@@ -86,7 +86,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     // Set up the component state manager
     this->component_state_manager = std::make_shared<ComponentStateManager>(
         evse_connector_structure, database_handler, [this](auto evse_id, auto connector_id, auto status) {
-            if (this->websocket == nullptr || !this->websocket->is_connected()) {
+            if (this->websocket == nullptr || !this->websocket->is_connected() ||
+                this->registration_status != RegistrationStatusEnum::Accepted) {
                 return false;
             } else {
                 this->status_notification_req(evse_id, connector_id, status);
