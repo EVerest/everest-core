@@ -1068,9 +1068,15 @@ void ChargePoint::message_callback(const std::string& message) {
                                                                                        enhanced_message.uniqueId);
                     this->send<RequestStopTransactionResponse>(call_result);
                 } else {
-                    EVLOG_warning << "Received invalid MessageType: "
-                                  << conversions::messagetype_to_string(enhanced_message.messageType)
-                                  << " from CSMS while in state Pending";
+                    std::string const call_error_message =
+                        "Received invalid MessageType: " +
+                        conversions::messagetype_to_string(enhanced_message.messageType) +
+                        " from CSMS while in state Pending";
+                    EVLOG_warning << call_error_message;
+                    // B02.FR.09 send CALLERROR SecurityError
+                    const auto call_error =
+                        CallError(enhanced_message.uniqueId, "SecurityError", call_error_message, json({}));
+                    this->send(call_error);
                 }
             }
         } else if (this->registration_status == RegistrationStatusEnum::Rejected) {
