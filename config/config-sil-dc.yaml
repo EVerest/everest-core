@@ -66,8 +66,8 @@ active_modules:
       dc_target_voltage: 400
     connections:
       ev_board_support:
-        - implementation_id: ev_board_support
-          module_id: yeti_driver
+        - module_id: yeti_driver
+          implementation_id: ev_board_support
       ev:
         - module_id: iso15118_car
           implementation_id: ev

@@ -24,7 +24,7 @@ active_modules:
         - implementation_id: main
           module_id: token_validator
     module: Auth
-  car_simulator:
+  ev_manager:
     config_module:
       auto_enable: true
       auto_exec: false
@@ -34,13 +34,13 @@ active_modules:
       ev:
         - implementation_id: ev
           module_id: iso15118_car
-      simulation_control:
-        - implementation_id: yeti_simulation_control
+      ev_board_support:
+        - implementation_id: ev_board_support
           module_id: connector_1_powerpath
       slac:
         - implementation_id: ev
           module_id: slac
-    module: JsCarSimulator
+    module: JsEvManager
   energy_manager:
     connections:
       energy_trunk:
@@ -210,7 +210,7 @@ active_modules:
         - id: token_provider
           interface: auth_token_provider
           type: requirement
-  car_simulator:
+  ev_manager:
     position:
       x: 53
       y: 33
@@ -225,7 +225,7 @@ active_modules:
           type: requirement
       right:
         - id: main
-          interface: car_simulator
+          interface: ev_manager
           type: provide
       top:
         - id: ev
