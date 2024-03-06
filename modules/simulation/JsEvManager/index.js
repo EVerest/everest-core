@@ -1,5 +1,3 @@
-/* eslint-disable no-shadow */
-/* eslint-disable no-param-reassign */
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 const { evlog, boot_module } = require('everestjs');
