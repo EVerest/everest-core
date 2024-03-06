@@ -540,9 +540,13 @@ Local testing is still in progress.
 ## Building with FetchContent instead of EDM
 In [doc/build-with-fetchcontent](doc/build-with-fetchcontent) you can find an example how to build libocpp with FetchContent instead of EDM.
 
-## Support for security profile 2 and 3 with TPM in OCPP 1.6 using libwebsockets
+## Support for libwebsockets
 
-If you want to try the new websocket implementation based on libwebsockets (supporting security profile 2 and 3 with TPM) you can set the following cmake option.
+A new websocket implementation based on libwebsockets will deprecate the old websocket++ implmentation. It supports all security profiles, along with TPM usage.
+
+### Support for TPM keys
+
+In order to use the TPM keys, it is mandatory to use the libwebsocket implementation with the following cmake option.
 
 ```bash
   cmake .. -DLIBOCPP_ENABLE_LIBWEBSOCKETS=ON

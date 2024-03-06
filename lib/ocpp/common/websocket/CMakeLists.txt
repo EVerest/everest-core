@@ -11,6 +11,6 @@ target_sources(ocpp
 if(LIBOCPP_ENABLE_LIBWEBSOCKETS)
     target_sources(ocpp
         PRIVATE
-            websocket_tls_tpm.cpp
+            websocket_libwebsockets.cpp
     )
 endif()

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include <evse_security/crypto/openssl/openssl_tpm.hpp>
-#include <ocpp/common/websocket/websocket_tls_tpm.hpp>
+#include <ocpp/common/websocket/websocket_libwebsockets.hpp>
 
 #include <everest/logging.hpp>
 
@@ -151,6 +151,93 @@ public:
     std::atomic_bool message_sent;
 };
 
+static std::vector<std::string> get_subject_alt_names(const X509* x509) {
+    std::vector<std::string> list;
+    GENERAL_NAMES* subject_alt_names =
+        static_cast<GENERAL_NAMES*>(X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL));
+    if (subject_alt_names == nullptr) {
+        return list;
+    }
+    for (int i = 0; i < sk_GENERAL_NAME_num(subject_alt_names); i++) {
+        GENERAL_NAME* gen = sk_GENERAL_NAME_value(subject_alt_names, i);
+        if (gen == nullptr) {
+            continue;
+        }
+        if (gen->type == GEN_URI || gen->type == GEN_DNS || gen->type == GEN_EMAIL) {
+            ASN1_IA5STRING* asn1_str = gen->d.uniformResourceIdentifier;
+            std::string san = std::string(reinterpret_cast<const char*>(ASN1_STRING_get0_data(asn1_str)),
+                                          ASN1_STRING_length(asn1_str));
+            list.push_back(san);
+        } else if (gen->type == GEN_IPADD) {
+            unsigned char* ip = gen->d.ip->data;
+            if (gen->d.ip->length == 4) { // only support IPv4 for now
+                std::stringstream ip_stream;
+                ip_stream << static_cast<int>(ip[0]) << '.' << static_cast<int>(ip[1]) << '.' << static_cast<int>(ip[2])
+                          << '.' << static_cast<int>(ip[3]);
+                list.push_back(ip_stream.str());
+            }
+        }
+    }
+    GENERAL_NAMES_free(subject_alt_names);
+    return list;
+}
+
+static bool verify_csms_cn(const std::string& hostname, bool preverified, const X509_STORE_CTX* ctx) {
+
+    // Error depth gives the depth in the chain (with 0 = leaf certificate) where
+    // a potential (!) error occurred; error here means current error code and can also be "OK".
+    // This thus gives also the position (in the chain)  of the currently to be verified certificate.
+    // If depth is 0, we need to check the leaf certificate;
+    // If depth > 0, we are verifying a CA (or SUB-CA) certificate and thus trust "preverified"
+    int depth = X509_STORE_CTX_get_error_depth(ctx);
+
+    if (!preverified) {
+        int error = X509_STORE_CTX_get_error(ctx);
+        EVLOG_warning << "Invalid certificate error '" << X509_verify_cert_error_string(error) << "' (at chain depth '"
+                      << depth << "')";
+    }
+
+    // only check for CSMS server certificate
+    if (depth == 0 and preverified) {
+        // Get server certificate
+        X509* server_cert = X509_STORE_CTX_get_current_cert(ctx);
+
+        // Extract CN from csms server's certificate
+        X509_NAME* subject_name = X509_get_subject_name(server_cert);
+        char common_name[256];
+        if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name, sizeof(common_name)) <= 0) {
+            EVLOG_error << "Could not extract CN from CSMS server certificate";
+            return false;
+        }
+
+        auto alt_names = get_subject_alt_names(server_cert);
+
+        // Compare the extracted CN with the expected FQDN
+        if (hostname == common_name) {
+            EVLOG_debug << "FQDN matches CN of server certificate: " << hostname;
+            return true;
+        }
+
+        // If the CN does not match, go through all alternative names
+        for (auto name : alt_names) {
+            if (hostname == name) {
+                EVLOG_debug << "FQDN matches alternative name of server certificate: " << hostname;
+                return true;
+            }
+        }
+
+        std::stringstream s;
+        s << "FQDN '" << hostname << "' does not match CN '" << common_name << "' or any alternative names";
+        for (auto alt_name : alt_names) {
+            s << " '" << alt_name << "'";
+        }
+        EVLOG_warning << s.str();
+        return false;
+    }
+
+    return preverified;
+}
+
 WebsocketTlsTPM::WebsocketTlsTPM(const WebsocketConnectionOptions& connection_options,
                                  std::shared_ptr<EvseSecurity> evse_security) :
     WebsocketBase(), evse_security(evse_security) {
@@ -178,8 +265,6 @@ void WebsocketTlsTPM::set_connection_options(const WebsocketConnectionOptions& c
     switch (connection_options.security_profile) { // `switch` used to lint on missing enum-values
     case security::SecurityProfile::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION:
     case security::SecurityProfile::UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION:
-        throw std::invalid_argument("`security_profile` is not a TLS-profile");
-        [[fallthrough]];
     case security::SecurityProfile::TLS_WITH_BASIC_AUTHENTICATION:
     case security::SecurityProfile::TLS_WITH_CLIENT_SIDE_CERTIFICATES:
         break;
@@ -347,39 +432,35 @@ void WebsocketTlsTPM::client_loop() {
 
     info.fd_limit_per_thread = 1 + 1 + 1;
 
-    // Setup context - need to know the key type first
+    if (this->connection_options.security_profile == 2 || this->connection_options.security_profile == 3) {
+        // Setup context - need to know the key type first
+        std::string path_key;
+        std::string path_chain;
+        std::optional<std::string> password;
 
-    std::string path_key;
-    std::string path_chain;
-    std::optional<std::string> password;
+        if (this->connection_options.security_profile == 3) {
 
-    if (this->connection_options.security_profile == 3) {
+            const auto certificate_key_pair =
+                this->evse_security->get_key_pair(CertificateSigningUseEnum::ChargingStationCertificate);
 
-        const auto certificate_key_pair =
-            this->evse_security->get_key_pair(CertificateSigningUseEnum::ChargingStationCertificate);
+            if (!certificate_key_pair.has_value()) {
+                EVLOG_AND_THROW(std::runtime_error(
+                    "Connecting with security profile 3 but no client side certificate is present or valid"));
+            }
 
-        if (!certificate_key_pair.has_value()) {
-            EVLOG_AND_THROW(std::runtime_error(
-                "Connecting with security profile 3 but no client side certificate is present or valid"));
+            path_chain = certificate_key_pair.value().certificate_path;
+            if (path_chain.empty()) {
+                path_chain = certificate_key_pair.value().certificate_single_path;
+            }
+            path_key = certificate_key_pair.value().key_path;
+            password = certificate_key_pair.value().password;
         }
 
-        path_chain = certificate_key_pair.value().certificate_path;
-        if (path_chain.empty()) {
-            path_chain = certificate_key_pair.value().certificate_single_path;
-        }
-        path_key = certificate_key_pair.value().key_path;
-        password = certificate_key_pair.value().password;
-    }
+        SSL_CTX* ssl_ctx = nullptr;
+        bool tpm_key = false;
 
-    SSL_CTX* ssl_ctx = nullptr;
-    bool tpm_key = false;
-
-    {
         if (!path_key.empty()) {
             tpm_key = is_tpm_key_filename(path_key);
-#ifdef DEBUG
-            EVLOG_info << "TPM Key: " << tpm_key;
-#endif
         }
 
         OpenSSLProvider provider;
@@ -397,16 +478,16 @@ void WebsocketTlsTPM::client_loop() {
             ERR_print_errors_fp(stderr);
             EVLOG_AND_THROW(std::runtime_error("Unable to create ssl ctx."));
         }
+
+        // Init TLS data
+        tls_init(ssl_ctx, path_chain, path_key, tpm_key, password);
+
+        // Setup our context
+        info.provided_client_ssl_ctx = ssl_ctx;
+
+        // Connection acquire the contexts
+        conn_data->sec_context = std::unique_ptr<SSL_CTX>(ssl_ctx);
     }
-
-    // Init TLS data
-    tls_init(ssl_ctx, path_chain, path_key, tpm_key, password);
-
-    // Setup our context
-    info.provided_client_ssl_ctx = ssl_ctx;
-
-    // Connection acquire the contexts
-    conn_data->sec_context = std::unique_ptr<SSL_CTX>(ssl_ctx);
 
     lws_context* lws_ctx = lws_create_context(&info);
     if (nullptr == lws_ctx) {
@@ -420,13 +501,18 @@ void WebsocketTlsTPM::client_loop() {
     lws_client_connect_info i;
     memset(&i, 0, sizeof(lws_client_connect_info));
 
-    int ssl_connection = LCCSCF_USE_SSL;
+    // No SSL
+    int ssl_connection = 0;
 
-    // TODO: Completely remove after test
-    // ssl_connection |= LCCSCF_ALLOW_SELFSIGNED;
-    // ssl_connection |= LCCSCF_ALLOW_INSECURE;
-    // ssl_connection |= LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
-    // ssl_connection |= LCCSCF_ALLOW_EXPIRED;
+    if (this->connection_options.security_profile == 2 || this->connection_options.security_profile == 3) {
+        ssl_connection = LCCSCF_USE_SSL;
+
+        // TODO: Completely remove after test
+        // ssl_connection |= LCCSCF_ALLOW_SELFSIGNED;
+        // ssl_connection |= LCCSCF_ALLOW_INSECURE;
+        // ssl_connection |= LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
+        // ssl_connection |= LCCSCF_ALLOW_EXPIRED;
+    }
 
     auto& uri = this->connection_options.csms_uri;
 
@@ -916,39 +1002,66 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
     }
 
     switch (reason) {
-    // TODO: If required in the future
     case LWS_CALLBACK_OPENSSL_PERFORM_SERVER_CERT_VERIFICATION:
+        // user is X509_STORE and and len is preverify_ok
+        if (false == verify_csms_cn(this->connection_options.csms_uri.get_hostname(), (len == 1),
+                                    reinterpret_cast<X509_STORE_CTX*>(user))) {
+            EVLOG_error << "Failed to verify server certificate cn!";
+            // Return 1 to fail the cert
+            return 1;
+        }
+
         break;
     case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
         break;
 
     case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER: {
+        EVLOG_info << "Handshake with security profile: " << this->connection_options.security_profile;
+
         unsigned char **ptr = reinterpret_cast<unsigned char**>(in), *end_header = (*ptr) + len;
 
         if (this->connection_options.hostName.has_value()) {
             auto& str = this->connection_options.hostName.value();
             EVLOG_info << "User-Host is set to " << str;
 
+            if (0 != lws_add_http_header_by_token(wsi, lws_token_indexes::WSI_TOKEN_HOST,
+                                                  reinterpret_cast<const unsigned char*>(str.c_str()), str.length(),
+                                                  ptr, end_header)) {
+                EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
+            }
+
+            /*
             if (0 != lws_add_http_header_by_name(wsi, reinterpret_cast<const unsigned char*>("User-Host"),
                                                  reinterpret_cast<const unsigned char*>(str.c_str()), str.length(), ptr,
                                                  end_header)) {
                 EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
             }
+            */
         }
 
-        if (this->connection_options.security_profile == 2) {
+        if (this->connection_options.security_profile == 1 || this->connection_options.security_profile == 2) {
             std::optional<std::string> authorization_header = this->getAuthorizationHeader();
 
             if (authorization_header != std::nullopt) {
                 auto& str = authorization_header.value();
+
+                if (0 != lws_add_http_header_by_token(wsi, lws_token_indexes::WSI_TOKEN_HTTP_AUTHORIZATION,
+                                                      reinterpret_cast<const unsigned char*>(str.c_str()), str.length(),
+                                                      ptr, end_header)) {
+                    EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
+                }
+
+                /*
+                // TODO: See if we need to switch back here
                 if (0 != lws_add_http_header_by_name(wsi, reinterpret_cast<const unsigned char*>("Authorization"),
                                                      reinterpret_cast<const unsigned char*>(str.c_str()), str.length(),
                                                      ptr, end_header)) {
                     EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
                 }
+                */
             } else {
                 EVLOG_AND_THROW(
-                    std::runtime_error("No authorization key provided when connecting with security profile 2 or 3."));
+                    std::runtime_error("No authorization key provided when connecting with security profile 1 or 2."));
             }
         }
 

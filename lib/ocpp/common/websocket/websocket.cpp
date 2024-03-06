@@ -6,7 +6,7 @@
 #include <ocpp/v16/types.hpp>
 
 #ifdef LIBOCPP_ENABLE_LIBWEBSOCKETS
-#include <ocpp/common/websocket/websocket_tls_tpm.hpp>
+#include <ocpp/common/websocket/websocket_libwebsockets.hpp>
 #endif
 
 #include <boost/algorithm/string.hpp>
