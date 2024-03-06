@@ -130,6 +130,16 @@ systemImpl::handle_standard_firmware_update(const types::system::FirmwareUpdateR
 
 types::system::UpdateFirmwareResponse
 systemImpl::handle_signed_fimware_update(const types::system::FirmwareUpdateRequest& firmware_update_request) {
+
+    if (!firmware_update_request.signing_certificate.has_value()) {
+        EVLOG_warning << "Signing certificate is missing in FirmwareUpdateRequest";
+        return types::system::UpdateFirmwareResponse::Rejected;
+    }
+    if (!firmware_update_request.signature.has_value()) {
+        EVLOG_warning << "Signature is missing in FirmwareUpdateRequest";
+        return types::system::UpdateFirmwareResponse::Rejected;
+    }
+
     EVLOG_info << "Executing signed firmware update download callback";
 
     if (firmware_update_request.retrieve_timestamp.has_value() &&
@@ -162,6 +172,19 @@ systemImpl::handle_signed_fimware_update(const types::system::FirmwareUpdateRequ
 }
 
 void systemImpl::download_signed_firmware(const types::system::FirmwareUpdateRequest& firmware_update_request) {
+
+    if (!firmware_update_request.signing_certificate.has_value()) {
+        EVLOG_warning << "Signing certificate is missing in FirmwareUpdateRequest";
+        this->publish_firmware_update_status(
+            {types::system::FirmwareUpdateStatusEnum::DownloadFailed, firmware_update_request.request_id});
+        return;
+    }
+    if (!firmware_update_request.signature.has_value()) {
+        EVLOG_warning << "Signature is missing in FirmwareUpdateRequest";
+        this->publish_firmware_update_status(
+            {types::system::FirmwareUpdateStatusEnum::DownloadFailed, firmware_update_request.request_id});
+        return;
+    }
 
     if (this->firmware_download_running) {
         EVLOG_info
@@ -232,7 +255,7 @@ void systemImpl::initialize_firmware_installation(const types::system::FirmwareU
                                                   const fs::path& firmware_file_path) {
     if (firmware_update_request.install_timestamp.has_value() &&
         Everest::Date::from_rfc3339(firmware_update_request.install_timestamp.value()) > date::utc_clock::now()) {
-        const auto install_timestamp = Everest::Date::from_rfc3339(firmware_update_request.retrieve_timestamp.value());
+        const auto install_timestamp = Everest::Date::from_rfc3339(firmware_update_request.install_timestamp.value());
         this->signed_firmware_update_install_timer.at(
             [this, firmware_update_request, firmware_file_path]() {
                 this->install_signed_firmware(firmware_update_request, firmware_file_path);
