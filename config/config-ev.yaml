@@ -33,6 +33,6 @@ active_modules:
     config_module:
       supported_DIN70121: true
       supported_ISO15118_2: true
-      supported_ISO15118_20: true
+      supported_ISO15118_20_DC: true
       tls_active: false
       device: eth1
