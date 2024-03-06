@@ -139,9 +139,15 @@ few CSMS and is continuously tested against OCTT2.
 
 Additionally, the implementation has been tested against those CSMS:
 
+-   [CitrineOS](https://lfenergy.org/projects/citrineos/)
+-   Chargepoint
 -   Current
+-   ihomer (Infuse CPMS)
 -   Instituto Tecnológico de la Energía (ITE)
+-   [MaEVe (Thoughtworks)](https://github.com/thoughtworks/maeve-csms)
+-   [Monta](https://monta.com)
 -   [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
+-   Switch EV
 
 ## Integration with EVerest
 
