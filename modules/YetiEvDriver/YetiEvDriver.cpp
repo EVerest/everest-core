@@ -62,7 +62,7 @@ void YetiEvDriver::ready() {
         types::board_support_common::BspMeasurement bspm;
         bspm.cp_pwm_duty_cycle = m.pwmDutyCycle * 100.;
         // FIXME(cc): This is not implemented on MCU side yet
-        bspm.proximity_pilot = types::board_support_common::Proximity_pilot::None;
+        bspm.proximity_pilot = {types::board_support_common::Ampacity::None};
         p_ev_board_support->publish_bsp_measurement(bspm);
     });
 

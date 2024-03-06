@@ -1321,10 +1321,12 @@ function publish_telemetry(mod) {
 
 function publish_ev_board_support(mod) {
 
+  const pp = { 'ampacity': read_pp_ampacity(mod) };
+
   mod.provides.ev_board_support.publish.bsp_measurement({
     'cp_pwm_duty_cycle': mod.pwm_duty_cycle * 100.0,
     'rcd_current_mA': mod.simulation_data.rcd_current,
-    'proximity_pilot': read_pp_ampacity(mod),
+    'proximity_pilot': pp,
   });
 }
 

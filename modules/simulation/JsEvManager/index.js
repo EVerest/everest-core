@@ -111,7 +111,7 @@ boot_module(async ({
     }
   });
   setup.uses.ev_board_support.subscribe.bsp_measurement((mod, args) => {
-    mod.pp = args.proximity_pilot;
+    mod.pp = args.proximity_pilot.ampacity;
     mod.rcd_current_mA = args.rcd_current_mA;
     mod.pwm_duty_cycle = args.cp_pwm_duty_cycle;
   });

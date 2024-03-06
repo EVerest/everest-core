@@ -55,13 +55,8 @@ types:
     properties:
       proximity_pilot:
         description: Current capability of the cable
-        type: string
-        enum:
-          - None
-          - A_13
-          - A_20
-          - A_32
-          - A_63
+        type: object
+        $ref: /board_support_common#/ProximityPilot
       rcd_current_mA:
         description: RCD current in mA
         type: number
