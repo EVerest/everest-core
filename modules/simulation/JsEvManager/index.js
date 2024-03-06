@@ -7,7 +7,7 @@ const { setInterval } = require('timers');
 let globalconf;
 
 // Command enable
-function enable(mod, {value}) {
+function enable(mod, { value }) {
   if (mod === undefined || mod.provides === undefined) {
     evlog.warning('Already received data, but framework is not ready yet');
     return;
@@ -135,7 +135,7 @@ boot_module(async ({
     mod.uses_list.ev[0].call.enable_sae_j2847_v2g_v2h();
     mod.uses_list.ev[0].call.set_bpt_dc_params(get_hlc_bpt_dc_parameters(mod));
   }
-  if(globalconf.module.auto_enable) enable(mod, { value: true });
+  if (globalconf.module.auto_enable) enable(mod, { value: true });
   if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
 });
 
@@ -255,10 +255,10 @@ function car_statemachine(mod) {
       break;
     case 'bcb_toggle':
       if (mod.bcb_toggle_C === true) {
-        mod.simdata_setting.cp_voltage = 6.0;
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'C' });
         mod.bcb_toggle_C = false;
       } else {
-        mod.simdata_setting.cp_voltage = 9.0;
+        mod.uses.ev_board_support.call.set_cp_state({ cp_state: 'B' });
         mod.bcb_toggle_C = true;
         mod.bcb_toggles++;
       }
@@ -351,8 +351,8 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'draw_power_regulated', 2, (mod, c) => {
     mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
-    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
-    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true });
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false });
     mod.state = 'charging_regulated';
     return true;
   });
@@ -360,8 +360,8 @@ function registerAllCmds(mod) {
   // Todo(sl). Check power_fixed again
   registerCmd(mod, 'draw_power_fixed', 2, (mod, c) => {
     mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
-    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
-    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true });
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false });
     mod.state = 'charging_fixed';
     return true;
   });
@@ -383,6 +383,11 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'diode_fail', 0, (mod, c) => {
     mod.state = 'diode_fail';
+    return true;
+  });
+
+  registerCmd(mod, 'rcd_current', 1, (mod, c) => {
+    mod.uses.ev_board_support.call.set_rcd_error({ rcd_current_mA: c.args[0] });
     return true;
   });
 
@@ -408,10 +413,6 @@ function registerAllCmds(mod) {
   });
 
   if (mod.uses_list.ev.length > 0) registerCmd(mod, 'iso_start_v2g_session', 2, (mod, c) => {
-    if (c.args[0] === 'externalpayment') mod.payment = 'ExternalPayment';
-    else if (c.args[0] === 'contract') mod.payment = 'Contract';
-    else return false;
-
     switch (c.args[1]) {
       case 'ac_single_phase_core': mod.energymode = 'AC_single_phase_core'; break;
       case 'ac_three_phase_core': mod.energymode = 'AC_three_phase_core'; break;
@@ -421,14 +422,10 @@ function registerAllCmds(mod) {
       case 'dc_unique': mod.energymode = 'DC_unique'; break;
       default: return false;
     }
-    // Todo(SL): Check NumPhases with EnergyMode
 
-    args = { PaymentOption: mod.payment, EnergyTransferMode: mod.energymode };
+    mod.uses_list.ev[0].call.start_charging({ EnergyTransferMode: mod.energymode });
 
-    if (mod.uses_list.ev[0].call.start_charging(args) === true) {
-      return true;
-    }
-    return false; // TODO:SL: Bleibt ewig in einer Schleife hängen, weil es nicht weiter geht
+    return true;
   });
 
   registerCmd(mod, 'iso_wait_pwr_ready', 0, (mod, c) => {
@@ -452,8 +449,8 @@ function registerAllCmds(mod) {
 
   registerCmd(mod, 'iso_draw_power_regulated', 2, (mod, c) => {
     mod.uses.ev_board_support.call.set_ac_max_current({ current: c.args[0] });
-    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true});
-    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false});
+    if (c.args[1] === 3) mod.uses.ev_board_support.call.set_three_phases({ three_phases: true });
+    else mod.uses.ev_board_support.call.set_three_phases({ three_phases: false });
     mod.state = 'iso_charging_regulated';
     return true;
   });

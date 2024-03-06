@@ -170,25 +170,28 @@ boot_module(async ({
         break;
     }
 
-    // Todo(sl)
-    // mod.provides.ev_board_support.publish.bsp_event(mod.relais_on ? "PowerOn" : "PowerOff");
-
   });
 
   setup.provides.ev_board_support.register.diode_fail((mod, args) => {
     mod.simdata_setting.diode_fail = args.value;
   });
 
+  // Right now the YetiSimulator have no option to control the dc powermeter.
   setup.provides.ev_board_support.register.allow_power_on((mod, args) => {
-    // Todo(sl): not implemented?
+    evlog.debug(`EV Power On: ${args.value}`);
   });
 
   setup.provides.ev_board_support.register.set_ac_max_current((mod, args) => {
     mod.ev_max_current = args.current;
   });
+
   setup.provides.ev_board_support.register.set_three_phases((mod, args) => {
     if (args.three_phases) mod.ev_three_phases = 3.0
     else mod.ev_three_phases = 1.0
+  });
+
+  setup.provides.ev_board_support.register.set_rcd_error((mod, args) => {
+    mod.simdata_setting.rcd_current = args.rcd_current_mA;
   });
 
   // Subscribe to nodered error injection
@@ -339,7 +342,7 @@ function telemetry_fast(mod) {
   mod.telemetry_data.power_switch.error_over_current = false;
 
   mod.telemetry_data.rcd.timestamp = date.toISOString();
-  mod.telemetry_data.rcd.current_mA = mod.rcd_current;
+  mod.telemetry_data.rcd.current_mA = mod.simulation_data.rcd_current;
 
   mod.telemetry.publish('livedata', 'power_path_controller', mod.telemetry_data.power_path_controller);
   mod.telemetry.publish('livedata', 'power_switch', mod.telemetry_data.power_switch);
@@ -413,7 +416,7 @@ function simulation_statemachine(mod) {
         powerOff(mod);
 
         // If car was unplugged, reset RCD flag.
-        mod.rcd_current = 0.1;
+        mod.simdata_setting.rcd_current = 0.1;
         mod.rcd_error = false;
       }
       break;
@@ -592,6 +595,9 @@ function addNoise(mod) {
   mod.simulation_data.cp_voltage = mod.simdata_setting.cp_voltage * noise;
   mod.simulation_data.rcd_current = mod.simdata_setting.rcd_current * noise;
   mod.simulation_data.pp_resistor = mod.simdata_setting.pp_resistor * noise;
+
+  mod.simulation_data.diode_fail = mod.simdata_setting.diode_fail;
+  mod.simulation_data.error_e = mod.simdata_setting.error_e;
 }
 
 // IEC61851 Table A.8
@@ -1068,7 +1074,6 @@ function clearData(mod) {
 
   mod.has_ventilation = false;
 
-  mod.rcd_current = 0.1;
   mod.rcd_error = false;
   mod.rcd_error_reported = false;
 
@@ -1315,12 +1320,11 @@ function publish_telemetry(mod) {
 }
 
 function publish_ev_board_support(mod) {
-  // mod.provides.yeti_simulation_control.publish.enabled(mod.simulation_enabled);
 
   mod.provides.ev_board_support.publish.bsp_measurement({
     'cp_pwm_duty_cycle': mod.pwm_duty_cycle * 100.0,
-    'rcd_current_mA': mod.rcd_current,
-    'proximity_pilot': "A_32" //FIXME(piet)
+    'rcd_current_mA': mod.simulation_data.rcd_current,
+    'proximity_pilot': read_pp_ampacity(mod),
   });
 }
 

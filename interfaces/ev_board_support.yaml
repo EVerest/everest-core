@@ -39,6 +39,12 @@ cmds:
       three_phases:
         description: "True: Three phase support, False: One phase support"
         type: boolean
+  set_rcd_error:
+    description: Setting a rcd error. Only for simulation purpose.
+    arguments:
+      rcd_current_mA:
+        description: RCD current in mA 
+        type: number
 vars:
   bsp_event:
     description: >-

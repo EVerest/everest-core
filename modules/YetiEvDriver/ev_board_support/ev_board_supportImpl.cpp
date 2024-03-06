@@ -38,7 +38,6 @@ void ev_board_supportImpl::handle_set_cp_state(types::ev_board_support::EvCpStat
 }
 
 void ev_board_supportImpl::handle_allow_power_on(bool& value) {
-    // your code for cmd allow_power_on goes here
     mod->serial.allowPowerOn(value);
 }
 
@@ -52,6 +51,10 @@ void ev_board_supportImpl::handle_set_ac_max_current(double& current) {
 
 void ev_board_supportImpl::handle_set_three_phases(bool& three_phases) {
     // your code for cmd set_three_phases goes here
+}
+
+void ev_board_supportImpl::handle_set_rcd_error(double& rcd_current_mA) {
+    // your code for cmd set_rcd_error goes here
 }
 
 } // namespace ev_board_support

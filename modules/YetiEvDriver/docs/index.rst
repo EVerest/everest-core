@@ -1,8 +1,8 @@
 .. _everest_modules_handwritten_YetiEvDriver:
 
-..  This file is a placeholder for an optional multiple files handwritten documentation for 
-    the YetiEvDriver module.
-    Please decide weather you want to use tthe doc.rst file
+..  This file is a placeholder for optional multiple files
+    handwritten documentation for the YetiEvDriver module.
+    Please decide whether you want to use the doc.rst file
     or a set of files in the doc/ directory.
     In the latter case, you can delete the doc.rst file.
     In the former case, you can delete the doc/ directory.

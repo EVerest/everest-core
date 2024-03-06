@@ -3,12 +3,6 @@ cmds:
   start_charging:
     description: Start the ev charging process
     arguments:
-      PaymentOption:
-        description: This element is used for indicating the payment type
-        type: string
-        enum:
-          - Contract
-          - ExternalPayment
       EnergyTransferMode:
         description: >-
           Selected energy transfer mode for charging that is requested
