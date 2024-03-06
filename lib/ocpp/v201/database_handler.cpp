@@ -439,6 +439,11 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
             insert_stmt.bind_text("@signing_method", signedMeterValue.signingMethod.get(), SQLiteString::Transient);
             insert_stmt.bind_text("@encoding_method", signedMeterValue.encodingMethod.get(), SQLiteString::Transient);
             insert_stmt.bind_text("@public_key", signedMeterValue.publicKey.get(), SQLiteString::Transient);
+        } else {
+            insert_stmt.bind_null("@signed_meter_data");
+            insert_stmt.bind_null("@signing_method");
+            insert_stmt.bind_null("@encoding_method");
+            insert_stmt.bind_null("@public_key");
         }
 
         if (insert_stmt.step() != SQLITE_DONE) {
