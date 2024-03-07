@@ -260,7 +260,7 @@ InstallCertificateResult EvseSecurity::install_ca_certificate(const std::string&
         X509CertificateBundle existing_certs(ca_bundle_path, EncodingFormat::PEM);
 
         if (existing_certs.is_using_directory()) {
-            std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_" +
+            std::string filename = conversions::ca_certificate_type_to_string(certificate_type) + "_ROOT_" +
                                    filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
             fs::path new_path = ca_bundle_path / filename;
 
@@ -1061,22 +1061,44 @@ InstallCertificateResult EvseSecurity::verify_certificate_internal(const std::st
 
         const auto leaf_certificate = _certificate_chain.at(0);
         std::vector<X509Handle*> parent_certificates;
-        std::optional<fs::path> store_file;
+        fs::path store;
 
         for (size_t i = 1; i < _certificate_chain.size(); i++) {
             parent_certificates.emplace_back(_certificate_chain[i].get());
         }
 
         if (certificate_type == LeafCertificateType::CSMS) {
-            store_file = this->ca_bundle_path_map.at(CaCertificateType::CSMS);
+            store = this->ca_bundle_path_map.at(CaCertificateType::CSMS);
         } else if (certificate_type == LeafCertificateType::V2G) {
-            store_file = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+            store = this->ca_bundle_path_map.at(CaCertificateType::V2G);
         } else {
-            store_file = this->ca_bundle_path_map.at(CaCertificateType::MF);
+            store = this->ca_bundle_path_map.at(CaCertificateType::MF);
         }
 
-        CertificateValidationError validated = CryptoSupplier::x509_verify_certificate_chain(
-            leaf_certificate.get(), parent_certificates, true, std::nullopt, store_file);
+        CertificateValidationError validated{};
+
+        if (fs::is_directory(store)) {
+            // In case of a directory load the certificates manually and add them
+            // to the parent certificates
+            X509CertificateBundle roots(store, EncodingFormat::PEM);
+
+            // We use a root chain instead of relying on OpenSSL since that requires to have
+            // the name of the certificates in the format "hash.0", hash being the subject hash
+            // or to have symlinks in the mentioned format to the certificates in the directory
+            std::vector<X509Wrapper> root_chain{roots.split()};
+
+            for (size_t i = 0; i < root_chain.size(); i++) {
+                parent_certificates.emplace_back(root_chain[i].get());
+            }
+
+            // The root_chain stores the X509Handler pointers, if this goes out of scope then
+            // parent_certificates will point to nothing.
+            validated = CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), parent_certificates, true,
+                                                                      std::nullopt, std::nullopt);
+        } else {
+            validated = CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), parent_certificates, true,
+                                                                      std::nullopt, store);
+        }
 
         if (validated != CertificateValidationError::NoError) {
             return to_install_certificate_result(validated);

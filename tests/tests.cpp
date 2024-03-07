@@ -246,116 +246,6 @@ protected:
     }
 };
 
-TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
-    // Check that the FS is not full
-    ASSERT_FALSE(evse_security->is_filesystem_full());
-
-    // List of date sorted certificates
-    std::vector<X509Wrapper> sorted;
-    std::vector<fs::path> sorded_should_delete;
-    std::vector<fs::path> sorded_should_keep;
-
-    // Ensure that we have GEN_CERTIFICATES + 2 (CPO_CERT_CHAIN.pem + SECC_LEAF.pem)
-    {
-        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
-        ASSERT_EQ(full_certs.get_certificate_chains_count(), GEN_CERTIFICATES + 2);
-
-        full_certs.for_each_chain([&sorted](const fs::path& path, const std::vector<X509Wrapper>& certifs) {
-            sorted.push_back(certifs.at(0));
-
-            return true;
-        });
-
-        ASSERT_EQ(sorted.size(), GEN_CERTIFICATES + 2);
-    }
-
-    // Sort by end expiry date
-    std::sort(std::begin(sorted), std::end(sorted),
-              [](X509Wrapper& a, X509Wrapper& b) { return (a.get_valid_to() > b.get_valid_to()); });
-
-    // Collect all should-delete and kept certificates
-    int skipped = 0;
-
-    for (const auto& cert : sorted) {
-        if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-            sorded_should_delete.push_back(cert.get_file().value());
-        } else {
-            sorded_should_keep.push_back(cert.get_file().value());
-        }
-    }
-
-    // Fill the disk
-    evse_security->max_fs_certificate_store_entries = 20;
-
-    ASSERT_TRUE(evse_security->is_filesystem_full());
-
-    // Garbage collect
-    evse_security->garbage_collect();
-
-    // Ensure that we have 10 certificates, since we only keep 10, the newest
-    {
-        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
-        ASSERT_EQ(full_certs.get_certificate_chains_count(), DEFAULT_MINIMUM_CERTIFICATE_ENTRIES);
-
-        // Ensure that we only have the newest ones
-        for (const auto& deleted : sorded_should_delete) {
-            ASSERT_FALSE(fs::exists(deleted));
-        }
-
-        for (const auto& deleted : sorded_should_keep) {
-            ASSERT_TRUE(fs::exists(deleted));
-        }
-    }
-}
-
-TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
-    // Generate a CSR
-    std::string csr =
-        evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
-    fs::path csr_key_path = evse_security->managed_csr.begin()->first;
-
-    // Simulate a full fs else no deletion will take place
-    evse_security->max_fs_usage_bytes = 1;
-
-    ASSERT_EQ(evse_security->managed_csr.size(), 1);
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Check that is is NOT deleted
-    evse_security->garbage_collect();
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Sleep 1 second AND it must be deleted
-    evse_security->csr_expiry = std::chrono::seconds(0);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    evse_security->garbage_collect();
-
-    ASSERT_FALSE(fs::exists(csr_key_path));
-    ASSERT_EQ(evse_security->managed_csr.size(), 0);
-
-    // Delete unmanaged, future expired CSRs
-    csr = evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
-    csr_key_path = evse_security->managed_csr.begin()->first;
-
-    ASSERT_EQ(evse_security->managed_csr.size(), 1);
-
-    // Remove from managed (simulate a reboot/reinit)
-    evse_security->managed_csr.clear();
-
-    // at this GC the should re-add the key to our managed list
-    evse_security->csr_expiry = std::chrono::seconds(10);
-    evse_security->garbage_collect();
-    ASSERT_EQ(evse_security->managed_csr.size(), 1);
-    ASSERT_TRUE(fs::exists(csr_key_path));
-
-    // Now it is technically expired again
-    evse_security->csr_expiry = std::chrono::seconds(0);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    // Garbage collect should delete the expired managed key
-    evse_security->garbage_collect();
-    ASSERT_FALSE(fs::exists(csr_key_path));
-}
-
 TEST_F(EvseSecurityTests, verify_basics) {
     // Check that we have the default provider
     ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
@@ -403,6 +293,21 @@ TEST_F(EvseSecurityTests, verify_basics) {
     X509Wrapper root_cert(certificate_strings[root_cert_idx], EncodingFormat::PEM);
     ASSERT_TRUE(certificates[root_cert_idx].get_certificate_hash_data() == root_cert.get_certificate_hash_data());
     ASSERT_TRUE(equal_certificate_strings(root_cert.get_export_string(), certificate_strings[root_cert_idx]));
+}
+
+TEST_F(EvseSecurityTests, verify_directory_bundles) {
+    const auto child_cert_str = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
+
+    ASSERT_EQ(this->evse_security->verify_certificate(child_cert_str, LeafCertificateType::CSMS),
+              InstallCertificateResult::Accepted);
+
+    // Verifies that directory bundles properly function when verifying a certificate
+    this->evse_security->ca_bundle_path_map[CaCertificateType::CSMS] = fs::path("certs/ca/v2g/");
+    this->evse_security->ca_bundle_path_map[CaCertificateType::V2G] = fs::path("certs/ca/v2g/");
+
+    // Verify a leaf
+    ASSERT_EQ(this->evse_security->verify_certificate(child_cert_str, LeafCertificateType::CSMS),
+              InstallCertificateResult::Accepted);
 }
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
@@ -969,6 +874,116 @@ TEST_F(EvseSecurityTests, verify_full_filesystem_install_reject) {
         read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::CertificateStoreMaxLengthExceeded);
+}
+
+TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
+    // Check that the FS is not full
+    ASSERT_FALSE(evse_security->is_filesystem_full());
+
+    // List of date sorted certificates
+    std::vector<X509Wrapper> sorted;
+    std::vector<fs::path> sorded_should_delete;
+    std::vector<fs::path> sorded_should_keep;
+
+    // Ensure that we have GEN_CERTIFICATES + 2 (CPO_CERT_CHAIN.pem + SECC_LEAF.pem)
+    {
+        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
+        ASSERT_EQ(full_certs.get_certificate_chains_count(), GEN_CERTIFICATES + 2);
+
+        full_certs.for_each_chain([&sorted](const fs::path& path, const std::vector<X509Wrapper>& certifs) {
+            sorted.push_back(certifs.at(0));
+
+            return true;
+        });
+
+        ASSERT_EQ(sorted.size(), GEN_CERTIFICATES + 2);
+    }
+
+    // Sort by end expiry date
+    std::sort(std::begin(sorted), std::end(sorted),
+              [](X509Wrapper& a, X509Wrapper& b) { return (a.get_valid_to() > b.get_valid_to()); });
+
+    // Collect all should-delete and kept certificates
+    int skipped = 0;
+
+    for (const auto& cert : sorted) {
+        if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+            sorded_should_delete.push_back(cert.get_file().value());
+        } else {
+            sorded_should_keep.push_back(cert.get_file().value());
+        }
+    }
+
+    // Fill the disk
+    evse_security->max_fs_certificate_store_entries = 20;
+
+    ASSERT_TRUE(evse_security->is_filesystem_full());
+
+    // Garbage collect
+    evse_security->garbage_collect();
+
+    // Ensure that we have 10 certificates, since we only keep 10, the newest
+    {
+        X509CertificateBundle full_certs(fs::path("certs/client/cso"), EncodingFormat::PEM);
+        ASSERT_EQ(full_certs.get_certificate_chains_count(), DEFAULT_MINIMUM_CERTIFICATE_ENTRIES);
+
+        // Ensure that we only have the newest ones
+        for (const auto& deleted : sorded_should_delete) {
+            ASSERT_FALSE(fs::exists(deleted));
+        }
+
+        for (const auto& deleted : sorded_should_keep) {
+            ASSERT_TRUE(fs::exists(deleted));
+        }
+    }
+}
+
+TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
+    // Generate a CSR
+    std::string csr =
+        evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
+    fs::path csr_key_path = evse_security->managed_csr.begin()->first;
+
+    // Simulate a full fs else no deletion will take place
+    evse_security->max_fs_usage_bytes = 1;
+
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Check that is is NOT deleted
+    evse_security->garbage_collect();
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Sleep 1 second AND it must be deleted
+    evse_security->csr_expiry = std::chrono::seconds(0);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    evse_security->garbage_collect();
+
+    ASSERT_FALSE(fs::exists(csr_key_path));
+    ASSERT_EQ(evse_security->managed_csr.size(), 0);
+
+    // Delete unmanaged, future expired CSRs
+    csr = evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
+    csr_key_path = evse_security->managed_csr.begin()->first;
+
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+
+    // Remove from managed (simulate a reboot/reinit)
+    evse_security->managed_csr.clear();
+
+    // at this GC the should re-add the key to our managed list
+    evse_security->csr_expiry = std::chrono::seconds(10);
+    evse_security->garbage_collect();
+    ASSERT_EQ(evse_security->managed_csr.size(), 1);
+    ASSERT_TRUE(fs::exists(csr_key_path));
+
+    // Now it is technically expired again
+    evse_security->csr_expiry = std::chrono::seconds(0);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Garbage collect should delete the expired managed key
+    evse_security->garbage_collect();
+    ASSERT_FALSE(fs::exists(csr_key_path));
 }
 
 } // namespace evse_security
