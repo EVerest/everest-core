@@ -181,7 +181,6 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
             // this has to be negotiated beforehand or done in a custom data transfer
             signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
         }
-        this->transaction_start(ocpp_connector_id, session_id);
         this->charge_point->on_transaction_started(ocpp_connector_id, session_event.uuid, id_token, energy_Wh_import,
                                                    reservation_id_opt, timestamp, signed_meter_data);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingPausedEV) {
@@ -221,7 +220,6 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
             // this has to be negotiated beforehand or done in a custom data transfer
             signed_meter_data.emplace(signed_meter_value.value().signed_meter_data);
         }
-        this->transaction_end(ocpp_connector_id, session_event.uuid);
         this->charge_point->on_transaction_stopped(ocpp_connector_id, session_event.uuid, reason, timestamp,
                                                    energy_Wh_import, id_tag_opt, signed_meter_data);
         // always triggered by libocpp
@@ -706,9 +704,26 @@ void OCPP::ready() {
     });
 
     this->charge_point->register_transaction_started_callback(
-        [this](const int32_t connector, const int32_t transaction_id) {
-            EVLOG_info << "Transaction started connector: " << connector << " id: " << transaction_id;
-            this->transaction_update(connector, transaction_id);
+        [this](const int32_t connector, const std::string& session_id) {
+            types::ocpp::OcppTransactionEvent tevent = {
+                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
+            };
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_updated_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
+                                                        session_id, std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_stopped_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
+                                                        std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     if (!this->r_data_transfer.empty()) {
@@ -760,55 +775,6 @@ void OCPP::ready() {
 
 int32_t OCPP::get_ocpp_connector_id(int32_t evse_id, int32_t connector_id) {
     return this->evse_connector_map.at(evse_id).at(connector_id);
-}
-
-void OCPP::transaction_start(int32_t connector, const std::string& session_id) {
-    const std::lock_guard<std::mutex> lock(transaction_muxtex);
-    if (auto it = transaction_map.find(connector); it != transaction_map.end()) {
-        EVLOG_error << "New Transaction with existing, connector: " << connector
-                    << " session: " << it->second.session_id
-                    << " transaction: " << it->second.transaction_id.value_or(-1);
-    }
-    types::ocpp::OcppTransactionEvent tevent = {
-        types::ocpp::Transaction_event::Start, connector, session_id, std::nullopt, std::nullopt,
-    };
-    transaction_map[connector] = {session_id, std::nullopt};
-    p_ocpp_generic->publish_ocpp_transaction_event(tevent);
-}
-
-void OCPP::transaction_update(int32_t connector, int32_t transaction_id) {
-    const std::lock_guard<std::mutex> lock(transaction_muxtex);
-    if (auto it = transaction_map.find(connector); it != transaction_map.end()) {
-        it->second.transaction_id = transaction_id;
-        types::ocpp::OcppTransactionEvent tevent = {
-            types::ocpp::Transaction_event::Update, connector, it->second.session_id, std::nullopt,
-            std::to_string(transaction_id),
-        };
-        p_ocpp_generic->publish_ocpp_transaction_event(tevent);
-    } else {
-        EVLOG_error << "Transaction ID with no start, connector: " << connector << " transaction: " << transaction_id;
-    }
-}
-
-void OCPP::transaction_end(int32_t connector, const std::string& session_id) {
-    const std::lock_guard<std::mutex> lock(transaction_muxtex);
-    if (auto it = transaction_map.find(connector); it != transaction_map.end()) {
-        if (it->second.session_id != session_id) {
-            EVLOG_error << "Transaction end with wrong session, connector: " << connector
-                        << " expected: " << it->second.session_id << " actual: " << session_id;
-        }
-        std::optional<std::string> transaction_id;
-        if (it->second.transaction_id.has_value()) {
-            transaction_id = std::to_string(it->second.transaction_id.value());
-        }
-        types::ocpp::OcppTransactionEvent tevent = {
-            types::ocpp::Transaction_event::End, connector, it->second.session_id, std::nullopt, transaction_id,
-        };
-        transaction_map.erase(it);
-        p_ocpp_generic->publish_ocpp_transaction_event(tevent);
-    } else {
-        EVLOG_error << "Transaction end with no start, connector: " << connector << " session: " << session_id;
-    }
 }
 
 } // namespace module

@@ -12,6 +12,7 @@
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
+#include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 namespace module {
@@ -112,6 +113,11 @@ types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdT
 /// types::authorization::CertificateStatus.
 types::authorization::CertificateStatus
 to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum status);
+
+/// \brief Converts a given ocpp::v201::TransactionEventEnum \p transaction_event to a
+/// types::ocpp::OcppTransactionEvent.
+types::ocpp::OcppTransactionEvent
+to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& transaction_event);
 
 } // namespace conversions
 } // namespace module

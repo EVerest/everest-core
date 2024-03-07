@@ -35,7 +35,6 @@
 #include <filesystem>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <queue>
 
 #include <ocpp/common/types.hpp>
@@ -145,17 +144,6 @@ private:
     std::mutex session_event_mutex;
     std::map<int32_t, std::queue<types::evse_manager::SessionEvent>> session_event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
-
-    struct OcppTransactionInfo {
-        std::string session_id;
-        std::optional<int32_t> transaction_id;
-    };
-    std::map<int32_t, OcppTransactionInfo> transaction_map;
-    std::mutex transaction_muxtex;
-
-    void transaction_start(std::int32_t connector, const std::string& session_id);
-    void transaction_update(std::int32_t connector, std::int32_t transaction_id);
-    void transaction_end(std::int32_t connector, const std::string& session_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

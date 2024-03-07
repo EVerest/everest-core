@@ -8,6 +8,7 @@ types:
     type: object
     required:
       - transaction_event
+      - evse_id
       - connector
       - session_id
     properties:
@@ -15,10 +16,11 @@ types:
         description: >-
           The transaction related event.
         type: string
-        enum:
-          - Start
-          - Update
-          - End
+        $ref: /ocpp#/TransactionEvent
+      evse_id:
+        description: >-
+          The OCPP 2.0.1 EVSE ID associated with the transaction.
+        type: integer
       connector:
         description: >-
           The connector associated with the transaction.
@@ -27,14 +29,17 @@ types:
         description: >-
           The EVSE manager assigned session ID.
         type: string
-      evseid:
-        description: >-
-          The OCPP 2.0.1 EVSE ID associated with the transaction.
-        type: integer
       transaction_id:
         description: >-
           The CSMS assigned transaction ID. A string is used to support OCPP 2.0.1. For OCPP 1.6 the integer is converted to a string
         type: string
+  TransactionEvent:
+    description: The transaction event enumeration
+    type: string
+    enum:
+      - Started
+      - Updated
+      - Ended
   DataTransferStatus:
     description: Data Transfer Status enum
     type: string
@@ -491,35 +496,6 @@ types:
         description: >-
           Additional text to provide detailed information
         type: string
-  TransactionEvent:
-    description: >-
-      Element providing information transactions.
-    type: object
-    required:
-      - event
-      - connector
-      - session_id
-    properties:
-      event:
-        description: >-
-          The transaction related event.
-        type: string
-        enum:
-          - Start
-          - Update
-          - End
-      connector:
-        description: >-
-          The connector associated with the transaction.
-        type: integer
-      session_id:
-        description: >-
-          The EVSE manager assigned session ID.
-        type: string
-      transaction_id:
-        description: >-
-          The CSMS assigned transaction ID (OCPP 1.6)
-        type: integer
   ChangeAvailabilityResponse:
     description: Response type to request to change the availability of the Charging Station/ an EVSE / a Connector.
     type: object
