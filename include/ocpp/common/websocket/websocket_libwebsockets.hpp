@@ -7,6 +7,8 @@
 #include <ocpp/common/websocket/websocket_base.hpp>
 
 #include <condition_variable>
+#include <memory>
+#include <mutex>
 #include <optional>
 #include <queue>
 #include <string>
