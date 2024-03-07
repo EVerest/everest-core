@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+   "RsIskraMeter",
+   "rust_examples/RsExample",
+   "rust_examples/RsExampleUser",
+]
+
+[workspace.dependencies]
+everestrs = { git = "https://github.com/qwello/everest-framework.git", rev = "0bb70094d030952c8933b38ab19403e9a825e885" }
+everestrs-build = { git = "https://github.com/qwello/everest-framework.git", rev = "0bb70094d030952c8933b38ab19403e9a825e885" }

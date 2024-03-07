@@ -45,6 +45,7 @@ types:
       - status
     properties:
       status:
+        type: object
         description: Response status that indicates whether the transaction start request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
       error:
@@ -66,6 +67,7 @@ types:
       - status
     properties:
       status:
+        type: object
         description: Response status that indicates whether the transaction stop request could successfully be performed.
         $ref: /powermeter#/TransactionRequestStatus
       signed_meter_value:

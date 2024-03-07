@@ -24,10 +24,11 @@ load("@rules_rust//crate_universe:defs.bzl", "crates_repository", "crate")
 
 crates_repository(
     name = "crate_index",
-    cargo_lockfile = "//modules/rust_examples:Cargo.lock",
+    cargo_lockfile = "//modules:Cargo.lock",
     isolated = False,
     manifests = [
-        "//modules/rust_examples:Cargo.toml",
+        "//modules:Cargo.toml",
+        "//modules/RsIskraMeter:Cargo.toml",
         "//modules/rust_examples/RsExample:Cargo.toml",
         "//modules/rust_examples/RsExampleUser:Cargo.toml",
     ],
