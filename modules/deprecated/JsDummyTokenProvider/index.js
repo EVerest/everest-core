@@ -8,7 +8,7 @@ boot_module(async ({ setup }) => {
       const data = {
         id_token: {
           value: mod.config.impl.main.token,
-          type: "ISO14443"
+          type: 'ISO14443',
         },
         authorization_type: mod.config.impl.main.type,
       };
