@@ -1,3 +1,4 @@
+//! Logger with journald compliant output.
 use env_logger::{Builder, Env};
 use everestrs::serde as __serde;
 use std::io::Write;

@@ -1,3 +1,40 @@
+//! Module for Iskra's WM3M4 & WM3M4C three-phase electrical energy meters.
+//!
+//! The implementation follows the user manual
+//! <https://www.iskra.eu/f/docs/Smart-energy-meters/K_WM3M4_EN_22433922_Users_manual_Ver_1.14.pdf>
+//! 
+//! ## Example usage:
+//! 
+//! To try out the Iskra meter you can use the following dummy config below.
+//! 
+//! ```yaml
+//!active_modules:
+//!  power_meter_1:
+//!    module: RsIskraMeter
+//!    config_module:
+//!      powermeter_device_id: 33
+//!    connections:
+//!      modbus:
+//!      - module_id: serial_comm_hub_1
+//!        implementation_id: main
+//!  serial_comm_hub_1:
+//!    module: SerialCommHub
+//!    config_implementation:
+//!      main:
+//!        serial_port: /dev/ttyUSB0
+//!        baudrate: 115200
+//!        initial_timeout_ms: 10000
+//!        within_message_timeout_ms: 100
+//!        max_packet_size: 100
+//! ```
+//! 
+//! You can start and stop transactions by publishing following messages to
+//! mqtt
+//! 
+//! ```sh
+//! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"value":{"cable_id":1,"client_id":"","evse_id":"DEABCD312ABC11","tariff_id":1,"transaction_id":"foobarbaz","user_data":""}},"id":"foo","origin":"bar"},"name":"start_transaction","type":"call"}'
+//! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"transaction_id":"foobarbaz"}, "id":"foo","origin":"bar"},"name":"stop_transaction","type":"call"}'
+//! ```
 #![allow(non_snake_case, non_camel_case_types)]
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
@@ -24,6 +61,7 @@ use utils::{
 /// Public key prefix for transparency software, defined under 6.5.14.
 const PUBLIC_KEY_PREFIX: &str = "3059301306072A8648CE3D020106082A8648CE3D03010703420004";
 
+/// The charging state from register 7000, defined at table 6.
 #[derive(PartialEq, Debug)]
 enum IskraMaterState {
     Idle,
@@ -31,6 +69,18 @@ enum IskraMaterState {
     Active_after_power_failure,
     Active_after_reset,
     Unknown,
+}
+
+impl IskraMaterState {
+    fn from_register(val: u16) -> Self {
+        match val {
+            0 => IskraMaterState::Idle,
+            1 => IskraMaterState::Active,
+            2 => IskraMaterState::Active_after_power_failure,
+            3 => IskraMaterState::Active_after_reset,
+            _ => IskraMaterState::Unknown,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -89,18 +139,6 @@ impl TryFrom<u16> for SignatureStatus {
             254 => Ok(SignatureStatus::SignatureError),
             255 => Ok(SignatureStatus::UndefinedError),
             unknown => Err(anyhow::anyhow!("Failed to convert the value {unknown}")),
-        }
-    }
-}
-
-impl IskraMaterState {
-    fn from_register(val: u16) -> Self {
-        match val {
-            0 => IskraMaterState::Idle,
-            1 => IskraMaterState::Active,
-            2 => IskraMaterState::Active_after_power_failure,
-            3 => IskraMaterState::Active_after_reset,
-            _ => IskraMaterState::Unknown,
         }
     }
 }
@@ -244,10 +282,6 @@ impl InitState {
 }
 
 /// State where we're ready for publishing.
-///
-/// The state implements the modbus communication commands from Iskra. See
-/// https://www.iskra.eu/f/docs/Smart-energy-meters/K_WM3M4_EN_22433922_Users_manual_Ver_1.14.pdf
-/// for documentation.
 #[derive(Clone)]
 struct ReadyState {
     /// Modbus id of the device.
@@ -624,6 +658,7 @@ enum StateMachine {
     ReadyState(ReadyState),
 }
 
+/// Main class implementing all EVerest traits.
 struct IskraMeter {
     state_machine: Mutex<StateMachine>,
 }
