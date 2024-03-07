@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Optional
 
 import pytest
+import os
+import paho.mqtt.client as mqtt
 
 from ._configuration.everest_configuration_strategies.everest_configuration_strategy import \
     EverestConfigAdjustmentStrategy
@@ -116,3 +118,15 @@ def test_controller(request, tmp_path, everest_core) -> EverestTestController:
 
     # FIXME (aw): proper life time management, shouldn't the fixure start and stop?
     test_controller.stop()
+
+@pytest.fixture
+def connected_mqtt_client(everest_core: EverestCore) -> mqtt.Client:
+    mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")
+    mqtt_server_port = int(os.environ.get("MQTT_SERVER_PORT", "1883"))
+    client = mqtt.Client(everest_core.everest_uuid)
+    client.connect(mqtt_server_uri, mqtt_server_port)
+    client.loop_start()
+
+    yield client
+
+    client.loop_stop()
