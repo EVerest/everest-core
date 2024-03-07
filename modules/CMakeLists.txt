@@ -35,6 +35,6 @@ add_subdirectory(examples)
 add_subdirectory(simulation)
 
 if(${EVEREST_ENABLE_RS_SUPPORT})
-    add_subdirectory(RsIskraMeter)
+    ev_add_module(RsIskraMeter)
     add_subdirectory(rust_examples)
 endif()
