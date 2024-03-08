@@ -1,0 +1,26 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  lem:
+    config_module:
+      ip_address: '192.168.1.2'
+      ntp_server_1_ip_addr: ''
+      ntp_server_1_port: 0
+      ntp_server_2_ip_addr: ''
+      ntp_server_2_port: 0
+      cable_id: 6
+      tariff_id: 0
+      meter_dst: '{"activated": false, "offset": 60, "start": {"order": "last", "day": "sunday", "month": "march", "hour": "T01:00Z"}, "end": {"order": "last", "day": "sunday", "month": "october", "hour": "T01:00Z" }}'
+      SC: 1
+      UV: "user sw version"
+      UD: "some text"
+    module: LemDCBM400600
+  cli:
+    config_module:
+      evse_id: "api"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: lem
+          implementation_id: main

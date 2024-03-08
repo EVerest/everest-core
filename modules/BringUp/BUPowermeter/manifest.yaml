@@ -1,0 +1,29 @@
+description: Interactive bring up helper for Powermeter interface
+config:
+  evse_id:
+    description: "Id of this EVSE"
+    type: string
+    default: "EVSE_ID"
+  transaction_id:
+    description: "OCPP transaction UUID"
+    type: string
+    default: "12345678-1234-5678-1234-567812345678"
+  identification_data:
+    description: "User identification means, e.g. RFID card ID"
+    type: string
+    default: "A1B2C3D4E5F6"
+  tariff_text:
+    description: "Tariff Text"
+    type: string
+    default: "custom"
+provides:
+  main:
+    interface: empty
+    description: This module does not provide anything
+requires:
+  powermeter:
+    interface: powermeter
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Florin Mihut

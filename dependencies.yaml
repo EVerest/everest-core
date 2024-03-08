@@ -95,7 +95,11 @@ libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
   git_tag: 2024.11.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBNFC_NCI"
-
+# UI library for BringUp modules
+ftxui:
+  git: https://github.com/ArthurSonzogni/ftxui
+  git_tag: v5.0.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_FTXUI"
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.

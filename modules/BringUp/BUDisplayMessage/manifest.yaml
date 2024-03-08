@@ -1,0 +1,12 @@
+description: Interactive bring up helper for Display Message interface
+provides:
+  main:
+    interface: empty
+    description: This module does not provide anything
+requires:
+  dm:
+    interface: display_message
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Christoph Burandt
