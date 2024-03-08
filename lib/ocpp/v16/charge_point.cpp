@@ -288,8 +288,20 @@ void ChargePoint::register_get_15118_ev_certificate_response_callback(
 }
 
 void ChargePoint::register_transaction_started_callback(
-    const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback) {
+    const std::function<void(const int32_t connector, const std::string& session_id)>& callback) {
     this->charge_point->register_transaction_started_callback(callback);
+}
+
+void ChargePoint::register_transaction_stopped_callback(
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
+        callback) {
+    this->charge_point->register_transaction_stopped_callback(callback);
+}
+
+void ChargePoint::register_transaction_updated_callback(
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
+        callback) {
+    this->charge_point->register_transaction_updated_callback(callback);
 }
 
 void ChargePoint::register_configuration_key_changed_callback(

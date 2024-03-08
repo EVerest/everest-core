@@ -166,6 +166,9 @@ struct Callbacks {
     /// \brief Callback function that can be used to handle arbitrary data transfers for all vendorId and
     /// messageId
     std::optional<std::function<DataTransferResponse(const DataTransferRequest& request)>> data_transfer_callback;
+
+    /// \breif Callback function that is called when a transaction_event was sent to the CSMS
+    std::optional<std::function<void(const TransactionEventRequest& transaction_event)>> transaction_event_callback;
 };
 
 /// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes

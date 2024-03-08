@@ -459,10 +459,25 @@ public:
                                  const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                                  const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
 
-    /// \brief registers a \p callback function that can be used to publish the response when transaction starts
+    /// \brief registers a \p callback function that is called when a StartTransaction.req message is sent by the
+    /// chargepoint
     /// \param callback
     void register_transaction_started_callback(
-        const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback);
+        const std::function<void(const int32_t connector, const std::string& session_id)>& callback);
+
+    /// \brief registers a \p callback function that is called when a StopTransaction.req message is sent by the
+    /// chargepoint
+    /// \param callback
+    void register_transaction_stopped_callback(
+        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
+            callback);
+
+    /// \brief registers a \p callback function that is called when a StartTransaction.conf message is received by the
+    /// CSMS. This includes the transactionId.
+    /// \param callback
+    void register_transaction_updated_callback(
+        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
+            callback);
 
     /// \brief registers a \p callback function that can be used to react on changed configuration keys. This
     /// callback is called when a configuration key has been successfully changed by the CSMS or internally using the

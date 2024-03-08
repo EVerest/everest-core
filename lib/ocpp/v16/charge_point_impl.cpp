@@ -1780,8 +1780,11 @@ void ChargePointImpl::handleStartTransactionResponse(ocpp::CallResult<StartTrans
             if (this->configuration->getStopTransactionOnInvalidId()) {
                 this->stop_transaction_callback(connector, Reason::DeAuthorized);
             }
-        } else if (this->transaction_started_callback != nullptr) {
-            this->transaction_started_callback(connector, start_transaction_response.transactionId);
+        }
+
+        if (this->transaction_updated_callback != nullptr) {
+            this->transaction_updated_callback(connector, transaction->get_session_id(),
+                                               start_transaction_response.transactionId);
         }
     } else {
         EVLOG_warning << "Received StartTransaction.conf for transaction that is not known to transaction_handler";
@@ -3201,6 +3204,10 @@ void ChargePointImpl::start_transaction(std::shared_ptr<Transaction> transaction
     transaction->change_meter_values_sample_interval(this->configuration->getMeterValueSampleInterval());
 
     this->send<StartTransactionRequest>(call);
+
+    if (this->transaction_started_callback != nullptr) {
+        this->transaction_started_callback(transaction->get_connector(), transaction->get_session_id());
+    }
 }
 
 void ChargePointImpl::on_session_started(int32_t connector, const std::string& session_id,
@@ -3353,6 +3360,10 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
     {
         std::lock_guard<std::mutex> lock(this->stop_transaction_mutex);
         this->send<StopTransactionRequest>(call);
+    }
+
+    if (this->transaction_stopped_callback != nullptr) {
+        this->transaction_stopped_callback(connector, transaction->get_session_id(), transaction->get_transaction_id());
     }
 
     transaction->set_finished();
@@ -3613,8 +3624,20 @@ void ChargePointImpl::register_get_15118_ev_certificate_response_callback(
 }
 
 void ChargePointImpl::register_transaction_started_callback(
-    const std::function<void(const int32_t connector, const int32_t transaction_id)>& callback) {
+    const std::function<void(const int32_t connector, const std::string& session_id)>& callback) {
     this->transaction_started_callback = callback;
+}
+
+void ChargePointImpl::register_transaction_stopped_callback(
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+        callback) {
+    this->transaction_stopped_callback = callback;
+}
+
+void ChargePointImpl::register_transaction_updated_callback(
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+        callback) {
+    this->transaction_updated_callback = callback;
 }
 
 void ChargePointImpl::register_configuration_key_changed_callback(
