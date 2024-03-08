@@ -48,7 +48,7 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
     // this is the actual OCPP request via DataTransfer.req to CSMS according to
     // PnC1.6 whitepaper
     const auto authorize_response = mod->charge_point->data_transfer_pnc_authorize(
-        provided_token.id_token, provided_token.certificate, iso15118_certificate_hash_data_opt);
+        provided_token.id_token.value, provided_token.certificate, iso15118_certificate_hash_data_opt);
 
     // preparing the validation result
     types::authorization::ValidationResult validation_result;
@@ -63,7 +63,8 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
         validation_result.expiry_time.emplace(authorize_response.idTokenInfo.cacheExpiryDateTime.value().to_rfc3339());
     }
     if (authorize_response.idTokenInfo.groupIdToken.has_value()) {
-        validation_result.parent_id_token.emplace(authorize_response.idTokenInfo.groupIdToken.value().idToken.get());
+        validation_result.parent_id_token = {authorize_response.idTokenInfo.groupIdToken.value().idToken.get(),
+                                             types::authorization::IdTokenType::Central};
     }
     validation_result.reason = "PnC OCPP1.6 Validiation result by CSMS";
     return validation_result;
@@ -71,7 +72,7 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
 
 types::authorization::ValidationResult
 auth_token_validatorImpl::validate_standard_request(const types::authorization::ProvidedIdToken& provided_token) {
-    const auto id_tag_info = mod->charge_point->authorize_id_token(ocpp::CiString<20>(provided_token.id_token));
+    const auto id_tag_info = mod->charge_point->authorize_id_token(ocpp::CiString<20>(provided_token.id_token.value));
     types::authorization::ValidationResult result;
 
     result.authorization_status = conversions::to_everest_authorization_status(id_tag_info.status);
@@ -79,7 +80,9 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
         result.expiry_time = id_tag_info.expiryDate->to_rfc3339();
     }
     if (id_tag_info.parentIdTag) {
-        result.parent_id_token = id_tag_info.parentIdTag->get();
+        result.parent_id_token = {id_tag_info.parentIdTag->get(),
+                                  types::authorization::IdTokenType::Central}; // For OCPP1.6 no IdTokenType is given,
+                                                                               // so we assume it is a central token
     }
     result.reason = "Validation by OCPP 1.6 Central System";
     return result;

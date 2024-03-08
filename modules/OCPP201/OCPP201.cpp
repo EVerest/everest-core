@@ -177,11 +177,14 @@ void OCPP201::ready() {
     callbacks.remote_start_transaction_callback = [this](const ocpp::v201::RequestStartTransactionRequest& request,
                                                          const bool authorize_remote_start) {
         types::authorization::ProvidedIdToken provided_token;
-        provided_token.id_token = request.idToken.idToken.get();
+        provided_token.id_token = conversions::to_everest_id_token(request.idToken);
         provided_token.authorization_type = types::authorization::AuthorizationType::OCPP;
-        provided_token.id_token_type = conversions::to_everest_id_token_type(request.idToken.type);
         provided_token.prevalidated = !authorize_remote_start;
         provided_token.request_id = request.remoteStartId;
+
+        if (request.groupIdToken.has_value()) {
+            provided_token.parent_id_token = conversions::to_everest_id_token(request.groupIdToken.value());
+        }
 
         if (request.evseId.has_value()) {
             provided_token.connectors = std::vector<int32_t>{request.evseId.value()};
@@ -248,6 +251,9 @@ void OCPP201::ready() {
                             << e.what();
                 return;
             }
+        } else if (set_variable_data.component.name == "AuthCtrlr" and
+                   set_variable_data.variable.name == "MasterPassGroupId") {
+            this->r_auth->call_set_master_pass_group_id(set_variable_data.attributeValue.get());
         }
     };
 
@@ -321,6 +327,14 @@ void OCPP201::ready() {
         this->r_auth->call_set_connection_timeout(ev_connection_timeout_request_value_response.value.value());
     }
 
+    const auto master_pass_group_id_response = this->charge_point->request_value<std::string>(
+        ocpp::v201::Component{"AuthCtrlr"}, ocpp::v201::Variable{"MasterPassGroupId"},
+        ocpp::v201::AttributeEnum::Actual);
+    if (master_pass_group_id_response.status == ocpp::v201::GetVariableStatusEnum::Accepted and
+        master_pass_group_id_response.value.has_value()) {
+        this->r_auth->call_set_master_pass_group_id(master_pass_group_id_response.value.value());
+    }
+
     if (this->config.EnableExternalWebsocketControl) {
         const std::string connect_topic = "everest_api/ocpp/cmd/connect";
         this->mqtt.subscribe(connect_topic,
@@ -371,13 +385,12 @@ void OCPP201::ready() {
                 const auto session_id = session_event.uuid;
                 const auto reservation_id = transaction_started.reservation_id;
                 const auto remote_start_id = transaction_started.id_tag.request_id;
+                const auto id_token = conversions::to_ocpp_id_token(transaction_started.id_tag.id_token);
 
-                ocpp::v201::IdTokenEnum id_token_type = ocpp::v201::IdTokenEnum::Local;
-                if (transaction_started.id_tag.id_token_type.has_value()) {
-                    id_token_type =
-                        conversions::to_ocpp_id_token_enum(transaction_started.id_tag.id_token_type.value());
+                std::optional<ocpp::v201::IdToken> group_id_token = std::nullopt;
+                if (transaction_started.id_tag.parent_id_token.has_value()) {
+                    group_id_token = conversions::to_ocpp_id_token(transaction_started.id_tag.parent_id_token.value());
                 }
-                ocpp::v201::IdToken id_token = {transaction_started.id_tag.id_token, id_token_type};
 
                 // assume cable has been plugged in first and then authorized
                 auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
@@ -395,11 +408,11 @@ void OCPP201::ready() {
                 if (this->tx_start_point == TxStartPoint::EnergyTransfer) {
                     this->transaction_starts[evse_connector].emplace(TransactionStart{
                         evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token,
-                        std::nullopt, reservation_id, remote_start_id, ocpp::v201::ChargingStateEnum::Charging});
+                        group_id_token, reservation_id, remote_start_id, ocpp::v201::ChargingStateEnum::Charging});
                 } else {
                     this->charge_point->on_transaction_started(
                         evse_id, connector_id, session_id, timestamp, trigger_reason, meter_value, id_token,
-                        std::nullopt, reservation_id, remote_start_id,
+                        group_id_token, reservation_id, remote_start_id,
                         ocpp::v201::ChargingStateEnum::EVConnected); // FIXME(piet): add proper groupIdToken +
                                                                      // ChargingStateEnum
                 }
@@ -410,7 +423,6 @@ void OCPP201::ready() {
                 const auto transaction_finished = session_event.transaction_finished.value();
                 const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
                 const auto signed_meter_value = transaction_finished.signed_meter_value;
-
                 const auto meter_value = conversions::to_ocpp_meter_value(
                     transaction_finished.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End,
                     signed_meter_value);
@@ -419,18 +431,12 @@ void OCPP201::ready() {
                     reason = conversions::to_ocpp_reason(transaction_finished.reason.value());
                 }
 
-                std::optional<ocpp::v201::IdToken> id_token_opt = std::nullopt;
+                std::optional<ocpp::v201::IdToken> id_token = std::nullopt;
                 if (transaction_finished.id_tag.has_value()) {
-                    ocpp::v201::IdToken id_token;
-                    id_token.idToken = transaction_finished.id_tag.value().id_token;
-                    if (transaction_finished.id_tag.value().id_token_type.has_value()) {
-                        id_token.type = conversions::to_ocpp_id_token_enum(
-                            transaction_finished.id_tag.value().id_token_type.value());
-                    }
-                    id_token_opt = id_token;
+                    id_token = conversions::to_ocpp_id_token(transaction_finished.id_tag.value().id_token);
                 }
 
-                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token_opt, "",
+                this->charge_point->on_transaction_finished(evse_id, timestamp, meter_value, reason, id_token, "",
                                                             ocpp::v201::ChargingStateEnum::EVConnected);
                 break;
             }

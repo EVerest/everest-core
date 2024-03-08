@@ -62,16 +62,16 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     this->token_in_process_mutex.lock();
     const auto referenced_connectors = this->get_referenced_connectors(provided_token);
 
-    if (!this->is_token_already_in_process(provided_token.id_token, referenced_connectors)) {
+    if (!this->is_token_already_in_process(provided_token.id_token.value, referenced_connectors)) {
         // process token if not already in process
-        this->tokens_in_process.insert(provided_token.id_token);
+        this->tokens_in_process.insert(provided_token.id_token.value);
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
         this->token_in_process_mutex.unlock();
         result = this->handle_token(provided_token);
         this->unlock_plug_in_mutex(referenced_connectors);
     } else {
         // do nothing if token is currently processed
-        EVLOG_info << "Received token " << provided_token.id_token << " repeatedly while still processing it";
+        EVLOG_info << "Received token " << provided_token.id_token.value << " repeatedly while still processing it";
         this->token_in_process_mutex.unlock();
         result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
@@ -92,10 +92,10 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
         std::lock_guard<std::mutex> lk(this->token_in_process_mutex);
-        this->tokens_in_process.erase(provided_token.id_token);
+        this->tokens_in_process.erase(provided_token.id_token.value);
     }
 
-    EVLOG_info << "Result for token: " << provided_token.id_token << ": "
+    EVLOG_info << "Result for token: " << provided_token.id_token.value << ": "
                << conversions::token_handling_result_to_string(result);
     return result;
 }
@@ -107,7 +107,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     if (provided_token.authorization_type == AuthorizationType::RFID) {
         // check if id_token is used for an active transaction
         const auto connector_used_for_transaction =
-            this->used_for_transaction(referenced_connectors, provided_token.id_token);
+            this->used_for_transaction(referenced_connectors, provided_token.id_token.value);
         if (connector_used_for_transaction != -1) {
             StopTransactionRequest req;
             req.reason = StopTransactionReason::Local;
@@ -124,6 +124,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     if (provided_token.prevalidated && provided_token.prevalidated.value()) {
         ValidationResult validation_result;
         validation_result.authorization_status = AuthorizationStatus::Accepted;
+        validation_result.parent_id_token = provided_token.parent_id_token;
         validation_results.push_back(validation_result);
     } else {
         validation_results = this->validate_token_callback(provided_token);
@@ -144,8 +145,26 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         for (const auto& validation_result : validation_results) {
             if (validation_result.authorization_status == AuthorizationStatus::Accepted &&
                 validation_result.parent_id_token.has_value()) {
+                // check if parent_id_token is equal to master_pass_group_id
+                if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
+                    EVLOG_info << "Provided parent_id_token is equal to master_pass_group_id. Stopping all active "
+                                  "transactions!";
+                    for (const auto connector_id : referenced_connectors) {
+                        const auto connector = this->connectors.at(connector_id)->connector;
+                        if (connector.transaction_active) {
+                            StopTransactionRequest req;
+                            req.reason = StopTransactionReason::MasterPass;
+                            req.id_tag.emplace(provided_token);
+                            this->stop_transaction_callback(this->connectors.at(connector_id)->evse_index, req);
+                        }
+                    }
+                    // TOOD: Add handling in case there is a display which can be used which transaction should stop
+                    // (see C16 of OCPP2.0.1 spec)
+                    return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
+                }
+
                 const auto connector_used_for_transaction =
-                    this->used_for_transaction(referenced_connectors, validation_result.parent_id_token.value());
+                    this->used_for_transaction(referenced_connectors, validation_result.parent_id_token.value().value);
                 if (connector_used_for_transaction != -1) {
                     const auto connector = this->connectors.at(connector_used_for_transaction)->connector;
                     // only stop transaction if a transaction is active
@@ -177,6 +196,16 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             auto validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
+
+                if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
+                    EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
+                                  "to authorize "
+                                  "this token for starting transactions!";
+                    this->publish_token_validation_status_callback(
+                        provided_token, types::authorization::TokenValidationStatus::Rejected);
+                    return TokenHandlingResult::REJECTED;
+                }
+
                 this->publish_token_validation_status_callback(provided_token,
                                                                types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to
@@ -185,7 +214,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - compare referenced_connectors against the connectors listed in the validation_result
                 */
                 int connector_id = this->select_connector(referenced_connectors); // might block
-                EVLOG_debug << "Selected connector#" << connector_id << " for token: " << provided_token.id_token;
+                EVLOG_debug << "Selected connector#" << connector_id << " for token: " << provided_token.id_token.value;
                 if (connector_id != -1) { // indicates timeout of connector selection
                     if (validation_result.evse_ids.has_value() and
                         intersect(referenced_connectors, validation_result.evse_ids.value()).empty()) {
@@ -197,8 +226,12 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         authorized = true;
                     } else {
                         EVLOG_debug << "Connector is reserved. Checking if token matches...";
-                        if (this->reservation_handler.matches_reserved_identifier(connector_id, provided_token.id_token,
-                                                                                  validation_result.parent_id_token)) {
+                        std::optional<std::string> parent_id_token;
+                        if (validation_result.parent_id_token.has_value()) {
+                            parent_id_token = validation_result.parent_id_token.value().value;
+                        }
+                        if (this->reservation_handler.matches_reserved_identifier(
+                                connector_id, provided_token.id_token.value, parent_id_token)) {
                             EVLOG_info << "Connector is reserved and token is valid for this reservation";
                             this->reservation_handler.on_reservation_used(connector_id);
                             authorized = true;
@@ -259,11 +292,11 @@ int AuthHandler::used_for_transaction(const std::vector<int>& connector_ids, con
         if (this->connectors.at(connector_id)->connector.identifier.has_value()) {
             const auto& identifier = this->connectors.at(connector_id)->connector.identifier.value();
             // check against id_token
-            if (identifier.id_token == token) {
+            if (identifier.id_token.value == token) {
                 return connector_id;
             }
             // check against parent_id_token
-            else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.value() == token) {
+            else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.value().value == token) {
                 return connector_id;
             }
         }
@@ -281,7 +314,7 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token,
         // check if id_token was already used to authorize evse but no transaction has been started yet
         for (const auto connector_id : referenced_connectors) {
             const auto connector = this->connectors.at(connector_id)->connector;
-            if (connector.identifier.has_value() && connector.identifier.value().id_token == id_token &&
+            if (connector.identifier.has_value() && connector.identifier.value().id_token.value == id_token &&
                 !connector.transaction_active) {
                 return true;
             }
@@ -302,6 +335,18 @@ bool AuthHandler::any_connector_available(const std::vector<int>& connector_ids)
     }
     EVLOG_debug << "No connector is available for this id_token";
     return false;
+}
+
+bool AuthHandler::equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token) {
+    if (!this->master_pass_group_id.has_value()) {
+        return false;
+    }
+
+    if (!parent_id_token.has_value()) {
+        return false;
+    }
+
+    return parent_id_token.value().value == this->master_pass_group_id.value();
 }
 
 int AuthHandler::get_latest_plugin(const std::vector<int>& connectors) {
@@ -505,6 +550,14 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
 void AuthHandler::set_connection_timeout(const int connection_timeout) {
     this->connection_timeout = connection_timeout;
 };
+
+void AuthHandler::set_master_pass_group_id(const std::string& master_pass_group_id) {
+    if (master_pass_group_id.empty()) {
+        this->master_pass_group_id = std::nullopt;
+    } else {
+        this->master_pass_group_id = master_pass_group_id;
+    }
+}
 
 void AuthHandler::set_prioritize_authorization_over_stopping_transaction(bool b) {
     this->prioritize_authorization_over_stopping_transaction = b;

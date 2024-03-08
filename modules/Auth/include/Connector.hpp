@@ -17,11 +17,11 @@ namespace module {
 
 /// \brief Validated Identifier struct. Used to keep track of active Identifiers
 struct Identifier {
-    std::string id_token; ///< Arbitrary id token string: this has to be printable case insensitive ascii
+    types::authorization::IdToken id_token;       ///< IdToken of the identifier
     types::authorization::AuthorizationType type; ///< Type of the provider of the identifier
     std::optional<types::authorization::AuthorizationStatus> authorization_status;
-    std::optional<std::string> expiry_time;     ///< Absolute UTC time point when reservation expires in RFC3339 format
-    std::optional<std::string> parent_id_token; ///< Parent id token of the id token
+    std::optional<std::string> expiry_time; ///< Absolute UTC time point when reservation expires in RFC3339 format
+    std::optional<types::authorization::IdToken> parent_id_token; ///< Parent id token of the identifier
 };
 
 struct Connector {

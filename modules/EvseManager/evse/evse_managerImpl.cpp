@@ -172,7 +172,7 @@ void evse_managerImpl::ready() {
                 std::thread authorize_thread([this]() {
                     types::authorization::ProvidedIdToken provided_token;
                     provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
-                    provided_token.id_token = "FREESERVICE";
+                    provided_token.id_token = {"FREESERVICE", types::authorization::IdTokenType::Local};
                     provided_token.prevalidated = true;
                     mod->charger->authorize(true, provided_token);
                     mod->charger_was_authorized();
@@ -228,7 +228,7 @@ void evse_managerImpl::ready() {
             {"type", "transaction_started"},
             {"session_id", session_uuid},
             {"energy_counter_import_wh", transaction_started.meter_value.energy_Wh_import.total},
-            {"id_tag", transaction_started.id_tag.id_token}};
+            {"id_tag", transaction_started.id_tag.id_token.value}};
 
         if (transaction_started.meter_value.energy_Wh_export.has_value()) {
             telemetry_data["energy_counter_export_wh"] = transaction_started.meter_value.energy_Wh_export.value().total;

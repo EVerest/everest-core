@@ -169,7 +169,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
         const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
-        const auto id_token = transaction_started.id_tag.id_token;
+        const auto id_token = transaction_started.id_tag.id_token.value;
         const auto signed_meter_value = transaction_started.signed_meter_value;
         std::optional<int32_t> reservation_id_opt = std::nullopt;
         if (transaction_started.reservation_id) {
@@ -212,7 +212,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         }
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token));
+            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value));
         }
         std::optional<std::string> signed_meter_data;
         if (signed_meter_value.has_value()) {
@@ -612,7 +612,7 @@ void OCPP::ready() {
     this->charge_point->register_provide_token_callback(
         [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
             types::authorization::ProvidedIdToken provided_token;
-            provided_token.id_token = id_token;
+            provided_token.id_token = {id_token, types::authorization::IdTokenType::Central};
             provided_token.authorization_type = types::authorization::AuthorizationType::OCPP;
             provided_token.connectors.emplace(referenced_connectors);
             provided_token.prevalidated.emplace(prevalidated);

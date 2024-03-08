@@ -66,6 +66,9 @@ ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason
 /// \brief Converts a given types::authorization::IdTokenType \p id_token_type to an ocpp::v201::IdTokenEnum.
 ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type);
 
+/// \brief Converts a given types::authorization::IdToken \p id_token to an ocpp::v201::IdToken.
+ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token);
+
 /// \brief Converts a given types::iso15118_charger::CertificateActionEnum \p action to an
 /// ocpp::v201::CertificateActionEnum.
 ocpp::v201::CertificateActionEnum
@@ -108,6 +111,9 @@ to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status
 
 /// \brief Converts a given ocpp::v201::IdTokenEnum \p type to a types::authorization::IdTokenType.
 types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdTokenEnum& type);
+
+/// \brief Converts a given ocpp::v201::IdToken \p id_token to a types::authorization::IdToken.
+types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_token);
 
 /// \brief Converts a given ocpp::v201::AuthorizeCertificateStatusEnum \p status to a
 /// types::authorization::CertificateStatus.

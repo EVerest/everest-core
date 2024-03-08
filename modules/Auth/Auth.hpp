@@ -33,6 +33,7 @@ namespace module {
 struct Conf {
     std::string selection_algorithm;
     int connection_timeout;
+    std::string master_pass_group_id;
     bool prioritize_authorization_over_stopping_transaction;
     bool ignore_connector_faults;
 };
@@ -70,6 +71,13 @@ public:
      * @param connection_timeout timeout in seconds
      */
     void set_connection_timeout(int& connection_timeout);
+
+    /**
+     * @brief Set the master pass group id for the auth handler
+     *
+     * @param master_pass_group_id master pass group id
+     */
+    void set_master_pass_group_id(const std::string& master_pass_group_id);
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

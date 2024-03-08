@@ -1290,9 +1290,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         // Publish the provided signature certificate chain and eMAID from EVCC
         // to receive PnC authorization
         types::authorization::ProvidedIdToken ProvidedIdToken;
-        ProvidedIdToken.id_token = std::string(cert_emaid);
+        ProvidedIdToken.id_token = {std::string(cert_emaid), types::authorization::IdTokenType::eMAID};
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
-        ProvidedIdToken.id_token_type = types::authorization::IdTokenType::eMAID;
         if (contract_cert_chain_pem.empty() == false) {
             ProvidedIdToken.certificate = contract_cert_chain_pem;
         }
