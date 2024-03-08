@@ -991,6 +991,18 @@ void ChargePointImpl::message_callback(const std::string& message) {
             if (this->registration_status == RegistrationStatus::Pending) {
                 if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
                     this->handleBootNotificationResponse(json_message);
+                } else if (enhanced_message.messageType == MessageType::RemoteStartTransaction) {
+                    RemoteStartTransactionResponse response;
+                    response.status = RemoteStartStopStatus::Rejected;
+                    const ocpp::CallResult<RemoteStartTransactionResponse> call_result(response,
+                                                                                       enhanced_message.uniqueId);
+                    this->send<RemoteStartTransactionResponse>(call_result);
+                } else if (enhanced_message.messageType == MessageType::RemoteStopTransaction) {
+                    RemoteStopTransactionResponse response;
+                    response.status = RemoteStartStopStatus::Rejected;
+                    const ocpp::CallResult<RemoteStopTransactionResponse> call_result(response,
+                                                                                      enhanced_message.uniqueId);
+                    this->send<RemoteStopTransactionResponse>(call_result);
                 } else {
                     this->handle_message(enhanced_message);
                 }
