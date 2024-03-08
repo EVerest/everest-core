@@ -14,6 +14,7 @@
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
 #include <generated/interfaces/empty/Implementation.hpp>
+#include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 
 // headers for required interface implementations
@@ -71,7 +72,7 @@ public:
     OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
-            std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer,
+            std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
@@ -82,6 +83,7 @@ public:
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
+        p_ocpp_generic(std::move(p_ocpp_generic)),
         r_evse_manager(std::move(r_evse_manager)),
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
@@ -94,6 +96,7 @@ public:
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
+    const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
@@ -134,6 +137,11 @@ private:
     void init_evse_ready_map();
     bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
+
+    void transaction_start(std::int32_t evseid, std::int32_t connector, const std::string& session_id,
+                           const std::optional<std::string>& transaction_id);
+    void transaction_end(std::int32_t evseid, std::int32_t connector, const std::string& session_id,
+                         const std::optional<std::string>& transaction_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

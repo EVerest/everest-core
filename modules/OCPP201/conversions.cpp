@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <conversions.hpp>
+#include <everest/logging.hpp>
 
 namespace module {
 namespace conversions {
@@ -825,6 +826,42 @@ to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum s
         throw std::out_of_range(
             "Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to types::authorization::CertificateStatus");
     }
+}
+
+types::ocpp::OcppTransactionEvent
+to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& transaction_event) {
+    types::ocpp::OcppTransactionEvent ocpp_transaction_event;
+    switch (transaction_event.eventType) {
+    case ocpp::v201::TransactionEventEnum::Started:
+        ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Started;
+        break;
+    case ocpp::v201::TransactionEventEnum::Updated:
+        ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Updated;
+        break;
+    case ocpp::v201::TransactionEventEnum::Ended:
+        ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Ended;
+        break;
+    }
+
+    auto evse_id = 1;
+    auto connector_id = 1;
+
+    if (transaction_event.evse.has_value()) {
+        evse_id = transaction_event.evse.value().id;
+        if (transaction_event.evse.value().connectorId.has_value()) {
+            connector_id = transaction_event.evse.value().connectorId.value();
+        }
+    } else {
+        EVLOG_warning << "Attempting to convert TransactionEventRequest that does not contain information about the "
+                         "EVSE. evse_id and connector default to 1.";
+    }
+
+    ocpp_transaction_event.evse_id = evse_id;
+    ocpp_transaction_event.connector = connector_id;
+    ocpp_transaction_event.session_id =
+        transaction_event.transactionInfo.transactionId; // session_id == transaction_id for OCPP2.0.1
+    ocpp_transaction_event.transaction_id = transaction_event.transactionInfo.transactionId;
+    return ocpp_transaction_event;
 }
 
 } // namespace conversions
