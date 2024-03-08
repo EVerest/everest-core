@@ -1591,6 +1591,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
     std::optional<std::string> organization;
 
     if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
+        req.certificateType = CertificateSigningUseEnum::ChargingStationCertificate;
         common =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
         organization =
@@ -1598,6 +1599,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
         country =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
     } else {
+        req.certificateType = CertificateSigningUseEnum::V2GCertificate;
         common = this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrSeccId);
         organization = this->device_model->get_optional_value<std::string>(
             ControllerComponentVariables::ISO15118CtrlrOrganizationName);
