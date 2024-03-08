@@ -1,0 +1,13 @@
+if (NOT ftxui_FOUND AND NOT DEFINED ftxui_SOURCE_DIR)
+    message(WARNING "Not building BringUp modules because dependency ftxui is not available")
+else()
+    ev_add_module(BUDisplayMessage)
+    ev_add_module(BUEvseBoardSupport)
+    ev_add_module(BUSystem)
+    ev_add_module(BUPowerSupplyDC)
+    ev_add_module(BUIsolationMonitor)
+    ev_add_module(BUPowermeter)
+    ev_add_module(BUNfcReader)
+    # ev_add_module(BUmMWcar) # FIXME, re-enable once https://github.com/EVerest/everest-core/pull/1340 is merged
+    ev_add_module(BUOverVoltageMonitor)
+endif()
