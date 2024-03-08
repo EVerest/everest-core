@@ -278,6 +278,11 @@ void OCPP201::ready() {
         this->r_system->call_allow_firmware_installation();
     };
 
+    callbacks.transaction_event_callback = [this](const ocpp::v201::TransactionEventRequest& transaction_event) {
+        const auto ocpp_transaction_event = conversions::to_everest_ocpp_transaction_event(transaction_event);
+        this->p_ocpp_generic->publish_ocpp_transaction_event(ocpp_transaction_event);
+    };
+
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request;

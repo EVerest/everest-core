@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+#include "generated/types/ocpp.hpp"
 #include <fmt/core.h>
 #include <fstream>
 
 #include <boost/process.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
+#include <optional>
 
 namespace module {
 
@@ -700,6 +702,29 @@ void OCPP::ready() {
         event.info = tech_info;
         this->p_ocpp_generic->publish_security_event(event);
     });
+
+    this->charge_point->register_transaction_started_callback(
+        [this](const int32_t connector, const std::string& session_id) {
+            types::ocpp::OcppTransactionEvent tevent = {
+                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
+            };
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_updated_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
+                                                        session_id, std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_stopped_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
+                                                        std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
 
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {

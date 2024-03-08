@@ -41,6 +41,9 @@ provides:
   data_transfer:
     description: OCPP data transfer towards the CSMS
     interface: ocpp_data_transfer
+  ocpp_generic:
+    description: Generic OCPP interface.
+    interface: ocpp
 requires:
   evse_manager:
     interface: evse_manager
