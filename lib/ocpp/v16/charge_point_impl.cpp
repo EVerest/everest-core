@@ -19,6 +19,7 @@ const auto OCSP_REQUEST_TIMER_INTERVAL = std::chrono::hours(12);
 const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
+const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if BootNotification returns interval of 0.
 
 ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
                                  const fs::path& user_config_path, const fs::path& database_path,
@@ -1161,6 +1162,13 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
     if (call_result.msg.interval > 0) {
         this->configuration->setHeartbeatInterval(call_result.msg.interval);
     }
+
+    // If interval value is zero, the Charge Point chooses a waiting interval on its own
+    auto boot_notification_retry_interval = DEFAULT_BOOT_NOTIFICATION_INTERVAL_S;
+    if (call_result.msg.interval > 0) {
+        boot_notification_retry_interval = call_result.msg.interval;
+    }
+
     switch (call_result.msg.status) {
     case RegistrationStatus::Accepted: {
         this->connection_state = ChargePointConnectionState::Booted;
@@ -1217,7 +1225,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
     case RegistrationStatus::Pending:
         this->connection_state = ChargePointConnectionState::Pending;
         EVLOG_info << "BootNotification response is pending.";
-        this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
+        this->boot_notification_timer->timeout(std::chrono::seconds(boot_notification_retry_interval));
         break;
     default:
         this->connection_state = ChargePointConnectionState::Rejected;
@@ -1227,7 +1235,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         EVLOG_info << "BootNotification was rejected, trying again in " << this->configuration->getHeartbeatInterval()
                    << "s";
 
-        this->boot_notification_timer->timeout(std::chrono::seconds(call_result.msg.interval));
+        this->boot_notification_timer->timeout(std::chrono::seconds(boot_notification_retry_interval));
 
         break;
     }
