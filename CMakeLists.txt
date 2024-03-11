@@ -166,10 +166,6 @@ if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TEST
     include(CTest)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
-    evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
-
     add_subdirectory(tests)
 
     setup_target_for_coverage_gcovr_html(

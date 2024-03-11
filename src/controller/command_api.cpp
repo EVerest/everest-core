@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 #include "command_api.hpp"
 
 #include <filesystem>
@@ -11,25 +11,13 @@
 #include <ryml_std.hpp>
 
 #include "rpc.hpp"
+#include "transpile_config.hpp"
 
 #include <utils/formatter.hpp>
 #include <utils/yaml_loader.hpp>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
-
-static void clear_quote_flags(ryml::NodeRef& root) {
-    if (root.has_val() && root.val().is_number()) {
-        // we don't want to trim away strings, that are a pure number
-        root.tree()->_rem_flags(root.id(), ryml::KEYQUO);
-    } else {
-        root.tree()->_rem_flags(root.id(), ryml::KEYQUO | ryml::VALQUO);
-    }
-
-    for (auto child : root.children()) {
-        clear_quote_flags(child);
-    }
-}
 
 CommandApi::CommandApi(const Config& config, RPC& rpc) : config(config), rpc(rpc) {
 }
@@ -98,14 +86,13 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             throw CommandApiParamsError("The save_config needs a 'name' parameter for the config file of type string");
         }
 
-        auto config_json = params.value("config", json::object());
-        const auto configs_path = fs::path(this->config.configs_dir);
-        auto check_config_file_path = configs_path / fmt::format("_{}.yaml", params.at("name"));
+        const auto name = params.at("name").get<std::string>();
 
-        const auto json_serialized = config_json.dump();
-        auto ryml_deserialized = ryml::parse_in_arena(ryml::to_csubstr(json_serialized));
-        auto root = ryml_deserialized.rootref();
-        clear_quote_flags(root);
+        json config_json = params.value("config", json::object());
+        auto ryml_deserialized = transpile_config(config_json);
+
+        const auto configs_path = fs::path(this->config.configs_dir);
+        auto check_config_file_path = configs_path / fmt::format("_{}.yaml", name);
 
         std::ofstream(check_config_file_path.string()) << ryml_deserialized;
 
@@ -116,7 +103,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
             throw CommandApiParamsError(result);
         }
 
-        fs::rename(check_config_file_path, configs_path / fmt::format("{}.yaml", params.at("name")));
+        fs::rename(check_config_file_path, configs_path / fmt::format("{}.yaml", name));
 
         return true;
     } else if (cmd == "restart_modules") {
