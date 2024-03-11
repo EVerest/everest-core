@@ -51,7 +51,7 @@ liblog:
   options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libfmt:
   git: https://github.com/fmtlib/fmt.git
-  git_tag: 9.1.0
+  git_tag: 10.1.0
   options:
     ["FMT_TEST OFF", "FMT_DOC OFF", "BUILD_SHARED_LIBS ON", "FMT_INSTALL ON"]
 date:
