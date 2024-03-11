@@ -250,6 +250,19 @@ static bool check_iso2_signature(const struct iso2_SignatureType* iso2_signature
     sig_fragment.SignedInfo_isUsed = 1;
     sig_fragment.SignedInfo = sig->SignedInfo;
 
+    /** \req [V2G2-771] Don't use following fields */
+    sig_fragment.SignedInfo.Id_isUsed = 0;
+    sig_fragment.SignedInfo.CanonicalizationMethod.ANY_isUsed = 0;
+    sig_fragment.SignedInfo.SignatureMethod.HMACOutputLength_isUsed = 0;
+    sig_fragment.SignedInfo.SignatureMethod.ANY_isUsed = 0;
+    for (auto* ref = sig_fragment.SignedInfo.Reference.array;
+         ref != (sig_fragment.SignedInfo.Reference.array + sig_fragment.SignedInfo.Reference.arrayLen); ++ref) {
+        ref->Type_isUsed = 0;
+        ref->Transforms.Transform.ANY_isUsed = 0;
+        ref->Transforms.Transform.XPath_isUsed = 0;
+        ref->DigestMethod.ANY_isUsed = 0;
+    }
+
     stream.byte_pos = 0;
     stream.bit_count = 0;
     err = encode_iso2_xmldsigFragment(&stream, &sig_fragment);
