@@ -348,8 +348,12 @@ int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
 }
 
 bool DatabaseHandler::transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value) {
+    if (meter_value.sampledValue.empty()) {
+        return false;
+    }
+
     auto sampled_value_context = meter_value.sampledValue.at(0).context;
-    if (meter_value.sampledValue.empty() or !sampled_value_context.has_value()) {
+    if (!sampled_value_context.has_value()) {
         return false;
     }
 

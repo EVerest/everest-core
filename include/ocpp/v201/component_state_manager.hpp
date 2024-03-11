@@ -23,12 +23,116 @@ struct FullConnectorStatus {
 
     /// \brief Translates the individual state to an Available/Unavailable/Occupied/Reserved/Faulted state
     /// This does NOT take into account the state of the EVSE or CS,
-    /// and is intended to be used internally by the ComponentStateManager.
+    /// and is intended to be used internally by the ComponentStateManagerInterface.
     ConnectorStatusEnum to_connector_status();
 };
 
+class ComponentStateManagerInterface {
+public:
+    virtual ~ComponentStateManagerInterface();
+
+    /// \brief Set a callback to be called when the effective Operative/Inoperative state of the CS changes.
+    virtual void set_cs_effective_availability_changed_callback(
+        const std::function<void(const OperationalStatusEnum new_status)>& callback) = 0;
+
+    /// \brief Set a callback to be called when the effective Operative/Inoperative state of an EVSE changes.
+    virtual void set_evse_effective_availability_changed_callback(
+        const std::function<void(const int32_t evse_id, const OperationalStatusEnum new_status)>& callback) = 0;
+
+    /// \brief Set a callback to be called when the effective Operative/Inoperative state of a connector changes.
+    virtual void set_connector_effective_availability_changed_callback(
+        const std::function<void(const int32_t evse_id, const int32_t connector_id,
+                                 const OperationalStatusEnum new_status)>& callback) = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of the CS, as set by the CSMS
+    virtual OperationalStatusEnum get_cs_individual_operational_status() = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of an EVSE, as set by the CSMS
+    /// Note: This is not the same as the effective status.
+    /// The EVSE might be effectively Inoperative if the CS is Inoperative.
+    virtual OperationalStatusEnum get_evse_individual_operational_status(int32_t evse_id) = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of a connector, as set by the CSMS
+    /// Note: This is not the same as the effective status.
+    /// The connector might be effectively Inoperative if its EVSE or the CS is Inoperative.
+    virtual OperationalStatusEnum get_connector_individual_operational_status(int32_t evse_id,
+                                                                              int32_t connector_id) = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of the CS, as persisted in the database
+    /// This status is restored after reboot, and differs from the individual status if non-persistent
+    /// status changes were made.
+    virtual OperationalStatusEnum get_cs_persisted_operational_status() = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of an EVSE, as persisted in the database
+    /// This status is restored after reboot, and differs from the individual status if non-persistent
+    /// status changes were made.
+    virtual OperationalStatusEnum get_evse_persisted_operational_status(int32_t evse_id) = 0;
+
+    /// \brief Get the individual status (Operative/Inoperative) of a connector, as persisted in the database
+    /// This status is restored after reboot, and differs from the individual status if non-persistent
+    /// status changes were made.
+    virtual OperationalStatusEnum get_connector_persisted_operational_status(int32_t evse_id, int32_t connector_id) = 0;
+
+    /// \brief Set the individual status (Operative/Inoperative) of the CS
+    virtual void set_cs_individual_operational_status(OperationalStatusEnum new_status, bool persist) = 0;
+
+    /// \brief Set the individual status (Operative/Inoperative) of an EVSE
+    /// Note: This is not the same as the effective status.
+    /// The EVSE might be effectively Inoperative if the CS is Inoperative.
+    virtual void set_evse_individual_operational_status(int32_t evse_id, OperationalStatusEnum new_status,
+                                                        bool persist) = 0;
+
+    /// \brief Set the individual status (Operative/Inoperative) of a connector
+    /// Note: This is not the same as the effective status.
+    /// The connector might be effectively Inoperative if its EVSE or the CS is Inoperative.
+    virtual void set_connector_individual_operational_status(int32_t evse_id, int32_t connector_id,
+                                                             OperationalStatusEnum new_status, bool persist) = 0;
+
+    /// \brief Get the effective Operative/Inoperative status of an EVSE
+    /// This is computed from the EVSE's and the CS's individual statuses.
+    virtual OperationalStatusEnum get_evse_effective_operational_status(int32_t evse_id) = 0;
+
+    /// \brief Get the effective Operative/Inoperative status of a connector.
+    /// This is computed from the connector's, the EVSE's, and the CS's individual statuses.
+    virtual OperationalStatusEnum get_connector_effective_operational_status(int32_t evse_id, int32_t connector_id) = 0;
+
+    /// \brief Get the effective Available/Unavailable/Occupied/Faulted/Reserved status of a connector.
+    /// If the EVSE or the CS is Inoperative, the connector will be effectively Unavailable.
+    virtual ConnectorStatusEnum get_connector_effective_status(int32_t evse_id, int32_t connector_id) = 0;
+
+    /// \brief Update the state of the connector when plugged in or out
+    virtual void set_connector_occupied(int32_t evse_id, int32_t connector_id, bool is_occupied) = 0;
+
+    /// \brief Update the state of the connector when reservations are made or expire
+    virtual void set_connector_reserved(int32_t evse_id, int32_t connector_id, bool is_reserved) = 0;
+
+    /// \brief Update the state of the connector when errors are raised and cleared
+    virtual void set_connector_faulted(int32_t evse_id, int32_t connector_id, bool is_faulted) = 0;
+
+    /// \brief Update the state of the connector when unavailable or enabled
+    virtual void set_connector_unavailable(int32_t evse_id, int32_t connector_id, bool is_unavailable) = 0;
+
+    /// \brief Call the {cs, evse, connector}_effective_availability_changed_callback callback once for every component.
+    /// This is usually only done once on boot to notify the rest of the system what the state manager expects the
+    /// operative state (Operative/Inoperative) of the CS, EVSEs, and connectors to be.
+    virtual void trigger_all_effective_availability_changed_callbacks() = 0;
+
+    /// \brief Call the send_connector_status_notification_callback once for every connector.
+    /// This is usually done on boot, and on reconnect after the station has been offline for a long time.
+    virtual void send_status_notification_all_connectors() = 0;
+
+    /// \brief Call the send_connector_status_notification_callback once for every connector whose state has changed
+    /// since it was last reported with a successful send_connector_status_notification_callback. This is usually done
+    /// when the station has been offline for short time and comes back online.
+    virtual void send_status_notification_changed_connectors() = 0;
+
+    /// \brief Call the send_connector_status_notification_callback for a single connector.
+    /// This is usually done when the CSMS explicitly sends a TriggerMessage to send a StatusNotification.
+    virtual void send_status_notification_single_connector(int32_t evse_id, int32_t connector_id) = 0;
+};
+
 /// \brief Stores and monitors operational/effective states of the CS, EVSEs, and connectors
-class ComponentStateManager {
+class ComponentStateManager : public ComponentStateManagerInterface {
 private:
     std::shared_ptr<DatabaseHandler> database;
 
@@ -136,98 +240,52 @@ public:
     /// database. No callbacks are triggered at this stage.
     /// When the status of components is updated, corresponding callbacks are triggered to notify the user of libocpp.
     /// Additionally, the ComponentStateManager sends StatusNotifications to the CSMS when connector statuses change.
-    /// Note: It is expected that ComponentStateManager::trigger_all_effective_availability_changed_callbacks is called
-    /// on boot, and ComponentStateManager::send_status_notification_all_connectors is called when first connected to
-    /// the CSMS. \param evse_connector_structure Maps each EVSE ID to the number of connectors the EVSE has \param
-    /// db_handler A shared reference to the persistent database \param send_connector_status_notification_callback The
-    /// callback through which to send StatusNotifications to the CSMS
+    /// Note: It is expected that ComponentStateManagerInterface::trigger_all_effective_availability_changed_callbacks
+    /// is called on boot, and ComponentStateManagerInterface::send_status_notification_all_connectors is called when
+    /// first connected to the CSMS. \param evse_connector_structure Maps each EVSE ID to the number of connectors the
+    /// EVSE has \param db_handler A shared reference to the persistent database \param
+    /// send_connector_status_notification_callback The callback through which to send StatusNotifications to the CSMS
     explicit ComponentStateManager(
         const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DatabaseHandler> db_handler,
         std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status)>
             send_connector_status_notification_callback);
 
-    /// \brief Set a callback to be called when the effective Operative/Inoperative state of the CS changes.
     void set_cs_effective_availability_changed_callback(
         const std::function<void(const OperationalStatusEnum new_status)>& callback);
 
-    /// \brief Set a callback to be called when the effective Operative/Inoperative state of an EVSE changes.
     void set_evse_effective_availability_changed_callback(
         const std::function<void(const int32_t evse_id, const OperationalStatusEnum new_status)>& callback);
 
-    /// \brief Set a callback to be called when the effective Operative/Inoperative state of a connector changes.
     void set_connector_effective_availability_changed_callback(
         const std::function<void(const int32_t evse_id, const int32_t connector_id,
                                  const OperationalStatusEnum new_status)>& callback);
 
-    /// \brief Get the individual status (Operative/Inoperative) of the CS, as set by the CSMS
     OperationalStatusEnum get_cs_individual_operational_status();
-    /// \brief Get the individual status (Operative/Inoperative) of an EVSE, as set by the CSMS
-    /// Note: This is not the same as the effective status.
-    /// The EVSE might be effectively Inoperative if the CS is Inoperative.
     OperationalStatusEnum get_evse_individual_operational_status(int32_t evse_id);
-    /// \brief Get the individual status (Operative/Inoperative) of a connector, as set by the CSMS
-    /// Note: This is not the same as the effective status.
-    /// The connector might be effectively Inoperative if its EVSE or the CS is Inoperative.
     OperationalStatusEnum get_connector_individual_operational_status(int32_t evse_id, int32_t connector_id);
 
-    /// \brief Get the individual status (Operative/Inoperative) of the CS, as persisted in the database
-    /// This status is restored after reboot, and differs from the individual status if non-persistent
-    /// status changes were made.
     OperationalStatusEnum get_cs_persisted_operational_status();
-    /// \brief Get the individual status (Operative/Inoperative) of an EVSE, as persisted in the database
-    /// This status is restored after reboot, and differs from the individual status if non-persistent
-    /// status changes were made.
     OperationalStatusEnum get_evse_persisted_operational_status(int32_t evse_id);
-    /// \brief Get the individual status (Operative/Inoperative) of a connector, as persisted in the database
-    /// This status is restored after reboot, and differs from the individual status if non-persistent
-    /// status changes were made.
     OperationalStatusEnum get_connector_persisted_operational_status(int32_t evse_id, int32_t connector_id);
 
-    /// \brief Set the individual status (Operative/Inoperative) of the CS
     void set_cs_individual_operational_status(OperationalStatusEnum new_status, bool persist);
-    /// \brief Set the individual status (Operative/Inoperative) of an EVSE
-    /// Note: This is not the same as the effective status.
-    /// The EVSE might be effectively Inoperative if the CS is Inoperative.
     void set_evse_individual_operational_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist);
-    /// \brief Set the individual status (Operative/Inoperative) of a connector
-    /// Note: This is not the same as the effective status.
-    /// The connector might be effectively Inoperative if its EVSE or the CS is Inoperative.
     void set_connector_individual_operational_status(int32_t evse_id, int32_t connector_id,
                                                      OperationalStatusEnum new_status, bool persist);
 
-    /// \brief Get the effective Operative/Inoperative status of an EVSE
-    /// This is computed from the EVSE's and the CS's individual statuses.
     OperationalStatusEnum get_evse_effective_operational_status(int32_t evse_id);
-    /// \brief Get the effective Operative/Inoperative status of a connector.
-    /// This is computed from the connector's, the EVSE's, and the CS's individual statuses.
     OperationalStatusEnum get_connector_effective_operational_status(int32_t evse_id, int32_t connector_id);
-    /// \brief Get the effective Available/Unavailable/Occupied/Faulted/Reserved status of a connector.
-    /// If the EVSE or the CS is Inoperative, the connector will be effectively Unavailable.
     ConnectorStatusEnum get_connector_effective_status(int32_t evse_id, int32_t connector_id);
 
-    /// \brief Update the state of the connector when plugged in or out
     void set_connector_occupied(int32_t evse_id, int32_t connector_id, bool is_occupied);
-    /// \brief Update the state of the connector when reservations are made or expire
     void set_connector_reserved(int32_t evse_id, int32_t connector_id, bool is_reserved);
-    /// \brief Update the state of the connector when errors are raised and cleared
     void set_connector_faulted(int32_t evse_id, int32_t connector_id, bool is_faulted);
-    /// \brief Update the state of the connector when unavailable or enabled
     void set_connector_unavailable(int32_t evse_id, int32_t connector_id, bool is_unavailable);
 
-    /// \brief Call the {cs, evse, connector}_effective_availability_changed_callback callback once for every component.
-    /// This is usually only done once on boot to notify the rest of the system what the state manager expects the
-    /// operative state (Operative/Inoperative) of the CS, EVSEs, and connectors to be.
     void trigger_all_effective_availability_changed_callbacks();
 
-    /// \brief Call the send_connector_status_notification_callback once for every connector.
-    /// This is usually done on boot, and on reconnect after the station has been offline for a long time.
     void send_status_notification_all_connectors();
-    /// \brief Call the send_connector_status_notification_callback once for every connector whose state has changed
-    /// since it was last reported with a successful send_connector_status_notification_callback. This is usually done
-    /// when the station has been offline for short time and comes back online.
     void send_status_notification_changed_connectors();
-    /// \brief Call the send_connector_status_notification_callback for a single connector.
-    /// This is usually done when the CSMS explicitly sends a TriggerMessage to send a StatusNotification.
     void send_status_notification_single_connector(int32_t evse_id, int32_t connector_id);
 };
 

@@ -46,7 +46,7 @@ private:
     AverageMeterValues aligned_data_tx_end;
 
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
-    std::shared_ptr<ComponentStateManager> component_state_manager;
+    std::shared_ptr<ComponentStateManagerInterface> component_state_manager;
 
 public:
     /// \brief Construct a new Evse object
@@ -58,7 +58,7 @@ public:
     /// invalid id being exceeded
     Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
          std::shared_ptr<DatabaseHandler> database_handler,
-         std::shared_ptr<ComponentStateManager> component_state_manager,
+         std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
          const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                                   const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
          const std::function<void()> pause_charging_callback);

@@ -220,7 +220,7 @@ private:
     bool skip_invalid_csms_certificate_notifications;
 
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
-    std::shared_ptr<ComponentStateManager> component_state_manager;
+    std::shared_ptr<ComponentStateManagerInterface> component_state_manager;
 
     // store the connector status
     struct EvseConnectorPair {

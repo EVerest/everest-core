@@ -42,7 +42,7 @@ private:
     int32_t connector_id;
 
     /// \brief Component responsible for maintaining and monitoring the operational status of CS, EVSEs, and connectors.
-    std::shared_ptr<ComponentStateManager> component_state_manager;
+    std::shared_ptr<ComponentStateManagerInterface> component_state_manager;
 
     /// \brief status mutex to protect the status of the connector against concurrent updates
     std::mutex status_mutex;
@@ -53,7 +53,7 @@ public:
     /// \param connector_id id of the connector
     /// \param component_state_manager A shared reference to the component state manager
     Connector(const int32_t evse_id, const int32_t connector_id,
-              std::shared_ptr<ComponentStateManager> component_state_manager);
+              std::shared_ptr<ComponentStateManagerInterface> component_state_manager);
 
     /// \brief Gets the effective Operative/Inoperative status of this connector
     OperationalStatusEnum get_effective_operational_status();

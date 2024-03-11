@@ -40,7 +40,7 @@ static float get_normalized_energy_value(SampledValue sampled_value) {
 
 Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
            std::shared_ptr<DatabaseHandler> database_handler,
-           std::shared_ptr<ComponentStateManager> component_state_manager,
+           std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
            const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
                                     const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
            const std::function<void()> pause_charging_callback) :

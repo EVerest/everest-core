@@ -33,7 +33,7 @@ std::string connector_event_to_string(ConnectorEvent e) {
 } // namespace conversions
 
 Connector::Connector(const int32_t evse_id, const int32_t connector_id,
-                     std::shared_ptr<ComponentStateManager> component_state_manager) :
+                     std::shared_ptr<ComponentStateManagerInterface> component_state_manager) :
     evse_id(evse_id), connector_id(connector_id), component_state_manager(component_state_manager) {
 }
 

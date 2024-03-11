@@ -32,6 +32,7 @@ target_sources(ocpp
         ocpp/v16/types.cpp
         ocpp/v201/average_meter_values.cpp
         ocpp/v201/charge_point.cpp
+        ocpp/v201/smart_charging.cpp
         ocpp/v201/connector.cpp
         ocpp/v201/ctrlr_component_variables.cpp
         ocpp/v201/database_handler.cpp
