@@ -188,6 +188,8 @@ private:
     std::unique_ptr<LimitDecimalPlaces> limit_decimal_places;
 
     std::mutex ocpp_data_mutex;
+    json ocpp_charging_schedule;
+    bool ocpp_charging_schedule_updated = false;
     std::string ocpp_connection_status = "unknown";
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

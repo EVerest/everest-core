@@ -490,8 +490,11 @@ void API::init() {
             }
         });
 
-        this->r_ocpp.at(0)->subscribe_charging_schedules(
-            [this, &var_ocpp_schedule](json schedule) { this->mqtt.publish(var_ocpp_schedule, schedule.dump()); });
+        this->r_ocpp.at(0)->subscribe_charging_schedules([this, &var_ocpp_schedule](json schedule) {
+            std::scoped_lock lock(ocpp_data_mutex);
+            this->ocpp_charging_schedule = schedule;
+            this->ocpp_charging_schedule_updated = true;
+        });
     }
 
     std::string var_info = api_base + "info/var/info";
@@ -517,6 +520,10 @@ void API::init() {
                 {
                     std::scoped_lock lock(ocpp_data_mutex);
                     this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
+                    if (this->ocpp_charging_schedule_updated) {
+                        this->ocpp_charging_schedule_updated = false;
+                        this->mqtt.publish(var_ocpp_schedule, ocpp_charging_schedule.dump());
+                    }
                 }
 
                 next_tick += NOTIFICATION_PERIOD;
