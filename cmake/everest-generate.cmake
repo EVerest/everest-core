@@ -479,6 +479,7 @@ function (ev_add_cpp_module MODULE_NAME)
 
             target_include_directories(${MODULE_NAME}
                 PRIVATE
+                    ${CMAKE_BINARY_DIR}
                     ${MODULE_PATH}
                     "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
                     ${MODULE_LOADER_DIR}
