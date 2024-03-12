@@ -19,18 +19,17 @@ def everest_core_repos():
     )
 
     maybe(
-        http_archive,
+        git_repository,
         name = "everest-framework",
-        url = "https://github.com/qwello/everest-framework/archive/2306559764824a61406da6641985517e3b61f193.tar.gz",
-        sha256 = "d1b9052558dacd383d47cc79e433d2df45beec0c06bf204c5570125a5c10cbcc",
-        strip_prefix = "everest-framework-2306559764824a61406da6641985517e3b61f193",
+        url = "https://github.com/qwello/everest-framework.git",
+        commit = "2306559764824a61406da6641985517e3b61f193",
     )
 
     maybe(
-        http_archive,
+        git_repository,
         name = "everest-utils",
-        url = "https://github.com/Qwello/everest-utils/archive/8d8c1b7172d114a6f4a0fc5f4d6e2d8ae1a0da82.tar.gz",
-        strip_prefix = "everest-utils-8d8c1b7172d114a6f4a0fc5f4d6e2d8ae1a0da82",
+        url = "https://github.com/Qwello/everest-utils.git",
+        commit = "8d8c1b7172d114a6f4a0fc5f4d6e2d8ae1a0da82",
     )
 
     maybe(
