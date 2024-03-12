@@ -341,6 +341,51 @@
           "default": true,
           "type": "boolean"
       },
+      "VerifyCsmsCommonName": {
+        "variable_name": "VerifyCsmsCommonName",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadOnly"
+            }
+        ],
+        "default": true,
+        "type": "boolean"
+      },
+      "UseTPM": {
+        "variable_name": "UseTPM",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadOnly"
+            }
+        ],
+        "default": false,
+        "type": "boolean"
+      },
+      "VerifyCsmsAllowWildcards": {
+        "variable_name": "VerifyCsmsAllowWildcards",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadWrite"
+            }
+        ],
+        "default": false,
+        "type": "boolean"
+      },
       "OcspRequestInterval": {
           "variable_name": "OcspRequestInterval",
           "characteristics": {

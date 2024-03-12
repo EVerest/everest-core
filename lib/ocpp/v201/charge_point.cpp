@@ -861,8 +861,10 @@ WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t 
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::AdditionalRootCertificateCheck)
             .value_or(false),
         std::nullopt, // hostName
-        true          // verify_csms_common_name
-    };
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::VerifyCsmsCommonName).value_or(true),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::VerifyCsmsAllowWildcards)
+            .value_or(false)};
 
     return connection_options;
 }
@@ -1613,9 +1615,11 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
         return;
     }
 
-    // TODO: use_tpm is hardcoded false here, see if it will require change
+    bool should_use_tpm =
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
+
     const auto csr = this->evse_security->generate_certificate_signing_request(
-        certificate_signing_use, country.value(), organization.value(), common.value(), false);
+        certificate_signing_use, country.value(), organization.value(), common.value(), should_use_tpm);
     req.csr = csr;
 
     this->awaited_certificate_signing_use_enum = certificate_signing_use;

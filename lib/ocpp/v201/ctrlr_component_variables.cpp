@@ -193,6 +193,27 @@ const ComponentVariable& UseSslDefaultVerifyPaths = {
         "UseSslDefaultVerifyPaths",
     }),
 };
+const ComponentVariable& VerifyCsmsCommonName = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "VerifyCsmsCommonName",
+    }),
+};
+const ComponentVariable& UseTPM = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "UseTPM",
+    }),
+};
+const ComponentVariable& VerifyCsmsAllowWildcards = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "VerifyCsmsAllowWildcards",
+    }),
+};
 const ComponentVariable& OcspRequestInterval = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

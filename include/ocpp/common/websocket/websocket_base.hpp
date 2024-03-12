@@ -36,6 +36,7 @@ struct WebsocketConnectionOptions {
     std::optional<std::string> hostName;
     bool verify_csms_common_name;
     bool use_tpm_tls;
+    bool verify_csms_allow_wildcards;
 };
 
 enum class ConnectionFailedReason {

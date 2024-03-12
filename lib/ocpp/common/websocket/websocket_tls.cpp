@@ -6,6 +6,8 @@
 #include <ocpp/common/websocket/websocket_tls.hpp>
 #include <ocpp/common/websocket/websocket_uri.hpp>
 
+#include <openssl/x509_vfy.h>
+
 #include <everest/logging.hpp>
 
 #include <memory>
@@ -13,98 +15,6 @@
 #include <string>
 
 namespace ocpp {
-
-static std::vector<std::string> get_subject_alt_names(const X509* x509) {
-    std::vector<std::string> list;
-    GENERAL_NAMES* subject_alt_names =
-        static_cast<GENERAL_NAMES*>(X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL));
-    if (subject_alt_names == nullptr) {
-        return list;
-    }
-    for (int i = 0; i < sk_GENERAL_NAME_num(subject_alt_names); i++) {
-        GENERAL_NAME* gen = sk_GENERAL_NAME_value(subject_alt_names, i);
-        if (gen == nullptr) {
-            continue;
-        }
-        if (gen->type == GEN_URI || gen->type == GEN_DNS || gen->type == GEN_EMAIL) {
-            ASN1_IA5STRING* asn1_str = gen->d.uniformResourceIdentifier;
-            std::string san = std::string(reinterpret_cast<const char*>(ASN1_STRING_get0_data(asn1_str)),
-                                          ASN1_STRING_length(asn1_str));
-            list.push_back(san);
-        } else if (gen->type == GEN_IPADD) {
-            unsigned char* ip = gen->d.ip->data;
-            if (gen->d.ip->length == 4) { // only support IPv4 for now
-                std::stringstream ip_stream;
-                ip_stream << static_cast<int>(ip[0]) << '.' << static_cast<int>(ip[1]) << '.' << static_cast<int>(ip[2])
-                          << '.' << static_cast<int>(ip[3]);
-                list.push_back(ip_stream.str());
-            }
-        }
-    }
-    GENERAL_NAMES_free(subject_alt_names);
-    return list;
-}
-
-bool WebsocketTLS::verify_csms_cn(const std::string& hostname, bool preverified,
-                                  boost::asio::ssl::verify_context& ctx) {
-
-    // Error depth gives the depth in the chain (with 0 = leaf certificate) where
-    // a potential (!) error occurred; error here means current error code and can also be "OK".
-    // This thus gives also the position (in the chain)  of the currently to be verified certificate.
-    // If depth is 0, we need to check the leaf certificate;
-    // If depth > 0, we are verifying a CA (or SUB-CA) certificate and thus trust "preverified"
-    int depth = X509_STORE_CTX_get_error_depth(ctx.native_handle());
-
-    if (!preverified) {
-        int error = X509_STORE_CTX_get_error(ctx.native_handle());
-        EVLOG_warning << "Invalid certificate error '" << X509_verify_cert_error_string(error) << "' (at chain depth '"
-                      << depth << "')";
-
-        this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
-    }
-
-    // only check for CSMS server certificate
-    if (depth == 0 and preverified) {
-        // Get server certificate
-        X509* server_cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-
-        // Extract CN from csms server's certificate
-        X509_NAME* subject_name = X509_get_subject_name(server_cert);
-        char common_name[256];
-        if (X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name, sizeof(common_name)) <= 0) {
-            EVLOG_error << "Could not extract CN from CSMS server certificate";
-            this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
-            return false;
-        }
-
-        auto alt_names = get_subject_alt_names(server_cert);
-
-        // Compare the extracted CN with the expected FQDN
-        if (hostname == common_name) {
-            EVLOG_debug << "FQDN matches CN of server certificate: " << hostname;
-            return true;
-        }
-
-        // If the CN does not match, go through all alternative names
-        for (auto name : alt_names) {
-            if (hostname == name) {
-                EVLOG_debug << "FQDN matches alternative name of server certificate: " << hostname;
-                return true;
-            }
-        }
-
-        std::stringstream s;
-        s << "FQDN '" << hostname << "' does not match CN '" << common_name << "' or any alternative names";
-        for (auto alt_name : alt_names) {
-            s << " '" << alt_name << "'";
-        }
-        EVLOG_warning << s.str();
-        this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
-        return false;
-    }
-
-    return preverified;
-}
 
 WebsocketTLS::WebsocketTLS(const WebsocketConnectionOptions& connection_options,
                            std::shared_ptr<EvseSecurity> evse_security) :
@@ -302,15 +212,28 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
         }
 
         context->set_verify_mode(boost::asio::ssl::verify_peer);
-        if (this->connection_options.verify_csms_common_name) {
-            context->set_verify_callback([this, hostname](bool preverified, boost::asio::ssl::verify_context& ctx) {
-                return this->verify_csms_cn(hostname, preverified, ctx);
-            });
 
+        if (this->connection_options.verify_csms_common_name) {
+
+            // Verify hostname
+            X509_VERIFY_PARAM* param = X509_VERIFY_PARAM_new();
+
+            if (this->connection_options.verify_csms_allow_wildcards) {
+                X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+            } else {
+                X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_WILDCARDS);
+            }
+
+            // Set the host and parameter check
+            X509_VERIFY_PARAM_set1_host(param, hostname.c_str(), hostname.length());
+            SSL_CTX_set1_param(context->native_handle(), param);
+
+            X509_VERIFY_PARAM_free(param);
         } else {
             EVLOG_warning << "Not verifying the CSMS certificates commonName with the Fully Qualified Domain Name "
                              "(FQDN) of the server because it has been explicitly turned off via the configuration!";
         }
+
         if (this->evse_security->is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
             EVLOG_info << "Loading ca csms bundle to verify server certificate: "
                        << this->evse_security->get_verify_file(ocpp::CaCertificateType::CSMS);

@@ -196,6 +196,12 @@
             "readOnly": true,
             "default": true
         },
+        "VerifyCsmsAllowWildcards": {
+            "$comment": "Allow wildcards when verifying the CSMS commonName",
+            "type": "boolean",
+            "readOnly": false,
+            "default": false
+        },        
         "OcspRequestInterval": {
             "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
             "type": "integer",
