@@ -135,10 +135,10 @@ public:
     bool clear_local_authorization_list();
 
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
-    void insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile);
+    virtual void insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile);
 
     /// \brief Deletes the profile with the given \p profile_id
-    void delete_charging_profile(const int profile_id);
+    virtual void delete_charging_profile(const int profile_id);
 
     /// \brief Deletes all profiles from table CHARGING_PROFILES
     void delete_charging_profiles();
