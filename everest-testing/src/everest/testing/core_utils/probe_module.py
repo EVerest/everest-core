@@ -1,10 +1,11 @@
 import asyncio
 import logging
+import threading
+
 from queue import Queue
 from typing import Any, Callable
 
 from everest.framework import Module, RuntimeSession
-
 
 class ProbeModule:
     """
@@ -24,7 +25,7 @@ class ProbeModule:
         m = Module(module_id, session)
         self._setup = m.say_hello()
         self._mod = m
-        self._ready_event = asyncio.Event()
+        self._ready_event = threading.Event()
         self._started = False
 
     def start(self):
@@ -106,14 +107,23 @@ class ProbeModule:
         Internal function: callback triggered by the EVerest framework when all modules have been initialized
         This is equivalent to the ready() method in C++ modules
         """
-        logging.info("ProbeModule ready")
         self._ready_event.set()
 
-    async def wait_to_be_ready(self, timeout=3):
+    async def wait_for_event(self, timeout: float):
+        """
+        Helper to make threading.Event behave similar to asyncio.Event, which is awaitable and raising TimeoutError.
+        - timeout: Time to for ready_event
+        """
+        self._ready_event.wait(timeout)
+        if not self._ready_event.is_set():
+            raise TimeoutError("Waiting for ready: timeout")
+
+
+    async def wait_to_be_ready(self, timeout=3.0):
         """
         Convenience method which allows you to wait until the _ready() callback is triggered (i.e. until EVerest is up and running)
         """
         if not self._started:
             raise RuntimeError("Called wait_to_be_ready(), but probe module has not been started yet! "
                                "Please use start() to start the module first.")
-        await asyncio.wait_for(asyncio.to_thread(self._ready_event.wait), timeout)
+        await self.wait_for_event(timeout)
