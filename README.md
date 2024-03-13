@@ -148,6 +148,7 @@ Additionally, the implementation has been tested against those CSMS:
 -   [Monta](https://monta.com)
 -   [Open Charging Cloud (GraphDefined)](https://github.com/OpenChargingCloud/WWCP_OCPP)
 -   Switch EV
+-   SWTCH
 
 ## Integration with EVerest
 
