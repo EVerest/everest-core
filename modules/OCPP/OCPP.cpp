@@ -174,13 +174,13 @@ types::ocpp::ChargingSchedule to_ChargingSchedule(const ocpp::v16::EnhancedCharg
 void OCPP::publish_charging_schedules(
     const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
     // publish the schedule over mqtt
-    Array arr;
+    types::ocpp::ChargingSchedules schedules;
     for (const auto& charging_schedule : charging_schedules) {
         types::ocpp::ChargingSchedule sch = to_ChargingSchedule(charging_schedule.second);
         sch.connector = charging_schedule.first;
-        arr.emplace_back(std::move(sch));
+        schedules.schedules.emplace_back(std::move(sch));
     }
-    this->p_ocpp_generic->publish_charging_schedules(arr);
+    this->p_ocpp_generic->publish_charging_schedules(schedules);
 }
 
 void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {

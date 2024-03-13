@@ -45,6 +45,19 @@ types:
         type: string
       minChargingRate:
         type: number
+  ChargingSchedules:
+    description: schedules for connectors
+    type: object
+    required:
+      - schedules
+    properties:
+      schedules:
+        description: array of schedules
+        type: array
+        items:
+          description: schedule for a connector
+          type: object
+          $ref: /ocpp#/ChargingSchedule
   OcppTransactionEvent:
     description: >-
       Element providing information on OCPP transactions.
