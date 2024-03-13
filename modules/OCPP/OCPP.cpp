@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 #include "generated/types/ocpp.hpp"
+#include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
 #include <fstream>
 
@@ -141,14 +142,45 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     }
 }
 
+namespace {
+types::ocpp::ChargingSchedulePeriod to_ChargingSchedulePeriod(const ocpp::v16::EnhancedChargingSchedulePeriod& period) {
+    types::ocpp::ChargingSchedulePeriod csp = {
+        period.startPeriod,
+        period.limit,
+        period.stackLevel,
+        period.numberPhases,
+    };
+    return csp;
+}
+
+types::ocpp::ChargingSchedule to_ChargingSchedule(const ocpp::v16::EnhancedChargingSchedule& schedule) {
+    types::ocpp::ChargingSchedule csch = {
+        0,
+        ocpp::v16::conversions::charging_rate_unit_to_string(schedule.chargingRateUnit),
+        {},
+        schedule.duration,
+        std::nullopt,
+        schedule.minChargingRate};
+    for (const auto& i : schedule.chargingSchedulePeriod) {
+        csch.chargingSchedulePeriod.emplace_back(to_ChargingSchedulePeriod(i));
+    }
+    if (schedule.startSchedule.has_value()) {
+        csch.startSchedule = schedule.startSchedule.value().to_rfc3339();
+    }
+    return csch;
+}
+} // namespace
+
 void OCPP::publish_charging_schedules(
     const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
     // publish the schedule over mqtt
-    Object j;
-    for (const auto charging_schedule : charging_schedules) {
-        j[std::to_string(charging_schedule.first)] = charging_schedule.second;
+    Array arr;
+    for (const auto& charging_schedule : charging_schedules) {
+        types::ocpp::ChargingSchedule sch = to_ChargingSchedule(charging_schedule.second);
+        sch.connector = charging_schedule.first;
+        arr.emplace_back(std::move(sch));
     }
-    this->p_ocpp_generic->publish_charging_schedules(j);
+    this->p_ocpp_generic->publish_charging_schedules(arr);
 }
 
 void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {

@@ -2,6 +2,49 @@ description: >-
   OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201,
   as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
+  ChargingSchedulePeriod:
+    description: >-
+      Element providing information on a charging schedule period.
+    type: object
+    required:
+      - startPeriod
+      - limit
+      - stackLevel
+    properties:
+      startPeriod:
+        type: integer
+      limit:
+        type: number
+      numberPhases:
+        type: integer
+      stackLevel:
+        type: integer
+  ChargingSchedule:
+    description: >-
+      Element providing information on an OCPP charging schedule.
+    type: object
+    required:
+      - connector
+      - chargingRateUnit
+      - chargingSchedulePeriod
+    properties:
+      connector:
+        type: integer
+        minimum: 0
+      chargingRateUnit:
+        type: string
+      chargingSchedulePeriod:
+        type: array
+        items:
+          description: schedule periods
+          type: object
+          $ref: /ocpp#/ChargingSchedulePeriod
+      duration:
+        type: integer
+      startSchedule:
+        type: string
+      minChargingRate:
+        type: number
   OcppTransactionEvent:
     description: >-
       Element providing information on OCPP transactions.
