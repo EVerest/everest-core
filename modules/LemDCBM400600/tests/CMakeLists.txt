@@ -13,8 +13,6 @@ set(INCLUDE_DIR
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
-find_package(GTest REQUIRED)
-
 target_include_directories(${TEST_TARGET_NAME} PRIVATE
         tests
         ${INCLUDE_DIR}
