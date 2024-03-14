@@ -9,11 +9,8 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
     ../WiFiSetup.cpp
 )
 
-find_package(GTest REQUIRED)
-
 target_link_libraries(${TEST_TARGET_NAME} PRIVATE
-    ${GTEST_LIBRARIES}
-    ${GTEST_MAIN_LIBRARIES}
+    GTest::gtest_main
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
