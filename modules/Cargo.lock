@@ -217,7 +217,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 [[package]]
 name = "everestrs"
 version = "0.1.0"
-source = "git+https://github.com/qwello/everest-framework.git?rev=0bb70094d030952c8933b38ab19403e9a825e885#0bb70094d030952c8933b38ab19403e9a825e885"
+source = "git+https://github.com/everest/everest-framework.git?rev=01468678f5b627a96791f749f3139c3d169bf081#01468678f5b627a96791f749f3139c3d169bf081"
 dependencies = [
  "argh",
  "cxx",
@@ -231,7 +231,7 @@ dependencies = [
 [[package]]
 name = "everestrs-build"
 version = "0.1.0"
-source = "git+https://github.com/qwello/everest-framework.git?rev=0bb70094d030952c8933b38ab19403e9a825e885#0bb70094d030952c8933b38ab19403e9a825e885"
+source = "git+https://github.com/everest/everest-framework.git?rev=01468678f5b627a96791f749f3139c3d169bf081#01468678f5b627a96791f749f3139c3d169bf081"
 dependencies = [
  "anyhow",
  "argh",
