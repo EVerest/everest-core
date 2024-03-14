@@ -673,7 +673,7 @@ ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_
 }
 
 std::vector<ocpp::v201::GetVariableData>
-to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest> get_variable_request_vector) {
+to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest>& get_variable_request_vector) {
     std::vector<ocpp::v201::GetVariableData> ocpp_get_variable_data_vector;
     for (const auto& get_variable_request : get_variable_request_vector) {
         ocpp::v201::GetVariableData get_variable_data;
@@ -688,7 +688,7 @@ to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableReque
 }
 
 std::vector<ocpp::v201::SetVariableData>
-to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest> set_variable_request_vector) {
+to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest>& set_variable_request_vector) {
     std::vector<ocpp::v201::SetVariableData> ocpp_set_variable_data_vector;
     for (const auto& set_variable_request : set_variable_request_vector) {
         ocpp::v201::SetVariableData set_variable_data;
@@ -957,7 +957,7 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
 }
 
 std::vector<types::ocpp::GetVariableResult>
-to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult> get_variable_result_vector) {
+to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult>& get_variable_result_vector) {
     std::vector<types::ocpp::GetVariableResult> response;
     for (const auto& get_variable_result : get_variable_result_vector) {
         types::ocpp::GetVariableResult _get_variable_result;
@@ -977,7 +977,7 @@ to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableR
 }
 
 std::vector<types::ocpp::SetVariableResult>
-to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult> set_variable_result_vector) {
+to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult>& set_variable_result_vector) {
     std::vector<types::ocpp::SetVariableResult> response;
     for (const auto& set_variable_result : set_variable_result_vector) {
         types::ocpp::SetVariableResult _set_variable_result;

@@ -86,12 +86,12 @@ ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_
 /// \brief Converts a given types::ocpp::GetVariableRequest \p get_variable_request_vector to an
 /// std::vector<ocpp::v201::GetVariableData>
 std::vector<ocpp::v201::GetVariableData>
-to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest> get_variable_request_vector);
+to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest>& get_variable_request_vector);
 
 /// \brief Converts a given types::ocpp::SetVariableRequest \p set_variable_request_vector to an
 /// std::vector<ocpp::v201::SetVariableData>
 std::vector<ocpp::v201::SetVariableData>
-to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest> set_variable_request_vector);
+to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest>& set_variable_request_vector);
 
 /// \brief Converts a given types::ocpp::Component \p component to a ocpp::v201::Component
 ocpp::v201::Component to_ocpp_component(const types::ocpp::Component& component);
@@ -150,12 +150,12 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
 /// \brief Converts a given ocpp::v201::GetVariableResult \p get_variable_result_vector to a
 /// std::vector<types::ocpp::GetVariableResult>
 std::vector<types::ocpp::GetVariableResult>
-to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult> get_variable_result_vector);
+to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult>& get_variable_result_vector);
 
 /// \brief Converts a given ocpp::v201::SetVariableResult \p set_variable_result_vector to a
 /// std::vector<types::ocpp::SetVariableResult>
 std::vector<types::ocpp::SetVariableResult>
-to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult> set_variable_result_vector);
+to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult>& set_variable_result_vector);
 
 /// \brief Converts a given ocpp::v201::Component \p component to a types::ocpp::Component.
 types::ocpp::Component to_everest_component(const ocpp::v201::Component& component);
@@ -169,11 +169,15 @@ types::ocpp::EVSE to_everest_evse(const ocpp::v201::EVSE& evse);
 /// \brief Converts a given ocpp::v201::AttributeEnum \p attribute_enum to a types::ocpp::AttributeEnum.
 types::ocpp::AttributeEnum to_everest_attribute_enum(const ocpp::v201::AttributeEnum attribute_enum);
 
-/// \brief Converts a given ocpp::v201::GetVariableStatusEnum \p get_variable_status to a types::ocpp::GetVariableStatusEnumType 
-types::ocpp::GetVariableStatusEnumType to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum get_variable_status);
+/// \brief Converts a given ocpp::v201::GetVariableStatusEnum \p get_variable_status to a
+/// types::ocpp::GetVariableStatusEnumType
+types::ocpp::GetVariableStatusEnumType
+to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum get_variable_status);
 
-/// \brief Converts a given ocpp::v201::SetVariableStatusEnum \p set_variable_status to a types::ocpp::SetVariableStatusEnumType 
-types::ocpp::SetVariableStatusEnumType to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
+/// \brief Converts a given ocpp::v201::SetVariableStatusEnum \p set_variable_status to a
+/// types::ocpp::SetVariableStatusEnumType
+types::ocpp::SetVariableStatusEnumType
+to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
 
 } // namespace conversions
 } // namespace module
