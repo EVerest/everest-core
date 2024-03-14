@@ -292,7 +292,17 @@ private:
     bool is_valid_evse(const EVSE& evse);
     void handle_scheduled_change_availability_requests(const int32_t evse_id);
     void handle_variable_changed(const SetVariableData& set_variable_data);
+    void handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results);
     bool validate_set_variable(const SetVariableData& set_variable_data);
+
+    /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
+    /// \param set_variable_data_vector contains data of the variables to set
+    /// \param allow_read_only if true, setting VariableAttribute values with mutability ReadOnly is allowed
+    /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
+    /// change
+    std::map<SetVariableData, SetVariableResult>
+    set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const bool allow_read_only);
+
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                const RequiredComponentVariable& component_variable);
 
@@ -729,6 +739,20 @@ public:
                                                 const AttributeEnum& attribute_enum) {
         return this->device_model->request_value<T>(component_id, variable_id, attribute_enum);
     }
+
+    /// \brief Gets variables specified within \p get_variable_data_vector from the device model and returns the result.
+    /// This function is used internally in order to handle GetVariables.req messages and it can be used to get
+    /// variables externally.
+    /// \param get_variable_data_vector contains data of the variables to get
+    /// \return Vector containing a result for each requested variable
+    std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector);
+
+    /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
+    /// \param set_variable_data_vector contains data of the variables to set
+    /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
+    /// change
+    std::map<SetVariableData, SetVariableResult>
+    set_variables(const std::vector<SetVariableData>& set_variable_data_vector);
 };
 
 } // namespace v201

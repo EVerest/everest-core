@@ -1449,6 +1449,22 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
     // TODO(piet): other special handling of changed variables can be added here...
 }
 
+void ChargePoint::handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results) {
+    // iterate over set_variable_results
+    for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
+        if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
+            EVLOG_info << set_variable_data.component.name << ":" << set_variable_data.variable.name << " changed to "
+                       << set_variable_data.attributeValue.get();
+            // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
+            this->handle_variable_changed(set_variable_data);
+            // notifies libocpp user application that a variable has changed
+            if (this->callbacks.variable_changed_callback.has_value()) {
+                this->callbacks.variable_changed_callback.value()(set_variable_data);
+            }
+        }
+    }
+}
+
 bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data) {
     ComponentVariable cv = {set_variable_data.component, std::nullopt, set_variable_data.variable};
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
@@ -1490,6 +1506,37 @@ bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data
     }
     return true;
     // TODO(piet): other special validating of variables requested to change can be added here...
+}
+
+std::map<SetVariableData, SetVariableResult>
+ChargePoint::set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector,
+                                    const bool allow_read_only) {
+    std::map<SetVariableData, SetVariableResult> response;
+
+    // iterate over the set_variable_data_vector
+    for (const auto& set_variable_data : set_variable_data_vector) {
+        SetVariableResult set_variable_result;
+        set_variable_result.component = set_variable_data.component;
+        set_variable_result.variable = set_variable_data.variable;
+        set_variable_result.attributeType = set_variable_data.attributeType.value_or(AttributeEnum::Actual);
+
+        // validates variable against business logic of the spec
+        if (this->validate_set_variable(set_variable_data)) {
+            // attempt to set the value includes device model validation
+            set_variable_result.attributeStatus =
+                this->device_model->set_value(set_variable_data.component, set_variable_data.variable,
+                                              set_variable_data.attributeType.value_or(AttributeEnum::Actual),
+                                              set_variable_data.attributeValue.get(), allow_read_only);
+        } else {
+            set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
+        }
+        response[set_variable_data] = set_variable_result;
+    }
+
+    // post handling of changed variables after the SetVariables.conf has been queued
+    this->handle_variables_changed(response);
+
+    return response;
 }
 
 std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& transaction_id) {
@@ -2001,46 +2048,17 @@ void ChargePoint::handle_set_variables_req(Call<SetVariablesRequest> call) {
 
     SetVariablesResponse response;
 
-    // collection used to collect SetVariableData that has been accepted
-    std::vector<SetVariableData> accepted_set_variable_data;
-
-    // iterate over the request
-    for (const auto& set_variable_data : msg.setVariableData) {
-        SetVariableResult set_variable_result;
-        set_variable_result.component = set_variable_data.component;
-        set_variable_result.variable = set_variable_data.variable;
-        set_variable_result.attributeType = set_variable_data.attributeType.value_or(AttributeEnum::Actual);
-
-        if (this->validate_set_variable(set_variable_data)) {
-            set_variable_result.attributeStatus =
-                this->device_model->set_value(set_variable_data.component, set_variable_data.variable,
-                                              set_variable_data.attributeType.value_or(AttributeEnum::Actual),
-                                              set_variable_data.attributeValue.get());
-        } else {
-            set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
-        }
-        response.setVariableResult.push_back(set_variable_result);
-
-        // collect SetVariableData that has been accepted
-        if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
-            accepted_set_variable_data.push_back(set_variable_data);
-        }
+    // set variables but do not allow setting ReadOnly variables
+    const auto set_variables_response = this->set_variables_internal(msg.setVariableData, false);
+    for (const auto& [single_set_variable_data, single_set_variable_result] : set_variables_response) {
+        response.setVariableResult.push_back(single_set_variable_result);
     }
 
     ocpp::CallResult<SetVariablesResponse> call_result(response, call.uniqueId);
     this->send<SetVariablesResponse>(call_result);
 
-    // iterate over changed_component_variables_values_map
-    for (const auto& set_variable_data : accepted_set_variable_data) {
-        EVLOG_info << set_variable_data.component.name << ":" << set_variable_data.variable.name << " changed to "
-                   << set_variable_data.attributeValue.get();
-        // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
-        this->handle_variable_changed(set_variable_data);
-        // notifies application that a variable has changed
-        if (this->callbacks.variable_changed_callback.has_value()) {
-            this->callbacks.variable_changed_callback.value()(set_variable_data);
-        }
-    }
+    // post handling of changed variables after the SetVariables.conf has been queued
+    this->handle_variables_changed(set_variables_response);
 }
 
 void ChargePoint::handle_get_variables_req(const EnhancedMessage<v201::MessageType>& message) {
@@ -2069,22 +2087,7 @@ void ChargePoint::handle_get_variables_req(const EnhancedMessage<v201::MessageTy
     }
 
     GetVariablesResponse response;
-
-    for (const auto& get_variable_data : msg.getVariableData) {
-        GetVariableResult get_variable_result;
-        get_variable_result.component = get_variable_data.component;
-        get_variable_result.variable = get_variable_data.variable;
-        get_variable_result.attributeType = get_variable_data.attributeType.value_or(AttributeEnum::Actual);
-        const auto request_value_response = this->device_model->request_value<std::string>(
-            get_variable_data.component, get_variable_data.variable,
-            get_variable_data.attributeType.value_or(AttributeEnum::Actual));
-        if (request_value_response.status == GetVariableStatusEnum::Accepted and
-            request_value_response.value.has_value()) {
-            get_variable_result.attributeValue = request_value_response.value.value();
-        }
-        get_variable_result.attributeStatus = request_value_response.status;
-        response.getVariableResult.push_back(get_variable_result);
-    }
+    response.getVariableResult = this->get_variables(msg.getVariableData);
 
     ocpp::CallResult<GetVariablesResponse> call_result(response, call.uniqueId);
     this->send<GetVariablesResponse>(call_result);
@@ -3116,6 +3119,33 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     } else {
         this->set_cs_operative_status(request.operationalStatus, persist);
     }
+}
+
+std::vector<GetVariableResult>
+ChargePoint::get_variables(const std::vector<GetVariableData>& get_variable_data_vector) {
+    std::vector<GetVariableResult> response;
+    for (const auto& get_variable_data : get_variable_data_vector) {
+        GetVariableResult get_variable_result;
+        get_variable_result.component = get_variable_data.component;
+        get_variable_result.variable = get_variable_data.variable;
+        get_variable_result.attributeType = get_variable_data.attributeType.value_or(AttributeEnum::Actual);
+        const auto request_value_response = this->device_model->request_value<std::string>(
+            get_variable_data.component, get_variable_data.variable,
+            get_variable_data.attributeType.value_or(AttributeEnum::Actual));
+        if (request_value_response.status == GetVariableStatusEnum::Accepted and
+            request_value_response.value.has_value()) {
+            get_variable_result.attributeValue = request_value_response.value.value();
+        }
+        get_variable_result.attributeStatus = request_value_response.status;
+        response.push_back(get_variable_result);
+    }
+    return response;
+}
+
+std::map<SetVariableData, SetVariableResult>
+ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data_vector) {
+    // set variables and allow setting of ReadOnly variables
+    return this->set_variables_internal(set_variable_data_vector, true);
 }
 
 } // namespace v201

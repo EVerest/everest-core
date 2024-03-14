@@ -85,15 +85,6 @@ private:
                                    const ocpp::v201::Component& component_,
                                    const struct ocpp::v201::Variable& variable_);
 
-    /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
-    /// attribute_enum \param component_id \param variable_id \param attribute_enum \param value
-    /// \param force_read_only If this is true, only read-only variables can be changed,
-    ///                        otherwise only non read-only variables can be changed
-    /// \return Result of the requested operation
-    SetVariableStatusEnum set_value_internal(const Component& component_id, const Variable& variable_id,
-                                             const AttributeEnum& attribute_enum, const std::string& value,
-                                             bool force_read_only);
-
 public:
     /// \brief Constructor for the device model
     /// \param device_model_storage pointer to a device model storage class
@@ -174,10 +165,12 @@ public:
     /// \param variable_id
     /// \param attribute_enum
     /// \param value
+    /// \param allow_read_only If this is true, read-only variables can be changed,
+    ///                        otherwise only non read-only variables can be changed. Defaults to false
     /// \return Result of the requested operation
     SetVariableStatusEnum set_value(const Component& component_id, const Variable& variable_id,
-                                    const AttributeEnum& attribute_enum, const std::string& value);
-
+                                    const AttributeEnum& attribute_enum, const std::string& value,
+                                    const bool allow_read_only = false);
     /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
     /// attribute_enum for read only variables only. Only works on certain allowed components.
     /// \param component_id
