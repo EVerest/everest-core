@@ -169,6 +169,11 @@ types:
           Node Type Enum
         type: string
         $ref: /energy#/NodeType
+      priority_request:
+        description: >-
+          If set to true, this is a high priority request that needs to be handled now. 
+          Otherwise energymanager may merge multiple requests and address them later.
+        type: boolean
       optimizer_target:
         description: User defined optimizer targets for this evse
         type: object
