@@ -4,6 +4,7 @@ add_executable(${TEST_TARGET_NAME}
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_400600_controller.cpp"
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_time_sync_helper.cpp"
 )
+add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
 
 set(INCLUDE_DIR
         "main"
@@ -37,6 +38,8 @@ add_executable(${TEST_TARGET_NAME}
         test_lem_dcbm_time_sync_helper.cpp
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_time_sync_helper.cpp"
 )
+
+add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
 
 set(INCLUDE_DIR
         "main"
