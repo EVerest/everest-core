@@ -18,3 +18,10 @@ alias (
     actual = "@com_github_curl_curl//:libcurl_boringssl",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "libcap",
+    actual = "@libcap//:libcap",
+    visibility = ["//visibility:public"],
+)
+

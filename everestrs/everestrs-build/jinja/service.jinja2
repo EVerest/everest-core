@@ -27,13 +27,13 @@ fn dispatch_command_to_{{ trait.name | snake }}(
    context: &Context,
    service: &dyn {{trait.name | title}}ServiceSubscriber,
    name: &str,
-   mut parameters: ::std::collections::HashMap<String, ::serde_json::Value>,
-) -> ::everestrs::Result<::serde_json::Value> {
+   mut parameters: ::std::collections::HashMap<String, __serde_json::Value>,
+) -> ::everestrs::Result<__serde_json::Value> {
    match name {
 {%- for cmd in trait.cmds %}
    "{{ cmd.name }}" => {
 {%- for arg in cmd.arguments %}
-      let {{ arg.name | identifier }}: {{ arg.data_type.name }} = ::serde_json::from_value(
+      let {{ arg.name | identifier }}: {{ arg.data_type.name }} = __serde_json::from_value(
          parameters.remove("{{ arg.name }}")
             .ok_or(::everestrs::Error::MissingArgument("{{ arg.name }}"))?,
           )
@@ -44,17 +44,19 @@ fn dispatch_command_to_{{ trait.name | snake }}(
             {{ arg.name | identifier }},
 {%- endfor %}
        )?;
-       serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MismatchedType("Failed to dispatch".to_string()))
+       __serde_json::to_value(retval).map_err(|e| ::everestrs::Error::MismatchedType("Failed to dispatch".to_string()))
     },
 {%- endfor %}
       _ => Err(::everestrs::Error::InvalidArgument("Unknown command called.")),
    }
 }
 
+pub(crate) mod __mockall_{{trait.name | snake }}_service {
+
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ServicePublisher {
-    implementation_id: &'static str,
-    runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) implementation_id: &'static str,
+   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
 }
 
 impl {{trait.name | title }}ServicePublisher {
@@ -65,3 +67,20 @@ impl {{trait.name | title }}ServicePublisher {
    }
 {% endfor %}
 }
+
+#[cfg(feature="mockall")]
+mockall::mock!{
+   pub(crate) {{trait.name | title }}ServicePublisher {
+{% for var in trait.vars %}
+   pub(crate) fn {{ var.name | identifier }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()>;
+{% endfor %}
+   }
+
+   impl Clone for {{trait.name | title }}ServicePublisher {
+      fn clone(&self) -> Self;
+   }
+}
+
+}
+#[cfg_attr(feature="mockall", mockall_double::double)]
+pub(crate) use __mockall_{{trait.name | snake }}_service::{{trait.name | title }}ServicePublisher;

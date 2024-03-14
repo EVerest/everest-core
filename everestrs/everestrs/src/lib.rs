@@ -12,6 +12,10 @@ use std::sync::RwLock;
 use std::sync::Weak;
 use thiserror::Error;
 
+// Reexport everything so the clients can use it.
+pub use serde;
+pub use serde_json;
+
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("missing argument to command call: '{0}'")]

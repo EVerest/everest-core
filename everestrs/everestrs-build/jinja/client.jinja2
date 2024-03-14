@@ -9,12 +9,12 @@ fn dispatch_variable_to_{{ trait.name | snake }}(
    context: &Context,
    client_subscriber: &dyn {{trait.name | title}}ClientSubscriber,
    name: &str,
-   value: ::serde_json::Value,
+   value: __serde_json::Value,
 ) -> ::everestrs::Result<()> {
    match name {
 {%- for var in trait.vars %}
    "{{ var.name }}" => {
-   let v: {{ var.data_type.name }} = ::serde_json::from_value(value)
+   let v: {{ var.data_type.name }} = __serde_json::from_value(value)
          .map_err(|_| ::everestrs::Error::InvalidArgument("{{ var.name }}"))?;
          client_subscriber.on_{{ var.name | snake }}(context, v);
                 Ok(())
@@ -24,10 +24,14 @@ fn dispatch_variable_to_{{ trait.name | snake }}(
    }
 }
 
+pub(crate) mod __mockall_{{trait.name | snake }}_client {
+
+use super::__serde_json;
+
 #[derive(Clone)]
 pub(crate) struct {{trait.name | title }}ClientPublisher {
-    implementation_id: &'static str,
-    runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) implementation_id: &'static str,
+   pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
 }
 
 impl {{trait.name | title }}ClientPublisher {
@@ -51,14 +55,41 @@ impl {{trait.name | title }}ClientPublisher {
       ()
    {%- endif -%}
       > {
-        let args = serde_json::json!({
+        let args = __serde_json::json!({
 {%- for arg in cmd.arguments %}
             "{{arg.name}}": {{arg.name | identifier}},
 {%- endfor %}
         });
         let blob = self.runtime.call_command(self.implementation_id, "{{ cmd.name }}", &args);
-        ::serde_json::from_value(blob).map_err(|_| ::everestrs::Error::InvalidArgument("return_value"))
+        __serde_json::from_value(blob).map_err(|_| ::everestrs::Error::InvalidArgument("return_value"))
 
       }
 {% endfor %}
+
 }
+
+#[cfg(feature="mockall")]
+mockall::mock!{
+   pub(crate) {{trait.name | title }}ClientPublisher {
+{%- for cmd in trait.cmds %}
+   pub(crate) fn {{cmd.name | identifier}}(&self,
+   {%- for arg in cmd.arguments %}
+      {{arg.name | identifier }}: {{arg.data_type.name}},
+   {%- endfor %}
+   ) -> ::everestrs::Result<{%- if cmd.result -%}
+      {{cmd.result.data_type.name}}
+   {%- else -%}
+      ()
+   {%- endif -%}
+      >;
+{% endfor %}
+   }
+
+   impl Clone for {{trait.name | title }}ClientPublisher {
+      fn clone(&self) -> Self;
+   }
+}
+
+}
+#[cfg_attr(feature="mockall", mockall_double::double)]
+pub(crate) use __mockall_{{trait.name | snake }}_client::{{trait.name | title }}ClientPublisher;

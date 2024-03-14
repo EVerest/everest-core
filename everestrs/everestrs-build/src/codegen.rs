@@ -85,9 +85,9 @@ fn lazy_load<'a, T: DeserializeOwned>(
     everest_core: &Vec<PathBuf>,
     prefix: &str,
     postfix: &str,
-) -> Result<&'a T> {
+) -> Result<&'a mut T> {
     if storage.contains_key(postfix) {
-        return Ok(storage.get(postfix).unwrap());
+        return Ok(storage.get_mut(postfix).unwrap());
     }
 
     let mut matches = everest_core
@@ -117,7 +117,7 @@ fn lazy_load<'a, T: DeserializeOwned>(
     );
 
     storage.insert(postfix.to_string(), matches.pop().unwrap());
-    Ok(storage.get(postfix).unwrap())
+    Ok(storage.get_mut(postfix).unwrap())
 }
 
 /// A lazy loader for YAML files. If the same file is requested twice, it will
@@ -138,11 +138,11 @@ impl YamlRepo {
         }
     }
 
-    pub fn get_interface<'a>(&'a mut self, name: &str) -> Result<&'a Interface> {
+    pub fn get_interface<'a>(&'a mut self, name: &str) -> Result<&'a mut Interface> {
         lazy_load(&mut self.interfaces, &self.everest_core, "interfaces", name)
     }
 
-    pub fn get_data_types<'a>(&'a mut self, name: &str) -> Result<&'a DataTypes> {
+    pub fn get_data_types<'a>(&'a mut self, name: &str) -> Result<&'a mut DataTypes> {
         lazy_load(&mut self.data_types, &self.everest_core, "types", name)
     }
 }
@@ -224,7 +224,7 @@ fn as_typename(arg: &TypeBase, type_refs: &mut BTreeSet<TypeRef>) -> Result<Stri
         Single(Integer(_)) => "i64".to_string(),
         Single(Object(args)) => {
             if args.object_reference.is_none() {
-                "::serde_json::Value".to_string()
+                "__serde_json::Value".to_string()
             } else {
                 let t = TypeRef::from_object(args)?;
                 let name = t.absolute_type_path();
@@ -233,13 +233,13 @@ fn as_typename(arg: &TypeBase, type_refs: &mut BTreeSet<TypeRef>) -> Result<Stri
             }
         }
         Single(Array(args)) => match args.items {
-            None => "Vec<::serde_json::Value>".to_string(),
+            None => "Vec<__serde_json::Value>".to_string(),
             Some(ref v) => {
                 let item_type = as_typename(&v.arg, type_refs)?;
                 format!("Vec<{item_type}>")
             }
         },
-        Multiple(_) => "::serde_json::Value".to_string(),
+        Multiple(_) => "__serde_json::Value".to_string(),
     })
 }
 
@@ -364,26 +364,60 @@ enum TypeContext {
     Enum(EnumTypeContext),
 }
 
+    
 fn type_context_from_ref(
     r: &TypeRef,
     yaml_repo: &mut YamlRepo,
     type_refs: &mut BTreeSet<TypeRef>,
 ) -> Result<TypeContext> {
+
     use TypeBase::*;
     use TypeEnum::*;
 
-    let data_types_yaml = yaml_repo.get_data_types(&r.module_path.join("/"))?;
+    let module_path = r.module_path.join("/");
+    let data_types_yaml = yaml_repo.get_data_types(&module_path)?;
 
     let type_descr = data_types_yaml
         .types
-        .get(&r.type_name)
+        .get_mut(&r.type_name)
         .ok_or_else(|| anyhow!("Unable to find data type {:?}. Is it defined?", r))?;
-    match &type_descr.arg {
+
+    let mut new_types: BTreeMap<std::string::String, Type> = BTreeMap::new();
+
+    let res = match &mut type_descr.arg {
         Single(Object(args)) => {
             let mut properties = Vec::new();
-            for (name, var) in &args.properties {
+            for (name, var) in &mut args.properties {
                 let mut extra_serde_annotations = Vec::new();
                 let data_type = {
+                    // This is some "trick" - if we have enums which are defined
+                    // inplace, we create a new entry.
+                    if let Single(String(enum_args)) = &mut var.arg {
+                        match &enum_args.enum_items {
+                            Some(items) => {
+                                let new_type = Type {
+                                    description: Some("An inlined type".to_string()),
+                                    arg: Single(String(StringOptions {
+                                        pattern: None,
+                                        format: None,
+                                        max_length: None,
+                                        min_length: None,
+                                        enum_items: Some(items.clone()),
+                                        default: None,
+                                        object_reference: None,
+                                    })),
+
+                                    qos: None,
+      
+                                };
+                                let new_name = format!("{}AutoGen{}", r.type_name.to_case(Case::Pascal), name.to_case(Case::Pascal));
+                                enum_args.object_reference = Some(format!("/{}#/{}", module_path, new_name));
+                                new_types.insert(new_name, new_type);
+                  
+                            }
+                            _ => {}
+                        }
+                    }
                     let d = as_typename(&var.arg, type_refs)?;
                     if !args.required.contains(name) {
                         extra_serde_annotations
@@ -420,7 +454,10 @@ fn type_context_from_ref(
             }))
         }
         other => unreachable!("Does not support $ref for {other:?}"),
-    }
+    };
+
+    data_types_yaml.types.extend(new_types);
+    return res;
 }
 
 #[derive(Debug, Clone, Serialize)]

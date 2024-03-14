@@ -1,10 +1,10 @@
-# Rust support for everest
+# Rust support for EVerest
 
 This is Rust support using cxx.rs to wrap the framework C++ library.
 
 ## Trying it out
 
-  - Install rust as outlined on <https://rustup.rs/>, which should just be this
+  - Install Rust as outlined on <https://rustup.rs/>, which should just be this
     one line: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
   - Built your workspace as outlined in `everest-core` README, make sure to tell
     cMake to enable `EVEREST_ENABLE_RS_SUPPORT`. Note, that the Rust code relies
@@ -19,8 +19,8 @@ This is Rust support using cxx.rs to wrap the framework C++ library.
   - The `enable_external_mqtt` is ignored for Rust modules. If you want to interact
     with MQTT externally, just pull an external mqtt module (for example the
     really excellent [rumqttc](https://docs.rs/rumqttc/latest/rumqttc/)) crate
-    into your module and use it directly. This is a concious decision to future
-    proof, should everst at some point move to something different than MQTT as
+    into your module and use it directly. This is a conscious decision to future
+    proof, should EVerest at some point move to something different than MQTT as
     transport layer and for cleaner abstraction.
 
 ## Status
@@ -30,3 +30,13 @@ currently is:
 
   - Support for EVerest logging
   - Support for implementations with `max_connections != 1` or `min_connections != 1`
+
+## Mocking in Unit-Tests
+
+The Rust wrapper supports mocking, which allows you to unit tests your modules.
+To enable mocking in your code you need to do some steps however
+* Add [mockall](https://github.com/asomers/mockall) and
+[mockall_double](https://github.com/asomers/mockall) to your module as dependencies
+* Add a `mockall` feature to your module and enable it for your tests.
+
+Then all publishers are mocked with `mockall`.

@@ -9,7 +9,10 @@ mod generated {
     non_camel_case_types,
     unused_mut,
     unused_variables,
+    unused_imports,
 )]
+
+use everestrs::serde_json as __serde_json;
 
 pub mod types {
 {% include "types" %}
@@ -30,7 +33,8 @@ pub(crate) trait OnReadySubscriber: Sync + Send {
 {% include "client" %}
 {% endfor %}
 
-#[derive(Clone)]
+#[cfg_attr(any(not(test), not(feature = "mockall")), derive(Clone))]
+#[cfg_attr(all(test, feature = "mockall"), derive(Default))]
 pub(crate) struct ModulePublisher {
 {% for provide in provides %}
    pub(crate) {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher,
@@ -79,6 +83,7 @@ impl Module {
 {% for require in requires %}
             {{ require.implementation_id | identifier }},
 {% endfor %}
+            #[cfg(any(not(test), not(feature = "mockall")))]
             publisher: ModulePublisher {
 {% for provide in provides %}
    {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher {
@@ -93,6 +98,8 @@ impl Module {
       },
 {% endfor %}
             },
+            #[cfg(all(test, feature = "mockall"))]
+            publisher: ModulePublisher::default(),
         });
 
         runtime.as_ref().set_subscriber(::std::sync::Arc::<Module>::downgrade(&this));
@@ -105,8 +112,8 @@ impl ::everestrs::Subscriber for Module {
         &self,
         implementation_id: &str,
         name: &str,
-        parameters: ::std::collections::HashMap<String, serde_json::Value>,
-    ) -> ::everestrs::Result<serde_json::Value> {
+        parameters: ::std::collections::HashMap<String, __serde_json::Value>,
+    ) -> ::everestrs::Result<__serde_json::Value> {
         let context = Context {
             publisher: &self.publisher,
             name: implementation_id,
@@ -127,7 +134,7 @@ impl ::everestrs::Subscriber for Module {
         &self,
         implementation_id: &str,
         name: &str,
-        value: serde_json::Value,
+        value: __serde_json::Value,
     ) -> ::everestrs::Result<()> {
         let context = Context {
             publisher: &self.publisher,
