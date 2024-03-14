@@ -52,6 +52,7 @@ target_sources(${MODULE_NAME}
         "evse/evse_managerImpl.cpp"
         "energy_grid/energyImpl.cpp"
         "token_provider/auth_token_providerImpl.cpp"
+        "random_delay/uk_random_delayImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
