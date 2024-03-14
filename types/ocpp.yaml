@@ -7,17 +7,17 @@ types:
       Element providing information on a charging schedule period.
     type: object
     required:
-      - startPeriod
+      - start_period
       - limit
-      - stackLevel
+      - stack_level
     properties:
-      startPeriod:
+      start_period:
         type: integer
       limit:
         type: number
-      numberPhases:
+      number_phases:
         type: integer
-      stackLevel:
+      stack_level:
         type: integer
   ChargingSchedule:
     description: >-
@@ -25,8 +25,8 @@ types:
     type: object
     required:
       - connector
-      - chargingRateUnit
-      - chargingSchedulePeriod
+      - charging_rate_unit
+      - charging_schedule_period
     properties:
       evse:
         description: The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
@@ -35,9 +35,9 @@ types:
       connector:
         type: integer
         minimum: 0
-      chargingRateUnit:
+      charging_rate_unit:
         type: string
-      chargingSchedulePeriod:
+      charging_schedule_period:
         type: array
         items:
           description: schedule periods
@@ -45,9 +45,9 @@ types:
           $ref: /ocpp#/ChargingSchedulePeriod
       duration:
         type: integer
-      startSchedule:
+      start_schedule:
         type: string
-      minChargingRate:
+      min_charging_rate:
         type: number
   ChargingSchedules:
     description: schedules for connectors
