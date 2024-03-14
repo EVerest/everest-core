@@ -27,6 +27,10 @@ active_modules:
       ac_hlc_enabled: true
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      request_zero_power_in_idle: false
+      uk_smartcharging_random_delay_at_any_change: false
+      uk_smartcharging_random_delay_max_duration: 100
+      uk_smartcharging_random_delay_enable: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -148,7 +152,7 @@ active_modules:
     config_module:
       schedule_total_duration: 2
       schedule_interval_duration: 15
-      debug: true
+      debug: false
     connections:
       energy_trunk:
         - module_id: grid_connection_point
@@ -174,4 +178,7 @@ active_modules:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
+      random_delay:
+        - module_id: evse_manager_1
+          implementation_id: random_delay
 x-module-layout: {}

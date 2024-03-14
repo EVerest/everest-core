@@ -42,6 +42,7 @@ void globals_t::init(date::utc_clock::time_point start_time, int _interval_durat
 void globals_t::create_timestamps(const date::utc_clock::time_point& start_time,
                                   const types::energy::EnergyFlowRequest& energy_flow_request) {
 
+    timestamps.clear();
     timestamps.reserve(schedule_length);
 
     auto minutes_overflow = start_time.time_since_epoch() % interval_duration;
@@ -85,7 +86,7 @@ void globals_t::add_timestamps(const types::energy::EnergyFlowRequest& energy_fl
     }
 
     // recurse to all children
-    for (auto c : energy_flow_request.children)
+    for (auto& c : energy_flow_request.children)
         add_timestamps(c);
 }
 

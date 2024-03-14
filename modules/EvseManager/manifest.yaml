@@ -195,6 +195,23 @@ config:
     description: Enable the external ready to start charging signal that delays charging ready until it has been received
     type: boolean
     default: false
+  uk_smartcharging_random_delay_enable:
+    description: >-
+      "true: enable random_delays on start up, false: disable random delays on startup."
+      "They can also be enabled/disabled during runtime on the random_delay implementation."
+    type: boolean
+    default: false
+  uk_smartcharging_random_delay_max_duration:
+    description: >-
+      "Start up value for the maximum duration of a random delay."
+      "Can be modified during runtime on the random_delay implementation."
+    type: integer
+    default: 600
+  uk_smartcharging_random_delay_at_any_change:
+    description: >-
+      "True: use random delays on any current change during charging. False: Only use if current is reduced to zero or increased from zero."
+    type: boolean
+    default: true
 provides:
   evse:
     interface: evse_manager
@@ -205,6 +222,9 @@ provides:
   token_provider:
     description: Provides authtokens for autocharge or plug and charge
     interface: auth_token_provider
+  random_delay:
+    description: Provides control over UK smart charging regulation random delay feature
+    interface: uk_random_delay
 requires:
   bsp:
     interface: evse_board_support
