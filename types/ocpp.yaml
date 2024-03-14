@@ -28,6 +28,10 @@ types:
       - chargingRateUnit
       - chargingSchedulePeriod
     properties:
+      evse:
+        description: The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
+        type: integer
+        minimum: 0
       connector:
         type: integer
         minimum: 0
