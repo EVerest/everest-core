@@ -672,6 +672,87 @@ ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_
     }
 }
 
+std::vector<ocpp::v201::GetVariableData>
+to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest> get_variable_request_vector) {
+    std::vector<ocpp::v201::GetVariableData> ocpp_get_variable_data_vector;
+    for (const auto& get_variable_request : get_variable_request_vector) {
+        ocpp::v201::GetVariableData get_variable_data;
+        get_variable_data.component = to_ocpp_component(get_variable_request.component_variable.component);
+        get_variable_data.variable = to_ocpp_variable(get_variable_request.component_variable.variable);
+        if (get_variable_request.attribute_type.has_value()) {
+            get_variable_data.attributeType = to_ocpp_attribute_enum(get_variable_request.attribute_type.value());
+        }
+        ocpp_get_variable_data_vector.push_back(get_variable_data);
+    }
+    return ocpp_get_variable_data_vector;
+}
+
+std::vector<ocpp::v201::SetVariableData>
+to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest> set_variable_request_vector) {
+    std::vector<ocpp::v201::SetVariableData> ocpp_set_variable_data_vector;
+    for (const auto& set_variable_request : set_variable_request_vector) {
+        ocpp::v201::SetVariableData set_variable_data;
+        set_variable_data.component = to_ocpp_component(set_variable_request.component_variable.component);
+        set_variable_data.variable = to_ocpp_variable(set_variable_request.component_variable.variable);
+        if (set_variable_request.attribute_type.has_value()) {
+            set_variable_data.attributeType = to_ocpp_attribute_enum(set_variable_request.attribute_type.value());
+        }
+        try {
+            set_variable_data.attributeValue = set_variable_request.value;
+        } catch (std::runtime_error& e) {
+            EVLOG_error << "Could not convert attributeValue to CiString";
+            continue;
+        }
+        ocpp_set_variable_data_vector.push_back(set_variable_data);
+    }
+    return ocpp_set_variable_data_vector;
+}
+
+ocpp::v201::Component to_ocpp_component(const types::ocpp::Component& component) {
+    ocpp::v201::Component _component;
+    _component.name = component.name;
+    if (component.evse.has_value()) {
+        _component.evse = to_ocpp_evse(component.evse.value());
+    }
+    if (component.instance.has_value()) {
+        _component.instance = component.instance.value();
+    }
+    return _component;
+}
+
+ocpp::v201::Variable to_ocpp_variable(const types::ocpp::Variable& variable) {
+    ocpp::v201::Variable _variable;
+    _variable.name = variable.name;
+    if (variable.instance.has_value()) {
+        _variable.instance = variable.instance.value();
+    }
+    return _variable;
+}
+
+ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse) {
+    ocpp::v201::EVSE _evse;
+    _evse.id = evse.id;
+    if (evse.connector_id.has_value()) {
+        _evse.connectorId = evse.connector_id.value();
+    }
+    return _evse;
+}
+
+ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum) {
+    switch (attribute_enum) {
+    case types::ocpp::AttributeEnum::Actual:
+        return ocpp::v201::AttributeEnum::Actual;
+    case types::ocpp::AttributeEnum::Target:
+        return ocpp::v201::AttributeEnum::Target;
+    case types::ocpp::AttributeEnum::MinSet:
+        return ocpp::v201::AttributeEnum::MinSet;
+    case types::ocpp::AttributeEnum::MaxSet:
+        return ocpp::v201::AttributeEnum::MaxSet;
+    default:
+        throw std::out_of_range("Could not convert AttributeEnum");
+    }
+}
+
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();
@@ -873,6 +954,127 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
         transaction_event.transactionInfo.transactionId; // session_id == transaction_id for OCPP2.0.1
     ocpp_transaction_event.transaction_id = transaction_event.transactionInfo.transactionId;
     return ocpp_transaction_event;
+}
+
+std::vector<types::ocpp::GetVariableResult>
+to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult> get_variable_result_vector) {
+    std::vector<types::ocpp::GetVariableResult> response;
+    for (const auto& get_variable_result : get_variable_result_vector) {
+        types::ocpp::GetVariableResult _get_variable_result;
+        _get_variable_result.status = to_everest_get_variable_status_enum_type(get_variable_result.attributeStatus);
+        _get_variable_result.component_variable = {conversions::to_everest_component(get_variable_result.component),
+                                                   conversions::to_everest_variable(get_variable_result.variable)};
+        if (get_variable_result.attributeType.has_value()) {
+            _get_variable_result.attribute_type =
+                conversions::to_everest_attribute_enum(get_variable_result.attributeType.value());
+        }
+        if (get_variable_result.attributeValue.has_value()) {
+            _get_variable_result.value = get_variable_result.attributeValue.value().get();
+        }
+        response.push_back(_get_variable_result);
+    }
+    return response;
+}
+
+std::vector<types::ocpp::SetVariableResult>
+to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult> set_variable_result_vector) {
+    std::vector<types::ocpp::SetVariableResult> response;
+    for (const auto& set_variable_result : set_variable_result_vector) {
+        types::ocpp::SetVariableResult _set_variable_result;
+        _set_variable_result.status =
+            conversions::to_everest_set_variable_status_enum_type(set_variable_result.attributeStatus);
+        _set_variable_result.component_variable = {conversions::to_everest_component(set_variable_result.component),
+                                                   conversions::to_everest_variable(set_variable_result.variable)};
+        if (set_variable_result.attributeType.has_value()) {
+            _set_variable_result.attribute_type =
+                conversions::to_everest_attribute_enum(set_variable_result.attributeType.value());
+        }
+        response.push_back(_set_variable_result);
+    }
+    return response;
+}
+
+types::ocpp::Component to_everest_component(const ocpp::v201::Component& component) {
+    types::ocpp::Component _component;
+    _component.name = component.name;
+    if (component.evse.has_value()) {
+        _component.evse = to_everest_evse(component.evse.value());
+    }
+    if (component.instance.has_value()) {
+        _component.instance = component.instance.value();
+    }
+    return _component;
+}
+
+types::ocpp::Variable to_everest_variable(const ocpp::v201::Variable& variable) {
+    types::ocpp::Variable _variable;
+    _variable.name = variable.name;
+    if (variable.instance.has_value()) {
+        _variable.instance = variable.instance.value();
+    }
+    return _variable;
+}
+
+types::ocpp::EVSE to_everest_evse(const ocpp::v201::EVSE& evse) {
+    types::ocpp::EVSE _evse;
+    _evse.id = evse.id;
+    if (evse.connectorId.has_value()) {
+        _evse.connector_id = evse.connectorId.value();
+    }
+    return _evse;
+}
+
+types::ocpp::AttributeEnum to_everest_attribute_enum(const ocpp::v201::AttributeEnum attribute_enum) {
+    switch (attribute_enum) {
+    case ocpp::v201::AttributeEnum::Actual:
+        return types::ocpp::AttributeEnum::Actual;
+    case ocpp::v201::AttributeEnum::Target:
+        return types::ocpp::AttributeEnum::Target;
+    case ocpp::v201::AttributeEnum::MinSet:
+        return types::ocpp::AttributeEnum::MinSet;
+    case ocpp::v201::AttributeEnum::MaxSet:
+        return types::ocpp::AttributeEnum::MaxSet;
+    default:
+        throw std::out_of_range("Could not convert AttributeEnum");
+    }
+}
+
+types::ocpp::GetVariableStatusEnumType
+to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum get_variable_status) {
+    switch (get_variable_status) {
+    case ocpp::v201::GetVariableStatusEnum::Accepted:
+        return types::ocpp::GetVariableStatusEnumType::Accepted;
+    case ocpp::v201::GetVariableStatusEnum::Rejected:
+        return types::ocpp::GetVariableStatusEnumType::Rejected;
+    case ocpp::v201::GetVariableStatusEnum::UnknownComponent:
+        return types::ocpp::GetVariableStatusEnumType::UnknownComponent;
+    case ocpp::v201::GetVariableStatusEnum::UnknownVariable:
+        return types::ocpp::GetVariableStatusEnumType::UnknownVariable;
+    case ocpp::v201::GetVariableStatusEnum::NotSupportedAttributeType:
+        return types::ocpp::GetVariableStatusEnumType::NotSupportedAttributeType;
+    default:
+        throw std::out_of_range("Could not convert GetVariableStatusEnumType");
+    }
+}
+
+types::ocpp::SetVariableStatusEnumType
+to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status) {
+    switch (set_variable_status) {
+    case ocpp::v201::SetVariableStatusEnum::Accepted:
+        return types::ocpp::SetVariableStatusEnumType::Accepted;
+    case ocpp::v201::SetVariableStatusEnum::Rejected:
+        return types::ocpp::SetVariableStatusEnumType::Rejected;
+    case ocpp::v201::SetVariableStatusEnum::UnknownComponent:
+        return types::ocpp::SetVariableStatusEnumType::UnknownComponent;
+    case ocpp::v201::SetVariableStatusEnum::UnknownVariable:
+        return types::ocpp::SetVariableStatusEnumType::UnknownVariable;
+    case ocpp::v201::SetVariableStatusEnum::NotSupportedAttributeType:
+        return types::ocpp::SetVariableStatusEnumType::NotSupportedAttributeType;
+    case ocpp::v201::SetVariableStatusEnum::RebootRequired:
+        return types::ocpp::SetVariableStatusEnumType::RebootRequired;
+    default:
+        throw std::out_of_range("Could not convert GetVariableStatusEnumType");
+    }
 }
 
 } // namespace conversions
