@@ -1,4 +1,4 @@
-set(TEST_TARGET_NAME ${PROJECT_NAME}_tests)
+set(TEST_TARGET_NAME ${PROJECT_NAME}_setup_tests)
 add_executable(${TEST_TARGET_NAME})
 
 target_include_directories(${TEST_TARGET_NAME} PUBLIC ${GTEST_INCLUDE_DIRS} . ..)
