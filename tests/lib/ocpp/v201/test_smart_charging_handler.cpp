@@ -1,6 +1,7 @@
 #include "date/tz.h"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
+#include "ocpp/v201/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <filesystem>
@@ -18,6 +19,7 @@
 #include <optional>
 
 #include <sstream>
+#include <vector>
 
 namespace ocpp::v201 {
 
@@ -47,11 +49,60 @@ protected:
         };
     }
 
-    ChargingProfile create_tx_profile(ChargingSchedule charging_schedule, std::string transaction_id,
-                                      int stack_level = 1) {
+    ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit,
+                                            std::vector<ChargingSchedulePeriod> charging_schedule_period,
+                                            std::optional<ocpp::DateTime> start_schedule = std::nullopt) {
+        int32_t id;
+        std::optional<CustomData> custom_data;
+        std::optional<int32_t> duration;
+        std::optional<float> min_charging_rate;
+        std::optional<SalesTariff> sales_tariff;
+
+        return ChargingSchedule{
+            id,
+            charging_rate_unit,
+            charging_schedule_period,
+            custom_data,
+            start_schedule,
+            duration,
+            min_charging_rate,
+            sales_tariff,
+        };
+    }
+
+    std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(int32_t start_period) {
+        auto charging_schedule_period = ChargingSchedulePeriod{
+            .startPeriod = start_period,
+        };
+
+        return {charging_schedule_period};
+    }
+
+    std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(std::vector<int32_t> start_periods) {
+        auto charging_schedule_periods = std::vector<ChargingSchedulePeriod>();
+        for (auto start_period : start_periods) {
+            auto charging_schedule_period = ChargingSchedulePeriod{
+                .startPeriod = start_period,
+            };
+            charging_schedule_periods.push_back(charging_schedule_period);
+        }
+
+        return charging_schedule_periods;
+    }
+
+    std::vector<ChargingSchedulePeriod>
+    create_charging_schedule_periods_with_phases(int32_t start_period, int32_t numberPhases, int32_t phaseToUse) {
+        auto charging_schedule_period =
+            ChargingSchedulePeriod{.startPeriod = start_period, .numberPhases = numberPhases, .phaseToUse = phaseToUse};
+
+        return {charging_schedule_period};
+    }
+
+    ChargingProfile
+    create_tx_profile(ChargingSchedule charging_schedule, std::string transaction_id, int stack_level = 1,
+                      ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute) {
         auto charging_profile_id = 1;
         auto charging_profile_purpose = ChargingProfilePurposeEnum::TxProfile;
-        auto charging_profile_kind = ChargingProfileKindEnum::Absolute;
         auto recurrency_kind = RecurrencyKindEnum::Daily;
         std::vector<ChargingSchedule> charging_schedules = {charging_schedule};
         return ChargingProfile{.id = charging_profile_id,
@@ -228,6 +279,77 @@ TEST_F(ChargepointTestFixtureV201,
     auto sut = handler.validate_tx_profile(profile_1, *evses[evse_id]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR19_NumberPhasesOtherThan1AndPhaseToUseSet_ThenProfileInvalid) {
+    auto periods = create_charging_schedule_periods_with_phases(0, 0, 1);
+    auto profile = create_tx_profile(
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(), 1,
+        ChargingProfileKindEnum::Relative);
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodInvalidPhaseToUse));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01_IfChargingSchedulePeriodsAreMissing_ThenProfileIsInvalid) {
+    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileNoChargingSchedulePeriods));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR31_IfStartPeriodOfFirstChargingSchedulePeriodIsNotZero_ThenProfileIsInvalid) {
+    auto periods = create_charging_schedule_periods(1);
+    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileFirstStartScheduleIsNotZero));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR35_IfChargingSchedulePeriodsAreNotInChonologicalOrder_ThenProfileIsInvalid) {
+    auto periods = create_charging_schedule_periods({0, 2, 1});
+    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodsOutOfOrder));
+}
+
+TEST_F(ChargepointTestFixtureV201,
+       K01FR40_IfChargingProfileKindIsAbsoluteAndStartScheduleDoesNotExist_ThenProfileIsInvalid) {
+    auto periods = create_charging_schedule_periods(0);
+    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(), 1,
+                                     ChargingProfileKindEnum::Absolute);
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileMissingRequiredStartSchedule));
+}
+
+TEST_F(ChargepointTestFixtureV201,
+       K01FR40_IfChargingProfileKindIsRecurringAndStartScheduleDoesNotExist_ThenProfileIsInvalid) {
+    auto periods = create_charging_schedule_periods(0);
+    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(), 1,
+                                     ChargingProfileKindEnum::Recurring);
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileMissingRequiredStartSchedule));
+}
+
+TEST_F(ChargepointTestFixtureV201,
+       K01FR41_IfChargingProfileKindIsRelativeAndStartScheduleDoesExist_ThenProfileIsInvalid) {
+    auto periods = create_charging_schedule_periods(0);
+    auto profile = create_tx_profile(
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(), 1,
+        ChargingProfileKindEnum::Relative);
+
+    auto sut = handler.validate_profile_schedules(profile);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileExtraneousStartSchedule));
 }
 
 } // namespace ocpp::v201

@@ -20,7 +20,13 @@ enum class ProfileValidationResultEnum {
     TxProfileEvseIdNotGreaterThanZero,
     TxProfileTransactionNotOnEvse,
     TxProfileEvseHasNoActiveTransaction,
-    TxProfileConflictingStackLevel
+    TxProfileConflictingStackLevel,
+    ChargingProfileNoChargingSchedulePeriods,
+    ChargingProfileFirstStartScheduleIsNotZero,
+    ChargingProfileMissingRequiredStartSchedule,
+    ChargingProfileExtraneousStartSchedule,
+    ChargingSchedulePeriodsOutOfOrder,
+    ChargingSchedulePeriodInvalidPhaseToUse,
 };
 
 /// \brief This class handles and maintains incoming ChargingProfiles and contains the logic
@@ -38,6 +44,9 @@ public:
     /// \brief validates the given \p profile according to the specification
     ///
     ProfileValidationResultEnum validate_tx_profile(const ChargingProfile& profile, Evse& evse) const;
+
+    /// \brief validates that the given \p profile has valid charging schedules
+    ProfileValidationResultEnum validate_profile_schedules(const ChargingProfile& profile) const;
 
     /// \brief Adds a given \p profile to our stored list of profiles
     void add_profile(const ChargingProfile& profile);
