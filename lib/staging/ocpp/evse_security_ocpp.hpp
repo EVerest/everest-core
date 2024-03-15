@@ -20,8 +20,9 @@ public:
                                                           const ocpp::CaCertificateType& certificate_type) override;
     ocpp::DeleteCertificateResult
     delete_certificate(const ocpp::CertificateHashDataType& certificate_hash_data) override;
-    ocpp::InstallCertificateResult verify_certificate(const std::string& certificate_chain,
-                                                      const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    ocpp::CertificateValidationResult
+    verify_certificate(const std::string& certificate_chain,
+                       const ocpp::CertificateSigningUseEnum& certificate_type) override;
     ocpp::InstallCertificateResult
     update_leaf_certificate(const std::string& certificate_chain,
                             const ocpp::CertificateSigningUseEnum& certificate_type) override;
@@ -47,6 +48,7 @@ ocpp::CertificateSigningUseEnum to_ocpp(types::evse_security::LeafCertificateTyp
 ocpp::CertificateType to_ocpp(types::evse_security::CertificateType other);
 ocpp::HashAlgorithmEnumType to_ocpp(types::evse_security::HashAlgorithm other);
 ocpp::InstallCertificateResult to_ocpp(types::evse_security::InstallCertificateResult other);
+ocpp::CertificateValidationResult to_ocpp(types::evse_security::CertificateValidationResult other);
 ocpp::DeleteCertificateResult to_ocpp(types::evse_security::DeleteCertificateResult other);
 
 ocpp::CertificateHashDataType to_ocpp(types::evse_security::CertificateHashData other);
