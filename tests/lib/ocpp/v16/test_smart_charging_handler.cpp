@@ -16,7 +16,7 @@ namespace v16 {
 /**
  * Chargepoint Test Fixture
  *
- * Test Matrix:
+ * Validate Profile Test Matrix:
  *
  * Positive Boundary Conditions:
  * - PB01 Valid Profile
@@ -201,6 +201,35 @@ protected:
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(chargepoint_id, database_path, init_script_path);
         auto handler = new SmartChargingHandler(connectors, database_handler, true);
+        return handler;
+    }
+
+    SmartChargingHandler* createSmartChargingHandler(const int number_of_connectors) {
+        for (int i = 0; i <= number_of_connectors; i++) {
+            addConnector(i);
+        }
+
+        const std::string chargepoint_id = "1";
+        const fs::path database_path = "na";
+        const fs::path init_script_path = "na";
+
+        std::shared_ptr<DatabaseHandlerMock> database_handler =
+            std::make_shared<DatabaseHandlerMock>(chargepoint_id, database_path, init_script_path);
+
+        auto handler = new SmartChargingHandler(connectors, database_handler, true);
+
+        return handler;
+    }
+
+    SmartChargingHandler* createSmartChargingHandlerWithChargePointMaxProfile() {
+        auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+        const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
+        auto handler = createSmartChargingHandler(10);
+
+        profile.chargingProfilePurpose = ChargingProfilePurposeType::ChargePointMaxProfile;
+        profile.chargingProfileKind = ChargingProfileKindType::Absolute;
+        handler->add_charge_point_max_profile(profile);
+
         return handler;
     }
 
@@ -1101,6 +1130,84 @@ TEST_F(ChargepointTestFixture,
     ASSERT_EQ(1, connector_id_1_profiles.size());
     ASSERT_EQ(2, connector_id_2_profiles.size());
     ASSERT_TRUE(sut);
+}
+
+/**
+ * SmartChargingHandler::add_charge_point_max_profile tests
+ */
+TEST_F(ChargepointTestFixture, AddChargePointMaxProfile) {
+    auto handler = createSmartChargingHandlerWithChargePointMaxProfile();
+
+    auto now = ocpp::DateTime();
+    auto valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, 0);
+    ASSERT_EQ(1, valid_profiles.size());
+    auto retrieved = valid_profiles[0];
+
+    ASSERT_EQ(ChargingProfilePurposeType::ChargePointMaxProfile, retrieved.chargingProfilePurpose);
+    ASSERT_EQ(ChargingProfileKindType::Absolute, retrieved.chargingProfileKind);
+}
+
+TEST_F(ChargepointTestFixture, AddTxDefaultProfile_ConnectorId_eq_0) {
+    auto handler = createSmartChargingHandler(1);
+    auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
+    bool is_profile_valid = handler->validate_profile(
+        profile, connector_id, ignore_no_transaction, profile_max_stack_level, max_charging_profiles_installed,
+        charging_schedule_max_periods, charging_schedule_allowed_charging_rate_units);
+    ASSERT_TRUE(is_profile_valid);
+
+    const int connector_id = 0;
+    handler->add_tx_default_profile(profile, connector_id);
+    // While the connector id is 0 when it is added, it is retrieved with a connector id of 1
+    // See AddTxDefaultProfile_ConnectorId_eq_0_Retrieved_at_0__NoProfilesReturned for a demonstration of this behavior
+    const int retrieved_connector_id = 1;
+    auto valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, retrieved_connector_id);
+    auto retrieved = valid_profiles[0];
+
+    ASSERT_EQ(1, valid_profiles.size());
+    ASSERT_EQ(ChargingProfileKindType::Absolute, retrieved.chargingProfileKind);
+    ASSERT_EQ(ChargingProfilePurposeType::TxDefaultProfile, retrieved.chargingProfilePurpose);
+}
+
+TEST_F(ChargepointTestFixture, AddTxDefaultProfile_ConnectorId_eq_0_Retrieved_at_0__NoProfilesReturned) {
+    auto handler = createSmartChargingHandler(1);
+    auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
+    bool is_profile_valid = handler->validate_profile(
+        profile, connector_id, ignore_no_transaction, profile_max_stack_level, max_charging_profiles_installed,
+        charging_schedule_max_periods, charging_schedule_allowed_charging_rate_units);
+    ASSERT_TRUE(is_profile_valid);
+
+    const int connector_id = 0;
+    handler->add_tx_default_profile(profile, connector_id);
+    // When profiles are retrieved with the same connector id of 0, nothing is returned
+    // See AddTxDefaultProfile_ConnectorId_eq_0 for a demonstration of how to retrieve the profile
+    auto valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, connector_id);
+
+    ASSERT_EQ(0, valid_profiles.size());
+}
+
+/**
+ * SmartChargingHandler::add_tx_default_profile test
+ */
+TEST_F(ChargepointTestFixture, AddTxDefaultProfile__ConnectorId_gt_0) {
+    auto handler = createSmartChargingHandlerWithChargePointMaxProfile();
+    auto valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, 0);
+    ASSERT_EQ(1, valid_profiles.size());
+    auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
+    const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
+
+    const int connector_id = 2;
+    handler->add_tx_default_profile(profile, connector_id);
+
+    valid_profiles = handler->get_valid_profiles(date_start_range, date_end_range, connector_id);
+    ASSERT_EQ(2, valid_profiles.size());
+    auto chargepoint_max_profile = valid_profiles[0];
+    ASSERT_EQ(ChargingProfilePurposeType::ChargePointMaxProfile, chargepoint_max_profile.chargingProfilePurpose);
+    ASSERT_EQ(ChargingProfileKindType::Absolute, chargepoint_max_profile.chargingProfileKind);
+    auto tx_default_profile = valid_profiles[1];
+    ASSERT_EQ(ChargingProfilePurposeType::TxDefaultProfile, tx_default_profile.chargingProfilePurpose);
+    ASSERT_EQ(ChargingProfileKindType::Absolute, tx_default_profile.chargingProfileKind);
 }
 
 } // namespace v16
