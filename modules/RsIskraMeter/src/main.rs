@@ -2,11 +2,11 @@
 //!
 //! The implementation follows the user manual
 //! <https://www.iskra.eu/f/docs/Smart-energy-meters/K_WM3M4_EN_22433922_Users_manual_Ver_1.14.pdf>
-//! 
+//!
 //! ## Example usage:
-//! 
+//!
 //! To try out the Iskra meter you can use the following dummy config below.
-//! 
+//!
 //! ```yaml
 //!active_modules:
 //!  power_meter_1:
@@ -27,10 +27,10 @@
 //!        within_message_timeout_ms: 100
 //!        max_packet_size: 100
 //! ```
-//! 
+//!
 //! You can start and stop transactions by publishing following messages to
 //! mqtt
-//! 
+//!
 //! ```sh
 //! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"value":{"cable_id":1,"client_id":"","evse_id":"DEABCD312ABC11","tariff_id":1,"transaction_id":"foobarbaz","user_data":""}},"id":"foo","origin":"bar"},"name":"start_transaction","type":"call"}'
 //! mosquitto_pub -t everest/power_meter_1/meter/cmd -m '{"data":{"args":{"transaction_id":"foobarbaz"}, "id":"foo","origin":"bar"},"name":"stop_transaction","type":"call"}'
@@ -38,18 +38,20 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
-mod utils;
 mod logger;
+mod utils;
 
 use anyhow::Result;
 use chrono::{Local, Offset, Utc};
+use everestrs::serde as everest_serde;
+use everestrs::serde_json as everest_serde_json;
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
 use generated::types::units_signed::SignedMeterValue;
-use generated::{get_config, Module, SerialCommunicationHubClientPublisher};
+use generated::{get_config, Module, ModuleConfig, SerialCommunicationHubClientPublisher};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -232,6 +234,123 @@ impl TransactionStopResponse {
     }
 }
 
+#[derive(everest_serde::Serialize, Clone)]
+#[serde(crate = "everest_serde")]
+/// The serialization according to the Open charge metering format. See
+/// https://github.com/SAFE-eV/OCMF-Open-Charge-Metering-Format/blob/master/OCMF-en.md
+/// for details.
+///
+/// The struct does not implement everything and also our config does not
+/// implement everything. Extend it as needed.
+struct OcmfData {
+    #[serde(rename = "FV")]
+    /// Version of the data format in the representation.
+    format_version: String,
+
+    #[serde(rename = "GI")]
+    /// Identifier of the manufacturer for the system which has generated the
+    /// present data
+    gateway_identification: String,
+
+    #[serde(rename = "GS")]
+    /// Serial number of the above mentioned system.
+    gateway_serial: String,
+
+    #[serde(rename = "GV")]
+    /// Version designation of the manufacturer for the software.
+    gateway_version: String,
+
+    #[serde(rename = "PG")]
+    /// Pagination of the entire data set, i.e. the data that is combined in one
+    /// signature.
+    pagination: String,
+
+    #[serde(rename = "MV")]
+    /// Manufacturer identification of the meter, name of the manufacturer.
+    meter_vendor: String,
+
+    #[serde(rename = "MM")]
+    /// Model identification of the meter.
+    meter_model: String,
+
+    #[serde(rename = "MS")]
+    /// Serial number of the meter.
+    meter_serial: String,
+
+    #[serde(rename = "MF")]
+    /// Firmware version of the meter.
+    meter_firmware: String,
+
+    #[serde(rename = "IS")]
+    /// General status for user assignment.
+    identification_status: bool,
+
+    #[serde(rename = "IF")]
+    /// Detailed statements about the user assignment.
+    identification_flags: Vec<String>,
+
+    #[serde(rename = "IT")]
+    /// Type of identification data.
+    identification_type: String,
+
+    #[serde(rename = "ID")]
+    /// The actual identification data according to the type.
+    identification_data: String,
+
+    #[serde(rename = "CT")]
+    /// Type of the specification for the identification of the charge point.
+    charge_point_identification_type: String,
+
+    #[serde(rename = "CI")]
+    /// Identification information for the charge point.
+    charge_point_identification: String,
+
+    #[serde(rename = "RD")]
+    /// Additional readings.
+    readings: Vec<String>,
+}
+
+impl Default for OcmfData {
+    fn default() -> Self {
+        Self {
+            format_version: "1.0".to_string(),
+            gateway_identification: String::default(),
+            gateway_serial: String::default(),
+            gateway_version: String::default(),
+            pagination: String::default(),
+            meter_vendor: String::default(),
+            meter_model: String::default(),
+            meter_serial: String::default(),
+            meter_firmware: String::default(),
+            identification_status: true,
+            // See table 13 for details.
+            identification_flags: vec!["RFID_PLAIN".to_string()],
+            // See table 17 for details.
+            identification_type: "NONE".to_string(),
+            identification_data: String::default(),
+            // See table 18 for details.
+            charge_point_identification_type: "EVSEID".to_string(),
+            charge_point_identification: String::default(),
+            readings: Vec::default(),
+        }
+    }
+}
+
+/// Conversion from the EVerest config to the OcmfData.
+impl From<&ModuleConfig> for OcmfData {
+    fn from(value: &ModuleConfig) -> Self {
+        OcmfData {
+            format_version: value.ocmf_format_version.clone(),
+            gateway_identification: value.ocmf_gateway_identification.clone(),
+            gateway_serial: value.ocmf_gateway_serial.clone(),
+            gateway_version: value.ocmf_gateway_version.clone(),
+            charge_point_identification_type: value.ocmf_charge_point_identification_type.clone(),
+            charge_point_identification: value.ocmf_charge_point_identification.clone(),
+            ..Default::default()
+        }
+    }
+}
+
 /// Toy retry module
 mod retry {
 
@@ -269,15 +388,21 @@ mod retry {
 
 /// Initial state. We're moving from this state to `ReadyState` once we're fully
 /// Initialized.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct InitState {
     /// Modbus id of the device.
     device_id: i64,
+
+    /// The base ocmf data.
+    ocmf_data: OcmfData,
 }
 
 impl InitState {
-    fn new(device_id: i64) -> Self {
-        Self { device_id }
+    fn new(device_id: i64, ocmf_data: OcmfData) -> Self {
+        Self {
+            device_id,
+            ocmf_data,
+        }
     }
 }
 
@@ -287,8 +412,14 @@ struct ReadyState {
     /// Modbus id of the device.
     device_id: i64,
 
+    /// The base ocmf data.
+    ocmf_data: OcmfData,
+
     /// The interface to the serial comm module.
     serial_comm_pub: SerialCommunicationHubClientPublisher,
+
+    /// Public key
+    public_key: Arc<Mutex<Option<String>>>,
 }
 
 impl ReadyState {
@@ -296,7 +427,9 @@ impl ReadyState {
     fn new(init_state: InitState, serial_comm_pub: SerialCommunicationHubClientPublisher) -> Self {
         Self {
             device_id: init_state.device_id,
+            ocmf_data: init_state.ocmf_data,
             serial_comm_pub,
+            public_key: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -488,8 +621,11 @@ impl ReadyState {
     }
 
     fn write_metadata(&self, evse_id: &str) -> Result<()> {
-        // Warning: JSON names must be in specified order and without whitespaces.
-        let message: String = format!("{{\"FV\":\"1.0\",\"GI\":\"\",\"GS\":\"\",\"PG\":\"\",\"MV\":\"\",\"MM\":\"\",\"MS\":\"\",\"MF\":\"\",\"IS\":true,\"IF\":[\"RFID_PLAIN\"],\"IT\":\"NONE\",\"ID\":\"{} {}\",\"CT\":\"EVSEID\",\"CI\":\"vestel\",\"RD\":[]}}", evse_id, create_random_meter_session_id());
+        let mut ocmf_data = self.ocmf_data.clone();
+        ocmf_data.identification_data = format!("{} {}", evse_id, create_random_meter_session_id());
+
+        let message = everest_serde_json::to_string(&ocmf_data)?;
+        println!("{message}");
         let data = string_to_vec(&message);
         self.write_multiple_registers(7100, &data)?;
         // write bytes
@@ -590,7 +726,7 @@ impl ReadyState {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
                 signing_method: "OCMF".to_string(),
                 encoding_method: String::new(),
-                public_key: None,
+                public_key: self.read_public_key().ok(),
                 timestamp: None,
             }),
             transaction_min_stop_time: Option::None,
@@ -639,16 +775,26 @@ impl ReadyState {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
                 signing_method: "OCMF".to_string(),
                 encoding_method: String::new(),
-                public_key: None,
+                public_key: self.read_public_key().ok(),
                 timestamp: None,
             }),
             status: TransactionRequestStatus::OK,
         })
     }
 
+    /// Read the public key once and cache it.
     fn read_public_key(&self) -> Result<String> {
-        let regs = self.read_holding_registers(8124, 32)?;
-        Ok(format!("{}{}", PUBLIC_KEY_PREFIX, &to_hex_string(regs)))
+        let mut lock = self.public_key.lock().expect("Never poisoned");
+        match &*lock {
+            Some(key) => Ok(key.clone()),
+            None => {
+                let regs = self.read_holding_registers(8124, 32)?;
+
+                let key = format!("{}{}", PUBLIC_KEY_PREFIX, &to_hex_string(regs));
+                *lock = Some(key.clone());
+                Ok(key)
+            }
+        }
     }
 }
 
@@ -666,13 +812,13 @@ struct IskraMeter {
 impl generated::OnReadySubscriber for IskraMeter {
     fn on_ready(&self, publishers: &generated::ModulePublisher) {
         let mut lock = self.state_machine.lock().unwrap();
-        let StateMachine::InitState(init_state) = *lock else {
+        let StateMachine::InitState(ref init_state) = *lock else {
             log::warn!("StateMachine already initialized");
             return;
         };
 
         // Update from `InitState` to `ReadyState`.
-        let ready_state = ReadyState::new(init_state, publishers.modbus.clone());
+        let ready_state = ReadyState::new(init_state.clone(), publishers.modbus.clone());
 
         fn print_spec<R, E>(res: &Result<R, E>, name: &str)
         where
@@ -776,10 +922,10 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
 fn main() {
     logger::init_logger("RS_ISKRA_METER_LOGGER_LEVEL");
     let config = get_config();
-
     let class = Arc::new(IskraMeter {
         state_machine: Mutex::new(StateMachine::InitState(InitState::new(
             config.powermeter_device_id,
+            (&config).into(),
         ))),
     });
 
@@ -797,6 +943,11 @@ mod tests {
 
     use super::*;
     use mockall::predicate::eq;
+
+    /// Helper to produce the class  under test.
+    fn make_ready_state(publisher: SerialCommunicationHubClientPublisher) -> ReadyState {
+        ReadyState::new(InitState::new(1234, OcmfData::default()), publisher)
+    }
 
     #[test]
     fn serial_comm_hub_requests__Result__conversion() {
@@ -897,21 +1048,21 @@ mod tests {
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_write_single_register()
-            .with(eq(187), eq(7056), eq(1234))
+            .with(eq(189), eq(7056), eq(1234))
             .times(1)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
 
         mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(94), eq(1234))
+            .with(eq(7100), eq(95), eq(1234))
             .times(1)
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 94]),
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 95]),
                 })
             });
 
-        let ready_state = ReadyState::new(InitState::new(1234), mock);
+        let ready_state = make_ready_state(mock);
         ready_state.write_metadata("some evse id").unwrap();
     }
 
@@ -939,7 +1090,7 @@ mod tests {
                 })
             });
 
-        let ready_state = ReadyState::new(InitState::new(1234), mock);
+        let ready_state = make_ready_state(mock);
         let res = ready_state.read_signed_meter_values().unwrap();
         assert_eq!(res, "abababababababa");
     }
@@ -968,7 +1119,7 @@ mod tests {
                 })
             });
 
-        let ready_state = ReadyState::new(InitState::new(1234), mock);
+        let ready_state = make_ready_state(mock);
         let res = ready_state.read_signature().unwrap();
         assert_eq!(res, "DEADBEEFABCD123456");
     }
@@ -988,7 +1139,7 @@ mod tests {
                     })
                 });
 
-            let ready_state = ReadyState::new(InitState::new(1234), mock);
+            let ready_state = make_ready_state(mock);
             assert_eq!(ready_state.check_signature_status().is_ok(), expected);
         }
     }
@@ -1019,7 +1170,7 @@ mod tests {
                 .with(eq(0x7200), eq(7051), eq(1234))
                 .returning(|_, _, _| Ok(StatusCodeEnum::Error));
 
-            let ready_state = ReadyState::new(InitState::new(1234), mock);
+            let ready_state = make_ready_state(mock);
 
             let _unused = ready_state.start_transaction(TransactionReq {
                 cable_id: 1,
@@ -1029,6 +1180,27 @@ mod tests {
                 transaction_id: String::new(),
                 user_data: String::new(),
             });
+        }
+    }
+
+    #[test]
+    fn ready_state__read_public_key() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        // We expect times(1) since the other calls should be cached.
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(8124), eq(32), eq(1234))
+            .times(1)
+            .returning(move |_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![0; 32]),
+                })
+            });
+
+        let ready_state = make_ready_state(mock);
+        let expected = "3059301306072A8648CE3D020106082A8648CE3D0301070342000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".to_string();
+        for _ in 0..2 {
+            assert_eq!(ready_state.read_public_key().unwrap(), expected);
         }
     }
 }

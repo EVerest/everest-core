@@ -3,9 +3,7 @@ use everestrs_build::Builder;
 pub fn main() {
     Builder::new(
         "manifest.yaml",
-        vec![
-            std::env::var("EVEREST_CORE_ROOT").unwrap(),
-        ],
+        vec![std::env::var("EVEREST_CORE_ROOT").unwrap()],
     )
     .generate()
     .unwrap();
