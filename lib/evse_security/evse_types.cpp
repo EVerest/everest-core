@@ -46,6 +46,19 @@ std::string leaf_certificate_type_to_string(LeafCertificateType e) {
     }
 };
 
+std::string leaf_certificate_type_to_filename(LeafCertificateType e) {
+    switch (e) {
+    case LeafCertificateType::CSMS:
+        return "CSMS_LEAF_";
+    case LeafCertificateType::V2G:
+        return "SECC_LEAF_";
+    case LeafCertificateType::MF:
+        return "MF_LEAF_";
+    default:
+        throw std::out_of_range("Could not convert LeafCertificateType to string");
+    }
+}
+
 std::string certificate_type_to_string(CertificateType e) {
     switch (e) {
     case CertificateType::V2GRootCertificate:

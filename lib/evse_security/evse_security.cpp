@@ -435,13 +435,16 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
 
         // Write certificate to file
         std::string extra_filename = filesystem_utils::get_random_file_name(PEM_EXTENSION.string());
+        std::string file_name = conversions::leaf_certificate_type_to_filename(certificate_type) + extra_filename;
 
-        const auto file_name = std::string("SECC_LEAF_") + extra_filename;
         const auto file_path = cert_path / file_name;
         std::string str_cert = leaf_certificate.get_export_string();
 
         // Also write chain to file
-        const auto chain_file_name = std::string("CPO_CERT_CHAIN_") + extra_filename;
+        const auto chain_file_name = std::string("CPO_CERT_") +
+                                     conversions::leaf_certificate_type_to_filename(certificate_type) + "CHAIN_" +
+                                     extra_filename;
+
         const auto chain_file_path = cert_path / chain_file_name;
         std::string str_chain_cert = chain_certificate.to_export_string();
 
@@ -620,18 +623,29 @@ OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
     OCSPRequestDataList response;
     std::vector<OCSPRequestData> ocsp_request_data_list;
 
-    X509CertificateBundle ca_bundle(this->ca_bundle_path_map.at(CaCertificateType::V2G), EncodingFormat::PEM);
-    const auto certificates_of_bundle = ca_bundle.split();
-    for (const auto& certificate : certificates_of_bundle) {
-        std::string responder_url = certificate.get_responder_url();
-        if (!responder_url.empty()) {
-            auto certificate_hash_data = certificate.get_certificate_hash_data();
-            OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
-            ocsp_request_data_list.push_back(ocsp_request_data);
-        }
+    try {
+        X509CertificateBundle ca_bundle(this->ca_bundle_path_map.at(CaCertificateType::V2G), EncodingFormat::PEM);
+
+        // Build hierarchy for the bundle
+        auto& hierarchy = ca_bundle.get_certficate_hierarchy();
+
+        // Iterate cache, get hashes
+        hierarchy.for_each([&](const X509Node& node) {
+            std::string responder_url = node.certificate.get_responder_url();
+            if (!responder_url.empty()) {
+                auto certificate_hash_data = node.hash;
+                OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
+                ocsp_request_data_list.push_back(ocsp_request_data);
+            }
+
+            return true;
+        });
+
+        response.ocsp_request_data_list = ocsp_request_data_list;
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not get ocsp cache, certificate load failure: " << e.what();
     }
 
-    response.ocsp_request_data_list = ocsp_request_data_list;
     return response;
 }
 
@@ -663,7 +677,7 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
             }
         }
     } catch (const CertificateLoadException& e) {
-        EVLOG_error << "Could not update ocsp cache, certificate load failure!";
+        EVLOG_error << "Could not update ocsp cache, certificate load failure: " << e.what();
     }
 }
 
@@ -706,7 +720,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 
     // Make a difference between normal and tpm keys for identification
     const auto file_name =
-        std::string("SECC_LEAF_") +
+        conversions::leaf_certificate_type_to_filename(certificate_type) +
         filesystem_utils::get_random_file_name(use_tpm ? TPM_KEY_EXTENSION.string() : KEY_EXTENSION.string());
 
     if (certificate_type == LeafCertificateType::CSMS) {
@@ -955,25 +969,33 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
 std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
-    // Support bundle files, in case the certificates contain
-    // multiple entries (should be 3) as per the specification
-    X509CertificateBundle verify_file(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+    try {
+        // Support bundle files, in case the certificates contain
+        // multiple entries (should be 3) as per the specification
+        X509CertificateBundle verify_file(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
 
-    EVLOG_debug << "Requesting certificate file: [" << conversions::ca_certificate_type_to_string(certificate_type)
-                << "] file:" << verify_file.get_path();
+        EVLOG_info << "Requesting certificate file: [" << conversions::ca_certificate_type_to_string(certificate_type)
+                   << "] file:" << verify_file.get_path();
 
-    // If we are using a directory, search for the first valid root file
-    if (verify_file.is_using_directory()) {
-        auto& hierarchy = verify_file.get_certficate_hierarchy();
+        // If we are using a directory, search for the first valid root file
+        if (verify_file.is_using_directory()) {
+            auto& hierarchy = verify_file.get_certficate_hierarchy();
 
-        // Get all roots and search for a valid self-signed
-        for (auto& root : hierarchy.get_hierarchy()) {
-            if (root.certificate.is_selfsigned() && root.certificate.is_valid())
-                return root.certificate.get_file().value_or("");
+            // Get all roots and search for a valid self-signed
+            for (auto& root : hierarchy.get_hierarchy()) {
+                if (root.certificate.is_selfsigned() && root.certificate.is_valid())
+                    return root.certificate.get_file().value_or("");
+            }
         }
+
+        return verify_file.get_path().string();
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not obtain verify file, wrong format for certificate: "
+                    << this->ca_bundle_path_map.at(certificate_type) << " with error: " << e.what();
     }
 
-    return verify_file.get_path().string();
+    throw NoCertificateFound("Could not find any CA certificate for: " +
+                             conversions::ca_certificate_type_to_string(certificate_type));
 }
 
 int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_type) {

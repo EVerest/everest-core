@@ -342,6 +342,7 @@ void X509CertificateBundle::invalidate_hierarchy() {
 
 X509CertificateHierarchy& X509CertificateBundle::get_certficate_hierarchy() {
     if (hierarchy_invalidated) {
+        EVLOG_info << "Building new certificate hierarchy!";
         hierarchy_invalidated = false;
 
         auto certificates = split();

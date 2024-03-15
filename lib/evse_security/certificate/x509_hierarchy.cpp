@@ -121,26 +121,29 @@ std::string X509CertificateHierarchy::to_debug_string() {
     return str.str();
 }
 
-void X509CertificateHierarchy::insert(X509Wrapper&& certificate) {
+void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
     // Invalid hash
     static CertificateHashData invalid_hash{HashAlgorithm::SHA256, {}, {}, {}};
 
-    if (false == certificate.is_selfsigned()) {
+    if (false == inserted_certificate.is_selfsigned()) {
         // If this certif has any link to any of the existing certificates
         bool hierarchy_found = false;
 
         // Create a new node, is not self-signed and is not a permanent orphan
-        X509Node new_node = {{0, 0, 0}, certificate, invalid_hash, certificate, {}};
+        X509Node new_node = {{0, 0, 0}, inserted_certificate, invalid_hash, inserted_certificate, {}};
 
         // Search through all the list for a link
         for_each([&](X509Node& top) {
-            if (top.certificate.is_child(certificate)) {
+            if (top.certificate.is_child(inserted_certificate)) {
                 // Some sanity checks
-                if (top.state.is_selfsigned)
+                if (top.state.is_selfsigned) {
                     throw InvalidStateException(
                         "Newly added certificate can't be parent of a self-signed certificate!");
-                if (top.state.is_hash_computed)
+                }
+
+                if (top.state.is_hash_computed) {
                     throw InvalidStateException("Existing non-root top certificate can't have a valid hash!");
+                }
 
                 // If the top certificate is a descendant of the certificate we're adding
 
@@ -158,12 +161,12 @@ void X509CertificateHierarchy::insert(X509Wrapper&& certificate) {
                 // Set the new top
                 top = std::move(new_node);
                 hierarchy_found = true; // Found a link
-            } else if (certificate.is_child(top.certificate)) {
+            } else if (inserted_certificate.is_child(top.certificate)) {
                 // If the certificate is the descendant of top certificate
 
                 // Calculate hash and set issuer
                 new_node.state = {0, 0, 1};
-                new_node.hash = certificate.get_certificate_hash_data(top.certificate);
+                new_node.hash = inserted_certificate.get_certificate_hash_data(top.certificate);
                 new_node.issuer = X509Wrapper(top.certificate); // Set the new issuer
 
                 // Add it to the top's descendant list
@@ -181,7 +184,11 @@ void X509CertificateHierarchy::insert(X509Wrapper&& certificate) {
         }
     } else {
         // If it is self-signed insert it in the roots, with the state set as a self-signed and a properly computed hash
-        hierarchy.push_back({{1, 0, 1}, certificate, certificate.get_certificate_hash_data(), certificate, {}});
+        hierarchy.push_back({{1, 0, 1},
+                             inserted_certificate,
+                             inserted_certificate.get_certificate_hash_data(),
+                             inserted_certificate,
+                             {}});
 
         // Attempt a partial prune, by searching through all the contained temporary orphan certificates
         // and trying to add them to the newly inserted root certificate, if that is possible
@@ -198,14 +205,14 @@ void X509CertificateHierarchy::insert(X509Wrapper&& certificate) {
                     throw InvalidStateException("Orphan certificate can't have a proper hash!");
 
                 // If it is a child of the new root certificate insert it to it's list and break
-                if (node.certificate.is_child(certificate)) {
+                if (node.certificate.is_child(inserted_certificate)) {
                     auto& new_root = hierarchy.back();
 
                     // Hash is properly computed now
                     node.hash = node.certificate.get_certificate_hash_data(new_root.certificate);
                     node.state.is_hash_computed = 1;
-                    node.state.is_orphan = 0;               // Not an orphan any more
-                    node.issuer = X509Wrapper(certificate); // Set the new valid issuer
+                    node.state.is_orphan = 0;                        // Not an orphan any more
+                    node.issuer = X509Wrapper(inserted_certificate); // Set the new valid issuer
 
                     // Add to the newly inserted root child list
                     new_root.children.push_back(std::move(node));

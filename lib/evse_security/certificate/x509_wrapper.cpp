@@ -145,6 +145,7 @@ std::string X509Wrapper::get_issuer_key_hash() const {
     if (is_selfsigned()) {
         return get_key_hash();
     } else {
+        // See 'OCPP 2.0.1 Spec: 2.6. CertificateHashDataType'
         throw std::logic_error("get_issuer_key_hash must only be used on self-signed certs");
     }
 }
@@ -170,6 +171,12 @@ CertificateHashData X509Wrapper::get_certificate_hash_data(const X509Wrapper& is
     CertificateHashData certificate_hash_data;
     certificate_hash_data.hash_algorithm = HashAlgorithm::SHA256;
     certificate_hash_data.issuer_name_hash = this->get_issuer_name_hash();
+
+    // OCPP 2.0.1 Spec: 2.6. CertificateHashDataType
+    // issuerKeyHash: The hash of the DER encoded public key: the
+    // value (excluding tag and length) of the subject public key
+    // field in the issuer’s certificate.
+
     // Issuer key hash
     certificate_hash_data.issuer_key_hash = issuer.get_key_hash();
     certificate_hash_data.serial_number = this->get_serial_number();
