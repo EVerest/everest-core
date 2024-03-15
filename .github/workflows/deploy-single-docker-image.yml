@@ -20,6 +20,10 @@ on:
         description: 'Github ref after the change'
         required: true
         type: string
+      force_rebuild:
+        description: 'Forces rebuild of docker image, even if no changes are detected'
+        default: false
+        type: boolean
     secrets:
       SA_GITHUB_PAT:
         description: 'Github PAT with access to the repository'
@@ -52,7 +56,7 @@ jobs:
   build-and-push:
     name: Build and push
     needs: check
-    if: ${{ needs.check.outputs.changed_files > 0 }}
+    if: ${{ needs.check.outputs.changed_files > 0 || inputs.force_rebuild }}
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Dockerfile
