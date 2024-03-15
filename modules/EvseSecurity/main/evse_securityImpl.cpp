@@ -45,7 +45,7 @@ evse_securityImpl::handle_update_leaf_certificate(std::string& certificate_chain
         this->evse_security->update_leaf_certificate(certificate_chain, conversions::from_everest(certificate_type)));
 }
 
-types::evse_security::InstallCertificateResult
+types::evse_security::CertificateValidationResult
 evse_securityImpl::handle_verify_certificate(std::string& certificate_chain,
                                              types::evse_security::LeafCertificateType& certificate_type) {
     return conversions::to_everest(

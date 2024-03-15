@@ -50,6 +50,18 @@ types:
       - CertificateStoreMaxLengthExceeded
       - WriteError
       - Accepted
+  CertificateValidationResult:
+    description: Result of the attempt to validate a certificate
+    type: string
+    enum:
+      - Valid
+      - Expired
+      - InvalidSignature
+      - IssuerNotFound
+      - InvalidLeafSignature
+      - InvalidChain
+      - Unknown
+
   DeleteCertificateResult:
     description: Result of the attempt to delete a certificate
     type: string

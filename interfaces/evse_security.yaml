@@ -56,7 +56,7 @@ cmds:
     result:
       description: Result of the verification
       type: string
-      $ref: /evse_security#/InstallCertificateResult
+      $ref: /evse_security#/CertificateValidationResult
   get_installed_certificates:
     description: Command to retrieve installed certificates of the EVSE
     arguments:

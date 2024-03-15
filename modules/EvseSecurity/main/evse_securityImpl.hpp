@@ -42,7 +42,7 @@ protected:
     virtual types::evse_security::InstallCertificateResult
     handle_update_leaf_certificate(std::string& certificate_chain,
                                    types::evse_security::LeafCertificateType& certificate_type) override;
-    virtual types::evse_security::InstallCertificateResult
+    virtual types::evse_security::CertificateValidationResult
     handle_verify_certificate(std::string& certificate_chain,
                               types::evse_security::LeafCertificateType& certificate_type) override;
     virtual types::evse_security::GetInstalledCertificatesResult
