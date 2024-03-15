@@ -347,6 +347,16 @@ enum class InstallCertificateResult {
     Accepted
 };
 
+enum class CertificateValidationResult {
+    Valid,
+    Expired,
+    InvalidSignature,
+    IssuerNotFound,
+    InvalidLeafSignature,
+    InvalidChain,
+    Unknown
+};
+
 namespace conversions {
 /// \brief Converts the given InstallCertificateResult \p e to human readable string
 /// \returns a string representation of the InstallCertificateResult

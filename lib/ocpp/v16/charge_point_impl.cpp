@@ -2379,7 +2379,7 @@ void ChargePointImpl::handleSignedUpdateFirmware(ocpp::Call<SignedUpdateFirmware
 
     if (this->evse_security->verify_certificate(call.msg.firmware.signingCertificate.get(),
                                                 ocpp::CertificateSigningUseEnum::ManufacturerCertificate) !=
-        ocpp::InstallCertificateResult::Accepted) {
+        ocpp::CertificateValidationResult::Valid) {
         response.status = UpdateFirmwareStatusEnumType::InvalidCertificate;
         ocpp::CallResult<SignedUpdateFirmwareResponse> call_result(response, call.uniqueId);
         this->send<SignedUpdateFirmwareResponse>(call_result);

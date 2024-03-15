@@ -40,8 +40,8 @@ InstallCertificateResult EvseSecurityImpl::update_leaf_certificate(const std::st
         this->evse_security->update_leaf_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
 
-InstallCertificateResult EvseSecurityImpl::verify_certificate(const std::string& certificate_chain,
-                                                              const CertificateSigningUseEnum& certificate_type) {
+CertificateValidationResult EvseSecurityImpl::verify_certificate(const std::string& certificate_chain,
+                                                                 const CertificateSigningUseEnum& certificate_type) {
     return conversions::to_ocpp(
         this->evse_security->verify_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
@@ -197,6 +197,27 @@ InstallCertificateResult to_ocpp(evse_security::InstallCertificateResult other) 
     default:
         throw std::runtime_error(
             "Could not convert evse_security::InstallCertificateResult to InstallCertificateResult");
+    }
+}
+
+CertificateValidationResult to_ocpp(evse_security::CertificateValidationResult other) {
+    switch (other) {
+    case evse_security::CertificateValidationResult::Valid:
+        return CertificateValidationResult::Valid;
+    case evse_security::CertificateValidationResult::InvalidSignature:
+        return CertificateValidationResult::InvalidSignature;
+    case evse_security::CertificateValidationResult::IssuerNotFound:
+        return CertificateValidationResult::IssuerNotFound;
+    case evse_security::CertificateValidationResult::InvalidLeafSignature:
+        return CertificateValidationResult::InvalidLeafSignature;
+    case evse_security::CertificateValidationResult::InvalidChain:
+        return CertificateValidationResult::InvalidChain;
+    case evse_security::CertificateValidationResult::Unknown:
+        return CertificateValidationResult::Unknown;
+        ;
+    default:
+        throw std::runtime_error(
+            "Could not convert evse_security::CertificateValidationResult to CertificateValidationResult");
     }
 }
 
