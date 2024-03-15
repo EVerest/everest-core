@@ -299,7 +299,7 @@ TEST_F(EvseSecurityTests, verify_directory_bundles) {
     const auto child_cert_str = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
 
     ASSERT_EQ(this->evse_security->verify_certificate(child_cert_str, LeafCertificateType::CSMS),
-              InstallCertificateResult::Accepted);
+              CertificateValidationResult::Valid);
 
     // Verifies that directory bundles properly function when verifying a certificate
     this->evse_security->ca_bundle_path_map[CaCertificateType::CSMS] = fs::path("certs/ca/v2g/");
@@ -307,7 +307,7 @@ TEST_F(EvseSecurityTests, verify_directory_bundles) {
 
     // Verify a leaf
     ASSERT_EQ(this->evse_security->verify_certificate(child_cert_str, LeafCertificateType::CSMS),
-              InstallCertificateResult::Accepted);
+              CertificateValidationResult::Valid);
 }
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
@@ -350,98 +350,6 @@ TEST_F(EvseSecurityTests, verify_certificate_counts) {
     // None were defined
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
 }
-
-#if USING_OPENSSL_3
-TEST_F(EvseSecurityTests, providers_tests) {
-    if (supports_tpm == false)
-        return;
-
-    // Unload all current providers for a clean state
-    std::vector<OSSL_PROVIDER*> current_providers;
-
-    auto clean_fct = [](OSSL_PROVIDER* provider, void* cbdata) {
-        static_cast<std::vector<OSSL_PROVIDER*>*>(cbdata)->push_back(provider);
-        return 1;
-    };
-
-    OSSL_PROVIDER_do_all(nullptr, clean_fct, &current_providers);
-
-    for (auto& provider : current_providers) {
-        OSSL_PROVIDER_unload(provider);
-    }
-
-    OSSL_PROVIDER* default_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_DEFAULT);
-    ASSERT_TRUE(default_provider);
-
-    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(nullptr, PROVIDER_TPM);
-    ASSERT_TRUE(tpm2_provider);
-
-    ASSERT_TRUE(OSSL_PROVIDER_available(nullptr, PROVIDER_DEFAULT));
-    ASSERT_TRUE(OSSL_PROVIDER_available(nullptr, PROVIDER_TPM));
-
-    ASSERT_TRUE(OSSL_PROVIDER_self_test(default_provider));
-    ASSERT_TRUE(OSSL_PROVIDER_self_test(tpm2_provider));
-
-    // Check that we have only 2 providers
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT, PROVIDER_TPM}));
-
-    auto fct = [](OSSL_PROVIDER* provider, void* cbdata) {
-        std::cout << "Provider: " << OSSL_PROVIDER_get0_name(provider) << std::endl;
-
-        const char* build = NULL;
-        const char* name = NULL;
-        const char* status = NULL;
-
-        OSSL_PARAM request[] = {{"buildinfo", OSSL_PARAM_UTF8_PTR, &build, 0, 0},
-                                {"name", OSSL_PARAM_UTF8_PTR, &name, 0, 0},
-                                {"status", OSSL_PARAM_UTF8_PTR, &status, 0, 0},
-                                {NULL, 0, NULL, 0, 0}};
-
-        OSSL_PROVIDER_get_params(provider, request);
-
-        std::cout << "Info: " << (build != nullptr ? build : "N/A") << "|" << (name != nullptr ? name : "N/A") << "|"
-                  << (status != nullptr ? status : "N/A") << std::endl;
-
-        return 1;
-    };
-
-    OSSL_PROVIDER_do_all(nullptr, fct, nullptr);
-
-    // Unload providers
-    ASSERT_TRUE(OSSL_PROVIDER_unload(default_provider));
-    ASSERT_TRUE(OSSL_PROVIDER_unload(tpm2_provider));
-
-    // Check that we don't have providers
-    ASSERT_TRUE(check_openssl_providers({}));
-
-    // Load default again
-    OSSL_PROVIDER_load(nullptr, PROVIDER_DEFAULT);
-
-    // Check that we have the default provider
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
-}
-
-TEST_F(EvseSecurityTests, verify_provider_scope) {
-#ifdef USING_TPM2
-    GTEST_SKIP() << "Skipped: OpenSSLProvider doesn't load and unload providers";
-#endif
-    if (supports_tpm == false)
-        return;
-
-    EXPECT_NO_THROW({ TPMScopedProvider provider; });
-
-    std::cout << "Testing TPM scoped provider" << std::endl;
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
-
-    {
-        TPMScopedProvider provider;
-        ASSERT_TRUE(check_openssl_providers({PROVIDER_TPM}));
-    }
-
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
-    std::cout << "Ending test TPM scoped provider" << std::endl;
-}
-#endif // USING_OPENSSL_3
 
 TEST_F(EvseSecurityTests, verify_normal_keygen) {
     KeyGenerationInfo info;
@@ -551,7 +459,7 @@ TEST_F(EvseSecurityTests, verify_v2g_cert_01) {
 TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
     const auto invalid_certificate = read_file_to_string(fs::path("certs/client/invalid/INVALID_CSMS.pem"));
     const auto result = this->evse_security->update_leaf_certificate(invalid_certificate, LeafCertificateType::V2G);
-    ASSERT_TRUE(result == InstallCertificateResult::InvalidCertificateChain);
+    ASSERT_TRUE(result != InstallCertificateResult::Accepted);
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_01) {

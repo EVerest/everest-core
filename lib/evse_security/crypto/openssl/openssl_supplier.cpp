@@ -68,19 +68,22 @@ static EVP_PKEY* get(KeyHandle* handle) {
     return nullptr;
 }
 
-static CertificateValidationError to_certificate_error(const int ec) {
+static CertificateValidationResult to_certificate_error(const int ec) {
     switch (ec) {
     case X509_V_ERR_CERT_HAS_EXPIRED:
-        return CertificateValidationError::Expired;
+        return CertificateValidationResult::Expired;
     case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-        return CertificateValidationError::InvalidSignature;
+        return CertificateValidationResult::InvalidSignature;
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-        return CertificateValidationError::IssuerNotFound;
+        return CertificateValidationResult::IssuerNotFound;
     case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-        return CertificateValidationError::InvalidLeafSignature;
+        return CertificateValidationResult::InvalidLeafSignature;
+    case X509_V_ERR_CERT_CHAIN_TOO_LONG:
+    case X509_V_ERR_CERT_UNTRUSTED:
+        return CertificateValidationResult::InvalidChain;
     default:
         EVLOG_warning << X509_verify_cert_error_string(ec);
-        return CertificateValidationError::Unknown;
+        return CertificateValidationResult::Unknown;
     }
 }
 
@@ -556,11 +559,11 @@ X509Handle_ptr OpenSSLSupplier::x509_duplicate_unique(X509Handle* handle) {
     return std::make_unique<X509HandleOpenSSL>(X509_dup(get(handle)));
 }
 
-CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Handle* target,
-                                                                          const std::vector<X509Handle*>& parents,
-                                                                          bool allow_future_certificates,
-                                                                          const std::optional<fs::path> dir_path,
-                                                                          const std::optional<fs::path> file_path) {
+CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(X509Handle* target,
+                                                                           const std::vector<X509Handle*>& parents,
+                                                                           bool allow_future_certificates,
+                                                                           const std::optional<fs::path> dir_path,
+                                                                           const std::optional<fs::path> file_path) {
     OpenSSLProvider provider;
     provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     X509_STORE_ptr store_ptr(X509_STORE_new());
@@ -575,12 +578,12 @@ CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Ha
         const char* c_file_path = file_path.has_value() ? file_path.value().c_str() : nullptr;
 
         if (1 != X509_STORE_load_locations(store_ptr.get(), c_file_path, c_dir_path)) {
-            return CertificateValidationError::Unknown;
+            return CertificateValidationResult::Unknown;
         }
 
         if (dir_path.has_value()) {
             if (X509_STORE_add_lookup(store_ptr.get(), X509_LOOKUP_file()) == nullptr) {
-                return CertificateValidationError::Unknown;
+                return CertificateValidationResult::Unknown;
             }
         }
     }
@@ -593,7 +596,7 @@ CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Ha
         ASN1_TIME_diff(&day, &sec, nullptr, X509_get_notAfter(get(target)));
         if (day < 0 || sec < 0) {
             // certificate is expired
-            return CertificateValidationError::Expired;
+            return CertificateValidationResult::Expired;
         }
         // certificate is not expired, but may not be valid yet. Since we allow future certs, disable time checks.
         X509_STORE_CTX_set_flags(store_ctx_ptr.get(), X509_V_FLAG_NO_CHECK_TIME);
@@ -606,7 +609,7 @@ CertificateValidationError OpenSSLSupplier::x509_verify_certificate_chain(X509Ha
         return to_certificate_error(ec);
     }
 
-    return CertificateValidationError::NoError;
+    return CertificateValidationResult::Valid;
 }
 
 bool OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string private_key,

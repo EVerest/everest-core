@@ -4,6 +4,7 @@
 
 #include <everest/timer.hpp>
 
+#include <evse_security/crypto/evse_crypto.hpp>
 #include <evse_security/evse_types.hpp>
 #include <evse_security/utils/evse_filesystem_types.hpp>
 
@@ -86,10 +87,10 @@ public:
     /// @brief Verifies the given \p certificate_chain for the given \p certificate_type against the respective CA
     /// certificates for the leaf.
     /// @param certificate_chain PEM formatted certificate or certificate chain
-    /// @param certificate_type type of the leaf certificate
+    /// @param certificate_type type of the root certificate for which the chain is verified
     /// @return result of the operation
-    InstallCertificateResult verify_certificate(const std::string& certificate_chain,
-                                                const LeafCertificateType certificate_type);
+    CertificateValidationResult verify_certificate(const std::string& certificate_chain,
+                                                   const LeafCertificateType certificate_type);
 
     /// @brief Verifies the given \p certificate_chain for the given \p certificate_type against the respective CA
     /// certificates for the leaf and if valid installs the certificate on the filesystem. Before installing on the
@@ -116,6 +117,13 @@ public:
     /// @brief Retrieves the OCSP request data of the V2G certificates
     /// @return contains OCSP request data
     OCSPRequestDataList get_ocsp_request_data();
+
+    /// @brief Retrieves the OCSP request data of the given \p certificate_chain
+    /// @param certificate_chain PEM formatted certificate or certificate chain
+    /// @param certificate_type type of the leaf certificate
+    /// @return contains OCSP request data
+    OCSPRequestDataList get_ocsp_request_data(const std::string& certificate_chain,
+                                              const CaCertificateType certificate_type);
 
     /// @brief Updates the OCSP cache for the given \p certificate_hash_data with the given \p ocsp_response
     /// @param certificate_hash_data identifies the certificate for which the \p ocsp_response is specified
@@ -189,8 +197,8 @@ public:
 
 private:
     // Internal versions of the functions do not lock the mutex
-    InstallCertificateResult verify_certificate_internal(const std::string& certificate_chain,
-                                                         LeafCertificateType certificate_type);
+    CertificateValidationResult verify_certificate_internal(const std::string& certificate_chain,
+                                                            LeafCertificateType certificate_type);
     GetKeyPairResult get_key_pair_internal(LeafCertificateType certificate_type, EncodingFormat encoding);
 
     /// @brief Determines if the total filesize of certificates is > than the max_filesystem_usage bytes

@@ -15,30 +15,32 @@
 #include <evse_security/certificate/x509_bundle.hpp>
 #include <evse_security/certificate/x509_hierarchy.hpp>
 #include <evse_security/certificate/x509_wrapper.hpp>
-#include <evse_security/crypto/evse_crypto.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
 
 namespace evse_security {
 
-static InstallCertificateResult to_install_certificate_result(CertificateValidationError error) {
+static InstallCertificateResult to_install_certificate_result(CertificateValidationResult error) {
     switch (error) {
-    case CertificateValidationError::Expired:
+    case CertificateValidationResult::Valid:
+        EVLOG_info << "Certificate accepted";
+        return InstallCertificateResult::Accepted;
+    case CertificateValidationResult::Expired:
         EVLOG_warning << "Certificate has expired";
         return InstallCertificateResult::Expired;
-    case CertificateValidationError::InvalidSignature:
+    case CertificateValidationResult::InvalidSignature:
         EVLOG_warning << "Invalid signature";
         return InstallCertificateResult::InvalidSignature;
-    case CertificateValidationError::InvalidChain:
+    case CertificateValidationResult::InvalidChain:
         EVLOG_warning << "Invalid certificate chain";
         return InstallCertificateResult::InvalidCertificateChain;
-    case CertificateValidationError::InvalidLeafSignature:
+    case CertificateValidationResult::InvalidLeafSignature:
         EVLOG_warning << "Unable to verify leaf signature";
         return InstallCertificateResult::InvalidSignature;
-    case CertificateValidationError::IssuerNotFound:
+    case CertificateValidationResult::IssuerNotFound:
         EVLOG_warning << "Issuer not found";
-        return InstallCertificateResult::InvalidCertificateChain;
+        return InstallCertificateResult::NoRootCertificateInstalled;
     default:
-        return InstallCertificateResult::InvalidCertificateChain;
+        return InstallCertificateResult::InvalidFormat;
     }
 }
 
@@ -401,9 +403,11 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
     if (certificate_type == LeafCertificateType::CSMS) {
         cert_path = this->directories.csms_leaf_cert_directory;
         key_path = this->directories.csms_leaf_key_directory;
-    } else {
+    } else if (certificate_type == LeafCertificateType::V2G) {
         cert_path = this->directories.secc_leaf_cert_directory;
         key_path = this->directories.secc_leaf_key_directory;
+    } else {
+        throw std::runtime_error("Attempt to update leaf certificate for non CSMS/V2G certificate!");
     }
 
     try {
@@ -415,8 +419,8 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
 
         // Internal since we already acquired the lock
         const auto result = this->verify_certificate_internal(certificate_chain, certificate_type);
-        if (result != InstallCertificateResult::Accepted) {
-            return result;
+        if (result != CertificateValidationResult::Valid) {
+            return to_install_certificate_result(result);
         }
 
         // First certificate is always the leaf as per the spec
@@ -644,6 +648,42 @@ OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
         response.ocsp_request_data_list = ocsp_request_data_list;
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not get ocsp cache, certificate load failure: " << e.what();
+    }
+
+    return response;
+}
+
+OCSPRequestDataList EvseSecurity::get_ocsp_request_data(const std::string& certificate_chain,
+                                                        const CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    OCSPRequestDataList response;
+    std::vector<OCSPRequestData> ocsp_request_data_list;
+
+    try {
+        X509CertificateBundle leaf_bundle(certificate_chain, EncodingFormat::PEM);
+        X509CertificateBundle root_bundle(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+
+        auto full_list = root_bundle.split();
+        const auto leaf_certificates = leaf_bundle.split();
+        for (const auto& certif : leaf_certificates) {
+            full_list.push_back(std::move(certif));
+        }
+        X509CertificateHierarchy full_hierarchy = X509CertificateHierarchy::build_hierarchy(full_list);
+
+        for (const auto& certificate : leaf_certificates) {
+            std::string responder_url = certificate.get_responder_url();
+            if (!responder_url.empty()) {
+                auto certificate_hash_data = full_hierarchy.get_certificate_hash(certificate);
+                OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
+                ocsp_request_data_list.push_back(ocsp_request_data);
+            }
+        }
+
+        response.ocsp_request_data_list = ocsp_request_data_list;
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not get ocsp cache, certificate load failure: " << e.what()
+                    << " for chain type: " << conversions::ca_certificate_type_to_string(certificate_type);
     }
 
     return response;
@@ -1065,39 +1105,52 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
     return false;
 }
 
-InstallCertificateResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
-                                                          LeafCertificateType certificate_type) {
+CertificateValidationResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
+                                                             LeafCertificateType certificate_type) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
     return verify_certificate_internal(certificate_chain, certificate_type);
 }
 
-InstallCertificateResult EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
-                                                                   LeafCertificateType certificate_type) {
+CertificateValidationResult EvseSecurity::verify_certificate_internal(const std::string& certificate_chain,
+                                                                      LeafCertificateType certificate_type) {
     try {
         X509CertificateBundle certificate(certificate_chain, EncodingFormat::PEM);
         std::vector<X509Wrapper> _certificate_chain = certificate.split();
         if (_certificate_chain.empty()) {
-            return InstallCertificateResult::InvalidFormat;
+            return CertificateValidationResult::Unknown;
         }
 
         const auto leaf_certificate = _certificate_chain.at(0);
         std::vector<X509Handle*> parent_certificates;
         fs::path store;
 
+        // Retrieve the hierarchy in order to check if the chain contains a root certificate
+        X509CertificateHierarchy& hierarchy = certificate.get_certficate_hierarchy();
+
+        // Make sure that an added root certificate is excluded and taken from the bundle
         for (size_t i = 1; i < _certificate_chain.size(); i++) {
-            parent_certificates.emplace_back(_certificate_chain[i].get());
+            const auto& cert = _certificate_chain[i];
+            if (hierarchy.is_root(cert)) {
+                EVLOG_warning << "ignore root certificate: " << cert.get_common_name();
+            } else {
+                parent_certificates.emplace_back(cert.get());
+            }
         }
 
         if (certificate_type == LeafCertificateType::CSMS) {
             store = this->ca_bundle_path_map.at(CaCertificateType::CSMS);
         } else if (certificate_type == LeafCertificateType::V2G) {
             store = this->ca_bundle_path_map.at(CaCertificateType::V2G);
-        } else {
+        } else if (certificate_type == LeafCertificateType::MF)
             store = this->ca_bundle_path_map.at(CaCertificateType::MF);
+        else if (certificate_type == LeafCertificateType::MO) {
+            store = this->ca_bundle_path_map.at(CaCertificateType::MO);
+        } else {
+            throw std::runtime_error("Could not convert LeafCertificateType to CaCertificateType during verification!");
         }
 
-        CertificateValidationError validated{};
+        CertificateValidationResult validated{};
 
         if (fs::is_directory(store)) {
             // In case of a directory load the certificates manually and add them
@@ -1122,14 +1175,10 @@ InstallCertificateResult EvseSecurity::verify_certificate_internal(const std::st
                                                                       std::nullopt, store);
         }
 
-        if (validated != CertificateValidationError::NoError) {
-            return to_install_certificate_result(validated);
-        }
-
-        return InstallCertificateResult::Accepted;
+        return validated;
     } catch (const CertificateLoadException& e) {
-        EVLOG_warning << "Could not load update leaf certificate because of invalid format";
-        return InstallCertificateResult::InvalidFormat;
+        EVLOG_warning << "Could not validate certificate chain because of invalid format";
+        return CertificateValidationResult::Unknown;
     }
 }
 

@@ -98,7 +98,7 @@ TEST_F(OpenSSLSupplierTest, x509_verify_certificate_chain) {
 
     auto res = OpenSSLSupplier::x509_verify_certificate_chain(res_leaf[0].get(), parents, true, std::nullopt,
                                                               "pki/root_cert.pem");
-    ASSERT_EQ(res, CertificateValidationError::NoError);
+    ASSERT_EQ(res, CertificateValidationResult::Valid);
 }
 
 TEST_F(OpenSSLSupplierTest, x509_generate_csr) {

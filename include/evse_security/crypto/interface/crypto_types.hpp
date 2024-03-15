@@ -10,16 +10,6 @@
 
 namespace evse_security {
 
-enum class CertificateValidationError {
-    NoError,
-    Expired,
-    InvalidSignature,
-    IssuerNotFound,
-    InvalidLeafSignature,
-    InvalidChain,
-    Unknown,
-};
-
 enum class CryptoKeyType {
     EC_prime256v1, // Default EC. P-256, ~equiv to rsa 3072
     EC_secp384r1,  // P-384, ~equiv to rsa 7680

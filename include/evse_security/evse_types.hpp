@@ -25,7 +25,8 @@ enum class CaCertificateType {
 enum class LeafCertificateType {
     CSMS,
     V2G,
-    MF
+    MF,
+    MO,
 };
 
 enum class CertificateType {
@@ -42,7 +43,16 @@ enum class HashAlgorithm {
     SHA512,
 };
 
-// the following 3 enum classes should go into evse_security
+enum class CertificateValidationResult {
+    Valid,
+    Expired,
+    InvalidSignature,
+    IssuerNotFound,
+    InvalidLeafSignature,
+    InvalidChain,
+    Unknown,
+};
+
 enum class InstallCertificateResult {
     InvalidSignature,
     InvalidCertificateChain,
@@ -61,7 +71,6 @@ enum class DeleteCertificateResult {
     NotFound,
 };
 
-// why Status here and not Result as before?
 enum class GetInstalledCertificatesStatus {
     Accepted,
     NotFound,
