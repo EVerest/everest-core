@@ -834,15 +834,6 @@ impl generated::OnReadySubscriber for IskraMeter {
         print_spec(&ready_state.read_device_model(), "device model");
         print_spec(&ready_state.read_device_serial(), "device serial");
 
-        let public_key = ready_state.read_public_key();
-        match public_key {
-            Ok(public_key) => {
-                log::info!("Publishing public_key: {}", public_key);
-                let _ = publishers.meter.public_key(public_key);
-            }
-            Err(e) => log::error!("Could not read public_key {:?}", e),
-        }
-
         let ready_state_clone = ready_state.clone();
         let power_meter_clone = publishers.meter.clone();
         std::thread::spawn(move || loop {
