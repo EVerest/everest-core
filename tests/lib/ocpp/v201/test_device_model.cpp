@@ -45,5 +45,40 @@ TEST_F(DeviceModelTest, test_allow_zero) {
     ASSERT_EQ(r, 0);
 }
 
+TEST_F(DeviceModelTest, test_component_as_key_in_map) {
+    std::map<Component, int32_t> components_to_ints;
+
+    const Component base_comp = {.name = "Foo"};
+    components_to_ints[base_comp] = 1;
+
+    const Component different_instance_comp = {
+        .name = "Foo",
+        .instance = "bar",
+    };
+    const Component different_evse_comp = {
+        .name = "Foo",
+        .evse = EVSE{.id = 0},
+    };
+    const Component different_evse_and_instance_comp = {
+        .name = "Foo",
+        .evse = EVSE{.id = 0},
+        .instance = "bar",
+    };
+    const Component comp_with_custom_data = {
+        .name = "Foo",
+        .customData = CustomData{.vendorId = "Baz"},
+    };
+    const Component different_name_comp = {
+        .name = "Bar",
+    };
+
+    EXPECT_EQ(components_to_ints.find(base_comp)->second, 1);
+    EXPECT_EQ(components_to_ints.find(different_instance_comp), components_to_ints.end());
+    EXPECT_EQ(components_to_ints.find(different_evse_comp), components_to_ints.end());
+    EXPECT_EQ(components_to_ints.find(different_evse_and_instance_comp), components_to_ints.end());
+    EXPECT_EQ(components_to_ints.find(comp_with_custom_data)->second, 1);
+    EXPECT_EQ(components_to_ints.find(different_name_comp), components_to_ints.end());
+}
+
 } // namespace v201
 } // namespace ocpp
