@@ -63,7 +63,7 @@ jobs:
           docker run \
           --volume "$(pwd):/ext" \
           --name unit-tests-container \
-          build-image run-script run-unit-tests
+          build-image run-script run_unit_tests
       - name: Create integration-image
         run: |
           docker run \
