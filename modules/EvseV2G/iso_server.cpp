@@ -1220,7 +1220,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             }
         }
 
-        std::string contract_cert_chain_pem = "";
         /* Only if certificate chain verification should be done locally by the EVSE */
         if (conn->ctx->session.verify_contract_cert_chain == true) {
             std::string v2g_root_cert_path = conn->ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
@@ -1260,26 +1259,29 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
             dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
         } else {
-            // Save the certificate chain in a variable in PEM format to publish it
-            mbedtls_x509_crt* crt = &conn->ctx->session.contract.crt;
-            unsigned char* base64Buffer = NULL;
-            size_t olen;
+        }
 
-            while (crt != nullptr && crt->version != 0) {
-                mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
-                base64Buffer = static_cast<unsigned char*>(malloc(olen));
-                if ((base64Buffer == NULL) ||
-                    ((mbedtls_base64_encode(base64Buffer, olen, &olen, crt->raw.p, crt->raw.len)) != 0)) {
-                    dlog(DLOG_LEVEL_ERROR, "Unable to encode certificate chain");
-                    break;
-                }
-                contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
-                contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
-                contract_cert_chain_pem.append("\n-----END CERTIFICATE-----\n");
+        // initialize contract cert chain to retrieve ocsp request data
+        std::string contract_cert_chain_pem = "";
+        // Save the certificate chain in a variable in PEM format to publish it
+        mbedtls_x509_crt* crt = &conn->ctx->session.contract.crt;
+        unsigned char* base64Buffer = NULL;
+        size_t olen;
 
-                free(base64Buffer);
-                crt = crt->next;
+        while (crt != nullptr && crt->version != 0) {
+            mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
+            base64Buffer = static_cast<unsigned char*>(malloc(olen));
+            if ((base64Buffer == NULL) ||
+                ((mbedtls_base64_encode(base64Buffer, olen, &olen, crt->raw.p, crt->raw.len)) != 0)) {
+                dlog(DLOG_LEVEL_ERROR, "Unable to encode certificate chain");
+                break;
             }
+            contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
+            contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
+            contract_cert_chain_pem.append("\n-----END CERTIFICATE-----\n");
+
+            free(base64Buffer);
+            crt = crt->next;
         }
 
         generate_random_data(&conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);
@@ -1287,12 +1289,18 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
         conn->ctx->session.contract.valid_crt = true;
 
+        const auto ocsp_response = conn->ctx->r_security->call_get_ocsp_request_data(contract_cert_chain_pem);
+        const auto certificate_hash_data_info_vector = convert_to_certificate_hash_data_info_vector(ocsp_response);
+
         // Publish the provided signature certificate chain and eMAID from EVCC
         // to receive PnC authorization
         types::authorization::ProvidedIdToken ProvidedIdToken;
         ProvidedIdToken.id_token = {std::string(cert_emaid), types::authorization::IdTokenType::eMAID};
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
-        if (contract_cert_chain_pem.empty() == false) {
+        ProvidedIdToken.iso15118CertificateHashData = certificate_hash_data_info_vector;
+        if (conn->ctx->session.verify_contract_cert_chain ==
+            false) { // chain has not been verified by this module, so we append to contract to the ProvidedIdToken so
+                     // that it can be verified in later stages of the authorization process
             ProvidedIdToken.certificate = contract_cert_chain_pem;
         }
         conn->ctx->p_charger->publish_Require_Auth_PnC(ProvidedIdToken);

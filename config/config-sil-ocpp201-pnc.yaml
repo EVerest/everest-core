@@ -4,7 +4,7 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
-      verify_contract_cert_chain: true
+      verify_contract_cert_chain: false
     connections:
       security:
         - module_id: evse_security
@@ -137,19 +137,13 @@ active_modules:
         - module_id: evse_manager_2
           implementation_id: evse
   ocpp:
-    module: OCPP
-    config_module:
-      ChargePointConfigPath: config-docker.json
-      PublishChargingScheduleIntervalS: 0
+    module: OCPP201
     connections:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
-      reservation:
-        - module_id: auth
-          implementation_id: reservation
       auth:
         - module_id: auth
           implementation_id: main
