@@ -69,9 +69,9 @@ jobs:
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
-          build-image run-script test_and_install
+          build-image run-script prepare_integration_tests
           docker commit test-container integration-image
       - name: Run integration tests
         run: |
           pushd source/.ci/e2e
-          docker-compose run e2e-test-server run-script tests
+          docker-compose run e2e-test-server run-script run_integration_tests
