@@ -241,7 +241,8 @@ impl TransactionStopResponse {
 /// for details.
 ///
 /// The struct does not implement everything and also our config does not
-/// implement everything. Extend it as needed.
+/// implement everything. The allowed fields (and which can be set by the user)
+/// are defined under the Iskra's manual chapter 6.5.15.
 struct OcmfData {
     #[serde(rename = "FV")]
     /// Version of the data format in the representation.
@@ -339,13 +340,23 @@ impl Default for OcmfData {
 /// Conversion from the EVerest config to the OcmfData.
 impl From<&ModuleConfig> for OcmfData {
     fn from(value: &ModuleConfig) -> Self {
+        // Below we have to replace the `|` with something (here whitespace),
+        // since otherwise the transpacency tool will not accept the signed
+        // data. See https://safe-ev.org/de/transparenzsoftware/e-mobilist/.
+        let sanitize = |user_string: &str| {
+            if user_string.contains("|") {
+                log::warn!("Removing the forbidden symbol`|` from {user_string}");
+            }
+            user_string.replace("|", " ")
+        };
+
         OcmfData {
-            format_version: value.ocmf_format_version.clone(),
-            gateway_identification: value.ocmf_gateway_identification.clone(),
-            gateway_serial: value.ocmf_gateway_serial.clone(),
-            gateway_version: value.ocmf_gateway_version.clone(),
-            charge_point_identification_type: value.ocmf_charge_point_identification_type.clone(),
-            charge_point_identification: value.ocmf_charge_point_identification.clone(),
+            format_version: sanitize(&value.ocmf_format_version),
+            gateway_identification: sanitize(&value.ocmf_gateway_identification),
+            gateway_serial: sanitize(&value.ocmf_gateway_serial),
+            gateway_version: sanitize(&value.ocmf_gateway_version),
+            charge_point_identification_type: sanitize(&value.ocmf_charge_point_identification_type),
+            charge_point_identification: sanitize(&value.ocmf_charge_point_identification),
             ..Default::default()
         }
     }
@@ -625,7 +636,6 @@ impl ReadyState {
         ocmf_data.identification_data = format!("{} {}", evse_id, create_random_meter_session_id());
 
         let message = everest_serde_json::to_string(&ocmf_data)?;
-        println!("{message}");
         let data = string_to_vec(&message);
         self.write_multiple_registers(7100, &data)?;
         // write bytes
