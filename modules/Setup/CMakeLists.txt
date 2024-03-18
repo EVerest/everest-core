@@ -23,7 +23,7 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
-if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
     add_subdirectory(tests)
     set(CMAKE_BUILD_TYPE Debug)

@@ -11,8 +11,6 @@ ev_setup_cpp_module()
 
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 # insert your custom targets and additional config variables here
-option(LEMDCBM_BUILD_TESTS "Build unit tests for LEM DCBM module" OFF)
-
 target_link_libraries(${MODULE_NAME} PRIVATE CURL::libcurl)
 
 target_sources(${MODULE_NAME}
@@ -30,7 +28,7 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
-if(LEMDCBM_BUILD_TESTS)
+if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

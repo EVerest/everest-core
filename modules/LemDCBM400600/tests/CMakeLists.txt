@@ -1,9 +1,10 @@
-
-add_executable(test_lem_dcbm_400600_controller
+set(TEST_TARGET_NAME ${PROJECT_NAME}_lem_dcbm_400600_controller_tests)
+add_executable(${TEST_TARGET_NAME}
         test_lem_dcbm_400600_controller.cpp
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_400600_controller.cpp"
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_time_sync_helper.cpp"
 )
+add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
 
 set(INCLUDE_DIR
         "main"
@@ -13,16 +14,14 @@ set(INCLUDE_DIR
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
-find_package(GTest REQUIRED)
-
-target_include_directories(test_lem_dcbm_400600_controller PRIVATE
+target_include_directories(${TEST_TARGET_NAME} PRIVATE
         tests
         ${INCLUDE_DIR}
         ${GENERATED_INCLUDE_DIR}
 )
 
 #
-target_link_libraries(test_lem_dcbm_400600_controller PRIVATE
+target_link_libraries(${TEST_TARGET_NAME} PRIVATE
         GTest::gmock_main
         everest::timer
         everest::framework
@@ -31,15 +30,17 @@ target_link_libraries(test_lem_dcbm_400600_controller PRIVATE
 )
 
 
-add_test(test_lem_dcbm_400600_controller test_lem_dcbm_400600_controller)
-
+add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 ## Time sync helper test
-add_executable(test_lem_time_sync_helper
+set(TEST_TARGET_NAME ${PROJECT_NAME}_lem_time_sync_helper_tests)
+add_executable(${TEST_TARGET_NAME}
         test_lem_dcbm_time_sync_helper.cpp
         "${PROJECT_SOURCE_DIR}/modules/LemDCBM400600/main/lem_dcbm_time_sync_helper.cpp"
 )
 
+add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
+
 set(INCLUDE_DIR
         "main"
         "tests"
@@ -48,16 +49,14 @@ set(INCLUDE_DIR
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
-find_package(GTest REQUIRED)
-
-target_include_directories(test_lem_time_sync_helper PRIVATE
+target_include_directories(${TEST_TARGET_NAME} PRIVATE
         tests
         ${INCLUDE_DIR}
         ${GENERATED_INCLUDE_DIR}
 )
 
 #
-target_link_libraries(test_lem_time_sync_helper PRIVATE
+target_link_libraries(${TEST_TARGET_NAME} PRIVATE
         GTest::gmock_main
         everest::timer
         everest::framework
@@ -65,7 +64,7 @@ target_link_libraries(test_lem_time_sync_helper PRIVATE
         CURL::libcurl
 )
 
-add_test(test_lem_dcbm_time_sync_helper test_lem_dcbm_time_sync_helper)
+add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 
 ## http client integration client

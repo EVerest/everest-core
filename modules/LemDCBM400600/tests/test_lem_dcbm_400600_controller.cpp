@@ -303,7 +303,7 @@ TEST_F(LemDCBM400600ControllerTest, test_stop_transaction) {
 
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "OK");
-    EXPECT_EQ(res.ocmf, "mock_ocmf_string");
+    EXPECT_EQ(res.signed_meter_value.value().signed_meter_data, "mock_ocmf_string");
 }
 
 // \brief Test a failed stop transaction with the DCBM returning an invalid response
@@ -324,7 +324,7 @@ TEST_P(LemDCBM400600ControllerTestInvalidResponses, test_stop_transaction_fail_i
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to stop transaction mock_transaction_id:.*"));
-    EXPECT_TRUE(res.ocmf->empty());
+    EXPECT_FALSE(res.signed_meter_value.has_value());
 }
 
 // Setup parametrized invalid responses
@@ -354,7 +354,7 @@ TEST_F(LemDCBM400600ControllerTest, test_stop_transaction_http_fail) {
     // Verify
     EXPECT_EQ(transaction_request_status_to_string(res.status), "UNEXPECTED_ERROR");
     EXPECT_THAT(res.error.value(), testing::MatchesRegex("Failed to stop transaction mock_transaction_id.*"));
-    EXPECT_TRUE(res.ocmf->empty());
+    EXPECT_FALSE(res.signed_meter_value.has_value());
 }
 
 //****************************************************************
