@@ -17,6 +17,10 @@
 
 #include "ld-ev.hpp"
 
+#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
+#include <gtest/gtest_prod.h>
+#endif
+
 #include <chrono>
 #include <mutex>
 #include <queue>
@@ -61,11 +65,25 @@ struct ActiveErrors {
         std::atomic_bool VendorError{false};
     } bsp;
 
+    inline bool bsp_any_set() {
+        return bsp.DiodeFault || bsp.VentilationNotAvailable || bsp.BrownOut || bsp.EnergyManagement ||
+               bsp.PermanentFault || bsp.MREC2GroundFailure || bsp.MREC4OverCurrentFailure || bsp.MREC5OverVoltage ||
+               bsp.MREC6UnderVoltage || bsp.MREC8EmergencyStop || bsp.MREC10InvalidVehicleMode ||
+               bsp.MREC14PilotFault || bsp.MREC15PowerLoss || bsp.MREC17EVSEContactorFault ||
+               bsp.MREC19CableOverTempStop || bsp.MREC20PartialInsertion || bsp.MREC23ProximityFault ||
+               bsp.MREC24ConnectorVoltageHigh || bsp.MREC25BrokenLatch || bsp.MREC26CutCable || bsp.VendorError;
+    }
+
     struct evse_manager_errors {
         std::atomic_bool MREC4OverCurrentFailure{false};
         std::atomic_bool Internal{false};
         std::atomic_bool PowermeterTransactionStartFailed{false};
     } evse_manager;
+
+    inline bool evse_manager_any_set() {
+        return evse_manager.MREC4OverCurrentFailure || evse_manager.Internal ||
+               evse_manager.PowermeterTransactionStartFailed;
+    }
 
     struct ac_rcd_errors {
         std::atomic_bool MREC2GroundFailure{false};
@@ -74,6 +92,10 @@ struct ActiveErrors {
         std::atomic_bool AC{false};
         std::atomic_bool DC{false};
     } ac_rcd;
+
+    inline bool ac_rcd_any_set() {
+        return ac_rcd.MREC2GroundFailure || ac_rcd.VendorError || ac_rcd.Selftest || ac_rcd.AC || ac_rcd.DC;
+    }
 
     struct connector_lock_errors {
         std::atomic_bool ConnectorLockCapNotCharged{false};
@@ -85,19 +107,19 @@ struct ActiveErrors {
         std::atomic_bool VendorError{false};
     } connector_lock;
 
-    bool all_cleared() {
-        return not(bsp.DiodeFault or bsp.VentilationNotAvailable or bsp.BrownOut or bsp.EnergyManagement or
-                   bsp.PermanentFault or bsp.MREC2GroundFailure or bsp.MREC4OverCurrentFailure or
-                   bsp.MREC5OverVoltage or bsp.MREC6UnderVoltage or bsp.MREC8EmergencyStop or
-                   bsp.MREC10InvalidVehicleMode or bsp.MREC14PilotFault or bsp.MREC15PowerLoss or
-                   bsp.MREC17EVSEContactorFault or bsp.MREC19CableOverTempStop or bsp.MREC20PartialInsertion or
-                   bsp.MREC23ProximityFault or bsp.MREC24ConnectorVoltageHigh or bsp.MREC25BrokenLatch or
-                   bsp.MREC26CutCable or evse_manager.MREC4OverCurrentFailure or evse_manager.Internal or
-                   evse_manager.PowermeterTransactionStartFailed or ac_rcd.MREC2GroundFailure or ac_rcd.VendorError or
-                   ac_rcd.Selftest or ac_rcd.AC or ac_rcd.DC or connector_lock.ConnectorLockCapNotCharged or
-                   connector_lock.ConnectorLockUnexpectedOpen or connector_lock.ConnectorLockUnexpectedClose or
-                   connector_lock.ConnectorLockFailedLock or connector_lock.ConnectorLockFailedUnlock or
-                   connector_lock.MREC1ConnectorLockFailure or connector_lock.VendorError);
+    inline bool connector_lock_any_set() {
+        return connector_lock.ConnectorLockCapNotCharged || connector_lock.ConnectorLockUnexpectedOpen ||
+               connector_lock.ConnectorLockUnexpectedClose || connector_lock.ConnectorLockFailedLock ||
+               connector_lock.ConnectorLockFailedUnlock || connector_lock.MREC1ConnectorLockFailure ||
+               connector_lock.VendorError;
+    }
+
+    inline bool any_set() {
+        return bsp_any_set() || evse_manager_any_set() || ac_rcd_any_set() || connector_lock_any_set();
+    }
+
+    inline bool all_cleared() {
+        return !any_set();
     }
 };
 
@@ -133,17 +155,21 @@ private:
     const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd;
     const std::unique_ptr<evse_managerImplBase>& p_evse;
 
-    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum evse_error);
     bool modify_error_connector_lock(const Everest::error::Error& error, bool active,
-                                     types::evse_manager::ErrorEnum& evse_error);
+                                     types::evse_manager::ErrorEnum evse_error);
     bool modify_error_ac_rcd(const Everest::error::Error& error, bool active,
-                             types::evse_manager::ErrorEnum& evse_error);
+                             types::evse_manager::ErrorEnum evse_error);
 
     bool modify_error_evse_manager(const std::string& error_type, bool active,
-                                   types::evse_manager::ErrorEnum& evse_error);
+                                   types::evse_manager::ErrorEnum evse_error);
     bool hlc{false};
 
     ActiveErrors active_errors;
+
+#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
+    FRIEND_TEST(ErrorHandlingTest, vendor);
+#endif
 };
 
 } // namespace module

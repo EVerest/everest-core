@@ -298,7 +298,7 @@ void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
 }
 
 bool ErrorHandling::modify_error_bsp(const Everest::error::Error& error, bool active,
-                                     types::evse_manager::ErrorEnum& evse_error) {
+                                     types::evse_manager::ErrorEnum evse_error) {
     const std::string& error_type = error.type;
 
     if (active) {
@@ -442,7 +442,7 @@ bool ErrorHandling::modify_error_bsp(const Everest::error::Error& error, bool ac
 };
 
 bool ErrorHandling::modify_error_connector_lock(const Everest::error::Error& error, bool active,
-                                                types::evse_manager::ErrorEnum& evse_error) {
+                                                types::evse_manager::ErrorEnum evse_error) {
     const std::string& error_type = error.type;
 
     if (active) {
@@ -486,7 +486,7 @@ bool ErrorHandling::modify_error_connector_lock(const Everest::error::Error& err
 };
 
 bool ErrorHandling::modify_error_ac_rcd(const Everest::error::Error& error, bool active,
-                                        types::evse_manager::ErrorEnum& evse_error) {
+                                        types::evse_manager::ErrorEnum evse_error) {
     const std::string& error_type = error.type;
 
     if (active) {
@@ -536,7 +536,7 @@ bool ErrorHandling::modify_error_ac_rcd(const Everest::error::Error& error, bool
 };
 
 bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, bool active,
-                                              types::evse_manager::ErrorEnum& evse_error) {
+                                              types::evse_manager::ErrorEnum evse_error) {
     if (error_type == "evse_manager/MREC4OverCurrentFailure") {
         active_errors.bsp.MREC4OverCurrentFailure = active;
         evse_error = types::evse_manager::ErrorEnum::MREC4OverCurrentFailure;
@@ -554,7 +554,7 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
     } else {
         return false; // Error does not stop charging, ignored here
     }
-    return true;      // Error stops charging
+    return true; // Error stops charging
 };
 
 } // namespace module

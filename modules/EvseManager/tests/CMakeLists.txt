@@ -10,7 +10,13 @@ target_include_directories(${TEST_TARGET_NAME} PUBLIC
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
     ErrorHandlingTest.cpp
+    ../ErrorHandling.cpp
 )
+
+target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
+    BUILD_TESTING_MODULE_EVSE_MANAGER
+)
+
 
 find_package(GTest REQUIRED)
 

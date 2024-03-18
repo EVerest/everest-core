@@ -70,15 +70,13 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
         signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
-        {
-            std::thread error_thread([this]() {
-                Everest::scoped_lock_timeout lock(state_machine_mutex,
-                                                  Everest::MutexDescription::Charger_signal_error_cleared);
-                shared_context.error_prevent_charging_flag = false;
-                shared_context.contactor_welded = false;
-            });
-            error_thread.detach();
-        }
+        std::thread error_thread([this]() {
+            Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                              Everest::MutexDescription::Charger_signal_error_cleared);
+            shared_context.error_prevent_charging_flag = false;
+            shared_context.contactor_welded = false;
+        });
+        error_thread.detach();
     });
 }
 
