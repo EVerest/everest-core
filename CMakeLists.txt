@@ -52,7 +52,7 @@ option(BUILD_DEV_TESTS "Build dev tests" OFF)
 # Already include CTest here to allow it to find tests defined in subdirectories like lib and modules
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
-    enable_testing()
+
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
     evc_include(CodeCoverage)
