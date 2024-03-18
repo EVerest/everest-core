@@ -24,7 +24,7 @@ jobs:
         image_name: [everest-ci-env, everest-clang-format]
     uses: ./.github/workflows/deploy-single-docker-image.yml
     with:
-      force_rebuild: ${{ inputs.force_rebuild || false }}
+      force_rebuild: ${{ inputs.force_rebuild || (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/' )) || false }}
       image_name: ${{ matrix.image_name }}
       docker_registry: ghcr.io
       github_ref_before: ${{ github.event.before }}

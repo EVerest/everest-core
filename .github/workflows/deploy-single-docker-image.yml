@@ -42,7 +42,7 @@ jobs:
     - name: Checkout Dockerfile
       uses: actions/checkout@v3
       with:
-        repository: everest/everest-utils 
+        repository: ${{ github.repository }} 
         path: everest-utils
         ref: ${{ inputs.github_ref_after }}
         token: ${{secrets.SA_GITHUB_PAT}}
@@ -62,7 +62,7 @@ jobs:
     - name: Checkout Dockerfile
       uses: actions/checkout@v3
       with:
-        repository: everest/everest-utils
+        repository: ${{ github.repository }} 
         path: everest-utils
         ref: ${{github.ref}}
         token: ${{secrets.SA_GITHUB_PAT}}
@@ -82,7 +82,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: ${{ inputs.docker_registry }}/everest/${{ inputs.image_name }}
+        images: ${{ inputs.docker_registry }}/${{ github.repository_owner }}/${{ inputs.image_name }}
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
       with:
