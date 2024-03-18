@@ -55,9 +55,17 @@ jobs:
           --volume "$(pwd):/ext" \
           --name compile-container \
           build-kit run-script compile
-      - name: Create integration-image
+      - name: Commit compile-container
         run: |
           docker commit compile-container build-image
+      - name: Run unit tests
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name unit-tests-container \
+          build-image run-script run-unit-tests
+      - name: Create integration-image
+        run: |
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
