@@ -11,7 +11,6 @@ types:
     type: string
     minLength: 3
     maxLength: 3
-    example: EUR
     enum:
       # 784, UAE Dirham, UNITED ARAB EMIRATES (THE)
       - AED
