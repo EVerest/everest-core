@@ -1258,7 +1258,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             }
 
             dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
-        } else {
         }
 
         // initialize contract cert chain to retrieve ocsp request data
