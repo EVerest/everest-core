@@ -438,7 +438,8 @@ bool ErrorHandling::modify_error_bsp(const Everest::error::Error& error, bool ac
         }
         return false;
     }
-    return true; // Error stops charging
+    // Error stops charging
+    return true;
 };
 
 bool ErrorHandling::modify_error_connector_lock(const Everest::error::Error& error, bool active,
@@ -482,7 +483,8 @@ bool ErrorHandling::modify_error_connector_lock(const Everest::error::Error& err
         }
         return false;
     }
-    return true; // Error stops charging
+    // Error stops charging
+    return true;
 };
 
 bool ErrorHandling::modify_error_ac_rcd(const Everest::error::Error& error, bool active,
@@ -532,7 +534,8 @@ bool ErrorHandling::modify_error_ac_rcd(const Everest::error::Error& error, bool
         }
         return false;
     }
-    return true; // Error stops charging
+    // Error stops charging
+    return true;
 };
 
 bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, bool active,
@@ -552,9 +555,11 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
         }
 
     } else {
-        return false; // Error does not stop charging, ignored here
+        // Error does not stop charging, ignored here
+        return false;
     }
-    return true; // Error stops charging
+    // Error stops charging
+    return true;
 };
 
 } // namespace module
