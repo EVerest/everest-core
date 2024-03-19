@@ -4,6 +4,8 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
+#include <generated/types/evse_security.hpp>
+#include <generated/types/iso15118_charger.hpp>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -13,8 +15,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
-#include <generated/types/evse_security.hpp>
-#include <generated/types/iso15118_charger.hpp>
 
 #define MAX_FILE_NAME_LENGTH 100
 #define MAX_PKI_CA_LENGTH    4 /* leaf up to root certificate */
