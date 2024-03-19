@@ -55,15 +55,23 @@ jobs:
           --volume "$(pwd):/ext" \
           --name compile-container \
           build-kit run-script compile
-      - name: Create integration-image
+      - name: Commit compile-container
         run: |
           docker commit compile-container build-image
+      - name: Run unit tests
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name unit-tests-container \
+          build-image run-script run_unit_tests
+      - name: Create integration-image
+        run: |
           docker run \
           --volume "$(pwd):/ext" \
           --name test-container \
-          build-image run-script test_and_install
+          build-image run-script prepare_integration_tests
           docker commit test-container integration-image
       - name: Run integration tests
         run: |
           pushd source/.ci/e2e
-          docker-compose run e2e-test-server run-script tests
+          docker-compose run e2e-test-server run-script run_integration_tests

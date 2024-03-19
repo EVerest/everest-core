@@ -49,6 +49,17 @@ endif()
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
 
+# Already include CTest here to allow it to find tests defined in subdirectories like lib and modules
+if(EVEREST_CORE_BUILD_TESTING)
+    include(CTest)
+
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+
+    evc_include(CodeCoverage)
+
+    append_coverage_compiler_flags()
+endif()
+
 include(ev-define-dependency)
 
 include("module-dependencies.cmake")
@@ -125,14 +136,6 @@ endif()
 
 # testing
 if(EVEREST_CORE_BUILD_TESTING)
-    include(CTest)
-    enable_testing()
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
-
     add_subdirectory(tests)
 
     setup_target_for_coverage_gcovr_html(

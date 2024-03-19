@@ -28,7 +28,7 @@ EvseSecurity::update_leaf_certificate(const std::string& certificate_chain,
         this->r_security.call_update_leaf_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
 
-ocpp::InstallCertificateResult
+ocpp::CertificateValidationResult
 EvseSecurity::verify_certificate(const std::string& certificate_chain,
                                  const ocpp::CertificateSigningUseEnum& certificate_type) {
     return conversions::to_ocpp(
@@ -191,6 +191,27 @@ ocpp::InstallCertificateResult to_ocpp(types::evse_security::InstallCertificateR
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::InstallCertificateResult to ocpp::InstallCertificateResult");
+    }
+}
+
+ocpp::CertificateValidationResult to_ocpp(types::evse_security::CertificateValidationResult other) {
+    switch (other) {
+    case types::evse_security::CertificateValidationResult::Valid:
+        return ocpp::CertificateValidationResult::Valid;
+    case types::evse_security::CertificateValidationResult::InvalidSignature:
+        return ocpp::CertificateValidationResult::InvalidSignature;
+    case types::evse_security::CertificateValidationResult::IssuerNotFound:
+        return ocpp::CertificateValidationResult::IssuerNotFound;
+    case types::evse_security::CertificateValidationResult::InvalidLeafSignature:
+        return ocpp::CertificateValidationResult::InvalidLeafSignature;
+    case types::evse_security::CertificateValidationResult::InvalidChain:
+        return ocpp::CertificateValidationResult::InvalidChain;
+    case types::evse_security::CertificateValidationResult::Unknown:
+        return ocpp::CertificateValidationResult::Unknown;
+        ;
+    default:
+        throw std::runtime_error("Could not convert types::evse_security::CertificateValidationResult to "
+                                 "ocpp::CertificateValidationResult");
     }
 }
 

@@ -295,6 +295,27 @@ types::evse_security::InstallCertificateResult to_everest(evse_security::Install
     }
 }
 
+types::evse_security::CertificateValidationResult to_everest(evse_security::CertificateValidationResult other) {
+    switch (other) {
+    case evse_security::CertificateValidationResult::Valid:
+        return types::evse_security::CertificateValidationResult::Valid;
+    case evse_security::CertificateValidationResult::InvalidSignature:
+        return types::evse_security::CertificateValidationResult::InvalidSignature;
+    case evse_security::CertificateValidationResult::IssuerNotFound:
+        return types::evse_security::CertificateValidationResult::IssuerNotFound;
+    case evse_security::CertificateValidationResult::InvalidLeafSignature:
+        return types::evse_security::CertificateValidationResult::InvalidLeafSignature;
+    case evse_security::CertificateValidationResult::InvalidChain:
+        return types::evse_security::CertificateValidationResult::InvalidChain;
+    case evse_security::CertificateValidationResult::Unknown:
+        return types::evse_security::CertificateValidationResult::Unknown;
+        ;
+    default:
+        throw std::runtime_error("Could not convert evse_security::CertificateValidationResult to "
+                                 "types::evse_security::CertificateValidationResult");
+    }
+}
+
 types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCertificateResult other) {
     switch (other) {
     case evse_security::DeleteCertificateResult::Accepted:

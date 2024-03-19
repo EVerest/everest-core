@@ -46,6 +46,8 @@ public:
         timing_constants(tc), ntp_spec(std::move(ntp_spec)), unsafe_period_start_time({}) {
     }
 
+    virtual ~LemDCBMTimeSyncHelper() = default;
+
     virtual void sync_if_deadline_expired(const HttpClientInterface& httpClient);
 
     virtual void sync(const HttpClientInterface& httpClient);

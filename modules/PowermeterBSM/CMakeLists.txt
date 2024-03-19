@@ -29,7 +29,6 @@ target_link_libraries( sunspec_framework_object_lib
     )
 
 if (BUILD_DEV_TESTS)
-    find_package(GTest REQUIRED)
     add_subdirectory( tests )
 endif()
 
