@@ -2,7 +2,7 @@ name: Bazel Build
 run-name: ${{ github.actor }} is building with bazel
 on: [pull_request]
 jobs:
-  bazel-build:
+  bazel-build-and-test:
     runs-on: ubuntu-22.04
     steps:
       - run: echo branch name is ${{ github.ref }}
@@ -16,3 +16,5 @@ jobs:
       - name: Build all
         run: >
           bazelisk build //...
+      - name: Test all
+        run: bazelisk test //...

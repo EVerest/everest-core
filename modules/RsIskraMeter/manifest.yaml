@@ -1,0 +1,46 @@
+description: Iskra meter
+config:
+  powermeter_device_id:
+    description: The address of the device on the modbus
+    default: 33
+    type: integer
+  ocmf_format_version:
+    description: Version of the data format in the representation.
+    default: "1.0"
+    type: string
+  ocmf_gateway_identification:
+    description: >-
+      Identifier of the manufacturer for the system which has generated the
+      present data.
+    default: ""
+    type: string
+  ocmf_gateway_serial:
+    description: Serial number of the above mentioned system.
+    default: ""
+    type: string
+  ocmf_gateway_version:
+    description: >-
+      Version designation of the manufacturer for the software.
+    default: ""
+    type: string
+  ocmf_charge_point_identification_type:
+    description: >-
+      Type of the specification for the identification of the charge point.
+    default: "EVSEID"
+    type: string
+  ocmf_charge_point_identification:
+    description: Identification information for the charge point.
+    default: ""
+    type: string
+provides:
+  meter:
+    description: Implementation of the driver functionality
+    interface: powermeter
+requires:
+  modbus:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - embedded@qwello.eu
+enable_external_mqtt: false
