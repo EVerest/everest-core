@@ -19,6 +19,7 @@ target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
     BUILD_TESTING_MODULE_EVSE_MANAGER
 )
 
+add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
 
 find_package(GTest REQUIRED)
 
