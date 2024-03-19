@@ -734,8 +734,8 @@ impl ReadyState {
             error: Option::None,
             signed_meter_value: Some(SignedMeterValue {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
-                signing_method: "OCMF".to_string(),
-                encoding_method: String::new(),
+                signing_method: String::new(),
+                encoding_method: "OCMF".to_string(),
                 public_key: self.read_public_key().ok(),
                 timestamp: None,
             }),
@@ -783,8 +783,8 @@ impl ReadyState {
             error: Option::None,
             signed_meter_value: Some(SignedMeterValue {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
-                signing_method: "OCMF".to_string(),
-                encoding_method: String::new(),
+                signing_method: String::new(),
+                encoding_method: "OCMF".to_string(),
                 public_key: self.read_public_key().ok(),
                 timestamp: None,
             }),
