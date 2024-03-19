@@ -348,7 +348,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
-            EVLOG_info << fmt::format("Not starting standalone module: {}", module_name);
+            EVLOG_info << "Not starting standalone module: " << fmt::format(TERMINAL_STYLE_BLUE, "{}", module_name);
             continue;
         }
 
@@ -582,6 +582,22 @@ int boot(const po::variables_map& vm) {
     std::vector<std::string> standalone_modules;
     if (vm.count("standalone")) {
         standalone_modules = vm["standalone"].as<std::vector<std::string>>();
+    }
+
+    const auto& main_config = config->get_main_config();
+    for (const auto& module : main_config.items()) {
+        std::string module_id = module.key();
+        // check if standalone parameter is set
+        const auto& module_config = main_config.at(module_id);
+        if (module_config.value("standalone", false)) {
+            if (std::find(standalone_modules.begin(), standalone_modules.end(), module_id) ==
+                standalone_modules.end()) {
+                EVLOG_info << "Module " << fmt::format(TERMINAL_STYLE_BLUE, "{}", module_id)
+                           << " marked as standalone in config";
+
+                standalone_modules.push_back(module_id);
+            }
+        }
     }
 
     std::vector<std::string> ignored_modules;
