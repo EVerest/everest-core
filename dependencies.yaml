@@ -49,7 +49,7 @@ libcurl:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.9.8
+  git_tag: 86adda6
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -73,7 +73,7 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.2.0
+  git_tag: v0.2.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 # evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
 # setting it here can be misleading since it does not affect the version being used

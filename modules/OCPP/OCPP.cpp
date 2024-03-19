@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+#include "generated/types/ocpp.hpp"
 #include <fmt/core.h>
 #include <fstream>
 
 #include <boost/process.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
+#include <optional>
 
 namespace module {
 
@@ -167,7 +169,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
         const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
-        const auto id_token = transaction_started.id_tag.id_token;
+        const auto id_token = transaction_started.id_tag.id_token.value;
         const auto signed_meter_value = transaction_started.signed_meter_value;
         std::optional<int32_t> reservation_id_opt = std::nullopt;
         if (transaction_started.reservation_id) {
@@ -210,7 +212,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         }
         std::optional<ocpp::CiString<20>> id_tag_opt = std::nullopt;
         if (transaction_finished.id_tag.has_value()) {
-            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token));
+            id_tag_opt.emplace(ocpp::CiString<20>(transaction_finished.id_tag.value().id_token.value));
         }
         std::optional<std::string> signed_meter_data;
         if (signed_meter_value.has_value()) {
@@ -610,7 +612,7 @@ void OCPP::ready() {
     this->charge_point->register_provide_token_callback(
         [this](const std::string& id_token, std::vector<int32_t> referenced_connectors, bool prevalidated) {
             types::authorization::ProvidedIdToken provided_token;
-            provided_token.id_token = id_token;
+            provided_token.id_token = {id_token, types::authorization::IdTokenType::Central};
             provided_token.authorization_type = types::authorization::AuthorizationType::OCPP;
             provided_token.connectors.emplace(referenced_connectors);
             provided_token.prevalidated.emplace(prevalidated);
@@ -700,6 +702,29 @@ void OCPP::ready() {
         event.info = tech_info;
         this->p_ocpp_generic->publish_security_event(event);
     });
+
+    this->charge_point->register_transaction_started_callback(
+        [this](const int32_t connector, const std::string& session_id) {
+            types::ocpp::OcppTransactionEvent tevent = {
+                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
+            };
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_updated_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
+                                                        session_id, std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
+
+    this->charge_point->register_transaction_stopped_callback(
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+            EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
+            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
+                                                        std::to_string(transaction_id)};
+            p_ocpp_generic->publish_ocpp_transaction_event(tevent);
+        });
 
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {

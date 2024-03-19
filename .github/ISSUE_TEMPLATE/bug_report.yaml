@@ -1,0 +1,57 @@
+name: Bug Report
+description: Thanks for taking the time to fill out this bug report!
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is. If applicable, add screenshots or logfiles to help explain your problem.
+    validations:
+      required: true
+  - type: dropdown
+    id: affected-domain
+    attributes:
+      label: EVerest Domain
+      description: Can you specify a specific domain is affected by the issue? Mark multiple if applicable.
+      options:
+        - Authorization
+        - Charge Control
+        - CHAdeMO
+        - Energy Management
+        - Hardware Drivers
+        - ISO15118
+        - Power Supplies
+        - OCPP
+        - OCPP1.6
+        - OCPP2.0.1
+        - Simulation
+        - SLAC
+        - Compilation
+        - Utility
+        - Testing
+        - Other
+      multiple: true
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected-module
+    attributes:
+      label: Affected EVerest Module
+      description: |
+        Please specify the module where the bug is located. If you are not sure, please leave this field empty.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: To Reproduce
+      description: |
+        If applicable describe the steps to and additional information to reproduce the behavior
+        like EVerest configuration files, EVerest version, compile options and your system information.
+
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else?
+      placeholder: Add any other context about the bug report here.

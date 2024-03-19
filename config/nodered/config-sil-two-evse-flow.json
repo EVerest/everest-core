@@ -1356,7 +1356,7 @@
         "type": "function",
         "z": "e921db8897354328",
         "name": "Swipe token",
-        "func": "if (msg.topic.indexOf('id_token') > -1) flow.set('id_token', msg.payload);\nif (msg.topic.indexOf('token_type') > -1) flow.set('token_type', msg.payload);\nif (msg.topic.indexOf('prevalidated') > -1) flow.set('prevalidated', msg.payload);\nif (msg.topic.indexOf('connectors') > -1) flow.set('connectors', msg.payload);\nif (msg.topic.indexOf('complete') > -1) {\n    msg.payload = {\n        'id_token': flow.get('id_token'),\n        'authorization_type': flow.get('token_type'),\n        'prevalidated': flow.get('prevalidated'),\n        'connectors': [flow.get('connectors')]\n    };\n    return msg;\n}\n",
+        "func": "if (msg.topic.indexOf('id_token') > -1) flow.set('id_token', msg.payload);\nif (msg.topic.indexOf('token_type') > -1) flow.set('token_type', msg.payload);\nif (msg.topic.indexOf('prevalidated') > -1) flow.set('prevalidated', msg.payload);\nif (msg.topic.indexOf('connectors') > -1) flow.set('connectors', msg.payload);\nif (msg.topic.indexOf('complete') > -1) {\n    msg.payload = {\n        'id_token': {\n    'value': flow.get('id_token'),\n 'type': 'ISO14443'\n},\n        'authorization_type': flow.get('token_type'),\n        'prevalidated': flow.get('prevalidated'),\n        'connectors': [flow.get('connectors')]\n    };\n    return msg;\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",

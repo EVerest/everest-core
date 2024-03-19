@@ -32,6 +32,7 @@ types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertific
 types::evse_security::CertificateType to_everest(evse_security::CertificateType other);
 types::evse_security::HashAlgorithm to_everest(evse_security::HashAlgorithm other);
 types::evse_security::InstallCertificateResult to_everest(evse_security::InstallCertificateResult other);
+types::evse_security::CertificateValidationResult to_everest(evse_security::CertificateValidationResult other);
 types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCertificateResult other);
 types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::GetInstalledCertificatesStatus other);
 types::evse_security::GetKeyPairStatus to_everest(evse_security::GetKeyPairStatus other);

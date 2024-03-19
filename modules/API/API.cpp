@@ -17,6 +17,10 @@ SessionInfo::SessionInfo() :
     end_energy_export_wh(0) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
+
+    uk_random_delay_remaining.countdown_s = 0;
+    uk_random_delay_remaining.current_limit_after_delay_A = 0.;
+    uk_random_delay_remaining.current_limit_during_delay_A = 0;
 }
 
 bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
@@ -190,6 +194,11 @@ void SessionInfo::set_latest_total_w(double latest_total_w) {
     this->latest_total_w = latest_total_w;
 }
 
+void SessionInfo::set_uk_random_delay_remaining(const types::uk_random_delay::CountDown& cd) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    this->uk_random_delay_remaining = cd;
+}
+
 static void to_json(json& j, const SessionInfo::Error& e) {
     j = json{{"type", e.type}, {"description", e.description}, {"severity", e.severity}};
 }
@@ -215,6 +224,14 @@ SessionInfo::operator std::string() {
                                       {"latest_total_w", this->latest_total_w},
                                       {"charging_duration_s", charging_duration_s.count()},
                                       {"datetime", Everest::Date::to_rfc3339(now)}});
+    if (uk_random_delay_remaining.countdown_s > 0) {
+        json random_delay =
+            json::object({{"remaining_s", uk_random_delay_remaining.countdown_s},
+                          {"current_limit_after_delay_A", uk_random_delay_remaining.current_limit_after_delay_A},
+                          {"current_limit_during_delay_A", uk_random_delay_remaining.current_limit_during_delay_A},
+                          {"start_time", uk_random_delay_remaining.start_time.value_or("")}});
+        session_info["uk_random_delay"] = random_delay;
+    }
 
     return session_info.dump();
 }
@@ -423,17 +440,60 @@ void API::init() {
             }
             evse->call_force_unlock(connector_id); //
         });
+
+        // Check if a uk_random_delay is connected that matches this evse_manager
+        for (auto& random_delay : this->r_random_delay) {
+            if (random_delay->module_id == evse->module_id) {
+
+                random_delay->subscribe_countdown([&session_info](const types::uk_random_delay::CountDown& s) {
+                    session_info->set_uk_random_delay_remaining(s);
+                });
+
+                std::string cmd_uk_random_delay = cmd_base + "uk_random_delay";
+                this->mqtt.subscribe(cmd_uk_random_delay, [&random_delay](const std::string& data) {
+                    if (data == "enable") {
+                        random_delay->call_enable();
+                    } else if (data == "disable") {
+                        random_delay->call_disable();
+                    } else if (data == "cancel") {
+                        random_delay->call_cancel();
+                    }
+                });
+
+                std::string uk_random_delay_set_max_duration_s = cmd_base + "uk_random_delay_set_max_duration_s";
+                this->mqtt.subscribe(uk_random_delay_set_max_duration_s, [&random_delay](const std::string& data) {
+                    int seconds = 600;
+                    try {
+                        seconds = std::stoi(data);
+                    } catch (const std::exception& e) {
+                        EVLOG_error
+                            << "Could not parse connector duration value for uk_random_delay_set_max_duration_s: "
+                            << e.what();
+                    }
+                    random_delay->call_set_duration_s(seconds);
+                });
+            }
+        }
     }
 
     std::string var_ocpp_connection_status = api_base + "ocpp/var/connection_status";
+    std::string var_ocpp_schedule = api_base + "ocpp/var/charging_schedules";
 
     if (this->r_ocpp.size() == 1) {
+
         this->r_ocpp.at(0)->subscribe_is_connected([this](bool is_connected) {
+            std::scoped_lock lock(ocpp_data_mutex);
             if (is_connected) {
                 this->ocpp_connection_status = "connected";
             } else {
                 this->ocpp_connection_status = "disconnected";
             }
+        });
+
+        this->r_ocpp.at(0)->subscribe_charging_schedules([this, &var_ocpp_schedule](json schedule) {
+            std::scoped_lock lock(ocpp_data_mutex);
+            this->ocpp_charging_schedule = schedule;
+            this->ocpp_charging_schedule_updated = true;
         });
     }
 
@@ -450,18 +510,26 @@ void API::init() {
         }
     }
 
-    this->api_threads.push_back(std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status]() {
-        auto next_tick = std::chrono::steady_clock::now();
-        while (this->running) {
-            json connectors_array = connectors;
-            this->mqtt.publish(var_connectors, connectors_array.dump());
-            this->mqtt.publish(var_info, this->charger_information.dump());
-            this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
+    this->api_threads.push_back(
+        std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status, var_ocpp_schedule]() {
+            auto next_tick = std::chrono::steady_clock::now();
+            while (this->running) {
+                json connectors_array = connectors;
+                this->mqtt.publish(var_connectors, connectors_array.dump());
+                this->mqtt.publish(var_info, this->charger_information.dump());
+                {
+                    std::scoped_lock lock(ocpp_data_mutex);
+                    this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
+                    if (this->ocpp_charging_schedule_updated) {
+                        this->ocpp_charging_schedule_updated = false;
+                        this->mqtt.publish(var_ocpp_schedule, ocpp_charging_schedule.dump());
+                    }
+                }
 
-            next_tick += NOTIFICATION_PERIOD;
-            std::this_thread::sleep_until(next_tick);
-        }
-    }));
+                next_tick += NOTIFICATION_PERIOD;
+                std::this_thread::sleep_until(next_tick);
+            }
+        }));
 }
 
 void API::ready() {

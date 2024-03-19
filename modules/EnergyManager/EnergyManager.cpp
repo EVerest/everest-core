@@ -15,6 +15,11 @@ void EnergyManager::init() {
         // Received new energy object from a child.
         std::scoped_lock lock(energy_mutex);
         energy_flow_request = e;
+
+        if (is_priority_request(e)) {
+            // trigger optimization now
+            mainloop_sleep_condvar.notify_all();
+        }
     });
 
     invoke_init(*p_main);
@@ -30,9 +35,31 @@ void EnergyManager::ready() {
                          config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
             auto optimized_values = run_optimizer(energy_flow_request);
             enforce_limits(optimized_values);
-            sleep(config.update_interval);
+            {
+                std::unique_lock<std::mutex> lock(mainloop_sleep_mutex);
+                mainloop_sleep_condvar.wait_for(lock, std::chrono::seconds(config.update_interval));
+            }
         }
     }).detach();
+}
+
+// Check if any node set the priority request flag
+bool EnergyManager::is_priority_request(const types::energy::EnergyFlowRequest& e) {
+    bool prio = e.priority_request.has_value() and e.priority_request.value();
+
+    // If this node has priority, no need to travese the tree any longer
+    if (prio) {
+        return true;
+    }
+
+    // recurse to all children
+    for (auto& c : e.children) {
+        if (is_priority_request(c)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits) {

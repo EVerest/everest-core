@@ -507,4 +507,4 @@ types:
         description: >-
           Value in the minor units of the currency.
         type: object
-        $ref: /money#/Value
+        $ref: /money#/MoneyAmount

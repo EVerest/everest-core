@@ -20,15 +20,21 @@ inline static void trim_colons_from_string(std::string& text) {
 inline static types::authorization::ProvidedIdToken create_autocharge_token(std::string token, int connector_id) {
     types::authorization::ProvidedIdToken autocharge_token;
     autocharge_token.authorization_type = types::authorization::AuthorizationType::Autocharge;
-    autocharge_token.id_token_type = types::authorization::IdTokenType::MacAddress;
     trim_colons_from_string(token);
-    autocharge_token.id_token = "VID:" + token;
+    autocharge_token.id_token = {"VID:" + token, types::authorization::IdTokenType::MacAddress};
     autocharge_token.connectors.emplace(connector_id, 1);
     return autocharge_token;
 }
 
 void EvseManager::init() {
     local_three_phases = config.three_phases;
+
+    random_delay_enabled = config.uk_smartcharging_random_delay_enable;
+    random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
+    if (random_delay_enabled) {
+        EVLOG_info << "UK Smart Charging regulations: enabled random delay with a default of "
+                   << random_delay_max_duration.load().count() << "s.";
+    }
 
     session_log.setPath(config.session_logging_path);
     session_log.setMqtt([this](json data) {
@@ -43,6 +49,7 @@ void EvseManager::init() {
     invoke_init(*p_evse);
     invoke_init(*p_energy_grid);
     invoke_init(*p_token_provider);
+    invoke_init(*p_random_delay);
 
     // check if a slac module is connected to the optional requirement
     slac_enabled = not r_slac.empty();
@@ -733,6 +740,8 @@ void EvseManager::ready() {
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);
     invoke_ready(*p_token_provider);
+    invoke_ready(*p_random_delay);
+
     if (config.ac_with_soc) {
         setup_fake_DC_mode();
     } else {
@@ -856,6 +865,7 @@ void EvseManager::ready() {
 }
 
 void EvseManager::ready_to_start_charging() {
+    timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
     charger->enable(0);
 

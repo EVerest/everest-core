@@ -34,6 +34,7 @@ public:
 protected:
     // command handler functions (virtual)
     virtual void handle_set_connection_timeout(int& connection_timeout) override;
+    virtual void handle_set_master_pass_group_id(std::string& master_pass_group_id) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

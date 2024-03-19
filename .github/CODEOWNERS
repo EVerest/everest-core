@@ -1,0 +1,31 @@
+# default option unless later match takes precedence
+* @pietfried @hikinggrass @corneliusclaussen
+
+# .github
+/.github/ @pietfried @corneliusclaussen
+
+# cmake
+/cmake/ @hikinggrass @a-w50
+
+# modules
+/modules/API/ @hikinggrass
+/modules/Auth/ @pietfried
+/modules/Energymanager/ @corneliusclaussen
+/modules/EnergyNode/ @corneliusclaussen
+/modules/EvseManager/ @corneliusclaussen @SebaLukas
+/modules/EvseSecurity/ @AssemblyJohn @pietfried
+/modules/EvseV2G/ @corneliusclaussen @SebaLukas
+/modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
+/modules/OCPP/ @hikinggrass @pietfried
+/modules/OCPP201/ @hikinggrass @pietfried
+/modules/PacketSniffer @corneliusclaussen @SebaLukas
+/modules/PyEvJosev @SebaLukas
+/modules/Setup @hikinggrass
+/modules/YetiDriver @corneliusclaussen
+/modules/simulation/ @SebaLukas
+/modules/rust_examples/ @SirVer @golovasteek @dorezyuk
+
+# Rust & Bazel
+*.rs @SirVer @golovasteek @dorezyuk
+*.bazel @SirVer @golovasteek @dorezyuk
+*.bzl @SirVer @golovasteek @dorezyuk
