@@ -9,7 +9,9 @@ target_include_directories(${TEST_TARGET_NAME} PUBLIC
 )
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
+    EnumFlagsTest.cpp
     ErrorHandlingTest.cpp
+    EventQueueTest.cpp
     ../ErrorHandling.cpp
 )
 
