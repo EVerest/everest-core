@@ -4,9 +4,6 @@ see `doc.rst`
 
 ## Tests
 
-GTest is required for building the test cases target.
-To build the target and run the tests use:
-
 ```bash
 cd everest-core
 mkdir build && cd build
