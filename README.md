@@ -36,6 +36,17 @@ make -j$(nproc) install
 make test
 ```
 
+## Certificate Structure
+
+We allow any certificate structure with the following recommendations:
+
+- Root CA certificate directories/bundles should not overlap leaf certificates
+- It is not recommended to store any SUBCAs in the root certificate bundle (if using files)
+
+**Important:** when requesting leaf certificates with [get_key_pair](https://github.com/EVerest/libevse-security/blob/5cd5f8284229ffd28ae1dfed2137ef194c39e732/lib/evse_security/evse_security.cpp#L820) care should be taken if you require the full certificate chain.
+
+If a full chain is **Leaf->SubCA2->SubCA1->Root**, it is recommended to have the root certificate in a single file, **V2G_ROOT_CA.pem** for example. The **Leaf->SubCA2->SubCA1** should be placed in a file e.g. **SECC_CERT_CHAIN.pem**. 
+  
 ## Certificate Signing Request
 
 There are two configuration options that will add a DNS name and IP address to the
@@ -44,6 +55,8 @@ By default they are not added.
 
 - `cmake -DCSR_DNS_NAME=charger.pionix.de ...` to include a DNS name
 - `cmake -DCSR_IP_ADDRESS=192.168.2.1 ...` to include an IPv4 address
+
+When receiving back a signed CSR, the library will take care to create two files, one containing the **Leaf->SubCA2->SubCA1** chain and another containing the single **Leaf**. When they both exist, the return of [get_key_pair](https://github.com/EVerest/libevse-security/blob/5cd5f8284229ffd28ae1dfed2137ef194c39e732/include/evse_security/evse_types.hpp#L126) will contain a path to both the single file and the chain file.
 
 ## TPM
 There is a configuration option to configure OpenSSL for use with a TPM.<br>

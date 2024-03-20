@@ -24,10 +24,10 @@ struct LinkPaths {
 };
 
 struct DirectoryPaths {
-    fs::path csms_leaf_cert_directory;
-    fs::path csms_leaf_key_directory;
-    fs::path secc_leaf_cert_directory;
-    fs::path secc_leaf_key_directory;
+    fs::path csms_leaf_cert_directory; /**< csms leaf certificate for OCPP shall be located in this directory */
+    fs::path csms_leaf_key_directory;  /**< csms leaf key shall be located in this directory */
+    fs::path secc_leaf_cert_directory; /**< secc leaf certificate for ISO15118 shall be located in this directory */
+    fs::path secc_leaf_key_directory;  /**< secc leaf key shall be located in this directory */
 };
 struct FilePaths {
     // bundle paths
@@ -58,10 +58,18 @@ class EvseSecurity {
 
 public:
     /// @brief Constructor initializes the certificate and key storage using the given \p file_paths for the different
-    /// PKIs. For CA certificates CA bundle files must be specified. For the SECC and CSMS leaf certificates,
-    /// directories are specified.
+    /// PKIs. For CA certificates either CA bundle files or directories containing the certificates can be specified.
+    /// For the SECC and CSMS leaf certificates, directories must be specified.
     /// @param file_paths specifies the certificate and key storage locations on the filesystem
     /// @param private_key_password optional password for encrypted private keys
+    /// @param max_fs_usage_bytes optional maximum filesystem usage for certificates. Defaults to
+    /// 'DEFAULT_MAX_FILESYSTEM_SIZE'
+    /// @param max_fs_certificate_store_entries optional maximum certificate entries. Defaults to
+    /// 'DEFAULT_MAX_CERTIFICATE_ENTRIES'
+    /// @param csr_expiry optional expiry time for a CSR entry. If the time is exceeded it will be deleted. Defaults to
+    /// 'DEFAULT_CSR_EXPIRY'
+    /// @param garbage_collect_time optional garbage collect time. How often we will delete expired CSRs and
+    /// certificates. Defaults to 'DEFAULT_GARBAGE_COLLECT_TIME'
     EvseSecurity(const FilePaths& file_paths, const std::optional<std::string>& private_key_password = std::nullopt,
                  const std::optional<std::uintmax_t>& max_fs_usage_bytes = std::nullopt,
                  const std::optional<std::uintmax_t>& max_fs_certificate_store_entries = std::nullopt,
@@ -71,15 +79,17 @@ public:
     /// @brief Destructor
     ~EvseSecurity();
 
-    /// @brief Installs the given \p certificate within the specified CA bundle file
+    /// @brief Installs the given \p certificate within the specified CA bundle file or directory if directories are
+    /// used. If the certificate already exists it will only be updated
     /// @param certificate PEM formatted CA certificate
     /// @param certificate_type specifies the CA certificate type
     /// @return result of the operation
     InstallCertificateResult install_ca_certificate(const std::string& certificate, CaCertificateType certificate_type);
 
     /// @brief Deletes the certificate specified by \p certificate_hash_data . If a CA certificate is specified, the
-    /// certificate is removed from the bundle. If a leaf certificate is specified, the file will be removed from the
-    /// filesystem
+    /// certificate is removed from the bundle or directory. If a leaf certificate is specified, the file will be
+    /// removed from the filesystem. It will also delete all certificates issued by this certificate, so that no invalid
+    /// hierarchies persisted on the filesystem
     /// @param certificate_hash_data specifies the certificate to be deleted
     /// @return result of the operation
     DeleteCertificateResult delete_certificate(const CertificateHashData& certificate_hash_data);
@@ -94,7 +104,10 @@ public:
 
     /// @brief Verifies the given \p certificate_chain for the given \p certificate_type against the respective CA
     /// certificates for the leaf and if valid installs the certificate on the filesystem. Before installing on the
-    /// filesystem, this function checks if a private key is present for the given certificate on the filesystem.
+    /// filesystem, this function checks if a private key is present for the given certificate on the filesystem. Two
+    /// files are installed, one containing the single leaf (presuming it is the first in the chain) and also the full
+    /// certificate chain. The \ref get_key_pair function will return a path to both files if they exist, the one
+    /// containing the single leaf, and the file containing the leaf including the SUBCAs if present
     /// @param certificate_chain PEM formatted certificate or certificate chain
     /// @param certificate_type type of the leaf certificate
     /// @return result of the operation
@@ -130,6 +143,7 @@ public:
     void update_ocsp_cache(const CertificateHashData& certificate_hash_data, const std::string& ocsp_response);
 
     /// @brief Indicates if a CA certificate for the given \p certificate_type is installed on the filesystem
+    /// Supports both CA certificate bundles and directories
     /// @param certificate_type
     /// @return true if CA certificate is present, else false
     bool is_ca_certificate_installed(CaCertificateType certificate_type);
@@ -162,7 +176,9 @@ public:
 
     /// @brief Searches the filesystem on the specified directories for the given \p certificate_type and retrieves the
     /// most recent certificate that is already valid and the respective key.  If no certificate is present or no key is
-    /// matching the certificate, this function returns std::nullopt
+    /// matching the certificate, this function returns a GetKeyPairStatus other than "Accepted". The function \ref
+    /// update_leaf_certificate will install two files for each leaf, one containing the single leaf and one containing
+    /// the leaf including any possible SUBCAs
     /// @param certificate_type type of the leaf certificate
     /// @param encoding specifies PEM or DER format
     /// @return contains response result
@@ -172,7 +188,9 @@ public:
     /// @return true if one of the links was updated
     bool update_certificate_links(LeafCertificateType certificate_type);
 
-    /// @brief Retrieves the PEM formatted CA bundle file for the given \p certificate_type
+    /// @brief Retrieves the PEM formatted CA bundle file for the given \p certificate_type It is not recommended to
+    /// add the SUBCAs to any root certificate bundle, but to leave them in the leaf file. See \ref
+    /// update_leaf_certificate
     /// @param certificate_type
     /// @return CA certificate file
     std::string get_verify_file(CaCertificateType certificate_type);
@@ -182,8 +200,10 @@ public:
     /// @return day count until the leaf certificate expires
     int get_leaf_expiry_days_count(LeafCertificateType certificate_type);
 
-    /// @brief Collects and deletes unfulfilled CSR private keys. If also deleting the expired
-    /// certificates, make sure the system clock is properly set for detecting expired certificates
+    /// @brief Collects and deletes unfulfilled CSR private keys. It also deletes the expired
+    /// certificates. The caller must be sure the system clock is properly set for detecting expired
+    /// certificates. A minimum of 'DEFAULT_MINIMUM_CERTIFICATE_ENTRIES' certificates to
+    /// have a safeguard against a poorly set system clock
     void garbage_collect();
 
     /// @brief Verifies the file at the given \p path using the provided \p signing_certificate and \p signature
