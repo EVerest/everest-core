@@ -160,9 +160,8 @@ static std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const
     throw NoCertificateValidException(error);
 }
 
-X509CertificateBundle get_leaf_certificates(const fs::path& cert_dir) {
-    return X509CertificateBundle(cert_dir, EncodingFormat::PEM);
-}
+// Declared here to avoid requirement of X509Wrapper include in header
+static OCSPRequestDataList get_ocsp_request_data_internal(fs::path& root_path, std::vector<X509Wrapper>& leaf_chain);
 
 std::mutex EvseSecurity::security_mutex;
 
@@ -621,69 +620,89 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
     return count;
 }
 
-OCSPRequestDataList EvseSecurity::get_ocsp_request_data() {
+OCSPRequestDataList EvseSecurity::get_v2g_ocsp_request_data() {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
+    try {
+        const auto secc_key_pair = this->get_key_pair_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
+
+        if (secc_key_pair.status != GetKeyPairStatus::Accepted or !secc_key_pair.pair.has_value()) {
+            EVLOG_error << "Could not get key pair, for v2g ocsp request!";
+            return OCSPRequestDataList();
+        }
+
+        std::vector<X509Wrapper> chain =
+            std::move(X509CertificateBundle(secc_key_pair.pair.value().certificate, EncodingFormat::PEM).split());
+        return get_ocsp_request_data_internal(this->ca_bundle_path_map.at(CaCertificateType::V2G), chain);
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not get v2g ocsp cache, certificate load failure: " << e.what();
+    }
+
+    return OCSPRequestDataList();
+}
+
+OCSPRequestDataList EvseSecurity::get_mo_ocsp_request_data(const std::string& certificate_chain) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    try {
+        std::vector<X509Wrapper> chain =
+            std::move(X509CertificateBundle(certificate_chain, EncodingFormat::PEM).split());
+
+        // Find the MO root
+        return get_ocsp_request_data_internal(this->ca_bundle_path_map.at(CaCertificateType::MO), chain);
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not get mo ocsp cache, certificate load failure: " << e.what();
+    }
+
+    return OCSPRequestDataList();
+}
+
+OCSPRequestDataList get_ocsp_request_data_internal(fs::path& root_path, std::vector<X509Wrapper>& leaf_chain) {
     OCSPRequestDataList response;
     std::vector<OCSPRequestData> ocsp_request_data_list;
 
     try {
-        X509CertificateBundle ca_bundle(this->ca_bundle_path_map.at(CaCertificateType::V2G), EncodingFormat::PEM);
+        std::vector<X509Wrapper> full_hierarchy = X509CertificateBundle(root_path, EncodingFormat::PEM).split();
+        std::move(std::begin(leaf_chain), std::end(leaf_chain), std::back_inserter(full_hierarchy));
 
-        // Build hierarchy for the bundle
-        auto& hierarchy = ca_bundle.get_certficate_hierarchy();
+        // Build the full hierarchy
+        auto hierarchy = X509CertificateHierarchy::build_hierarchy(full_hierarchy);
 
-        // Iterate cache, get hashes
-        hierarchy.for_each([&](const X509Node& node) {
-            std::string responder_url = node.certificate.get_responder_url();
-            if (!responder_url.empty()) {
-                auto certificate_hash_data = node.hash;
-                OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
-                ocsp_request_data_list.push_back(ocsp_request_data);
+        // Search for the first valid root, and collect all the chain
+        for (auto& root : hierarchy.get_hierarchy()) {
+            if (root.certificate.is_selfsigned() && root.certificate.is_valid()) {
+                // Collect the chain
+                std::vector<X509Wrapper> descendants = hierarchy.collect_descendants(root.certificate);
+                bool has_proper_descendants = (descendants.size() > 0);
+
+                for (auto& certificate : descendants) {
+                    std::string responder_url = certificate.get_responder_url();
+
+                    if (!responder_url.empty()) {
+                        try {
+                            auto certificate_hash_data = hierarchy.get_certificate_hash(certificate);
+                            OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
+                            ocsp_request_data_list.push_back(ocsp_request_data);
+                        } catch (const NoCertificateFound& e) {
+                            EVLOG_error << "Could not find hash for certificate: " << certificate.get_common_name()
+                                        << " with error: " << e.what();
+                        }
+                    }
+                }
+
+                // If we have collected the descendants we can break
+                // else we can continue iterating for a proper root
+                if (has_proper_descendants) {
+                    break;
+                }
             }
-
-            return true;
-        });
+        }
 
         response.ocsp_request_data_list = ocsp_request_data_list;
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not get ocsp cache, certificate load failure: " << e.what();
-    }
-
-    return response;
-}
-
-OCSPRequestDataList EvseSecurity::get_ocsp_request_data(const std::string& certificate_chain,
-                                                        const CaCertificateType certificate_type) {
-    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
-
-    OCSPRequestDataList response;
-    std::vector<OCSPRequestData> ocsp_request_data_list;
-
-    try {
-        X509CertificateBundle leaf_bundle(certificate_chain, EncodingFormat::PEM);
-        X509CertificateBundle root_bundle(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
-
-        auto full_list = root_bundle.split();
-        const auto leaf_certificates = leaf_bundle.split();
-        for (const auto& certif : leaf_certificates) {
-            full_list.push_back(std::move(certif));
-        }
-        X509CertificateHierarchy full_hierarchy = X509CertificateHierarchy::build_hierarchy(full_list);
-
-        for (const auto& certificate : leaf_certificates) {
-            std::string responder_url = certificate.get_responder_url();
-            if (!responder_url.empty()) {
-                auto certificate_hash_data = full_hierarchy.get_certificate_hash(certificate);
-                OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
-                ocsp_request_data_list.push_back(ocsp_request_data);
-            }
-        }
-
-        response.ocsp_request_data_list = ocsp_request_data_list;
-    } catch (const CertificateLoadException& e) {
-        EVLOG_error << "Could not get ocsp cache, certificate load failure: " << e.what()
-                    << " for chain type: " << conversions::ca_certificate_type_to_string(certificate_type);
+    } catch (const NoCertificateFound& e) {
+        EVLOG_error << "Could not find proper root: " << e.what();
     }
 
     return response;
@@ -846,7 +865,7 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
 
     // choose appropriate cert (valid_from / valid_to)
     try {
-        auto leaf_certificates = std::move(get_leaf_certificates(cert_dir));
+        auto leaf_certificates = X509CertificateBundle(cert_dir, EncodingFormat::PEM);
 
         if (leaf_certificates.empty()) {
             EVLOG_warning << "Could not find any key pair";

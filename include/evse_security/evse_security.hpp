@@ -114,16 +114,15 @@ public:
     /// @brief Retrieves the certificate count applying the \p certificate_types filter.
     int get_count_of_installed_certificates(const std::vector<CertificateType>& certificate_types);
 
-    /// @brief Retrieves the OCSP request data of the V2G certificates
+    /// @brief Command to retrieve the OCSP request data of the V2G certificates (SubCAs and possibly V2G leaf)
     /// @return contains OCSP request data
-    OCSPRequestDataList get_ocsp_request_data();
+    OCSPRequestDataList get_v2g_ocsp_request_data();
 
-    /// @brief Retrieves the OCSP request data of the given \p certificate_chain
+    /// @brief Retrieves the OCSP request data of the given contract \p certificate_chain
     /// @param certificate_chain PEM formatted certificate or certificate chain
     /// @param certificate_type type of the leaf certificate
     /// @return contains OCSP request data
-    OCSPRequestDataList get_ocsp_request_data(const std::string& certificate_chain,
-                                              const CaCertificateType certificate_type);
+    OCSPRequestDataList get_mo_ocsp_request_data(const std::string& certificate_chain);
 
     /// @brief Updates the OCSP cache for the given \p certificate_hash_data with the given \p ocsp_response
     /// @param certificate_hash_data identifies the certificate for which the \p ocsp_response is specified
