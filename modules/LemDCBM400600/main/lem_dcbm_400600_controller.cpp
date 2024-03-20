@@ -56,7 +56,8 @@ LemDCBM400600Controller::start_transaction(const types::powermeter::TransactionR
 
     auto [transaction_min_stop_time, transaction_max_stop_time] = get_transaction_stop_time_bounds();
 
-    return {types::powermeter::TransactionRequestStatus::OK, {}, transaction_min_stop_time, transaction_max_stop_time};
+    return {
+        types::powermeter::TransactionRequestStatus::OK, {}, {}, transaction_min_stop_time, transaction_max_stop_time};
 }
 
 void LemDCBM400600Controller::request_device_to_start_transaction(const types::powermeter::TransactionReq& value) {
