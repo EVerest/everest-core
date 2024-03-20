@@ -1,0 +1,14 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "main",
+]
+
+cc_everest_module(
+    name = "SerialCommHub",
+    deps = [
+        "//lib/staging/gpio",
+    ],
+    impls = IMPLS,
+    srcs = glob(["*.cpp", "*.hpp"]),
+)

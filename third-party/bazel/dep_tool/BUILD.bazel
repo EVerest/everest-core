@@ -1,0 +1,10 @@
+load("@dep_tool_crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+
+rust_binary(
+    name = "dep_tool",
+    srcs = glob(["src/**/*.rs"]),
+    deps = all_crate_deps(),
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,11 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "main",
+]
+
+cc_everest_module(
+    name = "GenericPowermeter",
+    deps = [],
+    impls = IMPLS,
+)

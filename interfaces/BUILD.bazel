@@ -1,0 +1,52 @@
+interface_srcs = glob(["*.yaml"])
+interface_names = [name[:-5] for name in interface_srcs]
+cpp_headers = [
+    "generated/interfaces/{}/Implementation.hpp".format(name) for name in interface_names
+] + [
+    "generated/interfaces/{}/Interface.hpp".format(name) for name in interface_names
+] + [
+    "generated/interfaces/{}/Types.hpp".format(name) for name in interface_names
+]
+
+# This separate label we need to resolve path to 
+# the directory later in the genrule
+some_output = cpp_headers[0]
+
+filegroup(
+    name = "interfaces",
+    srcs = interface_srcs,
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "cpp-headers",
+    outs = cpp_headers,
+    srcs = interface_srcs + [
+        "@everest-framework//schemas:schemas",
+        "//types:types",
+        "//:errors",
+    ],
+    tools = [
+        "@everest-utils//ev-dev-tools:ev-cli",
+    ],
+    cmd = """
+$(location @everest-utils//ev-dev-tools:ev-cli) interface generate-headers \
+    --everest-dir . \
+    --schemas-dir external/everest-framework/schemas \
+    --disable-clang-format \
+    --output-dir `dirname $(location {some_output})`/..
+""".format(
+        some_output = some_output
+    )
+)
+
+cc_library(
+    name = "interfaces_lib",
+    hdrs = [":cpp-headers"],
+    visibility = ["//visibility:public"],
+    includes = ["."],
+    deps = [
+        "//types:types_lib",
+    ],
+    copts = ["-std=c++17"],
+)
