@@ -602,6 +602,61 @@ std::ostream& operator<<(std::ostream& os, const CaCertificateType& ca_certifica
     os << conversions::ca_certificate_type_to_string(ca_certificate_type);
     return os;
 }
+
+namespace conversions {
+std::string certificate_validation_result_to_string(CertificateValidationResult e) {
+    switch (e) {
+    case CertificateValidationResult::Valid:
+        return "Valid";
+    case CertificateValidationResult::Expired:
+        return "Expired";
+    case CertificateValidationResult::InvalidSignature:
+        return "InvalidSignature";
+    case CertificateValidationResult::IssuerNotFound:
+        return "IssuerNotFound";
+    case CertificateValidationResult::InvalidLeafSignature:
+        return "InvalidLeafSignature";
+    case CertificateValidationResult::InvalidChain:
+        return "InvalidChain";
+    case CertificateValidationResult::Unknown:
+        return "Unknown";
+    }
+
+    throw std::out_of_range("No known string conversion for provided enum of type CertificateValidationResult");
+}
+
+CertificateValidationResult string_to_certificate_validation_result(const std::string& s) {
+    if (s == "Valid") {
+        return CertificateValidationResult::Valid;
+    }
+    if (s == "Expired") {
+        return CertificateValidationResult::Expired;
+    }
+    if (s == "InvalidSignature") {
+        return CertificateValidationResult::InvalidSignature;
+    }
+    if (s == "IssuerNotFound") {
+        return CertificateValidationResult::IssuerNotFound;
+    }
+    if (s == "InvalidLeafSignature") {
+        return CertificateValidationResult::InvalidLeafSignature;
+    }
+    if (s == "InvalidChain") {
+        return CertificateValidationResult::InvalidChain;
+    }
+    if (s == "Unknown") {
+        return CertificateValidationResult::Unknown;
+    }
+    throw std::out_of_range("Provided string " + s +
+                            " could not be converted to enum of type CertificateValidationResult");
+}
+} // namespace conversions
+
+std::ostream& operator<<(std::ostream& os, const CertificateValidationResult& certificate_validation_result) {
+    os << conversions::certificate_validation_result_to_string(certificate_validation_result);
+    return os;
+}
+
 namespace conversions {
 std::string install_certificate_result_to_string(InstallCertificateResult e) {
     switch (e) {

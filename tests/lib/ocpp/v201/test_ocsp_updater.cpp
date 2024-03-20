@@ -119,7 +119,7 @@ TEST_F(OcspUpdaterTest, test_success_boot_many) {
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
     response_success.status = v201::GetCertificateStatusEnum::Accepted;
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -168,7 +168,7 @@ TEST_F(OcspUpdaterTest, test_retry_boot_many) {
     v201::GetCertificateStatusResponse response_fail_empty;
     response_fail_empty.status = v201::GetCertificateStatusEnum::Accepted;
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -177,7 +177,7 @@ TEST_F(OcspUpdaterTest, test_retry_boot_many) {
         .InSequence(seq)
         .WillOnce(testing::Return(response_fail_status));
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -190,7 +190,7 @@ TEST_F(OcspUpdaterTest, test_retry_boot_many) {
         .InSequence(seq)
         .WillOnce(testing::Return(response_fail_empty));
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -235,7 +235,7 @@ TEST_F(OcspUpdaterTest, test_reverify_logic) {
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
     response_success.status = v201::GetCertificateStatusEnum::Accepted;
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -248,7 +248,7 @@ TEST_F(OcspUpdaterTest, test_reverify_logic) {
         .InSequence(seq)
         .WillRepeatedly(testing::Return());
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -265,7 +265,7 @@ TEST_F(OcspUpdaterTest, test_reverify_logic) {
         .InSequence(seq)
         .WillOnce(SignalCallsCompleteVoid(&this->calls_complete));
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .InSequence(seq)
         .WillRepeatedly(testing::Return(std::vector<OCSPRequestData>()));
 
@@ -283,7 +283,7 @@ TEST_F(OcspUpdaterTest, test_trigger) {
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
     response_success.status = v201::GetCertificateStatusEnum::Accepted;
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));
@@ -300,7 +300,7 @@ TEST_F(OcspUpdaterTest, test_trigger) {
         .InSequence(seq)
         .WillOnce(SignalCallsCompleteVoid(&this->calls_complete));
 
-    EXPECT_CALL(*this->evse_security, get_ocsp_request_data())
+    EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
         .InSequence(seq)
         .WillOnce(testing::Return(this->example_ocsp_data));

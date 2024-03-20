@@ -544,6 +544,31 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStat
     return false;
 }
 
+std::vector<OCSPRequestData> ChargePoint::generate_mo_ocsp_data(const CiString<5500>& certificate) {
+    std::vector<OCSPRequestData> ocsp_request_data_list;
+    const auto ocsp_data_list = this->evse_security->get_mo_ocsp_request_data(certificate.get());
+    for (const auto& ocsp_data : ocsp_data_list) {
+        OCSPRequestData request;
+        switch (ocsp_data.hashAlgorithm) {
+        case HashAlgorithmEnumType::SHA256:
+            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA256;
+            break;
+        case HashAlgorithmEnumType::SHA384:
+            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA384;
+            break;
+        case HashAlgorithmEnumType::SHA512:
+            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA512;
+            break;
+        }
+        request.issuerKeyHash = ocsp_data.issuerKeyHash;
+        request.issuerNameHash = ocsp_data.issuerNameHash;
+        request.responderURL = ocsp_data.responderUrl;
+        request.serialNumber = ocsp_data.serialNumber;
+        ocsp_request_data_list.push_back(request);
+    }
+    return ocsp_request_data_list;
+}
+
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
     // TODO(piet): C01.FR.14
@@ -561,6 +586,113 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
         !this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
         response.idTokenInfo.status = AuthorizationStatusEnum::Accepted;
         return response;
+    }
+
+    // C07: Authorization using contract certificates
+    if (id_token.type == IdTokenEnum::eMAID) {
+        // Temporary variable that is set to true to avoid immediate response to allow the local auth list
+        // or auth cache to be tried
+        bool try_local_auth_list_or_cache = false;
+        bool forwarded_to_csms = false;
+
+        // If OCSP data is provided as argument, use it
+        if (this->websocket->is_connected() and ocsp_request_data.has_value()) {
+            EVLOG_info << "Online: Pass provided OCSP data to CSMS";
+            response = this->authorize_req(id_token, std::nullopt, ocsp_request_data);
+            forwarded_to_csms = true;
+        } else if (certificate.has_value()) {
+            // First try to validate the contract certificate locally
+            CertificateValidationResult local_verify_result =
+                this->evse_security->verify_certificate(certificate.value().get(), ocpp::LeafCertificateType::MO);
+            EVLOG_info << "Local contract validation result: " << local_verify_result;
+
+            bool central_contract_validation_allowed =
+                this->device_model
+                    ->get_optional_value<bool>(ControllerComponentVariables::CentralContractValidationAllowed)
+                    .value_or(true);
+            bool contract_validation_offline =
+                this->device_model->get_optional_value<bool>(ControllerComponentVariables::ContractValidationOffline)
+                    .value_or(true);
+            bool local_authorize_offline =
+                this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthorizeOffline)
+                    .value_or(true);
+
+            // C07.FR.01: When CS is online, it shall send an AuthorizeRequest
+            // C07.FR.02: The AuthorizeRequest shall at least contain the OCSP data
+            // TODO: local validation results are ignored if response is based only on OCSP data, is that acceptable?
+            if (this->websocket->is_connected()) {
+                // If no OCSP data was provided, check for a contract root
+                if (local_verify_result == CertificateValidationResult::IssuerNotFound) {
+                    // C07.FR.06: Pass contract validation to CSMS when no contract root is found
+                    if (central_contract_validation_allowed) {
+                        EVLOG_info << "Online: No local contract root found. Pass contract validation to CSMS";
+                        response = this->authorize_req(id_token, certificate, std::nullopt);
+                        forwarded_to_csms = true;
+                    } else {
+                        EVLOG_warning << "Online: Central Contract Validation not allowed";
+                        response.idTokenInfo.status = AuthorizationStatusEnum::Invalid;
+                    }
+                } else {
+                    // Try to generate the OCSP data from the certificate chain and use that
+                    std::vector<OCSPRequestData> generated_ocsp_request_data_list =
+                        generate_mo_ocsp_data(certificate.value());
+                    if (generated_ocsp_request_data_list.size() > 0) {
+                        EVLOG_info << "Online: Pass generated OCSP data to CSMS";
+                        response = this->authorize_req(id_token, std::nullopt, generated_ocsp_request_data_list);
+                        forwarded_to_csms = true;
+                    } else {
+                        EVLOG_warning << "Online: OCSP data could not be generated";
+                        response.idTokenInfo.status = AuthorizationStatusEnum::Invalid;
+                    }
+                }
+            } else { // Offline
+                // C07.FR.08: CS shall try to validate the contract locally
+                if (contract_validation_offline) {
+                    EVLOG_info << "Offline: contract " << local_verify_result;
+                    switch (local_verify_result) {
+                    // C07.FR.09: CS shall lookup the eMAID in Local Auth List or Auth Cache when
+                    // local validation succeeded
+                    case CertificateValidationResult::Valid:
+                        // In C07.FR.09 LocalAuthorizeOffline is mentioned, this seems to be a generic config item
+                        // that applies to Local Auth List and Auth Cache, but since there are no requirements about
+                        // it, lets check it here
+                        if (local_authorize_offline) {
+                            try_local_auth_list_or_cache = true;
+                        } else {
+                            // No requirement states what to do when ContractValidationOffline is true
+                            // and LocalAuthorizeOffline is false
+                            response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
+                            response.certificateStatus = AuthorizeCertificateStatusEnum::Accepted;
+                        }
+                        break;
+                    case CertificateValidationResult::Expired:
+                        response.idTokenInfo.status = AuthorizationStatusEnum::Expired;
+                        response.certificateStatus = AuthorizeCertificateStatusEnum::CertificateExpired;
+                        break;
+                    default:
+                        response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
+                        break;
+                    }
+                } else {
+                    // C07.FR.07: CS shall not allow charging
+                    response.idTokenInfo.status = AuthorizationStatusEnum::NotAtThisTime;
+                }
+            }
+        } else {
+            EVLOG_warning << "Can not validate eMAID without certificate chain";
+            response.idTokenInfo.status = AuthorizationStatusEnum::Invalid;
+        }
+        if (forwarded_to_csms) {
+            // AuthorizeRequest sent to CSMS, let's show the results
+            EVLOG_info << "CSMS idToken status: " << response.idTokenInfo.status;
+            if (response.certificateStatus.has_value()) {
+                EVLOG_info << "CSMS certificate status: " << response.certificateStatus.value();
+            }
+        }
+        // For eMAID, we will respond here, unless the local auth list or auth cache is tried
+        if (!try_local_auth_list_or_cache) {
+            return response;
+        }
     }
 
     if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
@@ -1641,7 +1773,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
     std::optional<std::string> organization;
 
     if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
-        req.certificateType = CertificateSigningUseEnum::ChargingStationCertificate;
+        req.certificateType = ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate;
         common =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
         organization =
@@ -1649,7 +1781,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
         country =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
     } else {
-        req.certificateType = CertificateSigningUseEnum::V2GCertificate;
+        req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
         common = this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrSeccId);
         organization = this->device_model->get_optional_value<std::string>(
             ControllerComponentVariables::ISO15118CtrlrOrganizationName);

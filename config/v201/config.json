@@ -442,6 +442,12 @@
                 "attributes": {
                     "Actual": true
                 }
+            },
+            "PncEnabled": {
+                "variable_name": "PncEnabled",
+                "attributes": {
+                    "Actual": true
+                }
             }
         }
     },

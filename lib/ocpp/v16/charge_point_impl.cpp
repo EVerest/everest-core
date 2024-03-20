@@ -2236,7 +2236,7 @@ void ChargePointImpl::update_ocsp_cache() {
             (last_update.value().to_time_point() + std::chrono::seconds(this->configuration->getOcspRequestInterval()) <
              now.to_time_point())) {
             EVLOG_info << "Requesting OCSP response.";
-            const auto ocsp_request_data = this->evse_security->get_ocsp_request_data();
+            const auto ocsp_request_data = this->evse_security->get_v2g_ocsp_request_data();
             for (const auto& ocsp_request_entry : ocsp_request_data) {
                 ocpp::v201::OCSPRequestData ocsp_request =
                     ocpp::evse_security_conversions::to_ocpp_v201(ocsp_request_entry);
@@ -2378,7 +2378,7 @@ void ChargePointImpl::handleSignedUpdateFirmware(ocpp::Call<SignedUpdateFirmware
     SignedUpdateFirmwareResponse response;
 
     if (this->evse_security->verify_certificate(call.msg.firmware.signingCertificate.get(),
-                                                ocpp::CertificateSigningUseEnum::ManufacturerCertificate) !=
+                                                ocpp::LeafCertificateType::MF) !=
         ocpp::CertificateValidationResult::Valid) {
         response.status = UpdateFirmwareStatusEnumType::InvalidCertificate;
         ocpp::CallResult<SignedUpdateFirmwareResponse> call_result(response, call.uniqueId);

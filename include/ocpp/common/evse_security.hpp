@@ -47,7 +47,7 @@ public:
     /// \param certificate_type type of the leaf certificate
     /// \return result of the operation
     virtual CertificateValidationResult verify_certificate(const std::string& certificate_chain,
-                                                           const CertificateSigningUseEnum& certificate_type) = 0;
+                                                           const LeafCertificateType& certificate_type) = 0;
 
     /// \brief Retrieves all certificates installed on the filesystem applying the \p certificate_types filter. This
     /// function respects the requirements of OCPP specified for the CSMS initiated message
@@ -57,10 +57,16 @@ public:
     virtual std::vector<CertificateHashDataChain>
     get_installed_certificates(const std::vector<CertificateType>& certificate_types) = 0;
 
-    /// \brief Retrieves the OCSP request data of the V2G certificates. This function respects the requirements of OCPP
-    /// specified for the CSMS initiated message GetCertificateStatus.req .
+    /// \brief Retrieves the OCSP request data of the V2G certificates (exluding the root). This function respects the
+    /// requirements of OCPP specified for the CSMS initiated message GetCertificateStatus.req . \return contains OCSP
+    /// request data
+    virtual std::vector<OCSPRequestData> get_v2g_ocsp_request_data() = 0;
+
+    /// \brief Retrieves the OCSP request data of a certificate chain.
+    /// \param certificate_chain PEM formatted certificate or certificate chain
+    /// \param certificate_type type of the leaf certificate
     /// \return contains OCSP request data
-    virtual std::vector<OCSPRequestData> get_ocsp_request_data() = 0;
+    virtual std::vector<OCSPRequestData> get_mo_ocsp_request_data(const std::string& certificate_chain) = 0;
 
     /// \brief Updates the OCSP cache for the given \p certificate_hash_data with the given \p ocsp_response
     /// \param certificate_hash_data identifies the certificate for which the \p ocsp_response is specified

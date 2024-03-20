@@ -18,11 +18,12 @@ public:
     MOCK_METHOD(DeleteCertificateResult, delete_certificate, (const ocpp::CertificateHashDataType&), (override));
     MOCK_METHOD(InstallCertificateResult, update_leaf_certificate,
                 (const std::string&, const CertificateSigningUseEnum&), (override));
-    MOCK_METHOD(CertificateValidationResult, verify_certificate, (const std::string&, const CertificateSigningUseEnum&),
+    MOCK_METHOD(CertificateValidationResult, verify_certificate, (const std::string&, const LeafCertificateType&),
                 (override));
     MOCK_METHOD(std::vector<CertificateHashDataChain>, get_installed_certificates,
                 (const std::vector<CertificateType>&), (override));
-    MOCK_METHOD(std::vector<OCSPRequestData>, get_ocsp_request_data, (), (override));
+    MOCK_METHOD(std::vector<OCSPRequestData>, get_v2g_ocsp_request_data, (), (override));
+    MOCK_METHOD(std::vector<OCSPRequestData>, get_mo_ocsp_request_data, (const std::string&), (override));
     MOCK_METHOD(void, update_ocsp_cache, (const CertificateHashDataType&, const std::string&), (override));
     MOCK_METHOD(bool, is_ca_certificate_installed, (const CaCertificateType&), (override));
     MOCK_METHOD(std::string, generate_certificate_signing_request,

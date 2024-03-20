@@ -96,7 +96,7 @@ void OcspUpdater::updater_thread_loop() {
 }
 
 void OcspUpdater::execute_ocsp_update() {
-    auto ocsp_request_list = this->evse_security->get_ocsp_request_data();
+    auto ocsp_request_list = this->evse_security->get_v2g_ocsp_request_data();
     std::vector<std::pair<ocpp::CertificateHashDataType, std::string>> ocsp_responses;
 
     EVLOG_info << "libocpp: Updating OCSP cache on " << ocsp_request_list.size() << " certificates";
