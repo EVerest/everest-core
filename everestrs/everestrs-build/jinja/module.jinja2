@@ -33,8 +33,8 @@ pub(crate) trait OnReadySubscriber: Sync + Send {
 {% include "client" %}
 {% endfor %}
 
-#[cfg_attr(any(not(test), not(feature = "mockall")), derive(Clone))]
-#[cfg_attr(all(test, feature = "mockall"), derive(Default))]
+#[derive(Clone)]
+#[cfg_attr(all(test, feature="mockall"), derive(Default))]
 pub(crate) struct ModulePublisher {
 {% for provide in provides %}
    pub(crate) {{ provide.implementation_id | identifier }}: {{provide.interface | title}}ServicePublisher,
