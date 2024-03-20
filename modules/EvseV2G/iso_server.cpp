@@ -1288,7 +1288,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
         conn->ctx->session.contract.valid_crt = true;
 
-        const auto ocsp_response = conn->ctx->r_security->call_get_ocsp_request_data(contract_cert_chain_pem);
+        const auto ocsp_response = conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
         const auto certificate_hash_data_info_vector = convert_to_certificate_hash_data_info_vector(ocsp_response);
 
         // Publish the provided signature certificate chain and eMAID from EVCC

@@ -63,10 +63,10 @@ std::vector<ocpp::OCSPRequestData> EvseSecurity::get_v2g_ocsp_request_data() {
     return result;
 }
 
-std::vector<ocpp::OCSPRequestData> EvseSecurity::get_ocsp_request_data(const std::string& certificate_chain) {
+std::vector<ocpp::OCSPRequestData> EvseSecurity::get_mo_ocsp_request_data(const std::string& certificate_chain) {
     std::vector<ocpp::OCSPRequestData> result;
 
-    const auto ocsp_request_data = this->r_security.call_get_ocsp_request_data(certificate_chain);
+    const auto ocsp_request_data = this->r_security.call_get_mo_ocsp_request_data(certificate_chain);
     for (const auto& ocsp_request_entry : ocsp_request_data.ocsp_request_data_list) {
         result.push_back(conversions::to_ocpp(ocsp_request_entry));
     }

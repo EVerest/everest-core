@@ -68,8 +68,8 @@ types::evse_security::OCSPRequestDataList evse_securityImpl::handle_get_v2g_ocsp
 }
 
 types::evse_security::OCSPRequestDataList
-evse_securityImpl::handle_get_ocsp_request_data(std::string& certificate_chain) {
-    return conversions::to_everest(this->evse_security->get_ocsp_request_data(certificate_chain));
+evse_securityImpl::handle_get_mo_ocsp_request_data(std::string& certificate_chain) {
+    return conversions::to_everest(this->evse_security->get_mo_ocsp_request_data(certificate_chain));
 }
 
 void evse_securityImpl::handle_update_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data,
