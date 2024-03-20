@@ -47,8 +47,8 @@ Configuration for OCPP
 In OCPP and OCPP security profiles, the security level of the connection is
 specified as follows:
 
-* SecurityProfile 0: Unsecure transport without basic authentication
-* SecurityProfile 1: Unsecure transport with basic authentication
+* SecurityProfile 0: Unsecured transport without basic authentication
+* SecurityProfile 1: Unsecured transport with basic authentication
 * SecurityProfile 2: TLS with basic authentication
 * SecurityProfile 3: TLS with client-side certificates
 
