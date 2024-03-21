@@ -59,9 +59,12 @@ private:
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
     types::evse_board_support::HardwareCapabilities caps;
-    bool caps_received{false};
+    std::atomic_bool caps_received{false};
     std::mutex capsMutex;
-    types::board_support_common::ProximityPilot last_pp;
+    CpState last_cp_state{CpState::CpState_STATE_E};
+    bool last_relais_state{false};
+    types::board_support_common::ProximityPilot last_pp{types::board_support_common::Ampacity::None};
+    void wait_for_caps();
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

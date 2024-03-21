@@ -4,16 +4,20 @@
 #include <string.h>
 
 #include "evSerial.h"
+#include <filesystem>
 #include <unistd.h>
 
+#include "firmware_version.hpp"
 #include "yeti.pb.h"
 #include <sigslot/signal.hpp>
 
-volatile bool sw_version_received = false;
+std::atomic_bool sw_version_received = false;
+YetiFirmwareVersion installed_fw_version;
+std::string installed_fw_version_orig;
 
 void recvKeepAliveLo(KeepAliveLo s) {
-    printf("Current Yeti SW Version: %s (Protocol %i.%i)\n", s.sw_version_string, s.protocol_version_major,
-           s.protocol_version_minor);
+    installed_fw_version = s.sw_version_string;
+    installed_fw_version_orig = s.sw_version_string;
     sw_version_received = true;
 }
 
@@ -29,7 +33,7 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
     const char* device = argv[1];
-    const char* filename = argv[2];
+    std::filesystem::path filename = argv[2];
 
     evSerial* p = new evSerial();
 
@@ -42,6 +46,17 @@ int main(int argc, char* argv[]) {
                 break;
             usleep(100);
         }
+
+        YetiFirmwareVersion update_file_fw_version{filename.filename()};
+        printf("Installed Yeti Firmware Version: %s (%s)\n", installed_fw_version.to_string().c_str(),
+               installed_fw_version_orig.c_str());
+        printf("Update File Firmware Version: %s\n", update_file_fw_version.to_string().c_str());
+
+        if (installed_fw_version >= update_file_fw_version) {
+            printf("Latest version already installed. Exiting.\n");
+            exit(1);
+        }
+
         printf("\nRebooting Yeti in ROM Bootloader mode...\n");
         // send some dummy commands to make sure protocol is in sync
         p->keepAlive();
@@ -54,7 +69,7 @@ int main(int argc, char* argv[]) {
 
         sleep(1);
         char cmd[1000];
-        sprintf(cmd, "stm32flash -b 115200 %.100s -v -w %.100s -R", device, filename);
+        sprintf(cmd, "stm32flash -b 115200 %.100s -v -w %.100s -R", device, filename.string().c_str());
         // sprintf(cmd, "stm32flash -b115200 %.100s", device);
         printf("Executing %s ...\n", cmd);
         system(cmd);
