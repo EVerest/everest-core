@@ -350,7 +350,7 @@ bool evSerial::reset(const int reset_pin) {
         system(cmd);
 
         // clear uart input and output buffer
-        //tcflush(fd, TCIOFLUSH);
+        // tcflush(fd, TCIOFLUSH);
 
         sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
         system(cmd);
