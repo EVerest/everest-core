@@ -182,29 +182,32 @@ void ErrorHandling::raise_overcurrent_error(const std::string& description) {
 
 void ErrorHandling::clear_overcurrent_error() {
     // clear externally
-    p_evse->request_clear_all_evse_manager_MREC4OverCurrentFailure();
-    types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
-    types::evse_manager::Error output_error;
-    output_error.error_description = "";
-    output_error.error_severity = types::evse_manager::Error_severity::High;
-    output_error.error_code = types::evse_manager::ErrorEnum::MREC4OverCurrentFailure;
+    if (active_errors.bsp.is_set(BspErrors::MREC4OverCurrentFailure)) {
+        p_evse->request_clear_all_evse_manager_MREC4OverCurrentFailure();
 
-    if (modify_error_evse_manager("evse_manager/MREC4OverCurrentFailure", false, evse_error)) {
-        // signal to charger an error has been cleared that prevents charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, true);
-    } else {
-        // signal an error cleared that does not prevent charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, false);
-    }
+        types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
+        types::evse_manager::Error output_error;
+        output_error.error_description = "";
+        output_error.error_severity = types::evse_manager::Error_severity::High;
+        output_error.error_code = types::evse_manager::ErrorEnum::MREC4OverCurrentFailure;
 
-    if (active_errors.all_cleared()) {
-        // signal to charger that all errors are cleared now
-        signal_all_errors_cleared();
-        // clear errors with HLC stack
-        if (hlc) {
-            r_hlc[0]->call_reset_error();
+        if (modify_error_evse_manager("evse_manager/MREC4OverCurrentFailure", false, evse_error)) {
+            // signal to charger an error has been cleared that prevents charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, true);
+        } else {
+            // signal an error cleared that does not prevent charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, false);
+        }
+
+        if (active_errors.all_cleared()) {
+            // signal to charger that all errors are cleared now
+            signal_all_errors_cleared();
+            // clear errors with HLC stack
+            if (hlc) {
+                r_hlc[0]->call_reset_error();
+            }
         }
     }
 }
@@ -226,29 +229,32 @@ void ErrorHandling::raise_internal_error(const std::string& description) {
 
 void ErrorHandling::clear_internal_error() {
     // clear externally
-    p_evse->request_clear_all_evse_manager_Internal();
-    types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
-    types::evse_manager::Error output_error;
-    output_error.error_description = "";
-    output_error.error_severity = types::evse_manager::Error_severity::High;
-    output_error.error_code = types::evse_manager::ErrorEnum::VendorError;
+    if (active_errors.evse_manager.is_set(EvseManagerErrors::Internal)) {
+        p_evse->request_clear_all_evse_manager_Internal();
 
-    if (modify_error_evse_manager("evse_manager/Internal", false, evse_error)) {
-        // signal to charger an error has been cleared that prevents charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, true);
-    } else {
-        // signal an error cleared that does not prevent charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, false);
-    }
+        types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
+        types::evse_manager::Error output_error;
+        output_error.error_description = "";
+        output_error.error_severity = types::evse_manager::Error_severity::High;
+        output_error.error_code = types::evse_manager::ErrorEnum::VendorError;
 
-    if (active_errors.all_cleared()) {
-        // signal to charger that all errors are cleared now
-        signal_all_errors_cleared();
-        // clear errors with HLC stack
-        if (hlc) {
-            r_hlc[0]->call_reset_error();
+        if (modify_error_evse_manager("evse_manager/Internal", false, evse_error)) {
+            // signal to charger an error has been cleared that prevents charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, true);
+        } else {
+            // signal an error cleared that does not prevent charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, false);
+        }
+
+        if (active_errors.all_cleared()) {
+            // signal to charger that all errors are cleared now
+            signal_all_errors_cleared();
+            // clear errors with HLC stack
+            if (hlc) {
+                r_hlc[0]->call_reset_error();
+            }
         }
     }
 }
@@ -270,29 +276,32 @@ void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::s
 
 void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
     // clear externally
-    p_evse->request_clear_all_evse_manager_PowermeterTransactionStartFailed();
-    types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
-    types::evse_manager::Error output_error;
-    output_error.error_description = "";
-    output_error.error_severity = types::evse_manager::Error_severity::High;
-    output_error.error_code = types::evse_manager::ErrorEnum::VendorError;
+    if (active_errors.evse_manager.is_set(EvseManagerErrors::PowermeterTransactionStartFailed)) {
+        p_evse->request_clear_all_evse_manager_PowermeterTransactionStartFailed();
 
-    if (modify_error_evse_manager("evse_manager/PowermeterTransactionStartFailed", false, evse_error)) {
-        // signal to charger an error has been cleared that prevents charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, true);
-    } else {
-        // signal an error cleared that does not prevent charging
-        output_error.error_code = evse_error;
-        signal_error_cleared(output_error, false);
-    }
+        types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
+        types::evse_manager::Error output_error;
+        output_error.error_description = "";
+        output_error.error_severity = types::evse_manager::Error_severity::High;
+        output_error.error_code = types::evse_manager::ErrorEnum::VendorError;
 
-    if (active_errors.all_cleared()) {
-        // signal to charger that all errors are cleared now
-        signal_all_errors_cleared();
-        // clear errors with HLC stack
-        if (hlc) {
-            r_hlc[0]->call_reset_error();
+        if (modify_error_evse_manager("evse_manager/PowermeterTransactionStartFailed", false, evse_error)) {
+            // signal to charger an error has been cleared that prevents charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, true);
+        } else {
+            // signal an error cleared that does not prevent charging
+            output_error.error_code = evse_error;
+            signal_error_cleared(output_error, false);
+        }
+
+        if (active_errors.all_cleared()) {
+            // signal to charger that all errors are cleared now
+            signal_all_errors_cleared();
+            // clear errors with HLC stack
+            if (hlc) {
+                r_hlc[0]->call_reset_error();
+            }
         }
     }
 }
