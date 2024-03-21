@@ -37,6 +37,7 @@
 #include <sigslot/signal.hpp>
 
 #include "ErrorHandling.hpp"
+#include "EventQueue.hpp"
 #include "IECStateMachine.hpp"
 #include "scoped_lock_timeout.hpp"
 
@@ -300,6 +301,15 @@ private:
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
     const types::evse_board_support::Connector_type& connector_type;
+
+    // ErrorHandling events
+    enum class ErrorHandlingEvents : std::uint8_t {
+        prevent_charging,
+        prevent_charging_welded,
+        all_errors_cleared
+    };
+
+    EventQueue<ErrorHandlingEvents> error_handling_event_queue;
 
     // constants
     static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{80.};
