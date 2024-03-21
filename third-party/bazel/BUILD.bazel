@@ -1,3 +1,5 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+
 [
     alias(
         name = "boost_{}".format(name),
@@ -10,5 +12,22 @@
         "current_function",
         "uuid",
         "exception",
+        "asio"
     ]
 ]
+
+genrule(
+    name = "deps_versions.bzl.new",
+    srcs = ["//:dependencies.yaml"],
+    outs = ["deps_versions.bzl.new"],
+    tools = ["//third-party/bazel/dep_tool"],
+    cmd = "$(location //third-party/bazel/dep_tool) $(location //:dependencies.yaml) > $@",
+    visibility = ["//visibility:public"],
+)
+
+diff_test(
+    name = "check_deps_versions",
+    failure_message = "Please run `bazel run //:update` to update the dependencies",
+    file1 = "deps_versions.bzl",
+    file2 = ":deps_versions.bzl.new",
+)

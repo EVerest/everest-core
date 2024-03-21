@@ -11,8 +11,8 @@ cargo_build_script(
     },
     data = [
         "manifest.yaml",
-        "@everest-core//:interfaces",
-        "@everest-core//:types",
+        "@everest-core//interfaces",
+        "@everest-core//types",
     ],
     deps = all_crate_deps(build = True),
 )

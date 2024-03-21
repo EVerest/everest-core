@@ -7,12 +7,15 @@ cargo_build_script(
     srcs = ["build.rs"],
     edition="2021",
     build_script_env = {
+        # This is a path to the folder where interfaces and types are placed.
+        # We are guessing it here since bazel doesn't provide a good way 
+        # to resolve a directoryname of filegroup.
         "EVEREST_CORE_ROOT": "../../../",
     },
     deps = all_crate_deps(build=True),
     data= [
-        "//:types",
-        "//:interfaces",
+        "//types:types",
+        "//interfaces:interfaces",
         "manifest.yaml",
     ],
 )

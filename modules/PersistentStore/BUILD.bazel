@@ -1,0 +1,18 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "main",
+]
+
+cc_library(
+    name = "libsqlite3_stub",
+    linkopts = ["-lsqlite3"],
+)
+
+cc_everest_module(
+    name = "PersistentStore",
+    deps = [
+        ":libsqlite3_stub",
+    ],
+    impls = IMPLS,
+)
