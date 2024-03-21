@@ -4,7 +4,7 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
-      verify_contract_cert_chain: true
+      verify_contract_cert_chain: false
     connections:
       security:
         - module_id: evse_security
@@ -113,6 +113,29 @@ active_modules:
       slac:
         - module_id: slac
           implementation_id: ev
+  ocpp:
+    module: OCPP201
+    connections:
+      evse_manager:
+        - module_id: evse_manager_1
+          implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
+      system:
+        - module_id: system
+          implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      private_key_password: "123456"
+  token_provider_1:
+    module: DummyTokenProviderManual
   auth:
     module: Auth
     config_module:
@@ -136,35 +159,6 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
-  ocpp:
-    module: OCPP
-    config_module:
-      ChargePointConfigPath: config-docker.json
-      PublishChargingScheduleIntervalS: 0
-    connections:
-      evse_manager:
-        - module_id: evse_manager_1
-          implementation_id: evse
-        - module_id: evse_manager_2
-          implementation_id: evse
-      reservation:
-        - module_id: auth
-          implementation_id: reservation
-      auth:
-        - module_id: auth
-          implementation_id: main
-      system:
-        - module_id: system
-          implementation_id: main
-      security:
-        - module_id: evse_security
-          implementation_id: main
-  evse_security:
-    module: EvseSecurity
-    config_module:
-      private_key_password: "123456"
-  token_provider_1:
-    module: DummyTokenProviderManual
   energy_manager:
     module: EnergyManager
     connections:

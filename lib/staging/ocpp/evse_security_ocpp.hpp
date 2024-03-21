@@ -20,15 +20,15 @@ public:
                                                           const ocpp::CaCertificateType& certificate_type) override;
     ocpp::DeleteCertificateResult
     delete_certificate(const ocpp::CertificateHashDataType& certificate_hash_data) override;
-    ocpp::CertificateValidationResult
-    verify_certificate(const std::string& certificate_chain,
-                       const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    ocpp::CertificateValidationResult verify_certificate(const std::string& certificate_chain,
+                                                         const ocpp::LeafCertificateType& certificate_type) override;
     ocpp::InstallCertificateResult
     update_leaf_certificate(const std::string& certificate_chain,
                             const ocpp::CertificateSigningUseEnum& certificate_type) override;
     std::vector<ocpp::CertificateHashDataChain>
     get_installed_certificates(const std::vector<ocpp::CertificateType>& certificate_types) override;
-    std::vector<ocpp::OCSPRequestData> get_ocsp_request_data() override;
+    std::vector<ocpp::OCSPRequestData> get_v2g_ocsp_request_data() override;
+    std::vector<ocpp::OCSPRequestData> get_mo_ocsp_request_data(const std::string& certificate_chain) override;
     void update_ocsp_cache(const ocpp::CertificateHashDataType& certificate_hash_data,
                            const std::string& ocsp_response) override;
     bool is_ca_certificate_installed(const ocpp::CaCertificateType& certificate_type) override;
@@ -44,7 +44,7 @@ public:
 namespace conversions {
 
 ocpp::CaCertificateType to_ocpp(types::evse_security::CaCertificateType other);
-ocpp::CertificateSigningUseEnum to_ocpp(types::evse_security::LeafCertificateType other);
+ocpp::LeafCertificateType to_ocpp(types::evse_security::LeafCertificateType other);
 ocpp::CertificateType to_ocpp(types::evse_security::CertificateType other);
 ocpp::HashAlgorithmEnumType to_ocpp(types::evse_security::HashAlgorithm other);
 ocpp::InstallCertificateResult to_ocpp(types::evse_security::InstallCertificateResult other);
@@ -58,6 +58,7 @@ ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other);
 
 types::evse_security::CaCertificateType from_ocpp(ocpp::CaCertificateType other);
 types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseEnum other);
+types::evse_security::LeafCertificateType from_ocpp(ocpp::LeafCertificateType other);
 types::evse_security::CertificateType from_ocpp(ocpp::CertificateType other);
 types::evse_security::HashAlgorithm from_ocpp(ocpp::HashAlgorithmEnumType other);
 types::evse_security::InstallCertificateResult from_ocpp(ocpp::InstallCertificateResult other);

@@ -71,10 +71,26 @@ cmds:
       description: Indicates the result of the command and optional certificate hash data
       type: object
       $ref: /evse_security#/GetInstalledCertificatesResult
-  get_ocsp_request_data:
-    description: Command to retrieve the OCSP request data of the V2G certificates
+  get_v2g_ocsp_request_data:
+    description: >-
+      Command to retrieve the OCSP request data of the V2G certificates. Contains OCSP data for each
+      certificate that is present in the chain (excluding the root). 
     result:
-      description: The OCSP request data of all V2G CA certificates including Sub CAs
+      description: The OCSP request data of all V2G CA certificates including the Sub CAs (exluding the root)
+      type: object
+      $ref: /evse_security#/OCSPRequestDataList
+  get_mo_ocsp_request_data:
+    description: >-
+        Command to retrieve the OCSP request data of the given MO certificate chain. Contains OCSP data
+        for each certificate that is present in the chain (excluding the root)
+    arguments:
+      certificate_chain:
+        description: Certificate chain for which the OCSP data is retrieved
+        type: string
+    result:
+      description: >-
+          The OCSP request data of the given certificate chain. Contains OCSP data for each
+          certificate in the given chain. 
       type: object
       $ref: /evse_security#/OCSPRequestDataList
   update_ocsp_cache:
