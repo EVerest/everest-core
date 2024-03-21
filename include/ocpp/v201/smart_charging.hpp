@@ -16,6 +16,7 @@ namespace ocpp::v201 {
 
 enum class ProfileValidationResultEnum {
     Valid,
+    EvseDoesNotExist,
     TxProfileMissingTransactionId,
     TxProfileEvseIdNotGreaterThanZero,
     TxProfileTransactionNotOnEvse,
@@ -33,12 +34,19 @@ enum class ProfileValidationResultEnum {
 /// to calculate the composite schedules
 class SmartChargingHandler {
 private:
+    std::map<int32_t, std::unique_ptr<Evse>>& evses;
+
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
     // cppcheck-suppress unusedStructMember
     std::vector<ChargingProfile> charging_profiles;
 
 public:
-    explicit SmartChargingHandler();
+    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<Evse>>& evses);
+
+    ///
+    /// \brief validates the existence of the given \p evse_id according to the specification
+    ///
+    ProfileValidationResultEnum validate_evse_exists(int32_t evse_id) const;
 
     ///
     /// \brief validates the given \p profile according to the specification
