@@ -1220,11 +1220,37 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             }
         }
 
+        // initialize contract cert chain to retrieve ocsp request data
         std::string contract_cert_chain_pem = "";
+        // Save the certificate chain in a variable in PEM format to publish it
+        mbedtls_x509_crt* crt = &conn->ctx->session.contract.crt;
+        unsigned char* base64Buffer = NULL;
+        size_t olen;
+
+        while (crt != nullptr && crt->version != 0) {
+            mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
+            base64Buffer = static_cast<unsigned char*>(malloc(olen));
+            if ((base64Buffer == NULL) ||
+                ((mbedtls_base64_encode(base64Buffer, olen, &olen, crt->raw.p, crt->raw.len)) != 0)) {
+                dlog(DLOG_LEVEL_ERROR, "Unable to encode certificate chain");
+                break;
+            }
+            contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
+            contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
+            contract_cert_chain_pem.append("\n-----END CERTIFICATE-----\n");
+
+            free(base64Buffer);
+            crt = crt->next;
+        }
+
+        std::optional<std::vector<types::iso15118_charger::CertificateHashDataInfo>> iso15118_certificate_hash_data;
+
         /* Only if certificate chain verification should be done locally by the EVSE */
         if (conn->ctx->session.verify_contract_cert_chain == true) {
-            std::string v2g_root_cert_path = conn->ctx->certs_path + "/ca/v2g/V2G_ROOT_CA.pem";
-            std::string mo_root_cert_path = conn->ctx->certs_path + "/ca/mo/MO_ROOT_CA.pem";
+            std::string v2g_root_cert_path =
+                conn->ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
+            std::string mo_root_cert_path =
+                conn->ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
             mbedtls_x509_crt contract_root_crt;
             mbedtls_x509_crt_init(&contract_root_crt);
             uint32_t flags;
@@ -1259,27 +1285,10 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             }
 
             dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
-        } else {
-            // Save the certificate chain in a variable in PEM format to publish it
-            mbedtls_x509_crt* crt = &conn->ctx->session.contract.crt;
-            unsigned char* base64Buffer = NULL;
-            size_t olen;
 
-            while (crt != nullptr && crt->version != 0) {
-                mbedtls_base64_encode(NULL, 0, &olen, crt->raw.p, crt->raw.len);
-                base64Buffer = static_cast<unsigned char*>(malloc(olen));
-                if ((base64Buffer == NULL) ||
-                    ((mbedtls_base64_encode(base64Buffer, olen, &olen, crt->raw.p, crt->raw.len)) != 0)) {
-                    dlog(DLOG_LEVEL_ERROR, "Unable to encode certificate chain");
-                    break;
-                }
-                contract_cert_chain_pem.append("-----BEGIN CERTIFICATE-----\n");
-                contract_cert_chain_pem.append(std::string(reinterpret_cast<char const*>(base64Buffer), olen));
-                contract_cert_chain_pem.append("\n-----END CERTIFICATE-----\n");
-
-                free(base64Buffer);
-                crt = crt->next;
-            }
+            // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be verified
+            const auto ocsp_response = conn->ctx->r_security->call_get_mo_ocsp_request_data(contract_cert_chain_pem);
+            iso15118_certificate_hash_data = convert_to_certificate_hash_data_info_vector(ocsp_response);
         }
 
         generate_random_data(&conn->ctx->session.gen_challenge, GEN_CHALLENGE_SIZE);
@@ -1292,9 +1301,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         types::authorization::ProvidedIdToken ProvidedIdToken;
         ProvidedIdToken.id_token = {std::string(cert_emaid), types::authorization::IdTokenType::eMAID};
         ProvidedIdToken.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
-        if (contract_cert_chain_pem.empty() == false) {
-            ProvidedIdToken.certificate = contract_cert_chain_pem;
-        }
+        ProvidedIdToken.iso15118CertificateHashData = iso15118_certificate_hash_data;
+        ProvidedIdToken.certificate = contract_cert_chain_pem;
         conn->ctx->p_charger->publish_Require_Auth_PnC(ProvidedIdToken);
 
     } else {

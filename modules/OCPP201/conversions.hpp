@@ -11,6 +11,7 @@
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
+#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
@@ -104,6 +105,11 @@ ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse);
 
 /// \brief Converts a given types::ocpp::AttributeEnum to ocpp::v201::AttributeEnum
 ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum);
+
+/// \brief Converts a given types::types::iso15118_charger::Request_Exi_Stream_Schema to
+/// ocpp::v201::Get15118EVCertificateRequest
+ocpp::v201::Get15118EVCertificateRequest
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request);
 
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason

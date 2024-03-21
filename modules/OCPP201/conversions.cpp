@@ -753,6 +753,15 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
     }
 }
 
+ocpp::v201::Get15118EVCertificateRequest
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request) {
+    ocpp::v201::Get15118EVCertificateRequest _request;
+    _request.iso15118SchemaVersion = request.iso15118SchemaVersion;
+    _request.exiRequest = request.exiRequest;
+    _request.action = conversions::to_ocpp_certificate_action_enum(request.certificateAction);
+    return _request;
+}
+
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();

@@ -45,6 +45,8 @@ evse_security::LeafCertificateType from_everest(types::evse_security::LeafCertif
         return evse_security::LeafCertificateType::V2G;
     case types::evse_security::LeafCertificateType::MF:
         return evse_security::LeafCertificateType::MF;
+    case types::evse_security::LeafCertificateType::MO:
+        return evse_security::LeafCertificateType::MO;
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::LeafCertificateType to evse_security::LeafCertificateType");
@@ -231,6 +233,8 @@ types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertific
         return types::evse_security::LeafCertificateType::V2G;
     case evse_security::LeafCertificateType::MF:
         return types::evse_security::LeafCertificateType::MF;
+    case evse_security::LeafCertificateType::MO:
+        return types::evse_security::LeafCertificateType::MO;
     default:
         throw std::runtime_error(
             "Could not convert evse_security::LeafCertificateType to types::evse_security::LeafCertificateType");
