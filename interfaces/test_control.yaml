@@ -1,7 +1,7 @@
 description: This interface defines the everest-testing control functions on everest-core
 cmds:
   start_charging:
-    description: Enables the CarSimulator to begin charging
+    description: Enables the EvManager to begin charging
     arguments:
       mode:
         description: Sets charging mode (e.g. raw, iso15118)
@@ -9,7 +9,7 @@ cmds:
         minLength: 1
         maxLength: 20
     result:
-      description: Charging state of the CarSimulator
+      description: Charging state of the EvManager
       type: string
 vars:
   state:
