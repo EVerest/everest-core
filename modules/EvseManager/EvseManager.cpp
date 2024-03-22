@@ -117,6 +117,10 @@ void EvseManager::ready() {
         if (config.payment_enable_contract) {
             payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
         }
+        if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+            EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
+            payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
+        }
         r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
 
         r_hlc[0]->subscribe_dlink_error([this] {
@@ -719,6 +723,11 @@ void EvseManager::ready() {
             }
             if (config.payment_enable_contract) {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
+            }
+            if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+                EVLOG_warning
+                    << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
+                payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             }
             r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
         }
