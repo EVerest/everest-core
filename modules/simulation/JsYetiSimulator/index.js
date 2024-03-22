@@ -16,7 +16,7 @@ const Event_PowerOff = 9;
 
 let global_info;
 
-const active_errors = {
+let active_errors = {
   DiodeFault: false,
   BrownOut: false,
   EnergyManagement: false,

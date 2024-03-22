@@ -7,7 +7,7 @@ cmds:
         description: true to enable, false to disable
         type: boolean
   set_cp_state:
-    description: Sets the CP State that should be set by the EV Yeti driver (controlled by S2)
+    description: Sets the CP State that should be set by the EV board support driver (controlled by S2)
     arguments:
       cp_state:
         description: The CP State
