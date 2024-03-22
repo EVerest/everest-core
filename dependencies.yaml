@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.10.1
+  git_tag: v0.11.0
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
@@ -46,10 +46,18 @@ libcurl:
   git_tag: curl-8_4_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
+# EvseSecurity
+# This has to appear before libocpp in this file since it is also a direct dependency of libocpp
+# and would otherwise be overwritten by the version used there
+libevse-security:
+  git: https://github.com/EVerest/libevse-security.git
+  git_tag: bce1ba4
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 86adda6
+  git_tag: 778e080
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -75,12 +83,7 @@ everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.2.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-# evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
-# setting it here can be misleading since it does not affect the version being used
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.4.3
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.

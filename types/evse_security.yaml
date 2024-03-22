@@ -21,6 +21,7 @@ types:
       - CSMS
       - V2G
       - MF
+      - MO
   CertificateType:
     description: Enum specifies certificate type of leaf and CA certificates
     type: string
