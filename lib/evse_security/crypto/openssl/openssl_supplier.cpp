@@ -75,6 +75,7 @@ static CertificateValidationResult to_certificate_error(const int ec) {
     case X509_V_ERR_CERT_SIGNATURE_FAILURE:
         return CertificateValidationResult::InvalidSignature;
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+    case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
         return CertificateValidationResult::IssuerNotFound;
     case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
         return CertificateValidationResult::InvalidLeafSignature;
@@ -578,11 +579,13 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(X509H
         const char* c_file_path = file_path.has_value() ? file_path.value().c_str() : nullptr;
 
         if (1 != X509_STORE_load_locations(store_ptr.get(), c_file_path, c_dir_path)) {
+            EVLOG_warning << "X509 could not load store locations!";
             return CertificateValidationResult::Unknown;
         }
 
         if (dir_path.has_value()) {
             if (X509_STORE_add_lookup(store_ptr.get(), X509_LOOKUP_file()) == nullptr) {
+                EVLOG_warning << "X509 could not add store lookup!";
                 return CertificateValidationResult::Unknown;
             }
         }

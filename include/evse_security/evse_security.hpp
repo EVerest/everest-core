@@ -219,6 +219,7 @@ private:
     CertificateValidationResult verify_certificate_internal(const std::string& certificate_chain,
                                                             LeafCertificateType certificate_type);
     GetKeyPairResult get_key_pair_internal(LeafCertificateType certificate_type, EncodingFormat encoding);
+    bool is_ca_certificate_installed_internal(CaCertificateType certificate_type);
 
     /// @brief Determines if the total filesize of certificates is > than the max_filesystem_usage bytes
     bool is_filesystem_full();
