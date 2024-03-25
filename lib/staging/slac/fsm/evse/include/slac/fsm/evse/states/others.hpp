@@ -21,6 +21,21 @@ struct ResetState : public FSMSimpleState {
     bool setup_has_been_send{false};
 };
 
+struct ResetChipState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
+
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
+    CallbackReturnType callback() final;
+
+    // for now returns true if CM_RESET_CNF is received
+    bool handle_slac_message(slac::messages::HomeplugMessage&);
+
+    bool reset_delay_done{false};
+    bool chip_reset_has_been_sent{false};
+};
+
 struct IdleState : public FSMSimpleState {
     using FSMSimpleState::FSMSimpleState;
 

@@ -32,9 +32,16 @@ void ResetState::enter() {
 }
 
 FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa, Event ev) {
+    const auto& cfg = ctx.slac_config;
     if (ev == Event::SLAC_MESSAGE) {
         if (handle_slac_message(ctx.slac_message_payload)) {
-            return sa.create_simple<IdleState>(ctx);
+            if (cfg.do_chip_reset) {
+                // If chip reset is enabled in config, go to ResetChipState and from there to IdleState
+                return sa.create_simple<ResetChipState>(ctx);
+            } else {
+                // If chip reset is disabled, go to IdleState directly
+                return sa.create_simple<IdleState>(ctx);
+            }
         } else {
             return sa.PASS_ON;
         }
@@ -72,6 +79,57 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
         return false;
     } else {
         ctx.log_info("Received CM_SET_KEY_CNF");
+        return true;
+    }
+}
+
+void ResetChipState::enter() {
+    ctx.log_info("Entered HW Chip Reset state");
+}
+
+FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType& sa, Event ev) {
+    if (ev == Event::SLAC_MESSAGE) {
+        if (handle_slac_message(ctx.slac_message_payload)) {
+            return sa.create_simple<IdleState>(ctx);
+        } else {
+            return sa.PASS_ON;
+        }
+    } else {
+        return sa.PASS_ON;
+    }
+}
+
+FSMSimpleState::CallbackReturnType ResetChipState::callback() {
+    const auto& cfg = ctx.slac_config;
+    if (not reset_delay_done) {
+        reset_delay_done = true;
+        return cfg.chip_reset_delay_ms;
+    } else if (chip_reset_has_been_sent == false) {
+        slac::messages::cm_reset_device_req set_reset_req;
+
+        ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
+
+        // RS_DEV.REQ is on protocol version 0
+        ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req, 0);
+
+        chip_reset_has_been_sent = true;
+
+        return cfg.chip_reset_timeout_ms;
+    } else {
+        ctx.log_info("RS_DEV.REQ timeout, no response received - failed to reset the chip");
+        return {};
+    }
+}
+
+bool ResetChipState::handle_slac_message(slac::messages::HomeplugMessage& message) {
+    const auto mmtype = message.get_mmtype();
+    if (mmtype != (slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
+        // unexpected message
+        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
+        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        return false;
+    } else {
+        ctx.log_info("Received RS_DEV.CNF");
         return true;
     }
 }

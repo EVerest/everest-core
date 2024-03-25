@@ -46,6 +46,18 @@ provides:
           It is better to wait for the matching to be done.
         type: boolean
         default: false
+      do_chip_reset:
+        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (QCA7k)
+        type: boolean
+        default: false
+      chip_reset_delay_ms:
+        description: Delay between SET_KEY.CNF and RS_DEV.REQ
+        type: integer
+        default: 100
+      chip_reset_timeout_ms:
+        description: Timeout for RS_DEV.REQ (waiting for RS_DEV.CNF)
+        type: integer
+        default: 500
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0

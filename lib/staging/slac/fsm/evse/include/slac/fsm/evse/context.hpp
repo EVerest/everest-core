@@ -27,6 +27,15 @@ template <> struct MMTYPE<slac::messages::cm_validate_cnf> {
 template <> struct MMTYPE<slac::messages::cm_slac_match_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF;
 };
+
+template <> struct MMTYPE<slac::messages::cm_reset_device_req> {
+    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::cm_reset_device_cnf> {
+    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
+};
+
 } // namespace _context_detail
 
 struct ContextCallbacks {
@@ -54,6 +63,11 @@ struct EvseSlacConfig {
     // timeout for CM_SET_KEY.REQ
     int set_key_timeout_ms = 500;
 
+    // Settings CM_DEVICE_RESET.REQ
+    bool do_chip_reset = true;
+    int chip_reset_timeout_ms = 500;
+    int chip_reset_delay_ms = 100;
+
     // offset for adjusting the calculated sounding attenuation
     int sounding_atten_adjustment = 0;
 };
@@ -68,8 +82,10 @@ struct Context {
     slac::messages::HomeplugMessage slac_message_payload;
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
-    template <typename SlacMessageType> void send_slac_message(const uint8_t* mac, SlacMessageType& message) {
+    template <typename SlacMessageType>
+    void send_slac_message(const uint8_t* mac, SlacMessageType& message, int protocol_version = 1) {
         slac::messages::HomeplugMessage hp_message;
+        hp_message.set_protocol_version(protocol_version);
         hp_message.setup_ethernet_header(mac);
         hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value);
         callbacks.send_raw_slac(hp_message);

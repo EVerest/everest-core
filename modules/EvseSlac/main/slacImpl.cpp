@@ -84,6 +84,11 @@ void slacImpl::run() {
     fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
     fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
+
+    fsm_ctx.slac_config.do_chip_reset = config.do_chip_reset;
+    fsm_ctx.slac_config.chip_reset_delay_ms = config.chip_reset_delay_ms;
+    fsm_ctx.slac_config.chip_reset_timeout_ms = config.chip_reset_timeout_ms;
+
     fsm_ctx.slac_config.generate_nmk();
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
