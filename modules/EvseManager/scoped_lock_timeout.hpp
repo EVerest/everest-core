@@ -17,6 +17,7 @@ namespace Everest {
 
 enum class MutexDescription {
     Undefined,
+    Charger_signal_loop,
     Charger_signal_error,
     Charger_signal_error_cleared,
     Charger_mainloop,
@@ -92,6 +93,8 @@ enum class MutexDescription {
 
 static std::string to_string(MutexDescription d) {
     switch (d) {
+    case MutexDescription::Charger_signal_loop:
+        return "Charger.cpp: error_handling->signal_loop";
     case MutexDescription::Charger_signal_error:
         return "Charger.cpp: error_handling->signal_error";
     case MutexDescription::Charger_signal_error_cleared:

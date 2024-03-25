@@ -11,6 +11,7 @@ generate_config_run_script(CONFIG sil-gen-pm)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp-custom-extension)
 generate_config_run_script(CONFIG sil-ocpp-pnc)
+generate_config_run_script(CONFIG sil-ocpp201-pnc)
 generate_config_run_script(CONFIG example)
 
 # install configs

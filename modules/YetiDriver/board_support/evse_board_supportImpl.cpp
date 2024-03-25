@@ -71,28 +71,39 @@ void evse_board_supportImpl::init() {
         std::lock_guard<std::mutex> lock(capsMutex);
 
         caps.min_current_A_import = mod->config.caps_min_current_A;
-        caps.max_current_A_import = 6;
+        caps.max_current_A_import = 16;
         caps.min_phase_count_import = 1;
         caps.max_phase_count_import = 3;
         caps.supports_changing_phases_during_charging = false;
+        caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable;
 
         caps.min_current_A_export = mod->config.caps_min_current_A;
-        caps.max_current_A_export = 6;
+        caps.max_current_A_export = 16;
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
         caps.supports_changing_phases_during_charging = false;
     }
 
     mod->serial.signalCPState.connect([this](CpState cp_state) {
-        publish_event(cast_event_type(cp_state));
+        if (cp_state not_eq last_cp_state) {
+            auto event_cp_state = cast_event_type(cp_state);
+            EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
+            publish_event(event_cp_state);
 
-        if (cp_state == CpState_STATE_A) {
-            mod->clear_errors_on_unplug();
+            if (cp_state == CpState_STATE_A) {
+                mod->clear_errors_on_unplug();
+            }
+            last_cp_state = cp_state;
         }
     });
-    mod->serial.signalRelaisState.connect([this](bool relais_state) { publish_event(cast_event_type(relais_state)); });
+    mod->serial.signalRelaisState.connect([this](bool relais_state) {
+        if (last_relais_state not_eq relais_state) {
+            publish_event(cast_event_type(relais_state));
+            last_relais_state = relais_state;
+        }
+    });
+
     mod->serial.signalPPState.connect([this](PpState pp_state) {
-        std::lock_guard<std::mutex> lock(capsMutex);
         last_pp = cast_pp_type(pp_state);
         publish_ac_pp_ampacity(last_pp);
     });
@@ -113,20 +124,26 @@ void evse_board_supportImpl::init() {
         caps.max_phase_count_export = l.hwcap_max_phase_count;
 
         caps.supports_changing_phases_during_charging = l.supports_changing_phases_during_charging;
+        if (not caps_received) {
+            EVLOG_info << "Yeti Controller Configuration:";
+            EVLOG_info << "  Hardware revision: " << l.hw_revision;
+            EVLOG_info << "  Firmware version: " << l.sw_version_string;
+            EVLOG_info << "  Current Limit: " << l.hwcap_max_current;
+        }
         caps_received = true;
     });
 }
 
 void evse_board_supportImpl::ready() {
+    wait_for_caps();
+}
+
+void evse_board_supportImpl::wait_for_caps() {
     // Wait for caps to be received at least once
     int i;
     for (i = 0; i < 50; i++) {
-        {
-            std::lock_guard<std::mutex> lock(capsMutex);
-            if (caps_received)
-                break;
-        }
-
+        if (caps_received)
+            break;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (i == 49) {
@@ -136,6 +153,7 @@ void evse_board_supportImpl::ready() {
 }
 
 types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
+    wait_for_caps();
     std::lock_guard<std::mutex> lock(capsMutex);
     return caps;
 }

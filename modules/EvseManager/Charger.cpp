@@ -12,9 +12,12 @@
 
 #include <math.h>
 #include <string.h>
+#include <thread>
+#include <type_traits>
 
 #include <fmt/core.h>
 
+#include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
 
 namespace module {
@@ -53,32 +56,51 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 
     hlc_use_5percent_current_session = false;
 
+    // create thread for processing errors/error clearings
+    std::thread error_thread([this]() {
+        for (;;) {
+            auto events = this->error_handling_event_queue.wait();
+            if (!events.empty()) {
+                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
+                for (auto& event : events) {
+                    switch (event) {
+                    case ErrorHandlingEvents::prevent_charging:
+                        shared_context.error_prevent_charging_flag = true;
+                        break;
+                    case ErrorHandlingEvents::prevent_charging_welded:
+                        shared_context.error_prevent_charging_flag = true;
+                        shared_context.contactor_welded = true;
+                        break;
+                    case ErrorHandlingEvents::all_errors_cleared:
+                        shared_context.error_prevent_charging_flag = false;
+                        shared_context.contactor_welded = false;
+                        break;
+                    default:
+                        EVLOG_error << "ErrorHandlingEvents invalid value: "
+                                    << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    error_thread.detach();
+
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         if (prevent_charging) {
-            std::thread error_thread([this, e]() {
-                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_error);
-                shared_context.error_prevent_charging_flag = true;
-                if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
-                    shared_context.contactor_welded = true;
-                }
-            });
-            error_thread.detach();
+            if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
+                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging_welded);
+            } else {
+                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
+            }
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
         signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
-        {
-            std::thread error_thread([this]() {
-                Everest::scoped_lock_timeout lock(state_machine_mutex,
-                                                  Everest::MutexDescription::Charger_signal_error_cleared);
-                shared_context.error_prevent_charging_flag = false;
-                shared_context.contactor_welded = false;
-            });
-            error_thread.detach();
-        }
+        error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
     });
 }
 

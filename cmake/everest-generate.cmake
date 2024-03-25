@@ -174,6 +174,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             "Build rust modules"
         COMMAND
             ${CMAKE_COMMAND} -E env
+            EVEREST_CORE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
             ${CARGO_EXECUTABLE} build

@@ -491,14 +491,8 @@ void OCPP201::ready() {
 
         evse->subscribe_iso15118_certificate_request(
             [this, evse_id](const types::iso15118_charger::Request_Exi_Stream_Schema& certificate_request) {
-                // transform request forward to libocpp
-                ocpp::v201::Get15118EVCertificateRequest ocpp_request;
-                ocpp_request.exiRequest = certificate_request.exiRequest;
-                ocpp_request.iso15118SchemaVersion = certificate_request.iso15118SchemaVersion;
-                ocpp_request.action =
-                    conversions::to_ocpp_certificate_action_enum(certificate_request.certificateAction);
-
-                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(ocpp_request);
+                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
+                    conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
                 const auto everest_response_status =
