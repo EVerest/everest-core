@@ -1,9 +1,5 @@
 description: A OCPP charge point / charging station module for OCPP 2.0.1
 config:
-  ChargePointConfigPath:
-    description: Path to the configuration file
-    type: string
-    default: ocpp-config.json
   MessageLogPath:
     description: Path to folder where logs of all OCPP messages get written to
     type: string

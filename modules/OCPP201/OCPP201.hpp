@@ -57,7 +57,6 @@ struct TransactionStart {
 namespace module {
 
 struct Conf {
-    std::string ChargePointConfigPath;
     std::string MessageLogPath;
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
