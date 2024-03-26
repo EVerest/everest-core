@@ -291,17 +291,21 @@ void OCPP201::ready() {
             if (request.messageId.has_value()) {
                 data_transfer_request.message_id = request.messageId.value().get();
             }
+            if (request.data.has_value()) {
+                data_transfer_request.data = request.data.value().dump();
+            }
             if (request.customData.has_value()) {
                 auto ocpp_custom_data = request.customData.value();
                 types::ocpp::CustomData custom_data{ocpp_custom_data.at("vendorId"), ocpp_custom_data.dump()};
                 data_transfer_request.custom_data = custom_data;
             }
-            data_transfer_request.data = request.data;
             types::ocpp::DataTransferResponse data_transfer_response =
                 this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
             ocpp::v201::DataTransferResponse response;
             response.status = conversions::to_ocpp_data_transfer_status_enum(data_transfer_response.status);
-            response.data = data_transfer_response.data;
+            if (data_transfer_response.data.has_value()) {
+                response.data = json::parse(data_transfer_response.data.value());
+            }
             if (data_transfer_response.custom_data.has_value()) {
                 auto custom_data = data_transfer_response.custom_data.value();
                 json custom_data_json = json::parse(custom_data.data);
