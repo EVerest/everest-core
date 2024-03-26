@@ -2,6 +2,19 @@ description: >-
   OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201,
   as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
+  CustomData:
+    description: Custom data extension
+    required:
+      - vendor_id
+      - data
+    type: object
+    properties:
+      vendor_id:
+        description: Vendor Id to identify the customization, this is also included in the data field and only reproduced for convenience
+        type: string
+      data:
+        description: Custom json data object encoded as string
+        type: string
   MessageContent:
     description: Contains message details
     required:
@@ -105,6 +118,10 @@ types:
       data:
         description: Data provided by this data transfer
         type: string
+      custom_data:
+        description: Custom data extension
+        type: object
+        $ref: /ocpp#/CustomData
   DataTransferResponse:
     description: Type for data transfer response provided by OCPP
     type: object
@@ -119,6 +136,10 @@ types:
       data:
         description: Data provided by this data transfer
         type: string
+      custom_data:
+        description: Custom data extension
+        type: object
+        $ref: /ocpp#/CustomData
   KeyValue:
     description: Type for a key value pair
     type: object
