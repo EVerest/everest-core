@@ -110,7 +110,7 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
         ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
 
         // RS_DEV.REQ is on protocol version 0
-        ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req, 0);
+        ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req);
 
         sub_state = ChipResetState::DONE;
 
@@ -206,7 +206,7 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
         slac::messages::link_status_req link_status_req;
 
         // LINK_STATUS.REQ is on protocol version 0
-        ctx.send_slac_message(cfg.plc_peer_mac, link_status_req, 0);
+        ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
 
         link_status_req_sent = true;
         return cfg.link_status.retry_ms;

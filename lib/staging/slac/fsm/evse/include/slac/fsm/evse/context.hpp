@@ -11,6 +11,9 @@
 namespace slac::fsm::evse {
 
 namespace _context_detail {
+
+// FIXME (aw): message kind and mode should be separated to reduce
+// duplication
 template <typename SlacMessageType> struct MMTYPE;
 template <> struct MMTYPE<slac::messages::cm_slac_parm_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_CNF;
@@ -42,6 +45,29 @@ template <> struct MMTYPE<slac::messages::link_status_req> {
 
 template <> struct MMTYPE<slac::messages::link_status_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
+};
+
+template <typename SlacMessageType> struct MMV {
+    // this is the default value for homeplug av 2.0 messages
+    // only exception are CM_CHAN_EST, CM_AMP_MAP and CM_NW_STATS
+    // and probably older homeplug av 1.0 messages
+    static constexpr uint8_t value = 0x1;
+};
+
+template <> struct MMV<slac::messages::cm_reset_device_req> {
+    static constexpr uint8_t value = 0x0;
+};
+
+template <> struct MMV<slac::messages::cm_reset_device_cnf> {
+    static constexpr uint8_t value = 0x0;
+};
+
+template <> struct MMV<slac::messages::link_status_req> {
+    static constexpr uint8_t value = 0x0;
+};
+
+template <> struct MMV<slac::messages::link_status_cnf> {
+    static constexpr uint8_t value = 0x0;
 };
 
 } // namespace _context_detail
@@ -101,9 +127,9 @@ struct Context {
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
     template <typename SlacMessageType>
-    void send_slac_message(const uint8_t* mac, SlacMessageType& message, int protocol_version = 1) {
+    void send_slac_message(const uint8_t* mac, SlacMessageType const& message) {
         slac::messages::HomeplugMessage hp_message;
-        hp_message.set_protocol_version(protocol_version);
+        hp_message.set_protocol_version(_context_detail::MMV<SlacMessageType>::value);
         hp_message.setup_ethernet_header(mac);
         hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value);
         callbacks.send_raw_slac(hp_message);
