@@ -40,7 +40,7 @@ struct ResetChipState : public FSMSimpleState {
         DELAY,
         SEND_RESET,
         DONE,
-    } sub_state {SubState::DELAY};
+    } sub_state{SubState::DELAY};
 };
 
 struct IdleState : public FSMSimpleState {
