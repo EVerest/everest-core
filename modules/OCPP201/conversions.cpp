@@ -974,6 +974,43 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
     return ocpp_transaction_event;
 }
 
+types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+    switch (message_format) {
+    case ocpp::v201::MessageFormatEnum::ASCII:
+        return types::ocpp::MessageFormat::ASCII;
+    case ocpp::v201::MessageFormatEnum::HTML:
+        return types::ocpp::MessageFormat::HTML;
+    case ocpp::v201::MessageFormatEnum::URI:
+        return types::ocpp::MessageFormat::URI;
+    case ocpp::v201::MessageFormatEnum::UTF8:
+        return types::ocpp::MessageFormat::UTF8;
+    default:
+        throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
+    }
+}
+
+types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
+    types::ocpp::MessageContent everest_message_content;
+    everest_message_content.format = to_everest_message_format(message_content.format);
+    everest_message_content.content = message_content.content;
+    everest_message_content.language = message_content.language;
+    return everest_message_content;
+}
+
+types::ocpp::TransactionEventResponse
+to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response) {
+    types::ocpp::TransactionEventResponse everest_transaction_event_response;
+
+    everest_transaction_event_response.total_cost = transaction_event_response.totalCost;
+    everest_transaction_event_response.charging_priority = transaction_event_response.chargingPriority;
+    if (transaction_event_response.updatedPersonalMessage.has_value()) {
+        everest_transaction_event_response.personal_message =
+            to_everest_message_content(transaction_event_response.updatedPersonalMessage.value());
+    }
+
+    return everest_transaction_event_response;
+}
+
 std::vector<types::ocpp::GetVariableResult>
 to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult>& get_variable_result_vector) {
     std::vector<types::ocpp::GetVariableResult> response;

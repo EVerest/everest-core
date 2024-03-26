@@ -274,6 +274,16 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_ocpp_transaction_event(ocpp_transaction_event);
     };
 
+    callbacks.transaction_event_response_callback =
+        [this](const ocpp::v201::TransactionEventRequest& transaction_event,
+               const ocpp::v201::TransactionEventResponse& transaction_event_response) {
+            auto ocpp_transaction_event = conversions::to_everest_ocpp_transaction_event(transaction_event);
+            auto ocpp_transaction_event_response =
+                conversions::to_everest_transaction_event_response(transaction_event_response);
+            ocpp_transaction_event.transaction_event_response = ocpp_transaction_event_response;
+            this->p_ocpp_generic->publish_ocpp_transaction_event(ocpp_transaction_event);
+        };
+
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request;

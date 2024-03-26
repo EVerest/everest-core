@@ -2,6 +2,42 @@ description: >-
   OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201,
   as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
+  MessageContent:
+    description: Contains message details
+    required:
+      - format
+      - content
+    type: object
+    properties:
+      format:
+        type: string
+        $ref: /ocpp#/MessageFormat
+      language:
+        type: string
+      content:
+        type: string
+  MessageFormat:
+    description: Format of the message to be displayed
+    type: string
+    enum:
+      - ASCII
+      - HTML
+      - URI
+      - UTF8
+  TransactionEventResponse:
+    description: Optional information that can be returned with a OCPP TransactionEventResponse
+    type: object
+    properties:
+      total_cost:
+        description: Running or total cost
+        type: number
+      charging_priority:
+        description: Priority from -9 to 9 for smart charging, higher values mean higher priority
+        type: integer
+      personal_message:
+        description: Personal message
+        type: object
+        $ref: /ocpp#/MessageContent
   OcppTransactionEvent:
     description: >-
       Element providing information on OCPP transactions.
@@ -17,6 +53,11 @@ types:
           The transaction related event.
         type: string
         $ref: /ocpp#/TransactionEvent
+      transaction_event_response:
+        description: >-
+          An optional response to the initial transaction event, can be used for communicating cost and personal messages
+        type: object
+        $ref: /ocpp#/TransactionEventResponse
       evse_id:
         description: >-
           The OCPP 2.0.1 EVSE ID associated with the transaction.

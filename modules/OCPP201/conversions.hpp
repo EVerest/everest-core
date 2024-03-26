@@ -148,10 +148,23 @@ types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_
 types::authorization::CertificateStatus
 to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum status);
 
-/// \brief Converts a given ocpp::v201::TransactionEventEnum \p transaction_event to a
+/// \brief Converts a given ocpp::v201::TransactionEventRequest \p transaction_event to a
 /// types::ocpp::OcppTransactionEvent.
 types::ocpp::OcppTransactionEvent
 to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& transaction_event);
+
+/// \brief Converts a given ocpp::v201::MessageFormat \p message_format to a
+/// types::ocpp::MessageFormat
+types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
+
+/// \brief Converts a given ocpp::v201::MessageContent \p message_content to a
+/// types::ocpp::MessageContent
+types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
+
+/// \brief Converts a given ocpp::v201::TransactionEventResponse \p transaction_event_response to a
+/// types::ocpp::TransactionEventResponse
+types::ocpp::TransactionEventResponse
+to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response);
 
 /// \brief Converts a given ocpp::v201::GetVariableResult \p get_variable_result_vector to a
 /// std::vector<types::ocpp::GetVariableResult>
