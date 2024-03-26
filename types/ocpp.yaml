@@ -66,11 +66,6 @@ types:
           The transaction related event.
         type: string
         $ref: /ocpp#/TransactionEvent
-      transaction_event_response:
-        description: >-
-          An optional response to the initial transaction event, can be used for communicating cost and personal messages
-        type: object
-        $ref: /ocpp#/TransactionEventResponse
       evse_id:
         description: >-
           The OCPP 2.0.1 EVSE ID associated with the transaction.
@@ -87,6 +82,11 @@ types:
         description: >-
           The CSMS assigned transaction ID. A string is used to support OCPP 2.0.1. For OCPP 1.6 the integer is converted to a string
         type: string
+      transaction_event_response:
+        description: >-
+          An optional response to the initial transaction event, can be used for communicating cost and personal messages
+        type: object
+        $ref: /ocpp#/TransactionEventResponse
   TransactionEvent:
     description: The transaction event enumeration
     type: string
