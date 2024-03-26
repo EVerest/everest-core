@@ -26,4 +26,4 @@ if(NOT DISABLE_EDM)
     catch_discover_tests(${TARGET_NAME})
 endif()
 
-add_test(module_error_history_tests module_error_history_tests)
+add_test(${TARGET_NAME} ${TARGET_NAME})
