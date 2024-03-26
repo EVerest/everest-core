@@ -12,8 +12,6 @@ namespace slac::fsm::evse {
 
 namespace _context_detail {
 
-// FIXME (aw): message kind and mode should be separated to reduce
-// duplication
 template <typename SlacMessageType> struct MMTYPE;
 template <> struct MMTYPE<slac::messages::cm_slac_parm_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_CNF;
@@ -48,26 +46,28 @@ template <> struct MMTYPE<slac::messages::link_status_cnf> {
 };
 
 template <typename SlacMessageType> struct MMV {
-    // this is the default value for homeplug av 2.0 messages
-    // only exception are CM_CHAN_EST, CM_AMP_MAP and CM_NW_STATS
-    // and probably older homeplug av 1.0 messages
-    static constexpr uint8_t value = 0x1;
+    // this is the default value for homeplug av 2.0 messages, which are
+    // backward compatible with homeplug av 1.1 messages
+    // non-backward (to 1.1) compatible message are CM_CHAN_EST,
+    // CM_AMP_MAP and CM_NW_STATS, these need to use AV_2_0
+    // older av 1.0 message need to use AV_1_0
+    static constexpr auto value = slac::defs::MMV::AV_1_1;
 };
 
 template <> struct MMV<slac::messages::cm_reset_device_req> {
-    static constexpr uint8_t value = 0x0;
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
 template <> struct MMV<slac::messages::cm_reset_device_cnf> {
-    static constexpr uint8_t value = 0x0;
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
 template <> struct MMV<slac::messages::link_status_req> {
-    static constexpr uint8_t value = 0x0;
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
 template <> struct MMV<slac::messages::link_status_cnf> {
-    static constexpr uint8_t value = 0x0;
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
 } // namespace _context_detail
@@ -99,7 +99,7 @@ struct EvseSlacConfig {
 
     // Settings CM_DEVICE_RESET.REQ
     struct chip_reset_struct {
-        bool do_chip_reset = true;
+        bool enabled = true;
         int timeout_ms = 500;
         int delay_ms = 100;
     } chip_reset;
@@ -126,12 +126,11 @@ struct Context {
     slac::messages::HomeplugMessage slac_message_payload;
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
-    template <typename SlacMessageType>
-    void send_slac_message(const uint8_t* mac, SlacMessageType const& message) {
+    template <typename SlacMessageType> void send_slac_message(const uint8_t* mac, SlacMessageType const& message) {
         slac::messages::HomeplugMessage hp_message;
-        hp_message.set_protocol_version(_context_detail::MMV<SlacMessageType>::value);
         hp_message.setup_ethernet_header(mac);
-        hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value);
+        hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value,
+                                 _context_detail::MMV<SlacMessageType>::value);
         callbacks.send_raw_slac(hp_message);
     }
 

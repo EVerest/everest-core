@@ -35,7 +35,7 @@ FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa
     const auto& cfg = ctx.slac_config;
     if (ev == Event::SLAC_MESSAGE) {
         if (handle_slac_message(ctx.slac_message_payload)) {
-            if (cfg.chip_reset.do_chip_reset) {
+            if (cfg.chip_reset.enabled) {
                 // If chip reset is enabled in config, go to ResetChipState and from there to IdleState
                 return sa.create_simple<ResetChipState>(ctx);
             } else {
@@ -101,18 +101,17 @@ FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType
 
 FSMSimpleState::CallbackReturnType ResetChipState::callback() {
     const auto& cfg = ctx.slac_config;
-    if (sub_state == ChipResetState::DELAY) {
-        sub_state = ChipResetState::SEND_RESET;
+    if (sub_state == SubState::DELAY) {
+        sub_state = SubState::SEND_RESET;
         return cfg.chip_reset.delay_ms;
-    } else if (sub_state == ChipResetState::SEND_RESET) {
+    } else if (sub_state == SubState::SEND_RESET) {
         slac::messages::cm_reset_device_req set_reset_req;
 
         ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
 
-        // RS_DEV.REQ is on protocol version 0
         ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req);
 
-        sub_state = ChipResetState::DONE;
+        sub_state = SubState::DONE;
 
         return cfg.chip_reset.timeout_ms;
     } else {
@@ -205,7 +204,6 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
     if (not link_status_req_sent) {
         slac::messages::link_status_req link_status_req;
 
-        // LINK_STATUS.REQ is on protocol version 0
         ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
 
         link_status_req_sent = true;

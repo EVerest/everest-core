@@ -36,11 +36,11 @@ struct ResetChipState : public FSMSimpleState {
     bool reset_delay_done{false};
     bool chip_reset_has_been_sent{false};
 
-    enum class ChipResetState {
+    enum class SubState {
         DELAY,
         SEND_RESET,
         DONE,
-    } sub_state {ChipResetState::DELAY};
+    } sub_state {SubState::DELAY};
 };
 
 struct IdleState : public FSMSimpleState {

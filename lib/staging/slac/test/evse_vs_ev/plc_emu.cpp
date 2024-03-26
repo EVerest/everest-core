@@ -23,13 +23,15 @@ static void handle_set_key_req(int origin_fd) {
     slac::messages::cm_set_key_cnf set_key_cnf;
     // FIXME (aw): proper message and mac header setup!
     homeplug_message.setup_payload(&set_key_cnf, sizeof(set_key_cnf),
-                                   (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF));
+                                   (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF),
+                                   slac::defs::MMV::AV_1_1);
 
-    auto& raw = homeplug_message.get_raw_message();
-    memcpy(raw.ethernet_header.ether_dhost, raw.ethernet_header.ether_shost, sizeof(raw.ethernet_header.ether_dhost));
-    memcpy(raw.ethernet_header.ether_shost, PLC_SRC_MAC_ADDR, sizeof(PLC_SRC_MAC_ADDR));
+    auto raw = homeplug_message.get_raw_message_ptr();
+    memcpy(raw->ethernet_header.ether_dhost, raw->ethernet_header.ether_shost,
+           sizeof(raw->ethernet_header.ether_dhost));
+    memcpy(raw->ethernet_header.ether_shost, PLC_SRC_MAC_ADDR, sizeof(PLC_SRC_MAC_ADDR));
 
-    write(origin_fd, &homeplug_message.get_raw_message(), homeplug_message.get_raw_msg_len());
+    write(origin_fd, raw, homeplug_message.get_raw_msg_len());
 }
 
 static void attach_atten_profile(int evse_bridge_fd) {
@@ -47,31 +49,32 @@ static void attach_atten_profile(int evse_bridge_fd) {
     }
 
     homeplug_message.setup_payload(&atten_profile, sizeof(atten_profile),
-                                   (slac::defs::MMTYPE_CM_ATTEN_PROFILE | slac::defs::MMTYPE_MODE_IND));
+                                   (slac::defs::MMTYPE_CM_ATTEN_PROFILE | slac::defs::MMTYPE_MODE_IND),
+                                   slac::defs::MMV::AV_1_1);
 
-    auto& raw = homeplug_message.get_raw_message();
+    auto raw = homeplug_message.get_raw_message_ptr();
 
-    memcpy(raw.ethernet_header.ether_shost, PLC_SRC_MAC_ADDR, sizeof(PLC_SRC_MAC_ADDR));
+    memcpy(raw->ethernet_header.ether_shost, PLC_SRC_MAC_ADDR, sizeof(PLC_SRC_MAC_ADDR));
 
-    write(evse_bridge_fd, &homeplug_message.get_raw_message(), homeplug_message.get_raw_msg_len());
+    write(evse_bridge_fd, raw, homeplug_message.get_raw_msg_len());
 }
 
 void handle_ev_input(int ev_bridge_fd, int evse_bridge_fd) {
-    auto& raw_hp_message = homeplug_message.get_raw_message();
-    auto bytes_read = read(ev_bridge_fd, &raw_hp_message, sizeof(raw_hp_message));
+    auto raw_hp_message = homeplug_message.get_raw_message_ptr();
+    auto bytes_read = read(ev_bridge_fd, raw_hp_message, sizeof(slac::messages::homeplug_message));
 
     const auto mmtype = homeplug_message.get_mmtype();
 
     // printf("EV send message of size %d and type 0x%hx\n", bytes_read, mmtype);
 
     // patch in "our" mac address
-    memcpy(raw_hp_message.ethernet_header.ether_shost, EV_MAC_ADDR, sizeof(EV_MAC_ADDR));
+    memcpy(raw_hp_message->ethernet_header.ether_shost, EV_MAC_ADDR, sizeof(EV_MAC_ADDR));
 
     if (mmtype == (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_REQ)) {
         handle_set_key_req(ev_bridge_fd);
     } else {
         // default: forward message
-        write(evse_bridge_fd, &raw_hp_message, bytes_read);
+        write(evse_bridge_fd, raw_hp_message, bytes_read);
     }
 
     if (mmtype == (slac::defs::MMTYPE_CM_MNBC_SOUND | slac::defs::MMTYPE_MODE_IND)) {
@@ -81,18 +84,18 @@ void handle_ev_input(int ev_bridge_fd, int evse_bridge_fd) {
 }
 
 void handle_evse_input(int evse_bridge_fd, int ev_bridge_fd) {
-    auto& raw_hp_message = homeplug_message.get_raw_message();
-    auto bytes_read = read(evse_bridge_fd, &raw_hp_message, sizeof(raw_hp_message));
+    auto raw_hp_message = homeplug_message.get_raw_message_ptr();
+    auto bytes_read = read(evse_bridge_fd, raw_hp_message, sizeof(slac::messages::homeplug_message));
 
     const auto mmtype = homeplug_message.get_mmtype();
 
     // patch in "our" mac address
-    memcpy(raw_hp_message.ethernet_header.ether_shost, EVSE_MAC_ADDR, sizeof(EVSE_MAC_ADDR));
+    memcpy(raw_hp_message->ethernet_header.ether_shost, EVSE_MAC_ADDR, sizeof(EVSE_MAC_ADDR));
 
     if (mmtype == (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_REQ)) {
         handle_set_key_req(evse_bridge_fd);
     } else {
         // default: forward message
-        write(ev_bridge_fd, &raw_hp_message, bytes_read);
+        write(ev_bridge_fd, raw_hp_message, bytes_read);
     }
 }

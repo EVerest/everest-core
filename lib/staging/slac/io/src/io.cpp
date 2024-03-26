@@ -33,7 +33,6 @@ void SlacIO::loop() {
 
     while (running) {
         if (slac_channel.read(incoming_msg, 10)) {
-            incoming_msg.set_protocol_version_from_rawmsg();
             input_handler(incoming_msg);
         }
     }
