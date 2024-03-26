@@ -1,6 +1,7 @@
-add_executable(module_error_history_tests)
+set(TARGET_NAME ${PROJECT_NAME}_module_error_history_tests)
+add_executable(${TARGET_NAME})
 
-target_sources(module_error_history_tests
+target_sources(${TARGET_NAME}
     PRIVATE
         error_database_sqlite_tests.cpp
         ../ErrorDatabaseSqlite.cpp
@@ -11,7 +12,7 @@ target_sources(module_error_history_tests
 #     PRIVATE
 # )
 
-target_link_libraries(module_error_history_tests
+target_link_libraries(${TARGET_NAME}
     PRIVATE
         everest::framework
         everest::log
@@ -22,7 +23,7 @@ target_link_libraries(module_error_history_tests
 if(NOT DISABLE_EDM)
     list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
     include(Catch)
-    catch_discover_tests(module_error_history_tests)
+    catch_discover_tests(${TARGET_NAME})
 endif()
 
 add_test(module_error_history_tests module_error_history_tests)
