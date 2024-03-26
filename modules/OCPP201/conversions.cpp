@@ -582,7 +582,16 @@ ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType 
 }
 
 ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
-    return {id_token.value, to_ocpp_id_token_enum(id_token.type)};
+    ocpp::v201::IdToken ocpp_id_token = {id_token.value, to_ocpp_id_token_enum(id_token.type)};
+    if (id_token.additional_info.has_value()) {
+        std::vector<ocpp::v201::AdditionalInfo> ocpp_additional_info;
+        const auto& additional_info = id_token.additional_info.value();
+        for (const auto& entry : additional_info) {
+            ocpp_additional_info.push_back({entry.value, entry.type});
+        }
+        ocpp_id_token.additionalInfo = ocpp_additional_info;
+    }
+    return ocpp_id_token;
 }
 
 ocpp::v201::CertificateActionEnum
