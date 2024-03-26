@@ -35,7 +35,7 @@ FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa
     const auto& cfg = ctx.slac_config;
     if (ev == Event::SLAC_MESSAGE) {
         if (handle_slac_message(ctx.slac_message_payload)) {
-            if (cfg.do_chip_reset) {
+            if (cfg.chip_reset.do_chip_reset) {
                 // If chip reset is enabled in config, go to ResetChipState and from there to IdleState
                 return sa.create_simple<ResetChipState>(ctx);
             } else {
@@ -101,10 +101,10 @@ FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType
 
 FSMSimpleState::CallbackReturnType ResetChipState::callback() {
     const auto& cfg = ctx.slac_config;
-    if (not reset_delay_done) {
-        reset_delay_done = true;
-        return cfg.chip_reset_delay_ms;
-    } else if (chip_reset_has_been_sent == false) {
+    if (sub_state == ChipResetState::DELAY) {
+        sub_state = ChipResetState::SEND_RESET;
+        return cfg.chip_reset.delay_ms;
+    } else if (sub_state == ChipResetState::SEND_RESET) {
         slac::messages::cm_reset_device_req set_reset_req;
 
         ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
@@ -112,9 +112,9 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
         // RS_DEV.REQ is on protocol version 0
         ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req, 0);
 
-        chip_reset_has_been_sent = true;
+        sub_state = ChipResetState::DONE;
 
-        return cfg.chip_reset_timeout_ms;
+        return cfg.chip_reset.timeout_ms;
     } else {
         ctx.log_info("RS_DEV.REQ timeout, no response received - failed to reset the chip");
         return {};
@@ -125,7 +125,6 @@ bool ResetChipState::handle_slac_message(slac::messages::HomeplugMessage& messag
     const auto mmtype = message.get_mmtype();
     if (mmtype != (slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
-        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
         ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
@@ -210,15 +209,15 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
         ctx.send_slac_message(cfg.plc_peer_mac, link_status_req, 0);
 
         link_status_req_sent = true;
-        return cfg.link_status_retry_ms;
+        return cfg.link_status.retry_ms;
     } else {
         // Did we timeout?
-        if (std::chrono::steady_clock::now() - start_time > std::chrono::milliseconds(cfg.link_status_timeout_ms)) {
+        if (std::chrono::steady_clock::now() - start_time > std::chrono::milliseconds(cfg.link_status.timeout_ms)) {
             return Event::RETRY_MATCHING;
         }
         // Link is confirmed not up yet, query again
         link_status_req_sent = false;
-        return cfg.link_status_retry_ms;
+        return cfg.link_status.retry_ms;
     }
 }
 

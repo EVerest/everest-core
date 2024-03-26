@@ -273,7 +273,7 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 
     session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
 
-    if (not ctx.slac_config.debug_simulate_failed_matching) {
+    if (not ctx.slac_config.link_status.debug_simulate_failed_matching) {
         auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.slac_config.session_nmk);
         ctx.send_slac_message(tmp_ev_mac, match_confirm);
     } else {

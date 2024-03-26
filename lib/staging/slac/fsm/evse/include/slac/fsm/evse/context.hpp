@@ -72,15 +72,19 @@ struct EvseSlacConfig {
     int set_key_timeout_ms = 500;
 
     // Settings CM_DEVICE_RESET.REQ
-    bool do_chip_reset = true;
-    int chip_reset_timeout_ms = 500;
-    int chip_reset_delay_ms = 100;
+    struct chip_reset_struct {
+        bool do_chip_reset = true;
+        int timeout_ms = 500;
+        int delay_ms = 100;
+    } chip_reset;
 
     // Settings for LINK_STATUS detection
-    bool link_status_detection = false;
-    int link_status_retry_ms = 100;
-    int link_status_timeout_ms = 5000;
-    bool debug_simulate_failed_matching = false;
+    struct link_status_struct {
+        bool do_detect = false;
+        int retry_ms = 100;
+        int timeout_ms = 5000;
+        bool debug_simulate_failed_matching = false;
+    } link_status;
 
     // offset for adjusting the calculated sounding attenuation
     int sounding_atten_adjustment = 0;
