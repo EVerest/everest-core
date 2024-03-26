@@ -4,6 +4,7 @@
 #include "test_error_handlingImpl.hpp"
 
 #include <fmt/format.h>
+#include <utils/error.hpp>
 #include <utils/error/error_json.hpp>
 
 namespace module {
