@@ -58,6 +58,22 @@ provides:
         description: Timeout for RS_DEV.REQ (waiting for RS_DEV.CNF)
         type: integer
         default: 500
+      link_status_detection:
+        description: After matching.cnf, wait for link to come up before sending out d_link_ready=connected using LINK_STATUS Vendor MME Extension (QCA7k)
+        type: boolean
+        default: false
+      link_status_retry_ms:
+        description: Delay between retries of LINK_STATUS requests after matching request
+        type: integer
+        default: 100
+      link_status_timeout_ms:
+        description: Timeout for Link to come up after matching request
+        type: integer
+        default: 10000
+      debug_simulate_failed_matching:
+        description: Only for debugging. Simulate failed matching by sending a wrong NMK to the EV.
+        type: boolean
+        default: false
 metadata:
   base_license: https://directory.fsf.org/wiki/License:BSD-3-Clause-Clear
   license: https://opensource.org/licenses/Apache-2.0

@@ -36,6 +36,14 @@ template <> struct MMTYPE<slac::messages::cm_reset_device_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
 };
 
+template <> struct MMTYPE<slac::messages::link_status_req> {
+    static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::link_status_cnf> {
+    static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
+};
+
 } // namespace _context_detail
 
 struct ContextCallbacks {
@@ -67,6 +75,12 @@ struct EvseSlacConfig {
     bool do_chip_reset = true;
     int chip_reset_timeout_ms = 500;
     int chip_reset_delay_ms = 100;
+
+    // Settings for LINK_STATUS detection
+    bool link_status_detection = false;
+    int link_status_retry_ms = 100;
+    int link_status_timeout_ms = 5000;
+    bool debug_simulate_failed_matching = false;
 
     // offset for adjusting the calculated sounding attenuation
     int sounding_atten_adjustment = 0;

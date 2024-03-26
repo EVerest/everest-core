@@ -4,6 +4,7 @@
 #define EVSE_SLAC_STATES_OTHERS_HPP
 
 #include "../fsm.hpp"
+#include <chrono>
 
 namespace slac::fsm::evse {
 
@@ -59,6 +60,21 @@ struct FailedState : public FSMSimpleState {
     HandleEventReturnType handle_event(AllocatorType&, Event) final;
 
     void enter() final;
+};
+
+struct WaitForLinkState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
+
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
+    CallbackReturnType callback() final;
+
+    // for now returns true if link up detected is received
+    bool handle_slac_message(slac::messages::HomeplugMessage&);
+
+    bool link_status_req_sent{false};
+    std::chrono::steady_clock::time_point start_time;
 };
 
 } // namespace slac::fsm::evse

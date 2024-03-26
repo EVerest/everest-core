@@ -164,8 +164,6 @@ FSMSimpleState::HandleEventReturnType MatchedState::handle_event(AllocatorType& 
 }
 
 void MatchedState::leave() {
-    // FIXME (aw): do we want to generate the NMK here?
-    ctx.slac_config.generate_nmk();
     ctx.signal_dlink_ready(false);
 }
 
@@ -179,6 +177,64 @@ FSMSimpleState::HandleEventReturnType FailedState::handle_event(AllocatorType& s
         return sa.create_simple<ResetState>(ctx);
     } else {
         return sa.PASS_ON;
+    }
+}
+
+void WaitForLinkState::enter() {
+    ctx.log_info("Waiting for Link to be ready...");
+    start_time = std::chrono::steady_clock::now();
+}
+
+FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorType& sa, Event ev) {
+    if (ev == Event::SLAC_MESSAGE) {
+        if (handle_slac_message(ctx.slac_message_payload)) {
+            return sa.create_simple<MatchedState>(ctx);
+        } else {
+            return sa.PASS_ON;
+        }
+    } else if (ev == Event::RETRY_MATCHING) {
+        ctx.log_info("Link could not be established, resetting...");
+        // Notify higher layers to on CP signal
+        return sa.create_simple<FailedState>(ctx);
+    } else {
+        return sa.PASS_ON;
+    }
+}
+
+FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
+    const auto& cfg = ctx.slac_config;
+    if (not link_status_req_sent) {
+        slac::messages::link_status_req link_status_req;
+
+        // LINK_STATUS.REQ is on protocol version 0
+        ctx.send_slac_message(cfg.plc_peer_mac, link_status_req, 0);
+
+        link_status_req_sent = true;
+        return cfg.link_status_retry_ms;
+    } else {
+        // Did we timeout?
+        if (std::chrono::steady_clock::now() - start_time > std::chrono::milliseconds(cfg.link_status_timeout_ms)) {
+            return Event::RETRY_MATCHING;
+        }
+        // Link is confirmed not up yet, query again
+        link_status_req_sent = false;
+        return cfg.link_status_retry_ms;
+    }
+}
+
+bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& message) {
+    const auto mmtype = message.get_mmtype();
+    if (mmtype != (slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
+        // unexpected message
+        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
+        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        return false;
+    } else {
+        if (message.get_payload<slac::messages::link_status_cnf>().link_status == 0x01) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

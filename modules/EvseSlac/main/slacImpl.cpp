@@ -89,6 +89,11 @@ void slacImpl::run() {
     fsm_ctx.slac_config.chip_reset_delay_ms = config.chip_reset_delay_ms;
     fsm_ctx.slac_config.chip_reset_timeout_ms = config.chip_reset_timeout_ms;
 
+    fsm_ctx.slac_config.link_status_detection = config.link_status_detection;
+    fsm_ctx.slac_config.link_status_retry_ms = config.link_status_retry_ms;
+    fsm_ctx.slac_config.link_status_timeout_ms = config.link_status_timeout_ms;
+    fsm_ctx.slac_config.debug_simulate_failed_matching = config.debug_simulate_failed_matching;
+
     fsm_ctx.slac_config.generate_nmk();
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
