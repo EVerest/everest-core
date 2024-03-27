@@ -47,7 +47,7 @@ provides:
         type: boolean
         default: false
       do_chip_reset:
-        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (Enable for Qualcomm chips, disable for Lumissil and VertexCom)
+        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (Recommended for Qualcomm chips, works on Lumissil chips)
         type: boolean
         default: false
       chip_reset_delay_ms:
@@ -59,7 +59,7 @@ provides:
         type: integer
         default: 500
       link_status_detection:
-        description: After matching.cnf, wait for link to come up before sending out d_link_ready=connected using LINK_STATUS Vendor MME Extension (Enable for Qualcomm chips, disable for Lumissil and VertexCom)
+        description: After matching.cnf, wait for link to come up before sending out d_link_ready=connected using LINK_STATUS Vendor MME Extension (Works on Qualcomm and Lumissil chips)
         type: boolean
         default: false
       link_status_retry_ms:

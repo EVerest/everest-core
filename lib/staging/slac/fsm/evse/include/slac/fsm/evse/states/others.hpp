@@ -94,9 +94,10 @@ struct InitState : public FSMSimpleState {
 
     // For now we are requesting only one version info packet, but probably there will be more in the future.
     enum class SubState {
-        OP_ATTR,
+        QUALCOMM_OP_ATTR,
+        LUMISSIL_GET_VERSION,
         DONE,
-    } sub_state{SubState::OP_ATTR};
+    } sub_state{SubState::QUALCOMM_OP_ATTR};
 };
 
 } // namespace slac::fsm::evse

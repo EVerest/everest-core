@@ -94,6 +94,8 @@ FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType
         } else {
             return sa.PASS_ON;
         }
+    } else if (ev == Event::SUCCESS) {
+        return sa.create_simple<IdleState>(ctx);
     } else {
         return sa.PASS_ON;
     }
@@ -105,24 +107,32 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
         sub_state = SubState::SEND_RESET;
         return cfg.chip_reset.delay_ms;
     } else if (sub_state == SubState::SEND_RESET) {
-        slac::messages::qualcomm::cm_reset_device_req set_reset_req;
-
-        ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
-
-        ctx.send_slac_message(cfg.plc_peer_mac, set_reset_req);
-
-        sub_state = SubState::DONE;
-
-        return cfg.chip_reset.timeout_ms;
+        if (ctx.modem_vendor == Context::ModemVendor::Qualcomm) {
+            slac::messages::qualcomm::cm_reset_device_req reset_req;
+            ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
+            ctx.send_slac_message(cfg.plc_peer_mac, reset_req);
+            sub_state = SubState::DONE;
+            return cfg.chip_reset.timeout_ms;
+        } else if (ctx.modem_vendor == Context::ModemVendor::Lumissil) {
+            slac::messages::lumissil::nscm_reset_device_req reset_req;
+            ctx.log_info("Resetting HW Chip using NSCM_RESET_DEVICE.REQ");
+            sub_state = SubState::DONE;
+            ctx.send_slac_message(cfg.plc_peer_mac, reset_req);
+            // CG5317 does not reply to the reset packet
+            return Event::SUCCESS;
+        } else {
+            ctx.log_info("Chip reset not supported on this chip");
+        }
     } else {
-        ctx.log_info("RS_DEV.REQ timeout, no response received - failed to reset the chip");
+        ctx.log_info("Reset timeout, no response received - failed to reset the chip");
         return {};
     }
+    return {};
 }
 
 bool ResetChipState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype != (slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
+    if (mmtype != (slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
         ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
@@ -221,7 +231,7 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
 
 bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype != (slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
+    if (mmtype != (slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
         // FIXME (aw): need to also deal with CM_VALIDATE.REQ
         ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
@@ -248,10 +258,15 @@ FSMSimpleState::HandleEventReturnType InitState::handle_event(AllocatorType& sa,
 FSMSimpleState::CallbackReturnType InitState::callback() {
     const auto& cfg = ctx.slac_config;
 
-    if (sub_state == SubState::OP_ATTR) {
-        sub_state = SubState::DONE;
+    if (sub_state == SubState::QUALCOMM_OP_ATTR) {
+        sub_state = SubState::LUMISSIL_GET_VERSION;
         slac::messages::qualcomm::op_attr_req op_attr_req;
         ctx.send_slac_message(cfg.plc_peer_mac, op_attr_req);
+        return cfg.request_info_delay_ms;
+    } else if (sub_state == SubState::LUMISSIL_GET_VERSION) {
+        sub_state = SubState::DONE;
+        slac::messages::lumissil::nscm_get_version_req version_req;
+        ctx.send_slac_message(cfg.plc_peer_mac, version_req);
         return cfg.request_info_delay_ms;
     } else if (sub_state == SubState::DONE) {
         // the requested info may or may not be implemented by the chip,
@@ -267,7 +282,7 @@ static std::string to_string(uint8_t* s, int max_len) {
 }
 
 static void print_log(slac::fsm::evse::Context& ctx, slac::messages::qualcomm::op_attr_cnf& msg) {
-    ctx.log_info("PLC Device Attributes:");
+    ctx.log_info("Qualcomm PLC Device Attributes:");
     ctx.log_info("  HW Platform: " + to_string(msg.hw_platform, sizeof(msg.hw_platform)));
     ctx.log_info("  SW Platform: " + to_string(msg.sw_platform, sizeof(msg.sw_platform)));
     ctx.log_info("  Firmware: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) + "." +
@@ -296,11 +311,24 @@ static void print_log(slac::fsm::evse::Context& ctx, slac::messages::qualcomm::o
     ctx.log_info("  Line frequency: " + freq);
 }
 
+static void print_log(slac::fsm::evse::Context& ctx, slac::messages::lumissil::nscm_get_version_cnf& msg) {
+    ctx.log_info("Lumissil PLC Device Firmware version:" + std::to_string(msg.version_major) + "." +
+                 std::to_string(msg.version_minor) + "." + std::to_string(msg.version_patch) + "-" +
+                 std::to_string(msg.version_build));
+}
+
 void InitState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype == (slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF)) {
+    if (mmtype == (slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF)) {
         auto msg = message.get_payload<slac::messages::qualcomm::op_attr_cnf>();
         print_log(ctx, msg);
+        // This message is only supported on Qualcomm, so we can use it to detect the Vendor
+        ctx.modem_vendor = Context::ModemVendor::Qualcomm;
+    } else if (mmtype == (slac::defs::lumissil::MMTYPE_NSCM_GET_VERSION | slac::defs::MMTYPE_MODE_CNF)) {
+        auto msg = message.get_payload<slac::messages::qualcomm::op_attr_cnf>();
+        print_log(ctx, msg);
+        // This message is only supported on Qualcomm, so we can use it to detect the Vendor
+        ctx.modem_vendor = Context::ModemVendor::Lumissil;
     }
 }
 } // namespace slac::fsm::evse

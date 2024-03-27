@@ -30,27 +30,48 @@ template <> struct MMTYPE<slac::messages::cm_slac_match_cnf> {
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_req> {
-    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_cnf> {
-    static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::link_status_req> {
-    static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_REQ;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_REQ;
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::link_status_cnf> {
-    static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::op_attr_req> {
-    static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
 };
 
 template <> struct MMTYPE<slac::messages::qualcomm::op_attr_cnf> {
-    static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+};
+
+// This message has no CNF counterpart
+template <> struct MMTYPE<slac::messages::lumissil::nscm_reset_device_req> {
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::lumissil::nscm_get_version_req> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::lumissil::nscm_get_version_cnf> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+};
+
+template <> struct MMTYPE<slac::messages::lumissil::nscm_get_d_link_status_req> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::lumissil::nscm_get_d_link_status_cnf> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
 };
 
 template <typename SlacMessageType> struct MMV {
@@ -84,6 +105,26 @@ template <> struct MMV<slac::messages::qualcomm::op_attr_req> {
 
 template <> struct MMV<slac::messages::qualcomm::op_attr_cnf> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_reset_device_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_get_version_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_get_version_cnf> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_get_d_link_status_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_get_d_link_status_cnf> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
 };
 
 } // namespace _context_detail
@@ -161,6 +202,13 @@ struct Context {
 
     // logging util
     void log_info(const std::string& text);
+
+    enum class ModemVendor {
+        Unknown,
+        Qualcomm,
+        Lumissil,
+        VertexCom,
+    } modem_vendor{ModemVendor::Unknown};
 
 private:
     const ContextCallbacks& callbacks;
