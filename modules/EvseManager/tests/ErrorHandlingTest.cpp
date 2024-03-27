@@ -174,7 +174,7 @@ struct ErrorHandlingSignals {
     }
 };
 
-TEST(ErrorHandlingTest, vendor) {
+TEST(ErrorHandlingTest, modify_error_bsp) {
     stub::EvseManagerModuleAdapter manager;
     Requirement req("", 0);
     const std::unique_ptr<evse_board_supportIntf> evse_board_support =
@@ -260,6 +260,176 @@ TEST(ErrorHandlingTest, vendor) {
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_TRUE(ehs.called_signal_error_cleared);
     EXPECT_TRUE(ehs.called_signal_all_errors_cleared);
+}
+
+TEST(ErrorHandlingTest, modify_error_connector_lock) {
+    stub::EvseManagerModuleAdapter manager;
+    Requirement req("", 0);
+    const std::unique_ptr<evse_board_supportIntf> evse_board_support =
+        std::make_unique<evse_board_supportIntf>(&manager, req, "manager");
+    const std::vector<std::unique_ptr<ISO15118_chargerIntf>> ISO15118_charger;
+    const std::vector<std::unique_ptr<connector_lockIntf>> connector_lock;
+    const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
+    const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
+
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
+                                         evse_managerImpl);
+
+    // signals are "raised" via raise_error() and clear_error()
+    // but not via modify_error_bsp()
+    ErrorHandlingSignals ehs(error_handling);
+
+    EXPECT_FALSE(error_handling.hlc);
+    ImplementationIdentifier id("evse_manager", "main");
+    Everest::error::Error error("connector_lock/ConnectorLockUnexpectedOpen", "", "Will stop charging session.", id);
+
+    bool bResult;
+    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_connector_lock(error, true, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::ConnectorLockUnexpectedOpen);
+    EXPECT_FALSE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    ehs.reset();
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_connector_lock(error, false, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::ConnectorLockUnexpectedOpen);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    // VendorWarning not treated as an active error
+    ehs.reset();
+    Everest::error::Error warning("connector_lock/VendorWarning", "", "Will not stop charging session.", id);
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_connector_lock(warning, true, error_type);
+    EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    ehs.reset();
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_connector_lock(warning, false, error_type);
+    EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+}
+
+TEST(ErrorHandlingTest, modify_error_ac_rcd) {
+    stub::EvseManagerModuleAdapter manager;
+    Requirement req("", 0);
+    const std::unique_ptr<evse_board_supportIntf> evse_board_support =
+        std::make_unique<evse_board_supportIntf>(&manager, req, "manager");
+    const std::vector<std::unique_ptr<ISO15118_chargerIntf>> ISO15118_charger;
+    const std::vector<std::unique_ptr<connector_lockIntf>> connector_lock;
+    const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
+    const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
+
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
+                                         evse_managerImpl);
+
+    // signals are "raised" via raise_error() and clear_error()
+    // but not via modify_error_bsp()
+    ErrorHandlingSignals ehs(error_handling);
+
+    EXPECT_FALSE(error_handling.hlc);
+    ImplementationIdentifier id("evse_manager", "main");
+    Everest::error::Error error("ac_rcd/AC", "", "Will stop charging session.", id);
+
+    bool bResult;
+    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_ac_rcd(error, true, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::RCD_AC);
+    EXPECT_FALSE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    ehs.reset();
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_ac_rcd(error, false, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::RCD_AC);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    // VendorWarning not treated as an active error
+    ehs.reset();
+    Everest::error::Error warning("ac_rcd/VendorWarning", "", "Will not stop charging session.", id);
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_ac_rcd(warning, true, error_type);
+    EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    ehs.reset();
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_ac_rcd(warning, false, error_type);
+    EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+}
+
+TEST(ErrorHandlingTest, modify_error_evse_manager) {
+    stub::EvseManagerModuleAdapter manager;
+    Requirement req("", 0);
+    const std::unique_ptr<evse_board_supportIntf> evse_board_support =
+        std::make_unique<evse_board_supportIntf>(&manager, req, "manager");
+    const std::vector<std::unique_ptr<ISO15118_chargerIntf>> ISO15118_charger;
+    const std::vector<std::unique_ptr<connector_lockIntf>> connector_lock;
+    const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
+    const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
+
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
+                                         evse_managerImpl);
+
+    // signals are "raised" via raise_error() and clear_error()
+    // but not via modify_error_bsp()
+    ErrorHandlingSignals ehs(error_handling);
+
+    EXPECT_FALSE(error_handling.hlc);
+    ImplementationIdentifier id("evse_manager", "main");
+    std::string error{"evse_manager/PowermeterTransactionStartFailed"};
+
+    bool bResult;
+    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_evse_manager(error, true, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed);
+    EXPECT_FALSE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
+
+    ehs.reset();
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_evse_manager(error, false, error_type);
+    EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed);
+    EXPECT_TRUE(error_handling.active_errors.all_cleared());
+    EXPECT_FALSE(ehs.called_signal_error);
+    EXPECT_FALSE(ehs.called_signal_error_cleared);
+    EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 }
 
 } // namespace module

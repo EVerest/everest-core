@@ -149,7 +149,10 @@ private:
     ActiveErrors active_errors;
 
 #ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
-    FRIEND_TEST(ErrorHandlingTest, vendor);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_bsp);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_connector_lock);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_ac_rcd);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_evse_manager);
 #endif
 };
 
