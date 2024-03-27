@@ -12,6 +12,7 @@ find_package(everest-cmake 0.1 REQUIRED
 
 # options
 option(BUILD_BACKTRACE_SUPPORT "Build with backtrace support from libbacktrace" OFF)
+option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Run unit tests" OFF)
 option(BUILD_EXAMPLES "Build liblog example binaries." OFF)
 option(LOG_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
@@ -67,8 +68,10 @@ endif()
 
 
 # testing
-if(BUILD_TESTING)
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     include(CTest)
+    add_subdirectory(tests)
+    
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
     evc_include(CodeCoverage)
