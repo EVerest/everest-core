@@ -45,6 +45,14 @@ template <> struct MMTYPE<slac::messages::link_status_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
 };
 
+template <> struct MMTYPE<slac::messages::op_attr_req> {
+    static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::op_attr_cnf> {
+    static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+};
+
 template <typename SlacMessageType> struct MMV {
     // this is the default value for homeplug av 2.0 messages, which are
     // backward compatible with homeplug av 1.1 messages
@@ -67,6 +75,14 @@ template <> struct MMV<slac::messages::link_status_req> {
 };
 
 template <> struct MMV<slac::messages::link_status_cnf> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
+};
+
+template <> struct MMV<slac::messages::op_attr_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
+};
+
+template <> struct MMV<slac::messages::op_attr_cnf> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
@@ -111,6 +127,8 @@ struct EvseSlacConfig {
         int timeout_ms = 5000;
         bool debug_simulate_failed_matching = false;
     } link_status;
+
+    int request_info_delay_ms = 100;
 
     // offset for adjusting the calculated sounding attenuation
     int sounding_atten_adjustment = 0;

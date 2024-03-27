@@ -83,6 +83,22 @@ struct WaitForLinkState : public FSMSimpleState {
     std::chrono::steady_clock::time_point start_time;
 };
 
+struct InitState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
+
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    CallbackReturnType callback() final;
+
+    void handle_slac_message(slac::messages::HomeplugMessage&);
+
+    // For now we are requesting only one version info packet, but probably there will be more in the future.
+    enum class SubState {
+        OP_ATTR,
+        DONE,
+    } sub_state{SubState::OP_ATTR};
+};
+
 } // namespace slac::fsm::evse
 
 #endif // EVSE_SLAC_STATES_OTHERS_HPP

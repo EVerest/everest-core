@@ -235,4 +235,68 @@ bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& mess
     }
 }
 
+FSMSimpleState::HandleEventReturnType InitState::handle_event(AllocatorType& sa, Event ev) {
+    if (ev == Event::SLAC_MESSAGE) {
+        handle_slac_message(ctx.slac_message_payload);
+        return sa.PASS_ON;
+    } else if (ev == Event::SUCCESS) {
+        return sa.create_simple<ResetState>(ctx);
+    }
+    return sa.PASS_ON;
+}
+
+FSMSimpleState::CallbackReturnType InitState::callback() {
+    const auto& cfg = ctx.slac_config;
+
+    if (sub_state == SubState::OP_ATTR) {
+        sub_state = SubState::DONE;
+        slac::messages::op_attr_req op_attr_req;
+        ctx.send_slac_message(cfg.plc_peer_mac, op_attr_req);
+        return cfg.request_info_delay_ms;
+    } else if (sub_state == SubState::DONE) {
+        // the requested info may or may not be implemented by the chip,
+        // so we ignore timeouts here.
+        return Event::SUCCESS;
+    }
+    return {};
+}
+
+static std::string to_string(uint8_t* s, int max_len) {
+    s[max_len - 1] = 0;
+    return std::string(reinterpret_cast<const char*>(s));
+}
+
+void InitState::handle_slac_message(slac::messages::HomeplugMessage& message) {
+    const auto mmtype = message.get_mmtype();
+    if (mmtype == (slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF)) {
+        auto msg = message.get_payload<slac::messages::op_attr_cnf>();
+        ctx.log_info("PLC Device Attributes:");
+        ctx.log_info("  HW Platform: " + to_string(msg.hw_platform, sizeof(msg.hw_platform)));
+        ctx.log_info("  SW Platform: " + to_string(msg.sw_platform, sizeof(msg.sw_platform)));
+        ctx.log_info("  Firmware: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) +
+                     "." + std::to_string(msg.version_pib) + "-" + std::to_string(msg.version_build));
+        ctx.log_info("  Build date: " + to_string(msg.build_date, sizeof(msg.build_date)));
+        std::string zc;
+        int zc_signal = (msg.line_freq_zc >> 2) & 0x03;
+        if (zc_signal == 0x01) {
+            zc = "Detected";
+        } else if (zc_signal == 0x02) {
+            zc = "Missing";
+        } else {
+            zc = "Unknown (" + std::to_string(zc_signal) + ")";
+        }
+        ctx.log_info("  ZC signal: " + zc);
+
+        std::string freq;
+        int line_freq = (msg.line_freq_zc) & 0x03;
+        if (line_freq == 0x01) {
+            freq = "50Hz";
+        } else if (line_freq == 0x02) {
+            freq = "60Hz";
+        } else {
+            freq = "Unknown (" + std::to_string(line_freq) + ")";
+        }
+        ctx.log_info("  Line frequency: " + freq);
+    }
+}
 } // namespace slac::fsm::evse
