@@ -266,37 +266,41 @@ static std::string to_string(uint8_t* s, int max_len) {
     return std::string(reinterpret_cast<const char*>(s));
 }
 
+static void print_log(slac::fsm::evse::Context& ctx, slac::messages::qualcomm::op_attr_cnf& msg) {
+    ctx.log_info("PLC Device Attributes:");
+    ctx.log_info("  HW Platform: " + to_string(msg.hw_platform, sizeof(msg.hw_platform)));
+    ctx.log_info("  SW Platform: " + to_string(msg.sw_platform, sizeof(msg.sw_platform)));
+    ctx.log_info("  Firmware: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) + "." +
+                 std::to_string(msg.version_pib) + "-" + std::to_string(msg.version_build));
+    ctx.log_info("  Build date: " + to_string(msg.build_date, sizeof(msg.build_date)));
+    std::string zc;
+    int zc_signal = (msg.line_freq_zc >> 2) & 0x03;
+    if (zc_signal == 0x01) {
+        zc = "Detected";
+    } else if (zc_signal == 0x02) {
+        zc = "Missing";
+    } else {
+        zc = "Unknown (" + std::to_string(zc_signal) + ")";
+    }
+    ctx.log_info("  ZC signal: " + zc);
+
+    std::string freq;
+    int line_freq = (msg.line_freq_zc) & 0x03;
+    if (line_freq == 0x01) {
+        freq = "50Hz";
+    } else if (line_freq == 0x02) {
+        freq = "60Hz";
+    } else {
+        freq = "Unknown (" + std::to_string(line_freq) + ")";
+    }
+    ctx.log_info("  Line frequency: " + freq);
+}
+
 void InitState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
     if (mmtype == (slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF)) {
         auto msg = message.get_payload<slac::messages::qualcomm::op_attr_cnf>();
-        ctx.log_info("PLC Device Attributes:");
-        ctx.log_info("  HW Platform: " + to_string(msg.hw_platform, sizeof(msg.hw_platform)));
-        ctx.log_info("  SW Platform: " + to_string(msg.sw_platform, sizeof(msg.sw_platform)));
-        ctx.log_info("  Firmware: " + std::to_string(msg.version_major) + "." + std::to_string(msg.version_minor) +
-                     "." + std::to_string(msg.version_pib) + "-" + std::to_string(msg.version_build));
-        ctx.log_info("  Build date: " + to_string(msg.build_date, sizeof(msg.build_date)));
-        std::string zc;
-        int zc_signal = (msg.line_freq_zc >> 2) & 0x03;
-        if (zc_signal == 0x01) {
-            zc = "Detected";
-        } else if (zc_signal == 0x02) {
-            zc = "Missing";
-        } else {
-            zc = "Unknown (" + std::to_string(zc_signal) + ")";
-        }
-        ctx.log_info("  ZC signal: " + zc);
-
-        std::string freq;
-        int line_freq = (msg.line_freq_zc) & 0x03;
-        if (line_freq == 0x01) {
-            freq = "50Hz";
-        } else if (line_freq == 0x02) {
-            freq = "60Hz";
-        } else {
-            freq = "Unknown (" + std::to_string(line_freq) + ")";
-        }
-        ctx.log_info("  Line frequency: " + freq);
+        print_log(ctx, msg);
     }
 }
 } // namespace slac::fsm::evse
