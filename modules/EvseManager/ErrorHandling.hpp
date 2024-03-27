@@ -136,14 +136,14 @@ private:
     const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd;
     const std::unique_ptr<evse_managerImplBase>& p_evse;
 
-    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum evse_error);
+    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
     bool modify_error_connector_lock(const Everest::error::Error& error, bool active,
-                                     types::evse_manager::ErrorEnum evse_error);
+                                     types::evse_manager::ErrorEnum& evse_error);
     bool modify_error_ac_rcd(const Everest::error::Error& error, bool active,
-                             types::evse_manager::ErrorEnum evse_error);
+                             types::evse_manager::ErrorEnum& evse_error);
 
     bool modify_error_evse_manager(const std::string& error_type, bool active,
-                                   types::evse_manager::ErrorEnum evse_error);
+                                   types::evse_manager::ErrorEnum& evse_error);
     bool hlc{false};
 
     ActiveErrors active_errors;

@@ -197,16 +197,20 @@ TEST(ErrorHandlingTest, vendor) {
                                 "Vendor specific error code. Will stop charging session.", id);
 
     bool bResult;
-    bResult = error_handling.modify_error_bsp(error, true, types::evse_manager::ErrorEnum::VendorError);
+    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_bsp(error, true, error_type);
     EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    bResult = error_handling.modify_error_bsp(error, false, types::evse_manager::ErrorEnum::VendorError);
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_bsp(error, false, error_type);
     EXPECT_TRUE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -216,16 +220,20 @@ TEST(ErrorHandlingTest, vendor) {
     ehs.reset();
     Everest::error::Error warning("evse_board_support/VendorWarning", "K2Faults::FAULT_CT_CLAMP",
                                   "Vendor specific error code. Will not stop charging session.", id);
-    bResult = error_handling.modify_error_bsp(warning, true, types::evse_manager::ErrorEnum::VendorWarning);
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_bsp(warning, true, error_type);
     EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    bResult = error_handling.modify_error_bsp(warning, false, types::evse_manager::ErrorEnum::VendorWarning);
+    error_type = types::evse_manager::ErrorEnum::PermanentFault;
+    bResult = error_handling.modify_error_bsp(warning, false, error_type);
     EXPECT_FALSE(bResult);
+    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
