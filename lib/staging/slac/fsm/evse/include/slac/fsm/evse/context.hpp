@@ -115,7 +115,7 @@ struct EvseSlacConfig {
 
     // Settings CM_DEVICE_RESET.REQ
     struct chip_reset_struct {
-        bool enabled = true;
+        bool enabled = false;
         int timeout_ms = 500;
         int delay_ms = 100;
     } chip_reset;
