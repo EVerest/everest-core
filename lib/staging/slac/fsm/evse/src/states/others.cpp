@@ -105,7 +105,7 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
         sub_state = SubState::SEND_RESET;
         return cfg.chip_reset.delay_ms;
     } else if (sub_state == SubState::SEND_RESET) {
-        slac::messages::cm_reset_device_req set_reset_req;
+        slac::messages::qualcomm::cm_reset_device_req set_reset_req;
 
         ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
 
@@ -202,7 +202,7 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
 FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
     const auto& cfg = ctx.slac_config;
     if (not link_status_req_sent) {
-        slac::messages::link_status_req link_status_req;
+        slac::messages::qualcomm::link_status_req link_status_req;
 
         ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
 
@@ -227,7 +227,7 @@ bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& mess
         ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
-        if (message.get_payload<slac::messages::link_status_cnf>().link_status == 0x01) {
+        if (message.get_payload<slac::messages::qualcomm::link_status_cnf>().link_status == 0x01) {
             return true;
         } else {
             return false;
@@ -250,7 +250,7 @@ FSMSimpleState::CallbackReturnType InitState::callback() {
 
     if (sub_state == SubState::OP_ATTR) {
         sub_state = SubState::DONE;
-        slac::messages::op_attr_req op_attr_req;
+        slac::messages::qualcomm::op_attr_req op_attr_req;
         ctx.send_slac_message(cfg.plc_peer_mac, op_attr_req);
         return cfg.request_info_delay_ms;
     } else if (sub_state == SubState::DONE) {
@@ -269,7 +269,7 @@ static std::string to_string(uint8_t* s, int max_len) {
 void InitState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
     if (mmtype == (slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF)) {
-        auto msg = message.get_payload<slac::messages::op_attr_cnf>();
+        auto msg = message.get_payload<slac::messages::qualcomm::op_attr_cnf>();
         ctx.log_info("PLC Device Attributes:");
         ctx.log_info("  HW Platform: " + to_string(msg.hw_platform, sizeof(msg.hw_platform)));
         ctx.log_info("  SW Platform: " + to_string(msg.sw_platform, sizeof(msg.sw_platform)));

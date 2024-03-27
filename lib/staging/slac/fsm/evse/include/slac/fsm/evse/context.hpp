@@ -29,27 +29,27 @@ template <> struct MMTYPE<slac::messages::cm_slac_match_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_CNF;
 };
 
-template <> struct MMTYPE<slac::messages::cm_reset_device_req> {
+template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_req> {
     static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
 };
 
-template <> struct MMTYPE<slac::messages::cm_reset_device_cnf> {
+template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
 };
 
-template <> struct MMTYPE<slac::messages::link_status_req> {
+template <> struct MMTYPE<slac::messages::qualcomm::link_status_req> {
     static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_REQ;
 };
 
-template <> struct MMTYPE<slac::messages::link_status_cnf> {
+template <> struct MMTYPE<slac::messages::qualcomm::link_status_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
 };
 
-template <> struct MMTYPE<slac::messages::op_attr_req> {
+template <> struct MMTYPE<slac::messages::qualcomm::op_attr_req> {
     static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
 };
 
-template <> struct MMTYPE<slac::messages::op_attr_cnf> {
+template <> struct MMTYPE<slac::messages::qualcomm::op_attr_cnf> {
     static const uint16_t value = slac::defs::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
 };
 
@@ -62,27 +62,27 @@ template <typename SlacMessageType> struct MMV {
     static constexpr auto value = slac::defs::MMV::AV_1_1;
 };
 
-template <> struct MMV<slac::messages::cm_reset_device_req> {
+template <> struct MMV<slac::messages::qualcomm::cm_reset_device_req> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
-template <> struct MMV<slac::messages::cm_reset_device_cnf> {
+template <> struct MMV<slac::messages::qualcomm::cm_reset_device_cnf> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
-template <> struct MMV<slac::messages::link_status_req> {
+template <> struct MMV<slac::messages::qualcomm::link_status_req> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
-template <> struct MMV<slac::messages::link_status_cnf> {
+template <> struct MMV<slac::messages::qualcomm::link_status_cnf> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
-template <> struct MMV<slac::messages::op_attr_req> {
+template <> struct MMV<slac::messages::qualcomm::op_attr_req> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
-template <> struct MMV<slac::messages::op_attr_cnf> {
+template <> struct MMV<slac::messages::qualcomm::op_attr_cnf> {
     static constexpr auto value = slac::defs::MMV::AV_1_0;
 };
 
