@@ -29,6 +29,7 @@ crates_repository(
     manifests = [
         "//modules:Cargo.toml",
         "//modules/RsIskraMeter:Cargo.toml",
+        "//modules/RsPaymentTerminal:Cargo.toml",
         "//modules/rust_examples/RsExample:Cargo.toml",
         "//modules/rust_examples/RsExampleUser:Cargo.toml",
     ],

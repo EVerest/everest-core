@@ -13,6 +13,6 @@ def everest_core_repos():
     maybe(
         http_archive,
         name = "everest-framework",
-        url = "https://github.com/everest/everest-framework/archive/01468678f5b627a96791f749f3139c3d169bf081.tar.gz",
-        strip_prefix = "everest-framework-01468678f5b627a96791f749f3139c3d169bf081",
+        url = "https://github.com/everest/everest-framework/archive/d1f723c728e0f7eb286d6f2a86ebe188c146bdc2.tar.gz",
+        strip_prefix = "everest-framework-d1f723c728e0f7eb286d6f2a86ebe188c146bdc2",
     )
