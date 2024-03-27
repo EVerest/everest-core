@@ -67,9 +67,10 @@ class TestErrorHistory:
         """
         Test the ErrorHistory module.
         """
-        probe_module = ProbeModule(everest_core.get_runtime_session())
-
         everest_core.start(standalone_module='probe')
+
+        probe_module = ProbeModule(everest_core.get_runtime_session())
+        probe_module.start()
 
         call_args = {
             'filters': {}
@@ -133,8 +134,10 @@ class TestErrorHistory:
         """
         Test the ErrorHistory module with filters.
         """
-        probe_module = ProbeModule(everest_core.get_runtime_session())
         everest_core.start(standalone_module='probe')
+
+        probe_module = ProbeModule(everest_core.get_runtime_session())
+        probe_module.start()
         # insert 12 errors
         test_errors = [
             # index 0
