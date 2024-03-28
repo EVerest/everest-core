@@ -96,7 +96,8 @@ void EvseManager::ready() {
 
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
-    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, hw_capabilities.connector_type));
+    charger = std::unique_ptr<Charger>(
+        new Charger(bsp, error_handling, r_powermeter_billing(), hw_capabilities.connector_type, config.evse_id));
 
     if (r_connector_lock.size() > 0) {
         bsp->signal_lock.connect([this]() { r_connector_lock[0]->call_lock(); });

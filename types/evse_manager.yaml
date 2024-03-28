@@ -215,6 +215,10 @@ types:
         description: Transaction finished meter value
         type: object
         $ref: /powermeter#/Powermeter
+      start_signed_meter_value:
+        description: The starting signed meter value report of the stopped transaction. If not included in the `signed_meter_value` object, it must be included here.
+        type: object
+        $ref: /units_signed#/SignedMeterValue
       signed_meter_value:
         description: The signed meter value report of the stopped transaction
         type: object
@@ -324,7 +328,7 @@ types:
       session_finished:
         description: data for the SessionFinished event
         type: object
-        $ref: /evse_manager#/SessionFinished  
+        $ref: /evse_manager#/SessionFinished
       transaction_started:
         description: data for TransactionStarted event
         type: object

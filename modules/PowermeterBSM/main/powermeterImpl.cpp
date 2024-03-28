@@ -50,7 +50,7 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
 
     } catch (const std::runtime_error& e) {
         EVLOG_error << __PRETTY_FUNCTION__ << " Error: " << e.what() << std::endl;
-        return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, "get_signed_meter_value_error"};
+        return {types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "get_signed_meter_value_error"};
     }
 };
 
