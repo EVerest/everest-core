@@ -341,9 +341,12 @@ const ModuleInfo c_module_info{
     "MIT",            // license
     "energy_manager", // ID
     {
-        "", // path etc
-        "", // path libexec
-        "", // path share
+        // path etc
+        "",
+        // path libexec
+        "",
+        // path share
+        "",
     },
     false, // telemetry_enabled
     false, // global_errors_enabled

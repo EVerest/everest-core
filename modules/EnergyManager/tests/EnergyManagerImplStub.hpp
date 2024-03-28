@@ -5,7 +5,6 @@
 #define ENERGYMANAGERSTUB_H_
 
 #include <generated/interfaces/energy_manager/Implementation.hpp>
-//#include <ErrorHandling.hpp>
 
 //-----------------------------------------------------------------------------
 namespace module::stub {
