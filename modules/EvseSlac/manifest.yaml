@@ -47,7 +47,7 @@ provides:
         type: boolean
         default: false
       do_chip_reset:
-        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (Recommended for Qualcomm chips, works on Lumissil chips)
+        description: Perform a chip reset after setting NMK using the RS_DEV.REQ Vendor MME Extension (Only works on Qualcomm chips)
         type: boolean
         default: false
       chip_reset_delay_ms:
