@@ -1167,31 +1167,131 @@ bool Charger::deauthorize_internal() {
     return false;
 }
 
-bool Charger::disable(int connector_id) {
+bool Charger::enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_disable);
-    if (connector_id not_eq 0) {
-        shared_context.connector_enabled = false;
+
+    // insert the new request into the table
+    bool replaced = false;
+    for (auto& entry : enable_disable_source_table) {
+        if (entry.enable_source == source.enable_source) {
+            // replace this entry as it is an update from the same source
+            entry = source;
+            replaced = true;
+        }
     }
-    shared_context.current_state = EvseState::Disabled;
-    signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
-    return true;
+
+    if (not replaced) {
+        // Add to the table
+        enable_disable_source_table.push_back(source);
+    }
+
+    // Find out if we are actually enabled or disabled at the moment
+    bool is_enabled = parse_enable_disable_source_table();
+
+    if (is_enabled) {
+        if (connector_id not_eq 0) {
+            shared_context.connector_enabled = true;
+        }
+
+        signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
+        if (shared_context.current_state == EvseState::Disabled) {
+            if (shared_context.connector_enabled) {
+                shared_context.current_state = EvseState::Idle;
+            }
+            return true;
+        }
+    } else {
+        if (connector_id not_eq 0) {
+            shared_context.connector_enabled = false;
+        }
+        shared_context.current_state = EvseState::Disabled;
+        signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
+    }
+    return is_enabled;
 }
 
-bool Charger::enable(int connector_id) {
-    Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_enable);
+bool Charger::parse_enable_disable_source_table() {
+    /* Decide if we are enabled or disabled from the current table.
+     The logic is as follows:
 
-    if (connector_id not_eq 0) {
-        shared_context.connector_enabled = true;
-    }
+     The source is an enum of the following source types :
 
-    signal_simple_event(types::evse_manager::SessionEventEnum::Enabled);
-    if (shared_context.current_state == EvseState::Disabled) {
-        if (shared_context.connector_enabled) {
-            shared_context.current_state = EvseState::Idle;
+        - Unspecified
+        - LocalAPI
+        - LocalKeyLock
+        - ServiceTechnician
+        - RemoteKeyLock
+        - MobileApp
+        - FirmwareUpdate
+        - CSMS
+
+    The state can be either "enable", "disable", or "unassigned".
+
+    "enable" and "disable" enforce the state to be enable/disable, while unassigned means that the source does not care
+    about the state and other sources may decide.
+
+    Each call to this command will update an internal table that looks like this:
+
+    | Source       | State         | Priority |
+    | ------------ | ------------- | -------- |
+    | Unspecified  | unassigned    |   10000  |
+    | LocalAPI     | disable       |      42  |
+    | LocalKeyLock | enable        |       0  |
+
+    Evaluation will be done based on priorities. 0 is the highest priority, 10000 the lowest, so in this example the
+    connector will be enabled regardless of what other sources say. Imagine LocalKeyLock sends a "unassigned, prio 0",
+    the table will then look like this:
+
+    | Source       | State         | Priority |
+    | ------------ | ------------- | -------- |
+    | Unspecified  | unassigned    |   10000  |
+    | LocalAPI     | disable       |      42  |
+    | LocalKeyLock | unassigned    |       0  |
+
+    So now the connector will be disabled, because the second highest priority (42) sets it to disabled.
+
+    If all sources are unassigned, the connector is enabled.
+    If two sources have the same priority, "disabled" has priority over "enabled".
+    */
+
+    bool is_enabled = true; // By default, it is enabled.
+    types::evse_manager::EnableDisableSource winning_source{types::evse_manager::Enable_source::Unspecified,
+                                                            types::evse_manager::Enable_state::Unassigned, 10000};
+
+    // Walk through table
+    for (const auto& entry : enable_disable_source_table) {
+        // Ignore unassigned entries
+        if (entry.enable_state == types::evse_manager::Enable_state::Unassigned) {
+            continue;
         }
-        return true;
+
+        if (winning_source.enable_state == types::evse_manager::Enable_state::Unassigned) {
+            // Use the first entry that is not Unassigned
+            winning_source = entry;
+            if (entry.enable_state == types::evse_manager::Enable_state::Disable) {
+                is_enabled = false;
+            } else {
+                is_enabled = true;
+            }
+        } else if (entry.enable_priority == winning_source.enable_priority) {
+            // At the same priority, disable has higher priority then enable
+            if (entry.enable_state == types::evse_manager::Enable_state::Disable) {
+                is_enabled = false;
+                winning_source = entry;
+            }
+
+        } else if (entry.enable_priority < winning_source.enable_priority) {
+            winning_source = entry;
+            if (entry.enable_state == types::evse_manager::Enable_state::Disable) {
+                is_enabled = false;
+            } else {
+                is_enabled = true;
+            }
+        }
     }
-    return false;
+
+    active_enable_disable_source = winning_source;
+    return is_enabled;
 }
 
 void Charger::set_faulted() {
@@ -1524,6 +1624,10 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_overcurrent_error();
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
+}
+
+types::evse_manager::EnableDisableSource Charger::get_last_enable_disable_source() {
+    return active_enable_disable_source;
 }
 
 } // namespace module

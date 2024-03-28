@@ -79,6 +79,7 @@ static ErrorInfo get_error_info(const std::optional<types::evse_manager::Error> 
     case types::evse_manager::ErrorEnum::EnergyManagement:
     case types::evse_manager::ErrorEnum::PermanentFault:
     case types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed:
+    default:
         return {ocpp::v16::ChargePointErrorCode::InternalError, types::evse_manager::error_enum_to_string(error_code)};
     }
 
@@ -624,7 +625,9 @@ void OCPP::ready() {
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_disable(0);
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
+                ->call_enable_disable(
+                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Disable, 5000});
         } else {
             return false;
         }
@@ -632,7 +635,9 @@ void OCPP::ready() {
 
     this->charge_point->register_enable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_enable(0);
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
+                ->call_enable_disable(
+                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Enable, 5000});
         } else {
             return false;
         }

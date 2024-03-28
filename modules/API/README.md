@@ -46,12 +46,19 @@ This variable is published every second and contains a json object with informat
         "state": "Unplugged",
         "active_permanent_faults": [],
         "active_errors": [],
+        "active_enable_disable_source": {
+            "source": "Unspecified",
+            "state": "Enable",
+            "priority": 5000
+        },
         "uk_random_delay": {
             "remaining_s": 34,
             "current_limit_after_delay_A": 16.0,
             "current_limit_during_delay_A": 0.0,
             "start_time": "2024-02-28T14:11:11.129Z"
-        }
+        },
+        "last_enable_disable_source": "Unspecified",
+        "enable_disable_allow_others_to_modify": true
     }
 ```
 
@@ -77,7 +84,9 @@ Example with permanent faults being active:
   "datetime": "2024-01-15T14:58:15.172Z",
   "discharged_energy_wh": 0,
   "latest_total_w": 0,
-  "state": "Preparing"
+  "state": "Preparing",
+  "last_enable_disable_source": "Unspecified",
+  "enable_disable_other_sources_may_modify": true
 }
 ```
 
@@ -135,10 +144,13 @@ Example with permanent faults being active:
     - PermanentFault
     - PowermeterTransactionStartFailed
 
-- **active_errors** array of all active errors that do not block charging. This could be shown to the user but the current state should still be shown as it does not interfere with charging. The enum is the same as for active_permanent_faults.
+- **active_errors** array of all active errors that do not block charging. 
+This could be shown to the user but the current state should still be shown 
+as it does not interfere with charging. The enum is the same as for active_permanent_faults.
 
 ### everest_api/evse_manager/var/limits
-This variable is published every second and contains a json object with information relating to the current limits of this EVSE.
+This variable is published every second and contains a json object with information 
+relating to the current limits of this EVSE.
 ```json
     {
         "max_current": 16.0,
@@ -161,7 +173,8 @@ This variable is published every second and contains telemetry of the EVSE.
 ```
 
 ### everest_api/evse_manager/var/powermeter
-This variable is published every second and contains powermeter information of the EVSE.
+This variable is published every second and contains powermeter information
+of the EVSE.
 ```json
     {
         "current_A": {
@@ -201,16 +214,96 @@ This variable is published every second and contains powermeter information of t
 ## Periodically published variables for OCPP
 
 ### everest_api/ocpp/var/connection_status
-This variable is published every second and contains the connection status of the OCPP module.
-If the OCPP module has not yet published its "is_connected" status or no OCPP module is configured "unknown" is published. Otherwise "connected" or "disconnected" are published.
+This variable is published every second and contains the connection 
+status of the OCPP module.
+If the OCPP module has not yet published its "is_connected" status or 
+no OCPP module is configured "unknown" is published. Otherwise "connected" 
+or "disconnected" are published.
 
 
 ## Commands and variables published in response
+### everest_api/evse_manager/cmd/enable_disable
+Command to enable or disable a connector on the EVSE. The payload should be 
+the following json:
+
+```json
+    {
+        "connector_id": 0,
+        "source": "LocalAPI",
+        "state": "Enable",
+        "priority": 42
+    }
+```
+connector_id is a positive integer identifying the connector that should be 
+enabled. If the connector_id is 0 the whole EVSE is enabled.
+
+The source is an enum of the following source types :
+
+    - Unspecified
+    - LocalAPI
+    - LocalKeyLock
+    - ServiceTechnician
+    - RemoteKeyLock
+    - MobileApp
+    - FirmwareUpdate
+    - CSMS
+
+The state can be either "enable", "disable", or "unassigned".
+
+"enable" and "disable" enforce the state to be enable/disable, while unassigned means 
+that the source does not care about the state and other sources may decide.
+
+Each call to this command will update an internal table that looks like this:
+
+| Source       | State      | Priority |
+| ------------ | ---------- | -------- |
+| Unspecified  | unassigned | 10000    |
+| LocalAPI     | disable    | 42       |
+| LocalKeyLock | enable     | 0        |
+
+Evaluation will be done based on priorities. 0 is the highest priority, 
+10000 the lowest, so in this example the connector will be enabled regardless 
+of what other sources say.
+Imagine LocalKeyLock sends a "unassigned, prio 0", the table will then look like this:
+
+| Source       | State      | Priority |
+| ------------ | ---------- | -------- |
+| Unspecified  | unassigned | 10000    |
+| LocalAPI     | disable    | 42       |
+| LocalKeyLock | unassigned | 0        |
+
+So now the connector will be disabled, because the second highest priority (42) sets it to disabled.
+
+If all sources are unassigned, the connector is enabled.
+If two sources have the same priority, "disabled" has priority over "enabled".
+
 ### everest_api/evse_manager/cmd/enable
-Command to enable a connector on the EVSE. They payload should be a positive integer identifying the connector that should be enabled. If the payload is 0 the whole EVSE is enabled.
+Legacy command to enable a connector on the EVSE kept for compatibility reasons.
+They payload should be a positive integer identifying the connector that should be enabled.
+If the payload is 0 the whole EVSE is enabled.
+It will actually call the following command on everest_api/evse_manager/cmd/enable_enable:
+```json
+    {
+        "connector_id": 1,
+        "source": "LocalAPI",
+        "state": "enable",
+        "priority": 0
+    }
+```
 
 ### everest_api/evse_manager/cmd/disable
-Command to disable a connector on the EVSE. They payload should be a positive integer identifying the connector that should be disabled. If the payload is 0 the whole EVSE is disabled.
+Legacy command to enable a connector on the EVSE kept for compatibility reasons.
+Command to disable a connector on the EVSE. They payload should be a positive integer 
+identifying the connector that should be disabled. If the payload is 0 the whole EVSE is disabled.
+It will actually call the following command on everest_api/evse_manager/cmd/enable_disable:
+```json
+    {
+        "connector_id": 1,
+        "source": "LocalAPI",
+        "state": "disable",
+        "priority": 0
+    }
+```
 
 ### everest_api/evse_manager/cmd/pause_charging
 If any arbitrary payload is published to this topic charging will be paused by the EVSE.

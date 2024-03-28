@@ -59,6 +59,8 @@ public:
     void set_latest_energy_export_wh(int32_t latest_export_energy_wh);
     void set_latest_total_w(double latest_total_w);
     void set_uk_random_delay_remaining(const types::uk_random_delay::CountDown& c);
+    void set_enable_disable_source(const std::string& active_source, const std::string& active_state,
+                                            const int active_priority);
 
     /// \brief Converts this struct into a serialized json object
     operator std::string();
@@ -95,6 +97,10 @@ private:
     bool is_state_charging(const SessionInfo::State current_state);
 
     std::string state_to_string(State s);
+
+    std::string active_enable_disable_source{"Unspecified"};
+    std::string active_enable_disable_state{"Enabled"};
+    int active_enable_disable_priority{0};
 };
 } // namespace module
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1

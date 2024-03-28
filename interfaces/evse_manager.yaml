@@ -8,29 +8,21 @@ cmds:
       description: Object that contains information of the EVSE including its connectors
       type: object
       $ref: /evse_manager#/Evse
-  enable:
-    description: Enables the evse. EVSE is available for charging after this operation
+  enable_disable:
+    description: Enables or disables the evse
     arguments:
       connector_id:
         description: Specifies the ID of the connector to enable. If 0, the whole EVSE should be enabled
         type: integer
+      cmd_source:
+        description: Source of the enable command
+        type: object
+        $ref: /evse_manager#/EnableDisableSource
     result:
       description: >-
-        Returns true if evse was enabled (or was enabled before), returns
-        false if enable failed e.g. due to permanent fault.
-      type: boolean
-  disable:
-    description: >-
-      Disables the evse. EVSE is not available for charging after this
-      operation
-    arguments:
-      connector_id:
-        description: Specifies the ID of the connector. If 0, the whole EVSE should be disabled
-        type: integer
-    result:
-      description: >-
-        Returns true if evse was disabled (or was disabled before), returns
-        false if it could not be disabled (i.e. due to communication error with hardware)
+        Returns true if evse is enabled after the command, false if it is disabled.
+        This may not be the same value as the request, since there may be a higher priority request
+        from another source that is actually deciding whether it is enabled or disabled.
       type: boolean
   authorize_response:
     description: >-

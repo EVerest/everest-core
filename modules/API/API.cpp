@@ -223,6 +223,14 @@ void SessionInfo::set_uk_random_delay_remaining(const types::uk_random_delay::Co
     this->uk_random_delay_remaining = cd;
 }
 
+void SessionInfo::set_enable_disable_source(const std::string& active_source, const std::string& active_state,
+                                            const int active_priority) {
+    std::lock_guard<std::mutex> lock(this->session_info_mutex);
+    this->active_enable_disable_source = active_source;
+    this->active_enable_disable_state = active_state;
+    this->active_enable_disable_priority = active_priority;
+}
+
 static void to_json(json& j, const SessionInfo::Error& e) {
     j = json{{"type", e.type}, {"description", e.description}, {"severity", e.severity}};
 }
@@ -240,14 +248,23 @@ SessionInfo::operator std::string() {
     auto charging_duration_s =
         std::chrono::duration_cast<std::chrono::seconds>(this->end_time_point - this->start_time_point);
 
-    json session_info = json::object({{"state", state_to_string(this->state)},
-                                      {"active_permanent_faults", this->active_permanent_faults},
-                                      {"active_errors", this->active_errors},
-                                      {"charged_energy_wh", charged_energy_wh},
-                                      {"discharged_energy_wh", discharged_energy_wh},
-                                      {"latest_total_w", this->latest_total_w},
-                                      {"charging_duration_s", charging_duration_s.count()},
-                                      {"datetime", Everest::Date::to_rfc3339(now)}});
+    json session_info = json::object({
+        {"state", state_to_string(this->state)},
+        {"active_permanent_faults", this->active_permanent_faults},
+        {"active_errors", this->active_errors},
+        {"charged_energy_wh", charged_energy_wh},
+        {"discharged_energy_wh", discharged_energy_wh},
+        {"latest_total_w", this->latest_total_w},
+        {"charging_duration_s", charging_duration_s.count()},
+        {"datetime", Everest::Date::to_rfc3339(now)},
+
+    });
+
+    json active_disable_enable = json::object({{"source", this->active_enable_disable_source},
+                                               {"state", this->active_enable_disable_state},
+                                               {"priority", this->active_enable_disable_priority}});
+    session_info["active_enable_disable_source"] = active_disable_enable;
+
     if (uk_random_delay_remaining.countdown_s > 0) {
         json random_delay =
             json::object({{"remaining_s", uk_random_delay_remaining.countdown_s},
@@ -346,6 +363,13 @@ void API::init() {
 
                 session_info->update_state(session_event.event, error);
 
+                if (session_event.source.has_value()) {
+                    session_info->set_enable_disable_source(
+                        types::evse_manager::enable_source_to_string(session_event.source.value().enable_source),
+                        types::evse_manager::enable_state_to_string(session_event.source.value().enable_state),
+                        session_event.source.value().enable_priority);
+                }
+
                 if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
                     if (session_event.session_started.has_value()) {
                         auto session_started = session_event.session_started.value();
@@ -388,34 +412,73 @@ void API::init() {
         // API commands
         std::string cmd_base = evse_base + "/cmd/";
 
-        std::string cmd_enable = cmd_base + "enable";
-        this->mqtt.subscribe(cmd_enable, [&evse](const std::string& data) {
+        std::string cmd_enable_disable = cmd_base + "enable_disable";
+        this->mqtt.subscribe(cmd_enable_disable, [&evse](const std::string& data) {
             auto connector_id = 0;
+            types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
+                                                                   types::evse_manager::Enable_state::Enable, 100};
+
             if (!data.empty()) {
                 try {
-                    connector_id = std::stoi(data);
+                    auto arg = json::parse(data);
+                    if (arg.contains("connector_id")) {
+                        connector_id = arg.at("connector_id");
+                    }
+                    if (arg.contains("source")) {
+                        enable_source.enable_source = types::evse_manager::string_to_enable_source(arg.at("source"));
+                    }
+                    if (arg.contains("state")) {
+                        enable_source.enable_state = types::evse_manager::string_to_enable_state(arg.at("state"));
+                    }
+                    if (arg.contains("priority")) {
+                        enable_source.enable_priority = arg.at("priority");
+                    }
+
                 } catch (const std::exception& e) {
-                    EVLOG_error << "Could not parse connector id for enable connector, ignoring command, error: "
-                                << e.what();
-                    return;
+                    EVLOG_error << "enable: Cannot parse argument, command ignored: " << e.what();
                 }
+            } else {
+                EVLOG_error << "enable: No argument specified, ignoring command";
             }
-            evse->call_enable(connector_id);
+            evse->call_enable_disable(connector_id, enable_source);
         });
 
         std::string cmd_disable = cmd_base + "disable";
         this->mqtt.subscribe(cmd_disable, [&evse](const std::string& data) {
             auto connector_id = 0;
+            types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
+                                                                   types::evse_manager::Enable_state::Disable, 100};
+
             if (!data.empty()) {
                 try {
                     connector_id = std::stoi(data);
+                    EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
                 } catch (const std::exception& e) {
-                    EVLOG_error << "Could not parse connector id for disable connector, ignoring command, error: "
-                                << e.what();
-                    return;
+                    EVLOG_error << "disable: Cannot parse argument, ignoring command";
                 }
+            } else {
+                EVLOG_error << "disable: No argument specified, ignoring command";
             }
-            evse->call_disable(connector_id);
+            evse->call_enable_disable(connector_id, enable_source);
+        });
+
+        std::string cmd_enable = cmd_base + "enable";
+        this->mqtt.subscribe(cmd_enable, [&evse](const std::string& data) {
+            auto connector_id = 0;
+            types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
+                                                                   types::evse_manager::Enable_state::Enable, 100};
+
+            if (!data.empty()) {
+                try {
+                    connector_id = std::stoi(data);
+                    EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
+                } catch (const std::exception& e) {
+                    EVLOG_error << "disable: Cannot parse argument, ignoring command";
+                }
+            } else {
+                EVLOG_error << "disable: No argument specified, ignoring command";
+            }
+            evse->call_enable_disable(connector_id, enable_source);
         });
 
         std::string cmd_pause_charging = cmd_base + "pause_charging";
