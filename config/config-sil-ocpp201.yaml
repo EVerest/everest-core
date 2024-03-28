@@ -112,8 +112,6 @@ active_modules:
           implementation_id: ev
   ocpp:
     module: OCPP201
-    config_module:
-      ChargePointConfigPath: config.json
     connections:
       evse_manager:
         - module_id: evse_manager_1

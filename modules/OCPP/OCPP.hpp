@@ -55,7 +55,6 @@ struct Conf {
     int PublishChargingScheduleIntervalS;
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
-    std::string CertsPath;
     int MessageQueueResumeDelay;
 };
 
