@@ -82,7 +82,7 @@ new client certificates are installed by using the ``CertificateSigned.req``
 message.
 
 Configuration for ISO 15118
---------------------------
+---------------------------
 
 For ISO 15118 communication, the charging station provides a server endpoint
 to which the electric vehicle connects. The communication may be secured using
