@@ -25,7 +25,7 @@ namespace module {
 struct Conf {
     std::string serial_port;
     int baud_rate;
-    std::string control_mode;
+    std::string reset_gpio_chip;
     int reset_gpio;
     int caps_min_current_A;
 };
@@ -78,6 +78,9 @@ private:
     Everest::Thread telemetryThreadHandle;
     void error_handling(ErrorFlags e);
     ErrorFlags last_error_flags;
+
+    std::atomic_bool error_MREC2GroundFailure{false};
+    std::atomic_bool error_MREC1ConnectorLockFailure{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

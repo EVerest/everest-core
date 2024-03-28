@@ -18,6 +18,8 @@
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
 
+#include <gpio.hpp>
+
 #include "yeti.pb.h"
 
 evSerial::evSerial() {
@@ -334,26 +336,21 @@ void evSerial::forceUnlock() {
     linkWrite(&msg_out);
 }
 
-bool evSerial::reset(const int reset_pin) {
+bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
 
     reset_done_flag = false;
     forced_reset = true;
 
-    if (reset_pin > 0) {
+    if (not reset_chip.empty()) {
         // Try to hardware reset Yeti controller to be in a known state
-        char cmd[100];
-        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 0 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
-
-        // clear uart input and output buffer
-        // tcflush(fd, TCIOFLUSH);
-
-        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
+        Everest::Gpio reset_gpio;
+        reset_gpio.open(reset_chip, reset_line);
+        reset_gpio.set_output(true);
+        reset_gpio.set(true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(true);
     } else {
         // Try to soft reset Yeti controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;

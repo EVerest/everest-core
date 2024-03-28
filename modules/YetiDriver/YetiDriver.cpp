@@ -68,7 +68,7 @@ void YetiDriver::init() {
 void YetiDriver::ready() {
     serial.run();
 
-    if (!serial.reset(config.reset_gpio)) {
+    if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti reset not successful."));
     }
 
@@ -110,8 +110,15 @@ bool connector_lock_failed;
 bool cp_signal_fault;
 
 void YetiDriver::clear_errors_on_unplug() {
-    p_board_support->request_clear_all_evse_board_support_MREC2GroundFailure();
-    p_connector_lock->request_clear_all_connector_lock_MREC1ConnectorLockFailure();
+    if (error_MREC2GroundFailure) {
+        p_board_support->request_clear_all_evse_board_support_MREC2GroundFailure();
+    }
+    error_MREC2GroundFailure = false;
+
+    if (error_MREC1ConnectorLockFailure) {
+        p_connector_lock->request_clear_all_connector_lock_MREC1ConnectorLockFailure();
+    }
+    error_MREC1ConnectorLockFailure = false;
 }
 
 void YetiDriver::error_handling(ErrorFlags e) {
@@ -125,6 +132,7 @@ void YetiDriver::error_handling(ErrorFlags e) {
     if (e.rcd_triggered and not last_error_flags.rcd_triggered) {
         p_board_support->raise_evse_board_support_MREC2GroundFailure("Onboard RCD triggered",
                                                                      Everest::error::Severity::High);
+        error_MREC2GroundFailure = true;
     }
 
     if (e.ventilation_not_available and not last_error_flags.ventilation_not_available) {
@@ -137,6 +145,8 @@ void YetiDriver::error_handling(ErrorFlags e) {
     if (e.connector_lock_failed and not last_error_flags.connector_lock_failed) {
         p_connector_lock->raise_connector_lock_MREC1ConnectorLockFailure("Lock motor failure",
                                                                          Everest::error::Severity::High);
+
+        error_MREC1ConnectorLockFailure = true;
     }
 
     if (e.cp_signal_fault and not last_error_flags.cp_signal_fault) {
