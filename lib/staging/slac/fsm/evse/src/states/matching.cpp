@@ -137,7 +137,12 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::RESET) {
         return sa.create_simple<ResetState>(ctx);
     } else if (ev == Event::MATCH_COMPLETE) {
-        return sa.create_simple<MatchedState>(ctx);
+        // Wait for link up to be confirmed before going to MATCHED state if enabled in config
+        if (ctx.slac_config.link_status.do_detect) {
+            return sa.create_simple<WaitForLinkState>(ctx);
+        } else {
+            return sa.create_simple<MatchedState>(ctx);
+        }
     } else if (ev == Event::RETRY_MATCHING) {
         num_retries++;
         if (num_retries == slac::defs::C_EV_MATCH_RETRY) {

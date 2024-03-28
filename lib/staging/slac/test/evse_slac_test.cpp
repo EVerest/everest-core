@@ -15,7 +15,7 @@ static auto create_cm_set_key_cnf() {
     slac::messages::cm_set_key_cnf set_key_cnf;
     slac::messages::HomeplugMessage hp_message;
     hp_message.setup_payload(&set_key_cnf, sizeof(set_key_cnf),
-                             (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF));
+                             (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF), slac::defs::MMV::AV_1_1);
     return hp_message;
 }
 
@@ -27,7 +27,7 @@ static auto create_cm_validate_req() {
 
     slac::messages::HomeplugMessage hp_message;
     hp_message.setup_payload(&validate_req, sizeof(validate_req),
-                             (slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_REQ));
+                             (slac::defs::MMTYPE_CM_VALIDATE | slac::defs::MMTYPE_MODE_REQ), slac::defs::MMV::AV_1_1);
 
     return hp_message;
 }
@@ -43,7 +43,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&parm_req, sizeof(parm_req),
-                                 (slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_REQ));
+                                 (slac::defs::MMTYPE_CM_SLAC_PARAM | slac::defs::MMTYPE_MODE_REQ),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -55,7 +56,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&atten_char_ind, sizeof(atten_char_ind),
-                                 (slac::defs::MMTYPE_CM_START_ATTEN_CHAR | slac::defs::MMTYPE_MODE_IND));
+                                 (slac::defs::MMTYPE_CM_START_ATTEN_CHAR | slac::defs::MMTYPE_MODE_IND),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -67,7 +69,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&sound_ind, sizeof(sound_ind),
-                                 (slac::defs::MMTYPE_CM_MNBC_SOUND | slac::defs::MMTYPE_MODE_IND));
+                                 (slac::defs::MMTYPE_CM_MNBC_SOUND | slac::defs::MMTYPE_MODE_IND),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -84,7 +87,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&profile_ind, sizeof(profile_ind),
-                                 (slac::defs::MMTYPE_CM_ATTEN_PROFILE | slac::defs::MMTYPE_MODE_IND));
+                                 (slac::defs::MMTYPE_CM_ATTEN_PROFILE | slac::defs::MMTYPE_MODE_IND),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -96,7 +100,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&atten_char, sizeof(atten_char),
-                                 (slac::defs::MMTYPE_CM_ATTEN_CHAR | slac::defs::MMTYPE_MODE_RSP));
+                                 (slac::defs::MMTYPE_CM_ATTEN_CHAR | slac::defs::MMTYPE_MODE_RSP),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -108,7 +113,8 @@ struct EVSession {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(mac.data(), mac.data());
         hp_message.setup_payload(&match_req, sizeof(match_req),
-                                 (slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_REQ));
+                                 (slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_REQ),
+                                 slac::defs::MMV::AV_1_1);
 
         return hp_message;
     }
@@ -172,6 +178,7 @@ int main(int argc, char* argv[]) {
 
     auto ctx = slac::fsm::evse::Context(callbacks);
     ctx.slac_config.sounding_atten_adjustment = ATTENUATION_ADJUSTMENT;
+    ctx.slac_config.chip_reset.enabled = false;
 
     auto machine = slac::fsm::evse::FSM();
 
