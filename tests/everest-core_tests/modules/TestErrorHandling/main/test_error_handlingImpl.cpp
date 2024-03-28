@@ -13,39 +13,39 @@ namespace main {
 void test_error_handlingImpl::init() {
     this->mod->r_error_raiser->subscribe_error_test_errors_TestErrorA(
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_subscribe_TestErrorA(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_subscribe_TestErrorA(json(error));
         },
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_cleared_subscribe_TestErrorA(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_cleared_subscribe_TestErrorA(json(error));
         });
     this->mod->r_error_raiser->subscribe_error_test_errors_TestErrorB(
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_subscribe_TestErrorB(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_subscribe_TestErrorB(json(error));
         },
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_cleared_subscribe_TestErrorB(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_cleared_subscribe_TestErrorB(json(error));
         });
     this->mod->r_error_raiser->subscribe_all_errors(
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_subscribe_all(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_subscribe_all(json(error));
         },
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_cleared_subscribe_all(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_cleared_subscribe_all(json(error));
         });
     subscribe_global_all_errors(
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_subscribe_global_all(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_subscribe_global_all(json(error));
         },
         [this](const Everest::error::Error& error) {
-            EVLOG_debug << fmt::format("received error: {}", Everest::error::error_to_json(error).dump(2));
-            this->publish_errors_cleared_subscribe_global_all(Everest::error::error_to_json(error));
+            EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
+            this->publish_errors_cleared_subscribe_global_all(json(error));
         });
 }
 
