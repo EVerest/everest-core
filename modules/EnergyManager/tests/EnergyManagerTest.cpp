@@ -914,6 +914,18 @@ TEST(EnergyManagerTest, between_3_4) {
     test::schedule_test(energy_flow_request, "2024-03-27T12:42:50.200Z", 32.0);
 }
 
+TEST(EnergyManagerTest, equal_4) {
+    test::schedule_test(energy_flow_request, "2024-03-27T12:43:04.988Z", 12.0);
+}
+
+TEST(EnergyManagerTest, between_4_5) {
+    test::schedule_test(energy_flow_request, "2024-03-27T12:43:50.200Z", 12.0);
+}
+
+TEST(EnergyManagerTest, equal_5) {
+    test::schedule_test(energy_flow_request, "2024-03-27T12:44:04.988Z", 0.0);
+}
+
 TEST(EnergyManagerTest, after) {
     test::schedule_test(energy_flow_request, "2024-03-27T12:50:04.988Z", 0.0);
 }
@@ -951,6 +963,18 @@ TEST(EnergyManagerTest, gcp_equal_3) {
 
 TEST(EnergyManagerTest, gcp_between_3_4) {
     test::schedule_test(grid_connection_point::c_efr_grid_connection_point, "2024-03-28T14:22:30.557Z", 32.0);
+}
+
+TEST(EnergyManagerTest, gcp_equal_4) {
+    test::schedule_test(grid_connection_point::c_efr_grid_connection_point, "2024-03-28T14:22:50.557Z", 12.0);
+}
+
+TEST(EnergyManagerTest, gcp_between_4_5) {
+    test::schedule_test(grid_connection_point::c_efr_grid_connection_point, "2024-03-28T14:23:30.557Z", 12.0);
+}
+
+TEST(EnergyManagerTest, gcp_equal_5) {
+    test::schedule_test(grid_connection_point::c_efr_grid_connection_point, "2024-03-28T14:23:50.557Z", 0.0);
 }
 
 TEST(EnergyManagerTest, gcp_after) {
