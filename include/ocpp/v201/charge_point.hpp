@@ -182,7 +182,7 @@ class ChargePoint : ocpp::ChargingStationBase {
 
 private:
     // reference to evses
-    std::map<int32_t, std::unique_ptr<Evse>> evses;
+    std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
 
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -350,7 +350,7 @@ private:
     ///         If id_token is equal to reserved id_token or group_id_token is equal, return false.
     ///         If there is no reservation, return false.
     ///
-    bool is_evse_reserved_for_other(const std::unique_ptr<Evse>& evse, const IdToken& id_token,
+    bool is_evse_reserved_for_other(const std::unique_ptr<EvseInterface>& evse, const IdToken& id_token,
                                     const std::optional<IdToken>& group_id_token) const;
 
     ///
@@ -359,7 +359,7 @@ private:
     /// \param evse Evse to check.
     /// \return True if at least one connector is not faulted or unavailable.
     ///
-    bool is_evse_connector_available(const std::unique_ptr<Evse>& evse) const;
+    bool is_evse_connector_available(const std::unique_ptr<EvseInterface>& evse) const;
 
     ///
     /// \brief Set all connectors of a given evse to unavailable.
@@ -367,7 +367,7 @@ private:
     /// \param persist  True if unavailability should persist. If it is set to false, there will be a check per
     ///                 connector if it was already set to true and if that is the case, it will be persisted anyway.
     ///
-    void set_evse_connectors_unavailable(const std::unique_ptr<Evse>& evse, bool persist);
+    void set_evse_connectors_unavailable(const std::unique_ptr<EvseInterface>& evse, bool persist);
 
     /// \brief Get the value optional offline flag
     /// \return true if the charge point is offline. std::nullopt if it is online;
@@ -522,7 +522,7 @@ private:
     bool are_all_connectors_effectively_inoperative();
 
     /// \brief Returns a pointer to the EVSE with ID \param evse_id
-    Evse* get_evse(int32_t evse_id);
+    EvseInterface* get_evse(int32_t evse_id);
 
     /// \brief Returns a pointer to the connector with ID \param connector_id in the EVSE with ID \param evse_id
     Connector* get_connector(int32_t evse_id, int32_t connector_id);

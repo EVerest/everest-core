@@ -13,7 +13,7 @@ using namespace std::chrono;
 
 namespace ocpp::v201 {
 
-SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::unique_ptr<Evse>>& evses) : evses(evses) {
+SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses) : evses(evses) {
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_evse_exists(int32_t evse_id) const {
@@ -22,7 +22,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_evse_exists(int32_t e
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile,
-                                                                      Evse& evse) const {
+                                                                      EvseInterface& evse) const {
     if (!profile.transactionId.has_value()) {
         return ProfileValidationResultEnum::TxProfileMissingTransactionId;
     }

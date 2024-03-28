@@ -34,14 +34,14 @@ enum class ProfileValidationResultEnum {
 /// to calculate the composite schedules
 class SmartChargingHandler {
 private:
-    std::map<int32_t, std::unique_ptr<Evse>>& evses;
+    std::map<int32_t, std::unique_ptr<EvseInterface>>& evses;
 
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
     // cppcheck-suppress unusedStructMember
     std::vector<ChargingProfile> charging_profiles;
 
 public:
-    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<Evse>>& evses);
+    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses);
 
     ///
     /// \brief validates the existence of the given \p evse_id according to the specification
@@ -51,7 +51,7 @@ public:
     ///
     /// \brief validates the given \p profile according to the specification
     ///
-    ProfileValidationResultEnum validate_tx_profile(const ChargingProfile& profile, Evse& evse) const;
+    ProfileValidationResultEnum validate_tx_profile(const ChargingProfile& profile, EvseInterface& evse) const;
 
     /// \brief validates that the given \p profile has valid charging schedules
     ProfileValidationResultEnum validate_profile_schedules(const ChargingProfile& profile) const;

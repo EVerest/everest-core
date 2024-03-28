@@ -18,9 +18,111 @@
 namespace ocpp {
 namespace v201 {
 
+class EvseInterface {
+public:
+    virtual ~EvseInterface();
+
+    /// \brief Returns an OCPP2.0.1 EVSE type
+    /// \return
+    virtual EVSE get_evse_info() = 0;
+
+    /// \brief Returns the number of connectors of this EVSE
+    /// \return
+    virtual uint32_t get_number_of_connectors() = 0;
+
+    /// \brief Opens a new transaction
+    /// \param transaction_id id of the transaction
+    /// \param connector_id id of the connector
+    /// \param timestamp timestamp of the start of the transaction
+    /// \param meter_start start meter value of the transaction
+    /// \param id_token id_token with which the transaction was authorized / started
+    /// \param group_id_token optional group id_token
+    /// \param reservation optional reservation_id if evse was reserved
+    /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to
+    /// be transmitted via TransactionEventRequest (eventType = Updated) messages
+    virtual void open_transaction(const std::string& transaction_id, const int32_t connector_id,
+                                  const DateTime& timestamp, const MeterValue& meter_start, const IdToken& id_token,
+                                  const std::optional<IdToken>& group_id_token,
+                                  const std::optional<int32_t> reservation_id,
+                                  const std::chrono::seconds sampled_data_tx_updated_interval,
+                                  const std::chrono::seconds sampled_data_tx_ended_interval,
+                                  const std::chrono::seconds aligned_data_tx_updated_interval,
+                                  const std::chrono::seconds aligned_data_tx_ended_interval) = 0;
+
+    /// \brief Closes the transaction on this evse by adding the given \p timestamp \p meter_stop and \p reason .
+    /// \param timestamp
+    /// \param meter_stop
+    /// \param reason
+    virtual void close_transaction(const DateTime& timestamp, const MeterValue& meter_stop,
+                                   const ReasonEnum& reason) = 0;
+
+    /// \brief Start checking if the max energy on invalid id has exceeded.
+    ///        Will call pause_charging_callback when that happens.
+    virtual void start_checking_max_energy_on_invalid_id() = 0;
+
+    /// \brief Indicates if a transaction is active at this evse
+    /// \return
+    virtual bool has_active_transaction() = 0;
+
+    /// \brief Indicates if a transaction is active at this evse at the given \p connector_id
+    /// \param connector_id id of the connector of the evse
+    /// \return
+    virtual bool has_active_transaction(const int32_t connector_id) = 0;
+
+    /// \brief Releases the reference of the transaction on this evse
+    virtual void release_transaction() = 0;
+
+    /// \brief Returns a pointer to the EnhancedTransaction of this evse
+    /// \return pointer to transaction (nullptr if no transaction is active)
+    virtual std::unique_ptr<EnhancedTransaction>& get_transaction() = 0;
+
+    /// \brief Submits the given \p event to the state machine controller of the connector with the given
+    /// \p connector_id
+    /// \param connector_id id of the connector of the evse
+    /// \param event
+    virtual void submit_event(const int32_t connector_id, ConnectorEvent event) = 0;
+
+    /// \brief Event handler that should be called when a new meter_value for this evse is present
+    /// \param meter_value
+    virtual void on_meter_value(const MeterValue& meter_value) = 0;
+
+    /// \brief Returns the last present meter value for this evse
+    /// \return
+    virtual MeterValue get_meter_value() = 0;
+
+    /// @brief Return the idle meter values for this evse
+    /// \return MeterValue type
+    virtual MeterValue get_idle_meter_value() = 0;
+
+    /// @brief Clear the idle meter values for this evse
+    virtual void clear_idle_meter_values() = 0;
+
+    /// \brief Returns a pointer to the connector with ID \param connector_id in this EVSE.
+    virtual Connector* get_connector(int32_t connector_id) = 0;
+
+    /// \brief Gets the effective Operative/Inoperative status of this EVSE
+    virtual OperationalStatusEnum get_effective_operational_status() = 0;
+
+    /// \brief Switches the operative status of the EVSE
+    /// \param new_status The operative status to switch to
+    /// \param persist True the updated operative state should be persisted
+    virtual void set_evse_operative_status(OperationalStatusEnum new_status, bool persist) = 0;
+
+    /// \brief Switches the operative status of a connector within this EVSE
+    /// \param connector_id The ID of the connector
+    /// \param new_status The operative status to switch to
+    /// \param persist True the updated operative state should be persisted
+    virtual void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status,
+                                                bool persist) = 0;
+
+    /// \brief Restores the operative status of a connector within this EVSE to the persisted status and recomputes its
+    /// effective status \param connector_id The ID of the connector
+    virtual void restore_connector_operative_status(int32_t connector_id) = 0;
+};
+
 /// \brief Represents an EVSE. An EVSE can contain multiple Connector objects, but can only supply energy to one of
 /// them.
-class Evse {
+class Evse : public EvseInterface {
 
 private:
     int32_t evse_id;
@@ -63,24 +165,10 @@ public:
                                   const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
          const std::function<void()> pause_charging_callback);
 
-    /// \brief Returns an OCPP2.0.1 EVSE type
-    /// \return
     EVSE get_evse_info();
 
-    /// \brief Returns the number of connectors of this EVSE
-    /// \return
     uint32_t get_number_of_connectors();
 
-    /// \brief Opens a new transaction
-    /// \param transaction_id id of the transaction
-    /// \param connector_id id of the connector
-    /// \param timestamp timestamp of the start of the transaction
-    /// \param meter_start start meter value of the transaction
-    /// \param id_token id_token with which the transaction was authorized / started
-    /// \param group_id_token optional group id_token
-    /// \param reservation optional reservation_id if evse was reserved
-    /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to
-    /// be transmitted via TransactionEventRequest (eventType = Updated) messages
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const IdToken& id_token,
                           const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
@@ -88,73 +176,28 @@ public:
                           const std::chrono::seconds sampled_data_tx_ended_interval,
                           const std::chrono::seconds aligned_data_tx_updated_interval,
                           const std::chrono::seconds aligned_data_tx_ended_interval);
-
-    /// \brief Closes the transaction on this evse by adding the given \p timestamp \p meter_stop and \p reason .
-    /// \param timestamp
-    /// \param meter_stop
-    /// \param reason
     void close_transaction(const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason);
 
-    /// \brief Start checking if the max energy on invalid id has exceeded.
-    ///        Will call pause_charging_callback when that happens.
     void start_checking_max_energy_on_invalid_id();
 
-    /// \brief Indicates if a transaction is active at this evse
-    /// \return
     bool has_active_transaction();
-
-    /// \brief Indicates if a transaction is active at this evse at the given \p connector_id
-    /// \param connector_id id of the connector of the evse
-    /// \return
     bool has_active_transaction(const int32_t connector_id);
-
-    /// \brief Releases the reference of the transaction on this evse
     void release_transaction();
-
-    /// \brief Returns a pointer to the EnhancedTransaction of this evse
-    /// \return pointer to transaction (nullptr if no transaction is active)
     std::unique_ptr<EnhancedTransaction>& get_transaction();
 
-    /// \brief Submits the given \p event to the state machine controller of the connector with the given
-    /// \p connector_id
-    /// \param connector_id id of the connector of the evse
-    /// \param event
     void submit_event(const int32_t connector_id, ConnectorEvent event);
 
-    /// \brief Event handler that should be called when a new meter_value for this evse is present
-    /// \param meter_value
     void on_meter_value(const MeterValue& meter_value);
-
-    /// \brief Returns the last present meter value for this evse
-    /// \return
     MeterValue get_meter_value();
 
-    /// @brief Return the idle meter values for this evse
-    /// \return MeterValue type
     MeterValue get_idle_meter_value();
-
-    /// @brief Clear the idle meter values for this evse
     void clear_idle_meter_values();
 
-    /// \brief Returns a pointer to the connector with ID \param connector_id in this EVSE.
     Connector* get_connector(int32_t connector_id);
 
-    /// \brief Gets the effective Operative/Inoperative status of this EVSE
     OperationalStatusEnum get_effective_operational_status();
-
-    /// \brief Switches the operative status of the EVSE
-    /// \param new_status The operative status to switch to
-    /// \param persist True the updated operative state should be persisted
     void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);
-
-    /// \brief Switches the operative status of a connector within this EVSE
-    /// \param connector_id The ID of the connector
-    /// \param new_status The operative status to switch to
-    /// \param persist True the updated operative state should be persisted
     void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
-
-    /// \brief Restores the operative status of a connector within this EVSE to the persisted status and recomputes its
-    /// effective status \param connector_id The ID of the connector
     void restore_connector_operative_status(int32_t connector_id);
 };
 

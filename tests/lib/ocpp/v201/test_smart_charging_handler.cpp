@@ -179,7 +179,7 @@ protected:
     }
 
     // Default values used within the tests
-    std::map<int32_t, std::unique_ptr<Evse>> evses;
+    std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
     std::shared_ptr<DatabaseHandler> database_handler;
 
     const int evse_id = 1;

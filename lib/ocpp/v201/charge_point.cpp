@@ -1683,7 +1683,7 @@ std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& t
     return std::nullopt;
 }
 
-bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<Evse>& evse, const IdToken& id_token,
+bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<EvseInterface>& evse, const IdToken& id_token,
                                              const std::optional<IdToken>& group_id_token) const {
     const uint32_t connectors = evse->get_number_of_connectors();
     for (uint32_t i = 1; i <= connectors; ++i) {
@@ -1702,7 +1702,7 @@ bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<Evse>& evse, 
     return false;
 }
 
-bool ChargePoint::is_evse_connector_available(const std::unique_ptr<Evse>& evse) const {
+bool ChargePoint::is_evse_connector_available(const std::unique_ptr<EvseInterface>& evse) const {
     if (evse->has_active_transaction()) {
         // If an EV is connected and has no authorization yet then the status is 'Occupied' and the
         // RemoteStartRequest should still be accepted. So this is the 'occupied' check instead.
@@ -1724,7 +1724,7 @@ bool ChargePoint::is_evse_connector_available(const std::unique_ptr<Evse>& evse)
     return false;
 }
 
-void ChargePoint::set_evse_connectors_unavailable(const std::unique_ptr<Evse>& evse, bool persist) {
+void ChargePoint::set_evse_connectors_unavailable(const std::unique_ptr<EvseInterface>& evse, bool persist) {
     uint32_t number_of_connectors = evse->get_number_of_connectors();
 
     for (uint32_t i = 1; i <= number_of_connectors; ++i) {
@@ -2444,7 +2444,7 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
             }
         } else if (msg.type == ResetEnum::OnIdle && !evse_no_transactions.empty()) {
             for (const int32_t evse_id : evse_no_transactions) {
-                std::unique_ptr<Evse>& evse = this->evses.at(evse_id);
+                std::unique_ptr<EvseInterface>& evse = this->evses.at(evse_id);
                 if (evse) {
                     this->set_evse_connectors_unavailable(evse, false);
                 } else {
@@ -2559,7 +2559,7 @@ void ChargePoint::handle_unlock_connector(Call<UnlockConnectorRequest> call) {
 void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     const TriggerMessageRequest& msg = call.msg;
     TriggerMessageResponse response;
-    Evse* evse_ptr = nullptr;
+    EvseInterface* evse_ptr = nullptr;
 
     response.status = TriggerMessageStatusEnum::Rejected;
 
@@ -2654,7 +2654,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         return;
     }
 
-    auto send_evse_message = [&](std::function<void(int32_t evse_id, Evse & evse)> send) {
+    auto send_evse_message = [&](std::function<void(int32_t evse_id, EvseInterface & evse)> send) {
         if (evse_ptr != nullptr) {
             send(msg.evse.value().id, *evse_ptr);
         } else {
@@ -2670,7 +2670,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         break;
 
     case MessageTriggerEnum::MeterValues: {
-        auto send_meter_value = [&](int32_t evse_id, Evse& evse) {
+        auto send_meter_value = [&](int32_t evse_id, EvseInterface& evse) {
             const auto meter_value =
                 get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
                                                 ControllerComponentVariables::AlignedDataMeasurands);
@@ -2683,7 +2683,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     } break;
 
     case MessageTriggerEnum::TransactionEvent: {
-        auto send_transaction = [&](int32_t evse_id, Evse& evse) {
+        auto send_transaction = [&](int32_t evse_id, EvseInterface& evse) {
             if (!evse.has_active_transaction()) {
                 return;
             }
@@ -3222,7 +3222,7 @@ bool ChargePoint::are_all_connectors_effectively_inoperative() {
     return true;
 }
 
-Evse* ChargePoint::get_evse(int32_t evse_id) {
+EvseInterface* ChargePoint::get_evse(int32_t evse_id) {
     if (evse_id <= 0 || evse_id > this->evses.size()) {
         std::stringstream err_msg;
         err_msg << "EVSE ID " << evse_id << " out of bounds";
