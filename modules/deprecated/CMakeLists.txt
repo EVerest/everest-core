@@ -1,8 +1,0 @@
-ev_add_module(JsDummyTokenValidator)
-ev_add_module(JsDummyTokenProvider)
-ev_add_module(JsDummyTokenProviderManual)
-ev_add_module(JsForecastDotSolar)
-ev_add_module(JsPN532TokenProvider)
-ev_add_module(PyJosev)
-ev_add_module(SunspecReader)
-ev_add_module(SunspecScanner)
