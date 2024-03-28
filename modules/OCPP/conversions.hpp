@@ -89,6 +89,13 @@ types::authorization::AuthorizationStatus to_everest_authorization_status(const 
 types::authorization::AuthorizationStatus
 to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status);
 
+/// \brief Convert ocpp::v16::EnhancedChargingSchedulePeriod to types::ocpp::ChargingSchedulePeriod
+types::ocpp::ChargingSchedulePeriod
+to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& period);
+
+/// \brief Convert ocpp::v16::EnhancedChargingSchedule to types::ocpp::ChargingSchedule
+types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChargingSchedule& schedule);
+
 } // namespace conversions
 } // namespace module
 

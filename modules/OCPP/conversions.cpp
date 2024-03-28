@@ -359,5 +359,34 @@ to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status
     }
 }
 
+types::ocpp::ChargingSchedulePeriod
+to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& period) {
+    types::ocpp::ChargingSchedulePeriod csp = {
+        period.startPeriod,
+        period.limit,
+        period.stackLevel,
+        period.numberPhases,
+    };
+    return csp;
+}
+
+types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChargingSchedule& schedule) {
+    types::ocpp::ChargingSchedule csch = {
+        0,
+        ocpp::v16::conversions::charging_rate_unit_to_string(schedule.chargingRateUnit),
+        {},
+        std::nullopt,
+        schedule.duration,
+        std::nullopt,
+        schedule.minChargingRate};
+    for (const auto& i : schedule.chargingSchedulePeriod) {
+        csch.charging_schedule_period.emplace_back(to_charging_schedule_period(i));
+    }
+    if (schedule.startSchedule.has_value()) {
+        csch.start_schedule = schedule.startSchedule.value().to_rfc3339();
+    }
+    return csch;
+}
+
 } // namespace conversions
 } // namespace module

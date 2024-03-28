@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 #include "generated/types/ocpp.hpp"
+#include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
 #include <fstream>
 
@@ -144,11 +145,13 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
 void OCPP::publish_charging_schedules(
     const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules) {
     // publish the schedule over mqtt
-    Object j;
-    for (const auto charging_schedule : charging_schedules) {
-        j[std::to_string(charging_schedule.first)] = charging_schedule.second;
+    types::ocpp::ChargingSchedules schedules;
+    for (const auto& charging_schedule : charging_schedules) {
+        types::ocpp::ChargingSchedule sch = conversions::to_charging_schedule(charging_schedule.second);
+        sch.connector = charging_schedule.first;
+        schedules.schedules.emplace_back(std::move(sch));
     }
-    this->p_ocpp_generic->publish_charging_schedules(j);
+    this->p_ocpp_generic->publish_charging_schedules(schedules);
 }
 
 void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {
