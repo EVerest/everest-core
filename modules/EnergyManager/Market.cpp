@@ -9,16 +9,17 @@ namespace module {
 
 globals_t globals;
 
-void globals_t::init(date::utc_clock::time_point start_time, int _interval_duration, int _schedule_duration,
+void globals_t::init(date::utc_clock::time_point _start_time, int _interval_duration, int _schedule_duration,
                      float _slice_ampere, float _slice_watt, bool _debug,
                      const types::energy::EnergyFlowRequest& energy_flow_request) {
+    start_time = _start_time;
     interval_duration = std::chrono::minutes(_interval_duration);
     schedule_length = std::chrono::hours(_schedule_duration) / interval_duration;
     slice_ampere = _slice_ampere;
     slice_watt = _slice_watt;
     debug = _debug;
 
-    create_timestamps(start_time, energy_flow_request);
+    create_timestamps(energy_flow_request);
 
     zero_schedule_req = create_empty_schedule_req();
 
@@ -39,8 +40,7 @@ void globals_t::init(date::utc_clock::time_point start_time, int _interval_durat
     empty_schedule_res = create_empty_schedule_res();
 }
 
-void globals_t::create_timestamps(const date::utc_clock::time_point& start_time,
-                                  const types::energy::EnergyFlowRequest& energy_flow_request) {
+void globals_t::create_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request) {
 
     timestamps.clear();
     timestamps.reserve(schedule_length);

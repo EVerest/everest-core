@@ -25,4 +25,8 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 # insert other things like install cmds etc here
+# insert other things like install cmds etc here
+if(EVEREST_CORE_BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
