@@ -8,10 +8,10 @@
 /cmake/ @hikinggrass @a-w50
 
 # modules
-/modules/API/ @hikinggrass
-/modules/Auth/ @pietfried
-/modules/Energymanager/ @corneliusclaussen
-/modules/EnergyNode/ @corneliusclaussen
+/modules/API/ @hikinggrass @pietfried
+/modules/Auth/ @pietfried @corneliusclaussen
+/modules/Energymanager/ @corneliusclaussen @hikinggrass
+/modules/EnergyNode/ @corneliusclaussen @hikinggrass
 /modules/EvseManager/ @corneliusclaussen @SebaLukas
 /modules/EvseSecurity/ @AssemblyJohn @pietfried
 /modules/EvseV2G/ @corneliusclaussen @SebaLukas
@@ -19,10 +19,10 @@
 /modules/OCPP/ @hikinggrass @pietfried
 /modules/OCPP201/ @hikinggrass @pietfried
 /modules/PacketSniffer @corneliusclaussen @SebaLukas
-/modules/PyEvJosev @SebaLukas
-/modules/Setup @hikinggrass
-/modules/YetiDriver @corneliusclaussen
-/modules/simulation/ @SebaLukas
+/modules/PyEvJosev @SebaLukas @corneliusclaussen
+/modules/Setup @hikinggrass @corneliusclaussen
+/modules/YetiDriver @corneliusclaussen @hikinggrass
+/modules/simulation/ @SebaLukas @pietfried
 /modules/rust_examples/ @SirVer @golovasteek @dorezyuk
 
 # Rust & Bazel
