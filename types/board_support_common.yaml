@@ -46,3 +46,20 @@ types:
           - A_20
           - A_32
           - A_63_3ph_70_1ph
+  BspMeasurement:
+    description: Bsp Measurement
+    type: object
+    required:
+      - cp_pwm_duty_cycle
+      - proximity_pilot
+    properties:
+      proximity_pilot:
+        description: Current capability of the cable
+        type: object
+        $ref: /board_support_common#/ProximityPilot
+      rcd_current_mA:
+        description: RCD current in mA
+        type: number
+      cp_pwm_duty_cycle:
+        description: CP PWM Duty Cycle in percent (0-100)
+        type: number

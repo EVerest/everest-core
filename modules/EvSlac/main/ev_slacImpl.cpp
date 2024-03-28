@@ -65,6 +65,9 @@ void ev_slacImpl::run() {
     // fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
     // fsm_ctx.slac_config.generate_nmk();
 
+    // copy our host MAC address
+    fsm_ctx.set_mac_addr(slac_io.get_mac_addr());
+
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);
 
     slac_io.run([](slac::messages::HomeplugMessage& msg) { fsm_ctrl->signal_new_slac_message(msg); });

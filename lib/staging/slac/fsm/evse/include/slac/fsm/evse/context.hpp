@@ -85,6 +85,8 @@ struct Context {
     // logging util
     void log_info(const std::string& text);
 
+    void set_mac_addr(const uint8_t* mac);
+
 private:
     const ContextCallbacks& callbacks;
 };

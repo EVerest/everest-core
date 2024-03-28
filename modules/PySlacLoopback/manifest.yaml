@@ -1,0 +1,14 @@
+description: Simple driver for Evse Loopback communication
+provides:
+  main:
+    interface: empty
+    description: Nothing to do here
+requires:
+  ev_slac:
+    interface: ev_slac
+  evse_slac:
+    interface: slac
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - aw@pionix.de

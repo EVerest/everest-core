@@ -199,7 +199,7 @@ int MatchRequestState::send_match_req() {
     msg.security_type = 0x0;
     msg.mvf_length = htole16(0x3e); // FIXME (aw) fixed constant
     memset(msg.pev_id, 0, sizeof(msg.pev_id));
-    memcpy(msg.pev_mac, ctx.plc_mac, sizeof(msg.pev_mac));
+    memcpy(msg.pev_mac, ctx.host_mac, sizeof(msg.pev_mac));
     memset(msg.evse_id, 0, sizeof(msg.evse_id));
     memcpy(msg.evse_mac, session_parameters.evse_mac, sizeof(msg.evse_mac));
     memcpy(msg.run_id, session_parameters.run_id, sizeof(msg.run_id));

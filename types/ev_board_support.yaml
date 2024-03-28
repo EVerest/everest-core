@@ -1,0 +1,11 @@
+description: EV and EVSE board support types
+types:
+  EvCpState:
+    description: ControlPilot state
+    type: string
+    enum:
+      - A
+      - B
+      - C
+      - D
+      - 'E'
