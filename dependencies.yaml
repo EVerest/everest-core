@@ -33,7 +33,7 @@ libtimer:
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
-  git_tag: 4245947433da4469c04a44cb589ef20284015338
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
 libfsm:
   git: https://github.com/EVerest/libfsm.git
