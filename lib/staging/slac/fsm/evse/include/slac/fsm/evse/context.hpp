@@ -59,19 +59,19 @@ template <> struct MMTYPE<slac::messages::lumissil::nscm_reset_device_req> {
 };
 
 template <> struct MMTYPE<slac::messages::lumissil::nscm_get_version_req> {
-    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_GET_VERSION | slac::defs::MMTYPE_MODE_REQ;
 };
 
 template <> struct MMTYPE<slac::messages::lumissil::nscm_get_version_cnf> {
-    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_GET_VERSION | slac::defs::MMTYPE_MODE_CNF;
 };
 
 template <> struct MMTYPE<slac::messages::lumissil::nscm_get_d_link_status_req> {
-    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_REQ;
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_GET_D_LINK_STATUS | slac::defs::MMTYPE_MODE_REQ;
 };
 
 template <> struct MMTYPE<slac::messages::lumissil::nscm_get_d_link_status_cnf> {
-    static const uint16_t value = slac::defs::qualcomm::MMTYPE_OP_ATTR | slac::defs::MMTYPE_MODE_CNF;
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_GET_D_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF;
 };
 
 template <typename SlacMessageType> struct MMV {

@@ -212,11 +212,19 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
 FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
     const auto& cfg = ctx.slac_config;
     if (not link_status_req_sent) {
-        slac::messages::qualcomm::link_status_req link_status_req;
 
-        ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
+        if (ctx.modem_vendor == Context::ModemVendor::Qualcomm) {
+            slac::messages::qualcomm::link_status_req link_status_req;
+            ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
+            link_status_req_sent = true;
+        } else if (ctx.modem_vendor == Context::ModemVendor::Lumissil) {
+            slac::messages::lumissil::nscm_get_d_link_status_req link_status_req;
+            ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
+            link_status_req_sent = true;
+        } else {
+            ctx.log_info("Link detection not supported on this chip");
+        }
 
-        link_status_req_sent = true;
         return cfg.link_status.retry_ms;
     } else {
         // Did we timeout?
@@ -231,17 +239,26 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
 
 bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
-    if (mmtype != (slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
-        // unexpected message
-        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
-        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
-        return false;
-    } else {
+
+    if (ctx.modem_vendor == Context::ModemVendor::Qualcomm &&
+        mmtype == (slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
         if (message.get_payload<slac::messages::qualcomm::link_status_cnf>().link_status == 0x01) {
             return true;
         } else {
             return false;
         }
+    } else if (ctx.modem_vendor == Context::ModemVendor::Lumissil &&
+               mmtype == (slac::defs::lumissil::MMTYPE_NSCM_GET_D_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
+        if (message.get_payload<slac::messages::lumissil::nscm_get_d_link_status_cnf>().link_status == 0x01) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        // unexpected message
+        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
+        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+        return false;
     }
 }
 
@@ -312,8 +329,8 @@ static void print_log(slac::fsm::evse::Context& ctx, slac::messages::qualcomm::o
 }
 
 static void print_log(slac::fsm::evse::Context& ctx, slac::messages::lumissil::nscm_get_version_cnf& msg) {
-    ctx.log_info("Lumissil PLC Device Firmware version:" + std::to_string(msg.version_major) + "." +
-                 std::to_string(msg.version_minor) + "." + std::to_string(msg.version_patch) + "-" +
+    ctx.log_info("Lumissil PLC Device Firmware version: " + std::to_string(msg.version_major) + "." +
+                 std::to_string(msg.version_minor) + "." + std::to_string(msg.version_patch) + "." +
                  std::to_string(msg.version_build));
 }
 
@@ -325,7 +342,7 @@ void InitState::handle_slac_message(slac::messages::HomeplugMessage& message) {
         // This message is only supported on Qualcomm, so we can use it to detect the Vendor
         ctx.modem_vendor = Context::ModemVendor::Qualcomm;
     } else if (mmtype == (slac::defs::lumissil::MMTYPE_NSCM_GET_VERSION | slac::defs::MMTYPE_MODE_CNF)) {
-        auto msg = message.get_payload<slac::messages::qualcomm::op_attr_cnf>();
+        auto msg = message.get_payload<slac::messages::lumissil::nscm_get_version_cnf>();
         print_log(ctx, msg);
         // This message is only supported on Qualcomm, so we can use it to detect the Vendor
         ctx.modem_vendor = Context::ModemVendor::Lumissil;
