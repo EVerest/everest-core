@@ -142,7 +142,8 @@ void evse_managerImpl::ready() {
     });
 
     mod->charger->signal_session_started_event.connect(
-        [this](const types::evse_manager::StartSessionReason& start_reason) {
+        [this](const types::evse_manager::StartSessionReason& start_reason,
+               const std::optional<types::authorization::ProvidedIdToken>& provided_id_token) {
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::SessionStarted;
             this->mod->selected_protocol = "IEC61851-1";
@@ -169,6 +170,12 @@ void evse_managerImpl::ready() {
 
             session_started.reason = start_reason;
             const auto session_uuid = this->mod->charger->get_session_id();
+            session_started.meter_value = mod->get_latest_powermeter_data_billing();
+            session_started.id_tag = provided_id_token;
+            if (mod->is_reserved()) {
+                session_started.reservation_id = mod->get_reservation_id();
+            }
+
             session_started.logging_path = session_log.startSession(
                 mod->config.logfile_suffix == "session_uuid" ? session_uuid : mod->config.logfile_suffix);
 

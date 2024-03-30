@@ -144,6 +144,7 @@ types:
     required:
       - timestamp
       - reason
+      - meter_value
     properties:
       timestamp:
         description: Session start time in RFC3339 format
@@ -153,6 +154,21 @@ types:
         description: Reason for session start
         type: string
         $ref: /evse_manager#/StartSessionReason
+      id_tag:
+        description: The id tag assigned to this session
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Session start exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+      signed_meter_value:
+        description: The signed meter value report of the started session
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      reservation_id:
+        description: Id of the reservation
+        type: integer
       logging_path:
         description: >-
           File system path where additional log files are stored, such as

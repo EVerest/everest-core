@@ -15,8 +15,7 @@ TransactionHandler::TransactionHandler(const int32_t nr_of_evses, const std::set
     }
 
     if (nr_of_evses <= 0) {
-        throw std::runtime_error(
-            "Cannot construct TransactionHandler with either nr_of_evses <= 0");
+        throw std::runtime_error("Cannot construct TransactionHandler with either nr_of_evses <= 0");
     }
 
     for (int32_t evse_id = 1; evse_id <= nr_of_evses; evse_id++) {
@@ -41,28 +40,28 @@ TxEventEffect TransactionHandler::submit_event(const int32_t evse_id, const TxEv
 void TransactionHandler::add_transaction_data(const int32_t evse_id,
                                               const std::shared_ptr<TransactionData>& transaction_data) {
     if (evse_id <= 0 or evse_id > this->tx_start_stop_conditions.size()) {
-        throw std::runtime_error("Can not add transaction data for evse_id <= 0 or > nr_of_evses");
+        throw std::out_of_range("Can not add transaction data for evse_id <= 0 or > nr_of_evses");
     }
     this->evse_id_transaction_data_map[evse_id] = transaction_data;
 }
 
 std::shared_ptr<TransactionData> TransactionHandler::get_transaction_data(const int32_t evse_id) {
     if (!this->evse_id_transaction_data_map.count(evse_id)) {
-        throw std::runtime_error("Attempt to get transaction_data for invalid evse_id");
+        throw std::out_of_range("Attempt to get transaction_data for invalid evse_id");
     }
     return this->evse_id_transaction_data_map[evse_id];
 }
 
 void TransactionHandler::reset_transaction_data(const int32_t evse_id) {
     if (!this->evse_id_transaction_data_map.count(evse_id)) {
-        throw std::runtime_error("Attempt to reset transaction_data for invalid evse_id");
+        throw std::out_of_range("Attempt to reset transaction_data for invalid evse_id");
     }
     this->evse_id_transaction_data_map[evse_id].reset();
 }
 
 bool TransactionHandler::should_transaction_start(const int32_t evse_id) {
     if (!this->evse_id_transaction_data_map.count(evse_id)) {
-        throw std::runtime_error("Can not retrieve if transaction should start for invalid evse_id");
+        throw std::out_of_range("Can not retrieve if transaction should start for invalid evse_id");
     }
 
     // check if transaction data is present
@@ -83,7 +82,7 @@ bool TransactionHandler::should_transaction_start(const int32_t evse_id) {
 
 bool TransactionHandler::should_transaction_stop(const int32_t evse_id) {
     if (!this->evse_id_transaction_data_map.count(evse_id)) {
-        throw std::runtime_error("Can not retrieve if transaction should stop for invalid evse_id");
+        throw std::out_of_range("Can not retrieve if transaction should stop for invalid evse_id");
     }
 
     // check if transaction data is present

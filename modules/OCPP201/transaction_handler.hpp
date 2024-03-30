@@ -15,8 +15,7 @@
 namespace module {
 
 /// \brief TxStartStopPoint of OCPP2.0.1
-enum class TxStartStopPoint
-{
+enum class TxStartStopPoint {
     ParkingBayOccupancy,
     EVConnected,
     Authorized,
@@ -26,8 +25,7 @@ enum class TxStartStopPoint
 };
 
 /// \brief TxEvents that influence if conditions for TxStartStopPoints are fullfilled
-enum class TxEvent
-{
+enum class TxEvent {
     NONE,
     EV_CONNECTED,
     EV_DISCONNECTED,
@@ -42,8 +40,7 @@ enum class TxEvent
 
 /// \brief Effect to an TxEvent. An effect can either trigger the start of a Transaction, the stop of a transaction or
 /// it can have no effect
-enum class TxEventEffect
-{
+enum class TxEventEffect {
     START_TRANSACTION,
     STOP_TRANSACTION,
     NONE

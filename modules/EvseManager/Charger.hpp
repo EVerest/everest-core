@@ -146,7 +146,8 @@ public:
 
     // Signal for EvseEvents
     sigslot::signal<types::evse_manager::SessionEventEnum> signal_simple_event;
-    sigslot::signal<types::evse_manager::StartSessionReason> signal_session_started_event;
+    sigslot::signal<types::evse_manager::StartSessionReason, std::optional<types::authorization::ProvidedIdToken>>
+        signal_session_started_event;
     sigslot::signal<types::authorization::ProvidedIdToken> signal_transaction_started_event;
     sigslot::signal<types::evse_manager::StopTransactionReason, std::optional<types::authorization::ProvidedIdToken>>
         signal_transaction_finished_event;

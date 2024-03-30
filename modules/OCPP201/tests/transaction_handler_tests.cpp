@@ -37,7 +37,7 @@ TEST_F(TransactionHandlerTest, test_authorized) {
     res = transaction_handler.submit_event(1, TxEvent::DEAUTHORIZED);
     ASSERT_EQ(res, TxEventEffect::STOP_TRANSACTION);
 
-    ASSERT_THROW(transaction_handler.submit_event(2, TxEvent::AUTHORIZED), std::runtime_error);
+    ASSERT_THROW(transaction_handler.submit_event(2, TxEvent::AUTHORIZED), std::out_of_range);
 }
 
 TEST_F(TransactionHandlerTest, test_power_path_closed) {
@@ -126,10 +126,10 @@ TEST_F(TransactionHandlerTest, test_multiple) {
 TEST_F(TransactionHandlerTest, test_invalid_params) {
     TransactionHandler transaction_handler(2, {TxStartStopPoint::EVConnected, TxStartStopPoint::Authorized},
                                            {TxStartStopPoint::PowerPathClosed});
-    ASSERT_THROW(transaction_handler.get_transaction_data(1), std::runtime_error);
-    ASSERT_THROW(transaction_handler.reset_transaction_data(2), std::runtime_error);
-    ASSERT_THROW(transaction_handler.add_transaction_data(-1, transaction_data()), std::runtime_error);
-    ASSERT_THROW(transaction_handler.add_transaction_data(3, transaction_data()), std::runtime_error);
+    ASSERT_THROW(transaction_handler.get_transaction_data(1), std::out_of_range);
+    ASSERT_THROW(transaction_handler.reset_transaction_data(2), std::out_of_range);
+    ASSERT_THROW(transaction_handler.add_transaction_data(-1, transaction_data()), std::out_of_range);
+    ASSERT_THROW(transaction_handler.add_transaction_data(3, transaction_data()), std::out_of_range);
 }
 
 } // namespace module
