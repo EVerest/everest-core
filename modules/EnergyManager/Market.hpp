@@ -17,9 +17,10 @@ typedef std::vector<types::energy::ScheduleResEntry> ScheduleRes;
 
 class globals_t {
 public:
-    void init(date::utc_clock::time_point start_time, int _interval_duration, int _schedule_duration,
+    void init(date::utc_clock::time_point _start_time, int _interval_duration, int _schedule_duration,
               float _slice_ampere, float _slice_watt, bool _debug,
               const types::energy::EnergyFlowRequest& energy_flow_request);
+    date::utc_clock::time_point start_time; // common start point
     std::chrono::minutes interval_duration; // interval duration
     int schedule_length;                    // total forcast length (in counts of (non-regular) intervals)
     float slice_ampere;                     // ampere_slices for trades
@@ -29,8 +30,7 @@ public:
     ScheduleRes zero_schedule_res, empty_schedule_res;
 
 private:
-    void create_timestamps(const date::utc_clock::time_point& start_time,
-                           const types::energy::EnergyFlowRequest& energy_flow_request);
+    void create_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request);
     void add_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request);
     ScheduleReq create_empty_schedule_req();
     ScheduleRes create_empty_schedule_res();

@@ -24,6 +24,15 @@
 #include <utils/date.hpp>
 
 #include <mutex>
+
+#ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
+#include <gtest/gtest_prod.h>
+namespace module::test {
+void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, const std::string& start_time_str,
+                   float expected_limit);
+}
+
+#endif
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -76,6 +85,14 @@ private:
 
     std::condition_variable mainloop_sleep_condvar;
     std::mutex mainloop_sleep_mutex;
+
+#ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
+    FRIEND_TEST(EnergyManagerTest, empty);
+    FRIEND_TEST(EnergyManagerTest, noSchedules);
+    FRIEND_TEST(EnergyManagerTest, schedules);
+    friend void test::schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request,
+                                    const std::string& start_time_str, float expected_limit);
+#endif
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

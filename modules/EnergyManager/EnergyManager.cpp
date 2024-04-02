@@ -5,6 +5,7 @@
 #include "BrokerFastCharging.hpp"
 #include "Market.hpp"
 #include <fmt/core.h>
+#include <optional>
 
 using namespace std::literals::chrono_literals;
 
@@ -143,19 +144,37 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
 
     for (auto broker : brokers) {
         auto local_market = broker->get_local_market();
+        const auto sold_energy = local_market.get_sold_energy();
 
-        // EVLOG_info << "Sending enfored limits (import) to :" << local_market.energy_flow_request.uuid << " "
-        //            << local_market.get_sold_energy_import()[0].limits_to_root;
-        types::energy::EnforcedLimits l;
-        l.uuid = local_market.energy_flow_request.uuid;
-        l.valid_until =
-            Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(config.update_interval * 10));
+        if (sold_energy.size() > 0) {
 
-        l.limits_root_side = local_market.get_sold_energy()[0].limits_to_root;
+            types::energy::EnforcedLimits l;
+            l.uuid = local_market.energy_flow_request.uuid;
+            l.valid_until =
+                Everest::Date::to_rfc3339(globals.start_time + std::chrono::seconds(config.update_interval * 10));
 
-        l.schedule = local_market.get_sold_energy();
+            l.schedule = sold_energy;
 
-        optimized_values.push_back(l);
+            // select root limit from schedule based on globals.start_time
+            l.limits_root_side = sold_energy[0].limits_to_root;
+
+            for (const auto& s : sold_energy) {
+                const auto schedule_time = Everest::Date::from_rfc3339(s.timestamp);
+                if (globals.start_time < schedule_time) {
+                    // all further schedules will be further into the future
+                    break;
+                } else {
+                    // use this schedule as the starting point
+                    l.limits_root_side = s.limits_to_root;
+                }
+            }
+
+            optimized_values.push_back(l);
+
+            if (globals.debug && l.limits_root_side.has_value()) {
+                EVLOG_info << "Sending enfored limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
+            }
+        }
     }
 
     return optimized_values;
