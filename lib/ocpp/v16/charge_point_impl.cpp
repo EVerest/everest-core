@@ -6,6 +6,7 @@
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/charge_point_impl.hpp>
+#include <ocpp/v201/utils.hpp>
 
 #include <optional>
 
@@ -2629,7 +2630,7 @@ void ChargePointImpl::status_notification(const int32_t connector, const ChargeP
 
 // public API for Core profile
 
-IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag) {
+IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool authorize_only_locally) {
     // only do authorize req when authorization locally not enabled or fails
     // proritize auth list over auth cache for same idTags
 
@@ -2654,6 +2655,10 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag) {
                 return this->database_handler->get_authorization_cache_entry(idTag).value();
             }
         }
+    }
+
+    if (authorize_only_locally) {
+        return {AuthorizationStatus::Invalid};
     }
 
     AuthorizeRequest req;
@@ -2743,8 +2748,6 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
         return authorize_response;
     }
 
-    // FIXME(piet): Handle C07.FR.06 - C07.FR.12
-
     DataTransferRequest req;
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("Authorize")));
@@ -2754,58 +2757,136 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
 
     id_token.type = ocpp::v201::IdTokenEnum::eMAID;
     id_token.idToken = emaid;
-    authorize_req.iso15118CertificateHashData = iso15118_certificate_hash_data;
     authorize_req.idToken = id_token;
 
-    // C07.FR.06: If Charging Station is not able to validate a contract certificate, because it does not have the
-    // associated root certificate AND CentralContractValidationAllowed is true
-    // certificate.has_value() implies that ISO module could not validate certificate, otherwise certificate would not
-    // be set
-    if (certificate.has_value() and this->configuration->getCentralContractValidationAllowed().has_value() and
-        this->configuration->getCentralContractValidationAllowed().value()) {
-        authorize_req.certificate = certificate;
-    }
+    // Temporary variable that is set to true to avoid immediate response to allow the local auth list
+    // or auth cache to be tried
+    bool try_local_auth_list_or_cache = false;
+    bool forward_to_csms = false;
 
-    req.data.emplace(json(authorize_req).dump());
+    if (this->websocket->is_connected() and iso15118_certificate_hash_data.has_value()) {
+        authorize_req.iso15118CertificateHashData = iso15118_certificate_hash_data;
+        forward_to_csms = true;
+    } else if (certificate.has_value()) {
+        // First try to validate the contract certificate locally
+        CertificateValidationResult local_verify_result =
+            this->evse_security->verify_certificate(certificate.value(), ocpp::LeafCertificateType::MO);
+        EVLOG_info << "Local contract validation result: " << local_verify_result;
+        const auto central_contract_validation_allowed =
+            this->configuration->getCentralContractValidationAllowed().value_or(false);
+        const auto contract_validation_offline = this->configuration->getContractValidationOffline();
+        const auto local_authorize_offline = this->configuration->getLocalAuthorizeOffline();
 
-    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
-    auto authorize_future = this->send_async<DataTransferRequest>(call);
-
-    auto enhanced_message = authorize_future.get();
-
-    if (enhanced_message.messageType == MessageType::DataTransferResponse) {
-        try {
-            // parse and return authorize response
-            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
-            if (call_result.msg.data.has_value()) {
-                authorize_response = json::parse(call_result.msg.data.value());
-                return authorize_response;
+        // C07.FR.01: When CS is online, it shall send an AuthorizeRequest
+        // C07.FR.02: The AuthorizeRequest shall at least contain the OCSP data
+        if (this->websocket->is_connected()) {
+            if (local_verify_result == CertificateValidationResult::IssuerNotFound) {
+                // C07.FR.06: Pass contract validation to CSMS when no contract root is found
+                if (central_contract_validation_allowed) {
+                    EVLOG_info << "Online: No local contract root found. Pass contract validation to CSMS";
+                    authorize_req.certificate = certificate.value();
+                    forward_to_csms = true;
+                } else {
+                    EVLOG_warning << "Online: Central Contract Validation not allowed";
+                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                }
             } else {
-                EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) did not include data";
+                // Try to generate the OCSP data from the certificate chain and use that
+                const auto generated_ocsp_request_data_list = ocpp::evse_security_conversions::to_ocpp_v201(
+                    this->evse_security->get_mo_ocsp_request_data(certificate.value()));
+                if (generated_ocsp_request_data_list.size() > 0) {
+                    EVLOG_info << "Online: Pass generated OCSP data to CSMS";
+                    authorize_req.iso15118CertificateHashData = generated_ocsp_request_data_list;
+                    forward_to_csms = true;
+                } else {
+                    EVLOG_warning << "Online: OCSP data could not be generated";
+                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                }
             }
-        } catch (const json::exception& e) {
-            EVLOG_warning << "Could not parse data of DataTransfer message Authorize.conf: " << e.what();
-        } catch (const std::exception& e) {
-            EVLOG_error << "Unknown Error while handling DataTransfer message Authorize.conf: " << e.what();
-        }
-
-    } else if (enhanced_message.offline) {
-        if (this->configuration->getContractValidationOffline()) {
-            // C07.FR.08
-            // The Charging Station SHALL try to validate the contract certificate locally.
-
-            // if valid: C07.FR.09
-            if (this->configuration->getLocalAuthorizeOffline()) {
-                // use auth cache to look up emaid
+        } else { // Offline
+            // C07.FR.08: CS shall try to validate the contract locally
+            if (contract_validation_offline) {
+                EVLOG_info << "Offline: contract " << local_verify_result;
+                switch (local_verify_result) {
+                // C07.FR.09: CS shall lookup the eMAID in Local Auth List or Auth Cache when
+                // local validation succeeded
+                case CertificateValidationResult::Valid:
+                    // In C07.FR.09 LocalAuthorizeOffline is mentioned, this seems to be a generic config item
+                    // that applies to Local Auth List and Auth Cache, but since there are no requirements about
+                    // it, lets check it here
+                    if (local_authorize_offline) {
+                        try_local_auth_list_or_cache = true;
+                    } else {
+                        // No requirement states what to do when ContractValidationOffline is true
+                        // and LocalAuthorizeOffline is false
+                        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
+                        authorize_response.certificateStatus = ocpp::v201::AuthorizeCertificateStatusEnum::Accepted;
+                    }
+                    break;
+                case CertificateValidationResult::Expired:
+                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Expired;
+                    authorize_response.certificateStatus =
+                        ocpp::v201::AuthorizeCertificateStatusEnum::CertificateExpired;
+                    break;
+                default:
+                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
+                    break;
+                }
+            } else {
+                EVLOG_warning << "Offline: ContractValidationOffline is disabled. Validation not allowed";
+                // C07.FR.07: CS shall not allow charging
+                authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::NotAtThisTime;
             }
-        } else {
-            // C07.FR.07
-            // The Charging Station SHALL NOT allow charging.
         }
     } else {
-        EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) was not DataTransferResponse";
+        EVLOG_warning << "Can not validate eMAID without certificate chain";
+        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
     }
-    return authorize_response; // FIXME(piet)
+
+    if (forward_to_csms) {
+        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
+        // AuthorizeRequest sent to CSMS, let's show the results
+        req.data.emplace(json(authorize_req).dump());
+
+        // Send the DataTransfer(Authorize) to the CSMS
+        Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+        auto authorize_future = this->send_async<DataTransferRequest>(call);
+
+        auto enhanced_message = authorize_future.get();
+
+        if (enhanced_message.messageType == MessageType::DataTransferResponse) {
+            try {
+                // parse and return authorize response
+                ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+                if (call_result.msg.data.has_value()) {
+                    authorize_response = json::parse(call_result.msg.data.value());
+                } else {
+                    EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) did not include data";
+                }
+            } catch (const json::exception& e) {
+                EVLOG_warning << "Could not parse data of DataTransfer message Authorize.conf: " << e.what();
+            } catch (const std::exception& e) {
+                EVLOG_error << "Unknown Error while handling DataTransfer message Authorize.conf: " << e.what();
+            }
+        } else if (enhanced_message.offline) {
+            EVLOG_warning << "No response received for DataTransfer.req(Authorize) from CSMS";
+        } else {
+            EVLOG_warning << "CSMS response of DataTransferRequest(Authorize) was not DataTransferResponse";
+        }
+        return authorize_response;
+    }
+    // For eMAID, we will respond here, unless the local auth list or auth cache is tried
+    if (!try_local_auth_list_or_cache) {
+        return authorize_response;
+    } else {
+        const auto local_authorize_result = this->authorize_id_token(emaid, true);
+        if (local_authorize_result.status == AuthorizationStatus::Accepted) {
+            authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Accepted;
+        } else {
+            authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+        }
+        return authorize_response;
+    }
 }
 
 void ChargePointImpl::data_transfer_pnc_sign_certificate() {

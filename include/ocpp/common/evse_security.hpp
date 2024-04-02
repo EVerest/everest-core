@@ -128,6 +128,7 @@ ocpp::v201::DeleteCertificateStatusEnum to_ocpp_v201(ocpp::DeleteCertificateResu
 ocpp::v201::CertificateHashDataType to_ocpp_v201(ocpp::CertificateHashDataType other);
 ocpp::v201::CertificateHashDataChain to_ocpp_v201(ocpp::CertificateHashDataChain other);
 ocpp::v201::OCSPRequestData to_ocpp_v201(ocpp::OCSPRequestData other);
+std::vector<ocpp::v201::OCSPRequestData> to_ocpp_v201(const std::vector<ocpp::OCSPRequestData>& ocsp_request_data);
 
 ocpp::CertificateType from_ocpp_v201(ocpp::v201::GetCertificateIdUseEnum other);
 std::vector<ocpp::CertificateType> from_ocpp_v201(const std::vector<ocpp::v201::GetCertificateIdUseEnum>& other);

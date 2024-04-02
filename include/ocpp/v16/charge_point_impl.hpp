@@ -415,9 +415,10 @@ public:
 
     /// \brief Authorizes the provided \p id_token against the central system, LocalAuthorizationList or
     /// AuthorizationCache depending on the values of the ConfigurationKeys LocalPreAuthorize, LocalAuthorizeOffline,
-    /// LocalAuthListEnabled and AuthorizationCacheEnabled
+    /// LocalAuthListEnabled and AuthorizationCacheEnabled. If \p authorize_only_locally is true, no Authorize.req will
+    /// be sent to the CSMS but only LocalAuthorizationList and LocalAuthorizationCache will be used for the validation
     /// \returns the IdTagInfo
-    IdTagInfo authorize_id_token(CiString<20> id_token);
+    IdTagInfo authorize_id_token(CiString<20> id_token, const bool authorize_only_locally = false);
 
     // for plug&charge 1.6 whitepaper
 

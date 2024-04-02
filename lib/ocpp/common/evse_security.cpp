@@ -134,6 +134,15 @@ ocpp::v201::OCSPRequestData to_ocpp_v201(ocpp::OCSPRequestData other) {
     return lhs;
 }
 
+std::vector<ocpp::v201::OCSPRequestData> to_ocpp_v201(const std::vector<ocpp::OCSPRequestData>& ocsp_request_data) {
+    std::vector<ocpp::v201::OCSPRequestData> ocsp_request_data_list;
+    for (const auto& ocsp_data : ocsp_request_data) {
+        ocpp::v201::OCSPRequestData request = to_ocpp_v201(ocsp_data);
+        ocsp_request_data_list.push_back(request);
+    }
+    return ocsp_request_data_list;
+}
+
 ocpp::CertificateType from_ocpp_v201(ocpp::v201::GetCertificateIdUseEnum other) {
     switch (other) {
     case ocpp::v201::GetCertificateIdUseEnum::V2GRootCertificate:

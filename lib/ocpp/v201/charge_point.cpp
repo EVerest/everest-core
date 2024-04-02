@@ -544,31 +544,6 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, ChargingStat
     return false;
 }
 
-std::vector<OCSPRequestData> ChargePoint::generate_mo_ocsp_data(const CiString<5500>& certificate) {
-    std::vector<OCSPRequestData> ocsp_request_data_list;
-    const auto ocsp_data_list = this->evse_security->get_mo_ocsp_request_data(certificate.get());
-    for (const auto& ocsp_data : ocsp_data_list) {
-        OCSPRequestData request;
-        switch (ocsp_data.hashAlgorithm) {
-        case HashAlgorithmEnumType::SHA256:
-            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA256;
-            break;
-        case HashAlgorithmEnumType::SHA384:
-            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA384;
-            break;
-        case HashAlgorithmEnumType::SHA512:
-            request.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA512;
-            break;
-        }
-        request.issuerKeyHash = ocsp_data.issuerKeyHash;
-        request.issuerNameHash = ocsp_data.issuerNameHash;
-        request.responderURL = ocsp_data.responderUrl;
-        request.serialNumber = ocsp_data.serialNumber;
-        ocsp_request_data_list.push_back(request);
-    }
-    return ocsp_request_data_list;
-}
-
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
     // TODO(piet): C01.FR.14
@@ -634,8 +609,8 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
                     }
                 } else {
                     // Try to generate the OCSP data from the certificate chain and use that
-                    std::vector<OCSPRequestData> generated_ocsp_request_data_list =
-                        generate_mo_ocsp_data(certificate.value());
+                    const auto generated_ocsp_request_data_list = ocpp::evse_security_conversions::to_ocpp_v201(
+                        this->evse_security->get_mo_ocsp_request_data(certificate.value()));
                     if (generated_ocsp_request_data_list.size() > 0) {
                         EVLOG_info << "Online: Pass generated OCSP data to CSMS";
                         response = this->authorize_req(id_token, std::nullopt, generated_ocsp_request_data_list);
