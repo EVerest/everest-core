@@ -89,6 +89,9 @@ gtest:
 sqlite_cpp:
   git: https://github.com/SRombauts/SQLiteCpp.git
   git_tag: 3.3.1
+  options:
+  - SQLITECPP_RUN_CPPLINT OFF
+  - SQLITECPP_RUN_CPPCHECK OFF
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
 catch2:
   git: https://github.com/catchorg/Catch2.git
