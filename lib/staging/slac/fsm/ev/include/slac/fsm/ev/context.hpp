@@ -64,7 +64,7 @@ struct Context {
     slac::messages::HomeplugMessage slac_message;
 
     // FIXME (aw): message should be const, but libslac doesn't allow for const ptr - needs changes in libslac
-    template <typename SlacMessageType> void send_slac_message(const uint8_t* dest_mac, SlacMessageType& message) {
+    template <typename SlacMessageType> void send_slac_message(const uint8_t* dest_mac, SlacMessageType const& message) {
         slac::messages::HomeplugMessage hp_message;
         hp_message.setup_ethernet_header(dest_mac);
         hp_message.setup_payload(&message, sizeof(message), _context_detail::MMTYPE<SlacMessageType>::value,

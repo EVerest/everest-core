@@ -129,6 +129,14 @@ template <> struct MMV<slac::messages::lumissil::nscm_get_d_link_status_cnf> {
 
 } // namespace _context_detail
 
+// FIXME (aw): this should be moved to common headers (in libslac)
+enum class ModemVendor {
+    Unknown,
+    Qualcomm,
+    Lumissil,
+    VertexCom,
+};
+
 struct ContextCallbacks {
     std::function<void(slac::messages::HomeplugMessage&)> send_raw_slac{nullptr};
     std::function<void(const std::string&)> signal_state{nullptr};
@@ -203,12 +211,7 @@ struct Context {
     // logging util
     void log_info(const std::string& text);
 
-    enum class ModemVendor {
-        Unknown,
-        Qualcomm,
-        Lumissil,
-        VertexCom,
-    } modem_vendor{ModemVendor::Unknown};
+    ModemVendor modem_vendor{ModemVendor::Unknown};
 
 private:
     const ContextCallbacks& callbacks;
