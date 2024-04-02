@@ -14,10 +14,6 @@ libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
-libsunspec:
-  git: https://github.com/EVerest/libsunspec.git
-  git_tag: v0.2.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSUNSPEC"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
@@ -93,6 +89,9 @@ gtest:
 sqlite_cpp:
   git: https://github.com/SRombauts/SQLiteCpp.git
   git_tag: 3.3.1
+  options:
+  - SQLITECPP_RUN_CPPLINT OFF
+  - SQLITECPP_RUN_CPPCHECK OFF
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
 catch2:
   git: https://github.com/catchorg/Catch2.git
