@@ -19,6 +19,7 @@ enum class Event {
     RETRY_MATCHING,
     MATCH_COMPLETE,
     FAILED,
+    SUCCESS,
 };
 
 using FSMReturnType = int;
