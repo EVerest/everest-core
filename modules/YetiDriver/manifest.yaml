@@ -10,20 +10,15 @@ config:
     minimum: 9600
     maximum: 230400
     default: 115200
-  control_mode:
-    description: none, high or low
+  reset_gpio_chip:
+    description: >-
+      Reset GPIO chip to use to HW reset Yeti. If set to empty string, it is disabled.
     type: string
-    enum:
-      - none
-      - high
-      - low
-    default: low
+    default: 'gpiochip0'
   reset_gpio:
-    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    description: GPIO line to use to reset Yeti
     type: integer
-    minimum: -1
-    maximum: 1000
-    default: -1
+    default: 27
   caps_min_current_A:
     description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
     type: integer
