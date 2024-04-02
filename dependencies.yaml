@@ -47,13 +47,13 @@ libcurl:
 # and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: bce1ba4
+  git_tag: v0.5.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 778e080
+  git_tag: v0.10.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
