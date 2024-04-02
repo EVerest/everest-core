@@ -31,10 +31,6 @@ config:
     description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
-  CertsPath:
-    description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
-    type: string
-    default: ""
   MessageQueueResumeDelay:
     description: Time (seconds) to delay resuming the message queue after reconnecting
     type: integer
