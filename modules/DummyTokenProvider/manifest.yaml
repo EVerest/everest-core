@@ -23,6 +23,11 @@ provides:
         minimum: 0
         maximum: 120
         default: 10
+      connector_id:
+        description: If >0, the generated token is only valid for this connector_id
+        type: integer
+        minimum: 0
+        default: 0
 requires:
   evse:
     interface: evse_manager
