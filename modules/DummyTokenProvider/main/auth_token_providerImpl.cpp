@@ -13,6 +13,9 @@ void auth_token_providerImpl::init() {
 
             token.id_token = {config.token, types::authorization::IdTokenType::ISO14443};
             token.authorization_type = types::authorization::string_to_authorization_type(config.type);
+            if (config.connector_id > 0) {
+                token.connectors.emplace({config.connector_id});
+            }
 
             EVLOG_info << "Publishing new dummy token: " << token.id_token << " ("
                        << types::authorization::authorization_type_to_string(token.authorization_type) << ")";
