@@ -1,17 +1,9 @@
 description: A OCPP charge point / charging station module for OCPP 2.0.1
 config:
-  ChargePointConfigPath:
-    description: Path to the configuration file
-    type: string
-    default: ocpp-config.json
   MessageLogPath:
     description: Path to folder where logs of all OCPP messages get written to
     type: string
     default: /tmp/everest_ocpp_logs
-  CertsPath:
-    description: Path to folder where certificates are located. If empty uses everest prefix + etc/everest/certs
-    type: string
-    default: ""
   CoreDatabasePath:
     description: Path to the persistent SQLite database folder
     type: string
