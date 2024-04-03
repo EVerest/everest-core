@@ -1217,6 +1217,7 @@ void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& tok
         if (not shared_context.session_active) {
             start_session(true);
         }
+        signal_simple_event(types::evse_manager::SessionEventEnum::Authorized);
         shared_context.authorized = true;
         shared_context.authorized_pnc =
             token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge;
@@ -1234,6 +1235,7 @@ bool Charger::deauthorize() {
 }
 
 bool Charger::deauthorize_internal() {
+    signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
     if (shared_context.session_active) {
         auto s = shared_context.current_state;
 

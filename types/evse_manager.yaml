@@ -88,6 +88,8 @@ types:
   SessionEventEnum:
     description: >-
       Session Event enum
+        Authorized: Signaled when the EVSE is authorized for charging
+        Deauthorized: Signaled when the EVSE is not authorized for charging (anymore)
         Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
         Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
         SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
@@ -112,6 +114,8 @@ types:
         PluginTimeout: Signaled when an EV has been Plugged in but no authorization is present within specified ConnectionTimeout
     type: string
     enum:
+      - Authorized
+      - Deauthorized
       - Enabled
       - Disabled
       - SessionStarted
@@ -142,14 +146,8 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
       - reason
-      - meter_value
     properties:
-      timestamp:
-        description: Session start time in RFC3339 format
-        type: string
-        format: date-time
       reason:
         description: Reason for session start
         type: string
@@ -158,10 +156,6 @@ types:
         description: The id tag assigned to this session
         type: object
         $ref: /authorization#/ProvidedIdToken
-      meter_value:
-        description: Session start exported meter value
-        type: object
-        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: The signed meter value report of the started session
         type: object
@@ -176,38 +170,17 @@ types:
           Filenames should start with "incomplete-" when they are not finished yet,
           this allows other process to wait for the completion after the SessionFinished event.
         type: string
-  SessionFinished:
-    description: Data for the SessionFinished event
-    type: object
-    additionalProperties: false
-    required:
-      - timestamp
-    properties:
-      timestamp:
-        description: Session start time in RFC3339 format
-        type: string
-        format: date-time
   TransactionStarted:
     description: Data for the TransactionStarted event
     type: object
     additionalProperties: false
     required:
-      - timestamp
-      - meter_value
       - id_tag
     properties:
-      timestamp:
-        description: Transaction start time in RFC3339 format
-        type: string
-        format: date-time
       id_tag:
         description: The id tag assigned to this transaction
         type: object
         $ref: /authorization#/ProvidedIdToken
-      meter_value:
-        description: Transaction start exported meter value
-        type: object
-        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: The signed meter value report of the started transaction
         type: object
@@ -219,14 +192,7 @@ types:
     description: Data for TransactionFinished event
     type: object
     additionalProperties: false
-    required:
-      - timestamp
-      - meter_value
     properties:
-      timestamp:
-        description: Transaction end time in RFC3339 format
-        type: string
-        format: date-time
       meter_value:
         description: Transaction finished meter value
         type: object
@@ -320,12 +286,22 @@ types:
     required:
       - uuid
       - event
+      - timestamp
+      - meter_value
     properties:
       uuid:
         description: >-
           An EVSE generated UUID for this session, can be used e.g. for
           database storage.
         type: string
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
+      meter_value:
+        description: Session start exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
       connector_id:
         description: >-
           Id of the connector of this EVSE. 
@@ -340,11 +316,7 @@ types:
       session_started:
         description: data for SessionStarted event
         type: object
-        $ref: /evse_manager#/SessionStarted
-      session_finished:
-        description: data for the SessionFinished event
-        type: object
-        $ref: /evse_manager#/SessionFinished
+        $ref: /evse_manager#/SessionStarted  
       transaction_started:
         description: data for TransactionStarted event
         type: object

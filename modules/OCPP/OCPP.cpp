@@ -169,8 +169,8 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                    << "Received TransactionStarted";
         const auto transaction_started = session_event.transaction_started.value();
 
-        const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
-        const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
+        const auto timestamp = ocpp::DateTime(session_event.timestamp);
+        const auto energy_Wh_import = session_event.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
         const auto id_token = transaction_started.id_tag.id_token.value;
         const auto signed_meter_value = transaction_started.signed_meter_value;
@@ -205,8 +205,8 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                     << "Received TransactionFinished";
 
         const auto transaction_finished = session_event.transaction_finished.value();
-        const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
-        const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
+        const auto timestamp = ocpp::DateTime(session_event.timestamp);
+        const auto energy_Wh_import = session_event.meter_value.energy_Wh_import.total;
         const auto signed_meter_value = transaction_finished.signed_meter_value;
 
         auto reason = ocpp::v16::Reason::Other;

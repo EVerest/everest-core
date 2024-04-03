@@ -49,9 +49,9 @@ static SessionEvent get_transaction_started_event(const ProvidedIdToken provided
     SessionEvent session_event;
     session_event.event = SessionEventEnum::TransactionStarted;
     TransactionStarted transaction_event;
-    transaction_event.meter_value.energy_Wh_import.total = 0;
+    session_event.meter_value.energy_Wh_import.total = 0;
     transaction_event.id_tag = provided_token;
-    transaction_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     session_event.transaction_started = transaction_event;
     return session_event;
 }
@@ -832,9 +832,9 @@ TEST_F(AuthTest, test_complete_event_flow) {
     SessionEvent session_event_5;
     session_event_5.event = SessionEventEnum::TransactionFinished;
     TransactionStarted transaction_finished_event;
-    transaction_finished_event.meter_value.energy_Wh_import.total = 1000;
+    session_event_5.meter_value.energy_Wh_import.total = 1000;
     transaction_finished_event.id_tag = provided_token;
-    transaction_finished_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    session_event_5.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     SessionEvent session_event_6;
     session_event_6.event = SessionEventEnum::SessionFinished;
