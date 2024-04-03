@@ -18,7 +18,7 @@ protected:
 
     std::shared_ptr<TransactionData> transaction_data() {
         return std::make_shared<TransactionData>(1, "123", ocpp::DateTime(), ocpp::v201::TriggerReasonEnum::Authorized,
-                                                 ocpp::v201::MeterValue(), ocpp::v201::ChargingStateEnum::Idle);
+                                                 ocpp::v201::ChargingStateEnum::Idle);
     }
 };
 
@@ -36,8 +36,6 @@ TEST_F(TransactionHandlerTest, test_authorized) {
 
     res = transaction_handler.submit_event(1, TxEvent::DEAUTHORIZED);
     ASSERT_EQ(res, TxEventEffect::STOP_TRANSACTION);
-
-    ASSERT_THROW(transaction_handler.submit_event(2, TxEvent::AUTHORIZED), std::out_of_range);
 }
 
 TEST_F(TransactionHandlerTest, test_power_path_closed) {
@@ -126,8 +124,8 @@ TEST_F(TransactionHandlerTest, test_multiple) {
 TEST_F(TransactionHandlerTest, test_invalid_params) {
     TransactionHandler transaction_handler(2, {TxStartStopPoint::EVConnected, TxStartStopPoint::Authorized},
                                            {TxStartStopPoint::PowerPathClosed});
-    ASSERT_THROW(transaction_handler.get_transaction_data(1), std::out_of_range);
-    ASSERT_THROW(transaction_handler.reset_transaction_data(2), std::out_of_range);
+    ASSERT_THROW(transaction_handler.get_transaction_data(3), std::out_of_range);
+    ASSERT_THROW(transaction_handler.reset_transaction_data(3), std::out_of_range);
     ASSERT_THROW(transaction_handler.add_transaction_data(-1, transaction_data()), std::out_of_range);
     ASSERT_THROW(transaction_handler.add_transaction_data(3, transaction_data()), std::out_of_range);
 }

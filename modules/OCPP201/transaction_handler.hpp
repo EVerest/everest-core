@@ -140,13 +140,12 @@ struct TransactionData {
     std::optional<int32_t> remote_start_id;
 
     TransactionData(const int32_t connector_id, const std::string session_id, const ocpp::DateTime timestamp,
-                    const ocpp::v201::TriggerReasonEnum trigger_reason, const ocpp::v201::MeterValue meter_value,
+                    const ocpp::v201::TriggerReasonEnum trigger_reason,
                     const ocpp::v201::ChargingStateEnum charging_state) :
         connector_id(connector_id),
         session_id(session_id),
         timestamp(timestamp),
         trigger_reason(trigger_reason),
-        meter_value(meter_value),
         charging_state(charging_state){};
 };
 
@@ -164,6 +163,12 @@ public:
     /// \param tx_event
     /// \return
     TxEventEffect submit_event(const int32_t evse_id, const TxEvent tx_event);
+
+    /// \brief Sets the given \p tx_start_points
+    void set_tx_start_points(const std::set<TxStartStopPoint>& tx_start_points);
+
+    /// \brief Sets the given \p tx_stop_points
+    void set_tx_stop_points(const std::set<TxStartStopPoint>& tx_stop_points);
 
     /// \brief Adds \p transaction_data to \ref evse_id_transaction_data_map for the given \p evse_id
     /// \param evse_id

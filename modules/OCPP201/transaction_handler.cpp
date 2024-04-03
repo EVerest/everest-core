@@ -20,7 +20,16 @@ TransactionHandler::TransactionHandler(const int32_t nr_of_evses, const std::set
 
     for (int32_t evse_id = 1; evse_id <= nr_of_evses; evse_id++) {
         tx_start_stop_conditions[evse_id] = TxStartStopConditions();
+        evse_id_transaction_data_map[evse_id] = nullptr;
     }
+}
+
+void TransactionHandler::set_tx_start_points(const std::set<TxStartStopPoint>& tx_start_points) {
+    this->tx_start_points = tx_start_points;
+}
+
+void TransactionHandler::set_tx_stop_points(const std::set<TxStartStopPoint>& tx_stop_points) {
+    this->tx_stop_points = tx_stop_points;
 }
 
 TxEventEffect TransactionHandler::submit_event(const int32_t evse_id, const TxEvent tx_event) {

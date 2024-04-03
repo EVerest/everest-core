@@ -109,6 +109,33 @@ private:
     void init_evse_ready_map();
     bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
+    void process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
+    void process_tx_event_effect(const int32_t evse_id, const TxEventEffect tx_event_effect,
+                                 const types::evse_manager::SessionEvent& session_event);
+    void process_session_started(const int32_t evse_id, const int32_t connector_id,
+                                 const types::evse_manager::SessionEvent& session_event);
+    void process_session_finished(const int32_t evse_id, const int32_t connector_id,
+                                  const types::evse_manager::SessionEvent& session_event);
+    void process_transaction_started(const int32_t evse_id, const int32_t connector_id,
+                                     const types::evse_manager::SessionEvent& session_event);
+    void process_transaction_finished(const int32_t evse_id, const int32_t connector_id,
+                                      const types::evse_manager::SessionEvent& session_event);
+    void process_charging_started(const int32_t evse_id, const int32_t connector_id,
+                                  const types::evse_manager::SessionEvent& session_event);
+    void process_charging_resumed(const int32_t evse_id, const int32_t connector_id,
+                                  const types::evse_manager::SessionEvent& session_event);
+    void process_charging_paused_ev(const int32_t evse_id, const int32_t connector_id,
+                                    const types::evse_manager::SessionEvent& session_event);
+    void process_charging_paused_evse(const int32_t evse_id, const int32_t connector_id,
+                                      const types::evse_manager::SessionEvent& session_event);
+    void process_enabled(const int32_t evse_id, const int32_t connector_id,
+                         const types::evse_manager::SessionEvent& session_event);
+    void process_disabled(const int32_t evse_id, const int32_t connector_id,
+                          const types::evse_manager::SessionEvent& session_event);
+    void process_authorized(const int32_t evse_id, const int32_t connector_id,
+                            const types::evse_manager::SessionEvent& session_event);
+    void process_deauthorized(const int32_t evse_id, const int32_t connector_id,
+                              const types::evse_manager::SessionEvent& session_event);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
