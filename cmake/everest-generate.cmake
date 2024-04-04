@@ -704,6 +704,13 @@ function(ev_install_project)
         DESTINATION
             ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME}
     )
+
+    # generate and install version information
+    evc_generate_version_information()
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/version_information.txt
+        DESTINATION "${EVEREST_DATADIR}"
+    )
 endfunction()
 
 set(EVEREST_EXCLUDE_MODULES "" CACHE STRING "A list of modules that will not be built")
