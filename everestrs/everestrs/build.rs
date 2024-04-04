@@ -87,6 +87,11 @@ fn print_link_options(p: &Path) {
         p.parent().unwrap().to_string_lossy()
     );
     println!("cargo:rustc-link-lib={}", libname_from_path(p));
+    // If the c++ libraries are build with `-fprofile-arcs -ftest-coverage`
+    // compiler flags we've to link against the `gcov` lib as well.
+    if env::var("CARGO_FEATURE_LINK_GCOV").is_ok() {
+        println!("cargo:rustc-link-lib=gcov");
+    }
 }
 
 fn find_libs_in_everest_workspace() -> Option<Libraries> {
