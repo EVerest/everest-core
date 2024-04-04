@@ -9,7 +9,7 @@ project(everest-core
 # make some cmake variables available as defines
 configure_file(cmake-vars.h.in cmake-vars.h @ONLY)
 
-find_package(everest-cmake 0.3
+find_package(everest-cmake 0.1
     COMPONENTS bundling
     PATHS ../everest-cmake
 )
