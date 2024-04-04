@@ -22,7 +22,7 @@ def pytest_configure(config):
     pytest.everest_configs['ids'] = []
     for config_path in everest_configs:
         config_id = config_path.stem
-        if config_id == 'config-sil-gen-pm' or config_id == 'config-test-cpp-error-handling':
+        if config_id == 'config-sil-gen-pm' or config_id.startswith('config-test-'):
             # skip
             continue
         pytest.everest_configs['params'].append(config_path)

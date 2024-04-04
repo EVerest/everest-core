@@ -27,4 +27,5 @@ target_link_libraries(yeti_comms
     PRIVATE
         Pal::Sigslot
         everest::framework
+        everest::gpio
 )

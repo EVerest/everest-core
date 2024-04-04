@@ -2,10 +2,11 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 
 /*
- This is a simple wrapper around libgpiod C++ wrapper.
- The interface of libgpiod is powerful but somewhat hard to use for simple things,
- this class simplifies its usage in EVerest where usually just setting or
- reading of a single GPIO is required.
+ This is a simple wrapper for accessing GPIOs via the Linux kernel's
+ GPIO Character Device Userspace API (v1). This API was introduced in Linux
+ kernel version 4.8.
+ This wrapper attempts to provide a simple interface to that API, for uses
+ in EVerest where simply setting or reading of a single GPIO is required.
 */
 
 #ifndef GPIO_HPP

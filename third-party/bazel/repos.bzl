@@ -5,14 +5,14 @@ def everest_core_repos():
     maybe(
         http_archive,
         name = "com_github_nelhage_rules_boost",
-        url = "https://github.com/nelhage/rules_boost/archive/4ab574f9a84b42b1809978114a4664184716f4bf.tar.gz",
-        sha256 = "2215e6910eb763a971b1f63f53c45c0f2b7607df38c96287666d94d954da8cdc",
-        strip_prefix = "rules_boost-4ab574f9a84b42b1809978114a4664184716f4bf",
+        url = "https://github.com/nelhage/rules_boost/archive/f02f84fac7673c56bbcfe69dea68044e6e40f92b.tar.gz",
+        sha256 = "4f1f7e809960615ba8e40e3a96300acb8b4d7e6e2fb24423af7347383e4dd1bb",
+        strip_prefix = "rules_boost-f02f84fac7673c56bbcfe69dea68044e6e40f92b",
     )
 
     maybe(
         http_archive,
         name = "everest-framework",
-        url = "https://github.com/everest/everest-framework/archive/01468678f5b627a96791f749f3139c3d169bf081.tar.gz",
-        strip_prefix = "everest-framework-01468678f5b627a96791f749f3139c3d169bf081",
+        url = "https://github.com/everest/everest-framework/archive/86a2051ff9a087b82e70b3c93c09006fe8f99aab.tar.gz",
+        strip_prefix = "everest-framework-86a2051ff9a087b82e70b3c93c09006fe8f99aab",
     )
