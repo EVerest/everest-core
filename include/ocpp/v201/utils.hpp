@@ -3,8 +3,6 @@
 #ifndef V201_UTILS_HPP
 #define V201_UTILS_HPP
 
-#include <openssl/sha.h>
-
 #include <ocpp/v201/ocpp_types.hpp>
 namespace ocpp {
 namespace v201 {
