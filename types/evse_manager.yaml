@@ -147,6 +147,7 @@ types:
     additionalProperties: false
     required:
       - reason
+      - meter_value
     properties:
       reason:
         description: Reason for session start
@@ -156,6 +157,10 @@ types:
         description: The id tag assigned to this session
         type: object
         $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: The signed meter value report of the started session
         type: object
@@ -176,11 +181,16 @@ types:
     additionalProperties: false
     required:
       - id_tag
+      - meter_value
     properties:
       id_tag:
         description: The id tag assigned to this transaction
         type: object
         $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
       signed_meter_value:
         description: The signed meter value report of the started transaction
         type: object
@@ -192,6 +202,8 @@ types:
     description: Data for TransactionFinished event
     type: object
     additionalProperties: false
+    required:
+      - meter_value
     properties:
       meter_value:
         description: Transaction finished meter value
@@ -213,6 +225,17 @@ types:
         description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
         type: object
         $ref: /authorization#/ProvidedIdToken
+  ChargingStateChangedEvent:
+    description: Context for ChargingStateChanged event
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
   ErrorEnum:
     description: >-
       Note this is only kept for compatibility with the legacy error handling and will be removed soon.
@@ -287,7 +310,6 @@ types:
       - uuid
       - event
       - timestamp
-      - meter_value
     properties:
       uuid:
         description: >-
@@ -298,10 +320,6 @@ types:
         description: Session start time in RFC3339 format
         type: string
         format: date-time
-      meter_value:
-        description: Session start exported meter value
-        type: object
-        $ref: /powermeter#/Powermeter
       connector_id:
         description: >-
           Id of the connector of this EVSE. 
@@ -327,6 +345,12 @@ types:
           out
         type: object
         $ref: /evse_manager#/TransactionFinished
+      charging_state_changed_event:
+        description: >-
+          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums: 
+          ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+        type: object
+        $ref: /evse_manager#/ChargingStateChangedEvent
       error:
         description: Details on error type
         type: object

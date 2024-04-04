@@ -139,7 +139,7 @@ struct TransactionData {
     std::optional<int32_t> reservation_id;
     std::optional<int32_t> remote_start_id;
 
-    TransactionData(const int32_t connector_id, const std::string session_id, const ocpp::DateTime timestamp,
+    TransactionData(const int32_t connector_id, const std::string& session_id, const ocpp::DateTime timestamp,
                     const ocpp::v201::TriggerReasonEnum trigger_reason,
                     const ocpp::v201::ChargingStateEnum charging_state) :
         connector_id(connector_id),

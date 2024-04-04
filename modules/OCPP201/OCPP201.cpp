@@ -93,6 +93,33 @@ std::map<int32_t, int32_t> OCPP201::get_connector_structure() {
     return evse_connector_structure;
 }
 
+types::powermeter::Powermeter get_meter_value(const types::evse_manager::SessionEvent& session_event) {
+    const auto event_type = session_event.event;
+    if (event_type == types::evse_manager::SessionEventEnum::SessionStarted) {
+        if (!session_event.session_started.has_value()) {
+            throw std::runtime_error("SessionEvent SessionStarted does not contain session_started context");
+        }
+        return session_event.session_started.value().meter_value;
+    } else if (event_type == types::evse_manager::SessionEventEnum::TransactionStarted) {
+        if (!session_event.transaction_started.has_value()) {
+            throw std::runtime_error("SessionEvent TransactionStarted does not contain transaction_started context");
+        }
+        return session_event.transaction_started.value().meter_value;
+    } else if (event_type == types::evse_manager::SessionEventEnum::TransactionFinished) {
+        if (!session_event.transaction_finished.has_value()) {
+            throw std::runtime_error("SessionEvent TransactionFinished does not contain transaction_finished context");
+        }
+        return session_event.transaction_finished.value().meter_value;
+    } else if (event_type == types::evse_manager::SessionEventEnum::ChargingStarted or
+               event_type == types::evse_manager::SessionEventEnum::ChargingResumed or
+               event_type == types::evse_manager::SessionEventEnum::ChargingPausedEV or
+               event_type == types::evse_manager::SessionEventEnum::ChargingPausedEVSE) {
+        return session_event.charging_state_changed_event.value().meter_value;
+    } else {
+        throw std::runtime_error("Could not retrieve meter value from SessionEvent");
+    }
+}
+
 std::optional<types::units_signed::SignedMeterValue>
 get_signed_meter_value(const types::evse_manager::SessionEvent& session_event) {
     const auto event_type = session_event.event;
@@ -570,7 +597,7 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
     if (tx_event_effect == TxEventEffect::START_TRANSACTION) {
         transaction_data->started = true;
         transaction_data->meter_value = conversions::to_ocpp_meter_value(
-            session_event.meter_value, ocpp::v201::ReadingContextEnum::Transaction_Begin,
+            get_meter_value(session_event), ocpp::v201::ReadingContextEnum::Transaction_Begin,
             get_signed_meter_value(session_event));
         this->charge_point->on_transaction_started(
             evse_id, transaction_data->connector_id, transaction_data->session_id, transaction_data->timestamp,
@@ -578,9 +605,9 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
             transaction_data->group_id_token, transaction_data->reservation_id, transaction_data->remote_start_id,
             transaction_data->charging_state);
     } else if (tx_event_effect == TxEventEffect::STOP_TRANSACTION) {
-        transaction_data->meter_value =
-            conversions::to_ocpp_meter_value(session_event.meter_value, ocpp::v201::ReadingContextEnum::Transaction_End,
-                                             get_signed_meter_value(session_event));
+        transaction_data->meter_value = conversions::to_ocpp_meter_value(
+            get_meter_value(session_event), ocpp::v201::ReadingContextEnum::Transaction_End,
+            get_signed_meter_value(session_event));
         this->charge_point->on_transaction_finished(evse_id, transaction_data->timestamp, transaction_data->meter_value,
                                                     transaction_data->stop_reason, transaction_data->id_token,
                                                     std::nullopt, transaction_data->charging_state);
