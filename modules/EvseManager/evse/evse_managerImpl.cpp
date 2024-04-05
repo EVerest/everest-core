@@ -196,42 +196,43 @@ void evse_managerImpl::ready() {
             publish_session_event(se);
         });
 
-    mod->charger->signal_transaction_started_event.connect(
-        [this](const types::authorization::ProvidedIdToken& id_token) {
-            types::evse_manager::SessionEvent se;
-            se.event = types::evse_manager::SessionEventEnum::TransactionStarted;
-            types::evse_manager::TransactionStarted transaction_started;
-            se.timestamp =
-                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+    mod->charger->signal_transaction_started_event.connect([this](
+                                                               const types::authorization::ProvidedIdToken& id_token) {
+        types::evse_manager::SessionEvent se;
+        se.event = types::evse_manager::SessionEventEnum::TransactionStarted;
+        types::evse_manager::TransactionStarted transaction_started;
+        se.timestamp =
+            date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
 
-            transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
-            if (mod->is_reserved()) {
-                transaction_started.reservation_id.emplace(mod->get_reservation_id());
-                mod->cancel_reservation(false);
-            }
+        transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
+        if (mod->is_reserved()) {
+            transaction_started.reservation_id.emplace(mod->get_reservation_id());
+            mod->cancel_reservation(false);
+        }
 
-            transaction_started.id_tag = id_token;
+        transaction_started.id_tag = id_token;
 
-            double energy_import = transaction_started.meter_value.energy_Wh_import.total;
+        double energy_import = transaction_started.meter_value.energy_Wh_import.total;
 
-            session_log.evse(false, fmt::format("Transaction Started ({} kWh)", energy_import / 1000.));
-            const auto session_uuid = this->mod->charger->get_session_id();
+        session_log.evse(false, fmt::format("Transaction Started ({} kWh)", energy_import / 1000.));
+        const auto session_uuid = this->mod->charger->get_session_id();
 
-            Everest::TelemetryMap telemetry_data = {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
-                                                    {"type", "transaction_started"},
-                                                    {"session_id", session_uuid},
-                                                    {"energy_counter_import_wh", transaction_started.meter_value.energy_Wh_import.total},
-                                                    {"id_tag", transaction_started.id_tag.id_token.value}};
+        Everest::TelemetryMap telemetry_data = {
+            {"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
+            {"type", "transaction_started"},
+            {"session_id", session_uuid},
+            {"energy_counter_import_wh", transaction_started.meter_value.energy_Wh_import.total},
+            {"id_tag", transaction_started.id_tag.id_token.value}};
 
-            if (transaction_started.meter_value.energy_Wh_export.has_value()) {
-                telemetry_data["energy_counter_export_wh"] = transaction_started.meter_value.energy_Wh_export.value().total;
-            }
-            mod->telemetry.publish("session", "events", telemetry_data);
+        if (transaction_started.meter_value.energy_Wh_export.has_value()) {
+            telemetry_data["energy_counter_export_wh"] = transaction_started.meter_value.energy_Wh_export.value().total;
+        }
+        mod->telemetry.publish("session", "events", telemetry_data);
 
-            se.transaction_started.emplace(transaction_started);
-            se.uuid = session_uuid;
-            publish_session_event(se);
-        });
+        se.transaction_started.emplace(transaction_started);
+        se.uuid = session_uuid;
+        publish_session_event(se);
+    });
 
     mod->charger->signal_transaction_finished_event.connect(
         [this](const types::evse_manager::StopTransactionReason& finished_reason,
@@ -264,7 +265,8 @@ void evse_managerImpl::ready() {
                 {"reason", types::evse_manager::stop_transaction_reason_to_string(finished_reason)}};
 
             if (transaction_finished.meter_value.energy_Wh_export.has_value()) {
-                telemetry_data["energy_counter_export_wh"] = transaction_finished.meter_value.energy_Wh_export.value().total;
+                telemetry_data["energy_counter_export_wh"] =
+                    transaction_finished.meter_value.energy_Wh_export.value().total;
             }
 
             transaction_finished.start_signed_meter_value = mod->charger->get_start_signed_meter_value();
