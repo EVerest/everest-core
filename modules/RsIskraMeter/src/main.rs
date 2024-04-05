@@ -694,12 +694,20 @@ impl ReadyState {
         // We can start transaction only in Idle state
         let state = self.read_state()?;
         match state {
-            IskraMaterState::Active
-            | IskraMaterState::Active_after_power_failure
-            | IskraMaterState::Active_after_reset => {
-                log::error!("Unexpected state {state:?}, trying to stop transaction");
+            IskraMaterState::Active | IskraMaterState::Active_after_reset => {
+                log::error!("Unexpected state {state:?}, trying to stop active transaction");
                 self.stop_transaction()?;
             }
+            IskraMaterState::Active_after_power_failure => {
+                // For now, we just cancel any active transaction after a power failure,
+                // but in the future, we might want to handle this differently.
+                log::error!("Unexpected state {state:?}, trying to stop stuck transaction");
+                self.set_time()?;
+                self.write_metadata(&req.evse_id)?;
+                self.stop_transaction()?;
+                log::info!("Stopped stuck transaction");
+            }
+
             IskraMaterState::Idle => {}
             IskraMaterState::Unknown => {
                 log::warn!("Unknown state");
