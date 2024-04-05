@@ -70,7 +70,7 @@ void slacImpl::run() {
 
     callbacks.signal_error_routine_request = [this]() { publish_request_error_routine(nullptr); };
 
-    callbacks.log = [](const std::string& text) { EVLOG_info << "EvseSlac: " << text; };
+    callbacks.log = [](const std::string& text) { EVLOG_info << text; };
 
     if (config.publish_mac_on_first_parm_req) {
         callbacks.signal_ev_mac_address_parm_req = [this](const std::string& mac) { publish_ev_mac_address(mac); };
@@ -84,6 +84,16 @@ void slacImpl::run() {
     fsm_ctx.slac_config.set_key_timeout_ms = config.set_key_timeout_ms;
     fsm_ctx.slac_config.ac_mode_five_percent = config.ac_mode_five_percent;
     fsm_ctx.slac_config.sounding_atten_adjustment = config.sounding_attenuation_adjustment;
+
+    fsm_ctx.slac_config.chip_reset.enabled = config.do_chip_reset;
+    fsm_ctx.slac_config.chip_reset.delay_ms = config.chip_reset_delay_ms;
+    fsm_ctx.slac_config.chip_reset.timeout_ms = config.chip_reset_timeout_ms;
+
+    fsm_ctx.slac_config.link_status.do_detect = config.link_status_detection;
+    fsm_ctx.slac_config.link_status.retry_ms = config.link_status_retry_ms;
+    fsm_ctx.slac_config.link_status.timeout_ms = config.link_status_timeout_ms;
+    fsm_ctx.slac_config.link_status.debug_simulate_failed_matching = config.debug_simulate_failed_matching;
+
     fsm_ctx.slac_config.generate_nmk();
 
     fsm_ctrl = std::make_unique<FSMController>(fsm_ctx);

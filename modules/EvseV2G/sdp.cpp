@@ -220,15 +220,6 @@ int sdp_init(struct v2g_context* v2g_ctx) {
         return -1;
     }
 
-    if (v2g_ctx->local_tcp_addr) {
-        memcpy(&sdp_addr.sin6_addr, &v2g_ctx->local_tcp_addr->sin6_addr, sizeof(sdp_addr.sin6_addr));
-    } else if (v2g_ctx->local_tls_addr) {
-        memcpy(&sdp_addr.sin6_addr, &v2g_ctx->local_tls_addr->sin6_addr, sizeof(sdp_addr.sin6_addr));
-    } else {
-        dlog(DLOG_LEVEL_ERROR, "Neither TLS nor TCP server on %s", v2g_ctx->if_name);
-        return -1;
-    }
-
     /* create receiving socket */
     v2g_ctx->sdp_socket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     if (v2g_ctx->sdp_socket == -1) {
@@ -251,6 +242,16 @@ int sdp_init(struct v2g_context* v2g_ctx) {
     }
 
     dlog(DLOG_LEVEL_INFO, "SDP socket setup succeeded");
+
+    /* bind only to specified device */
+    if (setsockopt(v2g_ctx->sdp_socket, SOL_SOCKET, SO_BINDTODEVICE, v2g_ctx->if_name, strlen(v2g_ctx->if_name)) ==
+        -1) {
+        dlog(DLOG_LEVEL_ERROR, "setsockopt(SO_BINDTODEVICE) failed: %s", strerror(errno));
+        close(v2g_ctx->sdp_socket);
+        return -1;
+    }
+
+    dlog(DLOG_LEVEL_TRACE, "bind only to specified device");
 
     /* join multicast group */
     if (setsockopt(v2g_ctx->sdp_socket, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) == -1) {

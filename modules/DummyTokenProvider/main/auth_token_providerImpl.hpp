@@ -23,6 +23,7 @@ struct Conf {
     std::string token;
     std::string type;
     double timeout;
+    int connector_id;
 };
 
 class auth_token_providerImpl : public auth_token_providerImplBase {
