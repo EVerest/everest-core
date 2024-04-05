@@ -260,12 +260,12 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction) {
     std::optional<CiString<20>> id_tag;
     id_tag.emplace(CiString<20>("DEADBEEF"));
 
-    this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
+    this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42, "xyz");
     this->db_handler->update_transaction("id-42", 42);
-    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
+    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected, "xyz");
     this->db_handler->update_transaction_csms_ack(42);
 
-    this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43);
+    this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43, "xyz");
 
     auto incomplete_transactions = this->db_handler->get_transactions(true);
 
@@ -289,12 +289,12 @@ TEST_F(DatabaseTest, test_insert_and_get_transaction) {
 TEST_F(DatabaseTest, test_insert_and_get_transaction_without_id_tag) {
 
     std::optional<CiString<20>> id_tag;
-    this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42);
+    this->db_handler->insert_transaction("id-42", -1, 1, "DEADBEEF", "2022-08-18T09:42:41", 42, false, 42, "xyz");
     this->db_handler->update_transaction("id-42", 42);
-    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected);
+    this->db_handler->update_transaction("id-42", 5000, "2022-08-18T10:42:41", id_tag, Reason::EVDisconnected, "xyz");
     this->db_handler->update_transaction_csms_ack(42);
 
-    this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43);
+    this->db_handler->insert_transaction("id-43", -1, 1, "BEEFDEAD", "2022-08-18T09:42:41", 43, false, 43, "xyz");
 
     auto incomplete_transactions = this->db_handler->get_transactions(true);
 

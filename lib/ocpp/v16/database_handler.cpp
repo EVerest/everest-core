@@ -74,11 +74,13 @@ bool DatabaseHandler::clear_table(const std::string& table_name) {
 void DatabaseHandler::insert_transaction(const std::string& session_id, const int32_t transaction_id,
                                          const int32_t connector, const std::string& id_tag_start,
                                          const std::string& time_start, const int32_t meter_start, const bool csms_ack,
-                                         const std::optional<int32_t> reservation_id) {
-    std::string sql = "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
-                      "CSMS_ACK, METER_LAST, METER_LAST_TIME, LAST_UPDATE, RESERVATION_ID) VALUES "
-                      "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @csms_ack, "
-                      "@meter_last, @meter_last_time, @last_update, @reservation_id)";
+                                         const std::optional<int32_t> reservation_id,
+                                         const std::string& start_transaction_message_id) {
+    std::string sql =
+        "INSERT INTO TRANSACTIONS (ID, TRANSACTION_ID, CONNECTOR, ID_TAG_START, TIME_START, METER_START, "
+        "CSMS_ACK, METER_LAST, METER_LAST_TIME, LAST_UPDATE, RESERVATION_ID, START_TRANSACTION_MESSAGE_ID) VALUES "
+        "(@session_id, @transaction_id, @connector, @id_tag_start, @time_start, @meter_start, @csms_ack, "
+        "@meter_last, @meter_last_time, @last_update, @reservation_id, @start_transaction_message_id)";
     SQLiteStatement stmt(this->db, sql);
 
     stmt.bind_text("@session_id", session_id);
@@ -91,6 +93,7 @@ void DatabaseHandler::insert_transaction(const std::string& session_id, const in
     stmt.bind_int("@meter_last", meter_start);
     stmt.bind_text("@meter_last_time", time_start);
     stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt.bind_text("@start_transaction_message_id", start_transaction_message_id);
 
     if (reservation_id.has_value()) {
         stmt.bind_int("@reservation_id", reservation_id.value());
@@ -126,11 +129,11 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
 }
 
 void DatabaseHandler::update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
-                                         std::optional<CiString<20>> id_tag_end,
-                                         std::optional<v16::Reason> stop_reason) {
-    std::string sql =
-        "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
-        "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason, LAST_UPDATE=@last_update WHERE ID==@session_id";
+                                         std::optional<CiString<20>> id_tag_end, std::optional<v16::Reason> stop_reason,
+                                         const std::string& stop_transaction_message_id) {
+    std::string sql = "UPDATE TRANSACTIONS SET METER_STOP=@meter_stop, TIME_END=@time_end, "
+                      "ID_TAG_END=@id_tag_end, STOP_REASON=@stop_reason, LAST_UPDATE=@last_update, "
+                      "STOP_TRANSACTION_MESSAGE_ID=@stop_transaction_message_id WHERE ID==@session_id";
     SQLiteStatement stmt(this->db, sql);
 
     stmt.bind_int("@meter_stop", meter_stop);
@@ -144,6 +147,7 @@ void DatabaseHandler::update_transaction(const std::string& session_id, int32_t 
     }
     stmt.bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
     stmt.bind_text("@session_id", session_id);
+    stmt.bind_text("@stop_transaction_message_id", stop_transaction_message_id);
 
     if (stmt.step() != SQLITE_DONE) {
         EVLOG_error << "Could not insert into table: " << sqlite3_errmsg(this->db) << std::endl;
@@ -224,8 +228,9 @@ std::vector<TransactionEntry> DatabaseHandler::get_transactions(bool filter_inco
         if (stmt.column_type(15) != SQLITE_NULL) {
             transaction_entry.stop_reason.emplace(stmt.column_text(15));
         }
-        if (stmt.column_type(16) != SQLITE_NULL) {
-            transaction_entry.reservation_id.emplace(stmt.column_int(16));
+        transaction_entry.start_transaction_message_id = stmt.column_text(16);
+        if (stmt.column_type(17) != SQLITE_NULL) {
+            transaction_entry.stop_transaction_message_id = stmt.column_text(17);
         }
         transactions.push_back(transaction_entry);
     }

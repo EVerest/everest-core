@@ -29,6 +29,8 @@ struct TransactionEntry {
     int32_t meter_last;
     std::string meter_last_time;
     std::string last_update;
+    std::string start_transaction_message_id;
+    std::optional<std::string> stop_transaction_message_id;
     std::optional<int32_t> reservation_id = std::nullopt;
     std::optional<std::string> parent_id_tag = std::nullopt;
     std::optional<int32_t> meter_stop = std::nullopt;
@@ -61,7 +63,8 @@ public:
     /// \brief Inserts a transaction with the given parameter to the TRANSACTIONS table.
     void insert_transaction(const std::string& session_id, const int32_t transaction_id, const int32_t connector,
                             const std::string& id_tag_start, const std::string& time_start, const int32_t meter_start,
-                            const bool csms_ack, const std::optional<int32_t> reservation_id);
+                            const bool csms_ack, const std::optional<int32_t> reservation_id,
+                            const std::string& start_transaction_message_id);
 
     /// \brief Updates the given parameters for the transaction with the given \p session_id in the TRANSACTIONS table.
     void update_transaction(const std::string& session_id, int32_t transaction_id,
@@ -69,7 +72,8 @@ public:
 
     /// \brief Updates the given parameters for the transaction with the given \p session_id in the TRANSACTIONS table.
     void update_transaction(const std::string& session_id, int32_t meter_stop, const std::string& time_end,
-                            std::optional<CiString<20>> id_tag_end, std::optional<v16::Reason> stop_reason);
+                            std::optional<CiString<20>> id_tag_end, std::optional<v16::Reason> stop_reason,
+                            const std::string& stop_transaction_message_id);
 
     /// \brief Updates the CSMS_ACK column for the transaction with the given \p transaction_id in the TRANSACTIONS
     /// table

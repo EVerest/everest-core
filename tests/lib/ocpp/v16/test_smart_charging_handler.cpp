@@ -52,7 +52,7 @@ protected:
         auto timer = std::unique_ptr<Everest::SteadyTimer>();
 
         connector.transaction =
-            std::make_shared<Transaction>(id, "test", "test", 1, std::nullopt, ocpp::DateTime(), std::move(timer));
+            std::make_shared<Transaction>(-1, id, "test", "test", 1, std::nullopt, ocpp::DateTime(), std::move(timer));
         connectors[id] = std::make_shared<Connector>(connector);
     }
 

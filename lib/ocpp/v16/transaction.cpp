@@ -9,11 +9,11 @@
 namespace ocpp {
 namespace v16 {
 
-Transaction::Transaction(const int32_t& connector, const std::string& session_id, const CiString<20>& id_token,
-                         const int32_t& meter_start, std::optional<int32_t> reservation_id,
-                         const ocpp::DateTime& timestamp,
+Transaction::Transaction(const int32_t internal_transaction_id, const int32_t& connector, const std::string& session_id,
+                         const CiString<20>& id_token, const int32_t& meter_start,
+                         std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
                          std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer) :
-    transaction_id(-1),
+    internal_transaction_id(internal_transaction_id),
     connector(connector),
     session_id(session_id),
     id_token(id_token),
@@ -51,8 +51,12 @@ bool Transaction::change_meter_values_sample_interval(int32_t interval) {
     return true;
 }
 
-int32_t Transaction::get_transaction_id() {
+std::optional<int32_t> Transaction::get_transaction_id() {
     return this->transaction_id;
+}
+
+int32_t Transaction::get_internal_transaction_id() {
+    return this->internal_transaction_id;
 }
 
 std::string Transaction::get_session_id() {
@@ -126,10 +130,17 @@ std::optional<int32_t> Transaction::get_reservation_id() {
     return this->reservation_id;
 }
 
-TransactionHandler::TransactionHandler(int32_t number_of_connectors) : number_of_connectors(number_of_connectors) {
+TransactionHandler::TransactionHandler(int32_t number_of_connectors) :
+    number_of_connectors(number_of_connectors),
+    gen(std::random_device{}()),
+    distr(std::numeric_limits<int>::min(), -1) {
     for (int32_t i = 0; i < number_of_connectors + 1; i++) {
         this->active_transactions.push_back(nullptr);
     }
+}
+
+int32_t TransactionHandler::get_negative_random_transaction_id() {
+    return distr(this->gen);
 }
 
 void TransactionHandler::add_transaction(std::shared_ptr<Transaction> transaction) {
