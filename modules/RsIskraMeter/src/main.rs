@@ -355,7 +355,9 @@ impl From<&ModuleConfig> for OcmfData {
             gateway_identification: sanitize(&value.ocmf_gateway_identification),
             gateway_serial: sanitize(&value.ocmf_gateway_serial),
             gateway_version: sanitize(&value.ocmf_gateway_version),
-            charge_point_identification_type: sanitize(&value.ocmf_charge_point_identification_type),
+            charge_point_identification_type: sanitize(
+                &value.ocmf_charge_point_identification_type,
+            ),
             charge_point_identification: sanitize(&value.ocmf_charge_point_identification),
             ..Default::default()
         }
@@ -780,7 +782,7 @@ impl ReadyState {
         let signed_meter_values = self.read_signed_meter_values()?;
         Ok(TransactionStopResponse {
             error: Option::None,
-            // Iskra meter has both start and stop snapshot in one 
+            // Iskra meter has both start and stop snapshot in one
             // OCMF dataset. So we don't need to send the start snapshot.
             start_signed_meter_value: None,
             signed_meter_value: Some(SignedMeterValue {
