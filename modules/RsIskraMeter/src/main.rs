@@ -1209,4 +1209,80 @@ mod tests {
             assert_eq!(ready_state.read_public_key().unwrap(), expected);
         }
     }
+
+    #[test]
+    /// Test verifies that when we try to start the transaction and the meter
+    /// is already running a transaction, that we stop the ongoing transaction
+    /// before proceeding.
+    fn ready_state__start_transaction__try_stop_after_power_failure() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        use mockall::Sequence;
+        let mut seq = Sequence::new();
+
+        // First call to read the meter state before starting the transaction
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7000), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![IskraMaterState::Active_after_power_failure as i64]),
+                })
+            });
+
+        // Writes needed to set the time
+        for value in [7054, 7055, 7053, 7071] {
+            mock.expect_modbus_write_single_register()
+                .withf(move |_data, addr, _id| *addr == value as i64)
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        }
+
+        // Writes needed to write metadata
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|_data, addr, _id| *addr == 7100)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        mock.expect_modbus_write_single_register()
+            .withf(|_data, addr, _id| *addr == 7056)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7100), eq(88), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 88]),
+                })
+            });
+
+        // Second call to read the meter state when stopping the transaction
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7000), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Error,
+                    value: Some(vec![IskraMaterState::Idle as i64]),
+                })
+            });
+
+        let ready_state = ReadyState::new(InitState::new(1234), mock);
+
+        let _unused = ready_state.start_transaction(TransactionReq {
+            cable_id: 1,
+            client_id: String::new(),
+            evse_id: String::new(),
+            tariff_id: 1,
+            transaction_id: String::new(),
+            user_data: String::new(),
+        });
+    }
 }
