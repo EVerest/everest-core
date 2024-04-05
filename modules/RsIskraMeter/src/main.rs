@@ -1153,7 +1153,10 @@ mod tests {
     /// before proceeding.
     fn ready_state__start_transaction__try_stop() {
         // The values correspond to the three `Active` values of Iskra.
-        for value in [1, 2, 3] {
+        for value in [
+            IskraMaterState::Active as u8,
+            IskraMaterState::Active_after_reset as u8,
+        ] {
             let mut mock = SerialCommunicationHubClientPublisher::default();
             // We expect that this is called twice - once in the start_transaction
             // and once in the stop_transaction.
