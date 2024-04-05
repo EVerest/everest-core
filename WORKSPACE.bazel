@@ -2,6 +2,24 @@ workspace(name = "everest-framework")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+SHA="c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311"
+VERSION="0.31.0"
+
+http_archive(
+    name = "rules_python",
+    sha256 = SHA,
+    strip_prefix = "rules_python-{}".format(VERSION),
+    url = "https://github.com/bazelbuild/rules_python/releases/download/{}/rules_python-{}.tar.gz".format(VERSION,VERSION),
+)
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+py_repositories()
+
+python_register_toolchains(
+    name = "python3_10",
+    python_version = "3.10",
+)
+
 http_archive(
     name = "rules_rust",
     sha256 = "36ab8f9facae745c9c9c1b33d225623d976e78f2cc3f729b7973d8c20934ab95",

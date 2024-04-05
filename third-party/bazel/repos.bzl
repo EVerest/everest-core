@@ -192,10 +192,10 @@ make(
     )
 
     maybe(
-        http_archive,
+        git_repository,
         name = "pybind11_bazel",
-        strip_prefix = "pybind11_bazel-8889d39b2b925b2a47519ae09402a96f00ccf2b4",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/8889d39b2b925b2a47519ae09402a96f00ccf2b4.zip"],
+        tag = "v2.11.1.bzl.2",
+        remote = "https://github.com/pybind/pybind11_bazel",
     )
 
     maybe(
