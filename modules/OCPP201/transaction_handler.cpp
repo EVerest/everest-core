@@ -15,7 +15,7 @@ TransactionHandler::TransactionHandler(const int32_t nr_of_evses, const std::set
     }
 
     if (nr_of_evses <= 0) {
-        throw std::runtime_error("Cannot construct TransactionHandler with either nr_of_evses <= 0");
+        throw std::runtime_error("Cannot construct TransactionHandler with nr_of_evses <= 0");
     }
 
     for (int32_t evse_id = 1; evse_id <= nr_of_evses; evse_id++) {
