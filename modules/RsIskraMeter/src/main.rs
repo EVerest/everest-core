@@ -210,7 +210,6 @@ impl TransactionStartResponse {
     {
         Self {
             error: Some(format!("{error:?}")),
-            signed_meter_value: None,
             status: TransactionRequestStatus::UNEXPECTED_ERROR,
             transaction_max_stop_time: None,
             transaction_min_stop_time: None,
@@ -228,6 +227,7 @@ impl TransactionStopResponse {
     {
         Self {
             error: Some(format!("{error:?}")),
+            start_signed_meter_value: None,
             signed_meter_value: None,
             status: TransactionRequestStatus::UNEXPECTED_ERROR,
         }
@@ -728,17 +728,8 @@ impl ReadyState {
         )?;
 
         self.check_signature_status()?;
-        let signature = self.read_signature()?;
-        let signed_meter_values = self.read_signed_meter_values()?;
         Ok(TransactionStartResponse {
             error: Option::None,
-            signed_meter_value: Some(SignedMeterValue {
-                signed_meter_data: create_ocmf(signed_meter_values, signature),
-                signing_method: String::new(),
-                encoding_method: "OCMF".to_string(),
-                public_key: self.read_public_key().ok(),
-                timestamp: None,
-            }),
             transaction_min_stop_time: Option::None,
             status: TransactionRequestStatus::OK,
             transaction_max_stop_time: Option::None,
@@ -781,6 +772,9 @@ impl ReadyState {
         let signed_meter_values = self.read_signed_meter_values()?;
         Ok(TransactionStopResponse {
             error: Option::None,
+            // Iskra meter has both start and stop snapshot in one 
+            // OCMF dataset. So we don't need to send the start snapshot.
+            start_signed_meter_value: None,
             signed_meter_value: Some(SignedMeterValue {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
                 signing_method: String::new(),
