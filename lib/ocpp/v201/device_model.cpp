@@ -245,13 +245,13 @@ std::vector<ReportData> DeviceModel::get_base_report_data(const ReportBaseEnum& 
 
             // iterate over possibly (Actual, Target, MinSet, MaxSet)
             for (const auto& variable_attribute : variable_attributes) {
-                // FIXME(piet): Right now this reports only FullInventory and ConfigurationInventory (ReadOnly,
-                // ReadWrite or WriteOnly) correctly
+                // FIXME(piet): Right now this reports only FullInventory (ReadOnly,
+                // ReadWrite or WriteOnly) and ConfigurationInventory (ReadWrite or WriteOnly) correctly
                 // TODO(piet): SummaryInventory
                 if (report_base == ReportBaseEnum::FullInventory or
-                    variable_attribute.mutability == MutabilityEnum::ReadOnly or
-                    variable_attribute.mutability == MutabilityEnum::ReadWrite or
-                    variable_attribute.mutability == MutabilityEnum::WriteOnly) {
+                    (report_base == ReportBaseEnum::ConfigurationInventory and
+                     (variable_attribute.mutability == MutabilityEnum::ReadWrite or
+                      variable_attribute.mutability == MutabilityEnum::WriteOnly))) {
                     report_data.variableAttribute.push_back(variable_attribute);
                     // scrub WriteOnly value from report
                     if (variable_attribute.mutability == MutabilityEnum::WriteOnly) {
