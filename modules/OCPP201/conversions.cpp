@@ -997,9 +997,9 @@ types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::Message
     return everest_message_content;
 }
 
-types::ocpp::TransactionEventResponse
+types::ocpp::OcppTransactionEventResponse
 to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response) {
-    types::ocpp::TransactionEventResponse everest_transaction_event_response;
+    types::ocpp::OcppTransactionEventResponse everest_transaction_event_response;
 
     everest_transaction_event_response.total_cost = transaction_event_response.totalCost;
     everest_transaction_event_response.charging_priority = transaction_event_response.chargingPriority;

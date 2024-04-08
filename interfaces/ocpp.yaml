@@ -107,6 +107,10 @@ vars:
     description: Emits events related to OCPP transactions
     type: object
     $ref: /ocpp#/OcppTransactionEvent
+  ocpp_transaction_event_response:
+    description: Emits OCPP transaction responses
+    type: object
+    $ref: /ocpp#/OcppTransactionEventResponse
   charging_schedules:
     description: >-
       Object that contains OCPP charging schedules of all connectors. The

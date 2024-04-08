@@ -280,8 +280,8 @@ void OCPP201::ready() {
             auto ocpp_transaction_event = conversions::to_everest_ocpp_transaction_event(transaction_event);
             auto ocpp_transaction_event_response =
                 conversions::to_everest_transaction_event_response(transaction_event_response);
-            ocpp_transaction_event.transaction_event_response = ocpp_transaction_event_response;
-            this->p_ocpp_generic->publish_ocpp_transaction_event(ocpp_transaction_event);
+            ocpp_transaction_event_response.original_transaction_event = ocpp_transaction_event;
+            this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
         };
 
     if (!this->r_data_transfer.empty()) {

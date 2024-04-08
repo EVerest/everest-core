@@ -162,8 +162,8 @@ types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFo
 types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
 
 /// \brief Converts a given ocpp::v201::TransactionEventResponse \p transaction_event_response to a
-/// types::ocpp::TransactionEventResponse
-types::ocpp::TransactionEventResponse
+/// types::ocpp::OcppTransactionEventResponse
+types::ocpp::OcppTransactionEventResponse
 to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response);
 
 /// \brief Converts a given ocpp::v201::GetVariableResult \p get_variable_result_vector to a
