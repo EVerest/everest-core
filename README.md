@@ -71,7 +71,7 @@ All documentation and the issue tracking can be found in our main repository her
 ## Support for OCPP 2.0.1
 
 The development of OCPP2.0.1 is in progress. 
-[For details, see the sheet with the current implementation status.](https://docs.google.com/spreadsheets/d/1NXEa7d0pkT4_1L9lZ9RpiLHGPtTKoqwPsKLJPjTZ_vM/edit?usp=sharing)
+[Current implementation status.](/doc/ocpp_201_status.md)
 
 ### Feature Profile Support OCPP 2.0.1
 
