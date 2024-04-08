@@ -19,7 +19,6 @@ target_sources(framework
         error/error_comm_bridge.cpp
         error/error_database_map.cpp
         error/error_filter.cpp
-        error/error_json.cpp
         error/error_manager.cpp
         error/error_type_map.cpp
         everest.cpp

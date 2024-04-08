@@ -564,11 +564,9 @@ std::string Everest::raise_error(const std::string& impl_id, const std::string& 
 
     error::Error error(error_type, message, description, this->module_id, impl_id, severity_enum);
 
-    json data = error::error_to_json(error);
-
     const auto error_topic = fmt::format("{}/error/{}", this->config.mqtt_prefix(this->module_id, impl_id), error_type);
 
-    this->mqtt_abstraction.publish(error_topic, data, QOS::QOS2);
+    this->mqtt_abstraction.publish(error_topic, json(error), QOS::QOS2);
     return error.uuid.uuid;
 }
 

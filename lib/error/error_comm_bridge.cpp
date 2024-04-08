@@ -40,7 +40,7 @@ void ErrorCommBridge::handle_error(const json& data) {
     BOOST_LOG_FUNCTION();
     EVLOG_debug << "Received error: " << data.dump(1);
 
-    ErrorPtr error = std::make_shared<Error>(json_to_error(data));
+    ErrorPtr error = std::make_shared<Error>(data.get<Error>());
     this->error_manager->raise_error(error);
 }
 
@@ -75,7 +75,7 @@ void ErrorCommBridge::handle_request_clear_error(const json& data) {
     for (auto& error : cleared_errors) {
         std::string error_cleared_topic =
             error->from.module_id + "/" + error->from.implementation_id + "/error-cleared/" + error->type;
-        this->send_json_message(error_cleared_topic, error_to_json(*error));
+        this->send_json_message(error_cleared_topic, json(*error));
     }
 
     // send result
