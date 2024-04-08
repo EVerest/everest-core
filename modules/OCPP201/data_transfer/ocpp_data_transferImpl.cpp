@@ -18,7 +18,9 @@ types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
     ocpp::v201::DataTransferRequest ocpp_request;
     ocpp_request.vendorId = request.vendor_id;
-    ocpp_request.messageId = request.vendor_id;
+    if (request.message_id.has_value()) {
+        ocpp_request.messageId = request.message_id.value();
+    }
     if (request.data.has_value()) {
         ocpp_request.data = json::parse(request.data.value());
     }
