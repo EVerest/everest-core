@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <deque>
 #include <memory>
-#include <sqlite3.h>
 #include <string>
+#include <vector>
 
+#include <ocpp/common/database/database_connection.hpp>
 #include <ocpp/common/types.hpp>
 
 namespace ocpp::common {
@@ -20,9 +20,12 @@ struct DBTransactionMessage {
     std::string unique_id;
 };
 
-class DatabaseHandlerBase {
+class DatabaseHandlerCommon {
 protected:
-    sqlite3* db;
+    std::unique_ptr<DatabaseConnectionInterface> database;
+
+    /// \brief Perform the initialization needed to use the database. Will be called by open_connection()
+    virtual void init_sql() = 0;
 
 public:
     ///
@@ -33,10 +36,14 @@ public:
     ///
     /// \warning The 'db' variable is not initialized, the deriving class should do that.
     ///
-    DatabaseHandlerBase() noexcept;
+    explicit DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database) noexcept;
 
-    ~DatabaseHandlerBase();
+    ~DatabaseHandlerCommon() = default;
 
+    /// \brief Opens connection to database file and performs the initialization by calling init_sql()
+    void open_connection();
+
+    /// \brief Closes the database connection.
     void close_connection();
 
     /// \brief Get transaction messages from transaction messages queue table.

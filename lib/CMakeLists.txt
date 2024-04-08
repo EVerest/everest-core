@@ -12,7 +12,6 @@ target_sources(ocpp
     PRIVATE
         ocpp/common/call_types.cpp
         ocpp/common/charging_station_base.cpp
-        ocpp/common/database_handler_base.cpp
         ocpp/common/message_queue.cpp
         ocpp/common/ocpp_logging.cpp
         ocpp/common/schemas.cpp
@@ -20,6 +19,9 @@ target_sources(ocpp
         ocpp/common/utils.cpp
         ocpp/common/evse_security_impl.cpp
         ocpp/common/evse_security.cpp
+        ocpp/common/database/database_connection.cpp
+        ocpp/common/database/database_handler_common.cpp
+        ocpp/common/database/sqlite_statement.cpp
         ocpp/v16/charge_point.cpp
         ocpp/v16/database_handler.cpp
         ocpp/v16/charge_point_impl.cpp

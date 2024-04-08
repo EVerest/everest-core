@@ -18,7 +18,7 @@
 #include <everest/timer.hpp>
 
 #include <ocpp/common/call_types.hpp>
-#include <ocpp/common/database_handler_base.hpp>
+#include <ocpp/common/database/database_handler_common.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/messages/StopTransaction.hpp>
 #include <ocpp/v16/types.hpp>
@@ -92,7 +92,7 @@ template <typename M> struct ControlMessage {
 template <typename M> class MessageQueue {
 private:
     MessageQueueConfig config;
-    std::shared_ptr<ocpp::common::DatabaseHandlerBase> database_handler;
+    std::shared_ptr<ocpp::common::DatabaseHandlerCommon> database_handler;
 
     std::thread worker_thread;
     /// message deque for transaction related messages
@@ -281,7 +281,8 @@ private:
 public:
     /// \brief Creates a new MessageQueue object with the provided \p configuration and \p send_callback
     MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
-                 const std::vector<M>& external_notify, std::shared_ptr<common::DatabaseHandlerBase> database_handler) :
+                 const std::vector<M>& external_notify,
+                 std::shared_ptr<common::DatabaseHandlerCommon> database_handler) :
         database_handler(std::move(database_handler)),
         config(config),
         external_notify(external_notify),
@@ -442,7 +443,7 @@ public:
     }
 
     MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
-                 std::shared_ptr<common::DatabaseHandlerBase> databaseHandler) :
+                 std::shared_ptr<common::DatabaseHandlerCommon> databaseHandler) :
         MessageQueue(send_callback, config, {}, databaseHandler) {
     }
 

@@ -40,9 +40,11 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     this->configuration = std::make_shared<ocpp::v16::ChargePointConfiguration>(config, share_path, user_config_path);
     this->heartbeat_timer = std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->heartbeat(); });
     this->heartbeat_interval = this->configuration->getHeartbeatInterval();
-    this->database_handler =
-        std::make_shared<DatabaseHandler>(this->configuration->getChargePointId(), database_path, sql_init_path);
-    this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
+    auto database_connection =
+        std::make_unique<common::DatabaseConnection>(database_path / (this->configuration->getChargePointId() + ".db"));
+    this->database_handler = std::make_shared<DatabaseHandler>(std::move(database_connection), sql_init_path,
+                                                               this->configuration->getNumberOfConnectors());
+    this->database_handler->open_connection();
     this->transaction_handler = std::make_unique<TransactionHandler>(this->configuration->getNumberOfConnectors());
     this->external_notify = {v16::MessageType::StartTransactionResponse};
     this->message_queue = this->create_message_queue();
@@ -826,7 +828,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
 bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason) {
     if (this->stopped) {
         EVLOG_info << "Restarting OCPP Chargepoint";
-        this->database_handler->open_db_connection(this->configuration->getNumberOfConnectors());
+        this->database_handler->open_connection();
         // instantiating new message queue on restart
         this->message_queue = this->create_message_queue();
         this->initialized = true;

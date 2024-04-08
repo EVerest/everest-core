@@ -28,7 +28,7 @@ private:
     }
 
 public:
-    DatabaseHandlerMock() : DatabaseHandler("/dev/null", "/dev/null") {
+    DatabaseHandlerMock() : DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface>(), "/dev/null") {
     }
 
     virtual void insert_cs_availability(OperationalStatusEnum operational_status, bool replace) override {

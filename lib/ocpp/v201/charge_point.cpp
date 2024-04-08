@@ -81,7 +81,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     this->device_model = std::make_unique<DeviceModel>(std::move(device_model_storage));
     this->device_model->check_integrity();
 
-    this->database_handler = std::make_shared<DatabaseHandler>(core_database_path, sql_init_path);
+    auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db");
+    this->database_handler = std::make_shared<DatabaseHandler>(std::move(database_connection), sql_init_path);
     this->database_handler->open_connection();
 
     // Set up the component state manager
