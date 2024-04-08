@@ -1254,13 +1254,13 @@ mod tests {
             .in_sequence(&mut seq)
             .returning(|_, _, _| Ok(StatusCodeEnum::Success));
         mock.expect_modbus_read_holding_registers()
-            .with(eq(7100), eq(88), eq(1234))
+            .with(eq(7100), eq(89), eq(1234))
             .times(1)
             .in_sequence(&mut seq)
             .returning(|_, _, _| {
                 Ok(generated::types::serial_comm_hub_requests::Result {
                     status_code: StatusCodeEnum::Success,
-                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 88]),
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 89]),
                 })
             });
 
@@ -1276,7 +1276,7 @@ mod tests {
                 })
             });
 
-        let ready_state = ReadyState::new(InitState::new(1234), mock);
+        let ready_state = make_ready_state(mock);
 
         let _unused = ready_state.start_transaction(TransactionReq {
             cable_id: 1,
