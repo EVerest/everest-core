@@ -168,7 +168,6 @@ class EverestTestEnvironmentSetup:
             ocpp_paths = OCPPModulePaths16(
                 ChargePointConfigPath=str(temporary_paths.ocpp_config_file),
                 MessageLogPath=str(temporary_paths.ocpp_message_log_directory),
-                CertsPath=str(temporary_paths.certs_dir),
                 UserConfigPath=str(temporary_paths.ocpp_user_config_file),
                 DatabasePath=str(temporary_paths.ocpp_database_dir)
             )
@@ -176,7 +175,6 @@ class EverestTestEnvironmentSetup:
             ocpp_paths = OCPPModulePaths201(
                 ChargePointConfigPath=str(temporary_paths.ocpp_config_file),
                 MessageLogPath=str(temporary_paths.ocpp_message_log_directory),
-                CertsPath=str(temporary_paths.certs_dir),
                 CoreDatabasePath=str(temporary_paths.ocpp_database_dir),
                 DeviceModelDatabasePath=str(temporary_paths.ocpp_database_dir / "device_model_storage.db"),
             )

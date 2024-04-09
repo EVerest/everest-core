@@ -11,7 +11,6 @@ from everest.testing.core_utils._configuration.everest_configuration_strategies.
 class OCPPModuleConfigurationBase:
     ChargePointConfigPath: str
     MessageLogPath: str
-    CertsPath: str
 
 @dataclass
 class OCPPModulePaths16(OCPPModuleConfigurationBase):

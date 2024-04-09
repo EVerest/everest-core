@@ -58,7 +58,10 @@ class EverestTestController(TestController):
     def swipe(self, token, connectors=None):
         connectors = connectors if connectors is not None else [1]
         provided_token = {
-            "id_token": token,
+            "id_token": {
+                "value": token,
+                "type": "ISO14443"
+            },
             "authorization_type": "RFID",
             "connectors": connectors
         }
