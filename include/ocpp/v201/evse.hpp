@@ -41,8 +41,8 @@ public:
     /// \param sampled_data_tx_updated_interval Interval between sampling of metering (or other) data, intended to
     /// be transmitted via TransactionEventRequest (eventType = Updated) messages
     virtual void open_transaction(const std::string& transaction_id, const int32_t connector_id,
-                                  const DateTime& timestamp, const MeterValue& meter_start, const IdToken& id_token,
-                                  const std::optional<IdToken>& group_id_token,
+                                  const DateTime& timestamp, const MeterValue& meter_start,
+                                  const std::optional<IdToken>& id_token, const std::optional<IdToken>& group_id_token,
                                   const std::optional<int32_t> reservation_id,
                                   const std::chrono::seconds sampled_data_tx_updated_interval,
                                   const std::chrono::seconds sampled_data_tx_ended_interval,
@@ -170,7 +170,7 @@ public:
     uint32_t get_number_of_connectors();
 
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
-                          const MeterValue& meter_start, const IdToken& id_token,
+                          const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                           const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
                           const std::chrono::seconds sampled_data_tx_updated_interval,
                           const std::chrono::seconds sampled_data_tx_ended_interval,

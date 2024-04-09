@@ -117,14 +117,14 @@
     "TxStartPoint": {
       "variable_name": "TxStartPoint",
       "characteristics": {
-        "valuesList": "ParkingBayOccupancy,EVConnected,Authorized,PowerPathClosed,EnergyTransfer,DataSigned",
+        "valuesList": "EVConnected,Authorized,PowerPathClosed,EnergyTransfer,DataSigned",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Defines when the Charging Station starts a new transaction",
@@ -134,14 +134,14 @@
     "TxStopPoint": {
       "variable_name": "TxStopPoint",
       "characteristics": {
-        "valuesList": "ParkingBayOccupancy,EVConnected,Authorized,PowerPathClosed,EnergyTransfer",
+        "valuesList": "EVConnected,Authorized,PowerPathClosed,EnergyTransfer",
         "supportsMonitoring": true,
         "dataType": "MemberList"
       },
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadWrite"
         }
       ],
       "description": "Defines when the Charging Station ends a transaction",

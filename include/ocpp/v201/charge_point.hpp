@@ -458,7 +458,7 @@ private:
     void handle_get_local_authorization_list_version_req(Call<GetLocalListVersionRequest> call);
 
     // Functional Block E: Transaction
-    void handle_start_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);
+    void handle_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);
     void handle_get_transaction_status(const Call<GetTransactionStatusRequest> call);
 
     // Function Block F: Remote transaction control
@@ -613,7 +613,7 @@ public:
     /// \param charging_state   The new charging state
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
                                 const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
-                                const MeterValue& meter_start, const IdToken& id_token,
+                                const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                                 const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id,
                                 const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state);
@@ -634,6 +634,9 @@ public:
     /// \param evse_id
     /// \param connector_id
     void on_session_finished(const int32_t evse_id, const int32_t connector_id);
+
+    /// \brief Event handler that should be called when the given \p id_token is authorized
+    void on_authorized(const int32_t evse_id, const int32_t connector_id, const IdToken& id_token);
 
     /// \brief Event handler that should be called when a new meter value is present
     /// \param evse_id
@@ -661,8 +664,10 @@ public:
     /// \brief Event handler that will update the charging state internally when it has been changed.
     /// \param evse_id          The evse id of which the charging state has changed.
     /// \param charging_state   The new charging state.
+    /// \param trigger_reason   The trigger reason of the event. Defaults to ChargingStateChanged
     /// \return True on success. False if evse id does not exist.
-    bool on_charging_state_changed(const uint32_t evse_id, ChargingStateEnum charging_state);
+    bool on_charging_state_changed(const uint32_t evse_id, const ChargingStateEnum charging_state,
+                                   const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged);
 
     /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
     /// \param id_token

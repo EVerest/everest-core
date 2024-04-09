@@ -12,7 +12,7 @@ namespace v201 {
 
 /// \brief Struct that enhances the OCPP Transaction by some meta data and functionality
 struct EnhancedTransaction : public Transaction {
-    IdToken id_token;
+    std::optional<IdToken> id_token;
     std::optional<IdToken> group_id_token;
     std::optional<int32_t> reservation_id;
     int32_t connector_id;
