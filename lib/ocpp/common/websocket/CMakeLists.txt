@@ -2,15 +2,11 @@
 target_sources(ocpp
     PRIVATE
         websocket_base.cpp
-        websocket_uri.cpp
+        websocket_uri.cpp        
+        websocket.cpp
+        websocket_libwebsockets.cpp
+
+        # TODO: remove when interface refactor is done
         websocket_plain.cpp
         websocket_tls.cpp
-        websocket.cpp
 )
-
-if(LIBOCPP_ENABLE_LIBWEBSOCKETS)
-    target_sources(ocpp
-        PRIVATE
-            websocket_libwebsockets.cpp
-    )
-endif()

@@ -5,9 +5,7 @@
 #include <ocpp/common/websocket/websocket.hpp>
 #include <ocpp/v16/types.hpp>
 
-#ifdef LIBOCPP_ENABLE_LIBWEBSOCKETS
 #include <ocpp/common/websocket/websocket_libwebsockets.hpp>
-#endif
 
 #include <boost/algorithm/string.hpp>
 
@@ -19,14 +17,14 @@ Websocket::Websocket(const WebsocketConnectionOptions& connection_options, std::
                      std::shared_ptr<MessageLogging> logging) :
     logging(logging) {
 
-#ifdef LIBOCPP_ENABLE_LIBWEBSOCKETS
-    this->websocket = std::make_unique<WebsocketTlsTPM>(connection_options, evse_security);
-#else
+#ifdef LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP
     if (connection_options.security_profile <= 1) {
         this->websocket = std::make_unique<WebsocketPlain>(connection_options);
     } else if (connection_options.security_profile >= 2) {
         this->websocket = std::make_unique<WebsocketTLS>(connection_options, evse_security);
     }
+#else
+    this->websocket = std::make_unique<WebsocketTlsTPM>(connection_options, evse_security);
 #endif
 }
 

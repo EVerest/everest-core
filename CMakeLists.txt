@@ -41,6 +41,7 @@ else()
     find_package(nlohmann_json REQUIRED)
     find_package(nlohmann_json_schema_validator REQUIRED)
     find_package(websocketpp REQUIRED)
+    find_package(libwebsockets REQUIRED)
     
     find_package(fsm REQUIRED)
     find_package(everest-timer REQUIRED)

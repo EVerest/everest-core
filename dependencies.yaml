@@ -33,8 +33,7 @@ libevse-security:
   git_tag: v0.5.0
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
-  git_tag: v4.3.3
-  cmake_condition: "LIBOCPP_ENABLE_LIBWEBSOCKETS"
+  git_tag: v4.3.3  
   options:
     - CMAKE_POLICY_DEFAULT_CMP0077 NEW
     - LWS_ROLE_RAW_FILE OFF

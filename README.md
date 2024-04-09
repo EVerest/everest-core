@@ -547,14 +547,14 @@ Local testing is still in progress.
 ## Building with FetchContent instead of EDM
 In [doc/build-with-fetchcontent](doc/build-with-fetchcontent) you can find an example how to build libocpp with FetchContent instead of EDM.
 
-## Support for libwebsockets
-
-A new websocket implementation based on libwebsockets will deprecate the old websocket++ implmentation. It supports all security profiles, along with TPM usage.
-
 ### Support for TPM keys
 
-In order to use the TPM keys, it is mandatory to use the libwebsocket implementation with the following cmake option.
+In order to use the TPM keys, it is mandatory to use the default libwebsocket implementation.
+
+## Support for websocket++
+
+The old websocket++ implementation has been deprecated. For enabling websocket++ support use the following cmake option:
 
 ```bash
-  cmake .. -DLIBOCPP_ENABLE_LIBWEBSOCKETS=ON
+  cmake .. -DLIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP=ON
 ```
