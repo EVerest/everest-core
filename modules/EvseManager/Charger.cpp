@@ -1066,10 +1066,10 @@ void Charger::start_session(bool authfirst) {
 }
 
 void Charger::stop_session() {
-    shared_context.session_uuid.clear();
     shared_context.session_active = false;
     shared_context.authorized = false;
     signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
+    shared_context.session_uuid.clear();
 }
 
 bool Charger::start_transaction() {

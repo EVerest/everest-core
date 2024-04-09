@@ -298,7 +298,6 @@ void evse_managerImpl::ready() {
 
         publish_session_event(se);
 
-        // Clear UUID after publishing the SessionFinished event
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             this->mod->selected_protocol = "Unknown";
         }
