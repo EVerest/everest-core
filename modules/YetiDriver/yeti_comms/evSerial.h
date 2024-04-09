@@ -22,7 +22,7 @@ public:
     void readThread();
     void run();
 
-    bool reset(const int reset_pin);
+    bool reset(const std::string& reset_chip, const int reset_line);
     void firmwareUpdate(bool rom);
     void keepAlive();
 

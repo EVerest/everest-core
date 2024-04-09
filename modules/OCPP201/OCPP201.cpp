@@ -114,15 +114,6 @@ void OCPP201::ready() {
         }
     }();
 
-    const auto etc_certs_path = [&]() {
-        if (this->config.CertsPath.empty()) {
-            return fs::path(this->info.paths.etc) / CERTS_DIR;
-        } else {
-            return fs::path(this->config.CertsPath);
-        }
-    }();
-    EVLOG_info << "OCPP certificates path: " << etc_certs_path.string();
-
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
             fs::create_directory(this->config.MessageLogPath);

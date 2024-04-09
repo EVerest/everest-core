@@ -46,7 +46,9 @@ class ProbeModule:
     def test(self, timeout: float) -> bool:
         end_of_time = time.time() + timeout
 
+        logging.info("Wating for ready event...")
         if not self._ready_event.wait(timeout):
+            logging.error("Ready event not received. Timeout.")
             return False
 
         # fetch fulfillment
@@ -61,15 +63,20 @@ class ProbeModule:
 
         expected_events = ['TransactionStarted', 'TransactionFinished']
 
+        logging.info("Waiting for expected events...")
         while len(expected_events) > 0:
             time_left = end_of_time - time.time()
 
             if time_left < 0:
+                logging.error("Timeout waiting for expected events")
                 return False
 
             try:
+                logging.info("Waiting for event: %s", expected_events[0])
                 event = self._msg_queue.get(timeout=time_left)
+                logging.info("Received event: %s", event)
                 if expected_events[0] == event:
+                    logging.info("Event was expected, removing from list.")
                     expected_events.pop(0)
             except queue.Empty:
                 return False

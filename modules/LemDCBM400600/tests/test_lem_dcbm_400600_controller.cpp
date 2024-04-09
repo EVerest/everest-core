@@ -302,8 +302,9 @@ TEST_F(LemDCBM400600ControllerTest, test_stop_transaction) {
     auto res = controller.stop_transaction("mock_transaction_id");
 
     // Verify
-    EXPECT_EQ(transaction_request_status_to_string(res.status), "OK");
-    EXPECT_EQ(res.signed_meter_value.value().signed_meter_data, "mock_ocmf_string");
+    ASSERT_EQ(transaction_request_status_to_string(res.status), "OK");
+    ASSERT_TRUE(res.signed_meter_value.has_value());
+    ASSERT_EQ(res.signed_meter_value.value().signed_meter_data, "mock_ocmf_string");
 }
 
 // \brief Test a failed stop transaction with the DCBM returning an invalid response

@@ -138,6 +138,15 @@ boot_module(async ({
       connector_current = -settings_connector_max_import_current;
     }
   });
+
+  setup.provides.powermeter.register.stop_transaction((mod, args) => ({
+    status: 'NOT_SUPPORTED',
+    error: 'DcSupplySimulator does not support stop transaction request.',
+  }));
+  
+  setup.provides.powermeter.register.start_transaction((mod, args) => ({
+    status: 'OK',
+  }));
 }).then((mod) => {
   setInterval(() => {
     mod.provides.main.publish.voltage_current({
