@@ -3,9 +3,6 @@
 #include "evse_managerImpl.hpp"
 #include <utils/date.hpp>
 
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <date/date.h>
 #include <date/tz.h>
 #include <utils/date.hpp>
@@ -88,12 +85,6 @@ void evse_managerImpl::init() {
     }
 }
 
-void evse_managerImpl::set_session_uuid() {
-    if (session_uuid.empty()) {
-        session_uuid = generate_session_uuid();
-    }
-}
-
 void evse_managerImpl::ready() {
 
     // Register callbacks for errors/permanent faults
@@ -101,7 +92,7 @@ void evse_managerImpl::ready() {
         types::evse_manager::SessionEvent se;
 
         se.error = e;
-        se.uuid = session_uuid;
+        se.uuid = mod->charger->get_session_id();
 
         if (prevent_charging) {
             se.event = types::evse_manager::SessionEventEnum::PermanentFault;
@@ -116,7 +107,7 @@ void evse_managerImpl::ready() {
             types::evse_manager::SessionEvent se;
 
             se.error = e;
-            se.uuid = session_uuid;
+            se.uuid = mod->charger->get_session_id();
 
             if (prevent_charging) {
                 se.event = types::evse_manager::SessionEventEnum::PermanentFaultCleared;
@@ -146,11 +137,7 @@ void evse_managerImpl::ready() {
 
     // The module code generates the reservation events and we merely publish them here
     mod->signalReservationEvent.connect([this](types::evse_manager::SessionEvent j) {
-        if (j.event == types::evse_manager::SessionEventEnum::ReservationStart) {
-            set_session_uuid();
-        }
-
-        j.uuid = session_uuid;
+        j.uuid = ""; // Reservation is not part of a session
         publish_session_event(j);
     });
 
@@ -181,9 +168,7 @@ void evse_managerImpl::ready() {
             }
 
             session_started.reason = start_reason;
-
-            set_session_uuid();
-
+            const auto session_uuid = this->mod->charger->get_session_id();
             session_started.logging_path = session_log.startSession(
                 mod->config.logfile_suffix == "session_uuid" ? session_uuid : mod->config.logfile_suffix);
 
@@ -222,6 +207,7 @@ void evse_managerImpl::ready() {
         double energy_import = transaction_started.meter_value.energy_Wh_import.total;
 
         session_log.evse(false, fmt::format("Transaction Started ({} kWh)", energy_import / 1000.));
+        const auto session_uuid = this->mod->charger->get_session_id();
 
         Everest::TelemetryMap telemetry_data = {
             {"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
@@ -262,7 +248,7 @@ void evse_managerImpl::ready() {
             session_log.evse(false, fmt::format("Transaction Finished: {} ({} kWh)",
                                                 types::evse_manager::stop_transaction_reason_to_string(finished_reason),
                                                 energy_import / 1000.));
-
+            const auto session_uuid = this->mod->charger->get_session_id();
             Everest::TelemetryMap telemetry_data = {
                 {"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
                 {"type", "transaction_finished"},
@@ -290,6 +276,7 @@ void evse_managerImpl::ready() {
 
         se.event = e;
 
+        const auto session_uuid = this->mod->charger->get_session_id();
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             types::evse_manager::SessionFinished session_finished;
             session_finished.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
@@ -313,7 +300,6 @@ void evse_managerImpl::ready() {
 
         // Clear UUID after publishing the SessionFinished event
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
-            session_uuid = "";
             this->mod->selected_protocol = "Unknown";
         }
 
@@ -411,10 +397,6 @@ bool evse_managerImpl::handle_resume_charging() {
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
     return mod->charger->cancel_transaction(request);
 };
-
-std::string evse_managerImpl::generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
-}
 
 void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
     mod->updateLocalEnergyLimit(value);

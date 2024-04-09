@@ -112,6 +112,9 @@ public:
     // Call anytime, but mostly used during charging session
     //
 
+    // Returns active session_uuid. Returns empty string if not session is active
+    std::string get_session_id();
+
     // call when in state WaitingForAuthentication
     void authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool deauthorize();
@@ -196,6 +199,7 @@ public:
     std::optional<types::units_signed::SignedMeterValue> get_stop_signed_meter_value();
 
 private:
+    std::string generate_session_uuid();
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
 
@@ -262,6 +266,7 @@ private:
         float max_current_cable{0.};
         bool transaction_active;
         bool session_active;
+        std::string session_uuid{""};
         bool connector_enabled;
         EvseState current_state;
         types::evse_manager::StopTransactionReason last_stop_transaction_reason;
