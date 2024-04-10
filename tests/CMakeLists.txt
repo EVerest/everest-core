@@ -12,3 +12,4 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 
 add_subdirectory(app_handshake)
+add_subdirectory(DIN)
