@@ -20,7 +20,7 @@ cmds:
         false
   get_configuration_key:
     description: >-
-      Gets the response to the requested configuration key containing a list of the values of the requested keys 
+      Gets the response to the requested configuration key containing a list of the values of the requested keys
       and a list of the keys that are unknown
     arguments:
       keys:
@@ -74,12 +74,6 @@ cmds:
         description: Additional information about the occurred security event
         type: string
 vars:
-  charging_schedules:
-    description: >-
-      Object that contains OCPP charging schedules of all connectors. The
-      object contains one composite charging schedule for each connector id starting
-      from connector 0. Connector 0 contains a schedule for the whole charging station.
-    type: object
   is_connected:
     description: Indicates if chargepoint is connected to CSMS
     type: boolean
@@ -93,4 +87,3 @@ vars:
     description: Published when an internal security event occured
     type: object
     $ref: /ocpp#/SecurityEvent
-
