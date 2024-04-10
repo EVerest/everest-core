@@ -79,7 +79,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     }
 
     this->device_model = std::make_unique<DeviceModel>(std::move(device_model_storage));
-    this->device_model->check_integrity();
+    this->device_model->check_integrity(evse_connector_structure);
 
     auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db");
     this->database_handler = std::make_shared<DatabaseHandler>(std::move(database_connection), sql_init_path);
@@ -88,6 +88,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     // Set up the component state manager
     this->component_state_manager = std::make_shared<ComponentStateManager>(
         evse_connector_structure, database_handler, [this](auto evse_id, auto connector_id, auto status) {
+            this->update_dm_availability_state(evse_id, connector_id, status);
             if (this->websocket == nullptr || !this->websocket->is_connected() ||
                 this->registration_status != RegistrationStatusEnum::Accepted) {
                 return false;
@@ -466,6 +467,7 @@ void ChargePoint::on_meter_value(const int32_t evse_id, const MeterValue& meter_
         this->aligned_data_evse0.set_values(meter_value);
     } else {
         this->evses.at(evse_id)->on_meter_value(meter_value);
+        this->update_dm_evse_power(evse_id, meter_value);
     }
 }
 
@@ -3197,6 +3199,41 @@ void ChargePoint::scheduled_check_v2g_certificate_expiration() {
         this->device_model
             ->get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckIntervalSeconds)
             .value_or(12 * 60 * 60)));
+}
+
+void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
+                                               const ConnectorStatusEnum status) {
+    ComponentVariable evse_cv =
+        EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::AvailabilityState);
+    ComponentVariable connector_cv = ConnectorComponentVariables::get_component_variable(
+        evse_id, connector_id, ConnectorComponentVariables::AvailabilityState);
+    if (evse_cv.variable.has_value()) {
+        this->device_model->set_read_only_value(evse_cv.component, evse_cv.variable.value(),
+                                                ocpp::v201::AttributeEnum::Actual,
+                                                conversions::connector_status_enum_to_string(status));
+    }
+    if (connector_cv.variable.has_value()) {
+        this->device_model->set_read_only_value(connector_cv.component, connector_cv.variable.value(),
+                                                ocpp::v201::AttributeEnum::Actual,
+                                                conversions::connector_status_enum_to_string(status));
+    }
+}
+
+void ChargePoint::update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value) {
+    ComponentVariable evse_power_cv =
+        EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::Power);
+
+    if (!evse_power_cv.variable.has_value()) {
+        return;
+    }
+
+    const auto power = utils::get_total_power_active_import(meter_value);
+    if (!power.has_value()) {
+        return;
+    }
+
+    this->device_model->set_read_only_value(evse_power_cv.component, evse_power_cv.variable.value(),
+                                            AttributeEnum::Actual, std::to_string(power.value()));
 }
 
 void ChargePoint::set_cs_operative_status(OperationalStatusEnum new_status, bool persist) {

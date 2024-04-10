@@ -106,9 +106,6 @@ extern const ComponentVariable& TimeOffset;
 extern const ComponentVariable& TimeOffsetNextTransition;
 extern const RequiredComponentVariable& TimeSource;
 extern const ComponentVariable& TimeZone;
-extern const RequiredComponentVariable& ConnectorAvailable;
-extern const RequiredComponentVariable& ConnectorType;
-extern const RequiredComponentVariable& ConnectorSupplyPhases;
 extern const ComponentVariable& CustomImplementationEnabled;
 extern const RequiredComponentVariable& BytesPerMessageGetReport;
 extern const RequiredComponentVariable& BytesPerMessageGetVariables;
@@ -122,10 +119,6 @@ extern const ComponentVariable& DisplayMessageCtrlrAvailable;
 extern const RequiredComponentVariable& NumberOfDisplayMessages;
 extern const RequiredComponentVariable& DisplayMessageSupportedFormats;
 extern const RequiredComponentVariable& DisplayMessageSupportedPriorities;
-extern const ComponentVariable& EVSEAllowReset;
-extern const RequiredComponentVariable& EVSEAvailable;
-extern const RequiredComponentVariable& EVSEPower;
-extern const RequiredComponentVariable& EVSESupplyPhases;
 extern const ComponentVariable& CentralContractValidationAllowed;
 extern const RequiredComponentVariable& ContractValidationOffline;
 extern const ComponentVariable& RequestMeteringReceipt;
@@ -210,8 +203,25 @@ extern const RequiredComponentVariable& StopTxOnInvalidId;
 extern const ComponentVariable& TxBeforeAcceptedEnabled;
 extern const RequiredComponentVariable& TxStartPoint;
 extern const RequiredComponentVariable& TxStopPoint;
-
 } // namespace ControllerComponentVariables
+
+namespace EvseComponentVariables {
+extern const Variable& Available;
+extern const Variable& AvailabilityState;
+extern const Variable& SupplyPhases;
+extern const Variable& AllowReset;
+extern const Variable& Power;
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable);
+} // namespace EvseComponentVariables
+
+namespace ConnectorComponentVariables {
+extern const Variable& Available;
+extern const Variable& AvailabilityState;
+extern const Variable& Type;
+extern const Variable& SupplyPhases;
+ComponentVariable get_component_variable(const int32_t evse_id, const int32_t connector_id, const Variable& variable);
+} // namespace ConnectorComponentVariables
+
 } // namespace v201
 } // namespace ocpp
 

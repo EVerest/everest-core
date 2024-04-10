@@ -183,6 +183,15 @@ ocpp::DateTime align_timestamp(const DateTime timestamp, std::chrono::seconds al
     return rounded_time;
 }
 
+std::optional<float> get_total_power_active_import(const MeterValue& meter_value) {
+    for (const auto& sampled_value : meter_value.sampledValue) {
+        if (sampled_value.measurand == MeasurandEnum::Power_Active_Import and !sampled_value.phase.has_value()) {
+            return sampled_value.value;
+        }
+    }
+    return std::nullopt;
+}
+
 } // namespace utils
 } // namespace v201
 } // namespace ocpp

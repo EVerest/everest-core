@@ -13,11 +13,9 @@ const Component& AuthCacheCtrlr = {"AuthCacheCtrlr"};
 const Component& AuthCtrlr = {"AuthCtrlr"};
 const Component& ChargingStation = {"ChargingStation"};
 const Component& ClockCtrlr = {"ClockCtrlr"};
-const Component& Connector = {"Connector"};
 const Component& CustomizationCtrlr = {"CustomizationCtrlr"};
 const Component& DeviceDataCtrlr = {"DeviceDataCtrlr"};
 const Component& DisplayMessageCtrlr = {"DisplayMessageCtrlr"};
-const Component& EVSE = {"EVSE"};
 const Component& ISO15118Ctrlr = {"ISO15118Ctrlr"};
 const Component& LocalAuthListCtrlr = {"LocalAuthListCtrlr"};
 const Component& MonitoringCtrlr = {"MonitoringCtrlr"};
@@ -525,27 +523,6 @@ const ComponentVariable& TimeZone = {
         "TimeZone",
     }),
 };
-const RequiredComponentVariable& ConnectorAvailable = {
-    ControllerComponents::Connector,
-    std::nullopt,
-    std::optional<Variable>({
-        "Available",
-    }),
-};
-const RequiredComponentVariable& ConnectorType = {
-    ControllerComponents::Connector,
-    std::nullopt,
-    std::optional<Variable>({
-        "ConnectorType",
-    }),
-};
-const RequiredComponentVariable& ConnectorSupplyPhases = {
-    ControllerComponents::Connector,
-    std::nullopt,
-    std::optional<Variable>({
-        "SupplyPhases",
-    }),
-};
 const ComponentVariable& CustomImplementationEnabled = {
     ControllerComponents::CustomizationCtrlr,
     std::nullopt,
@@ -623,34 +600,6 @@ const RequiredComponentVariable& DisplayMessageSupportedPriorities = {
     std::nullopt,
     std::optional<Variable>({
         "SupportedPriorities",
-    }),
-};
-const ComponentVariable& EVSEAllowReset = {
-    ControllerComponents::EVSE,
-    std::nullopt,
-    std::optional<Variable>({
-        "AllowReset",
-    }),
-};
-const RequiredComponentVariable& EVSEAvailable = {
-    ControllerComponents::EVSE,
-    std::nullopt,
-    std::optional<Variable>({
-        "Available",
-    }),
-};
-const RequiredComponentVariable& EVSEPower = {
-    ControllerComponents::EVSE,
-    std::nullopt,
-    std::optional<Variable>({
-        "Power",
-    }),
-};
-const RequiredComponentVariable& EVSESupplyPhases = {
-    ControllerComponents::EVSE,
-    std::nullopt,
-    std::optional<Variable>({
-        "SupplyPhases",
     }),
 };
 const ComponentVariable& CentralContractValidationAllowed = {
@@ -1219,5 +1168,35 @@ const RequiredComponentVariable& TxStopPoint = {
 };
 
 } // namespace ControllerComponentVariables
+
+namespace EvseComponentVariables {
+
+const Variable& Available = {"Available"};
+const Variable& AvailabilityState = {"AvailabilityState"};
+const Variable& SupplyPhases = {"SupplyPhases"};
+const Variable& AllowReset = {"AllowReset"};
+const Variable& Power = {"Power"};
+
+ComponentVariable get_component_variable(const int32_t evse_id, const Variable& variable) {
+    EVSE evse = {evse_id};
+    Component component = {"EVSE", std::nullopt, evse};
+    return {component, std::nullopt, variable};
+}
+} // namespace EvseComponentVariables
+
+namespace ConnectorComponentVariables {
+
+const Variable& Available = {"Available"};
+const Variable& AvailabilityState = {"AvailabilityState"};
+const Variable& Type = {"Type"};
+const Variable& SupplyPhases = {"SupplyPhases"};
+
+ComponentVariable get_component_variable(const int32_t evse_id, const int32_t connector_id, const Variable& variable) {
+    EVSE evse = {evse_id, std::nullopt, connector_id};
+    Component component = {"Connector", std::nullopt, evse};
+    return {component, std::nullopt, variable};
+}
+} // namespace ConnectorComponentVariables
+
 } // namespace v201
 } // namespace ocpp

@@ -207,7 +207,7 @@ public:
 
     /// \brief Check data integrity of the device model provided by the device model data storage:
     /// For "required" variables, assert values exist. Checks might be extended in the future.
-    void check_integrity();
+    void check_integrity(const std::map<int32_t, int32_t>& evse_connector_structure);
 };
 
 } // namespace v201

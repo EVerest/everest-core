@@ -18,6 +18,18 @@ static bool allow_zero(const Component& component, const Variable& variable) {
            component_variable == ControllerComponentVariables::SampledDataTxEndedInterval;
 }
 
+bool allow_set_read_only_value(const Component& component, const Variable& variable,
+                               const AttributeEnum attribute_enum) {
+    if (attribute_enum != AttributeEnum::Actual) {
+        return false;
+    }
+
+    return component == ControllerComponents::AuthCacheCtrlr or component == ControllerComponents::LocalAuthListCtrlr or
+           component == ControllerComponents::OCPPCommCtrlr or component == ControllerComponents::SecurityCtrlr or
+           variable == EvseComponentVariables::AvailabilityState or variable == EvseComponentVariables::Power or
+           variable == ConnectorComponentVariables::AvailabilityState;
+}
+
 bool DeviceModel::component_criteria_match(const Component& component,
                                            const std::vector<ComponentCriterionEnum>& component_criteria) {
     if (component_criteria.empty()) {
@@ -214,11 +226,11 @@ DeviceModel::DeviceModel(std::unique_ptr<DeviceModelStorage> device_model_storag
 SetVariableStatusEnum DeviceModel::set_read_only_value(const Component& component, const Variable& variable,
                                                        const AttributeEnum& attribute_enum, const std::string& value) {
 
-    if (component == ControllerComponents::AuthCacheCtrlr or component == ControllerComponents::LocalAuthListCtrlr or
-        component == ControllerComponents::OCPPCommCtrlr or component == ControllerComponents::SecurityCtrlr) {
+    if (allow_set_read_only_value(component, variable, attribute_enum)) {
         return this->set_value(component, variable, attribute_enum, value, true);
     }
-    throw std::invalid_argument("Not allowed to set read only value for component " + component.name.get());
+    throw std::invalid_argument("Not allowed to set read only value for component " + component.name.get() +
+                                " and variable " + variable.name.get());
 }
 
 std::optional<VariableMetaData> DeviceModel::get_variable_meta_data(const Component& component,
@@ -301,10 +313,54 @@ DeviceModel::get_custom_report_data(const std::optional<std::vector<ComponentVar
     return report_data_vec;
 }
 
-void DeviceModel::check_integrity() {
+void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connector_structure) {
     EVLOG_debug << "Checking integrity of device model in storage";
     try {
         this->storage->check_integrity();
+
+        int32_t nr_evse_components;
+        std::map<int32_t, int32_t> evse_id_nr_connector_components;
+
+        for (const auto& [component, variable_map] : this->device_model) {
+            if (component.name == "EVSE") {
+                nr_evse_components++;
+            } else if (component.name == "Connector") {
+                if (evse_id_nr_connector_components.count(component.evse.value().id)) {
+                    evse_id_nr_connector_components[component.evse.value().id] += 1;
+                } else {
+                    evse_id_nr_connector_components[component.evse.value().id] = 1;
+                }
+            }
+        }
+
+        // check if number of EVSE in the device model matches the configured number
+        if (nr_evse_components != evse_connector_structure.size()) {
+            throw DeviceModelStorageError("Number of EVSE configured in device model is incompatible with number of "
+                                          "configured EVSEs of the ChargePoint");
+        }
+
+        for (const auto [evse_id, nr_of_connectors] : evse_connector_structure) {
+            // check if number of Cpnnectors for this EVSE in the device model matches the configured number
+            if (evse_id_nr_connector_components[evse_id] != nr_of_connectors) {
+                throw DeviceModelStorageError(
+                    "Number of Connectors configured in device model is incompatible with number "
+                    "of configured Connectors of the ChargePoint");
+            }
+
+            // check if all relevant EVSE and Connector components can be found
+            EVSE evse = {evse_id};
+            Component evse_component = {"EVSE", std::nullopt, evse};
+            if (!this->device_model.count(evse_component)) {
+                throw DeviceModelStorageError("Could not find required EVSE component in device model");
+            }
+            for (size_t connector_id = 1; connector_id <= nr_of_connectors; connector_id++) {
+                evse_component.name = "Connector";
+                evse_component.evse.value().connectorId = connector_id;
+                if (!this->device_model.count(evse_component)) {
+                    throw DeviceModelStorageError("Could not find required Connector component in device model");
+                }
+            }
+        }
     } catch (const DeviceModelStorageError& e) {
         EVLOG_error << "Integrity check in Device Model storage failed:" << e.what();
         throw e;

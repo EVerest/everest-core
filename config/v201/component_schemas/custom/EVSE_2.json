@@ -79,6 +79,10 @@
         {
           "type": "Actual",
           "mutability": "ReadOnly"
+        },
+        {
+          "type": "MaxSet",
+          "mutability": "ReadOnly"
         }
       ],
       "description": " kW,The variableCharacteristic maxLimit, that holds the maximum power that this EVSE can provide, is required. The Actual value of the instantaneous (real) power is desired, but not required.",

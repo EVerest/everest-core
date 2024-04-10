@@ -21,7 +21,8 @@ DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
 }
 
 int DeviceModelStorageSqlite::get_component_id(const Component& component_id) {
-    std::string select_query = "SELECT ID FROM COMPONENT WHERE NAME = ? AND INSTANCE IS ?";
+    std::string select_query =
+        "SELECT ID FROM COMPONENT WHERE NAME = ? AND INSTANCE IS ? AND EVSE_ID IS ? AND CONNECTOR_ID IS ?";
     SQLiteStatement select_stmt(this->db, select_query);
 
     select_stmt.bind_text(1, component_id.name.get(), SQLiteString::Transient);
@@ -29,6 +30,16 @@ int DeviceModelStorageSqlite::get_component_id(const Component& component_id) {
         select_stmt.bind_text(2, component_id.instance.value().get(), SQLiteString::Transient);
     } else {
         select_stmt.bind_null(2);
+    }
+    if (component_id.evse.has_value()) {
+        select_stmt.bind_int(3, component_id.evse.value().id);
+        if (component_id.evse.value().connectorId.has_value()) {
+            select_stmt.bind_int(4, component_id.evse.value().connectorId.value());
+        } else {
+            select_stmt.bind_null(4);
+        }
+    } else {
+        select_stmt.bind_null(3);
     }
 
     if (select_stmt.step() == SQLITE_ROW) {

@@ -46,12 +46,6 @@
         "name": "EVSE",
         "evse_id": 1,
         "variables": {
-            "EVSEAvailabilityState": {
-                "variable_name": "AvailabilityState",
-                "attributes": {
-                    "Actual": ""
-                }
-            },
             "EVSEAvailable": {
                 "variable_name": "Available",
                 "attributes": {
@@ -61,7 +55,7 @@
             "EVSEPower": {
                 "variable_name": "Power",
                 "attributes": {
-                    "Actual": 42
+                    "MaxSet": 22000
                 }
             },
             "EVSESupplyPhases": {
@@ -101,12 +95,6 @@
         "name": "EVSE",
         "evse_id": 2,
         "variables": {
-            "EVSEAvailabilityState": {
-                "variable_name": "AvailabilityState",
-                "attributes": {
-                    "Actual": ""
-                }
-            },
             "EVSEAvailable": {
                 "variable_name": "Available",
                 "attributes": {
@@ -116,7 +104,7 @@
             "EVSEPower": {
                 "variable_name": "Power",
                 "attributes": {
-                    "Actual": 42
+                    "MaxSet": 22000
                 }
             },
             "EVSESupplyPhases": {

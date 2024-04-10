@@ -264,6 +264,9 @@ private:
     void init_certificate_expiration_check_timers();
     void scheduled_check_client_certificate_expiration();
     void scheduled_check_v2g_certificate_expiration();
+    void update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
+                                      const ConnectorStatusEnum status);
+    void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 
     /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
     /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
