@@ -23,7 +23,10 @@
 
 namespace ocpp::v201 {
 
+static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
+static const int DEFAULT_PROFILE_ID = 1;
+static const int DEFAULT_STACK_LEVEL = 1;
 
 class ChargepointTestFixtureV201 : public testing::Test {
 protected:
@@ -101,10 +104,10 @@ protected:
     }
 
     ChargingProfile
-    create_tx_profile(ChargingSchedule charging_schedule, std::string transaction_id, int stack_level = 1,
-                      ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute) {
-        auto charging_profile_id = 1;
-        auto charging_profile_purpose = ChargingProfilePurposeEnum::TxProfile;
+    create_charging_profile(int32_t charging_profile_id, ChargingProfilePurposeEnum charging_profile_purpose,
+                            ChargingSchedule charging_schedule, std::string transaction_id,
+                            ChargingProfileKindEnum charging_profile_kind = ChargingProfileKindEnum::Absolute,
+                            int stack_level = DEFAULT_STACK_LEVEL) {
         auto recurrency_kind = RecurrencyKindEnum::Daily;
         std::vector<ChargingSchedule> charging_schedules = {charging_schedule};
         return ChargingProfile{.id = charging_profile_id,
@@ -120,8 +123,8 @@ protected:
     }
 
     ChargingProfile create_tx_profile_with_missing_transaction_id(ChargingSchedule charging_schedule) {
-        auto charging_profile_id = 1;
-        auto stack_level = 1;
+        auto charging_profile_id = DEFAULT_PROFILE_ID;
+        auto stack_level = DEFAULT_STACK_LEVEL;
         auto charging_profile_purpose = ChargingProfilePurposeEnum::TxProfile;
         auto charging_profile_kind = ChargingProfileKindEnum::Absolute;
         auto recurrency_kind = RecurrencyKindEnum::Daily;
@@ -178,42 +181,49 @@ protected:
             std::chrono::seconds(static_cast<int64_t>(1)), std::chrono::seconds(static_cast<int64_t>(1)));
     }
 
+    void install_profile_on_evse(int evse_id, int profile_id) {
+        if (evse_id != STATION_WIDE_ID) {
+            create_evse_with_id(evse_id);
+        }
+        auto existing_profile = create_charging_profile(profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                                        create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+        handler.add_profile(evse_id, existing_profile);
+    }
+
     // Default values used within the tests
     std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
     std::shared_ptr<DatabaseHandler> database_handler;
 
-    const int evse_id = 1;
     bool ignore_no_transaction = true;
-    const int profile_max_stack_level = 1;
-    const int max_charging_profiles_installed = 1;
-    const int charging_schedule_max_periods = 1;
     DeviceModel device_model = create_device_model();
     SmartChargingHandler handler = create_smart_charging_handler();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
 TEST_F(ChargepointTestFixtureV201, K01FR03_IfTxProfileIsMissingTransactionId_ThenProfileIsInvalid) {
-    create_evse_with_id(evse_id);
+    create_evse_with_id(DEFAULT_EVSE_ID);
     auto profile = create_tx_profile_with_missing_transaction_id(create_charge_schedule(ChargingRateUnitEnum::A));
-    auto sut = handler.validate_tx_profile(profile, *evses[evse_id]);
+    auto sut = handler.validate_tx_profile(profile, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileMissingTransactionId));
 }
 
 TEST_F(ChargepointTestFixtureV201, K01FR16_IfTxProfileHasEvseIdNotGreaterThanZero_ThenProfileIsInvalid) {
-    auto wrong_evse_id = 0;
-    create_evse_with_id(0);
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+    auto wrong_evse_id = STATION_WIDE_ID;
+    create_evse_with_id(wrong_evse_id);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid());
     auto sut = handler.validate_tx_profile(profile, *evses[wrong_evse_id]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileEvseIdNotGreaterThanZero));
 }
 
 TEST_F(ChargepointTestFixtureV201, K01FR33_IfTxProfileTransactionIsNotOnEvse_ThenProfileIsInvalid) {
-    create_evse_with_id(evse_id);
-    open_evse_transaction(evse_id, "wrong transaction id");
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), uuid());
-    auto sut = handler.validate_tx_profile(profile, *evses[evse_id]);
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    open_evse_transaction(DEFAULT_EVSE_ID, "wrong transaction id");
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+    auto sut = handler.validate_tx_profile(profile, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileTransactionNotOnEvse));
 }
@@ -223,71 +233,81 @@ TEST_F(ChargepointTestFixtureV201, K01FR09_IfTxProfileEvseHasNoActiveTransaction
     auto meter_start = MeterValue();
     auto id_token = IdToken();
     auto date_time = ocpp::DateTime("2024-01-17T17:00:00");
-    create_evse_with_id(evse_id);
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), uuid());
-    auto sut = handler.validate_tx_profile(profile, *evses[evse_id]);
+    create_evse_with_id(DEFAULT_EVSE_ID);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+    auto sut = handler.validate_tx_profile(profile, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileEvseHasNoActiveTransaction));
 }
 
 TEST_F(ChargepointTestFixtureV201,
        K01FR06_IfTxProfileHasSameTransactionAndStackLevelAsAnotherTxProfile_ThenProfileIsInvalid) {
-    create_evse_with_id(evse_id);
+    create_evse_with_id(DEFAULT_EVSE_ID);
     std::string transaction_id = uuid();
-    open_evse_transaction(evse_id, transaction_id);
+    open_evse_transaction(DEFAULT_EVSE_ID, transaction_id);
 
     auto same_stack_level = 42;
-    auto profile_1 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), transaction_id, same_stack_level);
-    auto profile_2 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), transaction_id, same_stack_level);
-    handler.add_profile(profile_2);
-    auto sut = handler.validate_tx_profile(profile_1, *evses[evse_id]);
+    auto profile_1 = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), transaction_id,
+                                             ChargingProfileKindEnum::Absolute, same_stack_level);
+    auto profile_2 = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), transaction_id,
+                                             ChargingProfileKindEnum::Absolute, same_stack_level);
+    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    auto sut = handler.validate_tx_profile(profile_1, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileConflictingStackLevel));
 }
 
 TEST_F(ChargepointTestFixtureV201,
        K01FR06_IfTxProfileHasDifferentTransactionButSameStackLevelAsAnotherTxProfile_ThenProfileIsValid) {
-    create_evse_with_id(evse_id);
+    create_evse_with_id(DEFAULT_EVSE_ID);
     std::string transaction_id = uuid();
     std::string different_transaction_id = uuid();
-    open_evse_transaction(evse_id, transaction_id);
+    open_evse_transaction(DEFAULT_EVSE_ID, transaction_id);
 
     auto same_stack_level = 42;
-    auto profile_1 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), transaction_id, same_stack_level);
-    auto profile_2 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), different_transaction_id, same_stack_level);
-    handler.add_profile(profile_2);
-    auto sut = handler.validate_tx_profile(profile_1, *evses[evse_id]);
+    auto profile_1 = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), transaction_id,
+                                             ChargingProfileKindEnum::Absolute, same_stack_level);
+    auto profile_2 = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), different_transaction_id,
+                                             ChargingProfileKindEnum::Absolute, same_stack_level);
+    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    auto sut = handler.validate_tx_profile(profile_1, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
 
 TEST_F(ChargepointTestFixtureV201,
        K01FR06_IfTxProfileHasSameTransactionButDifferentStackLevelAsAnotherTxProfile_ThenProfileIsValid) {
-    create_evse_with_id(evse_id);
+    create_evse_with_id(DEFAULT_EVSE_ID);
     std::string same_transaction_id = uuid();
-    open_evse_transaction(evse_id, same_transaction_id);
+    open_evse_transaction(DEFAULT_EVSE_ID, same_transaction_id);
 
     auto stack_level_1 = 42;
     auto stack_level_2 = 43;
-    auto profile_1 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), same_transaction_id, stack_level_1);
-    auto profile_2 =
-        create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), same_transaction_id, stack_level_2);
-    handler.add_profile(profile_2);
-    auto sut = handler.validate_tx_profile(profile_1, *evses[evse_id]);
+
+    auto profile_1 = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), same_transaction_id,
+                                             ChargingProfileKindEnum::Absolute, stack_level_1);
+    auto profile_2 = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
+                                             create_charge_schedule(ChargingRateUnitEnum::A), same_transaction_id,
+                                             ChargingProfileKindEnum::Absolute, stack_level_2);
+
+    handler.add_profile(DEFAULT_EVSE_ID, profile_2);
+    auto sut = handler.validate_tx_profile(profile_1, *evses[DEFAULT_EVSE_ID]);
 
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
 
 TEST_F(ChargepointTestFixtureV201, K01FR19_NumberPhasesOtherThan1AndPhaseToUseSet_ThenProfileInvalid) {
     auto periods = create_charging_schedule_periods_with_phases(0, 0, 1);
-    auto profile = create_tx_profile(
-        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(), 1,
-        ChargingProfileKindEnum::Relative);
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(),
+        ChargingProfileKindEnum::Absolute, 1);
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -295,7 +315,8 @@ TEST_F(ChargepointTestFixtureV201, K01FR19_NumberPhasesOtherThan1AndPhaseToUseSe
 }
 
 TEST_F(ChargepointTestFixtureV201, K01_IfChargingSchedulePeriodsAreMissing_ThenProfileIsInvalid) {
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A), uuid());
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid());
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -304,7 +325,8 @@ TEST_F(ChargepointTestFixtureV201, K01_IfChargingSchedulePeriodsAreMissing_ThenP
 
 TEST_F(ChargepointTestFixtureV201, K01FR31_IfStartPeriodOfFirstChargingSchedulePeriodIsNotZero_ThenProfileIsInvalid) {
     auto periods = create_charging_schedule_periods(1);
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -313,7 +335,8 @@ TEST_F(ChargepointTestFixtureV201, K01FR31_IfStartPeriodOfFirstChargingScheduleP
 
 TEST_F(ChargepointTestFixtureV201, K01FR35_IfChargingSchedulePeriodsAreNotInChonologicalOrder_ThenProfileIsInvalid) {
     auto periods = create_charging_schedule_periods({0, 2, 1});
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid());
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -323,8 +346,9 @@ TEST_F(ChargepointTestFixtureV201, K01FR35_IfChargingSchedulePeriodsAreNotInChon
 TEST_F(ChargepointTestFixtureV201,
        K01FR40_IfChargingProfileKindIsAbsoluteAndStartScheduleDoesNotExist_ThenProfileIsInvalid) {
     auto periods = create_charging_schedule_periods(0);
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(), 1,
-                                     ChargingProfileKindEnum::Absolute);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(),
+                                           ChargingProfileKindEnum::Absolute, 1);
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -334,8 +358,9 @@ TEST_F(ChargepointTestFixtureV201,
 TEST_F(ChargepointTestFixtureV201,
        K01FR40_IfChargingProfileKindIsRecurringAndStartScheduleDoesNotExist_ThenProfileIsInvalid) {
     auto periods = create_charging_schedule_periods(0);
-    auto profile = create_tx_profile(create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(), 1,
-                                     ChargingProfileKindEnum::Recurring);
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A, periods), uuid(),
+                                           ChargingProfileKindEnum::Recurring, 1);
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -345,9 +370,10 @@ TEST_F(ChargepointTestFixtureV201,
 TEST_F(ChargepointTestFixtureV201,
        K01FR41_IfChargingProfileKindIsRelativeAndStartScheduleDoesExist_ThenProfileIsInvalid) {
     auto periods = create_charging_schedule_periods(0);
-    auto profile = create_tx_profile(
-        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(), 1,
-        ChargingProfileKindEnum::Relative);
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), uuid(),
+        ChargingProfileKindEnum::Relative, 1);
 
     auto sut = handler.validate_profile_schedules(profile);
 
@@ -362,6 +388,96 @@ TEST_F(ChargepointTestFixtureV201, K01FR28_WhenEvseDoesNotExistThenReject) {
 TEST_F(ChargepointTestFixtureV201, K01FR28_WhenEvseDoesExistThenAccept) {
     create_evse_with_id(DEFAULT_EVSE_ID);
     auto sut = handler.validate_evse_exists(DEFAULT_EVSE_ID);
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+}
+
+/*
+ * 0 - For K01.FR.52, we return DuplicateTxDefaultProfileFound if an existing profile is on an EVSE,
+ *  and a new profile with the same stack level and different profile ID will be associated with EVSE ID = 0.
+ * 1 - For K01.FR.53, we return DuplicateTxDefaultProfileFound if an existing profile is on an EVSE ID = 0,
+ *  and a new profile with the same stack level and different profile ID will be associated with an EVSE.
+ * 2-7 - We return Valid for any other case, such as using the same EVSE or using the same profile ID.
+ */
+class ChargepointTestFixtureV201_FR52
+    : public ChargepointTestFixtureV201,
+      public ::testing::WithParamInterface<std::tuple<int, int, ProfileValidationResultEnum>> {};
+
+INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_FR52, ChargepointTestFixtureV201_FR52,
+                         testing::Values(std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL,
+                                                         ProfileValidationResultEnum::DuplicateTxDefaultProfileFound),
+                                         std::make_tuple(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL,
+                                                         ProfileValidationResultEnum::Valid),
+                                         std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL + 1,
+                                                         ProfileValidationResultEnum::Valid)));
+
+TEST_P(ChargepointTestFixtureV201_FR52, K01FR52_TxDefaultProfileValidationV201Tests) {
+    auto [added_profile_id, added_stack_level, expected] = GetParam();
+    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+
+    auto profile = create_charging_profile(added_profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, added_stack_level);
+    auto sut = handler.validate_tx_default_profile(profile, STATION_WIDE_ID);
+
+    EXPECT_THAT(sut, testing::Eq(expected));
+}
+
+class ChargepointTestFixtureV201_FR53
+    : public ChargepointTestFixtureV201,
+      public ::testing::WithParamInterface<std::tuple<int, int, ProfileValidationResultEnum>> {};
+
+INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_FR53, ChargepointTestFixtureV201_FR53,
+                         testing::Values(std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL,
+                                                         ProfileValidationResultEnum::DuplicateTxDefaultProfileFound),
+                                         std::make_tuple(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL,
+                                                         ProfileValidationResultEnum::Valid),
+                                         std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL + 1,
+                                                         ProfileValidationResultEnum::Valid)));
+
+TEST_P(ChargepointTestFixtureV201_FR53, K01FR53_TxDefaultProfileValidationV201Tests) {
+    auto [added_profile_id, added_stack_level, expected] = GetParam();
+    install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    create_evse_with_id(DEFAULT_EVSE_ID);
+
+    auto profile = create_charging_profile(added_profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, added_stack_level);
+    auto sut = handler.validate_tx_default_profile(profile, DEFAULT_EVSE_ID);
+
+    EXPECT_THAT(sut, testing::Eq(expected));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR52_TxDefaultProfileValidIfAppliedToWholeSystemAgain) {
+    install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    auto sut = handler.validate_tx_default_profile(profile, STATION_WIDE_ID);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR53_TxDefaultProfileValidIfAppliedToExistingEvseAgain) {
+    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    auto sut = handler.validate_tx_default_profile(profile, DEFAULT_EVSE_ID);
+
+    EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
+}
+
+TEST_F(ChargepointTestFixtureV201, K01FR53_TxDefaultProfileValidIfAppliedToDifferentEvse) {
+    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    create_evse_with_id(DEFAULT_EVSE_ID + 1);
+
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A), uuid(),
+                                           ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL);
+    auto sut = handler.validate_tx_default_profile(profile, DEFAULT_EVSE_ID + 1);
+
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::Valid));
 }
 

@@ -4,8 +4,10 @@
 #include "everest/logging.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/enums.hpp"
+#include "ocpp/v201/evse.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/transaction.hpp"
+#include <iterator>
 #include <memory>
 #include <ocpp/v201/smart_charging.hpp>
 
@@ -13,12 +15,28 @@ using namespace std::chrono;
 
 namespace ocpp::v201 {
 
+const int32_t STATION_WIDE_ID = 0;
+
 SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses) : evses(evses) {
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_evse_exists(int32_t evse_id) const {
     return evses.find(evse_id) == evses.end() ? ProfileValidationResultEnum::EvseDoesNotExist
                                               : ProfileValidationResultEnum::Valid;
+}
+
+ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(const ChargingProfile& profile,
+                                                                              int32_t evse_id) const {
+    auto profiles = evse_id == 0 ? get_evse_specific_tx_default_profiles() : get_station_wide_tx_default_profiles();
+    for (auto candidate : profiles) {
+        if (candidate.stackLevel == profile.stackLevel) {
+            if (candidate.id != profile.id) {
+                return ProfileValidationResultEnum::DuplicateTxDefaultProfileFound;
+            }
+        }
+    }
+
+    return ProfileValidationResultEnum::Valid;
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile,
@@ -41,8 +59,12 @@ ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const Char
         return ProfileValidationResultEnum::TxProfileTransactionNotOnEvse;
     }
 
-    auto conflicts_with = [&profile](const ChargingProfile& candidate) {
-        return candidate.transactionId == profile.transactionId && candidate.stackLevel == profile.stackLevel;
+    auto conflicts_with = [&profile](const std::pair<int32_t, std::vector<ChargingProfile>>& candidate) {
+        return std::any_of(candidate.second.begin(), candidate.second.end(),
+                           [&profile](const ChargingProfile& candidateProfile) {
+                               return candidateProfile.transactionId == profile.transactionId &&
+                                      candidateProfile.stackLevel == profile.stackLevel;
+                           });
     };
     if (std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with)) {
         return ProfileValidationResultEnum::TxProfileConflictingStackLevel;
@@ -102,8 +124,36 @@ ProfileValidationResultEnum SmartChargingHandler::validate_profile_schedules(con
     return ProfileValidationResultEnum::Valid;
 }
 
-void SmartChargingHandler::add_profile(const ChargingProfile& profile) {
-    charging_profiles.push_back(profile);
+void SmartChargingHandler::add_profile(int32_t evse_id, ChargingProfile& profile) {
+    if (STATION_WIDE_ID == evse_id) {
+        station_wide_charging_profiles.push_back(profile);
+    } else {
+        charging_profiles[evse_id].push_back(profile);
+    }
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
+    std::vector<ChargingProfile> evse_specific_tx_default_profiles;
+
+    for (auto evse_profile_pair : charging_profiles) {
+        for (auto profile : evse_profile_pair.second)
+            if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
+                evse_specific_tx_default_profiles.push_back(profile);
+            }
+    }
+
+    return evse_specific_tx_default_profiles;
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_profiles() const {
+    std::vector<ChargingProfile> station_wide_tx_default_profiles;
+    for (auto profile : station_wide_charging_profiles) {
+        if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
+            station_wide_tx_default_profiles.push_back(profile);
+        }
+    }
+
+    return station_wide_tx_default_profiles;
 }
 
 } // namespace ocpp::v201
