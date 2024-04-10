@@ -46,4 +46,5 @@ services:
       - node-red-data:/data
     depends_on:
       - mqtt-server
-    network_mode: "host"
+    ports:
+      - 1880:1880 

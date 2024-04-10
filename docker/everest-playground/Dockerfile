@@ -8,6 +8,12 @@ ARG USER_UID=1000
 # create user and add to sudoers
 RUN useradd -ms /bin/bash -u ${USER_UID} -U ${USERNAME}
 
+# Extend the timeout
+RUN mkdir -p /etc/apt/apt.conf.d/ \
+    && echo 'Acquire::http::Timeout "100";' >> /etc/apt/apt.conf.d/99stahp_stahping \
+    && echo 'Acquire::ftp::Timeout "100";' >> /etc/apt/apt.conf.d/99stahp_stahping \
+    && echo 'Acquire::Retries "10";' >> /etc/apt/apt.conf.d/99stahp_stahping
+
 RUN apt-get update \
     && apt-get install --no-install-recommends -y sudo \
     && echo ${USERNAME} ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/${USERNAME} \

@@ -26,6 +26,8 @@ fi
 (cd everest-dev-environment/dependency_manager && python3 -m pip install .)
 edm init main
 (cd everest-utils/ev-dev-tools && python3 -m pip install .)
+(cd everest-utils/everest-testing && python3 -m pip install .)
+(cd Josev && python3 -m pip install -r requirements.txt)
 mkdir -p everest-core/build
 cd everest-core/build
 echo ""
