@@ -827,8 +827,6 @@ void OCPP201::process_disabled(const int32_t evse_id, const int32_t connector_id
 void OCPP201::process_authorized(const int32_t evse_id, const int32_t connector_id,
                                  const types::evse_manager::SessionEvent& session_event) {
     // currently handled as part of SessionStarted and TransactionStarted events
-    const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::AUTHORIZED);
-    this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
 }
 
 void OCPP201::process_deauthorized(const int32_t evse_id, const int32_t connector_id,
