@@ -56,6 +56,56 @@ ocpp::v201::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp
     }
 }
 
+ocpp::v201::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataTransferRequest request) {
+    ocpp::v201::DataTransferRequest ocpp_request;
+    ocpp_request.vendorId = request.vendor_id;
+    if (request.message_id.has_value()) {
+        ocpp_request.messageId = request.message_id.value();
+    }
+    if (request.data.has_value()) {
+        try {
+            ocpp_request.data = json::parse(request.data.value());
+        } catch (const json::exception& e) {
+            EVLOG_error << "Parsing of data transfer request data json failed because: "
+                        << "(" << e.what() << ")";
+        }
+    }
+    if (request.custom_data.has_value()) {
+        auto custom_data = request.custom_data.value();
+        try {
+            json custom_data_json = json::parse(custom_data.data);
+            if (not custom_data_json.contains("vendorId")) {
+                EVLOG_warning
+                    << "DataTransferRequest custom_data.data does not contain vendorId, automatically adding it";
+                custom_data_json["vendorId"] = custom_data.vendor_id;
+            }
+            ocpp_request.customData = custom_data_json;
+        } catch (const json::exception& e) {
+            EVLOG_error << "Parsing of data transfer request custom_data json failed because: "
+                        << "(" << e.what() << ")";
+        }
+    }
+    return ocpp_request;
+}
+
+ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::DataTransferResponse response) {
+    ocpp::v201::DataTransferResponse ocpp_response;
+    ocpp_response.status = conversions::to_ocpp_data_transfer_status_enum(response.status);
+    if (response.data.has_value()) {
+        ocpp_response.data = json::parse(response.data.value());
+    }
+    if (response.custom_data.has_value()) {
+        auto custom_data = response.custom_data.value();
+        json custom_data_json = json::parse(custom_data.data);
+        if (not custom_data_json.contains("vendorId")) {
+            EVLOG_warning << "DataTransferResponse custom_data.data does not contain vendorId, automatically adding it";
+            custom_data_json["vendorId"] = custom_data.vendor_id;
+        }
+        ocpp_response.customData = custom_data_json;
+    }
+    return ocpp_response;
+}
+
 ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
                                                const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
                                                const std::optional<ocpp::v201::PhaseEnum> phase) {
@@ -832,6 +882,37 @@ types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v201::Data
     default:
         return types::ocpp::DataTransferStatus::UnknownVendorId;
     }
+}
+
+types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v201::DataTransferRequest request) {
+    types::ocpp::DataTransferRequest data_transfer_request;
+    data_transfer_request.vendor_id = request.vendorId.get();
+    if (request.messageId.has_value()) {
+        data_transfer_request.message_id = request.messageId.value().get();
+    }
+    if (request.data.has_value()) {
+        data_transfer_request.data = request.data.value().dump();
+    }
+    if (request.customData.has_value()) {
+        auto ocpp_custom_data = request.customData.value();
+        types::ocpp::CustomData custom_data{ocpp_custom_data.at("vendorId"), ocpp_custom_data.dump()};
+        data_transfer_request.custom_data = custom_data;
+    }
+    return data_transfer_request;
+}
+
+types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v201::DataTransferResponse response) {
+    types::ocpp::DataTransferResponse everest_response;
+    everest_response.status = conversions::to_everest_data_transfer_status(response.status);
+    if (response.data.has_value()) {
+        everest_response.data = response.data.value().dump();
+    }
+    if (response.customData.has_value()) {
+        auto ocpp_custom_data = response.customData.value();
+        types::ocpp::CustomData custom_data{ocpp_custom_data.at("vendorId"), ocpp_custom_data.dump()};
+        everest_response.custom_data = ocpp_custom_data;
+    }
+    return everest_response;
 }
 
 types::authorization::ValidationResult to_everest_validation_result(const ocpp::v201::AuthorizeResponse& response) {

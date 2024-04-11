@@ -24,6 +24,12 @@ ocpp::v201::FirmwareStatusEnum to_ocpp_firmware_status_enum(const types::system:
 /// \brief Converts a given types::ocpp::DataTransferStatus \p status to a ocpp::v201::DataTransferStatusEnum.
 ocpp::v201::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp::DataTransferStatus status);
 
+/// \brief Converts a given types::ocpp::DataTransferRequest \p status to a ocpp::v201::DataTransferRequest.
+ocpp::v201::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataTransferRequest request);
+
+/// \brief Converts a given types::ocpp::DataTransferResponse \p status to a ocpp::v201::DataTransferResponse.
+ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::DataTransferResponse response);
+
 /// \brief Converts the provided parameters to an ocpp::v201::SampledValue.
 ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
                                                const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
@@ -128,6 +134,12 @@ to_everest_iso15118_charger_status(const ocpp::v201::Iso15118EVCertificateStatus
 
 /// \brief Converts a given ocpp::v201::DataTransferStatusEnum \p status to a types::ocpp::DataTransferStatus.
 types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v201::DataTransferStatusEnum status);
+
+/// \brief Converts a given ocpp::v201::DataTransferRequest \p status to a types::ocpp::DataTransferRequest.
+types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v201::DataTransferRequest request);
+
+/// \brief Converts a given ocpp::v201::DataTransferResponse \p status to a types::ocpp::DataTransferResponse.
+types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v201::DataTransferResponse response);
 
 /// \brief Converts a given ocpp::v201::AuthorizeResponse \p response to a types::authorization::ValidationResult.
 types::authorization::ValidationResult to_everest_validation_result(const ocpp::v201::AuthorizeResponse& response);
