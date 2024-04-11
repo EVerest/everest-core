@@ -364,17 +364,24 @@ bool SmartChargingHandler::validate_profile(
     } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
         return true;
     } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
-        if (connector_id != 0) {
-            if (ignore_no_transaction or
-                (this->connectors.at(connector_id)->transaction != nullptr and
-                 this->connectors.at(connector_id)->transaction->get_transaction_id() == profile.transactionId)) {
-                return true;
-            } else {
-                EVLOG_info << "INVALID PROFILE - transaction_id doesnt match for purpose TxProfile";
-                return false;
-            }
-        } else {
+        if (connector_id == 0) {
             EVLOG_info << "INVALID PROFILE - connector_id != 0 or no active transaction at this connector";
+            return false;
+        }
+
+        if (!profile.transactionId.has_value() and ignore_no_transaction) {
+            return true;
+        }
+
+        // transactionId is present so we need to check if a transaction exists
+        if (this->connectors.at(connector_id)->transaction == nullptr) {
+            EVLOG_info << "INVALID PROFILE - No active transaction at connector";
+            return false;
+        }
+
+        // check if the transactionId matches the active transaction
+        if (this->connectors.at(connector_id)->transaction->get_transaction_id() != profile.transactionId) {
+            EVLOG_info << "INVALID PROFILE - transaction_id doesnt match for purpose TxProfile";
             return false;
         }
     }
