@@ -16,6 +16,9 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
     ErrorHandlingTest.cpp
     EventQueueTest.cpp
     ../ErrorHandling.cpp
+    IECStateMachineTest.cpp
+    ../IECStateMachine.cpp
+    ../backtrace.cpp
 )
 
 target_compile_definitions(${TEST_TARGET_NAME} PRIVATE
