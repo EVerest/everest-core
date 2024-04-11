@@ -253,7 +253,7 @@ static int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, v
             if (owner not_eq nullptr) {
                 return data->get_owner()->process_callback(wsi, static_cast<int>(reason), user, in, len);
             } else {
-                EVLOG_error << "callback_minimal called, but data->owner is nullptr";
+                EVLOG_warning << "callback_minimal called, but data->owner is nullptr. Reason: " << reason;
             }
         }
     }
@@ -413,7 +413,7 @@ void WebsocketTlsTPM::client_loop() {
     local_data->bind_thread(std::this_thread::get_id());
 
     // lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG | LLL_PARSER | LLL_HEADER | LLL_EXT |
-    //                      LLL_CLIENT | LLL_LATENCY | LLL_THREAD | LLL_USER, nullptr);
+    //                          LLL_CLIENT | LLL_LATENCY | LLL_THREAD | LLL_USER, nullptr);
     lws_set_log_level(LLL_USER | LLL_ERR | LLL_WARN | LLL_NOTICE, nullptr);
 
     lws_context_creation_info info;
@@ -503,10 +503,14 @@ void WebsocketTlsTPM::client_loop() {
     if (this->connection_options.security_profile == 2 || this->connection_options.security_profile == 3) {
         ssl_connection = LCCSCF_USE_SSL;
 
+        // Skip server hostname check
+        if (this->connection_options.verify_csms_common_name == false) {
+            ssl_connection |= LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
+        }
+
         // TODO: Completely remove after test
         // ssl_connection |= LCCSCF_ALLOW_SELFSIGNED;
         // ssl_connection |= LCCSCF_ALLOW_INSECURE;
-        // ssl_connection |= LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
         // ssl_connection |= LCCSCF_ALLOW_EXPIRED;
     }
 
@@ -707,6 +711,10 @@ void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::s
     conn_data.reset();
 
     this->m_is_connected = false;
+
+    // Notify any message senders that are waiting, since we can't send messages any more
+    msg_send_cv.notify_all();
+
     std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
     closing.detach();
 }
@@ -729,6 +737,9 @@ void WebsocketTlsTPM::on_conn_close() {
     this->m_is_connected = false;
     this->disconnected_callback();
     this->cancel_reconnect_timer();
+
+    // Notify any message senders that are waiting, since we can't send messages any more
+    msg_send_cv.notify_all();
 
     std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
     closing.detach();
@@ -935,12 +946,24 @@ void WebsocketTlsTPM::request_write() {
 }
 
 void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg) {
+    if (this->m_is_connected == false) {
+        EVLOG_warning << "Trying to poll message without being connected!";
+        return;
+    }
+
     std::shared_ptr<ConnectionData> local_data = conn_data;
+
     if (local_data != nullptr) {
         auto cd_tid = local_data->get_lws_thread_id();
 
         if (std::this_thread::get_id() == cd_tid) {
             EVLOG_AND_THROW(std::runtime_error("Deadlock detected, polling send from client lws thread!"));
+        }
+
+        // If we are interupted or finalized
+        if (local_data->is_interupted() || local_data->get_state() == EConnectionState::FINALIZED) {
+            EVLOG_warning << "Trying to poll message to interrupted/finalized state!";
+            return;
         }
     }
 
