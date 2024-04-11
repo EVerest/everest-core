@@ -114,7 +114,16 @@ types::powermeter::Powermeter get_meter_value(const types::evse_manager::Session
                event_type == types::evse_manager::SessionEventEnum::ChargingResumed or
                event_type == types::evse_manager::SessionEventEnum::ChargingPausedEV or
                event_type == types::evse_manager::SessionEventEnum::ChargingPausedEVSE) {
+        if (!session_event.charging_state_changed_event.has_value()) {
+            throw std::runtime_error("SessionEvent does not contain charging_state_changed_event context");
+        }
         return session_event.charging_state_changed_event.value().meter_value;
+    } else if (event_type == types::evse_manager::SessionEventEnum::Authorized or
+               event_type == types::evse_manager::SessionEventEnum::Deauthorized) {
+        if (!session_event.authorization_event.has_value()) {
+            throw std::runtime_error("SessionEvent Authorized or Deauthorized does not contain authorization_event context");
+        }
+        return session_event.authorization_event.value().meter_value;
     } else {
         throw std::runtime_error("Could not retrieve meter value from SessionEvent");
     }

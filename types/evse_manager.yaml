@@ -236,6 +236,17 @@ types:
         description: Exported meter value
         type: object
         $ref: /powermeter#/Powermeter
+  AuthorizationEvent:
+    description: Context for authorization event (Authorized or Deauthorized)
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
   ErrorEnum:
     description: >-
       Note this is only kept for compatibility with the legacy error handling and will be removed soon.
@@ -351,6 +362,12 @@ types:
           ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
         type: object
         $ref: /evse_manager#/ChargingStateChangedEvent
+      authorization_event:
+        description: >-
+          Data for Authorization event. Shall be set for the following SessionEventEnums: 
+          Authorized, Deauthorized
+        type: object
+        $ref: /evse_manager#/AuthorizationEvent
       error:
         description: Details on error type
         type: object

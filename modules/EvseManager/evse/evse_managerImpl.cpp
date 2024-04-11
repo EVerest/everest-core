@@ -306,6 +306,11 @@ void evse_managerImpl::ready() {
             types::evse_manager::ChargingStateChangedEvent charging_state_changed_event;
             charging_state_changed_event.meter_value = mod->get_latest_powermeter_data_billing();
             se.charging_state_changed_event = charging_state_changed_event;
+        } else if (e == types::evse_manager::SessionEventEnum::Authorized or
+                   e == types::evse_manager::SessionEventEnum::Deauthorized) {
+            types::evse_manager::AuthorizationEvent authorization_event;
+            authorization_event.meter_value = mod->get_latest_powermeter_data_billing();
+            se.authorization_event = authorization_event;
         }
 
         se.uuid = session_uuid;
