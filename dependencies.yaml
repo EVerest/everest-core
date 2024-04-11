@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.10.1
+  git_tag: v0.11.0
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
@@ -14,10 +14,6 @@ libmodbus:
   git: https://github.com/EVerest/libmodbus.git
   git_tag: v0.3.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
-libsunspec:
-  git: https://github.com/EVerest/libsunspec.git
-  git_tag: v0.2.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSUNSPEC"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
@@ -33,7 +29,7 @@ libtimer:
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git
-  git_tag: 486cd8b
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBSLAC"
 libfsm:
   git: https://github.com/EVerest/libfsm.git
@@ -46,10 +42,18 @@ libcurl:
   git_tag: curl-8_4_0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
+# EvseSecurity
+# This has to appear before libocpp in this file since it is also a direct dependency of libocpp
+# and would otherwise be overwritten by the version used there
+libevse-security:
+  git: https://github.com/EVerest/libevse-security.git
+  git_tag: v0.5.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 86adda6
+  git_tag: v0.10.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -75,15 +79,21 @@ everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.2.1
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
-# evse-security, since this is a direct dependency of libocpp it will get overwritten by the version set there
-# setting it here can be misleading since it does not affect the version being used
-libevse-security:
-  git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.4.3
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
+
 # unit testing
 gtest:
   # GoogleTest now follows the Abseil Live at Head philosophy. We recommend updating to the latest commit in the main branch as often as possible.
   git: https://github.com/google/googletest.git
   git_tag: release-1.12.1
+  cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+sqlite_cpp:
+  git: https://github.com/SRombauts/SQLiteCpp.git
+  git_tag: 3.3.1
+  options:
+  - SQLITECPP_RUN_CPPLINT OFF
+  - SQLITECPP_RUN_CPPCHECK OFF
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
+catch2:
+  git: https://github.com/catchorg/Catch2.git
+  git_tag: v3.4.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"

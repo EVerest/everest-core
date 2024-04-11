@@ -80,43 +80,67 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
-    if (event == Event::Enabled) {
+    // using switch since some code analysis tools can detect missing cases
+    // (when new events are added)
+    switch (event) {
+    case Event::Enabled:
         this->state = State::Unplugged;
-    } else if (event == Event::Disabled) {
+        break;
+    case Event::Disabled:
         this->state = State::Disabled;
-    } else if (event == Event::SessionStarted) {
-        this->state = State::Preparing;
-    } else if (event == Event::ReservationStart) {
-        this->state = State::Reserved;
-    } else if (event == Event::ReservationEnd) {
-        this->state = State::Unplugged;
-    } else if (event == Event::AuthRequired) {
+        break;
+    case Event::AuthRequired:
         this->state = State::AuthRequired;
-    } else if (event == Event::WaitingForEnergy) {
-        this->state = State::WaitingForEnergy;
-    } else if (event == Event::TransactionStarted) {
+        break;
+    case Event::PrepareCharging:
+    case Event::SessionStarted:
+    case Event::TransactionStarted:
         this->state = State::Preparing;
-    } else if (event == Event::ChargingPausedEV) {
+        break;
+    case Event::ChargingResumed:
+    case Event::ChargingStarted:
+        this->state = State::Charging;
+        break;
+    case Event::ChargingPausedEV:
         this->state = State::ChargingPausedEV;
-    } else if (event == Event::ChargingPausedEVSE) {
+        break;
+    case Event::ChargingPausedEVSE:
         this->state = State::ChargingPausedEVSE;
-    } else if (event == Event::ChargingStarted) {
-        this->state = State::Charging;
-    } else if (event == Event::ChargingResumed) {
-        this->state = State::Charging;
-    } else if (event == Event::TransactionFinished) {
+        break;
+    case Event::WaitingForEnergy:
+        this->state = State::WaitingForEnergy;
+        break;
+    case Event::ChargingFinished:
+    case Event::StoppingCharging:
+    case Event::TransactionFinished:
         this->state = State::Finished;
-    } else if (event == Event::SessionFinished) {
+        break;
+    case Event::ReservationStart:
+        this->state = State::Reserved;
+        break;
+    case Event::ReservationEnd:
+    case Event::SessionFinished:
         this->state = State::Unplugged;
-    } else if (event == Event::PermanentFault) {
-        this->active_permanent_faults.push_back(error);
-    } else if (event == Event::Error) {
+        break;
+    case Event::Error:
         this->active_errors.push_back(error);
-    } else if (event == Event::PermanentFaultCleared or event == Event::ErrorCleared) {
-        remove_error_from_list(this->active_permanent_faults, error.type);
-    } else if (event == Event::AllErrorsCleared) {
+        break;
+    case Event::AllErrorsCleared:
         this->active_permanent_faults.clear();
         this->active_errors.clear();
+        break;
+    case Event::PermanentFault:
+        this->active_permanent_faults.push_back(error);
+        break;
+    case Event::ErrorCleared:
+    case Event::PermanentFaultCleared:
+        remove_error_from_list(this->active_permanent_faults, error.type);
+        break;
+    case Event::ReplugStarted:
+    case Event::ReplugFinished:
+    case Event::PluginTimeout:
+    default:
+        break;
     }
 }
 

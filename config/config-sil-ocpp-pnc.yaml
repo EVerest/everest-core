@@ -162,7 +162,7 @@ active_modules:
   evse_security:
     module: EvseSecurity
     config_module:
-      private_key_password: "V2GCaPass2023Valencia"
+      private_key_password: "123456"
   token_provider_1:
     module: DummyTokenProviderManual
   energy_manager:

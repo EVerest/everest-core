@@ -57,6 +57,7 @@ void powermeterImpl::ready() {
 types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transaction(std::string& transaction_id) {
     return {types::powermeter::TransactionRequestStatus::NOT_SUPPORTED,
             {},
+            {},
             "YetiDriver powermeter does not support the stop_transaction command"};
 };
 

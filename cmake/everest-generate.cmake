@@ -134,6 +134,12 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         message(STATUS "Creating rust workspace at ${RUST_WORKSPACE_DIR}")
     endif ()
 
+    if (EVEREST_CORE_BUILD_TESTING)
+        set(EVERESTRS_FEATURE_FLAGS ",features = [\"link_gcov\"]")
+    else()
+        set(EVERESTRS_FEATURE_FLAGS "")
+    endif()
+
     # NOTE (aw): we could also write a small python script, which would do that for us
     add_custom_command(OUTPUT ${RUST_WORKSPACE_CARGO_FILE}
         COMMAND
@@ -149,7 +155,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
         COMMAND
             echo "[workspace.dependencies]" >> Cargo.toml
         COMMAND
-            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" }" >> Cargo.toml
+            echo "everestrs = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_DIR>\" ${EVERESTRS_FEATURE_FLAGS} }" >> Cargo.toml
         COMMAND
             echo "everestrs-build = { path = \"$<TARGET_PROPERTY:everest::everestrs_sys,EVERESTRS_BUILD_DIR>\" }" >> Cargo.toml
         COMMAND
@@ -174,6 +180,7 @@ if (EVEREST_ENABLE_RS_SUPPORT)
             "Build rust modules"
         COMMAND
             ${CMAKE_COMMAND} -E env
+            EVEREST_CORE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_SOURCE_LOCATION="${everest-framework_SOURCE_DIR}"
             EVEREST_RS_FRAMEWORK_BINARY_LOCATION="${everest-framework_BINARY_DIR}"
             ${CARGO_EXECUTABLE} build

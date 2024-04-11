@@ -45,7 +45,7 @@ bool FSMController::signal_simple_event(slac::fsm::evse::Event ev) {
 void FSMController::run() {
     ctx.log_info("Starting the SLAC state machine");
 
-    fsm.reset<slac::fsm::evse::ResetState>(ctx);
+    fsm.reset<slac::fsm::evse::InitState>(ctx);
 
     std::unique_lock<std::mutex> feed_lck(feed_mtx);
 

@@ -28,9 +28,8 @@ EvseSecurity::update_leaf_certificate(const std::string& certificate_chain,
         this->r_security.call_update_leaf_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
 
-ocpp::CertificateValidationResult
-EvseSecurity::verify_certificate(const std::string& certificate_chain,
-                                 const ocpp::CertificateSigningUseEnum& certificate_type) {
+ocpp::CertificateValidationResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
+                                                                   const ocpp::LeafCertificateType& certificate_type) {
     return conversions::to_ocpp(
         this->r_security.call_verify_certificate(certificate_chain, conversions::from_ocpp(certificate_type)));
 }
@@ -53,16 +52,28 @@ EvseSecurity::get_installed_certificates(const std::vector<ocpp::CertificateType
     return result;
 }
 
-std::vector<ocpp::OCSPRequestData> EvseSecurity::get_ocsp_request_data() {
+std::vector<ocpp::OCSPRequestData> EvseSecurity::get_v2g_ocsp_request_data() {
     std::vector<ocpp::OCSPRequestData> result;
 
-    const auto ocsp_request_data = this->r_security.call_get_ocsp_request_data();
+    const auto ocsp_request_data = this->r_security.call_get_v2g_ocsp_request_data();
     for (const auto& ocsp_request_entry : ocsp_request_data.ocsp_request_data_list) {
         result.push_back(conversions::to_ocpp(ocsp_request_entry));
     }
 
     return result;
 }
+
+std::vector<ocpp::OCSPRequestData> EvseSecurity::get_mo_ocsp_request_data(const std::string& certificate_chain) {
+    std::vector<ocpp::OCSPRequestData> result;
+
+    const auto ocsp_request_data = this->r_security.call_get_mo_ocsp_request_data(certificate_chain);
+    for (const auto& ocsp_request_entry : ocsp_request_data.ocsp_request_data_list) {
+        result.push_back(conversions::to_ocpp(ocsp_request_entry));
+    }
+
+    return result;
+}
+
 void EvseSecurity::update_ocsp_cache(const ocpp::CertificateHashDataType& certificate_hash_data,
                                      const std::string& ocsp_response) {
     this->r_security.call_update_ocsp_cache(conversions::from_ocpp(certificate_hash_data), ocsp_response);
@@ -123,14 +134,16 @@ ocpp::CaCertificateType to_ocpp(types::evse_security::CaCertificateType other) {
     }
 }
 
-ocpp::CertificateSigningUseEnum to_ocpp(types::evse_security::LeafCertificateType other) {
+ocpp::LeafCertificateType to_ocpp(types::evse_security::LeafCertificateType other) {
     switch (other) {
     case types::evse_security::LeafCertificateType::CSMS:
-        return ocpp::CertificateSigningUseEnum::ChargingStationCertificate;
+        return ocpp::LeafCertificateType::CSMS;
     case types::evse_security::LeafCertificateType::V2G:
-        return ocpp::CertificateSigningUseEnum::V2GCertificate;
+        return ocpp::LeafCertificateType::V2G;
     case types::evse_security::LeafCertificateType::MF:
-        return ocpp::CertificateSigningUseEnum::ManufacturerCertificate;
+        return ocpp::LeafCertificateType::MF;
+    case types::evse_security::LeafCertificateType::MO:
+        return ocpp::LeafCertificateType::MO;
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::LeafCertificateType to ocpp::CertificateSigningUseEnum");
@@ -299,6 +312,22 @@ types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseE
         return types::evse_security::LeafCertificateType::V2G;
     case ocpp::CertificateSigningUseEnum::ManufacturerCertificate:
         return types::evse_security::LeafCertificateType::MF;
+    default:
+        throw std::runtime_error(
+            "Could not convert ocpp::CertificateSigningUseEnum to types::evse_security::LeafCertificateType");
+    }
+}
+
+types::evse_security::LeafCertificateType from_ocpp(ocpp::LeafCertificateType other) {
+    switch (other) {
+    case ocpp::LeafCertificateType::CSMS:
+        return types::evse_security::LeafCertificateType::CSMS;
+    case ocpp::LeafCertificateType::V2G:
+        return types::evse_security::LeafCertificateType::V2G;
+    case ocpp::LeafCertificateType::MF:
+        return types::evse_security::LeafCertificateType::MF;
+    case ocpp::LeafCertificateType::MO:
+        return types::evse_security::LeafCertificateType::MO;
     default:
         throw std::runtime_error(
             "Could not convert ocpp::CertificateSigningUseEnum to types::evse_security::LeafCertificateType");

@@ -210,7 +210,6 @@ impl TransactionStartResponse {
     {
         Self {
             error: Some(format!("{error:?}")),
-            signed_meter_value: None,
             status: TransactionRequestStatus::UNEXPECTED_ERROR,
             transaction_max_stop_time: None,
             transaction_min_stop_time: None,
@@ -228,6 +227,7 @@ impl TransactionStopResponse {
     {
         Self {
             error: Some(format!("{error:?}")),
+            start_signed_meter_value: None,
             signed_meter_value: None,
             status: TransactionRequestStatus::UNEXPECTED_ERROR,
         }
@@ -355,7 +355,9 @@ impl From<&ModuleConfig> for OcmfData {
             gateway_identification: sanitize(&value.ocmf_gateway_identification),
             gateway_serial: sanitize(&value.ocmf_gateway_serial),
             gateway_version: sanitize(&value.ocmf_gateway_version),
-            charge_point_identification_type: sanitize(&value.ocmf_charge_point_identification_type),
+            charge_point_identification_type: sanitize(
+                &value.ocmf_charge_point_identification_type,
+            ),
             charge_point_identification: sanitize(&value.ocmf_charge_point_identification),
             ..Default::default()
         }
@@ -694,12 +696,20 @@ impl ReadyState {
         // We can start transaction only in Idle state
         let state = self.read_state()?;
         match state {
-            IskraMaterState::Active
-            | IskraMaterState::Active_after_power_failure
-            | IskraMaterState::Active_after_reset => {
-                log::error!("Unexpected state {state:?}, trying to stop transaction");
+            IskraMaterState::Active | IskraMaterState::Active_after_reset => {
+                log::error!("Unexpected state {state:?}, trying to stop active transaction");
                 self.stop_transaction()?;
             }
+            IskraMaterState::Active_after_power_failure => {
+                // For now, we just cancel any active transaction after a power failure,
+                // but in the future, we might want to handle this differently.
+                log::error!("Unexpected state {state:?}, trying to stop stuck transaction");
+                self.set_time()?;
+                self.write_metadata(&req.evse_id)?;
+                self.stop_transaction()?;
+                log::info!("Stopped stuck transaction");
+            }
+
             IskraMaterState::Idle => {}
             IskraMaterState::Unknown => {
                 log::warn!("Unknown state");
@@ -728,17 +738,8 @@ impl ReadyState {
         )?;
 
         self.check_signature_status()?;
-        let signature = self.read_signature()?;
-        let signed_meter_values = self.read_signed_meter_values()?;
         Ok(TransactionStartResponse {
             error: Option::None,
-            signed_meter_value: Some(SignedMeterValue {
-                signed_meter_data: create_ocmf(signed_meter_values, signature),
-                signing_method: String::new(),
-                encoding_method: "OCMF".to_string(),
-                public_key: self.read_public_key().ok(),
-                timestamp: None,
-            }),
             transaction_min_stop_time: Option::None,
             status: TransactionRequestStatus::OK,
             transaction_max_stop_time: Option::None,
@@ -781,6 +782,9 @@ impl ReadyState {
         let signed_meter_values = self.read_signed_meter_values()?;
         Ok(TransactionStopResponse {
             error: Option::None,
+            // Iskra meter has both start and stop snapshot in one
+            // OCMF dataset. So we don't need to send the start snapshot.
+            start_signed_meter_value: None,
             signed_meter_value: Some(SignedMeterValue {
                 signed_meter_data: create_ocmf(signed_meter_values, signature),
                 signing_method: String::new(),
@@ -1151,7 +1155,10 @@ mod tests {
     /// before proceeding.
     fn ready_state__start_transaction__try_stop() {
         // The values correspond to the three `Active` values of Iskra.
-        for value in [1, 2, 3] {
+        for value in [
+            IskraMaterState::Active as u8,
+            IskraMaterState::Active_after_reset as u8,
+        ] {
             let mut mock = SerialCommunicationHubClientPublisher::default();
             // We expect that this is called twice - once in the start_transaction
             // and once in the stop_transaction.
@@ -1203,5 +1210,81 @@ mod tests {
         for _ in 0..2 {
             assert_eq!(ready_state.read_public_key().unwrap(), expected);
         }
+    }
+
+    #[test]
+    /// Test verifies that when we try to start the transaction and the meter
+    /// is already running a transaction, that we stop the ongoing transaction
+    /// before proceeding.
+    fn ready_state__start_transaction__try_stop_after_power_failure() {
+        let mut mock = SerialCommunicationHubClientPublisher::default();
+        use mockall::Sequence;
+        let mut seq = Sequence::new();
+
+        // First call to read the meter state before starting the transaction
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7000), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![IskraMaterState::Active_after_power_failure as i64]),
+                })
+            });
+
+        // Writes needed to set the time
+        for value in [7054, 7055, 7053, 7071] {
+            mock.expect_modbus_write_single_register()
+                .withf(move |_data, addr, _id| *addr == value as i64)
+                .times(1)
+                .in_sequence(&mut seq)
+                .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        }
+
+        // Writes needed to write metadata
+        mock.expect_modbus_write_multiple_registers()
+            .withf(|_data, addr, _id| *addr == 7100)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        mock.expect_modbus_write_single_register()
+            .withf(|_data, addr, _id| *addr == 7056)
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| Ok(StatusCodeEnum::Success));
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7100), eq(89), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Success,
+                    value: Some(vec![u16::from_be_bytes([b' ', b' ']) as i64; 89]),
+                })
+            });
+
+        // Second call to read the meter state when stopping the transaction
+        mock.expect_modbus_read_holding_registers()
+            .with(eq(7000), eq(1), eq(1234))
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _, _| {
+                Ok(generated::types::serial_comm_hub_requests::Result {
+                    status_code: StatusCodeEnum::Error,
+                    value: Some(vec![IskraMaterState::Idle as i64]),
+                })
+            });
+
+        let ready_state = make_ready_state(mock);
+
+        let _unused = ready_state.start_transaction(TransactionReq {
+            cable_id: 1,
+            client_id: String::new(),
+            evse_id: String::new(),
+            tariff_id: 1,
+            transaction_id: String::new(),
+            user_data: String::new(),
+        });
     }
 }

@@ -10,18 +10,27 @@
 
 #include "Charger.hpp"
 
+#include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
+#include <thread>
+#include <type_traits>
 
 #include <fmt/core.h>
 
+#include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
 
 namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
-                 const types::evse_board_support::Connector_type& connector_type) :
-    bsp(bsp), error_handling(error_handling), connector_type(connector_type) {
+                 const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+                 const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id) :
+    bsp(bsp),
+    error_handling(error_handling),
+    r_powermeter_billing(r_powermeter_billing),
+    connector_type(connector_type),
+    evse_id(evse_id) {
 
 #ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
@@ -53,32 +62,51 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 
     hlc_use_5percent_current_session = false;
 
+    // create thread for processing errors/error clearings
+    std::thread error_thread([this]() {
+        for (;;) {
+            auto events = this->error_handling_event_queue.wait();
+            if (!events.empty()) {
+                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
+                for (auto& event : events) {
+                    switch (event) {
+                    case ErrorHandlingEvents::prevent_charging:
+                        shared_context.error_prevent_charging_flag = true;
+                        break;
+                    case ErrorHandlingEvents::prevent_charging_welded:
+                        shared_context.error_prevent_charging_flag = true;
+                        shared_context.contactor_welded = true;
+                        break;
+                    case ErrorHandlingEvents::all_errors_cleared:
+                        shared_context.error_prevent_charging_flag = false;
+                        shared_context.contactor_welded = false;
+                        break;
+                    default:
+                        EVLOG_error << "ErrorHandlingEvents invalid value: "
+                                    << static_cast<std::underlying_type_t<ErrorHandlingEvents>>(event);
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    error_thread.detach();
+
     // Register callbacks for errors/error clearings
     error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
         if (prevent_charging) {
-            std::thread error_thread([this, e]() {
-                Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_error);
-                shared_context.error_prevent_charging_flag = true;
-                if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
-                    shared_context.contactor_welded = true;
-                }
-            });
-            error_thread.detach();
+            if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
+                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging_welded);
+            } else {
+                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
+            }
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
         signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
-        {
-            std::thread error_thread([this]() {
-                Everest::scoped_lock_timeout lock(state_machine_mutex,
-                                                  Everest::MutexDescription::Charger_signal_error_cleared);
-                shared_context.error_prevent_charging_flag = false;
-                shared_context.contactor_welded = false;
-            });
-            error_thread.detach();
-        }
+        error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
     });
 }
 
@@ -274,7 +302,8 @@ void Charger::run_state_machine() {
 
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
-                    start_transaction();
+                    if (!start_transaction())
+                        break;
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
@@ -355,7 +384,8 @@ void Charger::run_state_machine() {
                 }
             } else if (shared_context.authorized and shared_context.authorized_pnc) {
 
-                start_transaction();
+                if (!start_transaction())
+                    break;
 
                 const EvseState target_state(EvseState::PrepareCharging);
 
@@ -991,6 +1021,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
             signal_hlc_stop_charging();
         } else {
             shared_context.current_state = EvseState::ChargingPausedEVSE;
+            pwm_off();
         }
 
         shared_context.transaction_active = false;
@@ -998,6 +1029,22 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
         if (request.id_tag) {
             shared_context.stop_transaction_id_token = request.id_tag.value();
         }
+
+        for (const auto& meter : r_powermeter_billing) {
+            const auto response =
+                meter->call_stop_transaction(shared_context.stop_transaction_id_token.value().id_token.value);
+            // If we fail to stop the transaction, we ignore since there is no
+            // path to recovery. Its also not clear what to do
+            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+                EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+                break;
+            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+                shared_context.start_signed_meter_value = response.start_signed_meter_value;
+                shared_context.stop_signed_meter_value = response.signed_meter_value;
+                break;
+            }
+        }
+
         signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
         signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
                                           shared_context.stop_transaction_id_token);
@@ -1023,18 +1070,67 @@ void Charger::stop_session() {
     signal_simple_event(types::evse_manager::SessionEventEnum::SessionFinished);
 }
 
-void Charger::start_transaction() {
+bool Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
     shared_context.transaction_active = true;
+
+    const types::powermeter::TransactionReq req{evse_id, "", "", 0, 0, ""};
+    for (const auto& meter : r_powermeter_billing) {
+        const auto response = meter->call_start_transaction(req);
+        // If we want to start the session but the meter fail, we stop the charging since
+        // we can't bill the customer.
+        if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to start a transaction on the power meter " << response.error.value_or("");
+            error_handling->raise_powermeter_transaction_start_failed_error(
+                "Failed to start transaction on the power meter");
+            return false;
+        }
+    }
+
     signal_transaction_started_event(shared_context.id_token);
+    return true;
 }
 
 void Charger::stop_transaction() {
     shared_context.transaction_active = false;
     shared_context.last_stop_transaction_reason = types::evse_manager::StopTransactionReason::EVDisconnected;
+
+    const std::string transaction_id{};
+
+    for (const auto& meter : r_powermeter_billing) {
+        const auto response = meter->call_stop_transaction(transaction_id);
+        // If we fail to stop the transaction, we ignore since there is no
+        // path to recovery. Its also not clear what to do
+        if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+            EVLOG_error << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+            break;
+        } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+            shared_context.start_signed_meter_value = response.start_signed_meter_value;
+            shared_context.stop_signed_meter_value = response.signed_meter_value;
+            break;
+        }
+    }
+
     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
     signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
                                       shared_context.stop_transaction_id_token);
+}
+
+std::optional<types::units_signed::SignedMeterValue>
+Charger::take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& in) {
+    std::optional<types::units_signed::SignedMeterValue> out;
+    std::swap(out, in);
+    return out;
+}
+
+std::optional<types::units_signed::SignedMeterValue> Charger::get_stop_signed_meter_value() {
+    // This is used only inside of the state machine, so we do not need to lock here.
+    return take_signed_meter_data(shared_context.stop_signed_meter_value);
+}
+
+std::optional<types::units_signed::SignedMeterValue> Charger::get_start_signed_meter_value() {
+    // This is used only inside of the state machine, so we do not need to lock here.
+    return take_signed_meter_data(shared_context.start_signed_meter_value);
 }
 
 bool Charger::switch_three_phases_while_charging(bool n) {

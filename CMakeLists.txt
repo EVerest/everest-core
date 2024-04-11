@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.7)
 
 project(everest-core
-    VERSION 2024.2.0
+    VERSION 2024.3.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -83,7 +83,6 @@ if(NOT DISABLE_EDM)
     set(EVEREST_SCHEMA_DIR ${everest-framework_SOURCE_DIR}/schemas)
 else()
     find_package(everest-framework REQUIRED)
-    find_package(everest-sunspec REQUIRED)
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(everest-openv2g REQUIRED)

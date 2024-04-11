@@ -41,9 +41,11 @@ EvseFsmController::EvseFsmController(int evse_fd) :
         {eventfd(0, 0), POLLIN, 0},
     }}) {
 
+    ctx.slac_config.chip_reset.enabled = false;
+
     callbacks.log = [](const std::string& msg) { printf("EVSE log: %s\n", msg.c_str()); };
     callbacks.send_raw_slac = [evse_fd](slac::messages::HomeplugMessage& msg) {
-        write(evse_fd, &msg.get_raw_message(), msg.get_raw_msg_len());
+        write(evse_fd, msg.get_raw_message_ptr(), msg.get_raw_msg_len());
     };
 
     fsm.reset<slac::fsm::evse::ResetState>(ctx);
@@ -78,8 +80,8 @@ void EvseFsmController::run() {
 
         // check for fds
         if (pollfds[0].revents & POLLIN) {
-            auto& raw_payload = ctx.slac_message_payload.get_raw_message();
-            read(pollfds[0].fd, &raw_payload, sizeof(raw_payload));
+            auto raw_msg = ctx.slac_message_payload.get_raw_message_ptr();
+            read(pollfds[0].fd, raw_msg, sizeof(slac::messages::homeplug_message));
             fsm.handle_event(slac::fsm::evse::Event::SLAC_MESSAGE);
         }
 
@@ -117,7 +119,7 @@ EvFsmController::EvFsmController(int ev_fd) {
 
     callbacks.log = [](const std::string& msg) { printf("EV log: %s\n", msg.c_str()); };
     callbacks.send_raw_slac = [ev_fd](slac::messages::HomeplugMessage& msg) {
-        write(ev_fd, &msg.get_raw_message(), msg.get_raw_msg_len());
+        write(ev_fd, msg.get_raw_message_ptr(), msg.get_raw_msg_len());
     };
 
     fsm.reset<slac::fsm::ev::ResetState>(ctx);
@@ -150,8 +152,8 @@ void EvFsmController::run() {
         }
 
         if (pollfds[0].revents & POLLIN) {
-            auto& raw_payload = ctx.slac_message.get_raw_message();
-            read(pollfds[0].fd, &raw_payload, sizeof(raw_payload));
+            auto raw_msg = ctx.slac_message.get_raw_message_ptr();
+            read(pollfds[0].fd, raw_msg, sizeof(slac::messages::homeplug_message));
             fsm.handle_event(slac::fsm::ev::Event::SLAC_MESSAGE);
         }
 

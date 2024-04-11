@@ -96,7 +96,8 @@ void EvseManager::ready() {
 
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
-    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, hw_capabilities.connector_type));
+    charger = std::unique_ptr<Charger>(
+        new Charger(bsp, error_handling, r_powermeter_billing(), hw_capabilities.connector_type, config.evse_id));
 
     if (r_connector_lock.size() > 0) {
         bsp->signal_lock.connect([this]() { r_connector_lock[0]->call_lock(); });
@@ -116,6 +117,10 @@ void EvseManager::ready() {
         }
         if (config.payment_enable_contract) {
             payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
+        }
+        if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+            EVLOG_warning << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
+            payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
         }
         r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
 
@@ -719,6 +724,11 @@ void EvseManager::ready() {
             }
             if (config.payment_enable_contract) {
                 payment_options.push_back(types::iso15118_charger::PaymentOption::Contract);
+            }
+            if (config.payment_enable_eim == false and config.payment_enable_contract == false) {
+                EVLOG_warning
+                    << "Both payment options are disabled! ExternalPayment is nevertheless enabled in this case.";
+                payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
             }
             r_hlc[0]->call_session_setup(payment_options, config.payment_enable_contract);
         }

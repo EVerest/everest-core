@@ -17,6 +17,10 @@
 
 #include "ld-ev.hpp"
 
+#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
+#include <gtest/gtest_prod.h>
+#endif
+
 #include <chrono>
 #include <mutex>
 #include <queue>
@@ -29,76 +33,75 @@
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <sigslot/signal.hpp>
 
+#include "EnumFlags.hpp"
 #include "Timeout.hpp"
 #include "utils/thread.hpp"
 
 namespace module {
 
 // bit field to track which errors are active at the moment. Only tracks errors that stop charging.
+
+enum class BspErrors : std::uint8_t {
+    DiodeFault,
+    VentilationNotAvailable,
+    BrownOut,
+    EnergyManagement,
+    PermanentFault,
+    MREC2GroundFailure,
+    MREC4OverCurrentFailure,
+    MREC5OverVoltage,
+    MREC6UnderVoltage,
+    MREC8EmergencyStop,
+    MREC10InvalidVehicleMode,
+    MREC14PilotFault,
+    MREC15PowerLoss,
+    MREC17EVSEContactorFault,
+    MREC19CableOverTempStop,
+    MREC20PartialInsertion,
+    MREC23ProximityFault,
+    MREC24ConnectorVoltageHigh,
+    MREC25BrokenLatch,
+    MREC26CutCable,
+    VendorError,
+    last = VendorError
+};
+
+enum class EvseManagerErrors : std::uint8_t {
+    MREC4OverCurrentFailure,
+    Internal,
+    PowermeterTransactionStartFailed,
+    last = PowermeterTransactionStartFailed
+};
+
+enum class AcRcdErrors : std::uint8_t {
+    MREC2GroundFailure,
+    VendorError,
+    Selftest,
+    AC,
+    DC,
+    last = DC
+};
+
+enum class ConnectorLockErrors : std::uint8_t {
+    ConnectorLockCapNotCharged,
+    ConnectorLockUnexpectedOpen,
+    ConnectorLockUnexpectedClose,
+    ConnectorLockFailedLock,
+    ConnectorLockFailedUnlock,
+    MREC1ConnectorLockFailure,
+    VendorError,
+    last = VendorError
+};
+
 struct ActiveErrors {
+    AtomicEnumFlags<BspErrors, std::uint32_t> bsp;
+    AtomicEnumFlags<EvseManagerErrors, std::uint8_t> evse_manager;
+    AtomicEnumFlags<AcRcdErrors, std::uint8_t> ac_rcd;
+    AtomicEnumFlags<ConnectorLockErrors, std::uint8_t> connector_lock;
 
-    struct bsp_errors {
-        std::atomic_bool DiodeFault{false};
-        std::atomic_bool VentilationNotAvailable{false};
-        std::atomic_bool BrownOut{false};
-        std::atomic_bool EnergyManagement{false};
-        std::atomic_bool PermanentFault{false};
-        std::atomic_bool MREC2GroundFailure{false};
-        std::atomic_bool MREC4OverCurrentFailure{false};
-        std::atomic_bool MREC5OverVoltage{false};
-        std::atomic_bool MREC6UnderVoltage{false};
-        std::atomic_bool MREC8EmergencyStop{false};
-        std::atomic_bool MREC10InvalidVehicleMode{false};
-        std::atomic_bool MREC14PilotFault{false};
-        std::atomic_bool MREC15PowerLoss{false};
-        std::atomic_bool MREC17EVSEContactorFault{false};
-        std::atomic_bool MREC19CableOverTempStop{false};
-        std::atomic_bool MREC20PartialInsertion{false};
-        std::atomic_bool MREC23ProximityFault{false};
-        std::atomic_bool MREC24ConnectorVoltageHigh{false};
-        std::atomic_bool MREC25BrokenLatch{false};
-        std::atomic_bool MREC26CutCable{false};
-        std::atomic_bool VendorError{false};
-    } bsp;
-
-    struct evse_manager_errors {
-        std::atomic_bool MREC4OverCurrentFailure{false};
-        std::atomic_bool Internal{false};
-        std::atomic_bool PowermeterTransactionStartFailed{false};
-    } evse_manager;
-
-    struct ac_rcd_errors {
-        std::atomic_bool MREC2GroundFailure{false};
-        std::atomic_bool VendorError{false};
-        std::atomic_bool Selftest{false};
-        std::atomic_bool AC{false};
-        std::atomic_bool DC{false};
-    } ac_rcd;
-
-    struct connector_lock_errors {
-        std::atomic_bool ConnectorLockCapNotCharged{false};
-        std::atomic_bool ConnectorLockUnexpectedOpen{false};
-        std::atomic_bool ConnectorLockUnexpectedClose{false};
-        std::atomic_bool ConnectorLockFailedLock{false};
-        std::atomic_bool ConnectorLockFailedUnlock{false};
-        std::atomic_bool MREC1ConnectorLockFailure{false};
-        std::atomic_bool VendorError{false};
-    } connector_lock;
-
-    bool all_cleared() {
-        return not(bsp.DiodeFault or bsp.VentilationNotAvailable or bsp.BrownOut or bsp.EnergyManagement or
-                   bsp.PermanentFault or bsp.MREC2GroundFailure or bsp.MREC4OverCurrentFailure or
-                   bsp.MREC5OverVoltage or bsp.MREC6UnderVoltage or bsp.MREC8EmergencyStop or
-                   bsp.MREC10InvalidVehicleMode or bsp.MREC14PilotFault or bsp.MREC15PowerLoss or
-                   bsp.MREC17EVSEContactorFault or bsp.MREC19CableOverTempStop or bsp.MREC20PartialInsertion or
-                   bsp.MREC23ProximityFault or bsp.MREC24ConnectorVoltageHigh or bsp.MREC25BrokenLatch or
-                   bsp.MREC26CutCable or evse_manager.MREC4OverCurrentFailure or evse_manager.Internal or
-                   evse_manager.PowermeterTransactionStartFailed or ac_rcd.MREC2GroundFailure or ac_rcd.VendorError or
-                   ac_rcd.Selftest or ac_rcd.AC or ac_rcd.DC or connector_lock.ConnectorLockCapNotCharged or
-                   connector_lock.ConnectorLockUnexpectedOpen or connector_lock.ConnectorLockUnexpectedClose or
-                   connector_lock.ConnectorLockFailedLock or connector_lock.ConnectorLockFailedUnlock or
-                   connector_lock.MREC1ConnectorLockFailure or connector_lock.VendorError);
-    }
+    inline bool all_cleared() {
+        return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset();
+    };
 };
 
 class ErrorHandling {
@@ -144,6 +147,13 @@ private:
     bool hlc{false};
 
     ActiveErrors active_errors;
+
+#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
+    FRIEND_TEST(ErrorHandlingTest, modify_error_bsp);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_connector_lock);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_ac_rcd);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_evse_manager);
+#endif
 };
 
 } // namespace module
