@@ -181,7 +181,6 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     this->component_state_manager->trigger_all_effective_availability_changed_callbacks();
     this->boot_notification_req(bootreason);
     this->start_websocket();
-    this->ocsp_updater.start();
     // FIXME(piet): Run state machine with correct initial state
 }
 
@@ -2130,6 +2129,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         this->init_certificate_expiration_check_timers();
         this->update_aligned_data_interval();
         this->component_state_manager->send_status_notification_all_connectors();
+        this->ocsp_updater.start();
 
         if (this->bootreason == BootReasonEnum::RemoteReset) {
             this->security_event_notification_req(
