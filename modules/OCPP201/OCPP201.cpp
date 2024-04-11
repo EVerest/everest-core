@@ -121,7 +121,8 @@ types::powermeter::Powermeter get_meter_value(const types::evse_manager::Session
     } else if (event_type == types::evse_manager::SessionEventEnum::Authorized or
                event_type == types::evse_manager::SessionEventEnum::Deauthorized) {
         if (!session_event.authorization_event.has_value()) {
-            throw std::runtime_error("SessionEvent Authorized or Deauthorized does not contain authorization_event context");
+            throw std::runtime_error(
+                "SessionEvent Authorized or Deauthorized does not contain authorization_event context");
         }
         return session_event.authorization_event.value().meter_value;
     } else {
