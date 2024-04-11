@@ -991,6 +991,9 @@ void ChargePointImpl::message_callback(const std::string& message) {
         case ChargePointConnectionState::Connected: {
             if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
                 this->handleBootNotificationResponse(json_message);
+            } else if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
+                // we dont want to reply to this message
+                this->message_queue->reset_next_message_to_send();
             }
             break;
         }
@@ -998,6 +1001,9 @@ void ChargePointImpl::message_callback(const std::string& message) {
             if (this->registration_status == RegistrationStatus::Rejected) {
                 if (enhanced_message.messageType == MessageType::BootNotificationResponse) {
                     this->handleBootNotificationResponse(json_message);
+                } else if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
+                    // we dont want to reply to this message
+                    this->message_queue->reset_next_message_to_send();
                 }
             }
             break;

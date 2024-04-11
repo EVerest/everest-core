@@ -447,6 +447,12 @@ public:
         MessageQueue(send_callback, config, {}, databaseHandler) {
     }
 
+    /// \brief Resets next message to send. Can be used in situation when we dont want to reply to a CALL message
+    void reset_next_message_to_send() {
+        std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+        this->next_message_to_send.reset();
+    }
+
     void get_transaction_messages_from_db(bool ignore_security_event_notifications = false) {
         std::vector<ocpp::common::DBTransactionMessage> transaction_messages =
             database_handler->get_transaction_messages();
