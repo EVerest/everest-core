@@ -137,6 +137,7 @@ private:
 
     int mqtt_socket_fd{-1};
     int event_fd{-1};
+    int disconnect_event_fd{-1};
 };
 } // namespace Everest
 

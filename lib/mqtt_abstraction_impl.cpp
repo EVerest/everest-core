@@ -49,6 +49,11 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_address,
     this->mqtt_is_connected = false;
 
     this->mqtt_client.publish_response_callback_state = &this->message_queue;
+
+    this->disconnect_event_fd = eventfd(0, 0);
+    if (this->disconnect_event_fd == -1) {
+        throw EverestInternalError("Could not setup eventfd for disconnect event");
+    }
 }
 
 MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_path,
@@ -68,6 +73,11 @@ MQTTAbstractionImpl::MQTTAbstractionImpl(const std::string& mqtt_server_socket_p
     this->mqtt_is_connected = false;
 
     this->mqtt_client.publish_response_callback_state = &this->message_queue;
+
+    this->disconnect_event_fd = eventfd(0, 0);
+    if (this->disconnect_event_fd == -1) {
+        throw EverestInternalError("Could not setup eventfd for disconnect event");
+    }
 }
 
 MQTTAbstractionImpl::~MQTTAbstractionImpl() {
@@ -97,6 +107,7 @@ void MQTTAbstractionImpl::disconnect() {
     mqtt_disconnect(&this->mqtt_client);
     // FIXME(kai): always set connected to false for the moment
     this->mqtt_is_connected = false;
+    eventfd_write(this->disconnect_event_fd, 1);
 }
 
 void MQTTAbstractionImpl::publish(const std::string& topic, const json& json) {
@@ -200,12 +211,19 @@ std::future<void> MQTTAbstractionImpl::spawn_main_loop_thread() {
             while (this->mqtt_is_connected) {
 
                 eventfd_t eventfd_buffer;
-                struct pollfd pollfds[2] = {{this->mqtt_socket_fd, POLLIN, 0}, {this->event_fd, POLLIN, 0}};
-                auto retval = ::poll(pollfds, 2, mqtt_poll_timeout_ms);
+                const int nfds = 3;
+                struct pollfd pollfds[nfds] = {{this->mqtt_socket_fd, POLLIN, 0},
+                                               {this->event_fd, POLLIN, 0},
+                                               {this->disconnect_event_fd, POLLIN, 0}};
+                auto retval = ::poll(pollfds, nfds, mqtt_poll_timeout_ms);
 
                 if (retval >= 0) {
                     // data available to send (the notifier writes, we should be ready to read)
                     if (retval > 0) {
+                        // check for disconnect event
+                        if (pollfds[2].revents & POLLIN) {
+                            break;
+                        }
                         // check for write notification and reset it
                         if (pollfds[1].revents & POLLIN) {
                             // FIXME (aw): check for failure
