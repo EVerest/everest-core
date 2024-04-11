@@ -137,7 +137,7 @@ void evse_managerImpl::ready() {
 
     // The module code generates the reservation events and we merely publish them here
     mod->signalReservationEvent.connect([this](types::evse_manager::SessionEvent j) {
-        j.uuid = ""; // Reservation is not part of a session
+        j.uuid.clear(); // Reservation is not part of a session
         publish_session_event(j);
     });
 

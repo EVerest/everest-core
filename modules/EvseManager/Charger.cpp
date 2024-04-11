@@ -24,6 +24,10 @@
 #include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
 
+std::string generate_session_uuid() {
+    return boost::uuids::to_string(boost::uuids::random_generator()());
+}
+
 namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
@@ -1117,10 +1121,6 @@ void Charger::stop_transaction() {
                                       shared_context.stop_transaction_id_token);
 }
 
-std::string Charger::generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
-}
-
 std::optional<types::units_signed::SignedMeterValue>
 Charger::take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& in) {
     std::optional<types::units_signed::SignedMeterValue> out;
@@ -1203,7 +1203,7 @@ bool Charger::get_authorized_eim_ready_for_hlc() {
     return (auth and ready);
 }
 
-std::string Charger::get_session_id() {
+std::string Charger::get_session_id() const {
     return shared_context.session_uuid;
 }
 
