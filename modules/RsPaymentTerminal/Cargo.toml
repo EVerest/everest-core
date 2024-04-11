@@ -1,0 +1,22 @@
+[package]
+name = "RsPaymentTerminal"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+everestrs = { workspace=true  }
+anyhow = "1.0.75"
+zvt_feig_terminal = { git="https://github.com/Everest/zvt.git", rev="843ecf44ab592216bd4a483a07543c329d2baee1" }
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "net", "sync"] }
+log = "0.4.20"
+env_logger = "0.10.0"
+mockall = { version = "0.12.1", optional = true }
+mockall_double = { version = "0.3.1", optional = true}
+
+[build-dependencies]
+everestrs-build = { workspace=true }
+
+[features]
+default = ["mockall", "mockall_double"]
