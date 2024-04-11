@@ -1,16 +1,15 @@
 description: Payment terminal module for Feig devices.
 config:
   ip:
-    description: IP Address of Feig terminal.
-    default: "0.0.0.0"
+    description: IP Address of Feig terminal, like "192.168.0.1"
     type: string
   feig_serial:
-    description: Serial of Feig terminal.
-    default: "ABCD123"
+    description: >-
+      Serial of Feig terminal. Typically a seven characters long string like
+      "ABCD123".
     type: string
   terminal_id:
     description: Payment terminal ID.
-    default: "12345678"
     type: string
   currency:
     description: Currency in ISO 4217 format.
@@ -41,7 +40,6 @@ config:
   password:
     description: Password for the Feig terminal.
     type: integer
-    default: 0
 requires:
     session:
       interface: session_cost
