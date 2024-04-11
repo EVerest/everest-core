@@ -3,6 +3,7 @@
 #include "evse_board_supportIntfStub.hpp"
 #include <EventQueue.hpp>
 #include <IECStateMachine.hpp>
+#include <backtrace.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
@@ -99,7 +100,9 @@ struct BspStubTimeout : public BspStub {
 };
 
 TEST(IECStateMachine, init_subscribe) {
+#ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
+#endif
 
     BspStubTimeout bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
@@ -202,7 +205,9 @@ TEST(IECStateMachine, deadlock_test) {
      *
      * check the timer runs for 6 seconds
      */
+#ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
+#endif
 
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
@@ -264,7 +269,9 @@ TEST(IECStateMachine, deadlock_fix) {
      * and wanting to stop the timer
      * 61851-1 state C starts the timer (from X2)
      */
+#ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
+#endif
 
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
