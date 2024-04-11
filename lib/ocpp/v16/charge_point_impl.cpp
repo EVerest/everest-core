@@ -820,6 +820,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     this->websocket->connect();
     this->boot_notification();
     this->load_charging_profiles();
+    this->call_set_connection_timeout();
 
     this->stopped = false;
     return true;
