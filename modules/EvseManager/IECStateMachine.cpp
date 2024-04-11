@@ -11,7 +11,9 @@
 namespace module {
 
 // helper type for visitor
-template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template <class... Ts> struct overloaded : Ts... {
+    using Ts::operator()...;
+};
 template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 enum class TimerControl : std::uint8_t {
