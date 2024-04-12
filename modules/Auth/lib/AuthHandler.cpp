@@ -604,6 +604,9 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.reserved = false;
         break;
+    default:
+        // ignoring other events on purpose
+        break;
     }
     this->connectors.at(connector_id)->event_mutex.unlock();
 }
