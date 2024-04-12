@@ -135,6 +135,7 @@ impl ProvidedIdToken {
             id_token: IdToken {
                 value: id_token,
                 r#type: IdTokenType::Local,
+                additional_info: None
             },
             authorization_type,
             certificate: None,
