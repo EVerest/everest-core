@@ -274,19 +274,24 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_ocpp_transaction_event(ocpp_transaction_event);
     };
 
+    callbacks.transaction_event_response_callback =
+        [this](const ocpp::v201::TransactionEventRequest& transaction_event,
+               const ocpp::v201::TransactionEventResponse& transaction_event_response) {
+            auto ocpp_transaction_event = conversions::to_everest_ocpp_transaction_event(transaction_event);
+            auto ocpp_transaction_event_response =
+                conversions::to_everest_transaction_event_response(transaction_event_response);
+            ocpp_transaction_event_response.original_transaction_event = ocpp_transaction_event;
+            this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
+        };
+
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
-            types::ocpp::DataTransferRequest data_transfer_request;
-            data_transfer_request.vendor_id = request.vendorId.get();
-            if (request.messageId.has_value()) {
-                data_transfer_request.message_id = request.messageId.value().get();
-            }
-            data_transfer_request.data = request.data;
+            types::ocpp::DataTransferRequest data_transfer_request =
+                conversions::to_everest_data_transfer_request(request);
             types::ocpp::DataTransferResponse data_transfer_response =
                 this->r_data_transfer.at(0)->call_data_transfer(data_transfer_request);
-            ocpp::v201::DataTransferResponse response;
-            response.status = conversions::to_ocpp_data_transfer_status_enum(data_transfer_response.status);
-            response.data = data_transfer_response.data;
+            ocpp::v201::DataTransferResponse response =
+                conversions::to_ocpp_data_transfer_response(data_transfer_response);
             return response;
         };
     }
