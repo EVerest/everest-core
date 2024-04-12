@@ -1061,12 +1061,14 @@ void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
     shared_context.session_uuid = generate_session_uuid();
+    std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
+        provided_id_token = shared_context.id_token;
     } else {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::EVConnected;
     }
-    signal_session_started_event(shared_context.last_start_session_reason);
+    signal_session_started_event(shared_context.last_start_session_reason, provided_id_token);
 }
 
 void Charger::stop_session() {
@@ -1210,14 +1212,15 @@ std::string Charger::get_session_id() const {
 void Charger::authorize(bool a, const types::authorization::ProvidedIdToken& token) {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_authorize);
     if (a) {
+        shared_context.id_token = token;
         // First user interaction was auth? Then start session already here and not at plug in
         if (not shared_context.session_active) {
             start_session(true);
         }
+        signal_simple_event(types::evse_manager::SessionEventEnum::Authorized);
         shared_context.authorized = true;
         shared_context.authorized_pnc =
             token.authorization_type == types::authorization::AuthorizationType::PlugAndCharge;
-        shared_context.id_token = token;
     } else {
         if (shared_context.session_active) {
             stop_session();
@@ -1232,6 +1235,7 @@ bool Charger::deauthorize() {
 }
 
 bool Charger::deauthorize_internal() {
+    signal_simple_event(types::evse_manager::SessionEventEnum::Deauthorized);
     if (shared_context.session_active) {
         auto s = shared_context.current_state;
 

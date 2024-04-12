@@ -142,14 +142,15 @@ void evse_managerImpl::ready() {
     });
 
     mod->charger->signal_session_started_event.connect(
-        [this](const types::evse_manager::StartSessionReason& start_reason) {
+        [this](const types::evse_manager::StartSessionReason& start_reason,
+               const std::optional<types::authorization::ProvidedIdToken>& provided_id_token) {
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::SessionStarted;
             this->mod->selected_protocol = "IEC61851-1";
             types::evse_manager::SessionStarted session_started;
 
-            session_started.timestamp =
-                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+            session_started.meter_value = mod->get_latest_powermeter_data_billing();
 
             if (mod->config.disable_authentication &&
                 start_reason == types::evse_manager::StartSessionReason::EVConnected) {
@@ -169,6 +170,12 @@ void evse_managerImpl::ready() {
 
             session_started.reason = start_reason;
             const auto session_uuid = this->mod->charger->get_session_id();
+            session_started.meter_value = mod->get_latest_powermeter_data_billing();
+            session_started.id_tag = provided_id_token;
+            if (mod->is_reserved()) {
+                session_started.reservation_id = mod->get_reservation_id();
+            }
+
             session_started.logging_path = session_log.startSession(
                 mod->config.logfile_suffix == "session_uuid" ? session_uuid : mod->config.logfile_suffix);
 
@@ -193,8 +200,7 @@ void evse_managerImpl::ready() {
         types::evse_manager::SessionEvent se;
         se.event = types::evse_manager::SessionEventEnum::TransactionStarted;
         types::evse_manager::TransactionStarted transaction_started;
-        transaction_started.timestamp =
-            date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+        se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
@@ -235,8 +241,7 @@ void evse_managerImpl::ready() {
             this->mod->selected_protocol = "Unknown";
             types::evse_manager::TransactionFinished transaction_finished;
 
-            transaction_finished.timestamp =
-                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
             transaction_finished.meter_value = mod->get_latest_powermeter_data_billing();
 
@@ -275,23 +280,33 @@ void evse_managerImpl::ready() {
         types::evse_manager::SessionEvent se;
 
         se.event = e;
+        se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
         const auto session_uuid = this->mod->charger->get_session_id();
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
-            types::evse_manager::SessionFinished session_finished;
-            session_finished.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
             session_log.evse(false, fmt::format("Session Finished"));
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
                                     {"type", "session_finished"},
                                     {"session_id", session_uuid}});
-            se.session_finished = session_finished;
         } else if (e == types::evse_manager::SessionEventEnum::Enabled or
                    e == types::evse_manager::SessionEventEnum::Disabled) {
             if (connector_status_changed) {
                 se.connector_id = 1;
             }
+        } else if (e == types::evse_manager::SessionEventEnum::ChargingPausedEV or
+                   e == types::evse_manager::SessionEventEnum::ChargingPausedEVSE or
+                   e == types::evse_manager::SessionEventEnum::ChargingStarted or
+                   e == types::evse_manager::SessionEventEnum::ChargingResumed) {
+            types::evse_manager::ChargingStateChangedEvent charging_state_changed_event;
+            charging_state_changed_event.meter_value = mod->get_latest_powermeter_data_billing();
+            se.charging_state_changed_event = charging_state_changed_event;
+        } else if (e == types::evse_manager::SessionEventEnum::Authorized or
+                   e == types::evse_manager::SessionEventEnum::Deauthorized) {
+            types::evse_manager::AuthorizationEvent authorization_event;
+            authorization_event.meter_value = mod->get_latest_powermeter_data_billing();
+            se.authorization_event = authorization_event;
         }
 
         se.uuid = session_uuid;
