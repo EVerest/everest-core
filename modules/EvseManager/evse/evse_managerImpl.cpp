@@ -149,8 +149,7 @@ void evse_managerImpl::ready() {
             this->mod->selected_protocol = "IEC61851-1";
             types::evse_manager::SessionStarted session_started;
 
-            se.timestamp =
-                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
             session_started.meter_value = mod->get_latest_powermeter_data_billing();
 
             if (mod->config.disable_authentication &&
@@ -201,8 +200,7 @@ void evse_managerImpl::ready() {
         types::evse_manager::SessionEvent se;
         se.event = types::evse_manager::SessionEventEnum::TransactionStarted;
         types::evse_manager::TransactionStarted transaction_started;
-        se.timestamp =
-            date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+        se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
@@ -243,8 +241,7 @@ void evse_managerImpl::ready() {
             this->mod->selected_protocol = "Unknown";
             types::evse_manager::TransactionFinished transaction_finished;
 
-            se.timestamp =
-                date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+            se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
             transaction_finished.meter_value = mod->get_latest_powermeter_data_billing();
 
@@ -283,8 +280,7 @@ void evse_managerImpl::ready() {
         types::evse_manager::SessionEvent se;
 
         se.event = e;
-        se.timestamp =
-            date::format("%FT%TZ", std::chrono::time_point_cast<std::chrono::milliseconds>(date::utc_clock::now()));
+        se.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
 
         const auto session_uuid = this->mod->charger->get_session_id();
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
