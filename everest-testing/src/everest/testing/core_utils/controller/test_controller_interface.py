@@ -60,7 +60,7 @@ class TestController():
         """
         raise NotImplementedError()
 
-    def rcd_error(self):
+    def didoe_fail(self):
         """
         Produces an RCD Error.
         """

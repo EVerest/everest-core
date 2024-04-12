@@ -76,10 +76,10 @@ class EverestTestController(TestController):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_api/ocpp/cmd/disconnect", "off")
 
-    def rcd_error(self, connector_id=1):
+    def diode_fail(self, connector_id=1):
         self._mqtt_client.publish(
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
-            "sleep 1;rcd_current 10.3;sleep 10;rcd_current 0.1;unplug")
+            "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000;unplug")
 
     def publish(self, topic, payload):
         self._mqtt_client.publish(topic, payload)
