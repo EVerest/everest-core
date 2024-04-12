@@ -2,6 +2,79 @@ description: >-
   OCPP types (OCPP1.6 and OCPP2.0.1). The types are based more on the type definitions of OCPP201,
   as these offer more flexibility and are easier to transfer to OCPP1.6 than vice versa.
 types:
+  CustomData:
+    description: Custom data extension
+    required:
+      - vendor_id
+      - data
+    type: object
+    properties:
+      vendor_id:
+        description: Vendor Id to identify the customization, this is also included in the data field and only reproduced for convenience
+        type: string
+      data:
+        description: Custom json data object encoded as string
+        type: string
+  ChargingSchedulePeriod:
+    description: >-
+      Element providing information on a charging schedule period.
+    type: object
+    required:
+      - start_period
+      - limit
+      - stack_level
+    properties:
+      start_period:
+        type: integer
+      limit:
+        type: number
+      number_phases:
+        type: integer
+      stack_level:
+        type: integer
+  ChargingSchedule:
+    description: >-
+      Element providing information on an OCPP charging schedule.
+    type: object
+    required:
+      - connector
+      - charging_rate_unit
+      - charging_schedule_period
+    properties:
+      evse:
+        description: The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
+        type: integer
+        minimum: 0
+      connector:
+        type: integer
+        minimum: 0
+      charging_rate_unit:
+        type: string
+      charging_schedule_period:
+        type: array
+        items:
+          description: schedule periods
+          type: object
+          $ref: /ocpp#/ChargingSchedulePeriod
+      duration:
+        type: integer
+      start_schedule:
+        type: string
+      min_charging_rate:
+        type: number
+  ChargingSchedules:
+    description: schedules for connectors
+    type: object
+    required:
+      - schedules
+    properties:
+      schedules:
+        description: array of schedules
+        type: array
+        items:
+          description: schedule for a connector
+          type: object
+          $ref: /ocpp#/ChargingSchedule
   OcppTransactionEvent:
     description: >-
       Element providing information on OCPP transactions.
@@ -40,6 +113,48 @@ types:
       - Started
       - Updated
       - Ended
+  MessageContent:
+    description: Contains message details
+    required:
+      - format
+      - content
+    type: object
+    properties:
+      format:
+        type: string
+        $ref: /ocpp#/MessageFormat
+      language:
+        type: string
+      content:
+        type: string
+  MessageFormat:
+    description: Format of the message to be displayed
+    type: string
+    enum:
+      - ASCII
+      - HTML
+      - URI
+      - UTF8
+  OcppTransactionEventResponse:
+    description: Information that can be returned with a OCPP TransactionEventResponse
+    type: object
+    required:
+      - original_transaction_event
+    properties:
+      original_transaction_event:
+        description: The original transaction event that promted this response
+        type: object
+        $ref: /ocpp#/OcppTransactionEvent
+      total_cost:
+        description: Running or total cost
+        type: number
+      charging_priority:
+        description: Priority from -9 to 9 for smart charging, higher values mean higher priority
+        type: integer
+      personal_message:
+        description: Personal message
+        type: object
+        $ref: /ocpp#/MessageContent
   DataTransferStatus:
     description: Data Transfer Status enum
     type: string
@@ -64,6 +179,10 @@ types:
       data:
         description: Data provided by this data transfer
         type: string
+      custom_data:
+        description: Custom data extension
+        type: object
+        $ref: /ocpp#/CustomData
   DataTransferResponse:
     description: Type for data transfer response provided by OCPP
     type: object
@@ -78,6 +197,10 @@ types:
       data:
         description: Data provided by this data transfer
         type: string
+      custom_data:
+        description: Custom data extension
+        type: object
+        $ref: /ocpp#/CustomData
   KeyValue:
     description: Type for a key value pair
     type: object

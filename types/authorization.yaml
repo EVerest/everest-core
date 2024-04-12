@@ -32,6 +32,24 @@ types:
       - Processing
       - Accepted
       - Rejected
+  CustomIdToken:
+    description: Type for a custom id token with a free-form type
+    type: object
+    additionalProperties: false
+    required:
+      - value
+      - type
+    properties:
+      value:
+        description: Arbitrary value of the IdToken
+        type: string
+        minLength: 0
+        maxLength: 36
+      type:
+        description: Custom type of the token
+        type: string
+        minLength: 0
+        maxLength: 50
   IdToken:
     description: Type for an id token
     type: object
@@ -44,12 +62,18 @@ types:
         description: >-
           Arbitrary value of the IdToken: This has to be printable case insensitive ascii
         type: string
-        minLength: 1
+        minLength: 0
         maxLength: 36
       type:
         description: Type of the token
         type: string
         $ref: /authorization#/IdTokenType
+      additional_info:
+        description: A list of additional custom id tokens than can be used for providing additional information for validation
+        type: array
+        items:
+          type: object
+          $ref: /authorization#/CustomIdToken
   ProvidedIdToken:
     description: Type for IdToken provided by auth token providers. Contains additional information about the IdToken like the source and purpose
     type: object

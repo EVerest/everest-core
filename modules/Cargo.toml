@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
    "RsIskraMeter",
+   "RsPaymentTerminal",
    "rust_examples/RsExample",
    "rust_examples/RsExampleUser",
 ]

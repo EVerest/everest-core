@@ -16,10 +16,9 @@ void ocpp_data_transferImpl::ready() {
 
 types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
-    auto ocpp_response = mod->charge_point->data_transfer_req(request.vendor_id, request.message_id, request.data);
-    types::ocpp::DataTransferResponse response;
-    response.status = conversions::to_everest_data_transfer_status(ocpp_response.status);
-    response.data = ocpp_response.data;
+    ocpp::v201::DataTransferRequest ocpp_request = conversions::to_ocpp_data_transfer_request(request);
+    auto ocpp_response = mod->charge_point->data_transfer_req(ocpp_request);
+    types::ocpp::DataTransferResponse response = conversions::to_everest_data_transfer_response(ocpp_response);
     return response;
 }
 

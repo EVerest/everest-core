@@ -69,7 +69,6 @@ types:
           description: One chunk of the session cost
           type: object
           $ref: /session_cost#/SessionCostChunk  
-        default: []
       status:
         description: >-
           Session status. Session can be running or finished. Costs of the

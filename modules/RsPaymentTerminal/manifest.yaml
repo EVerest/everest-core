@@ -1,0 +1,59 @@
+description: Payment terminal module for Feig devices.
+config:
+  ip:
+    description: IP Address of Feig terminal, like "192.168.0.1"
+    type: string
+  feig_serial:
+    description: >-
+      Serial of Feig terminal. Typically a seven characters long string like
+      "ABCD123".
+    type: string
+  terminal_id:
+    description: Payment terminal ID.
+    type: string
+  currency:
+    description: Currency in ISO 4217 format.
+    default: 978
+    type: integer
+  pre_authorization_amount:
+    description: Pre authentication amount in Cents.
+    default: 2500
+    type: integer
+  read_card_timeout:
+    description: The time (is seconds) to wait for a card to be read.
+    default: 2
+    type: integer
+  read_card_debounce:
+    description: >-
+      The debounce time (in seconds) after a successful card reading. The
+      parameter prevents re-reading the same card.
+    default: 2
+    type: integer
+  transactions_max_num:
+    description: >-
+      The maximum number of concurrent transactions. The Feig terminal will
+      reject a transaction if it would exceed the maximum number of concurrent
+      transactions - in this case you need to finish a transaction to allow a
+      new one.
+    default: 1
+    type: integer
+  password:
+    description: Password for the Feig terminal.
+    type: integer
+requires:
+    session:
+      interface: session_cost
+    bank_session_token:
+      interface: bank_session_token_provider
+provides:
+  token_provider:
+    interface: auth_token_provider
+    description: Provides an authentication token from the Feig terminal.
+  bank_transaction_summary:
+    interface: bank_transaction_summary_provider
+    description: Provides details of an already processed payment
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - embedded-team@qwello.eu
