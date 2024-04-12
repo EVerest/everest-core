@@ -72,7 +72,6 @@ types:
         description: A list of additional custom id tokens than can be used for providing additional information for validation
         type: array
         items:
-          minimum: 0
           type: object
           $ref: /authorization#/CustomIdToken
   ProvidedIdToken:
