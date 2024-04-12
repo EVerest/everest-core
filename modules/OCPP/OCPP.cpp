@@ -14,7 +14,7 @@
 namespace module {
 
 const std::string CERTS_SUB_DIR = "certs";
-const std::string INIT_SQL = "init.sql";
+const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string CHARGE_X_MREC_VENDOR_ID = "https://chargex.inl.gov";
 
 namespace fs = std::filesystem;
@@ -427,7 +427,7 @@ void OCPP::init() {
         create_empty_user_config(user_config_path);
     }
 
-    const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
+    const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRTATIONS;
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
             fs::create_directory(this->config.MessageLogPath);

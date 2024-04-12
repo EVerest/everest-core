@@ -10,7 +10,7 @@
 #include <evse_security_ocpp.hpp>
 namespace module {
 
-const std::string INIT_SQL = "init_core.sql";
+const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string CERTS_DIR = "certs";
 
 namespace fs = std::filesystem;
@@ -291,7 +291,7 @@ void OCPP201::ready() {
         };
     }
 
-    const auto sql_init_path = this->ocpp_share_path / INIT_SQL;
+    const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRTATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
