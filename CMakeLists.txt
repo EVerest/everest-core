@@ -57,6 +57,10 @@ ev_setup_python_executable(
     PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
 )
 
+add_compile_options(-Wall)
+# generated code has functions often not used
+add_compile_options(-Wno-unused-function)
+
 # Already include CTest here to allow it to find tests defined in subdirectories like lib and modules
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
