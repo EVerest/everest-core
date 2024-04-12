@@ -251,7 +251,8 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
             return parse_property(prop_type, def_prop, depends_on)
         else:
             # if not defined, propably any
-            return ('std::string', False)
+            print(f"{prop_name} has no type defined")
+            return ('json', False)
     if prop['type'] == 'string':
         if 'enum' in prop:
             prop_type = stringcase.capitalcase(prop_name)

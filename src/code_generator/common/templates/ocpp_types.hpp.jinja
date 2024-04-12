@@ -22,6 +22,9 @@ namespace {{namespace}} {
 {%- for type in parsed_types %}
 {% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
 
+{% if type.name == "CustomData" and namespace == "v201" %}
+    using CustomData = nlohmann::json;
+{% else %}
 struct {{type.name}} {
 {% for property in type.properties %}
     {{ 'std::optional<' if not property.required -}}
@@ -30,6 +33,7 @@ struct {{type.name}} {
     {{ ' ' + property.name + ';' }}
 {% endfor %}
 };
+{% endif %}
     /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
     void to_json(json& j, const {{ type.name }}& k);
 
@@ -44,6 +48,9 @@ struct {{type.name}} {
 {% endfor %}
 {%- endif %}
 {% if last %}
+{% if namespace == "v201" %}
+    struct RequiredComponentVariable : ComponentVariable {};
+{% endif %}
 } // namespace {{namespace}}
 } // namespace ocpp
 

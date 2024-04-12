@@ -20,6 +20,11 @@ namespace {{namespace}} {
 
     /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
     void to_json(json& j, const {{ type.name }}& k) {
+{% if type.name == "CustomData" and namespace == "v201" %}
+        // custom data, make sure that vendorId exists
+        j["vendorId"] = k.at("vendorId");
+        j = k;
+{% else %}
         // the required parts of the message
 {% if type.properties|selectattr('required')|list|length %}
         j = json{
@@ -77,10 +82,16 @@ j["{{property.name}}"] = k.{{property.name}}.value();
         }
 {% endif %}
 {% endfor %}
+{% endif %}
     }
 
     /// \brief Conversion from a given json object \p j to a given {{ type.name }} \p k
     void from_json(const json& j, {{ type.name }}& k) {
+{% if type.name == "CustomData" and namespace == "v201" %}
+        // custom data, make sure that vendorId exists
+        k["vendorId"] = j.at("vendorId");
+        k = j;
+{% else %}
         // the required parts of the message
 {% for property in type.properties %}
 {% if property.required %}
@@ -128,6 +139,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
         }
 {% endif %}
 {% endfor %}
+{% endif %}
     }
 
     // \brief Writes the string representation of the given {{ type.name }} \p k to the given output stream \p os

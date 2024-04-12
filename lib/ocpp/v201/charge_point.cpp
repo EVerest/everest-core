@@ -2466,6 +2466,10 @@ void ChargePoint::handle_transaction_event_response(const EnhancedMessage<v201::
     const Call<TransactionEventRequest>& original_call = message.call_message;
     const auto& original_msg = original_call.msg;
 
+    if (this->callbacks.transaction_event_response_callback.has_value()) {
+        this->callbacks.transaction_event_response_callback.value()(original_msg, call_result.msg);
+    }
+
     if (original_msg.eventType == TransactionEventEnum::Ended) {
         // nothing to do for TransactionEventEnum::Ended
         return;
@@ -3094,14 +3098,18 @@ void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {
 
 DataTransferResponse ChargePoint::data_transfer_req(const CiString<255>& vendorId,
                                                     const std::optional<CiString<50>>& messageId,
-                                                    const std::optional<std::string>& data) {
+                                                    const std::optional<json>& data) {
     DataTransferRequest req;
     req.vendorId = vendorId;
     req.messageId = messageId;
     req.data = data;
 
+    return this->data_transfer_req(req);
+}
+
+DataTransferResponse ChargePoint::data_transfer_req(const DataTransferRequest& request) {
     DataTransferResponse response;
-    ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<DataTransferRequest> call(request, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
     auto enhanced_message = data_transfer_future.get();

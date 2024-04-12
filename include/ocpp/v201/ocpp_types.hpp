@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_V201_OCPP_TYPES_HPP
 #define OCPP_V201_OCPP_TYPES_HPP
 
@@ -14,9 +14,7 @@
 namespace ocpp {
 namespace v201 {
 
-struct CustomData {
-    CiString<255> vendorId;
-};
+using CustomData = nlohmann::json;
 /// \brief Conversion from a given CustomData \p k to a given json object \p j
 void to_json(json& j, const CustomData& k);
 
@@ -345,9 +343,6 @@ struct ComponentVariable {
     std::optional<CustomData> customData;
     std::optional<Variable> variable;
 };
-
-struct RequiredComponentVariable : ComponentVariable {};
-
 /// \brief Conversion from a given ComponentVariable \p k to a given json object \p j
 void to_json(json& j, const ComponentVariable& k);
 
@@ -972,6 +967,7 @@ void from_json(const json& j, Firmware& k);
 /// \returns an output stream with the Firmware written to
 std::ostream& operator<<(std::ostream& os, const Firmware& k);
 
+struct RequiredComponentVariable : ComponentVariable {};
 } // namespace v201
 } // namespace ocpp
 

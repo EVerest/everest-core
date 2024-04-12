@@ -66,7 +66,7 @@ TEST_F(DeviceModelTest, test_component_as_key_in_map) {
     };
     const Component comp_with_custom_data = {
         .name = "Foo",
-        .customData = CustomData{.vendorId = "Baz"},
+        .customData = json::object({{"vendorId", "Baz"}}),
     };
     const Component different_name_comp = {
         .name = "Bar",

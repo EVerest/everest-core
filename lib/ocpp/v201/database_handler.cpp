@@ -387,14 +387,16 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
         }
 
         if (item.customData.has_value()) {
-            insert_stmt->bind_text("@custom_data", item.customData.value().vendorId.get(), SQLiteString::Transient);
+            insert_stmt->bind_text("@custom_data", item.customData.value().at("vendorId").get<std::string>(),
+                                   SQLiteString::Transient);
         }
 
         if (item.unitOfMeasure.has_value()) {
             const auto& unitOfMeasure = item.unitOfMeasure.value();
 
             if (unitOfMeasure.customData.has_value()) {
-                insert_stmt->bind_text("@unit_custom_data", unitOfMeasure.customData.value().vendorId.get(),
+                insert_stmt->bind_text("@unit_custom_data",
+                                       unitOfMeasure.customData.value().at("vendorId").get<std::string>(),
                                        SQLiteString::Transient);
             }
             if (unitOfMeasure.unit.has_value()) {

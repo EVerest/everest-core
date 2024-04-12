@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_V201_UNPUBLISHFIRMWARE_HPP
 #define OCPP_V201_UNPUBLISHFIRMWARE_HPP
 

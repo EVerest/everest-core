@@ -167,8 +167,13 @@ struct Callbacks {
     /// messageId
     std::optional<std::function<DataTransferResponse(const DataTransferRequest& request)>> data_transfer_callback;
 
-    /// \breif Callback function that is called when a transaction_event was sent to the CSMS
+    /// \brief Callback function that is called when a transaction_event was sent to the CSMS
     std::optional<std::function<void(const TransactionEventRequest& transaction_event)>> transaction_event_callback;
+
+    /// \brief Callback function that is called when a transaction_event_response was received from the CSMS
+    std::optional<std::function<void(const TransactionEventRequest& transaction_event,
+                                     const TransactionEventResponse& transaction_event_response)>>
+        transaction_event_response_callback;
 };
 
 /// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes
@@ -705,9 +710,14 @@ public:
     /// \param vendorId
     /// \param messageId
     /// \param data
-    /// \return DataTransferResponse contaning the result from CSMS
+    /// \return DataTransferResponse containing the result from CSMS
     DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
-                                           const std::optional<std::string>& data);
+                                           const std::optional<json>& data);
+
+    /// \brief Data transfer mechanism initiated by charger
+    /// \param request
+    /// \return DataTransferResponse containing the result from CSMS
+    DataTransferResponse data_transfer_req(const DataTransferRequest& request);
 
     /// \brief Switches the operative status of the CS
     /// \param new_status: The new operative status to switch to

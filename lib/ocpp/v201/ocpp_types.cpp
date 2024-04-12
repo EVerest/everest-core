@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 #include <string>
 
 #include <nlohmann/json.hpp>
@@ -15,19 +15,16 @@ namespace v201 {
 
 /// \brief Conversion from a given CustomData \p k to a given json object \p j
 void to_json(json& j, const CustomData& k) {
-    // the required parts of the message
-    j = json{
-        {"vendorId", k.vendorId},
-    };
-    // the optional parts of the message
+    // custom data, make sure that vendorId exists
+    j["vendorId"] = k.at("vendorId");
+    j = k;
 }
 
 /// \brief Conversion from a given json object \p j to a given CustomData \p k
 void from_json(const json& j, CustomData& k) {
-    // the required parts of the message
-    k.vendorId = j.at("vendorId");
-
-    // the optional parts of the message
+    // custom data, make sure that vendorId exists
+    k["vendorId"] = j.at("vendorId");
+    k = j;
 }
 
 // \brief Writes the string representation of the given CustomData \p k to the given output stream \p os

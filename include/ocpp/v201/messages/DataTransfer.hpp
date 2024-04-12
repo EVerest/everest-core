@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_V201_DATATRANSFER_HPP
 #define OCPP_V201_DATATRANSFER_HPP
 
@@ -18,7 +18,7 @@ struct DataTransferRequest : public ocpp::Message {
     CiString<255> vendorId;
     std::optional<CustomData> customData;
     std::optional<CiString<50>> messageId;
-    std::optional<std::string> data;
+    std::optional<json> data;
 
     /// \brief Provides the type of this DataTransfer message as a human readable string
     /// \returns the message type as a human readable string
@@ -40,7 +40,7 @@ struct DataTransferResponse : public ocpp::Message {
     DataTransferStatusEnum status;
     std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
-    std::optional<std::string> data;
+    std::optional<json> data;
 
     /// \brief Provides the type of this DataTransferResponse message as a human readable string
     /// \returns the message type as a human readable string

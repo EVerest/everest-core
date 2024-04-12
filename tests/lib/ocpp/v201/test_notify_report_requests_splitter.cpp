@@ -75,8 +75,8 @@ TEST_F(NotifyReportRequestsSplitterTest, test_create_single_request) {
     ASSERT_EQ(request[1], "test_message_0");
 
     std::stringstream expected_report_data_json;
-    expected_report_data_json << "[" << json(req.reportData.value()[0]) << "," << json(req.reportData.value()[1])
-                              << "]";
+    expected_report_data_json << "[" << json(req.reportData.value()[0]).dump() << ","
+                              << json(req.reportData.value()[1]).dump() << "]";
     ASSERT_EQ(expected_report_data_json.str(), request[3]["reportData"].dump());
     ASSERT_EQ("false", request[3]["tbc"].dump());
     ASSERT_EQ("0", request[3]["seqNo"].dump());
