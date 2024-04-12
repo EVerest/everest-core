@@ -113,6 +113,9 @@ ChargePointFSM::ChargePointFSM(const StatusNotificationCallback& status_notifica
 }
 
 FSMState ChargePointFSM::get_state() const {
+    if (faulted) {
+        return FSMState::Faulted;
+    }
     return state;
 }
 
