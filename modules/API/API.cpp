@@ -9,12 +9,12 @@ namespace module {
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
 
 SessionInfo::SessionInfo() :
-    state(State::Unknown),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
-    latest_total_w(0),
     start_energy_export_wh(0),
-    end_energy_export_wh(0) {
+    end_energy_export_wh(0),
+    latest_total_w(0),
+    state(State::Unknown) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 
