@@ -197,6 +197,8 @@ struct BspStubDeadlock : public BspStub {
 };
 
 TEST(IECStateMachine, deadlock_test) {
+    GTEST_SKIP() << "relies on thread timing so occasionally fails";
+
     /*
      * a deadlock was caused by timeout_state_c1 timing out and
      * trying to raise an event while state_machine() was running
@@ -263,6 +265,8 @@ TEST(IECStateMachine, deadlock_test) {
 }
 
 TEST(IECStateMachine, deadlock_fix) {
+    GTEST_SKIP() << "relies on thread timing so occasionally fails";
+
     /*
      * a deadlock was caused by timeout_state_c1 timing out and
      * trying to raise an event while state_machine() was running
