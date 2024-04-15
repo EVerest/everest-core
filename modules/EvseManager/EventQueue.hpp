@@ -37,7 +37,7 @@ public:
 
     events_t wait() {
         std::unique_lock<std::mutex> ul(mux);
-        cv.wait(ul);
+        cv.wait(ul, [this]() { return !pending.empty(); });
         events_t active;
         pending.swap(active);
         ul.unlock();
