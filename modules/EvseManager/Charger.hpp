@@ -112,6 +112,9 @@ public:
     // Call anytime, but mostly used during charging session
     //
 
+    // Returns active session_uuid. Returns empty string if not session is active
+    std::string get_session_id() const;
+
     // call when in state WaitingForAuthentication
     void authorize(bool a, const types::authorization::ProvidedIdToken& token);
     bool deauthorize();
@@ -143,7 +146,8 @@ public:
 
     // Signal for EvseEvents
     sigslot::signal<types::evse_manager::SessionEventEnum> signal_simple_event;
-    sigslot::signal<types::evse_manager::StartSessionReason> signal_session_started_event;
+    sigslot::signal<types::evse_manager::StartSessionReason, std::optional<types::authorization::ProvidedIdToken>>
+        signal_session_started_event;
     sigslot::signal<types::authorization::ProvidedIdToken> signal_transaction_started_event;
     sigslot::signal<types::evse_manager::StopTransactionReason, std::optional<types::authorization::ProvidedIdToken>>
         signal_transaction_finished_event;
@@ -262,6 +266,7 @@ private:
         float max_current_cable{0.};
         bool transaction_active;
         bool session_active;
+        std::string session_uuid;
         bool connector_enabled;
         EvseState current_state;
         types::evse_manager::StopTransactionReason last_stop_transaction_reason;
