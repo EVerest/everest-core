@@ -318,7 +318,7 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
     try {
         this->storage->check_integrity();
 
-        int32_t nr_evse_components;
+        int32_t nr_evse_components = 0;
         std::map<int32_t, int32_t> evse_id_nr_connector_components;
 
         for (const auto& [component, variable_map] : this->device_model) {
