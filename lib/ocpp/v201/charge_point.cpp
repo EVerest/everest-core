@@ -1187,6 +1187,7 @@ void ChargePoint::message_callback(const std::string& message) {
                     enhanced_message.messageType == MessageType::SetVariables or
                     enhanced_message.messageType == MessageType::GetBaseReport or
                     enhanced_message.messageType == MessageType::GetReport or
+                    enhanced_message.messageType == MessageType::NotifyReportResponse or
                     enhanced_message.messageType == MessageType::TriggerMessage) {
                     this->handle_message(enhanced_message);
                 } else if (enhanced_message.messageType == MessageType::RequestStartTransaction) {
