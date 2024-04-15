@@ -29,7 +29,6 @@
 #![allow(non_snake_case, non_camel_case_types, clippy::all)]
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
-mod logger;
 use anyhow::Result;
 use generated::types::{
     authorization::{AuthorizationType, IdToken, IdTokenType, ProvidedIdToken},
@@ -270,7 +269,6 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
 impl PaymentTerminalModule {}
 
 fn main() -> Result<()> {
-    logger::init_logger("RS_PAYMENT_TERMINAL_LOGGER_LEVEL");
     let config = get_config();
     log::info!("Received the config {config:?}");
 
