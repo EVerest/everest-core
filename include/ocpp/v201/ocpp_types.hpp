@@ -15,15 +15,6 @@ namespace ocpp {
 namespace v201 {
 
 using CustomData = nlohmann::json;
-/// \brief Conversion from a given CustomData \p k to a given json object \p j
-void to_json(json& j, const CustomData& k);
-
-/// \brief Conversion from a given json object \p j to a given CustomData \p k
-void from_json(const json& j, CustomData& k);
-
-// \brief Writes the string representation of the given CustomData \p k to the given output stream \p os
-/// \returns an output stream with the CustomData written to
-std::ostream& operator<<(std::ostream& os, const CustomData& k);
 
 struct AdditionalInfo {
     CiString<36> additionalIdToken;

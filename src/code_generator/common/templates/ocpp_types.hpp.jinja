@@ -34,6 +34,7 @@ struct {{type.name}} {
 {% endfor %}
 };
 {% endif %}
+{% if not (type.name == "CustomData" and namespace == "v201") %}
     /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
     void to_json(json& j, const {{ type.name }}& k);
 
@@ -44,6 +45,7 @@ struct {{type.name}} {
     /// \returns an output stream with the {{ type.name }} written to
     std::ostream& operator<<(std::ostream& os, const {{ type.name }}& k);
 
+{% endif %}
 {% endif %}
 {% endfor %}
 {%- endif %}
