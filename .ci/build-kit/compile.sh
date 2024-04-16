@@ -10,3 +10,4 @@ cmake \
     -DBUILD_TESTING=ON
 
 ninja -j$(nproc) -C "$EXT_MOUNT/build"
+ninja -j$(nproc) -C "$EXT_MOUNT/build" install
