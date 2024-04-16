@@ -476,8 +476,8 @@ public:
     /// CSMS. This includes the transactionId.
     /// \param callback
     void register_transaction_updated_callback(
-        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
-            callback);
+        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+                                 const IdTagInfo& id_tag_info)>& callback);
 
     /// \brief registers a \p callback function that can be used to react on changed configuration keys. This
     /// callback is called when a configuration key has been successfully changed by the CSMS or internally using the

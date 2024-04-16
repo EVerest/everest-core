@@ -1825,7 +1825,8 @@ void ChargePointImpl::handleStartTransactionResponse(ocpp::CallResult<StartTrans
 
         if (this->transaction_updated_callback != nullptr) {
             this->transaction_updated_callback(connector, transaction->get_session_id(),
-                                               start_transaction_response.transactionId);
+                                               start_transaction_response.transactionId,
+                                               start_transaction_response.idTagInfo);
         }
     } else {
         EVLOG_warning << "Received StartTransaction.conf for transaction that is not known to transaction_handler";
@@ -3754,13 +3755,14 @@ void ChargePointImpl::register_transaction_started_callback(
 }
 
 void ChargePointImpl::register_transaction_stopped_callback(
-    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
         callback) {
     this->transaction_stopped_callback = callback;
 }
 
 void ChargePointImpl::register_transaction_updated_callback(
-    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+    const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+                             const IdTagInfo& id_tag_info)>
         callback) {
     this->transaction_updated_callback = callback;
 }

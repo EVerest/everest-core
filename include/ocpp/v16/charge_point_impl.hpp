@@ -177,7 +177,8 @@ private:
     std::function<void(int32_t connection_timeout)> set_connection_timeout_callback;
 
     std::function<void(const int32_t connector, const std::string& session_id)> transaction_started_callback;
-    std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+    std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+                       const IdTagInfo& id_tag_info)>
         transaction_updated_callback;
     std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
         transaction_stopped_callback;
@@ -770,14 +771,15 @@ public:
     /// chargepoint
     /// \param callback
     void register_transaction_stopped_callback(
-        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>&
             callback);
 
     /// \brief registers a \p callback function that is called when a StartTransaction.conf message is received by the
     /// CSMS. This includes the transactionId.
     /// \param callback
     void register_transaction_updated_callback(
-        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
+        const std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+                                 const IdTagInfo& id_tag_info)>
             callback);
 
     /// \brief registers a \p callback function that can be used to react on changed configuration keys. This
