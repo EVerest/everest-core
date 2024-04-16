@@ -715,7 +715,8 @@ void OCPP::ready() {
         });
 
     this->charge_point->register_transaction_updated_callback(
-        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+               const ocpp::v16::IdTagInfo& id_tag_info) {
             types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
                                                         session_id, std::to_string(transaction_id)};
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
