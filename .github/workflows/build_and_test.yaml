@@ -114,6 +114,11 @@ jobs:
     name: Run Integration Tests
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
+      - name: Download build directory
+        uses: actions/download-artifact@v3
+        with:
+          name: build-directory
+          path: ${{ github.workspace }}/build
       - name: Download dist directory
         uses: actions/download-artifact@v3
         with:
