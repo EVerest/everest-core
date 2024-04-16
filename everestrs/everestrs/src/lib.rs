@@ -141,9 +141,14 @@ mod ffi {
         /// Publishes the given `blob` under the `implementation_id` and `name`.
         fn publish_variable(self: &Module, implementation_id: &str, name: &str, blob: JsonBlob);
 
+        /// Returns the severity for the cxx logger.
+        fn get_log_level(self: &Module) -> i32;
+
         /// Returns the module config from cpp.
         fn get_module_configs(module_id: &str, prefix: &str, conf: &str) -> Vec<RsModuleConfig>;
 
+        /// Logging sink for the EVerest module.
+        fn log2cxx(level: i32, line: i32, file: &str, message: &str);
     }
 }
 
@@ -159,6 +164,68 @@ impl ffi::JsonBlob {
 
     fn from_vec(data: Vec<u8>) -> Self {
         Self { data }
+    }
+}
+
+/// Very simple logger to use by the Rust modules.
+mod logger {
+    use super::ffi;
+
+    pub(crate) struct Logger {
+        level: log::Level,
+    }
+
+    impl log::Log for Logger {
+        fn enabled(&self, metadata: &log::Metadata) -> bool {
+            // Rust gives the Error level 1 and all other severities a higher
+            // value.
+            metadata.level() <= self.level
+        }
+
+        fn log(&self, record: &log::Record) {
+            // The doc says `log` has to perform the filtering itself.
+            if !self.enabled(record.metadata()) {
+                return;
+            }
+            // This mapping should be kept in sync with liblog's
+            // Everest::Logging::severity_level.
+            let level = match record.level() {
+                log::Level::Trace => 0,
+                log::Level::Debug => 1,
+                log::Level::Info => 2,
+                log::Level::Warn => 3,
+                log::Level::Error => 4,
+            };
+
+            ffi::log2cxx(
+                level,
+                record.line().unwrap_or_default() as i32,
+                record.file().unwrap_or_default(),
+                &format!("{}", record.args()),
+            )
+        }
+
+        fn flush(&self) {}
+    }
+
+    impl Logger {
+        /// Init the logger for everest.
+        ///
+        /// Don't do this on your own as we must also control some cxx code.
+        pub(crate) fn init_logger(module: &ffi::Module) {
+            let level = match module.get_log_level() {
+                0 => log::Level::Trace,
+                1 => log::Level::Debug,
+                2 => log::Level::Info,
+                3 => log::Level::Warn,
+                4 => log::Level::Error,
+                _ => log::Level::Info,
+            };
+
+            let logger = Self { level };
+            log::set_boxed_logger(Box::new(logger)).unwrap();
+            log::set_max_level(level.to_level_filter());
+        }
     }
 }
 
@@ -306,6 +373,8 @@ impl Runtime {
             &args.prefix.to_string_lossy(),
             &args.conf.to_string_lossy(),
         );
+
+        logger::Logger::init_logger(&cpp_module);
 
         Arc::pin(Self {
             cpp_module,
