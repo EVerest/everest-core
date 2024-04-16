@@ -61,3 +61,14 @@ filegroup(
     ],
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "python_tests",
+    srcs = glob(["tests/**/*.py"]),
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    ["tests/tests.yaml"],
+    visibility = ["//visibility:public"],
+)

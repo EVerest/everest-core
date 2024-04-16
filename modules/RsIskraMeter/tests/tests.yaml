@@ -1,0 +1,16 @@
+active_modules:
+  power_meter_1:
+    module: RsIskraMeter
+    config_module:
+      powermeter_device_id: 33
+    connections:
+      modbus:
+      - module_id: serial_comm_hub_1
+        implementation_id: main
+  serial_comm_hub_1:
+    module: SerialCommHub
+    config_implementation:
+      main:
+        serial_port: /dev/ttyUSB7
+        baudrate: 115200
+        max_packet_size: 100
