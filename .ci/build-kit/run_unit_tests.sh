@@ -1,3 +1,3 @@
 #!/bin/sh
 
-ninja -j$(nproc) -C build test
+ninja -j$(nproc) -C "$EXT_MOUNT/build" test

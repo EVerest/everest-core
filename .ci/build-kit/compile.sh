@@ -9,4 +9,4 @@ cmake \
     -DCMAKE_INSTALL_PREFIX="$EXT_MOUNT/dist" \
     -DBUILD_TESTING=ON
 
-ninja -j$(nproc) -C build
+ninja -j$(nproc) -C "$EXT_MOUNT/build"
