@@ -715,6 +715,9 @@ void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::s
     // Notify any message senders that are waiting, since we can't send messages any more
     msg_send_cv.notify_all();
 
+    // Clear any irrelevant data after a DC
+    recv_buffered_message.clear();
+
     std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
     closing.detach();
 }
@@ -725,6 +728,9 @@ void WebsocketTlsTPM::on_conn_connected() {
     this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
     this->reconnecting = false;
+
+    // Clear any irrelevant data after a DC
+    recv_buffered_message.clear();
 
     std::thread connected([this]() { this->connected_callback(this->connection_options.security_profile); });
     connected.detach();
@@ -741,6 +747,9 @@ void WebsocketTlsTPM::on_conn_close() {
     // Notify any message senders that are waiting, since we can't send messages any more
     msg_send_cv.notify_all();
 
+    // Clear any irrelevant data after a DC
+    recv_buffered_message.clear();
+
     std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
     closing.detach();
 }
@@ -755,6 +764,7 @@ void WebsocketTlsTPM::on_conn_fail() {
     }
 
     this->m_is_connected = false;
+    recv_buffered_message.clear();
 
     // -1 indicates to always attempt to reconnect
     if (this->connection_options.max_connection_attempts == -1 or
@@ -769,13 +779,12 @@ void WebsocketTlsTPM::on_conn_fail() {
     }
 }
 
-void WebsocketTlsTPM::on_message(void* msg, size_t len) {
+void WebsocketTlsTPM::on_message(std::string&& message) {
     if (!this->initialized()) {
         EVLOG_error << "Message received but TLS websocket has not been correctly initialized. Discarding message.";
         return;
     }
 
-    std::string message(reinterpret_cast<char*>(msg), len);
     EVLOG_info << "Received message over TLS websocket polling for process: " << message;
 
     {
@@ -1195,7 +1204,14 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
     } break;
 
     case LWS_CALLBACK_CLIENT_RECEIVE:
-        on_message(in, len);
+        recv_buffered_message.append(reinterpret_cast<char*>(in), reinterpret_cast<char*>(in) + len);
+
+        // Message is complete
+        if (lws_remaining_packet_payload(wsi) <= 0) {
+            on_message(std::move(recv_buffered_message));
+            recv_buffered_message.clear();
+        }
+
         {
             bool message_queue_empty;
             {

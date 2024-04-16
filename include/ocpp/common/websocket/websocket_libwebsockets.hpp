@@ -72,7 +72,7 @@ private:
     void on_writable();
 
     /// \brief Called when a message is received over the TLS websocket, calls the message callback
-    void on_message(void* msg, size_t len);
+    void on_message(std::string&& message);
 
     void request_write();
 
@@ -97,6 +97,7 @@ private:
     std::mutex recv_mutex;
     std::queue<std::string> recv_message_queue;
     std::condition_variable recv_message_cv;
+    std::string recv_buffered_message;
 };
 
 } // namespace ocpp
