@@ -100,6 +100,11 @@ types::powermeter::Powermeter get_meter_value(const types::evse_manager::Session
             throw std::runtime_error("SessionEvent SessionStarted does not contain session_started context");
         }
         return session_event.session_started.value().meter_value;
+    } else if (event_type == types::evse_manager::SessionEventEnum::SessionFinished) {
+        if (!session_event.session_finished.has_value()) {
+            throw std::runtime_error("SessionEvent SessionFinished does not contain session_finished context");
+        }
+        return session_event.session_finished.value().meter_value;
     } else if (event_type == types::evse_manager::SessionEventEnum::TransactionStarted) {
         if (!session_event.transaction_started.has_value()) {
             throw std::runtime_error("SessionEvent TransactionStarted does not contain transaction_started context");
