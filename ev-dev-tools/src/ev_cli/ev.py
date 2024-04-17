@@ -9,10 +9,10 @@ author: aw@pionix.de
 FIXME (aw): Module documentation.
 """
 
-from . import __version__
-from . import helpers
-from .type_parsing import TypeParser
-from .error_parsing import ErrorParser
+from ev_cli import __version__
+from ev_cli import helpers
+from ev_cli.type_parsing import TypeParser
+from ev_cli.error_parsing import ErrorParser
 
 from datetime import datetime
 from pathlib import Path

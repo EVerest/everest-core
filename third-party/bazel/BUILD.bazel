@@ -1,0 +1,8 @@
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier_test")
+
+buildifier_test(
+    name = "buildifier_test",
+    srcs = ["BUILD.bazel"] + glob([
+        "**/*.bzl",
+    ]),
+)

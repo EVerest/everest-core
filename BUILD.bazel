@@ -1,0 +1,42 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
+
+write_file(
+    name = "gen_update",
+    out = "update.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-everest-utils/external/everest-testing_pip_deps/requirements.bzl requirements.bzl",
+    ],
+)
+
+sh_binary(
+    name = "vendor_requirements",
+    srcs = ["update.sh"],
+    data = ["@everest-testing_pip_deps//:requirements.bzl"],
+)
+
+diff_test(
+    name = "vendored_requirements_diff",
+    failure_message = "Please run `bazel run //:vendor_requirements` to update the vendored requirements.bzl file.",
+    file1 = "@everest-testing_pip_deps//:requirements.bzl",
+    file2 = ":requirements.bzl",
+)
+
+# To format a bazel file, run the following command:
+#
+#     bazel run //:buildifier -- <path to bazel file>
+buildifier(
+    name = "buildifier",
+)
+
+buildifier_test(
+    name = "buildifier_test",
+    srcs = [
+        "BUILD.bazel",
+        "WORKSPACE.bazel",
+        "requirements.bzl",
+    ],
+)
