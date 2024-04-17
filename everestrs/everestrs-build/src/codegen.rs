@@ -7,7 +7,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use convert_case::{Case, Casing};
 use minijinja::{Environment, UndefinedBehavior};
 use serde::{de::DeserializeOwned, Serialize};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs;
 use std::path::PathBuf;
 
@@ -364,13 +364,11 @@ enum TypeContext {
     Enum(EnumTypeContext),
 }
 
-    
 fn type_context_from_ref(
     r: &TypeRef,
     yaml_repo: &mut YamlRepo,
     type_refs: &mut BTreeSet<TypeRef>,
 ) -> Result<TypeContext> {
-
     use TypeBase::*;
     use TypeEnum::*;
 
@@ -408,12 +406,15 @@ fn type_context_from_ref(
                                     })),
 
                                     qos: None,
-      
                                 };
-                                let new_name = format!("{}AutoGen{}", r.type_name.to_case(Case::Pascal), name.to_case(Case::Pascal));
-                                enum_args.object_reference = Some(format!("/{}#/{}", module_path, new_name));
+                                let new_name = format!(
+                                    "{}AutoGen{}",
+                                    r.type_name.to_case(Case::Pascal),
+                                    name.to_case(Case::Pascal)
+                                );
+                                enum_args.object_reference =
+                                    Some(format!("/{}#/{}", module_path, new_name));
                                 new_types.insert(new_name, new_type);
-                  
                             }
                             _ => {}
                         }
@@ -464,6 +465,8 @@ fn type_context_from_ref(
 struct SlotContext {
     implementation_id: String,
     interface: String,
+    min_connections: i64,
+    max_connections: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -480,6 +483,7 @@ struct RenderContext {
     required_interfaces: Vec<InterfaceContext>,
     provides: Vec<SlotContext>,
     requires: Vec<SlotContext>,
+    requires_with_generics: bool,
     types: TypeModuleContext,
     module_config: Vec<ArgumentContext>,
     provided_config: Vec<ConfigContext>,
@@ -501,30 +505,6 @@ fn identifier_case(arg: String) -> String {
     } else {
         arg
     }
-}
-
-fn handle_implementations(
-    yaml_repo: &mut YamlRepo,
-    entries: impl Iterator<Item = (String, String)>,
-    type_refs: &mut BTreeSet<TypeRef>,
-) -> Result<(Vec<InterfaceContext>, Vec<SlotContext>)> {
-    let mut implementations = Vec::new();
-    let mut unique_interfaces = Vec::new();
-    let mut seen_interfaces = HashSet::new();
-    for (implementation_id, interface) in entries {
-        let interface_context = InterfaceContext::from_yaml(yaml_repo, &interface, type_refs)?;
-
-        if !seen_interfaces.contains(&interface) {
-            unique_interfaces.push(interface_context);
-            seen_interfaces.insert(interface.clone());
-        }
-
-        implementations.push(SlotContext {
-            implementation_id,
-            interface,
-        });
-    }
-    Ok((unique_interfaces, implementations))
 }
 
 /// Converts the config data read from yaml and generates the context for Jinja.
@@ -598,22 +578,38 @@ pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String
         .collect::<Vec<_>>();
 
     let mut type_refs = BTreeSet::new();
-    let (provided_interfaces, provides) = handle_implementations(
-        &mut yaml_repo,
-        manifest
-            .provides
-            .into_iter()
-            .map(|(name, imp)| (name, imp.interface)),
-        &mut type_refs,
-    )?;
-    let (required_interfaces, requires) = handle_implementations(
-        &mut yaml_repo,
-        manifest
-            .requires
-            .into_iter()
-            .map(|(name, imp)| (name, imp.interface)),
-        &mut type_refs,
-    )?;
+    let mut provided_interfaces = HashMap::with_capacity(manifest.provides.len());
+    let mut provides = Vec::with_capacity(manifest.provides.len());
+    for (implementation_id, imp) in manifest.provides {
+        if !provided_interfaces.contains_key(&imp.interface) {
+            let interface_context =
+                InterfaceContext::from_yaml(&mut yaml_repo, &imp.interface, &mut type_refs)?;
+            provided_interfaces.insert(imp.interface.clone(), interface_context);
+        }
+        provides.push(SlotContext {
+            implementation_id,
+            interface: imp.interface.clone(),
+            min_connections: 1,
+            max_connections: 1,
+        })
+    }
+
+    let mut required_interfaces = HashMap::with_capacity(manifest.requires.len());
+    let mut requires = Vec::with_capacity(manifest.requires.len());
+    for (implementation_id, imp) in manifest.requires {
+        if !required_interfaces.contains_key(&imp.interface) {
+            let interface_context =
+                InterfaceContext::from_yaml(&mut yaml_repo, &imp.interface, &mut type_refs)?;
+            required_interfaces.insert(imp.interface.clone(), interface_context);
+        }
+
+        requires.push(SlotContext {
+            implementation_id,
+            interface: imp.interface.clone(),
+            min_connections: imp.min_connections.unwrap_or(1),
+            max_connections: imp.max_connections.unwrap_or(1),
+        })
+    }
 
     let mut type_module_root = TypeModuleContext::default();
 
@@ -638,12 +634,16 @@ pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String
     }
 
     let module_config = emit_config(manifest.config);
+    let requires_with_generics = requires
+        .iter()
+        .any(|elem| elem.min_connections != 0 || elem.max_connections != 1);
 
     let context = RenderContext {
-        provided_interfaces,
-        required_interfaces,
+        provided_interfaces: provided_interfaces.values().cloned().collect(),
+        required_interfaces: required_interfaces.values().cloned().collect(),
         provides,
         requires,
+        requires_with_generics,
         types: type_module_root,
         module_config,
         provided_config,

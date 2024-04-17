@@ -112,17 +112,16 @@ void Module::provide_command(const Runtime& rt, rust::String implementation_id, 
     });
 }
 
-void Module::subscribe_variable(const Runtime& rt, rust::String implementation_id, rust::String name) const {
-    // TODO(hrapp): I am not sure how to model the multiple slots that could theoretically be here.
-    const Requirement req(std::string(implementation_id), 0);
-    handle_->subscribe_var(req, std::string(name), [&rt, implementation_id, name](json args) {
-        rt.handle_variable(implementation_id, name, json2blob(args));
+void Module::subscribe_variable(const Runtime& rt, rust::String implementation_id, size_t index,
+                                rust::String name) const {
+    const Requirement req(std::string(implementation_id), index);
+    handle_->subscribe_var(req, std::string(name), [&rt, implementation_id, index, name](json args) {
+        rt.handle_variable(implementation_id, index, name, json2blob(args));
     });
 }
 
-JsonBlob Module::call_command(rust::Str implementation_id, rust::Str name, JsonBlob blob) const {
-    // TODO(hrapp): I am not sure how to model the multiple slots that could theoretically be here.
-    const Requirement req(std::string(implementation_id), 0);
+JsonBlob Module::call_command(rust::Str implementation_id, size_t index, rust::Str name, JsonBlob blob) const {
+    const Requirement req(std::string(implementation_id), index);
     json return_value = handle_->call_cmd(req, std::string(name), json::parse(blob.data.begin(), blob.data.end()));
 
     return json2blob(return_value);
@@ -159,6 +158,21 @@ rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id, rust::Str pref
         out.emplace_back(std::move(mm_out));
     }
 
+    return out;
+}
+
+rust::Vec<RsModuleConnections> get_module_connections(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
+    const auto rs = std::make_shared<Everest::RuntimeSettings>(std::string(prefix), std::string(config_file));
+    Everest::Config config{rs};
+
+    const auto connections = config.get_main_config().at(std::string(module_id))["connections"];
+
+    // Iterate over the connections block.
+    rust::Vec<RsModuleConnections> out;
+    out.reserve(connections.size());
+    for (const auto& connection : connections.items()) {
+        out.emplace_back(RsModuleConnections{rust::String{connection.key()}, connection.value().size()});
+    };
     return out;
 }
 

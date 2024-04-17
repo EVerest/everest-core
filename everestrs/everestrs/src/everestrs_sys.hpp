@@ -11,6 +11,7 @@
 struct JsonBlob;
 struct Runtime;
 struct RsModuleConfig;
+struct RsModuleConnections;
 struct ConfigField;
 enum class ConfigTypes : uint8_t;
 
@@ -23,8 +24,8 @@ public:
 
     void signal_ready(const Runtime& rt) const;
     void provide_command(const Runtime& rt, rust::String implementation_id, rust::String name) const;
-    JsonBlob call_command(rust::Str implementation_id, rust::Str name, JsonBlob args) const;
-    void subscribe_variable(const Runtime& rt, rust::String implementation_id, rust::String name) const;
+    JsonBlob call_command(rust::Str implementation_id, size_t index, rust::Str name, JsonBlob args) const;
+    void subscribe_variable(const Runtime& rt, rust::String implementation_id, size_t index, rust::String name) const;
     void publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const;
     int get_log_level() const;
 
@@ -38,5 +39,5 @@ private:
 std::unique_ptr<Module> create_module(rust::Str module_name, rust::Str prefix, rust::Str conf);
 
 rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_name, rust::Str prefix, rust::Str conf);
-
+rust::Vec<RsModuleConnections> get_module_connections(rust::Str module_name, rust::Str prefix, rust::Str conf);
 void log2cxx(int level, int line, rust::Str file, rust::Str message);

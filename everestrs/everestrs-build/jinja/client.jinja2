@@ -32,6 +32,7 @@ use super::__serde_json;
 pub(crate) struct {{trait.name | title }}ClientPublisher {
    pub(super) implementation_id: &'static str,
    pub(super) runtime: ::std::pin::Pin<::std::sync::Arc<::everestrs::Runtime>>,
+   pub(super) index: usize,
 }
 
 impl {{trait.name | title }}ClientPublisher {
@@ -60,7 +61,7 @@ impl {{trait.name | title }}ClientPublisher {
             "{{arg.name}}": {{arg.name | identifier}},
 {%- endfor %}
         });
-        let blob = self.runtime.call_command(self.implementation_id, "{{ cmd.name }}", &args);
+        let blob = self.runtime.call_command(self.implementation_id, self.index, "{{ cmd.name }}", &args);
         __serde_json::from_value(blob).map_err(|_| ::everestrs::Error::InvalidArgument("return_value"))
 
       }

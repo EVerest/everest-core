@@ -38,7 +38,13 @@ mod ffi {
             name: &str,
             json: JsonBlob,
         ) -> JsonBlob;
-        fn handle_variable(self: &Runtime, implementation_id: &str, name: &str, json: JsonBlob);
+        fn handle_variable(
+            self: &Runtime,
+            implementation_id: &str,
+            index: usize,
+            name: &str,
+            json: JsonBlob,
+        );
         fn on_ready(&self);
     }
 
@@ -93,6 +99,15 @@ mod ffi {
         data: Vec<ConfigField>,
     }
 
+    /// The information form the `connections` field of our current module.
+    struct RsModuleConnections {
+        /// The `implementation_id` of the connection block.
+        implementation_id: String,
+
+        /// Number of slots under the `implementation_id`.
+        slots: usize,
+    }
+
     unsafe extern "C++" {
         include!("everestrs/src/everestrs_sys.hpp");
 
@@ -124,6 +139,7 @@ mod ffi {
         fn call_command(
             self: &Module,
             implementation_id: &str,
+            index: usize,
             name: &str,
             args: JsonBlob,
         ) -> JsonBlob;
@@ -135,6 +151,7 @@ mod ffi {
             self: &Module,
             rt: Pin<&Runtime>,
             implementation_id: String,
+            index: usize,
             name: String,
         );
 
@@ -146,6 +163,14 @@ mod ffi {
 
         /// Returns the module config from cpp.
         fn get_module_configs(module_id: &str, prefix: &str, conf: &str) -> Vec<RsModuleConfig>;
+
+        /// Returns the `connections` block defined in the `config.yaml` for
+        /// the current module.
+        fn get_module_connections(
+            module_id: &str,
+            prefix: &str,
+            conf: &str,
+        ) -> Vec<RsModuleConnections>;
 
         /// Logging sink for the EVerest module.
         fn log2cxx(level: i32, line: i32, file: &str, message: &str);
@@ -271,6 +296,7 @@ pub trait Subscriber: Sync + Send {
     fn handle_variable(
         &self,
         implementation_id: &str,
+        index: usize,
         name: &str,
         value: serde_json::Value,
     ) -> Result<()>;
@@ -318,7 +344,7 @@ impl Runtime {
         ffi::JsonBlob::from_vec(serde_json::to_vec(&blob).unwrap())
     }
 
-    fn handle_variable(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) {
+    fn handle_variable(&self, impl_id: &str, index: usize, name: &str, json: ffi::JsonBlob) {
         debug!(
             "handle_variable: {impl_id}, {name}, '{:?}'",
             json.as_bytes()
@@ -330,7 +356,7 @@ impl Runtime {
             .unwrap()
             .upgrade()
             .unwrap()
-            .handle_variable(impl_id, name, json.deserialize())
+            .handle_variable(impl_id, index, name, json.deserialize())
             .unwrap();
     }
 
@@ -352,6 +378,7 @@ impl Runtime {
     pub fn call_command<T: serde::Serialize, R: serde::de::DeserializeOwned>(
         &self,
         impl_id: &str,
+        index: usize,
         name: &str,
         args: &T,
     ) -> R {
@@ -361,7 +388,7 @@ impl Runtime {
         let return_value = (self.cpp_module)
             .as_ref()
             .unwrap()
-            .call_command(impl_id, name, blob);
+            .call_command(impl_id, index, name, blob);
         serde_json::from_slice(&return_value.data).unwrap()
     }
 
@@ -389,8 +416,8 @@ impl Runtime {
 
         // Implement all commands for all of our implementations, dispatch everything to the
         // Subscriber.
-        for (implementation_id, implementation) in manifest.provides {
-            let interface_s = self.cpp_module.get_interface(&implementation.interface);
+        for (implementation_id, provides) in manifest.provides {
+            let interface_s = self.cpp_module.get_interface(&provides.interface);
             let interface: schema::Interface = interface_s.deserialize();
             for (name, _) in interface.cmds {
                 self.cpp_module.as_ref().unwrap().provide_command(
@@ -401,17 +428,22 @@ impl Runtime {
             }
         }
 
+        let connections = get_module_connections();
+
         // Subscribe to all variables that might be of interest.
-        // TODO(hrapp): This looks very similar to the block above.
-        for (implementation_id, provides) in manifest.requires {
-            let interface_s = self.cpp_module.get_interface(&provides.interface);
+        for (implementation_id, requires) in manifest.requires {
+            let interface_s = self.cpp_module.get_interface(&requires.interface);
             let interface: schema::Interface = interface_s.deserialize();
-            for (name, _) in interface.vars {
-                self.cpp_module.as_ref().unwrap().subscribe_variable(
-                    self,
-                    implementation_id.clone(),
-                    name,
-                );
+
+            for i in 0usize..connections.get(&implementation_id).cloned().unwrap_or(0) {
+                for (name, _) in interface.vars.iter() {
+                    self.cpp_module.as_ref().unwrap().subscribe_variable(
+                        self,
+                        implementation_id.clone(),
+                        i,
+                        name.clone(),
+                    );
+                }
             }
         }
 
@@ -508,4 +540,19 @@ pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
     }
 
     out
+}
+
+/// The interface for fetching the module connections though the C++ runtime.
+pub fn get_module_connections() -> HashMap<String, usize> {
+    let args: Args = argh::from_env();
+    let raw_connections = ffi::get_module_connections(
+        &args.module,
+        &args.prefix.to_string_lossy(),
+        &args.conf.to_string_lossy(),
+    );
+
+    raw_connections
+        .into_iter()
+        .map(|connection| (connection.implementation_id, connection.slots))
+        .collect()
 }
