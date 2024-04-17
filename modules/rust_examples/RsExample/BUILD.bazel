@@ -1,6 +1,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
-load("@crate_index//:defs.bzl", "all_crate_deps")
+load("@everest_core_crate_index//:defs.bzl", "all_crate_deps")
 
 cargo_build_script(
     name = "build_script",
