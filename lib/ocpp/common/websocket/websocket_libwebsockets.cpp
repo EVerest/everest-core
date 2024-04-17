@@ -718,7 +718,10 @@ void WebsocketTlsTPM::close(websocketpp::close::status::value code, const std::s
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
+    std::thread closing([this]() {
+        this->closed_callback(websocketpp::close::status::normal);
+        this->disconnected_callback();
+    });
     closing.detach();
 }
 
@@ -750,7 +753,10 @@ void WebsocketTlsTPM::on_conn_close() {
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    std::thread closing([this]() { this->closed_callback(websocketpp::close::status::normal); });
+    std::thread closing([this]() {
+        this->closed_callback(websocketpp::close::status::normal);
+        this->disconnected_callback();
+    });
     closing.detach();
 }
 
