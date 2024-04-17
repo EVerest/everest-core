@@ -169,7 +169,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                    << "Received TransactionStarted";
         const auto transaction_started = session_event.transaction_started.value();
 
-        const auto timestamp = ocpp::DateTime(transaction_started.timestamp);
+        const auto timestamp = ocpp::DateTime(session_event.timestamp);
         const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
         const auto id_token = transaction_started.id_tag.id_token.value;
@@ -205,7 +205,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                     << "Received TransactionFinished";
 
         const auto transaction_finished = session_event.transaction_finished.value();
-        const auto timestamp = ocpp::DateTime(transaction_finished.timestamp);
+        const auto timestamp = ocpp::DateTime(session_event.timestamp);
         const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
         const auto signed_meter_value = transaction_finished.signed_meter_value;
 
@@ -715,7 +715,8 @@ void OCPP::ready() {
         });
 
     this->charge_point->register_transaction_updated_callback(
-        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
+        [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id,
+               const ocpp::v16::IdTagInfo& id_tag_info) {
             types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
                                                         session_id, std::to_string(transaction_id)};
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);

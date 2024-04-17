@@ -88,6 +88,8 @@ types:
   SessionEventEnum:
     description: >-
       Session Event enum
+        Authorized: Signaled when the EVSE is authorized for charging
+        Deauthorized: Signaled when the EVSE is not authorized for charging (anymore)
         Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
         Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
         SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
@@ -112,6 +114,8 @@ types:
         PluginTimeout: Signaled when an EV has been Plugged in but no authorization is present within specified ConnectionTimeout
     type: string
     enum:
+      - Authorized
+      - Deauthorized
       - Enabled
       - Disabled
       - SessionStarted
@@ -142,17 +146,28 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
       - reason
+      - meter_value
     properties:
-      timestamp:
-        description: Session start time in RFC3339 format
-        type: string
-        format: date-time
       reason:
         description: Reason for session start
         type: string
         $ref: /evse_manager#/StartSessionReason
+      id_tag:
+        description: The id tag assigned to this session
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+      signed_meter_value:
+        description: The signed meter value report of the started session
+        type: object
+        $ref: /units_signed#/SignedMeterValue
+      reservation_id:
+        description: Id of the reservation
+        type: integer
       logging_path:
         description: >-
           File system path where additional log files are stored, such as
@@ -165,31 +180,26 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
+      - meter_value
     properties:
-      timestamp:
-        description: Session start time in RFC3339 format
-        type: string
-        format: date-time
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
   TransactionStarted:
     description: Data for the TransactionStarted event
     type: object
     additionalProperties: false
     required:
-      - timestamp
-      - meter_value
       - id_tag
+      - meter_value
     properties:
-      timestamp:
-        description: Transaction start time in RFC3339 format
-        type: string
-        format: date-time
       id_tag:
         description: The id tag assigned to this transaction
         type: object
         $ref: /authorization#/ProvidedIdToken
       meter_value:
-        description: Transaction start exported meter value
+        description: Exported meter value
         type: object
         $ref: /powermeter#/Powermeter
       signed_meter_value:
@@ -204,13 +214,8 @@ types:
     type: object
     additionalProperties: false
     required:
-      - timestamp
       - meter_value
     properties:
-      timestamp:
-        description: Transaction end time in RFC3339 format
-        type: string
-        format: date-time
       meter_value:
         description: Transaction finished meter value
         type: object
@@ -231,6 +236,28 @@ types:
         description: Id tag that was used to stop the transaction. Only present if transaction was stopped locally.
         type: object
         $ref: /authorization#/ProvidedIdToken
+  ChargingStateChangedEvent:
+    description: Context for ChargingStateChanged event
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
+  AuthorizationEvent:
+    description: Context for authorization event (Authorized or Deauthorized)
+    type: object
+    additionalProperties: false
+    required:
+      - meter_value
+    properties:
+      meter_value:
+        description: Exported meter value
+        type: object
+        $ref: /powermeter#/Powermeter
   ErrorEnum:
     description: >-
       Note this is only kept for compatibility with the legacy error handling and will be removed soon.
@@ -304,12 +331,17 @@ types:
     required:
       - uuid
       - event
+      - timestamp
     properties:
       uuid:
         description: >-
           An EVSE generated UUID for this session, can be used e.g. for
           database storage.
         type: string
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
       connector_id:
         description: >-
           Id of the connector of this EVSE. 
@@ -339,6 +371,18 @@ types:
           out
         type: object
         $ref: /evse_manager#/TransactionFinished
+      charging_state_changed_event:
+        description: >-
+          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums: 
+          ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+        type: object
+        $ref: /evse_manager#/ChargingStateChangedEvent
+      authorization_event:
+        description: >-
+          Data for Authorization event. Shall be set for the following SessionEventEnums: 
+          Authorized, Deauthorized
+        type: object
+        $ref: /evse_manager#/AuthorizationEvent
       error:
         description: Details on error type
         type: object

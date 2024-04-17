@@ -734,18 +734,20 @@ void EvseManager::ready() {
         }
     });
 
-    charger->signal_session_started_event.connect([this](types::evse_manager::StartSessionReason start_reason) {
-        // Reset EV information on Session start and end
-        ev_info = types::evse_manager::EVInfo();
-        p_evse->publish_ev_info(ev_info);
+    charger->signal_session_started_event.connect(
+        [this](types::evse_manager::StartSessionReason start_reason,
+               const std::optional<types::authorization::ProvidedIdToken>& provided_id_token) {
+            // Reset EV information on Session start and end
+            ev_info = types::evse_manager::EVInfo();
+            p_evse->publish_ev_info(ev_info);
 
-        std::vector<types::iso15118_charger::PaymentOption> payment_options;
+            std::vector<types::iso15118_charger::PaymentOption> payment_options;
 
-        if (get_hlc_enabled() and start_reason == types::evse_manager::StartSessionReason::Authorized) {
-            payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
-            r_hlc[0]->call_session_setup(payment_options, false);
-        }
-    });
+            if (get_hlc_enabled() and start_reason == types::evse_manager::StartSessionReason::Authorized) {
+                payment_options.push_back(types::iso15118_charger::PaymentOption::ExternalPayment);
+                r_hlc[0]->call_session_setup(payment_options, false);
+            }
+        });
 
     invoke_ready(*p_evse);
     invoke_ready(*p_energy_grid);

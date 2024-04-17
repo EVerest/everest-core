@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include <condition_variable>
+#include <mutex>
 #include <thread>
 
 namespace {
@@ -58,20 +59,30 @@ TEST(EventQueue, wait) {
     std::size_t count = 0;
     std::condition_variable cv;
     std::mutex mux;
+    bool ready{false};
 
-    std::thread wait_thread([&cv, &count, &queue]() {
+    std::thread wait_thread([&cv, &count, &queue, &ready, &mux]() {
+        {
+            std::lock_guard<std::mutex> lock(mux);
+            ready = true;
+        }
         cv.notify_one();
         auto events = queue.wait();
         count = events.size();
+        {
+            std::lock_guard<std::mutex> lock(mux);
+            ready = false;
+        }
         cv.notify_one();
     });
 
     std::unique_lock<std::mutex> ul(mux);
-    cv.wait(ul);
+    cv.wait(ul, [&ready] { return ready; });
     ASSERT_EQ(count, 0U);
 
     queue.push(ErrorHandlingEvents::prevent_charging);
-    cv.wait(ul);
+
+    cv.wait(ul, [&ready] { return !ready; });
     ASSERT_EQ(count, 1U);
 
     events = queue.get_events();
