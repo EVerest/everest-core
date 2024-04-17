@@ -62,6 +62,7 @@ struct TxStartStopConditions {
             break;
         case TxEvent::EV_DISCONNECTED:
             is_ev_connected = false;
+            is_energy_transfered = false;
             break;
         case TxEvent::AUTHORIZED:
             is_authorized = true;

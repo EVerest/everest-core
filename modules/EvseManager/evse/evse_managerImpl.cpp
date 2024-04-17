@@ -284,6 +284,9 @@ void evse_managerImpl::ready() {
 
         const auto session_uuid = this->mod->charger->get_session_id();
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
+            types::evse_manager::SessionFinished session_finished;
+            session_finished.meter_value = mod->get_latest_powermeter_data_billing();
+            se.session_finished = session_finished;
             session_log.evse(false, fmt::format("Session Finished"));
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
