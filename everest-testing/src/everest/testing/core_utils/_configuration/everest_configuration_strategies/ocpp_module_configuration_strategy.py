@@ -9,11 +9,11 @@ from everest.testing.core_utils._configuration.everest_configuration_strategies.
 
 @dataclass
 class OCPPModuleConfigurationBase:
-    ChargePointConfigPath: str
     MessageLogPath: str
 
 @dataclass
 class OCPPModulePaths16(OCPPModuleConfigurationBase):
+    ChargePointConfigPath: str
     UserConfigPath: str
     DatabasePath: str
 

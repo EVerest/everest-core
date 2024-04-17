@@ -173,7 +173,6 @@ class EverestTestEnvironmentSetup:
             )
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
             ocpp_paths = OCPPModulePaths201(
-                ChargePointConfigPath=str(temporary_paths.ocpp_config_file),
                 MessageLogPath=str(temporary_paths.ocpp_message_log_directory),
                 CoreDatabasePath=str(temporary_paths.ocpp_database_dir),
                 DeviceModelDatabasePath=str(temporary_paths.ocpp_database_dir / "device_model_storage.db"),
@@ -193,8 +192,12 @@ class EverestTestEnvironmentSetup:
 
         if self._ocpp_config.template_ocpp_config:
             source_ocpp_config = self._ocpp_config.template_ocpp_config
-        else:
+        elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
             source_ocpp_config = self._determine_configured_charge_point_config_path_from_everest_config()
+        elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
+            ocpp_dir = self._everest_core.prefix_path / "share/everest/modules/OCPP201"
+            source_ocpp_config = ocpp_dir / "config.json"
+
 
         liboccp_configuration_helper.generate_ocpp_config(
             central_system_port=self._ocpp_config.central_system_port,
@@ -243,18 +246,16 @@ class EverestTestEnvironmentSetup:
 
     def _determine_configured_charge_point_config_path_from_everest_config(self):
 
-        everest_template_config = yaml.safe_load(self._core_config.template_everest_config_path.read_text())
+        if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
+            everest_template_config = yaml.safe_load(self._core_config.template_everest_config_path.read_text())
 
-        charge_point_config_path = \
-            everest_template_config["active_modules"][self._ocpp_config.ocpp_module_id]["config_module"][
+            charge_point_config_path = \
+                everest_template_config["active_modules"][self._ocpp_config.ocpp_module_id]["config_module"][
                 "ChargePointConfigPath"]
 
-        if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
             ocpp_dir = self._everest_core.prefix_path / "share/everest/modules/OCPP"
-        elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
-            ocpp_dir = self._everest_core.prefix_path / "share/everest/modules/OCPP201"
         else:
-            raise ValueError(f"unknown OCPP version {self._ocpp_config.ocpp_version}")
+            raise ValueError(f"Could not determine ChargePointConfigPath for OCPP version {self._ocpp_config.ocpp_version}")
         ocpp_config_path = ocpp_dir / charge_point_config_path
         return ocpp_config_path
 
