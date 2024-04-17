@@ -38,7 +38,6 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 include!(concat!(env!("OUT_DIR"), "/generated.rs"));
-mod logger;
 mod utils;
 
 use anyhow::Result;
@@ -925,7 +924,6 @@ impl generated::PowermeterServiceSubscriber for IskraMeter {
 }
 
 fn main() {
-    logger::init_logger("RS_ISKRA_METER_LOGGER_LEVEL");
     let config = get_config();
     let class = Arc::new(IskraMeter {
         state_machine: Mutex::new(StateMachine::InitState(InitState::new(
