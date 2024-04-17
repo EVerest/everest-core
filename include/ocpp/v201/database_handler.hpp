@@ -19,10 +19,7 @@ namespace ocpp {
 namespace v201 {
 
 class DatabaseHandler : public common::DatabaseHandlerCommon {
-
 private:
-    fs::path sql_init_path;
-
     void init_sql() override;
 
     void inintialize_enum_tables();
@@ -38,7 +35,8 @@ private:
     OperationalStatusEnum get_availability(int32_t evse_id, int32_t connector_id);
 
 public:
-    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database, const fs::path& sql_init_path);
+    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database,
+                    const fs::path& sql_migration_files_path);
 
     // Authorization cache management
 

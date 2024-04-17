@@ -12,31 +12,12 @@ using namespace common;
 
 namespace v201 {
 
-DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database, const fs::path& sql_init_path) :
-    DatabaseHandlerCommon(std::move(database)), sql_init_path(sql_init_path) {
+DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database,
+                                 const fs::path& sql_migration_files_path) :
+    DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V201) {
 }
 
 void DatabaseHandler::init_sql() {
-    EVLOG_debug << "Running SQL initialization script: " << this->sql_init_path;
-
-    if (!fs::exists(this->sql_init_path)) {
-        EVLOG_AND_THROW(std::runtime_error("SQL initialization script does not exist"));
-    }
-
-    if (fs::file_size(this->sql_init_path) == 0) {
-        EVLOG_AND_THROW(std::runtime_error("SQL initialization script empty"));
-    }
-
-    std::ifstream t(this->sql_init_path.string());
-    std::stringstream init_sql;
-
-    init_sql << t.rdbuf();
-
-    if (!this->database->execute_statement(init_sql.str())) {
-        EVLOG_error << "Could not create tables: " << this->database->get_error_message();
-        throw std::runtime_error("Database access error");
-    }
-
     this->inintialize_enum_tables();
 }
 

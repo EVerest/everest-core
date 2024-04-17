@@ -1,4 +1,15 @@
-set(SQL_INIT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/init_core.sql")
+# find all migration files, store only the filenames by showing relative to the folder
+set(MIGRATION_FILES_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/core_migrations")
+
+include(../CollectMigrationFiles.cmake)
+
+collect_migration_files(
+     LOCATION ${MIGRATION_FILES_LOCATION}
+     INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/core_migrations
+     )
+
+set(MIGRATION_FILE_VERSION_V201 ${TARGET_MIGRATION_FILE_VERSION} PARENT_SCOPE)
+set(MIGRATION_FILES_SOURCE_DIR_V201 ${MIGRATION_FILES_LOCATION} PARENT_SCOPE)
 
 option(LIBOCPP_INSTALL_DEVICE_MODEL_DATABASE "Install device model database for OCPP201" ON)
 
@@ -11,8 +22,6 @@ install(
      FILES ${CONFIGS}
      DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201
 )
-
-install(FILES ${SQL_INIT_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201)
 
 if (LIBOCPP_INSTALL_DEVICE_MODEL_DATABASE)
      set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/config.json)

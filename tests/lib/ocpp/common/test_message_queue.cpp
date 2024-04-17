@@ -226,7 +226,7 @@ private:
     }
 
 public:
-    DatabaseHandlerBaseMock() : common::DatabaseHandlerCommon(nullptr) {
+    DatabaseHandlerBaseMock() : common::DatabaseHandlerCommon(nullptr, "", 1) {
     }
 
     MOCK_METHOD(std::vector<common::DBTransactionMessage>, get_transaction_messages, (), (override));

@@ -12,24 +12,12 @@ using namespace common;
 namespace v16 {
 
 DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database,
-                                 const fs::path& init_script_path, int32_t number_of_connectors) :
-    DatabaseHandlerCommon(std::move(database)),
-    init_script_path(init_script_path),
+                                 const fs::path& sql_migration_files_path, int32_t number_of_connectors) :
+    DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V16),
     number_of_connectors(number_of_connectors) {
 }
 
 void DatabaseHandler::init_sql() {
-    EVLOG_debug << "Running SQL initialization script.";
-    std::ifstream t(this->init_script_path.string());
-    std::stringstream init_sql;
-
-    init_sql << t.rdbuf();
-
-    if (!this->database->execute_statement(init_sql.str())) {
-        EVLOG_error << "Could not create tables: " << this->database->get_error_message();
-        throw std::runtime_error("Database access error");
-    }
-
     this->init_connector_table();
     this->insert_or_ignore_local_list_version(0);
 }

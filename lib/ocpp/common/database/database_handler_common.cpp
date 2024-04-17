@@ -4,17 +4,29 @@
 #include <ocpp/common/database/database_handler_common.hpp>
 
 #include <everest/logging.hpp>
+#include <ocpp/common/database/database_schema_updater.hpp>
 
 namespace ocpp::common {
 
-DatabaseHandlerCommon::DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database) noexcept :
-    database(std::move(database)) {
+DatabaseHandlerCommon::DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database,
+                                             const fs::path& sql_migration_files_path,
+                                             uint32_t target_schema_version) noexcept :
+    database(std::move(database)),
+    sql_migration_files_path(sql_migration_files_path),
+    target_schema_version(target_schema_version) {
 }
 
 void DatabaseHandlerCommon::open_connection() {
+    DatabaseSchemaUpdater updater{this->database.get()};
+
+    if (!updater.apply_migration_files(this->sql_migration_files_path, target_schema_version)) {
+        EVLOG_AND_THROW(std::runtime_error("SQL migration failed"));
+    }
+
     if (!this->database->open_connection()) {
         throw std::runtime_error("Could not open database at provided path.");
     }
+
     this->init_sql();
 }
 

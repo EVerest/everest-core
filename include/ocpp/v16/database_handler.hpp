@@ -42,7 +42,6 @@ struct TransactionEntry {
 /// \brief This class handles the connection and operations of the SQLite database
 class DatabaseHandler : public ocpp::common::DatabaseHandlerCommon {
 private:
-    fs::path init_script_path; // full path of init sql script
     const int32_t number_of_connectors;
 
     // Runs initialization script and initializes the CONNECTORS and AUTH_LIST_VERSION table.
@@ -50,8 +49,8 @@ private:
     void init_connector_table();
 
 public:
-    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database, const fs::path& init_script_path,
-                    int32_t number_of_connectors);
+    DatabaseHandler(std::unique_ptr<common::DatabaseConnectionInterface> database,
+                    const fs::path& sql_migration_files_path, int32_t number_of_connectors);
 
     // transactions
     /// \brief Inserts a transaction with the given parameter to the TRANSACTIONS table.

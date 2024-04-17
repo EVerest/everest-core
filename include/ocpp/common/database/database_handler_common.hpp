@@ -23,20 +23,21 @@ struct DBTransactionMessage {
 class DatabaseHandlerCommon {
 protected:
     std::unique_ptr<DatabaseConnectionInterface> database;
+    const fs::path sql_migration_files_path;
+    const uint32_t target_schema_version;
 
     /// \brief Perform the initialization needed to use the database. Will be called by open_connection()
     virtual void init_sql() = 0;
 
 public:
-    ///
-    /// \brief Base database handler class.
-    ///
-    /// Other database classes should derive from this class and only use the functions after `db` is initialized.
+    /// \brief Common database handler class
     /// Class handles some common database functionality like inserting and removing transaction messages.
     ///
-    /// \warning The 'db' variable is not initialized, the deriving class should do that.
-    ///
-    explicit DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database) noexcept;
+    /// \param database Interface for the database connection
+    /// \param sql_migration_files_path Filesystem path to migration file folder
+    /// \param target_schema_version The required schema version of the database
+    explicit DatabaseHandlerCommon(std::unique_ptr<DatabaseConnectionInterface> database,
+                                   const fs::path& sql_migration_files_path, uint32_t target_schema_version) noexcept;
 
     ~DatabaseHandlerCommon() = default;
 

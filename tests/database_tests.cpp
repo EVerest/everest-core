@@ -10,7 +10,6 @@
 
 namespace ocpp {
 namespace v16 {
-#define SQL_INIT_FILE _SQL_INIT_FILE
 
 ChargingProfile get_sample_charging_profile() {
     ChargingSchedulePeriod period1;
@@ -53,9 +52,10 @@ ChargingProfile get_sample_charging_profile() {
 class DatabaseTest : public ::testing::Test {
 public:
     DatabaseTest() {
-        auto database_connection = std::make_unique<common::DatabaseConnection>("file::memory:");
-        this->db_handler =
-            std::make_unique<DatabaseHandler>(std::move(database_connection), std::filesystem::path(SQL_INIT_FILE), 2);
+        auto database_connection = std::make_unique<common::DatabaseConnection>("file::memory:?cache=shared");
+        database_connection->open_connection(); // Open connection so memory stays shared
+        this->db_handler = std::make_unique<DatabaseHandler>(std::move(database_connection),
+                                                             std::filesystem::path(MIGRATION_FILES_LOCATION_V16), 2);
         this->db_handler->open_connection();
     }
 
