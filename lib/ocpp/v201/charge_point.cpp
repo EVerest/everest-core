@@ -1666,9 +1666,6 @@ ChargePoint::set_variables_internal(const std::vector<SetVariableData>& set_vari
         response[set_variable_data] = set_variable_result;
     }
 
-    // post handling of changed variables after the SetVariables.conf has been queued
-    this->handle_variables_changed(response);
-
     return response;
 }
 
@@ -3329,7 +3326,9 @@ ChargePoint::get_variables(const std::vector<GetVariableData>& get_variable_data
 std::map<SetVariableData, SetVariableResult>
 ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data_vector) {
     // set variables and allow setting of ReadOnly variables
-    return this->set_variables_internal(set_variable_data_vector, true);
+    const auto response = this->set_variables_internal(set_variable_data_vector, true);
+    this->handle_variables_changed(response);
+    return response;
 }
 
 } // namespace v201
