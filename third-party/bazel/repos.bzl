@@ -15,8 +15,8 @@ def everest_core_repos():
     maybe(
         http_archive,
         name = "everest-framework",
-        url = "https://github.com/everest/everest-framework/archive/15311b8f9c06be295ef2a94f8c2486158048b312.tar.gz",
-        strip_prefix = "everest-framework-15311b8f9c06be295ef2a94f8c2486158048b312",
+        url = "https://github.com/everest/everest-framework/archive/3e767e2a5652d3acb97d01fc88aae2f04f3f5282.tar.gz",
+        strip_prefix = "everest-framework-3e767e2a5652d3acb97d01fc88aae2f04f3f5282",
     )
     crates_repository(
         name = "everest_core_crate_index",
