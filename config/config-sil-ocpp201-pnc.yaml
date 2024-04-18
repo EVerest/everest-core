@@ -80,33 +80,33 @@ active_modules:
       connector_id: 2
   slac:
     module: JsSlacSimulator
-  car_simulator_1:
-    module: JsCarSimulator
+  ev_manager_1:
+    module: JsEvManager
     config_module:
       connector_id: 1
       auto_enable: true
       auto_exec: false
       auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
     connections:
-      simulation_control:
+      ev_board_support:
         - module_id: yeti_driver_1
-          implementation_id: yeti_simulation_control
+          implementation_id: ev_board_support
       ev:
         - module_id: iso15118_car
           implementation_id: ev
       slac:
         - module_id: slac
           implementation_id: ev
-  car_simulator_2:
-    module: JsCarSimulator
+  ev_manager_2:
+    module: JsEvManager
     config_module:
       connector_id: 2
       auto_enable: true
       auto_exec: false
     connections:
-      simulation_control:
+      ev_board_support:
         - module_id: yeti_driver_2
-          implementation_id: yeti_simulation_control
+          implementation_id: ev_board_support
       ev:
         - module_id: iso15118_car
           implementation_id: ev

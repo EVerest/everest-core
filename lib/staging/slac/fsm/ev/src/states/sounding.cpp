@@ -80,7 +80,7 @@ bool SoundingState::do_sounding() {
         msg.num_sounds = slac::defs::C_EV_MATCH_MNBC;
         msg.timeout = (slac::defs::TT_EVSE_MATCH_MNBC_MS + 99) / 100; // in multiples of 100ms!
         msg.resp_type = 0x01; // fixed value indicating 'other Green Phy station'
-        memcpy(msg.forwarding_sta, ctx.host_mac, sizeof(msg.forwarding_sta));
+        memcpy(msg.forwarding_sta, ctx.plc_mac, sizeof(msg.forwarding_sta));
         memcpy(msg.run_id, session_parameters.run_id, sizeof(msg.run_id));
 
         ctx.send_slac_message(session_parameters.evse_mac, msg);
@@ -140,8 +140,8 @@ bool SoundingState::handle_valid_atten_char_ind() {
     slac::messages::cm_atten_char_rsp response;
     response.application_type = 0x0;
     response.security_type = 0x0;
-
-    memcpy(response.source_address, ctx.host_mac, sizeof(response.source_address));
+    // FIXME (aw): here we need to supply ev mac, not the plc mac!!!
+    memcpy(response.source_address, ctx.plc_mac, sizeof(response.source_address));
     memcpy(response.run_id, atten_char.run_id, sizeof(response.run_id));
     memset(response.source_id, 0, sizeof(response.source_id));
     memset(response.resp_id, 0, sizeof(response.resp_id));

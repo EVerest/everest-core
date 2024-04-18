@@ -1792,12 +1792,12 @@
             },
             {
                 "label": "AC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC_three_phase_core;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             },
             {
                 "label": "DC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC_extended;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug",
                 "type": "str"
             }
         ],

@@ -18,10 +18,6 @@ void Context::log_info(const std::string& text) {
     }
 }
 
-void Context::set_mac_addr(const uint8_t* mac) {
-    memcpy(host_mac, mac, ETH_ALEN);
-}
-
 SessionParamaters::SessionParamaters(const uint8_t* run_id_, const uint8_t* evse_mac_) {
     memcpy(run_id, run_id_, sizeof(run_id));
     memcpy(evse_mac, evse_mac_, sizeof(evse_mac));

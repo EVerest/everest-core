@@ -9,10 +9,10 @@ provides:
     description: provides the Yeti Internal Power Meter
   board_support:
     interface: evse_board_support
-    description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock
-  yeti_simulation_control:
-    interface: yeti_simulation_control
-    description: Interface for the Yeti HIL simulator
+    description: provides the EVSE board support Interface to low level control pilot, relais, rcd, motor lock
+  ev_board_support:
+    interface: ev_board_support
+    description: provides the EV board support Interface to low level control pilot, relais, rcd
   rcd:
     interface: ac_rcd
     description: Interface for the simulated AC RCD

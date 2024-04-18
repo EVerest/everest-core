@@ -1789,7 +1789,7 @@
         "options": [
             {
                 "label": "DC ISO15118-2",
-                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000;",
+                "value": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session DC_extended;iso_wait_pwr_ready;sleep 36000;",
                 "type": "str"
             }
         ],
@@ -1859,7 +1859,7 @@
         "once": true,
         "onceDelay": "1",
         "topic": "sim_commands",
-        "payload": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session ExternalPayment,DC_extended;iso_wait_pwr_ready;sleep 36000;",
+        "payload": "sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC_extended;iso_wait_pwr_ready;sleep 36000#iso_stop_charging;iso_wait_v2g_session_stopped;unplug#iso_pause_charging;iso_wait_for_resume#iso_start_bcb_toogle 3;iso_wait_pwm_is_running;iso_start_v2g_session DC_extended;iso_wait_pwr_ready;sleep 36000;",
         "payloadType": "str",
         "x": 150,
         "y": 1180,

@@ -90,7 +90,7 @@ async def test_001_start_test_module(everest_core: EverestCore):
     logging.info(">>>>>>>>> test_001_start_test_module <<<<<<<<<")
 
     test_connections = {
-        'test_control': [Requirement('car_simulator', 'main')],
+        'test_control': [Requirement('ev_manager', 'main')],
         'connector_1': [Requirement('connector_1', 'evse')]
     }
 

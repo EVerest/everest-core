@@ -1,0 +1,58 @@
+description: This defines the board support package for the EV side
+cmds:
+  enable:
+    description: Enable/disable the simulation
+    arguments:
+      value:
+        description: true to enable, false to disable
+        type: boolean
+  set_cp_state:
+    description: Sets the CP State that should be set by the EV board support driver (controlled by S2)
+    arguments:
+      cp_state:
+        description: The CP State
+        type: string
+        $ref: /ev_board_support#/EvCpState
+  allow_power_on:
+    description: >-
+      Sets allow_power_on flag. If false, contactor must never be switched
+      on. Onyly for dc charging
+    arguments:
+      value:
+        description: 'True: allow power on, false: do not allow power on.'
+        type: boolean
+  diode_fail:
+    description: Setting a diode failure
+    arguments:
+      value:
+        description: "True: diode failure"
+        type: boolean
+  set_ac_max_current:
+    description: Setting the max current requested from the ev
+    arguments:
+      current:
+        description: Max current requested from the ev
+        type: number
+  set_three_phases:
+    description: Setting three or one phase support
+    arguments:
+      three_phases:
+        description: "True: Three phase support, False: One phase support"
+        type: boolean
+  set_rcd_error:
+    description: Setting a rcd error. Only for simulation purpose.
+    arguments:
+      rcd_current_mA:
+        description: RCD current in mA 
+        type: number
+vars:
+  bsp_event:
+    description: >-
+      Events from CP/Relais
+    type: object
+    $ref: /board_support_common#/BspEvent
+  bsp_measurement:
+    description: >-
+      BSP Measurements
+    type: object
+    $ref: /board_support_common#/BspMeasurement

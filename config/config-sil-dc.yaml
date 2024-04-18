@@ -55,8 +55,8 @@ active_modules:
     module: JsSlacSimulator
   imd:
     module: IMDSimulator
-  car_simulator:
-    module: JsCarSimulator
+  ev_manager:
+    module: JsEvManager
     config_module:
       connector_id: 1
       auto_enable: true
@@ -65,9 +65,9 @@ active_modules:
       dc_target_current: 20
       dc_target_voltage: 400
     connections:
-      simulation_control:
+      ev_board_support:
         - module_id: yeti_driver
-          implementation_id: yeti_simulation_control
+          implementation_id: ev_board_support
       ev:
         - module_id: iso15118_car
           implementation_id: ev
