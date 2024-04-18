@@ -143,10 +143,10 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
             if (!filtered_meter_value.sampledValue.empty()) {
                 const auto trigger = type == ReadingContextEnum::Sample_Clock ? TriggerReasonEnum::MeterValueClock
                                                                               : TriggerReasonEnum::MeterValuePeriodic;
-                this->transaction_event_req(
-                    TransactionEventEnum::Updated, DateTime(), transaction, trigger, seq_no, std::nullopt,
-                    this->evses.at(static_cast<int32_t>(evse_id_))->get_evse_info(), std::nullopt,
-                    std::vector<MeterValue>(1, filtered_meter_value), std::nullopt, this->is_offline(), reservation_id);
+                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction, trigger, seq_no,
+                                            std::nullopt, std::nullopt, std::nullopt,
+                                            std::vector<MeterValue>(1, filtered_meter_value), std::nullopt,
+                                            this->is_offline(), reservation_id);
             }
         };
 
@@ -379,8 +379,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
         trigger_reason == ocpp::v201::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
 
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, transaction, trigger_reason, seq_no,
-                                std::nullopt, this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
-                                transaction_id_token, meter_values, std::nullopt, this->is_offline(), std::nullopt);
+                                std::nullopt, std::nullopt, transaction_id_token, meter_values, std::nullopt, this->is_offline(),
+                                std::nullopt);
 
     this->database_handler->transaction_metervalues_clear(transaction_id);
 
@@ -559,8 +559,7 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, const Chargi
             } else {
                 transaction->chargingState = charging_state;
                 this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
-                                            trigger_reason, transaction->get_seq_no(), std::nullopt,
-                                            this->evses.at(static_cast<int32_t>(evse_id))->get_evse_info(),
+                                            trigger_reason, transaction->get_seq_no(), std::nullopt, std::nullopt,
                                             std::nullopt, std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
             }
             return true;
@@ -2714,8 +2713,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
             this->transaction_event_req(TransactionEventEnum::Updated, DateTime(),
                                         enhanced_transaction->get_transaction(), TriggerReasonEnum::Trigger,
-                                        enhanced_transaction->get_seq_no(), std::nullopt, evse.get_evse_info(),
-                                        std::nullopt, opt_meter_value, std::nullopt, this->is_offline(), std::nullopt);
+                                        enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt, std::nullopt,
+                                        opt_meter_value, std::nullopt, this->is_offline(), std::nullopt);
         };
         send_evse_message(send_transaction);
     } break;
