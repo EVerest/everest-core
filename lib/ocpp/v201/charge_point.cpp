@@ -374,7 +374,7 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
 
     const auto trigger_reason = utils::stop_reason_to_trigger_reason_enum(reason);
 
-    // Requirement E07.FR.02
+    // E07.FR.02 The field idToken is provided when the authorization of the transaction has been ended
     const std::optional<IdToken> transaction_id_token =
         trigger_reason == ocpp::v201::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
 
