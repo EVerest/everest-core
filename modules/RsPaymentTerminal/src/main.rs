@@ -443,6 +443,7 @@ mod tests {
             let context = Context {
                 name: "foo",
                 publisher: &everest_mock,
+                index: 0,
             };
             let feig = SyncFeig::default();
             let (tx, _) = channel();
@@ -538,6 +539,7 @@ mod tests {
             let context = Context {
                 name: "foo",
                 publisher: &everest_mock,
+                index: 0,
             };
             let mut feig = SyncFeig::default();
             feig.expect_commit_transaction()
