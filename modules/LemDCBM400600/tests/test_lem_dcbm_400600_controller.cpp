@@ -48,10 +48,11 @@ protected:
                                                 })"};
 
     const types::powermeter::TransactionReq transaction_request{
-        "mock_evse_id", "mock_transaction_id", "mock_client_id", 42, 43, "mock_user_data"};
+        "mock_evse_id", "mock_transaction_id", true,        {}, types::powermeter::OCMFIdentificationType::ISO14443,
+        std::nullopt,   std::nullopt,          std::nullopt};
 
     const std::string expected_start_transaction_request_body{
-        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":"mock_client_id","tariffId":42,"cableId":43,"userData":"mock_user_data"})"};
+        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":"mock_transaction_id","tariffId":0,"cableId":0,"userData":""})"};
 
     const std::string put_legal_response = R"({
                                                 "paginationCounter": 6,
@@ -85,7 +86,7 @@ protected:
                                                 "publicKey": "A80F10D968E1122F8820F288B23C4E1C0DA912F35B48481274ADFEFE66D7E87E130C7CF2B8047C45CF105041C8C3A57DD242782F755C9443F42DABA9404A67BF"
                                                 })";
 
-    const LemDCBM400600Controller::Conf controller_config{0, 0, 1, 0};
+    const LemDCBM400600Controller::Conf controller_config{0, 0, 1, 0, 0, 0};
 
     void SetUp() override {
         this->http_client = std::make_unique<HTTPClientMock>();

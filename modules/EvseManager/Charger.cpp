@@ -9,24 +9,17 @@
  */
 
 #include "Charger.hpp"
-
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
 #include <thread>
 #include <type_traits>
+#include <utils.hpp>
 
 #include <fmt/core.h>
 
 #include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
-
-std::string generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
-}
 
 namespace module {
 
@@ -1060,7 +1053,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
-    shared_context.session_uuid = generate_session_uuid();
+    shared_context.session_uuid = utils::generate_session_uuid();
     std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
@@ -1083,7 +1076,14 @@ bool Charger::start_transaction() {
     shared_context.transaction_active = true;
 
     const types::powermeter::TransactionReq req{
-        evse_id, shared_context.session_uuid, shared_context.id_token.id_token.value, 0, 0, ""};
+        evse_id,
+        shared_context.session_uuid,
+        true,
+        {},
+        utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type),
+        std::nullopt,
+        shared_context.id_token.id_token.value,
+        std::nullopt};
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
         // If we want to start the session but the meter fail, we stop the charging since
