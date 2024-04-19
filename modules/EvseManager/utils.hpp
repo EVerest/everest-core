@@ -30,9 +30,10 @@ convert_to_ocmf_identification_type(const types::authorization::IdTokenType& id_
         return types::powermeter::OCMFIdentificationType::LOCAL;
     case types::authorization::IdTokenType::NoAuthorization:
         return types::powermeter::OCMFIdentificationType::NONE;
-    default:
+    case types::authorization::IdTokenType::MacAddress:
         return types::powermeter::OCMFIdentificationType::UNDEFINED;
     }
+    return types::powermeter::OCMFIdentificationType::UNDEFINED;
 }
 
 } // namespace utils

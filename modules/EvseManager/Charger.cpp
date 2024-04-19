@@ -14,12 +14,12 @@
 #include <string.h>
 #include <thread>
 #include <type_traits>
-#include <utils.hpp>
 
 #include <fmt/core.h>
 
 #include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "utils.hpp"
 
 namespace module {
 
@@ -1075,15 +1075,16 @@ bool Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
     shared_context.transaction_active = true;
 
-    const types::powermeter::TransactionReq req{
-        evse_id,
-        shared_context.session_uuid,
-        true,
-        {},
-        utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type),
-        std::nullopt,
-        shared_context.id_token.id_token.value,
-        std::nullopt};
+    types::powermeter::TransactionReq req;
+    req.evse_id = evse_id;
+    req.transaction_id = shared_context.session_uuid;
+    req.identification_status = true;        // currently user is always assigned
+    req.identification_flags = {};           // TODO: Collect IF. Not all known in EVerest
+    req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
+    req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
+    req.identification_data = shared_context.id_token.id_token.value;
+    req.tariff_text = std::nullopt;          // TODO: Not yet known to EVerest
+
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
         // If we want to start the session but the meter fail, we stop the charging since
