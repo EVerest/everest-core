@@ -1179,12 +1179,11 @@ mod tests {
             let ready_state = make_ready_state(mock);
 
             let _unused = ready_state.start_transaction(TransactionReq {
-                cable_id: 1,
-                client_id: String::new(),
                 evse_id: String::new(),
-                tariff_id: 1,
                 transaction_id: String::new(),
-                user_data: String::new(),
+                identification_status: true,
+                identification_type: "ISO14443",
+                identification_flags: Vec::new()
             });
         }
     }
@@ -1277,12 +1276,11 @@ mod tests {
         let ready_state = make_ready_state(mock);
 
         let _unused = ready_state.start_transaction(TransactionReq {
-            cable_id: 1,
-            client_id: String::new(),
             evse_id: String::new(),
-            tariff_id: 1,
             transaction_id: String::new(),
-            user_data: String::new(),
+            identification_status: true,
+            identification_type: "ISO14443",
+            identification_flags: Vec::new()
         });
     }
 }
