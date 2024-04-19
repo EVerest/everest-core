@@ -1,8 +1,7 @@
 ISO 15118 library suite
 =======================
 
-Currently, this is a proof of concept library.  Therefore it is located
-in the branch `dash-20-poc`.
+Currently, this is a proof of concept library.
 
 Integration of ISO 15118 development for EVerest is under heavy development
 currently. Many features are already implemented, many are still to follow.
@@ -25,3 +24,20 @@ This is just a short overview to show you that there is not the one and
 only place for the ISO 15118 implementation. For more information and
 insights on that, join us in our
 [weekly tech meetups](https://everest.github.io/nightly/#weekly-tech-meetup).
+
+## Dependencies
+
+To build this library you need [libfsm](https://github.com/EVerest/libfsm) and [everest-cmake](https://github.com/EVerest/everest-cmake) checkout in the same directory as libiso15118.
+
+## Getting started
+
+```
+# Run cmake (ISO15118_BUILD_TESTS to enable/disable unit tests)
+cmake -S . -B build -G Ninja -DISO15118_BUILD_TESTS=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+# Build
+ninja -C build
+
+# Running tests
+ninja -C build test
+```
