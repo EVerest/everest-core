@@ -33,8 +33,8 @@ types:
           OCMF Identification Flags (IF): Detailed statements about the user assignment, represented by one or more identifiers
         type: array
         items:
-          minimum: 0
-          maximum: 4
+          minItems: 0
+          maxItems: 4
           type: string
           $ref: /powermeter#/OCMFIdentificationFlags
       identification_type:
