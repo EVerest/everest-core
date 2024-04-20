@@ -76,8 +76,8 @@ ext-mbedtls:
     - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
 # everest-testing
 everest-utils:
-  git: https://github.com/EVerest/everest-utils.git
-  git_tag: 86860668a859060bcbd31ac992d9ac4afe995985
+  git: https://github.com/Qwello/everest-utils.git
+  git_tag: cec5b58fb5c4a96c4164378e6ec59468aba89571
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 
 # unit testing

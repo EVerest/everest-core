@@ -17,8 +17,8 @@ EVEREST_DEPS = struct(
 	everest_framework_tag = "3e767e2a5652d3acb97d01fc88aae2f04f3f5282",
 
 	# everest-utils
-	everest_utils_repo = "https://github.com/EVerest/everest-utils.git",
-	everest_utils_tag = "86860668a859060bcbd31ac992d9ac4afe995985",
+	everest_utils_repo = "https://github.com/Qwello/everest-utils.git",
+	everest_utils_tag = "cec5b58fb5c4a96c4164378e6ec59468aba89571",
 
 	# ext-mbedtls
 	ext_mbedtls_repo = "https://github.com/EVerest/ext-mbedtls.git",
