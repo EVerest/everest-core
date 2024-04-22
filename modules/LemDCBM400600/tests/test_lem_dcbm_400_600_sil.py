@@ -29,7 +29,7 @@ def test_start_transaction(everest_test_instance):
                                                                      {"value": {
                                                                          "evse_id": "mock_evse_id",
                                                                          "transaction_id": "e2e_test_transaction",
-                                                                         "identification_status": True,
+                                                                         "identification_status": "ASSIGNED",
                                                                          "identification_flags": [],
                                                                          "identification_type": "ISO14443"
                                                                      }})

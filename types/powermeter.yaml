@@ -20,9 +20,8 @@ types:
       identification_status:
         description: >-
           OCMF Identification Status (IS): General status for user assignment
-          true: user successfully assigned
-          false: user not assigned
-        type: boolean
+        type: string
+        $ref: /powermeter#/OCMFUserIdentificationStatus
       identification_level:
         description: >-
           OCMF Identification Level (IL): Encoded overall status of the user assignment
@@ -206,6 +205,15 @@ types:
       - LOCAL_2
       - PHONE_NUMBER
       - KEY_CODE
+  OCMFUserIdentificationStatus:
+    description: >-
+      General status for user assignment
+      ASSIGNED: user successfully assigned
+      NOT_ASSIGNED: user not assigned
+    type: string
+    enum:
+      - ASSIGNED
+      - NOT_ASSIGNED
   Powermeter:
     description: Measured dataset (AC or DC)
     type: object

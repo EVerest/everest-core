@@ -1181,7 +1181,7 @@ mod tests {
             let _unused = ready_state.start_transaction(TransactionReq {
                 evse_id: String::new(),
                 transaction_id: String::new(),
-                identification_status: true,
+                identification_status: generated::types::powermeter::OCMFUserIdentificationStatus::ASSIGNED,
                 identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
                 identification_flags: Vec::new(),
                 identification_data: Some(String::new()),
@@ -1281,7 +1281,7 @@ mod tests {
         let _unused = ready_state.start_transaction(TransactionReq {
             evse_id: String::new(),
             transaction_id: String::new(),
-            identification_status: true,
+            identification_status: generated::types::powermeter::OCMFUserIdentificationStatus::ASSIGNED,
             identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
             identification_flags: Vec::new(),
             identification_data: Some(String::new()),

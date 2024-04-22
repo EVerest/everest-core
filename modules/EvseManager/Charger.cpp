@@ -1078,12 +1078,13 @@ bool Charger::start_transaction() {
     types::powermeter::TransactionReq req;
     req.evse_id = evse_id;
     req.transaction_id = shared_context.session_uuid;
-    req.identification_status = true;        // currently user is always assigned
-    req.identification_flags = {};           // TODO: Collect IF. Not all known in EVerest
+    req.identification_status =
+        types::powermeter::OCMFUserIdentificationStatus::ASSIGNED; // currently user is always assigned
+    req.identification_flags = {};                                 // TODO: Collect IF. Not all known in EVerest
     req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
-    req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
+    req.identification_level = std::nullopt;                       // TODO: Not yet known to EVerest
     req.identification_data = shared_context.id_token.id_token.value;
-    req.tariff_text = std::nullopt;          // TODO: Not yet known to EVerest
+    req.tariff_text = std::nullopt;                                // TODO: Not yet known to EVerest
 
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);

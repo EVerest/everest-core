@@ -105,7 +105,7 @@ async def test_lem_dcbm_e2e_start_stop_transaction(everest_test_instance, dcbm):
                                                                               {"value": {
                                                                                   "evse_id": "mock_evse_id",
                                                                                   "transaction_id": "e2e_test_transaction",
-                                                                                  "identification_status": True,
+                                                                                  "identification_status": "ASSIGNED",
                                                                                   "identification_flags": []
                                                                               }})
 
@@ -142,7 +142,7 @@ async def test_lem_dcbm_e2e_time_sync(everest_test_instance, dcbm):
                                                                       {"value": {
                                                                           "evse_id": "mock_evse_id",
                                                                           "transaction_id": "e2e_test_transaction",
-                                                                          "identification_status": True,
+                                                                          "identification_status": "ASSIGNED",
                                                                           "identification_flags": [],
                                                                           "identification_type": "ISO14443"
                                                                       }})["status"] == "OK"
@@ -165,7 +165,7 @@ async def test_lem_dcbm_e2e_ntp_setup(everest_test_instance_ntp_configured, dcbm
                                                                                      {"value": {
                                                                                          "evse_id": "mock_evse_id",
                                                                                          "transaction_id": "e2e_test_transaction",
-                                                                                         "identification_status": True,
+                                                                                         "identification_status": "ASSIGNED",
                                                                                          "identification_flags": [],
                                                                                          "identification_type": "ISO14443"
                                                                                      }})["status"] == "OK"

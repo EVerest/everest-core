@@ -48,8 +48,14 @@ protected:
                                                 })"};
 
     const types::powermeter::TransactionReq transaction_request{
-        "mock_evse_id", "mock_transaction_id", true,        {}, types::powermeter::OCMFIdentificationType::ISO14443,
-        std::nullopt,   std::nullopt,          std::nullopt};
+        "mock_evse_id",
+        "mock_transaction_id",
+        types::powermeter::OCMFUserIdentificationStatus::ASSIGNED,
+        {},
+        types::powermeter::OCMFIdentificationType::ISO14443,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt};
 
     const std::string expected_start_transaction_request_body{
         R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":"mock_transaction_id","tariffId":0,"cableId":0,"userData":""})"};
