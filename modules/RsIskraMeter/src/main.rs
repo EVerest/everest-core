@@ -1279,7 +1279,7 @@ mod tests {
             evse_id: String::new(),
             transaction_id: String::new(),
             identification_status: true,
-            identification_type: "ISO14443",
+            identification_type: "ISO14443".to_string(),
             identification_flags: Vec::new()
         });
     }
