@@ -124,7 +124,7 @@ class CentralSystem:
             self.on_connect,
             '0.0.0.0',
             self.port,
-            subprotocols=[self.ocpp_version],
+            subprotocols=[self.ocpp_version.value],
             ssl=ssl_context
         )
         if self.port is None:
