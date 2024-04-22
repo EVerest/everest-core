@@ -18,6 +18,12 @@
 namespace ocpp {
 namespace v201 {
 
+enum class CurrentPhaseType {
+    AC,
+    DC,
+    Unknown,
+};
+
 class EvseInterface {
 public:
     virtual ~EvseInterface();
@@ -118,6 +124,9 @@ public:
     /// \brief Restores the operative status of a connector within this EVSE to the persisted status and recomputes its
     /// effective status \param connector_id The ID of the connector
     virtual void restore_connector_operative_status(int32_t connector_id) = 0;
+
+    /// \brief Returns the phase type for the EVSE based on its SupplyPhases. It can be AC, DC, or Unknown.
+    virtual CurrentPhaseType get_current_phase_type() = 0;
 };
 
 /// \brief Represents an EVSE. An EVSE can contain multiple Connector objects, but can only supply energy to one of
@@ -199,6 +208,8 @@ public:
     void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);
     void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
     void restore_connector_operative_status(int32_t connector_id);
+
+    CurrentPhaseType get_current_phase_type();
 };
 
 } // namespace v201

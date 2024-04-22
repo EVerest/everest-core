@@ -9,8 +9,8 @@ public:
     MOCK_METHOD(uint32_t, get_number_of_connectors, ());
     MOCK_METHOD(void, open_transaction,
                 (const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
-                 const MeterValue& meter_start, const IdToken& id_token, const std::optional<IdToken>& group_id_token,
-                 const std::optional<int32_t> reservation_id,
+                 const MeterValue& meter_start, const std::optional<IdToken>& id_token,
+                 const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
                  const std::chrono::seconds sampled_data_tx_updated_interval,
                  const std::chrono::seconds sampled_data_tx_ended_interval,
                  const std::chrono::seconds aligned_data_tx_updated_interval,
@@ -33,5 +33,6 @@ public:
     MOCK_METHOD(void, set_connector_operative_status,
                 (int32_t connector_id, OperationalStatusEnum new_status, bool persist));
     MOCK_METHOD(void, restore_connector_operative_status, (int32_t connector_id));
+    MOCK_METHOD(CurrentPhaseType, get_current_phase_type, ());
 };
 } // namespace ocpp::v201

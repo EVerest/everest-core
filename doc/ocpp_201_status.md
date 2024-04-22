@@ -1178,12 +1178,12 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K01.FR.41 | :white_check_mark: |  |
 | K01.FR.42 |  |  |
 | K01.FR.43 |  |  |
-| K01.FR.44 |  |  |
-| K01.FR.45 |  |  |
+| K01.FR.44 | :white_check_mark: | We reject invalid profiles instead of modifying and accepting them. |
+| K01.FR.45 | :white_check_mark: | We reject invalid profiles instead of modifying and accepting them. |
 | K01.FR.46 |  |  |
 | K01.FR.47 |  |  |
 | K01.FR.48 |  |  |
-| K01.FR.49 |  |  |
+| K01.FR.49 | :white_check_mark: |  |
 | K01.FR.50 |  |  |
 | K01.FR.51 |  |  |
 | K01.FR.52 | :white_check_mark: |  |
