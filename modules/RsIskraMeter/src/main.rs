@@ -1182,8 +1182,11 @@ mod tests {
                 evse_id: String::new(),
                 transaction_id: String::new(),
                 identification_status: true,
-                identification_type: "ISO14443",
-                identification_flags: Vec::new()
+                identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
+                identification_flags: Vec::new(),
+                identification_data: Some(String::new()),
+                identification_level: Some(generated::types::powermeter::OCMFIdentificationLevel::NONE),
+                tariff_text: Some(String::new())
             });
         }
     }
@@ -1279,8 +1282,11 @@ mod tests {
             evse_id: String::new(),
             transaction_id: String::new(),
             identification_status: true,
-            identification_type: "ISO14443".to_string(),
-            identification_flags: Vec::new()
+            identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
+            identification_flags: Vec::new(),
+            identification_data: Some(String::new()),
+            identification_level: Some(generated::types::powermeter::OCMFIdentificationLevel::NONE),
+            tariff_text: Some(String::new())
         });
     }
 }
