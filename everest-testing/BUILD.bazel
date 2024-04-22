@@ -1,10 +1,8 @@
-load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier_test")
 load("@everest-utils//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_library")
 
-buildifier_test(
-    name = "buildifier_test",
-    srcs = ["BUILD.bazel"],
+exports_files(
+    ["BUILD.bazel"],
 )
 
 py_library(

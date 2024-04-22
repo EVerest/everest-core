@@ -38,5 +38,8 @@ buildifier_test(
         "BUILD.bazel",
         "WORKSPACE.bazel",
         "requirements.bzl",
+        "@everest-utils//ev-dev-tools:BUILD.bazel",
+        "@everest-utils//everest-testing:BUILD.bazel",
+        "@everest-utils//third-party/bazel:BUILD.bazel",
     ],
 )
