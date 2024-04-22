@@ -46,6 +46,7 @@ use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
+    OCMFUserIdentificationStatus, OCMFIdentificationType,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
@@ -1181,12 +1182,12 @@ mod tests {
             let _unused = ready_state.start_transaction(TransactionReq {
                 evse_id: String::new(),
                 transaction_id: String::new(),
-                identification_status: generated::types::powermeter::OCMFUserIdentificationStatus::ASSIGNED,
-                identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
+                identification_status: OCMFUserIdentificationStatus::ASSIGNED,
+                identification_type: OCMFIdentificationType::ISO14443,
                 identification_flags: Vec::new(),
-                identification_data: Some(String::new()),
-                identification_level: Some(generated::types::powermeter::OCMFIdentificationLevel::NONE),
-                tariff_text: Some(String::new())
+                identification_data: None,
+                identification_level: None,
+                tariff_text: None
             });
         }
     }
@@ -1281,12 +1282,12 @@ mod tests {
         let _unused = ready_state.start_transaction(TransactionReq {
             evse_id: String::new(),
             transaction_id: String::new(),
-            identification_status: generated::types::powermeter::OCMFUserIdentificationStatus::ASSIGNED,
-            identification_type: generated::types::powermeter::OCMFIdentificationType::ISO14443,
+            identification_status: OCMFUserIdentificationStatus::ASSIGNED,
+            identification_type: OCMFIdentificationType::ISO14443,
             identification_flags: Vec::new(),
-            identification_data: Some(String::new()),
-            identification_level: Some(generated::types::powermeter::OCMFIdentificationLevel::NONE),
-            tariff_text: Some(String::new())
+            identification_data: None,
+            identification_level: None,
+            tariff_text: None
         });
     }
 }
