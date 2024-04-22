@@ -55,6 +55,7 @@ private:
 class ModuleBase {
 public:
     ModuleBase(const ModuleInfo& info) : info(info){};
+    virtual ~ModuleBase() = default;
 
     const ModuleInfo& info;
 
