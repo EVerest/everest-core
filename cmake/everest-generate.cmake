@@ -116,6 +116,13 @@ function(ev_add_project)
         PROPERTY EVEREST_MODULES
     )
     message(STATUS "${EVEREST_PROJECT_NAME} modules that will be built: ${EVEREST_MODULES}")
+
+    # generate and install version information
+    evc_generate_version_information()
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/version_information.txt
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+    )
 endfunction()
 
 #
@@ -703,13 +710,6 @@ function(ev_install_project)
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-nodered-script.cmake
         DESTINATION
             ${CMAKE_INSTALL_LIBDIR}/cmake/${LIBRARY_PACKAGE_NAME}
-    )
-
-    # generate and install version information
-    evc_generate_version_information()
-    install(
-        FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/version_information.txt
-        DESTINATION "${EVEREST_DATADIR}"
     )
 endfunction()
 
