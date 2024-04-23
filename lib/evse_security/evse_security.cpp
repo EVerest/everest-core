@@ -94,7 +94,30 @@ static bool is_keyfile(const fs::path& file_path) {
 /// @brief Searches for the private key linked to the provided certificate
 static fs::path get_private_key_path_of_certificate(const X509Wrapper& certificate, const fs::path& key_path_directory,
                                                     const std::optional<std::string> password) {
-    // TODO(ioan): Before iterating the whole dir check by the filename first 'key_path'.key
+    // Before iterating the whole dir check by the filename first 'key_path'.key/.tkey
+    if (certificate.get_file().has_value()) {
+        // Check normal keyfile & tpm filename
+        for (const auto& extension : {KEY_EXTENSION, TPM_KEY_EXTENSION}) {
+            fs::path potential_keyfile = certificate.get_file().value();
+            potential_keyfile.replace_extension(extension);
+
+            if (fs::exists(potential_keyfile)) {
+                try {
+                    fsstd::ifstream file(potential_keyfile, std::ios::binary);
+                    std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+                    if (KeyValidationResult::Valid ==
+                        CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                        EVLOG_debug << "Key found for certificate at path: " << potential_keyfile;
+                        return potential_keyfile;
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_debug << "Could not load or verify private key at: " << potential_keyfile << ": " << e.what();
+                }
+            }
+        }
+    }
+
     for (const auto& entry : fs::recursive_directory_iterator(key_path_directory)) {
         if (fs::is_regular_file(entry)) {
             auto key_file_path = entry.path();
@@ -103,7 +126,8 @@ static fs::path get_private_key_path_of_certificate(const X509Wrapper& certifica
                     fsstd::ifstream file(key_file_path, std::ios::binary);
                     std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
-                    if (CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                    if (KeyValidationResult::Valid ==
+                        CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
                         EVLOG_debug << "Key found for certificate at path: " << key_file_path;
                         return key_file_path;
                     }
@@ -130,13 +154,44 @@ static std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const
     fsstd::ifstream file(key, std::ios::binary);
     std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
+    // Before iterating all bundles, check by certificates from key filename
+    fs::path cert_filename = key;
+    cert_filename.replace_extension(PEM_EXTENSION);
+
+    if (fs::exists(cert_filename)) {
+        try {
+            std::set<fs::path> bundles;
+            X509CertificateBundle certificate_bundles(cert_filename, EncodingFormat::PEM);
+
+            certificate_bundles.for_each_chain(
+                [&](const fs::path& bundle, const std::vector<X509Wrapper>& certificates) {
+                    for (const auto& certificate : certificates) {
+                        if (KeyValidationResult::Valid ==
+                            CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                            bundles.emplace(bundle);
+                        }
+                    }
+
+                    // Continue iterating
+                    return true;
+                });
+
+            if (bundles.empty() == false) {
+                return bundles;
+            }
+        } catch (const CertificateLoadException& e) {
+            EVLOG_debug << "Could not load certificate bundle at: " << certificate_path_directory << ": " << e.what();
+        }
+    }
+
     try {
         std::set<fs::path> bundles;
         X509CertificateBundle certificate_bundles(certificate_path_directory, EncodingFormat::PEM);
 
         certificate_bundles.for_each_chain([&](const fs::path& bundle, const std::vector<X509Wrapper>& certificates) {
             for (const auto& certificate : certificates) {
-                if (CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                if (KeyValidationResult::Valid ==
+                    CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
                     bundles.emplace(bundle);
                 }
             }
@@ -149,7 +204,7 @@ static std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const
             return bundles;
         }
     } catch (const CertificateLoadException& e) {
-        throw e;
+        EVLOG_debug << "Could not load certificate bundle at: " << certificate_path_directory << ": " << e.what();
     }
 
     std::string error = "Could not find certificate for given private key: ";
@@ -408,7 +463,8 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         cert_path = this->directories.secc_leaf_cert_directory;
         key_path = this->directories.secc_leaf_key_directory;
     } else {
-        throw std::runtime_error("Attempt to update leaf certificate for non CSMS/V2G certificate!");
+        EVLOG_error << "Attempt to update leaf certificate for non CSMS/V2G certificate!";
+        return InstallCertificateResult::WriteError;
     }
 
     try {
@@ -456,10 +512,15 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         if (filesystem_utils::write_to_file(file_path, str_cert, std::ios::out) &&
             filesystem_utils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
 
-            // Remove from managed certificate keys, it is safe, no need to delete
-            if (managed_csr.find(private_key_path) != managed_csr.end()) {
-                managed_csr.erase(managed_csr.find(private_key_path));
+            // Remove from managed certificate keys, the CSR is fulfilled, no need to delete the key
+            // since it is not orphaned any more
+            auto it = managed_csr.find(private_key_path);
+            if (it != managed_csr.end()) {
+                managed_csr.erase(it);
             }
+
+            // TODO(ioan): properly rename key path here for fast retrieval
+            // @see 'get_private_key_path_of_certificate' and 'get_certificate_path_of_key'
 
             return InstallCertificateResult::Accepted;
         } else {
@@ -782,7 +843,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
 
     fs::path key_path;
 
-    EVLOG_info << "generate_certificate_signing_request: create filename";
+    EVLOG_info << "Generating CSR: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     // Make a difference between normal and tpm keys for identification
     const auto file_name =
@@ -794,7 +855,7 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
     } else if (certificate_type == LeafCertificateType::V2G) {
         key_path = this->directories.secc_leaf_key_directory / file_name;
     } else {
-        EVLOG_error << "generate_certificate_signing_request: create filename failed";
+        EVLOG_error << "Generate CSR: create filename failed";
         throw std::runtime_error("Attempt to generate CSR for MF certificate");
     }
 
@@ -824,15 +885,16 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
         info.key_info.private_key_pass = private_key_password;
     }
 
-    EVLOG_info << "generate_certificate_signing_request: start";
+    EVLOG_debug << "Generate CSR start";
+
     if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
-        throw std::runtime_error("Failed to generate certificate signing request!");
+        EVLOG_error << "Failed to generate certificate signing request!";
+    } else {
+        // Add the key to the managed CRS that we will delete if we can't find a certificate pair within the time
+        managed_csr.emplace(key_path, std::chrono::steady_clock::now());
     }
 
-    // Add the key to the managed CRS that we will delete if we can't find a certificate pair within the time
-    managed_csr.emplace(key_path, std::chrono::steady_clock::now());
-
-    EVLOG_debug << csr;
+    EVLOG_debug << "Generated CSR end. CSR: " << csr;
     return csr;
 }
 
@@ -880,15 +942,59 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
             return result;
         }
 
-        fs::path key_file;
-        fs::path certificate_file;
-        fs::path chain_file;
+        std::optional<X509Wrapper> latest_valid;
+        std::optional<fs::path> found_private_key_path;
 
-        auto certificate = std::move(leaf_certificates.get_latest_valid_certificate());
-        auto private_key_path = get_private_key_path_of_certificate(certificate, key_dir, this->private_key_password);
+        // Iterate all certificates from newest to the oldest
+        leaf_certificates.for_each_chain_ordered(
+            [&](const fs::path& file, const std::vector<X509Wrapper>& chain) {
+                // Search for the first valid where we can find a key
+                if (not chain.empty() && chain.at(0).is_valid()) {
+                    try {
+                        // Search for the private key
+                        auto priv_key_path =
+                            get_private_key_path_of_certificate(chain.at(0), key_dir, this->private_key_password);
+
+                        // Copy to latest valid
+                        latest_valid = chain.at(0);
+                        found_private_key_path = priv_key_path;
+
+                        // We found, break
+                        return false;
+                    } catch (const NoPrivateKeyException& e) {
+                    }
+                }
+
+                return true;
+            },
+            [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
+                // Order from newest to oldest
+                if (not a.empty() && not b.empty()) {
+                    return a.at(0).get_valid_to() > b.at(0).get_valid_to();
+                } else {
+                    return false;
+                }
+            });
+
+        if (latest_valid.has_value() == false) {
+            EVLOG_warning << "Could not find valid certificate";
+            result.status = GetKeyPairStatus::NotFoundValid;
+            return result;
+        }
+
+        if (found_private_key_path.has_value() == false) {
+            EVLOG_warning << "Could not find private key for the valid certificate";
+            result.status = GetKeyPairStatus::PrivateKeyNotFound;
+            return result;
+        }
 
         // Key path doesn't change
-        key_file = private_key_path;
+        fs::path key_file = found_private_key_path.value();
+        auto& certificate = latest_valid.value();
+
+        // Paths to search
+        fs::path certificate_file;
+        fs::path chain_file;
 
         X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
 
@@ -933,14 +1039,6 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
         result.pair = {key_file, chain_file, certificate_file, this->private_key_password};
         result.status = GetKeyPairStatus::Accepted;
 
-        return result;
-    } catch (const NoPrivateKeyException& e) {
-        EVLOG_warning << "Could not find private key for the selected certificate: (" << e.what() << ")";
-        result.status = GetKeyPairStatus::PrivateKeyNotFound;
-        return result;
-    } catch (const NoCertificateValidException& e) {
-        EVLOG_warning << "Could not find valid cerificate";
-        result.status = GetKeyPairStatus::NotFoundValid;
         return result;
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Leaf certificate load exception";
@@ -1238,6 +1336,9 @@ void EvseSecurity::garbage_collect() {
     // Delete certificates first, give the option to cleanup the dangling keys afterwards
     std::set<fs::path> invalid_certificate_files;
 
+    // Private keys that are linked to the skipped certificates and that will not be deleted regardless
+    std::set<fs::path> protected_private_keys;
+
     // Order by latest valid, and keep newest with a safety limit
     for (auto const& [cert_dir, key_dir] : leaf_paths) {
         X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
@@ -1249,8 +1350,8 @@ void EvseSecurity::garbage_collect() {
 
             // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
             expired_certs.for_each_chain_ordered(
-                [this, &invalid_certificate_files, &skipped, &key_directory](const fs::path& file,
-                                                                             const std::vector<X509Wrapper>& chain) {
+                [this, &invalid_certificate_files, &skipped, &key_directory,
+                 &protected_private_keys](const fs::path& file, const std::vector<X509Wrapper>& chain) {
                     // By default delete all empty
                     if (chain.size() <= 0) {
                         invalid_certificate_files.emplace(file);
@@ -1270,6 +1371,20 @@ void EvseSecurity::garbage_collect() {
                                 } catch (NoPrivateKeyException& e) {
                                 }
                             }
+                        }
+                    } else {
+                        // Add to protected certificate list
+                        try {
+                            fs::path key_file = get_private_key_path_of_certificate(chain[0], key_directory,
+                                                                                    this->private_key_password);
+                            protected_private_keys.emplace(key_file);
+
+                            // Erase all protected keys from the managed CRSs
+                            auto it = managed_csr.find(key_file);
+                            if (it != managed_csr.end()) {
+                                managed_csr.erase(it);
+                            }
+                        } catch (NoPrivateKeyException& e) {
                         }
                     }
 
@@ -1299,18 +1414,31 @@ void EvseSecurity::garbage_collect() {
     // at a further invocation after the GC timer will elapse a few times. This behavior
     // was added so that if we have a reset and the CSMS sends us a CSR response while we were
     // down it should still be processed when we boot up and NOT delete the CSRs
-    for (auto const& [cert_dir, key_dir] : leaf_paths) {
+    for (auto const& [cert_dir, keys_dir] : leaf_paths) {
         fs::path cert_path = cert_dir;
-        fs::path key_path = key_dir;
+        fs::path key_path = keys_dir;
 
         for (const auto& key_entry : fs::recursive_directory_iterator(key_path)) {
             auto key_file_path = key_entry.path();
 
-            if (is_keyfile(key_entry)) {
-                // No certificate pair is found, and it is also unmanaged, add it again to give it the
-                // chance to be fulfilled by the CSMS
-                if (managed_csr.find(key_file_path) == managed_csr.end()) {
-                    managed_csr.emplace(key_file_path, std::chrono::steady_clock::now());
+            // Skip protected keys
+            if (protected_private_keys.find(key_file_path) != protected_private_keys.end()) {
+                continue;
+            }
+
+            if (is_keyfile(key_file_path)) {
+                try {
+                    // Check if we have found any matching certificate
+                    get_certificate_path_of_key(key_file_path, keys_dir, this->private_key_password);
+                } catch (const NoCertificateValidException& e) {
+                    // If we did not found, add to the potential delete list
+                    EVLOG_debug << "Could not find matching certificate for key: " << key_file_path
+                                << " adding to potential deletes";
+
+                    // Give a chance to be fulfilled by the CSMS
+                    if (managed_csr.find(key_file_path) == managed_csr.end()) {
+                        managed_csr.emplace(key_file_path, std::chrono::steady_clock::now());
+                    }
                 }
             }
         }

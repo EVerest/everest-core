@@ -64,8 +64,8 @@ public: // X509 certificate utilities
                                                                      const std::optional<fs::path> file_path);
 
     /// @brief Checks if the private key is consistent with the provided handle
-    static bool x509_check_private_key(X509Handle* handle, std::string private_key,
-                                       std::optional<std::string> password);
+    static KeyValidationResult x509_check_private_key(X509Handle* handle, std::string private_key,
+                                                      std::optional<std::string> password);
 
     /// @brief Verifies the signature with the certificate handle public key against the data
     static bool x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,

@@ -615,12 +615,13 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(X509H
     return CertificateValidationResult::Valid;
 }
 
-bool OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string private_key,
-                                             std::optional<std::string> password) {
+KeyValidationResult OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string private_key,
+                                                            std::optional<std::string> password) {
     X509* x509 = get(handle);
 
-    if (x509 == nullptr)
-        return false;
+    if (x509 == nullptr) {
+        return KeyValidationResult::Unknown;
+    }
 
     OpenSSLProvider provider;
 
@@ -630,7 +631,7 @@ bool OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string pri
     } else {
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }
-    EVLOG_info << "TPM Key: " << tpm_key;
+    EVLOG_debug << "TPM Key: " << tpm_key;
 
     BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
     // Passing password string since if NULL is provided, the password CB will be called
@@ -642,11 +643,14 @@ bool OpenSSLSupplier::x509_check_private_key(X509Handle* handle, std::string pri
                       << " Password configured correctly?";
         ERR_print_errors_fp(stderr);
 
-        bResult = false;
+        return KeyValidationResult::KeyLoadFailure;
     }
 
-    bResult = bResult && X509_check_private_key(x509, evp_pkey.get()) == 1;
-    return bResult;
+    if (X509_check_private_key(x509, evp_pkey.get()) == 1) {
+        return KeyValidationResult::Valid;
+    } else {
+        return KeyValidationResult::Invalid;
+    }
 }
 
 bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,

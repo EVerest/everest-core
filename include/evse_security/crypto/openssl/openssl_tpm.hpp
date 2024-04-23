@@ -9,6 +9,8 @@
 #include <mutex>
 #include <string>
 
+#include <evse_security/utils/evse_filesystem_types.hpp>
+
 // opaque types (from OpenSSL)
 struct ossl_lib_ctx_st;  // OpenSSL OSSL_LIB_CTX;
 struct ossl_provider_st; // OpenSSL OSSL_PROVIDER
@@ -25,7 +27,7 @@ bool is_tpm_key_string(const std::string& private_key_pem);
 /// @param private_key_file_pem filename of the PEM file
 /// @return true when file starts "-----BEGIN TSS2 PRIVATE KEY-----"
 /// @note works irrespective of OpenSSL version
-bool is_tpm_key_filename(const std::string& private_key_file_pem);
+bool is_tpm_key_file(const fs::path& private_key_file_pem);
 
 /// @brief Manage the loading and configuring of OpenSSL providers
 ///

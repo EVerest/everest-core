@@ -29,12 +29,17 @@ bool is_tpm_key_string(const std::string& private_key_pem) {
     return private_key_pem.find("-----BEGIN TSS2 PRIVATE KEY-----") != std::string::npos;
 }
 
-bool is_tpm_key_filename(const std::string& private_key_file_pem) {
-    std::ifstream key_file(private_key_file_pem);
-    std::string line;
-    std::getline(key_file, line);
-    key_file.close();
-    return line == "-----BEGIN TSS2 PRIVATE KEY-----";
+bool is_tpm_key_file(const fs::path& private_key_file_pem) {
+    if (fs::is_regular_file(private_key_file_pem)) {
+        std::ifstream key_file(private_key_file_pem);
+        std::string line;
+        std::getline(key_file, line);
+        key_file.close();
+
+        return line.find("-----BEGIN TSS2 PRIVATE KEY-----") != std::string::npos;
+    }
+
+    return false;
 }
 
 #ifdef USING_OPENSSL_3_TPM

@@ -80,7 +80,7 @@ TEST_F(OpenSSLSupplierTest, x509_check_private_key) {
     auto cert = res_leaf[0].get();
     auto key = getFile("pki/server_priv.pem");
     auto res = OpenSSLSupplier::x509_check_private_key(cert, key, std::nullopt);
-    ASSERT_TRUE(res);
+    ASSERT_TRUE(res == KeyValidationResult::Valid);
 }
 
 TEST_F(OpenSSLSupplierTest, x509_verify_certificate_chain) {

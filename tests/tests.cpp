@@ -22,6 +22,7 @@
 #if USING_OPENSSL_3
 // provider management has changed - ensure tests still work
 #ifndef USING_TPM2
+
 #include <evse_security/detail/openssl/openssl_providers.hpp>
 #else
 
@@ -790,8 +791,8 @@ TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
 
     // List of date sorted certificates
     std::vector<X509Wrapper> sorted;
-    std::vector<fs::path> sorded_should_delete;
-    std::vector<fs::path> sorded_should_keep;
+    std::vector<fs::path> sorted_should_delete;
+    std::vector<fs::path> sorted_should_keep;
 
     // Ensure that we have GEN_CERTIFICATES + 2 (CPO_CERT_CHAIN.pem + SECC_LEAF.pem)
     {
@@ -816,9 +817,9 @@ TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
 
     for (const auto& cert : sorted) {
         if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-            sorded_should_delete.push_back(cert.get_file().value());
+            sorted_should_delete.push_back(cert.get_file().value());
         } else {
-            sorded_should_keep.push_back(cert.get_file().value());
+            sorted_should_keep.push_back(cert.get_file().value());
         }
     }
 
@@ -836,12 +837,32 @@ TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
         ASSERT_EQ(full_certs.get_certificate_chains_count(), DEFAULT_MINIMUM_CERTIFICATE_ENTRIES);
 
         // Ensure that we only have the newest ones
-        for (const auto& deleted : sorded_should_delete) {
+        for (const auto& deleted : sorted_should_delete) {
             ASSERT_FALSE(fs::exists(deleted));
         }
 
-        for (const auto& deleted : sorded_should_keep) {
-            ASSERT_TRUE(fs::exists(deleted));
+        for (const auto& not_deleted : sorted_should_keep) {
+            fs::path key_file = not_deleted;
+            key_file.replace_extension(".key");
+
+            ASSERT_TRUE(fs::exists(not_deleted));
+
+            // Ignore the CPO chain that does not have a properly
+            if (not_deleted.string().find("CPO_CERT_CHAIN") != std::string::npos) {
+                key_file = "certs/client/cso/SECC_LEAF.key";
+            }
+
+            // Check their respective keys exist
+            EVLOG_info << key_file;
+            ASSERT_TRUE(fs::exists(key_file));
+
+            X509Wrapper cert = X509CertificateBundle(not_deleted, EncodingFormat::PEM).split().at(0);
+
+            fsstd::ifstream file(key_file, std::ios::binary);
+            std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+            ASSERT_EQ(KeyValidationResult::Valid, CryptoSupplier::x509_check_private_key(
+                                                      cert.get(), private_key, evse_security->private_key_password));
         }
     }
 }
@@ -896,4 +917,4 @@ TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
 
 } // namespace evse_security
 
-// FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)
+  // FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)

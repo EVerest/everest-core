@@ -18,6 +18,13 @@ enum class CryptoKeyType {
     RSA_7680,      // Protection lifetime: >2031
 };
 
+enum class KeyValidationResult {
+    Valid,
+    KeyLoadFailure, // The key could not be loaded, might be an password or invalid string
+    Invalid,        // The key is not linked to the specified certificate
+    Unknown,        // Unknown error, not related to provider validation
+};
+
 struct KeyGenerationInfo {
     CryptoKeyType key_type;
 
