@@ -1,0 +1,43 @@
+yaml_srcs = glob(["*.yaml"])
+some_yaml = yaml_srcs[0]
+
+type_names = [name[:-5] for name in yaml_srcs]
+cpp_headers = [
+    "generated/types/{}.hpp".format(name) for name in type_names
+]
+
+some_header = cpp_headers[0]
+
+filegroup(
+    name = "types",
+    srcs = yaml_srcs,
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "cpp-headers",
+    outs = cpp_headers,
+    srcs = yaml_srcs + [
+        "@everest-framework//schemas:schemas",
+    ],
+    tools = [
+        "@everest-utils//ev-dev-tools:ev-cli",
+    ],
+    cmd = """
+$(location @everest-utils//ev-dev-tools:ev-cli) types generate-headers \
+    --everest-dir . \
+    --schemas-dir external/everest-framework/schemas \
+    --disable-clang-format \
+    --output-dir `dirname $(location {some_header})`
+""".format(
+        some_header = some_header
+    )
+)
+
+cc_library(
+    name = "types_lib",
+    hdrs = [":cpp-headers"],
+    visibility = ["//visibility:public"],
+    includes = ["."],
+    copts = ["-std=c++17"],
+)
