@@ -27,7 +27,7 @@ insights on that, join us in our
 
 ## Dependencies
 
-To build this library you need [libfsm](https://github.com/EVerest/libfsm) and [everest-cmake](https://github.com/EVerest/everest-cmake) checkout in the same directory as libiso15118.
+To build this library you need [everest-cmake](https://github.com/EVerest/everest-cmake) checkout in the same directory as libiso15118.
 
 ## Getting started
 

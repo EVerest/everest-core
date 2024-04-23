@@ -21,6 +21,14 @@ option(ISO15118_LINK_CUSTOM_MBEDTLS "\
 Link against a pinned mbedtls library\
 " ON)
 
+# dependencies
+if (NOT DISABLE_EDM)
+    evc_setup_edm()
+    # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
+    set(ISO15118_INSTALL OFF)
+else()
+    find_package(fsm REQUIRED)
+endif()
 
 add_subdirectory(3rd_party)
 add_subdirectory(input)
@@ -28,6 +36,7 @@ add_subdirectory(src)
 
 if (ISO15118_BUILD_TESTS)
     include(CTest)
+    list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
     add_subdirectory(test)
 endif()
 

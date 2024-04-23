@@ -1,3 +1,5 @@
+include(Catch)
+
 add_executable(test_authorization_setup authorization_setup.cpp)
 
 target_link_libraries(test_authorization_setup

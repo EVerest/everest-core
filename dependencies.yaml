@@ -1,0 +1,9 @@
+---
+libfsm:
+  git: https://github.com/EVerest/libfsm.git
+  git_tag: v0.2.0
+  options: ["BUILD_EXAMPLES OFF"]
+catch2:
+  git: https://github.com/catchorg/Catch2.git
+  git_tag: v3.4.0
+  cmake_condition: "ISO15118_BUILD_TESTS"

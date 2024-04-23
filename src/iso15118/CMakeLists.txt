@@ -1,10 +1,3 @@
-if (TARGET fsm)
-    # FIXME (aw): need to get proper way to deal with dependencies out of edm ...
-else()
-    message(STATUS "Target for libfsm not found, trying sibling folder ../libfsm")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/../libfsm ${CMAKE_CURRENT_BINARY_DIR}/libfsm)
-endif()
-
 find_package(Threads REQUIRED)
 
 add_library(iso15118)
