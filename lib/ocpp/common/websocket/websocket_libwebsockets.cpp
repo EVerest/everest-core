@@ -38,7 +38,7 @@ public:
 
 namespace ocpp {
 
-using evse_security::is_tpm_key_filename;
+using evse_security::is_tpm_key_file;
 using evse_security::OpenSSLProvider;
 
 enum class EConnectionState {
@@ -456,7 +456,7 @@ void WebsocketTlsTPM::client_loop() {
         bool tpm_key = false;
 
         if (!path_key.empty()) {
-            tpm_key = is_tpm_key_filename(path_key);
+            tpm_key = is_tpm_key_file(path_key);
         }
 
         OpenSSLProvider provider;

@@ -30,7 +30,7 @@ websocketpp:
   git_tag: 0.8.2
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.5.0
+  git_tag: 34e89b2
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.3.3  
