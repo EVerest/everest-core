@@ -7,3 +7,6 @@ catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
   cmake_condition: "ISO15118_BUILD_TESTS"
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: 84d92f5

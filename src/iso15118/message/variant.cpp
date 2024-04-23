@@ -8,10 +8,10 @@
 #include <iso15118/detail/helper.hpp>
 #include <iso15118/detail/variant_access.hpp>
 
-#include <exi/cb/appHand_Decoder.h>
-#include <exi/cb/iso20_AC_Decoder.h>
-#include <exi/cb/iso20_CommonMessages_Decoder.h>
-#include <exi/cb/iso20_DC_Decoder.h>
+#include <cbv2g/app_handshake/appHand_Decoder.h>
+#include <cbv2g/iso_20/iso20_AC_Decoder.h>
+#include <cbv2g/iso_20/iso20_CommonMessages_Decoder.h>
+#include <cbv2g/iso_20/iso20_DC_Decoder.h>
 
 using PayloadType = iso15118::io::v2gtp::PayloadType;
 

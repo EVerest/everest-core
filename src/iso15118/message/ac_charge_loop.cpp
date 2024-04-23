@@ -6,8 +6,8 @@
 
 #include <iso15118/detail/variant_access.hpp>
 
-#include <exi/cb/iso20_AC_Decoder.h>
-#include <exi/cb/iso20_AC_Encoder.h>
+#include <cbv2g/iso_20/iso20_AC_Decoder.h>
+#include <cbv2g/iso_20/iso20_AC_Encoder.h>
 
 namespace iso15118::message_20 {
 

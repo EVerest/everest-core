@@ -88,13 +88,13 @@ target_link_libraries(iso15118
     PUBLIC
         # FIXME (aw): would be nice if we could make this private!
         fsm::fsm
+        cb_v2g::V2GTP
+        cb_v2g::ISO20
     PRIVATE
         Threads::Threads
 
         ${MBEDTLS_LINK_DEPENDENCIES}
 
-        iso15118::v2gtp
-        iso15118::exi_20
 )
 
 # FIXME (aw): do we want to have this public here?

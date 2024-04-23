@@ -7,7 +7,7 @@
 #include <iso15118/detail/cb_exi.hpp>
 #include <iso15118/detail/variant_access.hpp>
 
-#include <exi/cb/appHand_Encoder.h>
+#include <cbv2g/app_handshake/appHand_Encoder.h>
 
 namespace iso15118::message_20 {
 

@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-#include <exi/cb/common/exi_bitstream.h>
+#include <cbv2g/common/exi_bitstream.h>
 
 #include <iso15118/io/stream_view.hpp>
 

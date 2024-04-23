@@ -28,6 +28,7 @@ if (NOT DISABLE_EDM)
     set(ISO15118_INSTALL OFF)
 else()
     find_package(fsm REQUIRED)
+    find_package(cbv2g REQUIRED)
 endif()
 
 add_subdirectory(3rd_party)
@@ -43,9 +44,6 @@ endif()
 if (ISO15118_INSTALL)
     install(
         TARGETS
-            cb_v2gtp
-            cb_exi_codec
-            cb_iso20
             iso15118
         EXPORT iso15118-targets
     )

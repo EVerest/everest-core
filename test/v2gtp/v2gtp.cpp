@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include <exi/cb/exi_v2gtp.h>
+#include <cbv2g/exi_v2gtp.h>
 
 SCENARIO("V2GTP header test") {
     GIVEN("A binary representation of a valid (pre -20) V2GTP header") {
