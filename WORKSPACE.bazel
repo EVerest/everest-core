@@ -2,6 +2,25 @@ workspace(name = "everest-core")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+RULES_PYTHON_SHA = "c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311"
+RULES_PYTHON_VERSION = "0.31.0"
+
+http_archive(
+    name = "rules_python",
+    sha256 = RULES_PYTHON_SHA,
+    strip_prefix = "rules_python-{}".format(RULES_PYTHON_VERSION),
+    url = "https://github.com/bazelbuild/rules_python/releases/download/{}/rules_python-{}.tar.gz".format(
+        RULES_PYTHON_VERSION, RULES_PYTHON_VERSION),
+)
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
+
+py_repositories()
+
+python_register_toolchains(
+    name = "python3_10",
+    python_version = "3.10",
+)
+
 http_archive(
     name = "rules_rust",
     sha256 = "36ab8f9facae745c9c9c1b33d225623d976e78f2cc3f729b7973d8c20934ab95",
@@ -14,7 +33,28 @@ rules_rust_dependencies()
 
 rust_register_toolchains(
     versions = ["1.74.0"],
+    edition="2021",
 )
+
+load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
+
+crate_universe_dependencies()
+
+load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
+
+crates_repository(
+    name = "dep_tool_crate_index",
+    cargo_lockfile = "//third-party/bazel/dep_tool:Cargo.lock",
+    isolated = False,
+    manifests = [
+        "//third-party/bazel/dep_tool:Cargo.toml",
+    ],
+)
+
+load("@dep_tool_crate_index//:defs.bzl", dep_tool_crate_repositories = "crate_repositories")
+
+dep_tool_crate_repositories()
+
 
 load("//third-party/bazel:repos.bzl", "everest_core_repos")
 
@@ -24,6 +64,7 @@ load("//third-party/bazel:defs.bzl", "everest_core_defs")
 
 everest_core_defs()
 
+
 load("@everest-framework//third-party/bazel:repos.bzl", "everest_framework_repos")
 
 everest_framework_repos()
@@ -31,3 +72,7 @@ everest_framework_repos()
 load("@everest-framework//third-party/bazel:defs.bzl", "everest_framework_deps")
 
 everest_framework_deps()
+
+load("@everest-utils//third-party/bazel:defs.bzl", "everest_utils_defs")
+
+everest_utils_defs()

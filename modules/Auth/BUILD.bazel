@@ -1,0 +1,30 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+cc_library(
+    name = "auth_handler",
+    srcs = glob(["lib/*.cpp"]),
+    hdrs = glob(["include/*.hpp"]),
+    strip_include_prefix = "include",
+    deps = [
+        "@libtimer//:libtimer",
+        "//third-party/bazel:boost_asio",
+        "@everest-framework//:framework",
+        "@com_github_HowardHinnant_date//:date",
+        "//types:types_lib",
+    ],
+    copts = ["-std=c++17"],
+)
+
+IMPLS = [
+    "main",
+    "reservation",
+]
+
+cc_everest_module(
+    name = "Auth",
+    deps = [
+        "@libtimer//:libtimer",
+        ":auth_handler",
+    ],
+    impls = IMPLS,
+)
