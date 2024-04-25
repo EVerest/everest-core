@@ -7,6 +7,7 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
+#include <netinet/in.h>
 
 #include <iso15118/detail/helper.hpp>
 
@@ -49,8 +50,12 @@ bool get_first_sockaddr_in6_for_interface(const std::string& interface_name, soc
 }
 
 std::unique_ptr<char[]> sockaddr_in6_to_name(const sockaddr_in6& address) {
-    // 4 chars per 2 bytes, 7 colons, 1 '%' and interface name (note, that IFNAMESIZ already include null termination)
-    static constexpr auto MAX_NUMERIC_NAME_LENGTH = 8 * 4 + 7 * 1 + 1 + IFNAMSIZ;
+    // account for ipv6 address string length plus possible scope/zone
+    // identifier which seems to be an interface name, as both constants
+    // (INET6_ADDRSTRLEN and IFNAMSIZ) include the terminating NULL, we
+    // have one extra character that can account for the separating '%'
+    // between the ipv6 address and the scope/zone identifier
+    static constexpr auto MAX_NUMERIC_NAME_LENGTH = INET6_ADDRSTRLEN + IFNAMSIZ;
     auto name = std::make_unique<char[]>(MAX_NUMERIC_NAME_LENGTH);
 
     // FIXME (aw): what about alignment issues here between casting from sockaddr_in6 to sockaddr?
