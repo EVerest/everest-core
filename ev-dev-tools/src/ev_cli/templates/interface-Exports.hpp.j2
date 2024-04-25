@@ -100,7 +100,7 @@ public:
         args["{{ arg.name }}"] = {{ var_to_any(arg, arg.name) }};
         {% endif%}
         {% endfor %}
-        {% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
+        {{ '' }}{% if cmd.result %}Result result = {% endif %}_adapter->call(_req, "{{ cmd.name }}", args);
         {% if cmd.result %}
         {% if 'enum_type' in cmd.result %}
         auto retval = {{ string_to_enum(cmd.result.enum_type) }}({{ var_to_cpp(cmd.result) }}(result.value()));

@@ -5,15 +5,15 @@ std::variant<{{ type.cpp_type|join(', ') }}>
     {% if interface is not none and 'object_type' in type %}
         {{ interface + '::' + type.object_type }}
     {% else %}
-        {% if 'object_type' in type %}
+        {% if 'object_type' in type -%}
             {{ type.object_type }}
-        {% elif 'enum_type' in type %}
+        {%- elif 'enum_type' in type -%}
             {{ type.enum_type }}
-        {% elif 'array_type' in type %}
+        {%- elif 'array_type' in type -%}
             std::vector<{{ type.array_type }}>
-        {% else %}
+        {%- else -%}
             {{ type.cpp_type }}
-        {% endif %}
+        {%- endif %}
     {%- endif %}
 {%- endif %}
 {%- endmacro %}
@@ -99,16 +99,16 @@ void publish_{{ var.name }}({% if var.json_type != 'null' %}{{ cpp_type(var) }} 
 
 {% macro string_to_enum(enum_type) %}
 {% if '::' not in enum_type %}
-string_to_{{ enum_type | snake_case }}
+string_to_{{ enum_type | snake_case -}}
 {% else %}
-{{ enum_type[:enum_type.rfind('::')] }}::string_to_{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}
+{{ enum_type[:enum_type.rfind('::')] }}::string_to_{{ enum_type[(enum_type.rfind('::')+2):] | snake_case -}}
 {% endif %}
 {%- endmacro %}
 
 {% macro enum_to_string(enum_type) %}
 {% if '::' not in enum_type %}
 {{ enum_type | snake_case }}_to_string
-{% else %}
+{%- else %}
 {{ enum_type[:enum_type.rfind('::')] }}::{{ enum_type[(enum_type.rfind('::')+2):] | snake_case }}_to_string
-{% endif %}
+{%- endif %}
 {%- endmacro %}
