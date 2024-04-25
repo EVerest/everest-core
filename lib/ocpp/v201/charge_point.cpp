@@ -379,8 +379,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
         trigger_reason == ocpp::v201::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
 
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, transaction, trigger_reason, seq_no,
-                                std::nullopt, std::nullopt, transaction_id_token, meter_values, std::nullopt, this->is_offline(),
-                                std::nullopt);
+                                std::nullopt, std::nullopt, transaction_id_token, meter_values, std::nullopt,
+                                this->is_offline(), std::nullopt);
 
     this->database_handler->transaction_metervalues_clear(transaction_id);
 
