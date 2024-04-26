@@ -9,5 +9,3 @@ target_link_libraries(dpm1000_tester
         can_protocols::dpm1000
         Threads::Threads
 )
-
-target_compile_features(dpm1000_tester PRIVATE cxx_std_17)

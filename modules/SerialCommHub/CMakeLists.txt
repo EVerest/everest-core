@@ -19,8 +19,6 @@ target_sources(${MODULE_NAME}
     tiny_modbus_rtu.cpp
     crc16.cpp
 )
-
-target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
 target_sources(${MODULE_NAME}

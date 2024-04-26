@@ -9,7 +9,6 @@ target_link_libraries(evse_slac_test
         slac_fsm_evse
         fmt::fmt
 )
-target_compile_features(evse_slac_test PRIVATE cxx_std_17)
 
 add_executable(evse_vs_ev)
 target_sources(evse_vs_ev
@@ -25,7 +24,6 @@ target_link_libraries(evse_vs_ev
         slac::fsm::ev
         Threads::Threads
 )
-target_compile_features(evse_vs_ev PRIVATE cxx_std_17)
 
 add_executable(bridger)
 target_sources(bridger
@@ -38,4 +36,3 @@ target_link_libraries(bridger
         slac::slac
         fmt::fmt
 )
-target_compile_features(bridger PRIVATE cxx_std_17)

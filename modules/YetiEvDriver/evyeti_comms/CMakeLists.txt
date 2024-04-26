@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 
 # set the project name
 project(evyeti_comms VERSION 0.1)
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
 
 configure_file(config.h.in config.h)
 
