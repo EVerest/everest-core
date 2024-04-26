@@ -1,7 +1,9 @@
 description: Interface for power supplies used for DC charging
 cmds:
   getCapabilities:
-    description: Get capabilities of power supply
+    description: >-
+      Get maximum capabilities of power supply. It should report the maximum possible values under best conditions, even if it
+      is e.g. derated at this moment due to high temperature.
     result:
       description: Capabilities
       type: object
@@ -46,3 +48,7 @@ vars:
     description: Fault code. Published when fault happens.
     type: string
     $ref: /power_supply_DC#/FaultCode
+  update_capabilities:
+    description: Update some capability values at run-time. This can be used to e.g. report lower limits due to temperature de-rating of the PSU.
+    type: object
+    $ref: /power_supply_DC#/UpdateCapabilities
