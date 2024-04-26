@@ -199,7 +199,7 @@ void ChargePoint::stop() {
     this->websocket_timer.stop();
     this->client_certificate_expiration_check_timer.stop();
     this->v2g_certificate_expiration_check_timer.stop();
-    this->disconnect_websocket(websocketpp::close::status::normal);
+    this->disconnect_websocket(WebsocketCloseReason::Normal);
     this->message_queue->stop();
 }
 
@@ -211,7 +211,7 @@ void ChargePoint::connect_websocket() {
     }
 }
 
-void ChargePoint::disconnect_websocket(websocketpp::close::status::value code) {
+void ChargePoint::disconnect_websocket(WebsocketCloseReason code) {
     if (this->websocket != nullptr) {
         this->disable_automatic_websocket_reconnects = true;
         this->websocket->disconnect(code);
@@ -906,7 +906,7 @@ void ChargePoint::init_websocket() {
     });
 
     this->websocket->register_closed_callback(
-        [this, connection_options, configuration_slot](const websocketpp::close::status::value reason) {
+        [this, connection_options, configuration_slot](const WebsocketCloseReason reason) {
             EVLOG_warning << "Closed websocket of NetworkConfigurationPriority: "
                           << this->network_configuration_priority + 1
                           << " which is configurationSlot: " << configuration_slot;
@@ -914,7 +914,7 @@ void ChargePoint::init_websocket() {
             if (!this->disable_automatic_websocket_reconnects) {
                 this->websocket_timer.timeout(
                     [this, reason]() {
-                        if (reason != websocketpp::close::status::service_restart) {
+                        if (reason != WebsocketCloseReason::ServiceRestart) {
                             this->next_network_configuration_priority();
                         }
                         this->start_websocket();
@@ -1533,7 +1533,7 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
         if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
             this->websocket->set_authorization_key(set_variable_data.attributeValue.get());
-            this->websocket->disconnect(websocketpp::close::status::service_restart);
+            this->websocket->disconnect(WebsocketCloseReason::ServiceRestart);
         }
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
@@ -2042,7 +2042,7 @@ void ChargePoint::handle_certificate_signed_req(Call<CertificateSignedRequest> c
     if (response.status == CertificateSignedStatusEnum::Accepted and
         cert_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate and
         this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
-        this->websocket->disconnect(websocketpp::close::status::service_restart);
+        this->websocket->disconnect(WebsocketCloseReason::ServiceRestart);
     }
 }
 

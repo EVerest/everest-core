@@ -26,6 +26,9 @@ private:
     client ws_client;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
 
+    websocketpp::connection_hdl handle;
+    websocketpp::transport::timer_handler reconnect_callback;
+
     /// \brief Connect to a plain websocket
     void connect_plain();
 
@@ -57,10 +60,10 @@ public:
 
     /// \brief Reconnects the websocket using the delay, a reason for this reconnect can be provided with the
     /// \p reason parameter
-    void reconnect(std::error_code reason, long delay) override;
+    void reconnect(long delay) override;
 
     /// \brief Closes a plaintext websocket connection
-    void close(websocketpp::close::status::value code, const std::string& reason) override;
+    void close(const WebsocketCloseReason code, const std::string& reason) override;
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

@@ -5,7 +5,6 @@
 #include <ocpp/common/websocket/websocket_uri.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <websocketpp/uri.hpp>
 
 #include <stdexcept>
 #include <string>
@@ -50,7 +49,7 @@ Uri Uri::parse_and_validate(std::string uri, std::string chargepoint_id, int sec
         uri = "ws://" + uri;
     }
 
-    auto uri_temp = websocketpp::uri(uri);
+    auto uri_temp = ev_uri(uri);
     if (!uri_temp.get_valid()) {
         throw std::invalid_argument("given `uri` is invalid");
     }

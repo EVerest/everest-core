@@ -636,6 +636,22 @@ enum class MessageDirection {
     ChargingStationToCSMS
 };
 
+enum class ConnectionFailedReason {
+    InvalidCSMSCertificate = 0,
+};
+
+///
+/// \brief Reason why a websocket closes its connection
+///
+enum class WebsocketCloseReason : uint8_t {
+    /// Normal closure
+    Normal = 1,
+    ForceTcpDrop,
+    GoingAway,
+    AbnormalClose,
+    ServiceRestart
+};
+
 } // namespace ocpp
 
 #endif

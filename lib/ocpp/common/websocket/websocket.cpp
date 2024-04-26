@@ -5,7 +5,12 @@
 #include <ocpp/common/websocket/websocket.hpp>
 #include <ocpp/v16/types.hpp>
 
+#ifdef LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP
+#include <ocpp/common/websocket/websocket_plain.hpp>
+#include <ocpp/common/websocket/websocket_tls.hpp>
+#else
 #include <ocpp/common/websocket/websocket_libwebsockets.hpp>
+#endif
 
 #include <boost/algorithm/string.hpp>
 
@@ -40,14 +45,14 @@ void Websocket::set_connection_options(const WebsocketConnectionOptions& connect
     this->websocket->set_connection_options(connection_options);
 }
 
-void Websocket::disconnect(websocketpp::close::status::value code) {
+void Websocket::disconnect(const WebsocketCloseReason code) {
     this->logging->sys("Disconnecting");
     this->websocket->disconnect(code);
 }
 
-void Websocket::reconnect(std::error_code reason, long delay) {
+void Websocket::reconnect(long delay) {
     this->logging->sys("Reconnecting");
-    this->websocket->reconnect(reason, delay);
+    this->websocket->reconnect(delay);
 }
 
 bool Websocket::is_connected() {
@@ -72,11 +77,10 @@ void Websocket::register_disconnected_callback(const std::function<void()>& call
     });
 }
 
-void Websocket::register_closed_callback(
-    const std::function<void(const websocketpp::close::status::value reason)>& callback) {
+void Websocket::register_closed_callback(const std::function<void(const WebsocketCloseReason reason)>& callback) {
     this->closed_callback = callback;
     this->websocket->register_closed_callback(
-        [this](const websocketpp::close::status::value reason) { this->closed_callback(reason); });
+        [this](const WebsocketCloseReason reason) { this->closed_callback(reason); });
 }
 
 void Websocket::register_message_callback(const std::function<void(const std::string& message)>& callback) {

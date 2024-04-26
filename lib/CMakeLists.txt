@@ -63,12 +63,16 @@ add_subdirectory(ocpp/v16/messages)
 add_subdirectory(ocpp/v201/messages)
 
 option(LIBOCPP_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp instead of std::filesystem" OFF)
-option(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP "Usage of deprecated websocket++ instead of libwebsockets" OFF)
 
 target_include_directories(ocpp
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_include_directories(ocpp
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd_party>
 )
 
 #############
@@ -120,7 +124,7 @@ target_link_libraries(ocpp
         everest::timer        
         nlohmann_json_schema_validator
         everest::evse_security
-        websocketpp::websocketpp
+        websockets_shared
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -131,12 +135,12 @@ target_link_libraries(ocpp
         date::date-tz
 )
 
-target_link_libraries(ocpp
-PUBLIC
-    websockets_shared
-)
-
 if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
+    target_link_libraries(ocpp
+    PUBLIC    
+        websocketpp::websocketpp
+    )
+    
     target_compile_definitions(ocpp
         PRIVATE
             LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP

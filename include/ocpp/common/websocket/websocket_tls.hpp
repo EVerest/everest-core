@@ -26,6 +26,10 @@ private:
     tls_client wss_client;
     std::shared_ptr<EvseSecurity> evse_security;
     websocketpp::lib::shared_ptr<websocketpp::lib::thread> websocket_thread;
+
+    websocketpp::connection_hdl handle;
+    websocketpp::transport::timer_handler reconnect_callback;
+
     /// \brief Called when a TLS websocket connection gets initialized, manages the supported TLS versions, cipher lists
     /// and how verification of the server certificate is handled
     tls_context on_tls_init(std::string hostname, websocketpp::connection_hdl hdl, int32_t security_profile);
@@ -66,10 +70,10 @@ public:
     /// \brief Reconnects the websocket using the delay, a reason for this reconnect can be provided with the
     /// \param reason parameter
     /// \param delay delay of the reconnect attempt
-    void reconnect(std::error_code reason, long delay) override;
+    void reconnect(long delay) override;
 
     /// \brief closes the websocket
-    void close(websocketpp::close::status::value code, const std::string& reason) override;
+    void close(const WebsocketCloseReason code, const std::string& reason) override;
 
     /// \brief send a \p message over the websocket
     /// \returns true if the message was sent successfully

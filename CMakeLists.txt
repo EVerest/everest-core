@@ -16,6 +16,7 @@ option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." OFF)
 option(OCPP_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
+option(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP "Usage of deprecated websocket++ instead of libwebsockets" OFF)
 
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(LIBOCPP_BUILD_TESTING ON)
@@ -32,21 +33,25 @@ if(NOT DISABLE_EDM)
     # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
     set(OCPP_INSTALL OFF)
 
-    # FIXME (aw): websocketpp doesn't play well with EDM/CPM
-    add_library(websocketpp::websocketpp INTERFACE IMPORTED)
-    set_target_properties(websocketpp::websocketpp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${websocketpp_SOURCE_DIR}")
-
+    if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
+        # FIXME (aw): websocketpp doesn't play well with EDM/CPM
+        add_library(websocketpp::websocketpp INTERFACE IMPORTED)
+        set_target_properties(websocketpp::websocketpp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${websocketpp_SOURCE_DIR}")
+    endif()
 else()
     find_package(date REQUIRED)
     find_package(nlohmann_json REQUIRED)
-    find_package(nlohmann_json_schema_validator REQUIRED)
-    find_package(websocketpp REQUIRED)
+    find_package(nlohmann_json_schema_validator REQUIRED)    
     find_package(libwebsockets REQUIRED)
     
     find_package(fsm REQUIRED)
     find_package(everest-timer REQUIRED)
     find_package(everest-log REQUIRED)
     find_package(everest-evse_security REQUIRED)
+
+    if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
+        find_package(websocketpp REQUIRED)
+    endif()
 endif()
 
 # config and auxillary files
