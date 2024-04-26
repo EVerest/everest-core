@@ -1,0 +1,156 @@
+description: Driver module for Phytec PhyVerso EV Charging controller with Pionix MCU firmware
+config:
+  serial_port:
+    description: Serial port the Yeti hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with the hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio:
+    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    type: integer
+    minimum: -1
+    maximum: 1000
+    default: -1
+  mcu_config_file:
+    description: config file that should be sent to the MCU
+    type: string
+    default: example_config_pionix.json
+  conn1_max_current_A_import:
+    description: Maximum import current in amps
+    type: integer
+    minimum: 0
+    default: 16
+  conn1_min_current_A_import:
+    description: Minimum import current in amps
+    type: integer
+    minimum: 0
+    default: 6
+  conn1_min_phase_count_import:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_max_phase_count_import:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_min_current_A_export:
+    description: Minimum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn1_max_current_A_export:
+    description: Maximum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn1_min_phase_count_export:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_max_phase_count_export:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn1_has_socket:
+    description: Set to true if it has a socket, false if it has a permanently attached cable
+    type: boolean
+    default: false
+  conn1_dc:
+    description: Set to true if it is for DC, false if it is AC
+    type: boolean
+    default: false
+  conn2_max_current_A_import:
+    description: Maximum import current in amps
+    type: integer
+    minimum: 0
+    default: 16
+  conn2_min_current_A_import:
+    description: Minimum import current in amps
+    type: integer
+    minimum: 0
+    default: 6
+  conn2_min_phase_count_import:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_max_phase_count_import:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_min_current_A_export:
+    description: Minimum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn2_max_current_A_export:
+    description: Maximum export current in amps
+    type: integer
+    minimum: 0
+    maximum: 63
+    default: 0
+  conn2_min_phase_count_export:
+    description: Minimum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_max_phase_count_export:
+    description: Maximum phase count it can switch
+    type: integer
+    minimum: 1
+    maximum: 3
+    default: 3
+  conn2_has_socket:
+    description: Set to true if it has a socket, false if it has a permanently attached cable
+    type: boolean
+    default: false
+  conn2_dc:
+    description: Set to true if it is for DC, false if it is AC
+    type: boolean
+    default: false
+provides:
+  connector_1:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  connector_2:
+    interface: evse_board_support
+    description: provides the board support Interface to low level control control pilot, relais, motor lock
+  rcd_1:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  rcd_2:
+    interface: ac_rcd
+    description: RCD interface of the onboard RCD
+  connector_lock_1:
+    interface: connector_lock
+    description: RCD interface of the onboard RCD
+  connector_lock_2:
+    interface: connector_lock
+    description: RCD interface of the onboard RCD
+enable_external_mqtt: true
+enable_telemetry: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+
