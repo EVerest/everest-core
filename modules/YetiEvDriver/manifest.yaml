@@ -1,0 +1,30 @@
+description: Driver module for EV side for the YETI hardware
+config:
+  serial_port:
+    description: Serial port the Yeti hardware is connected to
+    type: string
+    default: /dev/ttyUSB0
+  baud_rate:
+    description: Serial baud rate to use when communicating with Yeti hardware
+    type: integer
+    minimum: 9600
+    maximum: 230400
+    default: 115200
+  reset_gpio:
+    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    type: integer
+    minimum: -1
+    maximum: 1000
+    default: -1
+provides:
+  ev_board_support:
+    interface: ev_board_support
+    description: provides the board support Interface to low level control control pilot, relais, rcd
+enable_telemetry: true
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Sebastian Lukas
+    - Piet Gömpel

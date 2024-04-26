@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.12.0
+  git_tag: 3e767e2a5652d3acb97d01fc88aae2f04f3f5282
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
@@ -77,7 +77,7 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.2.1
+  git_tag: 2d7ea3e4742114cb7e3b1e71b3d1e7da566e2146
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 
 # unit testing

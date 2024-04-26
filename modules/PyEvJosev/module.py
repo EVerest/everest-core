@@ -95,7 +95,6 @@ class PyEVJosevModule():
 
     def _handler_start_charging(self, args) -> bool:
 
-        self._es.PaymentOption =args['PaymentOption']
         self._es.EnergyTransferMode = args['EnergyTransferMode']
 
         self._ready_event.set()

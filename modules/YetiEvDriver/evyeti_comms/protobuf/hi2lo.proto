@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+/*
+ This container message is send from Hi Level to Low level and may contain any allowed message in that direction.
+*/
+message HiToLo {
+ oneof payload {
+    // Common/configuration messages
+    Enable enable = 6;
+    Disable disable = 7;
+    KeepAliveHi keep_alive = 13;
+    FirmwareUpdate firmware_update = 16;
+    // Commands only available in control_mode = 2 (direct low level control)
+    SetBCDE set_bcde = 25;
+    AllowPowerOn allow_power_on = 21;
+    // Commands for HIL simulator
+    Reset reset = 23;
+  }
+}
+
+message AllowPowerOn {
+  bool p = 1;
+}
+
+message SetBCDE {
+  int32 mode = 1; // 0: A, 1: B, 2: C, 3: D, 4: E
+}
+
+message FirmwareUpdate {
+  bool invoke_rom_bootloader = 1;
+}
+
+
+message KeepAliveHi {
+  uint32 time_stamp = 1;
+  uint32 hw_type = 2;
+  uint32 hw_revision = 3;
+  uint32 protocol_version_major = 4;
+  uint32 protocol_version_minor = 5;
+  string sw_version_string = 6;
+
+}
+
+message Enable { }
+message Disable { }
+message Reset { }
