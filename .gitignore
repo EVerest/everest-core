@@ -4,3 +4,4 @@
 workspace.yaml
 .vscode/
 /bazel-*
+/modules/target

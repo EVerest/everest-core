@@ -31,6 +31,9 @@
 /modules/YetiDriver @corneliusclaussen @hikinggrass
 /modules/simulation/ @SebaLukas @pietfried
 /modules/rust_examples/ @SirVer @golovasteek @dorezyuk
+**/Cargo.toml @SirVer @golovasteek @dorezyuk
+**/Cargo.lock @SirVer @golovasteek @dorezyuk
+
 
 # Rust & Bazel
 *.rs @SirVer @golovasteek @dorezyuk
