@@ -47,8 +47,8 @@ mbedtls_entropy_context entropy;
 mbedtls_ssl_cache_context cache;
 #endif
 
-static const int v2g_cipher_suites[] = {MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,
-                                        MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 0};
+static const int v2g_cipher_suites[] = {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+                                        MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256, 0};
 
 /* list of allowed hashes which our TLS server supports; this list is
  * copied from mbedtls' ssl_preset_default_hashes (ssl_tls.c) with one
