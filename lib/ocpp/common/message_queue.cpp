@@ -11,6 +11,7 @@ template <> ControlMessage<v16::MessageType>::ControlMessage(const json& message
     this->message = message.get<json::array_t>();
     this->messageType = v16::conversions::string_to_messagetype(message.at(CALL_ACTION));
     this->message_attempts = 0;
+    this->initial_unique_id = this->message[MESSAGE_ID];
 }
 
 template <> bool ControlMessage<v16::MessageType>::isTransactionMessage() const {
@@ -34,6 +35,7 @@ template <> ControlMessage<v201::MessageType>::ControlMessage(const json& messag
     this->message = message.get<json::array_t>();
     this->messageType = v201::conversions::string_to_messagetype(message.at(CALL_ACTION));
     this->message_attempts = 0;
+    this->initial_unique_id = this->message[MESSAGE_ID];
 }
 
 template <> bool ControlMessage<v201::MessageType>::isTransactionMessage() const {

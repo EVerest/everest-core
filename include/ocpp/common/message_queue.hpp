@@ -68,6 +68,7 @@ template <typename M> struct ControlMessage {
     int32_t message_attempts; ///< The number of times this message has been rejected by the central system
     std::promise<EnhancedMessage<M>> promise; ///< A promise used by the async send interface
     DateTime timestamp;                       ///< A timestamp that shows when this message can be sent
+    MessageId initial_unique_id;
 
     /// \brief Creates a new ControlMessage object from the provided \p message
     explicit ControlMessage(const json& message);
@@ -240,8 +241,8 @@ private:
             // drop every second update message (except last one)
             if (remove_next_update_message && element->isTransactionUpdateMessage() &&
                 transaction_message_queue.size() > 1) {
-                EVLOG_debug << "Drop transactional message " << element->uniqueId();
-                database_handler->remove_transaction_message(element->uniqueId());
+                EVLOG_debug << "Drop transactional message " << element->initial_unique_id;
+                database_handler->remove_transaction_message(element->initial_unique_id);
                 drop_count++;
                 remove_next_update_message = false;
             } else {
@@ -655,7 +656,7 @@ public:
             if (this->in_flight->isTransactionMessage()) {
                 // We only remove the message as soon as a response is received. Otherwise we might miss a message if
                 // the charging station just boots after sending, but before receiving the result.
-                this->database_handler->remove_transaction_message(this->in_flight->uniqueId());
+                this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
             }
 
             this->reset_in_flight();
@@ -723,6 +724,8 @@ public:
                     enhanced_message.offline = true;
                     this->in_flight->promise.set_value(enhanced_message);
                 }
+                // also drop the message from the database
+                this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
             }
         } else if (this->in_flight->isBootNotificationMessage()) {
             EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
