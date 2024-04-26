@@ -775,6 +775,8 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
         }
         break;
 
+    case EvseState::WaitingForEnergy:
+        [[fallthrough]];
     case EvseState::WaitingForAuthentication:
         if (cp_event == CPEvent::CarRequestedPower) {
             session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
