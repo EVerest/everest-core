@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# ninja -j$(nproc) -C build tests
-ninja -j$(nproc) -C build install
+set -e
 
 # install everest testing by cmake target to make sure using the version defined in dependencies.yaml
-ninja -C build install_everest_testing
+ninja -C "$EXT_MOUNT/build" install_everest_testing
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 
-rm -rf build
+rm -rf "$EXT_MOUNT/build"
