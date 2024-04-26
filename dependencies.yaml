@@ -92,6 +92,7 @@ sqlite_cpp:
   options:
   - SQLITECPP_RUN_CPPLINT OFF
   - SQLITECPP_RUN_CPPCHECK OFF
+  - SQLITECPP_INTERNAL_SQLITE OFF
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
 catch2:
   git: https://github.com/catchorg/Catch2.git
