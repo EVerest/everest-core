@@ -68,7 +68,7 @@ ext-openv2g:
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
-  git_tag: 8b3f26a
+  git_tag: 8b3f26a5ac38d4fdccbc5c5366229f3e01dafcc0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_MBEDTLS"
   options:
     - ENABLE_PROGRAMS OFF
