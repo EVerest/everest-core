@@ -625,7 +625,7 @@ static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile
     if (!AStr || std::string(AStr).size() < 3 + 3 * 16) {
         goto reset; /* not the expected hex buffer */
     }
-    AStr += 3;      /* skip over ":  " */
+    AStr += 3; /* skip over ":  " */
     /* Process sequences of "hh " */
     for (int i = 0; i < (3 * 16); i += 3) {
         char c1 = AStr[i], c2 = AStr[i + 1], c3 = AStr[i + 2];
