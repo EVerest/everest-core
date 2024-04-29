@@ -22,10 +22,11 @@ jobs:
     strategy:
       matrix:
         image_name: [everest-ci-env, everest-clang-format]
-    uses: ./.github/workflows/deploy-single-docker-image.yml
+    uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.1.0
     with:
       force_rebuild: ${{ inputs.force_rebuild || (github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/' )) || false }}
       image_name: ${{ matrix.image_name }}
+      docker_directory: docker/
       docker_registry: ghcr.io
       github_ref_before: ${{ github.event.before }}
       github_ref_after: ${{ github.event.after }}
