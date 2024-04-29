@@ -58,7 +58,7 @@ bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>
                component_variables.begin(), component_variables.end(), [component, variable](ComponentVariable v) {
                    return (component == v.component and !v.variable.has_value()) or // if component has no variable
                           (component == v.component and v.variable.has_value() and
-                           variable == v.variable.value()) or                       // if component has variables
+                           variable == v.variable.value()) or // if component has variables
                           (component == v.component and v.variable.has_value() and
                            !v.variable.value().instance.has_value() and
                            variable.name == v.variable.value().name) or // if component has no variable instances

@@ -214,7 +214,7 @@ void WebsocketPlain::connect_plain() {
 
 void WebsocketPlain::on_open_plain(client* c, websocketpp::connection_hdl hdl) {
     std::lock_guard<std::mutex> lk(this->connection_mutex);
-    (void)c;                       // client is not used in this function
+    (void)c; // client is not used in this function
     EVLOG_info << "OCPP client successfully connected to plain websocket server";
     this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
