@@ -917,4 +917,4 @@ TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
 
 } // namespace evse_security
 
-  // FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)
+// FIXME(piet): Add more tests for getRootCertificateHashData (incl. V2GCertificateChain etc.)

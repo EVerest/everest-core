@@ -220,7 +220,7 @@ void OpenSSLProvider::cleanup() {
     s_flags = 0;
 }
 
-#else  // USING_OPENSSL_3_TPM
+#else // USING_OPENSSL_3_TPM
 // ----------------------------------------------------------------------------
 // class OpenSSLProvider dummy where OpenSSL 3 is not available
 

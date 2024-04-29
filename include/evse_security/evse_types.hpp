@@ -109,12 +109,12 @@ struct CertificateHashDataChain {
     CertificateType certificate_type; ///< Indicates the type of the certificate for which the hash data is provided
     CertificateHashData certificate_hash_data; ///< Contains the hash data of the certificate
     std::vector<CertificateHashData>
-        child_certificate_hash_data;           ///< Contains the hash data of the child's certificates
+        child_certificate_hash_data; ///< Contains the hash data of the child's certificates
 };
 struct GetInstalledCertificatesResult {
     GetInstalledCertificatesStatus status; ///< Indicates the status of the request
     std::vector<CertificateHashDataChain>
-        certificate_hash_data_chain;       ///< the hashed certificate data for each requested certificates
+        certificate_hash_data_chain; ///< the hashed certificate data for each requested certificates
 };
 struct OCSPRequestData {
     std::optional<CertificateHashData> certificate_hash_data; ///< Contains the hash data of the certificate
