@@ -77,6 +77,10 @@ void evse_securityImpl::handle_update_ocsp_cache(types::evse_security::Certifica
     this->evse_security->update_ocsp_cache(conversions::from_everest(certificate_hash_data), ocsp_response);
 }
 
+std::string evse_securityImpl::handle_retrieve_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data) {
+    return this->evse_security->retrieve_ocsp_cache(conversions::from_everest(certificate_hash_data));
+}
+
 bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) {
     return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
 }
@@ -88,17 +92,18 @@ std::string evse_securityImpl::handle_generate_certificate_signing_request(
                                                                      country, organization, common, use_tpm);
 }
 
-types::evse_security::GetKeyPairResult
-evse_securityImpl::handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
-                                       types::evse_security::EncodingFormat& encoding) {
-    types::evse_security::GetKeyPairResult response;
-    const auto key_pair = this->evse_security->get_key_pair(conversions::from_everest(certificate_type),
-                                                            conversions::from_everest(encoding));
+types::evse_security::GetCertificateInfoResult
+evse_securityImpl::handle_get_leaf_certificate_info(types::evse_security::LeafCertificateType& certificate_type,
+                                                    types::evse_security::EncodingFormat& encoding, bool& include_ocsp) {
+    types::evse_security::GetCertificateInfoResult response;
+    const auto leaf_info = this->evse_security->get_leaf_certificate_info(conversions::from_everest(certificate_type),
+                                                                          conversions::from_everest(encoding), 
+                                                                          include_ocsp);
 
-    response.status = conversions::to_everest(key_pair.status);
+    response.status = conversions::to_everest(leaf_info.status);
 
-    if (key_pair.status == evse_security::GetKeyPairStatus::Accepted && key_pair.pair.has_value()) {
-        response.key_pair = conversions::to_everest(key_pair.pair.value());
+    if (leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted && leaf_info.info.has_value()) {
+        response.info = conversions::to_everest(leaf_info.info.value());
     }
 
     return response;

@@ -76,8 +76,8 @@ types:
     enum:
       - Accepted
       - NotFound
-  GetKeyPairStatus:
-    description: Status indicates the result of the attempt to retrieve a a keypair
+  GetCertificateInfoStatus:
+    description: Status indicates the result of the attempt to retrieve a certificate
     type: string
     enum:
       - Accepted
@@ -183,7 +183,18 @@ types:
           minimum: 0
           type: object
           $ref: /evse_security#/OCSPRequestData
-  KeyPair:
+  CertificateOCSP:
+    description: OCSP data related to requested the certificates
+    type: object
+    properties:
+      hash:
+        description: Hash of certificate linked to the provided data
+        type: object
+        ref: /evse_security#/CertificateHashData
+      ocsp_path:
+        description: OCSP path of the file containing the data
+        type: string
+  CertificateInfo:
     description: Type that specifies the paths of a certificate and the respective private key
     type: object
     required:
@@ -200,11 +211,21 @@ types:
       certificate_single:
         description: The path of the PEM or DER encoded single certificate
         type: string
+      certificate_count:
+        description: The count of certificates in the chain or 1 if only the single certificate is present
+        type: integer
       password:
         description: Specifies the password for the private key if encrypted
         type: string
-  GetKeyPairResult:
-    description: Response to the command get_key_pair
+      ocsp:
+        description: Certificate related OCSP data, if requested
+        type: array
+        items:
+          minimum: 0
+          type: object          
+          $ref: /evse_security#/CertificateOCSP
+  GetCertificateInfoResult:
+    description: Response to the command get_leaf_certificate_info
     type: object
     required:
       - status
@@ -212,9 +233,9 @@ types:
       status:
         description: The status of the requested command
         type: string
-        $ref: /evse_security#/GetKeyPairStatus
-      key_pair:
-        description: The requested key pair
+        $ref: /evse_security#/GetCertificateInfoStatus
+      info:
+        description: The requested info
         type: object
-        $ref: /evse_security#/KeyPair
+        $ref: /evse_security#/CertificateInfo
 
