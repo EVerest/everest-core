@@ -25,7 +25,7 @@ def everest_core_repos():
         git_repository,
         name = "everest-framework",
         remote = EVEREST_DEPS.everest_framework_repo,
-        commit = EVEREST_DEPS.everest_framework_tag,
+        tag = EVEREST_DEPS.everest_framework_tag,
     )
 
     crates_repository(

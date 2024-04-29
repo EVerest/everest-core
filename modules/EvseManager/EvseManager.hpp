@@ -166,7 +166,6 @@ public:
     void charger_was_authorized();
 
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
-    types::power_supply_DC::Capabilities powersupply_capabilities;
 
     // FIXME: this will be removed with proper intergration of BPT on ISO-20
     // on DIN SPEC and -2 we claim a positive charging current on ISO protocol,
@@ -191,6 +190,21 @@ public:
     std::chrono::time_point<date::utc_clock> random_delay_start_time;
     std::atomic<std::chrono::seconds> random_delay_max_duration;
     std::atomic<std::chrono::time_point<std::chrono::steady_clock>> timepoint_ready_for_charging;
+
+    types::power_supply_DC::Capabilities get_powersupply_capabilities() {
+        std::scoped_lock lock(powersupply_capabilities_mutex);
+        return powersupply_capabilities;
+    }
+
+    void update_powersupply_capabilities(types::power_supply_DC::UpdateCapabilities caps) {
+        std::scoped_lock lock(powersupply_capabilities_mutex);
+        powersupply_capabilities.max_export_current_A = caps.max_export_current_A;
+        powersupply_capabilities.max_export_power_W = caps.max_export_power_W;
+
+        powersupply_capabilities.max_import_current_A = caps.max_import_current_A;
+        powersupply_capabilities.max_import_power_W = caps.max_import_power_W;
+    }
+
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -205,6 +219,9 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
+    std::mutex powersupply_capabilities_mutex;
+    types::power_supply_DC::Capabilities powersupply_capabilities;
+
     Everest::timed_mutex_traceable power_mutex;
     types::powermeter::Powermeter latest_powermeter_data_billing;
 
