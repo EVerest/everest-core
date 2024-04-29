@@ -91,13 +91,15 @@ std::string EvseSecurity::generate_certificate_signing_request(const ocpp::Certi
                                                                       organization, common, use_tpm);
 }
 
-std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) {
-    const auto key_pair_response = this->r_security.call_get_key_pair(conversions::from_ocpp(certificate_type),
-                                                                      types::evse_security::EncodingFormat::PEM);
-    if (key_pair_response.status == types::evse_security::GetKeyPairStatus::Accepted and
-        key_pair_response.key_pair.has_value()) {
-        const auto _key_pair = conversions::to_ocpp(key_pair_response.key_pair.value());
-        return _key_pair;
+std::optional<ocpp::CertificateInfo> EvseSecurity::get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) {
+    const auto info_response = this->r_security.call_get_leaf_certificate_info(conversions::from_ocpp(certificate_type),
+                                                                                   types::evse_security::EncodingFormat::PEM, 
+                                                                                   include_ocsp);
+
+    if (info_response.status == types::evse_security::GetCertificateInfoStatus::Accepted and
+        info_response.info.has_value()) {
+        const auto _info = conversions::to_ocpp(info_response.info.value());
+        return _info;
     } else {
         return std::nullopt;
     }
@@ -279,12 +281,14 @@ ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other) {
     return lhs;
 }
 
-ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other) {
-    ocpp::KeyPair lhs;
+ocpp::CertificateInfo to_ocpp(types::evse_security::CertificateInfo other) {
+    ocpp::CertificateInfo lhs;
     lhs.certificate_path = other.certificate;
     lhs.certificate_single_path = other.certificate_single;
     lhs.key_path = other.key;
     lhs.password = other.password;
+    lhs.certificate_count = other.certificate_count;
+    lhs.ocsp = other.ocsp;
     return lhs;
 }
 
@@ -440,8 +444,8 @@ types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other) {
     return lhs;
 }
 
-types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other) {
-    types::evse_security::KeyPair lhs;
+types::evse_security::CertificateInfo from_ocpp(ocpp::CertificateInfo other) {
+    types::evse_security::CertificateInfo lhs;
     lhs.key = other.certificate_path;
     lhs.certificate = other.key_path;
     return lhs;

@@ -103,6 +103,16 @@ cmds:
       ocsp_response:
         description: OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
         type: string
+  retrieve_ocsp_cache:
+    description: Command to retrieve the OCSP cache file path of the specified certificate hash
+    arguments:
+      certificate_hash_data:
+        description: Certificate hash data that identifies the certificate for which the cache should be retrieved
+        type: object
+        $ref: /evse_security#/CertificateHashData
+    result:
+      description: Path of data related to the certificate hash, if present
+      type: string
   is_ca_certificate_installed:
     description: Command that indicates of the given CA certificate type is installed
     arguments:
@@ -135,7 +145,7 @@ cmds:
     result:
       description: The certificate signing request in PEM format
       type: string
-  get_key_pair:
+  get_leaf_certificate_info:
     description: Command to get the paths of the certificate and the respective key
     arguments:
       certificate_type: 
@@ -146,10 +156,13 @@ cmds:
         description: Specifies the encoding of the key
         type: string
         $ref: /evse_security#/EncodingFormat
+      include_ocsp:
+        description: Specifies whether per-certificate OCSP data  is also requested
+        type: boolean
     result:
       description: The response to the requested command
       type: object
-      $ref: /evse_security#/GetKeyPairResult
+      $ref: /evse_security#/GetCertificateInfoResult
   get_verify_file:
     description: Command to get the file path of a CA bundle that can be used for verification
     arguments:
