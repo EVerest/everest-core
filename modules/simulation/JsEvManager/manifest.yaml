@@ -14,6 +14,11 @@ config:
       Enable automatic execution of simulation commands at startup from auto_exec_commands config option.
     type: boolean
     default: false
+  auto_exec_infinite:
+    description: >-
+      If enabled the simulation commands executes infinitely.
+    type: boolean
+    default: false
   auto_exec_commands:
     description: >-
       Simulation commands, e.g. sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug

@@ -93,6 +93,26 @@ types:
         type: number
         minimum: 0.0
         maximum: 1.0
+  UpdateCapabilities:
+    description: Runtime update of some of the capabilities values. Can be used to e.g. inform about throttling of a power supply due to temperature de-rating.
+    type: object
+    additionalProperties: false
+    required:
+      - max_export_current_A
+      - max_export_power_W
+    properties:
+      max_export_current_A:
+        description: Maximum current that the power supply can output in Ampere
+        type: number
+      max_import_current_A:
+        description: Maximum current that the power supply can output in Ampere
+        type: number
+      max_export_power_W:
+        description: Maximum export power that the power supply can output in Watt
+        type: number
+      max_import_power_W:
+        description: Maximum import power that the power supply can sink in Watt
+        type: number
   FaultCode:
     description: Fault codes
     type: string

@@ -1,7 +1,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 3e767e2a5652d3acb97d01fc88aae2f04f3f5282
+  git_tag: v0.13.0
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
@@ -47,13 +47,13 @@ libcurl:
 # and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.5.0
+  git_tag: v0.6.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: cc169be
+  git_tag: v0.11.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -92,6 +92,7 @@ sqlite_cpp:
   options:
   - SQLITECPP_RUN_CPPLINT OFF
   - SQLITECPP_RUN_CPPCHECK OFF
+  - SQLITECPP_INTERNAL_SQLITE OFF
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_SQLITE_CPP"
 catch2:
   git: https://github.com/catchorg/Catch2.git

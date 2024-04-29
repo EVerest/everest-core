@@ -120,11 +120,9 @@ function car_statemachine(mod) {
 
         // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
 
-        // If we have auto_exec configured, restart simulation when it was unplugged
         evlog.info('Unplug detected, restarting simulation.');
         mod.slac_state = 'UNMATCHED';
         mod.uses_list.ev[0].call.stop_charging();
-        if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
       }
       break;
     case 'pluggedin':
@@ -203,8 +201,10 @@ function simulation_loop(mod) {
         evlog.debug('Finished simulation.');
         simdata_reset_defaults(mod);
         mod.executionActive = false;
-        // If we have auto_exec configured, restart simulation when it is done
-        if (globalconf.module.auto_exec) execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
+        // If we have auto_exec_infinite configured, restart simulation when it is done
+        if (globalconf.module.auto_exec === true && globalconf.module.auto_exec_infinite === true) {
+          execute_charging_session(mod, { value: globalconf.module.auto_exec_commands });
+        }
         break;
       }
     } else break; // command blocked, wait for timer to run this function again
