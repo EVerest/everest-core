@@ -78,7 +78,10 @@ static bool validate_checksum(const uint8_t* msg, int msg_len) {
 static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t expected_device_address,
                                           FunctionCode function) {
     std::vector<uint16_t> result;
-    if (len < MODBUS_MIN_REPLY_SIZE) {
+    if (len == 0) {
+        EVLOG_error << fmt::format("Packet receive timeout.");
+        return result;
+    } else if (len < MODBUS_MIN_REPLY_SIZE) {
         EVLOG_error << fmt::format("Packet too small: {} bytes.", len);
         return result;
     }
