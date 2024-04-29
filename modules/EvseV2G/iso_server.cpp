@@ -1096,7 +1096,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
     res->ResponseCode = (selected_services_found == false) ? iso1responseCodeType_FAILED_ServiceSelectionInvalid
                                                            : res->ResponseCode; // [V2G2-467]
     res->ResponseCode = (charge_service_found == false) ? iso1responseCodeType_FAILED_NoChargeServiceSelected
-                                                        : res->ResponseCode;    // [V2G2-804]
+                                                        : res->ResponseCode; // [V2G2-804]
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);

@@ -244,14 +244,14 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
     // disable IGNBRK for mismatched speed tests; otherwise receive break
     // as \000 chars
     tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IXANY);
-    tty.c_lflag = 0;                      // no signaling chars, no echo,
-                                          // no canonical processing
-    tty.c_oflag = 0;                      // no remapping, no delays
-    tty.c_cc[VMIN] = 1;                   // read blocks
-    tty.c_cc[VTIME] = 1;                  // 0.1 seconds inter character read timeout after first byte was received
+    tty.c_lflag = 0;     // no signaling chars, no echo,
+                         // no canonical processing
+    tty.c_oflag = 0;     // no remapping, no delays
+    tty.c_cc[VMIN] = 1;  // read blocks
+    tty.c_cc[VTIME] = 1; // 0.1 seconds inter character read timeout after first byte was received
 
-    tty.c_cflag |= (CLOCAL | CREAD);      // ignore modem controls,
-                                          // enable reading
+    tty.c_cflag |= (CLOCAL | CREAD); // ignore modem controls,
+                                     // enable reading
     if (parity == Parity::ODD) {
         tty.c_cflag |= (PARENB | PARODD); // odd parity
     } else if (parity == Parity::EVEN) {  // even parity
@@ -260,7 +260,7 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
     } else {
         tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
     }
-    tty.c_cflag &= ~CSTOPB;                // 1 Stop bit
+    tty.c_cflag &= ~CSTOPB; // 1 Stop bit
     tty.c_cflag &= ~CRTSCTS;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
@@ -297,7 +297,7 @@ int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
             break;
         } else if (rv == 0) { // no more bytes to read within timeout, so transfer is complete
             break;
-        } else {              // received more bytes, add them to buffer
+        } else { // received more bytes, add them to buffer
             // do we have space in the rx buffer left?
             if (bytes_read_total >= rxbuf_len) {
                 // no buffer space left, but more to read.

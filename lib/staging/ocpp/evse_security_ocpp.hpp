@@ -69,6 +69,6 @@ types::evse_security::CertificateHashDataChain from_ocpp(ocpp::CertificateHashDa
 types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other);
 types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other);
 
-};     // namespace conversions
+}; // namespace conversions
 
 #endif // EVEREST_SECURITY_OCPP_HPP

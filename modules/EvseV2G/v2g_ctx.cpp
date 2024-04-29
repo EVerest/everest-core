@@ -147,7 +147,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     }
     ctx->evse_v2g_data.notification_max_delay = (uint32_t)0;
     ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso1isolationLevelType_Invalid;
-    ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1;                          // Shall be used in DIN
+    ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1; // Shall be used in DIN
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
     ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso1DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
     ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
@@ -186,7 +186,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         init_physical_value(&ctx->evse_v2g_data.evse_current_regulation_tolerance, iso1unitSymbolType_A);
         ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = (unsigned int)0; // optional in din
         init_physical_value(&ctx->evse_v2g_data.evse_energy_to_be_delivered, iso1unitSymbolType_Wh);
-        ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = (unsigned int)0;       // optional in din
+        ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = (unsigned int)0; // optional in din
         init_physical_value(&ctx->evse_v2g_data.evse_maximum_current_limit, iso1unitSymbolType_A);
         ctx->evse_v2g_data.evse_maximum_current_limit_is_used = (unsigned int)0;
         ctx->evse_v2g_data.evse_current_limit_achieved = (int)0;
