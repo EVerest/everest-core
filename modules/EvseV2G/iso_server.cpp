@@ -884,9 +884,6 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     struct iso1ServiceDiscoveryResType* res = &conn->exi_out.iso1EXIDocument->V2G_Message.Body.ServiceDiscoveryRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
     int8_t scope_idx = -1; // To find a list entry within the evse service list */
-    const uint16_t evse_service_list_len = (conn->ctx->evse_service_list_len < iso1ServiceListType_Service_ARRAY_SIZE)
-                                               ? conn->ctx->evse_service_list_len
-                                               : iso1ServiceListType_Service_ARRAY_SIZE;
 
     /* At first, publish the received ev request message to the MQTT interface */
     publish_iso_service_discovery_req(req);
@@ -927,11 +924,11 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
-        for (uint16_t idx = 0; idx < evse_service_list_len; idx++) {
-            if ((conn->ctx->evse_service_list.array[idx].ServiceScope_isUsed == (unsigned int)1) &&
-                (strncmp(conn->ctx->evse_service_list.array[idx].ServiceScope.characters, req->ServiceScope.characters,
-                         sizeof(req->ServiceScope.characters)) == 0)) {
-                scope_idx = (uint8_t)idx;
+        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+            if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
+                (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
+                        req->ServiceScope.characters) == 0)) {
+                scope_idx = idx;
                 break;
             }
         }
