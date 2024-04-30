@@ -15,8 +15,7 @@ void ISO15118_chargerImpl::ready() {
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
     std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) {
     // your code for cmd setup goes here
 }
 
@@ -54,6 +53,9 @@ void ISO15118_chargerImpl::handle_receipt_is_required(bool& receipt_required) {
 
 void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     // your code for cmd stop_charging goes here
+}
+
+void ISO15118_chargerImpl::handle_set_physical_values(types::iso15118_charger::SetupPhysicalValues& physical_values) {
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

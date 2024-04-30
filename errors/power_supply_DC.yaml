@@ -1,0 +1,36 @@
+description: >-
+  Errors for DC power supply
+ 
+  Except for VendorWarning, all error codes will stop the charging session.
+  During all errors, follow the commands for setMode and setVoltageCurrent from EvseManager. If they cannot be sent to the hardware, cache the last values received.
+  Once the PSU is back on-line (e.g. after a CommunicationFault), set the last mode and voltage/current values and only after that clear the error.
+errors:
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
+  - name: HardwareFault
+    description: The hardware reported a fault
+  - name: OverTemperature
+    description: >-
+      The hardware shut down because of over temperature. This should not be used if the power supply can handle temperature reduction by reducing output power,
+      in this case update the capabilities as needed. 
+  - name: UnderTemperature
+    description: The hardware cannot operate because it is too cold
+  - name: UnderVoltageAC
+    description: The AC input voltage is too low
+  - name: OverVoltageAC
+    description: The AC input voltage is too high
+  - name: UnderVoltageDC
+    description: The DC output voltage is too low
+  - name: OverVoltageDC
+    description: The DC output voltage is too high
+  - name: OverCurrentAC
+    description: The AC input current is too high
+  - name: OverCurrentDC
+    description: The DC output current it too high
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.

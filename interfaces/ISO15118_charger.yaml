@@ -26,6 +26,11 @@ cmds:
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
+  set_physical_values:
+    description: >-
+      At startup, set the physical values at least once. May be updated later on.
+      If a charging session is currently active, some updated values may only be used for the next charging session.
+    arguments:
       physical_values:
         description: Set up initial physical values for a AC or DC charging session
         type: object
@@ -115,7 +120,7 @@ cmds:
         type: boolean
 # Update physical values
   update_ac_max_current:
-    description: Update the maximum allowed line current restriction per phase
+    description: Update the maximum allowed line current restriction per phase. Call at least once during start up.
     arguments:
       max_current:
         description: Max current in A
@@ -123,14 +128,14 @@ cmds:
         minimum: 0
         maximum: 400
   update_dc_maximum_limits:
-    description: Update the maximum limits
+    description: Update the maximum limits. Call at least once during start up.
     arguments:
       maximum_limits:
         description: Maximum values (current, power and voltage) the EVSE can deliver
         type: object
         $ref: /iso15118_charger#/DC_EVSEMaximumLimits
   update_dc_minimum_limits:
-    description: Update the minimum limits
+    description: Update the minimum limits. Call at least once during start up.
     arguments:
       minimum_limits:
         description: Minimum values (current and voltage) the EVSE can deliver

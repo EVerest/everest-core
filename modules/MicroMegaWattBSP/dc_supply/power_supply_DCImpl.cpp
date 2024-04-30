@@ -8,6 +8,7 @@ namespace module {
 namespace dc_supply {
 
 void power_supply_DCImpl::init() {
+
     mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) {
         types::power_supply_DC::VoltageCurrent vc;
         vc.voltage_V = p.voltage;
@@ -17,9 +18,6 @@ void power_supply_DCImpl::init() {
 }
 
 void power_supply_DCImpl::ready() {
-}
-
-types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities() {
     types::power_supply_DC::Capabilities caps;
     caps.bidirectional = false;
     caps.conversion_efficiency_export = 0.9;
@@ -30,8 +28,9 @@ types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities
     caps.max_export_power_W = 10000;
     caps.current_regulation_tolerance_A = 1;
     caps.peak_current_ripple_A = 0;
-    return caps;
-};
+
+    publish_capabilities(caps);
+}
 
 void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
     // your code for cmd setMode goes here
