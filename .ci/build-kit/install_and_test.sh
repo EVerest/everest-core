@@ -12,6 +12,6 @@ cmake \
 
 ninja -j$(nproc) -C build install
 
-ninja -j$(nproc) -C build test
+trap "cp build/Testing/Temporary/LastTest.log /ext/ctest-report" EXIT
 
-cp build/Testing/Temporary/LastTest.log /ext/ctest-report
+ninja -j$(nproc) -C build test
