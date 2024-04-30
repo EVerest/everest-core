@@ -83,7 +83,8 @@ void ErrorDatabaseSqlite::reset_database() {
                           "from_implementation    TEXT    NOT NULL,"
                           "timestamp              TEXT    NOT NULL,"
                           "severity               TEXT    NOT NULL,"
-                          "state                  TEXT    NOT NULL);";
+                          "state                  TEXT    NOT NULL,"
+                          "sub_type               TEXT    NOT NULL);";
         db.exec(sql);
     } catch (std::exception& e) {
         EVLOG_error << "Error creating database: " << e.what();
@@ -101,8 +102,8 @@ void ErrorDatabaseSqlite::add_error_without_mutex(Everest::error::ErrorPtr error
     try {
         SQLite::Database db(this->db_path.string(), SQLite::OPEN_READWRITE);
         std::string sql = "INSERT INTO errors(uuid, type, description, message, from_module, from_implementation, "
-                          "timestamp, severity, state) VALUES(";
-        sql += "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);";
+                          "timestamp, severity, state, sub_type) VALUES(";
+        sql += "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10);";
         SQLite::Statement stmt(db, sql);
         stmt.bind(1, error->uuid.to_string());
         stmt.bind(2, error->type);
@@ -113,6 +114,7 @@ void ErrorDatabaseSqlite::add_error_without_mutex(Everest::error::ErrorPtr error
         stmt.bind(7, Everest::Date::to_rfc3339(error->timestamp));
         stmt.bind(8, Everest::error::severity_to_string(error->severity));
         stmt.bind(9, Everest::error::state_to_string(error->state));
+        stmt.bind(10, error->sub_type.has_value() ? error->sub_type.value() : "");
         stmt.exec();
     } catch (std::exception& e) {
         EVLOG_error << "Error adding error to database: " << e.what();
@@ -155,6 +157,9 @@ std::string ErrorDatabaseSqlite::filter_to_sql_condition(const Everest::error::E
     } break;
     case Everest::error::FilterType::Handle: {
         condition = "(uuid = '" + filter.get_handle_filter().to_string() + "')";
+    } break;
+    case Everest::error::FilterType::SubType: {
+        condition = "(sub_type = '" + filter.get_sub_type_filter() + "')";
     } break;
     }
     return condition;
@@ -205,8 +210,9 @@ std::list<Everest::error::ErrorPtr> ErrorDatabaseSqlite::get_errors(const std::o
                 Everest::error::string_to_severity(stmt.getColumn("severity").getText());
             const Everest::error::State err_state = Everest::error::string_to_state(stmt.getColumn("state").getText());
             const Everest::error::ErrorHandle err_handle(Everest::error::ErrorHandle(stmt.getColumn("uuid").getText()));
+            const Everest::error::ErrorSubType err_sub_type(stmt.getColumn("sub_type").getText());
             Everest::error::ErrorPtr error = std::make_shared<Everest::error::Error>(
-                err_type, err_msg, err_description, err_from, err_severity, err_timestamp, err_handle, err_state);
+                err_type, err_sub_type, err_msg, err_description, err_from, err_severity, err_timestamp, err_handle, err_state);
             result.push_back(error);
         }
     } catch (std::exception& e) {
