@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright chargebyte GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_POWER_SUPPLY_DC_IMPL_HPP
 #define MAIN_POWER_SUPPLY_DC_IMPL_HPP
 
@@ -42,7 +42,6 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual types::power_supply_DC::Capabilities handle_getCapabilities() override;
     virtual void handle_setMode(types::power_supply_DC::Mode& value) override;
     virtual void handle_setExportVoltageCurrent(double& voltage, double& current) override;
     virtual void handle_setImportVoltageCurrent(double& voltage, double& current) override;

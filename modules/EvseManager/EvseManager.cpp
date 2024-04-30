@@ -167,12 +167,12 @@ void EvseManager::ready() {
 
         auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
 
-        types::iso15118_charger::SetupPhysicalValues setup_physical_values;
-
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
         std::vector<types::iso15118_charger::EnergyTransferMode> transfer_modes;
         if (config.charge_mode == "AC") {
+            types::iso15118_charger::SetupPhysicalValues setup_physical_values;
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
+            r_hlc[0]->call_set_physical_values(setup_physical_values);
 
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
             if (config.three_phases) {
@@ -180,39 +180,30 @@ void EvseManager::ready() {
             }
 
         } else if (config.charge_mode == "DC") {
-            // transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_core);
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
 
-            powersupply_capabilities = r_powersupply_DC[0]->call_getCapabilities();
+            // Init power supply capabilities with safe defaults
+            types::power_supply_DC::Capabilities psu_caps;
+            psu_caps.bidirectional = false;
+            psu_caps.peak_current_ripple_A = 0.5;
+            psu_caps.current_regulation_tolerance_A = 0.5;
+            psu_caps.max_export_current_A = 0;
+            psu_caps.max_export_power_W = 0;
+            psu_caps.max_export_voltage_V = 60;
+            psu_caps.min_export_voltage_V = 0;
+            psu_caps.min_export_current_A = 0;
 
-            // subscribe to run time updates e.g. due to de-rating
-            r_powersupply_DC[0]->subscribe_update_capabilities(
-                [this](auto caps) { update_powersupply_capabilities(caps); });
-
-            updateLocalMaxWattLimit(powersupply_capabilities.max_export_power_W);
-
-            setup_physical_values.dc_current_regulation_tolerance =
-                powersupply_capabilities.current_regulation_tolerance_A;
-            setup_physical_values.dc_peak_current_ripple = powersupply_capabilities.peak_current_ripple_A;
-
+            // Set present measurements on HLC to sane defaults
             types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
             present_values.EVSEPresentVoltage = 0;
             present_values.EVSEPresentCurrent = 0;
             r_hlc[0]->call_update_dc_present_values(present_values);
 
-            setup_physical_values.dc_energy_to_be_delivered = 10000;
+            // apply sane defaults capabilities settings once on boot
+            update_powersupply_capabilities(psu_caps);
 
-            types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
-            evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
-            evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
-            evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
-            setup_physical_values.dc_maximum_limits = evseMaxLimits;
-            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
-
-            types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
-            evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;
-            evseMinLimits.EVSEMinimumVoltageLimit = powersupply_capabilities.min_export_voltage_V;
-            setup_physical_values.dc_minimum_limits = evseMinLimits;
+            // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
+            r_powersupply_DC[0]->subscribe_capabilities([this](auto caps) { update_powersupply_capabilities(caps); });
 
             // Cable check for DC charging
             r_hlc[0]->subscribe_Start_CableCheck([this] { cable_check(); });
@@ -455,7 +446,7 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, setup_physical_values);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -930,11 +921,6 @@ void EvseManager::setup_fake_DC_mode() {
     transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_combo_core);
     transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_unique);
 
-    types::iso15118_charger::SetupPhysicalValues setup_physical_values;
-
-    setup_physical_values.dc_current_regulation_tolerance = powersupply_capabilities.current_regulation_tolerance_A;
-    setup_physical_values.dc_peak_current_ripple = powersupply_capabilities.peak_current_ripple_A;
-
     types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
     present_values.EVSEPresentVoltage = 400; // FIXME: set a correct values
     present_values.EVSEPresentCurrent = 0;
@@ -945,18 +931,16 @@ void EvseManager::setup_fake_DC_mode() {
     evseMaxLimits.EVSEMaximumCurrentLimit = 400;
     evseMaxLimits.EVSEMaximumPowerLimit = 200000;
     evseMaxLimits.EVSEMaximumVoltageLimit = 1000;
-
-    setup_physical_values.dc_maximum_limits = evseMaxLimits;
+    r_hlc[0]->call_update_dc_maximum_limits(evseMaxLimits);
 
     types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
     evseMinLimits.EVSEMinimumCurrentLimit = 0;
     evseMinLimits.EVSEMinimumVoltageLimit = 0;
-
-    setup_physical_values.dc_minimum_limits = evseMinLimits;
+    r_hlc[0]->call_update_dc_minimum_limits(evseMinLimits);
 
     const auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, setup_physical_values);
+    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -980,7 +964,7 @@ void EvseManager::setup_AC_mode() {
     const auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
 
     if (get_hlc_enabled()) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, setup_physical_values);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
     }
 }
 

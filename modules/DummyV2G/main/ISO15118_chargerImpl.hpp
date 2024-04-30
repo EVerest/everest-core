@@ -35,8 +35,8 @@ protected:
     // command handler functions (virtual)
     virtual void handle_setup(types::iso15118_charger::EVSEID& evse_id,
                               std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-                              types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
-                              types::iso15118_charger::SetupPhysicalValues& physical_values) override;
+                              types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) override;
+    virtual void handle_set_physical_values(types::iso15118_charger::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
                                       bool& supported_certificate_service) override;
     virtual void

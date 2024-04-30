@@ -136,6 +136,18 @@ void power_supply_DCImpl::init() {
 }
 
 void power_supply_DCImpl::ready() {
+    types::power_supply_DC::Capabilities caps;
+    caps.bidirectional = false;
+    caps.max_export_current_A = config_current_limit;
+    caps.max_export_voltage_V = config_voltage_limit;
+    caps.min_export_current_A = 0;
+    caps.min_export_voltage_V = config_min_voltage_limit;
+    caps.max_export_power_W = config_power_limit;
+    caps.current_regulation_tolerance_A = 0.5;
+    caps.peak_current_ripple_A = 1;
+    caps.conversion_efficiency_export = 0.95;
+
+    publish_capabilities(caps);
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -254,22 +266,6 @@ void power_supply_DCImpl::ready() {
                 ac_voltage_phase_b, ac_voltage_phase_c, pfc_temperature, power_limit);
         }
     }
-}
-
-types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities() {
-    // your code for cmd getCapabilities goes here
-    types::power_supply_DC::Capabilities caps;
-    caps.bidirectional = false;
-    caps.max_export_current_A = config_current_limit;
-    caps.max_export_voltage_V = config_voltage_limit;
-    caps.min_export_current_A = 0;
-    caps.min_export_voltage_V = config_min_voltage_limit;
-    caps.max_export_power_W = config_power_limit;
-    caps.current_regulation_tolerance_A = 0.5;
-    caps.peak_current_ripple_A = 1;
-    caps.conversion_efficiency_export = 0.95;
-
-    return caps;
 }
 
 void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
