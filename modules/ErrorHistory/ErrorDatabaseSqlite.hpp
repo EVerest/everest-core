@@ -16,9 +16,11 @@ class ErrorDatabaseSqlite : public Everest::error::ErrorDatabase {
 public:
     explicit ErrorDatabaseSqlite(const fs::path& db_path_, const bool reset_ = false);
 
-    void add_error(Everest::error::ErrorPtr error) override;
     std::list<Everest::error::ErrorPtr>
     get_errors(const std::list<Everest::error::ErrorFilter>& filters) const override;
+
+protected:
+    void add_error(Everest::error::ErrorPtr error) override;
     std::list<Everest::error::ErrorPtr> edit_errors(const std::list<Everest::error::ErrorFilter>& filters,
                                                     EditErrorFunc edit_func) override;
     std::list<Everest::error::ErrorPtr> remove_errors(const std::list<Everest::error::ErrorFilter>& filters) override;
