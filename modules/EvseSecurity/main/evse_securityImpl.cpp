@@ -77,8 +77,15 @@ void evse_securityImpl::handle_update_ocsp_cache(types::evse_security::Certifica
     this->evse_security->update_ocsp_cache(conversions::from_everest(certificate_hash_data), ocsp_response);
 }
 
-std::string evse_securityImpl::handle_retrieve_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data) {
-    return this->evse_security->retrieve_ocsp_cache(conversions::from_everest(certificate_hash_data));
+std::string
+evse_securityImpl::handle_retrieve_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data) {
+    auto cache = this->evse_security->retrieve_ocsp_cache(conversions::from_everest(certificate_hash_data));
+
+    if (cache.has_value()) {
+        return cache.value();
+    }
+
+    return {};
 }
 
 bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) {
@@ -94,11 +101,11 @@ std::string evse_securityImpl::handle_generate_certificate_signing_request(
 
 types::evse_security::GetCertificateInfoResult
 evse_securityImpl::handle_get_leaf_certificate_info(types::evse_security::LeafCertificateType& certificate_type,
-                                                    types::evse_security::EncodingFormat& encoding, bool& include_ocsp) {
+                                                    types::evse_security::EncodingFormat& encoding,
+                                                    bool& include_ocsp) {
     types::evse_security::GetCertificateInfoResult response;
-    const auto leaf_info = this->evse_security->get_leaf_certificate_info(conversions::from_everest(certificate_type),
-                                                                          conversions::from_everest(encoding), 
-                                                                          include_ocsp);
+    const auto leaf_info = this->evse_security->get_leaf_certificate_info(
+        conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
 
     response.status = conversions::to_everest(leaf_info.status);
 

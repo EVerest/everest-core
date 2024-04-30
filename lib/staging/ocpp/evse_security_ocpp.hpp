@@ -35,7 +35,8 @@ public:
     std::string generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
                                                      const std::string& country, const std::string& organization,
                                                      const std::string& common, bool use_tpm) override;
-    std::optional<ocpp::KeyPair> get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) override;
+    std::optional<ocpp::CertificateInfo>
+    get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) override;
     bool update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) override;
     std::string get_verify_file(const ocpp::CaCertificateType& certificate_type) override;
     int get_leaf_expiry_days_count(const ocpp::CertificateSigningUseEnum& certificate_type) override;
@@ -54,7 +55,8 @@ ocpp::DeleteCertificateResult to_ocpp(types::evse_security::DeleteCertificateRes
 ocpp::CertificateHashDataType to_ocpp(types::evse_security::CertificateHashData other);
 ocpp::CertificateHashDataChain to_ocpp(types::evse_security::CertificateHashDataChain other);
 ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other);
-ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other);
+ocpp::CertificateOCSP to_ocpp(types::evse_security::CertificateOCSP other);
+ocpp::CertificateInfo to_ocpp(types::evse_security::CertificateInfo other);
 
 types::evse_security::CaCertificateType from_ocpp(ocpp::CaCertificateType other);
 types::evse_security::LeafCertificateType from_ocpp(ocpp::CertificateSigningUseEnum other);
@@ -67,7 +69,7 @@ types::evse_security::DeleteCertificateResult from_ocpp(ocpp::DeleteCertificateR
 types::evse_security::CertificateHashData from_ocpp(ocpp::CertificateHashDataType other);
 types::evse_security::CertificateHashDataChain from_ocpp(ocpp::CertificateHashDataChain other);
 types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other);
-types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other);
+types::evse_security::CertificateInfo from_ocpp(ocpp::CertificateInfo other);
 
 }; // namespace conversions
 

@@ -24,7 +24,7 @@ evse_security::CertificateHashDataChain from_everest(types::evse_security::Certi
 evse_security::GetInstalledCertificatesResult from_everest(types::evse_security::GetInstalledCertificatesResult other);
 evse_security::OCSPRequestData from_everest(types::evse_security::OCSPRequestData other);
 evse_security::OCSPRequestDataList from_everest(types::evse_security::OCSPRequestDataList other);
-evse_security::KeyPair from_everest(types::evse_security::KeyPair other);
+evse_security::CertificateInfo from_everest(types::evse_security::CertificateInfo other);
 
 types::evse_security::EncodingFormat to_everest(evse_security::EncodingFormat other);
 types::evse_security::CaCertificateType to_everest(evse_security::CaCertificateType other);
@@ -35,14 +35,14 @@ types::evse_security::InstallCertificateResult to_everest(evse_security::Install
 types::evse_security::CertificateValidationResult to_everest(evse_security::CertificateValidationResult other);
 types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCertificateResult other);
 types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::GetInstalledCertificatesStatus other);
-types::evse_security::GetKeyPairStatus to_everest(evse_security::GetKeyPairStatus other);
+types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCertificateInfoStatus other);
 
 types::evse_security::CertificateHashData to_everest(evse_security::CertificateHashData other);
 types::evse_security::CertificateHashDataChain to_everest(evse_security::CertificateHashDataChain other);
 types::evse_security::GetInstalledCertificatesResult to_everest(evse_security::GetInstalledCertificatesResult other);
 types::evse_security::OCSPRequestData to_everest(evse_security::OCSPRequestData other);
 types::evse_security::OCSPRequestDataList to_everest(evse_security::OCSPRequestDataList other);
-types::evse_security::KeyPair to_everest(evse_security::KeyPair other);
+types::evse_security::CertificateInfo to_everest(evse_security::CertificateInfo other);
 
 } // namespace conversions
 

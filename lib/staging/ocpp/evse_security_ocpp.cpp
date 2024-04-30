@@ -91,10 +91,10 @@ std::string EvseSecurity::generate_certificate_signing_request(const ocpp::Certi
                                                                       organization, common, use_tpm);
 }
 
-std::optional<ocpp::CertificateInfo> EvseSecurity::get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) {
-    const auto info_response = this->r_security.call_get_leaf_certificate_info(conversions::from_ocpp(certificate_type),
-                                                                                   types::evse_security::EncodingFormat::PEM, 
-                                                                                   include_ocsp);
+std::optional<ocpp::CertificateInfo>
+EvseSecurity::get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) {
+    const auto info_response = this->r_security.call_get_leaf_certificate_info(
+        conversions::from_ocpp(certificate_type), types::evse_security::EncodingFormat::PEM, include_ocsp);
 
     if (info_response.status == types::evse_security::GetCertificateInfoStatus::Accepted and
         info_response.info.has_value()) {
@@ -281,6 +281,17 @@ ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other) {
     return lhs;
 }
 
+ocpp::CertificateOCSP to_ocpp(types::evse_security::CertificateOCSP other) {
+    ocpp::CertificateOCSP lhs;
+    lhs.hash = to_ocpp(other.hash);
+
+    if (other.ocsp_path.has_value()) {
+        lhs.ocsp_path = other.ocsp_path.value();
+    }
+
+    return lhs;
+}
+
 ocpp::CertificateInfo to_ocpp(types::evse_security::CertificateInfo other) {
     ocpp::CertificateInfo lhs;
     lhs.certificate_path = other.certificate;
@@ -288,7 +299,13 @@ ocpp::CertificateInfo to_ocpp(types::evse_security::CertificateInfo other) {
     lhs.key_path = other.key;
     lhs.password = other.password;
     lhs.certificate_count = other.certificate_count;
-    lhs.ocsp = other.ocsp;
+
+    if (other.ocsp.has_value()) {
+        for (auto& ocsp_data : other.ocsp.value()) {
+            lhs.ocsp.push_back(to_ocpp(ocsp_data));
+        }
+    }
+
     return lhs;
 }
 
@@ -446,8 +463,11 @@ types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other) {
 
 types::evse_security::CertificateInfo from_ocpp(ocpp::CertificateInfo other) {
     types::evse_security::CertificateInfo lhs;
-    lhs.key = other.certificate_path;
-    lhs.certificate = other.key_path;
+    lhs.certificate = other.certificate_path;
+    lhs.certificate_single = other.certificate_single_path;
+    lhs.certificate_count = other.certificate_count;
+    lhs.key = other.key_path;
+    lhs.password = other.password;
     return lhs;
 }
 
