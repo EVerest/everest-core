@@ -607,7 +607,7 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
             dlog(DLOG_LEVEL_WARNING,
                  "EVSE wants to finish charge parameter phase, but status code is not set to 'ready' (1)");
         }
-        conn->ctx->state = WAIT_FOR_CABLECHECK;               // [V2G-DC-453]
+        conn->ctx->state = WAIT_FOR_CABLECHECK; // [V2G-DC-453]
     } else {
         conn->ctx->state = WAIT_FOR_CHARGEPARAMETERDISCOVERY; // [V2G-DC-498]
     }
