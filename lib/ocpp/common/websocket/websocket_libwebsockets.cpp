@@ -420,6 +420,7 @@ void WebsocketTlsTPM::client_loop() {
 
     // lws_set_log_level(LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG | LLL_PARSER | LLL_HEADER | LLL_EXT |
     //                          LLL_CLIENT | LLL_LATENCY | LLL_THREAD | LLL_USER, nullptr);
+    lws_set_log_level(LLL_ERR, nullptr);
 
     lws_context_creation_info info;
     memset(&info, 0, sizeof(lws_context_creation_info));
@@ -806,7 +807,7 @@ void WebsocketTlsTPM::on_message(std::string&& message) {
         return;
     }
 
-    EVLOG_info << "Received message over TLS websocket polling for process: " << message;
+    EVLOG_debug << "Received message over TLS websocket polling for process: " << message;
 
     {
         std::lock_guard<std::mutex> lock(this->recv_mutex);
@@ -997,7 +998,7 @@ void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg)
         }
     }
 
-    EVLOG_info << "Queueing message over TLS websocket: " << msg->payload;
+    EVLOG_debug << "Queueing message over TLS websocket: " << msg->payload;
 
     {
         std::lock_guard<std::mutex> lock(this->queue_mutex);
@@ -1010,7 +1011,7 @@ void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg)
     {
         std::unique_lock lock(this->msg_send_cv_mutex);
         if (msg_send_cv.wait_for(lock, std::chrono::seconds(20), [&] { return (true == msg->message_sent); })) {
-            EVLOG_info << "Successfully sent last message over TLS websocket!";
+            EVLOG_debug << "Successfully sent last message over TLS websocket!";
         } else {
             EVLOG_warning << "Could not send last message over TLS websocket!";
         }
