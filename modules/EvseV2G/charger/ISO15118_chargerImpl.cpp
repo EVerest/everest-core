@@ -245,8 +245,8 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
         const int16_t cert_parameter_set_id[] = {1}; // parameter-set-ID 1: "Installation" service. TODO: Support of the
                                                      // "Update" service (parameter-set-ID 2)
 
-        cert_service.FreeService = 1;                // true
-        cert_service.ServiceID = 2;                  // as defined in ISO 15118-2
+        cert_service.FreeService = 1; // true
+        cert_service.ServiceID = 2;   // as defined in ISO 15118-2
         cert_service.ServiceCategory = iso1serviceCategoryType_ContractCertificate;
         memcpy(cert_service.ServiceName.characters, reinterpret_cast<const char*>(service_name.data()),
                service_name.length());

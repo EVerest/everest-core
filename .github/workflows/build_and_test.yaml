@@ -36,7 +36,7 @@ jobs:
         with:
           path: source
       - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.0.0
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.1.0
         with:
           source-dir: source
           extensions: hpp,cpp

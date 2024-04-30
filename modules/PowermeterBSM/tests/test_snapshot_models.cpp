@@ -552,11 +552,11 @@ ac_meter:
 
     // model_to_stream(std::cout, ac_meter, { 0, 1 ,2 ,3 , 4 ,5 , 6 , 8 , 36 } );
 
-    EXPECT_FLOAT_EQ(ac_meter.A() * pow(10, ac_meter.A_SF()), 0.13);        // check Amps and its scaling factor
+    EXPECT_FLOAT_EQ(ac_meter.A() * pow(10, ac_meter.A_SF()), 0.13); // check Amps and its scaling factor
 
     EXPECT_FLOAT_EQ(ac_meter.PhVphA() * pow(10, ac_meter.PF_SF()), 236.4); // check PhVphA and scaling factor
 
-    EXPECT_FLOAT_EQ(ac_meter.Hz() * pow(10, ac_meter.Hz_SF()), 50.0);      // check Hz and scaling factor
+    EXPECT_FLOAT_EQ(ac_meter.Hz() * pow(10, ac_meter.Hz_SF()), 50.0); // check Hz and scaling factor
 
     // same stuff for the other suspects.
 
