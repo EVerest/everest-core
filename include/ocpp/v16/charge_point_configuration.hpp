@@ -115,6 +115,9 @@ public:
     std::optional<std::string> getHostName();
     std::optional<KeyValue> getHostNameKeyValue();
 
+    std::optional<std::string> getIFace();
+    std::optional<KeyValue> getIFaceKeyValue();
+
     std::optional<bool> getQueueAllMessages();
     std::optional<int> getMessageQueueSizeThreshold();
 

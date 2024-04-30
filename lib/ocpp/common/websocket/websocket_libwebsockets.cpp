@@ -244,7 +244,11 @@ void WebsocketTlsTPM::set_connection_options(const WebsocketConnectionOptions& c
 
     set_connection_options_base(connection_options);
 
-    this->connection_options.csms_uri.set_secure(true);
+    // Set secure URI only if it is in TLS mode
+    if (connection_options.security_profile >
+        security::SecurityProfile::UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION) {
+        this->connection_options.csms_uri.set_secure(true);
+    }
 }
 
 static int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, void* user, void* in, size_t len) {
@@ -424,6 +428,13 @@ void WebsocketTlsTPM::client_loop() {
     info.port = CONTEXT_PORT_NO_LISTEN; /* we do not run any server */
     info.protocols = protocols;
 
+    if (this->connection_options.iface.has_value()) {
+        EVLOG_info << "Using network iface: " << this->connection_options.iface.value().c_str();
+
+        info.iface = this->connection_options.iface.value().c_str();
+        info.bind_iface = 1;
+    }
+
     // Set reference to ConnectionData since 'data' can go away in the websocket
     info.user = local_data.get();
 
@@ -529,6 +540,10 @@ void WebsocketTlsTPM::client_loop() {
     i.local_protocol_name = local_protocol_name;
     i.pwsi = &local_data->wsi;
     i.userdata = local_data.get(); // See lws_context 'user'
+
+    if (this->connection_options.iface.has_value()) {
+        i.iface = this->connection_options.iface.value().c_str();
+    }
 
     // Print data for debug
     EVLOG_info << "LWS connect with info "

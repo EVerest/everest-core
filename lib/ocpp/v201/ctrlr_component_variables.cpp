@@ -212,6 +212,13 @@ const ComponentVariable& VerifyCsmsAllowWildcards = {
         "VerifyCsmsAllowWildcards",
     }),
 };
+const ComponentVariable& IFace = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "IFace",
+    }),
+};
 const ComponentVariable& OcspRequestInterval = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

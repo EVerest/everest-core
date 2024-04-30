@@ -35,6 +35,7 @@ struct WebsocketConnectionOptions {
     bool verify_csms_common_name;
     bool use_tpm_tls;
     bool verify_csms_allow_wildcards;
+    std::optional<std::string> iface; // Optional interface where the socket is created. Only usable for libwebsocket
 };
 
 ///

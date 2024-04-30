@@ -62,6 +62,11 @@
              "readOnly": true,
              "minLength": 1
         },
+        "IFace": {
+            "type": "string",
+                "readOnly": true,
+                "minLength": 1
+           },
         "IMSI": {
             "type": "string",
             "readOnly": true,

@@ -999,7 +999,8 @@ WebsocketConnectionOptions ChargePoint::get_ws_connection_options(const int32_t 
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::VerifyCsmsCommonName).value_or(true),
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false),
         this->device_model->get_optional_value<bool>(ControllerComponentVariables::VerifyCsmsAllowWildcards)
-            .value_or(false)};
+            .value_or(false),
+        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::IFace)};
 
     return connection_options;
 }

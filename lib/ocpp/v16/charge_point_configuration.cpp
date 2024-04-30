@@ -761,6 +761,14 @@ std::optional<std::string> ChargePointConfiguration::getHostName() {
     return hostName_key;
 }
 
+std::optional<std::string> ChargePointConfiguration::getIFace() {
+    std::optional<std::string> iFace_key = std::nullopt;
+    if (this->config["Internal"].contains("IFace")) {
+        iFace_key.emplace(this->config["Internal"]["IFace"]);
+    }
+    return iFace_key;
+}
+
 std::optional<bool> ChargePointConfiguration::getQueueAllMessages() {
     std::optional<bool> queue_all_messages = std::nullopt;
     if (this->config["Internal"].contains("QueueAllMessages")) {
@@ -1475,6 +1483,19 @@ std::optional<KeyValue> ChargePointConfiguration::getHostNameKeyValue() {
         host_name_kv.emplace(kv);
     }
     return host_name_kv;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getIFaceKeyValue() {
+    std::optional<KeyValue> iface_name_kv = std::nullopt;
+    auto iface = this->getIFace();
+    if (iface != std::nullopt) {
+        KeyValue kv;
+        kv.key = "IFace";
+        kv.readonly = true;
+        kv.value.emplace(iface.value());
+        iface_name_kv.emplace(kv);
+    }
+    return iface_name_kv;
 }
 
 // Core Profile end

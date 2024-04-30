@@ -558,3 +558,13 @@ The old websocket++ implementation has been deprecated. For enabling websocket++
 ```bash
   cmake .. -DLIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP=ON
 ```
+
+### Support for iface
+
+In order to connect through a custom network iface, a custom internal config variable 'IFace' can be used.
+
+```json
+"Internal": {        
+    "IFace" : "enp43s0"
+}
+```

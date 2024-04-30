@@ -386,6 +386,21 @@
         "default": false,
         "type": "boolean"
       },
+      "IFace": {
+        "variable_name": "IFace",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "string"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadOnly"
+            }
+        ],
+        "default": "",
+        "type": "string"
+      },
       "OcspRequestInterval": {
           "variable_name": "OcspRequestInterval",
           "characteristics": {
