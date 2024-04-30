@@ -73,6 +73,11 @@ if (OCPP_INSTALL)
         TYPE INCLUDE
     )
 
+    install(
+        DIRECTORY 3rd_party/
+        TYPE INCLUDE
+    )
+
     evc_setup_package(
         NAME everest-ocpp
         NAMESPACE everest
@@ -80,7 +85,7 @@ if (OCPP_INSTALL)
         ADDITIONAL_CONTENT
             "find_dependency(OpenSSL)"
             "find_dependency(SQLite3)"
-            "find_dependency(websocketpp)"
+            "find_dependency(libwebsockets)"
             "find_dependency(everest-timer)"
             "find_dependency(everest-evse_security)"
     )
