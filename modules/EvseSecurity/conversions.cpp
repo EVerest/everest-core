@@ -188,12 +188,29 @@ evse_security::OCSPRequestDataList from_everest(types::evse_security::OCSPReques
     return lhs;
 }
 
-evse_security::KeyPair from_everest(types::evse_security::KeyPair other) {
-    evse_security::KeyPair lhs;
+evse_security::CertificateOCSP from_everest(types::evse_security::CertificateOCSP other) {
+    evse_security::CertificateOCSP lhs;
+    lhs.hash = from_everest(other.hash);
+
+    if (other.ocsp_path.has_value()) {
+        lhs.ocsp_path = other.ocsp_path.value();
+    }
+
+    return lhs;
+}
+
+evse_security::CertificateInfo from_everest(types::evse_security::CertificateInfo other) {
+    evse_security::CertificateInfo lhs;
     lhs.key = other.key;
     lhs.certificate = other.certificate;
     lhs.certificate_single = other.certificate_single;
+    lhs.certificate_count = other.certificate_count;
     lhs.password = other.password;
+    if (other.ocsp.has_value()) {
+        for (auto& ocsp_data : other.ocsp.value()) {
+            lhs.ocsp.push_back(from_everest(ocsp_data));
+        }
+    }
     return lhs;
 }
 
@@ -346,21 +363,21 @@ types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::G
     }
 }
 
-types::evse_security::GetKeyPairStatus to_everest(evse_security::GetKeyPairStatus other) {
+types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCertificateInfoStatus other) {
     switch (other) {
-    case evse_security::GetKeyPairStatus::Accepted:
-        return types::evse_security::GetKeyPairStatus::Accepted;
-    case evse_security::GetKeyPairStatus::Rejected:
-        return types::evse_security::GetKeyPairStatus::Rejected;
-    case evse_security::GetKeyPairStatus::NotFound:
-        return types::evse_security::GetKeyPairStatus::NotFound;
-    case evse_security::GetKeyPairStatus::NotFoundValid:
-        return types::evse_security::GetKeyPairStatus::NotFoundValid;
-    case evse_security::GetKeyPairStatus::PrivateKeyNotFound:
-        return types::evse_security::GetKeyPairStatus::PrivateKeyNotFound;
+    case evse_security::GetCertificateInfoStatus::Accepted:
+        return types::evse_security::GetCertificateInfoStatus::Accepted;
+    case evse_security::GetCertificateInfoStatus::Rejected:
+        return types::evse_security::GetCertificateInfoStatus::Rejected;
+    case evse_security::GetCertificateInfoStatus::NotFound:
+        return types::evse_security::GetCertificateInfoStatus::NotFound;
+    case evse_security::GetCertificateInfoStatus::NotFoundValid:
+        return types::evse_security::GetCertificateInfoStatus::NotFoundValid;
+    case evse_security::GetCertificateInfoStatus::PrivateKeyNotFound:
+        return types::evse_security::GetCertificateInfoStatus::PrivateKeyNotFound;
     default:
-        throw std::runtime_error("Could not convert evse_security::GetKeyPairStatus to "
-                                 "types::evse_security::GetKeyPairStatus");
+        throw std::runtime_error("Could not convert evse_security::GetCertificateInfoStatus to "
+                                 "types::evse_security::GetCertificateInfoStatus");
     }
 }
 
@@ -415,12 +432,13 @@ types::evse_security::OCSPRequestDataList to_everest(evse_security::OCSPRequestD
     return lhs;
 }
 
-types::evse_security::KeyPair to_everest(evse_security::KeyPair other) {
-    types::evse_security::KeyPair lhs;
+types::evse_security::CertificateInfo to_everest(evse_security::CertificateInfo other) {
+    types::evse_security::CertificateInfo lhs;
     lhs.key = other.key;
     lhs.certificate = other.certificate;
     lhs.certificate_single = other.certificate_single;
     lhs.password = other.password;
+    lhs.certificate_count = other.certificate_count;
     return lhs;
 }
 

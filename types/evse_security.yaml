@@ -186,11 +186,13 @@ types:
   CertificateOCSP:
     description: OCSP data related to requested the certificates
     type: object
+    required:
+      - hash
     properties:
       hash:
         description: Hash of certificate linked to the provided data
         type: object
-        ref: /evse_security#/CertificateHashData
+        $ref: /evse_security#/CertificateHashData
       ocsp_path:
         description: OCSP path of the file containing the data
         type: string
@@ -198,9 +200,8 @@ types:
     description: Type that specifies the paths of a certificate and the respective private key
     type: object
     required:
-      - key
-      - certificate
-      - certificate_single
+      - key      
+      - certificate_count
     properties:
       key:
         description: The path of the PEM or DER encoded private key
