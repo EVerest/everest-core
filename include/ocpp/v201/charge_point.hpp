@@ -182,8 +182,204 @@ struct AvailabilityChange {
     bool persist;
 };
 
+/// \brief Interface class for OCPP2.0.1 Charging Station
+class ChargePointInterface {
+public:
+    virtual ~ChargePointInterface() = default;
+
+    /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
+    /// \param bootreason   Optional bootreason (default: PowerUp).
+    virtual void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) = 0;
+
+    /// \brief Starts the websocket
+    virtual void start_websocket() = 0;
+
+    /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
+    virtual void stop() = 0;
+
+    /// \brief Initializes the websocket and connects to CSMS if it is not yet connected
+    virtual void connect_websocket() = 0;
+
+    /// \brief Disconnects the the websocket connection to the CSMS if it is connected
+    /// \param code Optional websocket close status code (default: normal).
+
+    /// \brief Disconnects the the websocket connection to the CSMS if it is connected
+    /// \param code Optional websocket close status code (default: normal).
+    virtual void disconnect_websocket(const WebsocketCloseReason code = WebsocketCloseReason::Normal) = 0;
+
+    /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
+    ///        called during a Firmware Update to indicate the current firmware_update_status.
+    /// \param request_id   The request_id. When it is -1, it will not be included in the request.
+    /// \param firmware_update_status The firmware_update_status
+    virtual void on_firmware_update_status_notification(int32_t request_id,
+                                                        const FirmwareStatusEnum& firmware_update_status) = 0;
+
+    /// \brief Event handler that should be called when a session has started
+    /// \param evse_id
+    /// \param connector_id
+    virtual void on_session_started(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that should be called when the EV sends a certificate request (for update or installation)
+    /// \param request
+    virtual Get15118EVCertificateResponse
+    on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) = 0;
+
+    /// \brief Event handler that should be called when a transaction has started
+    /// \param evse_id
+    /// \param connector_id
+    /// \param session_id
+    /// \param timestamp
+    /// \param trigger_reason
+    /// \param meter_start
+    /// \param id_token
+    /// \param group_id_token   Optional group id token
+    /// \param reservation_id
+    /// \param remote_start_id
+    /// \param charging_state   The new charging state
+    virtual void
+    on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
+                           const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
+                           const MeterValue& meter_start, const std::optional<IdToken>& id_token,
+                           const std::optional<IdToken>& group_id_token, const std::optional<int32_t>& reservation_id,
+                           const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state) = 0;
+
+    /// \brief Event handler that should be called when a transaction has finished
+    /// \param evse_id
+    /// \param timestamp
+    /// \param meter_stop
+    /// \param reason
+    /// \param id_token
+    /// \param signed_meter_value
+    /// \param charging_state
+    virtual void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
+                                         const ReasonEnum reason, const std::optional<IdToken>& id_token,
+                                         const std::optional<std::string>& signed_meter_value,
+                                         const ChargingStateEnum charging_state) = 0;
+
+    /// \brief Event handler that should be called when a session has finished
+    /// \param evse_id
+    /// \param connector_id
+    virtual void on_session_finished(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that should be called when the given \p id_token is authorized
+    virtual void on_authorized(const int32_t evse_id, const int32_t connector_id, const IdToken& id_token) = 0;
+
+    /// \brief Event handler that should be called when a new meter value is present
+    /// \param evse_id
+    /// \param meter_value
+    virtual void on_meter_value(const int32_t evse_id, const MeterValue& meter_value) = 0;
+
+    /// \brief Event handler that should be called when the connector on the given \p evse_id and \p connector_id
+    /// becomes unavailable
+    virtual void on_unavailable(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that should be called when the connector returns from unavailable on the given \p evse_id
+    /// and \p connector_id .
+    virtual void on_enabled(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is faulted.
+    /// \param evse_id          Faulted EVSE id
+    /// \param connector_id     Faulted connector id
+    virtual void on_faulted(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is reserved.
+    /// \param evse_id          Reserved EVSE id
+    /// \param connector_id     Reserved connector id
+    virtual void on_reserved(const int32_t evse_id, const int32_t connector_id) = 0;
+
+    /// \brief Event handler that will update the charging state internally when it has been changed.
+    /// \param evse_id          The evse id of which the charging state has changed.
+    /// \param charging_state   The new charging state.
+    /// \param trigger_reason   The trigger reason of the event. Defaults to ChargingStateChanged
+    /// \return True on success. False if evse id does not exist.
+    virtual bool
+    on_charging_state_changed(const uint32_t evse_id, const ChargingStateEnum charging_state,
+                              const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) = 0;
+
+    /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
+    /// \param id_token
+    /// \param certificate
+    /// \param ocsp_request_data
+    /// \return AuthorizeResponse containing the result of the validation
+    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+                                             const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
+
+    /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
+    /// \param events
+    virtual void on_event(const std::vector<EventData>& events) = 0;
+
+    ///
+    /// \brief Event handler that can be called to notify about the log status.
+    ///
+    /// This function should be called curing a Diagnostics / Log upload to indicate the current log status.
+    ///
+    /// \param status       Log status.
+    /// \param requestId    Request id that was provided in GetLogRequest.
+    ///
+    virtual void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) = 0;
+
+    // \brief Notifies chargepoint that a SecurityEvent has occured. This will send a SecurityEventNotification.req to
+    // the
+    /// CSMS
+    /// \param type type of the security event
+    /// \param tech_info additional info of the security event
+    virtual void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) = 0;
+
+    /// \brief Data transfer mechanism initiated by charger
+    /// \param vendorId
+    /// \param messageId
+    /// \param data
+    /// \return DataTransferResponse containing the result from CSMS
+    virtual DataTransferResponse data_transfer_req(const CiString<255>& vendorId,
+                                                   const std::optional<CiString<50>>& messageId,
+                                                   const std::optional<json>& data) = 0;
+
+    /// \brief Data transfer mechanism initiated by charger
+    /// \param request
+    /// \return DataTransferResponse containing the result from CSMS
+    virtual DataTransferResponse data_transfer_req(const DataTransferRequest& request) = 0;
+
+    /// \brief Switches the operative status of the CS
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    virtual void set_cs_operative_status(OperationalStatusEnum new_status, bool persist) = 0;
+
+    /// \brief Switches the operative status of an EVSE
+    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    virtual void set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist) = 0;
+
+    /// \brief Switches the operative status of the CS, an EVSE, or a connector, and recomputes effective statuses
+    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
+    /// \param connector_id: The ID of the connector, empty if an EVSE or the CS is addressed
+    /// \param new_status: The new operative status to switch to
+    /// \param persist: True if the updated state should be persisted in the database
+    virtual void set_connector_operative_status(int32_t evse_id, int32_t connector_id, OperationalStatusEnum new_status,
+                                                bool persist) = 0;
+
+    /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
+    /// \param delay The delay period (seconds)
+    virtual void set_message_queue_resume_delay(std::chrono::seconds delay) = 0;
+
+    /// \brief Gets variables specified within \p get_variable_data_vector from the device model and returns the result.
+    /// This function is used internally in order to handle GetVariables.req messages and it can be used to get
+    /// variables externally.
+    /// \param get_variable_data_vector contains data of the variables to get
+    /// \return Vector containing a result for each requested variable
+    virtual std::vector<GetVariableResult>
+    get_variables(const std::vector<GetVariableData>& get_variable_data_vector) = 0;
+
+    /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
+    /// \param set_variable_data_vector contains data of the variables to set
+    /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
+    /// change
+    virtual std::map<SetVariableData, SetVariableResult>
+    set_variables(const std::vector<SetVariableData>& set_variable_data_vector) = 0;
+};
+
 /// \brief Class implements OCPP2.0.1 Charging Station
-class ChargePoint : ocpp::ChargingStationBase {
+class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBase {
 
 private:
     // reference to evses
@@ -575,174 +771,84 @@ public:
                 const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                 const Callbacks& callbacks);
 
-    /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
-    /// \param bootreason   Optional bootreason (default: PowerUp).
-    void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp);
+    void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;
 
-    /// \brief Starts the websocket
-    void start_websocket();
+    void start_websocket() override;
 
-    /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
-    void stop();
+    void stop() override;
 
-    /// \brief Initializes the websocket and connects to CSMS if it is not yet connected
-    void connect_websocket();
+    void connect_websocket() override;
 
-    /// \brief Disconnects the the websocket connection to the CSMS if it is connected
-    /// \param code Optional websocket close status code (default: normal).
-    void disconnect_websocket(const WebsocketCloseReason code = WebsocketCloseReason::Normal);
+    void disconnect_websocket(const WebsocketCloseReason code = WebsocketCloseReason::Normal) override;
 
-    /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
-    ///        called during a Firmware Update to indicate the current firmware_update_status.
-    /// \param request_id   The request_id. When it is -1, it will not be included in the request.
-    /// \param firmware_update_status The firmware_update_status
-    void on_firmware_update_status_notification(int32_t request_id, const FirmwareStatusEnum& firmware_update_status);
+    void on_firmware_update_status_notification(int32_t request_id,
+                                                const FirmwareStatusEnum& firmware_update_status) override;
 
-    /// \brief Event handler that should be called when a session has started
-    /// \param evse_id
-    /// \param connector_id
-    void on_session_started(const int32_t evse_id, const int32_t connector_id);
+    void on_session_started(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that should be called when the EV sends a certificate request (for update or installation)
-    /// \param request
-    Get15118EVCertificateResponse on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request);
+    Get15118EVCertificateResponse
+    on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) override;
 
-    /// \brief Event handler that should be called when a transaction has started
-    /// \param evse_id
-    /// \param connector_id
-    /// \param session_id
-    /// \param timestamp
-    /// \param trigger_reason
-    /// \param meter_start
-    /// \param id_token
-    /// \param group_id_token   Optional group id token
-    /// \param reservation_id
-    /// \param remote_start_id
-    /// \param charging_state   The new charging state
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
                                 const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
                                 const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                                 const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id,
-                                const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state);
+                                const std::optional<int32_t>& remote_start_id,
+                                const ChargingStateEnum charging_state) override;
 
-    /// \brief Event handler that should be called when a transaction has finished
-    /// \param evse_id
-    /// \param timestamp
-    /// \param meter_stop
-    /// \param reason
-    /// \param id_token
-    /// \param signed_meter_value
     void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
                                  const ReasonEnum reason, const std::optional<IdToken>& id_token,
                                  const std::optional<std::string>& signed_meter_value,
-                                 const ChargingStateEnum charging_state);
+                                 const ChargingStateEnum charging_state) override;
 
-    /// \brief Event handler that should be called when a session has finished
-    /// \param evse_id
-    /// \param connector_id
-    void on_session_finished(const int32_t evse_id, const int32_t connector_id);
+    void on_session_finished(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that should be called when the given \p id_token is authorized
-    void on_authorized(const int32_t evse_id, const int32_t connector_id, const IdToken& id_token);
+    void on_authorized(const int32_t evse_id, const int32_t connector_id, const IdToken& id_token) override;
 
-    /// \brief Event handler that should be called when a new meter value is present
-    /// \param evse_id
-    /// \param meter_value
-    void on_meter_value(const int32_t evse_id, const MeterValue& meter_value);
+    void on_meter_value(const int32_t evse_id, const MeterValue& meter_value) override;
 
-    /// \brief Event handler that should be called when the connector on the given \p evse_id and \p connector_id
-    /// becomes unavailable
-    void on_unavailable(const int32_t evse_id, const int32_t connector_id);
+    void on_unavailable(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that should be called when the connector returns from unavailable on the given \p evse_id
-    /// and \p connector_id .
-    void on_enabled(const int32_t evse_id, const int32_t connector_id);
+    void on_enabled(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is faulted.
-    /// \param evse_id          Faulted EVSE id
-    /// \param connector_id     Faulted connector id
-    void on_faulted(const int32_t evse_id, const int32_t connector_id);
+    void on_faulted(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is reserved.
-    /// \param evse_id          Reserved EVSE id
-    /// \param connector_id     Reserved connector id
-    void on_reserved(const int32_t evse_id, const int32_t connector_id);
+    void on_reserved(const int32_t evse_id, const int32_t connector_id) override;
 
-    /// \brief Event handler that will update the charging state internally when it has been changed.
-    /// \param evse_id          The evse id of which the charging state has changed.
-    /// \param charging_state   The new charging state.
-    /// \param trigger_reason   The trigger reason of the event. Defaults to ChargingStateChanged
-    /// \return True on success. False if evse id does not exist.
-    bool on_charging_state_changed(const uint32_t evse_id, const ChargingStateEnum charging_state,
-                                   const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged);
+    bool on_charging_state_changed(
+        const uint32_t evse_id, const ChargingStateEnum charging_state,
+        const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) override;
 
-    /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
-    /// \param id_token
-    /// \param certificate
-    /// \param ocsp_request_data
-    /// \return AuthorizeResponse containing the result of the validation
     AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
-                                     const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
+                                     const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) override;
 
-    /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
-    /// \param events
-    void on_event(const std::vector<EventData>& events);
+    void on_event(const std::vector<EventData>& events) override;
 
-    ///
-    /// \brief Event handler that can be called to notify about the log status.
-    ///
-    /// This function should be called curing a Diagnostics / Log upload to indicate the current log status.
-    ///
-    /// \param status       Log status.
-    /// \param requestId    Request id that was provided in GetLogRequest.
-    ///
-    void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId);
+    void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) override;
 
-    // \brief Notifies chargepoint that a SecurityEvent has occured. This will send a SecurityEventNotification.req to
-    // the
-    /// CSMS
-    /// \param type type of the security event
-    /// \param tech_info additional info of the security event
-    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info);
+    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) override;
 
-    /// \brief Data transfer mechanism initiated by charger
-    /// \param vendorId
-    /// \param messageId
-    /// \param data
-    /// \return DataTransferResponse containing the result from CSMS
     DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
-                                           const std::optional<json>& data);
+                                           const std::optional<json>& data) override;
 
-    /// \brief Data transfer mechanism initiated by charger
-    /// \param request
-    /// \return DataTransferResponse containing the result from CSMS
-    DataTransferResponse data_transfer_req(const DataTransferRequest& request);
+    DataTransferResponse data_transfer_req(const DataTransferRequest& request) override;
 
-    /// \brief Switches the operative status of the CS
-    /// \param new_status: The new operative status to switch to
-    /// \param persist: True if the updated state should be persisted in the database
-    void set_cs_operative_status(OperationalStatusEnum new_status, bool persist);
+    void set_cs_operative_status(OperationalStatusEnum new_status, bool persist) override;
 
-    /// \brief Switches the operative status of an EVSE
-    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
-    /// \param new_status: The new operative status to switch to
-    /// \param persist: True if the updated state should be persisted in the database
-    void set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist);
+    void set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist) override;
 
-    /// \brief Switches the operative status of the CS, an EVSE, or a connector, and recomputes effective statuses
-    /// \param evse_id: The ID of the EVSE, empty if the CS is addressed
-    /// \param connector_id: The ID of the connector, empty if an EVSE or the CS is addressed
-    /// \param new_status: The new operative status to switch to
-    /// \param persist: True if the updated state should be persisted in the database
     void set_connector_operative_status(int32_t evse_id, int32_t connector_id, OperationalStatusEnum new_status,
-                                        bool persist);
+                                        bool persist) override;
 
-    /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
-    /// \param delay The delay period (seconds)
-    void set_message_queue_resume_delay(std::chrono::seconds delay) {
+    void set_message_queue_resume_delay(std::chrono::seconds delay) override {
         this->message_queue_resume_delay = delay;
     }
+
+    std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector) override;
+
+    std::map<SetVariableData, SetVariableResult>
+    set_variables(const std::vector<SetVariableData>& set_variable_data_vector) override;
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model
@@ -757,20 +863,6 @@ public:
                                                 const AttributeEnum& attribute_enum) {
         return this->device_model->request_value<T>(component_id, variable_id, attribute_enum);
     }
-
-    /// \brief Gets variables specified within \p get_variable_data_vector from the device model and returns the result.
-    /// This function is used internally in order to handle GetVariables.req messages and it can be used to get
-    /// variables externally.
-    /// \param get_variable_data_vector contains data of the variables to get
-    /// \return Vector containing a result for each requested variable
-    std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector);
-
-    /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
-    /// \param set_variable_data_vector contains data of the variables to set
-    /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
-    /// change
-    std::map<SetVariableData, SetVariableResult>
-    set_variables(const std::vector<SetVariableData>& set_variable_data_vector);
 };
 
 } // namespace v201
