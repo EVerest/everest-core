@@ -808,6 +808,10 @@ void ChargePoint::on_security_event(const CiString<50>& event_type, const std::o
     this->security_event_notification_req(event_type, tech_info, false, false);
 }
 
+void ChargePoint::on_variable_changed(const SetVariableData& set_variable_data) {
+    this->handle_variable_changed(set_variable_data);
+}
+
 bool ChargePoint::send(CallError call_error) {
     this->message_queue->push(call_error);
     return true;
