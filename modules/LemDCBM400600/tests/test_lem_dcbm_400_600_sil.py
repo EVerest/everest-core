@@ -28,17 +28,15 @@ def test_start_transaction(everest_test_instance):
     res = everest_test_instance.probe_module.call_powermeter_command('start_transaction',
                                                                      {"value": {
                                                                          "evse_id": "mock_evse_id",
-                                                                         "transaction_id": "mock_transaction_id",
-                                                                         "client_id": "mock_client_id",
-                                                                         "tariff_id": 42,
-                                                                         "cable_id": 43,
-                                                                         "user_data": "mock_user_data"
-                                                                     }
-                                                                     })
+                                                                         "transaction_id": "e2e_test_transaction",
+                                                                         "identification_status": "ASSIGNED",
+                                                                         "identification_flags": [],
+                                                                         "identification_type": "ISO14443"
+                                                                     }})
 
     parsed_start_result = StartTransactionSuccessResponse(**res)
     assert 48 * 60 - 3.1 < ((
-                                    parsed_start_result.transaction_max_stop_time - parsed_start_result.transaction_min_stop_time).total_seconds() / 60) <= 48 * 60 - 2.9
+        parsed_start_result.transaction_max_stop_time - parsed_start_result.transaction_min_stop_time).total_seconds() / 60) <= 48 * 60 - 2.9
 
 
 def test_stop_transaction(everest_test_instance):
