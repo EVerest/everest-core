@@ -325,6 +325,11 @@ public:
     /// \param tech_info additional info of the security event
     virtual void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) = 0;
 
+    /// \brief Event handler that will update the variable internally when it has been changed on the fly.
+    /// \param set_variable_data contains data of the variable to set
+    ///
+    virtual void on_variable_changed(const SetVariableData& set_variable_data) = 0;
+
     /// \brief Data transfer mechanism initiated by charger
     /// \param vendorId
     /// \param messageId
@@ -828,6 +833,8 @@ public:
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) override;
 
     void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) override;
+
+    void on_variable_changed(const SetVariableData& set_variable_data) override;
 
     DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
                                            const std::optional<json>& data) override;
