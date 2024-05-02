@@ -91,13 +91,14 @@ TEST_F(OpenSSLSupplierTest, x509_verify_certificate_chain) {
     auto res_leaf = OpenSSLSupplier::load_certificates(cert_leaf, EncodingFormat::PEM);
 
     std::vector<X509Handle*> parents;
+    std::vector<X509Handle*> empty_untrusted;
 
     for (auto& i : res_path) {
         parents.push_back(i.get());
     }
 
-    auto res = OpenSSLSupplier::x509_verify_certificate_chain(res_leaf[0].get(), parents, true, std::nullopt,
-                                                              "pki/root_cert.pem");
+    auto res = OpenSSLSupplier::x509_verify_certificate_chain(res_leaf[0].get(), parents, empty_untrusted, true,
+                                                              std::nullopt, "pki/root_cert.pem");
     ASSERT_EQ(res, CertificateValidationResult::Valid);
 }
 

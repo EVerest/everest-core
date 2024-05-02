@@ -560,13 +560,12 @@ X509Handle_ptr OpenSSLSupplier::x509_duplicate_unique(X509Handle* handle) {
     return std::make_unique<X509HandleOpenSSL>(X509_dup(get(handle)));
 }
 
-CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(X509Handle* target,
-                                                                           const std::vector<X509Handle*>& parents,
-                                                                           bool allow_future_certificates,
-                                                                           const std::optional<fs::path> dir_path,
-                                                                           const std::optional<fs::path> file_path) {
+CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(
+    X509Handle* target, const std::vector<X509Handle*>& parents, const std::vector<X509Handle*>& untrusted_subcas,
+    bool allow_future_certificates, const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path) {
     OpenSSLProvider provider;
     provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
+
     X509_STORE_ptr store_ptr(X509_STORE_new());
     X509_STORE_CTX_ptr store_ctx_ptr(X509_STORE_CTX_new());
 
@@ -591,7 +590,25 @@ CertificateValidationResult OpenSSLSupplier::x509_verify_certificate_chain(X509H
         }
     }
 
-    X509_STORE_CTX_init(store_ctx_ptr.get(), store_ptr.get(), get(target), NULL);
+    X509_STACK_UNSAFE_ptr untrusted = nullptr;
+
+    // Build potentially untrusted intermediary (subca) certificates
+    if (false == untrusted_subcas.empty()) {
+        untrusted = X509_STACK_UNSAFE_ptr(sk_X509_new_null());
+        int flags = X509_ADD_FLAG_NO_DUP | X509_ADD_FLAG_NO_SS;
+
+        for (auto& untrusted_cert : untrusted_subcas) {
+            if (1 != X509_add_cert(untrusted.get(), get(untrusted_cert), flags)) {
+                EVLOG_error << "X509 could not create untrusted store stack!";
+                return CertificateValidationResult::Unknown;
+            }
+        }
+    }
+
+    if (1 != X509_STORE_CTX_init(store_ctx_ptr.get(), store_ptr.get(), get(target), untrusted.get())) {
+        EVLOG_error << "X509 could not init x509 store ctx!";
+        return CertificateValidationResult::Unknown;
+    }
 
     if (allow_future_certificates) {
         // Manually check if cert is expired

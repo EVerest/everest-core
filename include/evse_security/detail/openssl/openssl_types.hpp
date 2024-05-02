@@ -33,6 +33,13 @@ public:
     }
 };
 
+template <> class std::default_delete<STACK_OF(X509)> {
+public:
+    void operator()(STACK_OF(X509) * ptr) const {
+        sk_X509_free(ptr);
+    }
+};
+
 template <> class std::default_delete<EVP_PKEY> {
 public:
     void operator()(EVP_PKEY* ptr) const {
@@ -87,6 +94,9 @@ namespace evse_security {
 using X509_ptr = std::unique_ptr<X509>;
 using X509_STORE_ptr = std::unique_ptr<X509_STORE>;
 using X509_STORE_CTX_ptr = std::unique_ptr<X509_STORE_CTX>;
+// Unsafe since it does not free contained elements, only the stack, the element
+// cleanup has to be done manually
+using X509_STACK_UNSAFE_ptr = std::unique_ptr<STACK_OF(X509)>;
 using X509_REQ_ptr = std::unique_ptr<X509_REQ>;
 using EVP_PKEY_ptr = std::unique_ptr<EVP_PKEY>;
 using EVP_PKEY_CTX_ptr = std::unique_ptr<EVP_PKEY_CTX>;

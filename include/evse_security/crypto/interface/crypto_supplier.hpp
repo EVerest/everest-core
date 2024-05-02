@@ -57,11 +57,10 @@ public: // X509 certificate utilities
     /// @param dir_path     Optional directory path that can be used for certificate store lookup
     /// @param file_path    Optional certificate file path that can be used for certificate store lookup
     /// @return
-    static CertificateValidationResult x509_verify_certificate_chain(X509Handle* target,
-                                                                     const std::vector<X509Handle*>& parents,
-                                                                     bool allow_future_certificates,
-                                                                     const std::optional<fs::path> dir_path,
-                                                                     const std::optional<fs::path> file_path);
+    static CertificateValidationResult
+    x509_verify_certificate_chain(X509Handle* target, const std::vector<X509Handle*>& parents,
+                                  const std::vector<X509Handle*>& untrusted_subcas, bool allow_future_certificates,
+                                  const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path);
 
     /// @brief Checks if the private key is consistent with the provided handle
     static KeyValidationResult x509_check_private_key(X509Handle* handle, std::string private_key,

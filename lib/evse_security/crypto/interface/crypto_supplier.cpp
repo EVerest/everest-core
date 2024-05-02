@@ -76,8 +76,8 @@ static X509Handle_ptr x509_duplicate_unique(X509Handle* handle) {
 }
 
 CertificateValidationResult AbstractCryptoSupplier::x509_verify_certificate_chain(
-    X509Handle* target, const std::vector<X509Handle*>& parents, bool allow_future_certificates,
-    const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path) {
+    X509Handle* target, const std::vector<X509Handle*>& parents, const std::vector<X509Handle*>& untrusted_subcas,
+    bool allow_future_certificates, const std::optional<fs::path> dir_path, const std::optional<fs::path> file_path) {
     default_crypto_supplier_usage_error() return CertificateValidationResult::Unknown;
 }
 

@@ -1261,26 +1261,34 @@ CertificateValidationResult EvseSecurity::verify_certificate_internal(const std:
 
     try {
         X509CertificateBundle certificate(certificate_chain, EncodingFormat::PEM);
+
         std::vector<X509Wrapper> _certificate_chain = certificate.split();
         if (_certificate_chain.empty()) {
             return CertificateValidationResult::Unknown;
         }
 
+        // The leaf is to be verified
         const auto leaf_certificate = _certificate_chain.at(0);
-        std::vector<X509Handle*> parent_certificates;
 
         // Retrieve the hierarchy in order to check if the chain contains a root certificate
         X509CertificateHierarchy& hierarchy = certificate.get_certficate_hierarchy();
 
-        // Make sure that an added root certificate is excluded and taken from the bundle
-        for (size_t i = 1; i < _certificate_chain.size(); i++) {
-            const auto& cert = _certificate_chain[i];
-            if (hierarchy.is_root(cert)) {
-                EVLOG_warning << "Ignore root certificate: " << cert.get_common_name();
-            } else {
-                parent_certificates.emplace_back(cert.get());
+        // Build all untrusted intermediary certificates, and exclude any root
+        std::vector<X509Handle*> untrusted_subcas;
+
+        if (_certificate_chain.size() > 1) {
+            for (size_t i = 1; i < _certificate_chain.size(); i++) {
+                const auto& cert = _certificate_chain[i];
+                if (hierarchy.is_root(cert)) {
+                    EVLOG_warning << "Ignore root certificate: " << cert.get_common_name();
+                } else {
+                    untrusted_subcas.emplace_back(cert.get());
+                }
             }
         }
+
+        // Build the trusted parent certificates from our internal store
+        std::vector<X509Handle*> trusted_parent_certificates;
 
         fs::path root_store = this->ca_bundle_path_map.at(ca_certificate_type);
         CertificateValidationResult validated{};
@@ -1296,16 +1304,17 @@ CertificateValidationResult EvseSecurity::verify_certificate_internal(const std:
             std::vector<X509Wrapper> root_chain{roots.split()};
 
             for (size_t i = 0; i < root_chain.size(); i++) {
-                parent_certificates.emplace_back(root_chain[i].get());
+                trusted_parent_certificates.emplace_back(root_chain[i].get());
             }
 
             // The root_chain stores the X509Handler pointers, if this goes out of scope then
             // parent_certificates will point to nothing.
-            validated = CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), parent_certificates, true,
-                                                                      std::nullopt, std::nullopt);
+            validated =
+                CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), trusted_parent_certificates,
+                                                              untrusted_subcas, true, std::nullopt, std::nullopt);
         } else {
-            validated = CryptoSupplier::x509_verify_certificate_chain(leaf_certificate.get(), parent_certificates, true,
-                                                                      std::nullopt, root_store);
+            validated = CryptoSupplier::x509_verify_certificate_chain(
+                leaf_certificate.get(), trusted_parent_certificates, untrusted_subcas, true, std::nullopt, root_store);
         }
 
         return validated;
