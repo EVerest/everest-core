@@ -793,6 +793,20 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
         if (cp_event == CPEvent::CarRequestedStopPower) {
             shared_context.iec_allow_close_contactor = false;
             shared_context.current_state = EvseState::ChargingPausedEV;
+            // Tell HLC stack to stop the session. Normally the session should have already been stopped by the EV, but
+            // if this is not the case, we have to do it here.
+            if (shared_context.hlc_charging_active) {
+                signal_hlc_stop_charging();
+                session_log.evse(false, "CP state transition C->B at this stage violates ISO15118-2");
+            }
+        } else if (cp_event == CPEvent::BCDtoEF) {
+            shared_context.iec_allow_close_contactor = false;
+            shared_context.current_state = EvseState::StoppingCharging;
+            // Tell HLC stack to stop the session in case of an E/F event while charging.
+            if (shared_context.hlc_charging_active) {
+                signal_hlc_stop_charging();
+                session_log.evse(false, "CP state transition C->E/F at this stage violates ISO15118-2");
+            }
         }
         break;
 
