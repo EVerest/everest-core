@@ -219,10 +219,10 @@ SCENARIO("DC charge parameter discovery state handling") {
                 {900, 0}, // max_voltage
                 {0, 0},   // min_voltage
             },
-            {11, 3},      // max_discharge_power
-            {0, 0},       // min_discharge_power
-            {25, 0},      // max_discharge_current
-            {0, 0},       // min_discharge_current
+            {11, 3}, // max_discharge_power
+            {0, 0},  // min_discharge_power
+            {25, 0}, // max_discharge_current
+            {0, 0},  // min_discharge_current
         };
         config.evse_dc_bpt_parameter = evse_dc_bpt_parameter;
 
