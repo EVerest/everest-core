@@ -144,7 +144,8 @@ cmds:
         type: boolean 
     result:
       description: The certificate signing request in PEM format
-      type: string
+      type: object
+      $ref: /evse_security#/GetCertificateSignRequestResult
   get_leaf_certificate_info:
     description: Command to get the paths of the certificate and the respective key
     arguments:

@@ -55,7 +55,7 @@ protected:
     virtual std::string
     handle_retrieve_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data) override;
     virtual bool handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) override;
-    virtual std::string
+    virtual types::evse_security::GetCertificateSignRequestResult
     handle_generate_certificate_signing_request(types::evse_security::LeafCertificateType& certificate_type,
                                                 std::string& country, std::string& organization, std::string& common,
                                                 bool& use_tpm) override;

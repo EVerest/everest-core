@@ -76,6 +76,14 @@ types:
     enum:
       - Accepted
       - NotFound
+  GetCertificateSignRequestStatus:
+    description: Status indicates the result to generate a certificate signing request
+    type: string
+    enum:
+      - Accepted
+      - InvalidRequestedType
+      - KeyGenError
+      - GenerationError
   GetCertificateInfoStatus:
     description: Status indicates the result of the attempt to retrieve a certificate
     type: string
@@ -195,6 +203,19 @@ types:
         $ref: /evse_security#/CertificateHashData
       ocsp_path:
         description: OCSP path of the file containing the data
+        type: string
+  GetCertificateSignRequestResult:
+    description: Response related to a CSR generation
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Status of the request
+        type: string
+        $ref: /evse_security#/GetCertificateSignRequestStatus
+      csr:
+        description: PEM encoded certificate signing request
         type: string
   CertificateInfo:
     description: Type that specifies the paths of a certificate and the respective private key

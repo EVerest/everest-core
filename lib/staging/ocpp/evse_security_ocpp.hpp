@@ -32,9 +32,10 @@ public:
     void update_ocsp_cache(const ocpp::CertificateHashDataType& certificate_hash_data,
                            const std::string& ocsp_response) override;
     bool is_ca_certificate_installed(const ocpp::CaCertificateType& certificate_type) override;
-    std::string generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
-                                                     const std::string& country, const std::string& organization,
-                                                     const std::string& common, bool use_tpm) override;
+    std::optional<std::string>
+    generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
+                                         const std::string& country, const std::string& organization,
+                                         const std::string& common, bool use_tpm) override;
     std::optional<ocpp::CertificateInfo>
     get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) override;
     bool update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) override;

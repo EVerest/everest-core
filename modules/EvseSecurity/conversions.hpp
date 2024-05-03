@@ -35,6 +35,7 @@ types::evse_security::InstallCertificateResult to_everest(evse_security::Install
 types::evse_security::CertificateValidationResult to_everest(evse_security::CertificateValidationResult other);
 types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCertificateResult other);
 types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::GetInstalledCertificatesStatus other);
+types::evse_security::GetCertificateSignRequestStatus to_everest(evse_security::GetCertificateSignRequestStatus other);
 types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCertificateInfoStatus other);
 
 types::evse_security::CertificateHashData to_everest(evse_security::CertificateHashData other);

@@ -92,11 +92,22 @@ bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security:
     return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
 }
 
-std::string evse_securityImpl::handle_generate_certificate_signing_request(
+types::evse_security::GetCertificateSignRequestResult evse_securityImpl::handle_generate_certificate_signing_request(
     types::evse_security::LeafCertificateType& certificate_type, std::string& country, std::string& organization,
     std::string& common, bool& use_tpm) {
-    return this->evse_security->generate_certificate_signing_request(conversions::from_everest(certificate_type),
-                                                                     country, organization, common, use_tpm);
+    types::evse_security::GetCertificateSignRequestResult response;
+
+    auto csr_response = this->evse_security->generate_certificate_signing_request(
+        conversions::from_everest(certificate_type), country, organization, common, use_tpm);
+
+    response.status = conversions::to_everest(csr_response.status);
+
+    if (csr_response.status == evse_security::GetCertificateSignRequestStatus::Accepted &&
+        csr_response.csr.has_value()) {
+        response.csr = csr_response.csr;
+    }
+
+    return response;
 }
 
 types::evse_security::GetCertificateInfoResult

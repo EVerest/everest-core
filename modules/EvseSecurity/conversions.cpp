@@ -363,6 +363,22 @@ types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::G
     }
 }
 
+types::evse_security::GetCertificateSignRequestStatus to_everest(evse_security::GetCertificateSignRequestStatus other) {
+    switch (other) {
+    case evse_security::GetCertificateSignRequestStatus::Accepted:
+        return types::evse_security::GetCertificateSignRequestStatus::Accepted;
+    case evse_security::GetCertificateSignRequestStatus::InvalidRequestedType:
+        return types::evse_security::GetCertificateSignRequestStatus::InvalidRequestedType;
+    case evse_security::GetCertificateSignRequestStatus::KeyGenError:
+        return types::evse_security::GetCertificateSignRequestStatus::KeyGenError;
+    case evse_security::GetCertificateSignRequestStatus::GenerationError:
+        return types::evse_security::GetCertificateSignRequestStatus::GenerationError;
+    default:
+        throw std::runtime_error("Could not convert evse_security::GetCertificateSignRequestStatus to "
+                                 "types::evse_security::GetCertificateSignRequestStatus");
+    }
+}
+
 types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCertificateInfoStatus other) {
     switch (other) {
     case evse_security::GetCertificateInfoStatus::Accepted:
