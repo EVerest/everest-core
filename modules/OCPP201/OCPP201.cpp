@@ -409,6 +409,13 @@ void OCPP201::ready() {
             this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
         };
 
+    callbacks.boot_notification_callback =
+        [this](const ocpp::v201::BootNotificationResponse& boot_notification_response) {
+            const auto everest_boot_notification_response =
+                conversions::to_everest_boot_notification_response(boot_notification_response);
+            this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
+        };
+
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request =

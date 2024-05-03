@@ -10,6 +10,7 @@
 #include <generated/types/system.hpp>
 
 #include <ocpp/common/types.hpp>
+#include <ocpp/v16/messages/BootNotification.hpp>
 #include <ocpp/v16/messages/DataTransfer.hpp>
 #include <ocpp/v16/messages/GetDiagnostics.hpp>
 #include <ocpp/v16/messages/LogStatusNotification.hpp>
@@ -95,6 +96,14 @@ to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& per
 
 /// \brief Convert ocpp::v16::EnhancedChargingSchedule to types::ocpp::ChargingSchedule
 types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChargingSchedule& schedule);
+
+/// \brief Converts a given ocpp::v16::BootNotificationResponse \p boot_notification_response to a
+/// types::ocpp::BootNotificationResponse
+types::ocpp::BootNotificationResponse
+to_everest_boot_notification_response(const ocpp::v16::BootNotificationResponse& boot_notification_response);
+
+types::ocpp::RegistrationStatus
+to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration_status);
 
 } // namespace conversions
 } // namespace module

@@ -633,3 +633,32 @@ types:
         description: Detailed status information.
         type: object
         $ref: /ocpp#/StatusInfoType
+  RegistrationStatus:
+    description: Indicates whether the Charging Station has been registered within the OCPP CSMS
+    type: string
+    enum:
+      - Accepted
+      - Pending
+      - Rejected
+  BootNotificationResponse:
+    description: OCPP BootNotificationResponse
+    type: object
+    required:
+      - status
+      - current_time
+      - interval
+    properties:
+      status:
+        description: Indicates whether the Charging Station has been registered within the OCPP CSMS
+        type: string
+        $ref: /ocpp#/RegistrationStatus
+      current_time:
+        description: Contains the CSMS current time in RFC3339 format
+        type: string
+        format: date-time
+      interval:
+        description: >-
+          When Status is Accepted, this contains the heartbeat interval in seconds. If the CSMS
+          returns something other than Accepted, the value of the interval field indicates the
+          minimum wait time before sending a next BootNotification request.
+        type: integer
