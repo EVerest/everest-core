@@ -556,8 +556,10 @@ void WebsocketTlsTPM::client_loop() {
         // This condition can occur when connecting fails to an IP address
         // retries need to be attempted
         local_data->update_state(EConnectionState::ERROR);
-        conn_cv.notify_one();
         on_conn_fail();
+
+        // Notify conn waiter
+        conn_cv.notify_one();
     } else {
         EVLOG_debug << "Init client loop with ID: " << std::hex << std::this_thread::get_id();
 
@@ -675,10 +677,21 @@ bool WebsocketTlsTPM::connect() {
 
     if (!connected) {
         EVLOG_error << "Conn failed, interrupting.";
+
+        // If we timeouted the on_conn_fail was not dispatched, since it did not had the chance
+        if (timeouted && local_data->get_state() != EConnectionState::ERROR) {
+            EVLOG_error << "Conn failed with timeout, without disconnect dispatch, dispatching manually.";
+            on_conn_fail();
+        }
+
         // Interrupt and drop the connection data
-        std::shared_ptr<ConnectionData> local_data = conn_data;
-        if (local_data != nullptr) {
-            local_data->do_interrupt();
+        local_data->do_interrupt();
+
+        // Also interrupt the latest conenction, if it was set by a parallel thread
+        auto local = conn_data;
+
+        if (local != nullptr) {
+            local->do_interrupt();
         }
 
         conn_data.reset();
