@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "PhyVersoBSP.hpp"
+#include <filesystem>
 
 namespace module {
 
@@ -27,9 +28,8 @@ void PhyVersoBSP::init() {
         mcu_config_file = info.paths.etc / mcu_config_file;
     }
 
-    if (!verso_config.open_file(mcu_config_file.string().c_str())) {
+    if (!verso_config.open_file(mcu_config_file.string())) {
         EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open config file ", mcu_config_file));
-        return;
     }
 
     serial.signal_config_request.connect([&]() {
@@ -40,20 +40,6 @@ void PhyVersoBSP::init() {
 
 void PhyVersoBSP::ready() {
     serial.run();
-
-    /*
-
-    Implement auto fw update and include current fw image
-    FIXME will need to be implemented
-    if (!serial.reset(config.reset_gpio)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti reset not successful."));
-    }
-
-    serial.signalSpuriousReset.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!")); });
-    serial.signalConnectionTimeout.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
-        */
 
     invoke_ready(*p_connector_1);
     invoke_ready(*p_connector_2);

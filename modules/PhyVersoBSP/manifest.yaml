@@ -1,7 +1,7 @@
 description: Driver module for Phytec PhyVerso EV Charging controller with Pionix MCU firmware
 config:
   serial_port:
-    description: Serial port the Yeti hardware is connected to
+    description: Serial port the hardware is connected to
     type: string
     default: /dev/ttyUSB0
   baud_rate:
@@ -31,13 +31,13 @@ config:
     minimum: 0
     default: 6
   conn1_min_phase_count_import:
-    description: Minimum phase count it can switch
+    description: Minimum phase count for import
     type: integer
     minimum: 1
     maximum: 3
     default: 3
   conn1_max_phase_count_import:
-    description: Maximum phase count it can switch
+    description: Maximum phase count for import
     type: integer
     minimum: 1
     maximum: 3
@@ -55,13 +55,13 @@ config:
     maximum: 63
     default: 0
   conn1_min_phase_count_export:
-    description: Minimum phase count it can switch
+    description: Minimum phase count for export
     type: integer
     minimum: 1
     maximum: 3
     default: 3
   conn1_max_phase_count_export:
-    description: Maximum phase count it can switch
+    description: Maximum phase count for export
     type: integer
     minimum: 1
     maximum: 3
@@ -85,13 +85,13 @@ config:
     minimum: 0
     default: 6
   conn2_min_phase_count_import:
-    description: Minimum phase count it can switch
+    description: Minimum phase count for import
     type: integer
     minimum: 1
     maximum: 3
     default: 3
   conn2_max_phase_count_import:
-    description: Maximum phase count it can switch
+    description: Maximum phase count for import
     type: integer
     minimum: 1
     maximum: 3
@@ -109,13 +109,13 @@ config:
     maximum: 63
     default: 0
   conn2_min_phase_count_export:
-    description: Minimum phase count it can switch
+    description: Minimum phase count for export
     type: integer
     minimum: 1
     maximum: 3
     default: 3
   conn2_max_phase_count_export:
-    description: Maximum phase count it can switch
+    description: Maximum phase count for export
     type: integer
     minimum: 1
     maximum: 3
@@ -143,10 +143,10 @@ provides:
     description: RCD interface of the onboard RCD
   connector_lock_1:
     interface: connector_lock
-    description: RCD interface of the onboard RCD
+    description: Lock interface
   connector_lock_2:
     interface: connector_lock
-    description: RCD interface of the onboard RCD
+    description: Lock interface
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:

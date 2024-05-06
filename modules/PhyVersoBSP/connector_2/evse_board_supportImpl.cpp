@@ -30,16 +30,22 @@ void evse_board_supportImpl::init() {
     }
 
     mod->serial.signal_cp_state.connect([this](int connector, CpState s) {
-        if (connector == 2 and s not_eq last_cp_state) {
+        if (connector == 2 && s != last_cp_state) {
             publish_event(to_bsp_event(s));
             EVLOG_info << "[2] CP State changed: " << to_bsp_event(s);
             last_cp_state = s;
         }
     });
     mod->serial.signal_set_coil_state_response.connect([this](int connector, CoilState s) {
-        if (connector == 1) {
-            EVLOG_info << "[1] Relais: " << (s.coil_state ? "ON" : "OFF");
+        if (connector == 2) {
+            EVLOG_info << "[2] Relais: " << (s.coil_state ? "ON" : "OFF");
             publish_event(to_bsp_event(s));
+        }
+    });
+
+    mod->serial.signal_telemetry.connect([this](int connector, Telemetry t) {
+        if (connector == 2) {
+            EVLOG_info << "[2] CP Voltage: " << t.cp_voltage_hi << " " << t.cp_voltage_lo;
         }
     });
 }
@@ -67,6 +73,8 @@ void evse_board_supportImpl::handle_enable(bool& value) {
 void evse_board_supportImpl::handle_pwm_on(double& value) {
     if (value >= 0 && value <= 100.) {
         mod->serial.set_pwm(2, value * 100);
+    } else {
+        EVLOG_warning << "Invalid pwm value " << value;
     }
 }
 

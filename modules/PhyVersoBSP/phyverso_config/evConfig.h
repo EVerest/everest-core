@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <fstream>
+#include <string>
 #include <nlohmann/json.hpp>
 #include "phyverso.pb.h"
 
@@ -12,7 +12,7 @@ public:
     evConfig();
     ~evConfig();
 
-    bool open_file(const char* path);
+    bool open_file(std::string path);
     EverestToMcu get_config_packet();
 private:
     bool check_validity();
@@ -20,7 +20,6 @@ private:
     void fill_config_packet();
 
     json config_file;
-    bool config_valid = false;
 
     EverestToMcu config_packet = EverestToMcu_init_default;
 };

@@ -3,6 +3,7 @@
 
 #include "evConfig.h"
 #include <iostream>
+#include <fstream>
 #include "phyverso.pb.h"
 
 // for convenience
@@ -17,14 +18,13 @@ evConfig::~evConfig()
 {
 }
 
-bool evConfig::open_file(const char* path)
+bool evConfig::open_file(std::string path)
 {
     try {
         std::ifstream f(path);
         config_file = json::parse(f);
         // check validity first
-        config_valid = check_validity();
-        return config_valid;
+        return check_validity();
     }
     catch(exception& e) {
         cerr << "error: " << e.what() << "\n";
@@ -32,7 +32,6 @@ bool evConfig::open_file(const char* path)
     catch(...) {
         cerr << "Exception of unknown type!\n";
     }
-    config_valid = false;
     return false;
 }
 
