@@ -32,7 +32,7 @@ public:
     void update_ocsp_cache(const ocpp::CertificateHashDataType& certificate_hash_data,
                            const std::string& ocsp_response) override;
     bool is_ca_certificate_installed(const ocpp::CaCertificateType& certificate_type) override;
-    std::optional<std::string>
+    ocpp::GetCertificateSignRequestResult
     generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
                                          const std::string& country, const std::string& organization,
                                          const std::string& common, bool use_tpm) override;
@@ -51,6 +51,7 @@ ocpp::CertificateType to_ocpp(types::evse_security::CertificateType other);
 ocpp::HashAlgorithmEnumType to_ocpp(types::evse_security::HashAlgorithm other);
 ocpp::InstallCertificateResult to_ocpp(types::evse_security::InstallCertificateResult other);
 ocpp::CertificateValidationResult to_ocpp(types::evse_security::CertificateValidationResult other);
+ocpp::GetCertificateSignRequestStatus to_ocpp(types::evse_security::GetCertificateSignRequestStatus other);
 ocpp::DeleteCertificateResult to_ocpp(types::evse_security::DeleteCertificateResult other);
 
 ocpp::CertificateHashDataType to_ocpp(types::evse_security::CertificateHashData other);
@@ -65,6 +66,7 @@ types::evse_security::LeafCertificateType from_ocpp(ocpp::LeafCertificateType ot
 types::evse_security::CertificateType from_ocpp(ocpp::CertificateType other);
 types::evse_security::HashAlgorithm from_ocpp(ocpp::HashAlgorithmEnumType other);
 types::evse_security::InstallCertificateResult from_ocpp(ocpp::InstallCertificateResult other);
+types::evse_security::GetCertificateSignRequestStatus from_ocpp(ocpp::GetCertificateSignRequestStatus other);
 types::evse_security::DeleteCertificateResult from_ocpp(ocpp::DeleteCertificateResult other);
 
 types::evse_security::CertificateHashData from_ocpp(ocpp::CertificateHashDataType other);

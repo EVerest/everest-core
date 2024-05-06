@@ -83,19 +83,21 @@ bool EvseSecurity::is_ca_certificate_installed(const ocpp::CaCertificateType& ce
     return this->r_security.call_is_ca_certificate_installed(conversions::from_ocpp(certificate_type));
 }
 
-std::optional<std::string>
+ocpp::GetCertificateSignRequestResult
 EvseSecurity::generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
                                                    const std::string& country, const std::string& organization,
                                                    const std::string& common, bool use_tpm) {
     auto csr_response = this->r_security.call_generate_certificate_signing_request(
         conversions::from_ocpp(certificate_type), country, organization, common, use_tpm);
 
-    if (csr_response.status == types::evse_security::GetCertificateSignRequestStatus::Accepted &&
-        csr_response.csr.has_value()) {
-        return csr_response.csr;
-    } else {
-        return std::nullopt;
+    ocpp::GetCertificateSignRequestResult result;
+
+    result.status = conversions::to_ocpp(csr_response.status);
+    if (csr_response.csr.has_value()) {
+        result.csr = csr_response.csr;
     }
+
+    return result;
 }
 
 std::optional<ocpp::CertificateInfo>
@@ -248,6 +250,22 @@ ocpp::DeleteCertificateResult to_ocpp(types::evse_security::DeleteCertificateRes
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::DeleteCertificateResult to ocpp::DeleteCertificateResult");
+    }
+}
+
+ocpp::GetCertificateSignRequestStatus to_ocpp(types::evse_security::GetCertificateSignRequestStatus other) {
+    switch (other) {
+    case types::evse_security::GetCertificateSignRequestStatus::Accepted:
+        return ocpp::GetCertificateSignRequestStatus::Accepted;
+    case types::evse_security::GetCertificateSignRequestStatus::InvalidRequestedType:
+        return ocpp::GetCertificateSignRequestStatus::InvalidRequestedType;
+    case types::evse_security::GetCertificateSignRequestStatus::KeyGenError:
+        return ocpp::GetCertificateSignRequestStatus::KeyGenError;
+    case types::evse_security::GetCertificateSignRequestStatus::GenerationError:
+        return ocpp::GetCertificateSignRequestStatus::GenerationError;
+    default:
+        throw std::runtime_error("Could not convert types::evse_security::GetCertificateSignRequestStatus to "
+                                 "ocpp::GetCertificateSignRequestStatus");
     }
 }
 
