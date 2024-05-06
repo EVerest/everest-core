@@ -777,12 +777,38 @@ std::optional<bool> ChargePointConfiguration::getQueueAllMessages() {
     return queue_all_messages;
 }
 
+std::optional<KeyValue> ChargePointConfiguration::getQueueAllMessagesKeyValue() {
+    std::optional<KeyValue> queue_all_messages_kv = std::nullopt;
+    auto queue_all_messages = this->getQueueAllMessages();
+    if (queue_all_messages.has_value()) {
+        KeyValue kv;
+        kv.key = "QueueAllMessages";
+        kv.readonly = true;
+        kv.value.emplace(ocpp::conversions::bool_to_string(queue_all_messages.value()));
+        queue_all_messages_kv.emplace(kv);
+    }
+    return queue_all_messages_kv;
+}
+
 std::optional<int> ChargePointConfiguration::getMessageQueueSizeThreshold() {
     std::optional<int> message_queue_size_threshold = std::nullopt;
     if (this->config["Internal"].contains("MessageQueueSizeThreshold")) {
         message_queue_size_threshold.emplace(this->config["Internal"]["MessageQueueSizeThreshold"]);
     }
     return message_queue_size_threshold;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getMessageQueueSizeThresholdKeyValue() {
+    std::optional<KeyValue> message_queue_size_threshold_kv = std::nullopt;
+    auto message_queue_size_threshold = this->getMessageQueueSizeThreshold();
+    if (message_queue_size_threshold.has_value()) {
+        KeyValue kv;
+        kv.key = "MessageQueueSizeThreshold";
+        kv.readonly = true;
+        kv.value.emplace(std::to_string(message_queue_size_threshold.value()));
+        message_queue_size_threshold_kv.emplace(kv);
+    }
+    return message_queue_size_threshold_kv;
 }
 
 // Core Profile - optional
@@ -2318,6 +2344,12 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "SupportedMeasurands") {
         return this->getSupportedMeasurandsKeyValue();
+    }
+    if (key == "QueueAllMessages") {
+        return this->getQueueAllMessagesKeyValue();
+    }
+    if (key == "MessageQueueSizeThreshold") {
+        return this->getMessageQueueSizeThresholdKeyValue();
     }
 
     // Core Profile
