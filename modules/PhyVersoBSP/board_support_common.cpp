@@ -33,4 +33,4 @@ types::board_support_common::BspEvent to_bsp_event(CoilState s) {
         return {types::board_support_common::Event::PowerOff};
     }
 }
-}
+} // namespace module

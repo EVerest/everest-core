@@ -49,12 +49,12 @@ int main(int argc, char* argv[]) {
     const char* config_path = argv[2];
 
     evConfig verso_config;
-    if(!verso_config.open_file(config_path)) {
+    if (!verso_config.open_file(config_path)) {
         printf("Could not open config file \"%s\"\n", config_path);
         return -1;
     }
 
-    evSerial p; 
+    evSerial p;
 
     if (!p.open_device(device, 115200)) {
         printf("Cannot open device \"%s\"\n", device);
@@ -68,8 +68,8 @@ int main(int argc, char* argv[]) {
         });
 
         p.signal_keep_alive.connect([](KeepAlive s) {
-            printf(">> KeepAlive: phyverso MCU SW Version: %s, Hardware %i/rev %i, MCU Timestamp %i\n", s.sw_version_string, s.hw_type,
-                   s.hw_revision, s.time_stamp);
+            printf(">> KeepAlive: phyverso MCU SW Version: %s, Hardware %i/rev %i, MCU Timestamp %i\n",
+                   s.sw_version_string, s.hw_type, s.hw_revision, s.time_stamp);
             sw_version_received = true;
         });
 
@@ -135,19 +135,18 @@ int main(int argc, char* argv[]) {
         });
 
         p.signal_lock_state.connect([](int connector, LockState s) {
-            switch(s) {
-                case LockState_UNDEFINED:
-                    printf(">> Connector %i: Lock State UNDEFINED\n", connector);
-                    break;
-                case LockState_LOCKED:
-                    printf(">> Connector %i: Lock State Locked\n", connector);
-                    break;
-                case LockState_UNLOCKED:
-                    printf(">> Connector %i: Lock State Unlocked\n", connector);
-                    break;
+            switch (s) {
+            case LockState_UNDEFINED:
+                printf(">> Connector %i: Lock State UNDEFINED\n", connector);
+                break;
+            case LockState_LOCKED:
+                printf(">> Connector %i: Lock State Locked\n", connector);
+                break;
+            case LockState_UNLOCKED:
+                printf(">> Connector %i: Lock State Unlocked\n", connector);
+                break;
             }
         });
-
 
         while (true) {
             char c = getc(stdin);

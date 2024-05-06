@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <string>
-#include <nlohmann/json.hpp>
 #include "phyverso.pb.h"
+#include <nlohmann/json.hpp>
+#include <string>
 
 using json = nlohmann::json;
 
@@ -14,6 +14,7 @@ public:
 
     bool open_file(std::string path);
     EverestToMcu get_config_packet();
+
 private:
     bool check_validity();
     bool read_hw_eeprom(ConfigHardwareRevision& hw_rev);

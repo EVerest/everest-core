@@ -186,7 +186,6 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
         case McuToEverest_config_request_tag:
             signal_config_request();
             break;
-
         }
 }
 
@@ -404,8 +403,7 @@ void evSerial::keep_alive() {
     link_write(&msg_out);
 }
 
-void evSerial::send_config(evConfig &config)
-{
+void evSerial::send_config(evConfig& config) {
     EverestToMcu config_packet = config.get_config_packet();
     link_write(&config_packet);
 }

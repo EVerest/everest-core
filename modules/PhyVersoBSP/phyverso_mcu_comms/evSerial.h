@@ -4,6 +4,7 @@
 #ifndef YETI_SERIAL
 #define YETI_SERIAL
 
+#include "evConfig.h"
 #include "phyverso.pb.h"
 #include <date/date.h>
 #include <date/tz.h>
@@ -11,7 +12,6 @@
 #include <stdint.h>
 #include <termios.h>
 #include <utils/thread.hpp>
-#include "evConfig.h"
 
 class evSerial {
 
@@ -34,7 +34,7 @@ public:
     void unlock(int target_connector);
     void set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty);
 
-    void send_config(evConfig &config);
+    void send_config(evConfig& config);
 
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;
