@@ -1098,6 +1098,10 @@ to_everest_boot_notification_response(const ocpp::v201::BootNotificationResponse
     everest_boot_notification_response.status = to_everest_registration_status(boot_notification_response.status);
     everest_boot_notification_response.current_time = boot_notification_response.currentTime.to_rfc3339();
     everest_boot_notification_response.interval = boot_notification_response.interval;
+    if (boot_notification_response.statusInfo.has_value()) {
+        everest_boot_notification_response.status_info =
+            to_everest_status_info_type(boot_notification_response.statusInfo.value());
+    }
     return everest_boot_notification_response;
 }
 
@@ -1114,6 +1118,13 @@ to_everest_registration_status(const ocpp::v201::RegistrationStatusEnum& registr
         throw std::out_of_range(
             "Could not convert ocpp::v201::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
     }
+}
+
+types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::StatusInfo& status_info) {
+    types::ocpp::StatusInfoType everest_status_info;
+    everest_status_info.reason_code = status_info.reasonCode;
+    everest_status_info.additional_info = status_info.additionalInfo;
+    return everest_status_info;
 }
 
 std::vector<types::ocpp::GetVariableResult>

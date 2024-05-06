@@ -102,6 +102,8 @@ types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChar
 types::ocpp::BootNotificationResponse
 to_everest_boot_notification_response(const ocpp::v16::BootNotificationResponse& boot_notification_response);
 
+/// \brief Converts a given ocpp::v16::RegistrationStatus \p registration_status to a
+/// types::ocpp::RegistrationStatus
 types::ocpp::RegistrationStatus
 to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration_status);
 

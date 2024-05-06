@@ -662,3 +662,7 @@ types:
           returns something other than Accepted, the value of the interval field indicates the
           minimum wait time before sending a next BootNotification request.
         type: integer
+      status_info:
+        description: Detailed status information.
+        type: object
+        $ref: /ocpp#/StatusInfoType
