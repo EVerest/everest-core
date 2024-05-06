@@ -137,7 +137,7 @@ TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ReasonEnum& stop_reas
     case ReasonEnum::SOCLimitReached:
         return TriggerReasonEnum::EnergyLimitReached;
     case ReasonEnum::StoppedByEV:
-        return TriggerReasonEnum::ChargingStateChanged;
+        return TriggerReasonEnum::StopAuthorized;
     case ReasonEnum::TimeLimitReached:
         return TriggerReasonEnum::TimeLimitReached;
     case ReasonEnum::Timeout:
