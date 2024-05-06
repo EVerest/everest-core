@@ -159,7 +159,7 @@ std::string ErrorDatabaseSqlite::filter_to_sql_condition(const Everest::error::E
         condition = "(uuid = '" + filter.get_handle_filter().to_string() + "')";
     } break;
     case Everest::error::FilterType::SubType: {
-        condition = "(sub_type = '" + filter.get_sub_type_filter() + "')";
+        condition = "(sub_type = '" + filter.get_sub_type_filter().value() + "')";
     } break;
     }
     return condition;

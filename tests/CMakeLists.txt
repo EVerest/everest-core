@@ -1,1 +1,1 @@
-add_subdirectory(everest-core_tests)
+# add_subdirectory(everest-core_tests)

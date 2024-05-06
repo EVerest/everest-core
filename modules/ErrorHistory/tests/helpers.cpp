@@ -18,71 +18,71 @@ std::vector<Everest::error::ErrorPtr> get_test_errors() {
     return {
         // index 0
         std::make_shared<Everest::error::Error>(
-            "test_type_a", "test_message_a", "test_description_a",
+            "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"), Everest::error::Severity::Low,
             date::utc_clock::now(), Everest::error::UUID(), Everest::error::State::ClearedByModule),
         // index 1
         std::make_shared<Everest::error::Error>(
-            "test_type_b", "test_message_b", "test_description_b",
+            "test_type_b", "test_sub_type_b", "test_message_b", "test_description_b",
             ImplementationIdentifier("test_from_module_b", "test_from_implementation_b"), Everest::error::Severity::Low,
             date::utc_clock::now() + std::chrono::hours(1), Everest::error::UUID(),
             Everest::error::State::ClearedByModule),
         // index 2
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_c", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"), Everest::error::Severity::Low,
             date::utc_clock::now() + std::chrono::hours(2), Everest::error::UUID(),
             Everest::error::State::ClearedByModule),
         // index 3
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_c", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_c", "test_from_implementation_c"), Everest::error::Severity::Low,
             date::utc_clock::now() + std::chrono::hours(3), Everest::error::UUID(), Everest::error::State::Active),
         // index 4
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_a", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"),
             Everest::error::Severity::Medium, date::utc_clock::now() + std::chrono::hours(4), Everest::error::UUID(),
             Everest::error::State::Active),
         // index 5
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_a", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_c", "test_from_implementation_c"),
             Everest::error::Severity::Medium, date::utc_clock::now() + std::chrono::hours(5), Everest::error::UUID(),
             Everest::error::State::Active),
         // index 6
         std::make_shared<Everest::error::Error>(
-            "test_type_a", "test_message_a", "test_description_a",
+            "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"),
             Everest::error::Severity::Medium, date::utc_clock::now() + std::chrono::hours(6), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot),
         // index 7
         std::make_shared<Everest::error::Error>(
-            "test_type_a", "test_message_a", "test_description_a",
+            "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
             ImplementationIdentifier("test_from_module_c", "test_from_implementation_c"),
             Everest::error::Severity::Medium, date::utc_clock::now() + std::chrono::hours(7), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot),
         // index 8
         std::make_shared<Everest::error::Error>(
-            "test_type_a", "test_message_a", "test_description_a",
+            "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"),
             Everest::error::Severity::High, date::utc_clock::now() + std::chrono::hours(8), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot),
         // index 9
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_c", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_c", "test_from_implementation_c"),
             Everest::error::Severity::High, date::utc_clock::now() + std::chrono::hours(9), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot),
         // index 10
         std::make_shared<Everest::error::Error>(
-            "test_type_c", "test_message_c", "test_description_c",
+            "test_type_c", "test_sub_type_c", "test_message_c", "test_description_c",
             ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"),
             Everest::error::Severity::High, date::utc_clock::now() + std::chrono::hours(10), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot),
         // index 11
         std::make_shared<Everest::error::Error>(
-            "test_type_b", "test_message_b", "test_description_b",
+            "test_type_b", "test_sub_type_b", "test_message_b", "test_description_b",
             ImplementationIdentifier("test_from_module_c", "test_from_implementation_c"),
             Everest::error::Severity::High, date::utc_clock::now() + std::chrono::hours(11), Everest::error::UUID(),
             Everest::error::State::ClearedByReboot)};

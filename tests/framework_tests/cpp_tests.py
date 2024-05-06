@@ -189,76 +189,73 @@ class ErrorHandlingTester:
         Raises an test error of type TestErrorA on the probe module (main)
         Returns the error args and the uuid of the error
         """
-        err_args = {
+        err_object = {
             'type': 'test_errors/TestErrorA',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Medium'
         }
-        uuid = self.__probe_module._mod.raise_error(
+        self.__probe_module._mod.raise_error(
             'main',
-            err_args['type'],
-            err_args['message'],
-            err_args['severity']
+            err_object
         )
-        return err_args, uuid
+        return err_object
     def probe_module_main_raise_error_b(self) -> (dict, str):
         """
         Raises an test error of type TestErrorB on the probe modulee (main)
         Returns the error and the uuid of the error
         """
-        err_args = {
+        err_object = {
             'type': 'test_errors/TestErrorB',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Low'
         }
-        uuid = self.__probe_module._mod.raise_error(
+        self.__probe_module._mod.raise_error(
             'main',
-            err_args['type'],
-            err_args['message'],
-            err_args['severity']
+            err_object
         )
-        return err_args, uuid
+        return err_object
     def probe_module_main_raise_error_c(self) -> (dict, str):
         """
         Raises an test error of type TestErrorC on the probe modulee (main)
         Returns the error and the uuid of the error
         """
-        err_args = {
+        err_object = {
             'type': 'test_errors/TestErrorC',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'High'
         }
-        uuid = self.__probe_module._mod.raise_error(
+        self.__probe_module._mod.raise_error(
             'main',
-            err_args['type'],
-            err_args['message'],
-            err_args['severity']
+            err_object
         )
-        return err_args, uuid
+        return err_object
     def probe_module_main_raise_error_d(self) -> (dict, str):
         """
         Raises an test error of type TestErrorD on the probe modulee (main)
         Returns the error and the uuid of the error
         """
-        err_args = {
+        err_object = {
             'type': 'test_errors/TestErrorD',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Medium'
         }
-        uuid = self.__probe_module._mod.raise_error(
+        self.__probe_module._mod.raise_error(
             'main',
-            err_args['type'],
-            err_args['message'],
-            err_args['severity']
+            err_object
         )
-        return err_args, uuid
-    def probe_module_main_clear_error_by_uuid(self, uuid: str):
+        return err_object
+    def probe_module_clear_error(self, type: str, sub_type: str):
         """
-        Clears an error by uuid on the probe module (main)
+        Clears an error on the probe module (main)
         """
-        self.__probe_module._mod.request_clear_error_uuid(
+        self.__probe_module._mod.clear_error(
             'main',
-            uuid
+            type,
+            sub_type
         )
     # raise test error functions on test_error_handling module
     async def test_error_handling_raise_error_a(self) -> (dict, str):
@@ -268,15 +265,16 @@ class ErrorHandlingTester:
         """
         err_args = {
             'type': 'test_errors/TestErrorA',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Medium'
         }
-        uuid = await self.__probe_module.call_command(
+        await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
             'raise_error',
             err_args
         )
-        return err_args, uuid
+        return err_args
     async def test_error_handling_raise_error_b(self) -> (dict, str):
         """
         Raises an test error of type TestErrorB on the test_error_handling module
@@ -284,15 +282,16 @@ class ErrorHandlingTester:
         """
         err_args = {
             'type': 'test_errors/TestErrorB',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Low'
         }
-        uuid = await self.__probe_module.call_command(
+        await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
             'raise_error',
             err_args
         )
-        return err_args, uuid
+        return err_args
     async def test_error_handling_raise_error_c(self) -> (dict, str):
         """
         Raises an test error of type TestErrorC on the test_error_handling module
@@ -300,15 +299,16 @@ class ErrorHandlingTester:
         """
         err_args = {
             'type': 'test_errors/TestErrorC',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'High'
         }
-        uuid = await self.__probe_module.call_command(
+        await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
             'raise_error',
             err_args
         )
-        return err_args, uuid
+        return err_args
     async def test_error_handling_raise_error_d(self) -> (dict, str):
         """
         Raises an test error of type TestErrorD on the test_error_handling module
@@ -316,35 +316,26 @@ class ErrorHandlingTester:
         """
         err_args = {
             'type': 'test_errors/TestErrorD',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Medium'
         }
-        uuid = await self.__probe_module.call_command(
+        await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
             'raise_error',
             err_args
         )
-        return err_args, uuid
-    async def test_error_handling_clear_error_by_uuid(self, uuid: str):
-        """
-        Clears an error by uuid on the test_error_handling module
-        """
-        await self.__probe_module.call_command(
-            self.__test_error_handling_conn_id,
-            'clear_error_by_uuid',
-            {
-                'uuid': uuid
-            }
-        )
+        return err_args
     async def test_error_handling_clear_a(self):
         """
         Clears all errors of type TestErrorA on the test_error_handling module
         """
         await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
-            'clear_errors_by_type',
+            'clear_error',
             {
-                'type': 'test_errors/TestErrorA'
+                'type': 'test_errors/TestErrorA',
+                'sub_type': ''
             }
         )
     async def test_error_handling_clear_b(self):
@@ -353,9 +344,10 @@ class ErrorHandlingTester:
         """
         await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
-            'clear_errors_by_type',
+            'clear_error',
             {
-                'type': 'test_errors/TestErrorB'
+                'type': 'test_errors/TestErrorB',
+                'sub_type': ''
             }
         )
     async def test_error_handling_clear_c(self):
@@ -364,9 +356,10 @@ class ErrorHandlingTester:
         """
         await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
-            'clear_errors_by_type',
+            'clear_error',
             {
-                'type': 'test_errors/TestErrorC'
+                'type': 'test_errors/TestErrorC',
+                'sub_type': ''
             }
         )
     async def test_error_handling_clear_d(self):
@@ -375,9 +368,10 @@ class ErrorHandlingTester:
         """
         await self.__probe_module.call_command(
             self.__test_error_handling_conn_id,
-            'clear_errors_by_type',
+            'clear_error',
             {
-                'type': 'test_errors/TestErrorD'
+                'type': 'test_errors/TestErrorD',
+                'sub_type': ''
             }
         )
     async def test_error_handling_clear_all(self):
@@ -397,27 +391,16 @@ class ErrorHandlingTester:
         """
         err_args = {
             'type': 'test_errors/TestErrorA',
+            'sub_type': '',
             'message': 'Test error message',
             'severity': 'Medium'
         }
-        uuid = await self.__probe_module.call_command(
+        await self.__probe_module.call_command(
             self.__test_error_handling_not_req_conn_id,
             'raise_error',
             err_args
         )
-        return err_args, uuid
-
-    async def test_error_handling_not_req_clear_error_by_uuid(self, uuid: str):
-        """
-        Clears an error by uuid on the test_error_handling_not_req module
-        """
-        await self.__probe_module.call_command(
-            self.__test_error_handling_not_req_conn_id,
-            'clear_error_by_uuid',
-            {
-                'uuid': uuid
-            }
-        )
+        return err_args
 
     def get_state(self) -> ErrorHandlingTesterState:
         state = ErrorHandlingTesterState(
@@ -467,7 +450,7 @@ class TestErrorHandling:
         and then checks that the error is raised by subscribing to it.
         """
         everest_core.start(standalone_module='probe')
-        err_args, uuid = await error_handling_tester.test_error_handling_raise_error_a()
+        err_args = await error_handling_tester.test_error_handling_raise_error_a()
         await asyncio.sleep(0.5)
         expected_state = ErrorHandlingTesterState(
             len_probe_module_errors_TestErrorA=1,
@@ -476,44 +459,10 @@ class TestErrorHandling:
         assert error_handling_tester.get_state() == expected_state, 'State does not match expected state'
         recieved_error = error_handling_tester.probe_module['errors_TestErrorA'][0]
         assert recieved_error['type'] == err_args['type'], 'Received wrong error type'
+        assert recieved_error['sub_type'] == err_args['sub_type'], 'Received wrong error sub type'
         assert recieved_error['message'] == err_args['message'], 'Received wrong error message'
         assert recieved_error['severity'] == err_args['severity'], 'Received wrong error severity'
 
-    @pytest.mark.everest_core_config('config-test-cpp-error-handling.yaml')
-    @pytest.mark.asyncio
-    async def test_clear_error_by_uuid(
-        self,
-        everest_core: EverestCore,
-        error_handling_tester: ErrorHandlingTester
-    ):
-        """
-        Tests that errors are cleared correctly.
-        The probe module triggers the TestErrorHandling module to raise multiple errors,
-        and then triggers the TestErrorHandling module to clear a error by uuid,
-        and then checks that the correct error is cleared by uuid.
-        """
-
-        everest_core.start(standalone_module='probe')
-        err_args, uuid = await error_handling_tester.test_error_handling_raise_error_a()
-        await error_handling_tester.test_error_handling_raise_error_a()
-        await error_handling_tester.test_error_handling_raise_error_b()
-        await asyncio.sleep(0.5)
-        await error_handling_tester.test_error_handling_clear_error_by_uuid(uuid)
-        await asyncio.sleep(0.5)
-        expected_state = ErrorHandlingTesterState(
-            len_probe_module_errors_TestErrorA=2,
-            len_probe_module_errors_TestErrorB=1,
-            len_probe_module_errors_cleared_TestErrorA=1,
-            len_test_error_handling_errors_global_all=3,
-            len_test_error_handling_errors_cleared_global_all=1
-        )
-        assert error_handling_tester.get_state() == expected_state, 'State does not match expected state'
-        raised_error = error_handling_tester.probe_module['errors_TestErrorA'][0]
-        cleared_error = error_handling_tester.probe_module['errors_cleared_TestErrorA'][0]
-        assert raised_error == cleared_error, 'Raised error does not match cleared error'
-
-    @pytest.mark.everest_core_config('config-test-cpp-error-handling.yaml')
-    @pytest.mark.asyncio
     async def test_clear_errors_by_type(
         self,
         everest_core: EverestCore,

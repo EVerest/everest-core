@@ -33,7 +33,7 @@ ev_add_module(DummyTokenProvider)
 ev_add_module(DummyTokenProviderManual)
 
 add_subdirectory(examples)
-add_subdirectory(simulation)
+# add_subdirectory(simulation)
 
 if(${EVEREST_ENABLE_RS_SUPPORT})
     ev_add_module(RsIskraMeter)

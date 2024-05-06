@@ -19,7 +19,6 @@ public:
     std::list<Everest::error::ErrorPtr>
     get_errors(const std::list<Everest::error::ErrorFilter>& filters) const override;
 
-protected:
     void add_error(Everest::error::ErrorPtr error) override;
     std::list<Everest::error::ErrorPtr> edit_errors(const std::list<Everest::error::ErrorFilter>& filters,
                                                     EditErrorFunc edit_func) override;

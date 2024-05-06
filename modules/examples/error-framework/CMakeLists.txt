@@ -1,0 +1,2 @@
+ev_add_module(ExampleErrorRaiser)
+ev_add_module(ExampleErrorSubscriber)

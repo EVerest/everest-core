@@ -2,13 +2,7 @@ description: >-
   This interface defines an testing interface that allows to control the
   usage of error handling features
 cmds:
-  clear_error_by_uuid:
-    description: This command clears an error by uuid
-    arguments:
-      uuid:
-        description: This argument allows to specify the uuid
-        type: string
-  clear_errors_by_type:
+  clear_error:
     description: This command clears all errors of a specific type
     arguments:
       type:
@@ -20,6 +14,9 @@ cmds:
           - test_errors/TestErrorB
           - test_errors/TestErrorC
           - test_errors/TestErrorD
+      sub_type:
+        description: This argument allows to specify the sub type
+        type: string
   clear_all_errors:
     description: This command clears all errors that are raises by this implementation
   raise_error:
@@ -34,6 +31,9 @@ cmds:
           - test_errors/TestErrorB
           - test_errors/TestErrorC
           - test_errors/TestErrorD
+      sub_type:
+        description: This argument allows to specify the sub type
+        type: string
       message:
         description: This argument allows to specify the message
         type: string
@@ -44,9 +44,6 @@ cmds:
           - Low
           - Medium
           - High
-    result:
-      description: This result returns the uuid of the raised error
-      type: string
 vars:
   errors_subscribe_TestErrorA:
     description: >-

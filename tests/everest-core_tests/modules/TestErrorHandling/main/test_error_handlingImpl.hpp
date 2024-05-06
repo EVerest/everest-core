@@ -34,10 +34,10 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_clear_error_by_uuid(std::string& uuid) override;
-    virtual void handle_clear_errors_by_type(std::string& type) override;
+    virtual void handle_clear_error(std::string& type, std::string& sub_type) override;
     virtual void handle_clear_all_errors() override;
-    virtual std::string handle_raise_error(std::string& type, std::string& message, std::string& severity) override;
+    virtual void handle_raise_error(std::string& type, std::string& sub_type, std::string& message,
+                                    std::string& severity) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
