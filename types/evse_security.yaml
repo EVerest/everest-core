@@ -234,7 +234,7 @@ types:
         description: The path of the PEM or DER encoded single certificate
         type: string
       certificate_count:
-        description: The count of certificates in the chain or 1 if only the single certificate is present
+        description: The count of certificates in the chain
         type: integer
       password:
         description: Specifies the password for the private key if encrypted
