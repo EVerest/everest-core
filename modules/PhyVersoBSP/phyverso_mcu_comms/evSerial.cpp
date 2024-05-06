@@ -127,7 +127,6 @@ uint32_t evSerial::crc32(uint8_t* buf, int len) {
         }
         i = i + 1;
     }
-    // printf("%X",crc);
     return crc;
 }
 
@@ -234,7 +233,7 @@ void evSerial::cobs_decode_byte(uint8_t byte) {
 }
 
 void evSerial::run() {
-    read_thread_handle = std::thread(&evSerial::readThread, this);
+    read_thread_handle = std::thread(&evSerial::read_thread, this);
     timeout_detection_thread_handle = std::thread(&evSerial::timeout_detection_thread, this);
 }
 
@@ -248,7 +247,7 @@ void evSerial::timeout_detection_thread() {
     }
 }
 
-void evSerial::readThread() {
+void evSerial::read_thread() {
     uint8_t buf[2048];
     int n;
 
@@ -285,7 +284,6 @@ bool evSerial::link_write(EverestToMcu* m) {
     }
 
     size_t tx_encode_len = cobs_encode(tx_packet_buf, tx_payload_len, encode_buf);
-    // std::cout << "Write "<<tx_encode_len<<" bytes to serial port." << std::endl;
     write(fd, encode_buf, tx_encode_len);
     return true;
 }

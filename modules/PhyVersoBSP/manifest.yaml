@@ -131,10 +131,10 @@ config:
 provides:
   connector_1:
     interface: evse_board_support
-    description: provides the board support Interface to low level control control pilot, relais, motor lock
+    description: provides the board support interface to low level control the proximity and control pilots, relais and motor lock
   connector_2:
     interface: evse_board_support
-    description: provides the board support Interface to low level control control pilot, relais, motor lock
+    description: provides the board support interface to low level control the proximity and control pilots, relais and motor lock
   rcd_1:
     interface: ac_rcd
     description: RCD interface of the onboard RCD

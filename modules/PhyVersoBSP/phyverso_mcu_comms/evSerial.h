@@ -21,7 +21,7 @@ public:
 
     bool open_device(const char* device, int baud);
 
-    void readThread();
+    void read_thread();
     void run();
 
     bool reset(const int reset_pin);
