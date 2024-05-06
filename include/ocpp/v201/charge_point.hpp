@@ -145,7 +145,8 @@ struct Callbacks {
         security_event_callback;
 
     /// \brief  Callback for when a bootnotification response is received
-    std::optional<std::function<void(const ocpp::v201::RegistrationStatusEnum& reg_status)>> boot_notification_callback;
+    std::optional<std::function<void(const ocpp::v201::BootNotificationResponse& boot_notification_response)>>
+        boot_notification_callback;
 
     /// \brief Callback function that can be used to get (human readable) customer information based on the given
     /// arguments

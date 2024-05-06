@@ -272,6 +272,11 @@ void ChargePoint::register_set_system_time_callback(
     this->charge_point->register_set_system_time_callback(callback);
 }
 
+void ChargePoint::register_boot_notification_response_callback(
+    const std::function<void(const BootNotificationResponse& boot_notification_response)>& callback) {
+    this->charge_point->register_boot_notification_response_callback(callback);
+}
+
 void ChargePoint::register_signal_set_charging_profiles_callback(const std::function<void()>& callback) {
     this->charge_point->register_signal_set_charging_profiles_callback(callback);
 }

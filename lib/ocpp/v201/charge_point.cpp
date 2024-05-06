@@ -2172,7 +2172,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
 
     if (this->callbacks.boot_notification_callback.has_value()) {
         // call the registered boot notification callback
-        callbacks.boot_notification_callback.value()(this->registration_status);
+        callbacks.boot_notification_callback.value()(call_result.msg);
     }
 }
 

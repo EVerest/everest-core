@@ -1273,6 +1273,10 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
 
         break;
     }
+
+    if (this->boot_notification_response_callback != nullptr) {
+        this->boot_notification_response_callback(call_result.msg);
+    }
 }
 
 void ChargePointImpl::preprocess_change_availability_request(
@@ -3704,6 +3708,11 @@ void ChargePointImpl::register_reset_callback(const std::function<void(const Res
 void ChargePointImpl::register_set_system_time_callback(
     const std::function<void(const std::string& system_time)>& callback) {
     this->set_system_time_callback = callback;
+}
+
+void ChargePointImpl::register_boot_notification_response_callback(
+    const std::function<void(const BootNotificationResponse& boot_notification_response)>& callback) {
+    this->boot_notification_response_callback = callback;
 }
 
 void ChargePointImpl::register_signal_set_charging_profiles_callback(const std::function<void()>& callback) {

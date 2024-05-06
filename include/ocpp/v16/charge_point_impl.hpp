@@ -157,6 +157,7 @@ private:
     std::function<bool(const ResetType& reset_type)> is_reset_allowed_callback;
     std::function<void(const ResetType& reset_type)> reset_callback;
     std::function<void(const std::string& system_time)> set_system_time_callback;
+    std::function<void(const BootNotificationResponse& boot_notification_response)> boot_notification_response_callback;
     std::function<void()> signal_set_charging_profiles_callback;
     std::function<void(bool is_connected)> connection_state_changed_callback;
 
@@ -739,6 +740,11 @@ public:
     /// \brief registers a \p callback function that can be used to set the system time.
     /// \param callback
     void register_set_system_time_callback(const std::function<void(const std::string& system_time)>& callback);
+
+    /// \brief registers a \p callback function that can be used receive the BootNotificationResponse
+    /// \param callback
+    void register_boot_notification_response_callback(
+        const std::function<void(const BootNotificationResponse& boot_notification_response)>& callback);
 
     /// \brief registers a \p callback function that can be used to signal that the chargepoint received a
     /// SetChargingProfile.req . The set_charging_profiles_callback is called when a SetChargingProfile.req is received
