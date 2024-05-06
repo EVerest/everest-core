@@ -21,6 +21,7 @@ TxEvent get_tx_event(const ocpp::v201::ReasonEnum reason) {
     case ocpp::v201::ReasonEnum::DeAuthorized:
     case ocpp::v201::ReasonEnum::Remote:
     case ocpp::v201::ReasonEnum::Local:
+    case ocpp::v201::ReasonEnum::MasterPass:
         return TxEvent::DEAUTHORIZED;
     case ocpp::v201::ReasonEnum::EVDisconnected:
         return TxEvent::EV_DISCONNECTED;
