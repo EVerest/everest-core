@@ -40,6 +40,7 @@ private:
     std::optional<int32_t> reservation_id;
     bool active;
     bool finished;
+    bool has_signed_meter_values;
     std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer;
     std::string start_transaction_message_id;
     std::string stop_transaction_message_id;
@@ -135,6 +136,15 @@ public:
     /// \brief Sets the finished flag for this transaction. This is done when a StopTransaction.req has been pushed to
     /// the message queue
     void set_finished();
+
+    /// \brief Sets the has_signed_meter_value flag for this transaction, this function is called
+    /// from \p on_transaction_started and \p on_transaction_stopped
+    void set_has_signed_meter_values();
+
+    /// \brief Indicates if this transaction has signed meter values or not, this function is called
+    /// from \p on_transaction_started and \p on_transaction_stopped
+    /// \returns a boolean value indicating if this transaction has signed meter values or not
+    bool get_has_signed_meter_values();
 };
 
 /// \brief Contains transactions for all available connectors and manages access to these transactions

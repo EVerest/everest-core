@@ -3525,7 +3525,8 @@ ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction
 
     std::vector<TransactionData> filtered_transaction_data_vec;
 
-    if (!stop_txn_sampled_data_measurands.empty() or !stop_txn_aligned_data_measurands.empty()) {
+    if (!stop_txn_sampled_data_measurands.empty() or !stop_txn_aligned_data_measurands.empty() or
+        transaction->get_has_signed_meter_values()) {
         std::vector<TransactionData> transaction_data_vec = transaction->get_transaction_data();
         for (const auto& entry : transaction_data_vec) {
             std::vector<SampledValue> sampled_values;

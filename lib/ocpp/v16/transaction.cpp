@@ -21,6 +21,7 @@ Transaction::Transaction(const int32_t internal_transaction_id, const int32_t& c
     reservation_id(reservation_id),
     active(true),
     finished(false),
+    has_signed_meter_values(false),
     meter_values_sample_timer(std::move(meter_values_sample_timer)),
     start_transaction_message_id(""),
     stop_transaction_message_id("") {
@@ -38,6 +39,13 @@ void Transaction::add_meter_value(MeterValue meter_value) {
     if (this->active) {
         std::lock_guard<std::mutex> lock(this->meter_values_mutex);
         this->meter_values.push_back(meter_value);
+
+        if (std::find_if(meter_value.sampledValue.begin(), meter_value.sampledValue.end(),
+                         [](SampledValue const& SampledValueItem) {
+                             return SampledValueItem.format == ValueFormat::SignedData;
+                         }) != meter_value.sampledValue.end()) {
+            this->set_has_signed_meter_values();
+        }
     }
 }
 
@@ -120,6 +128,15 @@ std::shared_ptr<StampedEnergyWh> Transaction::get_start_energy_wh() {
 void Transaction::add_stop_energy_wh(std::shared_ptr<StampedEnergyWh> stop_energy_wh) {
     this->stop_energy_wh = stop_energy_wh;
     this->stop();
+}
+
+void Transaction::set_has_signed_meter_values() {
+    this->has_signed_meter_values = true;
+}
+
+bool Transaction::get_has_signed_meter_values() {
+    std::lock_guard<std::mutex> lock(this->meter_values_mutex);
+    return this->has_signed_meter_values;
 }
 
 std::shared_ptr<StampedEnergyWh> Transaction::get_stop_energy_wh() {
