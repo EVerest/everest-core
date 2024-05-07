@@ -11,7 +11,7 @@ config:
   supported_DIN70121:
     description: The EVSE supports the DIN SPEC
     type: boolean
-    default: false
+    default: true
   supported_ISO15118_2:
     description: The EVSE supports ISO15118-2
     type: boolean

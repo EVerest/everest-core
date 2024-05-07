@@ -1,5 +1,15 @@
 description: ISO15118 ev types
 types:
+  EnergyTransferMode:
+    description: Possible energy transfer modes
+    type: string
+    enum:
+      - AC_single_phase_core
+      - AC_three_phase_core
+      - DC_core
+      - DC_extended
+      - DC_combo_core
+      - DC_unique
   DC_EVParameters:
     description: Target settings for dc charging
     type: object
