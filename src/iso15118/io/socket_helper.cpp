@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -32,20 +33,28 @@ bool get_first_sockaddr_in6_for_interface(const std::string& interface_name, soc
             continue;
         }
 
-        if (interface_name.compare(current_if->ifa_name) != 0) {
+        if (interface_name.compare("auto") != 0 && interface_name.compare(current_if->ifa_name) != 0) {
             continue;
         }
 
         // NOTE (aw): because we did the check for AF_INET6, we can assume that ifa_addr is indeed an sockaddr_in6
-        memcpy(&address, current_if->ifa_addr, sizeof(address));
-        found_interface = true;
+        const auto current_addr = reinterpret_cast<const sockaddr_in6*>(current_if->ifa_addr);
+        if (not IN6_IS_ADDR_LINKLOCAL(&(current_addr->sin6_addr))) {
+            continue;
+        }
 
-        // FIXME (aw): this would work, but JOSEV also puts the scope id aka ifname onto unique link addresses
-        // break;
+        if (interface_name == "auto") {
+            logf("Found an ipv6 link local address for interface: %s\n", current_if->ifa_name);
+        }
+
+        memcpy(&address, current_addr, sizeof(address));
+        found_interface = true;
+        break; // Stop the loop if a interface is found
     }
 
     freeifaddrs(if_list_head);
 
+    // Todo(sl): What to do if interface was not found?
     return found_interface;
 }
 
