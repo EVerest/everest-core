@@ -306,6 +306,10 @@ void Charger::run_state_machine() {
                         break;
                 }
 
+                // Unlock the connector, as the authorization has been received
+
+                bsp->connector_force_unlock();
+
                 const EvseState target_state(EvseState::PrepareCharging);
 
                 // EIM done and matching process not started -> we need to go through t_step_EF and fall back to nominal
