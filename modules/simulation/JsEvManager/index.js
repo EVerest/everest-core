@@ -364,12 +364,11 @@ function registerAllCmds(mod) {
   if (mod.uses_list.ev.length > 0) {
     registerCmd(mod, 'iso_start_v2g_session', 1, (mod, c) => {
       switch (c.args[0]) {
-        case 'ac_single_phase_core': mod.energymode = 'AC_single_phase_core'; break;
-        case 'ac_three_phase_core': mod.energymode = 'AC_three_phase_core'; break;
-        case 'dc_core': mod.energymode = 'DC_core'; break;
-        case 'dc_extended': mod.energymode = 'DC_extended'; break;
-        case 'dc_combo_core': mod.energymode = 'DC_combo_core'; break;
-        case 'dc_unique': mod.energymode = 'DC_unique'; break;
+        case 'ac':
+          if (mod.config.module.three_phases !== true) mod.energymode = 'AC_single_phase_core';
+          else mod.energymode = 'AC_three_phase_core';
+          break;
+        case 'dc': mod.energymode = 'DC_extended'; break;
         default: return false;
       }
 
@@ -450,7 +449,7 @@ function registerAllCmds(mod) {
 
     registerCmd(mod, 'iso_wait_for_resume', 0, () => false);
 
-    registerCmd(mod, 'iso_start_bcb_toogle', 1, (mod, c) => {
+    registerCmd(mod, 'iso_start_bcb_toggle', 1, (mod, c) => {
       mod.state = 'bcb_toggle';
       if (mod.bcb_toggles >= c.args[0] || mod.bcb_toggles === 3) {
         mod.bcb_toggles = 0;
