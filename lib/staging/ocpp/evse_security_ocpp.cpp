@@ -100,18 +100,19 @@ EvseSecurity::generate_certificate_signing_request(const ocpp::CertificateSignin
     return result;
 }
 
-std::optional<ocpp::CertificateInfo>
+ocpp::GetCertificateInfoResult
 EvseSecurity::get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) {
     const auto info_response = this->r_security.call_get_leaf_certificate_info(
         conversions::from_ocpp(certificate_type), types::evse_security::EncodingFormat::PEM, include_ocsp);
 
-    if (info_response.status == types::evse_security::GetCertificateInfoStatus::Accepted and
-        info_response.info.has_value()) {
-        const auto _info = conversions::to_ocpp(info_response.info.value());
-        return _info;
-    } else {
-        return std::nullopt;
+    ocpp::GetCertificateInfoResult result;
+
+    result.status = conversions::to_ocpp(info_response.status);
+    if (info_response.info.has_value()) {
+        result.info = conversions::to_ocpp(info_response.info.value());
     }
+
+    return result;
 }
 
 bool EvseSecurity::update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) {
@@ -232,10 +233,27 @@ ocpp::CertificateValidationResult to_ocpp(types::evse_security::CertificateValid
         return ocpp::CertificateValidationResult::InvalidChain;
     case types::evse_security::CertificateValidationResult::Unknown:
         return ocpp::CertificateValidationResult::Unknown;
-        ;
     default:
         throw std::runtime_error("Could not convert types::evse_security::CertificateValidationResult to "
                                  "ocpp::CertificateValidationResult");
+    }
+}
+
+ocpp::GetCertificateInfoStatus to_ocpp(types::evse_security::GetCertificateInfoStatus other) {
+    switch (other) {
+    case types::evse_security::GetCertificateInfoStatus::Accepted:
+        return ocpp::GetCertificateInfoStatus::Accepted;
+    case types::evse_security::GetCertificateInfoStatus::Rejected:
+        return ocpp::GetCertificateInfoStatus::Rejected;
+    case types::evse_security::GetCertificateInfoStatus::NotFound:
+        return ocpp::GetCertificateInfoStatus::NotFound;
+    case types::evse_security::GetCertificateInfoStatus::NotFoundValid:
+        return ocpp::GetCertificateInfoStatus::NotFoundValid;
+    case types::evse_security::GetCertificateInfoStatus::PrivateKeyNotFound:
+        return ocpp::GetCertificateInfoStatus::PrivateKeyNotFound;
+    default:
+        throw std::runtime_error("Could not convert types::evse_security::GetCertificateInfoStatus to "
+                                 "ocpp::GetCertificateInfoStatus");
     }
 }
 
