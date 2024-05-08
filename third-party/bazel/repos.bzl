@@ -25,6 +25,7 @@ def everest_core_repos():
         git_repository,
         name = "everest-framework",
         remote = EVEREST_DEPS.everest_framework_repo,
+        commit = EVEREST_DEPS.everest_framework_commit,
         tag = EVEREST_DEPS.everest_framework_tag,
     )
 
@@ -60,6 +61,7 @@ def everest_core_repos():
         git_repository,
         name = "pugixml",
         remote = EVEREST_DEPS.pugixml_repo,
+        commit = EVEREST_DEPS.pugixml_commit,
         tag = EVEREST_DEPS.pugixml_tag,
         build_file_content = """
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
@@ -83,6 +85,7 @@ cmake(
         git_repository,
         name = "libmodbus",
         remote = EVEREST_DEPS.libmodbus_repo,
+        commit = EVEREST_DEPS.libmodbus_commit,
         tag = EVEREST_DEPS.libmodbus_tag,
         build_file_content = """
 cc_library(
@@ -113,6 +116,7 @@ cc_library(
         git_repository,
         name = "sigslot",
         remote = EVEREST_DEPS.sigslot_repo,
+        commit = EVEREST_DEPS.sigslot_commit,
         tag = EVEREST_DEPS.sigslot_tag,
         build_file_content = """
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
@@ -138,6 +142,7 @@ cmake(
         git_repository,
         name = "libtimer",
         remote = EVEREST_DEPS.libtimer_repo,
+        commit = EVEREST_DEPS.libtimer_commit,
         tag = EVEREST_DEPS.libtimer_tag,
         build_file_content = """
 cc_library(
@@ -154,11 +159,7 @@ cc_library(
         git_repository,
         name = "everest-utils",
         remote = EVEREST_DEPS.everest_utils_repo,
-        # Note here, we use the `commit` instead of tag,
-        # because bazel is strict and doesn't allow to use 
-        # something like "revision".
-        # Once we switch to tag in dependencies.yaml, we should
-        # use tag here as well.
-        commit = EVEREST_DEPS.everest_utils_tag,
+        commit = EVEREST_DEPS.everest_utils_commit,
+        tag = EVEREST_DEPS.everest_utils_tag,
     )
 
