@@ -11,7 +11,6 @@ anyhow = "1.0.75"
 chrono = "0.4.31"
 everestrs = { workspace=true }
 log = "0.4.20"
-env_logger = "0.10.0"
 rand = "0.8.5"
 mockall = { version = "0.12.1", optional = true }
 mockall_double = { version = "0.3.1", optional = true}

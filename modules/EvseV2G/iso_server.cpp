@@ -924,10 +924,10 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < res->ServiceList.Service.arrayLen; idx++) {
-            if ((res->ServiceList.Service.array[idx].ServiceScope_isUsed == (unsigned int)1) &&
-                (strcmp(res->ServiceList.Service.array[idx].ServiceScope.characters, req->ServiceScope.characters) ==
-                 0)) {
+        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+            if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
+                (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
+                        req->ServiceScope.characters) == 0)) {
                 scope_idx = idx;
                 break;
             }

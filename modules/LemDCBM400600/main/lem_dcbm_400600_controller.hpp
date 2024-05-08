@@ -26,6 +26,11 @@ public:
         const int transaction_number_of_http_retries;
         // wait time before each retry for transaction start/stop requests
         const int transaction_retry_wait_in_milliseconds;
+        // The cable loss compensation level to use. This allows compensating the measurements of the DCBM with a
+        // resistance.
+        const int cable_id;
+        // Used for a unique transaction tariff designation
+        const int tariff_id;
     };
 
     class DCBMUnexpectedResponseException : public std::exception {
@@ -82,7 +87,8 @@ private:
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);
     void convert_livemeasure_to_powermeter(const std::string& livemeasure, types::powermeter::Powermeter& powermeter);
-    static std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request);
+    static std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request,
+                                                                 const int cable_id, const int tariff_id);
     static std::pair<std::string, std::string> get_transaction_stop_time_bounds();
 
     template <typename Callable>

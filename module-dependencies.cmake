@@ -8,11 +8,7 @@ ev_define_dependency(
 
 ev_define_dependency(
     DEPENDENCY_NAME libmodbus
-    DEPENDENT_MODULES_LIST PowermeterBSM SunspecReader SunspecScanner)
-
-ev_define_dependency(
-    DEPENDENCY_NAME libsunspec
-    DEPENDENT_MODULES_LIST SunspecReader SunspecScanner)
+    DEPENDENT_MODULES_LIST PowermeterBSM)
 
 ev_define_dependency(
     DEPENDENCY_NAME pugixml

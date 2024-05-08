@@ -43,6 +43,14 @@ config:
     description: For the controller resilience, the delay in milliseconds before a retry attempt  at a transaction start or stop request.
     type: integer
     default: 250
+  cable_id:
+    description: The cable loss compensation level to use. This allows compensating the measurements of the DCBM with a resistance.
+    type: integer
+    default: 0
+  tariff_id:
+    description: Used for a unique transaction tariff designation
+    type: integer
+    default: 0
 provides:
   main:
     description: This is the main unit of the module

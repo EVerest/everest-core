@@ -63,7 +63,8 @@ void LemDCBM400600Controller::request_device_to_start_transaction(const types::p
     this->time_sync_helper->sync(*this->http_client);
 
     auto response = this->http_client->post(
-        "/v1/legal", module::main::LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(value));
+        "/v1/legal", module::main::LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(
+                         value, this->config.cable_id, this->config.tariff_id));
     if (response.status_code != 201) {
         throw UnexpectedDCBMResponseCode("/v1/legal", 201, response);
     }
@@ -175,10 +176,14 @@ void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::strin
     powermeter.power_W.emplace(types::units::Power{data.at("power")});
 }
 std::string
-LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request) {
-    return nlohmann::ordered_json{{"evseId", request.evse_id},     {"transactionId", request.transaction_id},
-                                  {"clientId", request.client_id}, {"tariffId", request.tariff_id},
-                                  {"cableId", request.cable_id},   {"userData", request.user_data}}
+LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request,
+                                                                   const int cable_id, const int tariff_id) {
+    return nlohmann::ordered_json{{"evseId", request.evse_id},
+                                  {"transactionId", request.transaction_id},
+                                  {"clientId", request.transaction_id},
+                                  {"tariffId", tariff_id},
+                                  {"cableId", cable_id},
+                                  {"userData", ""}}
         .dump();
 }
 
