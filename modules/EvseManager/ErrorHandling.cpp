@@ -167,7 +167,13 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
 
 void ErrorHandling::raise_overcurrent_error(const std::string& description) {
     // raise externally
-    p_evse->raise_evse_manager_MREC4OverCurrentFailure(description, Everest::error::Severity::High);
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/MREC4OverCurrentFailure",
+        "",
+        description,
+        Everest::error::Severity::High
+    );
+    p_evse->raise_error(error_object);
     types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
 
     if (modify_error_evse_manager("evse_manager/MREC4OverCurrentFailure", true, evse_error)) {
@@ -183,7 +189,7 @@ void ErrorHandling::raise_overcurrent_error(const std::string& description) {
 void ErrorHandling::clear_overcurrent_error() {
     // clear externally
     if (active_errors.bsp.is_set(BspErrors::MREC4OverCurrentFailure)) {
-        p_evse->request_clear_all_evse_manager_MREC4OverCurrentFailure();
+        p_evse->clear_error("evse_manager/MREC4OverCurrentFailure");
 
         types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
         types::evse_manager::Error output_error;
@@ -214,7 +220,13 @@ void ErrorHandling::clear_overcurrent_error() {
 
 void ErrorHandling::raise_internal_error(const std::string& description) {
     // raise externally
-    p_evse->raise_evse_manager_Internal(description, Everest::error::Severity::High);
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/Internal",
+        "",
+        description,
+        Everest::error::Severity::High
+    );
+    p_evse->raise_error(error_object);
     types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
 
     if (modify_error_evse_manager("evse_manager/Internal", true, evse_error)) {
@@ -230,7 +242,7 @@ void ErrorHandling::raise_internal_error(const std::string& description) {
 void ErrorHandling::clear_internal_error() {
     // clear externally
     if (active_errors.evse_manager.is_set(EvseManagerErrors::Internal)) {
-        p_evse->request_clear_all_evse_manager_Internal();
+        p_evse->clear_error("evse_manager/Internal");
 
         types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
         types::evse_manager::Error output_error;
@@ -261,7 +273,13 @@ void ErrorHandling::clear_internal_error() {
 
 void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::string& description) {
     // raise externally
-    p_evse->raise_evse_manager_PowermeterTransactionStartFailed(description, Everest::error::Severity::High);
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/PowermeterTransactionStartFailed",
+        "",
+        description,
+        Everest::error::Severity::High
+    );
+    p_evse->raise_error(error_object);
     types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
 
     if (modify_error_evse_manager("evse_manager/PowermeterTransactionStartFailed", true, evse_error)) {
@@ -277,7 +295,7 @@ void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::s
 void ErrorHandling::clear_powermeter_transaction_start_failed_error() {
     // clear externally
     if (active_errors.evse_manager.is_set(EvseManagerErrors::PowermeterTransactionStartFailed)) {
-        p_evse->request_clear_all_evse_manager_PowermeterTransactionStartFailed();
+        p_evse->clear_error("evse_manager/PowermeterTransactionStartFailed");
 
         types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
         types::evse_manager::Error output_error;

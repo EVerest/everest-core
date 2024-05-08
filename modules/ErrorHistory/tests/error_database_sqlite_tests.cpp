@@ -20,7 +20,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
         WHEN("Adding an error") {
             std::vector<Everest::error::ErrorPtr> test_errors = {std::make_shared<Everest::error::Error>(
                 "test_type", "test_sub_type", "test_message", "test_description",
-                ImplementationIdentifier("test_from_module", "test_from_implementation"), Everest::error::Severity::Low,
+                ImplementationIdentifier("test_origin_module", "test_origin_implementation"), Everest::error::Severity::Low,
                 date::utc_clock::now(), Everest::error::UUID(), Everest::error::State::Active)};
             db.add_error(test_errors.at(0));
             THEN("The error should be in the database") {
@@ -31,12 +31,12 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             std::vector<Everest::error::ErrorPtr> test_errors = {
                 std::make_shared<Everest::error::Error>(
                     "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
-                    ImplementationIdentifier("test_from_module_a", "test_from_implementation_a"),
+                    ImplementationIdentifier("test_origin_module_a", "test_origin_implementation_a"),
                     Everest::error::Severity::High, date::utc_clock::now(), Everest::error::UUID(),
                     Everest::error::State::ClearedByModule),
                 std::make_shared<Everest::error::Error>(
                     "test_type_b", "test_sub_type_b", "test_message_b", "test_description_b",
-                    ImplementationIdentifier("test_from_module_b", "test_from_implementation_b"),
+                    ImplementationIdentifier("test_origin_module_b", "test_origin_implementation_b"),
                     Everest::error::Severity::Medium, date::utc_clock::now(), Everest::error::UUID(),
                     Everest::error::State::ClearedByReboot)};
             for (Everest::error::ErrorPtr error : test_errors) {
@@ -71,7 +71,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
         }
         WHEN("Getting all errors with OriginFilter") {
             auto errors = db.get_errors({Everest::error::ErrorFilter(
-                Everest::error::OriginFilter("test_from_module_a", "test_from_implementation_a"))});
+                Everest::error::OriginFilter("test_origin_module_a", "test_origin_implementation_a"))});
             THEN("The result should contain specific errors") {
                 std::vector<Everest::error::ErrorPtr> expected_errors(
                     {test_errors[0], test_errors[2], test_errors[4], test_errors[6], test_errors[8], test_errors[10]});
@@ -115,7 +115,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
         WHEN("Getting all errors with multiple filters") {
             auto errors = db.get_errors({Everest::error::ErrorFilter(Everest::error::StateFilter::Active),
                                          Everest::error::ErrorFilter(Everest::error::OriginFilter(
-                                             "test_from_module_a", "test_from_implementation_a"))});
+                                             "test_origin_module_a", "test_origin_implementation_a"))});
             THEN("The result should contain specific errors") {
                 std::vector<Everest::error::ErrorPtr> expected_errors({test_errors[4]});
                 check_expected_errors_in_list(expected_errors, errors);
@@ -125,7 +125,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             auto errors = db.get_errors({
                 Everest::error::ErrorFilter(Everest::error::StateFilter::ClearedByModule),
                 Everest::error::ErrorFilter(
-                    Everest::error::OriginFilter("test_from_module_a", "test_from_implementation_a")),
+                    Everest::error::OriginFilter("test_origin_module_a", "test_origin_implementation_a")),
                 Everest::error::ErrorFilter(Everest::error::TypeFilter("test_type_c")),
                 Everest::error::ErrorFilter(Everest::error::SeverityFilter::HIGH_GE),
             });
@@ -208,14 +208,14 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             std::list<Everest::error::ErrorFilter> filters = {
                 Everest::error::ErrorFilter(Everest::error::HandleFilter(test_errors[4]->uuid))};
             Everest::error::ErrorDatabase::EditErrorFunc edit_func = [](Everest::error::ErrorPtr error) {
-                error->from = ImplementationIdentifier("new_from_module", "new_from_implementation");
+                error->origin = ImplementationIdentifier("new_origin_module", "new_origin_implementation");
             };
             REQUIRE(db.get_errors(filters).size() > 0);
             db.edit_errors(filters, edit_func);
             THEN("The error should be edited") {
                 auto errors = db.get_errors(filters);
                 REQUIRE(errors.size() == 1);
-                REQUIRE(errors.front()->from == ImplementationIdentifier("new_from_module", "new_from_implementation"));
+                REQUIRE(errors.front()->origin == ImplementationIdentifier("new_origin_module", "new_origin_implementation"));
             }
         }
         WHEN("Edit error timestamp") {
@@ -265,7 +265,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             std::list<Everest::error::ErrorFilter> filters = {
                 Everest::error::ErrorFilter(Everest::error::StateFilter::Active),
                 Everest::error::ErrorFilter(
-                    Everest::error::OriginFilter("test_from_module_c", "test_from_implementation_c"))};
+                    Everest::error::OriginFilter("test_origin_module_c", "test_origin_implementation_c"))};
             REQUIRE(db.get_errors(filters).size() > 0);
             db.remove_errors(filters);
             THEN("The errors should be removed") {

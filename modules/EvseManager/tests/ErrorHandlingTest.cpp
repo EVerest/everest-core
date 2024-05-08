@@ -193,12 +193,17 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
 
     EXPECT_FALSE(error_handling.hlc);
     ImplementationIdentifier id("evse_manager", "main");
-    Everest::error::Error error("evse_board_support/VendorError", "K2Faults::FAULT_CT_CLAMP",
-                                "Vendor specific error code. Will stop charging session.", id);
+    Everest::error::Error error_object(
+        "evse_board_support/VendorError",
+        "",
+        "K2Faults::FAULT_CT_CLAMP",
+        "Vendor specific error code. Will stop charging session.",
+        id
+    );
 
     bool bResult;
     auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error, true, error_type);
+    bResult = error_handling.modify_error_bsp(error_object, true, error_type);
     EXPECT_TRUE(bResult);
     EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
@@ -208,7 +213,7 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
 
     ehs.reset();
     error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error, false, error_type);
+    bResult = error_handling.modify_error_bsp(error_object, false, error_type);
     EXPECT_TRUE(bResult);
     EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
@@ -218,8 +223,13 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
 
     // VendorWarning not treated as an active error
     ehs.reset();
-    Everest::error::Error warning("evse_board_support/VendorWarning", "K2Faults::FAULT_CT_CLAMP",
-                                  "Vendor specific error code. Will not stop charging session.", id);
+    Everest::error::Error warning(
+        "evse_board_support/VendorWarning",
+        "",
+        "K2Faults::FAULT_CT_CLAMP",
+        "Vendor specific error code. Will not stop charging session.",
+        id
+    );
     error_type = types::evse_manager::ErrorEnum::PermanentFault;
     bResult = error_handling.modify_error_bsp(warning, true, error_type);
     EXPECT_FALSE(bResult);

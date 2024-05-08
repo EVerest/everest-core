@@ -111,12 +111,12 @@ bool cp_signal_fault;
 
 void YetiDriver::clear_errors_on_unplug() {
     if (error_MREC2GroundFailure) {
-        p_board_support->request_clear_all_evse_board_support_MREC2GroundFailure();
+        p_board_support->clear_error("evse_board_support/MREC2GroundFailur");
     }
     error_MREC2GroundFailure = false;
 
     if (error_MREC1ConnectorLockFailure) {
-        p_connector_lock->request_clear_all_connector_lock_MREC1ConnectorLockFailure();
+        p_connector_lock->clear_error("connector_lock/MREC1ConnectorLockFailure");
     }
     error_MREC1ConnectorLockFailure = false;
 }
@@ -124,35 +124,63 @@ void YetiDriver::clear_errors_on_unplug() {
 void YetiDriver::error_handling(ErrorFlags e) {
 
     if (e.diode_fault and not last_error_flags.diode_fault) {
-        p_board_support->raise_evse_board_support_DiodeFault("Diode Fault", Everest::error::Severity::High);
+        Everest::error::Error error_object = p_board_support->error_factory->create_error(
+            "evse_board_support/DiodeFault",
+            "",
+            "Diode Fault",
+            Everest::error::Severity::High
+        );
+        p_board_support->raise_error(error_object);
     } else if (not e.diode_fault and last_error_flags.diode_fault) {
-        p_board_support->request_clear_all_evse_board_support_DiodeFault();
+        p_board_support->clear_error("evse_board_support/DiodeFault");
     }
 
     if (e.rcd_triggered and not last_error_flags.rcd_triggered) {
-        p_board_support->raise_evse_board_support_MREC2GroundFailure("Onboard RCD triggered",
-                                                                     Everest::error::Severity::High);
+        Everest::error::Error error_object = p_board_support->error_factory->create_error(
+            "evse_board_support/MREC2GroundFailure",
+            "",
+            "Onboard RCD triggered",
+            Everest::error::Severity::High
+        );
+        p_board_support->raise_error(error_object);
         error_MREC2GroundFailure = true;
     }
 
     if (e.ventilation_not_available and not last_error_flags.ventilation_not_available) {
-        p_board_support->raise_evse_board_support_VentilationNotAvailable("State D is not supported",
-                                                                          Everest::error::Severity::High);
+        Everest::error::Error error_object = p_board_support->error_factory->create_error(
+            "evse_board_support/VentilationNotAvailable",
+            "",
+            "State D is not supported",
+            Everest::error::Severity::High
+        );
+        p_board_support->raise_error(error_object);
     } else if (not e.ventilation_not_available and last_error_flags.ventilation_not_available) {
-        p_board_support->request_clear_all_evse_board_support_VentilationNotAvailable();
+        p_board_support->clear_error("evse_board_support/VentilationNotAvailable");
     }
 
     if (e.connector_lock_failed and not last_error_flags.connector_lock_failed) {
-        p_connector_lock->raise_connector_lock_MREC1ConnectorLockFailure("Lock motor failure",
-                                                                         Everest::error::Severity::High);
+        Everest::error::Error error_object = p_connector_lock->error_factory->create_error(
+            "connector_lock/MREC1ConnectorLockFailure",
+            "",
+            "Lock motor failure",
+            Everest::error::Severity::High
+        );
 
         error_MREC1ConnectorLockFailure = true;
+        p_connector_lock->raise_error(error_object);
+
     }
 
     if (e.cp_signal_fault and not last_error_flags.cp_signal_fault) {
-        p_board_support->raise_evse_board_support_MREC14PilotFault("CP error", Everest::error::Severity::High);
+        Everest::error::Error error_object = p_board_support->error_factory->create_error(
+            "evse_board_support/MREC14PilotFault",
+            "",
+            "CP error",
+            Everest::error::Severity::High
+        );
+        p_board_support->raise_error(error_object);
     } else if (not e.cp_signal_fault and last_error_flags.cp_signal_fault) {
-        p_board_support->request_clear_all_evse_board_support_MREC14PilotFault();
+        p_board_support->clear_error("evse_board_support/MREC14PilotFault");
     }
 
     last_error_flags = e;

@@ -94,8 +94,8 @@ error_historyImpl::handle_get_errors(types::error_history::FilterArguments& filt
         std::string string_severity = Everest::error::severity_to_string(error->severity);
         error_object.severity = types::error_history::string_to_severity(string_severity);
         error_object.type = error->type;
-        error_object.origin.module_id = error->from.module_id;
-        error_object.origin.implementation_id = error->from.implementation_id;
+        error_object.origin.module_id = error->origin.module_id;
+        error_object.origin.implementation_id = error->origin.implementation_id;
         error_object.message = error->message;
         error_object.description = error->description;
         return error_object;
@@ -105,7 +105,7 @@ error_historyImpl::handle_get_errors(types::error_history::FilterArguments& filt
 
 void error_historyImpl::handle_global_all_errors(const Everest::error::Error& error) {
     Everest::error::ErrorPtr error_ptr = std::make_shared<Everest::error::Error>(error);
-    this->db->add_error(error_ptr); // LTODO check if error is already in db -> write test case
+    this->db->add_error(error_ptr);
 }
 
 void error_historyImpl::handle_global_all_errors_cleared(const Everest::error::Error& error) {
