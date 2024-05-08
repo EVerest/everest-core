@@ -77,17 +77,6 @@ void evse_securityImpl::handle_update_ocsp_cache(types::evse_security::Certifica
     this->evse_security->update_ocsp_cache(conversions::from_everest(certificate_hash_data), ocsp_response);
 }
 
-std::string
-evse_securityImpl::handle_retrieve_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data) {
-    auto cache = this->evse_security->retrieve_ocsp_cache(conversions::from_everest(certificate_hash_data));
-
-    if (cache.has_value()) {
-        return cache.value();
-    }
-
-    return {};
-}
-
 bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) {
     return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
 }

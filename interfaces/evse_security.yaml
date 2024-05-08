@@ -102,17 +102,7 @@ cmds:
         $ref: /evse_security#/CertificateHashData
       ocsp_response:
         description: OCSPResponse class as defined in IETF RFC 6960. DER and then base64 encoded
-        type: string
-  retrieve_ocsp_cache:
-    description: Command to retrieve the OCSP cache file path of the specified certificate hash
-    arguments:
-      certificate_hash_data:
-        description: Certificate hash data that identifies the certificate for which the cache should be retrieved
-        type: object
-        $ref: /evse_security#/CertificateHashData
-    result:
-      description: Path of data related to the certificate hash, if present
-      type: string
+        type: string  
   is_ca_certificate_installed:
     description: Command that indicates of the given CA certificate type is installed
     arguments:
