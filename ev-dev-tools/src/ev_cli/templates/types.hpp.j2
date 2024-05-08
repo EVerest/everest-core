@@ -40,7 +40,7 @@ enum class {{ enum.enum_type}}
 
 /// \brief Converts the given {{ enum.enum_type }} \p e to human readable string
 /// \returns a string representation of the {{ enum.enum_type }}
-static const std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type }} e) {
+inline std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enum_type }} e) {
     switch (e) {
         {% for e in enum.enum %}
         case {{ enum.enum_type }}::{{ e }}: return "{{e}}";
@@ -52,7 +52,7 @@ static const std::string {{ enum.enum_type | snake_case }}_to_string({{ enum.enu
 
 /// \brief Converts the given std::string \p s to {{ enum.enum_type }}
 /// \returns a {{ enum.enum_type }} from a string representation
-static const {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(const std::string& s) {
+inline {{ enum.enum_type }} string_to_{{ enum.enum_type | snake_case }}(const std::string& s) {
     {% for e in enum.enum %}
     if(s == "{{e}}") {
         return {{ enum.enum_type }}::{{ e }};
