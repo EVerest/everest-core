@@ -18,7 +18,7 @@ cmds:
         description: This argument allows to specify the sub type
         type: string
   clear_all_errors:
-    description: This command clears all errors that are raises by this implementation
+    description: This command clears all errors that are raised by this implementation
   raise_error:
     description: This command raises an error
     arguments:

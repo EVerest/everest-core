@@ -291,7 +291,13 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
 
     EXPECT_FALSE(error_handling.hlc);
     ImplementationIdentifier id("evse_manager", "main");
-    Everest::error::Error error("connector_lock/ConnectorLockUnexpectedOpen", "", "Will stop charging session.", id);
+    Everest::error::Error error(
+        "connector_lock/ConnectorLockUnexpectedOpen",
+        "",
+        "Will stop charging session.",
+        "no description",
+        id
+    );
 
     bool bResult;
     auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
@@ -315,7 +321,13 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
 
     // VendorWarning not treated as an active error
     ehs.reset();
-    Everest::error::Error warning("connector_lock/VendorWarning", "", "Will not stop charging session.", id);
+    Everest::error::Error warning(
+        "connector_lock/VendorWarning",
+        "",
+        "Will not stop charging session.",
+        "no description",
+        id
+    );
     error_type = types::evse_manager::ErrorEnum::PermanentFault;
     bResult = error_handling.modify_error_connector_lock(warning, true, error_type);
     EXPECT_FALSE(bResult);
@@ -355,7 +367,13 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
 
     EXPECT_FALSE(error_handling.hlc);
     ImplementationIdentifier id("evse_manager", "main");
-    Everest::error::Error error("ac_rcd/AC", "", "Will stop charging session.", id);
+    Everest::error::Error error(
+        "ac_rcd/AC",
+        "",
+        "Will stop charging session.",
+        "no description",
+        id
+    );
 
     bool bResult;
     auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
@@ -379,7 +397,13 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
 
     // VendorWarning not treated as an active error
     ehs.reset();
-    Everest::error::Error warning("ac_rcd/VendorWarning", "", "Will not stop charging session.", id);
+    Everest::error::Error warning(
+        "ac_rcd/VendorWarning",
+        "",
+        "Will not stop charging session.",
+        "no description",
+        id
+    );
     error_type = types::evse_manager::ErrorEnum::PermanentFault;
     bResult = error_handling.modify_error_ac_rcd(warning, true, error_type);
     EXPECT_FALSE(bResult);
