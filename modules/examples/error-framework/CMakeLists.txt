@@ -1,2 +1,6 @@
 ev_add_module(ExampleErrorRaiser)
 ev_add_module(ExampleErrorSubscriber)
+ev_add_module(PyExampleErrorRaiser)
+ev_add_module(PyExampleErrorSubscriber)
+ev_add_module(JsExampleErrorRaiser)
+ev_add_module(JsExampleErrorSubscriber)

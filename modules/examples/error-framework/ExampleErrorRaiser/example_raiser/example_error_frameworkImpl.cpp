@@ -49,13 +49,13 @@ std::vector<std::list<Condition>> conditions = {
 };
 
 void example_error_frameworkImpl::check_conditions() {
-    // for (int i = 0; i < conditions.size(); i++) {
-    //    if (this->error_state_monitor->is_condition_satisfied(conditions.at(i))) {
-    //        EVLOG_info << "Condition " << i << " satisfied";
-    //    } else {
-    //        EVLOG_info << "Condition " << i << " not satisfied";
-    //    }
-    // }
+    for (int i = 0; i < conditions.size(); i++) {
+       if (this->error_state_monitor->is_condition_satisfied(conditions.at(i))) {
+           EVLOG_info << "Condition " << i << " satisfied";
+       } else {
+           EVLOG_info << "Condition " << i << " not satisfied";
+       }
+    }
 }
 
 void example_error_frameworkImpl::init() {

@@ -1,8 +1,8 @@
 active_modules:
   example_raiser:
-    module: ExampleErrorRaiser
+    module: JsExampleErrorRaiser
   example_subscriber:
-    module: ExampleErrorSubscriber
+    module: JsExampleErrorSubscriber
     connections:
       example_raiser:
         - module_id: example_raiser

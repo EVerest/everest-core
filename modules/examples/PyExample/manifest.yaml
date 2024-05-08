@@ -1,9 +1,0 @@
-description: Simple example module written in Python
-provides:
-  example:
-    interface: example_user
-    description: This implements an example_user interface that uses multiple framework features
-metadata:
-  license: https://opensource.org/licenses/Apache-2.0
-  authors:
-    - Andreas Heinrich
