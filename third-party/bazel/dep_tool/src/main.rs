@@ -38,7 +38,22 @@ fn main() {
     for (name, dep) in deps {
         println!("\t# {}", name);
         println!("\t{}_repo = \"{}\",", sanitize_name(&name), dep.git);
-        println!("\t{}_tag = \"{}\",", sanitize_name(&name), dep.git_tag);
+        // Check if git_tag looks like a commit sha
+        let is_hex = dep.git_tag.chars().all(|c| c.is_ascii_hexdigit());
+        if dep.git_tag.len() == 40 && is_hex {
+            println!("\t{}_commit = \"{}\",", sanitize_name(&name), dep.git_tag);
+            println!("\t{}_tag = None,", sanitize_name(&name));
+        } else {
+            if is_hex {
+                // This message will be printed into the generated file
+                // and will show up in the PR/diff.
+                println!("\t# Warning: {} git_tag is hexadecimal but not 40 characters long.", name);
+                println!("\t# Assuming it's a tag.");
+                println!("\t# If it's a commit, please use the full 40-character commit hash.");
+            }
+            println!("\t{}_commit = None,", sanitize_name(&name));
+            println!("\t{}_tag = \"{}\",", sanitize_name(&name), dep.git_tag);
+        }
         println!("");
     }
     println!(")");
