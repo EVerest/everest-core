@@ -1,3 +1,6 @@
+# `git_tag` can be either a tag or a commit hash.
+# For the sake of unambiguity the `git_tag` field is treated as a hash
+# only if it is 40 characters long hexadecimal string.
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
