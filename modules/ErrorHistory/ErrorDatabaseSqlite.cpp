@@ -129,8 +129,8 @@ std::string ErrorDatabaseSqlite::filter_to_sql_condition(const Everest::error::E
         condition = "(state = '" + Everest::error::state_to_string(filter.get_state_filter()) + "')";
     } break;
     case Everest::error::FilterType::Origin: {
-        condition = "(origin_module = '" + filter.get_origin_filter().module_id + "' AND " + "origin_implementation = '" +
-                    filter.get_origin_filter().implementation_id + "')";
+        condition = "(origin_module = '" + filter.get_origin_filter().module_id + "' AND " +
+                    "origin_implementation = '" + filter.get_origin_filter().implementation_id + "')";
     } break;
     case Everest::error::FilterType::Type: {
         condition = "(type = '" + filter.get_type_filter().value + "')";
@@ -211,8 +211,9 @@ std::list<Everest::error::ErrorPtr> ErrorDatabaseSqlite::get_errors(const std::o
             const Everest::error::State err_state = Everest::error::string_to_state(stmt.getColumn("state").getText());
             const Everest::error::ErrorHandle err_handle(Everest::error::ErrorHandle(stmt.getColumn("uuid").getText()));
             const Everest::error::ErrorSubType err_sub_type(stmt.getColumn("sub_type").getText());
-            Everest::error::ErrorPtr error = std::make_shared<Everest::error::Error>(
-                err_type, err_sub_type, err_msg, err_description, err_origin, err_severity, err_timestamp, err_handle, err_state);
+            Everest::error::ErrorPtr error =
+                std::make_shared<Everest::error::Error>(err_type, err_sub_type, err_msg, err_description, err_origin,
+                                                        err_severity, err_timestamp, err_handle, err_state);
             result.push_back(error);
         }
     } catch (std::exception& e) {

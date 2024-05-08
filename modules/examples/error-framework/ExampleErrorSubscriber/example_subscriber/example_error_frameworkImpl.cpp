@@ -13,40 +13,27 @@ using Condition = Everest::error::ErrorStateMonitor::StateCondition;
 namespace module {
 namespace example_subscriber {
 
-std::list<Condition> condition_0 = {
-    Condition("example/ExampleErrorA", "some custom sub_type", true),
-    Condition("example/ExampleErrorB", "some custom sub_type", false),
-    Condition("example/ExampleErrorC", "some custom sub_type", false),
-    Condition("example/ExampleErrorD", "some custom sub_type", false)
-};
+std::list<Condition> condition_0 = {Condition("example/ExampleErrorA", "some custom sub_type", true),
+                                    Condition("example/ExampleErrorB", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorC", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorD", "some custom sub_type", false)};
 
-std::list<Condition> condition_1 = {
-    Condition("example/ExampleErrorA", "some custom sub_type", false),
-    Condition("example/ExampleErrorB", "some custom sub_type", true),
-    Condition("example/ExampleErrorC", "some custom sub_type", false),
-    Condition("example/ExampleErrorD", "some custom sub_type", false)
-};
+std::list<Condition> condition_1 = {Condition("example/ExampleErrorA", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorB", "some custom sub_type", true),
+                                    Condition("example/ExampleErrorC", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorD", "some custom sub_type", false)};
 
-std::list<Condition> condition_2 = {
-    Condition("example/ExampleErrorA", "some custom sub_type", false),
-    Condition("example/ExampleErrorB", "some custom sub_type", false),
-    Condition("example/ExampleErrorC", "some custom sub_type", true),
-    Condition("example/ExampleErrorD", "some custom sub_type", true)
-};
+std::list<Condition> condition_2 = {Condition("example/ExampleErrorA", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorB", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorC", "some custom sub_type", true),
+                                    Condition("example/ExampleErrorD", "some custom sub_type", true)};
 
-std::list<Condition> condition_3 = {
-    Condition("example/ExampleErrorA", "some custom sub_type", false),
-    Condition("example/ExampleErrorB", "some custom sub_type", false),
-    Condition("example/ExampleErrorC", "some custom sub_type", false),
-    Condition("example/ExampleErrorD", "some custom sub_type", false)
-};
+std::list<Condition> condition_3 = {Condition("example/ExampleErrorA", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorB", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorC", "some custom sub_type", false),
+                                    Condition("example/ExampleErrorD", "some custom sub_type", false)};
 
-std::vector<std::list<Condition>> conditions = {
-    condition_0,
-    condition_1,
-    condition_2,
-    condition_3
-};
+std::vector<std::list<Condition>> conditions = {condition_0, condition_1, condition_2, condition_3};
 
 void example_error_frameworkImpl::check_conditions() {
     for (int i = 0; i < conditions.size(); i++) {

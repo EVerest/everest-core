@@ -125,11 +125,7 @@ void YetiDriver::error_handling(ErrorFlags e) {
 
     if (e.diode_fault and not last_error_flags.diode_fault) {
         Everest::error::Error error_object = p_board_support->error_factory->create_error(
-            "evse_board_support/DiodeFault",
-            "",
-            "Diode Fault",
-            Everest::error::Severity::High
-        );
+            "evse_board_support/DiodeFault", "", "Diode Fault", Everest::error::Severity::High);
         p_board_support->raise_error(error_object);
     } else if (not e.diode_fault and last_error_flags.diode_fault) {
         p_board_support->clear_error("evse_board_support/DiodeFault");
@@ -137,22 +133,15 @@ void YetiDriver::error_handling(ErrorFlags e) {
 
     if (e.rcd_triggered and not last_error_flags.rcd_triggered) {
         Everest::error::Error error_object = p_board_support->error_factory->create_error(
-            "evse_board_support/MREC2GroundFailure",
-            "",
-            "Onboard RCD triggered",
-            Everest::error::Severity::High
-        );
+            "evse_board_support/MREC2GroundFailure", "", "Onboard RCD triggered", Everest::error::Severity::High);
         p_board_support->raise_error(error_object);
         error_MREC2GroundFailure = true;
     }
 
     if (e.ventilation_not_available and not last_error_flags.ventilation_not_available) {
-        Everest::error::Error error_object = p_board_support->error_factory->create_error(
-            "evse_board_support/VentilationNotAvailable",
-            "",
-            "State D is not supported",
-            Everest::error::Severity::High
-        );
+        Everest::error::Error error_object =
+            p_board_support->error_factory->create_error("evse_board_support/VentilationNotAvailable", "",
+                                                         "State D is not supported", Everest::error::Severity::High);
         p_board_support->raise_error(error_object);
     } else if (not e.ventilation_not_available and last_error_flags.ventilation_not_available) {
         p_board_support->clear_error("evse_board_support/VentilationNotAvailable");
@@ -160,24 +149,15 @@ void YetiDriver::error_handling(ErrorFlags e) {
 
     if (e.connector_lock_failed and not last_error_flags.connector_lock_failed) {
         Everest::error::Error error_object = p_connector_lock->error_factory->create_error(
-            "connector_lock/MREC1ConnectorLockFailure",
-            "",
-            "Lock motor failure",
-            Everest::error::Severity::High
-        );
+            "connector_lock/MREC1ConnectorLockFailure", "", "Lock motor failure", Everest::error::Severity::High);
 
         error_MREC1ConnectorLockFailure = true;
         p_connector_lock->raise_error(error_object);
-
     }
 
     if (e.cp_signal_fault and not last_error_flags.cp_signal_fault) {
         Everest::error::Error error_object = p_board_support->error_factory->create_error(
-            "evse_board_support/MREC14PilotFault",
-            "",
-            "CP error",
-            Everest::error::Severity::High
-        );
+            "evse_board_support/MREC14PilotFault", "", "CP error", Everest::error::Severity::High);
         p_board_support->raise_error(error_object);
     } else if (not e.cp_signal_fault and last_error_flags.cp_signal_fault) {
         p_board_support->clear_error("evse_board_support/MREC14PilotFault");

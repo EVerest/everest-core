@@ -20,10 +20,14 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
             this->subscribe_fn(req, str, cb);
         };
         get_error_manager_impl = [this](const std::string& str) { return this->get_error_manager_impl_fn(str); };
-        get_error_state_monitor_impl = [this](const std::string& str) { return this->get_error_state_monitor_impl_fn(str); };
+        get_error_state_monitor_impl = [this](const std::string& str) {
+            return this->get_error_state_monitor_impl_fn(str);
+        };
         get_error_factory = [this](const std::string& str) { return this->get_error_factory_fn(str); };
         get_error_manager_req = [this](const Requirement& req) { return this->get_error_manager_req_fn(req); };
-        get_error_state_monitor_req = [this](const Requirement& req) { return this->get_error_state_monitor_req_fn(req); };
+        get_error_state_monitor_req = [this](const Requirement& req) {
+            return this->get_error_state_monitor_req_fn(req);
+        };
         subscribe_global_all_errors = [this](const Everest::error::ErrorCallback& cb1,
                                              const Everest::error::ErrorCallback& cb2) {
             this->subscribe_global_all_errors_fn(cb1, cb2);
@@ -67,7 +71,8 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         std::printf("get_error_state_monitor_req_fn\n");
         return nullptr;
     }
-    virtual void subscribe_global_all_errors_fn(const Everest::error::ErrorCallback&, const Everest::error::ErrorCallback&) {
+    virtual void subscribe_global_all_errors_fn(const Everest::error::ErrorCallback&,
+                                                const Everest::error::ErrorCallback&) {
         std::printf("subscribe_global_all_errors_fn\n");
     }
     virtual void ext_mqtt_publish_fn(const std::string&, const std::string&) {

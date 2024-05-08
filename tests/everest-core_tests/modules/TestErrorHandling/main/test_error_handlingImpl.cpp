@@ -20,8 +20,7 @@ void test_error_handlingImpl::init() {
         [this](const Everest::error::Error& error) {
             EVLOG_debug << fmt::format("received error: {}", json(error).dump(2));
             this->publish_errors_cleared_subscribe_TestErrorA(json(error));
-        }
-    );
+        });
     this->mod->r_error_raiser->subscribe_error(
         "test_errors/TestErrorB",
         [this](const Everest::error::Error& error) {
@@ -59,18 +58,14 @@ void test_error_handlingImpl::handle_clear_error(std::string& type, std::string&
     this->clear_error(type, sub_type);
 }
 
-
 void test_error_handlingImpl::handle_clear_all_errors() {
     this->clear_all_errors_of_impl();
 }
 
-void test_error_handlingImpl::handle_raise_error(std::string& type, std::string& sub_type, std::string& message, std::string& severity) {
-    Everest::error::Error error = this->error_factory->create_error(
-        type,
-        sub_type,
-        message,
-        Everest::error::string_to_severity(severity)
-    );
+void test_error_handlingImpl::handle_raise_error(std::string& type, std::string& sub_type, std::string& message,
+                                                 std::string& severity) {
+    Everest::error::Error error =
+        this->error_factory->create_error(type, sub_type, message, Everest::error::string_to_severity(severity));
     this->raise_error(error);
 }
 

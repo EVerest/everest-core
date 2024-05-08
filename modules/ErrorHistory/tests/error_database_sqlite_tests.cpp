@@ -20,8 +20,9 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
         WHEN("Adding an error") {
             std::vector<Everest::error::ErrorPtr> test_errors = {std::make_shared<Everest::error::Error>(
                 "test_type", "test_sub_type", "test_message", "test_description",
-                ImplementationIdentifier("test_origin_module", "test_origin_implementation"), Everest::error::Severity::Low,
-                date::utc_clock::now(), Everest::error::UUID(), Everest::error::State::Active)};
+                ImplementationIdentifier("test_origin_module", "test_origin_implementation"),
+                Everest::error::Severity::Low, date::utc_clock::now(), Everest::error::UUID(),
+                Everest::error::State::Active)};
             db.add_error(test_errors.at(0));
             THEN("The error should be in the database") {
                 check_expected_errors_in_list(test_errors, db.get_errors(std::list<Everest::error::ErrorFilter>()));
@@ -215,7 +216,8 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             THEN("The error should be edited") {
                 auto errors = db.get_errors(filters);
                 REQUIRE(errors.size() == 1);
-                REQUIRE(errors.front()->origin == ImplementationIdentifier("new_origin_module", "new_origin_implementation"));
+                REQUIRE(errors.front()->origin ==
+                        ImplementationIdentifier("new_origin_module", "new_origin_implementation"));
             }
         }
         WHEN("Edit error timestamp") {

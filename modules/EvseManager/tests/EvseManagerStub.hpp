@@ -84,24 +84,12 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
     }
 
     void raise_error(const std::string& error_type, const std::string& error_message, const std::string& error_desc) {
-        Everest::error::Error error_object(
-            error_type,
-            "",
-            error_message,
-            error_desc,
-            id
-        );
+        Everest::error::Error error_object(error_type, "", error_message, error_desc, id);
         error_raise[error_type](error_object);
     }
 
     void clear_error(const std::string& error_type, const std::string& error_message, const std::string& error_desc) {
-        Everest::error::Error error_object(
-            error_type,
-            "",
-            error_message,
-            error_desc,
-            id
-        );
+        Everest::error::Error error_object(error_type, "", error_message, error_desc, id);
         error_clear[error_type](error_object);
     }
 };
