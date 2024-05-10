@@ -81,24 +81,36 @@ bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security:
     return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
 }
 
-std::string evse_securityImpl::handle_generate_certificate_signing_request(
+types::evse_security::GetCertificateSignRequestResult evse_securityImpl::handle_generate_certificate_signing_request(
     types::evse_security::LeafCertificateType& certificate_type, std::string& country, std::string& organization,
     std::string& common, bool& use_tpm) {
-    return this->evse_security->generate_certificate_signing_request(conversions::from_everest(certificate_type),
-                                                                     country, organization, common, use_tpm);
+    types::evse_security::GetCertificateSignRequestResult response;
+
+    auto csr_response = this->evse_security->generate_certificate_signing_request(
+        conversions::from_everest(certificate_type), country, organization, common, use_tpm);
+
+    response.status = conversions::to_everest(csr_response.status);
+
+    if (csr_response.status == evse_security::GetCertificateSignRequestStatus::Accepted &&
+        csr_response.csr.has_value()) {
+        response.csr = csr_response.csr;
+    }
+
+    return response;
 }
 
-types::evse_security::GetKeyPairResult
-evse_securityImpl::handle_get_key_pair(types::evse_security::LeafCertificateType& certificate_type,
-                                       types::evse_security::EncodingFormat& encoding) {
-    types::evse_security::GetKeyPairResult response;
-    const auto key_pair = this->evse_security->get_key_pair(conversions::from_everest(certificate_type),
-                                                            conversions::from_everest(encoding));
+types::evse_security::GetCertificateInfoResult
+evse_securityImpl::handle_get_leaf_certificate_info(types::evse_security::LeafCertificateType& certificate_type,
+                                                    types::evse_security::EncodingFormat& encoding,
+                                                    bool& include_ocsp) {
+    types::evse_security::GetCertificateInfoResult response;
+    const auto leaf_info = this->evse_security->get_leaf_certificate_info(
+        conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
 
-    response.status = conversions::to_everest(key_pair.status);
+    response.status = conversions::to_everest(leaf_info.status);
 
-    if (key_pair.status == evse_security::GetKeyPairStatus::Accepted && key_pair.pair.has_value()) {
-        response.key_pair = conversions::to_everest(key_pair.pair.value());
+    if (leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted && leaf_info.info.has_value()) {
+        response.info = conversions::to_everest(leaf_info.info.value());
     }
 
     return response;

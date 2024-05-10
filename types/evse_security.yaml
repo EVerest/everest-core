@@ -76,8 +76,16 @@ types:
     enum:
       - Accepted
       - NotFound
-  GetKeyPairStatus:
-    description: Status indicates the result of the attempt to retrieve a a keypair
+  GetCertificateSignRequestStatus:
+    description: Status indicates the result to generate a certificate signing request
+    type: string
+    enum:
+      - Accepted
+      - InvalidRequestedType
+      - KeyGenError
+      - GenerationError
+  GetCertificateInfoStatus:
+    description: Status indicates the result of the attempt to retrieve a certificate
     type: string
     enum:
       - Accepted
@@ -183,13 +191,38 @@ types:
           minimum: 0
           type: object
           $ref: /evse_security#/OCSPRequestData
-  KeyPair:
+  CertificateOCSP:
+    description: OCSP data related to requested the certificates
+    type: object
+    required:
+      - hash
+    properties:
+      hash:
+        description: Hash of certificate linked to the provided data
+        type: object
+        $ref: /evse_security#/CertificateHashData
+      ocsp_path:
+        description: OCSP path of the file containing the data
+        type: string
+  GetCertificateSignRequestResult:
+    description: Response related to a CSR generation
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        description: Status of the request
+        type: string
+        $ref: /evse_security#/GetCertificateSignRequestStatus
+      csr:
+        description: PEM encoded certificate signing request
+        type: string
+  CertificateInfo:
     description: Type that specifies the paths of a certificate and the respective private key
     type: object
     required:
-      - key
-      - certificate
-      - certificate_single
+      - key      
+      - certificate_count
     properties:
       key:
         description: The path of the PEM or DER encoded private key
@@ -200,11 +233,21 @@ types:
       certificate_single:
         description: The path of the PEM or DER encoded single certificate
         type: string
+      certificate_count:
+        description: The count of certificates in the chain
+        type: integer
       password:
         description: Specifies the password for the private key if encrypted
         type: string
-  GetKeyPairResult:
-    description: Response to the command get_key_pair
+      ocsp:
+        description: Certificate related OCSP data, if requested
+        type: array
+        items:
+          minimum: 0
+          type: object          
+          $ref: /evse_security#/CertificateOCSP
+  GetCertificateInfoResult:
+    description: Response to the command get_leaf_certificate_info
     type: object
     required:
       - status
@@ -212,9 +255,9 @@ types:
       status:
         description: The status of the requested command
         type: string
-        $ref: /evse_security#/GetKeyPairStatus
-      key_pair:
-        description: The requested key pair
+        $ref: /evse_security#/GetCertificateInfoStatus
+      info:
+        description: The requested info
         type: object
-        $ref: /evse_security#/KeyPair
+        $ref: /evse_security#/CertificateInfo
 

@@ -494,16 +494,16 @@ static bool connection_init_tls(struct v2g_context* ctx) {
     std::string v2g_root_cert_path =
         ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
 
-    const auto key_pair_response = ctx->r_security->call_get_key_pair(types::evse_security::LeafCertificateType::V2G,
-                                                                      types::evse_security::EncodingFormat::PEM);
-    if (key_pair_response.status != types::evse_security::GetKeyPairStatus::Accepted) {
+    const auto key_pair_response = ctx->r_security->call_get_leaf_certificate_info(
+        types::evse_security::LeafCertificateType::V2G, types::evse_security::EncodingFormat::PEM, false);
+    if (key_pair_response.status != types::evse_security::GetCertificateInfoStatus::Accepted) {
         dlog(DLOG_LEVEL_ERROR, "Failed to read key/pair!");
         return false;
     }
 
-    std::string evse_leaf_cert_path = key_pair_response.key_pair.value().certificate;
-    std::string evse_leaf_key_path = key_pair_response.key_pair.value().key;
-    std::string secc_leaf_key_password = key_pair_response.key_pair.value().password.value_or("");
+    std::string evse_leaf_cert_path = key_pair_response.info.value().certificate.value();
+    std::string evse_leaf_key_path = key_pair_response.info.value().key;
+    std::string secc_leaf_key_password = key_pair_response.info.value().password.value_or("");
 
     uint8_t num_of_v2g_root = 1;
     mbedtls_x509_crt* root_crt = &ctx->v2g_root_crt;
