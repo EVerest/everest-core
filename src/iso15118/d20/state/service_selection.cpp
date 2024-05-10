@@ -3,6 +3,8 @@
 #include <iso15118/d20/state/dc_charge_parameter_discovery.hpp>
 #include <iso15118/d20/state/service_selection.hpp>
 
+#include <algorithm>
+
 #include <iso15118/detail/d20/context_helper.hpp>
 #include <iso15118/detail/d20/state/service_detail.hpp>
 #include <iso15118/detail/d20/state/service_selection.hpp>
