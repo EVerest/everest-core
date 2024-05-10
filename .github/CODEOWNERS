@@ -4,9 +4,6 @@
 # .github
 /.github/ @pietfried @corneliusclaussen
 
-# third-party/bazel
-/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @golovasteek @dorezyuk
-
 # cmake
 /cmake/ @hikinggrass @a-w50
 
@@ -42,3 +39,6 @@
 *.rs @SirVer @golovasteek @dorezyuk
 *.bazel @SirVer @golovasteek @dorezyuk
 *.bzl @SirVer @golovasteek @dorezyuk
+
+# third-party/bazel
+/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @golovasteek @dorezyuk
