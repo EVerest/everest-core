@@ -21,11 +21,6 @@ enum class X509CertificateSource {
     STRING
 };
 
-const fs::path PEM_EXTENSION = ".pem";
-const fs::path DER_EXTENSION = ".der";
-const fs::path KEY_EXTENSION = ".key";
-const fs::path TPM_KEY_EXTENSION = ".tkey";
-
 /// @brief Convenience wrapper around openssl X509 certificate
 class X509Wrapper {
 public:

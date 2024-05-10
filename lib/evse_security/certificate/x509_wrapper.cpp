@@ -77,7 +77,9 @@ bool X509Wrapper::operator==(const X509Wrapper& other) const {
 }
 
 void X509Wrapper::update_validity() {
-    CryptoSupplier::x509_get_validity(get(), valid_in, valid_to);
+    if (false == CryptoSupplier::x509_get_validity(get(), valid_in, valid_to)) {
+        EVLOG_error << "Could not update validity for certificate: " << get_common_name();
+    }
 }
 
 bool X509Wrapper::is_child(const X509Wrapper& parent) const {

@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <algorithm>
 #include <queue>
 
 #include <evse_security/certificate/x509_wrapper.hpp>
@@ -59,6 +60,10 @@ public:
     /// @brief Searches for the provided hash, throwing a NoCertificateFound if not found
     X509Wrapper find_certificate(const CertificateHashData& hash);
 
+    /// @brief Searches for all the certificates with the provided hash, throwing a NoCertificateFound
+    // if none were found. Can be useful when we have SUB-CAs in multiple bundles
+    std::vector<X509Wrapper> find_certificates_multi(const CertificateHashData& hash);
+
 public:
     std::string to_debug_string();
 
@@ -109,6 +114,19 @@ public:
     /// @brief Builds a proper certificate hierarchy from the provided certificates. The
     /// hierarchy can be incomplete, in case orphan certificates are present in the list
     static X509CertificateHierarchy build_hierarchy(std::vector<X509Wrapper>& certificates);
+
+    template <typename... Args> static X509CertificateHierarchy build_hierarchy(Args... certificates) {
+        X509CertificateHierarchy ordered;
+
+        (std::for_each(certificates.begin(), certificates.end(),
+                       [&ordered](X509Wrapper& cert) { ordered.insert(std::move(cert)); }),
+         ...); // Fold expr
+
+        // Prune the tree
+        ordered.prune();
+
+        return ordered;
+    }
 
 private:
     /// @brief Inserts the certificate in the hierarchy. If it is not a root

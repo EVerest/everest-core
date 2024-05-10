@@ -97,6 +97,20 @@ X509Wrapper X509CertificateHierarchy::find_certificate(const CertificateHashData
     throw NoCertificateFound("Could not find a certificate for hash: " + hash.issuer_name_hash);
 }
 
+std::vector<X509Wrapper> X509CertificateHierarchy::find_certificates_multi(const CertificateHashData& hash) {
+    std::vector<X509Wrapper> certificates;
+
+    for_each([&](X509Node& node) {
+        if (node.hash == hash) {
+            certificates.push_back(node.certificate);
+        }
+
+        return true;
+    });
+
+    return certificates;
+}
+
 std::string X509CertificateHierarchy::to_debug_string() {
     std::stringstream str;
 

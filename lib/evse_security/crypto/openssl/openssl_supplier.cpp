@@ -22,8 +22,6 @@
 #include <openssl/sha.h>
 #include <openssl/x509v3.h>
 
-#define EVSE_OPENSSL_VER_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
-
 #include <evse_security/crypto/openssl/openssl_tpm.hpp>
 
 namespace evse_security {
@@ -483,11 +481,12 @@ std::string OpenSSLSupplier::x509_get_responder_url(X509Handle* handle) {
     return responder_url;
 }
 
-void OpenSSLSupplier::x509_get_validity(X509Handle* handle, std::int64_t& out_valid_in, std::int64_t& out_valid_to) {
+bool OpenSSLSupplier::x509_get_validity(X509Handle* handle, std::int64_t& out_valid_in, std::int64_t& out_valid_to) {
     X509* x509 = get(handle);
 
-    if (x509 == nullptr)
-        return;
+    if (x509 == nullptr) {
+        return false;
+    }
 
     // For valid_in and valid_to
     ASN1_TIME* notBefore = X509_get_notBefore(x509);
@@ -500,6 +499,8 @@ void OpenSSLSupplier::x509_get_validity(X509Handle* handle, std::int64_t& out_va
     ASN1_TIME_diff(&day, &sec, nullptr, notAfter);
     out_valid_to =
         std::chrono::duration_cast<std::chrono::seconds>(days_to_seconds(day)).count() + sec; // Convert days to seconds
+
+    return true;
 }
 
 bool OpenSSLSupplier::x509_is_child(X509Handle* child, X509Handle* parent) {
@@ -670,8 +671,8 @@ KeyValidationResult OpenSSLSupplier::x509_check_private_key(X509Handle* handle, 
     }
 }
 
-bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,
-                                            const std::vector<std::byte>& data) {
+bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::uint8_t>& signature,
+                                            const std::vector<std::uint8_t>& data) {
     OpenSSLProvider provider;
     provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     // extract public key
@@ -719,7 +720,8 @@ bool OpenSSLSupplier::x509_verify_signature(X509Handle* handle, const std::vecto
     }
 }
 
-bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr) {
+CertificateSignRequestResult OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info,
+                                                                std::string& out_csr) {
 
     KeyHandle_ptr gen_key;
     EVP_PKEY_CTX_ptr ctx;
@@ -733,7 +735,7 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     }
 
     if (false == s_generate_key(csr_info.key_info, gen_key, ctx)) {
-        return false;
+        return CertificateSignRequestResult::KeyGenerationError;
     }
 
     EVP_PKEY* key = get(gen_key.get());
@@ -746,13 +748,13 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
 
     if (false == X509_REQ_set_version(x509_req_ptr.get(), n_version)) {
         EVLOG_error << "Failed to set csr version!";
-        return false;
+        return CertificateSignRequestResult::VersioningError;
     }
 
     // set public key of x509 req
     if (false == X509_REQ_set_pubkey(x509_req_ptr.get(), key)) {
         EVLOG_error << "Failed to set csr pubkey!";
-        return false;
+        return CertificateSignRequestResult::PubkeyError;
     }
 
     X509_NAME* x509Name = X509_REQ_get_subject_name(x509_req_ptr.get());
@@ -793,9 +795,10 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     X509_EXTENSION_free(ext_basic_constraints);
     X509_EXTENSION_free(ext_san);
     sk_X509_EXTENSION_free(extensions);
+
     if (!result) {
         EVLOG_error << "Failed to add csr extensions!";
-        return false;
+        return CertificateSignRequestResult::ExtensionsError;
     }
 
     // sign the certificate with the private key
@@ -805,7 +808,7 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
 
     if (x509_signed == false) {
         EVLOG_error << "Failed to sign csr!";
-        return false;
+        return CertificateSignRequestResult::SigningError;
     }
 
     // write csr
@@ -816,10 +819,11 @@ bool OpenSSLSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr
     BIO_get_mem_ptr(bio.get(), &mem_csr);
 
     out_csr = std::string(mem_csr->data, mem_csr->length);
-    return true;
+
+    return CertificateSignRequestResult::Valid;
 }
 
-bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::byte>& out_digest) {
+bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::uint8_t>& out_digest) {
     EVP_MD_CTX_ptr md_context_ptr(EVP_MD_CTX_create());
     if (!md_context_ptr.get()) {
         EVLOG_error << "Could not create EVP_MD_CTX";
@@ -835,11 +839,11 @@ bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::
     bool digest_error = false;
 
     unsigned int sha256_out_length = 0;
-    std::byte sha256_out[EVP_MAX_MD_SIZE];
+    std::uint8_t sha256_out[EVP_MAX_MD_SIZE];
 
     // calculate sha256 of file
     bool processed_file = filesystem_utils::process_file(
-        path, BUFSIZ, [&](const std::byte* bytes, std::size_t read, bool last_chunk) -> bool {
+        path, BUFSIZ, [&](const std::uint8_t* bytes, std::size_t read, bool last_chunk) -> bool {
             if (read > 0) {
                 if (EVP_DigestUpdate(md_context_ptr.get(), bytes, read) == 0) {
                     EVLOG_error << "Error during EVP_DigestUpdate";
@@ -871,8 +875,7 @@ bool OpenSSLSupplier::digest_file_sha256(const fs::path& path, std::vector<std::
     return true;
 }
 
-bool OpenSSLSupplier::decode_base64_signature(const std::string& signature, std::vector<std::byte>& out_decoded) {
-    // decode base64 encoded signature
+template <typename T> static bool base64_decode(const std::string& base64_string, T& out_decoded) {
     EVP_ENCODE_CTX_ptr base64_decode_context_ptr(EVP_ENCODE_CTX_new());
     if (!base64_decode_context_ptr.get()) {
         EVLOG_error << "Error during EVP_ENCODE_CTX_new";
@@ -885,28 +888,83 @@ bool OpenSSLSupplier::decode_base64_signature(const std::string& signature, std:
         return false;
     }
 
-    const unsigned char* signature_str = reinterpret_cast<const unsigned char*>(signature.data());
-    int base64_length = signature.size();
-    std::byte signature_out[base64_length];
+    const unsigned char* encoded_str = reinterpret_cast<const unsigned char*>(base64_string.data());
+    int base64_length = base64_string.size();
 
-    int signature_out_length;
-    if (EVP_DecodeUpdate(base64_decode_context_ptr.get(), reinterpret_cast<unsigned char*>(signature_out),
-                         &signature_out_length, signature_str, base64_length) < 0) {
+    std::uint8_t decoded_out[base64_length];
+
+    int decoded_out_length;
+    if (EVP_DecodeUpdate(base64_decode_context_ptr.get(), reinterpret_cast<unsigned char*>(decoded_out),
+                         &decoded_out_length, encoded_str, base64_length) < 0) {
         EVLOG_error << "Error during DecodeUpdate";
         return false;
     }
 
     int decode_final_out;
-    if (EVP_DecodeFinal(base64_decode_context_ptr.get(), reinterpret_cast<unsigned char*>(signature_out),
+    if (EVP_DecodeFinal(base64_decode_context_ptr.get(), reinterpret_cast<unsigned char*>(decoded_out),
                         &decode_final_out) < 0) {
         EVLOG_error << "Error during EVP_DecodeFinal";
         return false;
     }
 
     out_decoded.clear();
-    out_decoded.insert(std::end(out_decoded), signature_out, signature_out + signature_out_length);
+    out_decoded.insert(std::end(out_decoded), decoded_out, decoded_out + decoded_out_length);
 
     return true;
+}
+
+static bool base64_encode(const unsigned char* bytes_str, int bytes_size, std::string& out_encoded) {
+    EVP_ENCODE_CTX_ptr base64_encode_context_ptr(EVP_ENCODE_CTX_new());
+    if (!base64_encode_context_ptr.get()) {
+        EVLOG_error << "Error during EVP_ENCODE_CTX_new";
+        return false;
+    }
+
+    EVP_EncodeInit(base64_encode_context_ptr.get());
+    // evp_encode_ctx_set_flags(base64_encode_context_ptr.get(), EVP_ENCODE_CTX_NO_NEWLINES); // Of course it's not
+    // public
+
+    if (!base64_encode_context_ptr.get()) {
+        EVLOG_error << "Error during EVP_EncodeInit";
+        return false;
+    }
+
+    int base64_length = ((bytes_size / 3) * 4) + 2;
+    // If it causes issues, replace with 'alloca' on different platform
+    char base64_out[base64_length + 66]; // + 66 bytes for final block
+    int full_len = 0;
+
+    int base64_out_length;
+    if (EVP_EncodeUpdate(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out),
+                         &base64_out_length, bytes_str, bytes_size) < 0) {
+        EVLOG_error << "Error during EVP_EncodeUpdate";
+        return false;
+    }
+    full_len += base64_out_length;
+
+    EVP_EncodeFinal(base64_encode_context_ptr.get(), reinterpret_cast<unsigned char*>(base64_out) + base64_out_length,
+                    &base64_out_length);
+    full_len += base64_out_length;
+
+    out_encoded.assign(base64_out, full_len);
+
+    return true;
+}
+
+bool OpenSSLSupplier::base64_decode_to_bytes(const std::string& base64_string, std::vector<std::uint8_t>& out_decoded) {
+    return base64_decode<std::vector<std::uint8_t>>(base64_string, out_decoded);
+}
+
+bool OpenSSLSupplier::base64_decode_to_string(const std::string& base64_string, std::string& out_decoded) {
+    return base64_decode<std::string>(base64_string, out_decoded);
+}
+
+bool OpenSSLSupplier::base64_encode_from_bytes(const std::vector<std::uint8_t>& bytes, std::string& out_encoded) {
+    return base64_encode(reinterpret_cast<const unsigned char*>(bytes.data()), bytes.size(), out_encoded);
+}
+
+bool OpenSSLSupplier::base64_encode_from_string(const std::string& string, std::string& out_encoded) {
+    return base64_encode(reinterpret_cast<const unsigned char*>(string.data()), string.size(), out_encoded);
 }
 
 } // namespace evse_security

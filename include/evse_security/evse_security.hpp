@@ -142,6 +142,12 @@ public:
     /// @param ocsp_response the actual OCSP data
     void update_ocsp_cache(const CertificateHashData& certificate_hash_data, const std::string& ocsp_response);
 
+    // TODO: Switch to path
+    /// @brief Retrieves from the OCSP cache for the given \p certificate_hash_data
+    /// @param certificate_hash_data identifies the certificate for which the \p ocsp_response is specified
+    /// @return the actual OCSP data or an empty value
+    std::optional<fs::path> retrieve_ocsp_cache(const CertificateHashData& certificate_hash_data);
+
     /// @brief Indicates if a CA certificate for the given \p certificate_type is installed on the filesystem
     /// Supports both CA certificate bundles and directories
     /// @param certificate_type
@@ -159,10 +165,11 @@ public:
     /// @param organization
     /// @param common
     /// @param use_tpm  If the TPM should be used for the CSR request
-    /// @return the PEM formatted certificate signing request
-    std::string generate_certificate_signing_request(LeafCertificateType certificate_type, const std::string& country,
-                                                     const std::string& organization, const std::string& common,
-                                                     bool use_tpm);
+    /// @return the status and an optional PEM formatted certificate signing request string
+    GetCertificateSignRequestResult generate_certificate_signing_request(LeafCertificateType certificate_type,
+                                                                         const std::string& country,
+                                                                         const std::string& organization,
+                                                                         const std::string& common, bool use_tpm);
 
     /// @brief Generates a certificate signing request for the given \p certificate_type , \p country , \p organization
     /// and \p common without using the TPM
@@ -170,9 +177,11 @@ public:
     /// @param country
     /// @param organization
     /// @param common
-    /// @return the PEM formatted certificate signing request
-    std::string generate_certificate_signing_request(LeafCertificateType certificate_type, const std::string& country,
-                                                     const std::string& organization, const std::string& common);
+    /// @return the status and an optional PEM formatted certificate signing request string
+    GetCertificateSignRequestResult generate_certificate_signing_request(LeafCertificateType certificate_type,
+                                                                         const std::string& country,
+                                                                         const std::string& organization,
+                                                                         const std::string& common);
 
     /// @brief Searches the filesystem on the specified directories for the given \p certificate_type and retrieves the
     /// most recent certificate that is already valid and the respective key.  If no certificate is present or no key is
@@ -181,8 +190,10 @@ public:
     /// the leaf including any possible SUBCAs
     /// @param certificate_type type of the leaf certificate
     /// @param encoding specifies PEM or DER format
-    /// @return contains response result
-    GetKeyPairResult get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding);
+    /// @param include_ocsp if OCSP data should be included
+    /// @return contains response result, with info related to the certificate chain and response status
+    GetCertificateInfoResult get_leaf_certificate_info(LeafCertificateType certificate_type, EncodingFormat encoding,
+                                                       bool include_ocsp = false);
 
     /// @brief Checks and updates the symlinks for the V2G leaf certificates and keys to the most recent valid one
     /// @return true if one of the links was updated
@@ -194,6 +205,9 @@ public:
     /// @param certificate_type
     /// @return CA certificate file
     std::string get_verify_file(CaCertificateType certificate_type);
+
+    /// @brief An extension of 'get_verify_file' with error handling included
+    GetCertificateInfoResult get_ca_certificate_info(CaCertificateType certificate_type);
 
     /// @brief Gets the expiry day count for the leaf certificate of the given \p certificate_type
     /// @param certificate_type
@@ -214,12 +228,39 @@ public:
     static bool verify_file_signature(const fs::path& path, const std::string& signing_certificate,
                                       const std::string signature);
 
+    /// @brief Decodes the base64 encoded string to the raw byte representation
+    /// @param base64_string base64 encoded string
+    /// @return decoded byte vector
+    static std::vector<std::uint8_t> base64_decode_to_bytes(const std::string& base64_string);
+
+    /// @brief Decodes the base64 encoded string to string representation
+    /// @param base64_string base64 encoded string
+    /// @return decoded string array
+    static std::string base64_decode_to_string(const std::string& base64_string);
+
+    /// @brief Encodes the raw bytes to a base64 string
+    /// @param decoded_bytes raw byte array
+    /// @return encoded base64 string
+    static std::string base64_encode_from_bytes(const std::vector<std::uint8_t>& bytes);
+
+    /// @brief Encodes the string containing raw bytes to a base64 string
+    /// @param decoded_bytes string containing raw bytes
+    /// @return encoded base64 string
+    static std::string base64_encode_from_string(const std::string& string);
+
 private:
     // Internal versions of the functions do not lock the mutex
     CertificateValidationResult verify_certificate_internal(const std::string& certificate_chain,
                                                             LeafCertificateType certificate_type);
-    GetKeyPairResult get_key_pair_internal(LeafCertificateType certificate_type, EncodingFormat encoding);
+    GetCertificateInfoResult get_leaf_certificate_info_internal(LeafCertificateType certificate_type,
+                                                                EncodingFormat encoding, bool include_ocsp = false);
+    GetCertificateInfoResult get_ca_certificate_info_internal(CaCertificateType certificate_type);
+    std::optional<fs::path> retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data);
     bool is_ca_certificate_installed_internal(CaCertificateType certificate_type);
+
+    GetCertificateSignRequestResult
+    generate_certificate_signing_request_internal(LeafCertificateType certificate_type,
+                                                  const CertificateSigningRequestInfo& info);
 
     /// @brief Determines if the total filesize of certificates is > than the max_filesystem_usage bytes
     bool is_filesystem_full();
@@ -258,6 +299,7 @@ private:
     FRIEND_TEST(EvseSecurityTests, verify_full_filesystem_install_reject);
     FRIEND_TEST(EvseSecurityTests, verify_full_filesystem);
     FRIEND_TEST(EvseSecurityTests, verify_expired_csr_deletion);
+    FRIEND_TEST(EvseSecurityTests, verify_ocsp_garbage_collect);
     FRIEND_TEST(EvseSecurityTestsExpired, verify_expired_leaf_deletion);
 #endif
 };

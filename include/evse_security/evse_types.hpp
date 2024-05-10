@@ -10,6 +10,12 @@
 
 namespace evse_security {
 
+const fs::path PEM_EXTENSION = ".pem";
+const fs::path DER_EXTENSION = ".der";
+const fs::path KEY_EXTENSION = ".key";
+const fs::path TPM_KEY_EXTENSION = ".tkey";
+const fs::path CERT_HASH_EXTENSION = ".hash";
+
 enum class EncodingFormat {
     DER,
     PEM,
@@ -76,12 +82,19 @@ enum class GetInstalledCertificatesStatus {
     NotFound,
 };
 
-enum class GetKeyPairStatus {
+enum class GetCertificateInfoStatus {
     Accepted,
     Rejected,
     NotFound,
     NotFoundValid,
     PrivateKeyNotFound,
+};
+
+enum class GetCertificateSignRequestStatus {
+    Accepted,
+    InvalidRequestedType, ///< Requested a CSR for non CSMS/V2G leafs
+    KeyGenError,          ///< The key could not be generated with the requested/default parameters
+    GenerationError,      ///< Any other error when creating the CSR
 };
 
 // types of evse_security
@@ -123,15 +136,29 @@ struct OCSPRequestData {
 struct OCSPRequestDataList {
     std::vector<OCSPRequestData> ocsp_request_data_list; ///< A list of OCSP request data
 };
-struct KeyPair {
-    fs::path key;                        ///< The path of the PEM or DER encoded private key
-    fs::path certificate;                ///< The path of the PEM or DER encoded certificate chain
-    fs::path certificate_single;         ///< The path of the PEM or DER encoded certificate
-    std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
+
+struct CertificateOCSP {
+    CertificateHashData hash;          ///< Hash of the certificate for which the OCSP data is held
+    std::optional<fs::path> ocsp_path; ///< Path to the file in which the certificate OCSP data is held
 };
-struct GetKeyPairResult {
-    GetKeyPairStatus status;
-    std::optional<KeyPair> pair;
+
+struct CertificateInfo {
+    fs::path key;                               ///< The path of the PEM or DER encoded private key
+    std::optional<fs::path> certificate;        ///< The path of the PEM or DER encoded certificate chain if found
+    std::optional<fs::path> certificate_single; ///< The path of the PEM or DER encoded certificate if found
+    int certificate_count;               ///< The count of certificates, if the chain is available, or 1 if single
+    std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
+    std::vector<CertificateOCSP> ocsp;   ///< The ordered list of OCSP certificate data based on the chain file order
+};
+
+struct GetCertificateInfoResult {
+    GetCertificateInfoStatus status;
+    std::optional<CertificateInfo> info;
+};
+
+struct GetCertificateSignRequestResult {
+    GetCertificateSignRequestStatus status;
+    std::optional<std::string> csr;
 };
 
 namespace conversions {
@@ -141,10 +168,11 @@ std::string leaf_certificate_type_to_string(LeafCertificateType e);
 std::string leaf_certificate_type_to_filename(LeafCertificateType e);
 std::string certificate_type_to_string(CertificateType e);
 std::string hash_algorithm_to_string(HashAlgorithm e);
+HashAlgorithm string_to_hash_algorithm(const std::string& s);
 std::string install_certificate_result_to_string(InstallCertificateResult e);
 std::string delete_certificate_result_to_string(DeleteCertificateResult e);
 std::string get_installed_certificates_status_to_string(GetInstalledCertificatesStatus e);
-std::string get_key_pair_status_to_string(GetKeyPairStatus e);
+std::string get_certificate_info_status_to_string(GetCertificateInfoStatus e);
 } // namespace conversions
 
 } // namespace evse_security

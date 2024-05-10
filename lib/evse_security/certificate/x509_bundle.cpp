@@ -3,6 +3,7 @@
 #include <evse_security/certificate/x509_bundle.hpp>
 
 #include <algorithm>
+#include <fstream>
 
 #include <everest/logging.hpp>
 #include <evse_security/crypto/evse_crypto.hpp>
@@ -43,6 +44,9 @@ X509CertificateBundle::X509CertificateBundle(const std::string& certificate, con
 X509CertificateBundle::X509CertificateBundle(const fs::path& path, const EncodingFormat encoding) :
     hierarchy_invalidated(true) {
     this->path = path;
+
+    // Attempt creation
+    filesystem_utils::create_file_or_dir_if_nonexistent(path);
 
     if (fs::is_directory(path)) {
         source = X509CertificateSource::DIRECTORY;

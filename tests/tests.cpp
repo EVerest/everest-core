@@ -297,7 +297,7 @@ TEST_F(EvseSecurityTests, verify_basics) {
 }
 
 TEST_F(EvseSecurityTests, verify_directory_bundles) {
-    const auto child_cert_str = read_file_to_string(std::filesystem::path("certs/client/csms/CSMS_LEAF.pem"));
+    const auto child_cert_str = read_file_to_string(fs::path("certs/client/csms/CSMS_LEAF.pem"));
 
     ASSERT_EQ(this->evse_security->verify_certificate(child_cert_str, LeafCertificateType::CSMS),
               CertificateValidationResult::Valid);
@@ -396,8 +396,8 @@ TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
 
     std::string csr;
 
-    gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(gen);
+    auto csr_gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_EQ(csr_gen, CertificateSignRequestResult::Valid);
 
     std::cout << "TPM csr: " << std::endl << csr << std::endl;
 
@@ -408,8 +408,8 @@ TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
 
     csr_info.key_info = info;
 
-    gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(gen);
+    csr_gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
+    ASSERT_EQ(csr_gen, CertificateSignRequestResult::Valid);
 
     std::cout << "normal csr: " << std::endl << csr << std::endl;
 }
@@ -463,10 +463,27 @@ TEST_F(EvseSecurityTests, verify_v2g_cert_02) {
     ASSERT_TRUE(result != InstallCertificateResult::Accepted);
 }
 
+TEST_F(EvseSecurityTests, retrieve_root_ca) {
+    std::string path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
+    std::string retrieved_path = this->evse_security->get_verify_file(CaCertificateType::V2G);
+
+    ASSERT_EQ(path, retrieved_path);
+}
+
 TEST_F(EvseSecurityTests, install_root_ca_01) {
     const auto v2g_root_ca = read_file_to_string(fs::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
     const auto result = this->evse_security->install_ca_certificate(v2g_root_ca, CaCertificateType::V2G);
     ASSERT_TRUE(result == InstallCertificateResult::Accepted);
+
+    std::string path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
+    ASSERT_EQ(this->evse_security->get_verify_file(CaCertificateType::V2G), path);
+
+    const auto read_v2g_root_ca = read_file_to_string(path);
+    X509CertificateBundle root_bundle(read_v2g_root_ca, EncodingFormat::PEM);
+    X509Wrapper new_root(v2g_root_ca, EncodingFormat::PEM);
+
+    // Assert it was really installed
+    ASSERT_TRUE(root_bundle.contains_certificate(new_root));
 }
 
 TEST_F(EvseSecurityTests, install_root_ca_02) {
@@ -732,7 +749,8 @@ TEST_F(EvseSecurityTests, get_installed_certificates_and_delete_secc_leaf) {
 }
 
 TEST_F(EvseSecurityTests, leaf_cert_starts_in_future_accepted) {
-    const auto v2g_keypair_before = this->evse_security->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
+    const auto v2g_keypair_before =
+        this->evse_security->get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM);
 
     const auto new_root_ca = read_file_to_string(std::filesystem::path("future_leaf/V2G_ROOT_CA.pem"));
     const auto result_ca = this->evse_security->install_ca_certificate(new_root_ca, CaCertificateType::V2G);
@@ -747,10 +765,11 @@ TEST_F(EvseSecurityTests, leaf_cert_starts_in_future_accepted) {
     ASSERT_TRUE(result_client == InstallCertificateResult::Accepted);
 
     // Check: The certificate is installed, but it isn't actually used
-    const auto v2g_keypair_after = this->evse_security->get_key_pair(LeafCertificateType::V2G, EncodingFormat::PEM);
-    ASSERT_EQ(v2g_keypair_after.pair.value().certificate, v2g_keypair_before.pair.value().certificate);
-    ASSERT_EQ(v2g_keypair_after.pair.value().key, v2g_keypair_before.pair.value().key);
-    ASSERT_EQ(v2g_keypair_after.pair.value().password, v2g_keypair_before.pair.value().password);
+    const auto v2g_keypair_after =
+        this->evse_security->get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM);
+    ASSERT_EQ(v2g_keypair_after.info.value().certificate, v2g_keypair_before.info.value().certificate);
+    ASSERT_EQ(v2g_keypair_after.info.value().key, v2g_keypair_before.info.value().key);
+    ASSERT_EQ(v2g_keypair_after.info.value().password, v2g_keypair_before.info.value().password);
 }
 
 TEST_F(EvseSecurityTests, expired_leaf_cert_rejected) {
@@ -783,6 +802,186 @@ TEST_F(EvseSecurityTests, verify_full_filesystem_install_reject) {
         read_file_to_string(std::filesystem::path("certs/to_be_installed/INSTALL_TEST_ROOT_CA1.pem"));
     const auto result = this->evse_security->install_ca_certificate(new_root_ca_1, CaCertificateType::CSMS);
     ASSERT_TRUE(result == InstallCertificateResult::CertificateStoreMaxLengthExceeded);
+}
+
+TEST_F(EvseSecurityTests, verify_oscp_cache) {
+    std::string ocsp_mock_response_data = "OCSP_MOCK_RESPONSE_DATA";
+    std::string ocsp_mock_response_data_v2 = "OCSP_MOCK_RESPONSE_DATA_V2";
+
+    OCSPRequestDataList data = this->evse_security->get_v2g_ocsp_request_data();
+
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+
+    // Mock a response
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        this->evse_security->update_ocsp_cache(ocsp.certificate_hash_data.value(), ocsp_mock_response_data);
+    }
+
+    // Make sure all info was written and that it is correct
+    fs::path ocsp_path = "certs/ca/v2g/ocsp";
+
+    ASSERT_TRUE(fs::exists(ocsp_path));
+
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        std::optional<std::string> data = this->evse_security->retrieve_ocsp_cache(ocsp.certificate_hash_data.value());
+        ASSERT_TRUE(data.has_value());
+        ASSERT_EQ(read_file_to_string(data.value()), ocsp_mock_response_data);
+    }
+
+    int entries = 0;
+    for (const auto& ocsp_entry : fs::directory_iterator(ocsp_path)) {
+        ASSERT_TRUE(ocsp_entry.is_regular_file());
+        ASSERT_TRUE(ocsp_entry.path().has_extension());
+
+        auto ext = ocsp_entry.path().extension();
+
+        ASSERT_TRUE(ext == DER_EXTENSION || ext == CERT_HASH_EXTENSION);
+
+        if (ext == DER_EXTENSION) {
+            ASSERT_EQ(read_file_to_string(ocsp_entry.path()), ocsp_mock_response_data);
+        } else if (ext == CERT_HASH_EXTENSION) {
+            CertificateHashData hash;
+            ASSERT_TRUE(filesystem_utils::read_hash_from_file(ocsp_entry.path(), hash));
+
+            // Check that is is contained
+            auto it =
+                std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(),
+                             [&hash](OCSPRequestData& req_data) { return (hash == req_data.certificate_hash_data); });
+
+            ASSERT_NE(it, data.ocsp_request_data_list.end());
+        }
+
+        entries++;
+    }
+
+    ASSERT_EQ(entries, 4); // 2 for hash, 2 for data
+
+    // Write data again to test over-writing
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        this->evse_security->update_ocsp_cache(ocsp.certificate_hash_data.value(), ocsp_mock_response_data_v2);
+    }
+
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        std::optional<std::string> data = this->evse_security->retrieve_ocsp_cache(ocsp.certificate_hash_data.value());
+        ASSERT_TRUE(data.has_value());
+        ASSERT_EQ(read_file_to_string(data.value()), ocsp_mock_response_data_v2);
+    }
+
+    // Make sure the info was over-written
+    entries = 0;
+    for (const auto& ocsp_entry : fs::directory_iterator(ocsp_path)) {
+        ASSERT_TRUE(ocsp_entry.is_regular_file());
+        ASSERT_TRUE(ocsp_entry.path().has_extension());
+
+        auto ext = ocsp_entry.path().extension();
+
+        ASSERT_TRUE(ext == DER_EXTENSION || ext == CERT_HASH_EXTENSION);
+
+        if (ext == DER_EXTENSION) {
+            ASSERT_EQ(read_file_to_string(ocsp_entry.path()), ocsp_mock_response_data_v2);
+        } else if (ext == CERT_HASH_EXTENSION) {
+            CertificateHashData hash;
+            ASSERT_TRUE(filesystem_utils::read_hash_from_file(ocsp_entry.path(), hash));
+
+            // Check that is is contained
+            auto it =
+                std::find_if(data.ocsp_request_data_list.begin(), data.ocsp_request_data_list.end(),
+                             [&hash](OCSPRequestData& req_data) { return (hash == req_data.certificate_hash_data); });
+
+            ASSERT_NE(it, data.ocsp_request_data_list.end());
+        }
+
+        entries++;
+    }
+
+    ASSERT_EQ(entries, 4); // 4 still, since we have to over-write
+
+    // Retrieve OCSP data along with certificates
+    GetCertificateInfoResult response =
+        this->evse_security->get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM, true);
+
+    ASSERT_EQ(response.status, GetCertificateInfoStatus::Accepted);
+    ASSERT_TRUE(response.info.has_value());
+
+    CertificateInfo info = response.info.value();
+
+    ASSERT_EQ(info.certificate_count, 3);
+    ASSERT_EQ(info.ocsp.size(), 3);
+
+    // Skip first that does not have OCSP data
+    for (int i = 1; i < info.ocsp.size(); ++i) {
+        auto& ocsp = info.ocsp[i];
+
+        ASSERT_TRUE(ocsp.ocsp_path.has_value());
+        ASSERT_EQ(read_file_to_string(ocsp.ocsp_path.value()), ocsp_mock_response_data_v2);
+    }
+}
+
+TEST_F(EvseSecurityTests, verify_ocsp_garbage_collect) {
+    std::string ocsp_mock_response_data = "OCSP_MOCK_RESPONSE_DATA";
+
+    OCSPRequestDataList data = this->evse_security->get_v2g_ocsp_request_data();
+    ASSERT_EQ(data.ocsp_request_data_list.size(), 2);
+
+    // Mock a response
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        this->evse_security->update_ocsp_cache(ocsp.certificate_hash_data.value(), ocsp_mock_response_data);
+    }
+
+    // Make sure all info was written and that it is correct
+    fs::path ocsp_path = "certs/ca/v2g/ocsp";
+    fs::path ocsp_path2 = "certs/client/cso/ocsp";
+
+    ASSERT_TRUE(fs::exists(ocsp_path));
+
+    for (auto& ocsp : data.ocsp_request_data_list) {
+        std::optional<fs::path> data = this->evse_security->retrieve_ocsp_cache(ocsp.certificate_hash_data.value());
+        ASSERT_TRUE(data.has_value());
+        ASSERT_EQ(read_file_to_string(data.value()), ocsp_mock_response_data);
+    }
+
+    evse_security->max_fs_certificate_store_entries = 1;
+    ASSERT_TRUE(evse_security->is_filesystem_full());
+
+    // Garbage collect to see that we don't delete improper data
+    this->evse_security->garbage_collect();
+
+    ASSERT_TRUE(fs::exists(ocsp_path));
+    ASSERT_TRUE(fs::exists(ocsp_path2));
+
+    // Check existence of OCSP data
+    int existing = 0;
+    for (auto& ocsp_path : {ocsp_path, ocsp_path2}) {
+        for (auto& ocsp_entry : fs::directory_iterator(ocsp_path)) {
+            auto ext = ocsp_entry.path().extension();
+            if (ext == DER_EXTENSION || ext == CERT_HASH_EXTENSION) {
+                existing++;
+            }
+        }
+    }
+
+    ASSERT_EQ(existing, 8);
+
+    // Delete the certificates that had their OCSP data appended
+    fs::remove("certs/ca/v2g/V2G_CA_BUNDLE.pem");
+    fs::remove("certs/ca/v2g/V2G_ROOT_CA.pem");
+    fs::remove("certs/client/cso/CPO_CERT_CHAIN.pem");
+
+    // Garbage collect again
+    this->evse_security->garbage_collect();
+
+    // Check deletion
+    existing = 0;
+    for (auto& ocsp_path : {ocsp_path, ocsp_path2}) {
+        for (auto& ocsp_entry : fs::directory_iterator(ocsp_path)) {
+            auto ext = ocsp_entry.path().extension();
+            if (ext == DER_EXTENSION || ext == CERT_HASH_EXTENSION) {
+                existing++;
+            }
+        }
+    }
+
+    ASSERT_EQ(existing, 0);
 }
 
 TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
@@ -869,8 +1068,7 @@ TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
 
 TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
     // Generate a CSR
-    std::string csr =
-        evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
+    auto csr = evse_security->generate_certificate_signing_request(LeafCertificateType::CSMS, "DE", "Pionix", "NA");
     fs::path csr_key_path = evse_security->managed_csr.begin()->first;
 
     // Simulate a full fs else no deletion will take place
@@ -913,6 +1111,22 @@ TEST_F(EvseSecurityTests, verify_expired_csr_deletion) {
     // Garbage collect should delete the expired managed key
     evse_security->garbage_collect();
     ASSERT_FALSE(fs::exists(csr_key_path));
+}
+
+TEST_F(EvseSecurityTests, verify_base64) {
+    std::string test_string1 = "U29tZSBkYXRhIGZvciB0ZXN0IGNhc2VzLiBTb21lIGRhdGEgZm9yIHRlc3QgY2FzZXMuIFNvbWUgZGF0YSBmb3I"
+                               "gdGVzdCBjYXNlcy4gU29tZSBkYXRhIGZvciB0ZXN0IGNhc2VzLg==";
+
+    std::string decoded = this->evse_security->base64_decode_to_string(test_string1);
+    ASSERT_EQ(
+        decoded,
+        std::string(
+            "Some data for test cases. Some data for test cases. Some data for test cases. Some data for test cases."));
+
+    std::string out_encoded = this->evse_security->base64_encode_from_string(decoded);
+    out_encoded.erase(std::remove(out_encoded.begin(), out_encoded.end(), '\n'), out_encoded.cend());
+
+    ASSERT_EQ(test_string1, out_encoded);
 }
 
 } // namespace evse_security

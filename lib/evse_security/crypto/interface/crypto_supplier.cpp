@@ -54,9 +54,9 @@ std::string AbstractCryptoSupplier::x509_get_common_name(X509Handle* handle) {
     default_crypto_supplier_usage_error() return {};
 }
 
-void AbstractCryptoSupplier::x509_get_validity(X509Handle* handle, std::int64_t& out_valid_in,
+bool AbstractCryptoSupplier::x509_get_validity(X509Handle* handle, std::int64_t& out_valid_in,
                                                std::int64_t& out_valid_to) {
-    default_crypto_supplier_usage_error()
+    default_crypto_supplier_usage_error() return false;
 }
 
 bool AbstractCryptoSupplier::x509_is_selfsigned(X509Handle* handle) {
@@ -86,21 +86,35 @@ KeyValidationResult AbstractCryptoSupplier::x509_check_private_key(X509Handle* h
     default_crypto_supplier_usage_error() return KeyValidationResult::Unknown;
 }
 
-bool AbstractCryptoSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::byte>& signature,
-                                                   const std::vector<std::byte>& data) {
+bool AbstractCryptoSupplier::x509_verify_signature(X509Handle* handle, const std::vector<std::uint8_t>& signature,
+                                                   const std::vector<std::uint8_t>& data) {
     default_crypto_supplier_usage_error() return false;
 }
 
-bool AbstractCryptoSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info, std::string& out_csr) {
+CertificateSignRequestResult AbstractCryptoSupplier::x509_generate_csr(const CertificateSigningRequestInfo& csr_info,
+                                                                       std::string& out_csr) {
+    default_crypto_supplier_usage_error() return CertificateSignRequestResult::Unknown;
+}
+
+bool AbstractCryptoSupplier::digest_file_sha256(const fs::path& path, std::vector<std::uint8_t>& out_digest) {
     default_crypto_supplier_usage_error() return false;
 }
 
-bool AbstractCryptoSupplier::digest_file_sha256(const fs::path& path, std::vector<std::byte>& out_digest) {
+bool AbstractCryptoSupplier::base64_decode_to_bytes(const std::string& base64_string,
+                                                    std::vector<std::uint8_t>& out_decoded) {
     default_crypto_supplier_usage_error() return false;
 }
 
-bool AbstractCryptoSupplier::decode_base64_signature(const std::string& signature,
-                                                     std::vector<std::byte>& out_decoded) {
+bool AbstractCryptoSupplier::base64_decode_to_string(const std::string& base64_string, std::string& out_decoded) {
+    default_crypto_supplier_usage_error() return false;
+}
+
+bool AbstractCryptoSupplier::base64_encode_from_bytes(const std::vector<std::uint8_t>& bytes,
+                                                      std::string& out_encoded) {
+    default_crypto_supplier_usage_error() return false;
+}
+
+bool AbstractCryptoSupplier::base64_encode_from_string(const std::string& string, std::string& out_encoded) {
     default_crypto_supplier_usage_error() return false;
 }
 

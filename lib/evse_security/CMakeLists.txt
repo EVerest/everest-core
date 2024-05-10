@@ -14,6 +14,7 @@ target_sources(evse_security
         utils/evse_filesystem.cpp
 
         crypto/interface/crypto_supplier.cpp
+        crypto/interface/crypto_types.cpp
         crypto/openssl/openssl_supplier.cpp
         crypto/openssl/openssl_tpm.cpp
 )

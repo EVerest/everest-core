@@ -15,7 +15,7 @@ enum class CryptoKeyType {
     EC_secp384r1,  // P-384, ~equiv to rsa 7680
     RSA_TPM20,     // Default TPM RSA, only option allowed for TPM (universal support), 2048 bits
     RSA_3072,      // Default RSA. Protection lifetime: ~2030
-    RSA_7680,      // Protection lifetime: >2031
+    RSA_7680,      // Protection lifetime: >2031. Very long generation time 8-40s on 16 core PC
 };
 
 enum class KeyValidationResult {
@@ -23,6 +23,16 @@ enum class KeyValidationResult {
     KeyLoadFailure, // The key could not be loaded, might be an password or invalid string
     Invalid,        // The key is not linked to the specified certificate
     Unknown,        // Unknown error, not related to provider validation
+};
+
+enum class CertificateSignRequestResult {
+    Valid,
+    KeyGenerationError, // Error when generating the key, maybe invalid key type
+    VersioningError,    // The version could not be set
+    PubkeyError,        // The public key could not be attached
+    ExtensionsError,    // The extensions could not be appended
+    SigningError,       // The CSR could not be signed, maybe key or signing algo invalid
+    Unknown,            // Any other error
 };
 
 struct KeyGenerationInfo {
@@ -76,5 +86,9 @@ using KeyHandle_ptr = std::unique_ptr<KeyHandle>;
 
 // Transforms a duration of days into seconds
 using days_to_seconds = std::chrono::duration<std::int64_t, std::ratio<86400>>;
+
+namespace conversions {
+std::string get_certificate_sign_request_result_to_string(CertificateSignRequestResult e);
+}
 
 } // namespace evse_security

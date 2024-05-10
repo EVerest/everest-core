@@ -41,15 +41,6 @@ TEST_F(OpenSSLSupplierTest, generate_key_RSA_3072) {
     ASSERT_TRUE(res);
 }
 
-TEST_F(OpenSSLSupplierTest, generate_key_RSA_7680) {
-    KeyGenerationInfo info = {
-        CryptoKeyType::RSA_7680, false, std::nullopt, std::nullopt, std::nullopt,
-    };
-    KeyHandle_ptr key;
-    auto res = OpenSSLSupplier::generate_key(info, key);
-    ASSERT_TRUE(res);
-}
-
 TEST_F(OpenSSLSupplierTest, generate_key_EC_prime256v1) {
     KeyGenerationInfo info = {
         CryptoKeyType::EC_prime256v1, false, std::nullopt, std::nullopt, std::nullopt,
@@ -113,7 +104,7 @@ TEST_F(OpenSSLSupplierTest, x509_generate_csr) {
         .ip_address = std::nullopt,
         {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
     auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
 
     std::ofstream out("csr.pem");
     out << csr;
@@ -133,7 +124,7 @@ TEST_F(OpenSSLSupplierTest, x509_generate_csr_dns) {
         .ip_address = std::nullopt,
         {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
     auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
 
 #ifdef OUTPUT_CSR
     std::ofstream out("csr_dns.pem");
@@ -155,7 +146,7 @@ TEST_F(OpenSSLSupplierTest, x509_generate_csr_ip) {
         .ip_address = "127.0.0.1",
         {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
     auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
 
 #ifdef OUTPUT_CSR
     std::ofstream out("csr_ip.pem");
@@ -177,7 +168,7 @@ TEST_F(OpenSSLSupplierTest, x509_generate_csr_dns_ip) {
         .ip_address = "127.0.0.1",
         {CryptoKeyType::EC_prime256v1, false, std::nullopt, "pki/csr_key.pem", std::nullopt}};
     auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
 
 #ifdef OUTPUT_CSR
     std::ofstream out("csr_dns_ip.pem");

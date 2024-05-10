@@ -103,13 +103,14 @@ static fs::path get_private_key_path_of_certificate(const X509Wrapper& certifica
 
             if (fs::exists(potential_keyfile)) {
                 try {
-                    fsstd::ifstream file(potential_keyfile, std::ios::binary);
-                    std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                    std::string private_key;
 
-                    if (KeyValidationResult::Valid ==
-                        CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
-                        EVLOG_debug << "Key found for certificate at path: " << potential_keyfile;
-                        return potential_keyfile;
+                    if (filesystem_utils::read_from_file(potential_keyfile, private_key)) {
+                        if (KeyValidationResult::Valid ==
+                            CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                            EVLOG_debug << "Key found for certificate at path: " << potential_keyfile;
+                            return potential_keyfile;
+                        }
                     }
                 } catch (const std::exception& e) {
                     EVLOG_debug << "Could not load or verify private key at: " << potential_keyfile << ": " << e.what();
@@ -123,13 +124,14 @@ static fs::path get_private_key_path_of_certificate(const X509Wrapper& certifica
             auto key_file_path = entry.path();
             if (is_keyfile(key_file_path)) {
                 try {
-                    fsstd::ifstream file(key_file_path, std::ios::binary);
-                    std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+                    std::string private_key;
 
-                    if (KeyValidationResult::Valid ==
-                        CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
-                        EVLOG_debug << "Key found for certificate at path: " << key_file_path;
-                        return key_file_path;
+                    if (filesystem_utils::read_from_file(key_file_path, private_key)) {
+                        if (KeyValidationResult::Valid ==
+                            CryptoSupplier::x509_check_private_key(certificate.get(), private_key, password)) {
+                            EVLOG_debug << "Key found for certificate at path: " << key_file_path;
+                            return key_file_path;
+                        }
                     }
                 } catch (const std::exception& e) {
                     EVLOG_debug << "Could not load or verify private key at: " << key_file_path << ": " << e.what();
@@ -151,8 +153,11 @@ static fs::path get_private_key_path_of_certificate(const X509Wrapper& certifica
 /// present in a bundle too
 static std::set<fs::path> get_certificate_path_of_key(const fs::path& key, const fs::path& certificate_path_directory,
                                                       const std::optional<std::string> password) {
-    fsstd::ifstream file(key, std::ios::binary);
-    std::string private_key((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    std::string private_key;
+
+    if (false == filesystem_utils::read_from_file(key, private_key)) {
+        throw NoPrivateKeyException("Could not read private key from path: " + private_key);
+    }
 
     // Before iterating all bundles, check by certificates from key filename
     fs::path cert_filename = key;
@@ -226,6 +231,7 @@ EvseSecurity::EvseSecurity(const FilePaths& file_paths, const std::optional<std:
                            const std::optional<std::chrono::seconds>& csr_expiry,
                            const std::optional<std::chrono::seconds>& garbage_collect_time) :
     private_key_password(private_key_password) {
+    static_assert(sizeof(std::uint8_t) == 1, "uint8_t not equal to 1 byte!");
 
     std::vector<fs::path> dirs = {
         file_paths.directories.csms_leaf_cert_directory,
@@ -397,12 +403,8 @@ DeleteCertificateResult EvseSecurity::delete_certificate(const CertificateHashDa
             X509CertificateBundle root_bundle(ca_bundle_path_map[load], EncodingFormat::PEM);
             X509CertificateBundle leaf_bundle(leaf_certificate_path, EncodingFormat::PEM);
 
-            auto full_list = root_bundle.split();
-            for (X509Wrapper& certif : leaf_bundle.split()) {
-                full_list.push_back(std::move(certif));
-            }
-
-            X509CertificateHierarchy hierarchy = X509CertificateHierarchy::build_hierarchy(full_list);
+            X509CertificateHierarchy hierarchy =
+                std::move(X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_bundle.split()));
 
             EVLOG_debug << "Delete hierarchy:(" << leaf_certificate_path.string() << ")\n"
                         << hierarchy.to_debug_string();
@@ -585,59 +587,64 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
         certificate_types.end()) {
 
         // Internal since we already acquired the lock
-        const auto secc_key_pair = this->get_key_pair_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
-        if (secc_key_pair.status == GetKeyPairStatus::Accepted) {
+        const auto secc_key_pair =
+            this->get_leaf_certificate_info_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
+        if (secc_key_pair.status == GetCertificateInfoStatus::Accepted) {
             fs::path certificate_path;
 
-            if (secc_key_pair.pair.value().certificate.empty() == false)
-                certificate_path = secc_key_pair.pair.value().certificate;
+            if (secc_key_pair.info.value().certificate.has_value() == false)
+                certificate_path = secc_key_pair.info.value().certificate.value();
             else
-                certificate_path = secc_key_pair.pair.value().certificate_single;
+                certificate_path = secc_key_pair.info.value().certificate_single.value();
 
-            // Leaf V2G chain
-            X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
+            try {
+                // Leaf V2G chain
+                X509CertificateBundle leaf_bundle(certificate_path, EncodingFormat::PEM);
 
-            // V2G chain
-            const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
-            X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+                // V2G chain
+                const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+                X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
 
-            // Merge the bundles
-            for (auto& certif : leaf_bundle.split()) {
-                ca_bundle.add_certificate_unique(std::move(certif));
-            }
-
-            // Create the certificate hierarchy
-            X509CertificateHierarchy& hierarchy = ca_bundle.get_certficate_hierarchy();
-            EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
-
-            for (auto& root : hierarchy.get_hierarchy()) {
-                CertificateHashDataChain certificate_hash_data_chain;
-
-                certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
-
-                // Since the hierarchy starts with V2G and SubCa1/SubCa2 we have to add:
-                // the leaf as the first when returning
-                // * Leaf
-                // --- SubCa1
-                // --- SubCa2
-                std::vector<CertificateHashData> hierarchy_hash_data;
-
-                X509CertificateHierarchy::for_each_descendant(
-                    [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
-
-                if (hierarchy_hash_data.size()) {
-                    // Leaf is the last
-                    certificate_hash_data_chain.certificate_hash_data = hierarchy_hash_data.back();
-                    hierarchy_hash_data.pop_back();
-
-                    // Add others in order, except last
-                    for (const auto& hash_data : hierarchy_hash_data) {
-                        certificate_hash_data_chain.child_certificate_hash_data.push_back(hash_data);
-                    }
-
-                    // Add to our chains
-                    certificate_chains.push_back(certificate_hash_data_chain);
+                // Merge the bundles
+                for (auto& certif : leaf_bundle.split()) {
+                    ca_bundle.add_certificate_unique(std::move(certif));
                 }
+
+                // Create the certificate hierarchy
+                X509CertificateHierarchy& hierarchy = ca_bundle.get_certficate_hierarchy();
+                EVLOG_debug << "Hierarchy:(V2GCertificateChain)\n" << hierarchy.to_debug_string();
+
+                for (auto& root : hierarchy.get_hierarchy()) {
+                    CertificateHashDataChain certificate_hash_data_chain;
+
+                    certificate_hash_data_chain.certificate_type = CertificateType::V2GCertificateChain;
+
+                    // Since the hierarchy starts with V2G and SubCa1/SubCa2 we have to add:
+                    // the leaf as the first when returning
+                    // * Leaf
+                    // --- SubCa1
+                    // --- SubCa2
+                    std::vector<CertificateHashData> hierarchy_hash_data;
+
+                    X509CertificateHierarchy::for_each_descendant(
+                        [&](const X509Node& child, int depth) { hierarchy_hash_data.push_back(child.hash); }, root);
+
+                    if (hierarchy_hash_data.size()) {
+                        // Leaf is the last
+                        certificate_hash_data_chain.certificate_hash_data = hierarchy_hash_data.back();
+                        hierarchy_hash_data.pop_back();
+
+                        // Add others in order, except last
+                        for (const auto& hash_data : hierarchy_hash_data) {
+                            certificate_hash_data_chain.child_certificate_hash_data.push_back(hash_data);
+                        }
+
+                        // Add to our chains
+                        certificate_chains.push_back(certificate_hash_data_chain);
+                    }
+                }
+            } catch (const CertificateLoadException& e) {
+                EVLOG_error << "Could not load installed leaf certificates: " << e.what();
             }
         }
     }
@@ -666,8 +673,12 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
     }
 
     for (const auto& unique_dir : directories) {
-        X509CertificateBundle ca_bundle(unique_dir, EncodingFormat::PEM);
-        count += ca_bundle.get_certificate_count();
+        try {
+            X509CertificateBundle ca_bundle(unique_dir, EncodingFormat::PEM);
+            count += ca_bundle.get_certificate_count();
+        } catch (const CertificateLoadException& e) {
+            EVLOG_error << "Could not load bundle for certificate count: " << e.what();
+        }
     }
 
     // V2G Chain
@@ -676,8 +687,12 @@ int EvseSecurity::get_count_of_installed_certificates(const std::vector<Certific
         auto leaf_dir = this->directories.secc_leaf_cert_directory;
 
         // Load all from chain, including expired/unused
-        X509CertificateBundle leaf_bundle(leaf_dir, EncodingFormat::PEM);
-        count += leaf_bundle.get_certificate_count();
+        try {
+            X509CertificateBundle leaf_bundle(leaf_dir, EncodingFormat::PEM);
+            count += leaf_bundle.get_certificate_count();
+        } catch (const CertificateLoadException& e) {
+            EVLOG_error << "Could not load bundle for certificate count: " << e.what();
+        }
     }
 
     return count;
@@ -687,15 +702,16 @@ OCSPRequestDataList EvseSecurity::get_v2g_ocsp_request_data() {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
     try {
-        const auto secc_key_pair = this->get_key_pair_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
+        const auto secc_key_pair =
+            this->get_leaf_certificate_info_internal(LeafCertificateType::V2G, EncodingFormat::PEM);
 
-        if (secc_key_pair.status != GetKeyPairStatus::Accepted or !secc_key_pair.pair.has_value()) {
+        if (secc_key_pair.status != GetCertificateInfoStatus::Accepted or !secc_key_pair.info.has_value()) {
             EVLOG_error << "Could not get key pair, for v2g ocsp request!";
             return OCSPRequestDataList();
         }
 
-        std::vector<X509Wrapper> chain =
-            std::move(X509CertificateBundle(secc_key_pair.pair.value().certificate, EncodingFormat::PEM).split());
+        std::vector<X509Wrapper> chain = std::move(
+            X509CertificateBundle(secc_key_pair.info.value().certificate.value(), EncodingFormat::PEM).split());
         return get_ocsp_request_data_internal(this->ca_bundle_path_map.at(CaCertificateType::V2G), chain);
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not get v2g ocsp cache, certificate load failure: " << e.what();
@@ -726,10 +742,9 @@ OCSPRequestDataList get_ocsp_request_data_internal(fs::path& root_path, std::vec
 
     try {
         std::vector<X509Wrapper> full_hierarchy = X509CertificateBundle(root_path, EncodingFormat::PEM).split();
-        std::move(std::begin(leaf_chain), std::end(leaf_chain), std::back_inserter(full_hierarchy));
 
         // Build the full hierarchy
-        auto hierarchy = X509CertificateHierarchy::build_hierarchy(full_hierarchy);
+        auto hierarchy = std::move(X509CertificateHierarchy::build_hierarchy(full_hierarchy, leaf_chain));
 
         // Search for the first valid root, and collect all the chain
         for (auto& root : hierarchy.get_hierarchy()) {
@@ -744,8 +759,18 @@ OCSPRequestDataList get_ocsp_request_data_internal(fs::path& root_path, std::vec
                     if (!responder_url.empty()) {
                         try {
                             auto certificate_hash_data = hierarchy.get_certificate_hash(certificate);
-                            OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
-                            ocsp_request_data_list.push_back(ocsp_request_data);
+
+                            // Do not insert duplicate hashes, in case we have multiple SUBCAs in different bundles
+                            auto it =
+                                std::find_if(std::begin(ocsp_request_data_list), std::end(ocsp_request_data_list),
+                                             [&certificate_hash_data](const OCSPRequestData& existing_data) {
+                                                 return existing_data.certificate_hash_data == certificate_hash_data;
+                                             });
+
+                            if (it == ocsp_request_data_list.end()) {
+                                OCSPRequestData ocsp_request_data = {certificate_hash_data, responder_url};
+                                ocsp_request_data_list.push_back(ocsp_request_data);
+                            }
                         } catch (const NoCertificateFound& e) {
                             EVLOG_error << "Could not find hash for certificate: " << certificate.get_common_name()
                                         << " with error: " << e.what();
@@ -775,32 +800,139 @@ void EvseSecurity::update_ocsp_cache(const CertificateHashData& certificate_hash
                                      const std::string& ocsp_response) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
+    EVLOG_info << "Updating OCSP cache";
+
+    // TODO(ioan): shouldn't we also do this for the MO?
     const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+    auto leaf_cert_dir = this->directories.secc_leaf_cert_directory; // V2G leafs
 
     try {
         X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
-        const auto certificates_of_bundle = ca_bundle.split();
+        X509CertificateBundle leaf_bundle(leaf_cert_dir, EncodingFormat::PEM);
 
-        for (const auto& cert : certificates_of_bundle) {
-            if (cert == certificate_hash_data) {
+        auto certificate_hierarchy =
+            std::move(X509CertificateHierarchy::build_hierarchy(ca_bundle.split(), leaf_bundle.split()));
+
+        // If we already have the hash, over-write, else create a new one
+        try {
+            // Find the certificates, can me multiple if we have SUBcas in multiple bundles
+            std::vector<X509Wrapper> certs = certificate_hierarchy.find_certificates_multi(certificate_hash_data);
+
+            for (auto& cert : certs) {
                 EVLOG_debug << "Writing OCSP Response to filesystem";
-                if (!cert.get_file().has_value()) {
-                    continue;
+                if (cert.get_file().has_value()) {
+                    const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
+
+                    if (false == fs::exists(ocsp_path)) {
+                        filesystem_utils::create_file_or_dir_if_nonexistent(ocsp_path);
+                    } else {
+                        // Iterate existing hashes
+                        for (const auto& hash_entry : fs::directory_iterator(ocsp_path)) {
+                            if (hash_entry.is_regular_file()) {
+                                CertificateHashData read_hash;
+
+                                if (filesystem_utils::read_hash_from_file(hash_entry.path(), read_hash) &&
+                                    read_hash == certificate_hash_data) {
+                                    EVLOG_debug << "OCSP certificate hash already found, over-writing!";
+
+                                    // Over-write the data file and return
+                                    fs::path ocsp_path = hash_entry.path();
+                                    ocsp_path.replace_extension(DER_EXTENSION);
+
+                                    // Discard previous content
+                                    std::ofstream fs(ocsp_path.c_str(), std::ios::trunc);
+                                    fs << ocsp_response;
+                                    fs.close();
+
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    // Randomize filename, since multiple certificates can be stored in same bundle
+                    const auto name = filesystem_utils::get_random_file_name("_ocsp");
+
+                    const auto ocsp_file_path = (ocsp_path / name) += DER_EXTENSION;
+                    const auto hash_file_path = (ocsp_path / name) += CERT_HASH_EXTENSION;
+
+                    // Write out OCSP data
+                    try {
+                        std::ofstream fs(ocsp_file_path.c_str());
+                        fs << ocsp_response;
+                        fs.close();
+                    } catch (const std::exception& e) {
+                        EVLOG_error << "Could not write OCSP certificate data!";
+                    }
+
+                    if (false == filesystem_utils::write_hash_to_file(hash_file_path, certificate_hash_data)) {
+                        EVLOG_error << "Could not write OCSP certificate hash!";
+                    }
+
+                    EVLOG_debug << "OCSP certificate hash not found, written at path: " << ocsp_file_path;
+                } else {
+                    EVLOG_error << "Could not find OCSP cache patch directory!";
                 }
-                const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
-                if (!fs::exists(ocsp_path)) {
-                    fs::create_directories(ocsp_path);
-                }
-                const auto ocsp_file_path =
-                    ocsp_path / cert.get_file().value().filename().replace_extension(".ocsp.der");
-                std::ofstream fs(ocsp_file_path.c_str());
-                fs << ocsp_response;
-                fs.close();
             }
+        } catch (const NoCertificateFound& e) {
+            EVLOG_error << "Could not find any certificate for ocsp cache update: " << e.what();
         }
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not update ocsp cache, certificate load failure: " << e.what();
     }
+}
+
+std::optional<fs::path> EvseSecurity::retrieve_ocsp_cache(const CertificateHashData& certificate_hash_data) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    return retrieve_ocsp_cache_internal(certificate_hash_data);
+}
+
+std::optional<fs::path> EvseSecurity::retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data) {
+    // TODO(ioan): shouldn't we also do this for the MO?
+    const auto ca_bundle_path = this->ca_bundle_path_map.at(CaCertificateType::V2G);
+    const auto leaf_path = this->directories.secc_leaf_key_directory;
+
+    try {
+        X509CertificateBundle ca_bundle(ca_bundle_path, EncodingFormat::PEM);
+        X509CertificateBundle leaf_bundle(leaf_path, EncodingFormat::PEM);
+
+        auto certificate_hierarchy =
+            std::move(X509CertificateHierarchy::build_hierarchy(ca_bundle.split(), leaf_bundle.split()));
+
+        try {
+            // Find the certificate
+            X509Wrapper cert = certificate_hierarchy.find_certificate(certificate_hash_data);
+
+            EVLOG_debug << "Reading OCSP Response from filesystem";
+
+            if (cert.get_file().has_value()) {
+                const auto ocsp_path = cert.get_file().value().parent_path() / "ocsp";
+
+                // Search through the OCSP directory and see if we can find any related certificate hash data
+                for (const auto& ocsp_entry : fs::directory_iterator(ocsp_path)) {
+                    if (ocsp_entry.is_regular_file()) {
+                        CertificateHashData read_hash;
+
+                        if (filesystem_utils::read_hash_from_file(ocsp_entry.path(), read_hash) &&
+                            (read_hash == certificate_hash_data)) {
+                            fs::path replaced_ext = ocsp_entry.path();
+                            replaced_ext.replace_extension(DER_EXTENSION);
+
+                            // Return the data file's path
+                            return std::make_optional<fs::path>(replaced_ext);
+                        }
+                    }
+                }
+            }
+        } catch (const NoCertificateFound& e) {
+            EVLOG_error << "Could not find any certificate for ocsp cache retrieve: " << e.what();
+        }
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not retrieve ocsp cache, certificate load failure: " << e.what();
+    }
+
+    return std::nullopt;
 }
 
 bool EvseSecurity::is_ca_certificate_installed(CaCertificateType certificate_type) {
@@ -835,28 +967,63 @@ void EvseSecurity::certificate_signing_request_failed(const std::string& csr, Le
     // TODO(ioan): delete the pairing key of the CSR
 }
 
-std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
-                                                               const std::string& country,
-                                                               const std::string& organization,
-                                                               const std::string& common, bool use_tpm) {
+GetCertificateSignRequestResult
+EvseSecurity::generate_certificate_signing_request_internal(LeafCertificateType certificate_type,
+                                                            const CertificateSigningRequestInfo& info) {
+    GetCertificateSignRequestResult result{};
+
+    EVLOG_info << "Generating CSR for leaf: " << conversions::leaf_certificate_type_to_string(certificate_type);
+
+    std::string csr;
+    CertificateSignRequestResult csr_result = CryptoSupplier::x509_generate_csr(info, csr);
+
+    if (csr_result == CertificateSignRequestResult::Valid) {
+        result.status = GetCertificateSignRequestStatus::Accepted;
+        result.csr = std::move(csr);
+
+        EVLOG_debug << "Generated CSR end. CSR: " << csr;
+
+        // Add the key to the managed CRS that we will delete if we can't find a certificate pair within the time
+        if (info.key_info.private_key_file.has_value()) {
+            managed_csr.emplace(info.key_info.private_key_file.value(), std::chrono::steady_clock::now());
+        }
+    } else {
+        EVLOG_error << "CSR leaf generation error: "
+                    << conversions::get_certificate_sign_request_result_to_string(csr_result);
+
+        if (csr_result == CertificateSignRequestResult::KeyGenerationError) {
+            result.status = GetCertificateSignRequestStatus::KeyGenError;
+        } else {
+            result.status = GetCertificateSignRequestStatus::GenerationError;
+        }
+    }
+
+    return result;
+}
+
+GetCertificateSignRequestResult EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
+                                                                                   const std::string& country,
+                                                                                   const std::string& organization,
+                                                                                   const std::string& common,
+                                                                                   bool use_tpm) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
-
-    fs::path key_path;
-
-    EVLOG_info << "Generating CSR: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     // Make a difference between normal and tpm keys for identification
     const auto file_name =
         conversions::leaf_certificate_type_to_filename(certificate_type) +
         filesystem_utils::get_random_file_name(use_tpm ? TPM_KEY_EXTENSION.string() : KEY_EXTENSION.string());
 
+    fs::path key_path;
     if (certificate_type == LeafCertificateType::CSMS) {
         key_path = this->directories.csms_leaf_key_directory / file_name;
     } else if (certificate_type == LeafCertificateType::V2G) {
         key_path = this->directories.secc_leaf_key_directory / file_name;
     } else {
-        EVLOG_error << "Generate CSR: create filename failed";
-        throw std::runtime_error("Attempt to generate CSR for MF certificate");
+        EVLOG_error << "Generate CSR for non CSMS/V2G leafs!";
+
+        GetCertificateSignRequestResult result{};
+        result.status = GetCertificateSignRequestStatus::InvalidRequestedType;
+        return result;
     }
 
     std::string csr;
@@ -885,52 +1052,50 @@ std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateTy
         info.key_info.private_key_pass = private_key_password;
     }
 
-    EVLOG_debug << "Generate CSR start";
-
-    if (false == CryptoSupplier::x509_generate_csr(info, csr)) {
-        EVLOG_error << "Failed to generate certificate signing request!";
-    } else {
-        // Add the key to the managed CRS that we will delete if we can't find a certificate pair within the time
-        managed_csr.emplace(key_path, std::chrono::steady_clock::now());
-    }
-
-    EVLOG_debug << "Generated CSR end. CSR: " << csr;
-    return csr;
+    return generate_certificate_signing_request_internal(certificate_type, info);
 }
 
-std::string EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
-                                                               const std::string& country,
-                                                               const std::string& organization,
-                                                               const std::string& common) {
+GetCertificateSignRequestResult EvseSecurity::generate_certificate_signing_request(LeafCertificateType certificate_type,
+                                                                                   const std::string& country,
+                                                                                   const std::string& organization,
+                                                                                   const std::string& common) {
     return generate_certificate_signing_request(certificate_type, country, organization, common, false);
 }
 
-GetKeyPairResult EvseSecurity::get_key_pair(LeafCertificateType certificate_type, EncodingFormat encoding) {
+GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info(LeafCertificateType certificate_type,
+                                                                 EncodingFormat encoding, bool include_ocsp) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
-    return get_key_pair_internal(certificate_type, encoding);
+    return get_leaf_certificate_info_internal(certificate_type, encoding, include_ocsp);
 }
 
-GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certificate_type, EncodingFormat encoding) {
-    EVLOG_info << "Requesting key/pair: " << conversions::leaf_certificate_type_to_string(certificate_type);
+GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCertificateType certificate_type,
+                                                                          EncodingFormat encoding, bool include_ocsp) {
+    EVLOG_info << "Requesting leaf certificate info: "
+               << conversions::leaf_certificate_type_to_string(certificate_type);
 
-    GetKeyPairResult result;
-    result.pair = std::nullopt;
+    GetCertificateInfoResult result;
+    result.info = std::nullopt;
 
     fs::path key_dir;
     fs::path cert_dir;
+    CaCertificateType root_type;
 
     if (certificate_type == LeafCertificateType::CSMS) {
         key_dir = this->directories.csms_leaf_key_directory;
         cert_dir = this->directories.csms_leaf_cert_directory;
+        root_type = CaCertificateType::CSMS;
     } else if (certificate_type == LeafCertificateType::V2G) {
         key_dir = this->directories.secc_leaf_key_directory;
         cert_dir = this->directories.secc_leaf_cert_directory;
+        root_type = CaCertificateType::V2G;
     } else {
-        EVLOG_warning << "Rejected attempt to retrieve MF key pair";
-        result.status = GetKeyPairStatus::Rejected;
+        EVLOG_warning << "Rejected attempt to retrieve non CSMS/V2G key pair";
+        result.status = GetCertificateInfoStatus::Rejected;
         return result;
     }
+
+    fs::path root_dir = ca_bundle_path_map[root_type];
 
     // choose appropriate cert (valid_from / valid_to)
     try {
@@ -938,7 +1103,7 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
 
         if (leaf_certificates.empty()) {
             EVLOG_warning << "Could not find any key pair";
-            result.status = GetKeyPairStatus::NotFound;
+            result.status = GetCertificateInfoStatus::NotFound;
             return result;
         }
 
@@ -978,13 +1143,13 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
 
         if (latest_valid.has_value() == false) {
             EVLOG_warning << "Could not find valid certificate";
-            result.status = GetKeyPairStatus::NotFoundValid;
+            result.status = GetCertificateInfoStatus::NotFoundValid;
             return result;
         }
 
         if (found_private_key_path.has_value() == false) {
             EVLOG_warning << "Could not find private key for the valid certificate";
-            result.status = GetKeyPairStatus::PrivateKeyNotFound;
+            result.status = GetCertificateInfoStatus::PrivateKeyNotFound;
             return result;
         }
 
@@ -1000,6 +1165,7 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
 
         const std::vector<X509Wrapper>* leaf_fullchain = nullptr;
         const std::vector<X509Wrapper>* leaf_single = nullptr;
+        int chain_len = 1; // Defaults to 1, single certificate
 
         // We are searching for both the full leaf bundle, containing the leaf and the cso1/2 and the single leaf
         // without the cso1/2
@@ -1010,6 +1176,7 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
             if (bFound) {
                 if (chain.size() > 1) {
                     leaf_fullchain = &chain;
+                    chain_len = chain.size();
                 } else if (chain.size() == 1) {
                     leaf_single = &chain;
                 }
@@ -1021,6 +1188,8 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
 
             return true;
         });
+
+        std::vector<CertificateOCSP> certificate_ocsp{};
 
         if (leaf_fullchain != nullptr) {
             chain_file = leaf_fullchain->at(0).get_file().value();
@@ -1036,13 +1205,43 @@ GetKeyPairResult EvseSecurity::get_key_pair_internal(LeafCertificateType certifi
                           << " single leaf not found at path: " << cert_dir;
         }
 
-        result.pair = {key_file, chain_file, certificate_file, this->private_key_password};
-        result.status = GetKeyPairStatus::Accepted;
+        // Include OCSP data if possible
+        if (include_ocsp && (leaf_fullchain != nullptr || leaf_single != nullptr)) {
+            X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
+
+            auto hierarchy =
+                std::move(X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_directory.split()));
+            EVLOG_debug << "Hierarchy for OCSP data: \n" << hierarchy.to_debug_string();
+
+            // Search for OCSP data for each certificate
+            if (leaf_fullchain != nullptr) {
+                for (const auto& chain_certif : *leaf_fullchain) {
+                    try {
+                        CertificateHashData hash = hierarchy.get_certificate_hash(chain_certif);
+                        std::optional<fs::path> data = retrieve_ocsp_cache_internal(hash);
+
+                        certificate_ocsp.push_back({hash, data});
+                    } catch (const NoCertificateFound& e) {
+                        // Always add to preserve file order
+                        certificate_ocsp.push_back({{}, std::nullopt});
+                    }
+                }
+            } else {
+                try {
+                    CertificateHashData hash = hierarchy.get_certificate_hash(leaf_single->at(0));
+                    certificate_ocsp.push_back({hash, retrieve_ocsp_cache_internal(hash)});
+                } catch (const NoCertificateFound& e) {
+                }
+            }
+        }
+
+        result.info = {key_file, chain_file, certificate_file, chain_len, this->private_key_password, certificate_ocsp};
+        result.status = GetCertificateInfoStatus::Accepted;
 
         return result;
     } catch (const CertificateLoadException& e) {
         EVLOG_warning << "Leaf certificate load exception";
-        result.status = GetKeyPairStatus::NotFound;
+        result.status = GetCertificateInfoStatus::NotFound;
         return result;
     }
 }
@@ -1061,28 +1260,31 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
     fs::path chain_link_path = this->links.cpo_cert_chain_link;
 
     // Get the most recent valid certificate (internal since we already locked mutex)
-    const auto key_pair = this->get_key_pair_internal(certificate_type, EncodingFormat::PEM);
-    if ((key_pair.status == GetKeyPairStatus::Accepted) && key_pair.pair.has_value()) {
+    const auto key_pair = this->get_leaf_certificate_info_internal(certificate_type, EncodingFormat::PEM);
+    if ((key_pair.status == GetCertificateInfoStatus::Accepted) && key_pair.info.has_value()) {
 
         // Create or update symlinks to SECC leaf cert
         if (!cert_link_path.empty()) {
-            fs::path cert_path = key_pair.pair.value().certificate_single;
-            if (fs::is_symlink(cert_link_path)) {
-                if (fs::read_symlink(cert_link_path) != cert_path) {
-                    fs::remove(cert_link_path);
+            std::optional<fs::path> cert_path = key_pair.info.value().certificate_single;
+
+            if (cert_path.has_value()) {
+                if (fs::is_symlink(cert_link_path)) {
+                    if (fs::read_symlink(cert_link_path) != cert_path.value()) {
+                        fs::remove(cert_link_path);
+                        changed = true;
+                    }
+                }
+                if (!fs::exists(cert_link_path)) {
+                    EVLOG_debug << "SECC cert link: " << cert_link_path << " -> " << cert_path.value();
+                    fs::create_symlink(cert_path.value(), cert_link_path);
                     changed = true;
                 }
-            }
-            if (!fs::exists(cert_link_path)) {
-                EVLOG_debug << "SECC cert link: " << cert_link_path << " -> " << cert_path;
-                fs::create_symlink(cert_path, cert_link_path);
-                changed = true;
             }
         }
 
         // Create or update symlinks to SECC leaf key
         if (!key_link_path.empty()) {
-            fs::path key_path = key_pair.pair.value().key;
+            fs::path key_path = key_pair.info.value().key;
             if (fs::is_symlink(key_link_path)) {
                 if (fs::read_symlink(key_link_path) != key_path) {
                     fs::remove(key_link_path);
@@ -1097,18 +1299,20 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
         }
 
         // Create or update symlinks to CPO chain
-        fs::path chain_path = key_pair.pair.value().certificate;
-        if (!chain_link_path.empty()) {
-            if (fs::is_symlink(chain_link_path)) {
-                if (fs::read_symlink(chain_link_path) != chain_path) {
-                    fs::remove(chain_link_path);
+        if (key_pair.info.value().certificate.has_value()) {
+            fs::path chain_path = key_pair.info.value().certificate.value();
+            if (!chain_link_path.empty()) {
+                if (fs::is_symlink(chain_link_path)) {
+                    if (fs::read_symlink(chain_link_path) != chain_path) {
+                        fs::remove(chain_link_path);
+                        changed = true;
+                    }
+                }
+                if (!fs::exists(chain_link_path)) {
+                    EVLOG_debug << "CPO cert chain link: " << chain_link_path << " -> " << chain_path;
+                    fs::create_symlink(chain_path, chain_link_path);
                     changed = true;
                 }
-            }
-            if (!fs::exists(chain_link_path)) {
-                EVLOG_debug << "CPO cert chain link: " << chain_link_path << " -> " << chain_path;
-                fs::create_symlink(chain_path, chain_link_path);
-                changed = true;
             }
         }
     } else {
@@ -1130,8 +1334,8 @@ bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type
     return changed;
 }
 
-std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
-    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+GetCertificateInfoResult EvseSecurity::get_ca_certificate_info_internal(CaCertificateType certificate_type) {
+    GetCertificateInfoResult result{};
 
     try {
         // Support bundle files, in case the certificates contain
@@ -1147,19 +1351,55 @@ std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
 
             // Get all roots and search for a valid self-signed
             for (auto& root : hierarchy.get_hierarchy()) {
-                if (root.certificate.is_selfsigned() && root.certificate.is_valid())
-                    return root.certificate.get_file().value_or("");
-            }
-        }
+                if (root.certificate.is_selfsigned() && root.certificate.is_valid()) {
+                    CertificateInfo info;
+                    info.certificate = root.certificate.get_file().value();
+                    info.certificate_single = root.certificate.get_file().value();
 
-        return verify_file.get_path().string();
+                    result.info = info;
+                    result.status = GetCertificateInfoStatus::Accepted;
+                    return result;
+                }
+            }
+        } else {
+            CertificateInfo info;
+            info.certificate = verify_file.get_path();
+            info.certificate_single = verify_file.get_path();
+
+            result.info = info;
+            result.status = GetCertificateInfoStatus::Accepted;
+            return result;
+        }
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not obtain verify file, wrong format for certificate: "
                     << this->ca_bundle_path_map.at(certificate_type) << " with error: " << e.what();
     }
 
-    throw NoCertificateFound("Could not find any CA certificate for: " +
-                             conversions::ca_certificate_type_to_string(certificate_type));
+    EVLOG_error << "Could not find any CA certificate for: "
+                << conversions::ca_certificate_type_to_string(certificate_type);
+
+    result.status = GetCertificateInfoStatus::NotFound;
+    return result;
+}
+
+GetCertificateInfoResult EvseSecurity::get_ca_certificate_info(CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    return get_ca_certificate_info_internal(certificate_type);
+}
+
+std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    auto result = get_ca_certificate_info_internal(certificate_type);
+
+    if (result.status == GetCertificateInfoStatus::Accepted && result.info.has_value()) {
+        if (result.info.value().certificate.has_value()) {
+            return result.info.value().certificate.value().string();
+        }
+    }
+
+    return {};
 }
 
 int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_type) {
@@ -1168,21 +1408,26 @@ int EvseSecurity::get_leaf_expiry_days_count(LeafCertificateType certificate_typ
     EVLOG_info << "Requesting certificate expiry: " << conversions::leaf_certificate_type_to_string(certificate_type);
 
     // Internal since we already locked mutex
-    const auto key_pair = this->get_key_pair_internal(certificate_type, EncodingFormat::PEM);
-    if (key_pair.status == GetKeyPairStatus::Accepted) {
+    const auto key_pair = this->get_leaf_certificate_info_internal(certificate_type, EncodingFormat::PEM, false);
+    if (key_pair.status == GetCertificateInfoStatus::Accepted) {
         try {
             fs::path certificate_path;
 
-            if (key_pair.pair.value().certificate.empty() == false)
-                certificate_path = key_pair.pair.value().certificate;
-            else
-                certificate_path = key_pair.pair.value().certificate_single;
+            if (key_pair.info.has_value()) {
+                if (key_pair.info.value().certificate.has_value()) {
+                    certificate_path = key_pair.info.value().certificate.value();
+                } else {
+                    certificate_path = key_pair.info.value().certificate_single.value();
+                }
+            }
 
-            // In case it is a bundle, we know the leaf is always the first
-            X509CertificateBundle cert(certificate_path, EncodingFormat::PEM);
+            if (certificate_path.empty() == false) {
+                // In case it is a bundle, we know the leaf is always the first
+                X509CertificateBundle cert(certificate_path, EncodingFormat::PEM);
 
-            int64_t seconds = cert.split().at(0).get_valid_to();
-            return std::chrono::duration_cast<days_to_seconds>(std::chrono::seconds(seconds)).count();
+                int64_t seconds = cert.split().at(0).get_valid_to();
+                return std::chrono::duration_cast<days_to_seconds>(std::chrono::seconds(seconds)).count();
+            }
         } catch (const CertificateLoadException& e) {
             EVLOG_error << "Could not obtain leaf expiry certificate: " << e.what();
         }
@@ -1197,16 +1442,16 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
 
     EVLOG_info << "Verifying file signature for " << path.string();
 
-    std::vector<std::byte> sha256_digest;
+    std::vector<std::uint8_t> sha256_digest;
 
     if (false == CryptoSupplier::digest_file_sha256(path, sha256_digest)) {
         EVLOG_error << "Error during digesting file: " << path;
         return false;
     }
 
-    std::vector<std::byte> signature_decoded;
+    std::vector<std::uint8_t> signature_decoded;
 
-    if (false == CryptoSupplier::decode_base64_signature(signature, signature_decoded)) {
+    if (false == CryptoSupplier::base64_decode_to_bytes(signature, signature_decoded)) {
         EVLOG_error << "Error during decoding signature: " << signature;
         return false;
     }
@@ -1227,6 +1472,46 @@ bool EvseSecurity::verify_file_signature(const fs::path& path, const std::string
     }
 
     return false;
+}
+
+std::vector<std::uint8_t> EvseSecurity::base64_decode_to_bytes(const std::string& base64_string) {
+    std::vector<std::uint8_t> decoded_bytes;
+
+    if (false == CryptoSupplier::base64_decode_to_bytes(base64_string, decoded_bytes)) {
+        return {};
+    }
+
+    return decoded_bytes;
+}
+
+std::string EvseSecurity::base64_decode_to_string(const std::string& base64_string) {
+    std::string decoded_string;
+
+    if (false == CryptoSupplier::base64_decode_to_string(base64_string, decoded_string)) {
+        return {};
+    }
+
+    return decoded_string;
+}
+
+std::string EvseSecurity::base64_encode_from_bytes(const std::vector<std::uint8_t>& bytes) {
+    std::string encoded_string;
+
+    if (false == CryptoSupplier::base64_encode_from_bytes(bytes, encoded_string)) {
+        return {};
+    }
+
+    return encoded_string;
+}
+
+std::string EvseSecurity::base64_encode_from_string(const std::string& string) {
+    std::string encoded_string;
+
+    if (false == CryptoSupplier::base64_encode_from_string(string, encoded_string)) {
+        return {};
+    }
+
+    return encoded_string;
 }
 
 CertificateValidationResult EvseSecurity::verify_certificate(const std::string& certificate_chain,
@@ -1335,12 +1620,12 @@ void EvseSecurity::garbage_collect() {
 
     EVLOG_info << "Starting garbage collect!";
 
-    std::vector<std::pair<fs::path, fs::path>> leaf_paths;
+    std::vector<std::tuple<fs::path, fs::path, CaCertificateType>> leaf_paths;
 
-    leaf_paths.push_back(
-        std::make_pair(this->directories.csms_leaf_cert_directory, this->directories.csms_leaf_key_directory));
-    leaf_paths.push_back(
-        std::make_pair(this->directories.secc_leaf_cert_directory, this->directories.secc_leaf_key_directory));
+    leaf_paths.push_back(std::make_tuple(this->directories.csms_leaf_cert_directory,
+                                         this->directories.csms_leaf_key_directory, CaCertificateType::CSMS));
+    leaf_paths.push_back(std::make_tuple(this->directories.secc_leaf_cert_directory,
+                                         this->directories.secc_leaf_key_directory, CaCertificateType::V2G));
 
     // Delete certificates first, give the option to cleanup the dangling keys afterwards
     std::set<fs::path> invalid_certificate_files;
@@ -1349,26 +1634,32 @@ void EvseSecurity::garbage_collect() {
     std::set<fs::path> protected_private_keys;
 
     // Order by latest valid, and keep newest with a safety limit
-    for (auto const& [cert_dir, key_dir] : leaf_paths) {
-        X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
+    for (auto const& [cert_dir, key_dir, ca_type] : leaf_paths) {
+        // Root bundle required for hash of OCSP cache
+        try {
+            X509CertificateBundle root_bundle(ca_bundle_path_map[ca_type], EncodingFormat::PEM);
+            X509CertificateBundle expired_certs(cert_dir, EncodingFormat::PEM);
 
-        // Only handle if we have more than the minimum certificates entry
-        if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-            fs::path key_directory = key_dir;
-            int skipped = 0;
+            // Only handle if we have more than the minimum certificates entry
+            if (expired_certs.get_certificate_chains_count() > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                fs::path key_directory = key_dir;
+                int skipped = 0;
 
-            // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
-            expired_certs.for_each_chain_ordered(
-                [this, &invalid_certificate_files, &skipped, &key_directory,
-                 &protected_private_keys](const fs::path& file, const std::vector<X509Wrapper>& chain) {
-                    // By default delete all empty
-                    if (chain.size() <= 0) {
-                        invalid_certificate_files.emplace(file);
-                    }
+                // Order by expiry date, and keep even expired certificates with a minimum of 10 certificates
+                expired_certs.for_each_chain_ordered(
+                    [this, &invalid_certificate_files, &skipped, &key_directory, &protected_private_keys,
+                     &root_bundle](const fs::path& file, const std::vector<X509Wrapper>& chain) {
+                        // By default delete all empty
+                        if (chain.size() <= 0) {
+                            invalid_certificate_files.emplace(file);
+                        }
 
-                    if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
-                        // If the chain contains the first expired (leafs are the first)
-                        if (chain.size()) {
+                        if (++skipped > DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) {
+                            if (chain.empty()) {
+                                return true;
+                            }
+
+                            // If the chain contains the first expired (leafs are the first)
                             if (chain[0].is_expired()) {
                                 invalid_certificate_files.emplace(file);
 
@@ -1379,41 +1670,78 @@ void EvseSecurity::garbage_collect() {
                                     invalid_certificate_files.emplace(key_file);
                                 } catch (NoPrivateKeyException& e) {
                                 }
+
+                                auto leaf_chain = chain;
+                                X509CertificateHierarchy hierarchy = std::move(
+                                    X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_chain));
+
+                                try {
+                                    CertificateHashData ocsp_hash = hierarchy.get_certificate_hash(chain[0]);
+
+                                    // Find OCSP cache with hash
+                                    if (chain[0].get_file().has_value()) {
+                                        const auto ocsp_path = chain[0].get_file().value().parent_path() / "ocsp";
+
+                                        if (fs::exists(ocsp_path)) {
+                                            for (const auto& hash_entry : fs::directory_iterator(ocsp_path)) {
+                                                if (hash_entry.is_regular_file() == false) {
+                                                    continue;
+                                                }
+                                                // Attempt hash read
+                                                CertificateHashData read_hash;
+
+                                                if (filesystem_utils::read_hash_from_file(hash_entry.path(),
+                                                                                          read_hash) &&
+                                                    read_hash == ocsp_hash) {
+
+                                                    auto oscp_data_path = hash_entry.path();
+                                                    oscp_data_path.replace_extension(DER_EXTENSION);
+
+                                                    invalid_certificate_files.emplace(hash_entry.path());
+                                                    invalid_certificate_files.emplace(oscp_data_path);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (const NoCertificateFound& e) {
+                                }
+                            }
+                        } else {
+                            // Add to protected certificate list
+                            try {
+                                fs::path key_file = get_private_key_path_of_certificate(chain[0], key_directory,
+                                                                                        this->private_key_password);
+                                protected_private_keys.emplace(key_file);
+
+                                // Erase all protected keys from the managed CRSs
+                                auto it = managed_csr.find(key_file);
+                                if (it != managed_csr.end()) {
+                                    managed_csr.erase(it);
+                                }
+                            } catch (NoPrivateKeyException& e) {
                             }
                         }
-                    } else {
-                        // Add to protected certificate list
-                        try {
-                            fs::path key_file = get_private_key_path_of_certificate(chain[0], key_directory,
-                                                                                    this->private_key_password);
-                            protected_private_keys.emplace(key_file);
 
-                            // Erase all protected keys from the managed CRSs
-                            auto it = managed_csr.find(key_file);
-                            if (it != managed_csr.end()) {
-                                managed_csr.erase(it);
-                            }
-                        } catch (NoPrivateKeyException& e) {
+                        return true;
+                    },
+                    [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
+                        // Order from newest to oldest (newest DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) are kept
+                        // even if they are expired
+                        if (a.size() && b.size()) {
+                            return a.at(0).get_valid_to() > b.at(0).get_valid_to();
+                        } else {
+                            return false;
                         }
-                    }
-
-                    return true;
-                },
-                [](const std::vector<X509Wrapper>& a, const std::vector<X509Wrapper>& b) {
-                    // Order from newest to oldest (newest DEFAULT_MINIMUM_CERTIFICATE_ENTRIES) are kept
-                    // even if they are expired
-                    if (a.size() && b.size()) {
-                        return a.at(0).get_valid_to() > b.at(0).get_valid_to();
-                    } else {
-                        return false;
-                    }
-                });
+                    });
+            }
+        } catch (const CertificateLoadException& e) {
+            EVLOG_warning << "Could not load bundle from file: " << e.what();
         }
-    }
+    } // End leaf for iteration
 
     for (const auto& expired_certificate_file : invalid_certificate_files) {
         if (filesystem_utils::delete_file(expired_certificate_file))
-            EVLOG_debug << "Deleted expired certificate file: " << expired_certificate_file;
+            EVLOG_info << "Deleted expired certificate file: " << expired_certificate_file;
         else
             EVLOG_warning << "Error deleting expired certificate file: " << expired_certificate_file;
     }
@@ -1423,7 +1751,7 @@ void EvseSecurity::garbage_collect() {
     // at a further invocation after the GC timer will elapse a few times. This behavior
     // was added so that if we have a reset and the CSMS sends us a CSR response while we were
     // down it should still be processed when we boot up and NOT delete the CSRs
-    for (auto const& [cert_dir, keys_dir] : leaf_paths) {
+    for (auto const& [cert_dir, keys_dir, ca_type] : leaf_paths) {
         fs::path cert_path = cert_dir;
         fs::path key_path = keys_dir;
 
@@ -1436,6 +1764,8 @@ void EvseSecurity::garbage_collect() {
             }
 
             if (is_keyfile(key_file_path)) {
+                bool error = false;
+
                 try {
                     // Check if we have found any matching certificate
                     get_certificate_path_of_key(key_file_path, keys_dir, this->private_key_password);
@@ -1443,7 +1773,13 @@ void EvseSecurity::garbage_collect() {
                     // If we did not found, add to the potential delete list
                     EVLOG_debug << "Could not find matching certificate for key: " << key_file_path
                                 << " adding to potential deletes";
+                    error = true;
+                } catch (const NoPrivateKeyException& e) {
+                    EVLOG_debug << "Could not load private key: " << key_file_path << " adding to potential deletes";
+                    error = true;
+                }
 
+                if (error) {
                     // Give a chance to be fulfilled by the CSMS
                     if (managed_csr.find(key_file_path) == managed_csr.end()) {
                         managed_csr.emplace(key_file_path, std::chrono::steady_clock::now());
@@ -1468,6 +1804,81 @@ void EvseSecurity::garbage_collect() {
         } else {
             ++it;
         }
+    }
+
+    std::set<fs::path> invalid_ocsp_files;
+
+    // Delete all non-owned OCSP data
+    for (const auto& leaf_certificate_path :
+         {directories.secc_leaf_cert_directory, directories.csms_leaf_cert_directory}) {
+        try {
+            bool secc = (leaf_certificate_path == directories.secc_leaf_cert_directory);
+            bool csms = (leaf_certificate_path == directories.csms_leaf_cert_directory) ||
+                        (directories.csms_leaf_cert_directory == directories.secc_leaf_cert_directory);
+
+            CaCertificateType load;
+
+            if (secc)
+                load = CaCertificateType::V2G;
+            else if (csms)
+                load = CaCertificateType::CSMS;
+
+            // Also load the roots since we need to build the hierarchy for correct certificate hashes
+            X509CertificateBundle root_bundle(ca_bundle_path_map[load], EncodingFormat::PEM);
+            X509CertificateBundle leaf_bundle(leaf_certificate_path, EncodingFormat::PEM);
+
+            fs::path leaf_ocsp;
+            fs::path root_ocsp;
+
+            if (root_bundle.is_using_bundle_file()) {
+                root_ocsp = root_bundle.get_path().parent_path() / "ocsp";
+            } else {
+                root_ocsp = root_bundle.get_path() / "ocsp";
+            }
+
+            if (leaf_bundle.is_using_bundle_file()) {
+                leaf_ocsp = leaf_bundle.get_path().parent_path() / "ocsp";
+            } else {
+                leaf_ocsp = leaf_bundle.get_path() / "ocsp";
+            }
+
+            X509CertificateHierarchy hierarchy =
+                std::move(X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_bundle.split()));
+
+            // Iterate all hashes folders and see if any are missing
+            for (auto& ocsp_dir : {leaf_ocsp, root_ocsp}) {
+                if (fs::exists(ocsp_dir)) {
+                    for (auto& ocsp_entry : fs::directory_iterator(ocsp_dir)) {
+                        if (ocsp_entry.is_regular_file() == false) {
+                            continue;
+                        }
+
+                        // Attempt hash read
+                        CertificateHashData read_hash;
+
+                        if (filesystem_utils::read_hash_from_file(ocsp_entry.path(), read_hash)) {
+                            // If we can't find the has, it means it was deleted somehow, add to delete list
+                            if (hierarchy.contains_certificate_hash(read_hash) == false) {
+                                auto oscp_data_path = ocsp_entry.path();
+                                oscp_data_path.replace_extension(DER_EXTENSION);
+
+                                invalid_ocsp_files.emplace(ocsp_entry.path());
+                                invalid_ocsp_files.emplace(oscp_data_path);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (const CertificateLoadException& e) {
+            EVLOG_warning << "Could not load ca bundle from file: " << leaf_certificate_path;
+        }
+    }
+
+    for (const auto& invalid_ocsp : invalid_ocsp_files) {
+        if (filesystem_utils::delete_file(invalid_ocsp))
+            EVLOG_info << "Deleted invalid ocsp file: " << invalid_ocsp;
+        else
+            EVLOG_warning << "Error deleting invalid ocsp file: " << invalid_ocsp;
     }
 }
 
