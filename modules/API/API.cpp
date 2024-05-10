@@ -540,7 +540,9 @@ void API::init() {
             while (this->running) {
                 json connectors_array = connectors;
                 this->mqtt.publish(var_connectors, connectors_array.dump());
-                this->mqtt.publish(var_info, this->charger_information.dump());
+                if (not this->charger_information.is_null()) {
+                    this->mqtt.publish(var_info, this->charger_information.dump());
+                }
                 {
                     std::scoped_lock lock(ocpp_data_mutex);
                     this->mqtt.publish(var_ocpp_connection_status, this->ocpp_connection_status);
