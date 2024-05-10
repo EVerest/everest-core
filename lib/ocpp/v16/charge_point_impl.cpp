@@ -1355,14 +1355,14 @@ void ChargePointImpl::execute_connectors_availability_change(const std::vector<i
                 this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
             }
 
-            if (connector != 0 and this->enable_evse_callback != nullptr) {
+            if (this->enable_evse_callback != nullptr) {
                 this->enable_evse_callback(connector);
             }
         } else {
             if (connector == 0 or !evse_changed) {
                 this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
             }
-            if (connector != 0 and this->disable_evse_callback != nullptr) {
+            if (this->disable_evse_callback != nullptr) {
                 this->disable_evse_callback(connector);
             }
         }
