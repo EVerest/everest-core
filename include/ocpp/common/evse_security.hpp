@@ -80,25 +80,27 @@ public:
     virtual bool is_ca_certificate_installed(const CaCertificateType& certificate_type) = 0;
 
     /// \brief Generates a certificate signing request for the given \p certificate_type , \p country , \p organization
-    /// and \p common . This function respects the requirements of OCPP specified for the CSMS initiated message
-    /// SignCertificate.req .
+    /// and \p common , uses the TPM if \p use_tpm is true
     /// \param certificate_type
     /// \param country
     /// \param organization
     /// \param common
-    /// \return the PEM formatted certificate signing request
-    virtual std::string generate_certificate_signing_request(const CertificateSigningUseEnum& certificate_type,
-                                                             const std::string& country,
-                                                             const std::string& organization, const std::string& common,
-                                                             bool use_tpm) = 0;
+    /// \param use_tpm  If the TPM should be used for the CSR request
+    /// \return the status and an optional PEM formatted certificate signing request string
+    virtual GetCertificateSignRequestResult
+    generate_certificate_signing_request(const CertificateSigningUseEnum& certificate_type, const std::string& country,
+                                         const std::string& organization, const std::string& common, bool use_tpm) = 0;
 
-    /// \brief Searches the leaf certificate for the given \p certificate_type and retrieves the most recent certificate
-    /// that is already valid and the respective key . If no certificate is present or no key is matching the
-    /// certificate, this function returns std::nullopt
+    /// \brief Searches the filesystem on the specified directories for the given \p certificate_type and retrieves the
+    /// most recent certificate that is already valid and the respective key.  If no certificate is present or no key is
+    /// matching the certificate, this function returns a GetKeyPairStatus other than "Accepted". The function \ref
+    /// update_leaf_certificate will install two files for each leaf, one containing the single leaf and one containing
+    /// the leaf including any possible SUBCAs
     /// \param certificate_type type of the leaf certificate
-    /// \param encoding specifies PEM or DER format
-    /// \return key pair of certificate and key if present, else std::nullopt
-    virtual std::optional<KeyPair> get_key_pair(const CertificateSigningUseEnum& certificate_type) = 0;
+    /// \param include_ocsp if OCSP data should be included
+    /// \return contains response result, with info related to the certificate chain and response status
+    virtual GetCertificateInfoResult get_leaf_certificate_info(const CertificateSigningUseEnum& certificate_type,
+                                                               bool include_ocsp = false) = 0;
 
     /// \brief Updates the certificate and key links for the given \p certificate_type
     virtual bool update_certificate_links(const CertificateSigningUseEnum& certificate_type) = 0;

@@ -448,21 +448,28 @@ void WebsocketTlsTPM::client_loop() {
         std::optional<std::string> password;
 
         if (this->connection_options.security_profile == 3) {
+            const auto certificate_response =
+                this->evse_security->get_leaf_certificate_info(CertificateSigningUseEnum::ChargingStationCertificate);
 
-            const auto certificate_key_pair =
-                this->evse_security->get_key_pair(CertificateSigningUseEnum::ChargingStationCertificate);
-
-            if (!certificate_key_pair.has_value()) {
+            if (certificate_response.status != ocpp::GetCertificateInfoStatus::Accepted or
+                !certificate_response.info.has_value()) {
                 EVLOG_AND_THROW(std::runtime_error(
                     "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
 
-            path_chain = certificate_key_pair.value().certificate_path;
-            if (path_chain.empty()) {
-                path_chain = certificate_key_pair.value().certificate_single_path;
+            const auto& certificate_info = certificate_response.info.value();
+
+            if (certificate_info.certificate_path.has_value()) {
+                path_chain = certificate_info.certificate_path.value();
+            } else if (certificate_info.certificate_single_path.has_value()) {
+                path_chain = certificate_info.certificate_single_path.value();
+            } else {
+                EVLOG_AND_THROW(std::runtime_error(
+                    "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
-            path_key = certificate_key_pair.value().key_path;
-            password = certificate_key_pair.value().password;
+
+            path_key = certificate_info.key_path;
+            password = certificate_info.password;
         }
 
         SSL_CTX* ssl_ctx = nullptr;

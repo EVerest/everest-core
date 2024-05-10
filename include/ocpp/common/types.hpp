@@ -531,11 +531,43 @@ struct OCSPRequestData {
     std::string responderUrl;
 };
 
-struct KeyPair {
-    fs::path certificate_path;           // path to the full certificate chain
-    fs::path certificate_single_path;    // path to the single leaf certificate
-    fs::path key_path;                   // path to private key of the leaf certificate
-    std::optional<std::string> password; // optional password for the private key
+enum class GetCertificateSignRequestStatus {
+    Accepted,
+    InvalidRequestedType, ///< Requested a CSR for non CSMS/V2G leafs
+    KeyGenError,          ///< The key could not be generated with the requested/default parameters
+    GenerationError,      ///< Any other error when creating the CSR
+};
+
+enum class GetCertificateInfoStatus {
+    Accepted,
+    Rejected,
+    NotFound,
+    NotFoundValid,
+    PrivateKeyNotFound,
+};
+
+struct GetCertificateSignRequestResult {
+    GetCertificateSignRequestStatus status;
+    std::optional<std::string> csr;
+};
+
+struct CertificateOCSP {
+    CertificateHashDataType hash;
+    std::optional<fs::path> ocsp_path;
+};
+
+struct CertificateInfo {
+    std::optional<fs::path> certificate_path;        // path to the full certificate chain
+    std::optional<fs::path> certificate_single_path; // path to the single leaf certificate
+    int certificate_count;                           // count of certs in the chain
+    fs::path key_path;                               // path to private key of the leaf certificate
+    std::optional<std::string> password;             // optional password for the private key
+    std::vector<CertificateOCSP> ocsp;               // OCSP data if requested
+};
+
+struct GetCertificateInfoResult {
+    GetCertificateInfoStatus status;
+    std::optional<CertificateInfo> info;
 };
 
 enum class LeafCertificateType {
@@ -581,6 +613,11 @@ enum class FirmwareStatusNotification {
 };
 
 namespace conversions {
+/// \brief Converts GetCertificateSignRequestStatus to string
+std::string generate_certificate_signing_request_status_to_string(const GetCertificateSignRequestStatus status);
+} // namespace conversions
+
+namespace conversions {
 
 /// \brief Converts ocpp::FirmwareStatusNotification to v16::FirmwareStatus
 v16::FirmwareStatus firmware_status_notification_to_firmware_status(const FirmwareStatusNotification status);
@@ -613,6 +650,7 @@ namespace security_events {
 inline const std::string FIRMWARE_UPDATED = "FirmwareUpdated"; // CRITICAL
 inline const std::string FAILEDTOAUTHENTICATEATCSMS = "FailedToAuthenticateAtCsms";
 inline const std::string CSMSFAILEDTOAUTHENTICATE = "CsmsFailedToAuthenticate";
+inline const std::string CSRGENERATIONFAILED = "CSRGenerationFailed";
 inline const std::string SETTINGSYSTEMTIME = "SettingSystemTime";         // CRITICAL
 inline const std::string RESET_OR_REBOOT = "ResetOrReboot";               // CRITICAL
 inline const std::string STARTUP_OF_THE_DEVICE = "StartupOfTheDevice";    // CRITICAL

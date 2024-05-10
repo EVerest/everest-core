@@ -1443,9 +1443,10 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                                 << "New security level set to 2 or 3 but no CentralSystemRootCertificateInstalled";
                             response.status = ConfigurationStatus::Rejected;
                         } else if (security_profile == 3 &&
-                                   !this->evse_security
-                                        ->get_key_pair(ocpp::CertificateSigningUseEnum::ChargingStationCertificate)
-                                        .has_value()) {
+                                   this->evse_security
+                                           ->get_leaf_certificate_info(
+                                               ocpp::CertificateSigningUseEnum::ChargingStationCertificate)
+                                           .status != ocpp::GetCertificateInfoStatus::Accepted) {
                             EVLOG_warning << "New security level set to 3 but no Client Certificate is installed";
                             response.status = ConfigurationStatus::Rejected;
                         } else if (security_profile > 3) {
@@ -2256,12 +2257,26 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
     EVLOG_info << "Create CSR (TPM=" << this->configuration->getUseTPM() << ")";
     SignCertificateRequest req;
 
-    const auto csr = this->evse_security->generate_certificate_signing_request(
+    const auto response = this->evse_security->generate_certificate_signing_request(
         certificate_signing_use, this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
         this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber(),
         this->configuration->getUseTPM());
 
-    req.csr = csr;
+    if (response.status != GetCertificateSignRequestStatus::Accepted || !response.csr.has_value()) {
+        EVLOG_error << "Create CSR (TPM=" << this->configuration->getUseTPM() << ")"
+                    << " failed for:"
+                    << ocpp::conversions::certificate_signing_use_enum_to_string(certificate_signing_use);
+
+        std::string gen_error =
+            "Sign certificate failed due to:" +
+            ocpp::conversions::generate_certificate_signing_request_status_to_string(response.status);
+        this->securityEventNotification(ocpp::security_events::CSRGENERATIONFAILED, gen_error, true);
+
+        return;
+    }
+
+    req.csr = response.csr.value();
+
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
     this->send<SignCertificateRequest>(call, initiated_by_trigger_message);
 }
@@ -2942,14 +2957,24 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
 
     ocpp::v201::SignCertificateRequest csr_req;
 
-    const auto csr = this->evse_security->generate_certificate_signing_request(
+    const auto result = this->evse_security->generate_certificate_signing_request(
         ocpp::CertificateSigningUseEnum::V2GCertificate,
         this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
         this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().value()),
         this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()),
         this->configuration->getUseTPM());
 
-    csr_req.csr = csr;
+    if (result.status != GetCertificateSignRequestStatus::Accepted || !result.csr.has_value()) {
+        EVLOG_error << "Could not request new V2GCertificate, because the CSR was not successful.";
+
+        std::string gen_error = "Data transfer pnc csr failed due to:" +
+                                ocpp::conversions::generate_certificate_signing_request_status_to_string(result.status);
+        this->securityEventNotification(ocpp::security_events::CSRGENERATIONFAILED, gen_error, true);
+
+        return;
+    }
+
+    csr_req.csr = result.csr.value();
     csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
     req.data.emplace(json(csr_req).dump());
 

@@ -171,33 +171,42 @@ tls_context WebsocketTLS::on_tls_init(std::string hostname, websocketpp::connect
         }
 
         if (security_profile == 3) {
-            const auto certificate_key_pair =
-                this->evse_security->get_key_pair(CertificateSigningUseEnum::ChargingStationCertificate);
+            const auto certificate_result =
+                this->evse_security->get_leaf_certificate_info(CertificateSigningUseEnum::ChargingStationCertificate);
 
-            if (certificate_key_pair.has_value() && certificate_key_pair.value().password.has_value()) {
-                std::string passwd = certificate_key_pair.value().password.value();
-                context->set_password_callback(
-                    [passwd](auto max_len, auto purpose) { return passwd.substr(0, max_len); });
-            }
-
-            if (!certificate_key_pair.has_value()) {
+            if (certificate_result.status != GetCertificateInfoStatus::Accepted ||
+                !certificate_result.info.has_value()) {
                 EVLOG_AND_THROW(std::runtime_error(
                     "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
 
+            const auto& certificate_info = certificate_result.info.value();
+
+            if (certificate_info.password.has_value()) {
+                std::string passwd = certificate_info.password.value();
+                context->set_password_callback(
+                    [passwd](auto max_len, auto purpose) { return passwd.substr(0, max_len); });
+            }
+
             // certificate_path contains the chain if not empty. Use certificate chain if available, else use
             // certificate_single_path
-            auto certificate_path = certificate_key_pair.value().certificate_path;
-            if (certificate_path.empty()) {
-                certificate_path = certificate_key_pair.value().certificate_single_path;
+            fs::path certificate_path;
+
+            if (certificate_info.certificate_path.has_value()) {
+                certificate_path = certificate_info.certificate_path.value();
+            } else if (certificate_info.certificate_single_path.has_value()) {
+                certificate_path = certificate_info.certificate_single_path.value();
+            } else {
+                EVLOG_AND_THROW(std::runtime_error(
+                    "Connecting with security profile 3 but no client side certificate is present or valid"));
             }
 
             EVLOG_info << "Using certificate: " << certificate_path;
             if (SSL_CTX_use_certificate_chain_file(context->native_handle(), certificate_path.c_str()) != 1) {
                 EVLOG_AND_THROW(std::runtime_error("Could not use client certificate file within SSL context"));
             }
-            EVLOG_info << "Using key file: " << certificate_key_pair.value().key_path;
-            if (SSL_CTX_use_PrivateKey_file(context->native_handle(), certificate_key_pair.value().key_path.c_str(),
+            EVLOG_info << "Using key file: " << certificate_info.key_path;
+            if (SSL_CTX_use_PrivateKey_file(context->native_handle(), certificate_info.key_path.c_str(),
                                             SSL_FILETYPE_PEM) != 1) {
                 EVLOG_AND_THROW(std::runtime_error("Could not set private key file within SSL context"));
             }

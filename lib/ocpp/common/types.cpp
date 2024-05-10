@@ -997,6 +997,23 @@ std::string double_to_string(double d) {
 } // namespace conversions
 
 namespace conversions {
+std::string generate_certificate_signing_request_status_to_string(const GetCertificateSignRequestStatus status) {
+    switch (status) {
+    case GetCertificateSignRequestStatus::Accepted:
+        return "Accepted";
+    case GetCertificateSignRequestStatus::InvalidRequestedType:
+        return "InvalidRequestedType";
+    case GetCertificateSignRequestStatus::KeyGenError:
+        return "KeyGenError";
+    case GetCertificateSignRequestStatus::GenerationError:
+        return "GenerationError";
+    default:
+        throw std::out_of_range("Could not convert GetCertificateSignRequestStatus to string");
+    }
+}
+} // namespace conversions
+
+namespace conversions {
 v16::FirmwareStatus firmware_status_notification_to_firmware_status(const FirmwareStatusNotification status) {
     switch (status) {
     case FirmwareStatusNotification::Downloaded:
