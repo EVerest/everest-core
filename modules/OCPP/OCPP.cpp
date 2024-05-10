@@ -730,6 +730,13 @@ void OCPP::ready() {
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
+    this->charge_point->register_boot_notification_response_callback(
+        [this](const ocpp::v16::BootNotificationResponse& boot_notification_response) {
+            const auto everest_boot_notification_response =
+                conversions::to_everest_boot_notification_response(boot_notification_response);
+            this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
+        });
+
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request;

@@ -133,3 +133,8 @@ vars:
       For OCPP2.0.1: The object may contain all available properties
     type: object
     $ref: /ocpp#/EventData
+  boot_notification_response:
+    description: >-
+      Published any time a BootNotificationResponse message is received from the CSMS
+    type: object
+    $ref: /ocpp#/BootNotificationResponse
