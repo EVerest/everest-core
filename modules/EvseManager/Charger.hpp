@@ -323,6 +323,9 @@ private:
         std::chrono::system_clock::time_point current_state_started;
         EvseState last_state_detect_state_change;
         EvseState last_state;
+
+        bool pp_warning_printed{false};
+        bool no_energy_warning_printed{false};
     } internal_context;
 
     // main Charger thread
