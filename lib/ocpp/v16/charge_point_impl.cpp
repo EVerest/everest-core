@@ -1240,6 +1240,10 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         if (this->set_system_time_callback != nullptr) {
             this->set_system_time_callback(call_result.msg.currentTime.to_rfc3339());
         }
+
+        // in case the BootNotification.req was triggered by a TriggerMessage.req the timer might still run
+        this->boot_notification_timer->stop();
+
         // we are allowed to send messages to the central system
         // activate heartbeat
         this->update_heartbeat_interval();

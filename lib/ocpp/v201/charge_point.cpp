@@ -2168,6 +2168,10 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         if (msg.interval > 0) {
             this->heartbeat_timer.interval([this]() { this->heartbeat_req(); }, std::chrono::seconds(msg.interval));
         }
+
+        // in case the BootNotification.req was triggered by a TriggerMessage.req the timer might still run
+        this->boot_notification_timer.stop();
+
         this->init_certificate_expiration_check_timers();
         this->update_aligned_data_interval();
         this->component_state_manager->send_status_notification_all_connectors();
