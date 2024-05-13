@@ -868,6 +868,9 @@ void ChargePoint::init_websocket() {
         return;
     }
 
+    EVLOG_info << "Open websocket with NetworkConfigurationPriority: " << this->network_configuration_priority + 1
+               << " which is configurationSlot " << configuration_slot;
+
     const auto& active_network_profile_cv = ControllerComponentVariables::ActiveNetworkProfile;
     if (active_network_profile_cv.variable.has_value()) {
         this->device_model->set_read_only_value(active_network_profile_cv.component,
@@ -935,8 +938,8 @@ void ChargePoint::init_websocket() {
     this->websocket->register_closed_callback(
         [this, connection_options, configuration_slot](const WebsocketCloseReason reason) {
             EVLOG_warning << "Closed websocket of NetworkConfigurationPriority: "
-                          << this->network_configuration_priority + 1
-                          << " which is configurationSlot: " << configuration_slot;
+                          << this->network_configuration_priority + 1 << " which is configurationSlot "
+                          << configuration_slot;
 
             if (!this->disable_automatic_websocket_reconnects) {
                 this->websocket_timer.timeout(
