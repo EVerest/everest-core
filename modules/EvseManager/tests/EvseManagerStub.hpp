@@ -74,13 +74,9 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
 
     virtual std::shared_ptr<Everest::error::ErrorManagerReq> get_error_manager_req_fn(const Requirement& req) {
         return std::make_shared<Everest::error::ErrorManagerReq>(
-            std::make_shared<Everest::error::ErrorTypeMap>(),
-            std::make_shared<Everest::error::ErrorDatabaseMap>(),
-            std::list<Everest::error::ErrorType>({
-                Everest::error::ErrorType("evse_board_support/VendorWarning")
-            }),
-            [this](const Everest::error::ErrorType& error_type,
-                   const Everest::error::ErrorCallback& callback,
+            std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
+            std::list<Everest::error::ErrorType>({Everest::error::ErrorType("evse_board_support/VendorWarning")}),
+            [this](const Everest::error::ErrorType& error_type, const Everest::error::ErrorCallback& callback,
                    const Everest::error::ErrorCallback& clear_callback) {
                 error_raise[error_type] = callback;
                 error_clear[error_type] = clear_callback;
@@ -89,8 +85,7 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
 
     virtual std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string& str) {
         return std::make_shared<Everest::error::ErrorManagerImpl>(
-            std::make_shared<Everest::error::ErrorTypeMap>(),
-            std::make_shared<Everest::error::ErrorDatabaseMap>(),
+            std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
             std::list<Everest::error::ErrorType>(),
             [this](const Everest::error::Error& error) {
                 std::printf("publish_raised_error\n");
@@ -106,8 +101,7 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
                 }
                 error_clear[error.type](error);
             },
-            false
-        );
+            false);
     }
 };
 
