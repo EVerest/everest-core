@@ -94,6 +94,7 @@ error_historyImpl::handle_get_errors(types::error_history::FilterArguments& filt
         std::string string_severity = Everest::error::severity_to_string(error->severity);
         error_object.severity = types::error_history::string_to_severity(string_severity);
         error_object.type = error->type;
+        error_object.sub_type = error->sub_type;
         error_object.origin.module_id = error->origin.module_id;
         error_object.origin.implementation_id = error->origin.implementation_id;
         error_object.message = error->message;

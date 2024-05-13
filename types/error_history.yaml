@@ -81,6 +81,8 @@ types:
       type:
         type: string
         minLength: 2
+      sub_type:
+        type: string
       description:
         type: string
         minLength: 2

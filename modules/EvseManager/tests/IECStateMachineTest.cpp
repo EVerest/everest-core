@@ -82,7 +82,8 @@ struct BspStub : public module::stub::ModuleAdapterStub {
 };
 
 TEST(IECStateMachine, init) {
-    std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>();
+    module::stub::ModuleAdapterStub module_adapter = module::stub::ModuleAdapterStub();
+    std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(module_adapter);
     module::IECStateMachine state_machine(std::move(bsp_if));
 }
 
