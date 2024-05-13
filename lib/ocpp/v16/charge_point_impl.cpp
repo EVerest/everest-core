@@ -1961,7 +1961,7 @@ void ChargePointImpl::handleSetChargingProfileRequest(ocpp::Call<SetChargingProf
                       << call.msg.csChargingProfiles.chargingProfilePurpose;
         response.status = ChargingProfileStatus::Rejected;
     } else if (this->smart_charging_handler->validate_profile(
-                   profile, connector_id, true, this->configuration->getChargeProfileMaxStackLevel(),
+                   profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
                    this->configuration->getMaxChargingProfilesInstalled(),
                    this->configuration->getChargingScheduleMaxPeriods(),
                    this->configuration->getChargingScheduleAllowedChargingRateUnitVector())) {

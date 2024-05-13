@@ -351,8 +351,8 @@ bool SmartChargingHandler::validate_profile(
                 profile.chargingSchedule.duration = max_recurrency_duration;
             }
         }
-        return true;
     }
+
     if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
         if (connector_id == 0 and profile.chargingProfileKind != ChargingProfileKindType::Relative) {
             return true;
@@ -365,24 +365,28 @@ bool SmartChargingHandler::validate_profile(
         return true;
     } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
         if (connector_id == 0) {
-            EVLOG_info << "INVALID PROFILE - connector_id != 0 or no active transaction at this connector";
+            EVLOG_warning << "INVALID PROFILE - connector_id is 0";
             return false;
         }
 
-        if (!profile.transactionId.has_value() and ignore_no_transaction) {
-            return true;
-        }
+        const auto& connector = this->connectors.at(connector_id);
 
-        // transactionId is present so we need to check if a transaction exists
-        if (this->connectors.at(connector_id)->transaction == nullptr) {
-            EVLOG_info << "INVALID PROFILE - No active transaction at connector";
+        if (connector->transaction == nullptr && !ignore_no_transaction) {
+            EVLOG_warning << "INVALID PROFILE - No active transaction at this connector";
             return false;
         }
 
-        // check if the transactionId matches the active transaction
-        if (this->connectors.at(connector_id)->transaction->get_transaction_id() != profile.transactionId) {
-            EVLOG_info << "INVALID PROFILE - transaction_id doesnt match for purpose TxProfile";
-            return false;
+        if (profile.transactionId.has_value()) {
+            if (connector->transaction == nullptr) {
+                EVLOG_warning << "INVALID PROFILE - profile.transaction_id is present but no transaction is active at "
+                                 "this connector";
+                return false;
+            }
+
+            if (connector->transaction->get_transaction_id() != profile.transactionId) {
+                EVLOG_warning << "INVALID PROFILE - transaction_id doesn't match for purpose TxProfile";
+                return false;
+            }
         }
     }
     return true;
