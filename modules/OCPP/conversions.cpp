@@ -388,5 +388,28 @@ types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChar
     return csch;
 }
 
+types::ocpp::BootNotificationResponse
+to_everest_boot_notification_response(const ocpp::v16::BootNotificationResponse& boot_notification_response) {
+    types::ocpp::BootNotificationResponse everest_boot_notification_response;
+    everest_boot_notification_response.status = to_everest_registration_status(boot_notification_response.status);
+    everest_boot_notification_response.current_time = boot_notification_response.currentTime.to_rfc3339();
+    everest_boot_notification_response.interval = boot_notification_response.interval;
+    return everest_boot_notification_response;
+}
+
+types::ocpp::RegistrationStatus
+to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration_status) {
+    switch (registration_status) {
+    case ocpp::v16::RegistrationStatus::Accepted:
+        return types::ocpp::RegistrationStatus::Accepted;
+    case ocpp::v16::RegistrationStatus::Pending:
+        return types::ocpp::RegistrationStatus::Pending;
+    case ocpp::v16::RegistrationStatus::Rejected:
+        return types::ocpp::RegistrationStatus::Rejected;
+    default:
+        throw std::out_of_range("Could not convert ocpp::v201::RegistrationStatus to types::ocpp::RegistrationStatus");
+    }
+}
+
 } // namespace conversions
 } // namespace module

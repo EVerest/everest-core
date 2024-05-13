@@ -83,24 +83,36 @@ bool EvseSecurity::is_ca_certificate_installed(const ocpp::CaCertificateType& ce
     return this->r_security.call_is_ca_certificate_installed(conversions::from_ocpp(certificate_type));
 }
 
-std::string EvseSecurity::generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
-                                                               const std::string& country,
-                                                               const std::string& organization,
-                                                               const std::string& common, bool use_tpm) {
-    return this->r_security.call_generate_certificate_signing_request(conversions::from_ocpp(certificate_type), country,
-                                                                      organization, common, use_tpm);
+ocpp::GetCertificateSignRequestResult
+EvseSecurity::generate_certificate_signing_request(const ocpp::CertificateSigningUseEnum& certificate_type,
+                                                   const std::string& country, const std::string& organization,
+                                                   const std::string& common, bool use_tpm) {
+    auto csr_response = this->r_security.call_generate_certificate_signing_request(
+        conversions::from_ocpp(certificate_type), country, organization, common, use_tpm);
+
+    ocpp::GetCertificateSignRequestResult result;
+
+    result.status = conversions::to_ocpp(csr_response.status);
+    if (csr_response.csr.has_value()) {
+        result.csr = csr_response.csr;
+    }
+
+    return result;
 }
 
-std::optional<ocpp::KeyPair> EvseSecurity::get_key_pair(const ocpp::CertificateSigningUseEnum& certificate_type) {
-    const auto key_pair_response = this->r_security.call_get_key_pair(conversions::from_ocpp(certificate_type),
-                                                                      types::evse_security::EncodingFormat::PEM);
-    if (key_pair_response.status == types::evse_security::GetKeyPairStatus::Accepted and
-        key_pair_response.key_pair.has_value()) {
-        const auto _key_pair = conversions::to_ocpp(key_pair_response.key_pair.value());
-        return _key_pair;
-    } else {
-        return std::nullopt;
+ocpp::GetCertificateInfoResult
+EvseSecurity::get_leaf_certificate_info(const ocpp::CertificateSigningUseEnum& certificate_type, bool include_ocsp) {
+    const auto info_response = this->r_security.call_get_leaf_certificate_info(
+        conversions::from_ocpp(certificate_type), types::evse_security::EncodingFormat::PEM, include_ocsp);
+
+    ocpp::GetCertificateInfoResult result;
+
+    result.status = conversions::to_ocpp(info_response.status);
+    if (info_response.info.has_value()) {
+        result.info = conversions::to_ocpp(info_response.info.value());
     }
+
+    return result;
 }
 
 bool EvseSecurity::update_certificate_links(const ocpp::CertificateSigningUseEnum& certificate_type) {
@@ -221,10 +233,27 @@ ocpp::CertificateValidationResult to_ocpp(types::evse_security::CertificateValid
         return ocpp::CertificateValidationResult::InvalidChain;
     case types::evse_security::CertificateValidationResult::Unknown:
         return ocpp::CertificateValidationResult::Unknown;
-        ;
     default:
         throw std::runtime_error("Could not convert types::evse_security::CertificateValidationResult to "
                                  "ocpp::CertificateValidationResult");
+    }
+}
+
+ocpp::GetCertificateInfoStatus to_ocpp(types::evse_security::GetCertificateInfoStatus other) {
+    switch (other) {
+    case types::evse_security::GetCertificateInfoStatus::Accepted:
+        return ocpp::GetCertificateInfoStatus::Accepted;
+    case types::evse_security::GetCertificateInfoStatus::Rejected:
+        return ocpp::GetCertificateInfoStatus::Rejected;
+    case types::evse_security::GetCertificateInfoStatus::NotFound:
+        return ocpp::GetCertificateInfoStatus::NotFound;
+    case types::evse_security::GetCertificateInfoStatus::NotFoundValid:
+        return ocpp::GetCertificateInfoStatus::NotFoundValid;
+    case types::evse_security::GetCertificateInfoStatus::PrivateKeyNotFound:
+        return ocpp::GetCertificateInfoStatus::PrivateKeyNotFound;
+    default:
+        throw std::runtime_error("Could not convert types::evse_security::GetCertificateInfoStatus to "
+                                 "ocpp::GetCertificateInfoStatus");
     }
 }
 
@@ -239,6 +268,22 @@ ocpp::DeleteCertificateResult to_ocpp(types::evse_security::DeleteCertificateRes
     default:
         throw std::runtime_error(
             "Could not convert types::evse_security::DeleteCertificateResult to ocpp::DeleteCertificateResult");
+    }
+}
+
+ocpp::GetCertificateSignRequestStatus to_ocpp(types::evse_security::GetCertificateSignRequestStatus other) {
+    switch (other) {
+    case types::evse_security::GetCertificateSignRequestStatus::Accepted:
+        return ocpp::GetCertificateSignRequestStatus::Accepted;
+    case types::evse_security::GetCertificateSignRequestStatus::InvalidRequestedType:
+        return ocpp::GetCertificateSignRequestStatus::InvalidRequestedType;
+    case types::evse_security::GetCertificateSignRequestStatus::KeyGenError:
+        return ocpp::GetCertificateSignRequestStatus::KeyGenError;
+    case types::evse_security::GetCertificateSignRequestStatus::GenerationError:
+        return ocpp::GetCertificateSignRequestStatus::GenerationError;
+    default:
+        throw std::runtime_error("Could not convert types::evse_security::GetCertificateSignRequestStatus to "
+                                 "ocpp::GetCertificateSignRequestStatus");
     }
 }
 
@@ -279,12 +324,31 @@ ocpp::OCSPRequestData to_ocpp(types::evse_security::OCSPRequestData other) {
     return lhs;
 }
 
-ocpp::KeyPair to_ocpp(types::evse_security::KeyPair other) {
-    ocpp::KeyPair lhs;
+ocpp::CertificateOCSP to_ocpp(types::evse_security::CertificateOCSP other) {
+    ocpp::CertificateOCSP lhs;
+    lhs.hash = to_ocpp(other.hash);
+
+    if (other.ocsp_path.has_value()) {
+        lhs.ocsp_path = other.ocsp_path.value();
+    }
+
+    return lhs;
+}
+
+ocpp::CertificateInfo to_ocpp(types::evse_security::CertificateInfo other) {
+    ocpp::CertificateInfo lhs;
     lhs.certificate_path = other.certificate;
     lhs.certificate_single_path = other.certificate_single;
     lhs.key_path = other.key;
     lhs.password = other.password;
+    lhs.certificate_count = other.certificate_count;
+
+    if (other.ocsp.has_value()) {
+        for (auto& ocsp_data : other.ocsp.value()) {
+            lhs.ocsp.push_back(to_ocpp(ocsp_data));
+        }
+    }
+
     return lhs;
 }
 
@@ -440,10 +504,13 @@ types::evse_security::OCSPRequestData from_ocpp(ocpp::OCSPRequestData other) {
     return lhs;
 }
 
-types::evse_security::KeyPair from_ocpp(ocpp::KeyPair other) {
-    types::evse_security::KeyPair lhs;
-    lhs.key = other.certificate_path;
-    lhs.certificate = other.key_path;
+types::evse_security::CertificateInfo from_ocpp(ocpp::CertificateInfo other) {
+    types::evse_security::CertificateInfo lhs;
+    lhs.certificate = other.certificate_path;
+    lhs.certificate_single = other.certificate_single_path;
+    lhs.certificate_count = other.certificate_count;
+    lhs.key = other.key_path;
+    lhs.password = other.password;
     return lhs;
 }
 

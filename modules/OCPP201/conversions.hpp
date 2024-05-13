@@ -9,6 +9,7 @@
 #include <generated/types/system.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v201/messages/BootNotification.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
@@ -177,6 +178,20 @@ types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::Message
 /// types::ocpp::OcppTransactionEventResponse
 types::ocpp::OcppTransactionEventResponse
 to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response);
+
+/// \brief Converts a given ocpp::v201::BootNotificationResponse \p boot_notification_response to a
+/// types::ocpp::BootNotificationResponse
+types::ocpp::BootNotificationResponse
+to_everest_boot_notification_response(const ocpp::v201::BootNotificationResponse& boot_notification_response);
+
+/// \brief Converts a given ocpp::v201::RegistrationStatusEnum \p registration_status to a
+/// types::ocpp::RegistrationStatus
+types::ocpp::RegistrationStatus
+to_everest_registration_status(const ocpp::v201::RegistrationStatusEnum& registration_status);
+
+/// \brief Converts a given ocpp::v201::StatusInfo \p status_info to a
+/// types::ocpp::StatusInfoType
+types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::StatusInfo& status_info);
 
 /// \brief Converts a given ocpp::v201::GetVariableResult \p get_variable_result_vector to a
 /// std::vector<types::ocpp::GetVariableResult>

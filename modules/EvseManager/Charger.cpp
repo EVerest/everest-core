@@ -223,6 +223,9 @@ void Charger::run_state_machine() {
             // to make sure control_pilot does not switch on relais even if
             // we start PWM here
             if (initialize_state) {
+                internal_context.pp_warning_printed = false;
+                internal_context.no_energy_warning_printed = false;
+
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 
                 if (internal_context.last_state == EvseState::Replug) {
@@ -264,6 +267,10 @@ void Charger::run_state_machine() {
                 shared_context.max_current_cable = bsp->read_pp_ampacity();
                 // retry if the value is not yet available. Some BSPs may take some time to measure the PP.
                 if (shared_context.max_current_cable == 0) {
+                    if (not internal_context.pp_warning_printed) {
+                        EVLOG_warning << "PP ampacity is zero, still retrying to read PP ampacity...";
+                        internal_context.pp_warning_printed = true;
+                    }
                     break;
                 }
             }
@@ -274,6 +281,10 @@ void Charger::run_state_machine() {
                 // Create a copy of the atomic struct
                 types::iso15118_charger::DC_EVSEMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.EVSEMaximumCurrentLimit > 0 and evse_limit.EVSEMaximumPowerLimit > 0)) {
+                    if (not internal_context.no_energy_warning_printed) {
+                        EVLOG_warning << "No energy available, still retrying...";
+                        internal_context.no_energy_warning_printed = true;
+                    }
                     break;
                 }
             }
@@ -302,8 +313,9 @@ void Charger::run_state_machine() {
 
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
-                    if (!start_transaction())
+                    if (!start_transaction()) {
                         break;
+                    }
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
@@ -384,8 +396,9 @@ void Charger::run_state_machine() {
                 }
             } else if (shared_context.authorized and shared_context.authorized_pnc) {
 
-                if (!start_transaction())
+                if (!start_transaction()) {
                     break;
+                }
 
                 const EvseState target_state(EvseState::PrepareCharging);
 
