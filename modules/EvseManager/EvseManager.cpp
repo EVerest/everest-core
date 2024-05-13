@@ -60,7 +60,7 @@ void EvseManager::init() {
     }
 
     // Use SLAC MAC address for Autocharge if configured.
-    if (config.autocharge_use_slac_instead_of_hlc and slac_enabled) {
+    if (config.autocharge_use_slac_instead_of_hlc and slac_enabled and config.enable_autocharge) {
         r_slac[0]->subscribe_ev_mac_address([this](const std::string& token) {
             p_token_provider->publish_provided_token(create_autocharge_token(token, config.connector_id));
         });
@@ -474,7 +474,9 @@ void EvseManager::ready() {
                 r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
             } else {
-                p_token_provider->publish_provided_token(autocharge_token);
+                if (config.enable_autocharge) {
+                    p_token_provider->publish_provided_token(autocharge_token);
+                }
                 Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_publish_provided_token);
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;

@@ -79,6 +79,7 @@ struct Conf {
     bool hack_pause_imd_during_precharge;
     bool hack_allow_bpt_with_iso2;
     bool autocharge_use_slac_instead_of_hlc;
+    bool enable_autocharge;
     std::string logfile_suffix;
     double soft_over_current_tolerance_percent;
     double soft_over_current_measurement_noise_A;
@@ -204,7 +205,6 @@ public:
         powersupply_capabilities.max_import_current_A = caps.max_import_current_A;
         powersupply_capabilities.max_import_power_W = caps.max_import_power_W;
     }
-
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
