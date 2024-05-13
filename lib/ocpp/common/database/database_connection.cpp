@@ -5,15 +5,46 @@
 
 #include <everest/logging.hpp>
 
+using namespace std::chrono_literals;
 using namespace std::string_literals;
 
 namespace ocpp::common {
+
+class DatabaseTransaction : public DatabaseTransactionInterface {
+private:
+    DatabaseConnection& database;
+    std::unique_lock<std::timed_mutex> mutex;
+
+public:
+    DatabaseTransaction(DatabaseConnection& database, std::unique_lock<std::timed_mutex> mutex) :
+        database{database}, mutex{std::move(mutex)} {
+    }
+
+    // Will by default rollback the transaction if destructed
+    ~DatabaseTransaction() override {
+        if (this->mutex.owns_lock()) {
+            this->rollback();
+        }
+    }
+
+    void commit() override {
+        this->database.execute_statement("COMMIT TRANSACTION");
+        this->mutex.unlock();
+    }
+    void rollback() override {
+        this->database.execute_statement("ROLLBACK TRANSACTION");
+        this->mutex.unlock();
+    }
+};
 
 DatabaseConnection::DatabaseConnection(const fs::path& database_file_path) noexcept :
     db(nullptr), database_file_path(database_file_path), open_count(0) {
 }
 
 DatabaseConnection::~DatabaseConnection() {
+    // There could still be a transaction active and we have no way to abort it, so wait a few seconds to give it time
+    // to finish
+    auto lock = std::unique_lock(this->transaction_mutex, 2s);
     close_connection_internal(true);
 }
 
@@ -81,16 +112,8 @@ const char* DatabaseConnection::get_error_message() {
     return sqlite3_errmsg(this->db);
 }
 
-bool DatabaseConnection::begin_transaction() {
-    return this->execute_statement("BEGIN TRANSACTION");
-}
-
-bool DatabaseConnection::commit_transaction() {
-    return this->execute_statement("COMMIT TRANSACTION");
-}
-
-bool DatabaseConnection::rollback_transaction() {
-    return this->execute_statement("ROLLBACK TRANSACTION");
+std::unique_ptr<DatabaseTransactionInterface> DatabaseConnection::begin_transaction() {
+    return std::make_unique<DatabaseTransaction>(*this, std::unique_lock(this->transaction_mutex));
 }
 
 std::unique_ptr<SQLiteStatementInterface> DatabaseConnection::new_statement(const std::string& sql) {

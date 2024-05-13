@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <sqlite3.h>
 
 #include <ocpp/common/support_older_cpp_versions.hpp>
@@ -10,6 +11,20 @@
 #include "sqlite_statement.hpp"
 
 namespace ocpp::common {
+
+/// \brief Helper class for transactions. Will lock the database interface from new transaction until commit() or
+/// rollback() is called or the object destroyed
+class DatabaseTransactionInterface {
+public:
+    /// \brief Destructor of transaction: Will by default rollback unless commit() is called
+    virtual ~DatabaseTransactionInterface() = default;
+
+    /// \brief Commits the transaction and release the lock on the database interface
+    virtual void commit() = 0;
+
+    /// \brief Aborts the transaction and release the lock on the database interface
+    virtual void rollback() = 0;
+};
 
 class DatabaseConnectionInterface {
 public:
@@ -21,14 +36,9 @@ public:
     /// \brief Closes the database connection. Returns true if succeeded.
     virtual bool close_connection() = 0;
 
-    /// \brief Start a transaction on the database. Returns true if succeeded.
-    virtual bool begin_transaction() = 0;
-
-    /// \brief Commits the transaction on the database. Returns true if succeeded.
-    virtual bool commit_transaction() = 0;
-
-    /// \brief Rolls back the transaction on the database. Returns true if succeeded.
-    virtual bool rollback_transaction() = 0;
+    /// \brief Start a transaction on the database. Returns an object holding the transaction.
+    /// \note This function can block until the previous transaction is finished.
+    [[nodiscard]] virtual std::unique_ptr<DatabaseTransactionInterface> begin_transaction() = 0;
 
     /// \brief Immediately executes \p statement. Returns true if succeeded.
     virtual bool execute_statement(const std::string& statement) = 0;
@@ -52,6 +62,7 @@ private:
     sqlite3* db;
     const fs::path database_file_path;
     std::atomic_uint32_t open_count;
+    std::timed_mutex transaction_mutex;
 
     bool close_connection_internal(bool force_close);
 
@@ -63,9 +74,7 @@ public:
     bool open_connection() override;
     bool close_connection() override;
 
-    bool begin_transaction() override;
-    bool commit_transaction() override;
-    bool rollback_transaction() override;
+    [[nodiscard]] std::unique_ptr<DatabaseTransactionInterface> begin_transaction() override;
 
     bool execute_statement(const std::string& statement) override;
     std::unique_ptr<SQLiteStatementInterface> new_statement(const std::string& sql) override;

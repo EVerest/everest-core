@@ -200,8 +200,9 @@ bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file
         return false;
     }
 
+    bool retval = true;
     try {
-        this->database->begin_transaction();
+        auto transaction = this->database->begin_transaction();
 
         for (const auto& item : list.value()) {
             std::ifstream stream{item.path};
@@ -216,16 +217,14 @@ bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file
         }
 
         this->set_user_version(target_schema_version);
-        this->database->commit_transaction();
+        transaction->commit();
     } catch (std::exception& e) {
-        this->database->rollback_transaction();
-        this->database->close_connection();
         EVLOG_error << "Failure during migration file apply: " << e.what();
-        return false;
+        retval = false;
     }
 
     this->database->close_connection();
-    return true;
+    return retval;
 }
 
 } // namespace ocpp::common
