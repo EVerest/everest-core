@@ -194,7 +194,7 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
     EXPECT_FALSE(error_handling.hlc);
     ImplementationIdentifier id("evse_manager", "main");
     Everest::error::Error error("evse_board_support/VendorError", "", "K2Faults::FAULT_CT_CLAMP",
-                                       "Vendor specific error code. Will stop charging session.", id);
+                                "Vendor specific error code. Will stop charging session.", id);
 
     bool bResult;
     auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
