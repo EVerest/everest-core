@@ -166,6 +166,8 @@ typedef struct keylogDebugCtx {
     bool inClientRandom;
     bool inMasterSecret;
     uint8_t hexdumpLinesToProcess;
+    int udp_socket;
+    std::string udp_buffer;
 } keylogDebugCtx;
 
 struct SAE_Bidi_Data {
@@ -203,6 +205,10 @@ struct v2g_context {
 
     int sdp_socket;
     int tcp_socket;
+
+    int udp_port;
+    int udp_socket;
+
     pthread_t tcp_thread;
 
     mbedtls_ssl_config ssl_config;

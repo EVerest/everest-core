@@ -600,6 +600,19 @@ error_out:
 static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile, int ALine, const char* AStr) {
     keylogDebugCtx* ctx = static_cast<keylogDebugCtx*>(ACtx);
 
+    const auto add_to_udp_message = [&](const auto str) { ctx->udp_buffer.append(str); };
+
+    const auto add_character_to_udp_message = [&](const auto character) { ctx->udp_buffer.push_back(character); };
+
+    const auto send_udp_message = [&]() {
+        const auto message_size = ctx->udp_buffer.size();
+        const auto ret = send(ctx->udp_socket, ctx->udp_buffer.c_str(), message_size, 0);
+
+        if (ret != message_size) {
+            EVLOG_error << "send() failed: " << strerror(errno);
+        }
+    };
+
     ((void)ALevel);
     ((void)AFile);
     ((void)ALine);
@@ -607,12 +620,16 @@ static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile
     if (strstr(AStr, "dumping 'client hello, random bytes' (32 bytes)")) {
         ctx->inClientRandom = true;
         ctx->hexdumpLinesToProcess = 2;
-        fputs("CLIENT_RANDOM ", ctx->file);
+        const auto message = "CLIENT_RANDOM ";
+        fputs(message, ctx->file);
+        add_to_udp_message(message);
         return;
     } else if (strstr(AStr, "dumping 'master secret' (48 bytes)")) {
         ctx->inMasterSecret = true;
         ctx->hexdumpLinesToProcess = 3;
-        fputc(' ', ctx->file);
+        const auto message = ' ';
+        fputc(message, ctx->file);
+        add_character_to_udp_message(message);
         return;
     } else if (((ctx->inClientRandom == false) && (ctx->inMasterSecret == false)) ||
                (ctx->hexdumpLinesToProcess == 0)) {
@@ -632,7 +649,9 @@ static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile
         if ((('0' <= c1 && c1 <= '9') || ('a' <= c1 && c1 <= 'f')) &&
             (('0' <= c2 && c2 <= '9') || ('a' <= c2 && c2 <= 'f')) && c3 == ' ') {
             fputc(c1, ctx->file);
+            add_character_to_udp_message(c1);
             fputc(c2, ctx->file);
+            add_character_to_udp_message(c2);
         } else {
             goto reset; /* unexpected non-hex char */
         }
@@ -644,8 +663,13 @@ reset:
     ctx->hexdumpLinesToProcess = 0;
     ctx->inClientRandom = false;
     ctx->inMasterSecret = false;
-    fputc('\n', ctx->file); /* finish key log line */
+
+    const auto message = '\n';
+    fputc(message, ctx->file); /* finish key log line */
     fflush(ctx->file);
+
+    send_udp_message();
+    ctx->udp_buffer = {};
 }
 
 /**
@@ -735,6 +759,13 @@ static void* connection_handle_tls(void* data) {
 
         v2g_ctx->tls_log_ctx.file = fopen(tls_log_path.c_str(), "a");
 
+        const auto udp_socket = create_udp_socket(conn->ctx->udp_port, v2g_ctx->if_name);
+        if (udp_socket < 0) {
+            goto thread_exit;
+        }
+        EVLOG_info << "Sending TLS secrets to port: " << conn->ctx->udp_port;
+        v2g_ctx->udp_socket = udp_socket;
+
         if (v2g_ctx->tls_log_ctx.file == NULL) {
             dlog(DLOG_LEVEL_INFO, "%s", "Failed to open file path for TLS key logging: %s", strerror(errno));
             mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
@@ -744,6 +775,7 @@ static void* connection_handle_tls(void* data) {
             v2g_ctx->tls_log_ctx.inClientRandom = false;
             v2g_ctx->tls_log_ctx.inMasterSecret = false;
             v2g_ctx->tls_log_ctx.hexdumpLinesToProcess = 0;
+            v2g_ctx->tls_log_ctx.udp_socket = v2g_ctx->udp_socket;
             mbedtls_ssl_conf_dbg(ssl_config, ssl_key_log_debug_callback, &v2g_ctx->tls_log_ctx);
         }
     }
@@ -812,6 +844,7 @@ static void* connection_handle_tls(void* data) {
     if (conn->ctx->tls_log_ctx.file != NULL) {
         mbedtls_debug_set_threshold(MBEDTLS_DEBUG_LEVEL_NO_DEBUG);
         fclose(conn->ctx->tls_log_ctx.file);
+        close(conn->ctx->udp_socket);
         memset(&conn->ctx->tls_log_ctx, 0, sizeof(conn->ctx->tls_log_ctx));
     }
 
@@ -938,6 +971,9 @@ static void* connection_server(void* data) {
                  strerror(errno));
         }
 
+        // store the port to create a udp socket
+        conn->ctx->udp_port = ntohs(addr.sin6_port);
+
         if (pthread_create(&conn->thread_id, &attr,
                            conn->is_tls_connection ? connection_handle_tls : connection_handle_tcp, conn) != 0) {
             dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
@@ -984,4 +1020,64 @@ int connection_start_servers(struct v2g_context* ctx) {
     }
 
     return 0;
+}
+
+int create_udp_socket(const uint16_t udp_port, const char* interface_name) {
+    constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+
+    int udp_socket = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (udp_socket < 0) {
+        EVLOG_error << "Could not create socket: " << strerror(errno);
+        return udp_socket;
+    }
+
+    // source setup
+
+    // find port between 49152-65535
+    auto could_bind = false;
+    auto source_port = 49152;
+    for (; source_port < 65535; source_port++) {
+        sockaddr_in6 source_address = {AF_INET6, htons(source_port)};
+        if (bind(udp_socket, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+            could_bind = true;
+            break;
+        }
+    }
+
+    if (!could_bind) {
+        EVLOG_error << "Could not bind: " << strerror(errno);
+        return -1;
+    }
+
+    EVLOG_info << "UDP socket bound to source port: " << source_port;
+
+    const auto index = if_nametoindex(interface_name);
+    auto mreq = ipv6_mreq{};
+    mreq.ipv6mr_interface = index;
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+        EVLOG_error << "Failed to setup multicast address" << strerror(errno);
+        return -1;
+    }
+    if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        EVLOG_error << "Could not add multicast group membership: " << strerror(errno);
+        return -1;
+    }
+
+    if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+        EVLOG_error << "Could not set interface name: " << interface_name << "with error: " << strerror(errno);
+    }
+
+    // destination setup
+    sockaddr_in6 destination_address = {AF_INET6, htons(udp_port)};
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
+        EVLOG_error << "Failed to setup server address" << strerror(errno);
+    }
+    const auto connected =
+        connect(udp_socket, reinterpret_cast<sockaddr*>(&destination_address), sizeof(sockaddr_in6)) == 0;
+    if (!connected) {
+        EVLOG_error << "Could not connect: " << strerror(errno);
+        return -1;
+    }
+
+    return udp_socket;
 }
