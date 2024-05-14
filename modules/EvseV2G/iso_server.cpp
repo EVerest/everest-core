@@ -924,10 +924,10 @@ static enum v2g_event handle_iso_service_discovery(struct v2g_connection* conn) 
     /* Find requested scope id within evse service list */
     if (req->ServiceScope_isUsed) {
         /* Check if ServiceScope is in evse ServiceList */
-        for (uint8_t idx = 0; idx < res->ServiceList.Service.arrayLen; idx++) {
-            if ((res->ServiceList.Service.array[idx].ServiceScope_isUsed == (unsigned int)1) &&
-                (strcmp(res->ServiceList.Service.array[idx].ServiceScope.characters, req->ServiceScope.characters) ==
-                 0)) {
+        for (uint8_t idx = 0; idx < conn->ctx->evse_v2g_data.evse_service_list_len; idx++) {
+            if ((conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope_isUsed == (unsigned int)1) &&
+                (strcmp(conn->ctx->evse_v2g_data.evse_service_list[idx].ServiceScope.characters,
+                        req->ServiceScope.characters) == 0)) {
                 scope_idx = idx;
                 break;
             }
@@ -1096,7 +1096,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
     res->ResponseCode = (selected_services_found == false) ? iso1responseCodeType_FAILED_ServiceSelectionInvalid
                                                            : res->ResponseCode; // [V2G2-467]
     res->ResponseCode = (charge_service_found == false) ? iso1responseCodeType_FAILED_NoChargeServiceSelected
-                                                        : res->ResponseCode;    // [V2G2-804]
+                                                        : res->ResponseCode; // [V2G2-804]
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);

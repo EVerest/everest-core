@@ -43,16 +43,16 @@
 /* timeouts in milliseconds */
 #define V2G_SEQUENCE_TIMEOUT_60S              60000 /* [V2G2-443] et.al. */
 #define V2G_SEQUENCE_TIMEOUT_10S              10000
-#define V2G_CP_STATE_B_TO_C_D_TIMEOUT         250   /* [V2G2-847] */
-#define V2G_CP_STATE_B_TO_C_D_TIMEOUT_RELAXED 500   /* [V2G2-847] */
-#define V2G_CP_STATE_C_D_TO_B_TIMEOUT         250   /* [V2G2-848] */
-#define V2G_CONTACTOR_CLOSE_TIMEOUT           3000  /* [V2G2-862] [V2G2-865] 4.5 s for PowerDeliveryRes */
+#define V2G_CP_STATE_B_TO_C_D_TIMEOUT         250  /* [V2G2-847] */
+#define V2G_CP_STATE_B_TO_C_D_TIMEOUT_RELAXED 500  /* [V2G2-847] */
+#define V2G_CP_STATE_C_D_TO_B_TIMEOUT         250  /* [V2G2-848] */
+#define V2G_CONTACTOR_CLOSE_TIMEOUT           3000 /* [V2G2-862] [V2G2-865] 4.5 s for PowerDeliveryRes */
 #define V2G_COMMUNICATION_SETUP_TIMEOUT                                                                                \
     18000 /* [V2G2-723] [V2G2-029] [V2G2-032] [V2G2-714] [V2G2-716] V2G_SECC_CommunicationSetup_Performance_Time */
 #define V2G_CPSTATE_DETECTION_TIMEOUT                                                                                  \
-    1500  /* [V2G-DC-547] not (yet) defined for ISO and not implemented, but may be implemented */
+    1500 /* [V2G-DC-547] not (yet) defined for ISO and not implemented, but may be implemented */
 #define V2G_CPSTATE_DETECTION_TIMEOUT_RELAXED                                                                          \
-    3000  /* [V2G-DC-547] not (yet) defined for ISO and not implemented, but may be implemented */
+    3000 /* [V2G-DC-547] not (yet) defined for ISO and not implemented, but may be implemented */
 
 #define SA_SCHEDULE_DURATION 86400
 
@@ -242,7 +242,7 @@ struct v2g_context {
     std::atomic_bool is_connection_terminated; /* Is set to true if the connection is terminated (CP State A/F, shutdown
                                       immediately without response message) */
     std::atomic<bool> terminate_connection_on_failed_response;
-    std::atomic<bool> contactor_is_closed;     /* Actual contactor state */
+    std::atomic<bool> contactor_is_closed; /* Actual contactor state */
 
     struct {
         bool meter_info_is_used;

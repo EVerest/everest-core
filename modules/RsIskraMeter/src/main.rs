@@ -46,6 +46,7 @@ use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
+    OCMFUserIdentificationStatus, OCMFIdentificationType,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
@@ -1179,12 +1180,14 @@ mod tests {
             let ready_state = make_ready_state(mock);
 
             let _unused = ready_state.start_transaction(TransactionReq {
-                cable_id: 1,
-                client_id: String::new(),
                 evse_id: String::new(),
-                tariff_id: 1,
                 transaction_id: String::new(),
-                user_data: String::new(),
+                identification_status: OCMFUserIdentificationStatus::ASSIGNED,
+                identification_type: OCMFIdentificationType::ISO14443,
+                identification_flags: Vec::new(),
+                identification_data: None,
+                identification_level: None,
+                tariff_text: None
             });
         }
     }
@@ -1277,12 +1280,14 @@ mod tests {
         let ready_state = make_ready_state(mock);
 
         let _unused = ready_state.start_transaction(TransactionReq {
-            cable_id: 1,
-            client_id: String::new(),
             evse_id: String::new(),
-            tariff_id: 1,
             transaction_id: String::new(),
-            user_data: String::new(),
+            identification_status: OCMFUserIdentificationStatus::ASSIGNED,
+            identification_type: OCMFIdentificationType::ISO14443,
+            identification_flags: Vec::new(),
+            identification_data: None,
+            identification_level: None,
+            tariff_text: None
         });
     }
 }

@@ -1092,6 +1092,41 @@ to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse
     return everest_transaction_event_response;
 }
 
+types::ocpp::BootNotificationResponse
+to_everest_boot_notification_response(const ocpp::v201::BootNotificationResponse& boot_notification_response) {
+    types::ocpp::BootNotificationResponse everest_boot_notification_response;
+    everest_boot_notification_response.status = to_everest_registration_status(boot_notification_response.status);
+    everest_boot_notification_response.current_time = boot_notification_response.currentTime.to_rfc3339();
+    everest_boot_notification_response.interval = boot_notification_response.interval;
+    if (boot_notification_response.statusInfo.has_value()) {
+        everest_boot_notification_response.status_info =
+            to_everest_status_info_type(boot_notification_response.statusInfo.value());
+    }
+    return everest_boot_notification_response;
+}
+
+types::ocpp::RegistrationStatus
+to_everest_registration_status(const ocpp::v201::RegistrationStatusEnum& registration_status) {
+    switch (registration_status) {
+    case ocpp::v201::RegistrationStatusEnum::Accepted:
+        return types::ocpp::RegistrationStatus::Accepted;
+    case ocpp::v201::RegistrationStatusEnum::Pending:
+        return types::ocpp::RegistrationStatus::Pending;
+    case ocpp::v201::RegistrationStatusEnum::Rejected:
+        return types::ocpp::RegistrationStatus::Rejected;
+    default:
+        throw std::out_of_range(
+            "Could not convert ocpp::v201::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
+    }
+}
+
+types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::StatusInfo& status_info) {
+    types::ocpp::StatusInfoType everest_status_info;
+    everest_status_info.reason_code = status_info.reasonCode;
+    everest_status_info.additional_info = status_info.additionalInfo;
+    return everest_status_info;
+}
+
 std::vector<types::ocpp::GetVariableResult>
 to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult>& get_variable_result_vector) {
     std::vector<types::ocpp::GetVariableResult> response;

@@ -60,7 +60,7 @@ void EvseManager::init() {
     }
 
     // Use SLAC MAC address for Autocharge if configured.
-    if (config.autocharge_use_slac_instead_of_hlc and slac_enabled) {
+    if (config.autocharge_use_slac_instead_of_hlc and slac_enabled and config.enable_autocharge) {
         r_slac[0]->subscribe_ev_mac_address([this](const std::string& token) {
             p_token_provider->publish_provided_token(create_autocharge_token(token, config.connector_id));
         });
@@ -184,6 +184,10 @@ void EvseManager::ready() {
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
 
             powersupply_capabilities = r_powersupply_DC[0]->call_getCapabilities();
+
+            // subscribe to run time updates e.g. due to de-rating
+            r_powersupply_DC[0]->subscribe_update_capabilities(
+                [this](auto caps) { update_powersupply_capabilities(caps); });
 
             updateLocalMaxWattLimit(powersupply_capabilities.max_export_power_W);
 
@@ -470,7 +474,9 @@ void EvseManager::ready() {
                 r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
             } else {
-                p_token_provider->publish_provided_token(autocharge_token);
+                if (config.enable_autocharge) {
+                    p_token_provider->publish_provided_token(autocharge_token);
+                }
                 Everest::scoped_lock_timeout lock(hlc_mutex, Everest::MutexDescription::EVSE_publish_provided_token);
                 hlc_waiting_for_auth_eim = true;
                 hlc_waiting_for_auth_pnc = false;
@@ -882,8 +888,7 @@ void EvseManager::ready_to_start_charging() {
     charger->enable(0);
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
-                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
@@ -1033,7 +1038,7 @@ bool EvseManager::updateLocalEnergyLimit(types::energy::ExternalLimits l) {
             // by default we import energy
             updateLocalMaxCurrentLimit(hw_capabilities.max_current_A_import);
         } else {
-            updateLocalMaxWattLimit(powersupply_capabilities.max_export_power_W);
+            updateLocalMaxWattLimit(get_powersupply_capabilities().max_export_power_W);
         }
     } else {
         // apply external limits if they are lower
@@ -1242,6 +1247,7 @@ void EvseManager::cable_check() {
                     ok = false;
                     imd_stop();
                 } else {
+                    auto caps = get_powersupply_capabilities();
                     // read out one new isolation resistance
                     isolation_measurement.clear();
                     types::isolation_monitor::IsolationMeasurement m;
@@ -1252,9 +1258,9 @@ void EvseManager::cable_check() {
                         fail_session();
                     } else {
                         // wait until the voltage is back to safe level
-                        float minvoltage = (config.switch_to_minimum_voltage_after_cable_check
-                                                ? powersupply_capabilities.min_export_voltage_V
-                                                : config.dc_isolation_voltage_V);
+                        float minvoltage =
+                            (config.switch_to_minimum_voltage_after_cable_check ? caps.min_export_voltage_V
+                                                                                : config.dc_isolation_voltage_V);
 
                         // We do not want to shut down power supply
                         if (minvoltage < 60) {
@@ -1269,8 +1275,8 @@ void EvseManager::cable_check() {
                         } else {
                             // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
                             // is <100
-                            const double min_resistance_ok = 500. * powersupply_capabilities.max_export_voltage_V;
-                            const double min_resistance_warning = 100. * powersupply_capabilities.max_export_voltage_V;
+                            const double min_resistance_ok = 500. * caps.max_export_voltage_V;
+                            const double min_resistance_warning = 100. * caps.max_export_voltage_V;
 
                             if (m.resistance_F_Ohm < min_resistance_warning) {
                                 session_log.evse(
@@ -1350,6 +1356,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         current = std::abs(current);
     }
 
+    auto caps = get_powersupply_capabilities();
+
     if ((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active and
         is_actually_exporting_to_grid) {
         if (not last_is_actually_exporting_to_grid) {
@@ -1360,17 +1368,14 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
         // Hack: we are exporting to grid but are in ISO-2 mode
         // check limits of supply
-        if (powersupply_capabilities.min_import_voltage_V.has_value() and
-            voltage >= powersupply_capabilities.min_import_voltage_V.value() and
-            voltage <= powersupply_capabilities.max_import_voltage_V.value()) {
+        if (caps.min_import_voltage_V.has_value() and voltage >= caps.min_import_voltage_V.value() and
+            voltage <= caps.max_import_voltage_V.value()) {
 
-            if (powersupply_capabilities.max_import_current_A.has_value() and
-                current > powersupply_capabilities.max_import_current_A.value())
-                current = powersupply_capabilities.max_import_current_A.value();
+            if (caps.max_import_current_A.has_value() and current > caps.max_import_current_A.value())
+                current = caps.max_import_current_A.value();
 
-            if (powersupply_capabilities.min_import_current_A.has_value() and
-                current < powersupply_capabilities.min_import_current_A.value())
-                current = powersupply_capabilities.min_import_current_A.value();
+            if (caps.min_import_current_A.has_value() and current < caps.min_import_current_A.value())
+                current = caps.min_import_current_A.value();
 
             // Now it is within limits of DC power supply.
             // now also limit with the limits given by the energymanager.
@@ -1398,14 +1403,13 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         }
 
         // check limits of supply
-        if (voltage >= powersupply_capabilities.min_export_voltage_V and
-            voltage <= powersupply_capabilities.max_export_voltage_V) {
+        if (voltage >= caps.min_export_voltage_V and voltage <= caps.max_export_voltage_V) {
 
-            if (current > powersupply_capabilities.max_export_current_A)
-                current = powersupply_capabilities.max_export_current_A;
+            if (current > caps.max_export_current_A)
+                current = caps.max_export_current_A;
 
-            if (current < powersupply_capabilities.min_export_current_A)
-                current = powersupply_capabilities.min_export_current_A;
+            if (current < caps.min_export_current_A)
+                current = caps.min_export_current_A;
 
             // Now it is within limits of DC power supply.
             // now also limit with the limits given by the energymanager.

@@ -9,10 +9,6 @@
  */
 
 #include "Charger.hpp"
-
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <generated/types/powermeter.hpp>
 #include <math.h>
 #include <string.h>
@@ -23,10 +19,7 @@
 
 #include "everest/logging.hpp"
 #include "scoped_lock_timeout.hpp"
-
-std::string generate_session_uuid() {
-    return boost::uuids::to_string(boost::uuids::random_generator()());
-}
+#include "utils.hpp"
 
 namespace module {
 
@@ -230,6 +223,9 @@ void Charger::run_state_machine() {
             // to make sure control_pilot does not switch on relais even if
             // we start PWM here
             if (initialize_state) {
+                internal_context.pp_warning_printed = false;
+                internal_context.no_energy_warning_printed = false;
+
                 bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 
                 if (internal_context.last_state == EvseState::Replug) {
@@ -271,6 +267,10 @@ void Charger::run_state_machine() {
                 shared_context.max_current_cable = bsp->read_pp_ampacity();
                 // retry if the value is not yet available. Some BSPs may take some time to measure the PP.
                 if (shared_context.max_current_cable == 0) {
+                    if (not internal_context.pp_warning_printed) {
+                        EVLOG_warning << "PP ampacity is zero, still retrying to read PP ampacity...";
+                        internal_context.pp_warning_printed = true;
+                    }
                     break;
                 }
             }
@@ -281,6 +281,10 @@ void Charger::run_state_machine() {
                 // Create a copy of the atomic struct
                 types::iso15118_charger::DC_EVSEMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.EVSEMaximumCurrentLimit > 0 and evse_limit.EVSEMaximumPowerLimit > 0)) {
+                    if (not internal_context.no_energy_warning_printed) {
+                        EVLOG_warning << "No energy available, still retrying...";
+                        internal_context.no_energy_warning_printed = true;
+                    }
                     break;
                 }
             }
@@ -309,8 +313,9 @@ void Charger::run_state_machine() {
 
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
-                    if (!start_transaction())
+                    if (!start_transaction()) {
                         break;
+                    }
                 }
 
                 const EvseState target_state(EvseState::PrepareCharging);
@@ -391,8 +396,9 @@ void Charger::run_state_machine() {
                 }
             } else if (shared_context.authorized and shared_context.authorized_pnc) {
 
-                if (!start_transaction())
+                if (!start_transaction()) {
                     break;
+                }
 
                 const EvseState target_state(EvseState::PrepareCharging);
 
@@ -775,6 +781,8 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
         }
         break;
 
+    case EvseState::WaitingForEnergy:
+        [[fallthrough]];
     case EvseState::WaitingForAuthentication:
         if (cp_event == CPEvent::CarRequestedPower) {
             session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
@@ -798,6 +806,20 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
         if (cp_event == CPEvent::CarRequestedStopPower) {
             shared_context.iec_allow_close_contactor = false;
             shared_context.current_state = EvseState::ChargingPausedEV;
+            // Tell HLC stack to stop the session. Normally the session should have already been stopped by the EV, but
+            // if this is not the case, we have to do it here.
+            if (shared_context.hlc_charging_active) {
+                signal_hlc_stop_charging();
+                session_log.evse(false, "CP state transition C->B at this stage violates ISO15118-2");
+            }
+        } else if (cp_event == CPEvent::BCDtoEF) {
+            shared_context.iec_allow_close_contactor = false;
+            shared_context.current_state = EvseState::StoppingCharging;
+            // Tell HLC stack to stop the session in case of an E/F event while charging.
+            if (shared_context.hlc_charging_active) {
+                signal_hlc_stop_charging();
+                session_log.evse(false, "CP state transition C->E/F at this stage violates ISO15118-2");
+            }
         }
         break;
 
@@ -1060,7 +1082,7 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
 void Charger::start_session(bool authfirst) {
     shared_context.session_active = true;
     shared_context.authorized = false;
-    shared_context.session_uuid = generate_session_uuid();
+    shared_context.session_uuid = utils::generate_session_uuid();
     std::optional<types::authorization::ProvidedIdToken> provided_id_token;
     if (authfirst) {
         shared_context.last_start_session_reason = types::evse_manager::StartSessionReason::Authorized;
@@ -1082,8 +1104,17 @@ bool Charger::start_transaction() {
     shared_context.stop_transaction_id_token.reset();
     shared_context.transaction_active = true;
 
-    const types::powermeter::TransactionReq req{
-        evse_id, shared_context.session_uuid, shared_context.id_token.id_token.value, 0, 0, ""};
+    types::powermeter::TransactionReq req;
+    req.evse_id = evse_id;
+    req.transaction_id = shared_context.session_uuid;
+    req.identification_status =
+        types::powermeter::OCMFUserIdentificationStatus::ASSIGNED; // currently user is always assigned
+    req.identification_flags = {};                                 // TODO: Collect IF. Not all known in EVerest
+    req.identification_type = utils::convert_to_ocmf_identification_type(shared_context.id_token.id_token.type);
+    req.identification_level = std::nullopt; // TODO: Not yet known to EVerest
+    req.identification_data = shared_context.id_token.id_token.value;
+    req.tariff_text = std::nullopt; // TODO: Not yet known to EVerest
+
     for (const auto& meter : r_powermeter_billing) {
         const auto response = meter->call_start_transaction(req);
         // If we want to start the session but the meter fail, we stop the charging since

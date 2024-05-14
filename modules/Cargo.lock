@@ -28,7 +28,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "env_logger",
  "everestrs",
  "everestrs-build",
  "log",
@@ -42,7 +41,6 @@ name = "RsPaymentTerminal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "env_logger",
  "everestrs",
  "everestrs-build",
  "log",

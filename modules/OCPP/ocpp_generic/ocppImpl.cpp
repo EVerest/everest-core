@@ -228,7 +228,7 @@ void ocppImpl::handle_monitor_variables(std::vector<types::ocpp::ComponentVariab
             [this, cv](const ocpp::v16::KeyValue key_value) {
                 types::ocpp::EventData event_data;
                 event_data.component_variable = cv;
-                event_data.event_id = 0;                                      // irrelevant for OCPP1.6
+                event_data.event_id = 0; // irrelevant for OCPP1.6
                 event_data.timestamp = ocpp::DateTime();
                 event_data.trigger = types::ocpp::EventTriggerEnum::Alerting; // default for OCPP1.6
                 event_data.actual_value = key_value.value.value_or("");

@@ -31,6 +31,8 @@ struct Conf {
     int resilience_initial_connection_retry_delay;
     int resilience_transaction_request_retries;
     int resilience_transaction_request_retry_delay;
+    int cable_id;
+    int tariff_id;
 };
 
 class LemDCBM400600 : public Everest::ModuleBase {

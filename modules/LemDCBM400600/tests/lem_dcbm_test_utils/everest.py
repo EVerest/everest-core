@@ -28,9 +28,8 @@ class StartTransactionSuccessResponse(BaseModel, extra=Extra.forbid):
     transaction_min_stop_time: datetime
 
 
-class StopTransactionSuccessResponse(BaseModel, extra=Extra.forbid):
+class StopTransactionSuccessResponse(BaseModel, extra=Extra.allow):
     status: str = Field("OK", const=True, strict=True)
-    ocmf: str = Field(regex=r"^OCMF|.*|.*$", strict=True)
 
 
 class LemDCBMStandaloneEverestInstance(contextlib.ContextDecorator):

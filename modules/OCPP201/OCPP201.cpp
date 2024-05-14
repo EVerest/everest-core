@@ -4,7 +4,8 @@
 
 #include <fmt/core.h>
 #include <fstream>
-#include <websocketpp/uri.hpp>
+
+#include <websocketpp_utils/uri.hpp>
 
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
@@ -20,6 +21,7 @@ TxEvent get_tx_event(const ocpp::v201::ReasonEnum reason) {
     case ocpp::v201::ReasonEnum::DeAuthorized:
     case ocpp::v201::ReasonEnum::Remote:
     case ocpp::v201::ReasonEnum::Local:
+    case ocpp::v201::ReasonEnum::MasterPass:
         return TxEvent::DEAUTHORIZED;
     case ocpp::v201::ReasonEnum::EVDisconnected:
         return TxEvent::EV_DISCONNECTED;
@@ -374,7 +376,7 @@ void OCPP201::ready() {
     callbacks.validate_network_profile_callback =
         [this](const int32_t configuration_slot,
                const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
-            auto ws_uri = websocketpp::uri(network_connection_profile.ocppCsmsUrl.get());
+            auto ws_uri = ocpp::uri(network_connection_profile.ocppCsmsUrl.get());
 
             if (ws_uri.get_valid()) {
                 return ocpp::v201::SetNetworkProfileStatusEnum::Accepted;
@@ -405,6 +407,13 @@ void OCPP201::ready() {
                 conversions::to_everest_transaction_event_response(transaction_event_response);
             ocpp_transaction_event_response.original_transaction_event = ocpp_transaction_event;
             this->p_ocpp_generic->publish_ocpp_transaction_event_response(ocpp_transaction_event_response);
+        };
+
+    callbacks.boot_notification_callback =
+        [this](const ocpp::v201::BootNotificationResponse& boot_notification_response) {
+            const auto everest_boot_notification_response =
+                conversions::to_everest_boot_notification_response(boot_notification_response);
+            this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
         };
 
     if (!this->r_data_transfer.empty()) {

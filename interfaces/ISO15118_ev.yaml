@@ -8,13 +8,7 @@ cmds:
           Selected energy transfer mode for charging that is requested
           by the EVCC
         type: string
-        enum:
-          - AC_single_phase_core
-          - AC_three_phase_core
-          - DC_core
-          - DC_extended
-          - DC_combo_core
-          - DC_unique
+        $ref: /iso15118_ev#/EnergyTransferMode
     result:
       description: Returns true if the evcc simulation started
       type: boolean
