@@ -11,7 +11,7 @@
 namespace module::stub {
 
 struct evse_board_supportIntfStub : public evse_board_supportIntf {
-    evse_board_supportIntfStub(ModuleAdapterStub& adapter) :
+    explicit evse_board_supportIntfStub(ModuleAdapterStub& adapter) :
         evse_board_supportIntf(&adapter, Requirement("requirement", 1), "EvseManager") {
     }
 };

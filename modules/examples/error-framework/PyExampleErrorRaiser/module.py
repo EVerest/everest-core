@@ -60,7 +60,7 @@ class PyExampleErrorRaiserModule():
     def _ready(self):
         log.debug("ready!")
         self._ready_event.set()
-    
+
     def check_conditions(self):
         monitor = self._mod.get_error_state_monitor_impl("example_raiser")
         for entry in condition_lists:

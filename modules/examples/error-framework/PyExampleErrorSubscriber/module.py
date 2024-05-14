@@ -81,7 +81,7 @@ class PyExampleErrorSubscriberModule():
     def _ready(self):
         self._ready_event.set()
         log.debug("ready!")
-    
+
     def start_example(self):
         while True:
             self._ready_event.wait()

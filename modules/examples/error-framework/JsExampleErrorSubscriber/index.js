@@ -118,8 +118,8 @@ function check_conditions(setup) {
       evlog.info(`Condition '${element.name}' is not satisfied`);
     }
   });
-  evlog.info('')
-  evlog.info('')
+  evlog.info('');
+  evlog.info('');
 }
 
 boot_module(async ({
