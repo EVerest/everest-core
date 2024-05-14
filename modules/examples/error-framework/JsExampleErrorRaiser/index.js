@@ -4,104 +4,104 @@ const { evlog, boot_module } = require('everestjs');
 
 const conditions_lists = [
   {
-    'name': 'Only A is active',
-    'conditions': [
+    name: 'Only A is active',
+    conditions: [
       {
-        'type': 'example/ExampleErrorA',
-        'sub_type': 'some sub type',
-        'active': true
+        type: 'example/ExampleErrorA',
+        sub_type: 'some sub type',
+        active: true,
       },
       {
-        'type': 'example/ExampleErrorB',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorB',
+        sub_type: 'some sub type',
+        active: false,
       },
       {
-        'type': 'example/ExampleErrorC',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorC',
+        sub_type: 'some sub type',
+        active: false,
       },
       {
-        'type': 'example/ExampleErrorD',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-    ]
-  },
-  {
-    'name': 'Only B is active',
-    'conditions': [
-      {
-        'type': 'example/ExampleErrorA',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-      {
-        'type': 'example/ExampleErrorB',
-        'sub_type': 'some sub type',
-        'active': true
-      },
-      {
-        'type': 'example/ExampleErrorC',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-      {
-        'type': 'example/ExampleErrorD',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-    ]
-  },
-  {
-    'name': 'Only C & D are active',
-    'conditions': [
-      {
-        'type': 'example/ExampleErrorA',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-      {
-        'type': 'example/ExampleErrorB',
-        'sub_type': 'some sub type',
-        'active': false
-      },
-      {
-        'type': 'example/ExampleErrorC',
-        'sub_type': 'some sub type',
-        'active': true
-      },
-      {
-        'type': 'example/ExampleErrorD',
-        'sub_type': 'some sub type',
-        'active': true
+        type: 'example/ExampleErrorD',
+        sub_type: 'some sub type',
+        active: false,
       },
     ],
   },
   {
-    'name': 'No Error is active',
-    'conditions': [
+    name: 'Only B is active',
+    conditions: [
       {
-        'type': 'example/ExampleErrorA',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorA',
+        sub_type: 'some sub type',
+        active: false,
       },
       {
-        'type': 'example/ExampleErrorB',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorB',
+        sub_type: 'some sub type',
+        active: true,
       },
       {
-        'type': 'example/ExampleErrorC',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorC',
+        sub_type: 'some sub type',
+        active: false,
       },
       {
-        'type': 'example/ExampleErrorD',
-        'sub_type': 'some sub type',
-        'active': false
+        type: 'example/ExampleErrorD',
+        sub_type: 'some sub type',
+        active: false,
       },
-    ]
+    ],
+  },
+  {
+    name: 'Only C & D are active',
+    conditions: [
+      {
+        type: 'example/ExampleErrorA',
+        sub_type: 'some sub type',
+        active: false,
+      },
+      {
+        type: 'example/ExampleErrorB',
+        sub_type: 'some sub type',
+        active: false,
+      },
+      {
+        type: 'example/ExampleErrorC',
+        sub_type: 'some sub type',
+        active: true,
+      },
+      {
+        type: 'example/ExampleErrorD',
+        sub_type: 'some sub type',
+        active: true,
+      },
+    ],
+  },
+  {
+    name: 'No Error is active',
+    conditions: [
+      {
+        type: 'example/ExampleErrorA',
+        sub_type: 'some sub type',
+        active: false,
+      },
+      {
+        type: 'example/ExampleErrorB',
+        sub_type: 'some sub type',
+        active: false,
+      },
+      {
+        type: 'example/ExampleErrorC',
+        sub_type: 'some sub type',
+        active: false,
+      },
+      {
+        type: 'example/ExampleErrorD',
+        sub_type: 'some sub type',
+        active: false,
+      },
+    ],
   },
 ];
 
@@ -112,12 +112,12 @@ function sleep(ms) {
 function check_conditions(mod) {
   evlog.info('');
   evlog.info('Check Conditions:');
-  conditions_lists.forEach ((element) => {
+  conditions_lists.forEach((element) => {
     let res = mod.provides.example_raiser.error_state_monitor.is_condition_satisfied(element.conditions);
     if (res) {
-      evlog.info('Condition \'' + element.name + '\' is satisfied');
+      evlog.info(`Condition \'${element.name}\' is satisfied`);
     } else {
-      evlog.info('Condition \'' + element.name + '\' is not satisfied');
+      evlog.info(`Condition \'${element.name}\' is not satisfied`);
     }
   });
   evlog.info('');

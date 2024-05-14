@@ -1,6 +1,5 @@
 description: >-
-  This interface defines an example_user interface that uses the example
-  interface
+  This is an example interface used for the error framework example modules.
 errors:
   - reference: /errors/example#/ExampleErrorA
   - reference: /errors/example#/ExampleErrorB

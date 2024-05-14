@@ -1,9 +1,0 @@
-active_modules:
-  example_raiser:
-    module: JsExampleErrorRaiser
-  example_subscriber:
-    module: JsExampleErrorSubscriber
-    connections:
-      example_raiser:
-        - module_id: example_raiser
-          implementation_id: example_raiser
