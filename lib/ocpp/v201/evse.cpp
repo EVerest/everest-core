@@ -9,6 +9,7 @@
 #include <ocpp/v201/evse.hpp>
 
 using namespace std::chrono_literals;
+using QueryExecutionException = ocpp::common::QueryExecutionException;
 
 namespace ocpp {
 namespace v201 {
@@ -88,7 +89,15 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
     this->transaction->group_id_token = group_id_token;
     this->transaction->active_energy_import_start_value = this->get_active_import_register_meter_value();
 
-    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_start);
+    try {
+        this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_start);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                      << this->transaction->transactionId.get() << " into database: " << e.what();
+    } catch (const std::invalid_argument& e) {
+        EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                      << this->transaction->transactionId.get() << " into database: " << e.what();
+    }
 
     this->aligned_data_updated.clear_values();
     this->aligned_data_tx_end.clear_values();
@@ -105,8 +114,16 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
     if (sampled_data_tx_ended_interval > 0s) {
         transaction->sampled_tx_ended_meter_values_timer.interval_starting_from(
             [this] {
-                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
-                                                                       this->get_meter_value());
+                try {
+                    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                           this->get_meter_value());
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                                  << this->transaction->transactionId.get() << " into database: " << e.what();
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                                  << this->transaction->transactionId.get() << " into database: " << e.what();
+                }
             },
             sampled_data_tx_ended_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
     }
@@ -157,7 +174,16 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
                     .value_or(false)) {
                 meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_ended_interval);
             }
-            this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_value);
+            try {
+                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                       meter_value);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                              << this->transaction->transactionId.get() << " into database: " << e.what();
+            } catch (const std::invalid_argument& e) {
+                EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                              << this->transaction->transactionId.get() << " into database: " << e.what();
+            }
             this->aligned_data_tx_end.clear_values();
         };
 
@@ -188,8 +214,16 @@ void Evse::close_transaction(const DateTime& timestamp, const MeterValue& meter_
     this->transaction->sampled_tx_ended_meter_values_timer.stop();
     this->transaction->aligned_tx_updated_meter_values_timer.stop();
     this->transaction->aligned_tx_ended_meter_values_timer.stop();
-    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_stop);
 
+    try {
+        this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_stop);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                      << this->transaction->transactionId.get() << " into database: " << e.what();
+    } catch (const std::invalid_argument& e) {
+        EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                      << this->transaction->transactionId.get() << " into database: " << e.what();
+    }
     // Clear for non transaction aligned metervalues
     this->aligned_data_updated.clear_values();
 }

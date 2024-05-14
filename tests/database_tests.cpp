@@ -379,5 +379,17 @@ TEST_F(DatabaseTest, test_delete_profile) {
     ASSERT_EQ(profiles.size(), 0);
 }
 
+TEST_F(DatabaseTest, test_unknown_connector) {
+    ASSERT_THROW(this->db_handler->get_connector_availability(5), ocpp::common::RequiredEntryNotFoundException);
+    ASSERT_THROW(this->db_handler->get_connector_id(5), ocpp::common::RequiredEntryNotFoundException);
+
+    auto database_connection = std::make_unique<common::DatabaseConnection>("file::memory:?cache=shared");
+    database_connection->open_connection(); // Open connection so memory stays shared
+
+    database_connection->execute_statement("DROP TABLE CHARGING_PROFILES");
+
+    ASSERT_THROW(this->db_handler->get_charging_profiles(), ocpp::common::QueryExecutionException);
+}
+
 } // namespace v16
 } // namespace ocpp

@@ -12,6 +12,43 @@
 
 namespace ocpp::common {
 
+/// \brief Base class for database-related exceptions
+class DatabaseException : public std::exception {
+public:
+    explicit DatabaseException(const std::string& message) : msg(message) {
+    }
+    virtual ~DatabaseException() noexcept {
+    }
+
+    virtual const char* what() const noexcept {
+        return msg.c_str();
+    }
+
+protected:
+    std::string msg;
+};
+
+/// \brief Exception for database connection errors
+class DatabaseConnectionException : public DatabaseException {
+public:
+    explicit DatabaseConnectionException(const std::string& message) : DatabaseException(message) {
+    }
+};
+
+/// \brief Exception that is used if expected table entries are not found
+class RequiredEntryNotFoundException : public DatabaseException {
+public:
+    explicit RequiredEntryNotFoundException(const std::string& message) : DatabaseException(message) {
+    }
+};
+
+/// \brief Exception for errors during database migration
+class DatabaseMigrationException : public DatabaseException {
+public:
+    explicit DatabaseMigrationException(const std::string& message) : DatabaseException(message) {
+    }
+};
+
 struct DBTransactionMessage {
     json json_message;
     std::string message_type;
@@ -53,13 +90,15 @@ public:
 
     /// \brief Insert a new transaction message that needs to be sent to the CSMS.
     /// \param transaction_message  The message to be stored.
-    /// \return True on success.
-    virtual bool insert_transaction_message(const DBTransactionMessage& transaction_message);
+    virtual void insert_transaction_message(const DBTransactionMessage& transaction_message);
 
     /// \brief Remove a transaction message from the database.
     /// \param unique_id    The unique id of the transaction message.
     /// \return True on success.
     virtual void remove_transaction_message(const std::string& unique_id);
+
+    /// \brief Deletes all entries from TRANSACTION_QUEUE table
+    virtual void clear_transaction_queue();
 };
 
 } // namespace ocpp::common

@@ -18,6 +18,7 @@ private:
 public:
     DatabaseTransaction(DatabaseConnection& database, std::unique_lock<std::timed_mutex> mutex) :
         database{database}, mutex{std::move(mutex)} {
+        this->database.execute_statement("BEGIN TRANSACTION");
     }
 
     // Will by default rollback the transaction if destructed
@@ -28,12 +29,18 @@ public:
     }
 
     void commit() override {
-        this->database.execute_statement("COMMIT TRANSACTION");
+        const auto retval = this->database.execute_statement("COMMIT TRANSACTION");
         this->mutex.unlock();
+        if (retval == false) {
+            throw QueryExecutionException(this->database.get_error_message());
+        }
     }
     void rollback() override {
-        this->database.execute_statement("ROLLBACK TRANSACTION");
+        const auto retval = this->database.execute_statement("ROLLBACK TRANSACTION");
         this->mutex.unlock();
+        if (retval == false) {
+            throw QueryExecutionException(this->database.get_error_message());
+        }
     }
 };
 

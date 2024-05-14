@@ -12,6 +12,9 @@
 
 #include <optional>
 
+using QueryExecutionException = ocpp::common::QueryExecutionException;
+using RequiredEntryNotFoundException = ocpp::common::RequiredEntryNotFoundException;
+
 namespace ocpp {
 namespace v16 {
 
@@ -339,8 +342,13 @@ void ChargePointImpl::update_clock_aligned_meter_values_interval() {
 }
 
 void ChargePointImpl::stop_pending_transactions() {
-    const auto transactions = this->database_handler->get_transactions(true);
-
+    std::vector<ocpp::v16::TransactionEntry> transactions;
+    try {
+        transactions = this->database_handler->get_transactions(true);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not query transactions that haven't been acknowledged by the CSMS";
+        return;
+    }
     for (const auto& transaction_entry : transactions) {
         std::shared_ptr<Transaction> transaction = std::make_shared<Transaction>(
             this->transaction_handler->get_negative_random_transaction_id(), transaction_entry.connector,
@@ -368,8 +376,8 @@ void ChargePointImpl::stop_pending_transactions() {
 
         this->transaction_handler->add_transaction(transaction);
 
-        // StopTransaction.req is not yet queued for the transaction in the database, so we add the transaction to the
-        // transaction_handler and initiate a StopTransaction.req
+        // StopTransaction.req is not yet queued for the transaction in the database, so we add the transaction to
+        // the transaction_handler and initiate a StopTransaction.req
         if (!this->message_queue->contains_stop_transaction_message(transaction_entry.transaction_id)) {
             EVLOG_info << "Queuing StopTransaction.req for transaction with id: " << transaction_entry.transaction_id
                        << " because it hasn't been acknowledged by CSMS.";
@@ -383,30 +391,42 @@ void ChargePointImpl::stop_pending_transactions() {
 }
 
 void ChargePointImpl::load_charging_profiles() {
-    auto profiles = this->database_handler->get_charging_profiles();
-    EVLOG_info << "Found " << profiles.size() << " charging profile(s) in the database";
-    const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
-    for (auto& profile : profiles) {
-        const auto connector_id = this->database_handler->get_connector_id(profile.chargingProfileId);
-        if (this->smart_charging_handler->validate_profile(
-                profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
-                this->configuration->getMaxChargingProfilesInstalled(),
-                this->configuration->getChargingScheduleMaxPeriods(),
-                this->configuration->getChargingScheduleAllowedChargingRateUnitVector()) and
-            std::find(supported_purpose_types.begin(), supported_purpose_types.end(), profile.chargingProfilePurpose) !=
-                supported_purpose_types.end()) {
+    try {
+        auto profiles = this->database_handler->get_charging_profiles();
+        EVLOG_info << "Found " << profiles.size() << " charging profile(s) in the database";
+        const auto supported_purpose_types = this->configuration->getSupportedChargingProfilePurposeTypes();
+        for (auto& profile : profiles) {
+            try {
+                const auto connector_id = this->database_handler->get_connector_id(profile.chargingProfileId);
+                if (this->smart_charging_handler->validate_profile(
+                        profile, connector_id, false, this->configuration->getChargeProfileMaxStackLevel(),
+                        this->configuration->getMaxChargingProfilesInstalled(),
+                        this->configuration->getChargingScheduleMaxPeriods(),
+                        this->configuration->getChargingScheduleAllowedChargingRateUnitVector()) and
+                    std::find(supported_purpose_types.begin(), supported_purpose_types.end(),
+                              profile.chargingProfilePurpose) != supported_purpose_types.end()) {
 
-            if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
-                this->smart_charging_handler->add_charge_point_max_profile(profile);
-            } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
-                this->smart_charging_handler->add_tx_default_profile(profile, connector_id);
-            } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
-                this->smart_charging_handler->add_tx_profile(profile, connector_id);
+                    if (profile.chargingProfilePurpose == ChargingProfilePurposeType::ChargePointMaxProfile) {
+                        this->smart_charging_handler->add_charge_point_max_profile(profile);
+                    } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxDefaultProfile) {
+                        this->smart_charging_handler->add_tx_default_profile(profile, connector_id);
+                    } else if (profile.chargingProfilePurpose == ChargingProfilePurposeType::TxProfile) {
+                        this->smart_charging_handler->add_tx_profile(profile, connector_id);
+                    }
+                } else {
+                    // delete if not valid anymore
+                    this->database_handler->delete_charging_profile(profile.chargingProfileId);
+                }
+            } catch (RequiredEntryNotFoundException& e) {
+                EVLOG_warning << "Could not get connector id from database: " << e.what();
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not get connector id from database: " << e.what();
             }
-        } else {
-            // delete if not valid anymore
-            this->database_handler->delete_charging_profile(profile.chargingProfileId);
         }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not load charging profiles from database: " << e.what();
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Unknown error while loading charging profiles from database: " << e.what();
     }
 }
 
@@ -1350,7 +1370,12 @@ void ChargePointImpl::execute_connectors_availability_change(const std::vector<i
 
     for (const auto& connector : changed_connectors) {
         if (persist) {
-            this->database_handler->insert_or_update_connector_availability(connector, availability);
+            try {
+                this->database_handler->insert_or_update_connector_availability(connector, availability);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not update availability of connector << " << connector
+                              << " in the database: " << e.what();
+            }
         }
         if (availability == AvailabilityType::Operative) {
             if (connector == 0 or !evse_changed) {
@@ -1554,8 +1579,15 @@ void ChargePointImpl::handleClearCacheRequest(ocpp::Call<ClearCacheRequest> call
     ClearCacheResponse response;
 
     if (this->configuration->getAuthorizationCacheEnabled()) {
-        this->database_handler->clear_authorization_cache();
-        response.status = ClearCacheStatus::Accepted;
+        try {
+            this->database_handler->clear_authorization_cache();
+            response.status = ClearCacheStatus::Accepted;
+        } catch (QueryExecutionException& e) {
+            auto call_error = CallError(call.uniqueId, "InternalError",
+                                        "Database error while clearing authorization cache", json({}, true));
+            this->send(call_error);
+            return;
+        }
     } else {
         response.status = ClearCacheStatus::Rejected;
     }
@@ -1735,7 +1767,11 @@ bool ChargePointImpl::validate_against_cache_entries(CiString<20> id_tag) {
                 const auto expiry_date = expiry_date_opt.value();
                 if (expiry_date < ocpp::DateTime()) {
                     cache_entry.status = AuthorizationStatus::Expired;
-                    this->database_handler->insert_or_update_authorization_cache_entry(id_tag, cache_entry);
+                    try {
+                        this->database_handler->insert_or_update_authorization_cache_entry(id_tag, cache_entry);
+                    } catch (const QueryExecutionException& e) {
+                        EVLOG_warning << "Could not insert or update authorization cache entry: " << e.what();
+                    }
                     return false;
                 } else {
                     return true;
@@ -1831,13 +1867,23 @@ void ChargePointImpl::handleStartTransactionResponse(ocpp::CallResult<StartTrans
                                                               start_transaction_response.transactionId);
         int32_t connector = transaction->get_connector();
         transaction->set_transaction_id(start_transaction_response.transactionId);
-
-        this->database_handler->update_transaction(transaction->get_session_id(),
-                                                   start_transaction_response.transactionId,
-                                                   call_result.msg.idTagInfo.parentIdTag);
-
         auto idTag = transaction->get_id_tag();
-        this->database_handler->insert_or_update_authorization_cache_entry(idTag, start_transaction_response.idTagInfo);
+
+        try {
+            this->database_handler->update_transaction(transaction->get_session_id(),
+                                                       start_transaction_response.transactionId,
+                                                       call_result.msg.idTagInfo.parentIdTag);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not update transaction with session_id " << transaction->get_session_id()
+                          << " in the database: " << e.what();
+        }
+
+        try {
+            this->database_handler->insert_or_update_authorization_cache_entry(idTag,
+                                                                               start_transaction_response.idTagInfo);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert or update authorization cache entry: " << e.what();
+        }
 
         if (start_transaction_response.idTagInfo.status != AuthorizationStatus::Accepted) {
             this->pause_charging_callback(connector);
@@ -1869,9 +1915,13 @@ void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::M
 
         if (stop_transaction_response.idTagInfo) {
             auto id_tag = this->transaction_handler->get_authorized_id_tag(call_result.uniqueId.get());
-            if (id_tag) {
-                this->database_handler->insert_or_update_authorization_cache_entry(
-                    id_tag.value(), stop_transaction_response.idTagInfo.value());
+            if (id_tag.has_value()) {
+                try {
+                    this->database_handler->insert_or_update_authorization_cache_entry(
+                        id_tag.value(), stop_transaction_response.idTagInfo.value());
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not insert or update authorization cache entry";
+                }
             }
         }
 
@@ -1895,7 +1945,13 @@ void ChargePointImpl::handleStopTransactionResponse(const EnhancedMessage<v16::M
     } else {
         EVLOG_warning << "Received StopTransaction.conf for transaction that is not known to transaction_handler";
     }
-    this->database_handler->update_transaction_csms_ack(original_call.msg.transactionId);
+
+    try {
+        this->database_handler->update_transaction_csms_ack(original_call.msg.transactionId);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not update CSMS_ACK of transaction with transactionId "
+                      << original_call.msg.transactionId << " in the database: " << e.what();
+    }
 
     this->transaction_handler->erase_stopped_transaction(call_result.uniqueId.get());
     // when this transaction was stopped because of a Reset.req this signals that StopTransaction.conf has been received
@@ -2304,8 +2360,10 @@ void ChargePointImpl::update_ocsp_cache() {
         } else {
             EVLOG_info << "OCSP Cache is up-to-date enough";
         }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not insert OCSP update in database: " << e.what();
     } catch (const std::exception& e) {
-        EVLOG_error << "Error while requesting OCSP Response for CSO CAs";
+        EVLOG_warning << "Unknown Error while requesting OCSP Response: " << e.what();
     }
 }
 
@@ -2561,33 +2619,46 @@ void ChargePointImpl::handleSendLocalListRequest(ocpp::Call<SendLocalListRequest
     SendLocalListResponse response;
     response.status = UpdateStatus::Failed;
 
-    if (!this->configuration->getLocalAuthListEnabled()) {
-        response.status = UpdateStatus::NotSupported;
-    }
-
-    else if (call.msg.updateType == UpdateType::Full) {
-        if (call.msg.localAuthorizationList) {
-            auto local_auth_list = call.msg.localAuthorizationList.value();
-            this->database_handler->clear_local_authorization_list();
-            this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
-            this->database_handler->insert_or_update_local_authorization_list(local_auth_list);
-        } else {
-            this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
-            this->database_handler->clear_local_authorization_list();
-        }
-        response.status = UpdateStatus::Accepted;
-    } else if (call.msg.updateType == UpdateType::Differential) {
-        if (call.msg.localAuthorizationList) {
-            auto local_auth_list = call.msg.localAuthorizationList.value();
-            if (this->database_handler->get_local_list_version() < call.msg.listVersion) {
+    try {
+        if (!this->configuration->getLocalAuthListEnabled()) {
+            response.status = UpdateStatus::NotSupported;
+        } else if (call.msg.updateType == UpdateType::Full) {
+            if (call.msg.localAuthorizationList) {
+                auto local_auth_list = call.msg.localAuthorizationList.value();
+                this->database_handler->clear_local_authorization_list();
                 this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
                 this->database_handler->insert_or_update_local_authorization_list(local_auth_list);
-
-                response.status = UpdateStatus::Accepted;
             } else {
-                response.status = UpdateStatus::VersionMismatch;
+                this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
+                this->database_handler->clear_local_authorization_list();
+            }
+            response.status = UpdateStatus::Accepted;
+        } else if (call.msg.updateType == UpdateType::Differential) {
+            if (call.msg.localAuthorizationList) {
+                auto local_auth_list = call.msg.localAuthorizationList.value();
+                try {
+                    if (this->database_handler->get_local_list_version() < call.msg.listVersion) {
+                        this->database_handler->insert_or_update_local_list_version(call.msg.listVersion);
+                        this->database_handler->insert_or_update_local_authorization_list(local_auth_list);
+
+                        response.status = UpdateStatus::Accepted;
+                    } else {
+                        response.status = UpdateStatus::VersionMismatch;
+                    }
+                } catch (const RequiredEntryNotFoundException& e) {
+                    try {
+                        // try to recover if no entry for local list version is found
+                        this->database_handler->insert_or_ignore_local_list_version(0);
+                    } catch (QueryExecutionException& e) {
+                        EVLOG_warning << "Could not restore local list version in database";
+                    }
+                    response.status = UpdateStatus::Failed;
+                }
             }
         }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Insert or update of local authorization list failed (at least partially): " << e.what();
+        response.status = UpdateStatus::Failed;
     }
 
     ocpp::CallResult<SendLocalListResponse> call_result(response, call.uniqueId);
@@ -2603,7 +2674,25 @@ void ChargePointImpl::handleGetLocalListVersionRequest(ocpp::Call<GetLocalListVe
         // if Local Authorization List is not supported, report back -1 as list version
         response.listVersion = -1;
     } else {
-        response.listVersion = this->database_handler->get_local_list_version();
+        try {
+            response.listVersion = this->database_handler->get_local_list_version();
+        } catch (QueryExecutionException& e) {
+            auto call_error = CallError(call.uniqueId, "InternalError", "Could not retrieve listVersion from database",
+                                        json({}, true));
+            this->send(call_error);
+            return;
+        } catch (RequiredEntryNotFoundException& e) {
+            try {
+                // try to recover if not entry is found
+                this->database_handler->insert_or_ignore_local_list_version(0);
+            } catch (QueryExecutionException& e) {
+                EVLOG_warning << "Could not restore local list version in database";
+            }
+            auto call_error = CallError(call.uniqueId, "InternalError", "Could not retrieve listVersion from database",
+                                        json({}, true));
+            this->send(call_error);
+            return;
+        }
     }
 
     ocpp::CallResult<GetLocalListVersionResponse> call_result(response, call.uniqueId);
@@ -2700,10 +2789,16 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
         (this->configuration->getLocalAuthorizeOffline() &&
          (this->websocket == nullptr || !this->websocket->is_connected()))) {
         if (this->configuration->getLocalAuthListEnabled()) {
-            const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
-            if (auth_list_entry_opt.has_value()) {
-                EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
-                return auth_list_entry_opt.value();
+            try {
+                const auto auth_list_entry_opt = this->database_handler->get_local_authorization_list_entry(idTag);
+                if (auth_list_entry_opt.has_value()) {
+                    EVLOG_info << "Found id_tag " << idTag.get() << " in AuthorizationList";
+                    return auth_list_entry_opt.value();
+                }
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not request local authorization list entry: " << e.what();
+            } catch (const std::exception& e) {
+                EVLOG_warning << "Unknown Error while requesting local authorization list entry: " << e.what();
             }
         }
         if (this->configuration->getAuthorizationCacheEnabled()) {
@@ -2728,12 +2823,15 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
 
     IdTagInfo id_tag_info;
     if (enhanced_message.messageType == MessageType::AuthorizeResponse) {
+        ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
         try {
-            ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
             this->database_handler->insert_or_update_authorization_cache_entry(idTag, call_result.msg.idTagInfo);
             return call_result.msg.idTagInfo;
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert or update authorization cache entry";
+            return call_result.msg.idTagInfo;
         } catch (const json::exception& e) {
-            EVLOG_error << "CSMS returned a malformed response to the AuthorizeRequest, assuming id tag is invalid.";
+            EVLOG_warning << "CSMS returned a malformed response to the AuthorizeRequest, assuming id tag is invalid.";
             id_tag_info = {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
             return id_tag_info;
         }
@@ -3364,9 +3462,15 @@ void ChargePointImpl::start_transaction(std::shared_ptr<Transaction> transaction
     req.timestamp = transaction->get_start_energy_wh()->timestamp;
     const auto message_id = this->message_queue->createMessageId();
 
-    this->database_handler->insert_transaction(
-        transaction->get_session_id(), transaction->get_internal_transaction_id(), req.connectorId, req.idTag.get(),
-        req.timestamp, req.meterStart, false, transaction->get_reservation_id(), message_id);
+    try {
+        this->database_handler->insert_transaction(
+            transaction->get_session_id(), transaction->get_internal_transaction_id(), req.connectorId, req.idTag.get(),
+            req.timestamp, req.meterStart, false, transaction->get_reservation_id(), message_id);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not insert transaction with session_id " << transaction->get_session_id()
+                      << " into database: " << e.what();
+    }
+
     this->transaction_handler->add_transaction(transaction);
     this->connectors.at(req.connectorId)->transaction = transaction;
 
@@ -3447,6 +3551,9 @@ void ChargePointImpl::on_transaction_started(const int32_t& connector, const std
                         } catch (const std::invalid_argument& e) {
                             EVLOG_warning << "Processed invalid meter value: " << entry.value
                                           << " while updating database";
+                        } catch (const QueryExecutionException& e) {
+                            EVLOG_warning << "Could not update meter value of transaction with session_id "
+                                          << transaction->get_session_id() << " in the database: " << e.what();
                         }
                     }
                 }
@@ -3540,8 +3647,14 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
     transaction->set_finished();
     transaction->set_stop_transaction_message_id(message_id.get());
     this->transaction_handler->add_stopped_transaction(transaction->get_connector());
-    this->database_handler->update_transaction(transaction->get_session_id(), req.meterStop, req.timestamp.to_rfc3339(),
-                                               id_tag_end, reason, message_id.get());
+
+    try {
+        this->database_handler->update_transaction(transaction->get_session_id(), req.meterStop,
+                                                   req.timestamp.to_rfc3339(), id_tag_end, reason, message_id.get());
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not update transaction with session_id " << transaction->get_session_id()
+                      << " in the database: " << e.what();
+    }
 }
 
 std::vector<Measurand> ChargePointImpl::get_measurands_vec(const std::string& measurands_csv) {

@@ -89,7 +89,7 @@ public:
     std::optional<v16::IdTagInfo> get_authorization_cache_entry(const CiString<20>& id_tag);
 
     /// \brief Deletes all entries of the AUTH_CACHE table.
-    bool clear_authorization_cache();
+    void clear_authorization_cache();
 
     // connector availability
     /// \brief Inserts or updates the given \p availability_type of the given \p connector to the CONNECTORS table.
@@ -129,7 +129,7 @@ public:
     std::optional<v16::IdTagInfo> get_local_authorization_list_entry(const CiString<20>& id_tag);
 
     /// \brief Deletes all entries of the AUTH_LIST table.
-    bool clear_local_authorization_list();
+    void clear_local_authorization_list();
 
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
     virtual void insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile);

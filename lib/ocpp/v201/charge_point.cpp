@@ -17,6 +17,8 @@ using namespace std::chrono_literals;
 
 const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 
+using QueryExecutionException = ocpp::common::QueryExecutionException;
+
 namespace ocpp {
 namespace v201 {
 
@@ -376,20 +378,26 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
     this->evses.at(evse_id)->close_transaction(timestamp, meter_stop, reason);
     const auto transaction = enhanced_transaction->get_transaction();
     const auto transaction_id = enhanced_transaction->transactionId.get();
-    auto meter_values = std::make_optional(utils::get_meter_values_with_measurands_applied(
-        this->database_handler->transaction_metervalues_get_all(transaction_id),
-        utils::get_measurands_vec(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::SampledDataTxEndedMeasurands)),
-        utils::get_measurands_vec(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
-        timestamp,
-        this->device_model->get_optional_value<bool>(ControllerComponentVariables::SampledDataSignReadings)
-            .value_or(false),
-        this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSignReadings)
-            .value_or(false)));
 
-    if (meter_values.value().empty()) {
-        meter_values.reset();
+    std::optional<std::vector<ocpp::v201::MeterValue>> meter_values = std::nullopt;
+    try {
+        meter_values = std::make_optional(utils::get_meter_values_with_measurands_applied(
+            this->database_handler->transaction_metervalues_get_all(transaction_id),
+            utils::get_measurands_vec(
+                this->device_model->get_value<std::string>(ControllerComponentVariables::SampledDataTxEndedMeasurands)),
+            utils::get_measurands_vec(
+                this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
+            timestamp,
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::SampledDataSignReadings)
+                .value_or(false),
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSignReadings)
+                .value_or(false)));
+
+        if (meter_values.value().empty()) {
+            meter_values.reset();
+        }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_warning << "Could not get metervalues of transaction: " << e.what();
     }
 
     const auto seq_no = enhanced_transaction->get_seq_no();
@@ -405,7 +413,11 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
                                 std::nullopt, std::nullopt, transaction_id_token, meter_values, std::nullopt,
                                 this->is_offline(), std::nullopt);
 
-    this->database_handler->transaction_metervalues_clear(transaction_id);
+    try {
+        this->database_handler->transaction_metervalues_clear(transaction_id);
+    } catch (const QueryExecutionException& e) {
+        EVLOG_error << "Could not clear transaction meter values: " << e.what();
+    }
 
     bool send_reset = false;
     if (this->reset_scheduled) {
@@ -511,10 +523,18 @@ std::string ChargePoint::get_customer_information(const std::optional<Certificat
     // Retrieve information from auth cache
     if (id_token.has_value()) {
         const auto hashed_id_token = utils::generate_token_hash(id_token.value());
-        const auto entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
-        if (entry.has_value()) {
-            s << "Hashed id_token stored in cache: " + hashed_id_token + "\n";
-            s << "IdTokenInfo: " << entry.value();
+        try {
+            const auto entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
+            if (entry.has_value()) {
+                s << "Hashed id_token stored in cache: " + hashed_id_token + "\n";
+                s << "IdTokenInfo: " << entry.value();
+            }
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not get authorization cache entry from database";
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
         }
     }
 
@@ -531,7 +551,13 @@ void ChargePoint::clear_customer_information(const std::optional<CertificateHash
 
     if (id_token.has_value()) {
         const auto hashed_id_token = utils::generate_token_hash(id_token.value());
-        this->database_handler->authorization_cache_delete_entry(hashed_id_token);
+        try {
+            this->database_handler->authorization_cache_delete_entry(hashed_id_token);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_error << "Could not delete from table: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_error << "Exception while deleting from auth cache table: " << e.what();
+        }
         this->update_authorization_cache_size();
     }
 }
@@ -723,7 +749,14 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
 
     if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
-        const auto id_token_info = this->database_handler->get_local_authorization_list_entry(id_token);
+        std::optional<IdTokenInfo> id_token_info = std::nullopt;
+        try {
+            id_token_info = this->database_handler->get_local_authorization_list_entry(id_token);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not request local authorization list entry: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while requesting IdTokenInfo: " << e.what();
+        }
 
         if (id_token_info.has_value()) {
             if (id_token_info.value().status == AuthorizationStatusEnum::Accepted) {
@@ -755,29 +788,38 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
             .value_or(false);
 
     if (auth_cache_enabled) {
-        const auto cache_entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
-        if (cache_entry.has_value()) {
-            if ((cache_entry.value().cacheExpiryDateTime.has_value() and
-                 cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
-                EVLOG_info << "Found valid entry in AuthCache but expiry date passed: Removing from cache and sending "
-                              "new request";
-                this->database_handler->authorization_cache_delete_entry(hashed_id_token);
-                this->update_authorization_cache_size();
-            } else if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
-                       cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
-                EVLOG_info << "Found valid entry in AuthCache";
-                response.idTokenInfo = cache_entry.value();
-                return response;
-            } else if (this->device_model
-                           ->get_optional_value<bool>(ControllerComponentVariables::AuthCacheDisablePostAuthorize)
-                           .value_or(false)) {
-                EVLOG_info << "Found invalid entry in AuthCache: Not sending new request because "
-                              "AuthCacheDisablePostAuthorize is enabled";
-                response.idTokenInfo = cache_entry.value();
-                return response;
-            } else {
-                EVLOG_info << "Found invalid entry in AuthCache: Sending new request";
+        try {
+            const auto cache_entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
+            if (cache_entry.has_value()) {
+                if ((cache_entry.value().cacheExpiryDateTime.has_value() and
+                     cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
+                    EVLOG_info
+                        << "Found valid entry in AuthCache but expiry date passed: Removing from cache and sending "
+                           "new request";
+                    this->database_handler->authorization_cache_delete_entry(hashed_id_token);
+                    this->update_authorization_cache_size();
+                } else if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
+                           cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
+                    EVLOG_info << "Found valid entry in AuthCache";
+                    response.idTokenInfo = cache_entry.value();
+                    return response;
+                } else if (this->device_model
+                               ->get_optional_value<bool>(ControllerComponentVariables::AuthCacheDisablePostAuthorize)
+                               .value_or(false)) {
+                    EVLOG_info << "Found invalid entry in AuthCache: Not sending new request because "
+                                  "AuthCacheDisablePostAuthorize is enabled";
+                    response.idTokenInfo = cache_entry.value();
+                    return response;
+                } else {
+                    EVLOG_info << "Found invalid entry in AuthCache: Sending new request";
+                }
             }
+        } catch (const QueryExecutionException& e) {
+            EVLOG_error << "Database Error: " << e.what();
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
         }
     }
 
@@ -797,7 +839,11 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
 
         if (auth_cache_enabled) {
             this->update_id_token_cache_lifetime(response.idTokenInfo);
-            this->database_handler->authorization_cache_insert_entry(hashed_id_token, response.idTokenInfo);
+            try {
+                this->database_handler->authorization_cache_insert_entry(hashed_id_token, response.idTokenInfo);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_error << "Could not insert into authorization cache entry: " << e.what();
+            }
             this->update_authorization_cache_size();
         }
 
@@ -1352,9 +1398,15 @@ void ChargePoint::update_id_token_cache_lifetime(IdTokenInfo& id_token_info) {
 void ChargePoint::update_authorization_cache_size() {
     auto& auth_cache_size = ControllerComponentVariables::AuthCacheStorage;
     if (auth_cache_size.variable.has_value()) {
-        auto size = this->database_handler->authorization_cache_get_binary_size();
-        this->device_model->set_read_only_value(auth_cache_size.component, auth_cache_size.variable.value(),
-                                                AttributeEnum::Actual, std::to_string(size));
+        try {
+            auto size = this->database_handler->authorization_cache_get_binary_size();
+            this->device_model->set_read_only_value(auth_cache_size.component, auth_cache_size.variable.value(),
+                                                    AttributeEnum::Actual, std::to_string(size));
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not get authorization cache binary size from database: " << e.what();
+        } catch (const std::exception& e) {
+            EVLOG_warning << "Could not get authorization cache binary size from database" << e.what();
+        }
     }
 }
 
@@ -1376,8 +1428,13 @@ SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLo
         // D01.FR.18: Do nothing, not allowed, respond with failed
     } else if (request.updateType == UpdateEnum::Full) {
         if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
-            this->database_handler->clear_local_authorization_list();
-            status = SendLocalListStatusEnum::Accepted;
+            try {
+                this->database_handler->clear_local_authorization_list();
+                status = SendLocalListStatusEnum::Accepted;
+            } catch (const QueryExecutionException& e) {
+                status = SendLocalListStatusEnum::Failed;
+                EVLOG_warning << "Clearing of local authorization list failed: " << e.what();
+            }
         } else {
             const auto& list = request.localAuthorizationList.value();
 
@@ -1385,9 +1442,15 @@ SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLo
 
             if (!has_duplicate_in_list(list) and
                 std::find_if(list.begin(), list.end(), has_no_token_info) == list.end()) {
-                this->database_handler->clear_local_authorization_list();
-                this->database_handler->insert_or_update_local_authorization_list(list);
-                status = SendLocalListStatusEnum::Accepted;
+                try {
+                    this->database_handler->clear_local_authorization_list();
+                    this->database_handler->insert_or_update_local_authorization_list(list);
+                    status = SendLocalListStatusEnum::Accepted;
+                } catch (const QueryExecutionException& e) {
+                    status = SendLocalListStatusEnum::Failed;
+                    EVLOG_warning << "Full update of local authorization list failed (at least partially): "
+                                  << e.what();
+                }
             }
         }
     } else if (request.updateType == UpdateEnum::Differential) {
@@ -1401,16 +1464,13 @@ SendLocalListStatusEnum ChargePoint::apply_local_authorization_list(const SendLo
             // Do nothing with duplicate in list
         } else {
             const auto& list = request.localAuthorizationList.value();
-
-            for (auto& item : list) {
-                if (item.idTokenInfo.has_value()) {
-                    this->database_handler->insert_or_update_local_authorization_list_entry(item.idToken,
-                                                                                            item.idTokenInfo.value());
-                } else {
-                    this->database_handler->delete_local_authorization_list_entry(item.idToken);
-                }
+            try {
+                this->database_handler->insert_or_update_local_authorization_list(list);
+                status = SendLocalListStatusEnum::Accepted;
+            } catch (const QueryExecutionException& e) {
+                status = SendLocalListStatusEnum::Failed;
+                EVLOG_warning << "Differential update of authorization list failed (at least partially): " << e.what();
             }
-            status = SendLocalListStatusEnum::Accepted;
         }
     }
     return status;
@@ -2475,10 +2535,17 @@ void ChargePoint::handle_clear_cache_req(Call<ClearCacheRequest> call) {
     response.status = ClearCacheStatusEnum::Rejected;
 
     if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
-            .value_or(true) and
-        this->database_handler->authorization_cache_clear()) {
-        this->update_authorization_cache_size();
-        response.status = ClearCacheStatusEnum::Accepted;
+            .value_or(true)) {
+        try {
+            this->database_handler->authorization_cache_clear();
+            this->update_authorization_cache_size();
+            response.status = ClearCacheStatusEnum::Accepted;
+        } catch (QueryExecutionException& e) {
+            auto call_error = CallError(call.uniqueId, "InternalError",
+                                        "Database error while clearing authorization cache", json({}, true));
+            this->send(call_error);
+            return;
+        }
     }
 
     ocpp::CallResult<ClearCacheResponse> call_result(response, call.uniqueId);
@@ -2521,7 +2588,12 @@ void ChargePoint::handle_transaction_event_response(const EnhancedMessage<v201::
             .value_or(true)) {
         auto id_token_info = msg.idTokenInfo.value();
         this->update_id_token_cache_lifetime(id_token_info);
-        this->database_handler->authorization_cache_insert_entry(utils::generate_token_hash(id_token), id_token_info);
+        try {
+            this->database_handler->authorization_cache_insert_entry(utils::generate_token_hash(id_token),
+                                                                     id_token_info);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert into authorization cache entry: " << e.what();
+        }
         this->update_authorization_cache_size();
     }
 
@@ -3160,13 +3232,23 @@ void ChargePoint::handle_send_local_authorization_list_req(Call<SendLocalListReq
 
     // Set nr of entries in device_model
     if (response.status == SendLocalListStatusEnum::Accepted) {
-        this->database_handler->insert_or_update_local_authorization_list_version(call.msg.versionNumber);
-
-        auto& local_entries = ControllerComponentVariables::LocalAuthListCtrlrEntries;
-        if (local_entries.variable.has_value()) {
-            auto entries = this->database_handler->get_local_authorization_list_number_of_entries();
-            this->device_model->set_read_only_value(local_entries.component, local_entries.variable.value(),
-                                                    AttributeEnum::Actual, std::to_string(entries));
+        try {
+            this->database_handler->insert_or_update_local_authorization_list_version(call.msg.versionNumber);
+            auto& local_entries = ControllerComponentVariables::LocalAuthListCtrlrEntries;
+            if (local_entries.variable.has_value()) {
+                try {
+                    auto entries = this->database_handler->get_local_authorization_list_number_of_entries();
+                    this->device_model->set_read_only_value(local_entries.component, local_entries.variable.value(),
+                                                            AttributeEnum::Actual, std::to_string(entries));
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not get local list count from database";
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not get local list count from database";
+                }
+            }
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not update local authorization list in database: " << e.what();
+            response.status = SendLocalListStatusEnum::Failed;
         }
     }
 
@@ -3179,7 +3261,14 @@ void ChargePoint::handle_get_local_authorization_list_version_req(Call<GetLocalL
 
     if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
-        response.versionNumber = this->database_handler->get_local_authorization_list_version();
+        try {
+            response.versionNumber = this->database_handler->get_local_authorization_list_version();
+        } catch (const QueryExecutionException& e) {
+            const auto call_error = CallError(call.uniqueId, "InternalError",
+                                              "Unable to retrieve LocalListVersion from the database", json({}));
+            this->send(call_error);
+            return;
+        }
     } else {
         response.versionNumber = 0;
     }

@@ -103,7 +103,7 @@ public:
     std::optional<v201::IdTokenInfo> get_local_authorization_list_entry(const IdToken& id_token);
 
     /// \brief Deletes all entries of the AUTH_LIST table.
-    bool clear_local_authorization_list();
+    void clear_local_authorization_list();
 
     /// \brief Get the number of entries currently in the authorization list
     int32_t get_local_authorization_list_number_of_entries();
@@ -111,13 +111,13 @@ public:
     // Transaction metervalues
 
     /// \brief Inserts a \p meter_value to the database linked to transaction with id \p transaction_id
-    bool transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value);
+    void transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value);
 
     /// \brief Get all metervalues linked to transaction with id \p transaction_id
     std::vector<MeterValue> transaction_metervalues_get_all(const std::string& transaction_id);
 
     /// \brief Remove all metervalue entries linked to transaction with id \p transaction_id
-    bool transaction_metervalues_clear(const std::string& transaction_id);
+    void transaction_metervalues_clear(const std::string& transaction_id);
 };
 
 } // namespace v201

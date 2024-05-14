@@ -10,7 +10,7 @@ namespace ocpp::common {
 SQLiteStatement::SQLiteStatement(sqlite3* db, const std::string& query) : db(db), stmt(nullptr) {
     if (sqlite3_prepare_v2(db, query.c_str(), query.size(), &this->stmt, nullptr) != SQLITE_OK) {
         EVLOG_error << sqlite3_errmsg(db);
-        EVLOG_AND_THROW(std::runtime_error("Could not prepare statement for database."));
+        throw QueryExecutionException("Could not prepare statement for database.");
     }
 }
 

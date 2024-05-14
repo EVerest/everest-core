@@ -26,8 +26,8 @@ void DatabaseHandler::inintialize_enum_tables() {
     // TODO: Don't throw away all meter value items to allow resuming transactions
     // Also we should add functionality then to clean up old/unknown transactions from the database
     if (!this->database->clear_table("METER_VALUE_ITEMS") or !this->database->clear_table("METER_VALUES")) {
-        EVLOG_error << "Could not clear tables: " << this->database->get_error_message();
-        throw std::runtime_error("Could not clear tables");
+        EVLOG_error << "Could not clear tables METER_VALUE_ITEMS or METER_VALUES";
+        throw QueryExecutionException(this->database->get_error_message());
     }
 
     init_enum_table<ReadingContextEnum>("READING_CONTEXT_ENUM", ReadingContextEnum::Interruption_Begin,
@@ -48,7 +48,7 @@ void DatabaseHandler::init_enum_table_inner(const std::string& table_name, const
 
     if (!this->database->clear_table(table_name)) {
         EVLOG_critical << "Table \"" + table_name + "\" does not exist";
-        throw std::runtime_error("Table does not exist.");
+        throw QueryExecutionException(this->database->get_error_message());
     }
 
     auto transaction = this->database->begin_transaction();
@@ -63,7 +63,8 @@ void DatabaseHandler::init_enum_table_inner(const std::string& table_name, const
         insert_stmt->bind_text("@value", string);
 
         if (insert_stmt->step() != SQLITE_DONE) {
-            throw std::runtime_error("Could not perform step.");
+            EVLOG_error << "Could not perform step.";
+            throw QueryExecutionException(this->database->get_error_message());
         }
 
         insert_stmt->reset();
@@ -89,63 +90,56 @@ void DatabaseHandler::authorization_cache_insert_entry(const std::string& id_tok
     insert_stmt->bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
 
     if (insert_stmt->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not insert into AUTH_CACHE table: " << this->database->get_error_message();
-        return;
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
 std::optional<IdTokenInfo> DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash) {
-    try {
-        std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
-        auto select_stmt = this->database->new_statement(sql);
+    std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
+    auto select_stmt = this->database->new_statement(sql);
 
-        select_stmt->bind_text("@id_token_hash", id_token_hash);
+    select_stmt->bind_text("@id_token_hash", id_token_hash);
 
-        if (select_stmt->step() != SQLITE_ROW) {
-            return std::nullopt;
-        }
-        return IdTokenInfo(json::parse(select_stmt->column_text(0)));
-    } catch (const json::exception& e) {
-        EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
-        return std::nullopt;
-    } catch (const std::exception& e) {
-        EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
+    const auto status = select_stmt->step();
+
+    if (status == SQLITE_DONE) {
         return std::nullopt;
     }
+
+    if (status == SQLITE_ROW) {
+        return IdTokenInfo(json::parse(select_stmt->column_text(0)));
+    }
+
+    throw QueryExecutionException(this->database->get_error_message());
 }
 
 void DatabaseHandler::authorization_cache_delete_entry(const std::string& id_token_hash) {
-    try {
-        std::string sql = "DELETE FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
-        auto delete_stmt = this->database->new_statement(sql);
+    std::string sql = "DELETE FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
+    auto delete_stmt = this->database->new_statement(sql);
 
-        delete_stmt->bind_text("@id_token_hash", id_token_hash);
+    delete_stmt->bind_text("@id_token_hash", id_token_hash);
 
-        if (delete_stmt->step() != SQLITE_DONE) {
-            EVLOG_error << "Could not delete from table: " << this->database->get_error_message();
-        }
-    } catch (const std::exception& e) {
-        EVLOG_error << "Exception while deleting from auth cache table: " << e.what();
+    if (delete_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
 bool DatabaseHandler::authorization_cache_clear() {
-    return this->database->clear_table("AUTH_CACHE");
+    const auto retval = this->database->clear_table("AUTH_CACHE");
+    if (retval == false) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
 }
 
 size_t DatabaseHandler::authorization_cache_get_binary_size() {
-    try {
-        std::string sql = "SELECT SUM(\"payload\") FROM \"dbstat\" WHERE name='AUTH_CACHE';";
-        auto stmt = this->database->new_statement(sql);
+    std::string sql = "SELECT SUM(\"payload\") FROM \"dbstat\" WHERE name='AUTH_CACHE';";
+    auto stmt = this->database->new_statement(sql);
 
-        if (stmt->step() != SQLITE_ROW) {
-            throw std::runtime_error("Could not get authorization cache binary size from database");
-        }
-
-        return stmt->column_int(0);
-    } catch (const std::exception& e) {
-        throw std::runtime_error("Could not get authorization cache binary size from database");
+    if (stmt->step() != SQLITE_ROW) {
+        throw QueryExecutionException(this->database->get_error_message());
     }
+
+    return stmt->column_int(0);
 }
 
 void DatabaseHandler::insert_availability(int32_t evse_id, int32_t connector_id,
@@ -169,27 +163,28 @@ void DatabaseHandler::insert_availability(int32_t evse_id, int32_t connector_id,
                            SQLiteString::Transient);
 
     if (insert_stmt->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not insert into AVAILABILITY table: " << this->database->get_error_message();
-        return;
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
 OperationalStatusEnum DatabaseHandler::get_availability(int32_t evse_id, int32_t connector_id) {
-    try {
-        std::string sql =
-            "SELECT OPERATIONAL_STATUS FROM AVAILABILITY WHERE EVSE_ID = @evse_id AND CONNECTOR_ID = @connector_id;";
-        auto select_stmt = this->database->new_statement(sql);
+    std::string sql =
+        "SELECT OPERATIONAL_STATUS FROM AVAILABILITY WHERE EVSE_ID = @evse_id AND CONNECTOR_ID = @connector_id;";
+    auto select_stmt = this->database->new_statement(sql);
 
-        select_stmt->bind_int("@evse_id", evse_id);
-        select_stmt->bind_int("@connector_id", connector_id);
+    select_stmt->bind_int("@evse_id", evse_id);
+    select_stmt->bind_int("@connector_id", connector_id);
 
-        if (select_stmt->step() != SQLITE_ROW) {
-            throw std::runtime_error("Could not get availability from database");
-        }
-        return conversions::string_to_operational_status_enum(select_stmt->column_text(0));
-    } catch (const std::exception& e) {
-        throw std::runtime_error("Could not get availability from database");
+    int status = select_stmt->step();
+
+    if (status == SQLITE_DONE) {
+        throw RequiredEntryNotFoundException("Could not find operational status for connector");
     }
+
+    if (status != SQLITE_ROW) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+    return conversions::string_to_operational_status_enum(select_stmt->column_text(0));
 }
 
 void DatabaseHandler::insert_or_update_local_authorization_list_version(int32_t version) {
@@ -199,8 +194,8 @@ void DatabaseHandler::insert_or_update_local_authorization_list_version(int32_t 
     stmt->bind_int("@version", version);
 
     if (stmt->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not insert into table: " << this->database->get_error_message();
-        throw std::runtime_error("db access error");
+        EVLOG_error << "Could not insert or replace into AUTH_LIST_VERSION table";
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
@@ -209,8 +204,8 @@ int32_t DatabaseHandler::get_local_authorization_list_version() {
     auto stmt = this->database->new_statement(sql);
 
     if (stmt->step() != SQLITE_ROW) {
-        EVLOG_error << "Error selecting auth list version: " << this->database->get_error_message();
-        throw std::runtime_error("db access error");
+        EVLOG_error << "Error selecting auth list version";
+        throw QueryExecutionException(this->database->get_error_message());
     }
 
     return stmt->column_int(0);
@@ -227,20 +222,29 @@ void DatabaseHandler::insert_or_update_local_authorization_list_entry(const IdTo
     stmt->bind_text("@id_token_info", json(id_token_info).dump(), SQLiteString::Transient);
 
     if (stmt->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not insert into table: " << this->database->get_error_message();
-        throw std::runtime_error("db access error");
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
 void DatabaseHandler::insert_or_update_local_authorization_list(
     const std::vector<AuthorizationData>& local_authorization_list) {
+    bool success = true; // indicates if all database operations succeeded
     for (const auto& authorization_data : local_authorization_list) {
-        if (authorization_data.idTokenInfo.has_value()) {
-            this->insert_or_update_local_authorization_list_entry(authorization_data.idToken,
-                                                                  authorization_data.idTokenInfo.value());
-        } else {
-            this->delete_local_authorization_list_entry(authorization_data.idToken);
+        try {
+            if (authorization_data.idTokenInfo.has_value()) {
+                this->insert_or_update_local_authorization_list_entry(authorization_data.idToken,
+                                                                      authorization_data.idTokenInfo.value());
+            } else {
+                this->delete_local_authorization_list_entry(authorization_data.idToken);
+            }
+        } catch (const QueryExecutionException& e) {
+            // catch but continue with remaining entries
+            success = false;
         }
+    }
+
+    if (!success) {
+        throw QueryExecutionException("At least one insertion or deletion of local authorization list entries failed");
     }
 }
 
@@ -251,57 +255,56 @@ void DatabaseHandler::delete_local_authorization_list_entry(const IdToken& id_to
     stmt->bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
 
     if (stmt->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not delete from table: " << this->database->get_error_message();
+        throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
 std::optional<IdTokenInfo> DatabaseHandler::get_local_authorization_list_entry(const IdToken& id_token) {
-    try {
-        std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_LIST WHERE ID_TOKEN_HASH = @id_token_hash;";
-        auto stmt = this->database->new_statement(sql);
 
-        stmt->bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
+    std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_LIST WHERE ID_TOKEN_HASH = @id_token_hash;";
+    auto stmt = this->database->new_statement(sql);
 
-        if (stmt->step() != SQLITE_ROW) {
-            return std::nullopt;
-        }
-        return IdTokenInfo(json::parse(stmt->column_text(0)));
-    } catch (const json::exception& e) {
-        EVLOG_warning << "Could not parse data of IdTokenInfo: " << e.what();
-        return std::nullopt;
-    } catch (const std::exception& e) {
-        EVLOG_error << "Unknown Error while parsing IdTokenInfo: " << e.what();
+    stmt->bind_text("@id_token_hash", utils::generate_token_hash(id_token), SQLiteString::Transient);
+
+    int status = stmt->step();
+
+    if (status == SQLITE_DONE) {
         return std::nullopt;
     }
+
+    if (status == SQLITE_ROW) {
+        return IdTokenInfo(json::parse(stmt->column_text(0)));
+    }
+
+    throw QueryExecutionException(this->database->get_error_message());
 }
 
-bool DatabaseHandler::clear_local_authorization_list() {
-    return this->database->clear_table("AUTH_LIST");
+void DatabaseHandler::clear_local_authorization_list() {
+    const auto retval = this->database->clear_table("AUTH_LIST");
+    if (retval == false) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
 }
 
 int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
-    try {
-        std::string sql = "SELECT COUNT(*) FROM AUTH_LIST;";
-        auto stmt = this->database->new_statement(sql);
+    std::string sql = "SELECT COUNT(*) FROM AUTH_LIST;";
+    auto stmt = this->database->new_statement(sql);
 
-        if (stmt->step() != SQLITE_ROW) {
-            throw std::runtime_error("Could not get local list count from database");
-        }
-
-        return stmt->column_int(0);
-    } catch (const std::exception& e) {
-        throw std::runtime_error("Could not get local list count from database");
+    if (stmt->step() != SQLITE_ROW) {
+        throw QueryExecutionException(this->database->get_error_message());
     }
+
+    return stmt->column_int(0);
 }
 
-bool DatabaseHandler::transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value) {
+void DatabaseHandler::transaction_metervalues_insert(const std::string& transaction_id, const MeterValue& meter_value) {
     if (meter_value.sampledValue.empty()) {
-        return false;
+        return;
     }
 
     auto sampled_value_context = meter_value.sampledValue.at(0).context;
     if (!sampled_value_context.has_value()) {
-        return false;
+        return;
     }
 
     auto context = sampled_value_context.value();
@@ -324,8 +327,8 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
     stmt->bind_null("@custom_data");
 
     if (stmt->step() != SQLITE_DONE) {
-        EVLOG_critical << "Error: " << this->database->get_error_message();
-        throw std::runtime_error("Could not perform step.");
+        EVLOG_warning << "Could not insert meter values into database";
+        throw QueryExecutionException(this->database->get_error_message());
     }
 
     auto last_row_id = this->database->get_last_inserted_rowid();
@@ -397,16 +400,13 @@ bool DatabaseHandler::transaction_metervalues_insert(const std::string& transact
         }
 
         if (insert_stmt->step() != SQLITE_DONE) {
-            EVLOG_critical << "Error: " << this->database->get_error_message();
-            throw std::runtime_error("Could not perform step.");
+            throw QueryExecutionException(this->database->get_error_message());
         }
 
         insert_stmt->reset();
     }
 
     transaction->commit();
-
-    return true;
 }
 
 std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const std::string& transaction_id) {
@@ -420,7 +420,8 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
 
     std::vector<MeterValue> result;
 
-    while (select_stmt->step() == SQLITE_ROW) {
+    int status;
+    while ((status = select_stmt->step()) == SQLITE_ROW) {
         MeterValue value;
 
         value.timestamp = select_stmt->column_datetime(2);
@@ -434,7 +435,7 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
 
         select_stmt2->bind_int("@row_id", row_id);
 
-        while (select_stmt2->step() == SQLITE_ROW) {
+        while ((status = select_stmt2->step()) == SQLITE_ROW) {
             SampledValue sampled_value;
 
             sampled_value.value = select_stmt2->column_double(1);
@@ -485,15 +486,23 @@ std::vector<MeterValue> DatabaseHandler::transaction_metervalues_get_all(const s
             value.sampledValue.push_back(std::move(sampled_value));
         }
 
+        if (status != SQLITE_DONE) {
+            throw QueryExecutionException(this->database->get_error_message());
+        }
+
         result.push_back(std::move(value));
 
         select_stmt2->reset();
     }
 
+    if (status != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+
     return result;
 }
 
-bool DatabaseHandler::transaction_metervalues_clear(const std::string& transaction_id) {
+void DatabaseHandler::transaction_metervalues_clear(const std::string& transaction_id) {
 
     std::string sql1 = "SELECT ROWID FROM METER_VALUES WHERE TRANSACTION_ID = @transaction_id;";
 
@@ -503,24 +512,27 @@ bool DatabaseHandler::transaction_metervalues_clear(const std::string& transacti
 
     std::string sql2 = "DELETE FROM METER_VALUE_ITEMS WHERE METER_VALUE_ID = @row_id";
     auto delete_stmt = this->database->new_statement(sql2);
-    while (select_stmt->step() == SQLITE_ROW) {
+    int status;
+    while ((status = select_stmt->step()) == SQLITE_ROW) {
         auto row_id = select_stmt->column_int(0);
         delete_stmt->bind_int("@row_id", row_id);
 
         if (delete_stmt->step() != SQLITE_DONE) {
-            EVLOG_error << "Could not delete from table: " << this->database->get_error_message();
+            throw QueryExecutionException(this->database->get_error_message());
         }
         delete_stmt->reset();
+    }
+
+    if (status != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
     }
 
     std::string sql3 = "DELETE FROM METER_VALUES WHERE TRANSACTION_ID = @transaction_id";
     auto delete_stmt2 = this->database->new_statement(sql3);
     delete_stmt2->bind_text("@transaction_id", transaction_id);
     if (delete_stmt2->step() != SQLITE_DONE) {
-        EVLOG_error << "Could not delete from table: " << this->database->get_error_message();
+        throw QueryExecutionException(this->database->get_error_message());
     }
-
-    return true;
 }
 
 void DatabaseHandler::insert_cs_availability(OperationalStatusEnum operational_status, bool replace) {

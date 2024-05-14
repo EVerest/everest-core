@@ -4,6 +4,8 @@
 #include <ocpp/v201/component_state_manager.hpp>
 #include <utility>
 
+using QueryExecutionException = ocpp::common::QueryExecutionException;
+
 namespace ocpp::v201 {
 
 ComponentStateManagerInterface::~ComponentStateManagerInterface() {
@@ -193,7 +195,11 @@ OperationalStatusEnum ComponentStateManager::get_connector_individual_operationa
 void ComponentStateManager::set_cs_individual_operational_status(OperationalStatusEnum new_status, bool persist) {
     this->cs_individual_status = new_status;
     if (persist) {
-        this->database->insert_cs_availability(new_status, true);
+        try {
+            this->database->insert_cs_availability(new_status, true);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert charging station availability of id into database: " << e.what();
+        }
     }
     this->trigger_callbacks_cs(true);
 }
@@ -201,6 +207,11 @@ void ComponentStateManager::set_evse_individual_operational_status(int32_t evse_
                                                                    bool persist) {
     this->individual_evse_status(evse_id) = new_status;
     if (persist) {
+        try {
+            this->database->insert_evse_availability(evse_id, new_status, true);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert evse availability of id " << evse_id << " into database: " << e.what();
+        }
         this->database->insert_evse_availability(evse_id, new_status, true);
     }
     this->trigger_callbacks_evse(evse_id, true);
@@ -210,7 +221,12 @@ void ComponentStateManager::set_connector_individual_operational_status(int32_t 
                                                                         bool persist) {
     this->individual_connector_status(evse_id, connector_id).individual_operational_status = new_status;
     if (persist) {
-        this->database->insert_connector_availability(evse_id, connector_id, new_status, true);
+        try {
+            this->database->insert_connector_availability(evse_id, connector_id, new_status, true);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_warning << "Could not insert connector availability of id " << connector_id
+                          << " into database: " << e.what();
+        }
     }
     this->trigger_callbacks_connector(evse_id, connector_id, true);
 }

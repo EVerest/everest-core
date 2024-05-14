@@ -11,6 +11,23 @@
 
 namespace ocpp::common {
 
+/// \brief Exception for errors during query execution
+class QueryExecutionException : public std::exception {
+public:
+    explicit QueryExecutionException(const std::string& message) : msg(message) {
+    }
+
+    virtual ~QueryExecutionException() noexcept {
+    }
+
+    virtual const char* what() const noexcept {
+        return msg.c_str();
+    }
+
+protected:
+    std::string msg;
+};
+
 /// @brief Type used to indicate if SQLite should make a internal copy of a string
 enum class SQLiteString {
     Static,   /// Indicates string will be valid for the whole statement

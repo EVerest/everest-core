@@ -230,7 +230,7 @@ public:
     }
 
     MOCK_METHOD(std::vector<common::DBTransactionMessage>, get_transaction_messages, (), (override));
-    MOCK_METHOD(bool, insert_transaction_message, (const common::DBTransactionMessage&), (override));
+    MOCK_METHOD(void, insert_transaction_message, (const common::DBTransactionMessage&), (override));
     MOCK_METHOD(void, remove_transaction_message, (const std::string&), (override));
 };
 
@@ -316,7 +316,7 @@ TEST_F(MessageQueueTest, test_transactional_message_is_sent) {
 
     EXPECT_CALL(send_callback_mock, Call(json{2, "0", "transactional", json{{"data", "test_data"}}}))
         .WillOnce(MarkAndReturn(true));
-    EXPECT_CALL(*db, insert_transaction_message(testing::_)).WillOnce(testing::Return(true));
+    EXPECT_CALL(*db, insert_transaction_message(testing::_));
 
     Call<TestRequest> call;
     call.msg.type = TestMessageType::TRANSACTIONAL;
@@ -354,8 +354,8 @@ TEST_F(MessageQueueTest, test_queuing_up_of_transactional_messages) {
         .Times(message_count)
         .InSequence(s)
         .WillRepeatedly(MarkAndReturn(true, true));
-    EXPECT_CALL(*db, insert_transaction_message(testing::_)).WillRepeatedly(testing::Return(true));
-    EXPECT_CALL(*db, remove_transaction_message(testing::_)).Times(message_count).WillRepeatedly(testing::Return());
+    EXPECT_CALL(*db, insert_transaction_message(testing::_)).Times(message_count);
+    EXPECT_CALL(*db, remove_transaction_message(testing::_)).Times(message_count);
 
     // Act:
     // push first call and wait for callback; then push all other calls and resume queue
@@ -438,9 +438,7 @@ TEST_F(MessageQueueTest, test_clean_up_non_transactional_queue) {
     const int expected_skipped_transactional_messages = 6;
     init_message_queue();
 
-    EXPECT_CALL(*db, insert_transaction_message(testing::_))
-        .Times(sent_transactional_messages)
-        .WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(*db, insert_transaction_message(testing::_)).Times(sent_transactional_messages);
     EXPECT_CALL(*db, remove_transaction_message(testing::_))
         .Times(sent_transactional_messages)
         .WillRepeatedly(testing::Return());
@@ -511,7 +509,7 @@ TEST_F(MessageQueueTest, test_clean_up_transactional_queue) {
     config.queue_all_messages = true;
     init_message_queue();
 
-    EXPECT_CALL(*db, insert_transaction_message(testing::_)).Times(20).WillRepeatedly(testing::Return(true));
+    EXPECT_CALL(*db, insert_transaction_message(testing::_)).Times(20);
     EXPECT_CALL(*db, remove_transaction_message(testing::_)).Times(20).WillRepeatedly(testing::Return());
 
     // go offline

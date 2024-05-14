@@ -27,6 +27,8 @@
 
 namespace ocpp {
 
+using QueryExecutionException = common::QueryExecutionException;
+
 struct MessageQueueConfig {
     int transaction_message_attempts;
     int transaction_message_retry_interval; // seconds
@@ -184,7 +186,11 @@ private:
             ocpp::common::DBTransactionMessage db_message{message->message, messagetype_to_string(message->messageType),
                                                           message->message_attempts, message->timestamp,
                                                           message->uniqueId()};
-            this->database_handler->insert_transaction_message(db_message);
+            try {
+                this->database_handler->insert_transaction_message(db_message);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not insert message into transaction queue: " << e.what();
+            }
             this->new_message = true;
             this->check_queue_sizes();
         }
@@ -242,7 +248,13 @@ private:
             if (remove_next_update_message && element->isTransactionUpdateMessage() &&
                 transaction_message_queue.size() > 1) {
                 EVLOG_debug << "Drop transactional message " << element->initial_unique_id;
-                database_handler->remove_transaction_message(element->initial_unique_id);
+                try {
+                    database_handler->remove_transaction_message(element->initial_unique_id);
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                }
                 drop_count++;
                 remove_next_update_message = false;
             } else {
@@ -463,8 +475,14 @@ public:
 
                 if (ignore_security_event_notifications &&
                     transaction_message.message_type == "SecurityEventNotification") {
-                    // remove from database in case SecurityEventNotification.req should not be sent
-                    this->database_handler->remove_transaction_message(transaction_message.unique_id);
+                    try {
+                        // remove from database in case SecurityEventNotification.req should not be sent
+                        this->database_handler->remove_transaction_message(transaction_message.unique_id);
+                    } catch (const QueryExecutionException& e) {
+                        EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                    } catch (const std::exception& e) {
+                        EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                    }
                 } else {
                     std::shared_ptr<ControlMessage<M>> message =
                         std::make_shared<ControlMessage<M>>(transaction_message.json_message);
@@ -654,11 +672,16 @@ public:
             this->in_flight->promise.set_value(enhanced_message);
 
             if (this->in_flight->isTransactionMessage()) {
-                // We only remove the message as soon as a response is received. Otherwise we might miss a message if
-                // the charging station just boots after sending, but before receiving the result.
-                this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
+                try {
+                    // We only remove the message as soon as a response is received. Otherwise we might miss a message
+                    // if the charging station just boots after sending, but before receiving the result.
+                    this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                }
             }
-
             this->reset_in_flight();
 
             // we want the start transaction response handler to be executed before the next message will be
@@ -724,8 +747,14 @@ public:
                     enhanced_message.offline = true;
                     this->in_flight->promise.set_value(enhanced_message);
                 }
-                // also drop the message from the database
-                this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
+                try {
+                    // also drop the message from the database
+                    this->database_handler->remove_transaction_message(this->in_flight->initial_unique_id);
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not delete message from transaction queue: " << e.what();
+                }
             }
         } else if (this->in_flight->isBootNotificationMessage()) {
             EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
