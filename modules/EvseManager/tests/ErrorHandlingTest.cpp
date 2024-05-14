@@ -193,12 +193,12 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
 
     EXPECT_FALSE(error_handling.hlc);
     ImplementationIdentifier id("evse_manager", "main");
-    Everest::error::Error error_object("evse_board_support/VendorError", "", "K2Faults::FAULT_CT_CLAMP",
+    Everest::error::Error error("evse_board_support/VendorError", "", "K2Faults::FAULT_CT_CLAMP",
                                        "Vendor specific error code. Will stop charging session.", id);
 
     bool bResult;
     auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error_object, true, error_type);
+    bResult = error_handling.modify_error_bsp(error, true, error_type);
     EXPECT_TRUE(bResult);
     EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
@@ -208,7 +208,7 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
 
     ehs.reset();
     error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error_object, false, error_type);
+    bResult = error_handling.modify_error_bsp(error, false, error_type);
     EXPECT_TRUE(bResult);
     EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
@@ -239,7 +239,7 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
-    // TODO: test raise_error() and clear_error() with error_object
+    // TODO: test raise_error() and clear_error() with error object
 
     // ehs.reset();
     // Everest::error::Error err_object;
