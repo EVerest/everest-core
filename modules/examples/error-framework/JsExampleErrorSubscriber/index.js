@@ -106,16 +106,16 @@ const conditions_lists = [
 ];
 
 function check_conditions(setup) {
-  evlog.info('')
-  evlog.info('Check Conditions:')
-  conditions_lists.forEach ((element) => {
+  evlog.info('');
+  evlog.info('Check Conditions:');
+  conditions_lists.forEach((element) => {
     const res = setup.uses.example_raiser.error_state_monitor.is_condition_satisfied(
       element.conditions
     );
     if (res) {
-      evlog.info(`Condition \'${element.name}\' is satisfied`);
+      evlog.info(`Condition '${element.name}' is satisfied`);
     } else {
-      evlog.info(`Condition \'${element.name}\' is not satisfied`);
+      evlog.info(`Condition '${element.name}' is not satisfied`);
     }
   });
   evlog.info('')
@@ -135,12 +135,12 @@ boot_module(async ({
   //   }
   // );
   setup.uses.example_raiser.subscribe_all_errors(
-    (mod, error) => {
-      evlog.info(`Received error: ${ error.type }`);
+    (error) => {
+      evlog.info(`Received error: ${error.type}`);
       check_conditions(setup);
     },
-    (mod, error) => {
-      evlog.info(`Received error cleared: ${ error.type }`);
+    (error) => {
+      evlog.info(`Received error cleared: ${error.type}`);
       check_conditions(setup);
     }
   );

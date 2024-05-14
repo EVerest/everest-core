@@ -51,7 +51,7 @@ class PyExampleErrorRaiserModule():
         log.update_process_name(m.info.id)
 
         self._ready_event = threading.Event()
-    
+
         self._setup = m.say_hello()
 
         self._mod = m

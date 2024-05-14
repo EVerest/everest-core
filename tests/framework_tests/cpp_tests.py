@@ -4,7 +4,6 @@
 import logging
 import pytest
 import asyncio
-from typing import List
 
 from everest.framework import error
 from everest.testing.core_utils.fixtures import *

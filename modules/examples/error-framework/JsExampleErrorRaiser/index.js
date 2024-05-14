@@ -113,11 +113,11 @@ function check_conditions(mod) {
   evlog.info('');
   evlog.info('Check Conditions:');
   conditions_lists.forEach((element) => {
-    let res = mod.provides.example_raiser.error_state_monitor.is_condition_satisfied(element.conditions);
+    const res = mod.provides.example_raiser.error_state_monitor.is_condition_satisfied(element.conditions);
     if (res) {
-      evlog.info(`Condition \'${element.name}\' is satisfied`);
+      evlog.info(`Condition '${element.name}' is satisfied`);
     } else {
-      evlog.info(`Condition \'${element.name}\' is not satisfied`);
+      evlog.info(`Condition '${element.name}' is not satisfied`);
     }
   });
   evlog.info('');

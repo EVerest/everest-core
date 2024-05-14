@@ -2,7 +2,7 @@
 # Copyright Pionix GmbH and Contributors to EVerest
 
 from everest.framework import Module, RuntimeSession, log, error
-import time, threading
+import threading
 
 condition_lists = [
     {
@@ -49,7 +49,7 @@ class PyExampleErrorSubscriberModule():
         m = Module(self._session)
 
         log.update_process_name(m.info.id)
-    
+
         self._setup = m.say_hello()
 
         self._ready_event = threading.Event()
