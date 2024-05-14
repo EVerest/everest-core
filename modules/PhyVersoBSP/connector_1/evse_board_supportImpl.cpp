@@ -20,7 +20,6 @@ void evse_board_supportImpl::init() {
         caps.max_current_A_export = mod->config.conn1_max_current_A_export;
         caps.min_phase_count_export = mod->config.conn1_min_phase_count_export;
         caps.max_phase_count_export = mod->config.conn1_max_phase_count_export;
-        caps.supports_changing_phases_during_charging = false;
 
         if (mod->config.conn1_has_socket) {
             caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Socket;

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#ifndef YETI_SERIAL
-#define YETI_SERIAL
+#ifndef PHYVERSO_MCU_COMMS_EV_SERIAL_H
+#define PHYVERSO_MCU_COMMS_EV_SERIAL_H
 
 #include "evConfig.h"
 #include "phyverso.pb.h"
+#include <atomic>
+#include <chrono>
 #include <date/date.h>
 #include <date/tz.h>
 #include <sigslot/signal.hpp>
@@ -79,4 +81,4 @@ private:
     std::chrono::time_point<date::utc_clock> last_keep_alive_lo_timestamp;
 };
 
-#endif
+#endif // PHYVERSO_MCU_COMMS_EV_SERIAL_H

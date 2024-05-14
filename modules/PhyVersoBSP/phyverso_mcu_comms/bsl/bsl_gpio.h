@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "stdint.h"
+#ifndef PHYVERSO_MCU_COMMS_BSL_BSL_GPIO_H
+#define PHYVERSO_MCU_COMMS_BSL_BSL_GPIO_H
+
+#include <cstdint>
 
 class BSL_GPIO {
 public:
@@ -24,3 +27,5 @@ private:
     _gpio_def bsl_out;
     _gpio_def reset_out;
 };
+
+#endif // PHYVERSO_MCU_COMMS_BSL_BSL_GPIO_H

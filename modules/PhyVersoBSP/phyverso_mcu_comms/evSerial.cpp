@@ -23,11 +23,7 @@
 
 #include "bsl_gpio.h"
 
-evSerial::evSerial() {
-    fd = 0;
-    baud = 0;
-    reset_done_flag = false;
-    forced_reset = false;
+evSerial::evSerial() : fd(0), baud(0), reset_done_flag(false), forced_reset(false) {
     cobs_decode_reset();
 }
 

@@ -11,23 +11,21 @@ find_package(Threads REQUIRED)
 # add the executable
 add_executable(phyverso_cli main.cpp)
 target_include_directories(phyverso_cli
-	PUBLIC
-		"${PROJECT_BINARY_DIR}"
-        "../phyverso_mcu_comms/protobuf"
-        "../phyverso_mcu_comms"
-		"../phyverso_config"
+    PUBLIC
+    "${PROJECT_BINARY_DIR}"
+    "../phyverso_mcu_comms/protobuf"
+    "../phyverso_mcu_comms"
+    "../phyverso_config"
 )
 target_link_libraries(phyverso_cli
-	PRIVATE
-		Pal::Sigslot
-		Threads::Threads
-		phyverso_mcu_comms
-		everest::framework
-		everest::nanopb
-		phyverso_config
+    PRIVATE
+        Pal::Sigslot
+        Threads::Threads
+        phyverso_mcu_comms
+        everest::framework
+        everest::nanopb
+        phyverso_config
 )
 
 install(TARGETS phyverso_cli
         DESTINATION ${EVEREST_MOD_PHYVERSOBSP_DESTINATION})
-
-

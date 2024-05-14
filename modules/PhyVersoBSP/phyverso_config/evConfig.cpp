@@ -8,7 +8,6 @@
 
 // for convenience
 using json = nlohmann::json;
-using namespace std;
 
 evConfig::evConfig() {
 }
@@ -22,10 +21,10 @@ bool evConfig::open_file(std::string path) {
         config_file = json::parse(f);
         // check validity first
         return check_validity();
-    } catch (exception& e) {
-        cerr << "error: " << e.what() << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "error: " << e.what() << "\n";
     } catch (...) {
-        cerr << "Exception of unknown type!\n";
+        std::cerr << "Exception of unknown type!\n";
     }
     return false;
 }

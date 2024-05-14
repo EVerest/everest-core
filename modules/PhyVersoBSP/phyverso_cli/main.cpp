@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
                 p.reset(-1);
                 break;
             case 'R':
-                // hard reset
+                printf("Hard reset");
                 p.reset(1);
                 break;
             case 'V':
@@ -196,6 +196,7 @@ int main(int argc, char* argv[]) {
                 selected_connector = 2;
                 break;
             case '0':
+                printf("Set 0%% PWM\n");
                 p.set_pwm(selected_connector, 0);
                 break;
             case '5':

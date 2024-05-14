@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#ifndef PHYVERSO_CONFIG_EV_CONFIG_HPP
+#define PHYVERSO_CONFIG_EV_CONFIG_HPP
+
 #include "phyverso.pb.h"
 #include <nlohmann/json.hpp>
 #include <string>
@@ -24,3 +27,5 @@ private:
 
     EverestToMcu config_packet = EverestToMcu_init_default;
 };
+
+#endif // PHYVERSO_CONFIG_EV_CONFIG_HPP
