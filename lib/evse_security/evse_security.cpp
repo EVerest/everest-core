@@ -1125,6 +1125,7 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
                         found_private_key_path = priv_key_path;
 
                         // We found, break
+                        EVLOG_info << "Found valid leaf: [" << chain.at(0).get_file().value() << "]";
                         return false;
                     } catch (const NoPrivateKeyException& e) {
                     }
@@ -1158,8 +1159,8 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
         auto& certificate = latest_valid.value();
 
         // Paths to search
-        fs::path certificate_file;
-        fs::path chain_file;
+        std::optional<fs::path> certificate_file;
+        std::optional<fs::path> chain_file;
 
         X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
 
@@ -1191,27 +1192,29 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
 
         std::vector<CertificateOCSP> certificate_ocsp{};
 
+        // None were found
+        if (leaf_single == nullptr && leaf_fullchain == nullptr) {
+            EVLOG_error << "Could not find any leaf certificate for:"
+                        << conversions::leaf_certificate_type_to_string(certificate_type);
+
+            result.status = GetCertificateInfoStatus::NotFound;
+            return result;
+        }
+
         if (leaf_fullchain != nullptr) {
-            chain_file = leaf_fullchain->at(0).get_file().value();
+            chain_file = leaf_fullchain->at(0).get_file();
+            EVLOG_debug << "Leaf fullchain: [" << chain_file.value_or("INVALID") << "]";
         } else {
             EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
                           << " leaf requires full bundle, but full bundle not found at path: " << cert_dir;
         }
 
         if (leaf_single != nullptr) {
-            certificate_file = leaf_single->at(0).get_file().value();
+            certificate_file = leaf_single->at(0).get_file();
+            EVLOG_debug << "Leaf single: [" << certificate_file.value_or("INVALID") << "]";
         } else {
             EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
                           << " single leaf not found at path: " << cert_dir;
-        }
-
-        if (leaf_single == nullptr && leaf_fullchain == nullptr) {
-            // None were found
-            EVLOG_error << "Could not find any leaf certificate for:"
-                        << conversions::leaf_certificate_type_to_string(certificate_type);
-
-            result.status = GetCertificateInfoStatus::NotFound;
-            return result;
         }
 
         // Include OCSP data if possible
@@ -1244,7 +1247,16 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
             }
         }
 
-        result.info = {key_file, chain_file, certificate_file, chain_len, this->private_key_password, certificate_ocsp};
+        CertificateInfo info;
+
+        info.key = key_file;
+        info.certificate = chain_file;
+        info.certificate_single = certificate_file;
+        info.certificate_count = chain_len;
+        info.password = this->private_key_password;
+        info.ocsp = certificate_ocsp;
+
+        result.info = info;
         result.status = GetCertificateInfoStatus::Accepted;
 
         return result;
