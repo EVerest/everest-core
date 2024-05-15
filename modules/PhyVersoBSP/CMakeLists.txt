@@ -11,7 +11,6 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 add_subdirectory(phyverso_mcu_comms)
 add_subdirectory(phyverso_cli)
-add_subdirectory(phyverso_config)
 
 target_include_directories(${MODULE_NAME}
     PRIVATE

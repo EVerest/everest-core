@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
         p.signal_temperature.connect([](Temperature t) {
             printf("Temperatures reported: ");
             for (size_t i = 0; i < t.temp_count; ++i) {
-                printf("[T_%i]: %.1f\t", i, get_temp(t.temp[i]));
+                printf("[T_%zu]: %.1f\t", i, get_temp(t.temp[i]));
             }
             printf("\n");
         });
