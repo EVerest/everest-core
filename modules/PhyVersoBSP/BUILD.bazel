@@ -1,6 +1,6 @@
 load("//modules:module.bzl", "cc_everest_module")
 
-SLOTS = [ 
+IMPLS = [
   "connector_2",
   "connector_1",
   "rcd_1",
@@ -17,8 +17,6 @@ cc_everest_module(
     deps = [
         "//modules/PhyVersoBSP/phyverso_mcu_comms",
     ],
-    slots = SLOTS,
-    srcs = glob([
-        "*.cpp", "*.hpp",
-    ]),
+    impls = IMPLS,
+    srcs = ["board_support_common.cpp", "board_support_common.hpp"],
 )

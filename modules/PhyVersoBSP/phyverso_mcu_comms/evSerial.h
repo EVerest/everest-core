@@ -66,7 +66,7 @@ struct OpaqueDataHandler {
     }
 
 private:
-    static constexpr size_t NUM_ELEMENTS = sizeof(OpaqueData::data) / sizeof(&OpaqueData::data);
+    static constexpr size_t NUM_ELEMENTS = sizeof(OpaqueData::data) / (sizeof(&OpaqueData::data));
 
     /// @brief The message id - we use this to identify chunks of our data.
     const unsigned message_id;
@@ -75,7 +75,7 @@ private:
     const unsigned chunks_total;
 
     /// @brief The expected chunk.
-    int chunk_current;
+    unsigned chunk_current;
 
     /// @brief The data.
     std::vector<int32_t> data;
