@@ -46,7 +46,7 @@ EVEREST_DEPS = struct(
 
 	# libevse-security
 	libevse_security_repo = "https://github.com/EVerest/libevse-security.git",
-	libevse_security_commit = "34ced9f4452c2ffe3145f4ff200c42dc83278c47",
+	libevse_security_commit = "4330ce2e28e25535dd01558edb2331891c146769",
 	libevse_security_tag = None,
 
 	# libfsm
@@ -61,7 +61,7 @@ EVEREST_DEPS = struct(
 
 	# libocpp
 	libocpp_repo = "https://github.com/EVerest/libocpp.git",
-	libocpp_commit = "169573382e4d790103ce008027bb753d5ebd124a",
+	libocpp_commit = "6c2cdead9bdc288f6998ca1a5e6292514f3a41c9",
 	libocpp_tag = None,
 
 	# libslac
