@@ -18,6 +18,7 @@
 
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
+#include <everest/logging.hpp>
 
 #include "phyverso.pb.h"
 
@@ -135,54 +136,111 @@ void evSerial::handle_packet(uint8_t* buf, int len) {
 
     len -= 4;
 
+    if (handle_McuToEverest_packet(buf, len))
+        return;
+    else if (handle_OpaqueData_packet(buf, len))
+        return;
+    else
+        printf("Cannot handle a packet");
+}
+
+bool evSerial::handle_McuToEverest_packet(uint8_t* buf, int len) {
     McuToEverest msg_in;
     pb_istream_t istream = pb_istream_from_buffer(buf, len);
 
-    if (pb_decode(&istream, McuToEverest_fields, &msg_in))
-        switch (msg_in.which_payload) {
+    if (!pb_decode(&istream, McuToEverest_fields, &msg_in))
+        return false;
 
-        case McuToEverest_keep_alive_tag:
-            signal_keep_alive(msg_in.payload.keep_alive);
-            break;
+    switch (msg_in.which_payload) {
 
-        case McuToEverest_cp_state_tag:
-            signal_cp_state(msg_in.connector, msg_in.payload.cp_state);
-            break;
+    case McuToEverest_keep_alive_tag:
+        signal_keep_alive(msg_in.payload.keep_alive);
+        break;
 
-        case McuToEverest_set_coil_state_response_tag:
-            signal_set_coil_state_response(msg_in.connector, msg_in.payload.set_coil_state_response);
-            break;
+    case McuToEverest_cp_state_tag:
+        signal_cp_state(msg_in.connector, msg_in.payload.cp_state);
+        break;
 
-        case McuToEverest_error_flags_tag:
-            signal_error_flags(msg_in.connector, msg_in.payload.error_flags);
-            break;
+    case McuToEverest_set_coil_state_response_tag:
+        signal_set_coil_state_response(msg_in.connector, msg_in.payload.set_coil_state_response);
+        break;
 
-        case McuToEverest_telemetry_tag:
-            signal_telemetry(msg_in.connector, msg_in.payload.telemetry);
-            break;
+    case McuToEverest_error_flags_tag:
+        signal_error_flags(msg_in.connector, msg_in.payload.error_flags);
+        break;
 
-        case McuToEverest_reset_tag:
-            reset_done_flag = true;
-            if (!forced_reset)
-                signal_spurious_reset(msg_in.payload.reset);
-            break;
+    case McuToEverest_telemetry_tag:
+        signal_telemetry(msg_in.connector, msg_in.payload.telemetry);
+        break;
 
-        case McuToEverest_pp_state_tag:
-            signal_pp_state(msg_in.connector, msg_in.payload.pp_state);
-            break;
+    case McuToEverest_reset_tag:
+        reset_done_flag = true;
+        if (!forced_reset)
+            signal_spurious_reset(msg_in.payload.reset);
+        break;
 
-        case McuToEverest_fan_state_tag:
-            signal_fan_state(msg_in.payload.fan_state);
-            break;
+    case McuToEverest_pp_state_tag:
+        signal_pp_state(msg_in.connector, msg_in.payload.pp_state);
+        break;
 
-        case McuToEverest_lock_state_tag:
-            signal_lock_state(msg_in.connector, msg_in.payload.lock_state);
-            break;
+    case McuToEverest_fan_state_tag:
+        signal_fan_state(msg_in.payload.fan_state);
+        break;
 
-        case McuToEverest_config_request_tag:
-            signal_config_request();
-            break;
+    case McuToEverest_lock_state_tag:
+        signal_lock_state(msg_in.connector, msg_in.payload.lock_state);
+        break;
+
+    case McuToEverest_config_request_tag:
+        signal_config_request();
+        break;
+    }
+
+    return true;
+}
+
+bool evSerial::handle_OpaqueData_packet(uint8_t* buf, int len) {
+    OpaqueData data = OpaqueData_init_default;
+    pb_istream_t istream = pb_istream_from_buffer(buf, len);
+    if (!pb_decode(&istream, OpaqueData_fields, &data))
+        return false;
+    EVLOG_debug << "Received chunk " << data.id << " " << data.chunks_total << " " << data.chunk_current << " "
+                << data.data_count;
+
+    // Lambda for updating OpaqueDataHandler - here just to simplify the return
+    // logic.
+    [this](const OpaqueData& data) {
+        auto iter = opaque_handlers.find(data.connector);
+        if (iter == opaque_handlers.end()) {
+            // The item does not exist - try to insert it.
+            try {
+                iter = opaque_handlers.emplace(data.connector, data).first;
+            } catch (...) {
+                // We can't do anything here - the chunk is ill formed and does
+                // not start with 0.
+                EVLOG_debug << "Stray chunk " << data.id << "; Ignoring";
+                return;
+            }
+        } else {
+            try {
+                iter->second.insert(data);
+            } catch (...) {
+                // We've failed to insert the data.. Drop the current buffer.
+                EVLOG_debug << "Stray chunk " << data.id << "; Resetting";
+                opaque_handlers.erase(iter);
+                return;
+            }
         }
+        if (!iter->second.is_complete())
+            return;
+
+        const auto readings = iter->second.get_data();
+        EVLOG_debug << "Received sensor data with the size " << readings.size();
+        signal_opaque_data(iter->first, readings);
+        opaque_handlers.erase(iter);
+    }(data);
+
+    return true;
 }
 
 void evSerial::cobs_decode(uint8_t* buf, int len) {

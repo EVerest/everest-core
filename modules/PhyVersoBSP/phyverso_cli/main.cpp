@@ -16,6 +16,17 @@ void help() {
     printf("\nUsage: ./phyverso_cli /dev/ttyXXX /path/to/config.json\n\n");
 }
 
+constexpr auto REFERENCE_VOLTAGE = 3.3;
+constexpr auto NUMBER_OF_BITS = 12;
+constexpr auto VOLTAGE_TO_TEMPERATURE_SLOPE = -31.0;
+constexpr auto VOLTAGE_TO_TEMPERATURE_OFFSET = 92.8;
+
+/// @brief Converts the raw reading to temperature.
+float get_temp(int raw) {
+    float voltage = (static_cast<float>(raw) / ((1 << NUMBER_OF_BITS) - 1)) * REFERENCE_VOLTAGE;
+    return VOLTAGE_TO_TEMPERATURE_SLOPE * voltage + VOLTAGE_TO_TEMPERATURE_OFFSET;
+}
+
 int main(int argc, char* argv[]) {
     int selected_connector = 1;
 
@@ -147,6 +158,17 @@ int main(int argc, char* argv[]) {
                 break;
             }
         });
+
+        p.signal_temperature.connect([](Temperature t) {
+            printf("Temperatures reported: ");
+            for (size_t i = 0; i < t.temp_count; ++i) {
+                printf("[T_%i]: %.1f\t", i, get_temp(t.temp[i]));
+            }
+            printf("\n");
+        });
+
+        p.signal_opaque_data.connect(
+            [](int connector, const std::vector<int32_t>& data) { printf("Received data from connector %i\n", connector); });
 
         while (true) {
             char c = getc(stdin);
