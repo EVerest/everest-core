@@ -1205,6 +1205,15 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
                           << " single leaf not found at path: " << cert_dir;
         }
 
+        if (leaf_single == nullptr && leaf_fullchain == nullptr) {
+            // None were found
+            EVLOG_error << "Could not find any leaf certificate for:"
+                        << conversions::leaf_certificate_type_to_string(certificate_type);
+
+            result.status = GetCertificateInfoStatus::NotFound;
+            return result;
+        }
+
         // Include OCSP data if possible
         if (include_ocsp && (leaf_fullchain != nullptr || leaf_single != nullptr)) {
             X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
@@ -1244,6 +1253,9 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
         result.status = GetCertificateInfoStatus::NotFound;
         return result;
     }
+
+    result.status = GetCertificateInfoStatus::NotFound;
+    return result;
 }
 
 bool EvseSecurity::update_certificate_links(LeafCertificateType certificate_type) {
