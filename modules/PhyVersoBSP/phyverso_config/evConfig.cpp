@@ -22,9 +22,9 @@ bool evConfig::open_file(std::string path) {
         // check validity first
         return check_validity();
     } catch (const std::exception& e) {
-        std::cerr << "error: " << e.what() << "\n";
+        std::cerr << "error: " << e.what() << std::endl;
     } catch (...) {
-        std::cerr << "Exception of unknown type!\n";
+        std::cerr << "Exception of unknown type!" << std::endl;
     }
     return false;
 }
@@ -34,7 +34,7 @@ bool evConfig::check_validity() {
     std::cout << config_file.dump() << "\n\n";
 
     if (!config_file.contains("motor_lock_type")) {
-        printf("Missing 'motor_lock_type' config parameter\n");
+        std::cout << "Missing 'motor_lock_type' config parameter" << std::endl;
         return false;
     }
 

@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
                 p.reset(-1);
                 break;
             case 'R':
-                printf("Hard reset");
+                printf("Hard reset\n");
                 p.reset(1);
                 break;
             case 'V':
