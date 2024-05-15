@@ -288,7 +288,7 @@ void WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, cons
 
     if (this->connection_options.security_profile == 3) {
         if ((path_chain.empty()) || (path_key.empty())) {
-            EVLOG_error << "Cert chain: " << path_chain << " key: " << path_key;
+            EVLOG_error << "Cert chain: [" << path_chain << "] key: " << path_key << "]";
             EVLOG_AND_THROW(std::runtime_error("No certificate and key for SSL"));
         }
 
