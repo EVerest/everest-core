@@ -167,8 +167,9 @@ int main(int argc, char* argv[]) {
             printf("\n");
         });
 
-        p.signal_opaque_data.connect(
-            [](int connector, const std::vector<int32_t>& data) { printf("Received data from connector %i\n", connector); });
+        p.signal_opaque_data.connect([](int connector, const std::vector<int32_t>& data) {
+            printf("Received data from connector %i\n", connector);
+        });
 
         while (true) {
             char c = getc(stdin);
