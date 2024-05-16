@@ -6,12 +6,35 @@
 {{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
+#include <utils/types.hpp>
+#include <utils/error.hpp>
+#include <utils/error/error_state_monitor.hpp>
+#include <utils/error/error_manager_req.hpp>
 
 #include "Types.hpp"
 
 class {{ info.class_name }} {
 public:
-    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id) : module_id(module_id), _adapter(adapter), _req(req){};
+    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id)
+        : module_id(module_id),
+        _adapter(adapter),
+        _req(req) {
+        if (adapter == nullptr) {
+            EVLOG_error << "adapter is nullptr, please check the initialization of the module";
+            error_manager = nullptr;
+            error_state_monitor = nullptr;
+            EVLOG_error << "error_manager and error_state_monitor are nullptr";
+        } else {
+            error_manager = adapter->get_error_manager_req(req);
+            if (error_manager == nullptr) {
+                EVLOG_error << "error_manager is nullptr";
+            }
+            error_state_monitor = adapter->get_error_state_monitor_req(req);
+            if (error_state_monitor == nullptr) {
+                EVLOG_error << "error_state_monitor is nullptr";
+            }
+        }
+    }
 
     const std::string module_id;
 
@@ -44,31 +67,20 @@ public:
     {% endfor %}
     {% endif %}
 
-    {% if not errors %}
-    // This interface does not export any errors to subscribe to
-    {% else %}
-    // errors available for subscription
-    {% for error in errors %}
-    void subscribe_error_{{ error.namespace }}_{{ error.name }}(
-        const Everest::error::ErrorCallback& error_listener,
-        const Everest::error::ErrorCallback& error_cleared_listener
+    void subscribe_error(
+        const Everest::error::ErrorType& type,
+        const Everest::error::ErrorCallback& callback,
+        const Everest::error::ErrorCallback& clear_callback
     ) {
-        _adapter->subscribe_error(_req, "{{ error.namespace }}/{{ error.name }}", error_listener);
-        _adapter->subscribe_error_cleared(_req, "{{ error.namespace }}/{{ error.name }}", error_cleared_listener);
+        error_manager->subscribe_error(type, callback, clear_callback);
     }
-    {% if not loop.last %}
 
-    {% endif %}
-    {% endfor %}
     void subscribe_all_errors(
-        const Everest::error::ErrorCallback& error_listener,
-        const Everest::error::ErrorCallback& error_cleared_listener
+        const Everest::error::ErrorCallback& callback,
+        const Everest::error::ErrorCallback& clear_callback
     ) {
-        {% for error in errors %}
-        subscribe_error_{{ error.namespace }}_{{ error.name }}(error_listener, error_cleared_listener);
-        {% endfor %}
+        error_manager->subscribe_all_errors(callback, clear_callback);
     }
-    {% endif %}
 
     {% if not cmds %}
     // this interface does not export any commands to call
@@ -121,7 +133,10 @@ public:
     {% endfor %}
     {% endif %}
 
+    std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
+
 private:
+    std::shared_ptr<Everest::error::ErrorManagerReq> error_manager;
     Everest::ModuleAdapter* const _adapter;
     Requirement _req;
 };

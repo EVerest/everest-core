@@ -8,12 +8,39 @@
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
 #include <utils/error.hpp>
+#include <utils/error/error_state_monitor.hpp>
+#include <utils/error/error_manager_impl.hpp>
+#include <utils/error/error_factory.hpp>
 
 #include "Types.hpp"
 
 class {{ info.class_name }} : public Everest::ImplementationBase {
 public:
-    {{ info.class_name }}(Everest::ModuleAdapter* ev, const std::string& name) : Everest::ImplementationBase(), _ev(ev), _name(name) {};
+    {{ info.class_name }}(Everest::ModuleAdapter* ev, const std::string& name)
+        : Everest::ImplementationBase(),
+        _ev(ev),
+        _name(name) {
+        if (ev == nullptr) {
+            EVLOG_error << "ev is nullptr, please check the initialization of the module";
+            error_manager = nullptr;
+            error_state_monitor = nullptr;
+            error_factory = nullptr;
+            EVLOG_error << "error_manager, error_state_monitor and error_factory are nullptr";
+        } else {
+            error_manager = ev->get_error_manager_impl(name);
+            if (error_manager == nullptr) {
+                EVLOG_error << "error_manager is nullptr";
+            }
+            error_state_monitor = ev->get_error_state_monitor_impl(name);
+            if (error_state_monitor == nullptr) {
+                EVLOG_error << "error_state_monitor is nullptr";
+            }
+            error_factory = ev->get_error_factory(name);
+            if (error_factory == nullptr) {
+                EVLOG_error << "error_factory is nullptr";
+            }
+        }
+    }
 
     {% if not vars %}
     // no variables defined for this interface
@@ -43,33 +70,24 @@ public:
     {% endfor %}
     {% endif %}
 
-    {% if not errors %}
-    // no errors defined for this interface
-    {% else %}
-    // raise functions for errors
-    {% for error in errors %}
-    Everest::error::ErrorHandle raise_{{ error.namespace }}_{{ error.name }}(const std::string& message, const Everest::error::Severity& severity=Everest::error::Severity::Low) {
-        return _ev->raise_error(
-            _name,
-            "{{ error.namespace }}/{{ error.name }}",
-            message,
-            severity
-        );
+    void raise_error(const Everest::error::Error& error) {
+        error_manager->raise_error(error);
     }
-    {% endfor %}
-    // request clear functions for errors
-    {% for error in errors %}
-    void request_clear_all_{{ error.namespace }}_{{ error.name }}() {
-        _ev->request_clear_all_errors_of_type_of_module(_name, "{{ error.namespace }}/{{ error.name }}");
+    
+    void clear_error(const Everest::error::ErrorType& type, const bool clear_all = false) {
+        error_manager->clear_error(type, clear_all);
     }
-    {% endfor %}
-    void request_clear_error(const Everest::error::ErrorHandle& handle) {
-        _ev->request_clear_error_uuid(_name, handle);
+
+    void clear_error(const Everest::error::ErrorType& type, const Everest::error::ErrorSubType& sub_type) {
+        error_manager->clear_error(type, sub_type);
     }
-    void request_clear_all_errors() {
-        _ev->request_clear_all_errors_of_module(_name);
+
+    void clear_all_errors_of_impl() {
+        error_manager->clear_all_errors();
     }
-    {% endif %}
+
+    std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
+    std::shared_ptr<Everest::error::ErrorFactory> error_factory;
 
 protected:
     {% if not cmds %}
@@ -84,6 +102,7 @@ protected:
 private:
     Everest::ModuleAdapter* const _ev;
     const std::string _name;
+    std::shared_ptr<Everest::error::ErrorManagerImpl> error_manager;
 
     // helper function for getting all commands
     void _gather_cmds(std::vector<Everest::cmd>& cmds) override {

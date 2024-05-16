@@ -1,2 +1,2 @@
 """EVerest command line utility."""
-__version__ = '0.0.24'
+__version__ = '0.1.0'

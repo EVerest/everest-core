@@ -24,8 +24,8 @@ std::vector<Everest::cmd> everest_register(const json& connections);
 
 {% if info.enable_global_errors %}
 void subscribe_global_all_errors(
-    const Everest::error::ErrorCallback& error_listener,
-    const Everest::error::ErrorCallback& error_cleared_listener
+    const Everest::error::ErrorCallback& callback,
+    const Everest::error::ErrorCallback& clear_callback
 );
 {% endif %}
 
