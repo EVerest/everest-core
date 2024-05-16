@@ -13,7 +13,7 @@ WebsocketBase::WebsocketBase() :
     closed_callback(nullptr),
     message_callback(nullptr),
     reconnect_timer(nullptr),
-    connection_attempts(0),
+    connection_attempts(1),
     reconnect_backoff_ms(0),
     shutting_down(false),
     reconnecting(false) {
