@@ -71,6 +71,16 @@ jobs:
           --name test-container \
           build-image run-script prepare_integration_tests
           docker commit test-container integration-image
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist
+          name: dist
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist-wheels
+          name: wheels
       - name: Run integration tests
         run: |
           pushd source/.ci/e2e

@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.13.0
+  git_tag: feature/use-cmake-python-functions
   options: ["BUILD_TESTING OFF"]
 sigslot:
   git: https://github.com/palacaze/sigslot
