@@ -17,12 +17,12 @@ EVEREST_DEPS = struct(
 	# everest-framework
 	everest_framework_repo = "https://github.com/EVerest/everest-framework.git",
 	everest_framework_commit = None,
-	everest_framework_tag = "v0.13.0",
+	everest_framework_tag = "v0.14.0",
 
 	# everest-utils
 	everest_utils_repo = "https://github.com/EVerest/everest-utils.git",
-	everest_utils_commit = "2d7ea3e4742114cb7e3b1e71b3d1e7da566e2146",
-	everest_utils_tag = None,
+	everest_utils_commit = None,
+	everest_utils_tag = "v0.2.3",
 
 	# ext-mbedtls
 	ext_mbedtls_repo = "https://github.com/EVerest/ext-mbedtls.git",
