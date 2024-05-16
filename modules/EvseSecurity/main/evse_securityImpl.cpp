@@ -2,7 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "evse_securityImpl.hpp"
-#include "../conversions.hpp"
+#include <evse_security/conversions.hpp>
 
 namespace module {
 namespace main {
