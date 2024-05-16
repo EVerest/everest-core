@@ -3,8 +3,10 @@
 
 #include "systemImpl.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
+#include <thread>
 #include <vector>
 
 #include <unistd.h>
@@ -407,13 +409,22 @@ bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
 }
 
 void systemImpl::handle_reset(types::system::ResetType& type, bool& scheduled) {
-    if (type == types::system::ResetType::Soft) {
-        EVLOG_info << "Performing soft reset";
-        kill(getpid(), SIGINT);
-    } else {
-        EVLOG_info << "Performing hard reset";
-        kill(getpid(), SIGINT); // FIXME(piet): Define appropriate behavior for hard reset
-    }
+    // let the actual work be done by a worker thread, which can also delay it
+    // a little bit (if configured) to allow e.g. clean shutdown of communication
+    // channels in parallel when this call returns
+    std::thread([this, type, scheduled] {
+        EVLOG_info << "Reset request received: " << type << ", " << (scheduled ? "" : "not ") << "scheduled";
+
+        std::this_thread::sleep_for(std::chrono::seconds(this->mod->config.ResetDelay));
+
+        if (type == types::system::ResetType::Soft) {
+            EVLOG_info << "Performing soft reset now.";
+            kill(getpid(), SIGINT);
+        } else {
+            EVLOG_info << "Performing hard reset now.";
+            kill(getpid(), SIGINT); // FIXME(piet): Define appropriate behavior for hard reset
+        }
+    }).detach();
 }
 
 bool systemImpl::handle_set_system_time(std::string& timestamp) {
