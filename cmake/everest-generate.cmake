@@ -284,6 +284,7 @@ function (_ev_add_interfaces)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
+            ev-cli
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -322,6 +323,7 @@ function (_ev_add_types)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
+            ev-cli
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -465,6 +467,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
+                    ev-cli
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
