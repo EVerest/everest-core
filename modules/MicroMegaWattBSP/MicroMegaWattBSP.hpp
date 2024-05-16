@@ -13,7 +13,6 @@
 // headers for provided interface implementations
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
 #include <generated/interfaces/power_supply_DC/Implementation.hpp>
-#include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -34,18 +33,15 @@ public:
     MicroMegaWattBSP() = delete;
     MicroMegaWattBSP(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
                      std::unique_ptr<power_supply_DCImplBase> p_dc_supply,
-                     std::unique_ptr<powermeterImplBase> p_powermeter,
                      std::unique_ptr<evse_board_supportImplBase> p_board_support, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_dc_supply(std::move(p_dc_supply)),
-        p_powermeter(std::move(p_powermeter)),
         p_board_support(std::move(p_board_support)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<power_supply_DCImplBase> p_dc_supply;
-    const std::unique_ptr<powermeterImplBase> p_powermeter;
     const std::unique_ptr<evse_board_supportImplBase> p_board_support;
     const Conf& config;
 

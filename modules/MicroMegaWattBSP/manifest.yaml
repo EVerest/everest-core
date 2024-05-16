@@ -26,9 +26,6 @@ provides:
   dc_supply:
     interface: power_supply_DC
     description: Interface for the DC/DC output supply
-  powermeter:
-    interface: powermeter
-    description: provides the Yeti Internal Power Meter
   board_support:
     interface: evse_board_support
     description: provides the board support Interface to low level control control pilot, relais, rcd, motor lock

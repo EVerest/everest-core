@@ -12,7 +12,6 @@ void MicroMegaWattBSP::init() {
         return;
     }
 
-    invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
     invoke_init(*p_dc_supply);
 }
@@ -35,10 +34,7 @@ void MicroMegaWattBSP::ready() {
         mqtt.publish("everest_external/umwc/pwm_dc", t.pwm_dc);
         mqtt.publish("everest_external/umwc/relais_on", t.relais_on);
     });
-    serial.signalPowerMeter.connect(
-        [this](PowerMeter p) { mqtt.publish("everest_external/umwc/output_voltage", p.voltage); });
 
-    invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
     invoke_ready(*p_dc_supply);
 }

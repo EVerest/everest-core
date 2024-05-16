@@ -35,11 +35,9 @@ public:
     void setOutputVoltageCurrent(float v, float c);
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
-    sigslot::signal<PowerMeter> signalPowerMeter;
     sigslot::signal<Telemetry> signalTelemetry;
 
     sigslot::signal<CpState> signalCPState;
-    sigslot::signal<PpState> signalPPState;
     sigslot::signal<ErrorFlags> signalErrorFlags;
     sigslot::signal<bool> signalRelaisState;
 

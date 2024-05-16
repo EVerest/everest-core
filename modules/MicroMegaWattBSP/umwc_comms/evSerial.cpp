@@ -151,10 +151,6 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             // detect connection timeout if keep_alive packets stop coming...
             last_keep_alive_lo_timestamp = date::utc_clock::now();
             break;
-        case McuToEverest_power_meter_tag:
-            // printf("Received power_meter %i\n", (int)(msg_in.payload.power_meter.voltage));
-            signalPowerMeter(msg_in.payload.power_meter);
-            break;
         case McuToEverest_telemetry_tag:
             /*printf("Received telemetry cp_hi %f cp_lo %f relais_on %i pwm_dc %f\n", msg_in.payload.telemetry.cp_hi,
                    msg_in.payload.telemetry.cp_lo, (int)msg_in.payload.telemetry.relais_on,
@@ -163,9 +159,6 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             break;
         case McuToEverest_cp_state_tag:
             signalCPState(msg_in.payload.cp_state);
-            break;
-        case McuToEverest_pp_state_tag:
-            signalPPState(msg_in.payload.pp_state);
             break;
         case McuToEverest_relais_state_tag:
             signalRelaisState(msg_in.payload.relais_state);

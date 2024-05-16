@@ -8,13 +8,6 @@ namespace module {
 namespace dc_supply {
 
 void power_supply_DCImpl::init() {
-
-    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) {
-        types::power_supply_DC::VoltageCurrent vc;
-        vc.voltage_V = p.voltage;
-        vc.current_A = 0.;
-        publish_voltage_current(vc);
-    });
 }
 
 void power_supply_DCImpl::ready() {

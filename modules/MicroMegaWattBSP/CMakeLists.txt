@@ -27,7 +27,6 @@ target_link_libraries(${MODULE_NAME}
 target_sources(${MODULE_NAME}
     PRIVATE
         "dc_supply/power_supply_DCImpl.cpp"
-        "powermeter/powermeterImpl.cpp"
         "board_support/evse_board_supportImpl.cpp"
 )
 
