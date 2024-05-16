@@ -14,6 +14,10 @@
 #include "misc.hpp"
 #include "module.hpp"
 
+#include <utils/error.hpp>
+#include <utils/error/error_factory.hpp>
+#include <utils/error/error_state_monitor.hpp>
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(everestpy, m) {
@@ -36,16 +40,79 @@ PYBIND11_MODULE(everestpy, m) {
         .def_readonly("paths", &ModuleInfo::paths)
         .def_readonly("telemetry_enabled", &ModuleInfo::telemetry_enabled);
 
+    auto error_submodule = m.def_submodule("error");
+
+    py::enum_<Everest::error::Severity>(error_submodule, "Severity")
+        .value("Low", Everest::error::Severity::Low)
+        .value("Medium", Everest::error::Severity::Medium)
+        .value("High", Everest::error::Severity::High)
+        .export_values();
+
+    py::class_<ImplementationIdentifier>(error_submodule, "ImplementationIdentifier")
+        .def(py::init<const std::string&, const std::string&>())
+        .def_readwrite("module_id", &ImplementationIdentifier::module_id)
+        .def_readwrite("implementation_id", &ImplementationIdentifier::implementation_id);
+
+    py::class_<Everest::error::UUID>(error_submodule, "UUID")
+        .def(py::init<>())
+        .def(py::init<const std::string&>())
+        .def_readwrite("uuid", &Everest::error::UUID::uuid);
+
+    py::enum_<Everest::error::State>(error_submodule, "State")
+        .value("Active", Everest::error::State::Active)
+        .value("ClearedByModule", Everest::error::State::ClearedByModule)
+        .value("ClearedByReboot", Everest::error::State::ClearedByReboot)
+        .export_values();
+
+    py::class_<Everest::error::Error>(error_submodule, "Error")
+        .def(py::init<>())
+        .def_readwrite("type", &Everest::error::Error::type)
+        .def_readwrite("sub_type", &Everest::error::Error::sub_type)
+        .def_readwrite("description", &Everest::error::Error::description)
+        .def_readwrite("message", &Everest::error::Error::message)
+        .def_readwrite("severity", &Everest::error::Error::severity)
+        .def_readwrite("origin", &Everest::error::Error::origin)
+        .def_readwrite("timestamp", &Everest::error::Error::timestamp)
+        .def_readwrite("uuid", &Everest::error::Error::uuid)
+        .def_readwrite("state", &Everest::error::Error::state);
+
+    py::class_<Everest::error::ErrorStateMonitor::StateCondition>(error_submodule, "ErrorStateCondition")
+        .def(py::init<std::string, std::string, bool>())
+        .def_readwrite("type", &Everest::error::ErrorStateMonitor::StateCondition::type)
+        .def_readwrite("sub_type", &Everest::error::ErrorStateMonitor::StateCondition::sub_type)
+        .def_readwrite("active", &Everest::error::ErrorStateMonitor::StateCondition::active);
+
+    py::class_<Everest::error::ErrorStateMonitor, std::shared_ptr<Everest::error::ErrorStateMonitor>>(
+        error_submodule, "ErrorStateMonitor")
+        .def("is_error_active", &Everest::error::ErrorStateMonitor::is_error_active)
+        .def("is_condition_satisfied", py::overload_cast<const Everest::error::ErrorStateMonitor::StateCondition&>(
+                                           &Everest::error::ErrorStateMonitor::is_condition_satisfied, py::const_))
+        .def("is_condition_satisfied",
+             py::overload_cast<const std::list<Everest::error::ErrorStateMonitor::StateCondition>&>(
+                 &Everest::error::ErrorStateMonitor::is_condition_satisfied, py::const_));
+
+    py::class_<Everest::error::ErrorFactory, std::shared_ptr<Everest::error::ErrorFactory>>(error_submodule,
+                                                                                            "ErrorFactory")
+        .def("create_error", py::overload_cast<>(&Everest::error::ErrorFactory::create_error, py::const_))
+        .def("create_error",
+             py::overload_cast<const Everest::error::ErrorType&, const Everest::error::ErrorSubType&,
+                               const std::string&>(&Everest::error::ErrorFactory::create_error, py::const_))
+        .def("create_error", py::overload_cast<const Everest::error::ErrorType&, const Everest::error::ErrorSubType&,
+                                               const std::string&, Everest::error::Severity>(
+                                 &Everest::error::ErrorFactory::create_error, py::const_))
+        .def("create_error", py::overload_cast<const Everest::error::ErrorType&, const Everest::error::ErrorSubType&,
+                                               const std::string&, Everest::error::State>(
+                                 &Everest::error::ErrorFactory::create_error, py::const_))
+        .def("create_error", py::overload_cast<const Everest::error::ErrorType&, const Everest::error::ErrorSubType&,
+                                               const std::string&, Everest::error::Severity, Everest::error::State>(
+                                 &Everest::error::ErrorFactory::create_error, py::const_));
+
     py::class_<Interface>(m, "Interface")
         .def_readonly("variables", &Interface::variables)
         .def_readonly("commands", &Interface::commands)
         .def_readonly("errors", &Interface::errors);
 
     py::class_<Fulfillment>(m, "Fulfillment")
-        .def("__repr__",
-             [](const Fulfillment& f) {
-                 return "<framework.Fulfillment: (" + f.module_id + ":" + f.implementation_id + ")>";
-             })
         .def_readonly("module_id", &Fulfillment::module_id)
         .def_readonly("implementation_id", &Fulfillment::implementation_id);
 
@@ -68,11 +135,19 @@ PYBIND11_MODULE(everestpy, m) {
         .def("implement_command", &Module::implement_command)
         .def("subscribe_variable", &Module::subscribe_variable)
         .def("raise_error", &Module::raise_error)
-        .def("request_clear_error_uuid", &Module::request_clear_error_uuid)
-        .def("request_clear_error_all_of_type", &Module::request_clear_error_all_of_type)
-        .def("request_clear_error_all_of_module", &Module::request_clear_error_all_of_module)
+        .def("clear_error",
+             py::overload_cast<const std::string&, const Everest::error::ErrorType&, const bool>(&Module::clear_error),
+             py::arg("impl_id"), py::arg("type"), py::arg("clear_all") = false)
+        .def("clear_error",
+             py::overload_cast<const std::string&, const Everest::error::ErrorType&,
+                               const Everest::error::ErrorSubType&>(&Module::clear_error),
+             py::arg("impl_id"), py::arg("type"), py::arg("sub_type"))
+        .def("clear_all_errors_of_impl", &Module::clear_all_errors_of_impl)
+        .def("get_error_state_monitor_impl", &Module::get_error_state_monitor_impl)
+        .def("get_error_factory", &Module::get_error_factory)
         .def("subscribe_error", &Module::subscribe_error)
         .def("subscribe_all_errors", &Module::subscribe_all_errors)
+        .def("get_error_state_monitor_req", &Module::get_error_state_monitor_req)
         .def_property_readonly("fulfillments", &Module::get_fulfillments)
         .def_property_readonly("implementations", &Module::get_implementations)
         .def_property_readonly("requirements", &Module::get_requirements)

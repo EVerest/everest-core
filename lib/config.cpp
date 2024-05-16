@@ -546,7 +546,7 @@ error::ErrorTypeMap Config::get_error_map() const {
     return this->error_map;
 }
 
-std::string Config::get_module_name(const std::string& module_id) {
+std::string Config::get_module_name(const std::string& module_id) const {
     return this->module_names.at(module_id);
 }
 
@@ -666,7 +666,7 @@ json Config::load_interface_file(const std::string& intf_name) {
     }
 }
 
-json Config::resolve_requirement(const std::string& module_id, const std::string& requirement_id) {
+json Config::resolve_requirement(const std::string& module_id, const std::string& requirement_id) const {
     BOOST_LOG_FUNCTION();
 
     // FIXME (aw): this function should throw, if the requirement id
@@ -694,6 +694,28 @@ json Config::resolve_requirement(const std::string& module_id, const std::string
         return module_config["connections"][requirement_id].at(0);
     }
     return module_config["connections"][requirement_id];
+}
+
+std::list<Requirement> Config::get_requirements(const std::string& module_id) const {
+    BOOST_LOG_FUNCTION();
+
+    std::list<Requirement> res;
+
+    std::string module_name = get_module_name(module_id);
+    for (const std::string& req_id : Config::keys(this->manifests.at(module_name).at("requires"))) {
+        json resolved_req = this->resolve_requirement(module_id, req_id);
+        if (!resolved_req.is_array()) {
+            Requirement req(req_id, 0);
+            res.push_back(req);
+        } else {
+            for (int i = 0; i < resolved_req.size(); i++) {
+                Requirement req(req_id, i);
+                res.push_back(req);
+            }
+        }
+    }
+
+    return res;
 }
 
 bool Config::contains(const std::string& module_id) const {
@@ -914,13 +936,13 @@ void Config::format_checker(const std::string& format, const std::string& value)
     }
 }
 
-std::string Config::printable_identifier(const std::string& module_id) {
+std::string Config::printable_identifier(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
 
     return printable_identifier(module_id, "");
 }
 
-std::string Config::printable_identifier(const std::string& module_id, const std::string& impl_id) {
+std::string Config::printable_identifier(const std::string& module_id, const std::string& impl_id) const {
     BOOST_LOG_FUNCTION();
 
     json info = extract_implementation_info(module_id, impl_id);
@@ -977,7 +999,7 @@ std::string Config::mqtt_module_prefix(const std::string& module_id) {
     return fmt::format("{}{}", this->rs->mqtt_everest_prefix, module_id);
 }
 
-json Config::extract_implementation_info(const std::string& module_id, const std::string& impl_id) {
+json Config::extract_implementation_info(const std::string& module_id, const std::string& impl_id) const {
     BOOST_LOG_FUNCTION();
 
     if (!this->main.contains(module_id)) {
@@ -1005,7 +1027,7 @@ json Config::extract_implementation_info(const std::string& module_id, const std
     return info;
 }
 
-json Config::extract_implementation_info(const std::string& module_id) {
+json Config::extract_implementation_info(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
 
     return extract_implementation_info(module_id, "");

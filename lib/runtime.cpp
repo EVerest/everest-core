@@ -3,8 +3,11 @@
 
 #include <framework/runtime.hpp>
 #include <utils/error.hpp>
+#include <utils/error/error_factory.hpp>
 #include <utils/error/error_json.hpp>
-#include <utils/error/error_manager.hpp>
+#include <utils/error/error_manager_impl.hpp>
+#include <utils/error/error_manager_req.hpp>
+#include <utils/error/error_state_monitor.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -439,48 +442,29 @@ int ModuleLoader::initialize() {
             return everest.subscribe_var(req, var_name, callback);
         };
 
-        module_adapter.subscribe_error = [&everest](const Requirement& req, const std::string& error_type,
-                                                    const error::ErrorCallback& error_callback) {
-            JsonCallback json_callback = [error_callback](json j) { error_callback(j.get<error::Error>()); };
-            return everest.subscribe_error(req, error_type, json_callback);
+        module_adapter.get_error_manager_impl = [&everest](const std::string& impl_id) {
+            return everest.get_error_manager_impl(impl_id);
         };
 
-        module_adapter.subscribe_all_errors = [&everest](const error::ErrorCallback& error_callback) {
-            JsonCallback json_callback = [error_callback](json j) { error_callback(j.get<error::Error>()); };
-            return everest.subscribe_all_errors(json_callback);
+        module_adapter.get_error_state_monitor_impl = [&everest](const std::string& impl_id) {
+            return everest.get_error_state_monitor_impl(impl_id);
         };
 
-        module_adapter.subscribe_error_cleared = [&everest](const Requirement& req, const std::string& error_type,
-                                                            const error::ErrorCallback& error_callback) {
-            JsonCallback json_callback = [error_callback](json j) { return error_callback(j.get<error::Error>()); };
-            return everest.subscribe_error_cleared(req, error_type, json_callback);
+        module_adapter.get_error_factory = [&everest](const std::string& impl_id) {
+            return everest.get_error_factory(impl_id);
         };
 
-        module_adapter.subscribe_all_errors_cleared = [&everest](const error::ErrorCallback& error_callback) {
-            JsonCallback json_callback = [error_callback](json j) { return error_callback(j.get<error::Error>()); };
-            return everest.subscribe_all_errors_cleared(json_callback);
+        module_adapter.get_error_manager_req = [&everest](const Requirement& req) {
+            return everest.get_error_manager_req(req);
         };
 
-        module_adapter.raise_error = [&everest](const std::string& impl_id, const std::string& type,
-                                                const std::string& message, const error::Severity& severity) {
-            return error::ErrorHandle(everest.raise_error(impl_id, type, message, error::severity_to_string(severity)));
+        module_adapter.get_error_state_monitor_req = [&everest](const Requirement& req) {
+            return everest.get_error_state_monitor_req(req);
         };
 
-        module_adapter.request_clear_all_errors_of_module = [&everest](const std::string& impl_id) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfModule, impl_id, std::nullopt,
-                                               std::nullopt);
-        };
-
-        module_adapter.request_clear_all_errors_of_type_of_module = [&everest](const std::string& impl_id,
-                                                                               const std::string& error_type) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearAllOfTypeOfModule, impl_id,
-                                               std::nullopt, error_type);
-        };
-
-        module_adapter.request_clear_error_uuid = [&everest](const std::string& impl_id,
-                                                             const error::ErrorHandle& handle) {
-            return everest.request_clear_error(error::RequestClearErrorOption::ClearUUID, impl_id, handle.uuid,
-                                               std::nullopt);
+        module_adapter.subscribe_global_all_errors = [&everest](const error::ErrorCallback& callback,
+                                                                const error::ErrorCallback& clear_callback) {
+            return everest.subscribe_global_all_errors(callback, clear_callback);
         };
 
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability

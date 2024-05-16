@@ -42,10 +42,10 @@ std::list<ErrorPtr> ErrorDatabaseMap::get_errors_no_mutex(const std::list<ErrorF
             EVLOG_error << "ErrorDatabaseMap does not support StateFilter. Ignoring.";
         } break;
         case FilterType::Origin: {
-            pred = [&filter](const ErrorPtr& error) { return error->from != filter.get_origin_filter(); };
+            pred = [&filter](const ErrorPtr& error) { return error->origin != filter.get_origin_filter(); };
         } break;
         case FilterType::Type: {
-            pred = [&filter](const ErrorPtr& error) { return error->type != filter.get_type_filter(); };
+            pred = [&filter](const ErrorPtr& error) { return error->type != filter.get_type_filter().value; };
         } break;
         case FilterType::Severity: {
             pred = [&filter](const ErrorPtr& error) {
@@ -71,6 +71,9 @@ std::list<ErrorPtr> ErrorDatabaseMap::get_errors_no_mutex(const std::list<ErrorF
         } break;
         case FilterType::Handle: {
             pred = [&filter](const ErrorPtr& error) { return error->uuid != filter.get_handle_filter(); };
+        } break;
+        case FilterType::SubType: {
+            pred = [&filter](const ErrorPtr& error) { return error->sub_type != filter.get_sub_type_filter().value; };
         } break;
         default:
             throw std::out_of_range("No known pred for provided enum of type FilterType.");

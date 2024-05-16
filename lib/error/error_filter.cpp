@@ -40,6 +40,12 @@ SeverityFilter string_to_severity_filter(const std::string& s) {
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type SeverityFilter.");
 }
 
+TypeFilter::TypeFilter(const ErrorType& value_) : value(value_) {
+}
+
+SubTypeFilter::SubTypeFilter(const ErrorSubType& value_) : value(value_) {
+}
+
 std::string filter_type_to_string(const FilterType& f) {
     switch (f) {
     case FilterType::State:
@@ -127,6 +133,13 @@ HandleFilter ErrorFilter::get_handle_filter() const {
         throw EverestBaseLogicError("Filter type is not HandleFilter.");
     }
     return std::get<HandleFilter>(filter);
+}
+
+SubTypeFilter ErrorFilter::get_sub_type_filter() const {
+    if (this->get_filter_type() != FilterType::SubType) {
+        throw EverestBaseLogicError("Filter type is not SubTypeFilter.");
+    }
+    return std::get<SubTypeFilter>(filter);
 }
 
 } // namespace error

@@ -42,15 +42,20 @@ public:
     void implement_command(const std::string& impl_id, const std::string& cmd_name, std::function<json(json)> handler);
     void subscribe_variable(const Fulfillment& fulfillment, const std::string& var_name,
                             std::function<void(json)> callback);
-    std::string raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,
-                            const std::string& severity);
-    json request_clear_error_uuid(const std::string& impl_id, const std::string& uuid);
-    json request_clear_error_all_of_type(const std::string& impl_id, const std::string& error_type);
-    json request_clear_error_all_of_module(const std::string& impl_id);
-    void subscribe_error(const Fulfillment& fulfillment, const std::string& error_type, const JsonCallback& error_cb_,
-                         const JsonCallback& error_cleared_cb_);
-    void subscribe_all_errors(const Fulfillment& fulfillment, const JsonCallback& error_cb_,
-                              const JsonCallback& error_cleared_cb_);
+    void raise_error(const std::string& impl_id, const Everest::error::Error& error);
+    void clear_error(const std::string& impl_id, const Everest::error::ErrorType& type, const bool clear_all = false);
+    void clear_error(const std::string& impl_id, const Everest::error::ErrorType& type,
+                     const Everest::error::ErrorSubType& sub_type);
+    void clear_all_errors_of_impl(const std::string& impl_id);
+    std::shared_ptr<Everest::error::ErrorStateMonitor> get_error_state_monitor_impl(const std::string& impl_id) const;
+    std::shared_ptr<Everest::error::ErrorFactory> get_error_factory(const std::string& impl_id) const;
+    void subscribe_error(const Fulfillment& fulfillment, const Everest::error::ErrorType& type,
+                         const Everest::error::ErrorCallback& callback,
+                         const Everest::error::ErrorCallback& clear_callback);
+    void subscribe_all_errors(const Fulfillment& fulfillment, const Everest::error::ErrorCallback& callback,
+                              const Everest::error::ErrorCallback& clear_callback);
+    std::shared_ptr<Everest::error::ErrorStateMonitor>
+    get_error_state_monitor_req(const Fulfillment& fulfillment) const;
 
     const auto& get_fulfillments() const {
         return fulfillments;

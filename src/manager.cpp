@@ -28,10 +28,6 @@
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
 #include <utils/config.hpp>
-#include <utils/error/error_comm_bridge.hpp>
-#include <utils/error/error_database.hpp>
-#include <utils/error/error_database_map.hpp>
-#include <utils/error/error_manager.hpp>
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/status_fifo.hpp>
 
@@ -250,8 +246,7 @@ std::mutex modules_ready_mutex;
 static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstraction& mqtt_abstraction,
                                                   const std::vector<std::string>& ignored_modules,
                                                   const std::vector<std::string>& standalone_modules,
-                                                  std::shared_ptr<RuntimeSettings> rs, StatusFifo& status_fifo,
-                                                  error::ErrorCommBridge& err_comm_bridge) {
+                                                  std::shared_ptr<RuntimeSettings> rs, StatusFifo& status_fifo) {
     BOOST_LOG_FUNCTION();
 
     std::vector<ModuleStartInfo> modules_to_spawn;
@@ -330,21 +325,6 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
             std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(module_ready_handler));
 
         mqtt_abstraction.register_handler(topic, module_it->second.token, QOS::QOS2);
-
-        for (auto& it_impl : config.get_manifests().at(module_type).at("provides").items()) {
-            std::string impl_name = it_impl.key();
-            std::string if_name = it_impl.value().at("interface");
-            auto if_def = config.get_interface_definition(if_name);
-            for (auto& it_err_list : if_def.at("errors")) {
-                for (auto& it_err : it_err_list) {
-                    std::string err_namespace = it_err.at("namespace");
-                    std::string err_name = it_err.at("name");
-                    std::string err_topic =
-                        fmt::format("{}/{}/error/{}/{}", module_name, impl_name, err_namespace, err_name);
-                    err_comm_bridge.add_error_topic(err_topic);
-                }
-            }
-        }
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {
@@ -624,30 +604,8 @@ int boot(const po::variables_map& vm) {
 
     mqtt_abstraction.spawn_main_loop_thread();
 
-    // setup error comm bridge
-    error::ErrorCommBridge::SendMessageFunc send_json_message = [&rs, &mqtt_abstraction](const std::string& topic,
-                                                                                         const json& msg) {
-        mqtt_abstraction.publish(rs->mqtt_everest_prefix + topic, msg, QOS::QOS2);
-    };
-    error::ErrorCommBridge::RegisterCallHandlerFunc register_call_handler =
-        [&rs, &mqtt_abstraction](const std::string& topic, error::ErrorCommBridge::HandlerFunc& handler) {
-            auto token = std::make_shared<TypedHandler>(topic, HandlerType::Call, std::make_shared<Handler>(handler));
-            mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
-        };
-    error::ErrorCommBridge::RegisterErrorHandlerFunc register_error_handler =
-        [&rs, &mqtt_abstraction](const std::string& topic, error::ErrorCommBridge::HandlerFunc& handler) {
-            auto token =
-                std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(handler));
-            mqtt_abstraction.register_handler(rs->mqtt_everest_prefix + topic, token, QOS::QOS2);
-        };
-    std::string request_clear_error_topic = "request-clear-error";
-    std::shared_ptr<error::ErrorDatabase> err_database = std::make_shared<error::ErrorDatabaseMap>();
-    std::shared_ptr<error::ErrorManager> err_manager = std::make_shared<error::ErrorManager>(err_database);
-    error::ErrorCommBridge err_comm_bridge = error::ErrorCommBridge(
-        err_manager, send_json_message, register_call_handler, register_error_handler, request_clear_error_topic);
-
     auto module_handles =
-        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo, err_comm_bridge);
+        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo);
     bool modules_started = true;
     bool restart_modules = false;
 
@@ -712,8 +670,8 @@ int boot(const po::variables_map& vm) {
 
 #ifdef ENABLE_ADMIN_PANEL
         if (module_handles.size() == 0 && restart_modules) {
-            module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs,
-                                           status_fifo, err_comm_bridge);
+            module_handles =
+                start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, rs, status_fifo);
             restart_modules = false;
             modules_started = true;
         }

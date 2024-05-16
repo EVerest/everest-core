@@ -11,6 +11,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <memory>
 
 namespace Everest {
 
@@ -69,19 +70,22 @@ protected:
     }
 };
 
+namespace error {
+struct ErrorManagerImpl;
+struct ErrorManagerReq;
+struct ErrorStateMonitor;
+struct ErrorFactory;
+} // namespace error
 struct ModuleAdapter {
     using CallFunc = std::function<Result(const Requirement&, const std::string&, Parameters)>;
     using PublishFunc = std::function<void(const std::string&, const std::string&, Value)>;
     using SubscribeFunc = std::function<void(const Requirement&, const std::string&, ValueCallback)>;
-    using SubscribeErrorFunc = std::function<void(const Requirement&, const std::string&, error::ErrorCallback)>;
-    using SubscribeAllErrorsFunc = std::function<void(error::ErrorCallback)>;
-    using SubscribeErrorClearedFunc = SubscribeErrorFunc;
-    using SubscribeAllErrorsClearedFunc = SubscribeAllErrorsFunc;
-    using RaiseErrorFunc = std::function<error::ErrorHandle(const std::string&, const std::string&, const std::string&,
-                                                            const error::Severity&)>;
-    using RequestClearErrorUUIDFunc = std::function<Result(const std::string&, const error::ErrorHandle&)>;
-    using RequestClearAllErrorsOfMouduleFunc = std::function<Result(const std::string&)>;
-    using RequestClearAllErrorsOfTypeOfModuleFunc = std::function<Result(const std::string&, const std::string&)>;
+    using GetErrorManagerImplFunc = std::function<std::shared_ptr<error::ErrorManagerImpl>(const std::string&)>;
+    using GetErrorStateMonitorImplFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const std::string&)>;
+    using GetErrorFactoryFunc = std::function<std::shared_ptr<error::ErrorFactory>(const std::string&)>;
+    using GetErrorManagerReqFunc = std::function<std::shared_ptr<error::ErrorManagerReq>(const Requirement&)>;
+    using GetErrorStateMonitorReqFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const Requirement&)>;
+    using SubscribeGlobalAllErrorsFunc = std::function<void(const error::ErrorCallback&, const error::ErrorCallback&)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
     using ExtMqttSubscribeFunc = std::function<UnsubscribeToken(const std::string&, StringHandler)>;
     using TelemetryPublishFunc =
@@ -90,14 +94,12 @@ struct ModuleAdapter {
     CallFunc call;
     PublishFunc publish;
     SubscribeFunc subscribe;
-    SubscribeErrorFunc subscribe_error;
-    SubscribeAllErrorsFunc subscribe_all_errors;
-    SubscribeErrorClearedFunc subscribe_error_cleared;
-    SubscribeAllErrorsClearedFunc subscribe_all_errors_cleared;
-    RaiseErrorFunc raise_error;
-    RequestClearErrorUUIDFunc request_clear_error_uuid;
-    RequestClearAllErrorsOfMouduleFunc request_clear_all_errors_of_module;
-    RequestClearAllErrorsOfTypeOfModuleFunc request_clear_all_errors_of_type_of_module;
+    GetErrorManagerImplFunc get_error_manager_impl;
+    GetErrorStateMonitorImplFunc get_error_state_monitor_impl;
+    GetErrorFactoryFunc get_error_factory;
+    GetErrorManagerReqFunc get_error_manager_req;
+    GetErrorStateMonitorReqFunc get_error_state_monitor_req;
+    SubscribeGlobalAllErrorsFunc subscribe_global_all_errors;
     ExtMqttPublishFunc ext_mqtt_publish;
     ExtMqttSubscribeFunc ext_mqtt_subscribe;
     std::vector<cmd> registered_commands;

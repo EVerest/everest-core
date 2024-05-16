@@ -10,6 +10,9 @@
 #include <utils/conversions.hpp>
 #include <utils/types.hpp>
 
+#include <utils/error.hpp>
+#include <utils/error/error_state_monitor.hpp>
+
 namespace EverestJs {
 
 static const char* const napi_valuetype_strings[] = {
@@ -28,6 +31,18 @@ static const char* const napi_valuetype_strings[] = {
 Everest::json convertToJson(const Napi::Value& value);
 Everest::TelemetryMap convertToTelemetryMap(const Napi::Object& obj);
 Napi::Value convertToNapiValue(const Napi::Env& env, const Everest::json& value);
+
+// Error related
+Everest::error::Error convertToError(const Napi::Value& value);
+Everest::error::ErrorType convertToErrorType(const Napi::Value& value);
+Everest::error::ErrorSubType convertToErrorSubType(const Napi::Value& value);
+Everest::error::Severity convertToErrorSeverity(const Napi::Value& value);
+Everest::error::State convertToErrorState(const Napi::Value& value);
+Napi::Value convertToNapiValue(const Napi::Env& env, const Everest::error::Error& error);
+// ErrorStateCondition related
+bool isSingleErrorStateCondition(const Napi::Value& value);
+Everest::error::ErrorStateMonitor::StateCondition convertToErrorStateCondition(const Napi::Value& value);
+std::list<Everest::error::ErrorStateMonitor::StateCondition> convertToErrorStateConditionList(const Napi::Value& value);
 
 } // namespace EverestJs
 

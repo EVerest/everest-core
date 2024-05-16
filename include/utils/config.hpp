@@ -91,7 +91,7 @@ private:
     /// \brief extracts information about the provided module given via \p module_id from the config and manifest
     ///
     /// \returns a json object containing module_id, module_name, impl_id and impl_intf
-    json extract_implementation_info(const std::string& module_id);
+    json extract_implementation_info(const std::string& module_id) const;
 
     ///
     /// \brief extracts information about the provided implementation given via \p module_id and \p impl_id from the
@@ -99,7 +99,7 @@ private:
     /// manifest
     ///
     /// \returns a json object containing module_id, module_name, impl_id and impl_intf
-    json extract_implementation_info(const std::string& module_id, const std::string& impl_id);
+    json extract_implementation_info(const std::string& module_id, const std::string& impl_id) const;
     void resolve_all_requirements();
 
     // experimental caches
@@ -118,7 +118,7 @@ private:
 
 public:
     error::ErrorTypeMap get_error_map() const;
-    std::string get_module_name(const std::string& module_id);
+    std::string get_module_name(const std::string& module_id) const;
     bool module_provides(const std::string& module_name, const std::string& impl_id);
     json get_module_cmds(const std::string& module_name, const std::string& impl_id);
     ///
@@ -130,7 +130,12 @@ public:
     /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
     ///
     /// \returns a json object that contains the requirement
-    json resolve_requirement(const std::string& module_id, const std::string& requirement_id);
+    json resolve_requirement(const std::string& module_id, const std::string& requirement_id) const;
+
+    ///
+    /// \returns a list of Requirements for \p module_id
+    ///
+    std::list<Requirement> get_requirements(const std::string& module_id) const;
 
     ///
     /// \brief checks if the config contains the given \p module_id
@@ -177,13 +182,13 @@ public:
     /// \brief turns then given \p module_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id);
+    std::string printable_identifier(const std::string& module_id) const;
 
     ///
     /// \brief turns then given \p module_id and \p impl_id into a printable identifier
     ///
     /// \returns a string with the printable identifier
-    std::string printable_identifier(const std::string& module_id, const std::string& impl_id);
+    std::string printable_identifier(const std::string& module_id, const std::string& impl_id) const;
 
     ///
     /// \brief turns the given \p module_id and \p impl_id into a mqtt prefix

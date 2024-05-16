@@ -5,6 +5,8 @@
 #include <everest/exceptions.hpp>
 #include <everest/logging.hpp>
 
+#include <utils/error/error_json.hpp>
+
 namespace EverestJs {
 
 Everest::json convertToJson(const Napi::Value& value) {
@@ -106,6 +108,106 @@ Napi::Value convertToNapiValue(const Napi::Env& env, const json& value) {
         return v;
     }
     EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Javascript type can not be converted to Napi::Value: ", value));
+}
+
+Everest::error::Error convertToError(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    Everest::json j = convertToJson(value);
+    return j.get<Everest::error::Error>();
+}
+
+Everest::error::ErrorType convertToErrorType(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsString()) {
+        return Everest::error::ErrorType(std::string(value.As<Napi::String>()));
+    }
+    EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Javascript type can not be converted to Everest::error::ErrorType: ",
+                        napi_valuetype_strings[value.Type()]));
+}
+
+Everest::error::ErrorSubType convertToErrorSubType(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsString()) {
+        return Everest::error::ErrorSubType(std::string(value.As<Napi::String>()));
+    }
+    EVTHROW(EVEXCEPTION(Everest::EverestApiError,
+                        "Javascript type can not be converted to Everest::error::ErrorSubType: ",
+                        napi_valuetype_strings[value.Type()]));
+}
+
+Everest::error::Severity convertToErrorSeverity(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsString()) {
+        return Everest::error::string_to_severity(std::string(value.As<Napi::String>()));
+    }
+    EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Javascript type can not be converted to Everest::error::Severity: ",
+                        napi_valuetype_strings[value.Type()]));
+}
+
+Everest::error::State convertToErrorState(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsString()) {
+        return Everest::error::string_to_state(std::string(value.As<Napi::String>()));
+    }
+    EVTHROW(EVEXCEPTION(Everest::EverestApiError, "Javascript type can not be converted to Everest::error::State: ",
+                        napi_valuetype_strings[value.Type()]));
+}
+
+Napi::Value convertToNapiValue(const Napi::Env& env, const Everest::error::Error& error) {
+    BOOST_LOG_FUNCTION();
+
+    json j(error);
+    Napi::Value res = convertToNapiValue(env, j);
+    return res;
+}
+
+bool isSingleErrorStateCondition(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsArray()) {
+        return false;
+    }
+    return true;
+}
+
+Everest::error::ErrorStateMonitor::StateCondition convertToErrorStateCondition(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsObject()) {
+        Napi::Object obj = value.As<Napi::Object>();
+        Napi::Value type = obj.Get("type");
+        Napi::Value sub_type = obj.Get("sub_type");
+        Napi::Value active = obj.Get("active");
+        return Everest::error::ErrorStateMonitor::StateCondition(
+            convertToErrorType(type), convertToErrorSubType(sub_type), bool(active.As<Napi::Boolean>()));
+    }
+    EVTHROW(EVEXCEPTION(Everest::EverestApiError,
+                        "Javascript type can not be converted to Everest::error::ErrorStateMonitor::StateCondition: ",
+                        napi_valuetype_strings[value.Type()]));
+}
+
+std::list<Everest::error::ErrorStateMonitor::StateCondition>
+convertToErrorStateConditionList(const Napi::Value& value) {
+    BOOST_LOG_FUNCTION();
+
+    if (value.IsArray()) {
+        std::list<Everest::error::ErrorStateMonitor::StateCondition> conditions;
+        Napi::Array array = value.As<Napi::Array>();
+        for (uint64_t i = 0; i < array.Length(); i++) {
+            Napi::Value entry = Napi::Value(array[i]);
+            conditions.push_back(convertToErrorStateCondition(entry));
+        }
+        return conditions;
+    }
+    EVTHROW(EVEXCEPTION(
+        Everest::EverestApiError,
+        "Javascript type can not be converted to std::list<Everest::error::ErrorStateMonitor::StateCondition>: ",
+        napi_valuetype_strings[value.Type()]));
 }
 
 } // namespace EverestJs

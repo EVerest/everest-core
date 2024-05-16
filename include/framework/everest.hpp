@@ -14,7 +14,6 @@
 
 #include <utils/config.hpp>
 #include <utils/error.hpp>
-#include <utils/error/error_manager.hpp>
 #include <utils/mqtt_abstraction.hpp>
 #include <utils/types.hpp>
 
@@ -33,6 +32,14 @@ struct cmd {
 using TelemetryEntry = std::variant<std::string, const char*, bool, int32_t, uint32_t, int64_t, uint64_t, double>;
 using TelemetryMap = std::map<std::string, TelemetryEntry>;
 using UnsubscribeToken = std::function<void()>;
+
+namespace error {
+struct ErrorDatabaseMap;
+struct ErrorManagerImpl;
+struct ErrorManagerReq;
+struct ErrorStateMonitor;
+struct ErrorFactory;
+} // namespace error
 
 ///
 /// \brief Contains the EVerest framework that provides convenience functionality for implementing EVerest modules
@@ -78,45 +85,34 @@ public:
     void subscribe_var(const Requirement& req, const std::string& var_name, const JsonCallback& callback);
 
     ///
-    /// \brief Subscribes to an error of another module indentified by the given \p req and error type
-    /// \p error_type. The given \p callback is called when a new error is raised
+    /// \brief Return the error manager for the given \p impl_id
     ///
-    void subscribe_error(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
+    std::shared_ptr<error::ErrorManagerImpl> get_error_manager_impl(const std::string& impl_id);
 
     ///
-    /// \brief Subscribes to all errors. The given \p callback is called when a new error is raised.
+    /// \brief Return the error state monitor for the given \p impl_id
     ///
-    void subscribe_all_errors(const JsonCallback& callback);
+    std::shared_ptr<error::ErrorStateMonitor> get_error_state_monitor_impl(const std::string& impl_id);
 
     ///
-    /// \brief Subscribes to an error cleared event of another module indentified by the given \p req and error type
-    /// \p error_type. The given \p callback is called when an error is cleared
+    /// \brief Return the error factory for the given \p impl_id
     ///
-    void subscribe_error_cleared(const Requirement& req, const std::string& error_type, const JsonCallback& callback);
+    std::shared_ptr<error::ErrorFactory> get_error_factory(const std::string& impl_id);
 
     ///
-    /// \brief Subscribes to all errors cleared events. The given \p callback is called when an error is cleared.
+    /// \brief Return the error manager for the given \p req
     ///
-    void subscribe_all_errors_cleared(const JsonCallback& callback);
-    ///
-    /// \brief Requests to clear errors
-    /// If \p request_type is RequestClearErrorOption::ClearUUID, the error with the given \p uuid of the given \p
-    /// impl_id is cleared. \p error_type is ignored. If \p request_type is
-    /// RequestClearErrorOption::ClearAllOfTypeOfModule, all errors of the given \p impl_id with the given \p error_type
-    /// are cleared. \p uuid is ignored. If \p request_type is RequestClearErrorOption::ClearAllOfModule, all errors of
-    /// the given \p impl_id are cleared. \p uuid and \p error_type are ignored. Return a response json with the uuids
-    /// of the cleared errors
-    ///
-    json request_clear_error(const error::RequestClearErrorOption request_type, const std::string& impl_id,
-                             const std::optional<std::string>& uuid, const std::optional<std::string>& error_type);
+    std::shared_ptr<error::ErrorManagerReq> get_error_manager_req(const Requirement& req);
 
     ///
-    /// \brief Raises an given \p error of the given \p impl_id, with the given \p error_type. Returns the uuid of the
-    /// raised error
-    ///
-    std::string raise_error(const std::string& impl_id, const std::string& error_type, const std::string& message,
-                            const std::string& severity);
+    /// \brief Return the error state monitor for the given \p req
+    std::shared_ptr<error::ErrorStateMonitor> get_error_state_monitor_req(const Requirement& req);
 
+    ///
+    /// \brief Subscribes globally to all errors of all modules. The given \p callback is called when a new error is
+    /// raised. The given \p clear_callback is called when an error is cleared
+    ///
+    void subscribe_global_all_errors(const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
     ///
     /// \brief publishes the given \p data on the given \p topic
     ///
@@ -181,6 +177,12 @@ private:
     MQTTAbstraction mqtt_abstraction;
     Config config;
     std::string module_id;
+    std::map<std::string, std::shared_ptr<error::ErrorManagerImpl>> impl_error_managers; // one per implementation
+    std::map<std::string, std::shared_ptr<error::ErrorStateMonitor>>
+        impl_error_state_monitors;                                                             // one per implementation
+    std::map<std::string, std::shared_ptr<error::ErrorFactory>> error_factories;               // one per implementation
+    std::map<Requirement, std::shared_ptr<error::ErrorManagerReq>> req_error_managers;         // one per requirement
+    std::map<Requirement, std::shared_ptr<error::ErrorStateMonitor>> req_error_state_monitors; // one per requirement
     std::map<std::string, std::set<std::string>> registered_cmds;
     bool ready_received;
     std::chrono::seconds remote_cmd_res_timeout;
@@ -205,6 +207,24 @@ private:
 
     static std::string check_args(const Arguments& func_args, json manifest_args);
     static bool check_arg(ArgumentType arg_types, json manifest_arg);
+
+    ///
+    /// \brief Publishes the given \p error as a cleared error
+    ///
+    void publish_cleared_error(const std::string& impl_id, const error::Error& error);
+
+    ///
+    /// \brief Publishes the given \p error as a raised error
+    ///
+    void publish_raised_error(const std::string& impl_id, const error::Error& error);
+
+    ///
+    /// \brief Subscribes to an error of another module indentified by the given \p req and error type
+    /// \p error_type. The given \p callback is called when a new error is raised and \p clear_callback is called when
+    /// an error is cleared
+    ///
+    void subscribe_error(const Requirement& req, const error::ErrorType& error_type,
+                         const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
 };
 } // namespace Everest
 

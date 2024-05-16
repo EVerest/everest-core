@@ -34,28 +34,38 @@ std::string UUID::to_string() const {
     return uuid;
 }
 
-Error::Error(const ErrorType& type_, const std::string& message_, const std::string& description_,
-             const ImplementationIdentifier& from_, const Severity& severity_, const time_point& timestamp_,
-             const UUID& uuid_, const State& state_) :
+Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
+             const std::string& description_, const ImplementationIdentifier& origin_, const Severity& severity_,
+             const time_point& timestamp_, const UUID& uuid_, const State& state_) :
     type(type_),
+    sub_type(sub_type_),
     message(message_),
     description(description_),
-    from(from_),
+    origin(origin_),
     severity(severity_),
     timestamp(timestamp_),
     uuid(uuid_),
     state(state_) {
 }
 
-Error::Error(const ErrorType& type_, const std::string& message_, const std::string& description_,
-             const ImplementationIdentifier& from_, const Severity& severity_) :
-    Error(type_, message_, description_, from_, severity_, date::utc_clock::now(), UUID()) {
+Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
+             const std::string& description_, const ImplementationIdentifier& origin_, const Severity& severity_) :
+    Error(type_, sub_type_, message_, description_, origin_, severity_, UTILS_ERROR_DEFAULTS_TIMESTAMP,
+          UTILS_ERROR_DEFAULTS_UUID) {
 }
 
-Error::Error(const ErrorType& type_, const std::string& message_, const std::string& description_,
-             const std::string& from_module_, const std::string& from_implementation_, const Severity& severity_) :
-    Error(type_, message_, description_, ImplementationIdentifier(from_module_, from_implementation_), severity_) {
+Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
+             const std::string& description_, const std::string& origin_module_,
+             const std::string& origin_implementation_, const Severity& severity_) :
+    Error(type_, sub_type_, message_, description_, ImplementationIdentifier(origin_module_, origin_implementation_),
+          severity_) {
 }
+
+Error::Error() :
+    Error(UTILS_ERROR_DEFAULTS_TYPE, UTILS_ERROR_DEFAULTS_SUB_TYPE, UTILS_ERROR_DEFAULTS_MESSAGE,
+          UTILS_ERROR_DEFAULTS_DESCRIPTION, UTILS_ERROR_DEFAULTS_ORIGIN, UTILS_ERROR_DEFAULTS_SEVERITY) {
+}
+
 std::string severity_to_string(const Severity& s) {
     switch (s) {
     case Severity::Low:
