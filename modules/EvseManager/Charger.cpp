@@ -181,6 +181,9 @@ void Charger::run_state_machine() {
         auto time_in_current_state =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.current_state_started).count();
 
+        // std::cout << "Charger::run_state_machine: " << evse_state_to_string(shared_context.current_state) <<
+        // std::endl;
+
         switch (shared_context.current_state) {
         case EvseState::Disabled:
             if (initialize_state) {
@@ -762,7 +765,10 @@ void Charger::process_event(CPEvent cp_event) {
     run_state_machine();
 
     // Process all event actions that are independent of the current state
-    process_cp_events_independent(cp_event);
+    // except when disabled
+    if (shared_context.current_state != EvseState::Disabled) {
+        process_cp_events_independent(cp_event);
+    }
 
     run_state_machine();
 
