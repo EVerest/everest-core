@@ -15,7 +15,7 @@ on:
     - cron: '37 13,1 * * *'
 
 env:
-  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:add-error-subtype
+  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:v1.1.1
 
 jobs:
   build:
