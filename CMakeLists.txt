@@ -48,6 +48,13 @@ endif()
 # This is a flag for building development tests, but not necessarily to run them, for expample in case
 # tests requires hardware.
 option(BUILD_DEV_TESTS "Build dev tests" OFF)
+option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
+set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
+
+ev_setup_python_executable(
+    USE_PYTHON_VENV ${${PROJECT_NAME}_USE_PYTHON_VENV}
+    PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
+)
 
 # Already include CTest here to allow it to find tests defined in subdirectories like lib and modules
 if(EVEREST_CORE_BUILD_TESTING)
