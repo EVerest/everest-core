@@ -80,7 +80,7 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: feature/add-error-subtype
+  git_tag: v0.2.3
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 
 # unit testing
