@@ -47,8 +47,8 @@ jobs:
           rsync -a source/.ci/build-kit/ scripts
       - name: Pull build-kit image
         run: |
-          docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
-          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+          docker pull --quiet ghcr.io/everest/build-kit-alpine:add-pip-install-build
+          docker image tag ghcr.io/everest/build-kit-alpine:add-pip-install-build build-kit
       - name: Compile
         run: |
           docker run \
