@@ -10,4 +10,4 @@ ninja -C build install_everest_testing
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 
-rm -rf build
+# rm -rf build
