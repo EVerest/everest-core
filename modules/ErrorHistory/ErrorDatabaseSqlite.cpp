@@ -79,11 +79,12 @@ void ErrorDatabaseSqlite::reset_database() {
                           "type                   TEXT    NOT NULL,"
                           "description            TEXT    NOT NULL,"
                           "message                TEXT    NOT NULL,"
-                          "from_module            TEXT    NOT NULL,"
-                          "from_implementation    TEXT    NOT NULL,"
+                          "origin_module          TEXT    NOT NULL,"
+                          "origin_implementation  TEXT    NOT NULL,"
                           "timestamp              TEXT    NOT NULL,"
                           "severity               TEXT    NOT NULL,"
-                          "state                  TEXT    NOT NULL);";
+                          "state                  TEXT    NOT NULL,"
+                          "sub_type               TEXT    NOT NULL);";
         db.exec(sql);
     } catch (std::exception& e) {
         EVLOG_error << "Error creating database: " << e.what();
@@ -100,19 +101,20 @@ void ErrorDatabaseSqlite::add_error_without_mutex(Everest::error::ErrorPtr error
     BOOST_LOG_FUNCTION();
     try {
         SQLite::Database db(this->db_path.string(), SQLite::OPEN_READWRITE);
-        std::string sql = "INSERT INTO errors(uuid, type, description, message, from_module, from_implementation, "
-                          "timestamp, severity, state) VALUES(";
-        sql += "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9);";
+        std::string sql = "INSERT INTO errors(uuid, type, description, message, origin_module, origin_implementation, "
+                          "timestamp, severity, state, sub_type) VALUES(";
+        sql += "?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10);";
         SQLite::Statement stmt(db, sql);
         stmt.bind(1, error->uuid.to_string());
         stmt.bind(2, error->type);
         stmt.bind(3, error->description);
         stmt.bind(4, error->message);
-        stmt.bind(5, error->from.module_id);
-        stmt.bind(6, error->from.implementation_id);
+        stmt.bind(5, error->origin.module_id);
+        stmt.bind(6, error->origin.implementation_id);
         stmt.bind(7, Everest::Date::to_rfc3339(error->timestamp));
         stmt.bind(8, Everest::error::severity_to_string(error->severity));
         stmt.bind(9, Everest::error::state_to_string(error->state));
+        stmt.bind(10, error->sub_type);
         stmt.exec();
     } catch (std::exception& e) {
         EVLOG_error << "Error adding error to database: " << e.what();
@@ -127,11 +129,11 @@ std::string ErrorDatabaseSqlite::filter_to_sql_condition(const Everest::error::E
         condition = "(state = '" + Everest::error::state_to_string(filter.get_state_filter()) + "')";
     } break;
     case Everest::error::FilterType::Origin: {
-        condition = "(from_module = '" + filter.get_origin_filter().module_id + "' AND " + "from_implementation = '" +
-                    filter.get_origin_filter().implementation_id + "')";
+        condition = "(origin_module = '" + filter.get_origin_filter().module_id + "' AND " +
+                    "origin_implementation = '" + filter.get_origin_filter().implementation_id + "')";
     } break;
     case Everest::error::FilterType::Type: {
-        condition = "(type = '" + filter.get_type_filter() + "')";
+        condition = "(type = '" + filter.get_type_filter().value + "')";
     } break;
     case Everest::error::FilterType::Severity: {
         switch (filter.get_severity_filter()) {
@@ -155,6 +157,9 @@ std::string ErrorDatabaseSqlite::filter_to_sql_condition(const Everest::error::E
     } break;
     case Everest::error::FilterType::Handle: {
         condition = "(uuid = '" + filter.get_handle_filter().to_string() + "')";
+    } break;
+    case Everest::error::FilterType::SubType: {
+        condition = "(sub_type = '" + filter.get_sub_type_filter().value + "')";
     } break;
     }
     return condition;
@@ -196,17 +201,19 @@ std::list<Everest::error::ErrorPtr> ErrorDatabaseSqlite::get_errors(const std::o
             const Everest::error::ErrorType err_type(stmt.getColumn("type").getText());
             const std::string err_description = stmt.getColumn("description").getText();
             const std::string err_msg = stmt.getColumn("message").getText();
-            const std::string err_from_module_id = stmt.getColumn("from_module").getText();
-            const std::string err_from_impl_id = stmt.getColumn("from_implementation").getText();
-            const ImplementationIdentifier err_from(err_from_module_id, err_from_impl_id);
+            const std::string err_origin_module_id = stmt.getColumn("origin_module").getText();
+            const std::string err_origin_impl_id = stmt.getColumn("origin_implementation").getText();
+            const ImplementationIdentifier err_origin(err_origin_module_id, err_origin_impl_id);
             const Everest::error::Error::time_point err_timestamp =
                 Everest::Date::from_rfc3339(stmt.getColumn("timestamp").getText());
             const Everest::error::Severity err_severity =
                 Everest::error::string_to_severity(stmt.getColumn("severity").getText());
             const Everest::error::State err_state = Everest::error::string_to_state(stmt.getColumn("state").getText());
             const Everest::error::ErrorHandle err_handle(Everest::error::ErrorHandle(stmt.getColumn("uuid").getText()));
-            Everest::error::ErrorPtr error = std::make_shared<Everest::error::Error>(
-                err_type, err_msg, err_description, err_from, err_severity, err_timestamp, err_handle, err_state);
+            const Everest::error::ErrorSubType err_sub_type(stmt.getColumn("sub_type").getText());
+            Everest::error::ErrorPtr error =
+                std::make_shared<Everest::error::Error>(err_type, err_sub_type, err_msg, err_description, err_origin,
+                                                        err_severity, err_timestamp, err_handle, err_state);
             result.push_back(error);
         }
     } catch (std::exception& e) {

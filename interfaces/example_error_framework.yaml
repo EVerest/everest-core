@@ -1,0 +1,7 @@
+description: >-
+  This is an example interface used for the error framework example modules.
+errors:
+  - reference: /errors/example#/ExampleErrorA
+  - reference: /errors/example#/ExampleErrorB
+  - reference: /errors/example#/ExampleErrorC
+  - reference: /errors/example#/ExampleErrorD

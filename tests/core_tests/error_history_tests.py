@@ -12,8 +12,8 @@ from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.probe_module import ProbeModule
 
 def assert_error(expected_error, error):
-    assert expected_error['uuid'] == error['uuid']
     assert expected_error['type'] == error['type']
+    assert expected_error['sub_type'] == error['sub_type']
     assert expected_error['message'] == error['message']
     assert expected_error['severity'] == error['severity']
     assert expected_error['state'] == error['state']
@@ -26,7 +26,7 @@ def assert_errors(expected_errors, errors):
     for exp_err in expected_errors:
         index = None
         for (i, err) in zip(range(len(errors)), errors):
-            if exp_err['uuid'] == err['uuid']:
+            if exp_err['type'] == err['type'] and exp_err['sub_type'] == err['sub_type']:
                 if index is not None:
                     assert False, f'Found multiple errors with uuid {exp_err["uuid"]}'
                 index = i
@@ -84,17 +84,18 @@ class TestErrorHistory:
 
         err_args = {
             'type': 'test_errors/TestErrorA',
+            'sub_type': '',
             'message': 'Test Error A',
             'severity': 'Low'
         }
-        uuid = await probe_module.call_command(
+        await probe_module.call_command(
             'test_error_handling',
             'raise_error',
             err_args
         )
         expected_error = {
-            'uuid': uuid,
             'type': err_args['type'],
+            'sub_type': '',
             'message': err_args['message'],
             'severity': err_args['severity'],
             'state': 'Active',
@@ -115,8 +116,11 @@ class TestErrorHistory:
 
         await probe_module.call_command(
             'test_error_handling',
-            'clear_error_by_uuid',
-            {'uuid': uuid}
+            'clear_error',
+            {
+                'type': err_args['type'],
+                'sub_type': err_args['sub_type'],
+            }
         )
         expected_error['state'] = 'ClearedByModule'
         await asyncio.sleep(0.5)
@@ -142,8 +146,8 @@ class TestErrorHistory:
         test_errors = [
             # index 0
             {
-                'uuid': None,
                 'type': 'test_errors/TestErrorA',
+                'sub_type': '',
                 'message': 'Test Error A',
                 'severity': 'Low',
                 'description': 'Test error A',
@@ -155,8 +159,8 @@ class TestErrorHistory:
             },
             # index 1
             {
-                'uuid': None,
                 'type': 'test_errors/TestErrorB',
+                'sub_type': '',
                 'message': 'Test Error B',
                 'severity': 'Low',
                 'description': 'Test error B',
@@ -166,66 +170,15 @@ class TestErrorHistory:
                     'implementation_id': 'main'
                 }
             },
-            # index 2
-            {
-                'uuid': None,
-                'type': 'test_errors/TestErrorA',
-                'message': 'Test Error A',
-                'severity': 'High',
-                'description': 'Test error A',
-                'state': 'Active',
-                'origin': {
-                    'module_id': 'test_error_handling',
-                    'implementation_id': 'main'
-                }
-            },
-            # index 3
-            {
-                'uuid': None,
-                'type': 'test_errors/TestErrorB',
-                'message': 'Test Error B',
-                'severity': 'High',
-                'description': 'Test error B',
-                'state': 'Active',
-                'origin': {
-                    'module_id': 'test_error_handling',
-                    'implementation_id': 'main'
-                }
-            },
-            # index 4
-            {
-                'uuid': None,
-                'type': 'test_errors/TestErrorA',
-                'message': 'Test Error A',
-                'severity': 'Medium',
-                'description': 'Test error A',
-                'state': 'Active',
-                'origin': {
-                    'module_id': 'test_error_handling',
-                    'implementation_id': 'main'
-                }
-            },
-            # index 5
-            {
-                'uuid': None,
-                'type': 'test_errors/TestErrorB',
-                'message': 'Test Error B',
-                'severity': 'Medium',
-                'description': 'Test error B',
-                'state': 'Active',
-                'origin': {
-                    'module_id': 'test_error_handling',
-                    'implementation_id': 'main'
-                }
-            }
         ]
         for err in test_errors:
             err_args = {
                 'type': err['type'],
+                'sub_type': err['sub_type'],
                 'message': err['message'],
                 'severity': err['severity']
             }
-            err['uuid'] = await probe_module.call_command(
+            await probe_module.call_command(
                 'test_error_handling',
                 'raise_error',
                 err_args
@@ -252,7 +205,7 @@ class TestErrorHistory:
             'get_errors',
             call_args
         )
-        assert_errors([test_errors[0], test_errors[2], test_errors[4]], result)
+        assert_errors([test_errors[0]], result)
 
         # get all errors from module test_error_handling
         call_args['filters'] = {
@@ -277,18 +230,7 @@ class TestErrorHistory:
             'get_errors',
             call_args
         )
-        assert_errors([test_errors[2], test_errors[3]], result)
-
-        # get error by uuid
-        call_args['filters'] = {
-            'handle_filter': test_errors[0]['uuid']
-        }
-        result = await probe_module.call_command(
-            'error_history',
-            'get_errors',
-            call_args
-        )
-        assert_errors([test_errors[0]], result)
+        assert_errors([], result)
 
         # get all 'Active' errors
         call_args['filters'] = {
@@ -301,11 +243,14 @@ class TestErrorHistory:
         )
         assert_errors(test_errors, result)
 
-        for err in test_errors[:3]:
+        for err in test_errors:
             await probe_module.call_command(
                 'test_error_handling',
-                'clear_error_by_uuid',
-                {'uuid': err['uuid']}
+                'clear_error',
+                {
+                    'type': err['type'],
+                    'sub_type': err['sub_type']
+                }
             )
             err['state'] = 'ClearedByModule'
         await asyncio.sleep(0.5)
@@ -318,4 +263,4 @@ class TestErrorHistory:
             'get_errors',
             call_args
         )
-        assert_errors(test_errors[:3], result)
+        assert_errors(test_errors, result)

@@ -72,25 +72,36 @@ struct EvseManagerModuleAdapter : public ModuleAdapterStub {
     std::map<std::string, Everest::error::ErrorCallback> error_raise;
     std::map<std::string, Everest::error::ErrorCallback> error_clear;
 
-    virtual void subscribe_error_fn(const Requirement&, const std::string& str, Everest::error::ErrorCallback cb) {
-        // std::printf("subscribe_error_fn %s\n", str.c_str());
-        error_raise[str] = cb;
+    virtual std::shared_ptr<Everest::error::ErrorManagerReq> get_error_manager_req_fn(const Requirement& req) {
+        return std::make_shared<Everest::error::ErrorManagerReq>(
+            std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
+            std::list<Everest::error::ErrorType>({Everest::error::ErrorType("evse_board_support/VendorWarning")}),
+            [this](const Everest::error::ErrorType& error_type, const Everest::error::ErrorCallback& callback,
+                   const Everest::error::ErrorCallback& clear_callback) {
+                error_raise[error_type] = callback;
+                error_clear[error_type] = clear_callback;
+            });
     }
 
-    virtual void subscribe_error_cleared_fn(const Requirement&, const std::string& str,
-                                            Everest::error::ErrorCallback cb) {
-        // std::printf("subscribe_error_cleared_fn %s\n", str.c_str());
-        error_clear[str] = cb;
-    }
-
-    void raise_error(const std::string& error_type, const std::string& error_message, const std::string& error_desc) {
-        Everest::error::Error error(error_type, error_message, error_desc, id);
-        error_raise[error_type](error);
-    }
-
-    void clear_error(const std::string& error_type, const std::string& error_message, const std::string& error_desc) {
-        Everest::error::Error error(error_type, error_message, error_desc, id);
-        error_clear[error_type](error);
+    virtual std::shared_ptr<Everest::error::ErrorManagerImpl> get_error_manager_impl_fn(const std::string& str) {
+        return std::make_shared<Everest::error::ErrorManagerImpl>(
+            std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
+            std::list<Everest::error::ErrorType>(),
+            [this](const Everest::error::Error& error) {
+                std::printf("publish_raised_error\n");
+                if (error_raise.find(error.type) == error_raise.end()) {
+                    throw std::runtime_error("Error type " + error.type + " not found");
+                }
+                error_raise[error.type](error);
+            },
+            [this](const Everest::error::Error& error) {
+                std::printf("publish_cleared_error\n");
+                if (error_raise.find(error.type) == error_raise.end()) {
+                    throw std::runtime_error("Error type " + error.type + " not found");
+                }
+                error_clear[error.type](error);
+            },
+            false);
     }
 };
 

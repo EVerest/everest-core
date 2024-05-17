@@ -20,19 +20,3 @@ active_modules:
         - module_id: example
           implementation_id: example
     module: ExampleUser
-  example2:
-    module: JsExample
-  example_user2:
-    connections:
-      example:
-        - module_id: example2
-          implementation_id: example
-    module: JsExampleUser
-  example3:
-    module: PyExample
-  example_user3:
-    connections:
-      example:
-        - module_id: example3
-          implementation_id: example
-    module: PyExampleUser
