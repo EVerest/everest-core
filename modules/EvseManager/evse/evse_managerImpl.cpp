@@ -325,6 +325,9 @@ void evse_managerImpl::ready() {
             if (connector_status_changed) {
                 se.connector_id = 1;
             }
+
+            // Add source information (Who initiated this state change)
+            se.source = mod->charger->get_last_enable_disable_source();
         } else if (e == types::evse_manager::SessionEventEnum::ChargingPausedEV or
                    e == types::evse_manager::SessionEventEnum::ChargingPausedEVSE or
                    e == types::evse_manager::SessionEventEnum::ChargingStarted or
@@ -337,9 +340,6 @@ void evse_managerImpl::ready() {
             types::evse_manager::AuthorizationEvent authorization_event;
             authorization_event.meter_value = mod->get_latest_powermeter_data_billing();
             se.authorization_event = authorization_event;
-
-            // Add source information (Who initiated this state change)
-            se.source = mod->charger->get_last_enable_disable_source();
         }
 
         se.uuid = session_uuid;

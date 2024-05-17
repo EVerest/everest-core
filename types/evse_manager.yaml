@@ -345,7 +345,7 @@ types:
         - MobileApp
         - FirmwareUpdate
         - CSMS
-      enable_state: 
+      enable_state:
         description: Specifies the state for this entry
         type: string
         enum:
@@ -377,7 +377,7 @@ types:
         format: date-time
       connector_id:
         description: >-
-          Id of the connector of this EVSE. 
+          Id of the connector of this EVSE.
           If the connector_id is not specified, its assumed to be 1
         type: integer
       event:
@@ -406,13 +406,13 @@ types:
         $ref: /evse_manager#/TransactionFinished
       charging_state_changed_event:
         description: >-
-          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums: 
+          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
           ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
         type: object
         $ref: /evse_manager#/ChargingStateChangedEvent
       authorization_event:
         description: >-
-          Data for Authorization event. Shall be set for the following SessionEventEnums: 
+          Data for Authorization event. Shall be set for the following SessionEventEnums:
           Authorized, Deauthorized
         type: object
         $ref: /evse_manager#/AuthorizationEvent
