@@ -7,7 +7,7 @@ cmake \
     -DEVC_ENABLE_CCACHE=1 \
     -DISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES=OFF \
     -DCMAKE_INSTALL_PREFIX="$EXT_MOUNT/dist" \
-    -DWHEEL_INSTALL_PREFOX="$EXT_MOUNT/dist-wheels" \
+    -DWHEEL_INSTALL_PREFIX="$EXT_MOUNT/dist-wheels" \
     -DBUILD_TESTING=ON
 
 ninja -j$(nproc) -C build

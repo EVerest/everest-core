@@ -85,7 +85,6 @@ ext-mbedtls:
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: 2d7ea3e4742114cb7e3b1e71b3d1e7da566e2146
-  cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 
 # unit testing
 gtest:
