@@ -294,7 +294,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
-void ISO15118_chargerImpl::handle_set_physical_values(types::iso15118_charger::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) {
 
     if (physical_values.ac_nominal_voltage.has_value()) {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_nominal_voltage,

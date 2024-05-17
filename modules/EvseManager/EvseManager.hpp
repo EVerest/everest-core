@@ -206,7 +206,7 @@ public:
         setup_physical_values.dc_current_regulation_tolerance = powersupply_capabilities.current_regulation_tolerance_A;
         setup_physical_values.dc_peak_current_ripple = powersupply_capabilities.peak_current_ripple_A;
         setup_physical_values.dc_energy_to_be_delivered = 10000;
-        r_hlc[0]->call_set_physical_values(setup_physical_values);
+        r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
         types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
         evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;

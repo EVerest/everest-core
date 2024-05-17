@@ -26,9 +26,9 @@ cmds:
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
-  set_physical_values:
+  set_charging_parameters:
     description: >-
-      At startup, set the physical values at least once. May be updated later on.
+      At startup, set the the charging parameters at least once. May be updated later on.
       If a charging session is currently active, some updated values may only be used for the next charging session.
     arguments:
       physical_values:

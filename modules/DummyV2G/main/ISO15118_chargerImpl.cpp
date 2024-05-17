@@ -55,7 +55,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     // your code for cmd stop_charging goes here
 }
 
-void ISO15118_chargerImpl::handle_set_physical_values(types::iso15118_charger::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) {
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {

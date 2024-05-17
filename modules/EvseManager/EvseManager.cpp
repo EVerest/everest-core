@@ -172,7 +172,7 @@ void EvseManager::ready() {
         if (config.charge_mode == "AC") {
             types::iso15118_charger::SetupPhysicalValues setup_physical_values;
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
-            r_hlc[0]->call_set_physical_values(setup_physical_values);
+            r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
             if (config.three_phases) {
