@@ -13,6 +13,20 @@ using namespace std::literals::chrono_literals;
 
 namespace module {
 
+static const types::power_supply_DC::Capabilities get_sane_default_power_supply_capabilities() {
+    // Init power supply capabilities with safe defaults
+    types::power_supply_DC::Capabilities psu_caps;
+    psu_caps.bidirectional = false;
+    psu_caps.peak_current_ripple_A = 0.5;
+    psu_caps.current_regulation_tolerance_A = 0.5;
+    psu_caps.max_export_current_A = 0;
+    psu_caps.max_export_power_W = 0;
+    psu_caps.max_export_voltage_V = 60;
+    psu_caps.min_export_voltage_V = 0;
+    psu_caps.min_export_current_A = 0;
+    return psu_caps;
+}
+
 inline static void trim_colons_from_string(std::string& text) {
     text.erase(remove(text.begin(), text.end(), ':'), text.end());
 }
@@ -87,6 +101,14 @@ void EvseManager::init() {
 
     latest_target_voltage = 0;
     latest_target_current = 0;
+
+    if (get_hlc_enabled()) {
+        if (config.charge_mode == "DC") {
+            // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
+            r_powersupply_DC[0]->subscribe_capabilities(
+                [this](const auto& caps) { update_powersupply_capabilities(caps); });
+        }
+    }
 }
 
 void EvseManager::ready() {
@@ -182,28 +204,15 @@ void EvseManager::ready() {
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
 
-            // Init power supply capabilities with safe defaults
-            types::power_supply_DC::Capabilities psu_caps;
-            psu_caps.bidirectional = false;
-            psu_caps.peak_current_ripple_A = 0.5;
-            psu_caps.current_regulation_tolerance_A = 0.5;
-            psu_caps.max_export_current_A = 0;
-            psu_caps.max_export_power_W = 0;
-            psu_caps.max_export_voltage_V = 60;
-            psu_caps.min_export_voltage_V = 0;
-            psu_caps.min_export_current_A = 0;
+            // apply sane defaults capabilities settings once on boot
+            auto psu_caps = get_sane_default_power_supply_capabilities();
+            update_powersupply_capabilities(psu_caps);
 
             // Set present measurements on HLC to sane defaults
             types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
             present_values.EVSEPresentVoltage = 0;
             present_values.EVSEPresentCurrent = 0;
             r_hlc[0]->call_update_dc_present_values(present_values);
-
-            // apply sane defaults capabilities settings once on boot
-            update_powersupply_capabilities(psu_caps);
-
-            // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
-            r_powersupply_DC[0]->subscribe_capabilities([this](auto caps) { update_powersupply_capabilities(caps); });
 
             // Cable check for DC charging
             r_hlc[0]->subscribe_Start_CableCheck([this] { cable_check(); });
