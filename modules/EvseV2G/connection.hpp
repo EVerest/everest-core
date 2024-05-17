@@ -12,6 +12,7 @@
 
 int connection_init(struct v2g_context* ctx);
 int connection_start_servers(struct v2g_context* ctx);
+int create_udp_socket(const uint16_t udp_port, const char* interface_name);
 
 /*!
  * \brief connection_read This abstracts a read from the connection socket, so that higher level functions
