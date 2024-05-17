@@ -5,7 +5,11 @@
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
   git_tag: feature/use-cmake-python-functions
-  options: ["BUILD_TESTING OFF"]
+  options: [
+    "BUILD_TESTING OFF",
+    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
+    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
+  ]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
