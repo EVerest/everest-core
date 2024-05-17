@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # ninja -j$(nproc) -C build tests
 ninja -j$(nproc) -C build install
 ninja -C build everestpy_install_wheel

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 cmake \
     -B build \
     -S "$EXT_MOUNT/source" \
