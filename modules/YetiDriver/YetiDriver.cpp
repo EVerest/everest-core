@@ -111,7 +111,7 @@ bool cp_signal_fault;
 
 void YetiDriver::clear_errors_on_unplug() {
     if (error_MREC2GroundFailure) {
-        p_board_support->clear_error("evse_board_support/MREC2GroundFailur");
+        p_board_support->clear_error("evse_board_support/MREC2GroundFailure");
     }
     error_MREC2GroundFailure = false;
 
