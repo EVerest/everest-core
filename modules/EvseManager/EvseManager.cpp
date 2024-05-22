@@ -102,6 +102,9 @@ void EvseManager::init() {
     latest_target_voltage = 0;
     latest_target_current = 0;
 
+    // apply sane defaults capabilities settings once on boot
+    powersupply_capabilities = get_sane_default_power_supply_capabilities();
+
     if (get_hlc_enabled()) {
         if (config.charge_mode == "DC") {
             // subscribe to run time updates for real initial values (and changes e.g. due to de-rating)
@@ -204,9 +207,7 @@ void EvseManager::ready() {
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
 
-            // apply sane defaults capabilities settings once on boot
-            auto psu_caps = get_sane_default_power_supply_capabilities();
-            update_powersupply_capabilities(psu_caps);
+            update_powersupply_capabilities(get_powersupply_capabilities());
 
             // Set present measurements on HLC to sane defaults
             types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
