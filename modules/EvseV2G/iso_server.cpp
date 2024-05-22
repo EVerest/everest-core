@@ -538,6 +538,13 @@ static size_t getEmaidFromContractCert(const mbedtls_x509_name* ASubject, char* 
     return certEmaidLen;
 }
 
+static auto get_emergency_status_code(const struct v2g_context* ctx, uint8_t phase_type) {
+    if (ctx->intl_emergency_shutdown)
+        return iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown;
+    else
+        return static_cast<iso1DC_EVSEStatusCodeType>(ctx->evse_v2g_data.evse_status_code[phase_type]);
+}
+
 //=============================================
 //             Publishing request msg
 //=============================================
@@ -1579,9 +1586,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSENotification =
             (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
         res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEStatusCode =
-            (true == conn->ctx->intl_emergency_shutdown)
-                ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-                : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER];
+            get_emergency_status_code(conn->ctx, PHASE_PARAMETER);
         res->DC_EVSEChargeParameter.DC_EVSEStatus.NotificationMaxDelay =
             (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
 
@@ -1711,10 +1716,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
         res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-        res->DC_EVSEStatus.EVSEStatusCode =
-            (true == conn->ctx->intl_emergency_shutdown)
-                ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-                : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE];
+        res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_CHARGE);
         res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
 
         res->ResponseCode = (req->ChargeProgress == iso1chargeProgressType_Start) &&
@@ -2003,10 +2005,7 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (true == conn->ctx->intl_emergency_shutdown)
-            ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-            : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_ISOLATION);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEProcessing = (iso1EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_ISOLATION];
 
@@ -2040,10 +2039,7 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (true == conn->ctx->intl_emergency_shutdown)
-            ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-            : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_PRECHARGE);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEPresentVoltage = (iso1PhysicalValueType)conn->ctx->evse_v2g_data.evse_present_voltage;
     res->ResponseCode = iso1responseCodeType_OK;
@@ -2075,10 +2071,7 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (true == conn->ctx->intl_emergency_shutdown)
-            ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-            : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_CHARGE);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     if ((conn->ctx->evse_v2g_data.evse_maximum_current_limit_is_used == 1) &&
         (calc_physical_value(req->EVTargetCurrent.Value, req->EVTargetCurrent.Multiplier) >=
@@ -2218,10 +2211,7 @@ static enum v2g_event handle_iso_welding_detection(struct v2g_connection* conn) 
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (true == conn->ctx->intl_emergency_shutdown)
-            ? iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-            : (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_WELDING];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_WELDING);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEPresentVoltage = conn->ctx->evse_v2g_data.evse_present_voltage;
     res->ResponseCode = iso1responseCodeType_OK;
