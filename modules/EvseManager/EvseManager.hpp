@@ -224,7 +224,9 @@ public:
         evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
         evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
         evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
-        charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
+        if (charger) {
+            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
+        }
     }
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
