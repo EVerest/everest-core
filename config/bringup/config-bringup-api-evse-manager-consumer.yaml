@@ -1,0 +1,41 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  #system_1:
+  #  module: system_API
+  #  config_module:
+  #    cfg_communication_check_to_s: 60
+  evse_manager_dummy:
+    module: Evse_Manager_Dummy
+
+  evse_manager_consumer:
+    module: evse_manager_consumer_API
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 0
+    connections:
+      evse_manager:
+        - implementation_id: main
+          module_id: evse_manager_dummy
+      #evse_bsp:
+      #  - implementation_id: main
+      #    module_id: evse_bsp_dummy
+      #slac:
+      #  - implementation_id: main
+      #    module_id: slac_dummy
+      #imd:
+      #  - implementation_id: main
+      #    module_id: imd_dummy
+      #ps_dc:
+      #  - implementation_id: main
+      #    module_id: ps_dc_dummy
+      #random_delay:
+      #  - implementation_id: main
+      #    module_id: random_delay_dummy
+  #cli:
+  #  module: BUSystem
+  #  standalone: true
+  #  connections:
+  #    system:
+  #      - module_id: system_1
+  #        implementation_id: if_system

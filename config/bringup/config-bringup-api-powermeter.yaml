@@ -1,0 +1,17 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  powermeter_1:
+    module: powermeter_API
+    config_module:
+      cfg_communication_check_to_s: 60
+      cfg_heartbeat_interval_ms: 10000
+  cli:
+    config_module:
+      evse_id: "api"
+    module: BUPowermeter
+    standalone: true
+    connections:
+      powermeter:
+        - module_id: powermeter_1
+          implementation_id: main

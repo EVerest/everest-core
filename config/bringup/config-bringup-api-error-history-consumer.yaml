@@ -1,0 +1,22 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  error_raiser:
+    module: generic_error_raiser_API
+    config_module:
+      cfg_communication_check_to_s: 60
+      cfg_heartbeat_interval_ms: 1000
+  error_history_1:
+    config_module:
+      cfg_communication_check_to_s: 0
+      cfg_heartbeat_interval_ms: 1000
+    module: error_history_consumer_API
+    connections:
+      error_history:
+        - implementation_id: error_history
+          module_id: error_history
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db

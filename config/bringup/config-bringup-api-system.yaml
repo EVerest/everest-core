@@ -1,0 +1,14 @@
+settings:
+  telemetry_enabled: false
+active_modules:
+  system_1:
+    module: system_API
+    config_module:
+      cfg_communication_check_to_s: 60
+  cli:
+    module: BUSystem
+    standalone: true
+    connections:
+      system:
+        - module_id: system_1
+          implementation_id: main
