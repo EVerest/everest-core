@@ -188,11 +188,6 @@ types:
     type: object
     additionalProperties: false
     properties:
-      ac_max_current:
-        description: Set the maximum allowed line current restriction per phase in A.
-        type: number
-        minimum: 0
-        maximum: 400
       ac_nominal_voltage:
         description: >-
           Set line voltage supported by the EVSE. This is the voltage measured
@@ -217,14 +212,6 @@ types:
         type: number
         minimum: 0
         maximum: 200000
-      dc_minimum_limits:
-        description: Set the minimum limits for the EVSE
-        type: object
-        $ref: /iso15118_charger#/DC_EVSEMinimumLimits
-      dc_maximum_limits:
-        description: Set the maximum limits for the EVSE
-        type: object
-        $ref: /iso15118_charger#/DC_EVSEMaximumLimits 
   DC_EVStatusType:
     description: Current status of the EV
     type: object

@@ -62,7 +62,14 @@ void energyImpl::clear_import_request_schedule() {
     entry_import.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
     entry_import.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
-    entry_import.conversion_efficiency = mod->get_powersupply_capabilities().conversion_efficiency_export;
+
+    if (mod->config.charge_mode == "DC") {
+        // For DC, apply our power supply capabilities as limit on leaves side
+        const auto caps = mod->get_powersupply_capabilities();
+        entry_import.limits_to_leaves.total_power_W = caps.max_export_power_W;
+        entry_import.conversion_efficiency = caps.conversion_efficiency_export;
+    }
+
     energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_import}));
 }
 
@@ -80,7 +87,14 @@ void energyImpl::clear_export_request_schedule() {
     entry_export.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
     entry_export.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
-    entry_export.conversion_efficiency = mod->get_powersupply_capabilities().conversion_efficiency_import;
+
+    if (mod->config.charge_mode == "DC") {
+        // For DC, apply our power supply capabilities as limit on leaves side
+        const auto caps = mod->get_powersupply_capabilities();
+        entry_export.limits_to_leaves.total_power_W = caps.max_import_power_W;
+        entry_export.conversion_efficiency = caps.conversion_efficiency_import;
+    }
+
     energy_flow_request.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_export}));
 }
 
@@ -125,10 +139,20 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
         charger_state == Charger::EvseState::WaitingForAuthentication ||
         charger_state == Charger::EvseState::ChargingPausedEV || !mod->config.request_zero_power_in_idle) {
 
-        // copy complete external limit schedules
+        // copy complete external limit schedules for import
         if (mod->getLocalEnergyLimits().schedule_import.has_value() &&
             !mod->getLocalEnergyLimits().schedule_import.value().empty()) {
             energy_flow_request.schedule_import = mod->getLocalEnergyLimits().schedule_import;
+
+            if (mod->config.charge_mode == "DC") {
+                // For DC, apply our power supply capabilities as an additional limit on leaves side
+                const auto caps = mod->get_powersupply_capabilities();
+                for (auto& entry : energy_flow_request.schedule_import.value()) {
+                    if (entry.limits_to_leaves.total_power_W > caps.max_export_power_W) {
+                        entry.limits_to_leaves.total_power_W = caps.max_export_power_W;
+                    }
+                }
+            }
         }
 
         // apply our local hardware limits on root side
@@ -156,9 +180,20 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
                 hw_caps.supports_changing_phases_during_charging;
         }
 
+        // copy complete external limit schedules for export
         if (mod->getLocalEnergyLimits().schedule_export.has_value() &&
             !mod->getLocalEnergyLimits().schedule_export.value().empty()) {
             energy_flow_request.schedule_export = mod->getLocalEnergyLimits().schedule_export;
+
+            if (mod->config.charge_mode == "DC") {
+                // For DC, apply our power supply capabilities as an additional limit on leaves side
+                const auto caps = mod->get_powersupply_capabilities();
+                for (auto& entry : energy_flow_request.schedule_export.value()) {
+                    if (entry.limits_to_leaves.total_power_W > caps.max_import_power_W) {
+                        entry.limits_to_leaves.total_power_W = caps.max_import_power_W;
+                    }
+                }
+            }
         }
 
         // apply our local hardware limits on root side
