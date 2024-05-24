@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(cbv2g
+project(cb_v2g
     VERSION 0.1
     DESCRIPTION "V2GTP EXI library"
     HOMEPAGE_URL "https://github.com/Everest/libcbv2g"
