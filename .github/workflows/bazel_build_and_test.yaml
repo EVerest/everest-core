@@ -13,6 +13,9 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE.bazel', 'third-party/bazel/*') }}
+      - name: Setup edm
+        run: |
+          pip install git+https://github.com/Qwello/everest-dev-environment.git@add_bazel_deps_generation#subdirectory=dependency_manager
       - name: Build all
         run: >
           bazelisk build //...
