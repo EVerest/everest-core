@@ -5,8 +5,6 @@
 #include <memory>
 #include <openssl/x509v3.h>
 
-#define EVSE_OPENSSL_VER_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
-
 template <> class std::default_delete<X509> {
 public:
     void operator()(X509* ptr) const {
@@ -77,22 +75,6 @@ public:
     }
 };
 
-#if !EVSE_OPENSSL_VER_3
-template <> class std::default_delete<EC_KEY> {
-public:
-    void operator()(EC_KEY* ptr) const {
-        ::EC_KEY_free(ptr);
-    }
-};
-
-template <> class std::default_delete<RSA> {
-public:
-    void operator()(RSA* ptr) const {
-        ::RSA_free(ptr);
-    }
-};
-#endif
-
 namespace evse_security {
 
 using X509_ptr = std::unique_ptr<X509>;
@@ -107,10 +89,5 @@ using EVP_PKEY_CTX_ptr = std::unique_ptr<EVP_PKEY_CTX>;
 using BIO_ptr = std::unique_ptr<BIO>;
 using EVP_MD_CTX_ptr = std::unique_ptr<EVP_MD_CTX>;
 using EVP_ENCODE_CTX_ptr = std::unique_ptr<EVP_ENCODE_CTX>;
-
-#if !EVSE_OPENSSL_VER_3
-using EC_KEY_ptr = std::unique_ptr<EC_KEY>;
-using RSA_ptr = std::unique_ptr<RSA>;
-#endif
 
 } // namespace evse_security

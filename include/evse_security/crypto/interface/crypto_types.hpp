@@ -13,9 +13,10 @@ namespace evse_security {
 enum class CryptoKeyType {
     EC_prime256v1, // Default EC. P-256, ~equiv to rsa 3072
     EC_secp384r1,  // P-384, ~equiv to rsa 7680
-    RSA_TPM20,     // Default TPM RSA, only option allowed for TPM (universal support), 2048 bits
-    RSA_3072,      // Default RSA. Protection lifetime: ~2030
-    RSA_7680,      // Protection lifetime: >2031. Very long generation time 8-40s on 16 core PC
+    RSA_2048,
+    RSA_TPM20 = RSA_2048, // Default TPM RSA, only option allowed for TPM (universal support), 2048 bits
+    RSA_3072,             // Default RSA. Protection lifetime: ~2030
+    RSA_7680,             // Protection lifetime: >2031. Very long generation time 8-40s on 16 core PC
 };
 
 enum class KeyValidationResult {

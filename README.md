@@ -10,7 +10,7 @@ All documentation and the issue tracking can be found in our main repository her
 
 ## Prerequisites
 
-The library requires OpenSSL 1.1.1.
+The library requires OpenSSL 3.
 
 ## Build Instructions
 
@@ -61,7 +61,6 @@ When receiving back a signed CSR, the library will take care to create two files
 ## TPM
 There is a configuration option to configure OpenSSL for use with a TPM.<br>
 `cmake` ... `-DUSING_TPM2=ON`<br>
-Note OpenSSL providers are not available for OpenSSL v1, OpenSSL v3 is required.
 
 The library will use the `UseTPM` flag and the PEM private key file to
 configure whether to use the `default` provider or the `tpm2` provider.

@@ -5,9 +5,7 @@
 
 #include <openssl/opensslv.h>
 
-#define USING_OPENSSL_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
-
-#if USING_OPENSSL_3 && defined(USING_TPM2)
+#if USING_TPM2
 // OpenSSL3 without TPM will use the default provider anyway
 #include <openssl/err.h>
 #include <openssl/evp.h>

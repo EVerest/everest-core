@@ -17,14 +17,8 @@
 #include <evse_security/crypto/evse_crypto.hpp>
 
 #include <openssl/opensslv.h>
-#define USING_OPENSSL_3 (OPENSSL_VERSION_NUMBER >= 0x30000000L)
 
-#if USING_OPENSSL_3
-// provider management has changed - ensure tests still work
-#ifndef USING_TPM2
-
-#include <evse_security/detail/openssl/openssl_providers.hpp>
-#else
+#ifdef USING_TPM2
 
 // updates so that existing tests run with the OpenSSLProvider
 #include <evse_security/crypto/openssl/openssl_tpm.hpp>
@@ -37,19 +31,6 @@ typedef OpenSSLProvider TPMScopedProvider;
 
 } // namespace evse_security
 #endif // USING_TPM2
-
-#else
-
-// updates so that tests run under OpenSSL v1
-namespace evse_security {
-const char* PROVIDER_TPM = "tpm2";
-const char* PROVIDER_DEFAULT = "default";
-} // namespace evse_security
-constexpr bool check_openssl_providers(const std::vector<std::string>&) {
-    return true;
-}
-
-#endif // USING_OPENSSL_3
 
 std::string read_file_to_string(const fs::path filepath) {
     fsstd::ifstream t(filepath.string());
@@ -68,61 +49,6 @@ bool equal_certificate_strings(const std::string& cert1, const std::string& cert
 
     return true;
 }
-
-#if USING_OPENSSL_3
-bool supports_tpm_usage() {
-    bool supports_tpm = false;
-    auto libctx = OSSL_LIB_CTX_new();
-
-    OSSL_PROVIDER* tpm2_provider = OSSL_PROVIDER_load(libctx, evse_security::PROVIDER_TPM);
-
-    if (tpm2_provider != nullptr) {
-        supports_tpm =
-            OSSL_PROVIDER_available(libctx, evse_security::PROVIDER_TPM) && OSSL_PROVIDER_self_test(tpm2_provider);
-        OSSL_PROVIDER_unload(tpm2_provider);
-    } else {
-        supports_tpm = false;
-    }
-
-    // Load default again (removed - not needed and causes a memory leak)
-    // OSSL_PROVIDER_load(nullptr, evse_security::PROVIDER_DEFAULT);
-
-    OSSL_LIB_CTX_free(libctx);
-
-    std::cout << "Supports TPM usage: " << supports_tpm << std::endl;
-    return supports_tpm;
-}
-
-// Checks if we have the following providers active
-bool check_openssl_providers(const std::vector<std::string>& required_providers) {
-    struct Info {
-        std::set<std::string> providers;
-    };
-
-    auto collector = [](OSSL_PROVIDER* provider, void* cbdata) {
-        Info* info = (Info*)cbdata;
-        info->providers.emplace(OSSL_PROVIDER_get0_name(provider));
-        return 1;
-    };
-
-    Info info;
-    OSSL_PROVIDER_do_all(nullptr, collector, &info);
-
-    if (info.providers.size() != required_providers.size())
-        return false;
-
-    for (auto& required : required_providers) {
-        if (info.providers.find(required) == info.providers.end())
-            return false;
-    }
-
-    return true;
-}
-
-static bool supports_tpm = supports_tpm_usage();
-#else
-static bool supports_tpm = false;
-#endif // USING_OPENSSL_3
 
 void install_certs() {
     std::system("./generate_test_certs.sh");
@@ -248,9 +174,6 @@ protected:
 };
 
 TEST_F(EvseSecurityTests, verify_basics) {
-    // Check that we have the default provider
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
-
     const char* bundle_path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
 
     fsstd::ifstream file(bundle_path, std::ios::binary);
@@ -312,9 +235,6 @@ TEST_F(EvseSecurityTests, verify_directory_bundles) {
 }
 
 TEST_F(EvseSecurityTests, verify_bundle_management) {
-    // Check that we have the default provider
-    ASSERT_TRUE(check_openssl_providers({PROVIDER_DEFAULT}));
-
     const char* directory_path = "certs/ca/csms/";
     X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
@@ -366,18 +286,15 @@ TEST_F(EvseSecurityTests, verify_normal_keygen) {
     ASSERT_TRUE(gen);
 }
 
-TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
-    if (supports_tpm == false)
-        return;
-
+TEST_F(EvseSecurityTests, verify_keygen_csr) {
     KeyGenerationInfo info;
     KeyHandle_ptr key;
 
     info.key_type = CryptoKeyType::EC_prime256v1;
-    info.generate_on_tpm = true;
+    info.generate_on_tpm = false;
 
-    info.public_key_file = fs::path("key/tpm_pubkey.tkey");
-    info.private_key_file = fs::path("key/tpm_privkey.tkey");
+    info.public_key_file = fs::path("key/pubkey.key");
+    info.private_key_file = fs::path("key/privkey.key");
 
     bool gen = CryptoSupplier::generate_key(info, key);
     ASSERT_TRUE(gen);
@@ -388,9 +305,9 @@ TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
     csr_info.organization = "PionixDE";
     csr_info.country = "DE";
 
-    info.public_key_file = fs::path("key/csr_tpm_pubkey.tkey");
-    info.private_key_file = fs::path("key/csr_tpm_privkey.tkey");
-    info.key_type = CryptoKeyType::RSA_TPM20;
+    info.public_key_file = fs::path("key/csr_pubkey.tkey");
+    info.private_key_file = fs::path("key/csr_privkey.tkey");
+    info.key_type = CryptoKeyType::RSA_2048;
 
     csr_info.key_info = info;
 
@@ -399,19 +316,7 @@ TEST_F(EvseSecurityTests, verify_tpm_keygen_csr) {
     auto csr_gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
     ASSERT_EQ(csr_gen, CertificateSignRequestResult::Valid);
 
-    std::cout << "TPM csr: " << std::endl << csr << std::endl;
-
-    info.public_key_file = fs::path("key/csr_nrm_pubkey.tkey");
-    info.private_key_file = fs::path("key/csr_nrm_privkey.tkey");
-    info.generate_on_tpm = false;
-    info.key_type = CryptoKeyType::RSA_3072;
-
-    csr_info.key_info = info;
-
-    csr_gen = CryptoSupplier::x509_generate_csr(csr_info, csr);
-    ASSERT_EQ(csr_gen, CertificateSignRequestResult::Valid);
-
-    std::cout << "normal csr: " << std::endl << csr << std::endl;
+    std::cout << "Csr: " << std::endl << csr << std::endl;
 }
 
 /// \brief get_certificate_hash_data() throws exception if called with no issuer and a non-self-signed cert
@@ -1052,7 +957,7 @@ TEST_F(EvseSecurityTestsExpired, verify_expired_leaf_deletion) {
             }
 
             // Check their respective keys exist
-            EVLOG_info << key_file;
+            std::cout << key_file;
             ASSERT_TRUE(fs::exists(key_file));
 
             X509Wrapper cert = X509CertificateBundle(not_deleted, EncodingFormat::PEM).split().at(0);

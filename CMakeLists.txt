@@ -43,7 +43,7 @@ option(LIBEVSE_SECURITY_USE_BOOST_FILESYSTEM "Usage of boost/filesystem.hpp inst
 option(LIBEVSE_CRYPTO_SUPPLIER_OPENSSL "Default OpenSSL cryptography supplier" ON)
 
 # dependencies
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL 3 REQUIRED)
 
 add_subdirectory(lib)
 

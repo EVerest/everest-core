@@ -23,6 +23,22 @@ protected:
     }
 };
 
+TEST_F(OpenSSLSupplierTpmTest, supports_tpm) {
+    OpenSSLProvider::cleanup();
+    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
+    // calculates
+    OpenSSLProvider provider;
+    // returns cached
+    ASSERT_TRUE(OpenSSLProvider::supports_tpm());
+}
+
+TEST_F(OpenSSLSupplierTpmTest, supports_tpm_key_creation) {
+    OpenSSLProvider::cleanup();
+    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
+    // should calculate
+    ASSERT_TRUE(OpenSSLSupplier::supports_tpm_key_creation());
+}
+
 TEST_F(OpenSSLSupplierTpmTest, generate_key_RSA_TPM20) {
     KeyGenerationInfo info = {
         CryptoKeyType::RSA_TPM20, true, std::nullopt, std::nullopt, std::nullopt,
@@ -33,6 +49,10 @@ TEST_F(OpenSSLSupplierTpmTest, generate_key_RSA_TPM20) {
 }
 
 TEST_F(OpenSSLSupplierTpmTest, generate_key_RSA_3072) {
+    // Enable this test manually only if your platform supports 3072 TPM keys
+    GTEST_SKIP() << "Skipping TPM2.0 GEN_RSA_3072 test since it is a non-spec value"
+                    "which probably will not be supported on many platforms!";
+
     KeyGenerationInfo info = {
         CryptoKeyType::RSA_3072, true, std::nullopt, std::nullopt, std::nullopt,
     };
@@ -71,7 +91,7 @@ TEST_F(OpenSSLSupplierTpmTest, x509_check_private_key) {
     auto cert = res_leaf[0].get();
     auto key = getFile("tpm_pki/server_priv.pem");
     auto res = OpenSSLSupplier::x509_check_private_key(cert, key, std::nullopt);
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, KeyValidationResult::Valid);
 }
 
 TEST_F(OpenSSLSupplierTpmTest, x509_verify_certificate_chain) {
@@ -87,9 +107,9 @@ TEST_F(OpenSSLSupplierTpmTest, x509_verify_certificate_chain) {
         parents.push_back(i.get());
     }
 
-    auto res = OpenSSLSupplier::x509_verify_certificate_chain(res_leaf[0].get(), parents, true, std::nullopt,
+    auto res = OpenSSLSupplier::x509_verify_certificate_chain(res_leaf[0].get(), parents, {}, true, std::nullopt,
                                                               "tpm_pki/root_cert.pem");
-    ASSERT_EQ(res, CertificateValidationError::NoError);
+    ASSERT_EQ(res, CertificateValidationResult::Valid);
 }
 
 TEST_F(OpenSSLSupplierTpmTest, x509_generate_csr) {
@@ -101,7 +121,7 @@ TEST_F(OpenSSLSupplierTpmTest, x509_generate_csr) {
         "0123456789",
         .dns_name = std::nullopt,
         .ip_address = std::nullopt,
-        {CryptoKeyType::EC_prime256v1, true, std::nullopt, "tpm_pki/csr_key.pem", std::nullopt}};
+        {CryptoKeyType::EC_prime256v1, true, std::nullopt, "tpm_pki/csr_key.tkey", std::nullopt}};
 
     // std::cout << "tpm2 pre: " << OSSL_PROVIDER_available(nullptr, "tpm2") << std::endl;
     // std::cout << "base pre: " << OSSL_PROVIDER_available(nullptr, "base") << std::endl;
@@ -109,24 +129,25 @@ TEST_F(OpenSSLSupplierTpmTest, x509_generate_csr) {
     // std::cout << "tpm2 post: " << OSSL_PROVIDER_available(nullptr, "tpm2") << std::endl;
     // std::cout << "base post: " << OSSL_PROVIDER_available(nullptr, "base") << std::endl;
 
-    ASSERT_TRUE(res);
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
     ASSERT_GT(csr.size(), 0);
 }
 
-TEST_F(OpenSSLSupplierTpmTest, supports_tpm) {
-    OpenSSLProvider::cleanup();
-    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
-    // calculates
-    OpenSSLProvider provider;
-    // returns cached
-    ASSERT_TRUE(OpenSSLProvider::supports_tpm());
-}
+TEST_F(OpenSSLSupplierTpmTest, x509_generate_csr2) {
+    std::string csr;
+    CertificateSigningRequestInfo csr_info = {
+        0,
+        "UK",
+        "Pionix",
+        "0123456789",
+        .dns_name = std::nullopt,
+        .ip_address = std::nullopt,
+        {CryptoKeyType::RSA_TPM20, true, std::nullopt, "tpm_pki/csr_key.tkey", std::nullopt}};
 
-TEST_F(OpenSSLSupplierTpmTest, supports_tpm_key_creation) {
-    OpenSSLProvider::cleanup();
-    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
-    // should calculate
-    ASSERT_TRUE(OpenSSLSupplier::supports_tpm_key_creation());
+    auto res = OpenSSLSupplier::x509_generate_csr(csr_info, csr);
+
+    ASSERT_EQ(res, CertificateSignRequestResult::Valid);
+    ASSERT_GT(csr.size(), 0);
 }
 
 } // namespace
