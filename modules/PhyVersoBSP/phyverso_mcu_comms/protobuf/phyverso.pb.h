@@ -148,7 +148,7 @@ typedef struct _McuToEverest {
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } McuToEverest;
 
-/* Message containing a large binary blob. */
+/* Message for parking sensor data. */
 typedef struct _OpaqueData {
     /* The data itself. */
     pb_size_t data_count;
@@ -160,7 +160,7 @@ typedef struct _OpaqueData {
     uint32_t chunks_total;
     /* The current chunk. */
     uint32_t chunk_current;
-    /* The connector. */
+    /* The connector or parking sensor. */
     int32_t connector;
 } OpaqueData;
 
