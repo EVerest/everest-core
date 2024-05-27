@@ -887,7 +887,6 @@ void EvseManager::ready() {
 void EvseManager::ready_to_start_charging() {
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
-    charger->enable(0);
 
     this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
