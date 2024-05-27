@@ -273,16 +273,6 @@ This is defined in libocpp/include/ocpp/v16/charge_point.hpp and takes the follo
   │       └── V2G_ROOT_CA.key
   ```
 
-  If you're missing (some of) these files you might see error messages like these during startup:
-  ```bash
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/cso
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/csms
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/mf
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/mo
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/oem
-  void ocpp::PkiHandler::execOpenSSLRehash(boost::filesystem::path) :: Error executing the openssl rehash command for directory: /etc/everest/certs/ca/v2g
-  ```
-
 #### registering callbacks
 You can (and in many cases MUST) register a number of callbacks so libocpp can interact with the charger. In EVerest most of this functionality is orchestrated by the "EvseManager" module, but you can also register your own callbacks interacting directly with your chargers software. Following is a list of callbacks that you must register and a few words about their purpose.
 
@@ -475,6 +465,8 @@ For Debian GNU/Linux 11 you will need the following dependencies:
 ```bash
   sudo apt install build-essential cmake python3-pip libboost-all-dev libsqlite3-dev libssl-dev
 ```
+
+OpenSSL version 3.0 or above is required.
 
 Clone this repository.
 

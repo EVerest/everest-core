@@ -25,7 +25,7 @@ endif()
 # dependencies
 find_package(Boost COMPONENTS program_options regex system thread REQUIRED)
 find_package(SQLite3 REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL 3 REQUIRED)
 
 if(NOT DISABLE_EDM)
     evc_setup_edm()
