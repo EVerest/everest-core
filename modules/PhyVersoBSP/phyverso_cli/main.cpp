@@ -23,7 +23,9 @@ int main(int argc, char* argv[]) {
 
     printf("Use the following keys to send packets:\n");
     printf("A or a: set AC coil on or off\n");
-    printf("D or d: set DC coil on or off\n");
+    printf("D or d: set (monitored) DC coil on or off\n");
+    printf("O or o: set (unmonitored) AUX1 DC coil on or off\n");
+    printf("P or p: set (unmonitored) AUX2 DC coil on or off\n");
     printf("L or l: motorlock lock or unlock\n");
     printf("R or r: hard or soft reset\n");
     printf("V: send keep alive/get version\n");
@@ -151,6 +153,7 @@ int main(int argc, char* argv[]) {
         while (true) {
             char c = getc(stdin);
             switch (c) {
+            /* AC coils*/
             case 'A':
                 printf("Setting AC coil to ON\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_AC, true);
@@ -159,14 +162,32 @@ int main(int argc, char* argv[]) {
                 printf("Setting AC coil to OFF\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_AC, false);
                 break;
+            /* DC coils */
             case 'D':
-                printf("Setting DC coil to ON\n");
+                printf("Setting monitored DC coil to ON\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, true);
                 break;
             case 'd':
-                printf("Setting DC coil to OFF\n");
+                printf("Setting monitored DC coil to OFF\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, false);
                 break;
+            case 'O':
+                printf("Setting AUX1 DC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC2, true);
+                break;
+            case 'o':
+                printf("Setting AUX1 DC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC2, false);
+                break;
+            case 'P':
+                printf("Setting AUX2 DC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC3, true);
+                break;
+            case 'p':
+                printf("Setting AUX2 DC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC3, false);
+                break;
+            /* Motor lock */
             case 'L':
                 printf("Locking connector\n");
                 p.lock(selected_connector, true);
@@ -175,6 +196,7 @@ int main(int argc, char* argv[]) {
                 printf("Unlocking connector\n");
                 p.lock(selected_connector, false);
                 break;
+            /* Resets */
             case 'r':
                 printf("Soft reset\n");
                 p.reset(-1);
@@ -183,10 +205,12 @@ int main(int argc, char* argv[]) {
                 printf("Hard reset\n");
                 p.reset(1);
                 break;
+            /* Versions/timestamp */
             case 'V':
                 printf("Sending keep alive\n");
                 p.keep_alive();
                 break;
+            /* Charging connector selection */
             case '1':
                 printf("Connector 1 selected.\n");
                 selected_connector = 1;
@@ -195,6 +219,7 @@ int main(int argc, char* argv[]) {
                 printf("Connector 2 selected.\n");
                 selected_connector = 2;
                 break;
+            /* CP PWM setting */
             case '0':
                 printf("Set 0%% PWM\n");
                 p.set_pwm(selected_connector, 0);
@@ -219,6 +244,7 @@ int main(int argc, char* argv[]) {
                 printf("Set 100%% PWM\n");
                 p.set_pwm(selected_connector, 10000);
                 break;
+            /* Fans */
             case 'U':
                 printf("Set fan1 to 50%%\n");
                 p.set_fan_state(0, true, 500);
