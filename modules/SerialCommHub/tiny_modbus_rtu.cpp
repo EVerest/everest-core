@@ -142,7 +142,7 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         return result;
     } else {
         // handle exception message
-        uint8_t err_code = buf[RES_RX_START_OF_PAYLOAD];
+        uint8_t err_code = buf[RES_EXCEPTION_CODE];
         switch (err_code) {
         case 0x01:
             EVLOG_error << "Modbus exception: Illegal function";
