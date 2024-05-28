@@ -103,6 +103,8 @@ enum CoilType {
 	COIL_AC = 1;
 	COIL_DC1 = 2;
 	// add precharge and discharge coils here later
+	COIL_DC2 = 3;
+	COIL_DC3 = 4;
 }
 
 message BootConfigRequest {
