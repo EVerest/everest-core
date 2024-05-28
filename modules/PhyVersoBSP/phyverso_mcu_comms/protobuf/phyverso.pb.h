@@ -42,7 +42,10 @@ typedef enum _LockState {
 typedef enum _CoilType {
     CoilType_COIL_UNKNOWN = 0,
     CoilType_COIL_AC = 1,
-    CoilType_COIL_DC1 = 2 /* add precharge and discharge coils here later */
+    CoilType_COIL_DC1 = 2,
+    /* add precharge and discharge coils here later */
+    CoilType_COIL_DC2 = 3,
+    CoilType_COIL_DC3 = 4
 } CoilType;
 
 typedef enum _ConfigHardwareRevision {
@@ -164,8 +167,8 @@ extern "C" {
 #define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
 
 #define _CoilType_MIN CoilType_COIL_UNKNOWN
-#define _CoilType_MAX CoilType_COIL_DC1
-#define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC1+1))
+#define _CoilType_MAX CoilType_COIL_DC3
+#define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC3+1))
 
 #define _ConfigHardwareRevision_MIN ConfigHardwareRevision_HW_REV_UNKNOWN
 #define _ConfigHardwareRevision_MAX ConfigHardwareRevision_HW_REV_B
