@@ -13,6 +13,7 @@ message EverestToMcu {
     bool reset = 6;
     BootConfigResponse config_response = 8;
     FanState set_fan_state = 9;
+    RcdCommand rcd_cmd = 10;
   }
   int32 connector = 7; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -104,6 +105,8 @@ enum CoilType {
 	COIL_AC = 1;
 	COIL_DC1 = 2;
 	// add precharge and discharge coils here later
+	COIL_DC2 = 3;
+	COIL_DC3 = 4;
 }
 
 message BootConfigRequest {
@@ -154,4 +157,9 @@ message OpaqueData {
 
   // The connector or parking sensor.
   int32 connector = 5;
+}
+
+message RcdCommand {
+  bool test = 1;  // true -> set TEST pin high, false -> set TEST pin low
+  bool reset = 2; // reset RCD/emergency off if set to true
 }

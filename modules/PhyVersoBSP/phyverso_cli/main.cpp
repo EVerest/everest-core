@@ -34,10 +34,15 @@ int main(int argc, char* argv[]) {
 
     printf("Use the following keys to send packets:\n");
     printf("A or a: set AC coil on or off\n");
-    printf("D or d: set DC coil on or off\n");
+    printf("D or d: set (monitored) DC coil on or off\n");
+    printf("O or o: set (unmonitored) AUX1 DC coil on or off\n");
+    printf("P or p: set (unmonitored) AUX2 DC coil on or off\n");
     printf("L or l: motorlock lock or unlock\n");
     printf("R or r: hard or soft reset\n");
     printf("V: send keep alive/get version\n");
+    printf("K: trigger RCD TEST on selected connector\n");
+    printf("k: reset RCD on selected connector\n\n");
+
     printf("1: use connector 1\n");
     printf("2: use connector 2\n\n");
 
@@ -60,12 +65,16 @@ int main(int argc, char* argv[]) {
     const char* config_path = argv[2];
 
     evConfig verso_config;
+
+    // with config rework we still have to go the json route here
     if (!verso_config.open_file(config_path)) {
         printf("Could not open config file \"%s\"\n", config_path);
         return -1;
     }
 
-    evSerial p;
+    verso_config.json_conf_to_evConfig();
+
+    evSerial p(verso_config);
 
     if (!p.open_device(device, 115200)) {
         printf("Cannot open device \"%s\"\n", device);
@@ -74,7 +83,7 @@ int main(int argc, char* argv[]) {
 
         p.signal_config_request.connect([&]() {
             printf("Received config request\n");
-            p.send_config(verso_config);
+            p.send_config();
             printf("Sent config packet\n");
         });
 
@@ -171,9 +180,21 @@ int main(int argc, char* argv[]) {
             printf("Received data from connector %i\n", connector);
         });
 
+        p.signal_error_flags.connect([](int connector, ErrorFlags error_flags) {
+            printf("------------\nError flags Connector %d:\n", connector);
+            printf("\tdiode_fault: %d\n", error_flags.diode_fault);
+            printf("\trcd_selftest_failed: %d\n", error_flags.rcd_selftest_failed);
+            printf("\trcd_triggered: %d\n", error_flags.rcd_triggered);
+            printf("\tventilation_not_available: %d\n", error_flags.ventilation_not_available);
+            printf("\tconnector_lock_failed: %d\n", error_flags.connector_lock_failed);
+            printf("\tcp_signal_fault: %d\n", error_flags.cp_signal_fault);
+            printf("------------\n");
+        });
+
         while (true) {
             char c = getc(stdin);
             switch (c) {
+            /* AC coils*/
             case 'A':
                 printf("Setting AC coil to ON\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_AC, true);
@@ -182,14 +203,32 @@ int main(int argc, char* argv[]) {
                 printf("Setting AC coil to OFF\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_AC, false);
                 break;
+            /* DC coils */
             case 'D':
-                printf("Setting DC coil to ON\n");
+                printf("Setting monitored DC coil to ON\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, true);
                 break;
             case 'd':
-                printf("Setting DC coil to OFF\n");
+                printf("Setting monitored DC coil to OFF\n");
                 p.set_coil_state_request(selected_connector, CoilType_COIL_DC1, false);
                 break;
+            case 'O':
+                printf("Setting AUX1 DC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC2, true);
+                break;
+            case 'o':
+                printf("Setting AUX1 DC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC2, false);
+                break;
+            case 'P':
+                printf("Setting AUX2 DC coil to ON\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC3, true);
+                break;
+            case 'p':
+                printf("Setting AUX2 DC coil to OFF\n");
+                p.set_coil_state_request(selected_connector, CoilType_COIL_DC3, false);
+                break;
+            /* Motor lock */
             case 'L':
                 printf("Locking connector\n");
                 p.lock(selected_connector, true);
@@ -198,6 +237,7 @@ int main(int argc, char* argv[]) {
                 printf("Unlocking connector\n");
                 p.lock(selected_connector, false);
                 break;
+            /* Resets */
             case 'r':
                 printf("Soft reset\n");
                 p.reset(-1);
@@ -206,10 +246,12 @@ int main(int argc, char* argv[]) {
                 printf("Hard reset\n");
                 p.reset(1);
                 break;
+            /* Versions/timestamp */
             case 'V':
                 printf("Sending keep alive\n");
                 p.keep_alive();
                 break;
+            /* Charging connector selection */
             case '1':
                 printf("Connector 1 selected.\n");
                 selected_connector = 1;
@@ -218,6 +260,7 @@ int main(int argc, char* argv[]) {
                 printf("Connector 2 selected.\n");
                 selected_connector = 2;
                 break;
+            /* CP PWM setting */
             case '0':
                 printf("Set 0%% PWM\n");
                 p.set_pwm(selected_connector, 0);
@@ -242,6 +285,7 @@ int main(int argc, char* argv[]) {
                 printf("Set 100%% PWM\n");
                 p.set_pwm(selected_connector, 10000);
                 break;
+            /* Fans */
             case 'U':
                 printf("Set fan1 to 50%%\n");
                 p.set_fan_state(0, true, 500);
@@ -259,6 +303,15 @@ int main(int argc, char* argv[]) {
             case 'i':
                 printf("Set fan2 to 20%%\n");
                 p.set_fan_state(1, true, 200);
+                break;
+            /* RCD */
+            case 'K':
+                printf("Sending RCD Test on connector %d\n", selected_connector);
+                p.set_rcd_test(selected_connector, true);
+                break;
+            case 'k':
+                printf("Resetting RCD on connector %d\n", selected_connector);
+                p.reset_rcd(selected_connector, true);
                 break;
             }
         }

@@ -24,7 +24,8 @@
 
 #include "bsl_gpio.h"
 
-evSerial::evSerial() : fd(0), baud(0), reset_done_flag(false), forced_reset(false) {
+evSerial::evSerial(evConfig& _verso_config) :
+    fd(0), baud(0), reset_done_flag(false), forced_reset(false), verso_config(_verso_config) {
     cobs_decode_reset();
 }
 
@@ -297,6 +298,8 @@ void evSerial::timeout_detection_thread() {
             break;
         if (serial_timed_out())
             signal_connection_timeout();
+        // send keep alive
+        keep_alive();
     }
 }
 
@@ -418,10 +421,12 @@ bool evSerial::reset(const int reset_pin) {
 
     if (reset_pin > 0) {
         printf("Hard reset\n");
-        auto bsl_gpio = BSL_GPIO();
+        auto bsl_gpio = BSL_GPIO({.bank = 1, .pin = 12}, // BSL pins are unused here so keep defaults
+                                 {.bank = static_cast<uint8_t>(verso_config.conf.reset_gpio_bank),
+                                  .pin = static_cast<uint8_t>(verso_config.conf.reset_gpio_pin)});
         bsl_gpio.hard_reset();
     } else {
-        // Try to soft reset Yeti controller to be in a known state
+        // Try to soft reset phyVERSO controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;
         msg_out.which_payload = EverestToMcu_reset_tag;
         msg_out.connector = 0;
@@ -462,8 +467,8 @@ void evSerial::keep_alive() {
     link_write(&msg_out);
 }
 
-void evSerial::send_config(evConfig& config) {
-    EverestToMcu config_packet = config.get_config_packet();
+void evSerial::send_config() {
+    EverestToMcu config_packet = verso_config.get_config_packet();
     link_write(&config_packet);
 }
 
@@ -474,5 +479,23 @@ void evSerial::set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty) {
     msg_out.payload.set_fan_state.enabled = enabled;
     msg_out.payload.set_fan_state.duty = duty;
     msg_out.connector = 0;
+    link_write(&msg_out);
+}
+
+void evSerial::set_rcd_test(int target_connector, bool _test) {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_rcd_cmd_tag;
+    msg_out.payload.rcd_cmd.test = _test;
+    msg_out.payload.rcd_cmd.reset = false;
+    msg_out.connector = target_connector;
+    link_write(&msg_out);
+}
+
+void evSerial::reset_rcd(int target_connector, bool _reset) {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_rcd_cmd_tag;
+    msg_out.payload.rcd_cmd.test = false;
+    msg_out.payload.rcd_cmd.reset = _reset;
+    msg_out.connector = target_connector;
     link_write(&msg_out);
 }
