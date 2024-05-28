@@ -888,7 +888,8 @@ void EvseManager::ready_to_start_charging() {
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
 
-    // this will publish a session event Enabled or Disabled that allows other modules the retrieve this state on startup
+    // this will publish a session event Enabled or Disabled that allows other modules the retrieve this state on
+    // startup
     if (this->charger->get_current_state() == Charger::EvseState::Disabled) {
         this->charger->disable(0);
     } else {
