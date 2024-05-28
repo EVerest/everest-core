@@ -358,7 +358,7 @@ bool evSerial::reset(const int reset_pin) {
         auto bsl_gpio = BSL_GPIO();
         bsl_gpio.hard_reset();
     } else {
-        // Try to soft reset Yeti controller to be in a known state
+        // Try to soft reset phyVERSO controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;
         msg_out.which_payload = EverestToMcu_reset_tag;
         msg_out.connector = 0;

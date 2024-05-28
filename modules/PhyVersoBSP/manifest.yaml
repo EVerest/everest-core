@@ -11,7 +11,7 @@ config:
     maximum: 230400
     default: 115200
   reset_gpio:
-    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    description: Reset GPIO number to use to HW reset phyVERSO. If set <0 it is disabled.
     type: integer
     minimum: -1
     maximum: 1000
