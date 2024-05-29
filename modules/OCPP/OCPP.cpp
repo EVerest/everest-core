@@ -633,6 +633,9 @@ void OCPP::ready() {
         }
     });
 
+    this->charge_point->register_set_system_time_callback(
+        [this](const std::string& system_time) { this->r_system->call_set_system_time(system_time); });
+
     this->charge_point->register_enable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
             return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_enable(0);
