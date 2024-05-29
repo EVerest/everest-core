@@ -64,28 +64,6 @@ boot_module(async ({
   voltage = 0.0;
   current = 0.0;
 
-  // register commands
-  setup.provides.main.register.getCapabilities((mod, args) => {
-    const Capabilities = {
-      bidirectional: config_bidirectional,
-      max_export_voltage_V: config_max_voltage,
-      min_export_voltage_V: config_min_voltage,
-      max_export_current_A: config_max_current,
-      min_export_current_A: config_min_current,
-      max_import_voltage_V: config_max_voltage,
-      min_import_voltage_V: config_min_voltage,
-      max_import_current_A: config_max_current,
-      min_import_current_A: config_min_current,
-      max_export_power_W: config_max_power,
-      max_import_power_W: config_max_power,
-      current_regulation_tolerance_A: 2,
-      peak_current_ripple_A: 2,
-      conversion_efficiency_export: 0.9,
-      conversion_efficiency_import: 0.85,
-    };
-    return Capabilities;
-  });
-
   setup.provides.main.register.setMode((mod, args) => {
     if (args.value === 'Off') {
       mode = 'Off'; connector_voltage = 0.0;
@@ -143,11 +121,30 @@ boot_module(async ({
     status: 'NOT_SUPPORTED',
     error: 'DcSupplySimulator does not support stop transaction request.',
   }));
-  
+
   setup.provides.powermeter.register.start_transaction((mod, args) => ({
     status: 'OK',
   }));
 }).then((mod) => {
+
+  const Capabilities = {
+    bidirectional: config_bidirectional,
+    max_export_voltage_V: config_max_voltage,
+    min_export_voltage_V: config_min_voltage,
+    max_export_current_A: config_max_current,
+    min_export_current_A: config_min_current,
+    max_import_voltage_V: config_max_voltage,
+    min_import_voltage_V: config_min_voltage,
+    max_import_current_A: config_max_current,
+    min_import_current_A: config_min_current,
+    max_export_power_W: config_max_power,
+    max_import_power_W: config_max_power,
+    current_regulation_tolerance_A: 2,
+    peak_current_ripple_A: 2,
+    conversion_efficiency_export: 0.9,
+    conversion_efficiency_import: 0.85,
+  };
+
   setInterval(() => {
     mod.provides.main.publish.voltage_current({
       voltage_V: connector_voltage,
@@ -156,8 +153,9 @@ boot_module(async ({
 
     if (connector_current > 0) energy_import_total += (connector_voltage * connector_current * 0.5) / 3600;
     if (connector_current < 0) energy_export_total += (connector_voltage * -connector_current * 0.5) / 3600;
-    
+
     mod.provides.powermeter.publish.powermeter(power_meter_external());
+    mod.provides.main.publish.capabilities(Capabilities);
   }, 500, mod);
 });
 

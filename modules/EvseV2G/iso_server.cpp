@@ -538,6 +538,13 @@ static size_t getEmaidFromContractCert(const mbedtls_x509_name* ASubject, char* 
     return certEmaidLen;
 }
 
+static auto get_emergency_status_code(const struct v2g_context* ctx, uint8_t phase_type) {
+    if (ctx->intl_emergency_shutdown)
+        return iso1DC_EVSEStatusCodeType_EVSE_EmergencyShutdown;
+    else
+        return static_cast<iso1DC_EVSEStatusCodeType>(ctx->evse_v2g_data.evse_status_code[phase_type]);
+}
+
 //=============================================
 //             Publishing request msg
 //=============================================
@@ -619,38 +626,37 @@ static void publish_iso_charge_parameter_discovery_req(
                 time_now_in_sec + v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DepartureTime;
             std::strftime(buffer, sizeof(buffer), format, std::gmtime(&departure_time));
             ctx->p_charger->publish_DepartureTime(buffer);
-
-            if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity_isUsed == (unsigned int)1) {
-                ctx->p_charger->publish_DC_EVEnergyCapacity(calc_physical_value(
-                    v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
-                    v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier));
-            }
-            if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest_isUsed == (unsigned int)1) {
-                ctx->p_charger->publish_DC_EVEnergyRequest(calc_physical_value(
-                    v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
-                    v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier));
-            }
-            if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC_isUsed == (unsigned int)1) {
-                ctx->p_charger->publish_DC_FullSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
-            }
-            if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC_isUsed == (unsigned int)1) {
-                ctx->p_charger->publish_DC_BulkSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
-            }
-            float evMaximumCurrentLimit = calc_physical_value(
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value,
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Multiplier);
-            float evMaximumPowerLimit = calc_physical_value(
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit.Value,
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit.Multiplier);
-            float evMaximumVoltageLimit = calc_physical_value(
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value,
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Multiplier);
-            publish_DC_EVMaximumLimits(
-                ctx, evMaximumCurrentLimit, (unsigned int)1, evMaximumPowerLimit,
-                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed,
-                evMaximumVoltageLimit, (unsigned int)1);
-            publish_DC_EVStatusType(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
         }
+
+        if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity_isUsed == (unsigned int)1) {
+            ctx->p_charger->publish_DC_EVEnergyCapacity(calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier));
+        }
+        if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest_isUsed == (unsigned int)1) {
+            ctx->p_charger->publish_DC_EVEnergyRequest(calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier));
+        }
+        if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC_isUsed == (unsigned int)1) {
+            ctx->p_charger->publish_DC_FullSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
+        }
+        if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC_isUsed == (unsigned int)1) {
+            ctx->p_charger->publish_DC_BulkSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
+        }
+        float evMaximumCurrentLimit = calc_physical_value(
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value,
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Multiplier);
+        float evMaximumPowerLimit = calc_physical_value(
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit.Value,
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit.Multiplier);
+        float evMaximumVoltageLimit = calc_physical_value(
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value,
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Multiplier);
+        publish_DC_EVMaximumLimits(ctx, evMaximumCurrentLimit, (unsigned int)1, evMaximumPowerLimit,
+                                   v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed,
+                                   evMaximumVoltageLimit, (unsigned int)1);
+        publish_DC_EVStatusType(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
     }
 }
 
@@ -1579,7 +1585,7 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
         res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSENotification =
             (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
         res->DC_EVSEChargeParameter.DC_EVSEStatus.EVSEStatusCode =
-            (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER];
+            get_emergency_status_code(conn->ctx, PHASE_PARAMETER);
         res->DC_EVSEChargeParameter.DC_EVSEStatus.NotificationMaxDelay =
             (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
 
@@ -1709,8 +1715,7 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
         res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
         res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
         res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-        res->DC_EVSEStatus.EVSEStatusCode =
-            (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE];
+        res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_CHARGE);
         res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
 
         res->ResponseCode = (req->ChargeProgress == iso1chargeProgressType_Start) &&
@@ -1999,8 +2004,7 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_ISOLATION);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEProcessing = (iso1EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_ISOLATION];
 
@@ -2034,8 +2038,7 @@ static enum v2g_event handle_iso_pre_charge(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_PRECHARGE);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEPresentVoltage = (iso1PhysicalValueType)conn->ctx->evse_v2g_data.evse_present_voltage;
     res->ResponseCode = iso1responseCodeType_OK;
@@ -2067,8 +2070,7 @@ static enum v2g_event handle_iso_current_demand(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_CHARGE);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     if ((conn->ctx->evse_v2g_data.evse_maximum_current_limit_is_used == 1) &&
         (calc_physical_value(req->EVTargetCurrent.Value, req->EVTargetCurrent.Multiplier) >=
@@ -2208,8 +2210,7 @@ static enum v2g_event handle_iso_welding_detection(struct v2g_connection* conn) 
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (iso1DC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_WELDING];
+    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_WELDING);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEPresentVoltage = conn->ctx->evse_v2g_data.evse_present_voltage;
     res->ResponseCode = iso1responseCodeType_OK;

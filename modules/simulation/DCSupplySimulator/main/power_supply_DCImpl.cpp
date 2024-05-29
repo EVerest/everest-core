@@ -40,10 +40,7 @@ static auto get_capabilities_from_config(const Conf& config) {
 }
 
 void power_supply_DCImpl::ready() {
-}
-
-types::power_supply_DC::Capabilities power_supply_DCImpl::handle_getCapabilities() {
-    return get_capabilities_from_config(this->config);
+    publish_capabilities(get_capabilities_from_config(this->config));
 }
 
 void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
