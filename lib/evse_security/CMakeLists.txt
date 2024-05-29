@@ -28,7 +28,17 @@ target_include_directories(evse_security
 #############
 # Logging configuration
 #############
-if (EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)
+if (EVEREST_CUSTOM_LOGGING_LIBRARY)
+    if(NOT TARGET ${EVEREST_CUSTOM_LOGGING_LIBRARY})
+        message(FATAL_ERROR "${EVEREST_CUSTOM_LOGGING_LIBRARY} is not a valid library")
+    else()
+        target_link_libraries(evse_security
+            PUBLIC
+            ${EVEREST_CUSTOM_LOGGING_LIBRARY}
+        )
+        message(STATUS "Using custom logging library: ${EVEREST_CUSTOM_LOGGING_LIBRARY}")
+    endif()
+elseif (EVEREST_CUSTOM_LOGGING_INCLUDE_PATH)
     if (NOT EXISTS "${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}/everest/logging.hpp")
         message(FATAL_ERROR "everest/logging.hpp not found in directory ${EVEREST_CUSTOM_LOGGING_INCLUDE_PATH}")
     else()
