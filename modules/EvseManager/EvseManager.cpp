@@ -326,6 +326,7 @@ void EvseManager::ready() {
             r_hlc[0]->subscribe_currentDemand_Finished([this] { powersupply_DC_off(); });
 
             r_hlc[0]->subscribe_DC_EVMaximumLimits([this](types::iso15118_charger::DC_EVMaximumLimits l) {
+                EVLOG_info << "Received EV maximum limits: " << l;
                 Everest::scoped_lock_timeout lock(ev_info_mutex,
                                                   Everest::MutexDescription::EVSE_subscribe_DC_EVMaximumLimits);
                 ev_info.maximum_current_limit = l.DC_EVMaximumCurrentLimit;

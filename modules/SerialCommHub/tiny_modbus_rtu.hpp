@@ -28,6 +28,7 @@ constexpr int REQ_TX_MULTIPLE_REG_BYTE_COUNT_POS = 0x06;
 constexpr int RES_RX_LEN_POS = 0x02;
 constexpr int RES_RX_START_OF_PAYLOAD = 0x03;
 constexpr int RES_TX_START_OF_PAYLOAD = 0x02;
+constexpr int RES_EXCEPTION_CODE = 0x02;
 
 constexpr int MODBUS_MAX_REPLY_SIZE = 255 + 6;
 constexpr int MODBUS_MIN_REPLY_SIZE = 5;
