@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include "ocpp/common/types.hpp"
+#include <stdexcept>
 #include <thread>
 
 #include <everest/logging.hpp>
@@ -1092,6 +1093,15 @@ void ChargePointImpl::message_callback(const std::string& message) {
         }
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
+        if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
+            auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
+                                        e.what(), json({}, true));
+            this->send(call_error);
+            this->securityEventNotification(ocpp::security_events::INVALIDMESSAGES, message, true);
+        }
+    } catch (std::out_of_range e) {
+        // std::out_of_range is used when converting strings to enums
+        EVLOG_error << "Out of range exception during handling of message: " << e.what();
         if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
             auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
                                         e.what(), json({}, true));
