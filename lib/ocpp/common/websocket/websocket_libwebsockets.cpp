@@ -208,7 +208,7 @@ static bool verify_csms_cn(const std::string& hostname, bool preverified, const 
 
 WebsocketTlsTPM::WebsocketTlsTPM(const WebsocketConnectionOptions& connection_options,
                                  std::shared_ptr<EvseSecurity> evse_security) :
-    WebsocketBase(), evse_security(evse_security) {
+    WebsocketBase(), evse_security(evse_security), stop_deferred_handler(false) {
 
     set_connection_options(connection_options);
 
@@ -227,6 +227,15 @@ WebsocketTlsTPM::~WebsocketTlsTPM() {
 
     if (recv_message_thread != nullptr) {
         recv_message_thread->join();
+    }
+
+    if (this->deferred_callback_thread != nullptr) {
+        {
+            std::scoped_lock tmp_lock(this->deferred_callback_mutex);
+            this->stop_deferred_handler = true;
+        }
+        this->deferred_callback_cv.notify_one();
+        this->deferred_callback_thread->join();
     }
 }
 
@@ -628,6 +637,11 @@ bool WebsocketTlsTPM::connect() {
         this->recv_message_thread->join();
     }
 
+    if (this->deferred_callback_thread == nullptr) {
+        this->deferred_callback_thread =
+            std::make_unique<std::thread>(&WebsocketTlsTPM::handle_deferred_callback_queue, this);
+    }
+
     // Stop any pending reconnect timer
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
@@ -746,11 +760,10 @@ void WebsocketTlsTPM::close(const WebsocketCloseReason code, const std::string& 
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    std::thread closing([this]() {
+    this->push_deferred_callback([this]() {
         this->closed_callback(WebsocketCloseReason::Normal);
         this->disconnected_callback();
     });
-    closing.detach();
 }
 
 void WebsocketTlsTPM::on_conn_connected() {
@@ -763,8 +776,7 @@ void WebsocketTlsTPM::on_conn_connected() {
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    std::thread connected([this]() { this->connected_callback(this->connection_options.security_profile); });
-    connected.detach();
+    this->push_deferred_callback([this]() { this->connected_callback(this->connection_options.security_profile); });
 }
 
 void WebsocketTlsTPM::on_conn_close() {
@@ -772,7 +784,6 @@ void WebsocketTlsTPM::on_conn_close() {
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     this->m_is_connected = false;
-    this->disconnected_callback();
     this->cancel_reconnect_timer();
 
     // Notify any message senders that are waiting, since we can't send messages any more
@@ -781,11 +792,10 @@ void WebsocketTlsTPM::on_conn_close() {
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    std::thread closing([this]() {
+    this->push_deferred_callback([this]() {
         this->closed_callback(WebsocketCloseReason::Normal);
         this->disconnected_callback();
     });
-    closing.detach();
 }
 
 void WebsocketTlsTPM::on_conn_fail() {
@@ -793,8 +803,7 @@ void WebsocketTlsTPM::on_conn_fail() {
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     if (this->m_is_connected) {
-        std::thread disconnect([this]() { this->disconnected_callback(); });
-        disconnect.detach();
+        this->push_deferred_callback([this]() { this->disconnected_callback(); });
     }
 
     this->m_is_connected = false;
@@ -1286,6 +1295,33 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
 
     // Return -1 on fatal error (-1 is request to close the socket)
     return 0;
+}
+
+void WebsocketTlsTPM::push_deferred_callback(const std::function<void()>& callback) {
+    std::scoped_lock tmp_lock(this->deferred_callback_mutex);
+    this->deferred_callback_queue.push(callback);
+    this->deferred_callback_cv.notify_one();
+}
+
+void WebsocketTlsTPM::handle_deferred_callback_queue() {
+    while (true) {
+        std::function<void()> callback;
+        {
+            std::unique_lock lock(this->deferred_callback_mutex);
+            this->deferred_callback_cv.wait(
+                lock, [this]() { return !this->deferred_callback_queue.empty() or stop_deferred_handler; });
+
+            if (stop_deferred_handler and this->deferred_callback_queue.empty()) {
+                break;
+            }
+
+            callback = this->deferred_callback_queue.front();
+            this->deferred_callback_queue.pop();
+        }
+        // This needs to be out of lock scope otherwise we still keep the mutex locked while executing the callback.
+        // This would block the callers of push_deferred_callback()
+        callback();
+    }
 }
 
 } // namespace ocpp

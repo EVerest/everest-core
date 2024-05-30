@@ -78,6 +78,12 @@ private:
 
     void poll_message(const std::shared_ptr<WebsocketMessage>& msg);
 
+    /// \brief Function to handle the deferred callbacks
+    void handle_deferred_callback_queue();
+
+    /// \brief Add a callback to the queue of callbacks to be executed. All will be executed from a single thread
+    void push_deferred_callback(const std::function<void()>& callback);
+
 private:
     std::shared_ptr<EvseSecurity> evse_security;
 
@@ -100,6 +106,12 @@ private:
     std::queue<std::string> recv_message_queue;
     std::condition_variable recv_message_cv;
     std::string recv_buffered_message;
+
+    std::unique_ptr<std::thread> deferred_callback_thread;
+    std::queue<std::function<void()>> deferred_callback_queue;
+    std::mutex deferred_callback_mutex;
+    std::condition_variable deferred_callback_cv;
+    std::atomic_bool stop_deferred_handler;
 };
 
 } // namespace ocpp
