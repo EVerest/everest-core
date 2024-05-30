@@ -9,7 +9,7 @@ cmds:
       type: object
       $ref: /evse_manager#/Evse
   enable_disable:
-    description: Enables or disables the evse
+    description: Enables or disables the evse. Turns off PWM with error F. Charging is only possible if an EVSE is enabled.
     arguments:
       connector_id:
         description: Specifies the ID of the connector to enable. If 0, the whole EVSE should be enabled
