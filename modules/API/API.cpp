@@ -364,10 +364,11 @@ void API::init() {
                 session_info->update_state(session_event.event, error);
 
                 if (session_event.source.has_value()) {
+                    const auto source = session_event.source.value();
                     session_info->set_enable_disable_source(
-                        types::evse_manager::enable_source_to_string(session_event.source.value().enable_source),
-                        types::evse_manager::enable_state_to_string(session_event.source.value().enable_state),
-                        session_event.source.value().enable_priority);
+                        types::evse_manager::enable_source_to_string(source.enable_source),
+                        types::evse_manager::enable_state_to_string(source.enable_state),
+                        source.enable_priority);
                 }
 
                 if (session_event.event == types::evse_manager::SessionEventEnum::SessionStarted) {
