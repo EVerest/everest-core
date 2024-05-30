@@ -1089,9 +1089,11 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
             // 'user' is X509_STORE and 'len' is preverify_ok (1) in case the pre-verification was successful
             EVLOG_debug << "Verifying server certs!";
 
-            if (false == verify_csms_cn(this->connection_options.csms_uri.get_hostname(), (len == 1),
-                                        reinterpret_cast<X509_STORE_CTX*>(user),
-                                        this->connection_options.verify_csms_allow_wildcards)) {
+            if (!verify_csms_cn(this->connection_options.csms_uri.get_hostname(), (len == 1),
+                                reinterpret_cast<X509_STORE_CTX*>(user),
+                                this->connection_options.verify_csms_allow_wildcards)) {
+                this->push_deferred_callback(
+                    [this]() { this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate); });
                 // Return 1 to fail the cert
                 return 1;
             }
