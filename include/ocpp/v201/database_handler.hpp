@@ -55,8 +55,7 @@ public:
     void authorization_cache_delete_entry(const std::string& id_token_hash);
 
     /// \brief Deletes all entries of the AUTH_CACHE table. Returns true if the operation was successful, else false
-    /// \return
-    bool authorization_cache_clear();
+    void authorization_cache_clear();
 
     ///\brief Get the binary size of the authorization cache table
     ///
