@@ -887,7 +887,14 @@ void EvseManager::ready() {
 void EvseManager::ready_to_start_charging() {
     timepoint_ready_for_charging = std::chrono::steady_clock::now();
     charger->run();
-    charger->enable(0);
+
+    // this will publish a session event Enabled or Disabled that allows other modules the retrieve this state on
+    // startup
+    if (this->charger->get_current_state() == Charger::EvseState::Disabled) {
+        this->charger->disable(0);
+    } else {
+        this->charger->enable(0);
+    }
 
     this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
