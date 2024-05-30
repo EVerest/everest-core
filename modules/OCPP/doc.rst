@@ -1,4 +1,5 @@
-# Interaction with EVSE Manager
+Interaction with EVSE Manager
+=============================
 
 This module sets callbacks into libocpp to receive `ChangeAvailability.req` updates from the CSMS.
 
