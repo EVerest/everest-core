@@ -10,8 +10,8 @@ namespace ocpp {
 namespace v16 {
 
 Transaction::Transaction(const int32_t internal_transaction_id, const int32_t& connector, const std::string& session_id,
-                         const CiString<20>& id_token, const int32_t& meter_start,
-                         std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
+                         const CiString<20>& id_token, const double meter_start, std::optional<int32_t> reservation_id,
+                         const ocpp::DateTime& timestamp,
                          std::unique_ptr<Everest::SteadyTimer> meter_values_sample_timer) :
     internal_transaction_id(internal_transaction_id),
     connector(connector),

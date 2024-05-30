@@ -3539,7 +3539,7 @@ void ChargePointImpl::on_session_stopped(const int32_t connector, const std::str
 }
 
 void ChargePointImpl::on_transaction_started(const int32_t& connector, const std::string& session_id,
-                                             const std::string& id_token, const int32_t& meter_start,
+                                             const std::string& id_token, const double meter_start,
                                              std::optional<int32_t> reservation_id, const ocpp::DateTime& timestamp,
                                              std::optional<std::string> signed_meter_value) {
     if (this->status->get_state(connector) == ChargePointStatus::Reserved) {

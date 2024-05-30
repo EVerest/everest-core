@@ -210,7 +210,7 @@ public:
     /// \param timestamp of the start of transaction
     /// \param signed_meter_value e.g. in OCMF format
     void on_transaction_started(const int32_t& connector, const std::string& session_id, const std::string& id_token,
-                                const int32_t& meter_start, std::optional<int32_t> reservation_id,
+                                const double meter_start, std::optional<int32_t> reservation_id,
                                 const ocpp::DateTime& timestamp, std::optional<std::string> signed_meter_value);
 
     /// \brief Notifies chargepoint that the transaction on the given \p connector with the given \p reason has been
