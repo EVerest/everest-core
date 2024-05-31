@@ -32,6 +32,7 @@ types:
       - Processing
       - Accepted
       - Rejected
+      - TokenTimedOut
   CustomIdToken:
     description: Type for a custom id token with a free-form type
     type: object
