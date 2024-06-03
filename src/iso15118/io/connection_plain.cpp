@@ -3,6 +3,7 @@
 #include <iso15118/io/connection_plain.hpp>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstring>
 
 #include <endian.h>
@@ -14,6 +15,8 @@
 #include <iso15118/detail/io/socket_helper.hpp>
 
 namespace iso15118::io {
+
+static constexpr auto DEFAULT_SOCKET_BACKLOG = 4;
 
 ConnectionPlain::ConnectionPlain(PollManager& poll_manager_, const std::string& interface_name) :
     poll_manager(poll_manager_) {
@@ -41,7 +44,7 @@ ConnectionPlain::ConnectionPlain(PollManager& poll_manager_, const std::string& 
         log_and_throw(error.c_str());
     }
 
-    const auto listen_result = listen(fd, 0);
+    const auto listen_result = listen(fd, DEFAULT_SOCKET_BACKLOG);
     if (listen_result == -1) {
         log_and_throw("Listen on socket failed");
     }
@@ -91,11 +94,18 @@ ReadResult ConnectionPlain::read(uint8_t* buf, size_t len) {
 }
 
 void ConnectionPlain::handle_connect() {
-    // NOTE(aw): we could also determine the remote party here
-    const auto accept_fd = accept4(fd, nullptr, nullptr, SOCK_NONBLOCK);
+
+    sockaddr_in6 address;
+    socklen_t address_len = sizeof(address);
+
+    const auto accept_fd = accept4(fd, reinterpret_cast<struct sockaddr*>(&address), &address_len, SOCK_NONBLOCK);
     if (accept_fd == -1) {
         log_and_throw("Failed to accept4");
     }
+
+    const auto address_name = sockaddr_in6_to_name(address);
+
+    logf("Incoming connection from [%s]:%" PRIu16, address_name.get(), ntohs(address.sin6_port));
 
     poll_manager.unregister_fd(fd);
     ::close(fd);
