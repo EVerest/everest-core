@@ -79,7 +79,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     switch (result) {
     case TokenHandlingResult::ALREADY_IN_PROCESS:
         break;
-    case TokenHandlingResult::TIMEOUT:  // Timeout means accepted but failed to pick contactor
+    case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
         break;
     case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally

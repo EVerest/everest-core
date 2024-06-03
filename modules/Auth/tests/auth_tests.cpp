@@ -1217,7 +1217,7 @@ TEST_F(AuthTest, test_token_timed_out) {
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-            Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
