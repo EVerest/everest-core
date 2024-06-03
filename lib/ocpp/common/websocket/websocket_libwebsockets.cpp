@@ -671,25 +671,30 @@ bool WebsocketTlsTPM::connect() {
         this->connect();
     };
 
-    std::unique_lock<std::mutex> lock(connection_mutex);
+    bool timeouted = false;
+    bool connected = false;
 
-    // Release other threads
-    this->websocket_thread.reset(new std::thread(&WebsocketTlsTPM::client_loop, this));
+    {
+        std::unique_lock<std::mutex> lock(connection_mutex);
 
-    // TODO(ioan): remove this thread when the fix will be moved into 'MessageQueue'
-    // The reason for having a received message processing thread is that because
-    // if we dispatch a message receive from the client_loop thread, then the callback
-    // will send back another message, and since we're waiting for that message to be
-    // sent over the wire on the client_loop, not giving the opportunity to the loop to
-    // advance we will have a dead-lock
-    this->recv_message_thread.reset(new std::thread(&WebsocketTlsTPM::recv_loop, this));
+        // Release other threads
+        this->websocket_thread.reset(new std::thread(&WebsocketTlsTPM::client_loop, this));
 
-    // Wait until connect or timeout
-    bool timeouted = !conn_cv.wait_for(lock, std::chrono::seconds(60), [&]() {
-        return !local_data->is_connecting() && EConnectionState::INITIALIZE != local_data->get_state();
-    });
+        // TODO(ioan): remove this thread when the fix will be moved into 'MessageQueue'
+        // The reason for having a received message processing thread is that because
+        // if we dispatch a message receive from the client_loop thread, then the callback
+        // will send back another message, and since we're waiting for that message to be
+        // sent over the wire on the client_loop, not giving the opportunity to the loop to
+        // advance we will have a dead-lock
+        this->recv_message_thread.reset(new std::thread(&WebsocketTlsTPM::recv_loop, this));
 
-    bool connected = (local_data->get_state() == EConnectionState::CONNECTED);
+        // Wait until connect or timeout
+        timeouted = !conn_cv.wait_for(lock, std::chrono::seconds(60), [&]() {
+            return !local_data->is_connecting() && EConnectionState::INITIALIZE != local_data->get_state();
+        });
+
+        connected = (local_data->get_state() == EConnectionState::CONNECTED);
+    }
 
     if (!connected) {
         EVLOG_info << "Connect failed with state: " << (int)local_data->get_state() << " Timeouted: " << timeouted;
