@@ -1206,7 +1206,7 @@ TEST_F(AuthTest, test_master_pass_group_id) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test TokenTimedOut is published when authorization was provided but transaction has not yet been started.
+/// \brief Test TokenTimedOut is published when authorization was provided but transaction has never been started.
 TEST_F(AuthTest, test_token_timed_out) {
     // In order to time-out waiting for a plug-in event, we need to get select_connector to wait for a plug-in event
     // in the first place.
