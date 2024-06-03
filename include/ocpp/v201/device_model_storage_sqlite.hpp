@@ -8,6 +8,7 @@
 #include <sqlite3.h>
 
 #include <everest/logging.hpp>
+#include <ocpp/common/database/database_connection.hpp>
 #include <ocpp/v201/device_model_storage.hpp>
 
 namespace ocpp {
@@ -16,7 +17,7 @@ namespace v201 {
 class DeviceModelStorageSqlite : public DeviceModelStorage {
 
 private:
-    sqlite3* db;
+    std::unique_ptr<ocpp::common::DatabaseConnectionInterface> db;
 
     int get_component_id(const Component& component_id);
 
@@ -26,6 +27,7 @@ public:
     /// \brief Opens SQLite connection at given \p db_path
     /// \param db_path  path to database
     explicit DeviceModelStorageSqlite(const fs::path& db_path);
+    ~DeviceModelStorageSqlite() = default;
 
     std::map<Component, std::map<Variable, VariableMetaData>> get_device_model() final;
 

@@ -12,7 +12,9 @@ using namespace common;
 namespace v201 {
 
 DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
-    if (sqlite3_open(db_path.c_str(), &this->db) != SQLITE_OK) {
+    db = std::make_unique<ocpp::common::DatabaseConnection>(db_path);
+
+    if (!db->open_connection()) {
         EVLOG_error << "Could not open database at provided path: " << db_path;
         EVLOG_AND_THROW(std::runtime_error("Could not open device model database at provided path."));
     } else {
@@ -23,27 +25,28 @@ DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
 int DeviceModelStorageSqlite::get_component_id(const Component& component_id) {
     std::string select_query =
         "SELECT ID FROM COMPONENT WHERE NAME = ? AND INSTANCE IS ? AND EVSE_ID IS ? AND CONNECTOR_ID IS ?";
-    SQLiteStatement select_stmt(this->db, select_query);
 
-    select_stmt.bind_text(1, component_id.name.get(), SQLiteString::Transient);
+    auto select_stmt = this->db->new_statement(select_query);
+
+    select_stmt->bind_text(1, component_id.name.get(), SQLiteString::Transient);
     if (component_id.instance.has_value()) {
-        select_stmt.bind_text(2, component_id.instance.value().get(), SQLiteString::Transient);
+        select_stmt->bind_text(2, component_id.instance.value().get(), SQLiteString::Transient);
     } else {
-        select_stmt.bind_null(2);
+        select_stmt->bind_null(2);
     }
     if (component_id.evse.has_value()) {
-        select_stmt.bind_int(3, component_id.evse.value().id);
+        select_stmt->bind_int(3, component_id.evse.value().id);
         if (component_id.evse.value().connectorId.has_value()) {
-            select_stmt.bind_int(4, component_id.evse.value().connectorId.value());
+            select_stmt->bind_int(4, component_id.evse.value().connectorId.value());
         } else {
-            select_stmt.bind_null(4);
+            select_stmt->bind_null(4);
         }
     } else {
-        select_stmt.bind_null(3);
+        select_stmt->bind_null(3);
     }
 
-    if (select_stmt.step() == SQLITE_ROW) {
-        return select_stmt.column_int(0);
+    if (select_stmt->step() == SQLITE_ROW) {
+        return select_stmt->column_int(0);
     } else {
         return -1;
     }
@@ -56,17 +59,17 @@ int DeviceModelStorageSqlite::get_variable_id(const Component& component_id, con
     }
 
     std::string select_query = "SELECT ID FROM VARIABLE WHERE COMPONENT_ID = ? AND NAME = ? AND INSTANCE IS ?";
-    SQLiteStatement select_stmt(this->db, select_query);
+    auto select_stmt = this->db->new_statement(select_query);
 
-    select_stmt.bind_int(1, _component_id);
-    select_stmt.bind_text(2, variable_id.name.get(), SQLiteString::Transient);
+    select_stmt->bind_int(1, _component_id);
+    select_stmt->bind_text(2, variable_id.name.get(), SQLiteString::Transient);
     if (variable_id.instance.has_value()) {
-        select_stmt.bind_text(3, variable_id.instance.value().get(), SQLiteString::Transient);
+        select_stmt->bind_text(3, variable_id.instance.value().get(), SQLiteString::Transient);
     } else {
-        select_stmt.bind_null(3);
+        select_stmt->bind_null(3);
     }
-    if (select_stmt.step() == SQLITE_ROW) {
-        return select_stmt.column_int(0);
+    if (select_stmt->step() == SQLITE_ROW) {
+        return select_stmt->column_int(0);
     } else {
         return -1;
     }
@@ -82,51 +85,51 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
         "JOIN VARIABLE v ON c.ID = v.COMPONENT_ID "
         "JOIN VARIABLE_CHARACTERISTICS vc ON v.VARIABLE_CHARACTERISTICS_ID = vc.ID";
 
-    SQLiteStatement select_stmt(this->db, select_query);
+    auto select_stmt = this->db->new_statement(select_query);
 
-    while (select_stmt.step() == SQLITE_ROW) {
+    while (select_stmt->step() == SQLITE_ROW) {
         Component component;
-        component.name = select_stmt.column_text(0);
+        component.name = select_stmt->column_text(0);
 
-        if (select_stmt.column_type(1) != SQLITE_NULL) {
-            auto evse_id = select_stmt.column_int(1);
+        if (select_stmt->column_type(1) != SQLITE_NULL) {
+            auto evse_id = select_stmt->column_int(1);
             EVSE evse;
             evse.id = evse_id;
-            if (select_stmt.column_type(2) != SQLITE_NULL) {
-                evse.connectorId = select_stmt.column_int(2);
+            if (select_stmt->column_type(2) != SQLITE_NULL) {
+                evse.connectorId = select_stmt->column_int(2);
             }
             component.evse = evse;
         }
 
-        if (select_stmt.column_type(3) != SQLITE_NULL) {
-            component.instance = select_stmt.column_text(3);
+        if (select_stmt->column_type(3) != SQLITE_NULL) {
+            component.instance = select_stmt->column_text(3);
         }
 
         Variable variable;
-        variable.name = select_stmt.column_text(4);
+        variable.name = select_stmt->column_text(4);
 
-        if (select_stmt.column_type(5) != SQLITE_NULL) {
-            variable.instance = select_stmt.column_text(5);
+        if (select_stmt->column_type(5) != SQLITE_NULL) {
+            variable.instance = select_stmt->column_text(5);
         }
 
         VariableCharacteristics characteristics;
-        characteristics.dataType = static_cast<DataEnum>(select_stmt.column_int(6));
-        characteristics.supportsMonitoring = select_stmt.column_int(7) != 0;
+        characteristics.dataType = static_cast<DataEnum>(select_stmt->column_int(6));
+        characteristics.supportsMonitoring = select_stmt->column_int(7) != 0;
 
-        if (select_stmt.column_type(8) != SQLITE_NULL) {
-            characteristics.unit = select_stmt.column_text(8);
+        if (select_stmt->column_type(8) != SQLITE_NULL) {
+            characteristics.unit = select_stmt->column_text(8);
         }
 
-        if (select_stmt.column_type(9) != SQLITE_NULL) {
-            characteristics.minLimit = select_stmt.column_double(9);
+        if (select_stmt->column_type(9) != SQLITE_NULL) {
+            characteristics.minLimit = select_stmt->column_double(9);
         }
 
-        if (select_stmt.column_type(10) != SQLITE_NULL) {
-            characteristics.maxLimit = select_stmt.column_double(10);
+        if (select_stmt->column_type(10) != SQLITE_NULL) {
+            characteristics.maxLimit = select_stmt->column_double(10);
         }
 
-        if (select_stmt.column_type(11) != SQLITE_NULL) {
-            characteristics.valuesList = select_stmt.column_text(11);
+        if (select_stmt->column_type(11) != SQLITE_NULL) {
+            characteristics.valuesList = select_stmt->column_text(11);
         }
 
         VariableMetaData meta_data;
@@ -169,20 +172,20 @@ DeviceModelStorageSqlite::get_variable_attributes(const Component& component_id,
         select_query = ss.str();
     }
 
-    SQLiteStatement select_stmt(this->db, select_query);
+    auto select_stmt = this->db->new_statement(select_query);
 
-    select_stmt.bind_int(1, _variable_id);
+    select_stmt->bind_int(1, _variable_id);
 
-    while (select_stmt.step() == SQLITE_ROW) {
+    while (select_stmt->step() == SQLITE_ROW) {
         VariableAttribute attribute;
 
-        if (select_stmt.column_type(0) != SQLITE_NULL) {
-            attribute.value = select_stmt.column_text(0);
+        if (select_stmt->column_type(0) != SQLITE_NULL) {
+            attribute.value = select_stmt->column_text(0);
         }
-        attribute.mutability = static_cast<MutabilityEnum>(select_stmt.column_int(1));
-        attribute.persistent = static_cast<bool>(select_stmt.column_int(2));
-        attribute.constant = static_cast<bool>(select_stmt.column_int(3));
-        attribute.type = static_cast<AttributeEnum>(select_stmt.column_int(4));
+        attribute.mutability = static_cast<MutabilityEnum>(select_stmt->column_int(1));
+        attribute.persistent = static_cast<bool>(select_stmt->column_int(2));
+        attribute.constant = static_cast<bool>(select_stmt->column_int(3));
+        attribute.type = static_cast<AttributeEnum>(select_stmt->column_int(4));
         attributes.push_back(attribute);
     }
 
@@ -193,7 +196,7 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
                                                             const AttributeEnum& attribute_enum,
                                                             const std::string& value) {
     std::string insert_query = "UPDATE VARIABLE_ATTRIBUTE SET VALUE = ? WHERE VARIABLE_ID = ? AND TYPE_ID = ?";
-    SQLiteStatement insert_stmt(this->db, insert_query);
+    auto insert_stmt = this->db->new_statement(insert_query);
 
     const auto _variable_id = this->get_variable_id(component_id, variable_id);
 
@@ -201,11 +204,11 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
         return false;
     }
 
-    insert_stmt.bind_text(1, value);
-    insert_stmt.bind_int(2, _variable_id);
-    insert_stmt.bind_int(3, static_cast<int>(attribute_enum));
-    if (insert_stmt.step() != SQLITE_DONE) {
-        EVLOG_error << sqlite3_errmsg(this->db);
+    insert_stmt->bind_text(1, value);
+    insert_stmt->bind_int(2, _variable_id);
+    insert_stmt->bind_int(3, static_cast<int>(attribute_enum));
+    if (insert_stmt->step() != SQLITE_DONE) {
+        EVLOG_error << this->db->get_error_message();
         return false;
     }
     return true;
@@ -227,18 +230,18 @@ void DeviceModelStorageSqlite::check_integrity() {
                  << static_cast<int>(AttributeEnum::Actual)
                  << " AND va.VALUE IS NULL"
                     " AND v.REQUIRED = 1";
-    SQLiteStatement select_stmt(this->db, query_stream.str());
+    auto select_stmt = this->db->new_statement(query_stream.str());
 
-    if (select_stmt.step() != SQLITE_DONE) {
+    if (select_stmt->step() != SQLITE_DONE) {
         std::stringstream error;
         error << "Corrupted device model: Missing the following required values for 'Actual' Variable Attributes:"
               << std::endl;
         do {
-            error << "(Component/EvseId/ConnectorId/Variable/Instance: " << select_stmt.column_text(0) << "/"
-                  << select_stmt.column_text_nullable(1).value_or("<null>") << "/"
-                  << select_stmt.column_text_nullable(2).value_or("<null>") << "/" << select_stmt.column_text(3) << "/"
-                  << select_stmt.column_text_nullable(4).value_or("<null>") << ")" << std::endl;
-        } while (select_stmt.step() == SQLITE_ROW);
+            error << "(Component/EvseId/ConnectorId/Variable/Instance: " << select_stmt->column_text(0) << "/"
+                  << select_stmt->column_text_nullable(1).value_or("<null>") << "/"
+                  << select_stmt->column_text_nullable(2).value_or("<null>") << "/" << select_stmt->column_text(3)
+                  << "/" << select_stmt->column_text_nullable(4).value_or("<null>") << ")" << std::endl;
+        } while (select_stmt->step() == SQLITE_ROW);
 
         throw DeviceModelStorageError(error.str());
     }
