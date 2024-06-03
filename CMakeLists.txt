@@ -16,7 +16,7 @@ option(CB_V2G_INSTALL "Install the library (shared data might be installed anywa
 
 add_subdirectory(lib)
 
-message("-- Lib code based on cbexigen generator version: b64f296")
+message(STATUS "library code based on cbexigen generator version: b64f296")
 
 # tests
 if (CB_V2G_BUILD_TESTS)
@@ -28,25 +28,24 @@ endif()
 if (CB_V2G_INSTALL)
     install(
         TARGETS
-            cb_exi_codec
-            cb_din
-            cb_iso2
-            cb_iso20
-            cb_v2gtp
-        EXPORT cb_v2g-targets
+            cbv2g_exi_codec
+            cbv2g_din
+            cbv2g_iso2
+            cbv2g_iso20
+            cbv2g_tp
+        EXPORT cbv2g-targets
         LIBRARY
     )
 
     install(
         DIRECTORY include/
         TYPE INCLUDE
-        PATTERN "detail" EXCLUDE
     )
 
     evc_setup_package(
-        NAME everest-cb_v2g
-        NAMESPACE everest
-        EXPORT cb_v2g-targets
+        NAME cbv2g
+        NAMESPACE cbv2g
+        EXPORT cbv2g-targets
     )
 endif()
 
