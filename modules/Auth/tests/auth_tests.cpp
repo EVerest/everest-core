@@ -260,7 +260,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TokenTimedOut))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
         .Times(1);
 
     TokenHandlingResult result1;
@@ -954,7 +954,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted))
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TokenTimedOut))
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
         .Times(1);
 
     TokenHandlingResult result;
@@ -1206,7 +1206,7 @@ TEST_F(AuthTest, test_master_pass_group_id) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test TokenTimedOut is published when authorization was provided but transaction has never been started.
+/// \brief Test TimedOut is published when authorization was provided but transaction has never been started.
 TEST_F(AuthTest, test_token_timed_out) {
     // In order to time-out waiting for a plug-in event, we need to get select_connector to wait for a plug-in event
     // in the first place.
@@ -1221,7 +1221,7 @@ TEST_F(AuthTest, test_token_timed_out) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TokenTimedOut));
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut));
 
     TokenHandlingResult result;
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
@@ -1229,7 +1229,7 @@ TEST_F(AuthTest, test_token_timed_out) {
 
     ASSERT_TRUE(result == TokenHandlingResult::TIMEOUT);
 
-    // wait for timeout, after which TokenTimedOut should be published.
+    // wait for timeout, after which TimedOut should be published.
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
 }
 
