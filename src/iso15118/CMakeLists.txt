@@ -88,8 +88,8 @@ target_link_libraries(iso15118
     PUBLIC
         # FIXME (aw): would be nice if we could make this private!
         fsm::fsm
-        cb_v2g::V2GTP
-        cb_v2g::ISO20
+        cbv2g::tp
+        cbv2g::iso20
     PRIVATE
         Threads::Threads
 
