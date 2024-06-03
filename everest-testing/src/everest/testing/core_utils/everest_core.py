@@ -205,7 +205,7 @@ class EverestCore:
     def read_everest_log(self):
         while self.process.poll() == None:
             stderr_raw = self.process.stderr.readline()
-            stderr_formatted = stderr_raw.strip().decode()
+            stderr_formatted = stderr_raw.strip().decode(errors="ignore")
             logging.debug(f'  {stderr_formatted}')
 
         if self.process.returncode == 0:
