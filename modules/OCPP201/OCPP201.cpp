@@ -794,10 +794,10 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
     if (tx_event == TxEvent::DEAUTHORIZED) {
         if (reason == ocpp::v201::ReasonEnum::Remote) {
             this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::EVConnected,
-                                                  ocpp::v201::TriggerReasonEnum::RemoteStop);
+                                                          ocpp::v201::TriggerReasonEnum::RemoteStop);
         } else {
             this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::EVConnected,
-                                                  ocpp::v201::TriggerReasonEnum::StopAuthorized);
+                                                          ocpp::v201::TriggerReasonEnum::StopAuthorized);
         }
     }
 }
