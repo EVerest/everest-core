@@ -324,6 +324,39 @@ types:
       vendor_error:
         description: The error code of the vendor
         type: string
+  EnableDisableSource:
+    description: >-
+      Source of a Enable or Disable command/event
+    type: object
+    required:
+      - enable_source
+      - enable_state
+      - enable_priority
+    properties:
+      enable_source:
+        description: Specifies the source
+        type: string
+        enum:
+        - Unspecified
+        - LocalAPI
+        - LocalKeyLock
+        - ServiceTechnician
+        - RemoteKeyLock
+        - MobileApp
+        - FirmwareUpdate
+        - CSMS
+      enable_state:
+        description: Specifies the state for this entry
+        type: string
+        enum:
+        - Unassigned
+        - Disable
+        - Enable
+      enable_priority:
+        description: Priority of this entry. The highest priority is 0.
+        type: integer
+        minimum: 0
+        maximum: 10000
   SessionEvent:
     description: Emits all events related to sessions
     type: object
@@ -344,7 +377,7 @@ types:
         format: date-time
       connector_id:
         description: >-
-          Id of the connector of this EVSE. 
+          Id of the connector of this EVSE.
           If the connector_id is not specified, its assumed to be 1
         type: integer
       event:
@@ -373,13 +406,13 @@ types:
         $ref: /evse_manager#/TransactionFinished
       charging_state_changed_event:
         description: >-
-          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums: 
+          Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
           ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
         type: object
         $ref: /evse_manager#/ChargingStateChangedEvent
       authorization_event:
         description: >-
-          Data for Authorization event. Shall be set for the following SessionEventEnums: 
+          Data for Authorization event. Shall be set for the following SessionEventEnums:
           Authorized, Deauthorized
         type: object
         $ref: /evse_manager#/AuthorizationEvent
@@ -387,6 +420,11 @@ types:
         description: Details on error type
         type: object
         $ref: /evse_manager#/Error
+      source:
+        description: >-
+          Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.
+        type: object
+        $ref: /evse_manager#/EnableDisableSource
   Limits:
     description: Limits of this EVSE
     type: object
