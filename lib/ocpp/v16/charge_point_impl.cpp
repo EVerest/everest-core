@@ -2969,7 +2969,15 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
                     forward_to_csms = true;
                 } else {
                     EVLOG_warning << "Online: OCSP data could not be generated";
-                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                    if (central_contract_validation_allowed) {
+                        EVLOG_info << "Online: OCSP data could not be generated. Pass contract validation to CSMS";
+                        authorize_req.certificate = certificate.value();
+                        forward_to_csms = true;
+                    } else {
+                        EVLOG_warning
+                            << "Online: OCSP data could not be generated and CentralContractValidation not allowed";
+                        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                    }
                 }
             }
         } else { // Offline

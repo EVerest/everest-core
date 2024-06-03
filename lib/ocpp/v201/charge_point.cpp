@@ -704,8 +704,15 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
                         response = this->authorize_req(id_token, std::nullopt, generated_ocsp_request_data_list);
                         forwarded_to_csms = true;
                     } else {
-                        EVLOG_warning << "Online: OCSP data could not be generated";
-                        response.idTokenInfo.status = AuthorizationStatusEnum::Invalid;
+                        if (central_contract_validation_allowed) {
+                            EVLOG_info << "Online: OCSP data could not be generated. Pass contract validation to CSMS";
+                            response = this->authorize_req(id_token, certificate, std::nullopt);
+                            forwarded_to_csms = true;
+                        } else {
+                            EVLOG_warning
+                                << "Online: OCSP data could not be generated and CentralContractValidation not allowed";
+                            response.idTokenInfo.status = AuthorizationStatusEnum::Invalid;
+                        }
                     }
                 }
             } else { // Offline
