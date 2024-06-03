@@ -90,6 +90,8 @@ public:
     bool getUseTPM();
     std::string getSupportedMeasurands();
     KeyValue getSupportedMeasurandsKeyValue();
+    int getMaxMessageSize();
+    KeyValue getMaxMessageSizeKeyValue();
 
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);

@@ -262,6 +262,13 @@
             "type": "string",
             "readOnly": true,
             "default": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered"
+        },
+        "MaxMessageSize": {
+            "$comment": "Maximum size in bytes for messages sent to the CSMS via websocket. If a message exceeds this size, data of the message may be dropped",
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 32000,
+            "default": 65000
         }
     },
     "additionalProperties": false

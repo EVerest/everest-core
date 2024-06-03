@@ -3655,6 +3655,12 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
     auto message_id = this->message_queue->createMessageId();
     ocpp::Call<StopTransactionRequest> call(req, message_id);
 
+    const auto max_message_size = this->configuration->getMaxMessageSize();
+    if (utils::get_message_size(call) > max_message_size) {
+        EVLOG_warning << "StopTransaction.req is too large. Dropping transaction data";
+        utils::drop_transaction_data(max_message_size, call);
+    }
+
     {
         std::lock_guard<std::mutex> lock(this->stop_transaction_mutex);
         this->send<StopTransactionRequest>(call);

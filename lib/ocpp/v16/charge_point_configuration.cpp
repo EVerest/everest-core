@@ -570,6 +570,18 @@ KeyValue ChargePointConfiguration::getSupportedMeasurandsKeyValue() {
     return kv;
 }
 
+int ChargePointConfiguration::getMaxMessageSize() {
+    return this->config["Internal"]["MaxMessageSize"];
+}
+
+KeyValue ChargePointConfiguration::getMaxMessageSizeKeyValue() {
+    KeyValue kv;
+    kv.key = "MaxMessageSize";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getMaxMessageSize()));
+    return kv;
+}
+
 KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
     KeyValue kv;
     kv.key = "WebsocketPingPayload";
@@ -2344,6 +2356,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     }
     if (key == "SupportedMeasurands") {
         return this->getSupportedMeasurandsKeyValue();
+    }
+    if (key == "MaxMessageSize") {
+        return this->getMaxMessageSizeKeyValue();
     }
     if (key == "QueueAllMessages") {
         return this->getQueueAllMessagesKeyValue();
