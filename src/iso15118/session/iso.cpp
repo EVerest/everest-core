@@ -63,12 +63,13 @@ bool read_single_sdp_packet(io::IConnection& connection, io::SdpPacket& sdp_pack
 
     assert(sdp_packet.get_state() == PacketState::EMPTY || sdp_packet.get_state() == PacketState::HEADER_READ);
 
-    // FIXME (aw): proper handling of case, where read returns 0!
-    auto result = connection.read(sdp_packet.get_current_buffer_pos(), sdp_packet.get_remaining_bytes_to_read());
-    sdp_packet.update_read_bytes(result.bytes_read);
+    const auto first_try =
+        connection.read(sdp_packet.get_current_buffer_pos(), sdp_packet.get_remaining_bytes_to_read());
 
-    if (result.would_block) {
-        // need more data!
+    sdp_packet.update_read_bytes(first_try.bytes_read);
+
+    if (first_try.would_block) {
+        // need more data for at least the header
         return true;
     }
 
@@ -83,11 +84,13 @@ bool read_single_sdp_packet(io::IConnection& connection, io::SdpPacket& sdp_pack
     }
 
     // header read successfully, try to read the rest
-    result = connection.read(sdp_packet.get_current_buffer_pos(), sdp_packet.get_remaining_bytes_to_read());
-    sdp_packet.update_read_bytes(result.bytes_read);
+    const auto second_try =
+        connection.read(sdp_packet.get_current_buffer_pos(), sdp_packet.get_remaining_bytes_to_read());
 
-    if (result.would_block) {
-        // need more data!
+    sdp_packet.update_read_bytes(second_try.bytes_read);
+
+    if (second_try.would_block) {
+        // need more data for the rest of the packet!
         return true;
     }
 

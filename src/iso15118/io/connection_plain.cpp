@@ -75,22 +75,19 @@ ReadResult ConnectionPlain::read(uint8_t* buf, size_t len) {
     assert(connection_open);
 
     const auto read_result = ::read(fd, buf, len);
-    if (read_result > 0) {
-        size_t bytes_read = read_result;
-        const auto would_block = (bytes_read < len);
-        return {would_block, bytes_read};
+    const auto did_block = (len > 0) and (read_result != len);
+
+    if (read_result >= 0) {
+        return {did_block, static_cast<size_t>(read_result)};
     }
 
-    if (read_result == -1) {
-        // handle blocking read case
-        if (errno == EAGAIN) {
-            return {true, 0};
-        }
-
+    // should be an error
+    if (errno != EAGAIN) {
+        // in case the error is not due to blocking, log it
         logf("ConnectionPlain::read failed with error code: %d", errno);
     }
 
-    return {false, 0};
+    return {did_block, 0};
 }
 
 void ConnectionPlain::handle_connect() {
