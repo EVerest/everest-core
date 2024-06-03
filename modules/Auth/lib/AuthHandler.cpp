@@ -78,7 +78,10 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     switch (result) {
     case TokenHandlingResult::ALREADY_IN_PROCESS:
-    case TokenHandlingResult::TIMEOUT:  // Timeout means accepted but failed to pick contactor
+        break;
+    case TokenHandlingResult::TIMEOUT: // Timeout means accepted but failed to pick contactor
+        this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+        break;
     case TokenHandlingResult::ACCEPTED: // Handled in handle_token internally
         break;
     case TokenHandlingResult::NO_CONNECTOR_AVAILABLE:
@@ -201,8 +204,6 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
                                   "to authorize "
                                   "this token for starting transactions!";
-                    this->publish_token_validation_status_callback(
-                        provided_token, types::authorization::TokenValidationStatus::Rejected);
                     return TokenHandlingResult::REJECTED;
                 }
 
