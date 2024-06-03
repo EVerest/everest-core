@@ -3344,6 +3344,7 @@ void ChargePoint::scheduled_check_v2g_certificate_expiration() {
 
 void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                                const ConnectorStatusEnum status) {
+    ComponentVariable charging_station = ControllerComponentVariables::ChargingStationAvailabilityState;
     ComponentVariable evse_cv =
         EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::AvailabilityState);
     ComponentVariable connector_cv = ConnectorComponentVariables::get_component_variable(
@@ -3355,6 +3356,13 @@ void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int3
     }
     if (connector_cv.variable.has_value()) {
         this->device_model->set_read_only_value(connector_cv.component, connector_cv.variable.value(),
+                                                ocpp::v201::AttributeEnum::Actual,
+                                                conversions::connector_status_enum_to_string(status));
+    }
+
+    // if applicable to the entire charging station
+    if (evse_id == 0 and charging_station.variable.has_value()) {
+        this->device_model->set_read_only_value(charging_station.component, charging_station.variable.value(),
                                                 ocpp::v201::AttributeEnum::Actual,
                                                 conversions::connector_status_enum_to_string(status));
     }
