@@ -698,6 +698,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
     auto transaction_data = this->transaction_handler->get_transaction_data(evse_id);
     if (transaction_data != nullptr) {
         transaction_data->charging_state = ocpp::v201::ChargingStateEnum::Idle;
+        transaction_data->stop_reason = ocpp::v201::ReasonEnum::EVDisconnected;
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
@@ -789,6 +790,16 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, tx_event);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
+
+    if (tx_event == TxEvent::DEAUTHORIZED) {
+        if (reason == ocpp::v201::ReasonEnum::Remote) {
+            this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::EVConnected,
+                                                          ocpp::v201::TriggerReasonEnum::RemoteStop);
+        } else {
+            this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::EVConnected,
+                                                          ocpp::v201::TriggerReasonEnum::StopAuthorized);
+        }
+    }
 }
 
 void OCPP201::process_charging_started(const int32_t evse_id, const int32_t connector_id,
