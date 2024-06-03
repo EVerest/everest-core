@@ -101,8 +101,7 @@ public:
                bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc, bool ac_with_soc_timeout,
                float soft_over_current_tolerance_percent, float soft_over_current_measurement_noise_A);
 
-    bool enable(int connector_id);
-    bool disable(int connector_id);
+    bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
     void set_faulted();
     void set_hlc_error();
@@ -198,6 +197,8 @@ public:
     /// The data is generated when stopping the transaction. The call resets the
     /// internal variable and is thus not idempotent.
     std::optional<types::units_signed::SignedMeterValue> get_stop_signed_meter_value();
+
+    types::evse_manager::EnableDisableSource get_last_enable_disable_source();
 
 private:
     std::optional<types::units_signed::SignedMeterValue>
@@ -366,6 +367,11 @@ private:
     // 4 seconds according to table 3 of ISO15118-3
     static constexpr int T_STEP_EF = 4000;
     static constexpr int SOFT_OVER_CURRENT_TIMEOUT = 7000;
+
+    types::evse_manager::EnableDisableSource active_enable_disable_source{
+        types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
+    std::vector<types::evse_manager::EnableDisableSource> enable_disable_source_table;
+    bool parse_enable_disable_source_table();
 };
 
 } // namespace module

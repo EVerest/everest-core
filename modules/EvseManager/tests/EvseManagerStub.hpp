@@ -26,6 +26,9 @@ struct evse_managerImplStub : public evse_managerImplBase {
     virtual bool handle_disable(int& connector_id) {
         return true;
     }
+    virtual bool handle_enable_disable(int& connector_id, types::evse_manager::EnableDisableSource& cmd_source) {
+        return true;
+    }
     virtual void handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,
                                            types::authorization::ValidationResult& validation_result) {
     }
