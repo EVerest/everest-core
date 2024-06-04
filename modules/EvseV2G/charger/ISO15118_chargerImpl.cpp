@@ -224,6 +224,10 @@ void ISO15118_chargerImpl::handle_authorization_response(
     } else if (v2g_ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract) {
         v2g_ctx->session.certificate_status = certificate_status;
         v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Finished;
+
+        if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
+            v2g_ctx->session.authorization_rejected = true;
+        }
     }
 }
 
