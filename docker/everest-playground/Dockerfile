@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:11
+ARG BASE_IMAGE=debian:12
 FROM ${BASE_IMAGE}
 
 ARG BASE_IMAGE
@@ -35,7 +35,7 @@ RUN apt-get update \
     cppcheck \
     libboost-all-dev \
     maven \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     nodejs \
     npm \
     libsqlite3-dev \

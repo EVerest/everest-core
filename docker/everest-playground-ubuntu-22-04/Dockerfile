@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=ubuntu
-ARG BASE_IMAGE_VERSION=20.04
+ARG BASE_IMAGE_VERSION=22.04
 FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}
 
 ARG USERNAME=docker
@@ -33,7 +33,7 @@ RUN apt-get update \
     cppcheck \
     libboost-all-dev \
     maven \
-    openjdk-11-jdk \
+    openjdk-17-jdk \
     libsqlite3-dev \
     python3-pip \
     libssl-dev \
