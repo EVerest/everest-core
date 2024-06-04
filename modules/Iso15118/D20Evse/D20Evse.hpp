@@ -33,7 +33,7 @@ public:
     D20Evse() = delete;
     D20Evse(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
             std::unique_ptr<ISO15118_chargerImplBase> p_charger, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_charger(std::move(p_charger)), config(config) {};
+        ModuleBase(info), mqtt(mqtt_provider), p_charger(std::move(p_charger)), config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
