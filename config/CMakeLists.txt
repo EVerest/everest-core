@@ -3,6 +3,7 @@ generate_config_run_script(CONFIG sil-two-evse)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
 generate_config_run_script(CONFIG sil-dc)
+generate_config_run_script(CONFIG sil-dc-d20)
 generate_config_run_script(CONFIG sil-dc-sae-v2g)
 generate_config_run_script(CONFIG sil-dc-sae-v2h)
 generate_config_run_script(CONFIG sil-two-evse-dc)
@@ -13,7 +14,6 @@ generate_config_run_script(CONFIG sil-ocpp-custom-extension)
 generate_config_run_script(CONFIG sil-ocpp-pnc)
 generate_config_run_script(CONFIG sil-ocpp201-pnc)
 generate_config_run_script(CONFIG example)
-generate_config_run_script(CONFIG dash-20-sil)
 
 # install configs
 install(

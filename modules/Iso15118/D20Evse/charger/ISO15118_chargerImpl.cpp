@@ -100,6 +100,12 @@ void ISO15118_chargerImpl::init() {
         }
     };
 
+    callbacks.v2g_message = [this](iso15118::session::feedback::V2gMessageId id) {
+        types::iso15118_charger::V2G_Messages tmp;
+        tmp.V2G_Message_ID = static_cast<types::iso15118_charger::V2G_Message_ID>(id);
+        publish_V2G_Messages(tmp);
+    };
+
     const auto default_cert_path = mod->info.paths.etc / "certs";
 
     const auto cert_path = get_cert_path(default_cert_path, mod->config.certificate_path);
@@ -143,9 +149,13 @@ void ISO15118_chargerImpl::ready() {
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
     std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) {
     // your code for cmd setup goes here
+}
+
+void ISO15118_chargerImpl::handle_set_charging_parameters(
+    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    // your code for cmd set_charging_parameters goes here
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,

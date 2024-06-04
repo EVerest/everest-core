@@ -1,10 +1,8 @@
 active_modules:
   iso15118_charger:
     module: D20Evse
-    # config_module:
-    #   private_key_password: "failed"
-    #   enable_ssl_logging: true
-    #   tls_negotiation_strategy: ENFORCE_NO_TLS
+    config_module:
+      device: auto
   iso15118_car:
     module: PyEvJosev
     config_module:

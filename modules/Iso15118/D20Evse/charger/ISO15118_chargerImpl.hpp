@@ -25,7 +25,7 @@ class ISO15118_chargerImpl : public ISO15118_chargerImplBase {
 public:
     ISO15118_chargerImpl() = delete;
     ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<D20Evse>& mod, Conf& config) :
-        ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config){};
+        ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -35,8 +35,8 @@ protected:
     // command handler functions (virtual)
     virtual void handle_setup(types::iso15118_charger::EVSEID& evse_id,
                               std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-                              types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode,
-                              types::iso15118_charger::SetupPhysicalValues& physical_values) override;
+                              types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) override;
+    virtual void handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
                                       bool& supported_certificate_service) override;
     virtual void

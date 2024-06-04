@@ -100,6 +100,26 @@ types:
       - CertificateInstallationRes
       - CertificateUpdateReq
       - CertificateUpdateRes
+      - AuthorizationSetupReq
+      - AuthorizationSetupRes
+      - ScheduleExchangeReq
+      - ScheduleExchangeRes
+      - ServiceSelectionReq
+      - ServiceSelectionRes
+      - AcChargeLoopReq
+      - AcChargeLoopRes
+      - AcChargeParameterDiscoveryReq
+      - AcChargeParameterDiscoveryRes
+      - DcCableCheckReq
+      - DcCableCheckRes
+      - DcChargeLoopReq
+      - DcChargeLoopRes
+      - DcChargeParameterDiscoveryReq
+      - DcChargeParameterDiscoveryRes
+      - DcPreChargeReq
+      - DcPreChargeRes
+      - DcWeldingDetectionReq
+      - DcWeldingDetectionRes
       - UnknownMessage
   SAE_J2847_Bidi_Mode:
     description: Bidi mode for sae j2847_2 
