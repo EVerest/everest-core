@@ -710,9 +710,22 @@ OCSPRequestDataList EvseSecurity::get_v2g_ocsp_request_data() {
             return OCSPRequestDataList();
         }
 
-        std::vector<X509Wrapper> chain = std::move(
-            X509CertificateBundle(secc_key_pair.info.value().certificate.value(), EncodingFormat::PEM).split());
-        return get_ocsp_request_data_internal(this->ca_bundle_path_map.at(CaCertificateType::V2G), chain);
+        std::vector<X509Wrapper> chain;
+
+        if (secc_key_pair.info.value().certificate.has_value()) {
+            chain = std::move(
+                X509CertificateBundle(secc_key_pair.info.value().certificate.value(), EncodingFormat::PEM).split());
+        } else if (secc_key_pair.info.value().certificate_single.has_value()) {
+            chain = std::move(
+                X509CertificateBundle(secc_key_pair.info.value().certificate_single.value(), EncodingFormat::PEM)
+                    .split());
+        } else {
+            EVLOG_error << "Could not load v2g ocsp cache leaf chain!";
+        }
+
+        if (!chain.empty()) {
+            return get_ocsp_request_data_internal(this->ca_bundle_path_map.at(CaCertificateType::V2G), chain);
+        }
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not get v2g ocsp cache, certificate load failure: " << e.what();
     }
