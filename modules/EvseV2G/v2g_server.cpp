@@ -25,6 +25,7 @@
 #include "v2g_server.hpp"
 
 #define MAX_RES_TIME 98
+#define UINT32_MAX   0xFFFFFFFF
 
 static types::iso15118_charger::V2G_Message_ID get_V2G_Message_ID(enum V2gMsgTypeId v2g_msg,
                                                                   enum v2g_protocol selected_protocol, bool is_req) {
@@ -162,8 +163,14 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
         return -1;
     }
 
+    if (conn->payload_len >= UINT32_MAX - V2GTP_HEADER_LENGTH) {
+        dlog(DLOG_LEVEL_ERROR, "Prevent integer overflow - payload too long: have %d, would need %u",
+             DEFAULT_BUFFER_SIZE, conn->payload_len);
+        return -1;
+    }
+
     if (conn->payload_len + V2GTP_HEADER_LENGTH > DEFAULT_BUFFER_SIZE) {
-        dlog(DLOG_LEVEL_ERROR, "payload too long: have %d, would need %d", DEFAULT_BUFFER_SIZE,
+        dlog(DLOG_LEVEL_ERROR, "payload too long: have %d, would need %u", DEFAULT_BUFFER_SIZE,
              conn->payload_len + V2GTP_HEADER_LENGTH);
 
         /* we have no way to flush/discard remaining unread data from the socket without reading it in chunks,
