@@ -303,7 +303,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             return;
         }
 
-        EVLOG_debug << fmt::format(
+        EVLOG_verbose << fmt::format(
             "Incoming res {} for {}->{}()", data_id,
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name);
 
@@ -338,7 +338,7 @@ json Everest::call_cmd(const Requirement& req, const std::string& cmd_name, json
             "Timeout while waiting for result of {}->{}()",
             this->config.printable_identifier(connection["module_id"], connection["implementation_id"]), cmd_name)));
     } else if (res_future_status == std::future_status::ready) {
-        EVLOG_debug << "res future ready";
+        EVLOG_verbose << "res future ready";
         result = res_future.get();
     }
     this->mqtt_abstraction.unregister_handler(cmd_topic, res_token);
@@ -414,7 +414,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 
     Handler handler = [this, requirement_module_id, requirement_impl_id, requirement_manifest_vardef, var_name,
                        callback](json const& data) {
-        EVLOG_debug << fmt::format(
+        EVLOG_verbose << fmt::format(
             "Incoming {}->{}", this->config.printable_identifier(requirement_module_id, requirement_impl_id), var_name);
 
         if (this->validate_data_with_schema) {
@@ -649,7 +649,7 @@ UnsubscribeToken Everest::provide_external_mqtt_handler(const std::string& topic
     std::string external_topic = fmt::format("{}{}", this->mqtt_external_prefix, topic);
 
     Handler external_handler = [this, handler, external_topic](json const& data) {
-        EVLOG_debug << fmt::format("Incoming external mqtt data for topic '{}'...", external_topic);
+        EVLOG_verbose << fmt::format("Incoming external mqtt data for topic '{}'...", external_topic);
         if (!data.is_string()) {
             EVLOG_AND_THROW(EverestInternalError("External mqtt result is not a string (that should never happen)"));
         }
@@ -765,9 +765,9 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             arg_names = Config::keys(cmd_definition["arguments"]);
         }
 
-        EVLOG_debug << fmt::format("Incoming {}->{}({}) for <handler>",
-                                   this->config.printable_identifier(this->module_id, impl_id), cmd_name,
-                                   fmt::join(arg_names, ","));
+        EVLOG_verbose << fmt::format("Incoming {}->{}({}) for <handler>",
+                                     this->config.printable_identifier(this->module_id, impl_id), cmd_name,
+                                     fmt::join(arg_names, ","));
 
         // check data and ignore it if not matching (publishing it should have
         // been prohibited already)
@@ -820,7 +820,7 @@ void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name,
             }
         }
 
-        EVLOG_debug << fmt::format("RETVAL: {}", res_data["retval"].dump());
+        EVLOG_verbose << fmt::format("RETVAL: {}", res_data["retval"].dump());
         res_data["origin"] = this->module_id;
 
         json res_publish_data = json::object({{"name", cmd_name}, {"type", "result"}, {"data", res_data}});
