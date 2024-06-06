@@ -146,7 +146,7 @@ void evse_board_supportImpl::wait_for_caps() {
             break;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    if (i == 49) {
+    if (i == 50) {
         EVLOG_AND_THROW(
             Everest::EverestTimeoutError("Did not receive hardware capabilities from Yeti hardware, exiting."));
     }
