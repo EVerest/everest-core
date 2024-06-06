@@ -47,6 +47,13 @@ void evse_board_supportImpl::init() {
             EVLOG_info << "[1] CP Voltage: " << t.cp_voltage_hi << " " << t.cp_voltage_lo;
         }
     });
+
+    mod->serial.signal_pp_state.connect([this](int connector, PpState s) {
+        if (connector == 1) {
+            EVLOG_info << "[1] PpState " << s;
+        }
+        last_pp_state = s;
+    });
 }
 
 void evse_board_supportImpl::ready() {
@@ -108,8 +115,26 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
 }
 
 types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_read_pp_ampacity() {
-    // IMPLEMENT ME
-    return {types::board_support_common::Ampacity::A_32};
+    switch (last_pp_state) {
+    case PpState_STATE_NC: {
+        return {types::board_support_common::Ampacity::None};
+    }
+    case PpState_STATE_13A: {
+        return {types::board_support_common::Ampacity::A_13};
+    }
+    case PpState_STATE_20A: {
+        return {types::board_support_common::Ampacity::A_20};
+    }
+    case PpState_STATE_32A: {
+        return {types::board_support_common::Ampacity::A_32};
+    }
+    case PpState_STATE_70A: {
+        return {types::board_support_common::Ampacity::A_63_3ph_70_1ph};
+    }
+    default: {
+        return {types::board_support_common::Ampacity::None};
+    }
+    }
 }
 
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {

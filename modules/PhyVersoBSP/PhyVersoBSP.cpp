@@ -20,6 +20,9 @@ void PhyVersoBSP::init() {
     invoke_init(*p_rcd_2);
     invoke_init(*p_connector_lock_1);
     invoke_init(*p_connector_lock_2);
+    invoke_init(*p_phyverso_mcu_temperature);
+    invoke_init(*p_system_specific_data_1);
+    invoke_init(*p_system_specific_data_2);
 
     std::filesystem::path mcu_config_file = config.mcu_config_file;
 
@@ -47,6 +50,9 @@ void PhyVersoBSP::ready() {
     invoke_ready(*p_rcd_2);
     invoke_ready(*p_connector_lock_1);
     invoke_ready(*p_connector_lock_2);
+    invoke_ready(*p_phyverso_mcu_temperature);
+    invoke_ready(*p_system_specific_data_1);
+    invoke_ready(*p_system_specific_data_2);
 }
 
 } // namespace module

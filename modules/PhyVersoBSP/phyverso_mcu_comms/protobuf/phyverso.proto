@@ -32,6 +32,7 @@ message McuToEverest {
   FanState fan_state = 9;
   LockState lock_state = 10;
   BootConfigRequest config_request = 11;
+  Temperature temperature = 12;
  }
  int32 connector = 6; // 0: None, 1: Connector 1, 2: Connector 2
 }
@@ -95,7 +96,7 @@ enum LockState {
 
 message CoilState {
   CoilType coil_type = 1;
-  bool coil_state = 2;		// true -> on; false -> off
+  bool coil_state = 2;    // true -> on; false -> off
 }
 
 enum CoilType {
@@ -129,4 +130,28 @@ enum MotorLockType {
   MOTOR_LOCK_UNKNOWN = 0;
   MOTOR_LOCK_QWELLO = 1;
   MOTOR_LOCK_DEBUG_VALEO_HVAC = 2;
+}
+
+message Temperature {
+  // The temperature readings
+  repeated uint32 temp = 1;
+}
+
+// Message for parking sensor data.
+message OpaqueData {
+  // The data itself.
+  repeated uint32 data = 1;
+
+  // The id of the message - this allows the receiver to assemble chunks of the
+  // same message.
+  uint32 id = 2;
+
+  // The total number of chunks belonging to the `id`.
+  uint32 chunks_total = 3;
+
+  // The current chunk.
+  uint32 chunk_current = 4;
+
+  // The connector or parking sensor.
+  int32 connector = 5;
 }
