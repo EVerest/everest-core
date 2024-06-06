@@ -62,6 +62,7 @@ private:
     types::evse_board_support::HardwareCapabilities caps;
     std::mutex caps_mutex;
     CpState last_cp_state;
+    PpState last_pp_state; ///< The last pp state received from the MCU.
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

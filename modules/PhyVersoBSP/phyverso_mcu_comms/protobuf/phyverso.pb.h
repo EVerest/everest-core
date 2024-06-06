@@ -95,24 +95,6 @@ typedef struct _BootConfigRequest { /* TODO */
     char dummy_field;
 } BootConfigRequest;
 
-/* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
-typedef struct _McuToEverest {
-    pb_size_t which_payload;
-    union {
-        KeepAlive keep_alive;
-        ResetReason reset;
-        CpState cp_state;
-        CoilState set_coil_state_response;
-        ErrorFlags error_flags;
-        Telemetry telemetry;
-        PpState pp_state;
-        FanState fan_state;
-        LockState lock_state;
-        BootConfigRequest config_request;
-    } payload;
-    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
-} McuToEverest;
-
 typedef struct _ConfigMotorLockType {
     MotorLockType type;
 } ConfigMotorLockType;
@@ -140,6 +122,47 @@ typedef struct _EverestToMcu {
     } payload;
     int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
 } EverestToMcu;
+
+typedef struct _Temperature {
+    /* The temperature readings */
+    pb_size_t temp_count;
+    uint16_t temp[6];
+} Temperature;
+
+/* This container message is send from MCU to EVerest and may contain any allowed message in that direction. */
+typedef struct _McuToEverest {
+    pb_size_t which_payload;
+    union {
+        KeepAlive keep_alive;
+        ResetReason reset;
+        CpState cp_state;
+        CoilState set_coil_state_response;
+        ErrorFlags error_flags;
+        Telemetry telemetry;
+        PpState pp_state;
+        FanState fan_state;
+        LockState lock_state;
+        BootConfigRequest config_request;
+        Temperature temperature;
+    } payload;
+    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
+} McuToEverest;
+
+/* Message for parking sensor data. */
+typedef struct _OpaqueData {
+    /* The data itself. */
+    pb_size_t data_count;
+    uint16_t data[64];
+    /* The id of the message - this allows the receiver to assemble chunks of the
+ same message. */
+    uint32_t id;
+    /* The total number of chunks belonging to the `id`. */
+    uint32_t chunks_total;
+    /* The current chunk. */
+    uint32_t chunk_current;
+    /* The connector or parking sensor. */
+    int32_t connector;
+} OpaqueData;
 
 
 #ifdef __cplusplus
@@ -193,6 +216,8 @@ extern "C" {
 #define ConfigMotorLockType_type_ENUMTYPE MotorLockType
 
 
+
+
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
@@ -204,6 +229,8 @@ extern "C" {
 #define BootConfigRequest_init_default           {0}
 #define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_default, false, ConfigMotorLockType_init_default}
 #define ConfigMotorLockType_init_default         {_MotorLockType_MIN}
+#define Temperature_init_default                 {0, {0, 0, 0, 0, 0, 0}}
+#define OpaqueData_init_default                  {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
@@ -214,6 +241,8 @@ extern "C" {
 #define BootConfigRequest_init_zero              {0}
 #define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_zero, false, ConfigMotorLockType_init_zero}
 #define ConfigMotorLockType_init_zero            {_MotorLockType_MIN}
+#define Temperature_init_zero                    {0, {0, 0, 0, 0, 0, 0}}
+#define OpaqueData_init_zero                     {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -234,17 +263,6 @@ extern "C" {
 #define FanState_rpm_tag                         4
 #define CoilState_coil_type_tag                  1
 #define CoilState_coil_state_tag                 2
-#define McuToEverest_keep_alive_tag              1
-#define McuToEverest_reset_tag                   2
-#define McuToEverest_cp_state_tag                3
-#define McuToEverest_set_coil_state_response_tag 4
-#define McuToEverest_error_flags_tag             5
-#define McuToEverest_telemetry_tag               7
-#define McuToEverest_pp_state_tag                8
-#define McuToEverest_fan_state_tag               9
-#define McuToEverest_lock_state_tag              10
-#define McuToEverest_config_request_tag          11
-#define McuToEverest_connector_tag               6
 #define ConfigMotorLockType_type_tag             1
 #define BootConfigResponse_hw_rev_tag            1
 #define BootConfigResponse_lock_1_tag            2
@@ -258,6 +276,24 @@ extern "C" {
 #define EverestToMcu_config_response_tag         8
 #define EverestToMcu_set_fan_state_tag           9
 #define EverestToMcu_connector_tag               7
+#define Temperature_temp_tag                     1
+#define McuToEverest_keep_alive_tag              1
+#define McuToEverest_reset_tag                   2
+#define McuToEverest_cp_state_tag                3
+#define McuToEverest_set_coil_state_response_tag 4
+#define McuToEverest_error_flags_tag             5
+#define McuToEverest_telemetry_tag               7
+#define McuToEverest_pp_state_tag                8
+#define McuToEverest_fan_state_tag               9
+#define McuToEverest_lock_state_tag              10
+#define McuToEverest_config_request_tag          11
+#define McuToEverest_temperature_tag             12
+#define McuToEverest_connector_tag               6
+#define OpaqueData_data_tag                      1
+#define OpaqueData_id_tag                        2
+#define OpaqueData_chunks_total_tag              3
+#define OpaqueData_chunk_current_tag             4
+#define OpaqueData_connector_tag                 5
 
 /* Struct field encoding specification for nanopb */
 #define EverestToMcu_FIELDLIST(X, a) \
@@ -288,7 +324,8 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,telemetry,payload.telemetry),   7) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,pp_state,payload.pp_state),   8) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,fan_state,payload.fan_state),   9) \
 X(a, STATIC,   ONEOF,    UENUM,    (payload,lock_state,payload.lock_state),  10) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_request,payload.config_request),  11)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_request,payload.config_request),  11) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,temperature,payload.temperature),  12)
 #define McuToEverest_CALLBACK NULL
 #define McuToEverest_DEFAULT NULL
 #define McuToEverest_payload_keep_alive_MSGTYPE KeepAlive
@@ -297,6 +334,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_request,payload.config_reques
 #define McuToEverest_payload_telemetry_MSGTYPE Telemetry
 #define McuToEverest_payload_fan_state_MSGTYPE FanState
 #define McuToEverest_payload_config_request_MSGTYPE BootConfigRequest
+#define McuToEverest_payload_temperature_MSGTYPE Temperature
 
 #define ErrorFlags_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     diode_fault,       1) \
@@ -355,6 +393,20 @@ X(a, STATIC,   SINGULAR, UENUM,    type,              1)
 #define ConfigMotorLockType_CALLBACK NULL
 #define ConfigMotorLockType_DEFAULT NULL
 
+#define Temperature_FIELDLIST(X, a) \
+X(a, STATIC,   REPEATED, UINT32,   temp,              1)
+#define Temperature_CALLBACK NULL
+#define Temperature_DEFAULT NULL
+
+#define OpaqueData_FIELDLIST(X, a) \
+X(a, STATIC,   REPEATED, UINT32,   data,              1) \
+X(a, STATIC,   SINGULAR, UINT32,   id,                2) \
+X(a, STATIC,   SINGULAR, UINT32,   chunks_total,      3) \
+X(a, STATIC,   SINGULAR, UINT32,   chunk_current,     4) \
+X(a, STATIC,   SINGULAR, INT32,    connector,         5)
+#define OpaqueData_CALLBACK NULL
+#define OpaqueData_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
@@ -365,6 +417,8 @@ extern const pb_msgdesc_t CoilState_msg;
 extern const pb_msgdesc_t BootConfigRequest_msg;
 extern const pb_msgdesc_t BootConfigResponse_msg;
 extern const pb_msgdesc_t ConfigMotorLockType_msg;
+extern const pb_msgdesc_t Temperature_msg;
+extern const pb_msgdesc_t OpaqueData_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
@@ -377,6 +431,8 @@ extern const pb_msgdesc_t ConfigMotorLockType_msg;
 #define BootConfigRequest_fields &BootConfigRequest_msg
 #define BootConfigResponse_fields &BootConfigResponse_msg
 #define ConfigMotorLockType_fields &ConfigMotorLockType_msg
+#define Temperature_fields &Temperature_msg
+#define OpaqueData_fields &OpaqueData_msg
 
 /* Maximum encoded size of messages (where known) */
 #define BootConfigRequest_size                   0
@@ -388,8 +444,10 @@ extern const pb_msgdesc_t ConfigMotorLockType_msg;
 #define FanState_size                            15
 #define KeepAlive_size                           70
 #define McuToEverest_size                        83
-#define PHYVERSO_PB_H_MAX_SIZE                   EverestToMcu_size
+#define OpaqueData_size                          285
+#define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
 #define Telemetry_size                           12
+#define Temperature_size                         24
 
 #ifdef __cplusplus
 } /* extern "C" */
