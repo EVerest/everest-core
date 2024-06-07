@@ -16,44 +16,6 @@ const Event_PowerOff = 9;
 
 let global_info;
 
-let active_errors = {
-  DiodeFault: false,
-  BrownOut: false,
-  EnergyManagement: false,
-  PermanentFault: false,
-  MREC2GroundFailure: false,
-  MREC3HighTemperature: false,
-  MREC4OverCurrentFailure: false,
-  MREC5OverVoltage: false,
-  MREC6UnderVoltage: false,
-  MREC8EmergencyStop: false,
-  MREC10InvalidVehicleMode: false,
-  MREC14PilotFault: false,
-  MREC15PowerLoss: false,
-  MREC17EVSEContactorFault: false,
-  MREC18CableOverTempDerate: false,
-  MREC19CableOverTempStop: false,
-  MREC20PartialInsertion: false,
-  MREC23ProximityFault: false,
-  MREC24ConnectorVoltageHigh: false,
-  MREC25BrokenLatch: false,
-  MREC26CutCable: false,
-
-  ac_rcd_MREC2GroundFailure: false,
-  ac_rcd_VendorError: false,
-  ac_rcd_Selftest: false,
-  ac_rcd_AC: false,
-  ac_rcd_DC: false,
-
-  lock_ConnectorLockCapNotCharged: false,
-  lock_ConnectorLockUnexpectedOpen: false,
-  lock_ConnectorLockUnexpectedClose: false,
-  lock_ConnectorLockFailedLock: false,
-  lock_ConnectorLockFailedUnlock: false,
-  lock_MREC1ConnectorLockFailure: false,
-  lock_VendorError: false,
-};
-
 function publish_ac_nr_of_phases_available(mod, n) {
   mod.provides.board_support.publish.ac_nr_of_phases_available(n);
 }
@@ -267,7 +229,7 @@ function dutyCycleToAmps(dc) {
 }
 
 function error_BrownOut(mod, raise) {
-  if (!active_errors.BrownOut) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/BrownOut',
       '',
@@ -275,15 +237,13 @@ function error_BrownOut(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.BrownOut = true;
-  } else if (!raise && active_errors.BrownOut) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/BrownOut');
-    active_errors.BrownOut = false;
   }
 }
 
 function error_EnergyManagement(mod, raise) {
-  if (!active_errors.EnergyManagement) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/EnergyManagement',
       '',
@@ -291,15 +251,13 @@ function error_EnergyManagement(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.EnergyManagement = true;
-  } else if (!raise && active_errors.EnergyManagement) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/EnergyManagement');
-    active_errors.EnergyManagement = false;
   }
 }
 
 function error_PermanentFault(mod, raise) {
-  if (!active_errors.PermanentFault) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/PermanentFault',
       '',
@@ -307,15 +265,13 @@ function error_PermanentFault(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.PermanentFault = true;
-  } else if (!raise && active_errors.PermanentFault) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/PermanentFault');
-    active_errors.PermanentFault = false;
   }
 }
 
 function error_MREC2GroundFailure(mod, raise) {
-  if (!active_errors.MREC2GroundFailure) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC2GroundFailure',
       '',
@@ -323,15 +279,13 @@ function error_MREC2GroundFailure(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC2GroundFailure = true;
-  } else if (!raise && active_errors.MREC2GroundFailure) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC2GroundFailure');
-    active_errors.MREC2GroundFailure = false;
   }
 }
 
 function error_MREC3HighTemperature(mod, raise) {
-  if (!active_errors.MREC3HighTemperature) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC3HighTemperature',
       '',
@@ -339,15 +293,13 @@ function error_MREC3HighTemperature(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC3HighTemperature = true;
-  } else if (!raise && active_errors.MREC3HighTemperature) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC3HighTemperature');
-    active_errors.MREC3HighTemperature = false;
   }
 }
 
 function error_MREC4OverCurrentFailure(mod, raise) {
-  if (!active_errors.MREC4OverCurrentFailure) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC4OverCurrentFailure',
       '',
@@ -355,15 +307,13 @@ function error_MREC4OverCurrentFailure(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC4OverCurrentFailure = true;
-  } else if (!raise && active_errors.MREC4OverCurrentFailure) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC4OverCurrentFailure');
-    active_errors.MREC4OverCurrentFailure = false;
   }
 }
 
 function error_MREC5OverVoltage(mod, raise) {
-  if (!active_errors.MREC5OverVoltage) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC5OverVoltage',
       '',
@@ -371,15 +321,13 @@ function error_MREC5OverVoltage(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC5OverVoltage = true;
-  } else if (!raise && active_errors.MREC5OverVoltage) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC5OverVoltage');
-    active_errors.MREC5OverVoltage = false;
   }
 }
 
 function error_MREC6UnderVoltage(mod, raise) {
-  if (!active_errors.MREC6UnderVoltage) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC6UnderVoltage',
       '',
@@ -387,15 +335,13 @@ function error_MREC6UnderVoltage(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC6UnderVoltage = true;
-  } else if (!raise && active_errors.MREC6UnderVoltage) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC6UnderVoltage');
-    active_errors.MREC6UnderVoltage = false;
   }
 }
 
 function error_MREC8EmergencyStop(mod, raise) {
-  if (!active_errors.MREC8EmergencyStop) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC8EmergencyStop',
       '',
@@ -403,15 +349,13 @@ function error_MREC8EmergencyStop(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC8EmergencyStop = true;
-  } else if (!raise && active_errors.MREC8EmergencyStop) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC8EmergencyStop');
-    active_errors.MREC8EmergencyStop = false;
   }
 }
 
 function error_MREC10InvalidVehicleMode(mod, raise) {
-  if (!active_errors.MREC10InvalidVehicleMode) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC10InvalidVehicleMode',
       '',
@@ -419,15 +363,13 @@ function error_MREC10InvalidVehicleMode(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC10InvalidVehicleMode = true;
-  } else if (!raise && active_errors.MREC10InvalidVehicleMode) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC10InvalidVehicleMode');
-    active_errors.MREC10InvalidVehicleMode = false;
   }
 }
 
 function error_MREC14PilotFault(mod, raise) {
-  if (!active_errors.MREC14PilotFault) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC14PilotFault',
       '',
@@ -435,15 +377,13 @@ function error_MREC14PilotFault(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC14PilotFault = true;
-  } else if (!raise && active_errors.MREC14PilotFault) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC14PilotFault');
-    active_errors.MREC14PilotFault = false;
   }
 }
 
 function error_MREC15PowerLoss(mod, raise) {
-  if (!active_errors.MREC15PowerLoss) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC15PowerLoss',
       '',
@@ -451,15 +391,13 @@ function error_MREC15PowerLoss(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC15PowerLoss = true;
-  } else if (!raise && active_errors.MREC15PowerLoss) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC15PowerLoss');
-    active_errors.MREC15PowerLoss = false;
   }
 }
 
 function error_MREC17EVSEContactorFault(mod, raise) {
-  if (!active_errors.MREC17EVSEContactorFault) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC17EVSEContactorFault',
       '',
@@ -467,15 +405,13 @@ function error_MREC17EVSEContactorFault(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC17EVSEContactorFault = true;
-  } else if (!raise && active_errors.MREC17EVSEContactorFault) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC17EVSEContactorFault');
-    active_errors.MREC17EVSEContactorFault = false;
   }
 }
 
 function error_MREC18CableOverTempDerate(mod, raise) {
-  if (!active_errors.MREC18CableOverTempDerate) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC18CableOverTempDerate',
       '',
@@ -483,15 +419,13 @@ function error_MREC18CableOverTempDerate(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC18CableOverTempDerate = true;
-  } else if (!raise && active_errors.MREC18CableOverTempDerate) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC18CableOverTempDerate');
-    active_errors.MREC18CableOverTempDerate = false;
   }
 }
 
 function error_MREC19CableOverTempStop(mod, raise) {
-  if (!active_errors.MREC19CableOverTempStop) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC19CableOverTempStop',
       '',
@@ -499,15 +433,13 @@ function error_MREC19CableOverTempStop(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC19CableOverTempStop = true;
-  } else if (!raise && active_errors.MREC19CableOverTempStop) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC19CableOverTempStop');
-    active_errors.MREC19CableOverTempStop = false;
   }
 }
 
 function error_MREC20PartialInsertion(mod, raise) {
-  if (!active_errors.MREC20PartialInsertion) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC20PartialInsertion',
       '',
@@ -515,15 +447,13 @@ function error_MREC20PartialInsertion(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC20PartialInsertion = true;
-  } else if (!raise && active_errors.MREC20PartialInsertion) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC20PartialInsertion');
-    active_errors.MREC20PartialInsertion = false;
   }
 }
 
 function error_MREC23ProximityFault(mod, raise) {
-  if (!active_errors.MREC23ProximityFault) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC23ProximityFault',
       '',
@@ -531,15 +461,13 @@ function error_MREC23ProximityFault(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC23ProximityFault = true;
-  } else if (!raise && active_errors.MREC23ProximityFault) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC23ProximityFault');
-    active_errors.MREC23ProximityFault = false;
   }
 }
 
 function error_MREC24ConnectorVoltageHigh(mod, raise) {
-  if (!active_errors.MREC24ConnectorVoltageHigh) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC24ConnectorVoltageHigh',
       '',
@@ -547,15 +475,13 @@ function error_MREC24ConnectorVoltageHigh(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC24ConnectorVoltageHigh = true;
-  } else if (!raise && active_errors.MREC24ConnectorVoltageHigh) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC24ConnectorVoltageHigh');
-    active_errors.MREC24ConnectorVoltageHigh = false;
   }
 }
 
 function error_MREC25BrokenLatch(mod, raise) {
-  if (!active_errors.MREC25BrokenLatch) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC25BrokenLatch',
       '',
@@ -563,15 +489,13 @@ function error_MREC25BrokenLatch(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC25BrokenLatch = true;
-  } else if (!raise && active_errors.MREC25BrokenLatch) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC25BrokenLatch');
-    active_errors.MREC25BrokenLatch = false;
   }
 }
 
 function error_MREC26CutCable(mod, raise) {
-  if (raise && !active_errors.MREC26CutCable) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/MREC26CutCable',
       '',
@@ -579,15 +503,13 @@ function error_MREC26CutCable(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.MREC26CutCable = true;
-  } else if (!raise && active_errors.MREC26CutCable) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/MREC26CutCable');
-    active_errors.MREC26CutCable = false;
   }
 }
 
 function error_DiodeFault(mod, raise) {
-  if (raise && !active_errors.DiodeFault) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'evse_board_support/DiodeFault',
       '',
@@ -595,15 +517,13 @@ function error_DiodeFault(mod, raise) {
       'High'
     );
     mod.provides.board_support.raise_error(error);
-    active_errors.DiodeFault = true;
-  } else if (!raise && active_errors.DiodeFault) {
+  } else {
     mod.provides.board_support.clear_error('evse_board_support/DiodeFault');
-    active_errors.DiodeFault = false;
   }
 }
 
 function error_ac_rcd_MREC2GroundFailure(mod, raise) {
-  if (raise && !active_errors.ac_rcd_MREC2GroundFailure) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'ac_rcd/MREC2GroundFailure',
       '',
@@ -611,15 +531,13 @@ function error_ac_rcd_MREC2GroundFailure(mod, raise) {
       'High'
     );
     mod.provides.rcd.raise_error(error);
-    active_errors.ac_rcd_MREC2GroundFailure = true;
-  } else if (!raise && active_errors.ac_rcd_MREC2GroundFailure) {
+  } else {
     mod.provides.rcd.clear_error('ac_rcd/MREC2GroundFailure');
-    active_errors.ac_rcd_MREC2GroundFailure = false;
   }
 }
 
 function error_ac_rcd_VendorError(mod, raise) {
-  if (raise && !active_errors.ac_rcd_VendorError) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'ac_rcd/VendorError',
       '',
@@ -627,15 +545,13 @@ function error_ac_rcd_VendorError(mod, raise) {
       'High'
     );
     mod.provides.rcd.raise_error(error);
-    active_errors.ac_rcd_VendorError = true;
-  } else if (!raise && active_errors.ac_rcd_VendorError) {
+  } else {
     mod.provides.rcd.clear_error('ac_rcd/VendorError');
-    active_errors.ac_rcd_VendorError = false;
   }
 }
 
 function error_ac_rcd_Selftest(mod, raise) {
-  if (raise && !active_errors.ac_rcd_Selftest) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'ac_rcd/Selftest',
       '',
@@ -643,15 +559,13 @@ function error_ac_rcd_Selftest(mod, raise) {
       'High'
     );
     mod.provides.rcd.raise_error(error);
-    active_errors.ac_rcd_Selftest = true;
-  } else if (!raise && active_errors.ac_rcd_Selftest) {
+  } else {
     mod.provides.rcd.clear_error('ac_rcd/Selftest');
-    active_errors.ac_rcd_Selftest = false;
   }
 }
 
 function error_ac_rcd_AC(mod, raise) {
-  if (raise && !active_errors.ac_rcd_AC) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'ac_rcd/AC',
       '',
@@ -659,15 +573,13 @@ function error_ac_rcd_AC(mod, raise) {
       'High'
     );
     mod.provides.rcd.raise_error(error);
-    active_errors.ac_rcd_AC = true;
-  } else if (!raise && active_errors.ac_rcd_AC) {
+  } else {
     mod.provides.rcd.clear_error('ac_rcd/AC');
-    active_errors.ac_rcd_AC = false;
   }
 }
 
 function error_ac_rcd_DC(mod, raise) {
-  if (raise && !active_errors.ac_rcd_DC) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'ac_rcd/DC',
       '',
@@ -675,15 +587,13 @@ function error_ac_rcd_DC(mod, raise) {
       'High'
     );
     mod.provides.rcd.raise_error(error);
-    active_errors.ac_rcd_DC = true;
-  } else if (!raise && active_errors.ac_rcd_DC) {
+  } else {
     mod.provides.rcd.clear_error('ac_rcd/DC');
-    active_errors.ac_rcd_DC = false;
   }
 }
 
 function error_lock_ConnectorLockCapNotCharged(mod, raise) {
-  if (raise && !active_errors.lock_ConnectorLockCapNotCharged) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/ConnectorLockCapNotCharged',
       '',
@@ -691,15 +601,13 @@ function error_lock_ConnectorLockCapNotCharged(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_ConnectorLockCapNotCharged = true;
-  } else if (!raise && active_errors.lock_ConnectorLockCapNotCharged) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockCapNotCharged');
-    active_errors.lock_ConnectorLockCapNotCharged = false;
   }
 }
 
 function error_lock_ConnectorLockUnexpectedOpen(mod, raise) {
-  if (raise && !active_errors.lock_ConnectorLockUnexpectedOpen) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/ConnectorLockUnexpectedOpen',
       '',
@@ -707,15 +615,13 @@ function error_lock_ConnectorLockUnexpectedOpen(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_ConnectorLockUnexpectedOpen = true;
-  } else if (!raise && active_errors.lock_ConnectorLockUnexpectedOpen) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedOpen');
-    active_errors.lock_ConnectorLockUnexpectedOpen = false;
   }
 }
 
 function error_lock_ConnectorLockUnexpectedClose(mod, raise) {
-  if (raise && !active_errors.lock_ConnectorLockUnexpectedClose) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/ConnectorLockUnexpectedClose',
       '',
@@ -723,15 +629,13 @@ function error_lock_ConnectorLockUnexpectedClose(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_ConnectorLockUnexpectedClose = true;
-  } else if (!raise && active_errors.lock_ConnectorLockUnexpectedClose) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedClose');
-    active_errors.lock_ConnectorLockUnexpectedClose = false;
   }
 }
 
 function error_lock_ConnectorLockFailedLock(mod, raise) {
-  if (raise && !active_errors.lock_ConnectorLockFailedLock) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/ConnectorLockFailedLock',
       '',
@@ -739,15 +643,13 @@ function error_lock_ConnectorLockFailedLock(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_ConnectorLockFailedLock = true;
-  } else if (!raise && active_errors.ConnectorLockFailedLock) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedLock');
-    active_errors.lock_ConnectorLockFailedLock = false;
   }
 }
 
 function error_lock_ConnectorLockFailedUnlock(mod, raise) {
-  if (raise && !active_errors.lock_ConnectorLockFailedUnlock) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/ConnectorLockFailedUnlock',
       '',
@@ -755,15 +657,13 @@ function error_lock_ConnectorLockFailedUnlock(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_ConnectorLockFailedUnlock = true;
-  } else if (!raise && active_errors.lock_ConnectorLockFailedUnlock) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedUnlock');
-    active_errors.lock_ConnectorLockFailedUnlock = false;
   }
 }
 
 function error_lock_MREC1ConnectorLockFailure(mod, raise) {
-  if (raise && !active_errors.lock_MREC1ConnectorLockFailure) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/MREC1ConnectorLockFailure',
       '',
@@ -771,15 +671,13 @@ function error_lock_MREC1ConnectorLockFailure(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_MREC1ConnectorLockFailure = true;
-  } else if (!raise && active_errors.lock_MREC1ConnectorLockFailure) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/MREC1ConnectorLockFailure');
-    active_errors.lock_MREC1ConnectorLockFailure = false;
   }
 }
 
 function error_lock_VendorError(mod, raise) {
-  if (raise && !active_errors.lock_VendorError) {
+  if (raise) {
     let error = mod.provides.board_support.error_factory.create_error(
       'connector_lock/VendorError',
       '',
@@ -787,10 +685,8 @@ function error_lock_VendorError(mod, raise) {
       'High'
     );
     mod.provides.connector_lock.raise_error(error);
-    active_errors.lock_VendorError = true;
-  } else if (!raise && active_errors.lock_VendorError) {
+  } else {
     mod.provides.connector_lock.clear_error('connector_lock/VendorError');
-    active_errors.lock_VendorError = false;
   }
 }
 
@@ -799,7 +695,7 @@ function error_lock_VendorError(mod, raise) {
 // Note that in real life the clearing of errors may differ between BSPs depending on the
 // hardware implementation.
 function clear_disconnect_errors(mod) {
-  if (active_errors.DiodeFault) {
+  if (mod.provides.board_support.error_state_monitor.is_error_active('evse_board_support/DiodeFault','')) {
     error_DiodeFault(mod, false);
   }
 }
