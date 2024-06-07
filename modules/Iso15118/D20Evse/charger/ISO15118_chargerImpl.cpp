@@ -149,8 +149,30 @@ void ISO15118_chargerImpl::ready() {
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
     std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) {
-    // your code for cmd setup goes here
+    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode, bool& bidirectional) {
+
+    std::vector<iso15118::message_20::ServiceCategory> supported_energy_transfer_services;
+
+    for (auto mode : supported_energy_transfer_modes) {
+        if (mode == types::iso15118_charger::EnergyTransferMode::AC_single_phase_core ||
+            mode == types::iso15118_charger::EnergyTransferMode::AC_three_phase_core) {
+            supported_energy_transfer_services.push_back(iso15118::message_20::ServiceCategory::AC);
+            if (bidirectional) {
+                supported_energy_transfer_services.push_back(iso15118::message_20::ServiceCategory::AC_BPT);
+            }
+        } else if (mode == types::iso15118_charger::EnergyTransferMode::DC_core ||
+                   mode == types::iso15118_charger::EnergyTransferMode::DC_extended ||
+                   mode == types::iso15118_charger::EnergyTransferMode::DC_combo_core ||
+                   mode == types::iso15118_charger::EnergyTransferMode::DC_unique) {
+            supported_energy_transfer_services.push_back(iso15118::message_20::ServiceCategory::DC);
+            if (bidirectional) {
+                supported_energy_transfer_services.push_back(iso15118::message_20::ServiceCategory::DC_BPT);
+            }
+        }
+    }
+
+    // TODO(sl): Check if ISO-2 evse_id format is the same for ISO-20
+    controller->setup_config(evse_id.EVSE_ID, supported_energy_transfer_services);
 }
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(
@@ -163,12 +185,14 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
 
     std::vector<iso15118::message_20::Authorization> auth_services;
 
+    // Note(sl): Right now only eim is supported!
     for (auto& option : payment_options) {
         if (option == types::iso15118_charger::PaymentOption::ExternalPayment) {
             auth_services.push_back(iso15118::message_20::Authorization::EIM);
-        } else if (option == types::iso15118_charger::PaymentOption::Contract) {
-            auth_services.push_back(iso15118::message_20::Authorization::PnC);
         }
+        // } else if (option == types::iso15118_charger::PaymentOption::Contract) {
+        //     auth_services.push_back(iso15118::message_20::Authorization::PnC);
+        // }
     }
 
     controller->setup_session(auth_services, supported_certificate_service);

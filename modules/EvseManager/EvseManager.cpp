@@ -200,6 +200,8 @@ void EvseManager::ready() {
 
         auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
 
+        bool support_bidi = false;
+
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
         std::vector<types::iso15118_charger::EnergyTransferMode> transfer_modes;
         if (config.charge_mode == "AC") {
@@ -215,7 +217,10 @@ void EvseManager::ready() {
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
 
-            update_powersupply_capabilities(get_powersupply_capabilities());
+            const auto caps = get_powersupply_capabilities();
+            update_powersupply_capabilities(caps);
+
+            support_bidi = caps.bidirectional;
 
             // Set present measurements on HLC to sane defaults
             types::iso15118_charger::DC_EVSEPresentVoltage_Current present_values;
@@ -476,7 +481,7 @@ void EvseManager::ready() {
 
         r_hlc[0]->call_receipt_is_required(config.ev_receipt_required);
 
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, support_bidi);
 
         // reset error flags
         r_hlc[0]->call_reset_error();
@@ -980,8 +985,9 @@ void EvseManager::setup_fake_DC_mode() {
     r_hlc[0]->call_update_dc_minimum_limits(evseMinLimits);
 
     const auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
+    const auto support_bidi = false;
 
-    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+    r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, support_bidi);
 }
 
 void EvseManager::setup_AC_mode() {
@@ -1003,9 +1009,10 @@ void EvseManager::setup_AC_mode() {
     types::iso15118_charger::SetupPhysicalValues setup_physical_values;
 
     const auto sae_mode = types::iso15118_charger::SAE_J2847_Bidi_Mode::None;
+    const auto support_bidi = false;
 
     if (get_hlc_enabled()) {
-        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
+        r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging, support_bidi);
     }
 }
 
