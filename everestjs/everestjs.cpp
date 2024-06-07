@@ -322,8 +322,9 @@ static Napi::Value clear_error(const std::string& impl_id, const Napi::CallbackI
                 ctx->everest->get_error_manager_impl(impl_id)->clear_error(convertToErrorType(info[0]),
                                                                            convertToErrorSubType(info[1]));
             }
+        } else {
+            throw Everest::EverestApiError("There is no handler for " + std::to_string(info_length) + " arguments");
         }
-        throw Everest::EverestApiError("There is no handler for " + std::to_string(info_length) + " arguments");
     } catch (std::exception& e) {
         EVLOG_AND_RETHROW(env);
     }
