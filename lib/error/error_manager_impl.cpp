@@ -8,6 +8,8 @@
 #include <utils/error/error_exceptions.hpp>
 #include <utils/error/error_type_map.hpp>
 
+#include <everest/logging.hpp>
+
 #include <list>
 #include <memory>
 
@@ -39,10 +41,14 @@ void ErrorManagerImpl::raise_error(const Error& error) {
         }
     }
     if (!can_be_raised(error.type, error.sub_type)) {
-        throw EverestArgumentError("Error type " + error.type + " is already active.");
+        EVLOG_warning << "Error can't be raised, because type " << error.type << ", sub_type " << error.sub_type
+                      << " is already active.";
+        return;
     }
     database->add_error(std::make_shared<Error>(error));
     this->publish_raised_error(error);
+    EVLOG_error << "Error raised, type: " << error.type << ", sub_type: " << error.sub_type
+                << ", message: " << error.message;
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const bool clear_all) {
@@ -51,19 +57,26 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const b
         return clear_error(type, sub_type);
     }
     if (!can_be_cleared(type)) {
-        throw EverestArgumentError("Errors can't be cleared, becauce type " + type + " is not active.");
+        EVLOG_warning << "Errors can't be cleared, because type " << type << " is not active.";
+        return {};
     }
     std::list<ErrorFilter> filters = {ErrorFilter(TypeFilter(type))};
     std::list<ErrorPtr> res = database->remove_errors(filters);
+    std::stringstream ss;
+    ss << "Cleared " << res.size() << " errors of type " << type << " with sub_types:" << std::endl;
     for (const ErrorPtr error : res) {
         this->publish_cleared_error(*error);
+        ss << "  - " << error->sub_type << std::endl;
     }
+    EVLOG_info << ss.str();
     return res;
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const ErrorSubType& sub_type) {
     if (!can_be_cleared(type, sub_type)) {
-        throw EverestArgumentError("Error can't be cleared, because it is not active.");
+        EVLOG_warning << "Error can't be cleared, because type " << type << ", sub_type " << sub_type
+                      << " is not active.";
+        return {};
     }
     std::list<ErrorFilter> filters = {ErrorFilter(TypeFilter(type)), ErrorFilter(SubTypeFilter(sub_type))};
     std::list<ErrorPtr> res = database->remove_errors(filters);
@@ -73,16 +86,21 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const E
     const ErrorPtr error = res.front();
     error->state = State::ClearedByModule;
     this->publish_cleared_error(*error);
+    EVLOG_info << "Cleared error of type " << type << " with sub_type " << sub_type;
     return res;
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors() {
     std::list<ErrorFilter> filters = {};
     std::list<ErrorPtr> res = database->remove_errors(filters);
+    std::stringstream ss;
+    ss << "Cleared " << res.size() << " errors:" << std::endl;
     for (const ErrorPtr error : res) {
         error->state = State::ClearedByModule;
         this->publish_cleared_error(*error);
+        ss << "  - type: " << error->type << ", sub_type: " << error->sub_type << std::endl;
     }
+    EVLOG_info << ss.str();
     return res;
 }
 
