@@ -2004,9 +2004,14 @@ static enum v2g_event handle_iso_cable_check(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (iso1isolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (iso1EVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_ISOLATION);
     res->DC_EVSEStatus.NotificationMaxDelay = (uint16_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEProcessing = (iso1EVSEProcessingType)conn->ctx->evse_v2g_data.evse_processing[PHASE_ISOLATION];
+
+    if (conn->ctx->intl_emergency_shutdown == false && res->EVSEProcessing == dinEVSEProcessingType_Finished) {
+        res->DC_EVSEStatus.EVSEStatusCode = iso1DC_EVSEStatusCodeType_EVSE_Ready;
+    } else {
+        res->DC_EVSEStatus.EVSEStatusCode = get_emergency_status_code(conn->ctx, PHASE_ISOLATION);
+    }
 
     /* Check the current response code and check if no external error has occurred */
     next_event = (v2g_event)iso_validate_response_code(&res->ResponseCode, conn);

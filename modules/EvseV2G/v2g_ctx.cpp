@@ -149,10 +149,14 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso1isolationLevelType_Invalid;
     ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1; // Shall be used in DIN
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
+    ctx->evse_v2g_data.evse_status_code[PHASE_INIT] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+    ctx->evse_v2g_data.evse_status_code[PHASE_AUTH] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
     ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso1DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
-    ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
+    ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive;
     ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
     ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
+    ctx->evse_v2g_data.evse_status_code[PHASE_WELDING] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+    ctx->evse_v2g_data.evse_status_code[PHASE_STOP] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
     memset(ctx->evse_v2g_data.evse_processing, iso1EVSEProcessingType_Ongoing, PHASE_LENGTH);
     ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso1EVSEProcessingType_Finished; // Skip parameter phase
 
