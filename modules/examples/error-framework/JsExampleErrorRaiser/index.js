@@ -138,7 +138,7 @@ boot_module(async ({
   mod.provides.example_raiser.raise_error(error);
   check_conditions(mod);
   await sleep(1000);
-  mod.provides.example_raiser.clear_error(error.type, true);
+  mod.provides.example_raiser.clear_error(error.type, error.sub_type);
   check_conditions(mod);
   await sleep(1000);
   error = mod.provides.example_raiser.error_factory.create_error(
@@ -149,7 +149,7 @@ boot_module(async ({
   mod.provides.example_raiser.raise_error(error);
   check_conditions(mod);
   await sleep(1000);
-  mod.provides.example_raiser.clear_error(error.type, true);
+  mod.provides.example_raiser.clear_error(error.type, error.sub_type);
   check_conditions(mod);
   await sleep(1000);
   error = mod.provides.example_raiser.error_factory.create_error(
