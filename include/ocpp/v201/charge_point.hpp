@@ -412,6 +412,12 @@ private:
 
     Everest::SteadyTimer certificate_signed_timer;
 
+    // threads and synchronization
+    bool auth_cache_cleanup_required;
+    std::condition_variable auth_cache_cleanup_cv;
+    std::mutex auth_cache_cleanup_mutex;
+    std::thread auth_cache_cleanup_thread;
+
     // states
     RegistrationStatusEnum registration_status;
     FirmwareStatusEnum firmware_status;
@@ -475,6 +481,9 @@ private:
                                       const ConnectorStatusEnum status);
     void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 
+    void trigger_authorization_cache_cleanup();
+    void cache_cleanup_handler();
+
     /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
     /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
     /// present \param network_configuration_priority \return
@@ -524,10 +533,6 @@ private:
 
     /// \brief Restores all connectors to their persisted state
     void restore_all_connector_states();
-
-    /// \brief Sets the cache lifetime value in \param id_token_info with configured AuthCacheLifeTime
-    /// if it was not already set
-    void update_id_token_cache_lifetime(IdTokenInfo& id_token_info);
 
     ///\brief Calculate and update the authorization cache size in the device model
     ///

@@ -45,6 +45,12 @@ public:
     /// \param id_token_info
     void authorization_cache_insert_entry(const std::string& id_token_hash, const IdTokenInfo& id_token_info);
 
+    /// \brief Updates the last_used field in the entry
+    ///
+    /// \param id_token_hash
+    /// \retval true if entry was updated
+    void authorization_cache_update_last_used(const std::string& id_token_hash);
+
     /// \brief Gets cache entry for given \p id_token_hash if present
     /// \param id_token_hash
     /// \return
@@ -54,12 +60,24 @@ public:
     /// \param id_token_hash
     void authorization_cache_delete_entry(const std::string& id_token_hash);
 
+    /// \brief Removes up to \p nr_to_remove items from the cache starting from the least recently used
+    ///
+    /// \param nr_to_remove Number of items to remove from the database
+    /// \retval True if succeeded
+    void authorization_cache_delete_nr_of_oldest_entries(size_t nr_to_remove);
+
+    /// \brief Removes all entries from the cache that have passed their expiry date or auth cache lifetime
+    ///
+    /// \param auth_cache_lifetime The maximum time tokens can stay in the cache without being used
+    /// \retval True if succeeded
+    void authorization_cache_delete_expired_entries(std::optional<std::chrono::seconds> auth_cache_lifetime);
+
     /// \brief Deletes all entries of the AUTH_CACHE table. Returns true if the operation was successful, else false
     void authorization_cache_clear();
 
-    ///\brief Get the binary size of the authorization cache table
+    /// \brief Get the binary size of the authorization cache table
     ///
-    ///\retval The size of the authorization cache table in bytes
+    /// \retval The size of the authorization cache table in bytes
     size_t authorization_cache_get_binary_size();
 
     // Availability
