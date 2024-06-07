@@ -200,11 +200,12 @@ void Everest::check_code() {
     for (auto& element : module_manifest["provides"].items()) {
         auto const& impl_id = element.key();
         auto impl_manifest = element.value();
+        auto interface_definition = this->config.get_interface_definition(impl_manifest.at("interface"));
 
         std::set<std::string> cmds_not_registered;
         std::set<std::string> impl_manifest_cmds_set;
-        if (impl_manifest.contains("cmds")) {
-            impl_manifest_cmds_set = Config::keys(impl_manifest["cmds"]);
+        if (interface_definition.contains("cmds")) {
+            impl_manifest_cmds_set = Config::keys(interface_definition.at("cmds"));
         }
         std::set<std::string> registered_cmds_set = this->registered_cmds[impl_id];
 

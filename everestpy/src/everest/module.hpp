@@ -22,6 +22,8 @@ public:
     ModuleSetup say_hello();
 
     void init_done(std::function<void()> on_ready_handler) {
+        this->handle->check_code();
+
         if (on_ready_handler) {
             handle->register_on_ready_handler(std::move(on_ready_handler));
         }
