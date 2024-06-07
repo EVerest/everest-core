@@ -277,7 +277,7 @@ function error_BrownOut(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.BrownOut = true;
   } else if (!raise && active_errors.BrownOut) {
-    mod.provides.board_support.clear_error('evse_board_support/BrownOut', true);
+    mod.provides.board_support.clear_error('evse_board_support/BrownOut');
     active_errors.BrownOut = false;
   }
 }
@@ -293,7 +293,7 @@ function error_EnergyManagement(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.EnergyManagement = true;
   } else if (!raise && active_errors.EnergyManagement) {
-    mod.provides.board_support.clear_error('evse_board_support/EnergyManagement', true);
+    mod.provides.board_support.clear_error('evse_board_support/EnergyManagement');
     active_errors.EnergyManagement = false;
   }
 }
@@ -309,7 +309,7 @@ function error_PermanentFault(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.PermanentFault = true;
   } else if (!raise && active_errors.PermanentFault) {
-    mod.provides.board_support.clear_error('evse_board_support/PermanentFault', true);
+    mod.provides.board_support.clear_error('evse_board_support/PermanentFault');
     active_errors.PermanentFault = false;
   }
 }
@@ -325,7 +325,7 @@ function error_MREC2GroundFailure(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC2GroundFailure = true;
   } else if (!raise && active_errors.MREC2GroundFailure) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC2GroundFailure', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC2GroundFailure');
     active_errors.MREC2GroundFailure = false;
   }
 }
@@ -341,7 +341,7 @@ function error_MREC3HighTemperature(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC3HighTemperature = true;
   } else if (!raise && active_errors.MREC3HighTemperature) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC3HighTemperature', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC3HighTemperature');
     active_errors.MREC3HighTemperature = false;
   }
 }
@@ -357,7 +357,7 @@ function error_MREC4OverCurrentFailure(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC4OverCurrentFailure = true;
   } else if (!raise && active_errors.MREC4OverCurrentFailure) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC4OverCurrentFailure', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC4OverCurrentFailure');
     active_errors.MREC4OverCurrentFailure = false;
   }
 }
@@ -373,7 +373,7 @@ function error_MREC5OverVoltage(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC5OverVoltage = true;
   } else if (!raise && active_errors.MREC5OverVoltage) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC5OverVoltage', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC5OverVoltage');
     active_errors.MREC5OverVoltage = false;
   }
 }
@@ -389,7 +389,7 @@ function error_MREC6UnderVoltage(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC6UnderVoltage = true;
   } else if (!raise && active_errors.MREC6UnderVoltage) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC6UnderVoltage', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC6UnderVoltage');
     active_errors.MREC6UnderVoltage = false;
   }
 }
@@ -405,7 +405,7 @@ function error_MREC8EmergencyStop(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC8EmergencyStop = true;
   } else if (!raise && active_errors.MREC8EmergencyStop) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC8EmergencyStop', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC8EmergencyStop');
     active_errors.MREC8EmergencyStop = false;
   }
 }
@@ -421,7 +421,7 @@ function error_MREC10InvalidVehicleMode(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC10InvalidVehicleMode = true;
   } else if (!raise && active_errors.MREC10InvalidVehicleMode) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC10InvalidVehicleMode', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC10InvalidVehicleMode');
     active_errors.MREC10InvalidVehicleMode = false;
   }
 }
@@ -437,7 +437,7 @@ function error_MREC14PilotFault(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC14PilotFault = true;
   } else if (!raise && active_errors.MREC14PilotFault) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC14PilotFault', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC14PilotFault');
     active_errors.MREC14PilotFault = false;
   }
 }
@@ -453,7 +453,7 @@ function error_MREC15PowerLoss(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC15PowerLoss = true;
   } else if (!raise && active_errors.MREC15PowerLoss) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC15PowerLoss', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC15PowerLoss');
     active_errors.MREC15PowerLoss = false;
   }
 }
@@ -469,7 +469,7 @@ function error_MREC17EVSEContactorFault(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC17EVSEContactorFault = true;
   } else if (!raise && active_errors.MREC17EVSEContactorFault) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC17EVSEContactorFault', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC17EVSEContactorFault');
     active_errors.MREC17EVSEContactorFault = false;
   }
 }
@@ -485,7 +485,7 @@ function error_MREC18CableOverTempDerate(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC18CableOverTempDerate = true;
   } else if (!raise && active_errors.MREC18CableOverTempDerate) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC18CableOverTempDerate', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC18CableOverTempDerate');
     active_errors.MREC18CableOverTempDerate = false;
   }
 }
@@ -501,7 +501,7 @@ function error_MREC19CableOverTempStop(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC19CableOverTempStop = true;
   } else if (!raise && active_errors.MREC19CableOverTempStop) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC19CableOverTempStop', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC19CableOverTempStop');
     active_errors.MREC19CableOverTempStop = false;
   }
 }
@@ -517,7 +517,7 @@ function error_MREC20PartialInsertion(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC20PartialInsertion = true;
   } else if (!raise && active_errors.MREC20PartialInsertion) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC20PartialInsertion', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC20PartialInsertion');
     active_errors.MREC20PartialInsertion = false;
   }
 }
@@ -533,7 +533,7 @@ function error_MREC23ProximityFault(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC23ProximityFault = true;
   } else if (!raise && active_errors.MREC23ProximityFault) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC23ProximityFault', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC23ProximityFault');
     active_errors.MREC23ProximityFault = false;
   }
 }
@@ -549,7 +549,7 @@ function error_MREC24ConnectorVoltageHigh(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC24ConnectorVoltageHigh = true;
   } else if (!raise && active_errors.MREC24ConnectorVoltageHigh) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC24ConnectorVoltageHigh', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC24ConnectorVoltageHigh');
     active_errors.MREC24ConnectorVoltageHigh = false;
   }
 }
@@ -565,7 +565,7 @@ function error_MREC25BrokenLatch(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC25BrokenLatch = true;
   } else if (!raise && active_errors.MREC25BrokenLatch) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC25BrokenLatch', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC25BrokenLatch');
     active_errors.MREC25BrokenLatch = false;
   }
 }
@@ -581,7 +581,7 @@ function error_MREC26CutCable(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.MREC26CutCable = true;
   } else if (!raise && active_errors.MREC26CutCable) {
-    mod.provides.board_support.clear_error('evse_board_support/MREC26CutCable', true);
+    mod.provides.board_support.clear_error('evse_board_support/MREC26CutCable');
     active_errors.MREC26CutCable = false;
   }
 }
@@ -597,7 +597,7 @@ function error_DiodeFault(mod, raise) {
     mod.provides.board_support.raise_error(error);
     active_errors.DiodeFault = true;
   } else if (!raise && active_errors.DiodeFault) {
-    mod.provides.board_support.clear_error('evse_board_support/DiodeFault', true);
+    mod.provides.board_support.clear_error('evse_board_support/DiodeFault');
     active_errors.DiodeFault = false;
   }
 }
@@ -613,7 +613,7 @@ function error_ac_rcd_MREC2GroundFailure(mod, raise) {
     mod.provides.rcd.raise_error(error);
     active_errors.ac_rcd_MREC2GroundFailure = true;
   } else if (!raise && active_errors.ac_rcd_MREC2GroundFailure) {
-    mod.provides.rcd.clear_error('ac_rcd/MREC2GroundFailure', true);
+    mod.provides.rcd.clear_error('ac_rcd/MREC2GroundFailure');
     active_errors.ac_rcd_MREC2GroundFailure = false;
   }
 }
@@ -629,7 +629,7 @@ function error_ac_rcd_VendorError(mod, raise) {
     mod.provides.rcd.raise_error(error);
     active_errors.ac_rcd_VendorError = true;
   } else if (!raise && active_errors.ac_rcd_VendorError) {
-    mod.provides.rcd.clear_error('ac_rcd/VendorError', true);
+    mod.provides.rcd.clear_error('ac_rcd/VendorError');
     active_errors.ac_rcd_VendorError = false;
   }
 }
@@ -645,7 +645,7 @@ function error_ac_rcd_Selftest(mod, raise) {
     mod.provides.rcd.raise_error(error);
     active_errors.ac_rcd_Selftest = true;
   } else if (!raise && active_errors.ac_rcd_Selftest) {
-    mod.provides.rcd.clear_error('ac_rcd/Selftest', true);
+    mod.provides.rcd.clear_error('ac_rcd/Selftest');
     active_errors.ac_rcd_Selftest = false;
   }
 }
@@ -661,7 +661,7 @@ function error_ac_rcd_AC(mod, raise) {
     mod.provides.rcd.raise_error(error);
     active_errors.ac_rcd_AC = true;
   } else if (!raise && active_errors.ac_rcd_AC) {
-    mod.provides.rcd.clear_error('ac_rcd/AC', true);
+    mod.provides.rcd.clear_error('ac_rcd/AC');
     active_errors.ac_rcd_AC = false;
   }
 }
@@ -677,7 +677,7 @@ function error_ac_rcd_DC(mod, raise) {
     mod.provides.rcd.raise_error(error);
     active_errors.ac_rcd_DC = true;
   } else if (!raise && active_errors.ac_rcd_DC) {
-    mod.provides.rcd.clear_error('ac_rcd/DC', true);
+    mod.provides.rcd.clear_error('ac_rcd/DC');
     active_errors.ac_rcd_DC = false;
   }
 }
@@ -693,7 +693,7 @@ function error_lock_ConnectorLockCapNotCharged(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_ConnectorLockCapNotCharged = true;
   } else if (!raise && active_errors.lock_ConnectorLockCapNotCharged) {
-    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockCapNotCharged', true);
+    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockCapNotCharged');
     active_errors.lock_ConnectorLockCapNotCharged = false;
   }
 }
@@ -709,7 +709,7 @@ function error_lock_ConnectorLockUnexpectedOpen(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_ConnectorLockUnexpectedOpen = true;
   } else if (!raise && active_errors.lock_ConnectorLockUnexpectedOpen) {
-    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedOpen', true);
+    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedOpen');
     active_errors.lock_ConnectorLockUnexpectedOpen = false;
   }
 }
@@ -725,7 +725,7 @@ function error_lock_ConnectorLockUnexpectedClose(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_ConnectorLockUnexpectedClose = true;
   } else if (!raise && active_errors.lock_ConnectorLockUnexpectedClose) {
-    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedClose', true);
+    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockUnexpectedClose');
     active_errors.lock_ConnectorLockUnexpectedClose = false;
   }
 }
@@ -741,7 +741,7 @@ function error_lock_ConnectorLockFailedLock(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_ConnectorLockFailedLock = true;
   } else if (!raise && active_errors.ConnectorLockFailedLock) {
-    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedLock', true);
+    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedLock');
     active_errors.lock_ConnectorLockFailedLock = false;
   }
 }
@@ -757,7 +757,7 @@ function error_lock_ConnectorLockFailedUnlock(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_ConnectorLockFailedUnlock = true;
   } else if (!raise && active_errors.lock_ConnectorLockFailedUnlock) {
-    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedUnlock', true);
+    mod.provides.connector_lock.clear_error('connector_lock/ConnectorLockFailedUnlock');
     active_errors.lock_ConnectorLockFailedUnlock = false;
   }
 }
@@ -773,7 +773,7 @@ function error_lock_MREC1ConnectorLockFailure(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_MREC1ConnectorLockFailure = true;
   } else if (!raise && active_errors.lock_MREC1ConnectorLockFailure) {
-    mod.provides.connector_lock.clear_error('connector_lock/MREC1ConnectorLockFailure', true);
+    mod.provides.connector_lock.clear_error('connector_lock/MREC1ConnectorLockFailure');
     active_errors.lock_MREC1ConnectorLockFailure = false;
   }
 }
@@ -789,7 +789,7 @@ function error_lock_VendorError(mod, raise) {
     mod.provides.connector_lock.raise_error(error);
     active_errors.lock_VendorError = true;
   } else if (!raise && active_errors.lock_VendorError) {
-    mod.provides.connector_lock.clear_error('connector_lock/VendorError', true);
+    mod.provides.connector_lock.clear_error('connector_lock/VendorError');
     active_errors.lock_VendorError = false;
   }
 }
