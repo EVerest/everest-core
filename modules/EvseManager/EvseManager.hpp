@@ -211,8 +211,9 @@ public:
         r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
         types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
-        evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;
-        evseMinLimits.EVSEMinimumVoltageLimit = powersupply_capabilities.min_export_voltage_V;
+        evseMinLimits.minimum_current = powersupply_capabilities.min_export_current_A;
+        evseMinLimits.minimum_voltage = powersupply_capabilities.min_export_voltage_V;
+        evseMinLimits.minimum_power = evseMinLimits.minimum_current * evseMinLimits.minimum_voltage;
         r_hlc[0]->call_update_dc_minimum_limits(evseMinLimits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
@@ -223,9 +224,9 @@ public:
 
         // Inform charger about new max limits
         types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
-        evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
-        evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
-        evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
+        evseMaxLimits.maximum_current = powersupply_capabilities.max_export_current_A;
+        evseMaxLimits.maximum_power = powersupply_capabilities.max_export_power_W;
+        evseMaxLimits.maximum_voltage = powersupply_capabilities.max_export_voltage_V;
         if (charger) {
             charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
         }

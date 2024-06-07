@@ -161,47 +161,73 @@ types:
         minimum: 0
         maximum: 10000
   DC_EVSEMaximumLimits:
-    description: Maximum Values (current, power and voltage) the EVSE can deliver
+    description: Maximum Values the EVSE can deliver
     type: object
     additionalProperties: false
     required:
-      - EVSEMaximumCurrentLimit
-      - EVSEMaximumPowerLimit
-      - EVSEMaximumVoltageLimit
+      - maximum_current
+      - maximum_power
+      - maximum_voltage
     properties:
-      EVSEMaximumCurrentLimit:
+      maximum_current:
         description: Maximum current the EVSE can deliver in A
         type: number
         minimum: -10000
         maximum: 10000
-      EVSEMaximumPowerLimit:
+      maximum_power:
         description: Maximum power the EVSE can deliver in W
         type: number
         minimum: -1000000
         maximum: 1000000
-      EVSEMaximumVoltageLimit:
+      maximum_voltage:
         description: Maximum voltage the EVSE can deliver in V
         type: number
         minimum: 0
         maximum: 1500
+      maximum_discharge_current:
+        description: Maximum discharge current the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 10000
+      maximum_discharge_power:
+        description: Maximum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
   DC_EVSEMinimumLimits:
-    description: Minimum Values (current and voltage) the EVSE can deliver
+    description: Minimum Values the EVSE can deliver
     type: object
     additionalProperties: false
     required:
-      - EVSEMinimumCurrentLimit
-      - EVSEMinimumVoltageLimit
+      - minimum_current
+      - minimum_voltage
+      - minimum_power
     properties:
-      EVSEMinimumCurrentLimit:
+      minimum_current:
         description: Minimum current the EVSE can deliver with the expected accuracy in A
         type: number
         minimum: 0
         maximum: 10000
-      EVSEMinimumVoltageLimit:
+      minimum_voltage:
         description: Minimum voltage the EVSE can deliver with the expected accuracy in V
         type: number
         minimum: 0
         maximum: 1500
+      minimum_power:
+        description: Minimum power the EVSE can deliver with the expected accuracy in W
+        type: number
+        minimum: 0
+        maximum: 1000000
+      minimum_discharge_current:
+        description: Minimum discharge current the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 10000
+      minimum_discharge_power:
+        description: Minimum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
   SetupPhysicalValues:
     description: >-
       Initial physical values for setup a AC or DC charging session

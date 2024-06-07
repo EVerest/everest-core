@@ -330,21 +330,21 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
     types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) {
-    if (maximum_limits.EVSEMaximumCurrentLimit > 300.) {
+    if (maximum_limits.maximum_current > 300.) {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.EVSEMaximumCurrentLimit, 1, iso2_unitSymbolType_A);
+                                      maximum_limits.maximum_current, 1, iso2_unitSymbolType_A);
     } else {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.EVSEMaximumCurrentLimit, 2, iso2_unitSymbolType_A);
+                                      maximum_limits.maximum_current, 2, iso2_unitSymbolType_A);
     }
     v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
 
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, maximum_limits.EVSEMaximumPowerLimit,
+    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, maximum_limits.maximum_power,
                             iso2_unitSymbolType_W);
     v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
-                                  maximum_limits.EVSEMaximumVoltageLimit, 1, iso2_unitSymbolType_V);
+                                  maximum_limits.maximum_voltage, 1, iso2_unitSymbolType_V);
     v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used = 1;
 }
 
@@ -352,10 +352,10 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
     types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
-                                  static_cast<long long int>(minimum_limits.EVSEMinimumCurrentLimit), 1,
+                                  static_cast<long long int>(minimum_limits.minimum_current), 1,
                                   iso2_unitSymbolType_A);
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
-                                  static_cast<long long int>(minimum_limits.EVSEMinimumVoltageLimit), 1,
+                                  static_cast<long long int>(minimum_limits.minimum_voltage), 1,
                                   iso2_unitSymbolType_V);
 }
 

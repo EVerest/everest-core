@@ -433,64 +433,64 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         // current limit is too low, i.e. charging will not reach the actual watt value.
                         // FIXME: we could use some magic here that involves actual measured voltage as well.
                         if (actual_voltage > 10) {
-                            evseMaxLimits.EVSEMaximumCurrentLimit =
+                            evseMaxLimits.maximum_current =
                                 value.limits_root_side.value().total_power_W.value() / actual_voltage;
                         } else {
-                            evseMaxLimits.EVSEMaximumCurrentLimit =
+                            evseMaxLimits.maximum_current =
                                 value.limits_root_side.value().total_power_W.value() / target_voltage;
                         }
                     } else {
-                        evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
+                        evseMaxLimits.maximum_current = powersupply_capabilities.max_export_current_A;
                     }
 
-                    if (evseMaxLimits.EVSEMaximumCurrentLimit > powersupply_capabilities.max_export_current_A)
-                        evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
+                    if (evseMaxLimits.maximum_current > powersupply_capabilities.max_export_current_A)
+                        evseMaxLimits.maximum_current = powersupply_capabilities.max_export_current_A;
 
                     if (powersupply_capabilities.max_import_current_A.has_value() &&
-                        evseMaxLimits.EVSEMaximumCurrentLimit < -powersupply_capabilities.max_import_current_A.value())
-                        evseMaxLimits.EVSEMaximumCurrentLimit = -powersupply_capabilities.max_import_current_A.value();
+                        evseMaxLimits.maximum_current < -powersupply_capabilities.max_import_current_A.value())
+                        evseMaxLimits.maximum_current = -powersupply_capabilities.max_import_current_A.value();
 
-                    // now evseMaxLimits.EVSEMaximumCurrentLimit is between
+                    // now evseMaxLimits.maximum_current is between
                     // -max_import_current_A ... +max_export_current_A
 
-                    evseMaxLimits.EVSEMaximumPowerLimit = value.limits_root_side.value().total_power_W.value();
-                    if (evseMaxLimits.EVSEMaximumPowerLimit > powersupply_capabilities.max_export_power_W)
-                        evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
+                    evseMaxLimits.maximum_power = value.limits_root_side.value().total_power_W.value();
+                    if (evseMaxLimits.maximum_power > powersupply_capabilities.max_export_power_W)
+                        evseMaxLimits.maximum_power = powersupply_capabilities.max_export_power_W;
 
                     if (powersupply_capabilities.max_import_power_W.has_value() &&
-                        evseMaxLimits.EVSEMaximumPowerLimit < -powersupply_capabilities.max_import_power_W.value())
-                        evseMaxLimits.EVSEMaximumPowerLimit = -powersupply_capabilities.max_import_power_W.value();
+                        evseMaxLimits.maximum_power < -powersupply_capabilities.max_import_power_W.value())
+                        evseMaxLimits.maximum_power = -powersupply_capabilities.max_import_power_W.value();
 
-                    // now evseMaxLimits.EVSEMaximumPowerLimit is between
+                    // now evseMaxLimits.maximum_power is between
                     // -max_import_power_W ... +max_export_power_W
 
-                    evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
+                    evseMaxLimits.maximum_voltage = powersupply_capabilities.max_export_voltage_V;
 
                     // FIXME: we tell the ISO stack positive numbers for DIN spec and ISO-2 here in case of exporting to
                     // grid. This needs to be fixed in the transition to -20 for BPT.
-                    if (evseMaxLimits.EVSEMaximumPowerLimit < 0 || evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
+                    if (evseMaxLimits.maximum_power < 0 || evseMaxLimits.maximum_current < 0) {
                         // we are exporting power back to the grid
                         if (mod->config.hack_allow_bpt_with_iso2) {
-                            if (evseMaxLimits.EVSEMaximumPowerLimit < 0) {
-                                evseMaxLimits.EVSEMaximumPowerLimit = -evseMaxLimits.EVSEMaximumPowerLimit;
+                            if (evseMaxLimits.maximum_power < 0) {
+                                evseMaxLimits.maximum_power = -evseMaxLimits.maximum_power;
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;
                             }
 
-                            if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
-                                evseMaxLimits.EVSEMaximumCurrentLimit = -evseMaxLimits.EVSEMaximumCurrentLimit;
+                            if (evseMaxLimits.maximum_current < 0) {
+                                evseMaxLimits.maximum_current = -evseMaxLimits.maximum_current;
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;
                             }
                         } else if (mod->sae_bidi_active) {
-                            if (evseMaxLimits.EVSEMaximumPowerLimit < 0) {
+                            if (evseMaxLimits.maximum_power < 0) {
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;
                             }
-                            if (evseMaxLimits.EVSEMaximumCurrentLimit < 0) {
+                            if (evseMaxLimits.maximum_current < 0) {
                                 mod->is_actually_exporting_to_grid = true;
                             } else {
                                 mod->is_actually_exporting_to_grid = false;
@@ -498,8 +498,8 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         } else {
                             EVLOG_error << "Bidirectional export back to grid requested, but not supported. Enable "
                                            "ISO-20 or set hack_allow_bpt_with_iso2 config option.";
-                            evseMaxLimits.EVSEMaximumPowerLimit = 0.;
-                            evseMaxLimits.EVSEMaximumCurrentLimit = 0.;
+                            evseMaxLimits.maximum_power = 0.;
+                            evseMaxLimits.maximum_current = 0.;
                         }
                     } else {
                         mod->is_actually_exporting_to_grid = false;
@@ -508,7 +508,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     session_log.evse(
                         true,
                         fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
-                                    evseMaxLimits.EVSEMaximumPowerLimit, evseMaxLimits.EVSEMaximumCurrentLimit,
+                                    evseMaxLimits.maximum_power, evseMaxLimits.maximum_current,
                                     target_voltage, actual_voltage, mod->is_actually_exporting_to_grid));
                     mod->r_hlc[0]->call_update_dc_maximum_limits(evseMaxLimits);
                     mod->charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
