@@ -21,7 +21,6 @@ namespace Everest {
 class ConfigParseException : public std::exception {
 public:
     enum ParseErrorType {
-        NOT_DEFINED,
         MISSING_ENTRY,
         SCHEMA
     };
@@ -40,6 +39,11 @@ static json draft07 = R"(
 
 )"_json;
 
+struct ParsedConfigMap {
+    json parsed_config_map{};
+    std::set<std::string> unknown_config_entries;
+};
+
 static void validate_config_schema(const json& config_map_schema) {
     // iterate over every config entry
     json_validator validator(Config::loader, Config::format_checker);
@@ -57,7 +61,7 @@ static void validate_config_schema(const json& config_map_schema) {
     }
 }
 
-static json parse_config_map(const json& config_map_schema, const json& config_map) {
+static ParsedConfigMap parse_config_map(const json& config_map_schema, const json& config_map) {
     json parsed_config_map{};
 
     std::set<std::string> unknown_config_entries;
@@ -67,10 +71,6 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
     std::set_difference(config_map_keys.begin(), config_map_keys.end(), config_map_schema_keys.begin(),
                         config_map_schema_keys.end(),
                         std::inserter(unknown_config_entries, unknown_config_entries.end()));
-
-    if (unknown_config_entries.size()) {
-        throw ConfigParseException(ConfigParseException::NOT_DEFINED, *unknown_config_entries.begin());
-    }
 
     // validate each config entry
     for (auto& config_entry_el : config_map_schema.items()) {
@@ -103,7 +103,7 @@ static json parse_config_map(const json& config_map_schema, const json& config_m
         parsed_config_map[config_entry_name] = config_entry_value;
     }
 
-    return parsed_config_map;
+    return {parsed_config_map, unknown_config_entries};
 }
 
 static auto get_provides_for_probe_module(const std::string& probe_module_id, const json& config,
@@ -320,13 +320,17 @@ void Config::load_and_validate_manifest(const std::string& module_id, const json
             this->manifests[module_config["module"].get<std::string>()]["provides"][impl_id]["config"];
 
         try {
-            this->main[module_id]["config_maps"][impl_id] = parse_config_map(config_map_schema, config_map);
+            auto parsed_config_map = parse_config_map(config_map_schema, config_map);
+            if (parsed_config_map.unknown_config_entries.size()) {
+                for (const auto& unknown_entry : parsed_config_map.unknown_config_entries) {
+                    EVLOG_error << fmt::format(
+                        "Unknown config entry '{}' of {} of module '{}' ignored, please fix your config file!",
+                        unknown_entry, printable_identifier(module_id, impl_id), module_config["module"]);
+                }
+            }
+            this->main[module_id]["config_maps"][impl_id] = parsed_config_map.parsed_config_map;
         } catch (const ConfigParseException& err) {
-            if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                EVLOG_AND_THROW(EverestConfigError(
-                    fmt::format("Config entry '{}' of {} not defined in manifest of module '{}'!", err.entry,
-                                printable_identifier(module_id, impl_id), module_config["module"])));
-            } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
+            if (err.err_t == ConfigParseException::MISSING_ENTRY) {
                 EVLOG_AND_THROW(EverestConfigError(fmt::format("Missing mandatory config entry '{}' in {}!", err.entry,
                                                                printable_identifier(module_id, impl_id))));
             } else if (err.err_t == ConfigParseException::SCHEMA) {
@@ -345,13 +349,17 @@ void Config::load_and_validate_manifest(const std::string& module_id, const json
         json config_map_schema = this->manifests[module_config["module"].get<std::string>()]["config"];
 
         try {
-            this->main[module_id]["config_maps"]["!module"] = parse_config_map(config_map_schema, config_map);
+            auto parsed_config_map = parse_config_map(config_map_schema, config_map);
+            if (parsed_config_map.unknown_config_entries.size()) {
+                for (const auto& unknown_entry : parsed_config_map.unknown_config_entries) {
+                    EVLOG_error << fmt::format(
+                        "Unknown config entry '{}' of module '{}' ignored, please fix your config file!", unknown_entry,
+                        module_config["module"]);
+                }
+            }
+            this->main[module_id]["config_maps"]["!module"] = parsed_config_map.parsed_config_map;
         } catch (const ConfigParseException& err) {
-            if (err.err_t == ConfigParseException::NOT_DEFINED) {
-                EVLOG_AND_THROW(EverestConfigError(
-                    fmt::format("Config entry '{}' for module config not defined in manifest of module '{}'!",
-                                err.entry, module_config["module"])));
-            } else if (err.err_t == ConfigParseException::MISSING_ENTRY) {
+            if (err.err_t == ConfigParseException::MISSING_ENTRY) {
                 EVLOG_AND_THROW(
                     EverestConfigError(fmt::format("Missing mandatory config entry '{}' for module config in module {}",
                                                    err.entry, module_config["module"])));
