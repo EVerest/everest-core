@@ -1139,14 +1139,14 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 
 | ID | Status | Remark |
 | --- | --- | --- |
-| K01.FR.01 |  |  |
-| K01.FR.02 |  |  |
-| K01.FR.03 |  |  |
+| K01.FR.01 | :no_entry_sign: |  |
+| K01.FR.02 | :no_entry_sign: |  |
+| K01.FR.03 | :no_entry_sign: |  |
 | K01.FR.04 | :white_check_mark: |  |
 | K01.FR.05 |  |  |
 | K01.FR.06 |  |  |
 | K01.FR.07 |  |  |
-| K01.FR.08 |  |  |
+| K01.FR.08 | :no_entry_sign: |  |
 | K01.FR.09 |  |  |
 | K01.FR.10 | :white_check_mark: |  |
 | K01.FR.11 |  |  |
@@ -1192,26 +1192,26 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 
 | ID | Status | Remark |
 | --- | --- | --- |
-| K02.FR.01 |  |  |
-| K02.FR.02 |  |  |
-| K02.FR.03 |  |  |
+| K02.FR.01 | :no_entry_sign: |  |
+| K02.FR.02 | :no_entry_sign: | This should be handled by the user of libocpp |
+| K02.FR.03 | :no_entry_sign: |  |
 | K02.FR.04 |  |  |
 | K02.FR.05 |  |  |
-| K02.FR.06 |  |  |
-| K02.FR.07 |  |  |
+| K02.FR.06 |  | The same as K01.FR.21 |
+| K02.FR.07 |  | The same as K01.FR.22 |
 | K02.FR.08 |  |  |
 ## SmartCharging - Local Smart Charging
 
 | ID | Status | Remark |
 | --- | --- | --- |
-| K03.FR.01 |  |  |
+| K03.FR.01 | :no_entry_sign: |  |
 | K03.FR.02 |  |  |
 | K03.FR.03 |  |  |
 | K03.FR.04 |  |  |
 | K03.FR.05 |  |  |
 | K03.FR.06 |  |  |
-| K03.FR.07 |  |  |
-| K03.FR.08 |  |  |
+| K03.FR.07 |  | The same as K01.FR.21 |
+| K03.FR.08 |  | The same as K01.FR.22 |
 ## SmartCharging - Internal Load Balancing
 
 | ID | Status | Remark |
@@ -1219,13 +1219,13 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K04.FR.01 |  |  |
 | K04.FR.02 |  |  |
 | K04.FR.03 |  |  |
-| K04.FR.04 |  |  |
-| K04.FR.05 |  |  |
+| K04.FR.04 |  | The same as K01.FR.21 |
+| K04.FR.05 |  | This should be handled by the user of libocpp |
 ## SmartCharging - Remote Start Transaction with Charging Profile
 
 | ID | Status | Remark |
 | --- | --- | --- |
-| K05.FR.01 |  |  |
+| K05.FR.01 | :no_entry_sign: |  |
 | K05.FR.02 |  |  |
 | K05.FR.03 |  |  |
 | K05.FR.04 |  |  |
@@ -1245,7 +1245,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 
 | ID | Status | Remark |
 | --- | --- | --- |
-| K08.FR.01 |  |  |
+| K08.FR.01 | :no_entry_sign: |  |
 | K08.FR.02 |  |  |
 | K08.FR.03 |  |  |
 | K08.FR.04 |  |  |
@@ -1267,7 +1267,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | ID | Status | Remark |
 | --- | --- | --- |
 | K10.FR.01 |  |  |
-| K10.FR.02 |  |  |
+| K10.FR.02 | :no_entry_sign: |  |
 | K10.FR.03 |  |  |
 | K10.FR.04 |  |  |
 | K10.FR.05 |  |  |
