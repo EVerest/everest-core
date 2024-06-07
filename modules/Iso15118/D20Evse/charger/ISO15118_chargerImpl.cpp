@@ -177,7 +177,7 @@ void ISO15118_chargerImpl::handle_setup(
 
 void ISO15118_chargerImpl::handle_set_charging_parameters(
     types::iso15118_charger::SetupPhysicalValues& physical_values) {
-    // your code for cmd set_charging_parameters goes here
+    // TODO(SL)
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
@@ -238,21 +238,26 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
 }
 
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
-    // your code for cmd update_ac_max_current goes here
+    // send_control_event
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
     types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) {
-    // your code for cmd update_dc_maximum_limits goes here
+    controller->update_dc_max_values(maximum_limits.maximum_power, maximum_limits.maximum_current,
+                                     maximum_limits.maximum_voltage, maximum_limits.maximum_discharge_power,
+                                     maximum_limits.maximum_discharge_current);
 }
 
 void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
     types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
-    // your code for cmd update_dc_minimum_limits goes here
+
+    controller->update_dc_min_values(minimum_limits.minimum_power, minimum_limits.minimum_current,
+                                     minimum_limits.minimum_voltage, minimum_limits.minimum_discharge_power,
+                                     minimum_limits.minimum_discharge_current);
 }
 
+// Note: Not used here
 void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
-    // your code for cmd update_isolation_status goes here
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
@@ -269,11 +274,11 @@ void ISO15118_chargerImpl::handle_update_meter_info(types::powermeter::Powermete
 }
 
 void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError& error) {
-    // your code for cmd send_error goes here
+    // TODO(SL)
 }
 
 void ISO15118_chargerImpl::handle_reset_error() {
-    // your code for cmd reset_error goes here
+    // TODO(SL)
 }
 
 } // namespace charger
