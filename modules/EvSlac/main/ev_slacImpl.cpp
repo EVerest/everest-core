@@ -33,8 +33,11 @@ void ev_slacImpl::run() {
     try {
         slac_io.init(config.device);
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(Everest::EverestBaseRuntimeError(
-            fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device, e.what())));
+        EVLOG_error << fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device,
+                                   e.what());
+        raise_error(
+            error_factory->create_error("generic/CommunicationFault", "", "Could not open device " + config.device));
+        return;
     }
 
     // setup callbacks

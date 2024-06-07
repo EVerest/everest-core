@@ -88,6 +88,9 @@ public:
     ~evSerial();
 
     bool open_device(const char* device, int baud);
+    bool is_open() {
+        return fd > 0;
+    };
 
     void read_thread();
     void run();

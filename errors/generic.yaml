@@ -1,0 +1,5 @@
+description: >-
+  Generic errors used by multiple modules
+errors:
+  - name: CommunicationFault
+    description: Communication with the underlying hardware or device has a fault

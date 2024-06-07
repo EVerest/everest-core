@@ -36,7 +36,8 @@ fs::path create_temp_file(const fs::path& dir, const std::string& prefix) {
     auto fd = mkstemp(fn_template_buffer.data());
 
     if (fd == -1) {
-        EVLOG_AND_THROW(Everest::EverestBaseRuntimeError("Failed to create temporary file at: " + fn_template));
+        EVLOG_error << "Failed to create temporary file at: " << fn_template;
+        return {};
     }
 
     // close the file descriptor
@@ -64,6 +65,13 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "firmware-" + date_time);
+
+    if (firmware_file_path.empty()) {
+        EVLOG_error << "Firmware update ignored, cannot write temporary file.";
+        publish_firmware_update_status({types::system::FirmwareUpdateStatusEnum::DownloadFailed});
+        return;
+    }
+
     const auto constants = this->scripts_path / CONSTANTS;
 
     this->update_firmware_thread = std::thread([this, firmware_update_request, firmware_file_path, constants]() {
