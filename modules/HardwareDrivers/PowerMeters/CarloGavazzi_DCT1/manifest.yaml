@@ -1,0 +1,27 @@
+description: Carlo Gavazzi DCT1 powermeter
+provides:
+  meter:
+    description: Implementation of the driver functionality
+    interface: powermeter
+    config:
+      powermeter_device_id:
+        description: The powermeter's address on the modbus
+        type: integer
+        minimum: 1
+        maximum: 255
+        default: 1
+      low_side_sensing:
+        description: If low side sensing is set to false, the current sign will be inverted.
+        type: boolean
+        default: true
+requires:
+  modbus:
+    interface: serial_communication_hub
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - mikhail.nekrasov@excelsior-solutions.de
+    - Andreas Heinrich
+    - Cornelius Claussen
+    - Jan Christoph Habig
+enable_external_mqtt: false

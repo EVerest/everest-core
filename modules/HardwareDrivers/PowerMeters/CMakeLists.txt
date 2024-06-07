@@ -1,3 +1,4 @@
+ev_add_module(CarloGavazzi_DCT1)
 ev_add_module(GenericPowermeter)
 ev_add_module(IsabellenhuetteIemDcr)
 ev_add_module(LemDCBM400600)
