@@ -90,4 +90,31 @@ using BIO_ptr = std::unique_ptr<BIO>;
 using EVP_MD_CTX_ptr = std::unique_ptr<EVP_MD_CTX>;
 using EVP_ENCODE_CTX_ptr = std::unique_ptr<EVP_ENCODE_CTX>;
 
+struct X509Handle;
+struct KeyHandle;
+
+struct X509HandleOpenSSL : public X509Handle {
+    X509HandleOpenSSL(X509* certificate) : x509(certificate) {
+    }
+
+    X509* get() {
+        return x509.get();
+    }
+
+private:
+    X509_ptr x509;
+};
+
+struct KeyHandleOpenSSL : public KeyHandle {
+    KeyHandleOpenSSL(EVP_PKEY* key) : key(key) {
+    }
+
+    EVP_PKEY* get() {
+        return key.get();
+    }
+
+private:
+    EVP_PKEY_ptr key;
+};
+
 } // namespace evse_security

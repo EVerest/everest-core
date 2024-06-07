@@ -26,30 +26,6 @@
 
 namespace evse_security {
 
-struct X509HandleOpenSSL : public X509Handle {
-    X509HandleOpenSSL(X509* certificate) : x509(certificate) {
-    }
-
-    X509* get() {
-        return x509.get();
-    }
-
-private:
-    X509_ptr x509;
-};
-
-struct KeyHandleOpenSSL : public KeyHandle {
-    KeyHandleOpenSSL(EVP_PKEY* key) : key(key) {
-    }
-
-    EVP_PKEY* get() {
-        return key.get();
-    }
-
-private:
-    EVP_PKEY_ptr key;
-};
-
 static X509* get(X509Handle* handle) {
     if (X509HandleOpenSSL* ssl_handle = dynamic_cast<X509HandleOpenSSL*>(handle)) {
         return ssl_handle->get();
