@@ -294,7 +294,6 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             timer = TimerControl::stop;
             call_allow_power_on_bsp(false);
             pwm_running = false;
-            r_bsp->call_pwm_off();
             if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C || last_cp_state == RawCPState::D) {
                 events.push(CPEvent::BCDtoEF);
             }
