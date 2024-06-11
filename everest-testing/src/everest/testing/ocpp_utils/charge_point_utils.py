@@ -114,7 +114,9 @@ async def wait_for_and_validate(meta_data: TestUtility, charge_point: CP, exp_ac
             raw_message = await asyncio.wait_for(charge_point.wait_for_message(), timeout=timeout)
             charge_point.message_event.clear()
             msg = unpack(raw_message)
-            if (msg.action != None):
+            if (msg.message_type_id == 4):
+                logging.debug("Received CallError")
+            elif (msg.action != None):
                 logging.debug(f"Received Call {msg.action}")
             elif (msg.message_type_id == 3):
                 logging.debug("Received CallResult")
@@ -131,9 +133,10 @@ async def wait_for_and_validate(meta_data: TestUtility, charge_point: CP, exp_ac
                 else:
                     return True
             else:
-                logging.debug(
-                    f"This message {msg.action} with payload {msg.payload} was not what I waited for")
-                logging.debug(f"I wait for {exp_payload}")
+                if (msg.message_type_id != 4):
+                    logging.debug(
+                        f"This message {msg.action} with payload {msg.payload} was not what I waited for")
+                    logging.debug(f"I wait for {exp_payload}")
                 # add msg to messages and wait for next message
                 meta_data.messages.append(msg)
         except asyncio.TimeoutError:
@@ -173,6 +176,9 @@ def contains_expected_response(expected: dict, msg_payload: dict):
 
 
 def validate_message(msg, exp_action, exp_payload, validate_payload_func, meta_data):
+
+    if (msg.message_type_id == 4):
+        return False
 
     if msg.action in meta_data.forbidden_actions:
         logging.error(
