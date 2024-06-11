@@ -8,10 +8,6 @@ provides:
         description: Ethernet device used for PLC.
         type: string
         default: eth1
-      ev_id:
-        description: EVSE id - 17 octets.
-        type: string
-        default: PIONIX_SAYS_HELLO
       set_key_timeout_ms:
         description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
         type: integer
