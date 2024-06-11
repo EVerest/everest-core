@@ -662,6 +662,12 @@ void OCPP::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
+    // publish charging schedules at least once on startup
+    const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
+        this->config.PublishChargingScheduleDurationS);
+    this->set_external_limits(charging_schedules);
+    this->publish_charging_schedules(charging_schedules);
+
     this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
             this->config.PublishChargingScheduleDurationS);
