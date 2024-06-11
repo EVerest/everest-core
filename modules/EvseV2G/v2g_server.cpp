@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 chargebyte GmbH
 // Copyright (C) 2023 Contributors to EVerest
+#include "v2g_server.hpp"
 
 #include <inttypes.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <cstdint>
+
 #include <mbedtls/base64.h>
+
 #include <openv2g/appHandEXIDatatypesDecoder.h>
 #include <openv2g/appHandEXIDatatypesEncoder.h>
 #include <openv2g/dinEXIDatatypes.h>
@@ -13,19 +21,14 @@
 #include <openv2g/iso1EXIDatatypesDecoder.h>
 #include <openv2g/iso1EXIDatatypesEncoder.h>
 #include <openv2g/v2gtp.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "connection.hpp"
 #include "din_server.hpp"
 #include "iso_server.hpp"
 #include "log.hpp"
 #include "tools.hpp"
-#include "v2g_server.hpp"
 
 #define MAX_RES_TIME 98
-#define UINT32_MAX   0xFFFFFFFF
 
 static types::iso15118_charger::V2G_Message_ID get_V2G_Message_ID(enum V2gMsgTypeId v2g_msg,
                                                                   enum v2g_protocol selected_protocol, bool is_req) {
