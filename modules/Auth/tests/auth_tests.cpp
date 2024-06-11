@@ -76,6 +76,7 @@ class AuthTest : public ::testing::Test {
 protected:
     std::unique_ptr<AuthHandler> auth_handler;
     std::unique_ptr<FakeAuthReceiver> auth_receiver;
+    testing::MockFunction<bool(json message)> send_callback_mock;
     StrictMock<MockFunction<void(const ProvidedIdToken& token, TokenValidationStatus status)>>
         mock_publish_token_validation_status_callback;
 
@@ -93,6 +94,8 @@ protected:
                         << provided_token.id_token.value;
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
                 this->auth_receiver->authorize(evse_index);
+            } else {
+                this->auth_receiver->deauthorize(evse_index);
             }
         });
         this->auth_handler->register_withdraw_authorization_callback([this](int32_t evse_index) {
@@ -452,18 +455,18 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Rejected));
-
-    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
-
     t1.join();
     t2.join();
+    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     t3.join();
-    t4.join();
 
     ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
-    ASSERT_TRUE(result2 == TokenHandlingResult::REJECTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+    t4.join();
+
+    ASSERT_TRUE(result2 == TokenHandlingResult::REJECTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
@@ -1102,6 +1105,33 @@ TEST_F(AuthTest, test_plug_and_charge) {
     const auto result = this->auth_handler->on_token(provided_token);
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test PlugAndCharge
+TEST_F(AuthTest, test_plug_and_charge_rejected) {
+
+    // put authorization on evse so that we can check later if it was removed
+    this->auth_receiver->authorize(0);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    ProvidedIdToken provided_token;
+    provided_token.id_token = {INVALID_TOKEN, types::authorization::IdTokenType::eMAID};
+    provided_token.authorization_type = types::authorization::AuthorizationType::PlugAndCharge;
+    provided_token.certificate.emplace("TestCertificate");
+    provided_token.connectors = {1, 2};
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 

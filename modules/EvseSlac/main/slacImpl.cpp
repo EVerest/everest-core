@@ -26,18 +26,6 @@ static std::string mac_to_ascii(const std::string& mac_binary) {
 }
 
 void slacImpl::init() {
-    // validate config settings
-    if (config.evse_id.length() != slac::defs::STATION_ID_LEN) {
-        EVLOG_AND_THROW(
-            Everest::EverestConfigError(fmt::format("The EVSE id config needs to be exactly {} octets (got {}).",
-                                                    slac::defs::STATION_ID_LEN, config.evse_id.length())));
-    }
-
-    if (config.nid.length() != slac::defs::NID_LEN) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format(
-            "The NID config needs to be exactly {} octets (got {}).", slac::defs::NID_LEN, config.nid.length())));
-    }
-
     // setup evse fsm thread
     std::thread(&slacImpl::run, this).detach();
 }

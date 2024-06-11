@@ -223,12 +223,10 @@ void ISO15118_chargerImpl::handle_authorization_response(
         }
     } else if (v2g_ctx->session.iso_selected_payment_option == iso1paymentOptionType_Contract) {
         v2g_ctx->session.certificate_status = certificate_status;
+        v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Finished;
 
-        if (authorization_status == types::authorization::AuthorizationStatus::Accepted &&
-            certificate_status == types::authorization::CertificateStatus::Accepted) {
-            v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Finished;
-        } else {
-            v2g_ctx->evse_v2g_data.evse_processing[PHASE_AUTH] = (uint8_t)iso1EVSEProcessingType_Ongoing;
+        if (authorization_status != types::authorization::AuthorizationStatus::Accepted) {
+            v2g_ctx->session.authorization_rejected = true;
         }
     }
 }
@@ -419,8 +417,16 @@ void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError&
 
 void ISO15118_chargerImpl::handle_reset_error() {
     v2g_ctx->evse_v2g_data.rcd = 0;
-    memset(v2g_ctx->evse_v2g_data.evse_status_code, (int)iso1DC_EVSEStatusCodeType_EVSE_Ready,
-           sizeof(v2g_ctx->evse_v2g_data.evse_status_code));
+
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_INIT] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_AUTH] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso1DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_WELDING] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+    v2g_ctx->evse_v2g_data.evse_status_code[PHASE_STOP] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
+
     // Todo(sl): check if emergency should be cleared here?
 }
 

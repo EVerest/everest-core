@@ -323,6 +323,7 @@ struct v2g_context {
         uint8_t gen_challenge[16];                                  // for PnC
         bool verify_contract_cert_chain;                            // for PnC
         types::authorization::CertificateStatus certificate_status; // for PnC
+        bool authorization_rejected;                                // for PnC
 
         struct {
             bool valid_crt;
