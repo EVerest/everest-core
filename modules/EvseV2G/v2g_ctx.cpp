@@ -284,6 +284,8 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
     }
     memset(ctx->session.gen_challenge, 0, sizeof(ctx->session.gen_challenge));
 
+    ctx->session.authorization_rejected = false;
+
     initialize_once = true;
 }
 

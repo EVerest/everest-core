@@ -1389,6 +1389,8 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
             conn->ctx->session.auth_start_timeout = getmonotonictime();
             res->ResponseCode = iso1responseCodeType_FAILED;
         }
+    } else if (conn->ctx->session.authorization_rejected == true) {
+        res->ResponseCode = iso1responseCodeType_FAILED;
     }
 
 error_out:
