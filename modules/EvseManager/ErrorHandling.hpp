@@ -72,7 +72,8 @@ enum class EvseManagerErrors : std::uint8_t {
     MREC4OverCurrentFailure,
     Internal,
     PowermeterTransactionStartFailed,
-    last = PowermeterTransactionStartFailed
+    PermanentFault,
+    last = PermanentFault
 };
 
 enum class AcRcdErrors : std::uint8_t {

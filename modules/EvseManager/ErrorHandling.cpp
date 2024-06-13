@@ -198,7 +198,7 @@ void ErrorHandling::raise_permanent_fault_error(const std::string& description) 
 
 void ErrorHandling::clear_permanent_fault_error() {
     // clear externally
-    if (active_errors.evse_manager.is_set(EvseManagerErrors::Internal)) {
+    if (active_errors.evse_manager.is_set(EvseManagerErrors::PermanentFault)) {
         p_evse->clear_error("evse_manager/PermanentFault");
 
         if (modify_error_evse_manager("evse_manager/PermanentFault", false)) {
@@ -500,7 +500,11 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }
-
+    } else if (error_type == "evse_manager/PermanentFault") {
+        active_errors.evse_manager.set(EvseManagerErrors::PermanentFault, active);
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
     } else {
         // Error does not stop charging, ignored here
         return false;
