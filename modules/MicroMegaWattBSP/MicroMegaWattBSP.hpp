@@ -25,6 +25,7 @@ namespace module {
 struct Conf {
     std::string serial_port;
     int baud_rate;
+    std::string reset_gpio_chip;
     int reset_gpio;
     int dc_max_voltage;
 };

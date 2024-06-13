@@ -10,6 +10,7 @@
 #include <sigslot/signal.hpp>
 
 #include "umwc.pb.h"
+#include <gpio.hpp>
 
 using namespace std::chrono_literals;
 
@@ -56,6 +57,15 @@ int main(int argc, char* argv[]) {
         delete p;
 
         sleep(1);
+        // Try to hardware reset Yeti controller to be in a known state
+        Everest::Gpio reset_gpio;
+        reset_gpio.open("gpiochip0", 27);
+        reset_gpio.set_output(true);
+        reset_gpio.set(true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(true);
         char cmd[1000];
         sprintf(cmd, "stm32flash -b 115200 %.100s -v -w %.100s -R", device, filename);
         // sprintf(cmd, "stm32flash -b115200 %.100s", device);
