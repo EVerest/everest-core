@@ -1,0 +1,20 @@
+description: >-
+  Errors for Isolation Monitor
+
+  Note that actual isolation faults should just be reported as resistance values,
+  EvseManager will interpret them according to the limits given in the norm and stop charging.
+
+  This is only to report device errors to indicate valid isolation resistance measurements etc
+  are no longer possible.
+errors:
+  - name: DeviceFault
+    description: The IMD device is not fully functional anymore and cannot be used to monitor the isolation resistance.
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.
