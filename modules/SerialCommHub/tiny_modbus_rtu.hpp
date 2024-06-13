@@ -57,7 +57,7 @@ public:
     ~TinyModbusRTU();
 
     bool open_device(const std::string& device, int baud, bool ignore_echo,
-                     const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity,
+                     const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity, bool rtscts,
                      std::chrono::milliseconds initial_timeout, std::chrono::milliseconds within_message_timeout);
 
     std::vector<uint16_t> txrx(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
