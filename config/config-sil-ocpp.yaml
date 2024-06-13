@@ -189,6 +189,14 @@ active_modules:
       ocpp:
         - module_id: ocpp
           implementation_id: ocpp_generic
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
   system:
     module: System
 

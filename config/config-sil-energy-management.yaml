@@ -181,4 +181,12 @@ active_modules:
       random_delay:
         - module_id: evse_manager_1
           implementation_id: random_delay
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
 x-module-layout: {}
