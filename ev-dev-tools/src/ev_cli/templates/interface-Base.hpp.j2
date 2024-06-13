@@ -48,7 +48,9 @@ public:
     // publish functions for variables
     {% for var in vars %}
     void publish_{{ var.name }}(
-    {%- if 'object_type' in var %}
+    {% if 'array_type' in var %}
+        const std::vector<{{ var.array_type }}>&
+    {%- elif 'object_type' in var %}
         {{-  var.object_type }}
     {%- elif 'enum_type' in var %}
         {{-  var.enum_type }}

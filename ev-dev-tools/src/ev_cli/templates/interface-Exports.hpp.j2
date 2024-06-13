@@ -50,6 +50,16 @@ public:
         {% elif 'enum_type' in var %}
             auto native_value = {{ string_to_enum(var.enum_type) }}({{ var_to_cpp(var) }}(value));
             listener(native_value);
+        {% elif 'array_type' in var %}
+            {% if 'array_type_contains_enum' in var %}
+            std::vector<{{ arg.array_type }}> typed_value;
+            for (auto& entry : value) {
+                typed_value.push_back({{ string_to_enum(var.array_type) }}(entry));
+            }
+            listener(typed_value);
+            {% else %}
+            listener(value);
+            {% endif %}
         {% elif var.json_type != 'null' %}
             listener({{ var_to_cpp(var) }}(value));
         {% else %}
