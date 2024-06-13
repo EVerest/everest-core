@@ -476,10 +476,8 @@ TEST_F(AuthTest, test_faulted_state) {
     TokenHandlingResult result1;
     TokenHandlingResult result2;
 
-    SessionEvent session_event;
-    session_event.event = SessionEventEnum::PermanentFault;
-    std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+    std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
@@ -684,10 +682,7 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     SessionEvent session_event_1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(1, session_event_1); });
-
-    SessionEvent session_event_2;
-    session_event_2.event = SessionEventEnum::PermanentFault;
-    std::thread t2([this, session_event_2]() { this->auth_handler->handle_session_event(2, session_event_2); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
