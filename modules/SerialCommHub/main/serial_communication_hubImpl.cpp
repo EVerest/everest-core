@@ -39,8 +39,8 @@ void serial_communication_hubImpl::init() {
     rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
 
     if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings,
-                            static_cast<tiny_modbus::Parity>(config.parity), milliseconds(config.initial_timeout_ms),
-                            milliseconds(config.within_message_timeout_ms))) {
+                            static_cast<tiny_modbus::Parity>(config.parity), config.rtscts,
+                            milliseconds(config.initial_timeout_ms), milliseconds(config.within_message_timeout_ms))) {
         EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
     }
 }

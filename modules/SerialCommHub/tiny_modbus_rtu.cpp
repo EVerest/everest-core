@@ -193,7 +193,7 @@ TinyModbusRTU::~TinyModbusRTU() {
 }
 
 bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
-                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity,
+                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity, bool rtscts,
                                 std::chrono::milliseconds _initial_timeout,
                                 std::chrono::milliseconds _within_message_timeout) {
 
@@ -264,7 +264,12 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
         tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
     }
     tty.c_cflag &= ~CSTOPB; // 1 Stop bit
-    tty.c_cflag &= ~CRTSCTS;
+
+    if (rtscts) {
+        tty.c_cflag |= CRTSCTS;
+    } else {
+        tty.c_cflag &= ~CRTSCTS;
+    }
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
         printf("Serial: error %d from tcsetattr\n", errno);
