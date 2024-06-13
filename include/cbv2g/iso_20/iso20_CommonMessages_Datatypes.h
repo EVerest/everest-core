@@ -69,7 +69,7 @@ extern "C" {
 #define iso20_PriceRuleStackType_64_ARRAY_SIZE (64)
 #define iso20_OverstayRuleType_5_ARRAY_SIZE (5)
 #define iso20_AdditionalServiceType_5_ARRAY_SIZE (5)
-#define iso20_ParameterType_5_ARRAY_SIZE (5)
+#define iso20_ParameterType_8_ARRAY_SIZE (8)
 #define iso20_nameType_128_ARRAY_SIZE (128)
 #define iso20_ProviderID_CHARACTER_SIZE (80 + ASCII_EXTRA_CHAR)
 #define iso20_MeterID_CHARACTER_SIZE (32 + ASCII_EXTRA_CHAR)
@@ -85,7 +85,7 @@ extern "C" {
 #define iso20_X509IssuerSerialType_20_ARRAY_SIZE (20)
 #define iso20_genChallengeType_BYTES_SIZE (16)
 #define iso20_ServiceType_8_ARRAY_SIZE (8)
-#define iso20_ParameterSetType_5_ARRAY_SIZE (5)
+#define iso20_ParameterSetType_4_ARRAY_SIZE (4)
 #define iso20_identifierType_8_ARRAY_SIZE (8)
 #define iso20_EMAID_CHARACTER_SIZE (255 + ASCII_EXTRA_CHAR)
 #define iso20_dhPublicKeyType_BYTES_SIZE (133)
@@ -1192,13 +1192,13 @@ struct iso20_ServiceType {
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSet; type={urn:iso:std:iso:15118:-20:CommonMessages}ParameterSetType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 5);
+// Particle: ParameterSetID, serviceIDType (1, 1); Parameter, ParameterType (1, 8);
 struct iso20_ParameterSetType {
     // ParameterSetID, serviceIDType (base: unsignedShort)
     uint16_t ParameterSetID;
     // Parameter, ParameterType
     struct {
-        struct iso20_ParameterType array[iso20_ParameterType_5_ARRAY_SIZE];
+        struct iso20_ParameterType array[iso20_ParameterType_8_ARRAY_SIZE];
         uint16_t arrayLen;
     } Parameter;
 };
@@ -1699,11 +1699,11 @@ struct iso20_ServiceListType {
 
 // Element: definition=complex; name={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterList; type={urn:iso:std:iso:15118:-20:CommonMessages}ServiceParameterListType; base type=; content type=ELEMENT-ONLY;
 //          abstract=False; final=False;
-// Particle: ParameterSet, ParameterSetType (1, 5);
+// Particle: ParameterSet, ParameterSetType (1, 4);
 struct iso20_ServiceParameterListType {
     // ParameterSet, ParameterSetType
     struct {
-        struct iso20_ParameterSetType array[iso20_ParameterSetType_5_ARRAY_SIZE];
+        struct iso20_ParameterSetType array[iso20_ParameterSetType_4_ARRAY_SIZE];
         uint16_t arrayLen;
     } ParameterSet;
 };

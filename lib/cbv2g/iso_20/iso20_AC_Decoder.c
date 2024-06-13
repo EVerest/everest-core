@@ -58,13 +58,13 @@ static int decode_iso20_ac_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stre
 static int decode_iso20_ac_DisplayParametersType(exi_bitstream_t* stream, struct iso20_ac_DisplayParametersType* DisplayParametersType);
 static int decode_iso20_ac_AC_CPDResEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_AC_CPDResEnergyTransferModeType* AC_CPDResEnergyTransferModeType);
 static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_ac_EVSEStatusType* EVSEStatusType);
-static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType);
 static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType);
+static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType);
 static int decode_iso20_ac_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_CLReqControlModeType* CLReqControlModeType);
 static int decode_iso20_ac_MeterInfoType(exi_bitstream_t* stream, struct iso20_ac_MeterInfoType* MeterInfoType);
 static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_ReceiptType* ReceiptType);
-static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType);
 static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLResControlModeType* Dynamic_AC_CLResControlModeType);
+static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType);
 static int decode_iso20_ac_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_CLResControlModeType* CLResControlModeType);
 static int decode_iso20_ac_BPT_AC_CPDReqEnergyTransferModeType(exi_bitstream_t* stream, struct iso20_ac_BPT_AC_CPDReqEnergyTransferModeType* BPT_AC_CPDReqEnergyTransferModeType);
 static int decode_iso20_ac_AC_ChargeParameterDiscoveryReqType(exi_bitstream_t* stream, struct iso20_ac_AC_ChargeParameterDiscoveryReqType* AC_ChargeParameterDiscoveryReqType);
@@ -6739,125 +6739,45 @@ static int decode_iso20_ac_EVSEStatusType(exi_bitstream_t* stream, struct iso20_
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (0, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
-static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType) {
+// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (1, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
+static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType) {
     int grammar_id = 107;
     int done = 0;
     uint32_t eventCode;
     int error;
 
-    init_iso20_ac_Scheduled_AC_CLReqControlModeType(Scheduled_AC_CLReqControlModeType);
+    init_iso20_ac_Dynamic_AC_CLReqControlModeType(Dynamic_AC_CLReqControlModeType);
 
     while(!done)
     {
         switch(grammar_id)
         {
         case 107:
-            // Grammar: ID=107; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=107; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=108
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=108
+                    // decode: unsigned int
+                    error = decode_exi_type_uint32(stream, &Dynamic_AC_CLReqControlModeType->DepartureTime);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 1u;
                         grammar_id = 108;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=109
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=109
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
                         grammar_id = 109;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 115;
-                    }
-                    break;
-                case 8:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 9:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -6867,99 +6787,19 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 108:
-            // Grammar: ID=108; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=108; read/write bits=1; START (EVTargetEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=109
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=109
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
                         grammar_id = 109;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=110
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
-                        grammar_id = 110;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 115;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 8:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -6969,89 +6809,19 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 109:
-            // Grammar: ID=109; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=109; read/write bits=1; START (EVMaximumEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=110
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=110
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
                         grammar_id = 110;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=111
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
-                        grammar_id = 111;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 115;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7061,79 +6831,19 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 110:
-            // Grammar: ID=110; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=110; read/write bits=1; START (EVMinimumEnergyRequest)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=111
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=111
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
                         grammar_id = 111;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=112
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
-                        grammar_id = 112;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 115;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7143,69 +6853,19 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 111:
-            // Grammar: ID=111; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=111; read/write bits=1; START (EVMaximumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=112
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=112
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
                         grammar_id = 112;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
-                        grammar_id = 113;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
-                        grammar_id = 114;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
-                        grammar_id = 115;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7215,59 +6875,39 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 112:
-            // Grammar: ID=112; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=112; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=113
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=113
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
                         grammar_id = 113;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
                         grammar_id = 114;
                     }
                     break;
                 case 2:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 115;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7277,49 +6917,29 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 113:
-            // Grammar: ID=113; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=113; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=114
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=114
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
                         grammar_id = 114;
                     }
                     break;
                 case 1:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 115;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7329,39 +6949,19 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 114:
-            // Grammar: ID=114; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=114; read/write bits=1; START (EVMinimumChargePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=115
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=115
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 115;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
-                        grammar_id = 116;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
-                    if (error == 0)
-                    {
-                        grammar_id = 117;
                     }
                     break;
                 default:
@@ -7371,29 +6971,39 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 115:
-            // Grammar: ID=115; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            // Grammar: ID=115; read/write bits=2; START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=116
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=116
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 116;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=117
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
+                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
                         grammar_id = 117;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=118
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -7403,19 +7013,29 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 116:
-            // Grammar: ID=116; read/write bits=1; START (EVPresentActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=116; read/write bits=2; START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=117
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=117
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
+                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
                         grammar_id = 117;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=118
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -7425,66 +7045,20 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 117:
-            // Grammar: ID=117; read/write bits=3; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=117; read/write bits=1; START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=118
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=118
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 118;
                     }
-                    break;
-                case 1:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=119
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 119;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=120
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
-                        grammar_id = 120;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=121
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 121;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 5:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7493,56 +7067,40 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 118:
-            // Grammar: ID=118; read/write bits=3; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=118; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=119
+                    // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=119
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 119;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=120
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 120;
                     }
                     break;
                 case 2:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=121
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=121
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
                         grammar_id = 121;
                     }
-                    break;
-                case 3:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 4:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7551,46 +7109,30 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 119:
-            // Grammar: ID=119; read/write bits=3; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=119; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=120
+                    // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=120
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 120;
                     }
                     break;
                 case 1:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=121
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=121
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
                         grammar_id = 121;
                     }
-                    break;
-                case 2:
-                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 3:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -7599,29 +7141,51 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
             }
             break;
         case 120:
-            // Grammar: ID=120; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            // Grammar: ID=120; read/write bits=1; START (EVPresentReactivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=121
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 121;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 121:
+            // Grammar: ID=121; read/write bits=2; START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=121
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=122
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
-                        grammar_id = 121;
+                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 122;
                     }
                     break;
                 case 1:
                     // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -7636,8 +7200,8 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 121:
-            // Grammar: ID=121; read/write bits=2; START (EVPresentReactivePower_L3), END Element
+        case 122:
+            // Grammar: ID=122; read/write bits=2; START (EVPresentReactivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -7646,10 +7210,10 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
                 case 0:
                     // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -7695,67 +7259,125 @@ static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* st
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (1, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
-static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType) {
-    int grammar_id = 122;
+// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMaximumChargePower_L2, RationalNumberType (0, 1); EVMaximumChargePower_L3, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMinimumChargePower_L2, RationalNumberType (0, 1); EVMinimumChargePower_L3, RationalNumberType (0, 1); EVPresentActivePower, RationalNumberType (1, 1); EVPresentActivePower_L2, RationalNumberType (0, 1); EVPresentActivePower_L3, RationalNumberType (0, 1); EVPresentReactivePower, RationalNumberType (0, 1); EVPresentReactivePower_L2, RationalNumberType (0, 1); EVPresentReactivePower_L3, RationalNumberType (0, 1);
+static int decode_iso20_ac_Scheduled_AC_CLReqControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType) {
+    int grammar_id = 123;
     int done = 0;
     uint32_t eventCode;
     int error;
 
-    init_iso20_ac_Dynamic_AC_CLReqControlModeType(Dynamic_AC_CLReqControlModeType);
+    init_iso20_ac_Scheduled_AC_CLReqControlModeType(Scheduled_AC_CLReqControlModeType);
 
     while(!done)
     {
         switch(grammar_id)
         {
-        case 122:
-            // Grammar: ID=122; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+        case 123:
+            // Grammar: ID=123; read/write bits=4; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=123
-                    // decode: unsigned int
-                    error = decode_exi_type_uint32(stream, &Dynamic_AC_CLReqControlModeType->DepartureTime);
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=124
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 123;
+                        Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 1u;
+                        grammar_id = 124;
                     }
                     break;
                 case 1:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=124
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=125
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
+                        grammar_id = 125;
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (EVTargetEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType (RationalNumberType)); next=124
+                case 2:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=126
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVTargetEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 130;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 8:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 9:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7765,8 +7387,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 124:
-            // Grammar: ID=124; read/write bits=1; START (EVMaximumEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=124; read/write bits=4; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7774,10 +7396,90 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMaximumEnergyRequest, RationalNumberType (RationalNumberType)); next=125
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 1u;
                         grammar_id = 125;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=126
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
+                        grammar_id = 126;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 130;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 8:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7787,8 +7489,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 125:
-            // Grammar: ID=125; read/write bits=1; START (EVMinimumEnergyRequest)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=125; read/write bits=4; START (EVMinimumEnergyRequest), START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7796,10 +7498,80 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMinimumEnergyRequest, RationalNumberType (RationalNumberType)); next=126
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumEnergyRequest);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed = 1u;
                         grammar_id = 126;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=127
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
+                        grammar_id = 127;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 130;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7809,8 +7581,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 126:
-            // Grammar: ID=126; read/write bits=1; START (EVMaximumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=126; read/write bits=3; START (EVMaximumChargePower), START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7818,10 +7590,70 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMaximumChargePower, RationalNumberType (RationalNumberType)); next=127
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_isUsed = 1u;
                         grammar_id = 127;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        grammar_id = 128;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        grammar_id = 129;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
+                        grammar_id = 130;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7831,8 +7663,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 127:
-            // Grammar: ID=127; read/write bits=2; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=127; read/write bits=3; START (EVMaximumChargePower_L2), START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7840,30 +7672,60 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMaximumChargePower_L2, RationalNumberType (RationalNumberType)); next=128
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 1u;
                         grammar_id = 128;
                     }
                     break;
                 case 1:
                     // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
                         grammar_id = 129;
                     }
                     break;
                 case 2:
                     // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
                         grammar_id = 130;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7873,8 +7735,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 128:
-            // Grammar: ID=128; read/write bits=2; START (EVMaximumChargePower_L3), START (EVMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=128; read/write bits=3; START (EVMaximumChargePower_L3), START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7882,20 +7744,50 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMaximumChargePower_L3, RationalNumberType (RationalNumberType)); next=129
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 1u;
                         grammar_id = 129;
                     }
                     break;
                 case 1:
                     // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
                         grammar_id = 130;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7905,8 +7797,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 129:
-            // Grammar: ID=129; read/write bits=1; START (EVMinimumChargePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=129; read/write bits=3; START (EVMinimumChargePower), START (EVMinimumChargePower_L2), START (EVMinimumChargePower_L3), START (EVPresentActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -7914,10 +7806,40 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMinimumChargePower, RationalNumberType (RationalNumberType)); next=130
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_isUsed = 1u;
                         grammar_id = 130;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        grammar_id = 131;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        grammar_id = 132;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
+                    if (error == 0)
+                    {
+                        grammar_id = 133;
                     }
                     break;
                 default:
@@ -7936,27 +7858,27 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMinimumChargePower_L2, RationalNumberType (RationalNumberType)); next=131
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 1u;
                         grammar_id = 131;
                     }
                     break;
                 case 1:
                     // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
                         grammar_id = 132;
                     }
                     break;
                 case 2:
                     // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
                         grammar_id = 133;
@@ -7978,17 +7900,17 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVMinimumChargePower_L3, RationalNumberType (RationalNumberType)); next=132
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 1u;
                         grammar_id = 132;
                     }
                     break;
                 case 1:
                     // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
                         grammar_id = 133;
@@ -8010,7 +7932,7 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentActivePower, RationalNumberType (RationalNumberType)); next=133
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower);
                     if (error == 0)
                     {
                         grammar_id = 133;
@@ -8023,8 +7945,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 133:
-            // Grammar: ID=133; read/write bits=2; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=133; read/write bits=3; START (EVPresentActivePower_L2), START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -8032,31 +7954,57 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=134
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 134;
                     }
                     break;
                 case 1:
                     // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=135
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 135;
                     }
                     break;
                 case 2:
                     // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=136
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
                         grammar_id = 136;
                     }
+                    break;
+                case 3:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=137
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 137;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 5:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -8065,8 +8013,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 134:
-            // Grammar: ID=134; read/write bits=2; START (EVPresentActivePower_L3), START (EVPresentReactivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            // Grammar: ID=134; read/write bits=3; START (EVPresentActivePower_L3), START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -8074,21 +8022,47 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=135
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 135;
                     }
                     break;
                 case 1:
                     // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=136
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
                         grammar_id = 136;
                     }
+                    break;
+                case 2:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=137
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 137;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 4:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -8097,8 +8071,8 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
             }
             break;
         case 135:
-            // Grammar: ID=135; read/write bits=1; START (EVPresentReactivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            // Grammar: ID=135; read/write bits=3; START (EVPresentReactivePower), START (EVPresentReactivePower_L2), START (EVPresentReactivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
@@ -8106,11 +8080,37 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentReactivePower, RationalNumberType (RationalNumberType)); next=136
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower);
                     if (error == 0)
                     {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 1u;
                         grammar_id = 136;
                     }
+                    break;
+                case 1:
+                    // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=137
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        grammar_id = 137;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 3:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -8128,20 +8128,20 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentReactivePower_L2, RationalNumberType (RationalNumberType)); next=137
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 1u;
                         grammar_id = 137;
                     }
                     break;
                 case 1:
                     // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -8166,10 +8166,10 @@ static int decode_iso20_ac_Dynamic_AC_CLReqControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVPresentReactivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -10400,122 +10400,138 @@ static int decode_iso20_ac_ReceiptType(exi_bitstream_t* stream, struct iso20_ac_
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLResControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLResControlModeType; base type=Scheduled_CLResControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLResControlMode; type={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLResControlModeType; base type=Dynamic_CLResControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: EVSETargetActivePower, RationalNumberType (0, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
-static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType) {
+// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSETargetActivePower, RationalNumberType (1, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
+static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLResControlModeType* Dynamic_AC_CLResControlModeType) {
     int grammar_id = 197;
     int done = 0;
     uint32_t eventCode;
     int error;
 
-    init_iso20_ac_Scheduled_AC_CLResControlModeType(Scheduled_AC_CLResControlModeType);
+    init_iso20_ac_Dynamic_AC_CLResControlModeType(Dynamic_AC_CLResControlModeType);
 
     while(!done)
     {
         switch(grammar_id)
         {
         case 197:
-            // Grammar: ID=197; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=197; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=198
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower);
+                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=198
+                    // decode: unsigned int
+                    error = decode_exi_type_uint32(stream, &Dynamic_AC_CLResControlModeType->DepartureTime);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->DepartureTime_isUsed = 1u;
                         grammar_id = 198;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=199
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=199
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 199;
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
+                            if (error == 0)
+                            {
+                                Dynamic_AC_CLResControlModeType->MinimumSOC = (int8_t)value;
+                                Dynamic_AC_CLResControlModeType->MinimumSOC_isUsed = 1u;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 199;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=200
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    // Event: START (TargetSOC, percentValueType (byte)); next=200
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 200;
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
+                            if (error == 0)
+                            {
+                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
+                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 200;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=201
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=201
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
                         grammar_id = 201;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 202;
                     }
-                    break;
-                case 5:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 203;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
-                    }
-                    break;
-                case 8:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 9:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10524,96 +10540,112 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 198:
-            // Grammar: ID=198; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=198; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=199
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
+                    // Event: START (MinimumSOC, percentValueType (byte)); next=199
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
-                        grammar_id = 199;
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
+                            if (error == 0)
+                            {
+                                Dynamic_AC_CLResControlModeType->MinimumSOC = (int8_t)value;
+                                Dynamic_AC_CLResControlModeType->MinimumSOC_isUsed = 1u;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 199;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=200
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    // Event: START (TargetSOC, percentValueType (byte)); next=200
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 200;
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
+                            if (error == 0)
+                            {
+                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
+                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 200;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=201
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=201
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
                         grammar_id = 201;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 202;
                     }
-                    break;
-                case 4:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 203;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
-                    }
-                    break;
-                case 7:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 8:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10622,86 +10654,71 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 199:
-            // Grammar: ID=199; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            // Grammar: ID=199; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=200
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    // Event: START (TargetSOC, percentValueType (byte)); next=200
+                    // decode: restricted integer (4096 or fewer values)
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
-                        grammar_id = 200;
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
+                            if (error == 0)
+                            {
+                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
+                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 200;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=201
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=201
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
                         grammar_id = 201;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 202;
                     }
-                    break;
-                case 3:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 203;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
-                    }
-                    break;
-                case 6:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 7:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10710,76 +10727,30 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 200:
-            // Grammar: ID=200; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=200; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=201
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
+                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=201
+                    // decode: unsigned short
+                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
                         grammar_id = 201;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 202;
                     }
-                    break;
-                case 2:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 203;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
-                    }
-                    break;
-                case 5:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 6:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10788,66 +10759,20 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 201:
-            // Grammar: ID=201; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=201; read/write bits=1; START (EVSETargetActivePower)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=202
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=202
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 202;
                     }
-                    break;
-                case 1:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
-                        grammar_id = 203;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
-                    }
-                    break;
-                case 4:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
-                    if (error == 0)
-                    {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 5:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -10856,53 +10781,93 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 202:
-            // Grammar: ID=202; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            // Grammar: ID=202; read/write bits=4; START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=203
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=203
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
                         grammar_id = 203;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=204
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
                         grammar_id = 204;
                     }
                     break;
                 case 2:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=205
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
                         grammar_id = 205;
                     }
                     break;
                 case 3:
-                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=206
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
-                        grammar_id = 2;
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        grammar_id = 206;
                     }
                     break;
                 case 4:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=207
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 207;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                    break;
+                case 7:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 8:
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
@@ -10914,39 +10879,331 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
             }
             break;
         case 203:
-            // Grammar: ID=203; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            // Grammar: ID=203; read/write bits=4; START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=204
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
+                        grammar_id = 204;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=205
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        grammar_id = 205;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=206
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        grammar_id = 206;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=207
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 207;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                    break;
+                case 6:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 7:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 204:
+            // Grammar: ID=204; read/write bits=3; START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=204
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=205
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
-                        grammar_id = 204;
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        grammar_id = 205;
                     }
                     break;
                 case 1:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=206
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        grammar_id = 206;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=207
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 207;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                    break;
+                case 5:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 6:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 205:
+            // Grammar: ID=205; read/write bits=3; START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=206
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        grammar_id = 206;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=207
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 207;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                    break;
+                case 4:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 5:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 206:
+            // Grammar: ID=206; read/write bits=3; START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=207
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 207;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 2:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
+                    }
+                    break;
+                case 3:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
+                    }
+                    break;
+                case 4:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 207:
+            // Grammar: ID=207; read/write bits=3; START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=208
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 208;
+                    }
+                    break;
+                case 1:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    if (error == 0)
+                    {
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
                     }
                     break;
                 case 2:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -10961,30 +11218,30 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 204:
-            // Grammar: ID=204; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+        case 208:
+            // Grammar: ID=208; read/write bits=2; START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=205
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=209
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
-                        grammar_id = 205;
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 209;
                     }
                     break;
                 case 1:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -10999,8 +11256,8 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 205:
-            // Grammar: ID=205; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
+        case 209:
+            // Grammar: ID=209; read/write bits=2; START (EVSEPresentActivePower_L3), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -11009,10 +11266,10 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11058,379 +11315,122 @@ static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* st
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLResControlMode; type={urn:iso:std:iso:15118:-20:AC}Dynamic_AC_CLResControlModeType; base type=Dynamic_CLResControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLResControlMode; type={urn:iso:std:iso:15118:-20:AC}Scheduled_AC_CLResControlModeType; base type=Scheduled_CLResControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); MinimumSOC, percentValueType (0, 1); TargetSOC, percentValueType (0, 1); AckMaxDelay, unsignedShort (0, 1); EVSETargetActivePower, RationalNumberType (1, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
-static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Dynamic_AC_CLResControlModeType* Dynamic_AC_CLResControlModeType) {
-    int grammar_id = 206;
+// Particle: EVSETargetActivePower, RationalNumberType (0, 1); EVSETargetActivePower_L2, RationalNumberType (0, 1); EVSETargetActivePower_L3, RationalNumberType (0, 1); EVSETargetReactivePower, RationalNumberType (0, 1); EVSETargetReactivePower_L2, RationalNumberType (0, 1); EVSETargetReactivePower_L3, RationalNumberType (0, 1); EVSEPresentActivePower, RationalNumberType (0, 1); EVSEPresentActivePower_L2, RationalNumberType (0, 1); EVSEPresentActivePower_L3, RationalNumberType (0, 1);
+static int decode_iso20_ac_Scheduled_AC_CLResControlModeType(exi_bitstream_t* stream, struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType) {
+    int grammar_id = 210;
     int done = 0;
     uint32_t eventCode;
     int error;
 
-    init_iso20_ac_Dynamic_AC_CLResControlModeType(Dynamic_AC_CLResControlModeType);
+    init_iso20_ac_Scheduled_AC_CLResControlModeType(Scheduled_AC_CLResControlModeType);
 
     while(!done)
     {
         switch(grammar_id)
         {
-        case 206:
-            // Grammar: ID=206; read/write bits=3; START (DepartureTime), START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
+        case 210:
+            // Grammar: ID=210; read/write bits=4; START (EVSETargetActivePower), START (EVSETargetActivePower_L2), START (EVSETargetActivePower_L3), START (EVSETargetReactivePower), START (EVSETargetReactivePower_L2), START (EVSETargetReactivePower_L3), START (EVSEPresentActivePower), START (EVSEPresentActivePower_L2), START (EVSEPresentActivePower_L3), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (DepartureTime, unsignedInt (unsignedLong)); next=207
-                    // decode: unsigned int
-                    error = decode_exi_type_uint32(stream, &Dynamic_AC_CLResControlModeType->DepartureTime);
+                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->DepartureTime_isUsed = 1u;
-                        grammar_id = 207;
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 1u;
+                        grammar_id = 211;
                     }
                     break;
                 case 1:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=208
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=212
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
-                            if (error == 0)
-                            {
-                                Dynamic_AC_CLResControlModeType->MinimumSOC = (int8_t)value;
-                                Dynamic_AC_CLResControlModeType->MinimumSOC_isUsed = 1u;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 208;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
+                        grammar_id = 212;
                     }
                     break;
                 case 2:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=209
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=213
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
-                            if (error == 0)
-                            {
-                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
-                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 209;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
+                        grammar_id = 213;
                     }
                     break;
                 case 3:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=210
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
+                    // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=214
+                    // decode: element
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 210;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        grammar_id = 214;
                     }
                     break;
                 case 4:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                    // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        grammar_id = 211;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        grammar_id = 215;
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 207:
-            // Grammar: ID=207; read/write bits=3; START (MinimumSOC), START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (MinimumSOC, percentValueType (byte)); next=208
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
-                            if (error == 0)
-                            {
-                                Dynamic_AC_CLResControlModeType->MinimumSOC = (int8_t)value;
-                                Dynamic_AC_CLResControlModeType->MinimumSOC_isUsed = 1u;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 208;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=209
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
-                            if (error == 0)
-                            {
-                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
-                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 209;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 2:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=210
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
-                    if (error == 0)
-                    {
-                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 210;
-                    }
-                    break;
-                case 3:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                case 5:
+                    // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        grammar_id = 211;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        grammar_id = 216;
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 208:
-            // Grammar: ID=208; read/write bits=2; START (TargetSOC), START (AckMaxDelay), START (EVSETargetActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (TargetSOC, percentValueType (byte)); next=209
-                    // decode: restricted integer (4096 or fewer values)
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 7, &value);
-                            if (error == 0)
-                            {
-                                Dynamic_AC_CLResControlModeType->TargetSOC = (int8_t)value;
-                                Dynamic_AC_CLResControlModeType->TargetSOC_isUsed = 1u;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 209;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                case 1:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=210
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
-                    if (error == 0)
-                    {
-                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 210;
-                    }
-                    break;
-                case 2:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                case 6:
+                    // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        grammar_id = 211;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        grammar_id = 217;
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 209:
-            // Grammar: ID=209; read/write bits=2; START (AckMaxDelay), START (EVSETargetActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (AckMaxDelay, unsignedShort (unsignedInt)); next=210
-                    // decode: unsigned short
-                    error = decode_exi_type_uint16(stream, &Dynamic_AC_CLResControlModeType->AckMaxDelay);
-                    if (error == 0)
-                    {
-                        Dynamic_AC_CLResControlModeType->AckMaxDelay_isUsed = 1u;
-                        grammar_id = 210;
-                    }
-                    break;
-                case 1:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                case 7:
+                    // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        grammar_id = 211;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        grammar_id = 218;
                     }
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 210:
-            // Grammar: ID=210; read/write bits=1; START (EVSETargetActivePower)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSETargetActivePower, RationalNumberType (RationalNumberType)); next=211
+                case 8:
+                    // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        grammar_id = 211;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        grammar_id = 2;
                     }
+                    break;
+                case 9:
+                    // Event: END Element; next=3
+                    done = 1;
+                    grammar_id = 3;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -11448,80 +11448,80 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSETargetActivePower_L2, RationalNumberType (RationalNumberType)); next=212
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 1u;
                         grammar_id = 212;
                     }
                     break;
                 case 1:
                     // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=213
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
                         grammar_id = 213;
                     }
                     break;
                 case 2:
                     // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=214
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
                         grammar_id = 214;
                     }
                     break;
                 case 3:
                     // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 215;
                     }
                     break;
                 case 4:
                     // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
                         grammar_id = 216;
                     }
                     break;
                 case 5:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 6:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 7:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11546,70 +11546,70 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSETargetActivePower_L3, RationalNumberType (RationalNumberType)); next=213
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 1u;
                         grammar_id = 213;
                     }
                     break;
                 case 1:
                     // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=214
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
                         grammar_id = 214;
                     }
                     break;
                 case 2:
                     // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 215;
                     }
                     break;
                 case 3:
                     // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
                         grammar_id = 216;
                     }
                     break;
                 case 4:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 5:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 6:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11634,60 +11634,60 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSETargetReactivePower, RationalNumberType (RationalNumberType)); next=214
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 1u;
                         grammar_id = 214;
                     }
                     break;
                 case 1:
                     // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 215;
                     }
                     break;
                 case 2:
                     // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
                         grammar_id = 216;
                     }
                     break;
                 case 3:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 4:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 5:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11712,50 +11712,50 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSETargetReactivePower_L2, RationalNumberType (RationalNumberType)); next=215
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 1u;
                         grammar_id = 215;
                     }
                     break;
                 case 1:
                     // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
                         grammar_id = 216;
                     }
                     break;
                 case 2:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 3:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 4:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11780,40 +11780,40 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSETargetReactivePower_L3, RationalNumberType (RationalNumberType)); next=216
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 1u;
                         grammar_id = 216;
                     }
                     break;
                 case 1:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 2:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 3:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11838,30 +11838,30 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSEPresentActivePower, RationalNumberType (RationalNumberType)); next=217
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 1u;
                         grammar_id = 217;
                     }
                     break;
                 case 1:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 2:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11886,20 +11886,20 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSEPresentActivePower_L2, RationalNumberType (RationalNumberType)); next=218
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 1u;
                         grammar_id = 218;
                     }
                     break;
                 case 1:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;
@@ -11924,10 +11924,10 @@ static int decode_iso20_ac_Dynamic_AC_CLResControlModeType(exi_bitstream_t* stre
                 case 0:
                     // Event: START (EVSEPresentActivePower_L3, RationalNumberType (RationalNumberType)); next=2
                     // decode: element
-                    error = decode_iso20_ac_RationalNumberType(stream, &Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3);
+                    error = decode_iso20_ac_RationalNumberType(stream, &Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3);
                     if (error == 0)
                     {
-                        Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
+                        Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 1u;
                         grammar_id = 2;
                     }
                     break;

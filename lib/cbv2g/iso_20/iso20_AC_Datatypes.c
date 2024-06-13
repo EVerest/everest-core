@@ -231,6 +231,18 @@ void init_iso20_ac_EVSEStatusType(struct iso20_ac_EVSEStatusType* EVSEStatusType
     (void) EVSEStatusType;
 }
 
+void init_iso20_ac_Dynamic_AC_CLReqControlModeType(struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType) {
+    Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 0u;
+    Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 0u;
+}
+
 void init_iso20_ac_Scheduled_AC_CLReqControlModeType(struct iso20_ac_Scheduled_AC_CLReqControlModeType* Scheduled_AC_CLReqControlModeType) {
     Scheduled_AC_CLReqControlModeType->EVTargetEnergyRequest_isUsed = 0u;
     Scheduled_AC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed = 0u;
@@ -246,18 +258,6 @@ void init_iso20_ac_Scheduled_AC_CLReqControlModeType(struct iso20_ac_Scheduled_A
     Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_isUsed = 0u;
     Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 0u;
     Scheduled_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 0u;
-}
-
-void init_iso20_ac_Dynamic_AC_CLReqControlModeType(struct iso20_ac_Dynamic_AC_CLReqControlModeType* Dynamic_AC_CLReqControlModeType) {
-    Dynamic_AC_CLReqControlModeType->DepartureTime_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L2_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVMaximumChargePower_L3_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L2_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVMinimumChargePower_L3_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L2_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVPresentActivePower_L3_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L2_isUsed = 0u;
-    Dynamic_AC_CLReqControlModeType->EVPresentReactivePower_L3_isUsed = 0u;
 }
 
 void init_iso20_ac_CLReqControlModeType(struct iso20_ac_CLReqControlModeType* CLReqControlModeType) {
@@ -281,18 +281,6 @@ void init_iso20_ac_ReceiptType(struct iso20_ac_ReceiptType* ReceiptType) {
     ReceiptType->OverstayCosts_isUsed = 0u;
 }
 
-void init_iso20_ac_Scheduled_AC_CLResControlModeType(struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType) {
-    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 0u;
-    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 0u;
-}
-
 void init_iso20_ac_Dynamic_AC_CLResControlModeType(struct iso20_ac_Dynamic_AC_CLResControlModeType* Dynamic_AC_CLResControlModeType) {
     Dynamic_AC_CLResControlModeType->DepartureTime_isUsed = 0u;
     Dynamic_AC_CLResControlModeType->MinimumSOC_isUsed = 0u;
@@ -306,6 +294,18 @@ void init_iso20_ac_Dynamic_AC_CLResControlModeType(struct iso20_ac_Dynamic_AC_CL
     Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 0u;
     Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 0u;
     Dynamic_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 0u;
+}
+
+void init_iso20_ac_Scheduled_AC_CLResControlModeType(struct iso20_ac_Scheduled_AC_CLResControlModeType* Scheduled_AC_CLResControlModeType) {
+    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L2_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSETargetActivePower_L3_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L2_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSETargetReactivePower_L3_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L2_isUsed = 0u;
+    Scheduled_AC_CLResControlModeType->EVSEPresentActivePower_L3_isUsed = 0u;
 }
 
 void init_iso20_ac_CLResControlModeType(struct iso20_ac_CLResControlModeType* CLResControlModeType) {

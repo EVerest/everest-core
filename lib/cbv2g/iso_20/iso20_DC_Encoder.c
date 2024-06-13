@@ -58,8 +58,8 @@ static int encode_iso20_dc_DisplayParametersType(exi_bitstream_t* stream, const 
 static int encode_iso20_dc_DC_CPDResEnergyTransferModeType(exi_bitstream_t* stream, const struct iso20_dc_DC_CPDResEnergyTransferModeType* DC_CPDResEnergyTransferModeType);
 static int encode_iso20_dc_EVSEStatusType(exi_bitstream_t* stream, const struct iso20_dc_EVSEStatusType* EVSEStatusType);
 static int encode_iso20_dc_MeterInfoType(exi_bitstream_t* stream, const struct iso20_dc_MeterInfoType* MeterInfoType);
-static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlModeType);
 static int encode_iso20_dc_Dynamic_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Dynamic_DC_CLReqControlModeType* Dynamic_DC_CLReqControlModeType);
+static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlModeType);
 static int encode_iso20_dc_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_CLReqControlModeType* CLReqControlModeType);
 static int encode_iso20_dc_ReceiptType(exi_bitstream_t* stream, const struct iso20_dc_ReceiptType* ReceiptType);
 static int encode_iso20_dc_Scheduled_DC_CLResControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Scheduled_DC_CLResControlModeType* Scheduled_DC_CLResControlModeType);
@@ -6254,10 +6254,10 @@ static int encode_iso20_dc_MeterInfoType(exi_bitstream_t* stream, const struct i
     return error;
 }
 
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
 //          abstract=False; final=False; derivation=extension;
-// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVTargetCurrent, RationalNumberType (1, 1); EVTargetVoltage, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMaximumChargeCurrent, RationalNumberType (0, 1); EVMaximumVoltage, RationalNumberType (0, 1); EVMinimumVoltage, RationalNumberType (0, 1);
-static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlModeType) {
+// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1);
+static int encode_iso20_dc_Dynamic_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Dynamic_DC_CLReqControlModeType* Dynamic_DC_CLReqControlModeType) {
     int grammar_id = 111;
     int done = 0;
     int error = 0;
@@ -6267,17 +6267,194 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
         switch(grammar_id)
         {
         case 111:
-            // Grammar: ID=111; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVTargetCurrent)
+            // Grammar: ID=111; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
+            if (Dynamic_DC_CLReqControlModeType->DepartureTime_isUsed == 1u)
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (DepartureTime, unsignedLong); next=112
+                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        error = exi_basetypes_encoder_uint_32(stream, Dynamic_DC_CLReqControlModeType->DepartureTime);
+                        if (error == EXI_ERROR__NO_ERROR)
+                        {
+                            // encode END Element
+                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+                            if (error == EXI_ERROR__NO_ERROR)
+                            {
+                                grammar_id = 112;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=113
+                    error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVTargetEnergyRequest);
+                    if (error == EXI_ERROR__NO_ERROR)
+                    {
+                        grammar_id = 113;
+                    }
+                }
+            }
+            break;
+        case 112:
+            // Grammar: ID=112; read/write bits=1; START (EVTargetEnergyRequest)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=113
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVTargetEnergyRequest);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 113;
+                }
+            }
+            break;
+        case 113:
+            // Grammar: ID=113; read/write bits=1; START (EVMaximumEnergyRequest)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=114
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumEnergyRequest);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 114;
+                }
+            }
+            break;
+        case 114:
+            // Grammar: ID=114; read/write bits=1; START (EVMinimumEnergyRequest)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=115
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumEnergyRequest);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 115;
+                }
+            }
+            break;
+        case 115:
+            // Grammar: ID=115; read/write bits=1; START (EVMaximumChargePower)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=116
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumChargePower);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 116;
+                }
+            }
+            break;
+        case 116:
+            // Grammar: ID=116; read/write bits=1; START (EVMinimumChargePower)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=117
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumChargePower);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 117;
+                }
+            }
+            break;
+        case 117:
+            // Grammar: ID=117; read/write bits=1; START (EVMaximumChargeCurrent)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=118
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumChargeCurrent);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 118;
+                }
+            }
+            break;
+        case 118:
+            // Grammar: ID=118; read/write bits=1; START (EVMaximumVoltage)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=119
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumVoltage);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 119;
+                }
+            }
+            break;
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (EVMinimumVoltage)
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: START (RationalNumberType); next=2
+                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumVoltage);
+                if (error == EXI_ERROR__NO_ERROR)
+                {
+                    grammar_id = 2;
+                }
+            }
+            break;
+        case 2:
+            // Grammar: ID=2; read/write bits=1; END Element
+            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
+            if (error == EXI_ERROR__NO_ERROR)
+            {
+                // Event: END Element; next=3
+                done = 1;
+                grammar_id = 3;
+            }
+            break;
+        default:
+            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
+            break;
+        }
+
+        if (error)
+        {
+            done = 1;
+        }
+    }
+    return error;
+}
+
+// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Scheduled_DC_CLReqControlModeType; base type=Scheduled_CLReqControlModeType; content type=ELEMENT-ONLY;
+//          abstract=False; final=False; derivation=extension;
+// Particle: EVTargetEnergyRequest, RationalNumberType (0, 1); EVMaximumEnergyRequest, RationalNumberType (0, 1); EVMinimumEnergyRequest, RationalNumberType (0, 1); EVTargetCurrent, RationalNumberType (1, 1); EVTargetVoltage, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (0, 1); EVMinimumChargePower, RationalNumberType (0, 1); EVMaximumChargeCurrent, RationalNumberType (0, 1); EVMaximumVoltage, RationalNumberType (0, 1); EVMinimumVoltage, RationalNumberType (0, 1);
+static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Scheduled_DC_CLReqControlModeType* Scheduled_DC_CLReqControlModeType) {
+    int grammar_id = 120;
+    int done = 0;
+    int error = 0;
+
+    while(!done)
+    {
+        switch(grammar_id)
+        {
+        case 120:
+            // Grammar: ID=120; read/write bits=3; START (EVTargetEnergyRequest), START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVTargetCurrent)
             if (Scheduled_DC_CLReqControlModeType->EVTargetEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=112
+                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=121
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 112;
+                        grammar_id = 121;
                     }
                 }
             }
@@ -6286,11 +6463,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=113
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=122
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 113;
+                        grammar_id = 122;
                     }
                 }
             }
@@ -6299,11 +6476,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=114
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=123
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 114;
+                        grammar_id = 123;
                     }
                 }
             }
@@ -6312,27 +6489,27 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetCurrent, RationalNumberType); next=115
+                    // Event: START (EVTargetCurrent, RationalNumberType); next=124
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 115;
+                        grammar_id = 124;
                     }
                 }
             }
             break;
-        case 112:
-            // Grammar: ID=112; read/write bits=2; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVTargetCurrent)
+        case 121:
+            // Grammar: ID=121; read/write bits=2; START (EVMaximumEnergyRequest), START (EVMinimumEnergyRequest), START (EVTargetCurrent)
             if (Scheduled_DC_CLReqControlModeType->EVMaximumEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=113
+                    // Event: START (EVMaximumEnergyRequest, RationalNumberType); next=122
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 113;
+                        grammar_id = 122;
                     }
                 }
             }
@@ -6341,11 +6518,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=114
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=123
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 114;
+                        grammar_id = 123;
                     }
                 }
             }
@@ -6354,27 +6531,27 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetCurrent, RationalNumberType); next=115
+                    // Event: START (EVTargetCurrent, RationalNumberType); next=124
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 115;
+                        grammar_id = 124;
                     }
                 }
             }
             break;
-        case 113:
-            // Grammar: ID=113; read/write bits=2; START (EVMinimumEnergyRequest), START (EVTargetCurrent)
+        case 122:
+            // Grammar: ID=122; read/write bits=2; START (EVMinimumEnergyRequest), START (EVTargetCurrent)
             if (Scheduled_DC_CLReqControlModeType->EVMinimumEnergyRequest_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=114
+                    // Event: START (EVMinimumEnergyRequest, RationalNumberType); next=123
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMinimumEnergyRequest);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 114;
+                        grammar_id = 123;
                     }
                 }
             }
@@ -6383,53 +6560,53 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVTargetCurrent, RationalNumberType); next=115
+                    // Event: START (EVTargetCurrent, RationalNumberType); next=124
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 115;
+                        grammar_id = 124;
                     }
                 }
             }
             break;
-        case 114:
-            // Grammar: ID=114; read/write bits=1; START (EVTargetCurrent)
+        case 123:
+            // Grammar: ID=123; read/write bits=1; START (EVTargetCurrent)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=115
+                // Event: START (RationalNumberType); next=124
                 error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetCurrent);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 115;
+                    grammar_id = 124;
                 }
             }
             break;
-        case 115:
-            // Grammar: ID=115; read/write bits=1; START (EVTargetVoltage)
+        case 124:
+            // Grammar: ID=124; read/write bits=1; START (EVTargetVoltage)
             error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
             if (error == EXI_ERROR__NO_ERROR)
             {
-                // Event: START (RationalNumberType); next=116
+                // Event: START (RationalNumberType); next=125
                 error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVTargetVoltage);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    grammar_id = 116;
+                    grammar_id = 125;
                 }
             }
             break;
-        case 116:
-            // Grammar: ID=116; read/write bits=3; START (EVMaximumChargePower), START (EVMinimumChargePower), START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
+        case 125:
+            // Grammar: ID=125; read/write bits=3; START (EVMaximumChargePower), START (EVMinimumChargePower), START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
             if (Scheduled_DC_CLReqControlModeType->EVMaximumChargePower_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumChargePower, RationalNumberType); next=117
+                    // Event: START (EVMaximumChargePower, RationalNumberType); next=126
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumChargePower);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 117;
+                        grammar_id = 126;
                     }
                 }
             }
@@ -6438,11 +6615,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumChargePower, RationalNumberType); next=118
+                    // Event: START (EVMinimumChargePower, RationalNumberType); next=127
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 118;
+                        grammar_id = 127;
                     }
                 }
             }
@@ -6451,11 +6628,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=119
+                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=128
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumChargeCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 119;
+                        grammar_id = 128;
                     }
                 }
             }
@@ -6464,11 +6641,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumVoltage, RationalNumberType); next=120
+                    // Event: START (EVMaximumVoltage, RationalNumberType); next=129
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumVoltage);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 129;
                     }
                 }
             }
@@ -6496,18 +6673,18 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 117:
-            // Grammar: ID=117; read/write bits=3; START (EVMinimumChargePower), START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
+        case 126:
+            // Grammar: ID=126; read/write bits=3; START (EVMinimumChargePower), START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
             if (Scheduled_DC_CLReqControlModeType->EVMinimumChargePower_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMinimumChargePower, RationalNumberType); next=118
+                    // Event: START (EVMinimumChargePower, RationalNumberType); next=127
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMinimumChargePower);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 118;
+                        grammar_id = 127;
                     }
                 }
             }
@@ -6516,11 +6693,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=119
+                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=128
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumChargeCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 119;
+                        grammar_id = 128;
                     }
                 }
             }
@@ -6529,11 +6706,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumVoltage, RationalNumberType); next=120
+                    // Event: START (EVMaximumVoltage, RationalNumberType); next=129
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumVoltage);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 129;
                     }
                 }
             }
@@ -6561,18 +6738,18 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 118:
-            // Grammar: ID=118; read/write bits=3; START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
+        case 127:
+            // Grammar: ID=127; read/write bits=3; START (EVMaximumChargeCurrent), START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
             if (Scheduled_DC_CLReqControlModeType->EVMaximumChargeCurrent_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=119
+                    // Event: START (EVMaximumChargeCurrent, RationalNumberType); next=128
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumChargeCurrent);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 119;
+                        grammar_id = 128;
                     }
                 }
             }
@@ -6581,11 +6758,11 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumVoltage, RationalNumberType); next=120
+                    // Event: START (EVMaximumVoltage, RationalNumberType); next=129
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumVoltage);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 129;
                     }
                 }
             }
@@ -6613,18 +6790,18 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 119:
-            // Grammar: ID=119; read/write bits=2; START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
+        case 128:
+            // Grammar: ID=128; read/write bits=2; START (EVMaximumVoltage), START (EVMinimumVoltage), END Element
             if (Scheduled_DC_CLReqControlModeType->EVMaximumVoltage_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (EVMaximumVoltage, RationalNumberType); next=120
+                    // Event: START (EVMaximumVoltage, RationalNumberType); next=129
                     error = encode_iso20_dc_RationalNumberType(stream, &Scheduled_DC_CLReqControlModeType->EVMaximumVoltage);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 120;
+                        grammar_id = 129;
                     }
                 }
             }
@@ -6652,8 +6829,8 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=2; START (EVMinimumVoltage), END Element
+        case 129:
+            // Grammar: ID=129; read/write bits=2; START (EVMinimumVoltage), END Element
             if (Scheduled_DC_CLReqControlModeType->EVMinimumVoltage_isUsed == 1u)
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
@@ -6675,183 +6852,6 @@ static int encode_iso20_dc_Scheduled_DC_CLReqControlModeType(exi_bitstream_t* st
                     // Event: END Element; next=3
                     done = 1;
                     grammar_id = 3;
-                }
-            }
-            break;
-        case 2:
-            // Grammar: ID=2; read/write bits=1; END Element
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: END Element; next=3
-                done = 1;
-                grammar_id = 3;
-            }
-            break;
-        default:
-            error = EXI_ERROR__UNKNOWN_GRAMMAR_ID;
-            break;
-        }
-
-        if (error)
-        {
-            done = 1;
-        }
-    }
-    return error;
-}
-
-// Element: definition=complex; name={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlMode; type={urn:iso:std:iso:15118:-20:DC}Dynamic_DC_CLReqControlModeType; base type=Dynamic_CLReqControlModeType; content type=ELEMENT-ONLY;
-//          abstract=False; final=False; derivation=extension;
-// Particle: DepartureTime, unsignedInt (0, 1); EVTargetEnergyRequest, RationalNumberType (1, 1); EVMaximumEnergyRequest, RationalNumberType (1, 1); EVMinimumEnergyRequest, RationalNumberType (1, 1); EVMaximumChargePower, RationalNumberType (1, 1); EVMinimumChargePower, RationalNumberType (1, 1); EVMaximumChargeCurrent, RationalNumberType (1, 1); EVMaximumVoltage, RationalNumberType (1, 1); EVMinimumVoltage, RationalNumberType (1, 1);
-static int encode_iso20_dc_Dynamic_DC_CLReqControlModeType(exi_bitstream_t* stream, const struct iso20_dc_Dynamic_DC_CLReqControlModeType* Dynamic_DC_CLReqControlModeType) {
-    int grammar_id = 121;
-    int done = 0;
-    int error = 0;
-
-    while(!done)
-    {
-        switch(grammar_id)
-        {
-        case 121:
-            // Grammar: ID=121; read/write bits=2; START (DepartureTime), START (EVTargetEnergyRequest)
-            if (Dynamic_DC_CLReqControlModeType->DepartureTime_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (DepartureTime, unsignedLong); next=122
-                    error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        error = exi_basetypes_encoder_uint_32(stream, Dynamic_DC_CLReqControlModeType->DepartureTime);
-                        if (error == EXI_ERROR__NO_ERROR)
-                        {
-                            // encode END Element
-                            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-                            if (error == EXI_ERROR__NO_ERROR)
-                            {
-                                grammar_id = 122;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (EVTargetEnergyRequest, RationalNumberType); next=123
-                    error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVTargetEnergyRequest);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 123;
-                    }
-                }
-            }
-            break;
-        case 122:
-            // Grammar: ID=122; read/write bits=1; START (EVTargetEnergyRequest)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=123
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVTargetEnergyRequest);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 123;
-                }
-            }
-            break;
-        case 123:
-            // Grammar: ID=123; read/write bits=1; START (EVMaximumEnergyRequest)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=124
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumEnergyRequest);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 124;
-                }
-            }
-            break;
-        case 124:
-            // Grammar: ID=124; read/write bits=1; START (EVMinimumEnergyRequest)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=125
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumEnergyRequest);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 125;
-                }
-            }
-            break;
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (EVMaximumChargePower)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=126
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumChargePower);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 126;
-                }
-            }
-            break;
-        case 126:
-            // Grammar: ID=126; read/write bits=1; START (EVMinimumChargePower)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=127
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumChargePower);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 127;
-                }
-            }
-            break;
-        case 127:
-            // Grammar: ID=127; read/write bits=1; START (EVMaximumChargeCurrent)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=128
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumChargeCurrent);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 128;
-                }
-            }
-            break;
-        case 128:
-            // Grammar: ID=128; read/write bits=1; START (EVMaximumVoltage)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=129
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMaximumVoltage);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 129;
-                }
-            }
-            break;
-        case 129:
-            // Grammar: ID=129; read/write bits=1; START (EVMinimumVoltage)
-            error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
-            if (error == EXI_ERROR__NO_ERROR)
-            {
-                // Event: START (RationalNumberType); next=2
-                error = encode_iso20_dc_RationalNumberType(stream, &Dynamic_DC_CLReqControlModeType->EVMinimumVoltage);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    grammar_id = 2;
                 }
             }
             break;
