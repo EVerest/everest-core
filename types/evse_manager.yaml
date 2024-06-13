@@ -297,6 +297,7 @@ types:
       - EnergyManagement
       - PermanentFault
       - PowermeterTransactionStartFailed
+      - IMDFault
   Error:
     description: >-
       Error object that contains information about the error and optional vendor error information

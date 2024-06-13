@@ -75,3 +75,5 @@ vars:
     type: object
     $ref: /system#/LogStatus
 
+errors:
+  - reference: /errors/system

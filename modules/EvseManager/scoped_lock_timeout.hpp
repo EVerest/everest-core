@@ -52,6 +52,7 @@ enum class MutexDescription {
     Charger_set_hlc_allow_close_contactor,
     Charger_set_hlc_error,
     Charger_errors_prevent_charging,
+    Charger_set_max_current,
     IEC_process_bsp_event,
     IEC_state_machine,
     IEC_set_pwm,
@@ -163,6 +164,8 @@ static std::string to_string(MutexDescription d) {
         return "Charger.cpp: set_hlc_error";
     case MutexDescription::Charger_errors_prevent_charging:
         return "Charger.cpp: errors_prevent_charging";
+    case MutexDescription::Charger_set_max_current:
+        return "Charger.cpp: set max current";
     case MutexDescription::IEC_process_bsp_event:
         return "IECStateMachine::process_bsp_event";
     case MutexDescription::IEC_state_machine:

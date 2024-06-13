@@ -1,0 +1,6 @@
+description: >-
+  Errors for Powermeter
+errors:
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.

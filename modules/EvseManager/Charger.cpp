@@ -962,7 +962,8 @@ bool Charger::set_max_current(float c, std::chrono::time_point<date::utc_clock> 
         // is it still valid?
         if (validUntil > date::utc_clock::now()) {
             {
-                std::lock_guard lock(state_machine_mutex);
+                Everest::scoped_lock_timeout lock(state_machine_mutex,
+                                                  Everest::MutexDescription::Charger_pause_charging);
                 shared_context.max_current = c;
                 shared_context.max_current_valid_until = validUntil;
             }
@@ -1524,7 +1525,9 @@ void Charger::check_soft_over_current() {
 // i.e. max_current is in valid range
 bool Charger::power_available() {
     if (shared_context.max_current_valid_until < date::utc_clock::now()) {
-        EVLOG_warning << "Power budget expired, falling back to 0.";
+        EVLOG_warning << "Power budget expired, falling back to 0. Last update: "
+                      << Everest::Date::to_rfc3339(shared_context.max_current_valid_until)
+                      << " Now:" << Everest::Date::to_rfc3339(date::utc_clock::now());
         if (shared_context.max_current > 0.) {
             shared_context.max_current = 0.;
             signal_max_current(shared_context.max_current);
