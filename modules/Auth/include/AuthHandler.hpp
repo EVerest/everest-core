@@ -110,6 +110,12 @@ public:
     void handle_session_event(const int connector_id, const SessionEvent& events);
 
     /**
+     * @brief Handler for permanent faults from evsemanager that prevents charging
+     */
+    void handle_permanent_fault_cleared(const int connector_id);
+    void handle_permanent_fault_raised(const int connector_id);
+
+    /**
      * @brief Set the connection timeout of the handler.
      *
      * @param connection_timeout

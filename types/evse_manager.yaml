@@ -131,11 +131,6 @@ types:
       - ChargingFinished
       - TransactionFinished
       - SessionFinished
-      - Error
-      - ErrorCleared
-      - AllErrorsCleared
-      - PermanentFault
-      - PermanentFaultCleared
       - ReservationStart
       - ReservationEnd
       - ReplugStarted
@@ -258,73 +253,6 @@ types:
         description: Exported meter value
         type: object
         $ref: /powermeter#/Powermeter
-  ErrorEnum:
-    description: >-
-      Note this is only kept for compatibility with the legacy error handling and will be removed soon.
-    type: string
-    enum:
-      - RCD_Selftest
-      - RCD_DC
-      - RCD_AC
-      - VendorError
-      - VendorWarning
-      - ConnectorLockCapNotCharged
-      - ConnectorLockUnexpectedOpen
-      - ConnectorLockUnexpectedClose
-      - ConnectorLockFailedLock
-      - ConnectorLockFailedUnlock
-      - MREC1ConnectorLockFailure
-      - MREC2GroundFailure
-      - MREC3HighTemperature
-      - MREC4OverCurrentFailure
-      - MREC5OverVoltage
-      - MREC6UnderVoltage
-      - MREC8EmergencyStop
-      - MREC10InvalidVehicleMode
-      - MREC14PilotFault
-      - MREC15PowerLoss
-      - MREC17EVSEContactorFault
-      - MREC18CableOverTempDerate
-      - MREC19CableOverTempStop
-      - MREC20PartialInsertion
-      - MREC23ProximityFault
-      - MREC24ConnectorVoltageHigh
-      - MREC25BrokenLatch
-      - MREC26CutCable
-      - DiodeFault
-      - VentilationNotAvailable
-      - BrownOut
-      - EnergyManagement
-      - PermanentFault
-      - PowermeterTransactionStartFailed
-      - IMDFault
-  Error:
-    description: >-
-      Error object that contains information about the error and optional vendor error information
-    type: object
-    additionalProperties: false
-    required:
-      - error_code
-      - error_description
-      - error_severity
-    properties:
-      error_code:
-        description: The error enum
-        type: string
-        $ref: /evse_manager#/ErrorEnum
-      error_description:
-        description: Description of the error (human readable)
-        type: string
-      error_severity:
-        description: Severity of the error
-        type: string
-        enum:
-          - High
-          - Medium
-          - Low
-      vendor_error:
-        description: The error code of the vendor
-        type: string
   EnableDisableSource:
     description: >-
       Source of a Enable or Disable command/event
@@ -417,10 +345,6 @@ types:
           Authorized, Deauthorized
         type: object
         $ref: /evse_manager#/AuthorizationEvent
-      error:
-        description: Details on error type
-        type: object
-        $ref: /evse_manager#/Error
       source:
         description: >-
           Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.

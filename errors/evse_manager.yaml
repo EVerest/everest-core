@@ -11,3 +11,5 @@ errors:
     description: Over current event
   - name: PowermeterTransactionStartFailed
     description: Transaction could not be started at the powermeter
+  - name: PermanentFault
+    description: Charging is not possible. Usually caused by another error from one of the requirements.

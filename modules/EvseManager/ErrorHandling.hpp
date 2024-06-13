@@ -127,9 +127,9 @@ public:
                            const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd);
 
     // Signal that one error has been raised. Bool argument is true if it preventing charging.
-    sigslot::signal<types::evse_manager::Error, bool> signal_error;
+    sigslot::signal<bool> signal_error;
     // Signal that one error has been cleared. Bool argument is true if it was preventing charging.
-    sigslot::signal<types::evse_manager::Error, bool> signal_error_cleared;
+    sigslot::signal<bool> signal_error_cleared;
     // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
@@ -142,6 +142,9 @@ public:
     void raise_powermeter_transaction_start_failed_error(const std::string& description);
     void clear_powermeter_transaction_start_failed_error();
 
+    void raise_permanent_fault_error(const std::string& description);
+    void clear_permanent_fault_error();
+
 private:
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
@@ -150,15 +153,12 @@ private:
     const std::unique_ptr<evse_managerImplBase>& p_evse;
     const std::vector<std::unique_ptr<isolation_monitorIntf>>& r_imd;
 
-    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_connector_lock(const Everest::error::Error& error, bool active,
-                                     types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_ac_rcd(const Everest::error::Error& error, bool active,
-                             types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_bsp(const Everest::error::Error& error, bool active);
+    bool modify_error_connector_lock(const Everest::error::Error& error, bool active);
+    bool modify_error_ac_rcd(const Everest::error::Error& error, bool active);
 
-    bool modify_error_evse_manager(const std::string& error_type, bool active,
-                                   types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_imd(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_evse_manager(const std::string& error_type, bool active);
+    bool modify_error_imd(const Everest::error::Error& error, bool active);
     bool hlc{false};
 
     ActiveErrors active_errors;

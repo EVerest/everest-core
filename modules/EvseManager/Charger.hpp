@@ -277,7 +277,6 @@ private:
         int ac_with_soc_timer;
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
-        bool contactor_welded{false};
 
         std::optional<types::units_signed::SignedMeterValue> stop_signed_meter_value;
         std::optional<types::units_signed::SignedMeterValue> start_signed_meter_value;
@@ -341,7 +340,6 @@ private:
     // ErrorHandling events
     enum class ErrorHandlingEvents : std::uint8_t {
         prevent_charging,
-        prevent_charging_welded,
         all_errors_cleared
     };
 
