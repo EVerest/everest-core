@@ -2,7 +2,7 @@ add_executable(test_session_setup session_setup.cpp)
 
 target_link_libraries(test_session_setup
     PRIVATE
-        cb_v2g::DIN
+        cbv2g::din
         Catch2::Catch2WithMain
 )
 
@@ -13,7 +13,7 @@ add_executable(test_service_discovery service_discovery.cpp)
 
 target_link_libraries(test_service_discovery
         PRIVATE
-        cb_v2g::DIN
+        cbv2g::din
         Catch2::Catch2WithMain
 )
 
