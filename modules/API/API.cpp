@@ -34,14 +34,13 @@ bool SessionInfo::is_state_charging(const SessionInfo::State current_state) {
 void SessionInfo::reset() {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     this->state = State::Unknown;
-    this->active_permanent_faults.clear();
-    this->active_errors.clear();
     this->start_energy_import_wh = 0;
     this->end_energy_import_wh = 0;
     this->start_energy_export_wh = 0;
     this->end_energy_export_wh = 0;
     this->start_time_point = date::utc_clock::now();
     this->latest_total_w = 0;
+    this->permanent_fault = false;
 }
 
 types::energy::ExternalLimits get_external_limits(const std::string& data, bool is_watts) {
@@ -76,7 +75,7 @@ static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list
                list.end());
 }
 
-void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error) {
+void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
@@ -121,20 +120,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
     case Event::ReservationEnd:
     case Event::SessionFinished:
         this->state = State::Unplugged;
-        break;
-    case Event::Error:
-        this->active_errors.push_back(error);
-        break;
-    case Event::AllErrorsCleared:
-        this->active_permanent_faults.clear();
-        this->active_errors.clear();
-        break;
-    case Event::PermanentFault:
-        this->active_permanent_faults.push_back(error);
-        break;
-    case Event::ErrorCleared:
-    case Event::PermanentFaultCleared:
-        remove_error_from_list(this->active_permanent_faults, error.type);
         break;
     case Event::ReplugStarted:
     case Event::ReplugFinished:
@@ -250,8 +235,7 @@ SessionInfo::operator std::string() {
 
     json session_info = json::object({
         {"state", state_to_string(this->state)},
-        {"active_permanent_faults", this->active_permanent_faults},
-        {"active_errors", this->active_errors},
+        {"permanent_fault", this->permanent_fault},
         {"charged_energy_wh", charged_energy_wh},
         {"discharged_energy_wh", discharged_energy_wh},
         {"latest_total_w", this->latest_total_w},
@@ -333,6 +317,15 @@ void API::init() {
             this->selected_protocol = selected_protocol;
         });
 
+        evse->subscribe_error(
+            "evse_manager/PermanentFault",
+            [this, &session_info](const Everest::error::Error& error) {
+                session_info->set_permanent_fault(true);
+            },
+            [this, &session_info](const Everest::error::Error& error) {
+                session_info->set_permanent_fault(false);
+            });
+
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
         std::string var_logging_path = var_base + "logging_path";
@@ -353,15 +346,7 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                SessionInfo::Error error;
-                if (session_event.error.has_value()) {
-                    error.type = types::evse_manager::error_enum_to_string(session_event.error.value().error_code);
-                    error.description = session_event.error.value().error_description;
-                    error.severity =
-                        types::evse_manager::error_severity_to_string(session_event.error.value().error_severity);
-                }
-
-                session_info->update_state(session_event.event, error);
+                session_info->update_state(session_event.event);
 
                 if (session_event.source.has_value()) {
                     const auto source = session_event.source.value();
@@ -596,6 +581,25 @@ void API::init() {
                         << err.what();
         }
     }
+
+    std::string var_active_errors = api_base + "errors/var/active_errors";
+    this->api_threads.push_back(std::thread([this, &var_active_errors]() {
+        auto next_tick = std::chrono::steady_clock::now();
+        while (this->running) {
+            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
+            // request active errors
+            types::error_history::FilterArguments filter;
+            filter.state_filter = types::error_history::State::Active;
+            auto active_errors = r_error_history->call_get_errors(filter);
+            json errors_json = json(active_errors);
+
+            // publish
+            this->mqtt.publish(var_active_errors, errors_json.dump());
+
+            next_tick += NOTIFICATION_PERIOD;
+            std::this_thread::sleep_until(next_tick);
+        }
+    }));
 
     this->api_threads.push_back(
         std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status, var_ocpp_schedule]() {

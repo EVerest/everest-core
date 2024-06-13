@@ -43,9 +43,8 @@ This variable is published every second and contains a json object with informat
     "datetime": "2022-10-11T16:48:35.747Z",
     "discharged_energy_wh": 0,
     "latest_total_w": 0.0,
+    "permanent_fault": false,
     "state": "Unplugged",
-    "active_permanent_faults": [],
-    "active_errors": [],
     "active_enable_disable_source": {
         "source": "Unspecified",
         "state": "Enable",
@@ -58,44 +57,6 @@ This variable is published every second and contains a json object with informat
         "start_time": "2024-02-28T14:11:11.129Z"
     },
     "last_enable_disable_source": "Unspecified"
-}
-```
-
-Example with permanent faults being active:
-
-```json
-{
-  "active_errors": [],
-  "active_permanent_faults": [
-    {
-      "description": "The control pilot voltage is out of range.",
-      "severity": "High",
-      "type": "MREC14PilotFault"
-    },
-    {
-      "description": "The vehicle is in an invalid mode for charging (Reported by IEC stack)",
-      "severity": "High",
-      "type": "MREC10InvalidVehicleMode"
-    }
-  ],
-  "charged_energy_wh": 0,
-  "charging_duration_s": 0,
-  "datetime": "2024-01-15T14:58:15.172Z",
-  "discharged_energy_wh": 0,
-  "latest_total_w": 0,
-  "state": "Preparing",
-  "active_enable_disable_source": {
-    "source": "Unspecified",
-    "state": "Enable",
-    "priority": 5000
-  },
-  "uk_random_delay": {
-    "remaining_s": 34,
-    "current_limit_after_delay_A": 16.0,
-    "current_limit_during_delay_A": 0.0,
-    "start_time": "2024-02-28T14:11:11.129Z"
-  },
-  "last_enable_disable_source": "Unspecified"
 }
 ```
 
@@ -116,46 +77,6 @@ Example with permanent faults being active:
     - ChargingPausedEV
     - ChargingPausedEVSE
     - Finished
-
-- **active_permanent_faults** array of all active errors that are permanent faults (i.e. that block charging). If anything is set here it should be shown as an error to the user instead of showing the current state:
-    - RCD_Selftest
-    - RCD_DC
-    - RCD_AC
-    - VendorError
-    - VendorWarning
-    - ConnectorLockCapNotCharged
-    - ConnectorLockUnexpectedOpen
-    - ConnectorLockUnexpectedClose
-    - ConnectorLockFailedLock
-    - ConnectorLockFailedUnlock
-    - MREC1ConnectorLockFailure
-    - MREC2GroundFailure
-    - MREC3HighTemperature
-    - MREC4OverCurrentFailure
-    - MREC5OverVoltage
-    - MREC6UnderVoltage
-    - MREC8EmergencyStop
-    - MREC10InvalidVehicleMode
-    - MREC14PilotFault
-    - MREC15PowerLoss
-    - MREC17EVSEContactorFault
-    - MREC18CableOverTempDerate
-    - MREC19CableOverTempStop
-    - MREC20PartialInsertion
-    - MREC23ProximityFault
-    - MREC24ConnectorVoltageHigh
-    - MREC25BrokenLatch
-    - MREC26CutCable
-    - DiodeFault
-    - VentilationNotAvailable
-    - BrownOut
-    - EnergyManagement
-    - PermanentFault
-    - PowermeterTransactionStartFailed
-
-- **active_errors** array of all active errors that do not block charging.
-This could be shown to the user but the current state should still be shown
-as it does not interfere with charging. The enum is the same as for active_permanent_faults.
 
 ### everest_api/evse_manager/var/limits
 This variable is published every second and contains a json object with information
@@ -334,3 +255,6 @@ Command to control the UK Smart Charging random delay feature. The payload can b
 
 ### everest_api/evse_manager/cmd/uk_random_delay_set_max_duration_s
 Command to set the UK Smart Charging random delay maximum duration. Payload is an integer in seconds.
+
+### everest_api/errors/var/active_errors
+Publishes an array of all active errors of the charging station
