@@ -37,6 +37,15 @@ void Auth::ready() {
             this->auth_handler->handle_session_event(connector_id, session_event);
         });
 
+        evse_manager->subscribe_error(
+            "evse_manager/PermanentFault",
+            [this, connector_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_raised(connector_id);
+            },
+            [this, connector_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_cleared(connector_id);
+            });
+
         evse_index++;
     }
 

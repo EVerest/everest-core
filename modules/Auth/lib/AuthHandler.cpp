@@ -523,6 +523,18 @@ void AuthHandler::call_reservation_cancelled(const int& connector_id) {
     this->reservation_cancelled_callback(this->connectors.at(connector_id)->evse_index);
 }
 
+void AuthHandler::handle_permanent_fault_raised(const int connector_id) {
+    if (not ignore_faults) {
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+    }
+}
+
+void AuthHandler::handle_permanent_fault_cleared(const int connector_id) {
+    if (not ignore_faults) {
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
+    }
+}
+
 void AuthHandler::handle_session_event(const int connector_id, const SessionEvent& event) {
 
     std::lock_guard<std::mutex> lk(this->timer_mutex);
@@ -571,21 +583,6 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         {
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
             this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
-        }
-        break;
-    case SessionEventEnum::AllErrorsCleared:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
-        }
-        break;
-    case SessionEventEnum::PermanentFault:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
-        }
-        break;
-    case SessionEventEnum::Error:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
         }
         break;
 

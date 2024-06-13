@@ -73,13 +73,8 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                     case ErrorHandlingEvents::prevent_charging:
                         shared_context.error_prevent_charging_flag = true;
                         break;
-                    case ErrorHandlingEvents::prevent_charging_welded:
-                        shared_context.error_prevent_charging_flag = true;
-                        shared_context.contactor_welded = true;
-                        break;
                     case ErrorHandlingEvents::all_errors_cleared:
                         shared_context.error_prevent_charging_flag = false;
-                        shared_context.contactor_welded = false;
                         break;
                     default:
                         EVLOG_error << "ErrorHandlingEvents invalid value: "
@@ -93,19 +88,15 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_thread.detach();
 
     // Register callbacks for errors/error clearings
-    error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
+    error_handling->signal_error.connect([this](const bool prevent_charging) {
         if (prevent_charging) {
-            if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
-                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging_welded);
-            } else {
-                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
-            }
+            // raise external error to signal we cannot charge anymore
+            error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
-        signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
         error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
     });
 }
@@ -1818,9 +1809,7 @@ void Charger::graceful_stop_charging() {
     }
 
     // open contactors
-    if (contactors_closed and not shared_context.contactor_welded) {
-        bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
-    }
+    bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 }
 
 void Charger::clear_errors_on_unplug() {

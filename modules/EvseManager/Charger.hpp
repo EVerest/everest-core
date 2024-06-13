@@ -368,7 +368,6 @@ private:
     // ErrorHandling events
     enum class ErrorHandlingEvents : std::uint8_t {
         prevent_charging,
-        prevent_charging_welded,
         all_errors_cleared
     };
 
