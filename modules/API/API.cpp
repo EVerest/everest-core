@@ -583,7 +583,7 @@ void API::init() {
     }
 
     std::string var_active_errors = api_base + "errors/var/active_errors";
-    this->api_threads.push_back(std::thread([this, &var_active_errors]() {
+    this->api_threads.push_back(std::thread([this, var_active_errors]() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
             std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
