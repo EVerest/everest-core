@@ -60,11 +60,12 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
     {
         std::scoped_lock lock(serial_mutex);
 
-        auto retry_counter = this->num_resends_on_error;
+        auto retry_counter = config.retries + 1;
         while (retry_counter > 0) {
+            auto current_trial = config.retries + 1 - retry_counter + 1;
 
-            EVLOG_debug << fmt::format("Try {} Call modbus_client->read_holding_register(id {} addr {} len {})",
-                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+            EVLOG_debug << fmt::format("Trial {}/{}: call modbus_client->read_holding_register(id {} addr {} len {})",
+                                       current_trial , config.retries + 1, (uint8_t)target_device_id, (uint16_t)first_register_address,
                                        (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS,
@@ -96,11 +97,12 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
     {
         std::scoped_lock lock(serial_mutex);
 
-        uint8_t retry_counter{this->num_resends_on_error};
-        while (retry_counter-- > 0) {
+        auto retry_counter = config.retries + 1;
+        while (retry_counter > 0) {
+            auto current_trial = config.retries + 1 - retry_counter + 1;
 
-            EVLOG_debug << fmt::format("Try {} Call modbus_client->read_input_register(id {} addr {} len {})",
-                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+            EVLOG_debug << fmt::format("Trial {}/{}: call modbus_client->read_input_register(id {} addr {} len {})",
+                                       current_trial , config.retries + 1, (uint8_t)target_device_id, (uint16_t)first_register_address,
                                        (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_INPUT_REGISTERS,
@@ -108,6 +110,7 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
             if (response.size() > 0) {
                 break;
             }
+            retry_counter--;
         }
     }
 
@@ -134,11 +137,12 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
     {
         std::scoped_lock lock(serial_mutex);
 
-        uint8_t retry_counter{this->num_resends_on_error};
-        while (retry_counter-- > 0) {
+        auto retry_counter = config.retries + 1;
+        while (retry_counter > 0) {
+            auto current_trial = config.retries + 1 - retry_counter + 1;
 
-            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_multiple_registers(id {} addr {} len {})",
-                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+            EVLOG_debug << fmt::format("Trial {}/{}: call modbus_client->write_multiple_registers(id {} addr {} len {})",
+                                       current_trial , config.retries + 1, (uint8_t)target_device_id, (uint16_t)first_register_address,
                                        (uint16_t)data.size());
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS,
@@ -146,6 +150,7 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
             if (response.size() > 0) {
                 break;
             }
+            retry_counter--;
         }
     }
 
@@ -167,11 +172,12 @@ serial_communication_hubImpl::handle_modbus_write_single_register(int& target_de
     {
         std::scoped_lock lock(serial_mutex);
 
-        uint8_t retry_counter{this->num_resends_on_error};
-        while (retry_counter-- > 0) {
+        auto retry_counter = config.retries + 1;
+        while (retry_counter > 0) {
+            auto current_trial = config.retries + 1 - retry_counter + 1;
 
-            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_single_register(id {} addr {} data 0x{:04x})",
-                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)register_address,
+            EVLOG_debug << fmt::format("Trial {}/{}: call modbus_client->write_single_register(id {} addr {} data 0x{:04x})",
+                                       current_trial , config.retries + 1, (uint8_t)target_device_id, (uint16_t)register_address,
                                        (uint16_t)data);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::WRITE_SINGLE_HOLDING_REGISTER,
@@ -179,6 +185,7 @@ serial_communication_hubImpl::handle_modbus_write_single_register(int& target_de
             if (response.size() > 0) {
                 break;
             }
+            retry_counter--;
         }
     }
     EVLOG_debug << fmt::format("Done writing (size {})", response.size());

@@ -36,6 +36,7 @@ struct Conf {
     int max_packet_size;
     int initial_timeout_ms;
     int within_message_timeout_ms;
+    int retries;
 };
 
 class serial_communication_hubImpl : public serial_communication_hubImplBase {
@@ -80,7 +81,6 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    static constexpr uint8_t num_resends_on_error{3};
     tiny_modbus::TinyModbusRTU modbus;
 
     std::mutex serial_mutex;
