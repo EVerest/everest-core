@@ -9,6 +9,8 @@
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <utils/date.hpp>
 
+#include <set>
+
 namespace module {
 
 ErrorDatabaseSqlite::ErrorDatabaseSqlite(const fs::path& db_path_, const bool reset_) :
