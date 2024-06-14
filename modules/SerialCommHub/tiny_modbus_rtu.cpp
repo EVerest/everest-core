@@ -188,7 +188,7 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
 }
 
 TinyModbusRTU::~TinyModbusRTU() {
-    if (fd)
+    if (fd != -1)
         close(fd);
 }
 

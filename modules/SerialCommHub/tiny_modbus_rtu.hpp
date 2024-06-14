@@ -66,7 +66,7 @@ public:
 
 private:
     // Serial interface
-    int fd{0};
+    int fd{-1};
     bool ignore_echo{false};
 
     std::vector<uint16_t> txrx_impl(uint8_t device_address, FunctionCode function, uint16_t first_register_address,
