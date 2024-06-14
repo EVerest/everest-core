@@ -4,7 +4,6 @@
 #include <utils/error/error_type_map.hpp>
 
 #include <utils/error.hpp>
-#include <utils/error/error_exceptions.hpp>
 #include <utils/yaml_loader.hpp>
 
 #include <everest/logging.hpp>
@@ -20,8 +19,9 @@ void ErrorTypeMap::load_error_types(std::filesystem::path error_types_dir) {
     BOOST_LOG_FUNCTION();
 
     if (!std::filesystem::is_directory(error_types_dir) || !std::filesystem::exists(error_types_dir)) {
-        throw EverestDirectoryNotFoundError(
-            fmt::format("Error types directory '{}' does not exist.", error_types_dir.string()));
+        EVLOG_error << "Error types directory '" << error_types_dir.string()
+                    << "' does not exist, error types not loaded.";
+        return;
     }
     for (const auto& entry : std::filesystem::directory_iterator(error_types_dir)) {
         if (!entry.is_regular_file()) {
@@ -37,32 +37,44 @@ void ErrorTypeMap::load_error_types(std::filesystem::path error_types_dir) {
             continue;
         }
         if (!error_type_file.at("errors").is_array()) {
-            throw EverestParseError(fmt::format("Error type file '{}' does not contain an array with key 'errors'.",
-                                                entry.path().string()));
+            EVLOG_error << "Error type file '" << entry.path().string()
+                        << "' does not contain an array with key 'errors', skipped.";
+            continue;
         }
         for (const auto& error : error_type_file["errors"]) {
             if (!error.contains("name")) {
-                throw EverestParseError(
-                    fmt::format("Error type file '{}' contains an error without a 'name' key.", entry.path().string()));
+                EVLOG_error << "Error type file '" << entry.path().string()
+                            << "' contains an error without a 'name' key, skipped.";
+                continue;
             }
+            std::string description;
             if (!error.contains("description")) {
-                throw EverestParseError(fmt::format(
-                    "Error type file '{}' contains an error without a 'description' key.", entry.path().string()));
+                EVLOG_error << "Error type file '" << entry.path().string()
+                            << "' contains an error without a 'description' key, using default description";
+                description = "No description found";
+            } else {
+                description = error.at("description").get<std::string>();
             }
             ErrorType complete_name = prefix + "/" + error.at("name").get<std::string>();
             if (this->has(complete_name)) {
-                throw EverestAlreadyExistsError(
-                    fmt::format("Error type file '{}' contains an error with the name '{}' which is already defined.",
-                                entry.path().string(), complete_name));
+                EVLOG_error << "Error type file '" << entry.path().string() << "' contains an error with the name '"
+                            << complete_name << "' which is already defined, skipped.";
+                continue;
             }
-            std::string description = error.at("description").get<std::string>();
             error_types[complete_name] = description;
         }
     }
 }
 
 std::string ErrorTypeMap::get_description(const ErrorType& error_type) const {
-    return error_types.at(error_type);
+    std::string description;
+    try {
+        description = error_types.at(error_type);
+    } catch (...) {
+        EVLOG_error << "Error type '" << error_type << "' is not defined, returning default description.";
+        description = "No description found";
+    }
+    return description;
 }
 
 bool ErrorTypeMap::has(const ErrorType& error_type) const {

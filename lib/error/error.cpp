@@ -6,7 +6,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include <utils/error/error_exceptions.hpp>
+#include <everest/logging.hpp>
 
 namespace Everest {
 namespace error {
@@ -76,7 +76,8 @@ std::string severity_to_string(const Severity& s) {
     case Severity::High:
         return "High";
     }
-    throw std::out_of_range("No known string conversion for provided enum of type Severity.");
+    EVLOG_error << "No known string conversion for provided enum of type Severity. Defaulting to High.";
+    return "High";
 }
 
 Severity string_to_severity(const std::string& s) {
@@ -87,7 +88,8 @@ Severity string_to_severity(const std::string& s) {
     } else if (s == "High") {
         return Severity::High;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type Severity.");
+    EVLOG_error << "Provided string " << s << " could not be converted to enum of type Severity. Defaulting to High.";
+    return Severity::High;
 }
 
 std::string state_to_string(const State& s) {
@@ -99,7 +101,8 @@ std::string state_to_string(const State& s) {
     case State::ClearedByReboot:
         return "ClearedByReboot";
     }
-    throw std::out_of_range("No known string conversion for provided enum of type State.");
+    EVLOG_error << "No known string conversion for provided enum of type State. Defaulting to Active.";
+    return "Active";
 }
 
 State string_to_state(const std::string& s) {
@@ -110,7 +113,8 @@ State string_to_state(const std::string& s) {
     } else if (s == "ClearedByReboot") {
         return State::ClearedByReboot;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type State.");
+    EVLOG_error << "Provided string " << s << " could not be converted to enum of type State. Defaulting to Active.";
+    return State::Active;
 }
 
 } // namespace error

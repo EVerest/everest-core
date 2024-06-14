@@ -19,7 +19,6 @@
 #include <utils/error.hpp>
 #include <utils/error/error_database.hpp>
 #include <utils/error/error_database_map.hpp>
-#include <utils/error/error_exceptions.hpp>
 #include <utils/error/error_factory.hpp>
 #include <utils/error/error_json.hpp>
 #include <utils/error/error_manager_impl.hpp>
@@ -484,15 +483,17 @@ void Everest::subscribe_error(const Requirement& req, const error::ErrorType& er
     // split error_type at '/'
     int pos = error_type.find('/');
     if (pos == std::string::npos) {
-        throw error::EverestNotValidErrorTypeError(error_type);
+        EVLOG_error << fmt::format("Error type {} is not valid, ignore subscription", error_type);
+        return;
     }
     std::string error_type_namespace = error_type.substr(0, pos);
     std::string error_type_name = error_type.substr(pos + 1);
     if (!requirement_impl_if.contains("errors") || !requirement_impl_if.at("errors").contains(error_type_namespace) ||
         !requirement_impl_if.at("errors").at(error_type_namespace).contains(error_type_name)) {
-        throw error::EverestInterfaceMissingDeclartionError(
-            fmt::format("{}: Error {} not listed in interface!",
-                        this->config.printable_identifier(requirement_module_id, requirement_impl_id), error_type));
+        EVLOG_error << fmt::format("{}: Error {} not listed in interface, ignore subscription!",
+                                   this->config.printable_identifier(requirement_module_id, requirement_impl_id),
+                                   error_type);
+        return;
     }
 
     Handler raise_handler = [this, requirement_module_id, requirement_impl_id, error_type, callback](json const& data) {
@@ -587,8 +588,9 @@ void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
     EVLOG_debug << fmt::format("subscribing to all errors");
 
     if (not this->config.get_module_info(this->module_id).global_errors_enabled) {
-        throw error::EverestNotAllowedError(fmt::format("Module {} is not allowed to subscribe to all errors!",
-                                                        this->config.printable_identifier(this->module_id)));
+        EVLOG_error << fmt::format("Module {} is not allowed to subscribe to all errors, ignore subscription",
+                                   this->config.printable_identifier(this->module_id));
+        return;
     }
 
     Handler raise_handler = [this, callback](json const& data) {
