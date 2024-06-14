@@ -16,6 +16,7 @@
 // insert your custom include headers here
 #include "tiny_modbus_rtu.hpp"
 #include <chrono>
+#include <cstdint>
 #include <termios.h>
 #include <utils/thread.hpp>
 #include <vector>
@@ -81,6 +82,11 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    types::serial_comm_hub_requests::Result
+    perform_modbus_request(uint8_t device_address, tiny_modbus::FunctionCode function, uint16_t first_register_address,
+                           uint16_t register_quantity, bool wait_for_reply = true,
+                           std::vector<uint16_t> request = std::vector<uint16_t>());
+
     tiny_modbus::TinyModbusRTU modbus;
 
     std::mutex serial_mutex;

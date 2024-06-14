@@ -8,6 +8,8 @@
 #define TINY_MODBUS_RTU
 
 #include <chrono>
+#include <ostream>
+#include <stdexcept>
 #include <stdint.h>
 #include <termios.h>
 
@@ -49,6 +51,35 @@ enum FunctionCode : uint8_t {
     WRITE_SINGLE_HOLDING_REGISTER = 0x06,
     WRITE_MULTIPLE_COILS = 0x0F,
     WRITE_MULTIPLE_HOLDING_REGISTERS = 0x10,
+};
+
+std::string FunctionCode_to_string(FunctionCode fc);
+std::string FunctionCode_to_string_with_hex(FunctionCode fc);
+std::ostream& operator<<(std::ostream& os, const FunctionCode& fc);
+
+class TinyModbusException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+class TimeoutException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ShortPacketException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class AddressMismatchException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class FunctionCodeMismatchException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ChecksumErrorException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class IncompletePacketException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ModbusException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
 };
 
 class TinyModbusRTU {
