@@ -36,7 +36,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
         [this](const Everest::error::Error& error) {
             if (modify_error_bsp(error, false)) {
                 // signal to charger an error has been cleared that prevents charging
-                clear_permanent_fault_error();
+                signal_error_cleared(true);
             } else {
                 // signal an error cleared that does not prevent charging
                 signal_error_cleared(false);
@@ -44,6 +44,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
 
             if (active_errors.all_cleared()) {
                 // signal to charger that all errors are cleared now
+                clear_permanent_fault_error();
                 signal_all_errors_cleared();
                 // clear errors with HLC stack
                 if (hlc) {
@@ -67,7 +68,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_connector_lock(error, false)) {
                     // signal to charger an error has been cleared that prevents charging
-                    clear_permanent_fault_error();
+                    signal_error_cleared(true);
                 } else {
                     // signal an error cleared that does not prevent charging
                     signal_error_cleared(false);
@@ -75,6 +76,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
 
                 if (active_errors.all_cleared()) {
                     // signal to charger that all errors are cleared now
+                    clear_permanent_fault_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
@@ -99,7 +101,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_ac_rcd(error, false)) {
                     // signal to charger an error has been cleared that prevents charging
-                    clear_permanent_fault_error();
+                    signal_error_cleared(true);
                 } else {
                     // signal an error cleared that does not prevent charging
                     signal_error_cleared(false);
@@ -107,6 +109,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
 
                 if (active_errors.all_cleared()) {
                     // signal to charger that all errors are cleared now
+                    clear_permanent_fault_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
@@ -131,13 +134,14 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_imd(error, false)) {
                     // signal to charger an error has been cleared that prevents charging
-                    clear_permanent_fault_error();
+                    signal_error_cleared(true);
                 } else {
                     signal_error_cleared(false);
                 }
 
                 if (active_errors.all_cleared()) {
                     // signal to charger that all errors are cleared now
+                    clear_permanent_fault_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
