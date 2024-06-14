@@ -68,9 +68,9 @@ void ErrorDatabaseSqlite::check_database() {
     while (stmt2.executeStep()) {
         columns.insert(stmt2.getColumn("name").getText());
     }
-    std::set<std::string> required_columns = {"uuid", "type", "description", "message", "origin_module",
-                                                "origin_implementation", "timestamp", "severity", "state", "sub_type",
-                                                "vendor_id"};
+    std::set<std::string> required_columns = {
+        "uuid",      "type",     "description", "message",  "origin_module", "origin_implementation",
+        "timestamp", "severity", "state",       "sub_type", "vendor_id"};
     if (columns != required_columns) {
         throw Everest::EverestConfigError("Errors table does not contain all required columns");
     }
