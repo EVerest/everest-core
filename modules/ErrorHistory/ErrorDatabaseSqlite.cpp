@@ -22,7 +22,13 @@ ErrorDatabaseSqlite::ErrorDatabaseSqlite(const fs::path& db_path_, const bool re
         this->reset_database();
     } else {
         EVLOG_info << "Using database at " << this->db_path;
-        this->check_database();
+        try {
+            this->check_database();
+        } catch (std::exception& e) {
+            EVLOG_error << "Error checking database: " << e.what();
+            EVLOG_info << "Resetting database";
+            this->reset_database();
+        }
     }
 }
 
@@ -36,30 +42,37 @@ void ErrorDatabaseSqlite::check_database() {
         EVLOG_error << "Error opening database: " << e.what();
         throw;
     }
-    try {
-        std::string sql = "SELECT name";
-        sql += " FROM sqlite_schema";
-        sql += " WHERE type = 'table' AND name NOT LIKE 'sqlite_%';";
-        SQLite::Statement stmt(*db, sql);
-        bool has_errors_table = false;
-        while (stmt.executeStep()) {
-            std::string table_name = stmt.getColumn(0);
-            if (table_name == "errors") {
-                if (has_errors_table) {
-                    throw Everest::EverestConfigError("Database contains multiple errors tables");
-                }
-                has_errors_table = true;
-                EVLOG_debug << "Found errors table";
-            } else {
-                EVLOG_warning << "Found unknown table: " << table_name;
+    std::string sql = "SELECT name";
+    sql += " FROM sqlite_schema";
+    sql += " WHERE type = 'table' AND name NOT LIKE 'sqlite_%';";
+    SQLite::Statement stmt(*db, sql);
+    bool has_errors_table = false;
+    while (stmt.executeStep()) {
+        std::string table_name = stmt.getColumn(0);
+        if (table_name == "errors") {
+            if (has_errors_table) {
+                throw Everest::EverestConfigError("Database contains multiple errors tables");
             }
+            has_errors_table = true;
+            EVLOG_debug << "Found errors table";
+        } else {
+            EVLOG_warning << "Found unknown table: " << table_name;
         }
-        if (!has_errors_table) {
-            throw Everest::EverestConfigError("Database does not contain errors table");
-        }
-    } catch (std::exception& e) {
-        EVLOG_error << "Error checking whether table 'errors' exist" << e.what();
-        throw;
+    }
+    if (!has_errors_table) {
+        throw Everest::EverestConfigError("Database does not contain errors table");
+    }
+    sql = "PRAGMA table_info(errors);";
+    SQLite::Statement stmt2(*db, sql);
+    std::set<std::string> columns;
+    while (stmt2.executeStep()) {
+        columns.insert(stmt2.getColumn("name").getText());
+    }
+    std::set<std::string> required_columns = {"uuid", "type", "description", "message", "origin_module",
+                                                "origin_implementation", "timestamp", "severity", "state", "sub_type",
+                                                "vendor_id"};
+    if (columns != required_columns) {
+        throw Everest::EverestConfigError("Errors table does not contain all required columns");
     }
 }
 
