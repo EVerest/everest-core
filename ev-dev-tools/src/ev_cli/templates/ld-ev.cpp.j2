@@ -12,6 +12,10 @@
 #include <framework/runtime.hpp>
 #include <utils/types.hpp>
 
+{% if info.enable_global_errors %}
+#include <utils/error/error_manager_req_global.hpp>
+
+{% endif %}
 namespace module {
 
 // FIXME (aw): could this way of keeping static variables be changed somehow?
@@ -26,6 +30,19 @@ static {{ impl.id }}::Conf {{ impl.id }}_config;
 static Conf module_conf;
 static ModuleInfo module_info;
 
+{% if info.enable_global_errors %}
+void subscribe_global_all_errors(
+    const Everest::error::ErrorCallback& callback,
+    const Everest::error::ErrorCallback& clear_callback
+) {
+    adapter.get_global_error_manager()->subscribe_global_all_errors(callback, clear_callback);
+}
+
+std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor() {
+    return adapter.get_global_error_state_monitor();
+}
+
+{% endif %}
 void LdEverest::init(ModuleConfigs module_configs, const ModuleInfo& mod_info) {
     EVLOG_debug << "init() called on module {{ info.name }}";
 
@@ -115,14 +132,6 @@ std::vector<Everest::cmd> everest_register(const json& connections) {
     return adapter.registered_commands;
 }
 
-{% if info.enable_global_errors %}
-void subscribe_global_all_errors(
-    const Everest::error::ErrorCallback& callback,
-    const Everest::error::ErrorCallback& clear_callback
-) {
-    adapter.subscribe_global_all_errors(callback, clear_callback);
-}
-{% endif %}
 } // namespace module
 
 int main(int argc, char* argv[]) {

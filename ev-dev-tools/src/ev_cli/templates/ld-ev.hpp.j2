@@ -27,6 +27,7 @@ void subscribe_global_all_errors(
     const Everest::error::ErrorCallback& callback,
     const Everest::error::ErrorCallback& clear_callback
 );
+std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor();
 {% endif %}
 
 } // namespace module
