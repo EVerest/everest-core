@@ -188,7 +188,7 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
 }
 
 TinyModbusRTU::~TinyModbusRTU() {
-    if (fd)
+    if (fd != -1)
         close(fd);
 }
 
@@ -279,7 +279,7 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 }
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
-    if (fd <= 0) {
+    if (fd == -1) {
         return 0;
     }
 
@@ -425,7 +425,7 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
                                                uint16_t first_register_address, uint16_t register_quantity,
                                                bool wait_for_reply, std::vector<uint16_t> request) {
     {
-        if (fd <= 0) {
+        if (fd == -1) {
             return {};
         }
 
