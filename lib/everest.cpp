@@ -733,7 +733,6 @@ void Everest::telemetry_publish(const std::string& category, const std::string& 
 void Everest::signal_ready() {
     BOOST_LOG_FUNCTION();
 
-    // EVLOG_info << "Module " << this->module_id << " initialized.";
     const auto ready_topic = fmt::format("{}/ready", this->config.mqtt_module_prefix(this->module_id));
 
     this->mqtt_abstraction.publish(ready_topic, json(true));

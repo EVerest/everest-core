@@ -120,6 +120,8 @@ struct RuntimeSettings {
 
     std::string run_as_user;
 
+    std::string version_information;
+
     nlohmann::json config;
 
     bool validate_schema;
@@ -144,17 +146,27 @@ struct ModuleCallbacks {
                     const std::function<void()>& ready);
 };
 
+struct VersionInformation {
+    std::string project_name;
+    std::string project_version;
+    std::string git_version;
+};
+
 class ModuleLoader {
 private:
     std::shared_ptr<RuntimeSettings> runtime_settings;
     std::string module_id;
     std::string original_process_name;
     ModuleCallbacks callbacks;
+    VersionInformation version_information;
 
     bool parse_command_line(int argc, char* argv[]);
 
 public:
-    explicit ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks);
+    explicit ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks) :
+        ModuleLoader(argc, argv, callbacks, {"undefined project", "undefined version", "undefined git version"}){};
+    explicit ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks,
+                          const VersionInformation version_information);
 
     int initialize();
 };

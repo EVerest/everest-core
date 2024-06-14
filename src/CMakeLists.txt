@@ -4,6 +4,12 @@ target_sources(manager
         system_unix.cpp
         manager.cpp
 )
+# generate version information header
+evc_generate_version_information()
+target_include_directories(manager
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/include
+)
 
 target_link_libraries(manager
     PRIVATE

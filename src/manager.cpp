@@ -33,6 +33,7 @@
 
 #include "controller/ipc.hpp"
 #include "system_unix.hpp"
+#include <generated/version_information.hpp>
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -464,12 +465,34 @@ int boot(const po::variables_map& vm) {
 
     Logging::init(rs->logging_config_file.string());
 
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, "  ________      __                _   ");
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " |  ____\\ \\    / /               | |  ");
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " | |__   \\ \\  / /__ _ __ ___  ___| |_ ");
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " |  __|   \\ \\/ / _ \\ '__/ _ \\/ __| __|");
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " | |____   \\  /  __/ | |  __/\\__ \\ |_ ");
-    EVLOG_info << fmt::format(TERMINAL_STYLE_BLUE, " |______|   \\/ \\___|_|  \\___||___/\\__|");
+    EVLOG_info << "  \033[0;1;35;95m_\033[0;1;31;91m__\033[0;1;33;93m__\033[0;1;32;92m__\033[0;1;36;96m_\033[0m      "
+                  "\033[0;1;31;91m_\033[0;1;33;93m_\033[0m                \033[0;1;36;96m_\033[0m   ";
+    EVLOG_info << " \033[0;1;31;91m|\033[0m  \033[0;1;33;93m_\033[0;1;32;92m__\033[0;1;36;96m_\\\033[0m "
+                  "\033[0;1;34;94m\\\033[0m    \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0m               "
+                  "\033[0;1;34;94m|\033[0m \033[0;1;35;95m|\033[0m";
+    EVLOG_info
+        << " \033[0;1;33;93m|\033[0m \033[0;1;32;92m|_\033[0;1;36;96m_\033[0m   \033[0;1;35;95m\\\033[0m "
+           "\033[0;1;31;91m\\\033[0m  \033[0;1;33;93m/\033[0m \033[0;1;32;92m/\033[0;1;36;96m__\033[0m "
+           "\033[0;1;34;94m_\033[0m \033[0;1;35;95m_\033[0;1;31;91m_\033[0m \033[0;1;33;93m__\033[0;1;32;92m_\033[0m  "
+           "\033[0;1;36;96m_\033[0;1;34;94m__\033[0;1;35;95m|\033[0m \033[0;1;31;91m|_\033[0m";
+    EVLOG_info << " \033[0;1;32;92m|\033[0m  \033[0;1;36;96m_\033[0;1;34;94m_|\033[0m   \033[0;1;31;91m\\\033[0m "
+                  "\033[0;1;33;93m\\\033[0;1;32;92m/\033[0m \033[0;1;36;96m/\033[0m \033[0;1;34;94m_\033[0m "
+                  "\033[0;1;35;95m\\\033[0m \033[0;1;31;91m'_\033[0;1;33;93m_/\033[0m \033[0;1;32;92m_\033[0m "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m \033[0;1;35;95m__\033[0;1;31;91m|\033[0m "
+                  "\033[0;1;33;93m__\033[0;1;32;92m|\033[0m";
+    EVLOG_info << " \033[0;1;36;96m|\033[0m \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m_\033[0m   "
+                  "\033[0;1;32;92m\\\033[0m  \033[0;1;36;96m/\033[0m  \033[0;1;35;95m__\033[0;1;31;91m/\033[0m "
+                  "\033[0;1;33;93m|\033[0m \033[0;1;32;92m|\033[0m  "
+                  "\033[0;1;36;96m_\033[0;1;34;94m_/\033[0;1;35;95m\\_\033[0;1;31;91m_\033[0m \033[0;1;33;93m\\\033[0m "
+                  "\033[0;1;32;92m|_\033[0m";
+    EVLOG_info << " \033[0;1;34;94m|_\033[0;1;35;95m__\033[0;1;31;91m__\033[0;1;33;93m_|\033[0m   "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m/\033[0m "
+                  "\033[0;1;35;95m\\_\033[0;1;31;91m__\033[0;1;33;93m|_\033[0;1;32;92m|\033[0m  "
+                  "\033[0;1;36;96m\\\033[0;1;34;94m__\033[0;1;35;95m_|\033[0;1;31;91m|_\033[0;1;33;93m__\033[0;1;32;"
+                  "92m/\\\033[0;1;36;96m__\033[0;1;34;94m|\033[0m";
+    EVLOG_info << "";
+    EVLOG_info << PROJECT_NAME << " " << PROJECT_VERSION << " " << GIT_VERSION;
+    EVLOG_info << rs->version_information;
     EVLOG_info << "";
 
     if (rs->mqtt_broker_socket_path.empty()) {
@@ -715,6 +738,7 @@ int boot(const po::variables_map& vm) {
 
 int main(int argc, char* argv[]) {
     po::options_description desc("EVerest manager");
+    desc.add_options()("version", "Print version and exit");
     desc.add_options()("help,h", "produce help message");
     desc.add_options()("check", "Check and validate all config files and exit (0=success)");
     desc.add_options()("dump", po::value<std::string>(),
@@ -743,6 +767,12 @@ int main(int argc, char* argv[]) {
 
         if (vm.count("help") != 0) {
             desc.print(std::cout);
+            return EXIT_SUCCESS;
+        }
+
+        if (vm.count("version") != 0) {
+            std::cout << argv[0] << " (" << PROJECT_NAME << " " << PROJECT_VERSION << " " << GIT_VERSION << ") "
+                      << std::endl;
             return EXIT_SUCCESS;
         }
 

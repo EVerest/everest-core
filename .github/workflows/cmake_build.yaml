@@ -12,6 +12,9 @@ on:
           - 'ubuntu-22.04'
           - 'large-ubuntu-22.04-xxl'
 
+env:
+  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:v1.2.0
+
 jobs:
   build:
     name: Build and Test
@@ -39,8 +42,8 @@ jobs:
           rsync -a source/.ci/build-kit/ scripts
       - name: Pull build-kit docker image
         run: |
-          docker pull --quiet ghcr.io/everest/build-kit-alpine:latest
-          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+          docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
+          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
       - name: Compile
         run: |
           docker run \

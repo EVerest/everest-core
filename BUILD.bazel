@@ -7,10 +7,22 @@ genrule(
   """,
 )
 
+genrule(
+    name = "version_information",
+    outs = ["include/generated/version_information.hpp"],
+    cmd = """
+    echo "#pragma once" > $@
+    echo "#define PROJECT_NAME \\"everest-framework\\"" >> $@
+    echo "#define PROJECT_DESCRIPTION \\"\\"" >> $@
+    echo "#define PROJECT_VERSION \\"\\"" >> $@
+    echo "#define GIT_VERSION \\"\\"" >> $@
+  """,
+)
+
 cc_library(
     name = "framework",
     srcs = glob(["lib/**/*.cpp"]),
-    hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings"],
+    hdrs = glob(["include/**/*.hpp"]) + [":compile_time_settings", ":version_information"],
     copts = ["-std=c++17"],
     strip_include_prefix = "include",
     visibility = ["//visibility:public"],

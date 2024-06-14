@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <fstream>
 
 #include <boost/program_options.hpp>
 
@@ -368,6 +369,13 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
         validate_schema = defaults::VALIDATE_SCHEMA;
     }
     run_as_user = settings.value("run_as_user", "");
+    auto version_information_path = data_dir / "version_information.txt";
+    if (fs::exists(version_information_path)) {
+        std::ifstream ifs(version_information_path.string());
+        version_information = std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+    } else {
+        version_information = "unknown";
+    }
 }
 
 ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_adapter)>& register_module_adapter,
@@ -377,8 +385,9 @@ ModuleCallbacks::ModuleCallbacks(const std::function<void(ModuleAdapter module_a
     register_module_adapter(register_module_adapter), everest_register(everest_register), init(init), ready(ready) {
 }
 
-ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks) :
-    runtime_settings(nullptr), callbacks(callbacks) {
+ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks,
+                           const VersionInformation version_information) :
+    runtime_settings(nullptr), callbacks(callbacks), version_information(version_information) {
     if (!this->parse_command_line(argc, argv)) {
         return;
     }
@@ -525,6 +534,7 @@ int ModuleLoader::initialize() {
 
 bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
     po::options_description desc("EVerest");
+    desc.add_options()("version", "Print version and exit");
     desc.add_options()("help,h", "produce help message");
     desc.add_options()("prefix", po::value<std::string>(), "Set main EVerest directory");
     desc.add_options()("module,m", po::value<std::string>(),
@@ -538,6 +548,13 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
 
     if (vm.count("help") != 0) {
         std::cout << desc << "\n";
+        return false;
+    }
+
+    if (vm.count("version") != 0) {
+        std::cout << argv[0] << " (" << this->version_information.project_name << " "
+                  << this->version_information.project_version << " " << this->version_information.git_version << ")"
+                  << std::endl;
         return false;
     }
 
