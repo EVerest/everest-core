@@ -6,7 +6,6 @@
 #include "../ErrorDatabaseSqlite.hpp"
 
 #include <filesystem>
-#include <utils/error/error_exceptions.hpp>
 
 namespace fs = std::filesystem;
 namespace module {
@@ -118,11 +117,11 @@ void error_historyImpl::handle_global_all_errors_cleared(const Everest::error::E
                           [](Everest::error::ErrorPtr error) { error->state = Everest::error::State::ClearedByModule; })
             .size();
     if (edited_errors == 0) {
-        throw Everest::EverestBaseLogicError("ErrorHistory: Error with uuid " + error.uuid.to_string() +
-                                             " not found in database.");
+        EVLOG_error << "ErrorHistory: Error with uuid " << error.uuid.to_string() <<
+                                             " not found in database.";
     } else if (edited_errors > 1) {
-        throw Everest::EverestBaseLogicError("ErrorHistory: Multiple errors with uuid " + error.uuid.to_string() +
-                                             " found in database.");
+        EVLOG_error << "ErrorHistory: Multiple errors with uuid " << error.uuid.to_string() <<
+                                             " found in database.";
     }
 }
 
