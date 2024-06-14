@@ -17,7 +17,8 @@ template <> struct adl_serializer<Everest::error::Error> {
              {"timestamp", Everest::Date::to_rfc3339(e.timestamp)},
              {"uuid", e.uuid.uuid},
              {"state", Everest::error::state_to_string(e.state)},
-             {"sub_type", e.sub_type}};
+             {"sub_type", e.sub_type},
+             {"vendor_id", e.vendor_id}};
     }
     static Everest::error::Error from_json(const json& j) {
         Everest::error::ErrorType type = j.at("type");
@@ -30,8 +31,9 @@ template <> struct adl_serializer<Everest::error::Error> {
         Everest::error::UUID uuid(j.at("uuid"));
         Everest::error::State state = Everest::error::string_to_state(j.at("state"));
         Everest::error::ErrorSubType sub_type(j.at("sub_type"));
+        std::string vendor_id = j.at("vendor_id");
 
-        return {type, sub_type, message, description, origin, severity, timestamp, uuid, state};
+        return {type, sub_type, message, description, origin, vendor_id, severity, timestamp, uuid, state};
     }
 };
 

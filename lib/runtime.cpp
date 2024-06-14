@@ -462,9 +462,10 @@ int ModuleLoader::initialize() {
             return everest.get_error_state_monitor_req(req);
         };
 
-        module_adapter.subscribe_global_all_errors = [&everest](const error::ErrorCallback& callback,
-                                                                const error::ErrorCallback& clear_callback) {
-            return everest.subscribe_global_all_errors(callback, clear_callback);
+        module_adapter.get_global_error_manager = [&everest]() { return everest.get_global_error_manager(); };
+
+        module_adapter.get_global_error_state_monitor = [&everest]() {
+            return everest.get_global_error_state_monitor();
         };
 
         // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability

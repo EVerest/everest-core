@@ -37,6 +37,7 @@ namespace error {
 struct ErrorDatabaseMap;
 struct ErrorManagerImpl;
 struct ErrorManagerReq;
+struct ErrorManagerReqGlobal;
 struct ErrorStateMonitor;
 struct ErrorFactory;
 } // namespace error
@@ -109,10 +110,13 @@ public:
     std::shared_ptr<error::ErrorStateMonitor> get_error_state_monitor_req(const Requirement& req);
 
     ///
-    /// \brief Subscribes globally to all errors of all modules. The given \p callback is called when a new error is
-    /// raised. The given \p clear_callback is called when an error is cleared
+    /// \brief Return the global error manager, if not enabled nullptr
+    std::shared_ptr<error::ErrorManagerReqGlobal> get_global_error_manager() const;
+
     ///
-    void subscribe_global_all_errors(const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
+    /// \brief Return the global state monitor, if not enabled nullptr
+    std::shared_ptr<error::ErrorStateMonitor> get_global_error_state_monitor() const;
+
     ///
     /// \brief publishes the given \p data on the given \p topic
     ///
@@ -183,6 +187,8 @@ private:
     std::map<std::string, std::shared_ptr<error::ErrorFactory>> error_factories;               // one per implementation
     std::map<Requirement, std::shared_ptr<error::ErrorManagerReq>> req_error_managers;         // one per requirement
     std::map<Requirement, std::shared_ptr<error::ErrorStateMonitor>> req_error_state_monitors; // one per requirement
+    std::shared_ptr<error::ErrorManagerReqGlobal> global_error_manager;   // nullptr if not enabled in manifest
+    std::shared_ptr<error::ErrorStateMonitor> global_error_state_monitor; // nullptr if not enabled in manifest
     std::map<std::string, std::set<std::string>> registered_cmds;
     bool ready_received;
     std::chrono::seconds remote_cmd_res_timeout;
@@ -225,6 +231,12 @@ private:
     ///
     void subscribe_error(const Requirement& req, const error::ErrorType& error_type,
                          const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
+
+    ///
+    /// \brief Subscribes globally to all errors of all modules. The given \p callback is called when a new error is
+    /// raised. The given \p clear_callback is called when an error is cleared
+    ///
+    void subscribe_global_all_errors(const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
 };
 } // namespace Everest
 

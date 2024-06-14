@@ -73,6 +73,7 @@ protected:
 namespace error {
 struct ErrorManagerImpl;
 struct ErrorManagerReq;
+struct ErrorManagerReqGlobal;
 struct ErrorStateMonitor;
 struct ErrorFactory;
 } // namespace error
@@ -84,8 +85,9 @@ struct ModuleAdapter {
     using GetErrorStateMonitorImplFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const std::string&)>;
     using GetErrorFactoryFunc = std::function<std::shared_ptr<error::ErrorFactory>(const std::string&)>;
     using GetErrorManagerReqFunc = std::function<std::shared_ptr<error::ErrorManagerReq>(const Requirement&)>;
+    using GetGlobalErrorManagerFunc = std::function<std::shared_ptr<error::ErrorManagerReqGlobal>()>;
+    using GetGlobalErrorStateMonitorFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>()>;
     using GetErrorStateMonitorReqFunc = std::function<std::shared_ptr<error::ErrorStateMonitor>(const Requirement&)>;
-    using SubscribeGlobalAllErrorsFunc = std::function<void(const error::ErrorCallback&, const error::ErrorCallback&)>;
     using ExtMqttPublishFunc = std::function<void(const std::string&, const std::string&)>;
     using ExtMqttSubscribeFunc = std::function<UnsubscribeToken(const std::string&, StringHandler)>;
     using TelemetryPublishFunc =
@@ -99,7 +101,8 @@ struct ModuleAdapter {
     GetErrorFactoryFunc get_error_factory;
     GetErrorManagerReqFunc get_error_manager_req;
     GetErrorStateMonitorReqFunc get_error_state_monitor_req;
-    SubscribeGlobalAllErrorsFunc subscribe_global_all_errors;
+    GetGlobalErrorManagerFunc get_global_error_manager;
+    GetGlobalErrorStateMonitorFunc get_global_error_state_monitor;
     ExtMqttPublishFunc ext_mqtt_publish;
     ExtMqttSubscribeFunc ext_mqtt_subscribe;
     std::vector<cmd> registered_commands;

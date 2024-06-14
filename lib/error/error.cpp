@@ -35,13 +35,14 @@ std::string UUID::to_string() const {
 }
 
 Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
-             const std::string& description_, const ImplementationIdentifier& origin_, const Severity& severity_,
-             const time_point& timestamp_, const UUID& uuid_, const State& state_) :
+             const std::string& description_, const ImplementationIdentifier& origin_, const std::string& vendor_id_,
+             const Severity& severity_, const time_point& timestamp_, const UUID& uuid_, const State& state_) :
     type(type_),
     sub_type(sub_type_),
     message(message_),
     description(description_),
     origin(origin_),
+    vendor_id(vendor_id_),
     severity(severity_),
     timestamp(timestamp_),
     uuid(uuid_),
@@ -50,8 +51,8 @@ Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::s
 
 Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
              const std::string& description_, const ImplementationIdentifier& origin_, const Severity& severity_) :
-    Error(type_, sub_type_, message_, description_, origin_, severity_, UTILS_ERROR_DEFAULTS_TIMESTAMP,
-          UTILS_ERROR_DEFAULTS_UUID) {
+    Error(type_, sub_type_, message_, description_, origin_, UTILS_ERROR_DEFAULTS_VENDOR_ID, severity_,
+          UTILS_ERROR_DEFAULTS_TIMESTAMP, UTILS_ERROR_DEFAULTS_UUID) {
 }
 
 Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,

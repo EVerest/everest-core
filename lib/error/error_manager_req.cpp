@@ -37,6 +37,10 @@ ErrorManagerReq::Subscription::Subscription(const ErrorType& type_, const ErrorC
 
 void ErrorManagerReq::subscribe_error(const ErrorType& type, const ErrorCallback& callback,
                                       const ErrorCallback& clear_callback) {
+    if (error_subscriptions.count(type) != 1) {
+        EVLOG_error << "Tpye " << type << " is not known, ignore subscription";
+        return;
+    }
     Subscription sub(type, callback, clear_callback);
     error_subscriptions.at(type).push_back(sub);
 }

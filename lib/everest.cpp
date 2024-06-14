@@ -24,6 +24,7 @@
 #include <utils/error/error_json.hpp>
 #include <utils/error/error_manager_impl.hpp>
 #include <utils/error/error_manager_req.hpp>
+#include <utils/error/error_manager_req_global.hpp>
 #include <utils/error/error_state_monitor.hpp>
 #include <utils/error/error_type_map.hpp>
 #include <utils/formatter.hpp>
@@ -63,6 +64,23 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
 
     this->ready_received = false;
     this->on_ready = nullptr;
+
+    // setup error_manager_req_global if enabled + error_database + error_state_monitor
+    if (this->module_manifest.contains("enable_global_errors") &&
+        this->module_manifest.at("enable_global_errors").get<bool>()) {
+        std::shared_ptr<error::ErrorDatabaseMap> global_error_database = std::make_shared<error::ErrorDatabaseMap>();
+        error::ErrorManagerReqGlobal::SubscribeGlobalAllErrorsFunc subscribe_global_all_errors_func =
+            [this](const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback) {
+                this->subscribe_global_all_errors(callback, clear_callback);
+            };
+        this->global_error_manager = std::make_shared<error::ErrorManagerReqGlobal>(
+            std::make_shared<error::ErrorTypeMap>(this->config.get_error_map()), global_error_database,
+            subscribe_global_all_errors_func);
+        this->global_error_state_monitor = std::make_shared<error::ErrorStateMonitor>(global_error_database);
+    } else {
+        this->global_error_manager = nullptr;
+        this->global_error_state_monitor = nullptr;
+    }
 
     // setup error_managers, error_state_monitors, error_factories and error_databases for all implementations
     for (const std::string& impl : Config::keys(this->module_manifest.at("provides"))) {
@@ -546,6 +564,20 @@ std::shared_ptr<error::ErrorStateMonitor> Everest::get_error_state_monitor_req(c
         return nullptr;
     }
     return this->req_error_state_monitors.at(req);
+}
+
+std::shared_ptr<error::ErrorManagerReqGlobal> Everest::get_global_error_manager() const {
+    if (this->global_error_manager == nullptr) {
+        EVLOG_warning << "This module has no global_error_manager, returning nullptr";
+    }
+    return this->global_error_manager;
+}
+
+std::shared_ptr<error::ErrorStateMonitor> Everest::get_global_error_state_monitor() const {
+    if (this->global_error_state_monitor == nullptr) {
+        EVLOG_warning << "This module has no global_error_state_monitor, returning nullptr";
+    }
+    return this->global_error_state_monitor;
 }
 
 void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,

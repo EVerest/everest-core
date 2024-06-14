@@ -17,6 +17,7 @@
 #define UTILS_ERROR_DEFAULTS_TIMESTAMP   date::utc_clock::now()
 #define UTILS_ERROR_DEFAULTS_UUID        UUID()
 #define UTILS_ERROR_DEFAULTS_STATE       Everest::error::State::Active
+#define UTILS_ERROR_DEFAULTS_VENDOR_ID   "everest"
 
 namespace Everest {
 namespace error {
@@ -57,8 +58,9 @@ State string_to_state(const std::string& s);
 struct Error {
     using time_point = date::utc_clock::time_point;
     Error(const ErrorType& type, const ErrorSubType& sub_type, const std::string& message,
-          const std::string& description, const ImplementationIdentifier& origin, const Severity& severity,
-          const time_point& timestamp, const UUID& uuid, const State& state = UTILS_ERROR_DEFAULTS_STATE);
+          const std::string& description, const ImplementationIdentifier& origin, const std::string& vendor_id,
+          const Severity& severity, const time_point& timestamp, const UUID& uuid,
+          const State& state = UTILS_ERROR_DEFAULTS_STATE);
     Error(const ErrorType& type, const ErrorSubType& sub_type, const std::string& message,
           const std::string& description, const ImplementationIdentifier& origin,
           const Severity& severity = UTILS_ERROR_DEFAULTS_SEVERITY);
@@ -75,6 +77,7 @@ struct Error {
     time_point timestamp;
     UUID uuid;
     State state;
+    std::string vendor_id;
 };
 
 using ErrorHandle = UUID;

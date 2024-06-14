@@ -20,6 +20,7 @@ target_sources(framework
         error/error_filter.cpp
         error/error_manager_impl.cpp
         error/error_manager_req.cpp
+        error/error_manager_req_global.cpp
         error/error_type_map.cpp
         error/error_state_monitor.cpp
         error/error_factory.cpp

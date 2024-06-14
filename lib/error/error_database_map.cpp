@@ -75,6 +75,9 @@ std::list<ErrorPtr> ErrorDatabaseMap::get_errors_no_mutex(const std::list<ErrorF
         case FilterType::SubType: {
             pred = [&filter](const ErrorPtr& error) { return error->sub_type != filter.get_sub_type_filter().value; };
         } break;
+        case FilterType::VendorId: {
+            pred = [&filter](const ErrorPtr& error) { return error->vendor_id != filter.get_vendor_id_filter().value; };
+        } break;
         default:
             throw std::out_of_range("No known pred for provided enum of type FilterType.");
         }

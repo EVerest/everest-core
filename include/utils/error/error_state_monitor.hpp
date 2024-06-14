@@ -45,6 +45,12 @@ public:
     bool is_error_active(const ErrorType& type, const ErrorSubType& sub_type) const;
 
     ///
+    /// \brief get_active_error_count returns the amount of active errors for this error state monitor
+    /// \return Amount of active errors
+    ///
+    int get_ative_error_count() const;
+
+    ///
     /// \brief is_condition_satisfied checks if a certain condition is satisfied
     /// \param condition The condition to check
     /// \return True if the condition is satisfied, false otherwise

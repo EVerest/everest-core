@@ -24,7 +24,7 @@ public:
     ErrorFactory(std::shared_ptr<ErrorTypeMap> error_type_map, std::optional<ImplementationIdentifier> default_origin,
                  std::optional<Severity> default_severity, std::optional<State> default_state,
                  std::optional<ErrorType> default_type, std::optional<ErrorSubType> default_sub_type,
-                 std::optional<std::string> default_message);
+                 std::optional<std::string> default_message, std::optional<std::string> default_vendor_id);
 
     Error create_error() const;
     Error create_error(const ErrorType& type, const ErrorSubType& sub_type, const std::string& message) const;
@@ -41,6 +41,7 @@ public:
     void set_default_type(ErrorType type);
     void set_default_sub_type(ErrorSubType sub_type);
     void set_default_message(std::string message);
+    void set_default_vendor_id(std::string vendor_id);
 
 private:
     std::optional<ImplementationIdentifier> default_origin;
@@ -49,6 +50,7 @@ private:
     std::optional<ErrorType> default_type;
     std::optional<ErrorSubType> default_sub_type;
     std::optional<std::string> default_message;
+    std::optional<std::string> default_vendor_id;
 
     const std::shared_ptr<ErrorTypeMap> error_type_map;
 
