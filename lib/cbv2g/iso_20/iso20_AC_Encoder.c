@@ -15792,11 +15792,11 @@ static int encode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLReqControlMode, Dynamic_AC_CLReqControlModeType); next=312
+                    // Event: START (BPT_Dynamic_AC_CLReqControlMode, Dynamic_AC_CLReqControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->BPT_Dynamic_AC_CLReqControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 312;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -15805,11 +15805,11 @@ static int encode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLReqControlMode, Scheduled_AC_CLReqControlModeType); next=312
+                    // Event: START (BPT_Scheduled_AC_CLReqControlMode, Scheduled_AC_CLReqControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->BPT_Scheduled_AC_CLReqControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 312;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -15842,48 +15842,6 @@ static int encode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, const s
             else
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 4);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (Scheduled_AC_CLReqControlMode, Scheduled_CLReqControlModeType); next=2
-                    error = encode_iso20_ac_Scheduled_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->Scheduled_AC_CLReqControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            break;
-        case 312:
-            // Grammar: ID=312; read/write bits=2; START (CLReqControlMode), START (Dynamic_AC_CLReqControlMode), START (Scheduled_AC_CLReqControlMode)
-            if (AC_ChargeLoopReqType->CLReqControlMode_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Abstract element or type: START (CLReqControlModeType); next=2
-                    error = encode_iso20_ac_CLReqControlModeType(stream, &AC_ChargeLoopReqType->CLReqControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else if (AC_ChargeLoopReqType->Dynamic_AC_CLReqControlMode_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (Dynamic_AC_CLReqControlMode, Dynamic_CLReqControlModeType); next=2
-                    error = encode_iso20_ac_Dynamic_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->Dynamic_AC_CLReqControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     // Event: START (Scheduled_AC_CLReqControlMode, Scheduled_CLReqControlModeType); next=2
@@ -16928,11 +16886,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 4);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -16941,11 +16899,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 5);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17035,11 +16993,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17048,11 +17006,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 4, 4);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17129,11 +17087,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17142,11 +17100,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 3);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17210,11 +17168,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17223,11 +17181,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17278,11 +17236,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17291,11 +17249,11 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 1);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType); next=2
                     error = encode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                 }
             }
@@ -17328,48 +17286,6 @@ static int encode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, const s
             else
             {
                 error = exi_basetypes_encoder_nbit_uint(stream, 3, 4);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (Scheduled_AC_CLResControlMode, Scheduled_CLResControlModeType); next=2
-                    error = encode_iso20_ac_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->Scheduled_AC_CLResControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            break;
-        case 333:
-            // Grammar: ID=333; read/write bits=2; START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
-            if (AC_ChargeLoopResType->CLResControlMode_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 0);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Abstract element or type: START (CLResControlModeType); next=2
-                    error = encode_iso20_ac_CLResControlModeType(stream, &AC_ChargeLoopResType->CLResControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else if (AC_ChargeLoopResType->Dynamic_AC_CLResControlMode_isUsed == 1u)
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 1);
-                if (error == EXI_ERROR__NO_ERROR)
-                {
-                    // Event: START (Dynamic_AC_CLResControlMode, Dynamic_CLResControlModeType); next=2
-                    error = encode_iso20_ac_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->Dynamic_AC_CLResControlMode);
-                    if (error == EXI_ERROR__NO_ERROR)
-                    {
-                        grammar_id = 2;
-                    }
-                }
-            }
-            else
-            {
-                error = exi_basetypes_encoder_nbit_uint(stream, 2, 2);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
                     // Event: START (Scheduled_AC_CLResControlMode, Scheduled_CLResControlModeType); next=2

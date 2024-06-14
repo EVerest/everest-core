@@ -16584,23 +16584,23 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_Dynamic_AC_CLReqControlMode, BPT_Dynamic_AC_CLReqControlModeType (Dynamic_AC_CLReqControlModeType)); next=312
+                    // Event: START (BPT_Dynamic_AC_CLReqControlMode, BPT_Dynamic_AC_CLReqControlModeType (Dynamic_AC_CLReqControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->BPT_Dynamic_AC_CLReqControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopReqType->BPT_Dynamic_AC_CLReqControlMode_isUsed = 1u;
-                        grammar_id = 312;
+                        grammar_id = 2;
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_Scheduled_AC_CLReqControlMode, BPT_Scheduled_AC_CLReqControlModeType (Scheduled_AC_CLReqControlModeType)); next=312
+                    // Event: START (BPT_Scheduled_AC_CLReqControlMode, BPT_Scheduled_AC_CLReqControlModeType (Scheduled_AC_CLReqControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->BPT_Scheduled_AC_CLReqControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopReqType->BPT_Scheduled_AC_CLReqControlMode_isUsed = 1u;
-                        grammar_id = 312;
+                        grammar_id = 2;
                     }
                     break;
                 case 2:
@@ -16624,49 +16624,6 @@ static int decode_iso20_ac_AC_ChargeLoopReqType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 4:
-                    // Event: START (Scheduled_AC_CLReqControlMode, Scheduled_AC_CLReqControlModeType (Scheduled_CLReqControlModeType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_Scheduled_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->Scheduled_AC_CLReqControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopReqType->Scheduled_AC_CLReqControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 312:
-            // Grammar: ID=312; read/write bits=2; START (CLReqControlMode), START (Dynamic_AC_CLReqControlMode), START (Scheduled_AC_CLReqControlMode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Abstract element or type: CLReqControlMode, CLReqControlModeType (CLReqControlModeType)
-                    // decode: element
-                    error = decode_iso20_ac_CLReqControlModeType(stream, &AC_ChargeLoopReqType->CLReqControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopReqType->CLReqControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 1:
-                    // Event: START (Dynamic_AC_CLReqControlMode, Dynamic_AC_CLReqControlModeType (Dynamic_CLReqControlModeType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_Dynamic_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->Dynamic_AC_CLReqControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopReqType->Dynamic_AC_CLReqControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
                     // Event: START (Scheduled_AC_CLReqControlMode, Scheduled_AC_CLReqControlModeType (Scheduled_CLReqControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_Scheduled_AC_CLReqControlModeType(stream, &AC_ChargeLoopReqType->Scheduled_AC_CLReqControlMode);
@@ -17766,23 +17723,23 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 4:
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 5:
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 6:
@@ -17859,23 +17816,23 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 3:
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 4:
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 5:
@@ -17942,23 +17899,23 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 3:
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 4:
@@ -18015,23 +17972,23 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 2:
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 3:
@@ -18078,23 +18035,23 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Dynamic_AC_CLResControlMode, BPT_Dynamic_AC_CLResControlModeType (Dynamic_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 1:
-                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=333
+                    // Event: START (BPT_Scheduled_AC_CLResControlMode, BPT_Scheduled_AC_CLResControlModeType (Scheduled_AC_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_BPT_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode);
                     if (error == 0)
                     {
                         AC_ChargeLoopResType->BPT_Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 333;
+                        grammar_id = 2;
                     }
                     break;
                 case 2:
@@ -18118,49 +18075,6 @@ static int decode_iso20_ac_AC_ChargeLoopResType(exi_bitstream_t* stream, struct 
                     }
                     break;
                 case 4:
-                    // Event: START (Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType (Scheduled_CLResControlModeType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->Scheduled_AC_CLResControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopResType->Scheduled_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 333:
-            // Grammar: ID=333; read/write bits=2; START (CLResControlMode), START (Dynamic_AC_CLResControlMode), START (Scheduled_AC_CLResControlMode)
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Abstract element or type: CLResControlMode, CLResControlModeType (CLResControlModeType)
-                    // decode: element
-                    error = decode_iso20_ac_CLResControlModeType(stream, &AC_ChargeLoopResType->CLResControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopResType->CLResControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 1:
-                    // Event: START (Dynamic_AC_CLResControlMode, Dynamic_AC_CLResControlModeType (Dynamic_CLResControlModeType)); next=2
-                    // decode: element
-                    error = decode_iso20_ac_Dynamic_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->Dynamic_AC_CLResControlMode);
-                    if (error == 0)
-                    {
-                        AC_ChargeLoopResType->Dynamic_AC_CLResControlMode_isUsed = 1u;
-                        grammar_id = 2;
-                    }
-                    break;
-                case 2:
                     // Event: START (Scheduled_AC_CLResControlMode, Scheduled_AC_CLResControlModeType (Scheduled_CLResControlModeType)); next=2
                     // decode: element
                     error = decode_iso20_ac_Scheduled_AC_CLResControlModeType(stream, &AC_ChargeLoopResType->Scheduled_AC_CLResControlMode);
