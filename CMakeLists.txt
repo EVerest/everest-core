@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(everest-framework
-    VERSION 0.15.0
+    VERSION 0.15.1
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -20,6 +20,13 @@ option(EVEREST_ENABLE_PY_SUPPORT "Enable everestpy for Python modules" ON)
 option(EVEREST_ENABLE_RS_SUPPORT "Enable everestrs for Rust modules" OFF)
 option(EVEREST_ENABLE_ADMIN_PANEL_BACKEND "Enable everest admin panel backend" ON)
 option(EVEREST_INSTALL_ADMIN_PANEL "Download and install everest admin panel" ON)
+ev_setup_cmake_variables_python_wheel()
+option(${PROJECT_NAME}_USE_PYTHON_VENV "Use python venv for pip install targets" OFF)
+set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
+ev_setup_python_executable(
+    USE_PYTHON_VENV ${${PROJECT_NAME}_USE_PYTHON_VENV}
+    PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
+)
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

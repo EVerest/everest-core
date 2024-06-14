@@ -1,9 +1,3 @@
-find_program(
-    PYTHON_EXECUTABLE
-    python3
-    REQUIRED
-)
-
 if (DISABLE_EDM)
     find_package(pybind11 REQUIRED)
     find_package(pybind11_json REQUIRED)
