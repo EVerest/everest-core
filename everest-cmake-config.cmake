@@ -28,3 +28,5 @@ include("${CMAKE_CURRENT_LIST_DIR}/python-virtualenv.cmake")
 macro (evc_include FILE)
 	include("${everest-cmake_DIR}/3rd_party/${FILE}.cmake")
 endmacro()
+
+include("${CMAKE_CURRENT_LIST_DIR}/version-information.cmake")
