@@ -185,8 +185,8 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
-    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
-                                         evse_managerImpl, imd);
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
+                                         imd);
 
     // signals are "raised" via raise_error() and clear_error()
     // but not via modify_error_bsp()
@@ -271,8 +271,8 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
-    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
-                                         evse_managerImpl, imd);
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
+                                         imd);
 
     // signals are "raised" via raise_error() and clear_error()
     // but not via modify_error_bsp()
@@ -330,8 +330,8 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
-    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
-                                         evse_managerImpl, imd);
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
+                                         imd);
 
     // signals are "raised" via raise_error() and clear_error()
     // but not via modify_error_bsp()
@@ -387,8 +387,8 @@ TEST(ErrorHandlingTest, modify_error_evse_manager) {
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
-    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd,
-                                         evse_managerImpl, imd);
+    module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
+                                         imd);
 
     // signals are "raised" via raise_error() and clear_error()
     // but not via modify_error_bsp()

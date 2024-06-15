@@ -319,12 +319,8 @@ void API::init() {
 
         evse->subscribe_error(
             "evse_manager/PermanentFault",
-            [this, &session_info](const Everest::error::Error& error) {
-                session_info->set_permanent_fault(true);
-            },
-            [this, &session_info](const Everest::error::Error& error) {
-                session_info->set_permanent_fault(false);
-            });
+            [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(true); },
+            [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(false); });
 
         std::string var_datetime = var_base + "datetime";
         std::string var_session_info = var_base + "session_info";
