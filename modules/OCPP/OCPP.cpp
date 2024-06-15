@@ -7,8 +7,8 @@
 #include <fmt/core.h>
 #include <fstream>
 
-#include <boost/process.hpp>
 #include <conversions.hpp>
+#include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
 #include <optional>
 
@@ -16,76 +16,43 @@ namespace module {
 
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
-const std::string CHARGE_X_MREC_VENDOR_ID = "https://chargex.inl.gov";
 
 namespace fs = std::filesystem;
 
-static ErrorInfo get_error_info(const std::optional<types::evse_manager::Error> error) {
+/// \brief Converts the given \p error into the ErrorInfo that contains all necessary data for a
+/// StatusNotification.req
+static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, const bool is_fault) {
 
-    if (!error.has_value()) {
-        return {ocpp::v16::ChargePointErrorCode::InternalError};
+    const auto error_type = error.type;
+    const auto uuid = error.uuid.uuid;
+
+    // lambda to create MREC error info
+    auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
+        return ocpp::v16::ErrorInfo{
+            uuid, code, is_fault, error.description, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
+    };
+
+    auto it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(),
+                           [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
+
+    // is MREC error
+    if (it != MREC_ERROR_MAP.end()) {
+        return make_mrec_error_info(it->second.first, it->second.second);
     }
 
-    const auto error_code = error.value().error_code;
-
-    switch (error_code) {
-    case types::evse_manager::ErrorEnum::MREC1ConnectorLockFailure:
-        return {ocpp::v16::ChargePointErrorCode::ConnectorLockFailure, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX001"};
-    case types::evse_manager::ErrorEnum::MREC2GroundFailure:
-        return {ocpp::v16::ChargePointErrorCode::GroundFailure, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX002"};
-    case types::evse_manager::ErrorEnum::MREC3HighTemperature:
-        return {ocpp::v16::ChargePointErrorCode::HighTemperature, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX003"};
-    case types::evse_manager::ErrorEnum::MREC4OverCurrentFailure:
-        return {ocpp::v16::ChargePointErrorCode::OverCurrentFailure, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX004"};
-    case types::evse_manager::ErrorEnum::MREC5OverVoltage:
-        return {ocpp::v16::ChargePointErrorCode::OverVoltage, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX005"};
-    case types::evse_manager::ErrorEnum::MREC6UnderVoltage:
-        return {ocpp::v16::ChargePointErrorCode::UnderVoltage, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX006"};
-    case types::evse_manager::ErrorEnum::MREC8EmergencyStop:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX008"};
-    case types::evse_manager::ErrorEnum::MREC10InvalidVehicleMode:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX010"};
-    case types::evse_manager::ErrorEnum::MREC14PilotFault:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX014"};
-    case types::evse_manager::ErrorEnum::MREC15PowerLoss:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX015"};
-    case types::evse_manager::ErrorEnum::MREC17EVSEContactorFault:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX017"};
-    case types::evse_manager::ErrorEnum::MREC18CableOverTempDerate:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX018"};
-    case types::evse_manager::ErrorEnum::MREC19CableOverTempStop:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX019"};
-    case types::evse_manager::ErrorEnum::MREC20PartialInsertion:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX020"};
-    case types::evse_manager::ErrorEnum::MREC23ProximityFault:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX023"};
-    case types::evse_manager::ErrorEnum::MREC24ConnectorVoltageHigh:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX024"};
-    case types::evse_manager::ErrorEnum::MREC25BrokenLatch:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX025"};
-    case types::evse_manager::ErrorEnum::MREC26CutCable:
-        return {ocpp::v16::ChargePointErrorCode::OtherError, std::nullopt, CHARGE_X_MREC_VENDOR_ID, "CX026"};
-    case types::evse_manager::ErrorEnum::RCD_Selftest:
-    case types::evse_manager::ErrorEnum::RCD_DC:
-    case types::evse_manager::ErrorEnum::RCD_AC:
-    case types::evse_manager::ErrorEnum::VendorError:
-    case types::evse_manager::ErrorEnum::VendorWarning:
-    case types::evse_manager::ErrorEnum::ConnectorLockCapNotCharged:
-    case types::evse_manager::ErrorEnum::ConnectorLockUnexpectedOpen:
-    case types::evse_manager::ErrorEnum::ConnectorLockUnexpectedClose:
-    case types::evse_manager::ErrorEnum::ConnectorLockFailedLock:
-    case types::evse_manager::ErrorEnum::ConnectorLockFailedUnlock:
-    case types::evse_manager::ErrorEnum::DiodeFault:
-    case types::evse_manager::ErrorEnum::VentilationNotAvailable:
-    case types::evse_manager::ErrorEnum::BrownOut:
-    case types::evse_manager::ErrorEnum::EnergyManagement:
-    case types::evse_manager::ErrorEnum::PermanentFault:
-    case types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed:
-    default:
-        return {ocpp::v16::ChargePointErrorCode::InternalError, types::evse_manager::error_enum_to_string(error_code)};
+    // check if is VendorError
+    if (error_type.find("VendorError") != std::string::npos) {
+        return ocpp::v16::ErrorInfo{uuid,
+                                    ocpp::v16::ChargePointErrorCode::OtherError,
+                                    is_fault,
+                                    error.description,
+                                    error.origin.to_string(),
+                                    error.sub_type};
     }
 
-    return {ocpp::v16::ChargePointErrorCode::InternalError};
+    // Default case
+    return ocpp::v16::ErrorInfo{
+        uuid, ocpp::v16::ChargePointErrorCode::InternalError, is_fault, error.description, "EVerest", error_type};
 }
 
 void create_empty_user_config(const fs::path& user_config_path) {
@@ -242,18 +209,6 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         // ev side disconnect
         this->evse_soc_map[evse_id].reset();
         this->charge_point->on_session_stopped(ocpp_connector_id, session_event.uuid);
-    } else if (session_event.event == types::evse_manager::SessionEventEnum::Error) {
-        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
-                    << "Received Error";
-        const auto error_info = get_error_info(session_event.error);
-        this->charge_point->on_error(ocpp_connector_id, error_info.ocpp_error_code, error_info.info,
-                                     error_info.vendor_id, error_info.vendor_error_code);
-    } else if (session_event.event == types::evse_manager::SessionEventEnum::AllErrorsCleared) {
-        this->charge_point->on_fault(ocpp_connector_id, ocpp::v16::ChargePointErrorCode::NoError);
-    } else if (session_event.event == types::evse_manager::SessionEventEnum::PermanentFault) {
-        const auto error_info = get_error_info(session_event.error);
-        this->charge_point->on_fault(ocpp_connector_id, error_info.ocpp_error_code, error_info.info,
-                                     error_info.vendor_id, error_info.vendor_error_code);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ReservationStart) {
         this->charge_point->on_reservation_start(ocpp_connector_id);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ReservationEnd) {
@@ -369,6 +324,24 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
 
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
+        if (error.type != "evse_manager/PermanentFault") {
+            this->charge_point->on_error(0, get_error_info(error, false));
+        }
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
+        if (error.type == "evse_manager/PermanentFault") {
+            return;
+        }
+
+        this->charge_point->on_error_cleared(0, error.uuid.uuid);
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
+
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -379,6 +352,19 @@ void OCPP::init() {
                 this->evse_ready_cv.notify_one();
             }
         });
+
+        auto permanent_fault_error_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_error(evse_id, get_error_info(error, true));
+        };
+
+        auto permanent_fault_error_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
+        };
+
+        // only subscribe to evse_manager/PermanentFault error, other errors are handled by subscribe_global_all_errors
+        this->r_evse_manager.at(evse_id - 1)
+            ->subscribe_error("evse_manager/PermanentFault", permanent_fault_error_handler,
+                              permanent_fault_error_cleared_handler);
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
