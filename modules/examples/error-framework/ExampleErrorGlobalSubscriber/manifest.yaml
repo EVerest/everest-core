@@ -1,0 +1,10 @@
+description: Simple example module written in C++ to demonstrate error framework on global subscriber side
+provides:
+  example_global_subscriber:
+    interface: example_error_framework
+    description: This implements the example interface
+enable_global_errors: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Andreas Heinrich

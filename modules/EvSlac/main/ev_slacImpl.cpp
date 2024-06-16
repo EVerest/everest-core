@@ -16,13 +16,6 @@ namespace module {
 namespace main {
 
 void ev_slacImpl::init() {
-    // validate config settings
-    if (config.ev_id.length() != slac::defs::STATION_ID_LEN) {
-        EVLOG_AND_THROW(
-            Everest::EverestConfigError(fmt::format("The EVSE id config needs to be exactly {} octets (got {}).",
-                                                    slac::defs::STATION_ID_LEN, config.ev_id.length())));
-    }
-
     // setup evse fsm thread
     std::thread(&ev_slacImpl::run, this).detach();
 }

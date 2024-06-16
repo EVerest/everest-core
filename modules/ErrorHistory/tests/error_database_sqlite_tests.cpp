@@ -20,7 +20,7 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
         WHEN("Adding an error") {
             std::vector<Everest::error::ErrorPtr> test_errors = {std::make_shared<Everest::error::Error>(
                 "test_type", "test_sub_type", "test_message", "test_description",
-                ImplementationIdentifier("test_origin_module", "test_origin_implementation"),
+                ImplementationIdentifier("test_origin_module", "test_origin_implementation"), "everest-test",
                 Everest::error::Severity::Low, date::utc_clock::now(), Everest::error::UUID(),
                 Everest::error::State::Active)};
             db.add_error(test_errors.at(0));
@@ -32,12 +32,12 @@ SCENARIO("Check ErrorDatabaseSqlite class", "[!throws]") {
             std::vector<Everest::error::ErrorPtr> test_errors = {
                 std::make_shared<Everest::error::Error>(
                     "test_type_a", "test_sub_type_a", "test_message_a", "test_description_a",
-                    ImplementationIdentifier("test_origin_module_a", "test_origin_implementation_a"),
+                    ImplementationIdentifier("test_origin_module_a", "test_origin_implementation_a"), "everest-test",
                     Everest::error::Severity::High, date::utc_clock::now(), Everest::error::UUID(),
                     Everest::error::State::ClearedByModule),
                 std::make_shared<Everest::error::Error>(
                     "test_type_b", "test_sub_type_b", "test_message_b", "test_description_b",
-                    ImplementationIdentifier("test_origin_module_b", "test_origin_implementation_b"),
+                    ImplementationIdentifier("test_origin_module_b", "test_origin_implementation_b"), "everest-test",
                     Everest::error::Severity::Medium, date::utc_clock::now(), Everest::error::UUID(),
                     Everest::error::State::ClearedByReboot)};
             for (Everest::error::ErrorPtr error : test_errors) {

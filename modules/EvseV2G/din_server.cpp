@@ -723,14 +723,19 @@ static enum v2g_event handle_din_cable_check(struct v2g_connection* conn) {
     res->DC_EVSEStatus.EVSEIsolationStatus = (dinisolationLevelType)conn->ctx->evse_v2g_data.evse_isolation_status;
     res->DC_EVSEStatus.EVSEIsolationStatus_isUsed = conn->ctx->evse_v2g_data.evse_isolation_status_is_used;
     res->DC_EVSEStatus.EVSENotification = (dinEVSENotificationType)conn->ctx->evse_v2g_data.evse_notification;
-    res->DC_EVSEStatus.EVSEStatusCode =
-        (conn->ctx->intl_emergency_shutdown == true)
-            ? dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown
-            : (dinDC_EVSEStatusCodeType)conn->ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION];
     res->DC_EVSEStatus.NotificationMaxDelay = (uint32_t)conn->ctx->evse_v2g_data.notification_max_delay;
     res->EVSEProcessing = (conn->ctx->evse_v2g_data.evse_processing[PHASE_ISOLATION] == (uint8_t)0)
                               ? dinEVSEProcessingType_Finished
                               : dinEVSEProcessingType_Ongoing;
+
+    if (conn->ctx->intl_emergency_shutdown == true) {
+        res->DC_EVSEStatus.EVSEStatusCode = dinDC_EVSEStatusCodeType_EVSE_EmergencyShutdown;
+    } else if (res->EVSEProcessing == dinEVSEProcessingType_Finished) {
+        res->DC_EVSEStatus.EVSEStatusCode = dinDC_EVSEStatusCodeType_EVSE_Ready;
+    } else {
+        res->DC_EVSEStatus.EVSEStatusCode =
+            static_cast<dinDC_EVSEStatusCodeType>(conn->ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION]);
+    }
 
     /* Check the current response code and check if no external error has occurred */
     nextEvent = din_validate_response_code(&res->ResponseCode, conn);

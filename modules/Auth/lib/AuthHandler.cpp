@@ -192,12 +192,13 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
+    types::authorization::ValidationResult validation_result = {types::authorization::AuthorizationStatus::Unknown};
     if (!validation_results.empty()) {
         bool authorized = false;
         int i = 0;
         // iterate over validation results
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
-            auto validation_result = validation_results.at(i);
+            validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
 
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
@@ -254,6 +255,16 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             return TokenHandlingResult::ACCEPTED;
         } else {
             EVLOG_debug << "id_token could not be validated by any validator";
+            // in case the validation was not successful, we need to notify the evse and transmit the validation result.
+            // This is especially required for Plug&Charge with ISO15118 in order to allow the ISO15118 state machine to
+            // escape the Authorize loop. We do this for all connectors that were referenced
+            if (provided_token.connectors.has_value()) {
+                const auto connectors = provided_token.connectors.value();
+                std::for_each(connectors.begin(), connectors.end(),
+                              [this, provided_token, validation_result](int32_t connector) {
+                                  this->notify_evse(connector, provided_token, validation_result);
+                              });
+            }
             return TokenHandlingResult::REJECTED;
         }
     } else {

@@ -70,14 +70,14 @@ void evse_board_supportImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps.min_current_A_import = mod->config.caps_min_current_A;
+        caps.min_current_A_import = 6;
         caps.max_current_A_import = 16;
         caps.min_phase_count_import = 1;
         caps.max_phase_count_import = 3;
         caps.supports_changing_phases_during_charging = false;
         caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable;
 
-        caps.min_current_A_export = mod->config.caps_min_current_A;
+        caps.min_current_A_export = 6;
         caps.max_current_A_export = 16;
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
@@ -113,13 +113,15 @@ void evse_board_supportImpl::init() {
 
         caps.min_current_A_import =
             (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
-        caps.max_current_A_import = l.hwcap_max_current;
+        caps.max_current_A_import =
+            (mod->config.caps_max_current_A >= 0 ? mod->config.caps_max_current_A : l.hwcap_max_current);
         caps.min_phase_count_import = l.hwcap_min_phase_count;
         caps.max_phase_count_import = l.hwcap_max_phase_count;
 
         caps.min_current_A_export =
             (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
-        caps.max_current_A_export = l.hwcap_max_current;
+        caps.max_current_A_export =
+            (mod->config.caps_max_current_A >= 0 ? mod->config.caps_max_current_A : l.hwcap_max_current);
         caps.min_phase_count_export = l.hwcap_min_phase_count;
         caps.max_phase_count_export = l.hwcap_max_phase_count;
 
