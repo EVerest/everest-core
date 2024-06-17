@@ -84,7 +84,7 @@ static void clear_exception_bit(uint8_t& received_function_code) {
 static std::string hexdump(const uint8_t* msg, int msg_len) {
     std::stringstream ss;
     for (int i = 0; i < msg_len; i++) {
-        ss << std::hex << (int)msg[i] << " ";
+        ss << "<" << std::nouppercase << std::setfill('0') << std::setw(2) << std::hex << (int)msg[i] << ">";
     }
     return ss.str();
 }
