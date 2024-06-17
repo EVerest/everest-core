@@ -940,6 +940,8 @@ std::optional<fs::path> EvseSecurity::retrieve_ocsp_cache_internal(const Certifi
             }
         } catch (const NoCertificateFound& e) {
             EVLOG_error << "Could not find any certificate for ocsp cache retrieve: " << e.what();
+        } catch (const std::filesystem::filesystem_error& e) {
+            EVLOG_error << "Could not iterate over ocsp cache: " << e.what();
         }
     } catch (const CertificateLoadException& e) {
         EVLOG_error << "Could not retrieve ocsp cache, certificate load failure: " << e.what();
