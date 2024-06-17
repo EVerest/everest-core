@@ -78,6 +78,9 @@ class ChecksumErrorException : public TinyModbusException {
 class IncompletePacketException : public TinyModbusException {
     using TinyModbusException::TinyModbusException;
 };
+class OddByteCountException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
 class ModbusException : public TinyModbusException {
     using TinyModbusException::TinyModbusException;
 };
