@@ -116,6 +116,13 @@ function(ev_add_project)
         PROPERTY EVEREST_MODULES
     )
     message(STATUS "${EVEREST_PROJECT_NAME} modules that will be built: ${EVEREST_MODULES}")
+
+    # generate and install version information
+    evc_generate_version_information()
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/version_information.txt
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+    )
 endfunction()
 
 #
