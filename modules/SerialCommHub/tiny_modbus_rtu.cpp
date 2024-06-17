@@ -24,6 +24,7 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <system_error>
 #include <type_traits>
 #include <unistd.h>
 
@@ -485,7 +486,17 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
 
         // write to serial port
         rxtx_gpio.set(false);
-        write(fd, req.data(), req.size());
+
+        uint8_t* buffer = req.data();
+        ssize_t written = 0;
+
+        while (written < req.size()) {
+            ssize_t c = write(fd, &buffer[written], req.size() - written);
+            if (c == -1)
+                throw std::system_error(errno, std::generic_category(), "Could not send Modbus request");
+            written += c;
+        }
+
         if (rxtx_gpio.is_ready()) {
             // if we are using GPIO to switch between RX/TX, use the fast version of tcdrain with exact timing
             fast_tcdrain(fd);
