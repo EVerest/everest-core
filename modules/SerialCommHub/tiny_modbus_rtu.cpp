@@ -198,8 +198,8 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         throw IncompletePacketException("Result data not completely in received message.");
     }
 
-    // ready to copy actual result data to output
-    result.reserve(byte_cnt / 2);
+    // ready to copy actual result data to output, so pre-allocate enough memory for the output
+    result.reserve((byte_cnt + 1) / 2);
 
     for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
         uint16_t t;
