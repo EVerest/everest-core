@@ -78,6 +78,8 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
                 EVLOG_debug << logmsg;
             else
                 EVLOG_warning << logmsg;
+        } catch (const std::logic_error& e) {
+            EVLOG_warning << "Logic error in Modbus implementation: " << e.what();
         }
 
         if (response.size() > 0)

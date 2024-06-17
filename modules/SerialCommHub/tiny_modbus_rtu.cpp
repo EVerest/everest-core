@@ -184,18 +184,41 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     // For a write reply we always get 4 bytes
     uint8_t byte_cnt = 4;
     int start_of_result = RES_TX_START_OF_PAYLOAD;
+    bool even_byte_cnt_expected = false;
 
     // Was it a read reply?
-    if (function == FunctionCode::READ_COILS || function == FunctionCode::READ_DISCRETE_INPUTS ||
-        function == FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS || function == FunctionCode::READ_INPUT_REGISTERS) {
+    switch (function) {
+    case FunctionCode::WRITE_SINGLE_COIL:
+    case FunctionCode::WRITE_SINGLE_HOLDING_REGISTER:
+    case FunctionCode::WRITE_MULTIPLE_COILS:
+    case FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS:
+        // no - nothing to do
+        break;
+    case FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS:
+    case FunctionCode::READ_INPUT_REGISTERS:
+        // yes - for 16-bit wide registers thus we can assume an even byte count
+        even_byte_cnt_expected = true;
+        [[fallthrough]];
+    case FunctionCode::READ_COILS:
+    case FunctionCode::READ_DISCRETE_INPUTS:
+        // yes
         // adapt byte count and starting pos
         byte_cnt = buf[RES_RX_LEN_POS];
         start_of_result = RES_RX_START_OF_PAYLOAD;
+        break;
+    default:
+        throw std::logic_error("Missing implementation for function code " + FunctionCode_to_string_with_hex(function));
     }
 
     // check if result is completely in received data
     if (start_of_result + byte_cnt > len) {
         throw IncompletePacketException("Result data not completely in received message.");
+    }
+
+    // check even number of bytes
+    if (even_byte_cnt_expected && byte_cnt % 2 == 1) {
+        throw OddByteCountException("For " + FunctionCode_to_string_with_hex(function) +
+                                    " an even byte count is expected in the response.");
     }
 
     // ready to copy actual result data to output, so pre-allocate enough memory for the output
