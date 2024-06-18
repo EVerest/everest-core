@@ -5,7 +5,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/config-run-script.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/config-run-nodered-script.cmake)
 
 # dependencies
-require_ev_cli_version("0.1.0")
+require_ev_cli_version("0.2.0")
 
 # source generate scripts / setup
 include(${CMAKE_CURRENT_LIST_DIR}/everest-generate.cmake)

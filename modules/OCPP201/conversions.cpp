@@ -108,11 +108,12 @@ ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::Dat
 
 ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
                                                const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
-                                               const std::optional<ocpp::v201::PhaseEnum> phase) {
+                                               const std::optional<ocpp::v201::PhaseEnum> phase,
+                                               ocpp::v201::LocationEnum location) {
     ocpp::v201::SampledValue sampled_value;
     ocpp::v201::UnitOfMeasure unit_of_measure;
     sampled_value.context = reading_context;
-    sampled_value.location = ocpp::v201::LocationEnum::Outlet;
+    sampled_value.location = location;
     sampled_value.measurand = measurand;
     unit_of_measure.unit = unit;
     sampled_value.unitOfMeasure = unit_of_measure;
