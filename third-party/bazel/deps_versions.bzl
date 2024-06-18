@@ -17,7 +17,7 @@ EVEREST_DEPS = struct(
 	# everest-framework
 	everest_framework_repo = "https://github.com/EVerest/everest-framework.git",
 	everest_framework_commit = None,
-	everest_framework_tag = "v0.14.2",
+	everest_framework_tag = "v0.15.0",
 
 	# everest-utils
 	everest_utils_repo = "https://github.com/EVerest/everest-utils.git",
