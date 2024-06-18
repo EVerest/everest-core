@@ -104,9 +104,10 @@ private:
 
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
+    std::map<int32_t, std::optional<float>> evse_soc_map;
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
-    void init_evse_ready_map();
+    void init_evse_maps();
     bool all_evse_ready();
     std::map<int32_t, int32_t> get_connector_structure();
     void process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
