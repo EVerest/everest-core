@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 #include "generated/types/ocpp.hpp"
+#include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
 #include <fstream>
@@ -239,6 +240,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received SessionFinished";
         // ev side disconnect
+        this->evse_soc_map[evse_id].reset();
         this->charge_point->on_session_stopped(ocpp_connector_id, session_event.uuid);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::Error) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
@@ -265,8 +267,19 @@ void OCPP::init_evse_subscriptions() {
     int32_t evse_id = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, evse_id](types::powermeter::Powermeter powermeter) {
-            json powermeter_json = powermeter;
-            this->charge_point->on_meter_values(evse_id, powermeter_json); //
+            ocpp::Measurement measurement;
+            measurement.power_meter = conversions::to_ocpp_power_meter(powermeter);
+            if (this->evse_soc_map[evse_id].has_value()) {
+                // soc is present, so add this to the measurement
+                measurement.soc_Percent = ocpp::StateOfCharge{this->evse_soc_map[evse_id].value()};
+            }
+            this->charge_point->on_meter_values(evse_id, measurement);
+        });
+
+        evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
+            if (ev_info.soc.has_value()) {
+                this->evse_soc_map[evse_id] = ev_info.soc.value();
+            }
         });
 
         evse->subscribe_limits([this, evse_id](types::evse_manager::Limits limits) {
@@ -331,10 +344,11 @@ void OCPP::init_evse_connector_map() {
     }
 }
 
-void OCPP::init_evse_ready_map() {
+void OCPP::init_evse_maps() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->evse_ready_map[evse_id] = false;
+        this->evse_soc_map[evse_id] = std::nullopt;
     }
 }
 
@@ -355,7 +369,7 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
 
-    this->init_evse_ready_map();
+    this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
