@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+
 #include <gmock/gmock.h>
 
 #include "ocpp/v201/component_state_manager.hpp"

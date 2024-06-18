@@ -205,6 +205,27 @@ public:
     get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
                            const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
 
+    /// \brief Sets the given monitor \p requests in the device model
+    /// \param request
+    /// \param type The type of the set monitors. HardWiredMonitor - used for OEM specific monitors,
+    /// PreconfiguredMonitor - monitors that were manually defined in the config.json,
+    /// CustomMonitor - used for monitors that are set by the CSMS,
+    /// \return List of results of the requested operation
+    std::vector<SetMonitoringResult> set_monitors(const std::vector<SetMonitoringData>& requests,
+                                                  const VariableMonitorType type = VariableMonitorType::CustomMonitor);
+
+    /// \brief Gets the Monitoring data for the request \p criteria and \p component_variables
+    /// \param criteria
+    /// \param component_variables
+    /// \return List of results of the requested monitors
+    std::vector<MonitoringData> get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                                             const std::vector<ComponentVariable>& component_variables);
+
+    /// \brief Clears the given \p request_ids from the registered monitors if request_id is present
+    /// \param request_ids
+    /// \return List of results of the requested operation
+    std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids);
+
     /// \brief Check data integrity of the device model provided by the device model data storage:
     /// For "required" variables, assert values exist. Checks might be extended in the future.
     void check_integrity(const std::map<int32_t, int32_t>& evse_connector_structure);

@@ -15,10 +15,17 @@
 namespace ocpp {
 namespace v201 {
 
+/// \brief Helper struct that holds database only values that don't have spec coverage
+struct VariableMonitoringMeta {
+    VariableMonitoring monitor;
+    VariableMonitorType type;
+    std::optional<std::string> reference_value;
+};
+
 /// \brief Helper struct that combines VariableCharacteristics and VariableMonitoring
 struct VariableMetaData {
     VariableCharacteristics characteristics;
-    std::vector<VariableMonitoring> monitors;
+    std::unordered_map<int64_t, VariableMonitoringMeta> monitors;
 };
 
 using VariableMap = std::map<Variable, VariableMetaData>;
@@ -80,6 +87,27 @@ public:
     /// \return true if the value could be set in the storage, else false
     virtual bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
                                               const AttributeEnum& attribute_enum, const std::string& value) = 0;
+
+    /// \brief Inserts or replaces a variable monitor in the database
+    /// \param data Monitor data to set
+    /// \return true if the value could be inserted, or valse otherwise
+    virtual std::optional<VariableMonitoringMeta> set_monitoring_data(const SetMonitoringData& data,
+                                                                      const VariableMonitorType type) = 0;
+
+    /// \brief Returns all the monitors currently in the database based
+    /// on the provided filtering criteria
+    /// \param criteria
+    /// \param component_id
+    /// \param variable_id
+    /// \return the monitoring data if it could be found or an empty vector
+    virtual std::vector<VariableMonitoringMeta>
+    get_monitoring_data(const std::vector<MonitoringCriterionEnum>& criteria, const Component& component_id,
+                        const Variable& variable_id) = 0;
+
+    /// \brief Clears a single monitor based on the ID from the database
+    /// @param monitor_id Monitor ID
+    /// @return true if the monitor could be cleared or false otherwise
+    virtual bool clear_variable_monitor(int monitor_id) = 0;
 
     /// \brief Check data integrity of the stored data:
     /// For "required" variables, assert values exist. Checks might be extended in the future.

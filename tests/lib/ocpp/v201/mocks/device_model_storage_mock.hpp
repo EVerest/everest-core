@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+
 #include <gmock/gmock.h>
 
 #include "ocpp/v201/device_model_storage.hpp"
@@ -12,6 +15,11 @@ public:
                 (const Component&, const Variable&, const std::optional<AttributeEnum>&));
     MOCK_METHOD(bool, set_variable_attribute_value,
                 (const Component&, const Variable&, const AttributeEnum&, const std::string&));
+    MOCK_METHOD(std::optional<VariableMonitoringMeta>, set_monitoring_data,
+                (const SetMonitoringData&, const VariableMonitorType));
+    MOCK_METHOD(std::vector<VariableMonitoringMeta>, get_monitoring_data,
+                (const std::vector<MonitoringCriterionEnum>&, const Component&, const Variable&));
+    MOCK_METHOD(bool, clear_variable_monitor, (int));
     MOCK_METHOD(void, check_integrity, ());
 };
 } // namespace ocpp::v201

@@ -30,6 +30,11 @@ int SQLiteStatement::reset() {
     return sqlite3_reset(this->stmt);
 }
 
+int SQLiteStatement::changes() {
+    // Rows affected by the last INSERT, UPDATE, DELETE
+    return sqlite3_changes(this->db);
+}
+
 int SQLiteStatement::bind_text(const int idx, const std::string& val, SQLiteString lifetime) {
     return sqlite3_bind_text(this->stmt, idx, val.c_str(), val.length(),
                              lifetime == SQLiteString::Static ? SQLITE_STATIC : SQLITE_TRANSIENT);

@@ -80,5 +80,134 @@ TEST_F(DeviceModelTest, test_component_as_key_in_map) {
     EXPECT_EQ(components_to_ints.find(different_name_comp), components_to_ints.end());
 }
 
+TEST_F(DeviceModelTest, test_set_monitors) {
+    std::vector<SetMonitoringData> requests;
+
+    const EVSE evse = {.id = 2, .connectorId = 3};
+
+    const Component component1 = {
+        .name = "UnitTestCtrlr",
+        .evse = evse,
+    };
+    const Component component2 = {.name = "AlignedDataCtrlr"};
+
+    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
+    const Variable variable_comp2 = {.name = "Interval"};
+
+    const SetMonitoringData req_one{.value = 0.0,
+                                    .type = MonitorEnum::PeriodicClockAligned,
+                                    .severity = 7,
+                                    .component = component1,
+                                    .variable = variable_comp1};
+    const SetMonitoringData req_two{.value = 4.579,
+                                    .type = MonitorEnum::UpperThreshold,
+                                    .severity = 3,
+                                    .component = component2,
+                                    .variable = variable_comp2};
+
+    requests.push_back(req_one);
+    requests.push_back(req_two);
+
+    auto results = dm->set_monitors(requests);
+    ASSERT_EQ(results.size(), requests.size());
+
+    for (auto& result : results) {
+        ASSERT_EQ(result.status, SetMonitoringStatusEnum::Accepted);
+    }
+}
+
+TEST_F(DeviceModelTest, test_get_monitors) {
+    std::vector<MonitoringCriterionEnum> criteria = {
+        MonitoringCriterionEnum::DeltaMonitoring,
+        MonitoringCriterionEnum::PeriodicMonitoring,
+        MonitoringCriterionEnum::ThresholdMonitoring,
+    };
+
+    const EVSE evse = {.id = 2, .connectorId = 3};
+
+    const Component component1 = {
+        .name = "UnitTestCtrlr",
+        .evse = evse,
+    };
+    const Component component2 = {.name = "AlignedDataCtrlr"};
+
+    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
+    const Variable variable_comp2 = {.name = "Interval"};
+
+    std::vector<ComponentVariable> components = {
+        {component1, std::nullopt, variable_comp1},
+        {component2, std::nullopt, variable_comp2},
+    };
+
+    auto results = dm->get_monitors(criteria, components);
+    ASSERT_EQ(results.size(), 2);
+
+    ASSERT_EQ(results[0].variableMonitoring.size(), 1);
+    ASSERT_EQ(results[1].variableMonitoring.size(), 1);
+
+    auto monitor1 = results[0].variableMonitoring[0];
+    auto monitor2 = results[1].variableMonitoring[0];
+
+    // Valued used above
+    const SetMonitoringData req_one{.value = 0.0,
+                                    .type = MonitorEnum::PeriodicClockAligned,
+                                    .severity = 7,
+                                    .component = component1,
+                                    .variable = variable_comp1};
+    const SetMonitoringData req_two{.value = 4.579,
+                                    .type = MonitorEnum::UpperThreshold,
+                                    .severity = 3,
+                                    .component = component2,
+                                    .variable = variable_comp2};
+
+    ASSERT_EQ(monitor1.severity, 7);
+    ASSERT_EQ(monitor1.type, MonitorEnum::PeriodicClockAligned);
+    ASSERT_EQ(monitor2.severity, 3);
+    ASSERT_TRUE(abs(monitor2.value - 4.579) < 0.001); // Nearly equal since it's floating point
+}
+
+TEST_F(DeviceModelTest, test_clear_monitors) {
+    std::vector<MonitoringCriterionEnum> criteria = {
+        MonitoringCriterionEnum::DeltaMonitoring,
+        MonitoringCriterionEnum::PeriodicMonitoring,
+        MonitoringCriterionEnum::ThresholdMonitoring,
+    };
+
+    const EVSE evse = {.id = 2, .connectorId = 3};
+
+    const Component component1 = {
+        .name = "UnitTestCtrlr",
+        .evse = evse,
+    };
+    const Component component2 = {.name = "AlignedDataCtrlr"};
+
+    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
+    const Variable variable_comp2 = {.name = "Interval"};
+
+    std::vector<ComponentVariable> components = {
+        {component1, std::nullopt, variable_comp1},
+        {component2, std::nullopt, variable_comp2},
+    };
+
+    auto current_results = dm->get_monitors(criteria, components);
+
+    // Delete all found IDs
+    std::vector<int> to_delete;
+    for (auto& result : current_results) {
+        for (auto& monitor : result.variableMonitoring) {
+            to_delete.push_back(monitor.id);
+        }
+    }
+
+    dm->clear_monitors(to_delete);
+
+    auto results = dm->get_monitors(criteria, components);
+    ASSERT_EQ(results.size(), 2);
+
+    for (auto& result : results) {
+        ASSERT_TRUE(result.variableMonitoring.empty());
+    }
+}
+
 } // namespace v201
 } // namespace ocpp

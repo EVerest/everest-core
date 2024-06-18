@@ -534,7 +534,15 @@ The main reference for the integration of libocpp for OCPP1.6 is the ocpp::v16::
 GTest is required for building the test cases target.
 To build the target and run the tests you can reference the script `.ci/build-kit/install_and_test.sh`.
 The script allows the GitHub Actions runner to execute.
-Local testing is still in progress.
+
+Local testing:
+```bash
+mkdir build
+cmake -B build -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="./dist"
+cd build
+make -j$(nproc) install
+```
+Run any required tests from build/tests.
 
 ## Building with FetchContent instead of EDM
 In [doc/build-with-fetchcontent](doc/build-with-fetchcontent) you can find an example how to build libocpp with FetchContent instead of EDM.

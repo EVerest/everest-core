@@ -42,6 +42,7 @@ public:
 
     virtual int step() = 0;
     virtual int reset() = 0;
+    virtual int changes() = 0;
 
     virtual int bind_text(const int idx, const std::string& val, SQLiteString lifetime = SQLiteString::Static) = 0;
     virtual int bind_text(const std::string& param, const std::string& val,
@@ -75,6 +76,7 @@ public:
 
     int step() override;
     int reset() override;
+    int changes() override;
 
     int bind_text(const int idx, const std::string& val, SQLiteString lifetime = SQLiteString::Static) override;
     int bind_text(const std::string& param, const std::string& val,

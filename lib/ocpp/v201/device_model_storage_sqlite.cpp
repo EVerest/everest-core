@@ -11,6 +11,9 @@ using namespace common;
 
 namespace v201 {
 
+extern void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                                     std::vector<VariableMonitoringMeta>& monitors);
+
 DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
     db = std::make_unique<ocpp::common::DatabaseConnection>(db_path);
 
@@ -135,6 +138,14 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
         VariableMetaData meta_data;
         meta_data.characteristics = characteristics;
 
+        // Query all monitors for this variable
+        auto monitoring = get_monitoring_data({}, component, variable);
+        if (!monitoring.empty()) {
+            for (auto& monitor_meta : monitoring) {
+                meta_data.monitors.insert(std::pair{monitor_meta.monitor.id, std::move(monitor_meta)});
+            }
+        }
+
         device_model[component][variable] = meta_data;
     }
 
@@ -212,6 +223,148 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
         return false;
     }
     return true;
+}
+
+std::optional<VariableMonitoringMeta> DeviceModelStorageSqlite::set_monitoring_data(const SetMonitoringData& data,
+                                                                                    const VariableMonitorType type) {
+    const auto _variable_id = this->get_variable_id(data.component, data.variable);
+    if (_variable_id == -1) {
+        return std::nullopt;
+    }
+
+    std::optional<std::string> actual_value;
+
+    // For a delta monitor, the actual value is mandatory,
+    // since it is used as a reference value when triggering
+    if (data.type == MonitorEnum::Delta) {
+        auto attrib = get_variable_attribute(data.component, data.variable, AttributeEnum::Actual);
+
+        if (attrib.has_value() && attrib.value().value.has_value()) {
+            actual_value = attrib.value().value.value();
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    // TODO (ioan): see if we already have an existing monitor?
+    auto transaction = this->db->begin_transaction();
+
+    std::string insert_query;
+
+    if (data.id.has_value()) {
+        insert_query = "INSERT OR REPLACE INTO VARIABLE_MONITORING (VARIABLE_ID, SEVERITY, 'TRANSACTION', TYPE_ID, "
+                       "CONFIG_TYPE_ID, VALUE, REFERENCE_VALUE) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    } else {
+        insert_query = "INSERT OR REPLACE INTO VARIABLE_MONITORING (VARIABLE_ID, SEVERITY, 'TRANSACTION', TYPE_ID, "
+                       "CONFIG_TYPE_ID, VALUE, REFERENCE_VALUE, ID) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    }
+
+    auto insert_stmt = this->db->new_statement(insert_query);
+
+    insert_stmt->bind_int(1, _variable_id);
+    insert_stmt->bind_int(2, data.severity);
+    insert_stmt->bind_int(3, data.transaction.value_or(false));
+    insert_stmt->bind_int(4, static_cast<int>(data.type));
+    insert_stmt->bind_int(5, static_cast<int>(type));
+    insert_stmt->bind_double(6, data.value);
+
+    if (actual_value.has_value()) {
+        // If the monitor is a delta, we need to insert the reference value
+        insert_stmt->bind_text(7, actual_value.value(), SQLiteString::Transient);
+    } else {
+        insert_stmt->bind_null(7);
+    }
+
+    if (data.id.has_value()) {
+        insert_stmt->bind_int(8, data.id.value());
+    }
+
+    if (insert_stmt->step() != SQLITE_DONE) {
+        EVLOG_error << this->db->get_error_message();
+        return std::nullopt;
+    }
+
+    transaction->commit();
+
+    int64_t last_row_id = this->db->get_last_inserted_rowid();
+
+    VariableMonitoringMeta meta;
+
+    meta.monitor.id = last_row_id;
+    meta.monitor.severity = data.severity;
+    meta.monitor.transaction = data.transaction.value_or(false);
+    meta.monitor.type = data.type;
+    meta.monitor.value = data.value;
+    meta.type = type;
+    meta.reference_value = actual_value;
+
+    return meta;
+}
+
+std::vector<VariableMonitoringMeta>
+DeviceModelStorageSqlite::get_monitoring_data(const std::vector<MonitoringCriterionEnum>& criteria,
+                                              const Component& component_id, const Variable& variable_id) {
+    const auto _variable_id = this->get_variable_id(component_id, variable_id);
+    if (_variable_id == -1) {
+        return {};
+    }
+
+    // TODO (ioan): optimize select based on criterions
+    std::string select_query =
+        "SELECT vm.TYPE_ID, vm.ID, vm.SEVERITY, vm.'TRANSACTION', vm.VALUE, vm.CONFIG_TYPE_ID, vm.REFERENCE_VALUE "
+        "FROM VARIABLE_MONITORING vm "
+        "WHERE vm.VARIABLE_ID = @variable_id";
+
+    auto select_stmt = this->db->new_statement(select_query);
+    select_stmt->bind_int(1, _variable_id);
+
+    std::vector<VariableMonitoringMeta> monitors;
+
+    while (select_stmt->step() == SQLITE_ROW) {
+        VariableMonitoringMeta monitor_meta;
+        VariableMonitoring monitor;
+
+        // Retrieve monitor data
+        monitor.type = static_cast<MonitorEnum>(select_stmt->column_int(0));
+        monitor.id = select_stmt->column_int(1);
+        monitor.severity = select_stmt->column_int(2);
+        monitor.transaction = static_cast<bool>(select_stmt->column_int(3));
+        monitor.value = static_cast<float>(select_stmt->column_double(4));
+
+        VariableMonitorType type = static_cast<VariableMonitorType>(select_stmt->column_int(5));
+        auto reference_value = select_stmt->column_text_nullable(6);
+
+        monitor_meta.monitor = monitor;
+        monitor_meta.reference_value = reference_value;
+        monitor_meta.type = type;
+
+        monitors.push_back(monitor_meta);
+
+        // Filter only required monitors
+        filter_criteria_monitors(criteria, monitors);
+    }
+
+    return monitors;
+}
+
+bool DeviceModelStorageSqlite::clear_variable_monitor(int monitor_id) {
+    std::string delete_query = "DELETE FROM VARIABLE_MONITORING WHERE ID = ?";
+
+    auto transaction = this->db->begin_transaction();
+    auto delete_stmt = this->db->new_statement(delete_query);
+
+    delete_stmt->bind_int(1, monitor_id);
+    if (delete_stmt->step() != SQLITE_DONE) {
+        EVLOG_error << this->db->get_error_message();
+        return false;
+    }
+
+    transaction->commit();
+
+    // Ensure that we deleted 1 row
+    return (delete_stmt->changes() == 1);
 }
 
 void DeviceModelStorageSqlite::check_integrity() {

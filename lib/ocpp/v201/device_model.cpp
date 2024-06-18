@@ -30,6 +30,55 @@ bool allow_set_read_only_value(const Component& component, const Variable& varia
            variable == ConnectorComponentVariables::AvailabilityState;
 }
 
+bool filter_criteria_monitor(const std::vector<MonitoringCriterionEnum>& criteria,
+                             const VariableMonitoringMeta& monitor) {
+    // N02.FR.11 - if no criteria is provided we have a match
+    if (criteria.empty()) {
+        return true;
+    }
+
+    auto type = monitor.monitor.type;
+    bool any_filter_match = false;
+
+    for (auto& criterion : criteria) {
+        switch (criterion) {
+        case MonitoringCriterionEnum::DeltaMonitoring:
+            any_filter_match = (type == MonitorEnum::Delta);
+            break;
+        case MonitoringCriterionEnum::ThresholdMonitoring:
+            any_filter_match = (type == MonitorEnum::LowerThreshold || type == MonitorEnum::UpperThreshold);
+            break;
+        case MonitoringCriterionEnum::PeriodicMonitoring:
+            any_filter_match = (type == MonitorEnum::Periodic || type == MonitorEnum::PeriodicClockAligned);
+            break;
+        }
+
+        if (any_filter_match) {
+            break;
+        }
+    }
+
+    return any_filter_match;
+}
+
+void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                              std::vector<VariableMonitoringMeta>& monitors) {
+    // N02.FR.11 - if no criteria is provided, all monitors are left
+    if (criteria.empty()) {
+        return;
+    }
+
+    for (auto it = std::begin(monitors); it != std::end(monitors);) {
+        bool any_filter_match = filter_criteria_monitor(criteria, *it);
+
+        if (any_filter_match == false) {
+            it = monitors.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 bool DeviceModel::component_criteria_match(const Component& component,
                                            const std::vector<ComponentCriterionEnum>& component_criteria) {
     if (component_criteria.empty()) {
@@ -365,6 +414,156 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
         EVLOG_error << "Integrity check in Device Model storage failed:" << e.what();
         throw e;
     }
+}
+
+std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<SetMonitoringData>& requests,
+                                                           const VariableMonitorType type) {
+    if (requests.empty()) {
+        return {};
+    }
+
+    std::vector<SetMonitoringResult> set_monitors_res;
+
+    for (auto& request : requests) {
+        SetMonitoringResult result;
+
+        if (this->device_model.find(request.component) == this->device_model.end()) {
+            result.status = SetMonitoringStatusEnum::UnknownComponent;
+            set_monitors_res.push_back(result);
+            continue;
+        }
+
+        auto& variable_map = this->device_model[request.component];
+        auto variable_it = variable_map.find(request.variable);
+
+        if (variable_it == variable_map.end()) {
+            result.status = SetMonitoringStatusEnum::UnknownVariable;
+            set_monitors_res.push_back(result);
+            continue;
+        }
+
+        // TODO (ioan): see how we should handle the 'Duplicate' data
+        try {
+            auto monitor_meta = this->storage->set_monitoring_data(request, type);
+
+            if (monitor_meta.has_value()) {
+                // If we had a successful insert, add it to the variable monitor map
+                variable_it->second.monitors.insert(
+                    std::pair{monitor_meta.value().monitor.id, std::move(monitor_meta.value())});
+                result.status = SetMonitoringStatusEnum::Accepted;
+            } else {
+                result.status = SetMonitoringStatusEnum::Rejected;
+            }
+        } catch (const ocpp::common::QueryExecutionException& e) {
+            EVLOG_error << "Set monitors failed:" << e.what();
+            throw e;
+        }
+
+        set_monitors_res.push_back(result);
+    }
+
+    return set_monitors_res;
+}
+std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
+                                                      const std::vector<ComponentVariable>& component_variables) {
+    std::vector<MonitoringData> get_monitors_res{};
+
+    // N02.FR.11 - if criteria and component_variables are empty, return all existing monitors
+    if (criteria.empty() && component_variables.empty()) {
+        for (const auto& [component, variable_map] : this->device_model) {
+            for (const auto& [variable, variable_metadata] : variable_map) {
+                std::vector<VariableMonitoring> monitors;
+
+                for (const auto& [id, monitor_meta] : variable_metadata.monitors) {
+                    monitors.push_back(monitor_meta.monitor);
+                }
+
+                get_monitors_res.push_back({component, variable, monitors, std::nullopt});
+            }
+        }
+
+        return get_monitors_res;
+    } else {
+        for (auto& component_variable : component_variables) {
+            // Case not handled by spec, skipping
+            if (this->device_model.find(component_variable.component) == this->device_model.end()) {
+                continue;
+            }
+
+            auto& variable_map = this->device_model[component_variable.component];
+
+            // N02.FR.16 - if variable is missing, report all existing variables inside that component
+            if (component_variable.variable.has_value() == false) {
+                for (const auto& [variable, variable_meta] : variable_map) {
+                    MonitoringData monitor_data;
+
+                    monitor_data.component = component_variable.component;
+                    monitor_data.variable = variable;
+
+                    for (const auto& [id, monitor_meta] : variable_meta.monitors) {
+                        if (filter_criteria_monitor(criteria, monitor_meta)) {
+                            monitor_data.variableMonitoring.push_back(monitor_meta.monitor);
+                        }
+                    }
+
+                    get_monitors_res.push_back(std::move(monitor_data));
+                }
+            } else {
+                auto variable_it = variable_map.find(component_variable.variable.value());
+
+                // Case not handled by spec, skipping
+                if (variable_it == variable_map.end()) {
+                    continue;
+                }
+
+                MonitoringData monitor_data;
+
+                monitor_data.component = component_variable.component;
+                monitor_data.variable = variable_it->first;
+
+                auto& variable_meta = variable_it->second;
+
+                for (const auto& [id, monitor_meta] : variable_meta.monitors) {
+                    if (filter_criteria_monitor(criteria, monitor_meta)) {
+                        monitor_data.variableMonitoring.push_back(monitor_meta.monitor);
+                    }
+                }
+
+                get_monitors_res.push_back(std::move(monitor_data));
+            }
+        }
+    }
+
+    return get_monitors_res;
+}
+std::vector<ClearMonitoringResult> DeviceModel::clear_monitors(const std::vector<int>& request_ids) {
+    if (request_ids.size() <= 0) {
+        return {};
+    }
+
+    std::vector<ClearMonitoringResult> clear_monitors_vec;
+
+    for (auto& id : request_ids) {
+        ClearMonitoringResult clear_monitor_res;
+        clear_monitor_res.id = id;
+
+        if (this->storage->clear_variable_monitor(id)) {
+            // Clear from memory too
+            for (auto& [component, variable_map] : this->device_model) {
+                for (auto& [variable, variable_metadata] : variable_map) {
+                    variable_metadata.monitors.erase(static_cast<int64_t>(id));
+                }
+            }
+
+            clear_monitor_res.status = ClearMonitoringStatusEnum::Accepted;
+        } else {
+            clear_monitor_res.status = ClearMonitoringStatusEnum::NotFound;
+        }
+
+        clear_monitors_vec.push_back(clear_monitor_res);
+    }
+
+    return clear_monitors_vec;
 }
 
 } // namespace v201

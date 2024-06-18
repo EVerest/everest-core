@@ -1183,6 +1183,12 @@ EventTriggerEnum string_to_event_trigger_enum(const std::string& s);
 /// stream \p os \returns an output stream with the EventTriggerEnum written to
 std::ostream& operator<<(std::ostream& os, const EventTriggerEnum& event_trigger_enum);
 
+enum class VariableMonitorType {
+    HardWiredMonitor,
+    PreconfiguredMonitor,
+    CustomMonitor,
+};
+
 // from: NotifyEventRequest
 enum class EventNotificationEnum {
     HardWiredNotification,
