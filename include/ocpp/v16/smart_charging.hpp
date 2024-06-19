@@ -4,6 +4,7 @@
 #ifndef OCPP_V16_SMART_CHARGING_HPP
 #define OCPP_V16_SMART_CHARGING_HPP
 
+#include <cstddef>
 #include <limits>
 
 #include <ocpp/v16/connector.hpp>
@@ -14,7 +15,6 @@
 namespace ocpp {
 namespace v16 {
 
-const int LOW_VOLTAGE = 230;
 const int DEFAULT_AND_MAX_NUMBER_PHASES = 3;
 const int HOURS_PER_DAY = 24;
 const int SECONDS_PER_HOUR = 3600;
@@ -51,29 +51,8 @@ private:
                         std::optional<int> connector_id_opt, const int connector_id, std::optional<int> stack_level_opt,
                         std::optional<ChargingProfilePurposeType> charging_profile_purpose_opt, bool check_id_only);
 
-    ///
-    /// \brief Iterates over the periods of the given \p profile and returns a struct that contains the period and the
-    /// absolute end time of the period that refers to the given absoulte \p time as a pair.
-    ///
-    PeriodDateTimePair find_period_at(const ocpp::DateTime& time, const ChargingProfile& profile,
-                                      const int connector_id);
-
     void clear_expired_profiles();
     int get_number_installed_profiles();
-
-    ///
-    /// \brief Gets the absolute start time of the given \p profile for the given \p connector_id for different profile
-    /// purposes
-    ///
-    std::optional<ocpp::DateTime> get_profile_start_time(const ChargingProfile& profile, const ocpp::DateTime& time,
-                                                         const int connector_id);
-
-    ///
-    /// \brief Iterates over the periods of the given \p valid_profiles and determines the earliest next absolute period
-    /// end time later than \p temp_time
-    ///
-    ocpp::DateTime get_next_temp_time(const ocpp::DateTime temp_time,
-                                      const std::vector<ChargingProfile>& valid_profiles, const int connector_id);
 
 public:
     SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,
@@ -127,7 +106,7 @@ public:
     ///
     /// \brief Calculates the enhanced composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
-    EnhancedChargingSchedule calculate_enhanced_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+    EnhancedChargingSchedule calculate_enhanced_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
                                                                    const ocpp::DateTime& start_time,
                                                                    const ocpp::DateTime& end_time,
                                                                    const int connector_id,
@@ -135,7 +114,7 @@ public:
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
-    ChargingSchedule calculate_composite_schedule(std::vector<ChargingProfile> valid_profiles,
+    ChargingSchedule calculate_composite_schedule(const std::vector<ChargingProfile>& valid_profiles,
                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                   const int connector_id,
                                                   std::optional<ChargingRateUnit> charging_rate_unit);
@@ -143,14 +122,6 @@ public:
 
 bool validate_schedule(const ChargingSchedule& schedule, const int charging_schedule_max_periods,
                        const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units);
-bool overlap(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, const ChargingProfile profile);
-int get_requested_limit(const int limit, const int nr_phases, const ChargingRateUnit& requested_unit);
-int get_power_limit(const int limit, const int nr_phases, const ChargingRateUnit& unit_of_limit);
-ocpp::DateTime get_period_end_time(const int period_index, const ocpp::DateTime& period_start_time,
-                                   const ChargingSchedule& schedule,
-                                   const std::vector<ChargingSchedulePeriod>& periods);
-
-std::map<ChargingProfilePurposeType, LimitStackLevelPair> get_initial_purpose_and_stack_limits();
 
 } // namespace v16
 } // namespace ocpp
