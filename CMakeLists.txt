@@ -18,6 +18,13 @@ option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." 
 option(OCPP_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP "Usage of deprecated websocket++ instead of libwebsockets" OFF)
 
+option(LIBOCPP_ENABLE_V16 "Enable OCPP 1.6 in the ocpp library" ON)
+option(LIBOCPP_ENABLE_V201 "Enable OCPP 2.0.1 in the ocpp library" ON)
+
+if((NOT LIBOCPP_ENABLE_V16) AND (NOT LIBOCPP_ENABLE_V201))
+    message(FATAL_ERROR "At least one of LIBOCPP_ENABLE_V16 and LIBOCPP_ENABLE_V201 needs to be ON")
+endif()
+
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(LIBOCPP_BUILD_TESTING ON)
 endif()
