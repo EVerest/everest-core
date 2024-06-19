@@ -1,0 +1,32 @@
+name: Build and test libcbv2g
+on: 
+  pull_request: {}
+jobs:
+  build_and_test:
+    name: Build and test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout libcbv2g
+        uses: actions/checkout@v3
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/.ci/build-kit/ scripts
+      - name: Pull docker container
+        run: |
+          docker pull --quiet ghcr.io/everest/build-kit-alpine:v1.2.0
+          docker image tag ghcr.io/everest/build-kit-alpine:v1.2.0 build-kit
+      - name: Build and test
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name test-container \
+          build-kit run-script build_and_test
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ctest-report
+          path: ${{ github.workspace }}/ctest-report
