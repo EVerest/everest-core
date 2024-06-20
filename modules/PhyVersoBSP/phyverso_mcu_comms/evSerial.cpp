@@ -239,6 +239,8 @@ void evSerial::timeout_detection_thread() {
             break;
         if (serial_timed_out())
             signal_connection_timeout();
+        // send keep alive
+        keep_alive();
     }
 }
 
