@@ -2485,7 +2485,7 @@ void ChargePointImpl::handleInstallCertificateRequest(ocpp::Call<InstallCertific
     this->send<InstallCertificateResponse>(call_result);
 
     if (response.status == InstallCertificateStatusEnumType::Rejected) {
-        this->securityEventNotification(ocpp::security_events::INVALIDCSMSCERTIFICATE,
+        this->securityEventNotification(ocpp::security_events::INVALIDCENTRALSYSTEMCERTIFICATE,
                                         ocpp::conversions::install_certificate_result_to_string(result), true);
     }
 }

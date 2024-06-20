@@ -663,6 +663,7 @@ inline const std::string TAMPERDETECTIONACTIVATED = "TamperDetectionActivated"; 
 inline const std::string INVALIDFIRMWARESIGNATURE = "InvalidFirmwareSignature";
 inline const std::string INVALIDFIRMWARESIGNINGCERTIFICATE = "InvalidFirmwareSigningCertificate";
 inline const std::string INVALIDCSMSCERTIFICATE = "InvalidCsmsCertificate";
+inline const std::string INVALIDCENTRALSYSTEMCERTIFICATE = "InvalidCentralSystemCertificate";
 inline const std::string INVALIDCHARGINGSTATIONCERTIFICATE = "InvalidChargingStationCertificate";
 inline const std::string INVALIDCHARGEPOINTCERTIFICATE = "InvalidChargePointCertificate"; // for OCPP1.6
 inline const std::string INVALIDTLSVERSION = "InvalidTLSVersion";
