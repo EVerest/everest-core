@@ -912,10 +912,14 @@ void ChargePoint::init_websocket() {
         EVLOG_AND_THROW(std::runtime_error("ChargePointId must not contain \':\'"));
     }
 
-    const auto configuration_slot =
-        ocpp::get_vector_from_csv(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority))
-            .at(this->network_configuration_priority);
+    const auto network_connection_priorities = ocpp::get_vector_from_csv(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority));
+
+    if (network_connection_priorities.empty()) {
+        EVLOG_AND_THROW(std::runtime_error("NetworkConfigurationPriority must not be empty"));
+    }
+
+    const auto configuration_slot = network_connection_priorities.at(this->network_configuration_priority);
     const auto connection_options = this->get_ws_connection_options(std::stoi(configuration_slot));
     const auto network_connection_profile = this->get_network_connection_profile(std::stoi(configuration_slot));
 
