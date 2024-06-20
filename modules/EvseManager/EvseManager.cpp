@@ -112,6 +112,9 @@ void EvseManager::init() {
                 [this](const auto& caps) { update_powersupply_capabilities(caps); });
         }
     }
+
+    r_bsp->subscribe_request_stop_transaction(
+        [this](types::evse_manager::StopTransactionRequest r) { charger->cancel_transaction(r); });
 }
 
 void EvseManager::ready() {
@@ -899,7 +902,8 @@ void EvseManager::ready_to_start_charging() {
     }
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
