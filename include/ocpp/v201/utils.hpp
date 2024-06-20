@@ -4,6 +4,7 @@
 #define V201_UTILS_HPP
 
 #include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v201/types.hpp>
 namespace ocpp {
 namespace v201 {
 namespace utils {

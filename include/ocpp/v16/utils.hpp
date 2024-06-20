@@ -8,10 +8,6 @@
 namespace ocpp {
 namespace v16 {
 namespace utils {
-bool is_transaction_message_type(const MessageType& message_type) {
-    return message_type == MessageType::StartTransaction or message_type == MessageType::StopTransaction or
-           message_type == MessageType::MeterValues or message_type == MessageType::SecurityEventNotification;
-}
 
 size_t get_message_size(const ocpp::Call<StopTransactionRequest>& call) {
     return json(call).at(CALL_PAYLOAD).dump().length();

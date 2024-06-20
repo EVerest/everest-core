@@ -34,7 +34,6 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
                                  const std::shared_ptr<EvseSecurity> evse_security,
                                  const std::optional<SecurityConfiguration> security_configuration) :
     ocpp::ChargingStationBase(evse_security, security_configuration),
-    initialized(false),
     bootreason(BootReasonEnum::PowerUp),
     connection_state(ChargePointConnectionState::Disconnected),
     registration_status(RegistrationStatus::Pending),
@@ -302,20 +301,18 @@ void ChargePointImpl::boot_notification(bool initiated_by_trigger_message) {
 }
 
 void ChargePointImpl::clock_aligned_meter_values_sample() {
-    if (this->initialized) {
-        EVLOG_debug << "Sending clock aligned meter values";
-        for (int32_t connector = 1; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
-            auto meter_value = this->get_latest_meter_value(
-                connector, this->configuration->getMeterValuesAlignedDataVector(), ReadingContext::Sample_Clock);
-            if (meter_value.has_value()) {
-                if (this->transaction_handler->transaction_active(connector)) {
-                    this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value.value());
-                }
-                this->send_meter_value(connector, meter_value.value());
-            } else {
-                EVLOG_warning << "Could not send clock aligned meter value for uninitialized measurement at connector#"
-                              << connector;
+    EVLOG_debug << "Sending clock aligned meter values";
+    for (int32_t connector = 1; connector < this->configuration->getNumberOfConnectors() + 1; connector++) {
+        auto meter_value = this->get_latest_meter_value(
+            connector, this->configuration->getMeterValuesAlignedDataVector(), ReadingContext::Sample_Clock);
+        if (meter_value.has_value()) {
+            if (this->transaction_handler->transaction_active(connector)) {
+                this->transaction_handler->get_transaction(connector)->add_meter_value(meter_value.value());
             }
+            this->send_meter_value(connector, meter_value.value());
+        } else {
+            EVLOG_warning << "Could not send clock aligned meter value for uninitialized measurement at connector#"
+                          << connector;
         }
     }
 }
@@ -884,8 +881,6 @@ bool ChargePointImpl::restart(const std::map<int, ChargePointStatus>& connector_
         this->database_handler->open_connection();
         // instantiating new message queue on restart
         this->message_queue = this->create_message_queue();
-        this->initialized = true;
-
         return this->start(connector_status_map, bootreason);
     } else {
         EVLOG_warning << "Attempting to restart Chargepoint while it has not been stopped before";
@@ -947,7 +942,6 @@ void ChargePointImpl::stop_all_transactions(Reason reason) {
 bool ChargePointImpl::stop() {
     if (!this->stopped) {
         EVLOG_info << "Stopping OCPP Chargepoint";
-        this->initialized = false;
         if (this->boot_notification_timer != nullptr) {
             this->boot_notification_timer->stop();
         }
@@ -1251,7 +1245,6 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
                 << "\nwith messageId: " << call_result.uniqueId;
 
     this->registration_status = call_result.msg.status;
-    this->initialized = true;
     this->boot_time = date::utc_clock::now();
     if (call_result.msg.interval > 0) {
         this->configuration->setHeartbeatInterval(call_result.msg.interval);
@@ -1266,6 +1259,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
     switch (call_result.msg.status) {
     case RegistrationStatus::Accepted: {
         this->connection_state = ChargePointConnectionState::Booted;
+        this->message_queue->set_registration_status_accepted();
 
         if (this->set_system_time_callback != nullptr) {
             this->set_system_time_callback(call_result.msg.currentTime.to_rfc3339());
@@ -2177,10 +2171,10 @@ void ChargePointImpl::handleTriggerMessageRequest(ocpp::Call<TriggerMessageReque
         this->boot_notification(true);
         break;
     case MessageTrigger::DiagnosticsStatusNotification:
-        this->diagnostic_status_notification(this->diagnostics_status);
+        this->diagnostic_status_notification(this->diagnostics_status, true);
         break;
     case MessageTrigger::FirmwareStatusNotification:
-        this->firmware_status_notification(this->firmware_status);
+        this->firmware_status_notification(this->firmware_status, true);
         break;
     case MessageTrigger::Heartbeat:
         this->heartbeat(true);
@@ -2714,51 +2708,46 @@ void ChargePointImpl::handleGetLocalListVersionRequest(ocpp::Call<GetLocalListVe
     this->send<GetLocalListVersionResponse>(call_result);
 }
 
-bool ChargePointImpl::allowed_to_send_message(json::array_t message, bool initiated_by_trigger_message) {
-    auto message_type = conversions::string_to_messagetype(message.at(CALL_ACTION));
-
-    if (initiated_by_trigger_message) {
-        return true;
-    }
-
-    if (!this->initialized) {
-        // BootNotification and transaction related messages can be queued before receiving a BootNotification.conf
-        if (message_type == MessageType::BootNotification or utils::is_transaction_message_type(message_type)) {
-            return true;
-        }
-        return false;
-    }
-
-    if (this->registration_status == RegistrationStatus::Rejected) {
-        std::chrono::time_point<date::utc_clock> retry_time =
-            this->boot_time + std::chrono::seconds(this->configuration->getHeartbeatInterval());
-        if (date::utc_clock::now() < retry_time) {
-            using date::operator<<;
-            std::ostringstream oss;
-            oss << "status is rejected and retry time not reached. Messages can be sent again at: " << retry_time;
-            EVLOG_debug << oss.str();
-            return false;
-        }
-    } else if (this->registration_status == RegistrationStatus::Pending) {
-        // BootNotification and StopTransaction messages can be queued before receiving a BootNotification.conf
-        if (message_type == MessageType::BootNotification || message_type == MessageType::StopTransaction) {
-            return true;
-        }
-        return false;
-    }
-    return true;
-}
-
 template <class T> bool ChargePointImpl::send(ocpp::Call<T> call, bool initiated_by_trigger_message) {
-    if (this->allowed_to_send_message(json(call), initiated_by_trigger_message)) {
+    const auto message_type = conversions::string_to_messagetype(json(call).at(CALL_ACTION));
+    const auto message_transmission_priority = get_message_transmission_priority(
+        is_boot_notification_message(message_type), initiated_by_trigger_message,
+        (this->registration_status == RegistrationStatus::Accepted), is_transaction_message(message_type),
+        this->configuration->getQueueAllMessages().value_or(false));
+    switch (message_transmission_priority) {
+    case MessageTransmissionPriority::SendImmediately:
         this->message_queue->push(call);
         return true;
+    case MessageTransmissionPriority::SendAfterRegistrationStatusAccepted:
+        this->message_queue->push(call, true);
+        return true;
+    case MessageTransmissionPriority::Discard:
+        return false;
     }
-    return false;
+    throw std::runtime_error("Missing handling for MessageTransmissionPriority");
 }
 
-template <class T> std::future<EnhancedMessage<v16::MessageType>> ChargePointImpl::send_async(ocpp::Call<T> call) {
-    return this->message_queue->push_async(call);
+template <class T>
+std::future<EnhancedMessage<v16::MessageType>> ChargePointImpl::send_async(ocpp::Call<T> call,
+                                                                           bool initiated_by_trigger_message) {
+    const auto message_type = conversions::string_to_messagetype(json(call).at(CALL_ACTION));
+    const auto message_transmission_priority = get_message_transmission_priority(
+        is_boot_notification_message(message_type), initiated_by_trigger_message,
+        (this->registration_status == RegistrationStatus::Accepted), is_transaction_message(message_type),
+        this->configuration->getQueueAllMessages().value_or(false));
+
+    switch (message_transmission_priority) {
+    case MessageTransmissionPriority::SendImmediately:
+        return this->message_queue->push_async(call);
+    case MessageTransmissionPriority::SendAfterRegistrationStatusAccepted:
+    case MessageTransmissionPriority::Discard:
+        auto promise = std::promise<EnhancedMessage<MessageType>>();
+        auto enhanced_message = EnhancedMessage<MessageType>();
+        enhanced_message.offline = true;
+        promise.set_value(enhanced_message);
+        return promise.get_future();
+    }
+    throw std::runtime_error("Missing handling for MessageTransmissionPriority");
 }
 
 template <class T> bool ChargePointImpl::send(ocpp::CallResult<T> call_result) {
@@ -3804,16 +3793,16 @@ void ChargePointImpl::on_firmware_update_status_notification(int32_t request_id,
     }
 }
 
-void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status) {
+void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status, bool initiated_by_trigger_message) {
     DiagnosticsStatusNotificationRequest req;
     req.status = status;
     this->diagnostics_status = status;
 
     ocpp::Call<DiagnosticsStatusNotificationRequest> call(req, this->message_queue->createMessageId());
-    this->send_async<DiagnosticsStatusNotificationRequest>(call);
+    this->send_async<DiagnosticsStatusNotificationRequest>(call, true);
 }
 
-void ChargePointImpl::firmware_status_notification(FirmwareStatus status) {
+void ChargePointImpl::firmware_status_notification(FirmwareStatus status, bool initiated_by_trigger_message) {
 
     EVLOG_debug << "Received FirmwareUpdateStatusNotification with status"
                 << conversions::firmware_status_to_string(status);
@@ -3832,7 +3821,7 @@ void ChargePointImpl::firmware_status_notification(FirmwareStatus status) {
     this->firmware_status = status;
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
-    this->send_async<FirmwareStatusNotificationRequest>(call);
+    this->send_async<FirmwareStatusNotificationRequest>(call, initiated_by_trigger_message);
 
     if (this->firmware_update_is_pending) {
         this->change_all_connectors_to_unavailable_for_firmware_update();

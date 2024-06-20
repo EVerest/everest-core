@@ -65,7 +65,8 @@ void ComponentStateManager::initialize_reported_state_cache() {
 
 ComponentStateManager::ComponentStateManager(
     const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DatabaseHandler> db_handler,
-    std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status)>
+    std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status,
+                       const bool initiated_by_trigger_message)>
         send_connector_status_notification_callback) :
     database(std::move(db_handler)),
     send_connector_status_notification_callback(std::move(send_connector_status_notification_callback)) {
@@ -308,12 +309,14 @@ void ComponentStateManager::trigger_all_effective_availability_changed_callbacks
 
 // TODO(Piet): Move to connector file
 void ComponentStateManager::send_status_notification_single_connector_internal(int32_t evse_id, int32_t connector_id,
-                                                                               bool only_if_changed) {
+                                                                               bool only_if_changed,
+                                                                               bool intiated_by_trigger_message) {
     ConnectorStatusEnum connector_status =
         this->individual_connector_status(evse_id, connector_id).to_connector_status();
     ConnectorStatusEnum& last_reported_status = this->last_connector_reported_status(evse_id, connector_id);
     if (!only_if_changed || last_reported_status != connector_status) {
-        if (this->send_connector_status_notification_callback(evse_id, connector_id, connector_status)) {
+        if (this->send_connector_status_notification_callback(evse_id, connector_id, connector_status,
+                                                              intiated_by_trigger_message)) {
             last_reported_status = connector_status;
         }
     }
@@ -333,7 +336,7 @@ void ComponentStateManager::send_status_notification_changed_connectors() {
     }
 }
 void ComponentStateManager::send_status_notification_single_connector(int32_t evse_id, int32_t connector_id) {
-    this->send_status_notification_single_connector_internal(evse_id, connector_id, false);
+    this->send_status_notification_single_connector_internal(evse_id, connector_id, false, true);
 }
 
 } // namespace ocpp::v201

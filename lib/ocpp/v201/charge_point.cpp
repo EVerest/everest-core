@@ -89,13 +89,14 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
 
     // Set up the component state manager
     this->component_state_manager = std::make_shared<ComponentStateManager>(
-        evse_connector_structure, database_handler, [this](auto evse_id, auto connector_id, auto status) {
+        evse_connector_structure, database_handler,
+        [this](auto evse_id, auto connector_id, auto status, bool initiated_by_trigger_message) {
             this->update_dm_availability_state(evse_id, connector_id, status);
             if (this->websocket == nullptr || !this->websocket->is_connected() ||
                 this->registration_status != RegistrationStatusEnum::Accepted) {
                 return false;
             } else {
-                this->status_notification_req(evse_id, connector_id, status);
+                this->status_notification_req(evse_id, connector_id, status, initiated_by_trigger_message);
                 return true;
             }
         });
@@ -116,9 +117,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         // used by evse to trigger StatusNotification.req
         auto status_notification_callback = [this, evse_id_](const int32_t connector_id,
                                                              const ConnectorStatusEnum& status) {
-            if (this->registration_status == RegistrationStatusEnum::Accepted) {
-                this->status_notification_req(evse_id_, connector_id, status);
-            }
+            this->status_notification_req(evse_id_, connector_id, status);
         };
         // used by evse when TransactionEvent.req to transmit meter values
         auto transaction_meter_value_callback = [this, evse_id_](const MeterValue& _meter_value,
@@ -1862,7 +1861,8 @@ void ChargePoint::security_event_notification_req(const CiString<50>& event_type
     }
 }
 
-void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use) {
+void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
+                                       const bool initiated_by_trigger_message) {
     if (this->awaited_certificate_signing_use_enum.has_value()) {
         EVLOG_warning
             << "Not sending new SignCertificate.req because still waiting for CertificateSigned.req from CSMS";
@@ -1919,10 +1919,10 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
     this->awaited_certificate_signing_use_enum = certificate_signing_use;
 
     ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
-    this->send<SignCertificateRequest>(call);
+    this->send<SignCertificateRequest>(call, initiated_by_trigger_message);
 }
 
-void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
+void ChargePoint::boot_notification_req(const BootReasonEnum& reason, const bool initiated_by_trigger_message) {
     EVLOG_debug << "Sending BootNotification";
     BootNotificationRequest req;
 
@@ -1939,7 +1939,7 @@ void ChargePoint::boot_notification_req(const BootReasonEnum& reason) {
     req.chargingStation = charging_station;
 
     ocpp::Call<BootNotificationRequest> call(req, this->message_queue->createMessageId());
-    this->send<BootNotificationRequest>(call);
+    this->send<BootNotificationRequest>(call, initiated_by_trigger_message);
 }
 
 void ChargePoint::notify_report_req(const int request_id, const std::vector<ReportData>& report_data) {
@@ -1988,7 +1988,7 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
 }
 
 void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t connector_id,
-                                          const ConnectorStatusEnum status) {
+                                          const ConnectorStatusEnum status, const bool initiated_by_trigger_message) {
     StatusNotificationRequest req;
     req.connectorId = connector_id;
     req.evseId = evse_id;
@@ -1996,15 +1996,15 @@ void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t c
     req.connectorStatus = status;
 
     ocpp::Call<StatusNotificationRequest> call(req, this->message_queue->createMessageId());
-    this->send<StatusNotificationRequest>(call);
+    this->send<StatusNotificationRequest>(call, initiated_by_trigger_message);
 }
 
-void ChargePoint::heartbeat_req() {
+void ChargePoint::heartbeat_req(const bool initiated_by_trigger_message) {
     HeartbeatRequest req;
 
     heartbeat_request_time = std::chrono::steady_clock::now();
     ocpp::Call<HeartbeatRequest> call(req, this->message_queue->createMessageId());
-    this->send<HeartbeatRequest>(call);
+    this->send<HeartbeatRequest>(call, initiated_by_trigger_message);
 }
 
 void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, const DateTime& timestamp,
@@ -2015,7 +2015,8 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
                                         const std::optional<ocpp::v201::IdToken>& id_token,
                                         const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
                                         const std::optional<int32_t>& number_of_phases_used, const bool offline,
-                                        const std::optional<int32_t>& reservation_id) {
+                                        const std::optional<int32_t>& reservation_id,
+                                        const bool initiated_by_trigger_message) {
     TransactionEventRequest req;
     req.eventType = event_type;
     req.timestamp = timestamp;
@@ -2059,20 +2060,21 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
         remote_start_id_per_evse.erase(it);
     }
 
-    this->send<TransactionEventRequest>(call);
+    this->send<TransactionEventRequest>(call, initiated_by_trigger_message);
 
     if (this->callbacks.transaction_event_callback.has_value()) {
         this->callbacks.transaction_event_callback.value()(req);
     }
 }
 
-void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values) {
+void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values,
+                                   const bool initiated_by_trigger_message) {
     MeterValuesRequest req;
     req.evseId = evse_id;
     req.meterValue = meter_values;
 
     ocpp::Call<MeterValuesRequest> call(req, this->message_queue->createMessageId());
-    this->send<MeterValuesRequest>(call);
+    this->send<MeterValuesRequest>(call, initiated_by_trigger_message);
 }
 
 void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
@@ -2225,6 +2227,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
     this->registration_status = msg.status;
 
     if (this->registration_status == RegistrationStatusEnum::Accepted) {
+        this->message_queue->set_registration_status_accepted();
         // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
         if (this->callbacks.time_sync_callback.has_value() &&
             this->device_model->get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
@@ -2801,7 +2804,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
                                                 ControllerComponentVariables::AlignedDataMeasurands);
 
             if (!meter_value.sampledValue.empty()) {
-                this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+                this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value), true);
             }
         };
         send_evse_message(send_meter_value);
@@ -2826,7 +2829,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
             this->transaction_event_req(TransactionEventEnum::Updated, DateTime(),
                                         enhanced_transaction->get_transaction(), TriggerReasonEnum::Trigger,
                                         enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt, std::nullopt,
-                                        opt_meter_value, std::nullopt, this->is_offline(), std::nullopt);
+                                        opt_meter_value, std::nullopt, this->is_offline(), std::nullopt, true);
         };
         send_evse_message(send_transaction);
     } break;
@@ -2839,7 +2842,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         break;
 
     case MessageTriggerEnum::Heartbeat:
-        this->heartbeat_req();
+        this->heartbeat_req(true);
         break;
 
     case MessageTriggerEnum::LogStatusNotification: {
@@ -2852,7 +2855,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         }
 
         ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
-        this->send<LogStatusNotificationRequest>(call);
+        this->send<LogStatusNotificationRequest>(call, true);
     } break;
 
     case MessageTriggerEnum::FirmwareStatusNotification: {
@@ -2871,15 +2874,15 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         }
 
         ocpp::Call<FirmwareStatusNotificationRequest> call(request, this->message_queue->createMessageId());
-        this->send<FirmwareStatusNotificationRequest>(call);
+        this->send<FirmwareStatusNotificationRequest>(call, true);
     } break;
 
     case MessageTriggerEnum::SignChargingStationCertificate: {
-        sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+        sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate, true);
     } break;
 
     case MessageTriggerEnum::SignV2GCertificate: {
-        sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate, true);
     } break;
 
     default:
@@ -3207,6 +3210,50 @@ void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {
 
     ocpp::CallResult<DataTransferResponse> call_result(response, call.uniqueId);
     this->send<DataTransferResponse>(call_result);
+}
+
+template <class T> bool ChargePoint::send(ocpp::Call<T> call, const bool initiated_by_trigger_message) {
+    const auto message_type = conversions::string_to_messagetype(json(call).at(CALL_ACTION));
+    const auto message_transmission_priority = get_message_transmission_priority(
+        is_boot_notification_message(message_type), initiated_by_trigger_message,
+        (this->registration_status == RegistrationStatusEnum::Accepted), is_transaction_message(message_type),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages).value_or(false));
+    switch (message_transmission_priority) {
+    case MessageTransmissionPriority::SendImmediately:
+        this->message_queue->push(call);
+        return true;
+    case MessageTransmissionPriority::SendAfterRegistrationStatusAccepted:
+        this->message_queue->push(call, true);
+        return true;
+    case MessageTransmissionPriority::Discard:
+        return false;
+    }
+    throw std::runtime_error("Missing handling for MessageTransmissionPriority");
+}
+
+template <class T> std::future<EnhancedMessage<v201::MessageType>> ChargePoint::send_async(ocpp::Call<T> call) {
+    const auto message_type = conversions::string_to_messagetype(json(call).at(CALL_ACTION));
+    const auto message_transmission_priority = get_message_transmission_priority(
+        is_boot_notification_message(message_type), false,
+        (this->registration_status == RegistrationStatusEnum::Accepted), is_transaction_message(message_type),
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages).value_or(false));
+    switch (message_transmission_priority) {
+    case MessageTransmissionPriority::SendImmediately:
+        return this->message_queue->push_async(call);
+    case MessageTransmissionPriority::SendAfterRegistrationStatusAccepted:
+    case MessageTransmissionPriority::Discard:
+        auto promise = std::promise<EnhancedMessage<MessageType>>();
+        auto enhanced_message = EnhancedMessage<MessageType>();
+        enhanced_message.offline = true;
+        promise.set_value(enhanced_message);
+        return promise.get_future();
+    }
+    throw std::runtime_error("Missing handling for MessageTransmissionPriority");
+}
+
+template <class T> bool ChargePoint::send(ocpp::CallResult<T> call_result) {
+    this->message_queue->push(call_result);
+    return true;
 }
 
 DataTransferResponse ChargePoint::data_transfer_req(const CiString<255>& vendorId,

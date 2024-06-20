@@ -85,7 +85,6 @@ namespace v16 {
 /// \brief Contains a ChargePoint implementation compatible with OCPP-J 1.6
 class ChargePointImpl : ocpp::ChargingStationBase {
 private:
-    bool initialized;
     BootReasonEnum bootreason;
     ChargePointConnectionState connection_state;
     bool boot_notification_callerror;
@@ -198,9 +197,9 @@ private:
     std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> create_message_queue();
     void message_callback(const std::string& message);
     void handle_message(const EnhancedMessage<v16::MessageType>& message);
-    bool allowed_to_send_message(json::array_t message_type, bool initiated_by_trigger_message);
     template <class T> bool send(Call<T> call, bool initiated_by_trigger_message = false);
-    template <class T> std::future<EnhancedMessage<v16::MessageType>> send_async(Call<T> call);
+    template <class T>
+    std::future<EnhancedMessage<v16::MessageType>> send_async(Call<T> call, bool initiated_by_trigger_message = false);
     template <class T> bool send(CallResult<T> call_result);
     bool send(CallError call_error);
     void heartbeat(bool initiated_by_trigger_message = false);
@@ -221,8 +220,8 @@ private:
                              const std::optional<CiString<255>>& vendor_id = std::nullopt,
                              const std::optional<CiString<50>>& vendor_error_code = std::nullopt,
                              bool initiated_by_trigger_message = false);
-    void diagnostic_status_notification(DiagnosticsStatus status);
-    void firmware_status_notification(FirmwareStatus status);
+    void diagnostic_status_notification(DiagnosticsStatus status, bool initiated_by_trigger_message = false);
+    void firmware_status_notification(FirmwareStatus status, bool initiated_by_trigger_message = false);
     void log_status_notification(UploadLogStatusEnumType status, int requestId,
                                  bool initiated_by_trigger_message = false);
     void signed_firmware_update_status_notification(FirmwareStatusEnumType status, int requestId,

@@ -7,22 +7,16 @@
 
 namespace ocpp {
 
-template <> ControlMessage<v201::MessageType>::ControlMessage(const json& message) {
-    this->message = message.get<json::array_t>();
-    this->messageType = v201::conversions::string_to_messagetype(message.at(CALL_ACTION));
-    this->message_attempts = 0;
-    this->initial_unique_id = this->message[MESSAGE_ID];
+bool is_transaction_message(const ocpp::v201::MessageType message_type) {
+    return (message_type == v201::MessageType::TransactionEvent) ||
+           (message_type == v201::MessageType::SecurityEventNotification);
 }
 
-template <> bool ControlMessage<v201::MessageType>::isTransactionMessage() const {
-    if (this->messageType == v201::MessageType::TransactionEvent ||
-        this->messageType == v201::MessageType::SecurityEventNotification) { // A04.FR.02
-        return true;
-    }
-    return false;
+bool is_boot_notification_message(const ocpp::v201::MessageType message_type) {
+    return message_type == ocpp::v201::MessageType::BootNotification;
 }
 
-template <> bool ControlMessage<v201::MessageType>::isTransactionUpdateMessage() const {
+template <> bool ControlMessage<v201::MessageType>::is_transaction_update_message() const {
     if (this->messageType == v201::MessageType::TransactionEvent) {
         return v201::TransactionEventRequest{this->message.at(CALL_PAYLOAD)}.eventType ==
                v201::TransactionEventEnum::Updated;
@@ -30,8 +24,13 @@ template <> bool ControlMessage<v201::MessageType>::isTransactionUpdateMessage()
     return false;
 }
 
-template <> bool ControlMessage<v201::MessageType>::isBootNotificationMessage() const {
-    return this->messageType == v201::MessageType::BootNotification;
+template <>
+ControlMessage<v201::MessageType>::ControlMessage(const json& message, const bool stall_until_accepted) :
+    message(message.get<json::array_t>()),
+    messageType(v201::conversions::string_to_messagetype(message.at(CALL_ACTION))),
+    message_attempts(0),
+    initial_unique_id(message[MESSAGE_ID]),
+    stall_until_accepted(stall_until_accepted) {
 }
 
 template <> v201::MessageType MessageQueue<v201::MessageType>::string_to_messagetype(const std::string& s) {

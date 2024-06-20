@@ -77,7 +77,8 @@ protected:
         }
 
         ComponentStateManager mgr(evse_connector_structure, database,
-                                  [this](int32_t evse_id, int32_t connector_id, ConnectorStatusEnum status) {
+                                  [this](int32_t evse_id, int32_t connector_id, ConnectorStatusEnum status,
+                                         bool initiated_by_trigger_message) {
                                       return this->callbacks.connector_status_update(
                                           evse_id, connector_id, conversions::connector_status_enum_to_string(status));
                                       return true;

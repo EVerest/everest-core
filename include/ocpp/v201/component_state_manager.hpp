@@ -176,8 +176,10 @@ private:
     /// \param evse_id The ID of the EVSE
     /// \param connector_id The ID of the connector
     /// \param new_status The connector status
+    /// \param initiated_by_trigger_message Indicates if the StatusNotification was initiated by a TriggerMessage.req
     /// \return true if the status notification was successfully sent, false otherwise (usually it fails when offline)
-    std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status)>
+    std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status,
+                       bool initiated_by_trigger_message)>
         send_connector_status_notification_callback;
 
     /// \brief Internal convenience function - returns the number of EVSEs
@@ -224,8 +226,9 @@ private:
     /// \brief Internal helper function, calls send_connector_status_notification_callback for a single connector
     /// \param only_if_changed If set to true, the callback will only be triggered if the connector state has changed
     ///  since it was last reported with a successful send_connector_status_notification_callback
-    void send_status_notification_single_connector_internal(int32_t evse_id, int32_t connector_id,
-                                                            bool only_if_changed);
+    /// \param intiated_by_trigger_message Indicates if the StatusNotification was initiated by a TriggerMessage.req
+    void send_status_notification_single_connector_internal(int32_t evse_id, int32_t connector_id, bool only_if_changed,
+                                                            bool intiated_by_trigger_message = false);
 
     /// \brief Initializes *_individual_status(es) from the values stored in the DB.
     /// Inserts Operative if values are missing.
@@ -242,12 +245,16 @@ public:
     /// Additionally, the ComponentStateManager sends StatusNotifications to the CSMS when connector statuses change.
     /// Note: It is expected that ComponentStateManagerInterface::trigger_all_effective_availability_changed_callbacks
     /// is called on boot, and ComponentStateManagerInterface::send_status_notification_all_connectors is called when
-    /// first connected to the CSMS. \param evse_connector_structure Maps each EVSE ID to the number of connectors the
-    /// EVSE has \param db_handler A shared reference to the persistent database \param
-    /// send_connector_status_notification_callback The callback through which to send StatusNotifications to the CSMS
+    /// first connected to the CSMS.
+    /// \param evse_connector_structure Maps each EVSE ID to the number of connectors the EVSE has
+    /// \param db_handler A shared reference to the persistent database
+    /// \param send_connector_status_notification_callback The callback through which to send StatusNotifications to the
+    /// CSMS \param initiated_by_trigger_message Indicates if the StatusNotification was initiated by a
+    /// TriggerMessage.req
     explicit ComponentStateManager(
         const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DatabaseHandler> db_handler,
-        std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status)>
+        std::function<bool(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum new_status,
+                           const bool initiated_by_trigger_message)>
             send_connector_status_notification_callback);
 
     void set_cs_effective_availability_changed_callback(

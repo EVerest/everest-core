@@ -7,28 +7,27 @@
 
 namespace ocpp {
 
-template <> ControlMessage<v16::MessageType>::ControlMessage(const json& message) {
-    this->message = message.get<json::array_t>();
-    this->messageType = v16::conversions::string_to_messagetype(message.at(CALL_ACTION));
-    this->message_attempts = 0;
-    this->initial_unique_id = this->message[MESSAGE_ID];
+template <>
+ControlMessage<v16::MessageType>::ControlMessage(const json& message, const bool stall_until_accepted) :
+    message(message.get<json::array_t>()),
+    messageType(v16::conversions::string_to_messagetype(message.at(CALL_ACTION))),
+    message_attempts(0),
+    initial_unique_id(message[MESSAGE_ID]),
+    stall_until_accepted(stall_until_accepted) {
 }
 
-template <> bool ControlMessage<v16::MessageType>::isTransactionMessage() const {
-    if (this->messageType == v16::MessageType::StartTransaction ||
-        this->messageType == v16::MessageType::StopTransaction || this->messageType == v16::MessageType::MeterValues ||
-        this->messageType == v16::MessageType::SecurityEventNotification) {
-        return true;
-    }
-    return false;
+bool is_transaction_message(const ocpp::v16::MessageType message_type) {
+    return (message_type == v16::MessageType::StartTransaction) ||
+           (message_type == v16::MessageType::StopTransaction) || (message_type == v16::MessageType::MeterValues) ||
+           (message_type == v16::MessageType::SecurityEventNotification);
 }
 
-template <> bool ControlMessage<v16::MessageType>::isTransactionUpdateMessage() const {
+bool is_boot_notification_message(const ocpp::v16::MessageType message_type) {
+    return message_type == ocpp::v16::MessageType::BootNotification;
+}
+
+template <> bool ControlMessage<v16::MessageType>::is_transaction_update_message() const {
     return (this->messageType == v16::MessageType::MeterValues);
-}
-
-template <> bool ControlMessage<v16::MessageType>::isBootNotificationMessage() const {
-    return this->messageType == v16::MessageType::BootNotification;
 }
 
 template <> v16::MessageType MessageQueue<v16::MessageType>::string_to_messagetype(const std::string& s) {
