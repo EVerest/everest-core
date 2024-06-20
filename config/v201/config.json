@@ -151,7 +151,7 @@
             "SampledDataTxUpdatedMeasurands": {
                 "variable_name": "TxUpdatedMeasurands",
                 "attributes": {
-                    "Actual": "Energy.Active.Import.Register,Current.Import,Voltage,Power.Active.Import,Power.Reactive.Import,Frequency"
+                    "Actual": "Energy.Active.Import.Register,Current.Import,Voltage,Power.Active.Import,Power.Reactive.Import,Frequency,SoC"
                 }
             }
         }

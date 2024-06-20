@@ -261,7 +261,7 @@
             "$comment": "Comma separated list of supported measurands of the powermeter",
             "type": "string",
             "readOnly": true,
-            "default": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered"
+            "default": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered,SoC"
         },
         "MaxMessageSize": {
             "$comment": "Maximum size in bytes for messages sent to the CSMS via websocket. If a message exceeds this size, data of the message may be dropped",

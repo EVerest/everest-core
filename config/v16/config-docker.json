@@ -20,7 +20,7 @@
         "LocalAuthorizeOffline": false,
         "LocalPreAuthorize": false,
         "MeterValuesAlignedData": "Energy.Active.Import.Register",
-        "MeterValuesSampledData": "Energy.Active.Import.Register",
+        "MeterValuesSampledData": "Energy.Active.Import.Register,SoC",
         "MeterValueSampleInterval": 60,
         "NumberOfConnectors": 1,
         "ResetRetries": 1,
