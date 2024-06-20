@@ -185,7 +185,8 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
 }
 
 std::vector<types::ocpp::SetVariableResult>
-ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests) {
+ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests,
+                               std::string& source) { // TODO do something with source?
 
     std::vector<types::ocpp::SetVariableResult> results;
 

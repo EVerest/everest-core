@@ -35,7 +35,7 @@ void OCPPExtensionExample::ready() {
     set_variable_requests.push_back({{{""}, {"ExampleConfigurationKey"}}, "ExampleValue"});
 
     EVLOG_info << "Setting custom configuration key...";
-    const auto set_variable_results = this->r_ocpp->call_set_variables(set_variable_requests);
+    const auto set_variable_results = this->r_ocpp->call_set_variables(set_variable_requests, "example");
 
     for (const auto& set_variable_result : set_variable_results) {
         if (set_variable_result.status == types::ocpp::SetVariableStatusEnumType::Accepted) {
