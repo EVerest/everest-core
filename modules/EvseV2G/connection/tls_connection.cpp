@@ -12,7 +12,6 @@
 #include <cerrno>
 #include <cstring>
 #include <ctime>
-#include <iostream>
 #include <memory>
 #include <sys/types.h>
 #include <thread>
@@ -41,7 +40,7 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
     assert(con != nullptr);
     assert(ctx != nullptr);
 
-    openssl::PKey_ptr contract_public_key{nullptr, nullptr};
+    openssl::pkey_ptr contract_public_key{nullptr, nullptr};
     auto connection = std::make_unique<v2g_connection>();
     connection->ctx = ctx;
     connection->is_tls_connection = true;
@@ -132,9 +131,10 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
             // workaround (see above libevse-security comment)
             const auto key_password = info.password.value_or("");
 
-            config.certificate_chain_file = cert_path.c_str();
-            config.private_key_file = key_path.c_str();
-            config.private_key_password = key_password.c_str();
+            config.chains.emplace_back();
+            config.chains[0].certificate_chain_file = cert_path.c_str();
+            config.chains[0].private_key_file = key_path.c_str();
+            config.chains[0].private_key_password = key_password.c_str();
 
             if (info.ocsp) {
                 for (const auto& ocsp : info.ocsp.value()) {
@@ -142,7 +142,7 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
                     if (ocsp.ocsp_path) {
                         file = ocsp.ocsp_path.value().c_str();
                     }
-                    config.ocsp_response_files.push_back(file);
+                    config.chains[0].ocsp_response_files.push_back(file);
                 }
             }
 

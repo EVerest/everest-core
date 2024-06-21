@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 
+#include "tls_connection_test.hpp"
+#include <openssl_util.hpp>
 #include <tls.hpp>
 
 #include <chrono>
@@ -11,10 +13,11 @@
 using namespace std::chrono_literals;
 
 namespace {
-const char* short_opts = "h123";
+const char* short_opts = "h123r:";
 bool use_tls1_3{false};
 bool use_status_request{false};
 bool use_status_request_v2{false};
+const char* trust_anchor{nullptr};
 
 void parse_options(int argc, char** argv) {
     int c;
@@ -31,12 +34,16 @@ void parse_options(int argc, char** argv) {
         case '3':
             use_tls1_3 = true;
             break;
+        case 'r':
+            trust_anchor = optarg;
+            break;
         case 'h':
         case '?':
-            std::cout << "Usage: " << argv[0] << " [-1|-2|-3]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " [-1|-2|-3] [-r server_root_cert.pem]" << std::endl;
             std::cout << "       -1 request status_request" << std::endl;
             std::cout << "       -2 request status_request_v2" << std::endl;
             std::cout << "       -3 use TLS 1.3 (TLS 1.2 otherwise)" << std::endl;
+            std::cout << "       -r root certificate / trust anchor" << std::endl;
             exit(1);
             break;
         default:
@@ -49,7 +56,8 @@ void parse_options(int argc, char** argv) {
 int main(int argc, char** argv) {
     parse_options(argc, argv);
 
-    tls::Client client;
+    // used test client for extra output
+    ClientTest client;
     tls::Client::config_t config;
 
     if (use_tls1_3) {
@@ -67,6 +75,19 @@ int main(int argc, char** argv) {
     config.verify_locations_file = "server_root_cert.pem";
     config.io_timeout_ms = 500;
     config.verify_server = false;
+
+    if (trust_anchor != nullptr) {
+        openssl::sha_1_digest_t digest;
+        auto certs = openssl::load_certificates(trust_anchor);
+        for (const auto& ta : certs) {
+            if (openssl::certificate_sha_1(digest, ta.get())) {
+                config.trusted_ca_keys_data.cert_sha1_hash.push_back(digest);
+            }
+        }
+        config.verify_locations_file = trust_anchor;
+        config.trusted_ca_keys = true;
+        config.trusted_ca_keys_data.pre_agreed = true;
+    }
 
     if (use_status_request) {
         config.status_request = true;
@@ -86,10 +107,21 @@ int main(int argc, char** argv) {
 
     client.init(config);
 
-    // localhost works in some cases but not in the CI pipeline
-    auto connection = client.connect("ip6-localhost", "8444", true);
+    // localhost works in some cases but not in the CI pipeline ip6-localhost is an option
+    auto connection = client.connect("localhost", "8444", false, 1000);
     if (connection) {
         if (connection->connect()) {
+            const auto* cert = connection->peer_certificate();
+            if (cert != nullptr) {
+                const auto subject = openssl::certificate_subject(cert);
+                if (!subject.empty()) {
+                    std::cout << "subject:";
+                    for (const auto& itt : subject) {
+                        std::cout << " " << itt.first << ":" << itt.second;
+                    }
+                    std::cout << std::endl;
+                }
+            }
             std::array<std::byte, 1024> buffer{};
             std::size_t readbytes = 0;
             std::cout << "about to read" << std::endl;

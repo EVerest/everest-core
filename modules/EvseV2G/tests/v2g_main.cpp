@@ -83,7 +83,7 @@ struct EvseSecurity : public module::stub::evse_securityIntfStub {
         return "client_root_cert.pem";
     }
 
-    virtual Result get_leaf_certificate_info(const Requirement& req, const Parameters& args) {
+    virtual Result get_leaf_certificate_info(const Requirement& req, const Parameters& args) override {
         // using types::evse_security::CertificateHashDataType;
         using types::evse_security::CertificateInfo;
         using types::evse_security::CertificateOCSP;

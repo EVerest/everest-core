@@ -5,6 +5,8 @@ find_package(OpenSSL 3)
 
 target_sources(tls
     PRIVATE
+        extensions/status_request.cpp
+        extensions/trusted_ca_keys.cpp
         openssl_conv.cpp
         openssl_util.cpp
         tls.cpp

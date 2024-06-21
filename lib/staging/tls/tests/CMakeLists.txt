@@ -17,6 +17,10 @@ target_sources(${TLS_GTEST_NAME} PRIVATE
     crypto_test.cpp
     openssl_util_test.cpp
     tls_test.cpp
+    tls_connection_test.cpp
+    ../extensions/helpers.cpp
+    ../extensions/status_request.cpp
+    ../extensions/trusted_ca_keys.cpp
     ../openssl_conv.cpp
     ../openssl_util.cpp
     ../tls.cpp
@@ -42,6 +46,9 @@ target_compile_definitions(${TLS_MAIN_NAME} PRIVATE
 
 target_sources(${TLS_MAIN_NAME} PRIVATE
     tls_main.cpp
+    ../extensions/helpers.cpp
+    ../extensions/status_request.cpp
+    ../extensions/trusted_ca_keys.cpp
     ../openssl_util.cpp
     ../tls.cpp
 )
@@ -64,6 +71,9 @@ target_compile_definitions(${TLS_CLIENT_NAME} PRIVATE
 
 target_sources(${TLS_CLIENT_NAME} PRIVATE
     tls_client_main.cpp
+    ../extensions/helpers.cpp
+    ../extensions/status_request.cpp
+    ../extensions/trusted_ca_keys.cpp
     ../openssl_util.cpp
     ../tls.cpp
 )
@@ -86,6 +96,9 @@ target_compile_definitions(${TLS_PATCH_NAME} PRIVATE
 
 target_sources(${TLS_PATCH_NAME} PRIVATE
     patched_test.cpp
+    ../extensions/helpers.cpp
+    ../extensions/status_request.cpp
+    ../extensions/trusted_ca_keys.cpp
     ../openssl_util.cpp
     ../tls.cpp
 )
@@ -98,6 +111,7 @@ target_link_libraries(${TLS_PATCH_NAME} PRIVATE
 
 install(
     FILES
+    pki/alt_openssl-pki.conf
     pki/iso_pkey.asn1
     pki/openssl-pki.conf
     pki/ocsp_response.der

@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 
 #include "tls.hpp"
+#include "extensions/status_request.hpp"
+#include "extensions/trusted_ca_keys.hpp"
 #include "openssl_util.hpp"
 
 #include <array>
 #include <cassert>
+#include <csignal>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fcntl.h>
-#include <iomanip>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <openssl/types.h>
 #include <poll.h>
-#include <sstream>
 #include <string>
 #include <sys/socket.h>
 
@@ -28,9 +28,11 @@
 #include <openssl/ocsp.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
+#include <openssl/types.h>
+#include <utility>
 
-#ifdef TLSEXT_STATUSTYPE_ocsp_multi
-#define OPENSSL_PATCHED
+#ifdef UNIT_TEST
+#include "extensions/helpers.hpp"
 #endif
 
 namespace std {
@@ -54,40 +56,14 @@ using ::openssl::log_warning;
 namespace {
 
 /**
- * \brief convert a big endian 3 byte (24 bit) unsigned value to uint32
- * \param[in] ptr the pointer to the most significant byte
- * \return the interpreted value
+ * \brief signal handler that does nothing
+ * \param[in] sig is the signal that was received (not used)
+ * \note exists so that poll() can be interrupted
  */
-constexpr std::uint32_t uint24(const std::uint8_t* ptr) {
-    return (static_cast<std::uint32_t>(ptr[0]) << 16U) | (static_cast<std::uint32_t>(ptr[1]) << 8U) |
-           static_cast<std::uint32_t>(ptr[2]);
+void sig_int_handler(int sig) {
 }
 
-/**
- * \brief convert a uint32 to big endian 3 byte (24 bit) value
- * \param[in] ptr the pointer to the most significant byte
- * \param[in] value the 24 bit value
- */
-constexpr void uint24(std::uint8_t* ptr, std::uint32_t value) {
-    ptr[0] = (value >> 16U) & 0xffU;
-    ptr[1] = (value >> 8U) & 0xffU;
-    ptr[2] = value & 0xffU;
-}
-
-// see https://datatracker.ietf.org/doc/html/rfc6961
-constexpr int TLSEXT_TYPE_status_request_v2 = 17;
-
-std::string to_string(const openssl::sha_256_digest_t& digest) {
-    std::stringstream string_stream;
-    string_stream << std::hex;
-    for (const auto& c : digest) {
-        string_stream << std::setw(2) << std::setfill('0') << static_cast<int>(c);
-    }
-    return string_stream.str();
-}
-
-constexpr std::uint32_t c_shutdown_timeout_ms = 5000; // 5 seconds
-
+/// OpenSSL results mapped to an enum
 enum class ssl_error_t : std::uint8_t {
     error,
     error_ssl,
@@ -105,6 +81,11 @@ enum class ssl_error_t : std::uint8_t {
     timeout, // not an OpenSSL result
 };
 
+/**
+ * \brief convert OpenSSL result into an enum
+ * \param[in] err is the OpenSSL result
+ * \return enum equivalent of err
+ */
 constexpr ssl_error_t convert(const int err) {
     ssl_error_t res{ssl_error_t::error};
     switch (err) {
@@ -151,6 +132,7 @@ constexpr ssl_error_t convert(const int err) {
     return res;
 }
 
+/// subset of OpenSSL results to simplify error recovery
 enum class ssl_result_t : std::uint8_t {
     error,
     error_syscall,
@@ -159,6 +141,11 @@ enum class ssl_result_t : std::uint8_t {
     timeout,
 };
 
+/**
+ * \brief map OpenSSL result enum to a simplified subset
+ * \param[in] err is the OpenSSL result enum value
+ * \return the simplified version of err
+ */
 constexpr ssl_result_t convert(ssl_error_t err) {
     switch (err) {
     case ssl_error_t::none:
@@ -184,6 +171,11 @@ constexpr ssl_result_t convert(ssl_error_t err) {
     }
 }
 
+/**
+ * \brief convert the simplified result into the result used in the API
+ * \param[in] err is the simplified result
+ * \return the mapped API result value
+ */
 constexpr tls::Connection::result_t convert(ssl_result_t err) {
     switch (err) {
     case ssl_result_t::success:
@@ -198,39 +190,133 @@ constexpr tls::Connection::result_t convert(ssl_result_t err) {
     }
 }
 
+/**
+ * \brief wait for an event on a socket
+ * \param[in] soc is the file descriptor/socket
+ * \param[in] forWrite wait for a write event when true, read event otherwise
+ * \param[in] timeout_ms -1 is wait forever, 0 checks for events and returns
+ *            immediately, >0 maximum time to wait in milliseconds
+ * \return >0 when there are events on the socket
+ *         0 for timeout
+ *         -1 for error (check errno)
+ *         -2 for error where errno is EINTR (interrupted call)
+ */
 int wait_for(int soc, bool forWrite, std::int32_t timeout_ms) {
-    std::int16_t event = POLLIN;
-    if (forWrite) {
-        event = POLLOUT;
-    }
+    const std::int16_t event = (forWrite) ? POLLOUT : POLLIN;
     std::array<pollfd, 1> fds = {{{soc, event, 0}}};
-    int poll_res{0};
-
-    for (;;) {
-        poll_res = poll(fds.data(), fds.size(), timeout_ms);
-        if (poll_res == -1) {
-            if (errno != EINTR) {
-                log_error(std::string("wait_for poll: ") + std::to_string(errno));
-                break;
-            }
+    auto poll_res = poll(fds.data(), fds.size(), timeout_ms);
+    if (poll_res == -1) {
+        if (errno != EINTR) {
+            log_error(std::string("wait_for poll: ") + std::to_string(errno));
+        } else {
+            poll_res = -2;
         }
-        // timeout or event(s)
-        break;
     }
-
     return poll_res;
 }
 
+/**
+ * \brief wait for an event on a socket retrying when interrupted
+ * \param[in] soc is the file descriptor/socket
+ * \param[in] forWrite wait for a write event when true, read event otherwise
+ * \param[in] timeout_ms -1 is wait forever, 0 checks for events and returns
+ *            immediately, >0 maximum time to wait in milliseconds
+ * \return >0 when there are events on the socket
+ *         0 for timeout
+ *         -1 for error (check errno)
+ */
+int wait_for_loop(int soc, bool forWrite, std::int32_t timeout_ms) {
+    int res{-2};
+    while (res == -2) {
+        res = wait_for(soc, forWrite, timeout_ms);
+    }
+    return res;
+}
+
+/**
+ * \brief read user data from a SSL connection
+ * \param[in] ctx is SSL connection data
+ * \param[in] buf is where to place received data
+ * \param[in] num is the size of buff (the maximum number of bytes to receive)
+ * \param[out] readbytes number of bytes received
+ * \param[in] timeout_ms how long to wait for bytes in milliseconds
+ * \returns the result of the operation
+ */
 [[nodiscard]] ssl_result_t ssl_read(SSL* ctx, std::byte* buf, std::size_t num, std::size_t& readbytes,
                                     std::int32_t timeout_ms);
+/**
+ * \brief write user data to a SSL connection
+ * \param[in] ctx is SSL connection data
+ * \param[in] buf is the data to send
+ * \param[in] num is the size of buff
+ * \param[out] writebytes number of bytes sent
+ * \param[in] timeout_ms how long to wait in milliseconds
+ * \returns the result of the operation
+ */
 [[nodiscard]] ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, std::size_t num, std::size_t& writebytes,
                                      std::int32_t timeout_ms);
+/**
+ * \brief accept an incoming SSL connection, runs the TLS handshake (sever)
+ * \param[in] ctx is SSL connection data
+ * \param[in] timeout_ms how long to wait in milliseconds
+ * \returns the result of the operation
+ */
 [[nodiscard]] ssl_result_t ssl_accept(SSL* ctx, std::int32_t timeout_ms);
+/**
+ * \brief start a SSL connection, runs the TLS handshake (client)
+ * \param[in] ctx is SSL connection data
+ * \param[in] timeout_ms how long to wait in milliseconds
+ * \returns the result of the operation
+ */
 [[nodiscard]] ssl_result_t ssl_connect(SSL* ctx, std::int32_t timeout_ms);
+/**
+ * \brief close a SSL connection
+ * \param[in] ctx is SSL connection data
+ * \param[in] timeout_ms how long to wait in milliseconds
+ * \returns the result of the operation
+ */
 void ssl_shutdown(SSL* ctx, std::int32_t timeout_ms);
 
-bool process_result(SSL* ctx, const std::string& operation, const int res, ssl_error_t& result,
-                    std::int32_t timeout_ms) {
+/// operation being performed
+enum class operation_t : std::uint8_t {
+    ssl_read,
+    ssl_write,
+    ssl_accept,
+    ssl_connect,
+    ssl_shutdown,
+};
+
+/**
+ * \brief text representation of the operation being performed
+ * \param[in] the operation
+ * \return a string representing the operation
+ */
+const char* operation_str(operation_t operation) {
+    switch (operation) {
+    case operation_t::ssl_read:
+        return "SSL_read: ";
+    case operation_t::ssl_write:
+        return "SSL_write: ";
+    case operation_t::ssl_accept:
+        return "SSL_accept: ";
+    case operation_t::ssl_connect:
+        return "SSL_connect: ";
+    case operation_t::ssl_shutdown:
+        return "SSL_shutdown: ";
+    default:
+        return "<SSL unknown>: ";
+    }
+}
+
+/**
+ * \brief manage the result from a SSL operation
+ * \param[in] ctx is SSL connection data
+ * \param[in] res is the result of the SSL operation
+ * \param[in] result is the simplified result mapped from res
+ * \param[in] timeout_ms how long to wait in milliseconds
+ * \return true when the operation should be retried
+ */
+bool process_result(SSL* ctx, operation_t operation, const int res, ssl_error_t& result, std::int32_t timeout_ms) {
     bool bLoop = false;
 
     if (res <= 0) {
@@ -243,29 +329,35 @@ bool process_result(SSL* ctx, const std::string& operation, const int res, ssl_e
         case ssl_error_t::want_accept:
         case ssl_error_t::want_connect:
         case ssl_error_t::want_read:
-        case ssl_error_t::want_write:
-            if (wait_for(SSL_get_fd(ctx), result == ssl_error_t::want_write, timeout_ms) > 0) {
-                bLoop = true;
-            }
-            result = ssl_error_t::timeout;
+        case ssl_error_t::want_write: {
+            // wait for a read or write event on the socket
+            const auto res = wait_for(SSL_get_fd(ctx), result == ssl_error_t::want_write, timeout_ms);
+            bLoop = res > 0 || res == -2;  // event received or operation interrupted
+            result = ssl_error_t::timeout; // error or timeout
             break;
+        }
         case ssl_error_t::error_syscall:
+            // no further operation permitted on the connection
             if (errno != 0) {
-                log_error(operation + "SSL_ERROR_SYSCALL " + std::to_string(errno));
+                log_error(operation_str(operation) + std::string("SSL_ERROR_SYSCALL ") + std::to_string(errno));
+            }
+            break;
+        case ssl_error_t::error_ssl:
+            if (operation != operation_t::ssl_shutdown) {
+                log_error(operation_str(operation) + std::to_string(res) + " " + std::to_string(sslerr_raw));
             }
             break;
         case ssl_error_t::error:
-        case ssl_error_t::error_ssl:
         case ssl_error_t::want_async:
         case ssl_error_t::want_async_job:
         case ssl_error_t::want_hello_cb:
         case ssl_error_t::want_x509_lookup:
         default:
-            log_error(operation + std::to_string(res) + " " + std::to_string(sslerr_raw));
+            log_error(operation_str(operation) + std::to_string(res) + " " + std::to_string(sslerr_raw));
             break;
         }
     } else {
-        result = ssl_error_t::none;
+        result = ssl_error_t::none; // no error i.e. success
     }
 
     return bLoop;
@@ -277,7 +369,7 @@ ssl_result_t ssl_read(SSL* ctx, std::byte* buf, const std::size_t num, std::size
     bool bLoop = ctx != nullptr;
     while (bLoop) {
         const auto res = SSL_read_ex(ctx, buf, num, &readbytes);
-        bLoop = process_result(ctx, "SSL_read: ", res, result, timeout_ms);
+        bLoop = process_result(ctx, operation_t::ssl_read, res, result, timeout_ms);
     }
     return convert(result);
 };
@@ -288,7 +380,7 @@ ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, const std::size_t num, st
     bool bLoop = ctx != nullptr;
     while (bLoop) {
         const auto res = SSL_write_ex(ctx, buf, num, &writebytes);
-        bLoop = process_result(ctx, "SSL_write: ", res, result, timeout_ms);
+        bLoop = process_result(ctx, operation_t::ssl_write, res, result, timeout_ms);
     }
     return convert(result);
 }
@@ -298,9 +390,9 @@ ssl_result_t ssl_accept(SSL* ctx, std::int32_t timeout_ms) {
     bool bLoop = ctx != nullptr;
     while (bLoop) {
         const auto res = SSL_accept(ctx);
-        // 0 is handshake not successful
+        // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
         // < 0 is other error
-        bLoop = process_result(ctx, "SSL_accept: ", res, result, timeout_ms);
+        bLoop = process_result(ctx, operation_t::ssl_accept, res, result, timeout_ms);
     }
     return convert(result);
 }
@@ -311,9 +403,9 @@ ssl_result_t ssl_connect(SSL* ctx, std::int32_t timeout_ms) {
 
     while (bLoop) {
         const auto res = SSL_connect(ctx);
-        // 0 is handshake not successful
+        // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
         // < 0 is other error
-        bLoop = process_result(ctx, "SSL_connect: ", res, result, timeout_ms);
+        bLoop = process_result(ctx, operation_t::ssl_connect, res, result, timeout_ms);
     }
     return convert(result);
 }
@@ -323,101 +415,100 @@ void ssl_shutdown(SSL* ctx, std::int32_t timeout_ms) {
     bool bLoop = ctx != nullptr;
     while (bLoop) {
         const auto res = SSL_shutdown(ctx);
-        bLoop = process_result(ctx, "SSL_shutdown: ", res, result, timeout_ms);
+        bLoop = process_result(ctx, operation_t::ssl_shutdown, res, result, timeout_ms);
     }
 }
 
+/**
+ * \brief configure SSL context with certificates and keys
+ * \param[in] ctx is SSL context data
+ * \param[in] ciphersuites are the TLS 1.3 cipher suites,
+ *            nullptr means use default, "" disables TSL 1.3
+ * \param[in] cipher_list are the TLS 1.2 ciphers, nullptr means use default
+ * \param[in] cert_config are one of more sets of key and certificates
+ * \param[in] required when true, fail when cert_config is missing
+ * \return true when successful
+ * \note required will be true for a TLS server and can be false for a TLS client
+ */
 bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* cipher_list,
-                       const char* certificate_chain_file, const char* private_key_file,
-                       const char* private_key_password, bool required) {
-    bool bRes{true};
+                       const tls::Server::certificate_config_t& cert_config, bool required) {
+    bool result{true};
+
+    // TODO(james-ctc) TPM2 support
 
     if (ctx == nullptr) {
         log_error("server_init::SSL_CTX_new");
-        bRes = false;
+        result = false;
     } else {
         if (SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION) == 0) {
             log_error("SSL_CTX_set_min_proto_version");
-            bRes = false;
+            result = false;
         }
         if ((ciphersuites != nullptr) && (ciphersuites[0] == '\0')) {
             // no cipher suites configured - don't use TLS 1.3
             // nullptr means use the defaults
             if (SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION) == 0) {
                 log_error("SSL_CTX_set_max_proto_version");
-                bRes = false;
+                result = false;
             }
         }
         if (cipher_list != nullptr) {
             if (SSL_CTX_set_cipher_list(ctx, cipher_list) == 0) {
                 log_error("SSL_CTX_set_cipher_list");
-                bRes = false;
+                result = false;
             }
         }
         if (ciphersuites != nullptr) {
             if (SSL_CTX_set_ciphersuites(ctx, ciphersuites) == 0) {
                 log_error("SSL_CTX_set_ciphersuites");
-                bRes = false;
+                result = false;
             }
         }
 
-        if (certificate_chain_file != nullptr) {
-            if (SSL_CTX_use_certificate_chain_file(ctx, certificate_chain_file) != 1) {
+        if (cert_config.certificate_chain_file != nullptr) {
+            if (SSL_CTX_use_certificate_chain_file(ctx, cert_config.certificate_chain_file) != 1) {
                 log_error("SSL_CTX_use_certificate_chain_file");
-                bRes = false;
+                result = false;
             }
         } else {
-            bRes = !required;
+            if (required) {
+                result = false;
+            }
         }
 
-        if (private_key_file != nullptr) {
+        if (cert_config.private_key_file != nullptr) {
             // the password callback uses a non-const argument
             void* pass_ptr{nullptr};
             std::string pass_str;
-            if (private_key_password != nullptr) {
-                pass_str = private_key_password;
+            if (cert_config.private_key_password != nullptr) {
+                pass_str = cert_config.private_key_password;
                 pass_ptr = pass_str.data();
             }
             SSL_CTX_set_default_passwd_cb_userdata(ctx, pass_ptr);
 
-            if (SSL_CTX_use_PrivateKey_file(ctx, private_key_file, SSL_FILETYPE_PEM) != 1) {
+            if (SSL_CTX_use_PrivateKey_file(ctx, cert_config.private_key_file, SSL_FILETYPE_PEM) != 1) {
                 log_error("SSL_CTX_use_PrivateKey_file");
-                bRes = false;
+                result = false;
             }
             if (SSL_CTX_check_private_key(ctx) != 1) {
                 log_error("SSL_CTX_check_private_key");
-                bRes = false;
+                result = false;
             }
         } else {
-            bRes = !required;
+            if (required) {
+                result = false;
+            }
         }
     }
 
-    return bRes;
+    return result;
 }
 
-OCSP_RESPONSE* load_ocsp(const char* filename) {
-    // update the cache
-    OCSP_RESPONSE* resp{nullptr};
-
-    if (filename != nullptr) {
-
-        BIO* bio_file = BIO_new_file(filename, "r");
-        if (bio_file == nullptr) {
-            log_error(std::string("BIO_new_file: ") + filename);
-        } else {
-            resp = d2i_OCSP_RESPONSE_bio(bio_file, nullptr);
-            BIO_free(bio_file);
-        }
-
-        if (resp == nullptr) {
-            log_error("d2i_OCSP_RESPONSE_bio");
-        }
-    }
-
-    return resp;
-}
-
+/**
+ * \brief duplicate a string checking for nullptr
+ * \param[in] value a pointer to a \0 terminated string or nullptr
+ * \return a copy of the string (which must be freed) or nullptr
+ */
 constexpr char* dup(const char* value) {
     char* res = nullptr;
     if (value != nullptr) {
@@ -433,12 +524,14 @@ namespace tls {
 ConfigItem::ConfigItem(const char* value) : m_ptr(dup(value)) {
 }
 ConfigItem& ConfigItem::operator=(const char* value) {
+    free(m_ptr);
     m_ptr = dup(value);
     return *this;
 }
 ConfigItem::ConfigItem(const ConfigItem& obj) : m_ptr(dup(obj.m_ptr)) {
 }
 ConfigItem& ConfigItem::operator=(const ConfigItem& obj) {
+    free(m_ptr);
     m_ptr = dup(obj.m_ptr);
     return *this;
 }
@@ -446,6 +539,7 @@ ConfigItem::ConfigItem(ConfigItem&& obj) noexcept : m_ptr(obj.m_ptr) {
     obj.m_ptr = nullptr;
 }
 ConfigItem& ConfigItem::operator=(ConfigItem&& obj) noexcept {
+    free(m_ptr);
     m_ptr = obj.m_ptr;
     obj.m_ptr = nullptr;
     return *this;
@@ -477,7 +571,7 @@ struct connection_ctx {
 };
 
 struct ocsp_cache_ctx {
-    std::map<openssl::sha_256_digest_t, OCSP_RESPONSE_ptr> cache;
+    std::map<OcspCache::digest_t, OCSP_RESPONSE_ptr> cache;
 };
 
 struct server_ctx {
@@ -489,320 +583,7 @@ struct client_ctx {
 };
 
 // ----------------------------------------------------------------------------
-// OcspCache
-OcspCache::OcspCache() : m_context(std::make_unique<ocsp_cache_ctx>()) {
-}
-
-OcspCache::~OcspCache() = default;
-
-bool OcspCache::load(const std::vector<ocsp_entry_t>& filenames) {
-    assert(m_context != nullptr);
-
-    bool bResult{true};
-
-    if (filenames.empty()) {
-        // clear the cache
-        std::lock_guard lock(mux);
-        m_context->cache.clear();
-    } else {
-        std::map<openssl::sha_256_digest_t, OCSP_RESPONSE_ptr> updates;
-        for (const auto& entry : filenames) {
-            const auto& digest = std::get<openssl::sha_256_digest_t>(entry);
-            const auto* filename = std::get<const char*>(entry);
-
-            OCSP_RESPONSE* resp{nullptr};
-
-            if (filename != nullptr) {
-                resp = load_ocsp(filename);
-                if (resp == nullptr) {
-                    bResult = false;
-                }
-            }
-
-            if (resp != nullptr) {
-                updates[digest] = std::shared_ptr<OCSP_RESPONSE>(resp, &::OCSP_RESPONSE_free);
-            }
-        }
-
-        {
-            std::lock_guard lock(mux);
-            m_context->cache.swap(updates);
-        }
-    }
-
-    return bResult;
-}
-
-std::shared_ptr<OcspResponse> OcspCache::lookup(const openssl::sha_256_digest_t& digest) {
-    assert(m_context != nullptr);
-
-    std::shared_ptr<OcspResponse> resp;
-    std::lock_guard lock(mux);
-    if (const auto itt = m_context->cache.find(digest); itt != m_context->cache.end()) {
-        resp = itt->second;
-    } else {
-        log_error("OcspCache::lookup: not in cache: " + to_string(digest));
-    }
-
-    return resp;
-}
-
-bool OcspCache::digest(openssl::sha_256_digest_t& digest, const x509_st* cert) {
-    assert(cert != nullptr);
-
-    bool bResult{false};
-    const ASN1_BIT_STRING* signature{nullptr};
-    const X509_ALGOR* alg{nullptr};
-    X509_get0_signature(&signature, &alg, cert);
-    if (signature != nullptr) {
-        unsigned char* data{nullptr};
-        const auto len = i2d_ASN1_BIT_STRING(signature, &data);
-        if (len > 0) {
-            bResult = openssl::sha_256(data, len, digest);
-        }
-        OPENSSL_free(data);
-    }
-
-    return bResult;
-}
-
-// ----------------------------------------------------------------------------
-// CertificateStatusRequestV2
-
-bool CertificateStatusRequestV2::set_ocsp_response(const openssl::sha_256_digest_t& digest, SSL* ctx) {
-    bool bResult{false};
-    auto response = m_cache.lookup(digest);
-    if (response) {
-        unsigned char* der{nullptr};
-        auto len = i2d_OCSP_RESPONSE(response.get(), &der);
-        if (len > 0) {
-            bResult = SSL_set_tlsext_status_ocsp_resp(ctx, der, len) == 1;
-            if (bResult) {
-                SSL_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp);
-            } else {
-                log_error((std::string("SSL_set_tlsext_status_ocsp_resp")));
-                OPENSSL_free(der);
-            }
-        }
-    }
-    return bResult;
-}
-
-int CertificateStatusRequestV2::status_request_cb(SSL* ctx, void* object) {
-    // returns:
-    // - SSL_TLSEXT_ERR_OK response to client via SSL_set_tlsext_status_ocsp_resp
-    // - SSL_TLSEXT_ERR_NOACK no response to client
-    // - SSL_TLSEXT_ERR_ALERT_FATAL abort connection
-    bool bSet{false};
-    bool tls_1_3{false};
-    int result = SSL_TLSEXT_ERR_NOACK;
-    openssl::sha_256_digest_t digest{};
-
-    if (ctx != nullptr) {
-        const auto* cert = SSL_get_certificate(ctx);
-        bSet = OcspCache::digest(digest, cert);
-    }
-
-    const auto* session = SSL_get0_session(ctx);
-    if (session != nullptr) {
-        tls_1_3 = SSL_SESSION_get_protocol_version(session) == TLS1_3_VERSION;
-    }
-
-    if (!tls_1_3) {
-        auto* connection = reinterpret_cast<ServerConnection*>(SSL_get_app_data(ctx));
-        if (connection != nullptr) {
-            /*
-             * if there is a status_request_v2 then don't provide a status_request response
-             * unless this is TLS 1.3 where status_request_v2 is deprecated (not to be used)
-             */
-            if (connection->has_status_request_v2()) {
-                bSet = false;
-                result = SSL_TLSEXT_ERR_NOACK;
-            }
-        }
-    }
-
-    auto* ptr = reinterpret_cast<CertificateStatusRequestV2*>(object);
-    if (bSet && (ptr != nullptr)) {
-        if (ptr->set_ocsp_response(digest, ctx)) {
-            result = SSL_TLSEXT_ERR_OK;
-        }
-    }
-    return result;
-}
-
-bool CertificateStatusRequestV2::set_ocsp_v2_response(const std::vector<openssl::sha_256_digest_t>& digests, SSL* ctx) {
-    /*
-     * There is no response in the extension. An additional handshake message is
-     * sent after the certificate (certificate status) that includes the
-     * actual response.
-     */
-
-    /*
-     * s->ext.status_expected, set to 1 to include the certificate status message
-     * s->ext.status_type, ocsp(1), ocsp_multi(2)
-     * s->ext.ocsp.resp, set by SSL_set_tlsext_status_ocsp_resp
-     * s->ext.ocsp.resp_len, set by SSL_set_tlsext_status_ocsp_resp
-     */
-
-    bool bResult{false};
-
-#ifdef OPENSSL_PATCHED
-    if (ctx != nullptr) {
-        std::vector<std::pair<std::size_t, std::uint8_t*>> response_list;
-        std::size_t total_size{0};
-
-        for (const auto& digest : digests) {
-            auto response = m_cache.lookup(digest);
-            if (response) {
-                unsigned char* der{nullptr};
-                auto len = i2d_OCSP_RESPONSE(response.get(), &der);
-                if (len > 0) {
-                    const std::size_t adjusted_len = len + 3;
-                    total_size += adjusted_len;
-                    // prefix the length of the DER encoded OCSP response
-                    auto* der_len = static_cast<std::uint8_t*>(OPENSSL_malloc(adjusted_len));
-                    if (der_len != nullptr) {
-                        uint24(der_len, len);
-                        std::memcpy(&der_len[3], der, len);
-                        response_list.emplace_back(adjusted_len, der_len);
-                    }
-                    OPENSSL_free(der);
-                }
-            }
-        }
-
-        // don't include the extension when there are no OCSP responses
-        if (total_size > 0) {
-            std::size_t resp_len = total_size;
-            auto* resp = static_cast<std::uint8_t*>(OPENSSL_malloc(resp_len));
-            if (resp == nullptr) {
-                resp_len = 0;
-            } else {
-                std::size_t idx{0};
-
-                for (auto& entry : response_list) {
-                    auto len = entry.first;
-                    auto* der = entry.second;
-                    std::memcpy(&resp[idx], der, len);
-                    OPENSSL_free(der);
-                    idx += len;
-                }
-            }
-
-            // SSL_set_tlsext_status_ocsp_resp sets the correct overall length
-            bResult = SSL_set_tlsext_status_ocsp_resp(ctx, resp, resp_len) == 1;
-            if (bResult) {
-                SSL_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp_multi);
-                SSL_set_tlsext_status_expected(ctx, 1);
-            } else {
-                log_error((std::string("SSL_set_tlsext_status_ocsp_resp")));
-            }
-        }
-    }
-#endif // OPENSSL_PATCHED
-
-    return bResult;
-}
-
-int CertificateStatusRequestV2::status_request_v2_add(Ssl* ctx, unsigned int ext_type, unsigned int context,
-                                                      const unsigned char** out, std::size_t* outlen, Certificate* cert,
-                                                      std::size_t chainidx, int* alert, void* object) {
-    /*
-     * return values:
-     * - fatal, abort handshake and sent TLS Alert: result = -1 and *alert = alert value
-     * - do not include extension: result = 0
-     * - include extension: result = 1
-     */
-
-    *out = nullptr;
-    *outlen = 0;
-
-    int result = 0;
-
-#ifdef OPENSSL_PATCHED
-    openssl::sha_256_digest_t digest{};
-    std::vector<openssl::sha_256_digest_t> digest_chain;
-
-    if (ctx != nullptr) {
-        const auto* cert = SSL_get_certificate(ctx);
-        const auto* name = X509_get_subject_name(cert);
-        if (OcspCache::digest(digest, cert)) {
-            digest_chain.push_back(digest);
-        }
-
-        STACK_OF(X509) * chain{nullptr};
-
-        if (SSL_get0_chain_certs(ctx, &chain) != 1) {
-            log_error((std::string("SSL_get0_chain_certs")));
-        } else {
-            const auto num = sk_X509_num(chain);
-            for (std::size_t i = 0; i < num; i++) {
-                cert = sk_X509_value(chain, i);
-                name = X509_get_subject_name(cert);
-                if (OcspCache::digest(digest, cert)) {
-                    digest_chain.push_back(digest);
-                }
-            }
-        }
-    }
-
-    auto* ptr = reinterpret_cast<CertificateStatusRequestV2*>(object);
-    if (!digest_chain.empty() && (ptr != nullptr)) {
-        if (ptr->set_ocsp_v2_response(digest_chain, ctx)) {
-            result = 1;
-        }
-    }
-#endif // OPENSSL_PATCHED
-
-    return result;
-}
-
-void CertificateStatusRequestV2::status_request_v2_free(Ssl* ctx, unsigned int ext_type, unsigned int context,
-                                                        const unsigned char* out, void* object) {
-    OPENSSL_free(const_cast<unsigned char*>(out));
-}
-
-int CertificateStatusRequestV2::status_request_v2_cb(Ssl* ctx, unsigned int ext_type, unsigned int context,
-                                                     const unsigned char* data, std::size_t datalen, X509* cert,
-                                                     std::size_t chainidx, int* alert, void* object) {
-    /*
-     * return values:
-     * - fatal, abort handshake and sent TLS Alert: result = 0 or negative and *alert = alert value
-     * - success: result = 1
-     */
-
-    // TODO(james-ctc): check requested type std, or multi
-    return 1;
-}
-
-int CertificateStatusRequestV2::client_hello_cb(Ssl* ctx, int* alert, void* object) {
-    /*
-     * return values:
-     * - fatal, abort handshake and sent TLS Alert: result = 0 or negative and *alert = alert value
-     * - success: result = 1
-     */
-
-    auto* connection = reinterpret_cast<ServerConnection*>(SSL_get_app_data(ctx));
-    if (connection != nullptr) {
-        int* extensions{nullptr};
-        std::size_t length{0};
-        if (SSL_client_hello_get1_extensions_present(ctx, &extensions, &length) == 1) {
-            for (std::size_t i = 0; i < length; i++) {
-                if (extensions[i] == TLSEXT_TYPE_status_request) {
-                    connection->status_request_received();
-                } else if (extensions[i] == TLSEXT_TYPE_status_request_v2) {
-                    connection->status_request_v2_received();
-                }
-            }
-            OPENSSL_free(extensions);
-        }
-    }
-    return 1;
-}
-
-// ----------------------------------------------------------------------------
-// Connection represents a TLS connection
+// Connection represents a TLS connection (client and server)
 
 Connection::Connection(SslContext* ctx, int soc, const char* ip_in, const char* service_in, std::int32_t timeout_ms) :
     m_context(std::make_unique<connection_ctx>()), m_ip(ip_in), m_service(service_in), m_timeout_ms(timeout_ms) {
@@ -812,7 +593,9 @@ Connection::Connection(SslContext* ctx, int soc, const char* ip_in, const char* 
     if (m_context->ctx == nullptr) {
         log_error("Connection::SSL_new");
     } else {
+        // BIO_free is handled when SSL_free is done (SSL_ptr)
         m_context->soc_bio = BIO_new_socket(soc, BIO_CLOSE);
+        SSL_set_bio(m_context->ctx.get(), m_context->soc_bio, m_context->soc_bio);
     }
 
     if (m_context->soc_bio == nullptr) {
@@ -822,11 +605,11 @@ Connection::Connection(SslContext* ctx, int soc, const char* ip_in, const char* 
 
 Connection::~Connection() = default;
 
-Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size_t& readbytes) {
+Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size_t& readbytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
     if (m_state == state_t::connected) {
-        result = ssl_read(m_context->ctx.get(), buf, num, readbytes, m_timeout_ms);
+        result = ssl_read(m_context->ctx.get(), buf, num, readbytes, timeout_ms);
         switch (result) {
         case ssl_result_t::success:
         case ssl_result_t::timeout:
@@ -847,11 +630,11 @@ Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size
     return convert(result);
 }
 
-Connection::result_t Connection::write(const std::byte* buf, std::size_t num, std::size_t& writebytes) {
+Connection::result_t Connection::write(const std::byte* buf, std::size_t num, std::size_t& writebytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
     if (m_state == state_t::connected) {
-        result = ssl_write(m_context->ctx.get(), buf, num, writebytes, m_timeout_ms);
+        result = ssl_write(m_context->ctx.get(), buf, num, writebytes, timeout_ms);
         switch (result) {
         case ssl_result_t::success:
         case ssl_result_t::timeout:
@@ -872,16 +655,21 @@ Connection::result_t Connection::write(const std::byte* buf, std::size_t num, st
     return convert(result);
 }
 
-void Connection::shutdown() {
+void Connection::shutdown(int timeout_ms) {
     assert(m_context != nullptr);
     if (m_state == state_t::connected) {
-        ssl_shutdown(m_context->ctx.get(), c_shutdown_timeout_ms);
+        ssl_shutdown(m_context->ctx.get(), timeout_ms);
         m_state = state_t::closed;
     }
 }
 
 int Connection::socket() const {
     return m_context->soc;
+}
+
+const Certificate* Connection::peer_certificate() const {
+    assert(m_context != nullptr);
+    return SSL_get0_peer_certificate(m_context->ctx.get());
 }
 
 // ----------------------------------------------------------------------------
@@ -893,16 +681,15 @@ std::condition_variable ServerConnection::m_cv;
 
 ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in,
                                    std::int32_t timeout_ms) :
-    Connection(ctx, soc, ip_in, service_in, timeout_ms) {
+    Connection(ctx, soc, ip_in, service_in, timeout_ms), m_tck_data{m_trusted_ca_keys, m_flags} {
     {
         std::lock_guard lock(m_cv_mutex);
         m_count++;
     }
     if (m_context->soc_bio != nullptr) {
-        // BIO_free is handled when SSL_free is done (SSL_ptr)
-        SSL_set_bio(m_context->ctx.get(), m_context->soc_bio, m_context->soc_bio);
         SSL_set_accept_state(m_context->ctx.get());
-        SSL_set_app_data(m_context->ctx.get(), this);
+        ServerStatusRequestV2::set_data(m_context->ctx.get(), &m_flags);
+        ServerTrustedCaKeys::set_data(m_context->ctx.get(), &m_tck_data);
     }
 }
 
@@ -912,13 +699,13 @@ ServerConnection::~ServerConnection() {
         m_count--;
     }
     m_cv.notify_all();
-};
+}
 
-bool ServerConnection::accept() {
+bool ServerConnection::accept(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
     if (m_state == state_t::idle) {
-        result = ssl_accept(m_context->ctx.get(), m_timeout_ms);
+        result = ssl_accept(m_context->ctx.get(), timeout_ms);
         switch (result) {
         case ssl_result_t::success:
             m_state = state_t::connected;
@@ -946,26 +733,23 @@ void ServerConnection::wait_all_closed() {
 }
 
 // ----------------------------------------------------------------------------
-// ClientConnection represents a TLS server connection
+// ClientConnection represents a TLS client connection
 
 ClientConnection::ClientConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in,
                                    std::int32_t timeout_ms) :
     Connection(ctx, soc, ip_in, service_in, timeout_ms) {
     if (m_context->soc_bio != nullptr) {
-        BIO_set_nbio(m_context->soc_bio, 1);
-        //  BIO_free is handled when SSL_free is done (SSL_ptr)
-        SSL_set_bio(m_context->ctx.get(), m_context->soc_bio, m_context->soc_bio);
         SSL_set_connect_state(m_context->ctx.get());
     }
 }
 
 ClientConnection::~ClientConnection() = default;
 
-bool ClientConnection::connect() {
+bool ClientConnection::connect(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
     if (m_state == state_t::idle) {
-        result = ssl_connect(m_context->ctx.get(), m_timeout_ms);
+        result = ssl_connect(m_context->ctx.get(), timeout_ms);
         switch (result) {
         case ssl_result_t::success:
             m_state = state_t::connected;
@@ -989,6 +773,8 @@ bool ClientConnection::connect() {
 // ----------------------------------------------------------------------------
 // TLS Server
 
+int Server::s_sig_int{-1};
+
 Server::Server() : m_context(std::make_unique<server_ctx>()), m_status_request_v2(m_cache) {
 }
 
@@ -998,32 +784,37 @@ Server::~Server() {
 }
 
 bool Server::init_socket(const config_t& cfg) {
-    bool bRes = false;
+    bool result = false;
     if (cfg.socket == INVALID_SOCKET) {
         BIO_ADDRINFO* addrinfo{nullptr};
+        // AF_UNSPEC is another option but seems to prefer IPv4
+        const int family{(cfg.ipv6_only) ? AF_INET6 : AF_INET};
 
-        bRes = BIO_lookup_ex(cfg.host, cfg.service, BIO_LOOKUP_SERVER, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP,
-                             &addrinfo) != 0;
+        result =
+            BIO_lookup_ex(cfg.host, cfg.service, BIO_LOOKUP_SERVER, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo) != 0;
 
-        if (!bRes) {
+        if (!result) {
             log_error("init_socket::BIO_lookup_ex");
         } else {
             const auto sock_family = BIO_ADDRINFO_family(addrinfo);
             const auto sock_type = BIO_ADDRINFO_socktype(addrinfo);
             const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo);
             const auto* sock_address = BIO_ADDRINFO_address(addrinfo);
-            int sock_options{BIO_SOCK_REUSEADDR | BIO_SOCK_NONBLOCK};
-            if (cfg.ipv6_only) {
-                sock_options = BIO_SOCK_REUSEADDR | BIO_SOCK_V6_ONLY | BIO_SOCK_NONBLOCK;
-            }
-
             m_socket = BIO_socket(sock_family, sock_type, sock_protocol, 0);
 
             if (m_socket == INVALID_SOCKET) {
                 log_error("init_socket::BIO_socket");
+                if (cfg.ipv6_only) {
+                    log_warning("Verify that the configured interface has a valid IPv6 link local address configured.");
+                }
             } else {
-                bRes = BIO_listen(m_socket, sock_address, sock_options) != 0;
-                if (!bRes) {
+                int sock_options{BIO_SOCK_REUSEADDR | BIO_SOCK_NONBLOCK};
+                if (cfg.ipv6_only) {
+                    sock_options = BIO_SOCK_REUSEADDR | BIO_SOCK_V6_ONLY | BIO_SOCK_NONBLOCK;
+                }
+
+                result = BIO_listen(m_socket, sock_address, sock_options) != 0;
+                if (!result) {
                     log_error("init_socket::BIO_listen");
                     BIO_closesocket(m_socket);
                     m_socket = INVALID_SOCKET;
@@ -1036,61 +827,58 @@ bool Server::init_socket(const config_t& cfg) {
         // the code that sets cfg.socket is responsible for
         // all socket initialisation
         m_socket = cfg.socket;
-        bRes = true;
+        result = true;
     }
 
-    return bRes;
+    return result;
 }
 
 bool Server::init_ssl(const config_t& cfg) {
     assert(m_context != nullptr);
 
-    // TODO(james-ctc) TPM2 support
-
     const SSL_METHOD* method = TLS_server_method();
     auto* ctx = SSL_CTX_new(method);
-    auto bRes = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.certificate_chain_file,
-                                  cfg.private_key_file, cfg.private_key_password, true);
-    if (bRes) {
-        int mode = SSL_VERIFY_NONE;
+    bool result = ctx != nullptr;
+    result = result && (cfg.chains.size() > 0);
 
-        if (cfg.verify_client) {
-            mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-            if (SSL_CTX_load_verify_locations(ctx, cfg.verify_locations_file, cfg.verify_locations_path) != 1) {
-                log_error("SSL_CTX_load_verify_locations");
+    if (result) {
+        // use the first server chain
+        result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.chains[0], true);
+        if (result) {
+            int mode = SSL_VERIFY_NONE;
+
+            // TODO(james-ctc): verify may need to change based on TLS version
+            // 15118-2 mandates TLS 1.2 and no client certificate
+            // 15118-20 mandates TLS 1.3 and requires a client certificate
+            // There might be a requirement to support mutual authentication on
+            // TLS 1.2
+            //
+            // Potential solution is to provide optional mutual authentication
+            // for TLS 1.2 and mandatory mutual authentication for TLS 1.3
+            // SSL_set_verify() could be used in
+            // ServerStatusRequestV2::client_hello_cb
+            // TLS 1.3 has a post handshake flag SSL_VERIFY_POST_HANDSHAKE
+            // which might be a better approach
+
+            if (cfg.verify_client) {
+                mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+                if (SSL_CTX_load_verify_locations(ctx, cfg.verify_locations_file, cfg.verify_locations_path) != 1) {
+                    log_error("SSL_CTX_load_verify_locations");
+                }
+            } else {
+                if (SSL_CTX_set_default_verify_paths(ctx) != 1) {
+                    log_error("SSL_CTX_set_default_verify_paths");
+                    result = false;
+                }
             }
-        } else {
-            if (SSL_CTX_set_default_verify_paths(ctx) != 1) {
-                log_error("SSL_CTX_set_default_verify_paths");
-                bRes = false;
-            }
-        }
+            SSL_CTX_set_verify(ctx, mode, nullptr);
 
-        SSL_CTX_set_verify(ctx, mode, nullptr);
-        SSL_CTX_set_client_hello_cb(ctx, &CertificateStatusRequestV2::client_hello_cb, nullptr);
-
-        if (SSL_CTX_set_tlsext_status_cb(ctx, &CertificateStatusRequestV2::status_request_cb) != 1) {
-            log_error("SSL_CTX_set_tlsext_status_cb");
-            bRes = false;
-        }
-
-        if (SSL_CTX_set_tlsext_status_arg(ctx, &m_status_request_v2) != 1) {
-            log_error("SSL_CTX_set_tlsext_status_arg");
-            bRes = false;
-        }
-
-        constexpr int context = SSL_EXT_TLS_ONLY | SSL_EXT_TLS1_2_AND_BELOW_ONLY | SSL_EXT_IGNORE_ON_RESUMPTION |
-                                SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO;
-        if (SSL_CTX_add_custom_ext(ctx, TLSEXT_TYPE_status_request_v2, context,
-                                   &CertificateStatusRequestV2::status_request_v2_add,
-                                   &CertificateStatusRequestV2::status_request_v2_free, &m_status_request_v2,
-                                   &CertificateStatusRequestV2::status_request_v2_cb, nullptr) != 1) {
-            log_error("SSL_CTX_add_custom_ext");
-            bRes = false;
+            result = result && m_status_request_v2.init_ssl(ctx);
+            result = result && m_server_trusted_ca_keys.init_ssl(ctx);
         }
     }
 
-    if (!bRes) {
+    if (!result) {
         SSL_CTX_free(ctx);
         ctx = nullptr;
     }
@@ -1099,10 +887,100 @@ bool Server::init_ssl(const config_t& cfg) {
     return ctx != nullptr;
 }
 
+bool Server::init_certificates(const std::vector<certificate_config_t>& chain_files) {
+    std::vector<OcspCache::ocsp_entry_t> entries;
+    openssl::chain_list chains;
+
+    for (const auto& i : chain_files) {
+        auto certs = openssl::load_certificates(i.certificate_chain_file);
+        auto tas = openssl::load_certificates(i.trust_anchor_file);
+        auto pkey = openssl::load_private_key(i.private_key_file, i.private_key_password);
+
+        if (certs.size() > 0) {
+            openssl::chain_t chain;
+
+            // update OCSP cache
+            if (certs.size() == i.ocsp_response_files.size()) {
+                for (std::size_t c = 0; c < certs.size(); c++) {
+                    const auto& file = i.ocsp_response_files[c];
+                    const auto& cert = certs[c];
+
+                    if (file != nullptr) {
+                        OcspCache::digest_t digest{};
+                        if (OcspCache::digest(digest, cert.get())) {
+                            entries.emplace_back(digest, file);
+                        }
+                    }
+                }
+            } else {
+                log_warning("<n> certificates != <n> OCSP responses");
+            }
+
+            /*
+             * If there are no trust anchors then the chain can't be verified
+             * it also means that trusted_ca_keys can't be supported for the
+             * chain.
+             */
+
+            if (!tas.empty()) {
+                // update trusted CA keys information
+                chain.chain.leaf = std::move(certs[0]);
+                // remove server cert from intermediate list
+                certs.erase(certs.begin());
+                chain.chain.chain = std::move(certs);
+                chain.chain.trust_anchors = std::move(tas);
+                chain.private_key = std::move(pkey);
+
+                if (openssl::verify_chain(chain)) {
+                    chains.emplace_back(std::move(chain));
+                }
+            } else {
+                const auto subject = openssl::certificate_subject(certs[0].get());
+                std::string msg("No trust anchors for certificate:");
+                for (const auto& item : subject) {
+                    msg += ' ';
+                    msg += item.first;
+                    msg += ':';
+                    msg += item.second;
+                }
+                log_warning(msg);
+            }
+        }
+    }
+
+    bool result{true};
+
+    if (chains.empty()) {
+        // continue without trusted_ca_keys support
+        log_warning("trusted_ca_keys support disabled");
+    } else {
+        m_server_trusted_ca_keys.update(std::move(chains));
+    }
+
+    // don't error when there are no OCSP cached responses
+    if (!entries.empty()) {
+        if (!m_cache.load(entries)) {
+            result = false;
+        }
+    }
+
+    return result;
+}
+
+void Server::configure_signal_handler(int interrupt_signal) {
+    s_sig_int = interrupt_signal;
+    struct sigaction action {};
+    action.sa_handler = &sig_int_handler;
+    action.sa_flags = SA_RESTART;
+    if (sigaction(s_sig_int, &action, nullptr) == -1) {
+        log_error("Server::configure_signal_handler: " + std::to_string(errno));
+    }
+}
+
 Server::state_t Server::init(const config_t& cfg, const std::function<bool(Server& server)>& init_ssl) {
+    // prevent multiple calls to init, or calling init whilst serve() is running
     std::lock_guard lock(m_mutex);
-    m_timeout_ms = cfg.io_timeout_ms;
-    m_init_callback = init_ssl;
+    m_init_callback = init_ssl; // save handler for later
     m_state = state_t::init_needed;
     if (init_socket(cfg)) {
         m_state = state_t::init_socket;
@@ -1114,49 +992,34 @@ Server::state_t Server::init(const config_t& cfg, const std::function<bool(Serve
 }
 
 bool Server::update(const config_t& cfg) {
-    bool bRes = init_ssl(cfg);
+    // does not change server socket settings, use init() if needed
+    std::vector<OcspCache::ocsp_entry_t> entries;
 
-    if (bRes) {
-        std::vector<OcspCache::ocsp_entry_t> entries;
-        auto chain = openssl::load_certificates(cfg.certificate_chain_file);
-        if (chain.size() == cfg.ocsp_response_files.size()) {
-            for (std::size_t i = 0; i < chain.size(); i++) {
-                const auto& file = cfg.ocsp_response_files[i];
-                const auto& cert = chain[i];
-
-                if (file != nullptr) {
-                    openssl::sha_256_digest_t digest{};
-                    if (OcspCache::digest(digest, cert.get())) {
-                        entries.emplace_back(digest, file);
-                    }
-                }
-            }
-
-            bRes = m_cache.load(entries);
-        } else {
-            log_warning(std::string("update_ocsp: ocsp files != ") + std::to_string(chain.size()));
-        }
+    m_timeout_ms = cfg.io_timeout_ms;
+    // always try init_certificates() and init_ssl()
+    bool result = init_certificates(cfg.chains);
+    if (!init_ssl(cfg)) {
+        result = false;
     }
-
-    return bRes;
+    return result;
 }
 
-Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler) {
+Server::state_t Server::serve(const std::function<void(ServerConnection_t& ctx)>& handler) {
     assert(m_context != nullptr);
     // prevent init() or server() being called while serve is running
     std::lock_guard lock(m_mutex);
-    bool bRes = false;
 
+    // check server socket configuration has been successful
+    bool result{false};
     state_t tmp = m_state;
-
     switch (tmp) {
     case state_t::init_socket:
         if (m_init_callback != nullptr) {
-            bRes = m_socket != INVALID_SOCKET;
+            result = m_socket != INVALID_SOCKET;
         }
         break;
     case state_t::init_complete:
-        bRes = m_socket != INVALID_SOCKET;
+        result = m_socket != INVALID_SOCKET;
         break;
     case state_t::init_needed:
     case state_t::running:
@@ -1165,13 +1028,15 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
         break;
     }
 
+    // wakeup wait_running()
     {
         std::lock_guard lock(m_cv_mutex);
         m_running = true;
     }
     m_cv.notify_all();
+    m_server_thread = pthread_self(); // for use by stop()
 
-    if (bRes) {
+    if (result) {
         m_exit = false;
         m_state = (m_state == state_t::init_complete) ? state_t::running : state_t::init_socket;
         while (!m_exit) {
@@ -1182,12 +1047,14 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
             } else {
                 int soc{INVALID_SOCKET};
                 while ((soc < 0) && !m_exit) {
-                    auto poll_res = wait_for(m_socket, false, m_timeout_ms);
+                    auto poll_res = wait_for(m_socket, false, c_serve_timeout_ms);
                     if (poll_res == -1) {
-                        log_error(std::string("Server::serve poll: ") + std::to_string(errno));
+                        // poll() has failed
                         m_exit = true;
-                    } else if (poll_res == 0) {
-                        // timeout
+                    } else if ((poll_res == -2) || (poll_res == 0)) {
+                        // EINTR is -2 - triggered by stop()
+                        // timeout is 0
+                        // nothing to accept, check for m_exit
                     } else {
                         soc = BIO_accept_ex(m_socket, peer, BIO_SOCK_NONBLOCK);
                         if (BIO_sock_should_retry(soc) == 0) {
@@ -1196,10 +1063,12 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
                     }
                 };
 
+                // attempt to get SSL configuration when not set yet
                 if ((soc >= 0) && (m_state == state_t::init_socket)) {
                     if (m_init_callback(*this)) {
                         m_state = state_t::running;
                     } else {
+                        // updated configuration failed
                         BIO_closesocket(soc);
                         soc = INVALID_SOCKET;
                     }
@@ -1213,6 +1082,7 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
                     if (soc < 0) {
                         log_error("serve::BIO_accept_ex");
                     } else {
+                        // new connection, pass to handler
                         auto* ip = BIO_ADDR_hostname_string(peer, 1);
                         auto* service = BIO_ADDR_service_string(peer, 1);
                         auto connection =
@@ -1229,10 +1099,10 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
 
         BIO_closesocket(m_socket);
         m_socket = INVALID_SOCKET;
-        bRes = true;
         m_state = state_t::stopped;
     }
 
+    // wakeup wait_stopped()
     {
         std::lock_guard lock(m_cv_mutex);
         m_running = false;
@@ -1243,6 +1113,10 @@ Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerCon
 
 void Server::stop() {
     m_exit = true;
+    // raise a signal if a hander was installed
+    if (m_running && (s_sig_int != -1)) {
+        pthread_kill(m_server_thread, s_sig_int);
+    }
 }
 
 void Server::wait_running() {
@@ -1260,39 +1134,40 @@ void Server::wait_stopped() {
 // ----------------------------------------------------------------------------
 // Client
 
-Client::Client() : m_context(std::make_unique<client_ctx>()) {
+Client::Client() :
+    m_context(std::make_unique<client_ctx>()), m_status_request_v2(std::make_unique<ClientStatusRequestV2>()) {
+}
+
+Client::Client(std::unique_ptr<ClientStatusRequestV2>&& handler) :
+    m_context(std::make_unique<client_ctx>()), m_status_request_v2(std::move(handler)) {
 }
 
 Client::~Client() = default;
 
-bool Client::print_ocsp_response(FILE* stream, const unsigned char*& response, std::size_t length) {
-    OCSP_RESPONSE* ocsp{nullptr};
-
-    if (response != nullptr) {
-        ocsp = d2i_OCSP_RESPONSE(nullptr, &response, static_cast<std::int64_t>(length));
-        if (ocsp == nullptr) {
-            std::cerr << "d2i_OCSP_RESPONSE: decode error" << std::endl;
-        } else {
-            BIO* bio_out = BIO_new_fp(stream, BIO_NOCLOSE);
-            OCSP_RESPONSE_print(bio_out, ocsp, 0);
-            OCSP_RESPONSE_free(ocsp);
-            BIO_free(bio_out);
-        }
-    }
-
-    return ocsp != nullptr;
+bool Client::init(const config_t& cfg) {
+    return init(cfg, default_overrides());
 }
 
-bool Client::init(const config_t& cfg) {
+bool Client::init(const config_t& cfg, const override_t& override) {
     assert(m_context != nullptr);
+    assert(override.tlsext_status_cb != nullptr);
+    assert(override.status_request_v2_cb != nullptr);
+    assert(override.status_request_v2_add != nullptr);
+    assert(override.trusted_ca_keys_add != nullptr);
+    assert(override.trusted_ca_keys_free != nullptr);
 
-    // TODO(james-ctc) TPM2 support
-
+    m_timeout_ms = cfg.io_timeout_ms;
+    m_trusted_ca_keys = cfg.trusted_ca_keys_data;
     const SSL_METHOD* method = TLS_client_method();
     auto* ctx = SSL_CTX_new(method);
-    auto bRes = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.certificate_chain_file,
-                                  cfg.private_key_file, cfg.private_key_password, false);
-    if (bRes) {
+    const Server::certificate_config_t cert_config = {
+        cfg.certificate_chain_file,
+        nullptr,
+        cfg.private_key_file,
+        cfg.private_key_password,
+    };
+    auto result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cert_config, false);
+    if (result) {
         int mode = SSL_VERIFY_NONE;
 
         if (cfg.verify_server) {
@@ -1303,48 +1178,53 @@ bool Client::init(const config_t& cfg) {
         } else {
             if (SSL_CTX_set_default_verify_paths(ctx) != 1) {
                 log_error("SSL_CTX_set_default_verify_paths");
-                bRes = false;
+                result = false;
             }
         }
 
         SSL_CTX_set_verify(ctx, mode, nullptr);
-
         if (cfg.status_request) {
-            if (SSL_CTX_set_tlsext_status_cb(ctx, &Client::status_request_v2_multi_cb) != 1) {
-                log_error("SSL_CTX_set_tlsext_status_cb");
-                bRes = false;
-            }
             if (SSL_CTX_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp) != 1) {
                 log_error("SSL_CTX_set_tlsext_status_type");
-                bRes = false;
+                result = false;
             }
         }
 
         if (cfg.status_request_v2) {
             constexpr int context = SSL_EXT_TLS_ONLY | SSL_EXT_TLS1_2_AND_BELOW_ONLY | SSL_EXT_IGNORE_ON_RESUMPTION |
                                     SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO;
-            if (SSL_CTX_add_custom_ext(ctx, TLSEXT_TYPE_status_request_v2, context, &Client::status_request_v2_add,
-                                       nullptr, nullptr, &Client::status_request_v2_cb, this) != 1) {
-                log_error("SSL_CTX_add_custom_ext");
-                bRes = false;
-            }
-            if (SSL_CTX_set_tlsext_status_cb(ctx, &Client::status_request_v2_multi_cb) != 1) {
-                log_error("SSL_CTX_set_tlsext_status_cb");
-                bRes = false;
+            if (SSL_CTX_add_custom_ext(ctx, TLSEXT_TYPE_status_request_v2, context, override.status_request_v2_add,
+                                       nullptr, nullptr, override.status_request_v2_cb,
+                                       m_status_request_v2.get()) != 1) {
+                log_error("SSL_CTX_add_custom_ext status_request_v2");
+                result = false;
             }
         }
 
         if (cfg.status_request || cfg.status_request_v2) {
-            if (SSL_CTX_set_tlsext_status_arg(ctx, this) != 1) {
+            if (SSL_CTX_set_tlsext_status_cb(ctx, override.tlsext_status_cb) != 1) {
+                log_error("SSL_CTX_set_tlsext_status_cb");
+                result = false;
+            }
+            if (SSL_CTX_set_tlsext_status_arg(ctx, m_status_request_v2.get()) != 1) {
                 log_error("SSL_CTX_set_tlsext_status_arg");
-                bRes = false;
+                result = false;
+            }
+        }
+
+        if (cfg.trusted_ca_keys) {
+            constexpr int context = SSL_EXT_TLS_ONLY | SSL_EXT_IGNORE_ON_RESUMPTION | SSL_EXT_CLIENT_HELLO;
+            if (SSL_CTX_add_custom_ext(ctx, TLSEXT_TYPE_trusted_ca_keys, context, override.trusted_ca_keys_add,
+                                       override.trusted_ca_keys_free, &m_trusted_ca_keys, nullptr, nullptr) != 1) {
+                log_error("SSL_CTX_add_custom_ext trusted_ca_keys");
+                result = false;
             }
         }
     }
 
-    if (bRes) {
+    if (result) {
         m_context->ctx = SSL_CTX_ptr(ctx);
-        m_state = state_t::init;
+        // m_state = state_t::init;
     } else {
         SSL_CTX_free(ctx);
         ctx = nullptr;
@@ -1353,14 +1233,16 @@ bool Client::init(const config_t& cfg) {
     return ctx != nullptr;
 }
 
-std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* service, bool ipv6_only) {
+std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* service, bool ipv6_only,
+                                                  int timeout_ms) {
     BIO_ADDRINFO* addrinfo{nullptr};
     std::unique_ptr<ClientConnection> result;
 
     const int family = (ipv6_only) ? AF_INET6 : AF_UNSPEC;
-    bool bRes = BIO_lookup_ex(host, service, BIO_LOOKUP_CLIENT, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo) != 0;
+    const bool lookup_result =
+        BIO_lookup_ex(host, service, BIO_LOOKUP_CLIENT, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo) != 0;
 
-    if (!bRes) {
+    if (!lookup_result) {
         log_error("connect::BIO_lookup_ex");
     } else {
         const auto sock_family = BIO_ADDRINFO_family(addrinfo);
@@ -1368,18 +1250,36 @@ std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* 
         const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo);
         const auto* sock_address = BIO_ADDRINFO_address(addrinfo);
 
-        // set non-blocking after a successful connection
-        // using BIO_SOCK_NONBLOCK on connect is problematic
-        // int sock_options{BIO_SOCK_NONBLOCK};
-
         auto socket = BIO_socket(sock_family, sock_type, sock_protocol, 0);
 
         if (socket == INVALID_SOCKET) {
             log_error("connect::BIO_socket");
         } else {
-            if (BIO_connect(socket, sock_address, 0) != 1) {
-                log_error("connect::BIO_connect");
-            } else {
+            bool connected{true};
+            constexpr int soc_opt = BIO_SOCK_NONBLOCK;
+
+            // calls connect() - hence checking errno
+            if (BIO_connect(socket, sock_address, soc_opt) != 1) {
+                connected = false;
+                if (errno == EINPROGRESS) {
+                    // wait for write on the socket
+                    auto res = wait_for_loop(socket, true, timeout_ms);
+                    if (res == 0) {
+                        log_error("connect::wait_for: timeout");
+                    } else if (res > 0) {
+                        res = BIO_sock_error(socket);
+                        if (res == 0) {
+                            connected = true;
+                        } else {
+                            log_error("connect::BIO_sock_error: " + std::to_string(res));
+                        }
+                    }
+                } else {
+                    log_error("connect::BIO_connect: " + std::to_string(errno));
+                }
+            }
+
+            if (connected) {
                 result = std::make_unique<ClientConnection>(m_context->ctx.get(), socket, host, service, m_timeout_ms);
             }
         }
@@ -1389,130 +1289,12 @@ std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* 
     return result;
 }
 
-int Client::status_request_cb(Ssl* ctx) {
-    /*
-     * This callback is called when status_request or status_request_v2 extensions
-     * were present in the Client Hello. It doesn't mean that the extension is in
-     * the Server Hello SSL_get_tlsext_status_ocsp_resp() returns -1 in that case
-     */
-
-    /*
-     * The callback when used on the client side should return
-     * a negative value on error,
-     * 0 if the response is not acceptable (in which case the handshake will fail), or
-     * a positive value if it is acceptable.
-     */
-
-    int result{1};
-
-    const unsigned char* response{nullptr};
-    const auto total_length = SSL_get_tlsext_status_ocsp_resp(ctx, &response);
-    // length == -1 on no response and response will be nullptr
-
-    if ((response != nullptr) && (total_length > 0)) {
-        // there is a response
-
-        if (response[0] == 0x30) {
-            // not a multi response
-            if (!print_ocsp_response(stdout, response, total_length)) {
-                result = 0;
-            }
-        } else {
-            // multiple responses
-            auto remaining{total_length};
-            const unsigned char* ptr{response};
-
-            while (remaining > 0) {
-                bool b_okay = remaining > 3;
-                std::uint32_t len{0};
-
-                if (b_okay) {
-                    len = uint24(ptr);
-                    remaining -= len + 3;
-                    b_okay = remaining >= 0;
-                }
-
-                if (b_okay) {
-                    ptr += 3;
-                    b_okay = print_ocsp_response(stdout, ptr, len);
-                }
-
-                if (!b_okay) {
-                    result = 0;
-                    remaining = -1;
-                }
-            }
-        }
-    }
-
-    return result;
-}
-
-int Client::status_request_v2_multi_cb(Ssl* ctx, void* object) {
-    /*
-     * This callback is called when status_request or status_request_v2 extensions
-     * were present in the Client Hello. It doesn't mean that the extension is in
-     * the Server Hello SSL_get_tlsext_status_ocsp_resp() returns -1 in that case
-     */
-
-    /*
-     * The callback when used on the client side should return
-     * a negative value on error,
-     * 0 if the response is not acceptable (in which case the handshake will fail), or
-     * a positive value if it is acceptable.
-     */
-
-    auto* client_ptr = reinterpret_cast<Client*>(object);
-
-    int result{1};
-    if (client_ptr != nullptr) {
-        result = client_ptr->status_request_cb(ctx);
-    } else {
-        log_error("Client::status_request_v2_multi_cb missing Client *");
-    }
-    return result;
-}
-
-int Client::status_request_v2_add(Ssl* ctx, unsigned int ext_type, unsigned int context, const unsigned char** out,
-                                  std::size_t* outlen, Certificate* cert, std::size_t chainidx, int* alert,
-                                  void* object) {
-    if (context == SSL_EXT_CLIENT_HELLO) {
-        /*
-         * CertificateStatusRequestListV2:
-         * 0x0007   struct CertificateStatusRequestItemV2 + length
-         *   0x02     CertificateStatusType - OCSP multi
-         *   0x0004   request_length (uint 16)
-         *     0x0000   struct ResponderID list + length
-         *     0x0000   struct Extensions + length
-         */
-        // don't use constexpr
-        static const std::uint8_t asn1[] = {0x00, 0x07, 0x02, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00};
-        *out = &asn1[0];
-        *outlen = sizeof(asn1);
-#ifdef OPENSSL_PATCHED
-        /*
-         * ensure client callback is called - SSL_set_tlsext_status_type() needs to have a value
-         * TLSEXT_STATUSTYPE_ocsp_multi for status_request_v2, or
-         * TLSEXT_STATUSTYPE_ocsp for status_request and status_request_v2
-         */
-
-        if (SSL_get_tlsext_status_type(ctx) != TLSEXT_STATUSTYPE_ocsp) {
-            SSL_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp_multi);
-        }
-#endif // OPENSSL_PATCHED
-        return 1;
-    }
-    return 0;
-}
-
-int Client::status_request_v2_cb(SSL* ctx, unsigned int ext_type, unsigned int context, const unsigned char* data,
-                                 std::size_t datalen, X509* cert, std::size_t chainidx, int* alert, void* object) {
-#ifdef OPENSSL_PATCHED
-    SSL_set_tlsext_status_type(ctx, TLSEXT_STATUSTYPE_ocsp_multi);
-    SSL_set_tlsext_status_expected(ctx, 1);
-#endif // OPENSSL_PATCHED
-
-    return 1;
+Client::override_t Client::default_overrides() {
+    return {
+        &ClientStatusRequestV2::status_request_v2_multi_cb, &ClientStatusRequestV2::status_request_v2_add,
+        &ClientStatusRequestV2::status_request_v2_cb,       &ClientTrustedCaKeys::trusted_ca_keys_add,
+        &ClientTrustedCaKeys::trusted_ca_keys_free,
+    };
 }
 
 } // namespace tls

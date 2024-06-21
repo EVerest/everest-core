@@ -1,38 +1,72 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <iterator>
 #include <memory>
-#include <openssl/crypto.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 #include <string>
-#include <tuple>
 
 #include "openssl_util.hpp"
 
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/ecdsa.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
 #include <openssl/store.h>
+#include <openssl/types.h>
 #include <openssl/ui.h>
+#include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
 
 namespace {
 
-openssl::log_handler_t s_log_handler{nullptr};
+openssl::log_handler_t s_log_handler{nullptr}; //!< logs are passed to this function
 
+/**
+ * \brief add OpenSSL error information to the string
+ * \param[in] str is the OpenSSL \n\0 terminated error string
+ * \param[in] len is the length of the string including the \n
+ * \param[in] u is user data - a std::string to append to
+ * \return 0 on success
+ */
 int add_error_str(const char* str, std::size_t len, void* u) {
     assert(u != nullptr);
     auto* list = reinterpret_cast<std::string*>(u);
-    *list += '\n' + std::string(str, len);
+    *list += '\n' + std::string(str, len - 1);
     return 0;
 }
+
+/**
+ * \brief present a password for private key files
+ * \param[in] buf is a pointer for where to place the password
+ * \param[in] size is the size of buf i.e. max password size
+ * \param[in] rwflag to indicate whether a file os being read or written
+ * \param[in] u is user data which must be set to the required password
+ * \return the length of the password written to buf or -1 on error
+ * \note this callback is used to prevent attempts to prompt for a password
+ *       from a terminal
+ */
+int password_cb(char* buf, int size, int rwflag, void* u) {
+    int result{-1};
+
+    if ((u != nullptr) && (buf != nullptr)) {
+        const auto len = std::strlen(static_cast<const char*>(u));
+        if (len <= size) {
+            std::memcpy(buf, u, len);
+            result = len;
+        }
+    }
+
+    return result;
+}
+
 } // namespace
 
 namespace openssl {
@@ -57,10 +91,14 @@ log_handler_t set_log_handler(log_handler_t handler) {
 
 namespace {
 
-void DER_Signature_free(std::uint8_t* ptr) {
-    OPENSSL_free(ptr);
-}
-
+/**
+ * \brief calculate a SHA digest
+ * \param[in] data is the data to hash
+ * \param[in] len is the length of the data to hash
+ * \param[out] digest is the calculated digest
+ * \param[in] HASH is the type of digest e.g. SHA1, SHA256 ...
+ * \return true on success
+ */
 template <typename DIGEST> bool sha_impl(const void* data, std::size_t len, DIGEST& digest, const EVP_MD* HASH) {
     std::array<std::uint8_t, EVP_MAX_MD_SIZE> buffer{};
     unsigned int digestlen{0};
@@ -79,6 +117,9 @@ template <typename DIGEST> bool sha_impl(const void* data, std::size_t len, DIGE
 
 template <typename DIGEST> bool sha(const void* data, std::size_t len, DIGEST& digest);
 
+template <> bool sha(const void* data, std::size_t len, openssl::sha_1_digest_t& digest) {
+    return sha_impl(data, len, digest, EVP_sha1());
+}
 template <> bool sha(const void* data, std::size_t len, openssl::sha_256_digest_t& digest) {
     return sha_impl(data, len, digest, EVP_sha256());
 }
@@ -93,7 +134,82 @@ template <> bool sha(const void* data, std::size_t len, openssl::sha_512_digest_
 
 namespace openssl {
 
-bool sign(evp_pkey_st* pkey, bn_t& r, bn_t& s, const sha_256_digest_t& digest) {
+DER::DER(std::size_t size) : DER(nullptr, size) {
+}
+
+DER::DER(const der_underlying_t* src, std::size_t size) {
+    auto* tmp = static_cast<std::uint8_t*>(OPENSSL_malloc(size));
+    if (tmp != nullptr) {
+        ptr = der_ptr{tmp, &DER::free};
+        len = size;
+        if (src != nullptr) {
+            std::memcpy(ptr.get(), src, size);
+        } else {
+            std::memset(ptr.get(), 0, size);
+        }
+    }
+}
+
+DER::DER(const DER& obj) : DER(obj.ptr.get(), obj.len) {
+}
+
+DER& DER::operator=(const DER& obj) {
+    if (&obj != this) {
+        *this = DER(obj);
+    }
+    return *this;
+}
+
+DER::DER(DER&& obj) noexcept : ptr(std::move(obj.ptr)), len(obj.len) {
+    obj.len = 0;
+}
+
+DER& DER::operator=(DER&& obj) noexcept {
+    if (this != &obj) {
+        ptr = std::move(obj.ptr);
+        len = obj.len;
+        obj.len = 0;
+    }
+    return *this;
+}
+
+bool DER::operator==(const DER& rhs) const {
+    if (&rhs == this) {
+        return true;
+    }
+
+    bool result{false};
+    const auto* lhs_p = ptr.get();
+    const auto* rhs_p = rhs.ptr.get();
+
+    if ((lhs_p != nullptr) && (rhs_p != nullptr)) {
+        result = len == rhs.len;
+        result = result && (std::memcmp(lhs_p, rhs_p, len) == 0);
+    }
+    return result;
+}
+
+bool DER::operator==(const der_underlying_t* rhs) const {
+    return ptr.get() == rhs;
+}
+
+DER::operator bool() const {
+    return (ptr.get() != nullptr) && (len > 0);
+}
+
+der_underlying_t* DER::dup(const DER& obj) {
+    auto* ptr = static_cast<std::uint8_t*>(OPENSSL_malloc(obj.len));
+    if ((ptr != nullptr) && (obj.ptr != nullptr)) {
+        std::memcpy(ptr, obj.ptr.get(), obj.len);
+    }
+    return ptr;
+}
+
+void DER::free(der_underlying_t* ptr) {
+    OPENSSL_free(ptr);
+}
+
+bool sign(EVP_PKEY* pkey, bn_t& r, bn_t& s, const sha_256_digest_t& digest) {
     bool bRes{false};
     std::array<std::uint8_t, signature_der_size> signature{};
     auto len = signature.size();
@@ -142,15 +258,15 @@ bool sign(EVP_PKEY* pkey, unsigned char* sig, std::size_t& siglen, const unsigne
     return bRes;
 }
 
-bool verify(evp_pkey_st* pkey, const bn_t& r, const bn_t& s, const sha_256_digest_t& digest) {
+bool verify(EVP_PKEY* pkey, const bn_t& r, const bn_t& s, const sha_256_digest_t& digest) {
     return verify(pkey, r.data(), s.data(), digest);
 }
 
-bool verify(evp_pkey_st* pkey, const std::uint8_t* r, const std::uint8_t* s, const sha_256_digest_t& digest) {
+bool verify(EVP_PKEY* pkey, const std::uint8_t* r, const std::uint8_t* s, const sha_256_digest_t& digest) {
     bool bRes{false};
-    auto [signature, len] = bn_to_signature(r, s);
-    if ((signature != nullptr) && (len > 0)) {
-        bRes = verify(pkey, signature.get(), len, digest.data(), sha_256_digest_size);
+    auto signature = bn_to_signature(r, s);
+    if (signature) {
+        bRes = verify(pkey, signature.get(), signature.size(), digest.data(), sha_256_digest_size);
     }
     return bRes;
 }
@@ -181,6 +297,10 @@ bool verify(EVP_PKEY* pkey, const unsigned char* sig, std::size_t siglen, const 
     }
     EVP_PKEY_CTX_free(ctx);
     return bRes;
+}
+
+bool sha_1(const void* data, std::size_t len, sha_1_digest_t& digest) {
+    return sha(data, len, digest);
 }
 
 bool sha_256(const void* data, std::size_t len, sha_256_digest_t& digest) {
@@ -270,11 +390,26 @@ std::string base64_encode(const std::uint8_t* data, std::size_t len, bool newLin
     return result;
 }
 
-std::tuple<DER_Signature_ptr, std::size_t> bn_to_signature(const bn_t& r, const bn_t& s) {
+pkey_ptr load_private_key(const char* filename, const char* password) {
+    pkey_ptr private_key{nullptr, nullptr};
+    auto* bio = BIO_new_file(filename, "r");
+    if (bio != nullptr) {
+        // password is passed to password_cb() as parameter u which is never
+        // written to, hence const_cast is okay
+        auto* pkey = PEM_read_bio_PrivateKey(bio, nullptr, &password_cb, const_cast<char*>(password));
+        if (pkey != nullptr) {
+            private_key = pkey_ptr{pkey, &EVP_PKEY_free};
+        }
+        BIO_free(bio);
+    }
+    return private_key;
+}
+
+DER bn_to_signature(const bn_t& r, const bn_t& s) {
     return bn_to_signature(r.data(), s.data());
 };
 
-std::tuple<DER_Signature_ptr, std::size_t> bn_to_signature(const std::uint8_t* r, const std::uint8_t* s) {
+DER bn_to_signature(const std::uint8_t* r, const std::uint8_t* s) {
     std::uint8_t* sig_p{nullptr};
     std::size_t signature_len{0};
     BIGNUM* rbn{nullptr};
@@ -304,7 +439,8 @@ std::tuple<DER_Signature_ptr, std::size_t> bn_to_signature(const std::uint8_t* r
     BN_free(rbn);
     BN_free(sbn);
     ECDSA_SIG_free(signature);
-    return {DER_Signature_ptr(sig_p, &DER_Signature_free), signature_len};
+    // move sig_p to DER
+    return {der_ptr{sig_p, &DER::free}, signature_len};
 };
 
 bool signature_to_bn(bn_t& r, bn_t& s, const std::uint8_t* sig_p, std::size_t len) {
@@ -328,9 +464,8 @@ bool signature_to_bn(bn_t& r, bn_t& s, const std::uint8_t* sig_p, std::size_t le
     return bRes;
 };
 
-std::vector<Certificate_ptr> load_certificates(const char* filename) {
-    std::vector<Certificate_ptr> result{};
-
+certificate_list load_certificates(const char* filename) {
+    certificate_list result{};
     if (filename != nullptr) {
         auto* store = OSSL_STORE_open(filename, UI_null(), nullptr, nullptr, nullptr);
         if (store != nullptr) {
@@ -360,7 +495,87 @@ std::vector<Certificate_ptr> load_certificates(const char* filename) {
     return result;
 }
 
-std::string certificate_to_pem(const x509_st* cert) {
+certificate_list load_certificates(const std::vector<const char*>& filenames) {
+    certificate_list result{};
+    for (const auto* i : filenames) {
+        auto tmp = load_certificates(i);
+        std::move(tmp.begin(), tmp.end(), std::back_inserter(result));
+    }
+    return result;
+}
+
+chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file) {
+    certificate_ptr leaf_cert{nullptr, nullptr};
+    auto leaf = load_certificates(leaf_file);
+    auto chain = load_certificates(chain_file);
+    auto root = load_certificates(root_file);
+
+    if (leaf.empty()) {
+        if (!chain.empty()) {
+            leaf_cert.swap(chain[0]);
+            chain.erase(chain.begin());
+        }
+    } else {
+        leaf_cert.swap(leaf[0]);
+    }
+
+    if (leaf_cert && !root.empty()) {
+        if (verify_certificate(leaf_cert.get(), root, chain) == verify_result_t::Verified) {
+            return {std::move(leaf_cert), std::move(chain), std::move(root)};
+        }
+    }
+
+    return {{nullptr, nullptr}, {}, {}};
+}
+
+chain_info_list_t load_certificates(const chain_filenames_list_t& chains) {
+    chain_info_list_t result;
+    result.reserve(chains.size());
+    for (const auto& chain : chains) {
+        result.emplace_back(load_certificates(chain));
+    }
+    return result;
+}
+
+bool verify_certificate_key(const X509* cert, const EVP_PKEY* pkey) {
+    return X509_check_private_key(cert, pkey) == 1;
+}
+
+bool verify_chain(const chain_info_t& chain) {
+    return verify_certificate(chain.leaf.get(), chain.trust_anchors, chain.chain) == verify_result_t::Verified;
+}
+
+bool verify_chain(const chain_t& chain) {
+    bool result = verify_chain(chain.chain);
+    result = result && verify_certificate_key(chain.chain.leaf.get(), chain.private_key.get());
+    return result;
+}
+
+bool use_certificate_and_key(SSL* ssl, const chain_t& chain) {
+    assert(ssl != nullptr);
+
+    bool result{false};
+    SSL_certs_clear(ssl);
+    auto* untrusted = sk_X509_new_null();
+    if (untrusted == nullptr) {
+        log_error("sk_X509_new_null");
+    } else {
+        for (const auto& cert : chain.chain.chain) {
+            if (X509_add_cert(untrusted, cert.get(),
+                              X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP | X509_ADD_FLAG_NO_SS) != 1) {
+                log_error("X509_add_cert");
+            }
+        }
+        result = SSL_use_cert_and_key(ssl, chain.chain.leaf.get(), chain.private_key.get(), untrusted, 1) == 1;
+        if (!result) {
+            log_error("SSL_use_cert_and_key");
+        }
+        sk_X509_pop_free(untrusted, X509_free);
+    }
+    return result;
+}
+
+std::string certificate_to_pem(const X509* cert) {
     assert(cert != nullptr);
 
     auto* mem = BIO_new(BIO_s_mem());
@@ -379,21 +594,21 @@ std::string certificate_to_pem(const x509_st* cert) {
     return result;
 }
 
-Certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len) {
-    Certificate_ptr result{nullptr, nullptr};
+certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len) {
+    certificate_ptr result{nullptr, nullptr};
     const auto* ptr = der;
     auto* cert = d2i_X509(nullptr, &ptr, static_cast<std::int64_t>(len));
     if (cert == nullptr) {
         log_error("d2i_X509");
     } else {
-        result = Certificate_ptr{cert, &X509_free};
+        result = certificate_ptr{cert, &X509_free};
     }
     return result;
 }
 
-verify_result_t verify_certificate(const x509_st* cert, const CertificateList& trust_anchors,
-                                   const CertificateList& untrusted) {
-    verify_result_t result = verify_result_t::verified;
+verify_result_t verify_certificate(const X509* cert, const certificate_list& trust_anchors,
+                                   const certificate_list& untrusted) {
+    verify_result_t result = verify_result_t::Verified;
     auto* store_ctx = X509_STORE_CTX_new();
     auto* ta_store = X509_STORE_new();
     auto* chain = sk_X509_new_null();
@@ -422,7 +637,7 @@ verify_result_t verify_certificate(const x509_st* cert, const CertificateList& t
         }
     }
 
-    if (result == verify_result_t::verified) {
+    if (result == verify_result_t::Verified) {
         result = verify_result_t::OtherError;
 
         for (const auto& i : trust_anchors) {
@@ -472,7 +687,7 @@ verify_result_t verify_certificate(const x509_st* cert, const CertificateList& t
                     break;
                 }
             } else {
-                result = verify_result_t::verified;
+                result = verify_result_t::Verified;
             }
         }
     }
@@ -484,7 +699,7 @@ verify_result_t verify_certificate(const x509_st* cert, const CertificateList& t
     return result;
 }
 
-std::map<std::string, std::string> certificate_subject(const x509_st* cert) {
+std::map<std::string, std::string> certificate_subject(const X509* cert) {
     assert(cert != nullptr);
     std::map<std::string, std::string> result;
 
@@ -509,15 +724,67 @@ std::map<std::string, std::string> certificate_subject(const x509_st* cert) {
     return result;
 }
 
-PKey_ptr certificate_public_key(x509_st* cert) {
-    PKey_ptr result{nullptr, nullptr};
+DER certificate_subject_der(const X509* cert) {
+    assert(cert != nullptr);
+
+    int len{0};
+    unsigned char* data{nullptr};
+
+    // DO NOT FREE - internal pointers to certificate
+    const auto* subject = X509_get_subject_name(cert);
+    if (subject != nullptr) {
+        len = i2d_X509_NAME(subject, &data);
+    }
+
+    // move data to DER
+    return {der_ptr{data, &DER::free}, static_cast<std::size_t>(len)};
+}
+
+pkey_ptr certificate_public_key(X509* cert) {
+    pkey_ptr result{nullptr, nullptr};
     auto* pkey = X509_get_pubkey(cert);
     if (pkey == nullptr) {
         log_error("X509_get_pubkey");
     } else {
-        result = PKey_ptr(pkey, &EVP_PKEY_free);
+        result = pkey_ptr(pkey, &EVP_PKEY_free);
     }
     return result;
+}
+
+bool certificate_sha_1(openssl::sha_1_digest_t& digest, const X509* cert) {
+    assert(cert != nullptr);
+
+    bool bResult{false};
+    const ASN1_BIT_STRING* signature{nullptr};
+    const X509_ALGOR* alg{nullptr};
+    X509_get0_signature(&signature, &alg, cert);
+    if (signature != nullptr) {
+        unsigned char* data{nullptr};
+        const auto len = i2d_ASN1_BIT_STRING(signature, &data);
+        if (len > 0) {
+            bResult = openssl::sha_1(data, len, digest);
+        }
+        OPENSSL_free(data);
+    }
+
+    return bResult;
+}
+
+bool certificate_subject_public_key_sha_1(openssl::sha_1_digest_t& digest, const X509* cert) {
+    assert(cert != nullptr);
+
+    bool bResult{false};
+    const auto* pubkey = X509_get_X509_PUBKEY(cert);
+    if (pubkey != nullptr) {
+        unsigned char* data{nullptr};
+        const auto len = i2d_X509_PUBKEY(pubkey, &data);
+        if (len > 0) {
+            bResult = openssl::sha_1(data, len, digest);
+        }
+        OPENSSL_free(data);
+    }
+
+    return bResult;
 }
 
 } // namespace openssl

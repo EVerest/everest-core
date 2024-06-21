@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 chargebyte GmbH
 // Copyright (C) 2023 Contributors to EVerest
+#include "openssl_util.hpp"
 #include <cbv2g/common/exi_bitstream.h>
 #include <cbv2g/exi_v2gtp.h> //for V2GTP_HEADER_LENGTHs
 #include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
@@ -461,6 +462,8 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 
 #ifdef EVEREST_MBED_TLS
     /* Parse contract leaf certificate */
+    unsigned char* base64Buffer = NULL;
+    size_t olen;
     mbedtls_base64_encode(NULL, 0, &olen, static_cast<unsigned char*>(AExiBuffer), AExiBufferSize);
 
     if (MQTT_MAX_PAYLOAD_SIZE < olen) {
@@ -494,9 +497,11 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
     certificate_request.certificate_action = types::iso15118_charger::CertificateActionEnum::Install;
     ctx->p_charger->publish_certificate_request(certificate_request);
 
+#ifdef EVEREST_MBED_TLS
 exit:
     if (base64Buffer != NULL)
         free(base64Buffer);
+#endif // EVEREST_MBED_TLS
 
     return rv;
 }
@@ -744,7 +749,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
      * in the message; if we are not happy -> bail out
      */
     for (idx = 0; idx < conn->ctx->evse_v2g_data.payment_option_list_len; idx++) {
-        if ((conn->ctx->evse_v2g_data.payment_option_list[idx] == req->SelectedPaymentOption)) {
+        if (conn->ctx->evse_v2g_data.payment_option_list[idx] == req->SelectedPaymentOption) {
             list_element_found = true;
             conn->ctx->p_charger->publish_selected_payment_option(
                 static_cast<types::iso15118_charger::PaymentOption>(req->SelectedPaymentOption));
@@ -852,8 +857,8 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         Certificate_ptr contract_crt;
         const void* chain{nullptr};
 #else
-        Certificate_ptr contract_crt{nullptr, nullptr};
-        CertificateList chain{};
+        certificate_ptr contract_crt{nullptr, nullptr};
+        certificate_list chain{};
 #endif // EVEREST_MBED_TLS
 
         if (req->ContractSignatureCertChain.Certificate.bytesLen != 0) {
@@ -942,7 +947,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
 
             err = -1;
             switch (vRes) {
-            case crypto::verify_result_t::verified:
+            case crypto::verify_result_t::Verified:
                 err = 0;
                 break;
             case crypto::verify_result_t::CertificateExpired:
@@ -1024,7 +1029,6 @@ static enum v2g_event handle_iso_authorization(struct v2g_connection* conn) {
     struct iso2_AuthorizationReqType* req = &conn->exi_in.iso2EXIDocument->V2G_Message.Body.AuthorizationReq;
     struct iso2_AuthorizationResType* res = &conn->exi_out.iso2EXIDocument->V2G_Message.Body.AuthorizationRes;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
-    struct timespec ts_abs_timeout;
     bool is_payment_option_contract = conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract;
 
     /* At first, publish the received ev request message to the customer mqtt interface */
@@ -1109,7 +1113,6 @@ static enum v2g_event handle_iso_charge_parameter_discovery(struct v2g_connectio
     struct iso2_ChargeParameterDiscoveryResType* res =
         &conn->exi_out.iso2EXIDocument->V2G_Message.Body.ChargeParameterDiscoveryRes;
     enum v2g_event next_event = V2G_EVENT_NO_EVENT;
-    struct timespec ts_abs_timeout;
 
     /* At first, publish the received ev request message to the MQTT interface */
     publish_iso_charge_parameter_discovery_req(conn->ctx, req);
@@ -1425,8 +1428,8 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
     for (sa_schedule_tuple_idx = 0;
          sa_schedule_tuple_idx < conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.arrayLen;
          sa_schedule_tuple_idx++) {
-        if ((conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[sa_schedule_tuple_idx]
-                 .SAScheduleTupleID == req->SAScheduleTupleID)) {
+        if (conn->ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[sa_schedule_tuple_idx]
+                .SAScheduleTupleID == req->SAScheduleTupleID) {
             entry_found = true;
             conn->ctx->session.sa_schedule_tuple_id = req->SAScheduleTupleID;
             break;
@@ -1996,7 +1999,6 @@ static enum v2g_event handle_iso_session_stop(struct v2g_connection* conn) {
 enum v2g_event iso_handle_request(v2g_connection* conn) {
     struct iso2_exiDocument* exi_in = conn->exi_in.iso2EXIDocument;
     struct iso2_exiDocument* exi_out = conn->exi_out.iso2EXIDocument;
-    bool resume_trial;
     enum v2g_event next_v2g_event = V2G_EVENT_TERMINATE_CONNECTION;
 
     /* extract session id */
