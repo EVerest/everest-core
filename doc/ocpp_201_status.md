@@ -1144,7 +1144,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K01.FR.03 | :no_entry_sign: |  |
 | K01.FR.04 | :white_check_mark: |  |
 | K01.FR.05 |  |  |
-| K01.FR.06 |  |  |
+| K01.FR.06 | :white_check_mark: |  |
 | K01.FR.07 |  |  |
 | K01.FR.08 | :no_entry_sign: |  |
 | K01.FR.09 |  |  |
@@ -1157,10 +1157,10 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K01.FR.16 |  |  |
 | K01.FR.17 |  |  |
 | K01.FR.19 |  |  |
-| K01.FR.20 | :white_check_mark: |  |
+| K01.FR.20 | :white_check_mark: | This FR hints that `ACPhaseSwitchingSupported` should be per EVSE, but this makes no sense with the rest of the spec. |
 | K01.FR.21 |  |  |
 | K01.FR.22 |  |  |
-| K01.FR.26 |  |  |
+| K01.FR.26 | :white_check_mark: |  |
 | K01.FR.27 |  |  |
 | K01.FR.28 |  |  |
 | K01.FR.29 |  |  |
@@ -1172,7 +1172,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | K01.FR.35 |  |  |
 | K01.FR.36 | :white_check_mark: |  |
 | K01.FR.37 |  |  |
-| K01.FR.38 |  |  |
+| K01.FR.38 | :white_check_mark: |  |
 | K01.FR.39 | :white_check_mark: |  |
 | K01.FR.40 | :white_check_mark: |  |
 | K01.FR.41 | :white_check_mark: |  |
@@ -1218,7 +1218,7 @@ This document contains the status of which OCPP 2.0.1 numbered requirements have
 | --- | --- | --- |
 | K04.FR.01 |  |  |
 | K04.FR.02 |  |  |
-| K04.FR.03 |  |  |
+| K04.FR.03 | :white_check_mark: |  |
 | K04.FR.04 |  | The same as K01.FR.21 |
 | K04.FR.05 |  | This should be handled by the user of libocpp |
 ## SmartCharging - Remote Start Transaction with Charging Profile

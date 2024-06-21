@@ -80,7 +80,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
     }
 
-    this->device_model = std::make_unique<DeviceModel>(std::move(device_model_storage));
+    this->device_model = std::make_shared<DeviceModel>(std::move(device_model_storage));
     this->device_model->check_integrity(evse_connector_structure);
 
     auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db");

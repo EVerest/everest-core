@@ -4,6 +4,7 @@
 #pragma once
 
 #include <future>
+#include <memory>
 #include <set>
 
 #include <ocpp/common/charging_station_base.hpp>
@@ -393,7 +394,7 @@ private:
 
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
-    std::unique_ptr<DeviceModel> device_model;
+    std::shared_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
