@@ -376,6 +376,12 @@ void powermeterImpl::process_response(const RegisterData& register_data,
                                       const types::serial_comm_hub_requests::Result exponent_message) {
 
     if (register_message.status_code == types::serial_comm_hub_requests::StatusCodeEnum::Success) {
+        // in case the meter was unavailable before and now the query succeeded,
+        // we can tell the user about this good news and reset our flag
+        if (meter_is_unavailable) {
+            EVLOG_info << "Communication with power meter restored.";
+            meter_is_unavailable = false;
+        }
 
         int16_t exponent{0};
         if (exponent_message.value.has_value()) {
@@ -497,6 +503,13 @@ void powermeterImpl::process_response(const RegisterData& register_data,
     } else {
         // error: message sending failed
         output_error_with_content(register_message);
+
+        // let's warn the user about the meter's unavailability once only
+        // (since we keep trying communicating an 'error' is not justified)
+        if (!meter_is_unavailable) {
+            EVLOG_warning << "Lost communication with power meter.";
+            meter_is_unavailable = true;
+        }
     }
 }
 
