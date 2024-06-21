@@ -11,5 +11,9 @@ FetchContent_MakeAvailable(Catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 
+# source helper functions and library
+add_subdirectory(test_utils)
+
 add_subdirectory(app_handshake)
-add_subdirectory(DIN)
+add_subdirectory(din)
+add_subdirectory(iso20)

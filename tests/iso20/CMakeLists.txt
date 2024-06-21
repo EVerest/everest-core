@@ -1,0 +1,2 @@
+add_codec_test(ac_charge_loop)
+add_codec_test(dc_charge_loop)
