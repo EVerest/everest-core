@@ -442,6 +442,12 @@ bool ErrorHandling::modify_error_bsp(const Everest::error::Error& error, bool ac
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }
+    } else if (error_type == "evse_board_support/CommunicationFault") {
+        active_errors.bsp.set(BspErrors::CommunicationFault, active);
+        evse_error = types::evse_manager::ErrorEnum::VendorError;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
     } else {
         // Errors that do not stop charging
         if (error_type == "evse_board_support/MREC3HighTemperature") {

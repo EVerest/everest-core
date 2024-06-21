@@ -9,8 +9,7 @@ namespace module {
 void PhyVersoBSP::init() {
     // initialize serial driver
     if (!serial.open_device(config.serial_port.c_str(), config.baud_rate)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
-                                    " with baud rate ", config.baud_rate));
+        EVLOG_error << "Could not open serial port " << config.serial_port << " with baud rate " << config.baud_rate;
         return;
     }
 
@@ -32,7 +31,7 @@ void PhyVersoBSP::init() {
     }
 
     if (!verso_config.open_file(mcu_config_file.string())) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open config file ", mcu_config_file));
+        EVLOG_error << "Could not open config file " << mcu_config_file;
     }
 
     serial.signal_config_request.connect([&]() {
@@ -53,6 +52,15 @@ void PhyVersoBSP::ready() {
     invoke_ready(*p_phyverso_mcu_temperature);
     invoke_ready(*p_system_specific_data_1);
     invoke_ready(*p_system_specific_data_2);
+
+    if (not serial.is_open()) {
+        auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "",
+                                                              "Could not open serial port.");
+        p_connector_1->raise_error(err);
+        err = p_connector_2->error_factory->create_error("evse_board_support/CommunicationFault", "",
+                                                         "Could not open serial port.");
+        p_connector_2->raise_error(err);
+    }
 }
 
 } // namespace module
