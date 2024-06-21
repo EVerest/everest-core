@@ -489,6 +489,17 @@ void DatabaseHandler::clear_local_authorization_list() {
     }
 }
 
+int32_t DatabaseHandler::get_local_authorization_list_number_of_entries() {
+    std::string sql = "SELECT COUNT(*) FROM AUTH_LIST;";
+    auto stmt = this->database->new_statement(sql);
+
+    if (stmt->step() != SQLITE_ROW) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+
+    return stmt->column_int(0);
+}
+
 void DatabaseHandler::insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile) {
     // add or replace
     std::string sql = "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, CONNECTOR_ID, PROFILE) VALUES "

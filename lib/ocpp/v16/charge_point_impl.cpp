@@ -2629,7 +2629,9 @@ void ChargePointImpl::handleSendLocalListRequest(ocpp::Call<SendLocalListRequest
     response.status = UpdateStatus::Failed;
 
     try {
-        if (!this->configuration->getLocalAuthListEnabled()) {
+        if (!this->configuration->getSupportedFeatureProfilesSet().count(
+                SupportedFeatureProfiles::LocalAuthListManagement) or
+            !this->configuration->getLocalAuthListEnabled()) {
             response.status = UpdateStatus::NotSupported;
         } else if (call.msg.updateType == UpdateType::Full) {
             if (call.msg.localAuthorizationList) {
@@ -2679,12 +2681,17 @@ void ChargePointImpl::handleGetLocalListVersionRequest(ocpp::Call<GetLocalListVe
 
     GetLocalListVersionResponse response;
     if (!this->configuration->getSupportedFeatureProfilesSet().count(
-            SupportedFeatureProfiles::LocalAuthListManagement)) {
+            SupportedFeatureProfiles::LocalAuthListManagement) or
+        !this->configuration->getLocalAuthListEnabled()) {
         // if Local Authorization List is not supported, report back -1 as list version
         response.listVersion = -1;
     } else {
         try {
-            response.listVersion = this->database_handler->get_local_list_version();
+            if (this->database_handler->get_local_authorization_list_number_of_entries() == 0) {
+                response.listVersion = 0;
+            } else {
+                response.listVersion = this->database_handler->get_local_list_version();
+            }
         } catch (QueryExecutionException& e) {
             auto call_error = CallError(call.uniqueId, "InternalError", "Could not retrieve listVersion from database",
                                         json({}, true));

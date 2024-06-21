@@ -131,6 +131,9 @@ public:
     /// \brief Deletes all entries of the AUTH_LIST table.
     void clear_local_authorization_list();
 
+    /// \brief Get the number of entries currently in the authorization list
+    int32_t get_local_authorization_list_number_of_entries();
+
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
     virtual void insert_or_update_charging_profile(const int connector_id, const v16::ChargingProfile& profile);
 
