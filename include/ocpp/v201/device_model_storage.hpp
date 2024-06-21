@@ -105,9 +105,16 @@ public:
                         const Variable& variable_id) = 0;
 
     /// \brief Clears a single monitor based on the ID from the database
-    /// @param monitor_id Monitor ID
-    /// @return true if the monitor could be cleared or false otherwise
-    virtual bool clear_variable_monitor(int monitor_id) = 0;
+    /// \param monitor_id Monitor ID
+    /// \param allow_protected If we are allowed to delete non-custom monitors
+    /// \return if not Accepted, NotFound if the monitor could not be
+    /// found, or Rejected if it is a protected monitor
+    virtual ClearMonitoringStatusEnum clear_variable_monitor(int monitor_id, bool allow_protected) = 0;
+
+    /// \brief Clears all custom monitors (that were added by the CSMS)
+    /// from the database
+    /// \return count of monitors deleted, or 0 if none were deleted
+    virtual int32_t clear_custom_variable_monitors() = 0;
 
     /// \brief Check data integrity of the stored data:
     /// For "required" variables, assert values exist. Checks might be extended in the future.

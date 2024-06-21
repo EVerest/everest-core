@@ -47,7 +47,9 @@ public:
                                                             const Component& component_id,
                                                             const Variable& variable_id) final;
 
-    bool clear_variable_monitor(int monitor_id) final;
+    ClearMonitoringStatusEnum clear_variable_monitor(int monitor_id, bool allow_protected) final;
+
+    int32_t clear_custom_variable_monitors() final;
 
     void check_integrity() final;
 };

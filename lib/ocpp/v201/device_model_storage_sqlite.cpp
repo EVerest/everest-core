@@ -353,13 +353,57 @@ DeviceModelStorageSqlite::get_monitoring_data(const std::vector<MonitoringCriter
     return monitors;
 }
 
-bool DeviceModelStorageSqlite::clear_variable_monitor(int monitor_id) {
-    std::string delete_query = "DELETE FROM VARIABLE_MONITORING WHERE ID = ?";
+ClearMonitoringStatusEnum DeviceModelStorageSqlite::clear_variable_monitor(int monitor_id, bool allow_protected) {
+    std::string select_query = "SELECT COUNT(*) FROM VARIABLE_MONITORING WHERE ID = ?";
+
+    auto select_stmt = this->db->new_statement(select_query);
+    select_stmt->bind_int(1, monitor_id);
+
+    if (select_stmt->step() != SQLITE_ROW) {
+        EVLOG_error << this->db->get_error_message();
+        return ClearMonitoringStatusEnum::Rejected;
+    } else {
+        // If we couldn't find a monitor in the DB
+        if (select_stmt->column_int(0) != 1) {
+            return ClearMonitoringStatusEnum::NotFound;
+        }
+    }
+
+    std::string delete_query;
+
+    if (allow_protected) {
+        delete_query = "DELETE FROM VARIABLE_MONITORING WHERE ID = ?";
+    } else {
+        delete_query = "DELETE FROM VARIABLE_MONITORING WHERE ID = ? AND CONFIG_TYPE_ID = ?";
+    }
 
     auto transaction = this->db->begin_transaction();
     auto delete_stmt = this->db->new_statement(delete_query);
 
     delete_stmt->bind_int(1, monitor_id);
+
+    if (!allow_protected) {
+        delete_stmt->bind_int(2, static_cast<int>(VariableMonitorType::CustomMonitor));
+    }
+
+    if (delete_stmt->step() != SQLITE_DONE) {
+        EVLOG_error << this->db->get_error_message();
+        return ClearMonitoringStatusEnum::Rejected;
+    }
+
+    transaction->commit();
+
+    // Ensure that we deleted 1 row
+    return ((delete_stmt->changes() == 1) ? ClearMonitoringStatusEnum::Accepted : ClearMonitoringStatusEnum::Rejected);
+}
+
+int32_t DeviceModelStorageSqlite::clear_custom_variable_monitors() {
+    std::string delete_query = "DELETE FROM VARIABLE_MONITORING WHERE CONFIG_TYPE_ID = ?";
+
+    auto transaction = this->db->begin_transaction();
+    auto delete_stmt = this->db->new_statement(delete_query);
+
+    delete_stmt->bind_int(1, static_cast<int>(VariableMonitorType::CustomMonitor));
     if (delete_stmt->step() != SQLITE_DONE) {
         EVLOG_error << this->db->get_error_message();
         return false;
@@ -367,8 +411,7 @@ bool DeviceModelStorageSqlite::clear_variable_monitor(int monitor_id) {
 
     transaction->commit();
 
-    // Ensure that we deleted 1 row
-    return (delete_stmt->changes() == 1);
+    return delete_stmt->changes();
 }
 
 void DeviceModelStorageSqlite::check_integrity() {

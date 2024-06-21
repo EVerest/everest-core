@@ -27,6 +27,7 @@
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/ClearCache.hpp>
+#include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
 #include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/DeleteCertificate.hpp>
@@ -34,6 +35,7 @@
 #include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
 #include <ocpp/v201/messages/GetLocalListVersion.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
+#include <ocpp/v201/messages/GetMonitoringReport.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
 #include <ocpp/v201/messages/GetTransactionStatus.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
@@ -42,13 +44,17 @@
 #include <ocpp/v201/messages/MeterValues.hpp>
 #include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
 #include <ocpp/v201/messages/NotifyEvent.hpp>
+#include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
 #include <ocpp/v201/messages/NotifyReport.hpp>
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
+#include <ocpp/v201/messages/SetMonitoringBase.hpp>
+#include <ocpp/v201/messages/SetMonitoringLevel.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
+#include <ocpp/v201/messages/SetVariableMonitoring.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
 #include <ocpp/v201/messages/SignCertificate.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
@@ -655,6 +661,7 @@ private:
     // Functional Block N: Diagnostics
     void notify_event_req(const std::vector<EventData>& events);
     void notify_customer_information_req(const std::string& data, const int32_t request_id);
+    void notify_monitoring_report_req(const int request_id, const std::vector<MonitoringData>& montoring_data);
 
     /* OCPP message handlers */
 
@@ -703,6 +710,12 @@ private:
     // Functional Block N: Diagnostics
     void handle_get_log_req(Call<GetLogRequest> call);
     void handle_customer_information_req(Call<CustomerInformationRequest> call);
+
+    void handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> call);
+    void handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest> call);
+    void handle_set_variable_monitoring_req(const EnhancedMessage<v201::MessageType>& message);
+    void handle_get_monitoring_report_req(Call<GetMonitoringReportRequest> call);
+    void handle_clear_variable_monitoring_req(Call<ClearVariableMonitoringRequest> call);
 
     // Functional Block P: DataTransfer
     void handle_data_transfer_req(Call<DataTransferRequest> call);

@@ -139,6 +139,8 @@ extern const ComponentVariable& MonitoringCtrlrAvailable;
 extern const ComponentVariable& BytesPerMessageClearVariableMonitoring;
 extern const RequiredComponentVariable& BytesPerMessageSetVariableMonitoring;
 extern const ComponentVariable& MonitoringCtrlrEnabled;
+extern const ComponentVariable& ActiveMonitoringBase;
+extern const ComponentVariable& ActiveMonitoringLevel;
 extern const ComponentVariable& ItemsPerMessageClearVariableMonitoring;
 extern const RequiredComponentVariable& ItemsPerMessageSetVariableMonitoring;
 extern const ComponentVariable& OfflineQueuingSeverity;

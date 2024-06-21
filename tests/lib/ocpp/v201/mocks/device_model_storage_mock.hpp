@@ -19,7 +19,8 @@ public:
                 (const SetMonitoringData&, const VariableMonitorType));
     MOCK_METHOD(std::vector<VariableMonitoringMeta>, get_monitoring_data,
                 (const std::vector<MonitoringCriterionEnum>&, const Component&, const Variable&));
-    MOCK_METHOD(bool, clear_variable_monitor, (int));
+    MOCK_METHOD(ClearMonitoringStatusEnum, clear_variable_monitor, (int, bool));
+    MOCK_METHOD(int32_t, clear_custom_variable_monitors, ());
     MOCK_METHOD(void, check_integrity, ());
 };
 } // namespace ocpp::v201

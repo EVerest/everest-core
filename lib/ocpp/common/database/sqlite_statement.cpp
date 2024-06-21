@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/common/database/database_exceptions.hpp>
 #include <ocpp/common/database/sqlite_statement.hpp>
 
 #include <everest/logging.hpp>

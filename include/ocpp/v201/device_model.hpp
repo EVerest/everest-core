@@ -223,8 +223,15 @@ public:
 
     /// \brief Clears the given \p request_ids from the registered monitors if request_id is present
     /// \param request_ids
+    /// \param allow_protected if we should delete the non-custom monitors, defaults to false when
+    /// this operation is requested by the CSMS
     /// \return List of results of the requested operation
-    std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids);
+    std::vector<ClearMonitoringResult> clear_monitors(const std::vector<int>& request_ids,
+                                                      bool allow_protected = false);
+
+    /// \brief Clears all the custom monitors (set by the CSMS) present in the database
+    /// \return count of monitors deleted, can be 0 if no custom monitors were present in the db
+    int32_t clear_custom_monitors();
 
     /// \brief Check data integrity of the device model provided by the device model data storage:
     /// For "required" variables, assert values exist. Checks might be extended in the future.

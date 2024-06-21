@@ -94,6 +94,21 @@ TEST_F(DeviceModelTest, test_set_monitors) {
     const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
     const Variable variable_comp2 = {.name = "Interval"};
 
+    std::vector<ComponentVariable> components = {
+        {component1, std::nullopt, variable_comp1},
+        {component2, std::nullopt, variable_comp2},
+    };
+
+    // Clear all existing monitors for a clean test state
+    auto existing_monitors = dm->get_monitors({}, components);
+    for (auto& result : existing_monitors) {
+        std::vector<int32_t> ids;
+        for (auto& monitor : result.variableMonitoring) {
+            ids.push_back(monitor.id);
+        }
+        dm->clear_monitors(ids, true);
+    }
+
     const SetMonitoringData req_one{.value = 0.0,
                                     .type = MonitorEnum::PeriodicClockAligned,
                                     .severity = 7,
@@ -189,6 +204,29 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
         {component2, std::nullopt, variable_comp2},
     };
 
+    // Insert some monitors that are hard-wired
+    const SetMonitoringData hardwired_one{.value = 0.0,
+                                          .type = MonitorEnum::PeriodicClockAligned,
+                                          .severity = 5,
+                                          .component = component1,
+                                          .variable = variable_comp1};
+    const SetMonitoringData hardwired_two{.value = 8.579,
+                                          .type = MonitorEnum::UpperThreshold,
+                                          .severity = 2,
+                                          .component = component2,
+                                          .variable = variable_comp2};
+
+    std::vector<SetMonitoringData> requests;
+    requests.push_back(hardwired_one);
+    requests.push_back(hardwired_two);
+
+    auto set_result = dm->set_monitors(requests, VariableMonitorType::HardWiredMonitor);
+    std::vector<int> hardwired_monitor_ids;
+
+    for (auto& res : set_result) {
+        hardwired_monitor_ids.push_back(res.id.value());
+    }
+
     auto current_results = dm->get_monitors(criteria, components);
 
     // Delete all found IDs
@@ -199,14 +237,26 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
         }
     }
 
-    dm->clear_monitors(to_delete);
+    auto clear_result = dm->clear_custom_monitors();
+    ASSERT_EQ(clear_result, 2); // 2 custom should be deleted
 
     auto results = dm->get_monitors(criteria, components);
     ASSERT_EQ(results.size(), 2);
 
     for (auto& result : results) {
-        ASSERT_TRUE(result.variableMonitoring.empty());
+        // Each have 1 hardwired monitor
+        ASSERT_EQ(result.variableMonitoring.size(), 1);
     }
+
+    // All must be rejected
+    auto res_clear = dm->clear_monitors(hardwired_monitor_ids);
+
+    for (auto& result : res_clear) {
+        ASSERT_EQ(result.status, ClearMonitoringStatusEnum::Rejected);
+    }
+
+    // Clear all for next test iteration
+    dm->clear_monitors(hardwired_monitor_ids, true);
 }
 
 } // namespace v201

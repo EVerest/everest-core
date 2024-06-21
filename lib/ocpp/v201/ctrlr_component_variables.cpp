@@ -738,6 +738,16 @@ const ComponentVariable& MonitoringCtrlrEnabled = {
         "Enabled",
     }),
 };
+const ComponentVariable& ActiveMonitoringBase = {
+    ControllerComponents::MonitoringCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"ActiveMonitoringBase"}),
+};
+const ComponentVariable& ActiveMonitoringLevel = {
+    ControllerComponents::MonitoringCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"ActiveMonitoringLevel"}),
+};
 const ComponentVariable& ItemsPerMessageClearVariableMonitoring = {
     ControllerComponents::MonitoringCtrlr,
     std::nullopt,
