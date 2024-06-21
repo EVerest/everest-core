@@ -279,6 +279,10 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 }
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
+    if (fd <= 0) {
+        return 0;
+    }
+
     // Lambda to convert std::chrono to timeval.
     auto to_timeval = [](const auto& time) {
         using namespace std::chrono;
@@ -421,6 +425,10 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
                                                uint16_t first_register_address, uint16_t register_quantity,
                                                bool wait_for_reply, std::vector<uint16_t> request) {
     {
+        if (fd <= 0) {
+            return {};
+        }
+
         auto req =
             function == FunctionCode::WRITE_SINGLE_HOLDING_REGISTER
                 ? _make_single_write_request(device_address, first_register_address, wait_for_reply, request.at(0))

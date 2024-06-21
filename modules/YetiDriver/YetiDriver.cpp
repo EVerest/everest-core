@@ -10,8 +10,7 @@ void YetiDriver::init() {
 
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
-                                    " with baud rate ", config.baud_rate));
+        EVLOG_error << "Could not open serial port " << config.serial_port << " with baud rate " << config.baud_rate;
         return;
     }
 
@@ -69,13 +68,11 @@ void YetiDriver::ready() {
     serial.run();
 
     if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti reset not successful."));
+        EVLOG_error << "Yeti reset not successful.";
     }
 
-    serial.signalSpuriousReset.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti uC spurious reset!")); });
-    serial.signalConnectionTimeout.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "Yeti UART timeout!")); });
+    serial.signalSpuriousReset.connect([this]() { EVLOG_error << "Yeti uC spurious reset!"; });
+    serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "Yeti UART timeout!"; });
 
     invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
@@ -96,6 +93,12 @@ void YetiDriver::ready() {
     });
 
     serial.signalErrorFlags.connect([this](ErrorFlags e) { error_handling(e); });
+
+    if (not serial.is_open()) {
+        auto err = p_board_support->error_factory->create_error("evse_board_support/CommunicationFault", "",
+                                                                "Could not open serial port.");
+        p_board_support->raise_error(err);
+    }
 }
 
 void YetiDriver::publish_external_telemetry_livedata(const std::string& topic, const Everest::TelemetryMap& data) {

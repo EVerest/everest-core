@@ -63,7 +63,8 @@ enum class BspErrors : std::uint8_t {
     MREC25BrokenLatch,
     MREC26CutCable,
     VendorError,
-    last = VendorError
+    CommunicationFault,
+    last = CommunicationFault
 };
 
 enum class EvseManagerErrors : std::uint8_t {
