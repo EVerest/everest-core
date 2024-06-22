@@ -4,8 +4,12 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.15.0
-  options: ["BUILD_TESTING OFF"]
+  git_tag: v0.15.1
+  options: [
+    "BUILD_TESTING OFF",
+    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
+    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
+  ]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -61,7 +65,7 @@ libocpp:
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2024.2.1
+  git_tag: 2024.6.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
 # OpenV2G
 ext-openv2g:
@@ -80,7 +84,7 @@ ext-mbedtls:
 # everest-testing
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.2.3
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
 
 # unit testing

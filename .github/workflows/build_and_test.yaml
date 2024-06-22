@@ -15,11 +15,25 @@ on:
     - cron: '37 13,1 * * *'
 
 env:
-  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:v1.1.4
+  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:v1.2.0
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - name: Checkout everest-core
+        uses: actions/checkout@v4.1.6
+        with:
+          path: source
+      - name: Run clang-format
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.1.0
+        with:
+          source-dir: source
+          extensions: hpp,cpp
+          exclude: cache
   build:
-    name: Build, Lint and Test
+    name: Build and Unit Tests
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Format branch name for cache key
@@ -35,15 +49,9 @@ jobs:
             compile-${{ env.branch_name_for_cache }}-
             compile-
       - name: Checkout everest-core
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.6
         with:
           path: source
-      - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.1.0
-        with:
-          source-dir: source
-          extensions: hpp,cpp
-          exclude: cache
       - name: Setup run scripts
         run: |
           mkdir scripts
@@ -67,14 +75,81 @@ jobs:
           --volume "$(pwd):/ext" \
           --name unit-tests-container \
           build-image run-script run_unit_tests
+      - name: Create dist
+        run: |
+          docker run \
+          --volume "$(pwd):/ext" \
+          --name install-container \
+          build-image run-script install
+      - name: Tar dist dir and keep permissions
+        run: |
+          tar -czf dist.tar.gz dist
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          path: dist.tar.gz
+          name: dist
+      - name: Upload wheels artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          path: dist-wheels
+          name: wheels
+  integration-tests:
+    name: Integration Tests
+    needs: build
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    steps:
+      - name: Download dist dir
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: dist
+      - name: Extract dist.tar.gz
+        run: |
+          tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
+      - name: Download wheels
+        uses: actions/download-artifact@v4.1.2
+        with:
+          name: wheels
+          path: wheels
+      - name: Checkout everest-core
+        uses: actions/checkout@v4.1.6
+        with:
+          path: source
+      - name: Setup run scripts
+        run: |
+          mkdir scripts
+          rsync -a source/.ci/build-kit/ scripts
+      - name: Pull build-kit image
+        run: |
+          docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
+          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
       - name: Create integration-image
         run: |
           docker run \
           --volume "$(pwd):/ext" \
-          --name test-container \
-          build-image run-script prepare_integration_tests
-          docker commit test-container integration-image
+          --name prepare-container \
+          build-kit run-script prepare_integration_tests
+          docker commit prepare-container integration-image
       - name: Run integration tests
         run: |
           pushd source/.ci/e2e
-          docker-compose run e2e-test-server run-script run_integration_tests
+          docker-compose run \
+          e2e-test-server \
+          run-script run_integration_tests
+      - name: Upload result & report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          path: |
+            ${{ github.workspace }}/result.xml
+            ${{ github.workspace }}/report.html
+          name: pytest-results
+      - name: Render result
+        if: always()
+        uses: pmeier/pytest-results-action@v0.6.0
+        with:
+          path: ${{ github.workspace }}/result.xml
+          summary: True
+          display-options: fEX
+          fail-on-empty: True
+          title: Test results
