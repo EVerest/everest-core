@@ -13,6 +13,7 @@ void MicroMegaWattBSP::init() {
 
     invoke_init(*p_board_support);
     invoke_init(*p_dc_supply);
+    invoke_init(*p_powermeter);
 }
 
 void MicroMegaWattBSP::ready() {
@@ -38,6 +39,7 @@ void MicroMegaWattBSP::ready() {
 
     invoke_ready(*p_board_support);
     invoke_ready(*p_dc_supply);
+    invoke_ready(*p_powermeter);
 
     if (not serial.is_open()) {
         auto err = p_board_support->error_factory->create_error("evse_board_support/CommunicationFault", "",

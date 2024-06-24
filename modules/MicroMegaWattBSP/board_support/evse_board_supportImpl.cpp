@@ -71,10 +71,6 @@ void evse_board_supportImpl::init() {
             auto event_cp_state = cast_event_type(cp_state);
             EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
             publish_event(event_cp_state);
-
-            /*if (cp_state == CpState_STATE_A) {
-                mod->clear_errors_on_unplug();
-            }*/
             last_cp_state = cp_state;
         }
     });
