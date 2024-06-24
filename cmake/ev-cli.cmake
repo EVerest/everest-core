@@ -1,5 +1,7 @@
 macro(setup_ev_cli)
-    add_custom_target(ev-cli)
+    if(NOT TARGET ev-cli)
+        add_custom_target(ev-cli)
+    endif()
     if(${EV_CLI})
         message(FATAL_ERROR "EV_CLI is already defined.")
         return()
