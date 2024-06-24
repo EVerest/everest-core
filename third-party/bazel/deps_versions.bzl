@@ -7,7 +7,7 @@ EVEREST_DEPS = struct(
 	# Josev
 	Josev_repo = "https://github.com/EVerest/ext-switchev-iso15118.git",
 	Josev_commit = None,
-	Josev_tag = "2024.2.1",
+	Josev_tag = "2024.6.0",
 
 	# catch2
 	catch2_repo = "https://github.com/catchorg/Catch2.git",
@@ -17,12 +17,12 @@ EVEREST_DEPS = struct(
 	# everest-framework
 	everest_framework_repo = "https://github.com/EVerest/everest-framework.git",
 	everest_framework_commit = None,
-	everest_framework_tag = "v0.15.0",
+	everest_framework_tag = "v0.15.1",
 
 	# everest-utils
 	everest_utils_repo = "https://github.com/EVerest/everest-utils.git",
 	everest_utils_commit = None,
-	everest_utils_tag = "v0.2.3",
+	everest_utils_tag = "v0.3.0",
 
 	# ext-mbedtls
 	ext_mbedtls_repo = "https://github.com/EVerest/ext-mbedtls.git",
