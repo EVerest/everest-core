@@ -167,6 +167,7 @@ private:
     FRIEND_TEST(ErrorHandlingTest, modify_error_bsp);
     FRIEND_TEST(ErrorHandlingTest, modify_error_connector_lock);
     FRIEND_TEST(ErrorHandlingTest, modify_error_ac_rcd);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_imd);
     FRIEND_TEST(ErrorHandlingTest, modify_error_evse_manager);
 #endif
 };
