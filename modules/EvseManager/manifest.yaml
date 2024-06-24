@@ -142,6 +142,13 @@ config:
       always be positive but power supply may actually discharge the car.
     type: boolean
     default: false
+  hack_simplified_mode_limit_10A:
+    description:
+      Limit PWM to 10A if EV uses simplified charging mode. Set to false to be compliant with IEC61851-1:2019 section A.2.3.
+      It is the responsibility of the EV to limit to 10A according to the norm. Enable this option to deviate from the norm
+      and limit from the EVSE side.
+    type: boolean
+    default: false
   autocharge_use_slac_instead_of_hlc:
     description: Use slac ev mac address for autocharge instead of EVCCID from HLC
     type: boolean

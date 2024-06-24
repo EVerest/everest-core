@@ -89,6 +89,10 @@ public:
 
     void connector_force_unlock();
 
+    void set_ev_simplified_mode_evse_limit(bool l) {
+        ev_simplified_mode_evse_limit = l;
+    }
+
     // Signal for internal events type
     sigslot::signal<CPEvent> signal_event;
     sigslot::signal<> signal_lock;
@@ -103,6 +107,9 @@ private:
     bool pwm_running{false};
     bool last_pwm_running{false};
 
+    static constexpr float ev_simplified_mode_evse_limit_pwm{10 / 0.6 / 100.}; // Fixed 10A limit
+    // If set to true, EVSE will limit to 10A in case of simplified charging
+    bool ev_simplified_mode_evse_limit{false};
     bool ev_simplified_mode{false};
     bool has_ventilation{false};
     bool power_on_allowed{false};
