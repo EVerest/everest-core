@@ -6,18 +6,18 @@ macro(setup_ev_cli)
     endif()
     if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
         find_program(EV_CLI ev-cli REQUIRED)
-        return()
+    else()
+        ev_is_python_venv_active(
+            RESULT_VAR IS_PYTHON_VENV_ACTIVE
+        )
+        if(NOT ${IS_PYTHON_VENV_ACTIVE})
+            message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
+        endif()
+        set(EV_CLI "${${PROJECT_NAME}_PYTHON_VENV_PATH}/bin/ev-cli")
+        add_dependencies(ev-cli
+            ev-dev-tools_pip_install_dist
+        )
     endif()
-    ev_is_python_venv_active(
-        RESULT_VAR IS_PYTHON_VENV_ACTIVE
-    )
-    if(NOT ${IS_PYTHON_VENV_ACTIVE})
-        message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
-    endif()
-    set(EV_CLI "${${PROJECT_NAME}_PYTHON_VENV_PATH}/bin/ev-cli")
-    add_dependencies(ev-cli
-        ev-dev-tools_pip_install_dist
-    )
 endmacro()
 
 function(require_ev_cli_version EV_CLI_VERSION_REQUIRED)
