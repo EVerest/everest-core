@@ -29,10 +29,10 @@ EVEREST_DEPS = struct(
 	ext_mbedtls_commit = "8b3f26a5ac38d4fdccbc5c5366229f3e01dafcc0",
 	ext_mbedtls_tag = None,
 
-	# ext-openv2g
-	ext_openv2g_repo = "https://github.com/EVerest/ext-openv2g.git",
-	ext_openv2g_commit = None,
-	ext_openv2g_tag = "2023.3.0",
+	# libcbv2g
+	ext_libcbv2g_repo = "https://github.com/EVerest/libcbv2g.git",
+	ext_libcbv2g_commit = None,
+	ext_libcbv2g_tag = "v0.2.0",
 
 	# gtest
 	gtest_repo = "https://github.com/google/googletest.git",
