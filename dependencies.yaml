@@ -81,7 +81,7 @@ ext-mbedtls:
     - ENABLE_PROGRAMS OFF
     - ENABLE_TESTING OFF
     - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
-# everest-testing
+# everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
   git_tag: v0.3.1
