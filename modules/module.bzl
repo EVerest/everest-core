@@ -54,9 +54,11 @@ def cc_everest_module(
     """.format(module_name = name)
     )
 
+    binary = name + "__binary"
+    manifest = native.glob(["manifest.y*ml"], allow_empty = False)[0]
 
     native.cc_binary(
-        name = name,
+        name = binary,
         srcs = depset(srcs + impl_srcs + module_srcs + [
             ":ld-ev",
         ]).to_list(),
@@ -69,4 +71,25 @@ def cc_everest_module(
             ".",
             "generated/modules/" + name,
         ],
+        visibility = ["//visibility:public"],
     )
+
+    native.genrule(
+        name = "copy_to_subdir",
+        srcs = [":" + binary, manifest],
+        outs = [
+            "{}/manifest.yaml".format(name),
+            "{}/{}".format(name, name),
+        ],
+        cmd = "mkdir -p $(RULEDIR)/{} && ".format(name) +
+              "cp $(location {}) $(RULEDIR)/{}/{} && ".format(binary, name, name) +
+              "cp $(location {}) $(RULEDIR)/{}/".format(manifest, name),
+    )
+
+    native.filegroup(
+        name = name,
+        srcs = [
+            ":copy_to_subdir",
+        ],
+        visibility = ["//visibility:public"],
+    )    
