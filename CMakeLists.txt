@@ -93,7 +93,7 @@ else()
     find_package(everest-framework REQUIRED)
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
-    find_package(libcbv2g REQUIRED)
+    find_package(cbv2g REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 
