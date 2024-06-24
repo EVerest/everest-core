@@ -315,8 +315,13 @@ RuntimeSettings::RuntimeSettings(const std::string& prefix_, const std::string& 
     // overwrite mqtt broker port with environment variable
     // NOLINTNEXTLINE(concurrency-mt-unsafe): not problematic that this function is not threadsafe here
     const char* mqtt_server_port = std::getenv("MQTT_SERVER_PORT");
+
     if (mqtt_server_port != nullptr) {
-        mqtt_broker_port = std::stoi(mqtt_server_port);
+        try {
+            mqtt_broker_port = std::stoi(mqtt_server_port);
+        } catch (...) {
+            EVLOG_warning << "Environment variable MQTT_SERVER_PORT set, but not set to an integer. Ignoring.";
+        }
     }
 
     const auto settings_mqtt_everest_prefix_it = settings.find("mqtt_everest_prefix");
