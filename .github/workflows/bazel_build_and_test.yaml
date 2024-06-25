@@ -12,9 +12,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: "~/.cache/bazel"
-          key: ${{ runner.os }}-bazel-${{ hashFiles('.bazelversion', '.bazelrc', 'WORKSPACE.bazel', 'third-party/bazel/*') }}
+          key: ${{ runner.os }}-bazel-${{ hashFiles('dependencies.yaml', '.bazelversion', '.bazelrc', 'WORKSPACE.bazel', 'third-party/bazel/*') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
+      - name: Setup edm
+        run: |
+          pip install git+https://github.com/Everest/everest-dev-environment.git#subdirectory=dependency_manager
       - name: Build all
         run: >
           bazelisk build //...
       - name: Test all
-        run: bazelisk test //...
+        run: bazelisk test //... --test_output=errors

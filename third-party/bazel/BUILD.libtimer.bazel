@@ -1,0 +1,7 @@
+cc_library(
+    name = "libtimer",
+    hdrs = ["include/everest/timer.hpp"],
+    deps = [],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
