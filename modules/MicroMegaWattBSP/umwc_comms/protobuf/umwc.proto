@@ -12,7 +12,6 @@ message EverestToMcu {
 
     // Other IDs are 100+ to avoid compatibility issues with older firmware versions
     KeepAlive keep_alive = 100;
-    bool connector_lock = 102; // false: unlock, true: lock
     uint32 pwm_duty_cycle = 103; // in 0.01 %, 0 = State F, 10000 = X1
     bool allow_power_on = 104;
     bool reset = 105;
@@ -35,9 +34,6 @@ message McuToEverest {
   bool relais_state = 103; // false: relais are off, true: relais are on
   ErrorFlags error_flags = 104;
   Telemetry telemetry = 105;
-  PpState pp_state = 106;
-  LockState lock_state = 107;
-  PowerMeter power_meter = 108;
  }
 }
 
@@ -91,25 +87,7 @@ message Telemetry {
   float cp_lo = 2;
   float pwm_dc = 3;
   float relais_on = 4;
-}
-
-enum PpState {
-  STATE_NC = 0;
-  STATE_13A = 1;
-  STATE_20A = 2;
-  STATE_32A = 3;
-  STATE_70A = 4;
-  STATE_FAULT = 5;
-}
-
-enum LockState {
-  UNDEFINED = 0;
-  UNLOCKED = 1;
-  LOCKED = 2;
-}
-
-message PowerMeter {
-  float voltage = 2;
+  float voltage = 5;
 }
 
 message FirmwareUpdate {
