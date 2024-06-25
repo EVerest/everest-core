@@ -4,8 +4,8 @@
 #ifndef EVSEMANAGERSTUB_H_
 #define EVSEMANAGERSTUB_H_
 
-#include "ModuleAdapterStub.hpp"
 #include <ErrorHandling.hpp>
+#include <ModuleAdapterStub.hpp>
 
 //-----------------------------------------------------------------------------
 namespace module::stub {
