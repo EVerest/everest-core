@@ -25,6 +25,8 @@ TxEvent get_tx_event(const ocpp::v201::ReasonEnum reason) {
         return TxEvent::DEAUTHORIZED;
     case ocpp::v201::ReasonEnum::EVDisconnected:
         return TxEvent::EV_DISCONNECTED;
+    case ocpp::v201::ReasonEnum::ImmediateReset:
+        return TxEvent::IMMEDIATE_RESET;
     default:
         return TxEvent::NONE;
     }
@@ -796,6 +798,9 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
         auto charging_state = transaction_data->charging_state;
         if (reason == ocpp::v201::ReasonEnum::EVDisconnected) {
             charging_state = ocpp::v201::ChargingStateEnum::Idle;
+        } else if (reason == ocpp::v201::ReasonEnum::ImmediateReset &&
+                   charging_state != ocpp::v201::ChargingStateEnum::Idle) {
+            charging_state = ocpp::v201::ChargingStateEnum::EVConnected;
         } else if (tx_event == TxEvent::DEAUTHORIZED) {
             charging_state = ocpp::v201::ChargingStateEnum::EVConnected;
         }
