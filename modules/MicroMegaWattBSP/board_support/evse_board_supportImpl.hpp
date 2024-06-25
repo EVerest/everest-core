@@ -61,6 +61,9 @@ private:
     // insert your private definitions here
     types::evse_board_support::HardwareCapabilities caps;
     std::mutex capsMutex;
+    std::atomic_bool keep_alive_printed{false};
+    CpState last_cp_state{CpState::CpState_STATE_E};
+    bool last_relais_state{false};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

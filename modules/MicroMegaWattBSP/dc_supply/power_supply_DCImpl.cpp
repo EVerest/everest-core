@@ -8,12 +8,22 @@ namespace module {
 namespace dc_supply {
 
 void power_supply_DCImpl::init() {
-
-    mod->serial.signalPowerMeter.connect([this](const PowerMeter& p) {
+    mod->serial.signalTelemetry.connect([this](Telemetry t) {
         types::power_supply_DC::VoltageCurrent vc;
-        vc.voltage_V = p.voltage;
-        vc.current_A = 0.;
+        vc.current_A = 0;
+        vc.voltage_V = t.voltage;
         publish_voltage_current(vc);
+
+        types::powermeter::Powermeter p;
+        p.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+        p.meter_id = "UMWC";
+        types::units::Energy e;
+        e.total = 0.;
+        p.energy_Wh_import = e;
+        types::units::Voltage v;
+        v.DC = t.voltage;
+        p.voltage_V = v;
+        mod->p_powermeter->publish_powermeter(p);
     });
 }
 

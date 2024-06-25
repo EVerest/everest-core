@@ -5,73 +5,81 @@
 
 namespace module {
 namespace board_support {
-
-/*
-
-
-static types::board_support::Event cast_event_type(const Event& e) {
-switch (e.type) {
-case Event_InterfaceEvent_CAR_PLUGGED_IN:
-    return types::board_support::Event::CarPluggedIn;
-case Event_InterfaceEvent_CAR_REQUESTED_POWER:
-    return types::board_support::Event::CarRequestedPower;
-case Event_InterfaceEvent_POWER_ON:
-    return types::board_support::Event::PowerOn;
-case Event_InterfaceEvent_POWER_OFF:
-    return types::board_support::Event::PowerOff;
-case Event_InterfaceEvent_CAR_REQUESTED_STOP_POWER:
-    return types::board_support::Event::CarRequestedStopPower;
-case Event_InterfaceEvent_CAR_UNPLUGGED:
-    return types::board_support::Event::CarUnplugged;
-case Event_InterfaceEvent_ERROR_E:
-    return types::board_support::Event::ErrorE;
-case Event_InterfaceEvent_ERROR_DF:
-    return types::board_support::Event::ErrorDF;
-case Event_InterfaceEvent_ERROR_RELAIS:
-    return types::board_support::Event::ErrorRelais;
-case Event_InterfaceEvent_ERROR_RCD:
-    return types::board_support::Event::ErrorRCD;
-case Event_InterfaceEvent_ERROR_VENTILATION_NOT_AVAILABLE:
-    return types::board_support::Event::ErrorVentilationNotAvailable;
-case Event_InterfaceEvent_ERROR_OVER_CURRENT:
-    return types::board_support::Event::ErrorOverCurrent;
-case Event_InterfaceEvent_ENTER_BCD:
-    return types::board_support::Event::EFtoBCD;
-case Event_InterfaceEvent_LEAVE_BCD:
-    return types::board_support::Event::BCDtoEF;
-case Event_InterfaceEvent_PERMANENT_FAULT:
-    return types::board_support::Event::PermanentFault;
-case Event_InterfaceEvent_EVSE_REPLUG_STARTED:
-    return types::board_support::Event::EvseReplugStarted;
-case Event_InterfaceEvent_EVSE_REPLUG_FINISHED:
-    return types::board_support::Event::EvseReplugFinished;
+static types::board_support_common::BspEvent cast_event_type(CpState cp_state) {
+    types::board_support_common::BspEvent event;
+    switch (cp_state) {
+    case CpState_STATE_A:
+        event.event = types::board_support_common::Event::A;
+        break;
+    case CpState_STATE_B:
+        event.event = types::board_support_common::Event::B;
+        break;
+    case CpState_STATE_C:
+        event.event = types::board_support_common::Event::C;
+        break;
+    case CpState_STATE_D:
+        event.event = types::board_support_common::Event::D;
+        break;
+    case CpState_STATE_E:
+        event.event = types::board_support_common::Event::E;
+        break;
+    case CpState_STATE_F:
+        event.event = types::board_support_common::Event::F;
+        break;
+    }
+    return event;
 }
 
-EVLOG_error << "Received an unknown interface event from uMWC: " << (int)e.type;
-return types::board_support::Event::ErrorVentilationNotAvailable;
+static types::board_support_common::BspEvent cast_event_type(bool relais_state) {
+    types::board_support_common::BspEvent event;
+    if (relais_state) {
+        event.event = types::board_support_common::Event::PowerOn;
+    } else {
+        event.event = types::board_support_common::Event::PowerOff;
+    }
+    return event;
 }
-*/
 
 void evse_board_supportImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
         caps.min_current_A_import = 0;
-        caps.max_current_A_import = 6;
+        caps.max_current_A_import = 100;
         caps.min_phase_count_import = 1;
         caps.max_phase_count_import = 3;
         caps.supports_changing_phases_during_charging = false;
+        caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable;
 
         caps.min_current_A_export = 0;
-        caps.max_current_A_export = 6;
+        caps.max_current_A_export = 100;
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
     }
 
-    /*   mod->serial.signalEvent.connect([this](Event e) {
-           EVLOG_info << "CP EVENT: " << types::board_support::event_to_string(cast_event_type(e));
-           publish_event(cast_event_type(e));
-       });*/
+    mod->serial.signalKeepAliveLo.connect([this](KeepAliveLo l) {
+        if (not keep_alive_printed) {
+            EVLOG_info << "uMWC Controller Configuration:";
+            EVLOG_info << "  Hardware revision: " << l.hw_revision;
+            EVLOG_info << "  Firmware version: " << l.sw_version_string;
+        }
+        keep_alive_printed = true;
+    });
+
+    mod->serial.signalCPState.connect([this](CpState cp_state) {
+        if (cp_state not_eq last_cp_state) {
+            auto event_cp_state = cast_event_type(cp_state);
+            EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
+            publish_event(event_cp_state);
+            last_cp_state = cp_state;
+        }
+    });
+    mod->serial.signalRelaisState.connect([this](bool relais_state) {
+        if (last_relais_state not_eq relais_state) {
+            publish_event(cast_event_type(relais_state));
+            last_relais_state = relais_state;
+        }
+    });
 }
 
 void evse_board_supportImpl::ready() {
