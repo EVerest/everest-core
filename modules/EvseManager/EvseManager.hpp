@@ -78,6 +78,7 @@ struct Conf {
     int hack_present_current_offset;
     bool hack_pause_imd_during_precharge;
     bool hack_allow_bpt_with_iso2;
+    bool hack_simplified_mode_limit_10A;
     bool autocharge_use_slac_instead_of_hlc;
     bool enable_autocharge;
     std::string logfile_suffix;
