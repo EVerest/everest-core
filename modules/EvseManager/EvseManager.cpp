@@ -119,6 +119,11 @@ void EvseManager::init() {
 
 void EvseManager::ready() {
     bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
+
+    if (config.hack_simplified_mode_limit_10A) {
+        bsp->set_ev_simplified_mode_evse_limit(true);
+    }
+
     error_handling =
         std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse));
 
