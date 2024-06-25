@@ -17,7 +17,7 @@ jobs:
             ${{ runner.os }}-bazel-
       - name: Setup edm
         run: |
-          pip install git+https://github.com/Qwello/everest-dev-environment.git@add_bazel_deps_generation#subdirectory=dependency_manager
+          pip install git+https://github.com/Everest/everest-dev-environment.git#subdirectory=dependency_manager
       - name: Build all
         run: >
           bazelisk build //...
