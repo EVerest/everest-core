@@ -343,8 +343,8 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
                             iso2_unitSymbolType_W);
     v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
 
-    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
-                                  maximum_limits.maximum_voltage, 1, iso2_unitSymbolType_V);
+    populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit, maximum_limits.maximum_voltage, 1,
+                                  iso2_unitSymbolType_V);
     v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used = 1;
 }
 
@@ -352,11 +352,9 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
     types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
-                                  static_cast<long long int>(minimum_limits.minimum_current), 1,
-                                  iso2_unitSymbolType_A);
+                                  static_cast<long long int>(minimum_limits.minimum_current), 1, iso2_unitSymbolType_A);
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
-                                  static_cast<long long int>(minimum_limits.minimum_voltage), 1,
-                                  iso2_unitSymbolType_V);
+                                  static_cast<long long int>(minimum_limits.minimum_voltage), 1, iso2_unitSymbolType_V);
 }
 
 void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {

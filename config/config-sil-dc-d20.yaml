@@ -44,7 +44,7 @@ active_modules:
         - module_id: imd
           implementation_id: main
   powersupply_dc:
-    module: JsDCSupplySimulator
+    module: DCSupplySimulator
   yeti_driver:
     module: JsYetiSimulator
     config_module:

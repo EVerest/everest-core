@@ -130,7 +130,7 @@ void ISO15118_chargerImpl::ready() {
         try {
             controller->loop();
         } catch (const std::exception& e) {
-            EVLOG_error << "D20Evse chrashed: " << e.what();
+            EVLOG_error << "D20Evse crashed: " << e.what();
             publish_dlink_error(nullptr);
         }
 

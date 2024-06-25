@@ -508,8 +508,8 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     session_log.evse(
                         true,
                         fmt::format("Change HLC Limits: {}W/{}A, target_voltage {}, actual_voltage {}, hack_bpt {}",
-                                    evseMaxLimits.maximum_power, evseMaxLimits.maximum_current,
-                                    target_voltage, actual_voltage, mod->is_actually_exporting_to_grid));
+                                    evseMaxLimits.maximum_power, evseMaxLimits.maximum_current, target_voltage,
+                                    actual_voltage, mod->is_actually_exporting_to_grid));
                     mod->r_hlc[0]->call_update_dc_maximum_limits(evseMaxLimits);
                     mod->charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
 

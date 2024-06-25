@@ -185,7 +185,7 @@ types:
         minimum: 0
         maximum: 1500
       maximum_discharge_current:
-        description: Maximum discharge current the EVSE can deliver in W
+        description: Maximum discharge current the EVSE can deliver in A
         type: number
         minimum: 0
         maximum: 10000
@@ -219,7 +219,7 @@ types:
         minimum: 0
         maximum: 1000000
       minimum_discharge_current:
-        description: Minimum discharge current the EVSE can deliver in W
+        description: Minimum discharge current the EVSE can deliver in A
         type: number
         minimum: 0
         maximum: 10000
