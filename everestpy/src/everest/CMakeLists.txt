@@ -1,3 +1,9 @@
+find_package(Python3
+    REQUIRED
+    COMPONENTS
+    Development
+)
+
 if (DISABLE_EDM)
     find_package(pybind11 REQUIRED)
     find_package(pybind11_json REQUIRED)
