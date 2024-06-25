@@ -57,6 +57,9 @@ active_modules:
     module: JsSlacSimulator
   imd:
     module: IMDSimulator
+    config_implementation:
+      main:
+        selftest_success: true
   ev_manager:
     module: JsEvManager
     config_module:
