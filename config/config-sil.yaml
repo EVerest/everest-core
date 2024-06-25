@@ -89,6 +89,15 @@ active_modules:
     module: EvseManager
     telemetry:
       id: 1
+    mapping:
+      evse:
+        evse: 1
+      energy_grid:
+        evse: 1
+      token_provider:
+        evse: 1
+      random_delay:
+        evse: 1
   grid_connection_point:
     config_module:
       fuse_limit_A: 40
