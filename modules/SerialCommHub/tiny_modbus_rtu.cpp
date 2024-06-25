@@ -54,10 +54,7 @@ std::string FunctionCode_to_string(FunctionCode fc) {
 }
 
 std::string FunctionCode_to_string_with_hex(FunctionCode fc) {
-    std::stringstream ss;
-    ss << FunctionCode_to_string(fc) << "(0x" << std::nouppercase << std::setfill('0') << std::setw(2) << std::hex
-       << (unsigned int)fc << ")";
-    return ss.str();
+    return fmt::format("{}({:#04x})", FunctionCode_to_string(fc), (unsigned int)fc);
 }
 
 std::ostream& operator<<(std::ostream& os, const FunctionCode& fc) {
