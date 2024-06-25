@@ -7,7 +7,7 @@ EVEREST_DEPS = struct(
 	# Josev
 	Josev_repo = "https://github.com/EVerest/ext-switchev-iso15118.git",
 	Josev_commit = None,
-	Josev_tag = "2024.2.1",
+	Josev_tag = "2024.6.0",
 
 	# catch2
 	catch2_repo = "https://github.com/catchorg/Catch2.git",
@@ -17,22 +17,22 @@ EVEREST_DEPS = struct(
 	# everest-framework
 	everest_framework_repo = "https://github.com/EVerest/everest-framework.git",
 	everest_framework_commit = None,
-	everest_framework_tag = "v0.15.0",
+	everest_framework_tag = "v0.15.1",
 
 	# everest-utils
 	everest_utils_repo = "https://github.com/EVerest/everest-utils.git",
 	everest_utils_commit = None,
-	everest_utils_tag = "v0.2.3",
+	everest_utils_tag = "v0.3.0",
 
 	# ext-mbedtls
 	ext_mbedtls_repo = "https://github.com/EVerest/ext-mbedtls.git",
 	ext_mbedtls_commit = "8b3f26a5ac38d4fdccbc5c5366229f3e01dafcc0",
 	ext_mbedtls_tag = None,
 
-	# ext-openv2g
-	ext_openv2g_repo = "https://github.com/EVerest/ext-openv2g.git",
-	ext_openv2g_commit = None,
-	ext_openv2g_tag = "2023.3.0",
+	# libcbv2g
+	ext_libcbv2g_repo = "https://github.com/EVerest/libcbv2g.git",
+	ext_libcbv2g_commit = None,
+	ext_libcbv2g_tag = "v0.2.0",
 
 	# gtest
 	gtest_repo = "https://github.com/google/googletest.git",

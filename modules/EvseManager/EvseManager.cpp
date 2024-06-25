@@ -112,6 +112,9 @@ void EvseManager::init() {
                 [this](const auto& caps) { update_powersupply_capabilities(caps); });
         }
     }
+
+    r_bsp->subscribe_request_stop_transaction(
+        [this](types::evse_manager::StopTransactionRequest r) { charger->cancel_transaction(r); });
 }
 
 void EvseManager::ready() {

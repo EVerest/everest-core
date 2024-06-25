@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2022-2023 chargebyte GmbH
 // Copyright (C) 2022-2023 Contributors to EVerest
+
 #include <dirent.h>
 #include <errno.h>
 #include <math.h>
@@ -11,15 +12,17 @@
 #include "log.hpp"
 #include "v2g_ctx.hpp"
 
-void init_physical_value(struct iso1PhysicalValueType* const physicalValue, iso1unitSymbolType unit) {
+#include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
+
+void init_physical_value(struct iso2_PhysicalValueType* const physicalValue, iso2_unitSymbolType unit) {
     physicalValue->Multiplier = 0;
     physicalValue->Unit = unit;
     physicalValue->Value = 0;
 }
 
 // Only for AC
-bool populate_physical_value(struct iso1PhysicalValueType* pv, long long int value, iso1unitSymbolType unit) {
-    struct iso1PhysicalValueType physic_tmp = {pv->Multiplier, pv->Unit, pv->Value}; // To restore
+bool populate_physical_value(struct iso2_PhysicalValueType* pv, long long int value, iso2_unitSymbolType unit) {
+    struct iso2_PhysicalValueType physic_tmp = {pv->Multiplier, pv->Unit, pv->Value}; // To restore
     pv->Unit = unit;
     pv->Multiplier = 0; // with integers, we don't need negative multipliers for precision, so start at 0
 
@@ -30,7 +33,7 @@ bool populate_physical_value(struct iso1PhysicalValueType* pv, long long int val
     }
 
     if ((pv->Multiplier < PHY_VALUE_MULT_MIN) || (pv->Multiplier > PHY_VALUE_MULT_MAX)) {
-        memcpy(pv, &physic_tmp, sizeof(struct iso1PhysicalValueType));
+        memcpy(pv, &physic_tmp, sizeof(struct iso2_PhysicalValueType));
         dlog(DLOG_LEVEL_WARNING, "Physical value out of scope. Ignore value");
         return false;
     }
@@ -40,8 +43,8 @@ bool populate_physical_value(struct iso1PhysicalValueType* pv, long long int val
     return true;
 }
 
-void populate_physical_value_float(struct iso1PhysicalValueType* pv, float value, uint8_t decimal_places,
-                                   iso1unitSymbolType unit) {
+void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float value, uint8_t decimal_places,
+                                   iso2_unitSymbolType unit) {
     if (false == populate_physical_value(pv, (long long int)value, unit)) {
         return;
     }
@@ -64,7 +67,7 @@ void populate_physical_value_float(struct iso1PhysicalValueType* pv, float value
     pv->Value = value;
 }
 
-void setMinPhysicalValue(struct iso1PhysicalValueType* ADstPhyValue, const struct iso1PhysicalValueType* ASrcPhyValue,
+void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
                          unsigned int* AIsUsed) {
 
     if (((NULL != AIsUsed) && (0 == *AIsUsed)) || ((pow(10, ASrcPhyValue->Multiplier) * ASrcPhyValue->Value) <
@@ -146,22 +149,22 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
             (uint64_t)0; /* store associated session id, this is zero until SessionSetupRes is sent */
     }
     ctx->evse_v2g_data.notification_max_delay = (uint32_t)0;
-    ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso1isolationLevelType_Invalid;
+    ctx->evse_v2g_data.evse_isolation_status = (uint8_t)iso2_isolationLevelType_Invalid;
     ctx->evse_v2g_data.evse_isolation_status_is_used = (unsigned int)1; // Shall be used in DIN
     ctx->evse_v2g_data.evse_notification = (uint8_t)0;
-    ctx->evse_v2g_data.evse_status_code[PHASE_INIT] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
-    ctx->evse_v2g_data.evse_status_code[PHASE_AUTH] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
-    ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso1DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
-    ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso1DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive;
-    ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
-    ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE] = iso1DC_EVSEStatusCodeType_EVSE_Ready;
-    ctx->evse_v2g_data.evse_status_code[PHASE_WELDING] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
-    ctx->evse_v2g_data.evse_status_code[PHASE_STOP] = iso1DC_EVSEStatusCodeType_EVSE_NotReady;
-    memset(ctx->evse_v2g_data.evse_processing, iso1EVSEProcessingType_Ongoing, PHASE_LENGTH);
-    ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso1EVSEProcessingType_Finished; // Skip parameter phase
+    ctx->evse_v2g_data.evse_status_code[PHASE_INIT] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
+    ctx->evse_v2g_data.evse_status_code[PHASE_AUTH] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
+    ctx->evse_v2g_data.evse_status_code[PHASE_PARAMETER] = iso2_DC_EVSEStatusCodeType_EVSE_Ready; // [V2G-DC-453]
+    ctx->evse_v2g_data.evse_status_code[PHASE_ISOLATION] = iso2_DC_EVSEStatusCodeType_EVSE_IsolationMonitoringActive;
+    ctx->evse_v2g_data.evse_status_code[PHASE_PRECHARGE] = iso2_DC_EVSEStatusCodeType_EVSE_Ready;
+    ctx->evse_v2g_data.evse_status_code[PHASE_CHARGE] = iso2_DC_EVSEStatusCodeType_EVSE_Ready;
+    ctx->evse_v2g_data.evse_status_code[PHASE_WELDING] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
+    ctx->evse_v2g_data.evse_status_code[PHASE_STOP] = iso2_DC_EVSEStatusCodeType_EVSE_NotReady;
+    memset(ctx->evse_v2g_data.evse_processing, iso2_EVSEProcessingType_Ongoing, PHASE_LENGTH);
+    ctx->evse_v2g_data.evse_processing[PHASE_PARAMETER] = iso2_EVSEProcessingType_Finished; // Skip parameter phase
 
     if (ctx->hlc_pause_active != true) {
-        ctx->evse_v2g_data.charge_service.ServiceCategory = iso1serviceCategoryType_EVCharging;
+        ctx->evse_v2g_data.charge_service.ServiceCategory = iso2_serviceCategoryType_EVCharging;
         ctx->evse_v2g_data.charge_service.ServiceID = (uint16_t)1;
         memcpy(ctx->evse_v2g_data.charge_service.ServiceName.characters, init_service_name, sizeof(init_service_name));
         ctx->evse_v2g_data.charge_service.ServiceName.charactersLen = sizeof(init_service_name);
@@ -174,7 +177,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 
     ctx->evse_v2g_data.evse_service_list_len = (uint16_t)0;
     memset(&ctx->evse_v2g_data.service_parameter_list, 0,
-           sizeof(struct iso1ServiceParameterListType) * iso1ServiceListType_Service_ARRAY_SIZE);
+           sizeof(struct iso2_ServiceParameterListType) * iso2_ServiceType_8_ARRAY_SIZE);
 
     if (initialize_once == false) {
         ctx->evse_v2g_data.charge_service.FreeService = 0;
@@ -182,34 +185,34 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         strcpy(reinterpret_cast<char*>(ctx->evse_v2g_data.evse_id.bytes), evse_id.data());
         ctx->evse_v2g_data.evse_id.bytesLen = evse_id.size();
         ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.array[0] =
-            iso1EnergyTransferModeType_AC_single_phase_core;
+            iso2_EnergyTransferModeType_AC_single_phase_core;
         ctx->evse_v2g_data.charge_service.SupportedEnergyTransferMode.EnergyTransferMode.arrayLen = 1;
         ctx->evse_v2g_data.date_time_now_is_used = (unsigned int)0;
 
         // evse power values
-        init_physical_value(&ctx->evse_v2g_data.evse_current_regulation_tolerance, iso1unitSymbolType_A);
+        init_physical_value(&ctx->evse_v2g_data.evse_current_regulation_tolerance, iso2_unitSymbolType_A);
         ctx->evse_v2g_data.evse_current_regulation_tolerance_is_used = (unsigned int)0; // optional in din
-        init_physical_value(&ctx->evse_v2g_data.evse_energy_to_be_delivered, iso1unitSymbolType_Wh);
+        init_physical_value(&ctx->evse_v2g_data.evse_energy_to_be_delivered, iso2_unitSymbolType_Wh);
         ctx->evse_v2g_data.evse_energy_to_be_delivered_is_used = (unsigned int)0; // optional in din
-        init_physical_value(&ctx->evse_v2g_data.evse_maximum_current_limit, iso1unitSymbolType_A);
+        init_physical_value(&ctx->evse_v2g_data.evse_maximum_current_limit, iso2_unitSymbolType_A);
         ctx->evse_v2g_data.evse_maximum_current_limit_is_used = (unsigned int)0;
         ctx->evse_v2g_data.evse_current_limit_achieved = (int)0;
-        init_physical_value(&ctx->evse_v2g_data.evse_maximum_power_limit, iso1unitSymbolType_W);
+        init_physical_value(&ctx->evse_v2g_data.evse_maximum_power_limit, iso2_unitSymbolType_W);
         ctx->evse_v2g_data.evse_maximum_power_limit_is_used = (unsigned int)0;
         ctx->evse_v2g_data.evse_power_limit_achieved = (int)0;
-        init_physical_value(&ctx->evse_v2g_data.evse_maximum_voltage_limit, iso1unitSymbolType_V);
+        init_physical_value(&ctx->evse_v2g_data.evse_maximum_voltage_limit, iso2_unitSymbolType_V);
 
         ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used = (unsigned int)0; // mandatory
         ctx->evse_v2g_data.evse_voltage_limit_achieved = (int)0;
-        init_physical_value(&ctx->evse_v2g_data.evse_minimum_current_limit, iso1unitSymbolType_A);
-        init_physical_value(&ctx->evse_v2g_data.evse_minimum_voltage_limit, iso1unitSymbolType_V);
-        init_physical_value(&ctx->evse_v2g_data.evse_peak_current_ripple, iso1unitSymbolType_A);
+        init_physical_value(&ctx->evse_v2g_data.evse_minimum_current_limit, iso2_unitSymbolType_A);
+        init_physical_value(&ctx->evse_v2g_data.evse_minimum_voltage_limit, iso2_unitSymbolType_V);
+        init_physical_value(&ctx->evse_v2g_data.evse_peak_current_ripple, iso2_unitSymbolType_A);
         // AC evse power values
-        init_physical_value(&ctx->evse_v2g_data.evse_nominal_voltage, iso1unitSymbolType_V);
+        init_physical_value(&ctx->evse_v2g_data.evse_nominal_voltage, iso2_unitSymbolType_V);
         ctx->evse_v2g_data.rcd = (int)0; // 0 if RCD has not detected an error
         ctx->contactor_is_closed = false;
 
-        ctx->evse_v2g_data.payment_option_list[0] = iso1paymentOptionType_ExternalPayment;
+        ctx->evse_v2g_data.payment_option_list[0] = iso2_paymentOptionType_ExternalPayment;
         ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
 
         ctx->evse_v2g_data.evse_service_list[0].FreeService = (int)0;
@@ -220,15 +223,15 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
         // in din and iso
     }
 
-    init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso1unitSymbolType_V);
-    init_physical_value(&ctx->evse_v2g_data.evse_present_current, iso1unitSymbolType_A);
+    init_physical_value(&ctx->evse_v2g_data.evse_present_voltage, iso2_unitSymbolType_V);
+    init_physical_value(&ctx->evse_v2g_data.evse_present_current, iso2_unitSymbolType_A);
 
     if (ctx->hlc_pause_active != true) {
         // SAScheduleTupleID#PMaxScheduleTupleID#Start#Duration#PMax#
         init_physical_value(&ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
                                  .PMaxSchedule.PMaxScheduleEntry.array[0]
                                  .PMax,
-                            iso1unitSymbolType_W);
+                            iso2_unitSymbolType_W);
         ctx->evse_v2g_data.evse_sa_schedule_list.SAScheduleTuple.array[0]
             .PMaxSchedule.PMaxScheduleEntry.array[0]
             .RelativeTimeInterval.duration = (uint32_t)0;
@@ -277,7 +280,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 
     /* Init session values */
     if (ctx->hlc_pause_active != true) {
-        ctx->session.iso_selected_payment_option = iso1paymentOptionType_ExternalPayment;
+        ctx->session.iso_selected_payment_option = iso2_paymentOptionType_ExternalPayment;
     } else {
         ctx->evse_v2g_data.payment_option_list[0] = ctx->session.iso_selected_payment_option;
         ctx->evse_v2g_data.payment_option_list_len = (uint8_t)1; // One option must be set
@@ -499,8 +502,8 @@ void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& v2g_dc_ev_
  * \param selected_energy_transfer_mode is the selected energy transfer mode
  */
 void log_selected_energy_transfer_type(int selected_energy_transfer_mode) {
-    if (selected_energy_transfer_mode >= iso1EnergyTransferModeType_AC_single_phase_core &&
-        selected_energy_transfer_mode <= iso1EnergyTransferModeType_DC_unique) {
+    if (selected_energy_transfer_mode >= iso2_EnergyTransferModeType_AC_single_phase_core &&
+        selected_energy_transfer_mode <= iso2_EnergyTransferModeType_DC_unique) {
         dlog(DLOG_LEVEL_INFO, "Selected energy transfer mode: %s",
              selected_energy_transfer_mode_string[selected_energy_transfer_mode]);
     } else {
@@ -508,7 +511,7 @@ void log_selected_energy_transfer_type(int selected_energy_transfer_mode) {
     }
 }
 
-bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1ServiceType& evse_service,
+bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso2_ServiceType& evse_service,
                                  const int16_t* parameter_set_id, uint8_t parameter_set_id_len) {
 
     uint8_t write_idx = 0;
@@ -523,11 +526,10 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1S
         }
     }
 
-    if (service_found == false &&
-        (v2g_ctx->evse_v2g_data.evse_service_list_len < iso1ServiceListType_Service_ARRAY_SIZE)) {
+    if (service_found == false && (v2g_ctx->evse_v2g_data.evse_service_list_len < iso2_ServiceType_8_ARRAY_SIZE)) {
         write_idx = v2g_ctx->evse_v2g_data.evse_service_list_len;
         v2g_ctx->evse_v2g_data.evse_service_list_len++;
-    } else if (v2g_ctx->evse_v2g_data.evse_service_list_len == iso1ServiceListType_Service_ARRAY_SIZE) {
+    } else if (v2g_ctx->evse_v2g_data.evse_service_list_len == iso2_ServiceType_8_ARRAY_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Maximum service list size reached. Unable to add service ID %u",
              evse_service.ServiceID);
         return false;
@@ -545,7 +547,7 @@ bool add_service_to_service_list(struct v2g_context* v2g_ctx, const struct iso1S
     return true;
 }
 
-void configure_parameter_set(struct iso1ServiceParameterListType* parameterSetList, int16_t parameterSetId,
+void configure_parameter_set(struct iso2_ServiceParameterListType* parameterSetList, int16_t parameterSetId,
                              uint16_t serviceId) {
 
     bool parameter_set_id_found = false;
@@ -558,17 +560,17 @@ void configure_parameter_set(struct iso1ServiceParameterListType* parameterSetLi
         }
     }
     if ((parameter_set_id_found == false) &&
-        (parameterSetList->ParameterSet.arrayLen < iso1ServiceParameterListType_ParameterSet_ARRAY_SIZE)) {
+        (parameterSetList->ParameterSet.arrayLen < iso2_ParameterSetType_5_ARRAY_SIZE)) {
         write_idx = parameterSetList->ParameterSet.arrayLen;
         parameterSetList->ParameterSet.arrayLen++;
-    } else if (parameterSetList->ParameterSet.arrayLen == iso1ServiceParameterListType_ParameterSet_ARRAY_SIZE) {
+    } else if (parameterSetList->ParameterSet.arrayLen == iso2_ParameterSetType_5_ARRAY_SIZE) {
         dlog(DLOG_LEVEL_ERROR, "Maximum parameter-set list size reached. Unable to add parameter-set-ID %d",
              parameterSetId);
         return;
     }
 
     /* Get an free parameter-set-entry */
-    struct iso1ParameterSetType* parameterSet = &parameterSetList->ParameterSet.array[write_idx];
+    struct iso2_ParameterSetType* parameterSet = &parameterSetList->ParameterSet.array[write_idx];
     parameterSet->ParameterSetID = parameterSetId;
     if (serviceId == 2) {
         /* Configure parameter-set-ID of the certificate service */
