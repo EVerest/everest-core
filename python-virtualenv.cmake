@@ -122,7 +122,6 @@ macro(ev_setup_python_executable)
             REQUIRED
             COMPONENTS
                 Interpreter
-                Development
         )
     else()
         message(STATUS "Using python venv: ${${PROJECT_NAME}_PYTHON_VENV_PATH}")
