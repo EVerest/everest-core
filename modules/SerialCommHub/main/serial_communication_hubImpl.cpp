@@ -62,7 +62,7 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
     while (retry_counter > 0) {
         auto current_trial = config.retries + 1 - retry_counter + 1;
 
-        EVLOG_debug << fmt::format("Trial {}/{}: calling {}(id {} addr {}(0x{:04x}) len {})", current_trial,
+        EVLOG_debug << fmt::format("Trial {}/{}: calling {}(id {} addr {}({:#06x}) len {})", current_trial,
                                    config.retries + 1, tiny_modbus::FunctionCode_to_string_with_hex(function),
                                    device_address, first_register_address, first_register_address, register_quantity);
 
@@ -70,7 +70,7 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
             response = modbus.txrx(device_address, function, first_register_address, register_quantity,
                                    config.max_packet_size, wait_for_reply, request);
         } catch (const tiny_modbus::TinyModbusException& e) {
-            auto logmsg = fmt::format("Modbus call {} for device id {} addr {}(0x{:04x}) failed: {}",
+            auto logmsg = fmt::format("Modbus call {} for device id {} addr {}({:#06x}) failed: {}",
                                       tiny_modbus::FunctionCode_to_string_with_hex(function), device_address,
                                       first_register_address, first_register_address, e.what());
 
