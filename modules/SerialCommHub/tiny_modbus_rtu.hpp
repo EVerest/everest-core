@@ -63,6 +63,9 @@ class TinyModbusException : public std::runtime_error {
 class TimeoutException : public TinyModbusException {
     using TinyModbusException::TinyModbusException;
 };
+class UnimplementedFunction : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
 class ShortPacketException : public TinyModbusException {
     using TinyModbusException::TinyModbusException;
 };

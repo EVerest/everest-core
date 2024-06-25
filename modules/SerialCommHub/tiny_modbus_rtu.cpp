@@ -211,7 +211,8 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
         start_of_result = RES_RX_START_OF_PAYLOAD;
         break;
     default:
-        throw std::logic_error("Missing implementation for function code " + FunctionCode_to_string_with_hex(function));
+        throw UnimplementedFunction("Missing implementation for function code " +
+                                    FunctionCode_to_string_with_hex(function));
     }
 
     // check if result is completely in received data
