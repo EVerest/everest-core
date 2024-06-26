@@ -31,6 +31,7 @@
 #include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/evse_manager/Implementation.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <sigslot/signal.hpp>
 
 #include "EnumFlags.hpp"
@@ -94,14 +95,24 @@ enum class ConnectorLockErrors : std::uint8_t {
     last = VendorError
 };
 
+enum class IMDErrors : std::uint8_t {
+    DeviceFault,
+    CommunicationFault,
+    VendorWarning,
+    VendorError,
+    last = VendorError
+};
+
 struct ActiveErrors {
     AtomicEnumFlags<BspErrors, std::uint32_t> bsp;
     AtomicEnumFlags<EvseManagerErrors, std::uint8_t> evse_manager;
     AtomicEnumFlags<AcRcdErrors, std::uint8_t> ac_rcd;
     AtomicEnumFlags<ConnectorLockErrors, std::uint8_t> connector_lock;
+    AtomicEnumFlags<IMDErrors, std::uint8_t> imd;
 
     inline bool all_cleared() {
-        return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset();
+        return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() &&
+               imd.all_reset();
     };
 };
 
@@ -112,7 +123,8 @@ public:
                            const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc,
                            const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock,
                            const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd,
-                           const std::unique_ptr<evse_managerImplBase>& _p_evse);
+                           const std::unique_ptr<evse_managerImplBase>& _p_evse,
+                           const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd);
 
     // Signal that one error has been raised. Bool argument is true if it preventing charging.
     sigslot::signal<types::evse_manager::Error, bool> signal_error;
@@ -136,6 +148,7 @@ private:
     const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock;
     const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd;
     const std::unique_ptr<evse_managerImplBase>& p_evse;
+    const std::vector<std::unique_ptr<isolation_monitorIntf>>& r_imd;
 
     bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
     bool modify_error_connector_lock(const Everest::error::Error& error, bool active,
@@ -145,6 +158,7 @@ private:
 
     bool modify_error_evse_manager(const std::string& error_type, bool active,
                                    types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_imd(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
     bool hlc{false};
 
     ActiveErrors active_errors;
@@ -153,6 +167,7 @@ private:
     FRIEND_TEST(ErrorHandlingTest, modify_error_bsp);
     FRIEND_TEST(ErrorHandlingTest, modify_error_connector_lock);
     FRIEND_TEST(ErrorHandlingTest, modify_error_ac_rcd);
+    FRIEND_TEST(ErrorHandlingTest, modify_error_imd);
     FRIEND_TEST(ErrorHandlingTest, modify_error_evse_manager);
 #endif
 };

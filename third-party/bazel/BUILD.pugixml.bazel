@@ -1,0 +1,14 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+    visibility = ["//visibility:public"],
+)
+
+cmake(
+    name = "libpugixml",
+    cache_entries = {
+    },
+    lib_source = "@pugixml//:all_srcs",
+    visibility = ["//visibility:public"],
+)

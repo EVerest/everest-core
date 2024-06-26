@@ -11,24 +11,14 @@ All documentation and the issue tracking can be found in our main repository her
 It is recommended to have at least 4GB of RAM available to build EVerest.
 More CPU cores will optionally boost the build process, while requiring more RAM accordingly.
 
-#### Ubuntu 20.04 & 22.04
+#### Ubuntu 22.04
+
+> :warning: Ubuntu 20.04 is not supported anymore. Please use Ubuntu 22.04 or newer.
+
 ```bash
 sudo apt update
 sudo apt install -y python3-pip git rsync wget cmake doxygen graphviz build-essential clang-tidy cppcheck openjdk-17-jdk npm docker docker-compose libboost-all-dev nodejs libssl-dev libsqlite3-dev clang-format curl rfkill libpcap-dev libevent-dev pkg-config libcap-dev
 ```
-##### Ubuntu 20.04
-In order to build EVerest, we need clang-format version greater than 11. To date *apt* does only install an older version, so we install version 12 manually:
-```bash
-sudo apt install clang-format-12
-```
-Then make Ubuntu use version 12:
-``` bash
-sudo update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-12 100
-```
-EVerest requires nodejs version >10.20 for node_api version 6+. as Ubuntu 20.4 only installs v10.19 including node_api version <6 by default we need to install a newer version.
-
-Follow [**these instructions**](https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions)
-to install a newer version, minimum v12.
 
 #### OpenSuse
 ```bash

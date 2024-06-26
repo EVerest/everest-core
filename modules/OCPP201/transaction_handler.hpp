@@ -35,7 +35,8 @@ enum class TxEvent {
     PARKING_BAY_UNOCCUPIED,
     ENERGY_TRANSFER_STARTED,
     ENERGY_TRANSFER_STOPPED,
-    SIGNED_START_DATA_RECEIVED
+    SIGNED_START_DATA_RECEIVED,
+    IMMEDIATE_RESET
 };
 
 /// \brief Effect to an TxEvent. An effect can either trigger the start of a Transaction, the stop of a transaction or
@@ -53,6 +54,7 @@ struct TxStartStopConditions {
     bool is_parking_bay_occupied = false;
     bool is_energy_transfered = false;
     bool is_signed_data_received = false;
+    bool is_immediate_reset = false;
 
     void submit_event(const TxEvent tx_event) {
 
@@ -85,6 +87,9 @@ struct TxStartStopConditions {
         case TxEvent::SIGNED_START_DATA_RECEIVED:
             is_signed_data_received = true;
             break;
+        case TxEvent::IMMEDIATE_RESET:
+            is_immediate_reset = true;
+            break;
         }
     };
 
@@ -108,6 +113,9 @@ struct TxStartStopConditions {
     };
 
     bool is_stop_condition_fullfilled(const TxStartStopPoint tx_stop_point) {
+        if (is_immediate_reset) {
+            return true;
+        }
         switch (tx_stop_point) {
         case TxStartStopPoint::ParkingBayOccupancy:
             return !is_parking_bay_occupied;

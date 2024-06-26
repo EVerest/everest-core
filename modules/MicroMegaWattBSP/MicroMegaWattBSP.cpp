@@ -11,33 +11,35 @@ void MicroMegaWattBSP::init() {
         return;
     }
 
-    invoke_init(*p_powermeter);
     invoke_init(*p_board_support);
     invoke_init(*p_dc_supply);
+    invoke_init(*p_powermeter);
 }
 
 void MicroMegaWattBSP::ready() {
     serial.run();
 
-    if (!serial.reset(config.reset_gpio)) {
-        EVLOG_error << "uMWC reset not successful.";
+    if (not config.reset_gpio_chip.empty()) {
+        EVLOG_info << "Perform HW reset with gpio chip " << config.reset_gpio_chip << " line " << config.reset_gpio;
+        if (!serial.reset(config.reset_gpio_chip, config.reset_gpio)) {
+            EVLOG_error << "uMWC reset not successful.";
+        }
     }
 
-    serial.signalSpuriousReset.connect([this]() { EVLOG_error << "uMWC uC spurious reset!"; });
-    serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "uMWC UART timeout!"; });
+    serial.signalSpuriousReset.connect([this]() { EVLOG_warning << "uMWC uC spurious reset!"; });
+    serial.signalConnectionTimeout.connect([this]() { EVLOG_warning << "uMWC UART timeout!"; });
 
     serial.signalTelemetry.connect([this](Telemetry t) {
         mqtt.publish("everest_external/umwc/cp_hi", t.cp_hi);
         mqtt.publish("everest_external/umwc/cp_lo", t.cp_lo);
         mqtt.publish("everest_external/umwc/pwm_dc", t.pwm_dc);
         mqtt.publish("everest_external/umwc/relais_on", t.relais_on);
+        mqtt.publish("everest_external/umwc/output_voltage", t.voltage);
     });
-    serial.signalPowerMeter.connect(
-        [this](PowerMeter p) { mqtt.publish("everest_external/umwc/output_voltage", p.voltage); });
 
-    invoke_ready(*p_powermeter);
     invoke_ready(*p_board_support);
     invoke_ready(*p_dc_supply);
+    invoke_ready(*p_powermeter);
 
     if (not serial.is_open()) {
         auto err = p_board_support->error_factory->create_error("evse_board_support/CommunicationFault", "",
