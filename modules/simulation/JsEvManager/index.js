@@ -362,17 +362,27 @@ function registerAllCmds(mod) {
   });
 
   if (mod.uses_list.ev.length > 0) {
-    registerCmd(mod, 'iso_start_v2g_session', 1, (mod, c) => {
-      switch (c.args[0]) {
+    registerCmd(mod, 'iso_start_v2g_session', 2, (mod, c) => {
+      if (c.args[0] === 'externalpayment') mod.payment = 'ExternalPayment';
+        else if (c.args[0] === 'contract') mod.payment = 'Contract';
+      else {
+        evlog.debug('Found invalid payment method' + c.args[0]);
+	return false;
+      }
+
+      switch (c.args[1]) {
         case 'ac':
           if (mod.config.module.three_phases !== true) mod.energymode = 'AC_single_phase_core';
           else mod.energymode = 'AC_three_phase_core';
           break;
         case 'dc': mod.energymode = 'DC_extended'; break;
-        default: return false;
+        default:
+          evlog.debug('Found invalid payment method' + c.args[1]);
+	        return false;
       }
 
-      mod.uses_list.ev[0].call.start_charging({ EnergyTransferMode: mod.energymode });
+      args = { PaymentOption: mod.payment, EnergyTransferMode: mod.energymode };
+      mod.uses_list.ev[0].call.start_charging(args);
 
       return true;
     });
