@@ -691,6 +691,13 @@ enum class WebsocketCloseReason : uint8_t {
     ServiceRestart
 };
 
+/// \brief This can be used to distinguish the different queue types
+enum class QueueType {
+    Normal,
+    Transaction,
+    None,
+};
+
 } // namespace ocpp
 
 #endif

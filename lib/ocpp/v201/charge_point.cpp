@@ -182,9 +182,9 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     // Trigger all initial status notifications and callbacks related to component state
     // Should be done before sending the BootNotification.req so that the correct states can be reported
     this->component_state_manager->trigger_all_effective_availability_changed_callbacks();
-    this->boot_notification_req(bootreason);
     // get transaction messages from db (if there are any) so they can be sent again.
-    this->message_queue->get_transaction_messages_from_db();
+    this->message_queue->get_persisted_messages_from_db();
+    this->boot_notification_req(bootreason);
     this->start_websocket();
 
     if (this->bootreason == BootReasonEnum::RemoteReset) {

@@ -839,9 +839,9 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     this->init_state_machine(connector_status_map);
     this->init_websocket();
     this->websocket->connect();
-    this->boot_notification();
     // push transaction messages including SecurityEventNotification.req onto the message queue
-    this->message_queue->get_transaction_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
+    this->message_queue->get_persisted_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
+    this->boot_notification();
     this->stop_pending_transactions();
     this->load_charging_profiles();
     this->call_set_connection_timeout();

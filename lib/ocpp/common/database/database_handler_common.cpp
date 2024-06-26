@@ -34,11 +34,12 @@ void DatabaseHandlerCommon::close_connection() {
     this->database->close_connection();
 }
 
-std::vector<DBTransactionMessage> DatabaseHandlerCommon::get_transaction_messages() {
-    std::vector<DBTransactionMessage> transaction_messages;
+std::vector<DBTransactionMessage> DatabaseHandlerCommon::get_message_queue_messages(const QueueType queue_type) {
+    std::vector<DBTransactionMessage> messages;
 
-    std::string sql =
-        "SELECT UNIQUE_ID, MESSAGE, MESSAGE_TYPE, MESSAGE_ATTEMPTS, MESSAGE_TIMESTAMP FROM TRANSACTION_QUEUE";
+    const std::string table_name = queue_type == QueueType::Normal ? "NORMAL_QUEUE" : "TRANSACTION_QUEUE";
+
+    std::string sql = "SELECT UNIQUE_ID, MESSAGE, MESSAGE_TYPE, MESSAGE_ATTEMPTS, MESSAGE_TIMESTAMP FROM " + table_name;
 
     auto stmt = this->database->new_statement(sql);
 
@@ -59,7 +60,7 @@ std::vector<DBTransactionMessage> DatabaseHandlerCommon::get_transaction_message
             control_message.message_type = message_type;
             control_message.unique_id = unique_id;
             control_message.json_message = json_message;
-            transaction_messages.push_back(std::move(control_message));
+            messages.push_back(std::move(control_message));
         } catch (const json::exception& e) {
             EVLOG_error << "json parse failed because: "
                         << "(" << e.what() << ")";
@@ -74,30 +75,34 @@ std::vector<DBTransactionMessage> DatabaseHandlerCommon::get_transaction_message
         throw QueryExecutionException(this->database->get_error_message());
     }
 
-    return transaction_messages;
+    return messages;
 }
 
-void DatabaseHandlerCommon::insert_transaction_message(const DBTransactionMessage& transaction_message) {
-    const std::string sql =
-        "INSERT INTO TRANSACTION_QUEUE (UNIQUE_ID, MESSAGE, MESSAGE_TYPE, MESSAGE_ATTEMPTS, MESSAGE_TIMESTAMP) VALUES "
-        "(@unique_id, @message, @message_type, @message_attempts, @message_timestamp)";
+void DatabaseHandlerCommon::insert_message_queue_message(const DBTransactionMessage& db_message,
+                                                         const QueueType queue_type) {
+    const std::string table_name = queue_type == QueueType::Normal ? "NORMAL_QUEUE" : "TRANSACTION_QUEUE";
+
+    const std::string sql = "INSERT INTO " + table_name +
+                            " (UNIQUE_ID, MESSAGE, MESSAGE_TYPE, MESSAGE_ATTEMPTS, MESSAGE_TIMESTAMP) VALUES "
+                            "(@unique_id, @message, @message_type, @message_attempts, @message_timestamp)";
 
     auto stmt = this->database->new_statement(sql);
 
-    const std::string message = transaction_message.json_message.dump();
-    stmt->bind_text("@unique_id", transaction_message.unique_id);
+    const std::string message = db_message.json_message.dump();
+    stmt->bind_text("@unique_id", db_message.unique_id);
     stmt->bind_text("@message", message);
-    stmt->bind_text("@message_type", transaction_message.message_type);
-    stmt->bind_int("@message_attempts", transaction_message.message_attempts);
-    stmt->bind_text("@message_timestamp", transaction_message.timestamp.to_rfc3339(), SQLiteString::Transient);
+    stmt->bind_text("@message_type", db_message.message_type);
+    stmt->bind_int("@message_attempts", db_message.message_attempts);
+    stmt->bind_text("@message_timestamp", db_message.timestamp.to_rfc3339(), SQLiteString::Transient);
 
     if (stmt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
-void DatabaseHandlerCommon::remove_transaction_message(const std::string& unique_id) {
-    std::string sql = "DELETE FROM TRANSACTION_QUEUE WHERE UNIQUE_ID = @unique_id";
+void DatabaseHandlerCommon::remove_message_queue_message(const std::string& unique_id, const QueueType queue_type) {
+    const std::string table_name = queue_type == QueueType::Normal ? "NORMAL_QUEUE" : "TRANSACTION_QUEUE";
+    std::string sql = "DELETE FROM " + table_name + " WHERE UNIQUE_ID = @unique_id";
 
     auto stmt = this->database->new_statement(sql);
 
@@ -108,8 +113,9 @@ void DatabaseHandlerCommon::remove_transaction_message(const std::string& unique
     }
 }
 
-void DatabaseHandlerCommon::clear_transaction_queue() {
-    const auto retval = this->database->clear_table("TRANSACTION_QUEUE");
+void DatabaseHandlerCommon::clear_message_queue(const QueueType queue_type) {
+    const std::string table_name = queue_type == QueueType::Normal ? "NORMAL_QUEUE" : "TRANSACTION_QUEUE";
+    const auto retval = this->database->clear_table(table_name);
     if (retval == false) {
         throw QueryExecutionException(this->database->get_error_message());
     }
