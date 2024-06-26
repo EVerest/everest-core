@@ -219,6 +219,7 @@ private:
     int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);
     bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_connectors);
     bool any_connector_available(const std::vector<int>& connectors);
+    bool any_parent_id_present(const std::vector<int> connector_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
     TokenHandlingResult handle_token(const ProvidedIdToken& provided_token);
