@@ -348,7 +348,7 @@ private:
     EventQueue<ErrorHandlingEvents> error_handling_event_queue;
 
     // constants
-    static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{80.};
+    static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{1000.};
     constexpr static int LEGACY_WAKEUP_TIMEOUT{30000};
     // valid Length of BCB toggles
     static constexpr auto TP_EV_VALD_STATE_DURATION_MIN =

@@ -46,6 +46,13 @@ public:
                                      std::optional<std::string> parent_id_token);
 
     /**
+     * @brief Functions check if reservation at the given \p connector contains a parent_id
+     * @param connector
+     * @return true if reservation for \p connector exists and reservation contains a parent_id
+     */
+    bool has_reservation_parent_id(int connector);
+
+    /**
      * @brief Function tries to reserve the given \p connector using the given \p reservation
      *
      * @param connector

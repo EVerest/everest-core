@@ -73,7 +73,8 @@ struct Conf {
     bool dbg_hlc_auth_after_tstep;
     int hack_sleep_in_cable_check;
     int hack_sleep_in_cable_check_volkswagen;
-    bool switch_to_minimum_voltage_after_cable_check;
+    int cable_check_wait_number_of_imd_measurements;
+    bool cable_check_enable_imd_self_test;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
     bool hack_pause_imd_during_precharge;
@@ -267,6 +268,7 @@ private:
 
     VarContainer<types::isolation_monitor::IsolationMeasurement> isolation_measurement;
     VarContainer<types::power_supply_DC::VoltageCurrent> powersupply_measurement;
+    VarContainer<bool> selftest_result;
 
     double latest_target_voltage;
     double latest_target_current;
@@ -297,6 +299,8 @@ private:
     bool wait_powersupply_DC_voltage_reached(double target_voltage);
     bool wait_powersupply_DC_below_voltage(double target_voltage);
 
+    bool cable_check_should_exit();
+
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;
     types::evse_manager::EVInfo ev_info;
@@ -306,12 +310,18 @@ private:
     void imd_start();
     Everest::Thread telemetryThreadHandle;
 
-    void fail_session();
+    void fail_cable_check();
 
     // setup sae j2847/2 v2h mode
     void setup_v2h_mode();
 
+    bool check_isolation_resistance_in_range(double resistance);
+
     static constexpr auto CABLECHECK_CONTACTORS_CLOSE_TIMEOUT{std::chrono::seconds(5)};
+    static constexpr double CABLECHECK_CURRENT_LIMIT{2};
+    static constexpr double CABLECHECK_INSULATION_FAULT_RESISTANCE_OHM{100000.};
+    static constexpr double CABLECHECK_SAFE_VOLTAGE{60.};
+    static constexpr int CABLECHECK_SELFTEST_TIMEOUT{30};
 
     std::atomic_bool current_demand_active{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
