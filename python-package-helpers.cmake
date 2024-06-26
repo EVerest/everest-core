@@ -7,18 +7,28 @@ function (ev_create_pip_install_dist_target)
         ${ARGN}
     )
 
-    add_custom_target(${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist
+    set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist_installed")
+    add_custom_command(
+        OUTPUT
+            "${CHECK_DONE_FILE}"
+        COMMENT
+            "Installing ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME} from distribution"
+        WORKING_DIRECTORY
+            ${CMAKE_CURRENT_SOURCE_DIR}
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
             ${Python3_EXECUTABLE} -m pip install --force-reinstall .
-        WORKING_DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND
+            ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
+    )
+
+    add_custom_target(${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist
+        DEPENDS
+            "${CHECK_DONE_FILE}"
         DEPENDS
             ${EV_CREATE_PIP_INSTALL_DIST_TARGET_DEPENDS}
-        COMMENT
-            "Installing ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME} from distribution"
     )
 endfunction()
 
