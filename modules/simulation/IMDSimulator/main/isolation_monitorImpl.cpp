@@ -18,15 +18,16 @@ void isolation_monitorImpl::init() {
 void isolation_monitorImpl::ready() {
 }
 
-isolation_monitorImpl::~isolation_monitorImpl() {
-}
-
 void isolation_monitorImpl::handle_start() {
     if (this->isolation_monitoring_active == false) {
         this->isolation_monitoring_active = true;
         EVLOG_info << "Started simulated isolation monitoring with " << this->config_interval << " ms interval";
     }
 };
+
+void isolation_monitorImpl::handle_start_self_test(double& test_voltage_V) {
+    selftest_running_countdown = 3 * 1000 / LOOP_SLEEP_MS;
+}
 
 void isolation_monitorImpl::isolation_measurement_worker() {
     while (true) {
@@ -35,9 +36,16 @@ void isolation_monitorImpl::isolation_measurement_worker() {
         }
 
         if (this->isolation_monitoring_active == true) {
-            this->mod->p_main->publish_IsolationMeasurement(this->isolation_measurement);
+            this->mod->p_main->publish_isolation_measurement(this->isolation_measurement);
             EVLOG_debug << "Simulated isolation measurement finished";
             std::this_thread::sleep_for(std::chrono::milliseconds(this->config_interval - this->LOOP_SLEEP_MS));
+        }
+
+        if (this->selftest_running_countdown > 0) {
+            this->selftest_running_countdown--;
+            if (this->selftest_running_countdown == 0) {
+                this->mod->p_main->publish_self_test_result(config.selftest_success);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(this->LOOP_SLEEP_MS));

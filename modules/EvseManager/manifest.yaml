@@ -94,10 +94,10 @@ config:
     type: boolean
     default: false
   dc_isolation_voltage_V:
-    description: DC voltage used to test isolation in CableCheck.
-      Set to 500V.
+    description: Override DC voltage used to test isolation in CableCheck.
+      Default is 0, which means the voltage will be determined according to IEC 61851-23 (2023) CC.4.1.2
     type: integer
-    default: 500
+    default: 0
   dbg_hlc_auth_after_tstep:
     description: >-
       Special mode: send HLC auth ok only after t_step_XX is finished (true) or directly when available (false)
@@ -111,12 +111,18 @@ config:
     description: "Hack: Additional sleep for Volkswagen cars for n seconds at the end of cable check"
     type: integer
     default: 0
-  switch_to_minimum_voltage_after_cable_check:
+  cable_check_wait_number_of_imd_measurements:
     description: >-
-      When cable check is completed, switch to minimal voltage of DC output.
-      Normally disabled.
+      Amount of isolation measurement samples to collect before the value can be trusted. This does not average,
+      it will evaluate the last measurement. Some IMDs (e.g. from Bender) need to measure for 10s to really get a trustable result.
+      In this case, at 1 Hz sample rate, specify 10 samples here.
+    type: integer
+    default: 1
+  cable_check_enable_imd_self_test:
+    description: >-
+      Enable self testing of IMD in cable check. This is required for IEC 61851-23 (2023) compliance.
     type: boolean
-    default: false
+    default: true
   hack_skoda_enyaq:
     description: >-
       Skoda Enyaq requests DC charging voltages below its battery level or even below 0 initially.

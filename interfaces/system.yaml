@@ -74,4 +74,5 @@ vars:
     description: Describes the current status of log upload of the system
     type: object
     $ref: /system#/LogStatus
-
+errors:
+  - reference: /errors/system
