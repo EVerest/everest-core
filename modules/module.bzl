@@ -39,7 +39,8 @@ def cc_everest_module(
         ],
         srcs = native.glob(["manifest.y*ml"], allow_empty = False) + [
             "@everest-framework//schemas:schemas",
-            "//types:types",
+            "@everest-core//types:types",
+            "@everest-core//errors:errors",
         ],
         tools = [
             "@everest-utils//ev-dev-tools:ev-cli",
@@ -63,7 +64,7 @@ def cc_everest_module(
             ":ld-ev",
         ]).to_list(),
         deps = deps + [
-            "//interfaces:interfaces_lib",
+            "@everest-core//interfaces:interfaces_lib",
             "@everest-framework//:framework",
         ],
         copts = ["-std=c++17"],
