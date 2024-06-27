@@ -4,21 +4,18 @@
 
 #include "connection.hpp"
 #include "log.hpp"
+#include "tls_connection.hpp"
 #include "tools.hpp"
 #include "v2g_server.hpp"
 
 #include <arpa/inet.h>
+#include <cstring>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fstream>
 #include <inttypes.h>
 #include <iostream>
-#include <mbedtls/debug.h>
-#include <mbedtls/error.h>
-#include <mbedtls/sha1.h>
-#include <mbedtls/ssl_cache.h>
-#include <mbedtls/ssl_internal.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -29,15 +26,20 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef SYSCONFDIR
-#define SYSCONFDIR "/etc"
-#endif
+#ifdef EVEREST_MBED_TLS
+#include <mbedtls/debug.h>
+#include <mbedtls/error.h>
+#include <mbedtls/sha1.h>
+#include <mbedtls/ssl_cache.h>
+#include <mbedtls/ssl_internal.h>
+#endif // EVEREST_MBED_TLS
 
 #define DEFAULT_SOCKET_BACKLOG        3
 #define DEFAULT_TCP_PORT              61341
 #define DEFAULT_TLS_PORT              64109
 #define ERROR_SESSION_ALREADY_STARTED 2
 
+#ifdef EVEREST_MBED_TLS
 #define MBEDTLS_DEBUG_LEVEL_VERBOSE  4
 #define MBEDTLS_DEBUG_LEVEL_NO_DEBUG 0
 
@@ -69,6 +71,7 @@ static const int v2g_ssl_allowed_hashes[] = {
     MBEDTLS_MD_SHA256, MBEDTLS_MD_SHA224,
 #endif
     MBEDTLS_MD_SHA1,   MBEDTLS_MD_NONE};
+#endif // EVEREST_MBED_TLS
 
 /*!
  * \brief connection_create_socket This function creates a tcp/tls socket
@@ -134,7 +137,8 @@ static int connection_create_socket(struct sockaddr_in6* sockaddr) {
     return s;
 }
 
-static int connection_ssl_initialize(void) {
+static int connection_ssl_initialize() {
+#ifdef EVEREST_MBED_TLS
     unsigned char random_data[64];
     int rv;
 
@@ -168,6 +172,7 @@ static int connection_ssl_initialize(void) {
 #if defined(MBEDTLS_SSL_CACHE_C)
     mbedtls_ssl_cache_init(&cache);
 #endif
+#endif // EVEREST_MBED_TLS
 
     return 0;
 }
@@ -180,7 +185,8 @@ static int connection_ssl_initialize(void) {
  */
 int check_interface(struct v2g_context* v2g_ctx) {
 
-    struct ipv6_mreq mreq = {{0}, 0};
+    struct ipv6_mreq mreq = {};
+    std::memset(&mreq, 0, sizeof(mreq));
 
     if (strcmp(v2g_ctx->if_name, "auto") == 0) {
         v2g_ctx->if_name = choose_first_ipv6_interface();
@@ -192,7 +198,7 @@ int check_interface(struct v2g_context* v2g_ctx) {
         return -1;
     }
 
-    return (v2g_ctx->if_name == NULL) ? -1 : 0;
+    return (v2g_ctx->if_name == nullptr) ? -1 : 0;
 }
 
 /*!
@@ -207,7 +213,7 @@ int connection_init(struct v2g_context* v2g_ctx) {
 
     if (v2g_ctx->tls_security != TLS_SECURITY_FORCE) {
         v2g_ctx->local_tcp_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tcp_addr)));
-        if (v2g_ctx->local_tcp_addr == NULL) {
+        if (v2g_ctx->local_tcp_addr == nullptr) {
             dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TCP address");
             return -1;
         }
@@ -254,7 +260,7 @@ int connection_init(struct v2g_context* v2g_ctx) {
                 sleep(1);
                 continue;
             }
-            if (inet_ntop(AF_INET6, &v2g_ctx->local_tcp_addr->sin6_addr, buffer, sizeof(buffer)) != NULL) {
+            if (inet_ntop(AF_INET6, &v2g_ctx->local_tcp_addr->sin6_addr, buffer, sizeof(buffer)) != nullptr) {
                 dlog(DLOG_LEVEL_INFO, "TCP server on %s is listening on port [%s%%%" PRIu32 "]:%" PRIu16,
                      v2g_ctx->if_name, buffer, v2g_ctx->local_tcp_addr->sin6_scope_id,
                      ntohs(v2g_ctx->local_tcp_addr->sin6_port));
@@ -282,7 +288,7 @@ int connection_init(struct v2g_context* v2g_ctx) {
                 continue;
             }
 
-            if (inet_ntop(AF_INET6, &v2g_ctx->local_tls_addr->sin6_addr, buffer, sizeof(buffer)) != NULL) {
+            if (inet_ntop(AF_INET6, &v2g_ctx->local_tls_addr->sin6_addr, buffer, sizeof(buffer)) != nullptr) {
                 dlog(DLOG_LEVEL_INFO, "TLS server on %s is listening on port [%s%%%" PRIu32 "]:%" PRIu16,
                      v2g_ctx->if_name, buffer, v2g_ctx->local_tls_addr->sin6_scope_id,
                      ntohs(v2g_ctx->local_tls_addr->sin6_port));
@@ -295,6 +301,12 @@ int connection_init(struct v2g_context* v2g_ctx) {
         /* Sockets should be ready, leave the loop */
         break;
     }
+
+#ifndef EVEREST_MBED_TLS
+    if (v2g_ctx->local_tls_addr) {
+        return tls::connection_init(v2g_ctx);
+    }
+#endif // EVEREST_MBED_TLS
     return 0;
 }
 
@@ -304,7 +316,7 @@ int connection_init(struct v2g_context* v2g_ctx) {
  * \param ctx is the V2G context.
  * \return Returns \c true if a timeout has occured, otherwise \c false
  */
-static bool is_sequence_timeout(struct timespec ts_start, struct v2g_context* ctx) {
+bool is_sequence_timeout(struct timespec ts_start, struct v2g_context* ctx) {
     struct timespec ts_current;
     int sequence_timeout = V2G_SEQUENCE_TIMEOUT_60S;
 
@@ -340,6 +352,7 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
         int num_of_bytes;
 
         if (conn->is_tls_connection) {
+#ifdef EVEREST_MBED_TLS
             num_of_bytes = mbedtls_ssl_read(&conn->conn.ssl.ssl_context, &buf[bytes_read], count - bytes_read);
 
             if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE ||
@@ -356,6 +369,10 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
 
                 return -1;
             }
+#else
+            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() not configured");
+            return -1;
+#endif // EVEREST_MBED_TLS
         } else {
             /* use select for timeout handling */
             struct timeval tv;
@@ -367,7 +384,7 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
             tv.tv_sec = conn->ctx->network_read_timeout / 1000;
             tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
 
-            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, NULL, NULL, &tv);
+            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
 
             if (num_of_bytes == -1) {
                 if (errno == EINTR)
@@ -422,6 +439,7 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
         int num_of_bytes;
 
         if (conn->is_tls_connection) {
+#ifdef EVEREST_MBED_TLS
             num_of_bytes = mbedtls_ssl_write(&conn->conn.ssl.ssl_context, &buf[bytes_written], count - bytes_written);
 
             if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE)
@@ -429,7 +447,10 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
 
             if (num_of_bytes < 0)
                 return -1;
-
+#else
+            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_write() not configured");
+            return -1; // shouldn't be using this function
+#endif // EVEREST_MBED_TLS
         } else {
             num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
 
@@ -455,7 +476,7 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
  * \brief connection_teardown This function must be called on connection teardown.
  * \param conn is the V2G connection context
  */
-static void connection_teardown(struct v2g_connection* conn) {
+void connection_teardown(struct v2g_connection* conn) {
     if (conn->ctx->session.is_charging == true) {
         conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
 
@@ -470,7 +491,7 @@ static void connection_teardown(struct v2g_connection* conn) {
     v2g_ctx_init_charging_session(conn->ctx, true);
 
     /* stop timer */
-    stop_timer(&conn->ctx->com_setup_timeout, NULL, conn->ctx);
+    stop_timer(&conn->ctx->com_setup_timeout, nullptr, conn->ctx);
 
     /* print dlink status */
     switch (conn->dlink_action) {
@@ -488,6 +509,7 @@ static void connection_teardown(struct v2g_connection* conn) {
     }
 }
 
+#ifdef EVEREST_MBED_TLS
 static bool connection_init_tls(struct v2g_context* ctx) {
 
     int rv;
@@ -520,7 +542,7 @@ static bool connection_init_tls(struct v2g_context* ctx) {
         mbedtls_pk_init(&ctx->evse_tls_crt_key[idx]);
     }
 
-    if (ctx->evseTlsCrt == NULL || ctx->evse_tls_crt_key == NULL) {
+    if (ctx->evseTlsCrt == nullptr || ctx->evse_tls_crt_key == nullptr) {
         dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory!");
         goto error_out;
     }
@@ -673,6 +695,7 @@ reset:
     send_udp_message();
     ctx->udp_buffer = {};
 }
+#endif // EVEREST_MBED_TLS
 
 /**
  * This is the 'main' function of a thread, which handles a TCP connection.
@@ -719,13 +742,14 @@ static void* connection_handle_tcp(void* data) {
 
     free(conn);
 
-    return NULL;
+    return nullptr;
 }
 
 /**
  * This is the 'main' function of a thread, which handles a TLS connection.
  */
 static void* connection_handle_tls(void* data) {
+#ifdef EVEREST_MBED_TLS
     struct v2g_connection* conn = static_cast<v2g_connection*>(data);
     struct v2g_context* v2g_ctx = conn->ctx;
     mbedtls_ssl_config* ssl_config = conn->conn.ssl.ssl_config;
@@ -905,8 +929,9 @@ thread_exit:
     connection_teardown(conn);
 
     free(conn);
+#endif // EVEREST_MBED_TLS
 
-    return NULL;
+    return nullptr;
 }
 
 static void* connection_server(void* data) {
@@ -939,14 +964,21 @@ static void* connection_server(void* data) {
 
         /* setup common stuff */
         conn->ctx = ctx;
+        conn->read = &connection_read;
+        conn->write = &connection_write;
 
         /* if this thread is the TLS thread, then connections are TLS secured;
          * return code is non-zero if equal so align it
          */
+#ifdef EVEREST_MBED_TLS
         conn->is_tls_connection = !!pthread_equal(pthread_self(), ctx->tls_thread);
+#else
+        conn->is_tls_connection = false;
+#endif // EVEREST_MBED_TLS
 
         /* wait for an incoming connection */
         if (conn->is_tls_connection) {
+#ifdef EVEREST_MBED_TLS
             conn->conn.ssl.ssl_config = &ctx->ssl_config;
 
             /* at the moment, this is simply resetting the fd to -1; kept for upwards compatibility */
@@ -957,6 +989,7 @@ static void* connection_server(void* data) {
                 dlog(DLOG_LEVEL_ERROR, "Accept(tls) failed: %s", strerror(errno));
                 continue;
             }
+#endif // EVEREST_MBED_TLS
         } else {
             conn->conn.socket_fd = accept(ctx->tcp_socket, (struct sockaddr*)&addr, &addrlen);
             if (conn->conn.socket_fd == -1) {
@@ -1010,7 +1043,11 @@ int connection_start_servers(struct v2g_context* ctx) {
     }
 
     if (ctx->tls_socket.fd != -1) {
+#ifdef EVEREST_MBED_TLS
         rv = pthread_create(&ctx->tls_thread, NULL, connection_server, ctx);
+#else
+        rv = tls::connection_start_server(ctx);
+#endif // EVEREST_MBED_TLS
         if (rv != 0) {
             if (tcp_started) {
                 pthread_cancel(ctx->tcp_thread);

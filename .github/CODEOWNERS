@@ -13,6 +13,7 @@
 /lib/staging/gpio/ @corneliusclaussen @hikinggrass @hikinggrass
 /lib/staging/ocpp/ @hikinggrass @pietfried @corneliusclaussen
 /lib/staging/slac/ @a-w50 @corneliusclaussen @SebaLukas
+/lib/staging/tls/ @james-ctc @AssemblyJohn @corneliusclaussen @SebaLukas
 
 # modules
 /modules/API/ @hikinggrass @pietfried @corneliusclaussen

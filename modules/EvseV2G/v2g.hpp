@@ -6,6 +6,13 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
+
+#include <atomic>
+#include <cstdint>
+#include <netinet/in.h>
+#include <pthread.h>
+
+#ifdef EVEREST_MBED_TLS
 #include <mbedtls/certs.h>
 #include <mbedtls/config.h>
 #include <mbedtls/ctr_drbg.h>
@@ -13,21 +20,22 @@
 #include <mbedtls/ssl.h>
 #include <mbedtls/version.h>
 #include <mbedtls/x509.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <stdint.h>
 #if MBEDTLS_VERSION_MINOR == 2
 #include <mbedtls/net.h>
 #else
 #include <mbedtls/net_sockets.h>
 #endif
+#else
+#include <openssl_util.hpp>
+#include <tls.hpp>
+#endif // EVEREST_MBED_TLS
+
 #include <cbv2g/app_handshake/appHand_Datatypes.h>
 #include <cbv2g/common/exi_basetypes.h>
 #include <cbv2g/common/exi_bitstream.h>
-
 #include <cbv2g/din/din_msgDefDatatypes.h>
 #include <cbv2g/iso_2/iso2_msgDefDatatypes.h>
+
 #include <event2/event.h>
 #include <event2/thread.h>
 
@@ -170,9 +178,13 @@ struct SAE_Bidi_Data {
 
 /**
  * Abstracts a charging port, i.e. a power outlet in this daemon.
+ *
+ * **** NOTE ****
+ * Be very careful about adding C++ objects since constructors and
+ * destructors are not called. (see v2g_ctx_create() and calloc)
  */
 struct v2g_context {
-    volatile int shutdown;
+    std::atomic_bool shutdown;
 
     evse_securityIntf* r_security;
     ISO15118_chargerImplBase* p_charger;
@@ -202,6 +214,7 @@ struct v2g_context {
 
     pthread_t tcp_thread;
 
+#ifdef EVEREST_MBED_TLS
     mbedtls_ssl_config ssl_config;
     mbedtls_x509_crt* evseTlsCrt;
     uint8_t num_of_tls_crt;
@@ -209,10 +222,17 @@ struct v2g_context {
     mbedtls_x509_crt v2g_root_crt;
     mbedtls_net_context tls_socket;
     keylogDebugCtx tls_log_ctx;
-    bool tls_key_logging;
     pthread_t tls_thread;
 
     mbedtls_x509_crt mop_root_ca_list;
+#else
+    struct {
+        int fd;
+    } tls_socket;
+    tls::Server* tls_server;
+#endif // EVEREST_MBED_TLS
+
+    bool tls_key_logging;
 
     pthread_mutex_t mqtt_lock;
     pthread_cond_t mqtt_cond;
@@ -316,11 +336,14 @@ struct v2g_context {
         types::authorization::CertificateStatus certificate_status; // for PnC
         bool authorization_rejected;                                // for PnC
 
+#ifdef EVEREST_MBED_TLS
+        // needed by iso_server.cpp
+        // for OpenSSL the key is part of v2g_connection
         struct {
-            bool valid_crt;
-            mbedtls_x509_crt crt;
             mbedtls_ecdsa_context pubkey;
-        } contract;                   // for PnC
+        } contract; // for PnC
+#endif              // EVEREST_MBED_TLS
+
         bool renegotiation_required;  /* Is set to true if renegotiation is required. Only relevant for ISO */
         bool is_charging;             /* set to true if ChargeProgress is set to Start */
         uint8_t sa_schedule_tuple_id; /* selected SA schedule tuple ID*/
@@ -363,6 +386,8 @@ struct v2g_connection {
     struct v2g_context* ctx;
 
     bool is_tls_connection;
+
+#ifdef EVEREST_MBED_TLS
     union {
         struct {
             mbedtls_ssl_config* ssl_config;
@@ -371,6 +396,18 @@ struct v2g_connection {
         } ssl;
         int socket_fd;
     } conn;
+#else
+    // used for non-TLS connections
+    struct {
+        int socket_fd;
+    } conn;
+
+    tls::Connection* tls_connection;
+    openssl::PKey_ptr* pubkey;
+#endif // EVEREST_MBED_TLS
+
+    ssize_t (*read)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);
+    ssize_t (*write)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);
 
     /* V2GTP EXI encoding/decoding stuff */
     uint8_t* buffer;
