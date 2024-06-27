@@ -1,0 +1,11 @@
+asn1=SEQ:pkcs8c
+[pkcs8c]
+ver=INT:0
+algid=SEQ:algid
+data=OCTWRAP,SEQ:sec1
+[algid]
+alg=OID:id-ecPublicKey
+parm=OID:prime256v1
+[sec1]
+ver=INT:1
+privkey=FORMAT:HEX,OCT:b9134963f51c4414738435057f97bbf1010cabcb8dbde9c5d48138396aa94b9d

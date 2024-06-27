@@ -6,19 +6,26 @@
 #include "log.hpp"
 #include "sdp.hpp"
 
-struct v2g_context* v2g_ctx = NULL;
+struct v2g_context* v2g_ctx = nullptr;
 
 namespace module {
 
 void EvseV2G::init() {
-    int rv = 0;
     /* create v2g context */
     v2g_ctx = v2g_ctx_create(&(*p_charger), &(*r_security));
 
-    if (v2g_ctx == NULL)
+    if (v2g_ctx == nullptr)
         return;
 
+#ifndef EVEREST_MBED_TLS
+    v2g_ctx->tls_server = &tls_server;
+#endif // EVEREST_MBED_TLS
+
     invoke_init(*p_charger);
+}
+
+void EvseV2G::ready() {
+    int rv = 0;
 
     dlog(DLOG_LEVEL_DEBUG, "Starting SDP responder");
 
@@ -42,14 +49,6 @@ void EvseV2G::init() {
         goto err_out;
     }
 
-    return;
-err_out:
-    v2g_ctx_free(v2g_ctx);
-}
-
-void EvseV2G::ready() {
-    int rv = 0;
-
     invoke_ready(*p_charger);
 
     rv = sdp_listen(v2g_ctx);
@@ -58,6 +57,8 @@ void EvseV2G::ready() {
         dlog(DLOG_LEVEL_ERROR, "sdp_listen() failed");
         goto err_out;
     }
+
+    return;
 
 err_out:
     v2g_ctx_free(v2g_ctx);
