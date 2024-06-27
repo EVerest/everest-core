@@ -70,14 +70,14 @@ void evse_board_supportImpl::init() {
     {
         std::lock_guard<std::mutex> lock(capsMutex);
 
-        caps.min_current_A_import = mod->config.caps_min_current_A;
+        caps.min_current_A_import = 6;
         caps.max_current_A_import = 16;
         caps.min_phase_count_import = 1;
         caps.max_phase_count_import = 3;
         caps.supports_changing_phases_during_charging = false;
         caps.connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable;
 
-        caps.min_current_A_export = mod->config.caps_min_current_A;
+        caps.min_current_A_export = 6;
         caps.max_current_A_export = 16;
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
@@ -87,8 +87,12 @@ void evse_board_supportImpl::init() {
     mod->serial.signalCPState.connect([this](CpState cp_state) {
         if (cp_state not_eq last_cp_state) {
             auto event_cp_state = cast_event_type(cp_state);
-            EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
-            publish_event(event_cp_state);
+            EVLOG_info << "CP state changed: "
+                       << types::board_support_common::event_to_string(cast_event_type(last_cp_state).event) << " -> "
+                       << types::board_support_common::event_to_string(event_cp_state.event);
+            if (enabled) {
+                publish_event(event_cp_state);
+            }
 
             if (cp_state == CpState_STATE_A) {
                 mod->clear_errors_on_unplug();
@@ -113,13 +117,15 @@ void evse_board_supportImpl::init() {
 
         caps.min_current_A_import =
             (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
-        caps.max_current_A_import = l.hwcap_max_current;
+        caps.max_current_A_import =
+            (mod->config.caps_max_current_A >= 0 ? mod->config.caps_max_current_A : l.hwcap_max_current);
         caps.min_phase_count_import = l.hwcap_min_phase_count;
         caps.max_phase_count_import = l.hwcap_max_phase_count;
 
         caps.min_current_A_export =
             (mod->config.caps_min_current_A >= 0 ? mod->config.caps_min_current_A : l.hwcap_min_current);
-        caps.max_current_A_export = l.hwcap_max_current;
+        caps.max_current_A_export =
+            (mod->config.caps_max_current_A >= 0 ? mod->config.caps_max_current_A : l.hwcap_max_current);
         caps.min_phase_count_export = l.hwcap_min_phase_count;
         caps.max_phase_count_export = l.hwcap_max_phase_count;
 
@@ -146,9 +152,8 @@ void evse_board_supportImpl::wait_for_caps() {
             break;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    if (i == 49) {
-        EVLOG_AND_THROW(
-            Everest::EverestTimeoutError("Did not receive hardware capabilities from Yeti hardware, exiting."));
+    if (i == 50) {
+        EVLOG_error << "Did not receive hardware capabilities from Yeti hardware, using defaults.";
     }
 }
 
@@ -191,7 +196,9 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {
-    // Query CP state once and publish
+    enabled = true;
+    // Publish CP state once on enable
+    publish_event(cast_event_type(last_cp_state));
 }
 
 void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {

@@ -17,13 +17,13 @@ void PacketSniffer::init() {
 
     p_handle = pcap_open_live(config.device.c_str(), BUFFERSIZE, PROMISC_MODE, PACKET_BUFFER_TIMEOUT_MS, errbuf);
     if (p_handle == nullptr) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Could not open device {}", config.device)));
+        EVLOG_error << fmt::format("Could not open device {}. Sniffing disabled.", config.device);
         return;
     }
 
     if (pcap_datalink(p_handle) != DLT_EN10MB) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(
-            fmt::format("Device {} doesn't provide Ethernet headers - not supported", config.device)));
+        EVLOG_error << fmt::format("Device {} doesn't provide Ethernet headers - not supported. Sniffing disabled.",
+                                   config.device);
         return;
     }
 

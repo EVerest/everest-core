@@ -3,8 +3,10 @@
 
 #include "systemImpl.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
+#include <thread>
 #include <vector>
 
 #include <unistd.h>
@@ -34,7 +36,8 @@ fs::path create_temp_file(const fs::path& dir, const std::string& prefix) {
     auto fd = mkstemp(fn_template_buffer.data());
 
     if (fd == -1) {
-        EVLOG_AND_THROW(Everest::EverestBaseRuntimeError("Failed to create temporary file at: " + fn_template));
+        EVLOG_error << "Failed to create temporary file at: " << fn_template;
+        return {};
     }
 
     // close the file descriptor
@@ -62,6 +65,13 @@ void systemImpl::standard_firmware_update(const types::system::FirmwareUpdateReq
     const auto date_time = Everest::Date::to_rfc3339(date::utc_clock::now());
 
     const auto firmware_file_path = create_temp_file(fs::temp_directory_path(), "firmware-" + date_time);
+
+    if (firmware_file_path.empty()) {
+        EVLOG_error << "Firmware update ignored, cannot write temporary file.";
+        publish_firmware_update_status({types::system::FirmwareUpdateStatusEnum::DownloadFailed});
+        return;
+    }
+
     const auto constants = this->scripts_path / CONSTANTS;
 
     this->update_firmware_thread = std::thread([this, firmware_update_request, firmware_file_path, constants]() {
@@ -407,13 +417,22 @@ bool systemImpl::handle_is_reset_allowed(types::system::ResetType& type) {
 }
 
 void systemImpl::handle_reset(types::system::ResetType& type, bool& scheduled) {
-    if (type == types::system::ResetType::Soft) {
-        EVLOG_info << "Performing soft reset";
-        kill(getpid(), SIGINT);
-    } else {
-        EVLOG_info << "Performing hard reset";
-        kill(getpid(), SIGINT); // FIXME(piet): Define appropriate behavior for hard reset
-    }
+    // let the actual work be done by a worker thread, which can also delay it
+    // a little bit (if configured) to allow e.g. clean shutdown of communication
+    // channels in parallel when this call returns
+    std::thread([this, type, scheduled] {
+        EVLOG_info << "Reset request received: " << type << ", " << (scheduled ? "" : "not ") << "scheduled";
+
+        std::this_thread::sleep_for(std::chrono::seconds(this->mod->config.ResetDelay));
+
+        if (type == types::system::ResetType::Soft) {
+            EVLOG_info << "Performing soft reset now.";
+            kill(getpid(), SIGINT);
+        } else {
+            EVLOG_info << "Performing hard reset now.";
+            kill(getpid(), SIGINT); // FIXME(piet): Define appropriate behavior for hard reset
+        }
+    }).detach();
 }
 
 bool systemImpl::handle_set_system_time(std::string& timestamp) {

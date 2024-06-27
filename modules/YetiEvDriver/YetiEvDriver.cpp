@@ -8,8 +8,9 @@ void YetiEvDriver::init() {
 
     // initialize serial driver
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
-                                    " with baud rate ", config.baud_rate));
+        EVLOG_error << "Could not open serial port " << config.serial_port << " with baud rate " << config.baud_rate;
+        p_ev_board_support->raise_error(p_ev_board_support->error_factory->create_error(
+            "generic/CommunicationFault", "", "Could not open serial port"));
         return;
     }
 
@@ -20,13 +21,11 @@ void YetiEvDriver::ready() {
     serial.run();
 
     if (!serial.reset(config.reset_gpio)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "EVYeti reset not successful."));
+        EVLOG_error << "EVYeti reset not successful.";
     }
 
-    serial.signalSpuriousReset.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "EVYeti uC spurious reset!")); });
-    serial.signalConnectionTimeout.connect(
-        [this]() { EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestInternalError, "EVYeti UART timeout!")); });
+    serial.signalSpuriousReset.connect([this]() { EVLOG_error << "EVYeti uC spurious reset!"; });
+    serial.signalConnectionTimeout.connect([this]() { EVLOG_error << "EVYeti UART timeout!"; });
 
     serial.signalEvent.connect([this](Event e) {
         types::board_support_common::BspEvent bspe;

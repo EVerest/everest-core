@@ -56,3 +56,5 @@ vars:
       BSP Measurements
     type: object
     $ref: /board_support_common#/BspMeasurement
+errors:
+  - reference: /errors/generic

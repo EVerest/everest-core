@@ -1,0 +1,14 @@
+description: Generic types.
+types:
+  VectorOfInts:
+    description: Data blob.
+    type: object
+    required:
+      - data
+    properties:
+      data:
+        type: array
+        items:
+          type: integer
+          minimum: 0
+          maximum: 65535

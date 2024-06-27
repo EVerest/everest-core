@@ -28,6 +28,7 @@ struct Conf {
     std::string reset_gpio_chip;
     int reset_gpio;
     int caps_min_current_A;
+    int caps_max_current_A;
 };
 
 class YetiDriver : public Everest::ModuleBase {

@@ -8,28 +8,3 @@ filegroup(
 )
 
 exports_files(["dependencies.yaml"])
-
-_GENERATED = {
-    "third-party/bazel/deps_versions.bzl": "//third-party/bazel:deps_versions.bzl.new",
-}
-
-write_file(
-    name = "gen_update",
-    out = "update.sh",
-    content = [
-        "#!/bin/sh",
-        "set -xe",
-        "cd $BUILD_WORKSPACE_DIRECTORY",
-    ] + [
-        "cp -fv bazel-bin/{1} {0} && chmod u+w {0}".format(
-            k, v[2:].replace(":", "/")
-        )
-        for k, v in _GENERATED.items()
-    ]
-)
-
-sh_binary(
-    name = "update",
-    srcs = [":gen_update"],
-    data = _GENERATED.values(),
-)

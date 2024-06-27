@@ -79,6 +79,9 @@ active_modules:
     module: JsDCSupplySimulator
   imd:
     module: IMDSimulator
+    config_implementation:
+      main:
+        selftest_success: true
   ev_manager_1:
     module: JsEvManager
     config_module:

@@ -23,6 +23,10 @@ config:
     description: Minimal current on AC side. For AC this is typically 6, but for HLC this can be less. -1 means use limit reported by HW.
     type: integer
     default: -1
+  caps_max_current_A:
+    description: Maximum current on AC side. For AC this is typically 16 or 32, but for HLC this can be less. -1 means use limit reported by HW.
+    type: integer
+    default: -1
 provides:
   powermeter:
     interface: powermeter

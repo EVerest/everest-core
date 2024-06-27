@@ -40,20 +40,7 @@ load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencie
 
 crate_universe_dependencies()
 
-load("@rules_rust//crate_universe:defs.bzl", "crates_repository")
 
-crates_repository(
-    name = "dep_tool_crate_index",
-    cargo_lockfile = "//third-party/bazel/dep_tool:Cargo.lock",
-    isolated = False,
-    manifests = [
-        "//third-party/bazel/dep_tool:Cargo.toml",
-    ],
-)
-
-load("@dep_tool_crate_index//:defs.bzl", dep_tool_crate_repositories = "crate_repositories")
-
-dep_tool_crate_repositories()
 
 
 load("//third-party/bazel:repos.bzl", "everest_core_repos")

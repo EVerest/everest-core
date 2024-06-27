@@ -20,6 +20,10 @@ provides:
         minimum: 0
         maximum: 2
         default: 0
+      rtscts:
+        description: Use RTS/CTS hardware flow control
+        type: boolean
+        default: false
       ignore_echo:
         description: On some hardware every message that is sent is read back, this setting filters the sent message in the reply.
         type: boolean

@@ -59,6 +59,9 @@ to_ocpp_hash_algorithm_enum_type(const types::iso15118_charger::HashAlgorithm ha
 /// \brief  Converts a given types::iso15118_charger::Status \p status to a ocpp::v201::Iso15118EVCertificateStatusEnum.
 ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReason reason);
 
+/// \brief  Converts a given types::powermeter::Powermeter \p powermeter to a ocpp::Powermeter
+ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter);
+
 /// \brief Converts a given types::iso15118_charger::HashAlgorithm \p hash_algorithm to a ocpp::v201::HashAlgorithmEnum.
 ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm);
 

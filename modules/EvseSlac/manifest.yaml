@@ -8,14 +8,6 @@ provides:
         description: Ethernet device used for PLC.
         type: string
         default: eth1
-      evse_id:
-        description: EVSE id - 17 octets.
-        type: string
-        default: PIONIX_SAYS_HELLO
-      nid:
-        description: NID (Network Identification Key) - 7 octets.
-        type: string
-        default: pionix!
       number_of_sounds:
         description: SLAC number of sounds.
         type: integer

@@ -27,3 +27,5 @@ vars:
       Inform higher layers about the MAC address of the charging connector
     type: string
     pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+errors:
+  - reference: /errors/generic

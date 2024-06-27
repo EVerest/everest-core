@@ -39,8 +39,8 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST PyJosev PyEvJosev)
 
 ev_define_dependency(
-    DEPENDENCY_NAME ext-openv2g
-    OUTPUT_VARIABLE_SUFFIX OPENV2G
+    DEPENDENCY_NAME libcbv2g
+    OUTPUT_VARIABLE_SUFFIX LIBCBV2G
     DEPENDENT_MODULES_LIST EvseV2G)
 
 ev_define_dependency(

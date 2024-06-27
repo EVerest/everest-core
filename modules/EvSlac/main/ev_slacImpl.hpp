@@ -21,7 +21,6 @@ namespace main {
 
 struct Conf {
     std::string device;
-    std::string ev_id;
     int set_key_timeout_ms;
 };
 

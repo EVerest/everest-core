@@ -6,7 +6,24 @@ project(phyverso_mcu_comms VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# add the executable
+add_library(phyverso_config STATIC)
+target_sources(phyverso_config
+    PRIVATE
+        evConfig.cpp
+)
+
+target_include_directories(phyverso_config
+    PUBLIC
+        "${PROJECT_BINARY_DIR}"
+        protobuf
+)
+
+target_link_libraries(phyverso_config
+    PRIVATE
+        everest::nanopb
+        nlohmann_json::nlohmann_json
+)
+
 add_library(phyverso_mcu_comms STATIC)
 target_sources(phyverso_mcu_comms
     PRIVATE
@@ -20,7 +37,6 @@ target_include_directories(phyverso_mcu_comms
         "${PROJECT_BINARY_DIR}"
         protobuf
         bsl
-        "../phyverso_config"
 )
 
 target_link_libraries(phyverso_mcu_comms

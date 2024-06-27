@@ -129,5 +129,9 @@ vars:
       need to be implemented and the returned value is not used in those cases.
     type: object
     $ref: /board_support_common#/ProximityPilot
+  request_stop_transaction:
+    description: Publish to stop the transaction gracefully (e.g. user pressed the stop button)
+    type: object
+    $ref: /evse_manager#/StopTransactionRequest
 errors:
   - reference: /errors/evse_board_support

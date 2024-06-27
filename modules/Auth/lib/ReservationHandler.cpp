@@ -19,6 +19,13 @@ bool ReservationHandler::matches_reserved_identifier(int connector, const std::s
             parent_id_token.value() == this->reservations[connector].parent_id_token.value());
 }
 
+bool ReservationHandler::has_reservation_parent_id(int connector) {
+    if (!this->reservations.count(connector)) {
+        return false;
+    }
+    return this->reservations.at(connector).parent_id_token.has_value();
+}
+
 types::reservation::ReservationResult ReservationHandler::reserve(int connector, const ConnectorState& state,
                                                                   bool is_reservable,
                                                                   const types::reservation::Reservation& reservation) {

@@ -35,11 +35,6 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         get_error_state_monitor_req = [this](const Requirement& req) {
             return this->get_error_state_monitor_req_fn(req);
         };
-        subscribe_global_all_errors = [this](const Everest::error::ErrorCallback& cb1,
-                                             const Everest::error::ErrorCallback& cb2) {
-            this->subscribe_global_all_errors_fn(cb1, cb2);
-        };
-
         ext_mqtt_publish = [this](const std::string& s1, const std::string& s2) { this->ext_mqtt_publish_fn(s1, s2); };
         ext_mqtt_subscribe = [this](const std::string& str, StringHandler sh) {
             return this->ext_mqtt_subscribe_fn(str, sh);
@@ -87,10 +82,6 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         std::printf("get_error_state_monitor_req_fn\n");
         return std::make_shared<Everest::error::ErrorStateMonitor>(
             Everest::error::ErrorStateMonitor(std::make_shared<Everest::error::ErrorDatabaseMap>()));
-    }
-    virtual void subscribe_global_all_errors_fn(const Everest::error::ErrorCallback&,
-                                                const Everest::error::ErrorCallback&) {
-        std::printf("subscribe_global_all_errors_fn\n");
     }
     virtual void ext_mqtt_publish_fn(const std::string&, const std::string&) {
         std::printf("ext_mqtt_publish_fn\n");

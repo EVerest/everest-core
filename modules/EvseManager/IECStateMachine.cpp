@@ -294,7 +294,6 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             timer = TimerControl::stop;
             call_allow_power_on_bsp(false);
             pwm_running = false;
-            r_bsp->call_pwm_off();
             if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C || last_cp_state == RawCPState::D) {
                 events.push(CPEvent::BCDtoEF);
             }
@@ -336,6 +335,12 @@ void IECStateMachine::set_pwm(double value) {
         } else {
             pwm_running = false;
         }
+    }
+
+    if (ev_simplified_mode_evse_limit and ev_simplified_mode and value > ev_simplified_mode_evse_limit_pwm) {
+        EVLOG_warning
+            << "Simplified mode: Limiting output PWM to 10A due to config option \"hack_simplified_mode_limit_10A\"";
+        value = ev_simplified_mode_evse_limit_pwm;
     }
 
     r_bsp->call_pwm_on(value * 100);

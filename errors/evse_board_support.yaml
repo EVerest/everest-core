@@ -54,3 +54,7 @@ errors:
   - name: VendorWarning
     description: >-
       Vendor specific error code. Charging may continue.
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
+

@@ -58,3 +58,5 @@ vars:
       Inform higher layers about the MAC address of the vehicle (upper case)
     type: string
     pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
+errors:
+  - reference: /errors/generic

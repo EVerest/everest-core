@@ -22,6 +22,7 @@ namespace module {
 struct Conf {
     double DefaultRetries;
     double DefaultRetryInterval;
+    int ResetDelay;
 };
 
 class System : public Everest::ModuleBase {

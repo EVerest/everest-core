@@ -61,10 +61,11 @@ private:
     types::evse_board_support::HardwareCapabilities caps;
     std::atomic_bool caps_received{false};
     std::mutex capsMutex;
-    CpState last_cp_state{CpState::CpState_STATE_E};
+    CpState last_cp_state{CpState::CpState_STATE_F};
     bool last_relais_state{false};
     types::board_support_common::ProximityPilot last_pp{types::board_support_common::Ampacity::None};
     void wait_for_caps();
+    std::atomic_bool enabled{false};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

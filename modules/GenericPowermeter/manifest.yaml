@@ -11,8 +11,8 @@ provides:
       powermeter_device_id:
         description: The powermeter's address on the serial bus
         type: integer
-        minimum: 0
-        maximum: 255
+        minimum: 1
+        maximum: 247
         default: 1
       modbus_base_address:
         description: The base address for register access

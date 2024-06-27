@@ -38,13 +38,6 @@ bool evConfig::check_validity() {
         return false;
     }
 
-    /* will be used later when separate config for both charging ports is needed
-        if(!config_file.contains("motor_lock_2")) {
-            printf("Missing 'motor_lock_2' config parameter\n");
-            return false;
-        }
-    */
-
     return true;
 }
 

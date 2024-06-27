@@ -3,7 +3,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@rules_rust//crate_universe:defs.bzl", "crates_repository", "crate")
 load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
-load("//third-party/bazel:deps_versions.bzl", "EVEREST_DEPS")
+load("//third-party/bazel:edm.bzl", "edm_repositories")
+
 
 def everest_core_repos():
     http_archive(
@@ -21,13 +22,6 @@ def everest_core_repos():
         strip_prefix = "rules_boost-f02f84fac7673c56bbcfe69dea68044e6e40f92b",
     )
 
-    maybe(
-        git_repository,
-        name = "everest-framework",
-        remote = EVEREST_DEPS.everest_framework_repo,
-        commit = EVEREST_DEPS.everest_framework_commit,
-        tag = EVEREST_DEPS.everest_framework_tag,
-    )
 
     crates_repository(
         name = "everest_core_crate_index",
@@ -48,7 +42,6 @@ def everest_core_repos():
     )
     crate_universe_dependencies()
 
-
     maybe(
         http_archive,
         name = "rules_python",
@@ -57,109 +50,13 @@ def everest_core_repos():
         url = "https://github.com/bazelbuild/rules_python/releases/download/0.27.0/rules_python-0.27.0.tar.gz",
     )
 
-    maybe(
-        git_repository,
-        name = "pugixml",
-        remote = EVEREST_DEPS.pugixml_repo,
-        commit = EVEREST_DEPS.pugixml_commit,
-        tag = EVEREST_DEPS.pugixml_tag,
-        build_file_content = """
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
-)
-
-cmake(
-    name = "libpugixml",
-    cache_entries = {
-    },
-    lib_source = "@pugixml//:all_srcs",
-    visibility = ["//visibility:public"],
-)
-        """
+    edm_repositories(
+        name = "edm_deps",
+        dependencies_yaml = "//:dependencies.yaml",
+        build_files = [
+            "@everest-core//third-party/bazel:BUILD.libmodbus.bazel",
+            "@everest-core//third-party/bazel:BUILD.libtimer.bazel",
+            "@everest-core//third-party/bazel:BUILD.pugixml.bazel",
+            "@everest-core//third-party/bazel:BUILD.sigslot.bazel",
+        ],
     )
-
-    maybe(
-        git_repository,
-        name = "libmodbus",
-        remote = EVEREST_DEPS.libmodbus_repo,
-        commit = EVEREST_DEPS.libmodbus_commit,
-        tag = EVEREST_DEPS.libmodbus_tag,
-        build_file_content = """
-cc_library(
-    name = "libmodbus_connection",
-    srcs = glob(["lib/connection/src/**/*.cpp"]),
-    hdrs = glob(["lib/connection/include/**/*.hpp"]),
-    strip_include_prefix = "lib/connection/include",
-    deps = [
-        "@@com_github_everest_liblog//:liblog",
-    ]
-)
-
-cc_library(
-    name = "libmodbus",
-    srcs = glob(["src/**/*.cpp"]),
-    hdrs = glob(["include/**/*.hpp"]),
-    deps = [
-        "@com_github_everest_liblog//:liblog",
-        ":libmodbus_connection",
-    ],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-)
-        """
-    )
-
-    maybe(
-        git_repository,
-        name = "sigslot",
-        remote = EVEREST_DEPS.sigslot_repo,
-        commit = EVEREST_DEPS.sigslot_commit,
-        tag = EVEREST_DEPS.sigslot_tag,
-        build_file_content = """
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
-)
-
-cmake(
-    name = "sigslot",
-    cache_entries = {
-        "SIGSLOT_COMPILE_EXAMPLES": "OFF",
-    },
-    lib_source = "@sigslot//:all_srcs",
-    out_headers_only = True,
-    visibility = ["//visibility:public"],
-)
-        """
-    )
-
-    maybe(
-        git_repository,
-        name = "libtimer",
-        remote = EVEREST_DEPS.libtimer_repo,
-        commit = EVEREST_DEPS.libtimer_commit,
-        tag = EVEREST_DEPS.libtimer_tag,
-        build_file_content = """
-cc_library(
-    name = "libtimer",
-    hdrs = ["include/everest/timer.hpp"],
-    deps = [],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-)
-        """
-    )
-
-    maybe(
-        git_repository,
-        name = "everest-utils",
-        remote = EVEREST_DEPS.everest_utils_repo,
-        commit = EVEREST_DEPS.everest_utils_commit,
-        tag = EVEREST_DEPS.everest_utils_tag,
-    )
-

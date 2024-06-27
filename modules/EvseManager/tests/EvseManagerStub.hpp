@@ -4,8 +4,8 @@
 #ifndef EVSEMANAGERSTUB_H_
 #define EVSEMANAGERSTUB_H_
 
-#include "ModuleAdapterStub.hpp"
 #include <ErrorHandling.hpp>
+#include <ModuleAdapterStub.hpp>
 
 //-----------------------------------------------------------------------------
 namespace module::stub {
@@ -24,6 +24,9 @@ struct evse_managerImplStub : public evse_managerImplBase {
         return true;
     }
     virtual bool handle_disable(int& connector_id) {
+        return true;
+    }
+    virtual bool handle_enable_disable(int& connector_id, types::evse_manager::EnableDisableSource& cmd_source) {
         return true;
     }
     virtual void handle_authorize_response(types::authorization::ProvidedIdToken& provided_token,

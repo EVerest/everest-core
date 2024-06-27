@@ -18,6 +18,9 @@ public:
     ~evSerial();
 
     bool openDevice(const char* device, int baud);
+    bool is_open() {
+        return fd > 0;
+    };
 
     void readThread();
     void run();
@@ -25,7 +28,7 @@ public:
     void enable(bool en);
     void disable();
     void replug();
-    bool reset(const int reset_pin);
+    bool reset(const std::string& reset_chip, const int reset_line);
     void firmwareUpdate(bool rom);
     void keepAlive();
 
@@ -35,11 +38,9 @@ public:
     void setOutputVoltageCurrent(float v, float c);
 
     sigslot::signal<KeepAliveLo> signalKeepAliveLo;
-    sigslot::signal<PowerMeter> signalPowerMeter;
     sigslot::signal<Telemetry> signalTelemetry;
 
     sigslot::signal<CpState> signalCPState;
-    sigslot::signal<PpState> signalPPState;
     sigslot::signal<ErrorFlags> signalErrorFlags;
     sigslot::signal<bool> signalRelaisState;
 

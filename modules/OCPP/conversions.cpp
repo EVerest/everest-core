@@ -209,6 +209,49 @@ ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReas
     }
 }
 
+ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter) {
+    ocpp::Powermeter ocpp_powermeter;
+    ocpp_powermeter.timestamp = powermeter.timestamp;
+    ocpp_powermeter.energy_Wh_import = {powermeter.energy_Wh_import.total, powermeter.energy_Wh_import.L1,
+                                        powermeter.energy_Wh_import.L2, powermeter.energy_Wh_import.L3};
+
+    ocpp_powermeter.meter_id = powermeter.meter_id;
+    ocpp_powermeter.phase_seq_error = powermeter.phase_seq_error;
+
+    if (powermeter.energy_Wh_export.has_value()) {
+        const auto energy_wh_export = powermeter.energy_Wh_export.value();
+        ocpp_powermeter.energy_Wh_export =
+            ocpp::Energy{energy_wh_export.total, energy_wh_export.L1, energy_wh_export.L2, energy_wh_export.L3};
+    }
+
+    if (powermeter.power_W.has_value()) {
+        const auto power_w = powermeter.power_W.value();
+        ocpp_powermeter.power_W = ocpp::Power{power_w.total, power_w.L1, power_w.L2, power_w.L3};
+    }
+
+    if (powermeter.voltage_V.has_value()) {
+        const auto voltage_v = powermeter.voltage_V.value();
+        ocpp_powermeter.voltage_V = ocpp::Voltage{voltage_v.DC, voltage_v.L1, voltage_v.L2, voltage_v.L3};
+    }
+
+    if (powermeter.VAR.has_value()) {
+        const auto var = powermeter.VAR.value();
+        ocpp_powermeter.VAR = ocpp::ReactivePower{var.total, var.L1, var.L2, var.L3};
+    }
+
+    if (powermeter.current_A.has_value()) {
+        const auto current_a = powermeter.current_A.value();
+        ocpp_powermeter.current_A = ocpp::Current{current_a.DC, current_a.L1, current_a.L2, current_a.L3, current_a.N};
+    }
+
+    if (powermeter.frequency_Hz.has_value()) {
+        const auto frequency_hz = powermeter.frequency_Hz.value();
+        ocpp_powermeter.frequency_Hz = ocpp::Frequency{frequency_hz.L1, frequency_hz.L2, frequency_hz.L3};
+    }
+
+    return ocpp_powermeter;
+}
+
 ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm) {
     switch (hash_algorithm) {
     case types::iso15118_charger::HashAlgorithm::SHA256:

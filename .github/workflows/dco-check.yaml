@@ -1,0 +1,20 @@
+name: DCO Check
+on:    
+  pull_request: {}
+jobs:
+  dco_check:
+    name: DCO Check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dco-check
+        run: pip3 install -U dco-check==0.4.0
+      - name: Check DCO
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dco-check

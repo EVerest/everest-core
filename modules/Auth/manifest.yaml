@@ -3,7 +3,14 @@ description: >-
   the connected evse managers. In addition to that, it handles the reservation management.
 config:
   selection_algorithm:
-    description: The algorithm that is used to map an incoming token to a connector
+    description: >-
+      The selection algorithm contains the logic to select one connector for an incoming token. In case the charging station
+      has only one connector, the selection of a connector is pretty straight-forward because there is only one that is 
+      available. The selection algorithm becomes relevant in case the Auth  module manages authorization requests 
+      for multiple connectors. The following values can be set:
+      PlugEvents: Selection of connector is based on EV Plug In events
+      FindFirst: Simply selects the first available connector that has no active transaction
+      UserInput: Placeholder, not yet implemented
     type: string
     default: FindFirst
   connection_timeout:

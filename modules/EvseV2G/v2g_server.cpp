@@ -1,28 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2023 chargebyte GmbH
 // Copyright (C) 2023 Contributors to EVerest
+#include "v2g_server.hpp"
 
 #include <inttypes.h>
-#include <mbedtls/base64.h>
-#include <openv2g/appHandEXIDatatypesDecoder.h>
-#include <openv2g/appHandEXIDatatypesEncoder.h>
-#include <openv2g/dinEXIDatatypes.h>
-#include <openv2g/dinEXIDatatypesDecoder.h>
-#include <openv2g/dinEXIDatatypesEncoder.h>
-#include <openv2g/iso1EXIDatatypes.h>
-#include <openv2g/iso1EXIDatatypesDecoder.h>
-#include <openv2g/iso1EXIDatatypesEncoder.h>
-#include <openv2g/v2gtp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <cstdint>
+
+#include <mbedtls/base64.h>
+
+#include <cbv2g/app_handshake/appHand_Decoder.h>
+#include <cbv2g/app_handshake/appHand_Encoder.h>
+#include <cbv2g/common/exi_basetypes.h>
+#include <cbv2g/din/din_msgDefDecoder.h>
+#include <cbv2g/din/din_msgDefEncoder.h>
+#include <cbv2g/exi_v2gtp.h>
+#include <cbv2g/iso_2/iso2_msgDefDecoder.h>
+#include <cbv2g/iso_2/iso2_msgDefEncoder.h>
 
 #include "connection.hpp"
 #include "din_server.hpp"
 #include "iso_server.hpp"
 #include "log.hpp"
 #include "tools.hpp"
-#include "v2g_server.hpp"
 
 #define MAX_RES_TIME 98
 
@@ -156,14 +159,20 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
         return -1;
     }
 
-    rv = read_v2gtpHeader(conn->buffer, &conn->payload_len);
+    rv = V2GTP_ReadHeader(conn->buffer, &conn->payload_len);
     if (rv == -1) {
         dlog(DLOG_LEVEL_ERROR, "Invalid v2gtp header");
         return -1;
     }
 
+    if (conn->payload_len >= UINT32_MAX - V2GTP_HEADER_LENGTH) {
+        dlog(DLOG_LEVEL_ERROR, "Prevent integer overflow - payload too long: have %d, would need %u",
+             DEFAULT_BUFFER_SIZE, conn->payload_len);
+        return -1;
+    }
+
     if (conn->payload_len + V2GTP_HEADER_LENGTH > DEFAULT_BUFFER_SIZE) {
-        dlog(DLOG_LEVEL_ERROR, "payload too long: have %d, would need %d", DEFAULT_BUFFER_SIZE,
+        dlog(DLOG_LEVEL_ERROR, "payload too long: have %d, would need %u", DEFAULT_BUFFER_SIZE,
              conn->payload_len + V2GTP_HEADER_LENGTH);
 
         /* we have no way to flush/discard remaining unread data from the socket without reading it in chunks,
@@ -184,8 +193,8 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
         return -1;
     }
     /* adjust buffer pos to decode request */
-    conn->buffer_pos = V2GTP_HEADER_LENGTH;
-    conn->stream.size = conn->payload_len + V2GTP_HEADER_LENGTH;
+    conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
+    conn->stream.data_size = conn->payload_len + V2GTP_HEADER_LENGTH;
 
     return 0;
 }
@@ -197,12 +206,11 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
  */
 int v2g_outgoing_v2gtp(struct v2g_connection* conn) {
     /* fixup/create header */
-    if (write_v2gtpHeader(conn->buffer, conn->buffer_pos - V2GTP_HEADER_LENGTH, V2GTP_EXI_TYPE) != 0) {
-        dlog(DLOG_LEVEL_ERROR, "write_v2gtpHeader() failed");
-        return -1;
-    }
+    const auto len = exi_bitstream_get_length(&conn->stream);
 
-    if (connection_write(conn, conn->buffer, conn->buffer_pos) == -1) {
+    V2GTP_WriteHeader(conn->buffer, len - V2GTP_HEADER_LENGTH);
+
+    if (connection_write(conn, conn->buffer, len) == -1) {
         dlog(DLOG_LEVEL_ERROR, "connection_write(header) failed: %s", strerror(errno));
         return -1;
     }
@@ -222,15 +230,15 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     uint8_t ev_app_priority = 20; // lowest priority
 
     /* validate handshake request and create response */
-    init_appHandEXIDocument(&conn->handshake_resp);
+    init_appHand_exiDocument(&conn->handshake_resp);
     conn->handshake_resp.supportedAppProtocolRes_isUsed = 1;
     conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-        appHandresponseCodeType_Failed_NoNegotiation; // [V2G2-172]
+        appHand_responseCodeType_Failed_NoNegotiation; // [V2G2-172]
 
     dlog(DLOG_LEVEL_INFO, "Handling SupportedAppProtocolReq");
     conn->ctx->current_v2g_msg = V2G_SUPPORTED_APP_PROTOCOL_MSG;
 
-    if (decode_appHandExiDocument(&conn->stream, &conn->handshake_req) != 0) {
+    if (decode_appHand_exiDocument(&conn->stream, &conn->handshake_req) != 0) {
         dlog(DLOG_LEVEL_ERROR, "decode_appHandExiDocument() failed");
         return V2G_EVENT_TERMINATE_CONNECTION; // If the mesage can't be decoded we have to terminate the tcp-connection
                                                // (e.g. after an unexpected message)
@@ -239,7 +247,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     json appProtocolArray = json::array(); // to publish supported app protocol array
 
     for (i = 0; i < conn->handshake_req.supportedAppProtocolReq.AppProtocol.arrayLen; i++) {
-        struct appHandAppProtocolType* app_proto = &conn->handshake_req.supportedAppProtocolReq.AppProtocol.array[i];
+        struct appHand_AppProtocolType* app_proto = &conn->handshake_req.supportedAppProtocolReq.AppProtocol.array[i];
         char* proto_ns = strndup(static_cast<const char*>(app_proto->ProtocolNamespace.characters),
                                  app_proto->ProtocolNamespace.charactersLen);
 
@@ -257,7 +265,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
             (strcmp(proto_ns, DIN_70121_MSG_DEF) == 0) && (app_proto->VersionNumberMajor == DIN_70121_MAJOR) &&
             (ev_app_priority >= app_proto->Priority)) {
             conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-                appHandresponseCodeType_OK_SuccessfulNegotiation;
+                appHand_responseCodeType_OK_SuccessfulNegotiation;
             ev_app_priority = app_proto->Priority;
             conn->handshake_resp.supportedAppProtocolRes.SchemaID = app_proto->SchemaID;
             conn->ctx->selected_protocol = V2G_PROTO_DIN70121;
@@ -267,7 +275,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
                    (ev_app_priority >= app_proto->Priority)) {
 
             conn->handshake_resp.supportedAppProtocolRes.ResponseCode =
-                appHandresponseCodeType_OK_SuccessfulNegotiation;
+                appHand_responseCodeType_OK_SuccessfulNegotiation;
             ev_app_priority = app_proto->Priority;
             conn->handshake_resp.supportedAppProtocolRes.SchemaID = app_proto->SchemaID;
             conn->ctx->selected_protocol = V2G_PROTO_ISO15118_2013;
@@ -295,7 +303,8 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     }
 
     std::string selected_protocol_str;
-    if (conn->handshake_resp.supportedAppProtocolRes.ResponseCode == appHandresponseCodeType_OK_SuccessfulNegotiation) {
+    if (conn->handshake_resp.supportedAppProtocolRes.ResponseCode ==
+        appHand_responseCodeType_OK_SuccessfulNegotiation) {
         conn->handshake_resp.supportedAppProtocolRes.SchemaID_isUsed = (unsigned int)1;
         if (V2G_PROTO_DIN70121 == conn->ctx->selected_protocol) {
             dlog(DLOG_LEVEL_INFO, "Protocol negotiation was successful. Selected protocol is DIN70121");
@@ -325,7 +334,7 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     /* Validate response code */
     if ((conn->ctx->intl_emergency_shutdown == true) || (conn->ctx->stop_hlc == true) ||
         (V2G_EVENT_SEND_AND_TERMINATE == next_event)) {
-        conn->handshake_resp.supportedAppProtocolRes.ResponseCode = appHandresponseCodeType_Failed_NoNegotiation;
+        conn->handshake_resp.supportedAppProtocolRes.ResponseCode = appHand_responseCodeType_Failed_NoNegotiation;
         dlog(DLOG_LEVEL_ERROR, "Abort charging session");
 
         if (conn->ctx->terminate_connection_on_failed_response == true) {
@@ -334,11 +343,10 @@ static enum v2g_event v2g_handle_apphandshake(struct v2g_connection* conn) {
     }
 
     /* encode response at the right buffer location */
-    *(conn->stream.pos) = V2GTP_HEADER_LENGTH;
-    conn->stream.capacity = 8; // as it should be for send
-    conn->stream.buffer = 0;
+    conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
+    conn->stream.bit_count = 0;
 
-    if (encode_appHandExiDocument(&conn->stream, &conn->handshake_resp) != 0) {
+    if (encode_appHand_exiDocument(&conn->stream, &conn->handshake_resp) != 0) {
         dlog(DLOG_LEVEL_ERROR, "Encoding of the protocol handshake message failed");
         next_event = V2G_EVENT_SEND_AND_TERMINATE;
     }
@@ -360,7 +368,6 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     /* static setup */
     conn->stream.data = conn->buffer;
-    conn->stream.pos = &conn->buffer_pos;
 
     /* Here is a good point to wait until the customer is ready for a resumed session,
      * because we are waiting for the incoming message of the ev */
@@ -370,10 +377,9 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     do {
         /* setup for receive */
-        conn->stream.buffer = 0;
-        conn->stream.capacity = 0; // Set to 8 for send and 0 for recv
-        conn->buffer_pos = 0;
+        conn->stream.data[0] = 0;
         conn->payload_len = 0;
+        exi_bitstream_init(&conn->stream, conn->buffer, 0, 0, nullptr);
 
         /* next call return -1 on error, 1 when peer closed connection, 0 on success */
         rv = v2g_incoming_v2gtp(conn);
@@ -425,25 +431,27 @@ int v2g_handle_connection(struct v2g_connection* conn) {
     switch (selected_protocol) {
     case V2G_PROTO_DIN70121:
     case V2G_PROTO_ISO15118_2010:
-        conn->exi_in.dinEXIDocument = static_cast<struct dinEXIDocument*>(calloc(1, sizeof(struct dinEXIDocument)));
+        conn->exi_in.dinEXIDocument = static_cast<struct din_exiDocument*>(calloc(1, sizeof(struct din_exiDocument)));
         if (conn->exi_in.dinEXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
-        conn->exi_out.dinEXIDocument = static_cast<struct dinEXIDocument*>(calloc(1, sizeof(struct dinEXIDocument)));
+        conn->exi_out.dinEXIDocument = static_cast<struct din_exiDocument*>(calloc(1, sizeof(struct din_exiDocument)));
         if (conn->exi_out.dinEXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
         break;
     case V2G_PROTO_ISO15118_2013:
-        conn->exi_in.iso1EXIDocument = static_cast<struct iso1EXIDocument*>(calloc(1, sizeof(struct iso1EXIDocument)));
-        if (conn->exi_in.iso1EXIDocument == NULL) {
+        conn->exi_in.iso2EXIDocument =
+            static_cast<struct iso2_exiDocument*>(calloc(1, sizeof(struct iso2_exiDocument)));
+        if (conn->exi_in.iso2EXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
-        conn->exi_out.iso1EXIDocument = static_cast<struct iso1EXIDocument*>(calloc(1, sizeof(struct iso1EXIDocument)));
-        if (conn->exi_out.iso1EXIDocument == NULL) {
+        conn->exi_out.iso2EXIDocument =
+            static_cast<struct iso2_exiDocument*>(calloc(1, sizeof(struct iso2_exiDocument)));
+        if (conn->exi_out.iso2EXIDocument == NULL) {
             dlog(DLOG_LEVEL_ERROR, "out-of-memory");
             goto error_out;
         }
@@ -454,9 +462,9 @@ int v2g_handle_connection(struct v2g_connection* conn) {
 
     do {
         /* setup for receive */
-        conn->stream.buffer = 0;
-        conn->stream.capacity = 0; // Set to 8 for send and 0 for recv
-        conn->buffer_pos = 0;
+        conn->stream.data[0] = 0;
+        conn->stream.bit_count = 0;
+        conn->stream.byte_pos = 0;
         conn->payload_len = 0;
 
         /* next call return -1 on error, 1 when peer closed connection, 0 on success */
@@ -478,8 +486,8 @@ int v2g_handle_connection(struct v2g_connection* conn) {
         switch (selected_protocol) {
         case V2G_PROTO_DIN70121:
         case V2G_PROTO_ISO15118_2010:
-            memset(conn->exi_in.dinEXIDocument, 0, sizeof(struct dinEXIDocument));
-            rv = decode_dinExiDocument(&conn->stream, conn->exi_in.dinEXIDocument);
+            memset(conn->exi_in.dinEXIDocument, 0, sizeof(struct din_exiDocument));
+            rv = decode_din_exiDocument(&conn->stream, conn->exi_in.dinEXIDocument);
             if (rv != 0) {
                 dlog(DLOG_LEVEL_ERROR, "decode_dinExiDocument() (previous message \"%s\") failed: %d",
                      v2g_msg_type[conn->ctx->last_v2g_msg], rv);
@@ -489,26 +497,24 @@ int v2g_handle_connection(struct v2g_connection* conn) {
                 break;
             }
 
-            memset(conn->exi_out.dinEXIDocument, 0, sizeof(struct dinEXIDocument));
-            conn->exi_out.dinEXIDocument->V2G_Message_isUsed = 1;
+            memset(conn->exi_out.dinEXIDocument, 0, sizeof(struct din_exiDocument));
 
             v2gEvent = din_handle_request(conn);
             break;
 
         case V2G_PROTO_ISO15118_2013:
-            memset(conn->exi_in.iso1EXIDocument, 0, sizeof(struct iso1EXIDocument));
-            rv = decode_iso1ExiDocument(&conn->stream, conn->exi_in.iso1EXIDocument);
+            memset(conn->exi_in.iso2EXIDocument, 0, sizeof(struct iso2_exiDocument));
+            rv = decode_iso2_exiDocument(&conn->stream, conn->exi_in.iso2EXIDocument);
             if (rv != 0) {
-                dlog(DLOG_LEVEL_ERROR, "decode_iso1EXIDocument() (previous message \"%s\") failed: %d",
+                dlog(DLOG_LEVEL_ERROR, "decode_iso2_exiDocument() (previous message \"%s\") failed: %d",
                      v2g_msg_type[conn->ctx->last_v2g_msg], rv);
                 /* we must ignore packet which we cannot decode, so reset rv to zero to stay in loop */
                 rv = 0;
                 v2gEvent = V2G_EVENT_IGNORE_MSG;
                 break;
             }
-            conn->buffer_pos = 0; // Reset buffer pos for the case if exi msg will be configured over mqtt
-            memset(conn->exi_out.iso1EXIDocument, 0, sizeof(struct iso1EXIDocument));
-            conn->exi_out.iso1EXIDocument->V2G_Message_isUsed = 1;
+            conn->stream.byte_pos = 0; // Reset pos for the case if exi msg will be configured over mqtt
+            memset(conn->exi_out.iso2EXIDocument, 0, sizeof(struct iso2_exiDocument));
 
             v2gEvent = iso_handle_request(conn);
 
@@ -527,23 +533,23 @@ int v2g_handle_connection(struct v2g_connection* conn) {
             stop_receiving_loop = true;
         case V2G_EVENT_NO_EVENT: { // fall-through intended
             /* Reset v2g-buffer */
-            conn->stream.buffer = 0;
-            conn->stream.capacity = 8; // Set to 8 for send and 0 for recv
-            conn->buffer_pos = V2GTP_HEADER_LENGTH;
-            conn->stream.size = DEFAULT_BUFFER_SIZE;
+            conn->stream.data[0] = 0;
+            conn->stream.bit_count = 0;
+            conn->stream.byte_pos = V2GTP_HEADER_LENGTH;
+            conn->stream.data_size = DEFAULT_BUFFER_SIZE;
 
             /* Configure msg and send */
             switch (selected_protocol) {
             case V2G_PROTO_DIN70121:
             case V2G_PROTO_ISO15118_2010:
-                if ((rv = encode_dinExiDocument(&conn->stream, conn->exi_out.dinEXIDocument)) != 0) {
+                if ((rv = encode_din_exiDocument(&conn->stream, conn->exi_out.dinEXIDocument)) != 0) {
                     dlog(DLOG_LEVEL_ERROR, "encode_dinExiDocument() (message \"%s\") failed: %d",
                          v2g_msg_type[conn->ctx->current_v2g_msg], rv);
                 }
                 break;
             case V2G_PROTO_ISO15118_2013:
-                if ((rv = encode_iso1ExiDocument(&conn->stream, conn->exi_out.iso1EXIDocument)) != 0) {
-                    dlog(DLOG_LEVEL_ERROR, "encode_iso1ExiDocument() (message \"%s\") failed: %d",
+                if ((rv = encode_iso2_exiDocument(&conn->stream, conn->exi_out.iso2EXIDocument)) != 0) {
+                    dlog(DLOG_LEVEL_ERROR, "encode_iso2_exiDocument() (message \"%s\") failed: %d",
                          v2g_msg_type[conn->ctx->current_v2g_msg], rv);
                 }
                 break;
@@ -598,10 +604,10 @@ error_out:
             free(conn->exi_out.dinEXIDocument);
         break;
     case V2G_PROTO_ISO15118_2013:
-        if (conn->exi_in.iso1EXIDocument != NULL)
-            free(conn->exi_in.iso1EXIDocument);
-        if (conn->exi_out.iso1EXIDocument != NULL)
-            free(conn->exi_out.iso1EXIDocument);
+        if (conn->exi_in.iso2EXIDocument != NULL)
+            free(conn->exi_in.iso2EXIDocument);
+        if (conn->exi_out.iso2EXIDocument != NULL)
+            free(conn->exi_out.iso2EXIDocument);
         break;
     default:
         break;
@@ -620,8 +626,8 @@ uint64_t v2g_session_id_from_exi(bool is_iso, void* exi_in) {
     uint64_t session_id = 0;
 
     if (is_iso) {
-        struct iso1EXIDocument* req = static_cast<struct iso1EXIDocument*>(exi_in);
-        struct iso1MessageHeaderType* hdr = &req->V2G_Message.Header;
+        struct iso2_exiDocument* req = static_cast<struct iso2_exiDocument*>(exi_in);
+        struct iso2_MessageHeaderType* hdr = &req->V2G_Message.Header;
 
         /* the provided session id could be smaller (error) in case that the peer did not
          * send our full session id back to us; this is why we init the id with 0 above
@@ -629,8 +635,8 @@ uint64_t v2g_session_id_from_exi(bool is_iso, void* exi_in) {
          */
         memcpy(&session_id, &hdr->SessionID.bytes, std::min((int)sizeof(session_id), (int)hdr->SessionID.bytesLen));
     } else {
-        struct dinEXIDocument* req = static_cast<struct dinEXIDocument*>(exi_in);
-        struct dinMessageHeaderType* hdr = &req->V2G_Message.Header;
+        struct din_exiDocument* req = static_cast<struct din_exiDocument*>(exi_in);
+        struct din_MessageHeaderType* hdr = &req->V2G_Message.Header;
 
         /* see comment above */
         memcpy(&session_id, &hdr->SessionID.bytes, std::min((int)sizeof(session_id), (int)hdr->SessionID.bytesLen));

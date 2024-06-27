@@ -1,0 +1,6 @@
+description: This interface publishes just generic data blobs.
+vars:
+  vector_of_ints:
+    description: data blob.
+    type: object
+    $ref: /generic_array#/VectorOfInts

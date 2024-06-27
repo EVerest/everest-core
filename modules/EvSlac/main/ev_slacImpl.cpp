@@ -16,13 +16,6 @@ namespace module {
 namespace main {
 
 void ev_slacImpl::init() {
-    // validate config settings
-    if (config.ev_id.length() != slac::defs::STATION_ID_LEN) {
-        EVLOG_AND_THROW(
-            Everest::EverestConfigError(fmt::format("The EVSE id config needs to be exactly {} octets (got {}).",
-                                                    slac::defs::STATION_ID_LEN, config.ev_id.length())));
-    }
-
     // setup evse fsm thread
     std::thread(&ev_slacImpl::run, this).detach();
 }
@@ -40,8 +33,11 @@ void ev_slacImpl::run() {
     try {
         slac_io.init(config.device);
     } catch (const std::exception& e) {
-        EVLOG_AND_THROW(Everest::EverestBaseRuntimeError(
-            fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device, e.what())));
+        EVLOG_error << fmt::format("Couldn't open device {} for SLAC communication. Reason: {}", config.device,
+                                   e.what());
+        raise_error(
+            error_factory->create_error("generic/CommunicationFault", "", "Could not open device " + config.device));
+        return;
     }
 
     // setup callbacks

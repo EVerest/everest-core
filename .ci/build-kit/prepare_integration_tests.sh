@@ -1,11 +1,9 @@
 #!/bin/sh
 
-# ninja -j$(nproc) -C build tests
-ninja -j$(nproc) -C build install
-
-# install everest testing by cmake target to make sure using the version defined in dependencies.yaml
-ninja -C build install_everest_testing
+set -e
 
 rsync -a "$EXT_MOUNT/source/tests" ./
 
-rm -rf build
+pip install $EXT_MOUNT/wheels/everestpy-*.whl
+pip install $EXT_MOUNT/wheels/everest_testing-*.whl
+pip install pytest-html

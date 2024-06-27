@@ -30,7 +30,9 @@ target_link_libraries(${MODULE_NAME}
         mbedcrypto
         mbedtls
         mbedx509
-        everest::openv2g
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
 )
 
 target_sources(${MODULE_NAME}

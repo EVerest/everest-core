@@ -28,6 +28,7 @@ struct Conf {
     std::string serial_port;
     int baudrate;
     int parity;
+    bool rtscts;
     bool ignore_echo;
     std::string rxtx_gpio_chip;
     int rxtx_gpio_line;

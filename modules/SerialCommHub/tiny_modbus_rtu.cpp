@@ -78,8 +78,11 @@ static bool validate_checksum(const uint8_t* msg, int msg_len) {
 static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t expected_device_address,
                                           FunctionCode function) {
     std::vector<uint16_t> result;
-    if (len < MODBUS_MIN_REPLY_SIZE) {
-        EVLOG_error << fmt::format("Packet too small: {} bytes.", len);
+    if (len == 0) {
+        EVLOG_error << fmt::format("Packet receive timeout (device address {}).", expected_device_address);
+        return result;
+    } else if (len < MODBUS_MIN_REPLY_SIZE) {
+        EVLOG_error << fmt::format("Packet too small: {} bytes (device address {}).", len, expected_device_address);
         return result;
     }
     if (expected_device_address != buf[DEVICE_ADDRESS_POS]) {
@@ -190,7 +193,7 @@ TinyModbusRTU::~TinyModbusRTU() {
 }
 
 bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _ignore_echo,
-                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity,
+                                const Everest::GpioSettings& rxtx_gpio_settings, const Parity parity, bool rtscts,
                                 std::chrono::milliseconds _initial_timeout,
                                 std::chrono::milliseconds _within_message_timeout) {
 
@@ -261,7 +264,12 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
         tty.c_cflag &= ~(PARENB | PARODD); // shut off parity
     }
     tty.c_cflag &= ~CSTOPB; // 1 Stop bit
-    tty.c_cflag &= ~CRTSCTS;
+
+    if (rtscts) {
+        tty.c_cflag |= CRTSCTS;
+    } else {
+        tty.c_cflag &= ~CRTSCTS;
+    }
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
         printf("Serial: error %d from tcsetattr\n", errno);
@@ -271,6 +279,10 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 }
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
+    if (fd <= 0) {
+        return 0;
+    }
+
     // Lambda to convert std::chrono to timeval.
     auto to_timeval = [](const auto& time) {
         using namespace std::chrono;
@@ -413,6 +425,10 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
                                                uint16_t first_register_address, uint16_t register_quantity,
                                                bool wait_for_reply, std::vector<uint16_t> request) {
     {
+        if (fd <= 0) {
+            return {};
+        }
+
         auto req =
             function == FunctionCode::WRITE_SINGLE_HOLDING_REGISTER
                 ? _make_single_write_request(device_address, first_register_address, wait_for_reply, request.at(0))

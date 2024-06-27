@@ -34,7 +34,8 @@ ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::Dat
 /// \brief Converts the provided parameters to an ocpp::v201::SampledValue.
 ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
                                                const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
-                                               const std::optional<ocpp::v201::PhaseEnum> phase);
+                                               const std::optional<ocpp::v201::PhaseEnum> phase,
+                                               ocpp::v201::LocationEnum location = ocpp::v201::LocationEnum::Outlet);
 
 /// \brief Converts the given types::units_signed::SignedMeterValue \p signed_meter_value  to an
 /// ocpp::v201::SignedMeterValue.

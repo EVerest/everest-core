@@ -2,6 +2,7 @@
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
 #include "generated/types/ocpp.hpp"
+#include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
 #include <fstream>
@@ -80,6 +81,7 @@ static ErrorInfo get_error_info(const std::optional<types::evse_manager::Error> 
     case types::evse_manager::ErrorEnum::EnergyManagement:
     case types::evse_manager::ErrorEnum::PermanentFault:
     case types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed:
+    default:
         return {ocpp::v16::ChargePointErrorCode::InternalError, types::evse_manager::error_enum_to_string(error_code)};
     }
 
@@ -238,6 +240,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received SessionFinished";
         // ev side disconnect
+        this->evse_soc_map[evse_id].reset();
         this->charge_point->on_session_stopped(ocpp_connector_id, session_event.uuid);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::Error) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
@@ -264,8 +267,19 @@ void OCPP::init_evse_subscriptions() {
     int32_t evse_id = 1;
     for (auto& evse : this->r_evse_manager) {
         evse->subscribe_powermeter([this, evse_id](types::powermeter::Powermeter powermeter) {
-            json powermeter_json = powermeter;
-            this->charge_point->on_meter_values(evse_id, powermeter_json); //
+            ocpp::Measurement measurement;
+            measurement.power_meter = conversions::to_ocpp_power_meter(powermeter);
+            if (this->evse_soc_map[evse_id].has_value()) {
+                // soc is present, so add this to the measurement
+                measurement.soc_Percent = ocpp::StateOfCharge{this->evse_soc_map[evse_id].value()};
+            }
+            this->charge_point->on_meter_values(evse_id, measurement);
+        });
+
+        evse->subscribe_ev_info([this, evse_id](const types::evse_manager::EVInfo& ev_info) {
+            if (ev_info.soc.has_value()) {
+                this->evse_soc_map[evse_id] = ev_info.soc.value();
+            }
         });
 
         evse->subscribe_limits([this, evse_id](types::evse_manager::Limits limits) {
@@ -330,10 +344,11 @@ void OCPP::init_evse_connector_map() {
     }
 }
 
-void OCPP::init_evse_ready_map() {
+void OCPP::init_evse_maps() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->evse_ready_map[evse_id] = false;
+        this->evse_soc_map[evse_id] = std::nullopt;
     }
 }
 
@@ -354,7 +369,7 @@ void OCPP::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
 
-    this->init_evse_ready_map();
+    this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
         this->r_evse_manager.at(evse_id - 1)->subscribe_waiting_for_external_ready([this, evse_id](bool ready) {
@@ -627,15 +642,22 @@ void OCPP::ready() {
 
     this->charge_point->register_disable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_disable(0);
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
+                ->call_enable_disable(
+                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Disable, 5000});
         } else {
             return false;
         }
     });
 
+    this->charge_point->register_set_system_time_callback(
+        [this](const std::string& system_time) { this->r_system->call_set_system_time(system_time); });
+
     this->charge_point->register_enable_evse_callback([this](int32_t connector) {
         if (this->connector_evse_index_map.count(connector)) {
-            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))->call_enable(0);
+            return this->r_evse_manager.at(this->connector_evse_index_map.at(connector))
+                ->call_enable_disable(
+                    0, {types::evse_manager::Enable_source::CSMS, types::evse_manager::Enable_state::Enable, 5000});
         } else {
             return false;
         }
@@ -653,6 +675,12 @@ void OCPP::ready() {
         this->mqtt.subscribe(disconnect_topic,
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
+
+    // publish charging schedules at least once on startup
+    const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
+        this->config.PublishChargingScheduleDurationS);
+    this->set_external_limits(charging_schedules);
+    this->publish_charging_schedules(charging_schedules);
 
     this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(

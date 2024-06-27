@@ -30,4 +30,5 @@ target_link_libraries(umwc_comms
     PRIVATE
         Pal::Sigslot
         everest::framework
+        everest::gpio
 )

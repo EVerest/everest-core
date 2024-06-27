@@ -39,9 +39,9 @@ void serial_communication_hubImpl::init() {
     rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
 
     if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings,
-                            static_cast<tiny_modbus::Parity>(config.parity), milliseconds(config.initial_timeout_ms),
-                            milliseconds(config.within_message_timeout_ms))) {
-        EVLOG_AND_THROW(Everest::EverestConfigError(fmt::format("Cannot open serial port {}.", config.serial_port)));
+                            static_cast<tiny_modbus::Parity>(config.parity), config.rtscts,
+                            milliseconds(config.initial_timeout_ms), milliseconds(config.within_message_timeout_ms))) {
+        EVLOG_error << "Cannot open serial port {}, ModBus will not work.", config.serial_port;
     }
 }
 
@@ -63,9 +63,9 @@ serial_communication_hubImpl::handle_modbus_read_holding_registers(int& target_d
         auto retry_counter = this->num_resends_on_error;
         while (retry_counter > 0) {
 
-            // EVLOG_info << fmt::format("Try {} Call modbus_client->read_holding_register(id {} addr {} len {})",
-            //                           (int)retry_counter, (uint8_t)target_device_id,
-            //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->read_holding_register(id {} addr {} len {})",
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS,
                                    first_register_address, num_registers_to_read, config.max_packet_size);
@@ -99,9 +99,9 @@ serial_communication_hubImpl::handle_modbus_read_input_registers(int& target_dev
         uint8_t retry_counter{this->num_resends_on_error};
         while (retry_counter-- > 0) {
 
-            // EVLOG_info << fmt::format("Try {} Call modbus_client->read_input_register(id {} addr {} len {})",
-            //                           (int)retry_counter, (uint8_t)target_device_id,
-            //                           (uint16_t)first_register_address, (uint16_t)num_registers_to_read);
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->read_input_register(id {} addr {} len {})",
+                                       (int)retry_counter, (uint8_t)target_device_id, (uint16_t)first_register_address,
+                                       (uint16_t)num_registers_to_read);
 
             response = modbus.txrx(target_device_id, tiny_modbus::FunctionCode::READ_INPUT_REGISTERS,
                                    first_register_address, num_registers_to_read, config.max_packet_size);
@@ -149,7 +149,7 @@ types::serial_comm_hub_requests::StatusCodeEnum serial_communication_hubImpl::ha
         }
     }
 
-    EVLOG_debug << fmt::format("Done writing");
+    EVLOG_debug << fmt::format("Done writing (size {})", response.size());
     // process response
     if (response.size() > 0) {
         return types::serial_comm_hub_requests::StatusCodeEnum::Success;
@@ -170,7 +170,7 @@ serial_communication_hubImpl::handle_modbus_write_single_register(int& target_de
         uint8_t retry_counter{this->num_resends_on_error};
         while (retry_counter-- > 0) {
 
-            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_single_register(id {} addr {} data {})",
+            EVLOG_debug << fmt::format("Try {} Call modbus_client->write_single_register(id {} addr {} data 0x{:04x})",
                                        (int)retry_counter, (uint8_t)target_device_id, (uint16_t)register_address,
                                        (uint16_t)data);
 
@@ -181,7 +181,7 @@ serial_communication_hubImpl::handle_modbus_write_single_register(int& target_de
             }
         }
     }
-    EVLOG_debug << fmt::format("Done writing");
+    EVLOG_debug << fmt::format("Done writing (size {})", response.size());
     // process response
     if (response.size() > 0) {
         return types::serial_comm_hub_requests::StatusCodeEnum::Success;

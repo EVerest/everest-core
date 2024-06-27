@@ -116,6 +116,13 @@ function(ev_add_project)
         PROPERTY EVEREST_MODULES
     )
     message(STATUS "${EVEREST_PROJECT_NAME} modules that will be built: ${EVEREST_MODULES}")
+
+    # generate and install version information
+    evc_generate_version_information()
+    install(
+        FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/version_information.txt
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
+    )
 endfunction()
 
 #
@@ -277,6 +284,7 @@ function (_ev_add_interfaces)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
+            ev-cli
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -315,6 +323,7 @@ function (_ev_add_types)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
+            ev-cli
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -458,6 +467,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
+                    ev-cli
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
