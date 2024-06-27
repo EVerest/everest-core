@@ -31,32 +31,35 @@ def cc_everest_module(
         name + ".hpp",
     ]
 
+    binary = name + "__binary"
+    manifest = native.glob(["manifest.y*ml"], allow_empty = False)[0]
+
     native.genrule(
         name = "ld-ev",
         outs = [
             "generated/modules/{}/ld-ev.hpp".format(name),
             "generated/modules/{}/ld-ev.cpp".format(name),
         ],
-        srcs = native.glob(["manifest.y*ml"], allow_empty = False) + [
-            "@everest-framework//schemas:schemas",
+        srcs = [
+            manifest,
             "@everest-core//types:types",
-            "@everest-core//errors:errors",
+            "@everest-framework//schemas:schemas",
+            "@everest-core//:WORKSPACE.bazel",
+            "@everest-core//interfaces:interfaces",
         ],
         tools = [
             "@everest-utils//ev-dev-tools:ev-cli",
         ],
         cmd = """
     $(location @everest-utils//ev-dev-tools:ev-cli) module generate-loader \
-        --everest-dir . \
+        --work-dir `dirname $(location @everest-core//:WORKSPACE.bazel)` \
+        --everest-dir ~/foo \
         --schemas-dir external/everest-framework/schemas \
         --disable-clang-format \
         --output-dir `dirname $(location generated/modules/{module_name}/ld-ev.hpp)`/.. \
         {module_name}
     """.format(module_name = name)
     )
-
-    binary = name + "__binary"
-    manifest = native.glob(["manifest.y*ml"], allow_empty = False)[0]
 
     native.cc_binary(
         name = binary,
@@ -93,4 +96,4 @@ def cc_everest_module(
             ":copy_to_subdir",
         ],
         visibility = ["//visibility:public"],
-    )    
+    )

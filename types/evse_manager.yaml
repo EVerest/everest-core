@@ -180,8 +180,13 @@ types:
     type: object
     additionalProperties: false
     required:
+      - timestamp
       - meter_value
     properties:
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
       meter_value:
         description: Exported meter value
         type: object
@@ -191,9 +196,14 @@ types:
     type: object
     additionalProperties: false
     required:
+      - timestamp
       - id_tag
       - meter_value
     properties:
+      timestamp:
+        description: Session start time in RFC3339 format
+        type: string
+        format: date-time
       id_tag:
         description: The id tag assigned to this transaction
         type: object
