@@ -280,7 +280,7 @@ void Charger::run_state_machine() {
             if (config_context.charge_mode == ChargeMode::DC) {
                 // Create a copy of the atomic struct
                 types::iso15118_charger::DC_EVSEMaximumLimits evse_limit = shared_context.current_evse_max_limits;
-                if (not(evse_limit.EVSEMaximumCurrentLimit > 0 and evse_limit.EVSEMaximumPowerLimit > 0)) {
+                if (not(evse_limit.maximum_current > 0 and evse_limit.maximum_power > 0)) {
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying...";
                         internal_context.no_energy_warning_printed = true;

@@ -33,6 +33,8 @@ ev_add_module(DummyTokenProvider)
 ev_add_module(DummyTokenProviderManual)
 ev_add_module(PhyVersoBSP)
 
+add_subdirectory(Iso15118)
+
 add_subdirectory(examples)
 add_subdirectory(simulation)
 
