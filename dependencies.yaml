@@ -9,4 +9,4 @@ catch2:
   cmake_condition: "ISO15118_BUILD_TESTS"
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: eed06cb6b73787ef48001968f8e8e3ad6458b476
+  git_tag: v0.2.0
