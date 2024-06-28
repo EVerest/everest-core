@@ -69,6 +69,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    verso_config.json_conf_to_evConfig();
+
     evSerial p(verso_config);
 
     if (!p.open_device(device, 115200)) {

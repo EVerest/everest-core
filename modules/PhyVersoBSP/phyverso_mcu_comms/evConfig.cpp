@@ -79,4 +79,8 @@ void evConfig::json_conf_to_evConfig()
 {
     conf.conn1_motor_lock_type = config_file["conn1_motor_lock_type"];
     conf.conn2_motor_lock_type = config_file["conn2_motor_lock_type"];
+
+    // set GPIO related settings for evSerial if available
+    try{conf.reset_gpio_bank = config_file["reset_gpio_bank"];} catch (...) {}
+    try{conf.reset_gpio_pin = config_file["reset_gpio_pin"];} catch (...) {}
 }
