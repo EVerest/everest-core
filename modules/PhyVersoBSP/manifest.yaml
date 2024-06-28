@@ -11,7 +11,7 @@ config:
     maximum: 230400
     default: 115200
   reset_gpio:
-    description: Reset GPIO number to use to HW reset phyVERSO. If set <0 it is disabled.
+    description: If set <0 it is disabled. If > 0, configured reset_gpio_bank and reset_gpio_pin configuration is used for hard reset of MCU
     type: integer
     minimum: -1
     maximum: 1000
@@ -128,6 +128,14 @@ config:
     description: Set to true if it is for DC, false if it is AC
     type: boolean
     default: false
+  reset_gpio_bank:
+    description: GPIO peripheral bank the nRST pin of the MCU is mapped to
+    type: integer
+    default: 1
+  reset_gpio_pin:
+    description: GPIO peripheral pin the nRST pin of the MCU is mapped to
+    type: integer
+    default: 23
 provides:
   connector_1:
     interface: evse_board_support

@@ -13,6 +13,9 @@ void PhyVersoBSP::init() {
         return;
     }
 
+    // configure nRST gpios
+    serial.set_nrst_config(config.reset_gpio_bank, config.reset_gpio_pin);
+
     invoke_init(*p_connector_1);
     invoke_init(*p_connector_2);
     invoke_init(*p_rcd_1);

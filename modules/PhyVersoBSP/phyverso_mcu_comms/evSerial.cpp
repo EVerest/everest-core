@@ -478,3 +478,9 @@ void evSerial::set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty) {
     msg_out.connector = 0;
     link_write(&msg_out);
 }
+
+void evSerial::set_nrst_config(uint8_t bank, uint8_t pin)
+{
+    nRST_bank = bank;
+    nRST_pin = pin;
+}

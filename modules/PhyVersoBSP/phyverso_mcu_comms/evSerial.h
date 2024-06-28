@@ -107,6 +107,8 @@ public:
 
     void send_config(evConfig& config);
 
+    void set_nrst_config(uint8_t bank, uint8_t pin);
+
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;
     sigslot::signal<int, CoilState> signal_set_coil_state_response;
@@ -126,6 +128,10 @@ private:
     bool set_serial_attributes();
     int fd;
     int baud;
+
+    // GPIO config
+    uint8_t nRST_bank = 1;
+    uint8_t nRST_pin = 23;
 
     // COBS de-/encoder
     void cobs_decode_reset();

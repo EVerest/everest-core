@@ -49,6 +49,8 @@ struct Conf {
     int conn2_max_phase_count_export;
     bool conn2_has_socket;
     bool conn2_dc;
+    int reset_gpio_bank;
+    int reset_gpio_pin;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {
