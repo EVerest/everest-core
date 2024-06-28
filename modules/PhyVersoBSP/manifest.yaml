@@ -16,10 +16,6 @@ config:
     minimum: -1
     maximum: 1000
     default: -1
-  mcu_config_file:
-    description: config file that should be sent to the MCU
-    type: string
-    default: example_config_pionix.json
   conn1_max_current_A_import:
     description: Maximum import current in amps
     type: integer
@@ -136,6 +132,14 @@ config:
     description: GPIO peripheral pin the nRST pin of the MCU is mapped to
     type: integer
     default: 23
+  conn1_motor_lock_type:
+    description: Connector 1 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    type: integer
+    default: 2
+  conn2_motor_lock_type:
+    description: Connector 2 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    type: integer
+    default: 2
 provides:
   connector_1:
     interface: evse_board_support

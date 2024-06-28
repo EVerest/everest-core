@@ -84,7 +84,7 @@ private:
 class evSerial {
 
 public:
-    evSerial();
+    evSerial(evConfig& _verso_config);
     ~evSerial();
 
     bool open_device(const char* device, int baud);
@@ -105,9 +105,7 @@ public:
     void unlock(int target_connector);
     void set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty);
 
-    void send_config(evConfig& config);
-
-    void set_nrst_config(uint8_t bank, uint8_t pin);
+    void send_config();
 
     sigslot::signal<KeepAlive> signal_keep_alive;
     sigslot::signal<int, CpState> signal_cp_state;
@@ -128,10 +126,6 @@ private:
     bool set_serial_attributes();
     int fd;
     int baud;
-
-    // GPIO config
-    uint8_t nRST_bank = 1;
-    uint8_t nRST_pin = 23;
 
     // COBS de-/encoder
     void cobs_decode_reset();
@@ -160,6 +154,9 @@ private:
     std::chrono::time_point<date::utc_clock> last_keep_alive_lo_timestamp;
     /// @brief Maps the connectors to OpaqueDataHandlers.
     std::unordered_map<unsigned, OpaqueDataHandler> opaque_handlers;
+
+    // config bridge (filled by json or everest module config)
+    evConfig& verso_config;
 };
 
 #endif // PHYVERSO_MCU_COMMS_EV_SERIAL_H

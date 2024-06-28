@@ -62,12 +62,14 @@ int main(int argc, char* argv[]) {
     const char* config_path = argv[2];
 
     evConfig verso_config;
+
+    // with config rework we still have to go the json route here
     if (!verso_config.open_file(config_path)) {
         printf("Could not open config file \"%s\"\n", config_path);
         return -1;
     }
 
-    evSerial p;
+    evSerial p(verso_config);
 
     if (!p.open_device(device, 115200)) {
         printf("Cannot open device \"%s\"\n", device);
@@ -76,7 +78,7 @@ int main(int argc, char* argv[]) {
 
         p.signal_config_request.connect([&]() {
             printf("Received config request\n");
-            p.send_config(verso_config);
+            p.send_config();
             printf("Sent config packet\n");
         });
 

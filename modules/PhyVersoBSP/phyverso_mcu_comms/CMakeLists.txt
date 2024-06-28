@@ -22,6 +22,7 @@ target_link_libraries(phyverso_config
     PRIVATE
         everest::nanopb
         nlohmann_json::nlohmann_json
+        fmt::fmt
 )
 
 add_library(phyverso_mcu_comms STATIC)

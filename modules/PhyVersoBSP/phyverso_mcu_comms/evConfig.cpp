@@ -5,6 +5,7 @@
 #include "phyverso.pb.h"
 #include <fstream>
 #include <iostream>
+#include <fmt/core.h>
 
 // for convenience
 using json = nlohmann::json;
@@ -31,16 +32,21 @@ bool evConfig::open_file(std::string path) {
 
 // todo: needs to be refactored a lot
 bool evConfig::check_validity() {
-    std::cout << config_file.dump() << "\n\n";
+    std::cout << config_file.dump() << "\n\n"; // DEBUG
 
-    if (!config_file.contains("motor_lock_type")) {
-        std::cout << "Missing 'motor_lock_type' config parameter" << std::endl;
-        return false;
+    std::vector<std::string> mandatory_config_keys = {"conn1_motor_lock_type", "conn2_motor_lock_type"};
+
+    for(const std::string& key : mandatory_config_keys) {
+        if (!config_file.contains(key)) {
+            std::cout << fmt::format("Missing '{}' config parameter", key) << std::endl;
+            return false;
+        }
     }
 
     return true;
 }
 
+// unused for now
 bool evConfig::read_hw_eeprom(ConfigHardwareRevision& hw_rev) {
     // TODO: read eeprom on new phyVERSO hw revisions,
     // for now return hardcoded value
@@ -53,14 +59,24 @@ void evConfig::fill_config_packet() {
     config_packet.which_payload = EverestToMcu_config_response_tag;
     config_packet.connector = 0;
     read_hw_eeprom(config_packet.payload.config_response.hw_rev);
-    config_packet.payload.config_response.lock_1.type = config_file["motor_lock_type"];
+
+    config_packet.payload.config_response.lock_1.type = static_cast<MotorLockType>(conf.conn1_motor_lock_type);
     config_packet.payload.config_response.has_lock_1 = true;
 
-    // TODO: implement handling of two different lock types on MCU, for now only send motor_lock_type
+    config_packet.payload.config_response.lock_2.type = static_cast<MotorLockType>(conf.conn2_motor_lock_type);
+    config_packet.payload.config_response.has_lock_2 = true;
+
+    // TODO: implement FW handling of two different lock types on MCU, for now only send motor_lock_type
     // and use config for both MCU charging ports
 }
 
 EverestToMcu evConfig::get_config_packet() {
     fill_config_packet();
     return config_packet;
+}
+
+void evConfig::json_conf_to_evConfig()
+{
+    conf.conn1_motor_lock_type = config_file["conn1_motor_lock_type"];
+    conf.conn2_motor_lock_type = config_file["conn2_motor_lock_type"];
 }
