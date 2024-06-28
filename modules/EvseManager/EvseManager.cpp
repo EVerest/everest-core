@@ -112,12 +112,20 @@ void EvseManager::init() {
                 [this](const auto& caps) { update_powersupply_capabilities(caps); });
         }
     }
+
+    r_bsp->subscribe_request_stop_transaction(
+        [this](types::evse_manager::StopTransactionRequest r) { charger->cancel_transaction(r); });
 }
 
 void EvseManager::ready() {
     bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
+
+    if (config.hack_simplified_mode_limit_10A) {
+        bsp->set_ev_simplified_mode_evse_limit(true);
+    }
+
     error_handling =
-        std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse));
+        std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd));
 
     hw_capabilities = r_bsp->call_get_hw_capabilities();
 
@@ -234,10 +242,21 @@ void EvseManager::ready() {
 
                 imd_stop();
 
-                r_imd[0]->subscribe_IsolationMeasurement([this](types::isolation_monitor::IsolationMeasurement m) {
+                r_imd[0]->subscribe_isolation_measurement([this](types::isolation_monitor::IsolationMeasurement m) {
                     // new DC isolation monitoring measurement received
-                    session_log.evse(false, fmt::format("Isolation measurement R_F {}.", m.resistance_F_Ohm));
+
+                    // Are we in charge loop?
+                    if (charger->get_current_state() == Charger::EvseState::Charging and
+                        not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
+                        charger->set_hlc_error();
+                        r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+                    }
                     isolation_measurement = m;
+                });
+
+                r_imd[0]->subscribe_self_test_result([this](bool result) {
+                    session_log.evse(false, fmt::format("Isolation monitor self test result: {}", result));
+                    selftest_result = result;
                 });
             }
 
@@ -876,7 +895,7 @@ void EvseManager::ready() {
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
-    charger->set_max_current(0.0F, date::utc_clock::now() + std::chrono::seconds(10));
+    charger->set_max_current(0.0F, date::utc_clock::now() + std::chrono::seconds(120));
     this->p_evse->publish_waiting_for_external_ready(config.external_ready_to_start_charging);
     if (not config.external_ready_to_start_charging) {
         // immediately ready, otherwise delay until we get the external signal
@@ -1206,19 +1225,62 @@ void EvseManager::charger_was_authorized() {
     }
 }
 
+static double get_cable_check_voltage(double ev_max_cpd, double evse_max_cpd) {
+    double cable_check_voltage = 500;
+    // IEC 61851-23 (2023) CC.4.1.2 / Formular CC.1
+    if (ev_max_cpd <= 500) {
+        if ((ev_max_cpd + 50) < cable_check_voltage) {
+            cable_check_voltage = (ev_max_cpd + 50);
+        }
+        if (evse_max_cpd < cable_check_voltage) {
+            cable_check_voltage = evse_max_cpd;
+        }
+    } else {
+        cable_check_voltage = evse_max_cpd;
+        if (1.1 * ev_max_cpd < cable_check_voltage) {
+            cable_check_voltage = 1.1 * ev_max_cpd;
+        }
+    }
+
+    return cable_check_voltage;
+}
+
+bool EvseManager::cable_check_should_exit() {
+    return charger->get_current_state() not_eq Charger::EvseState::PrepareCharging;
+}
+
+bool EvseManager::check_isolation_resistance_in_range(double resistance) {
+    if (resistance < CABLECHECK_INSULATION_FAULT_RESISTANCE_OHM) {
+        session_log.evse(false, fmt::format("Isolation measurement FAULT R_F {}.", resistance));
+        r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::Fault);
+        return false;
+    } else {
+        session_log.evse(false, fmt::format("Isolation measurement Ok R_F {}.", resistance));
+        r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::Valid);
+    }
+    return true;
+}
+
 void EvseManager::cable_check() {
 
     if (r_imd.empty()) {
         // If no IMD is connected, we skip isolation checking.
-        EVLOG_info << "No IMD: skippint cable check.";
+        EVLOG_info << "No IMD: skipping cable check.";
         r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::No_IMD);
         r_hlc[0]->call_cable_check_finished(true);
         return;
     }
+
     // start cable check in a seperate thread.
     std::thread t([this]() {
         session_log.evse(true, "Start cable check...");
-        bool ok = false;
+
+        // Verify output is below 60V initially
+        if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
+            EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
+            fail_cable_check();
+            return;
+        }
 
         // normally contactors should be closed before entering cable check routine.
         // On some hardware implementation it may take some time until the confirmation arrives though,
@@ -1230,102 +1292,165 @@ void EvseManager::cable_check() {
         Timeout timeout;
         timeout.start(CABLECHECK_CONTACTORS_CLOSE_TIMEOUT);
 
-        while (not timeout.reached()) {
+        while (not timeout.reached() and not cable_check_should_exit()) {
             if (not contactor_open) {
                 break;
             }
             std::this_thread::sleep_for(100ms);
         }
 
-        // verify the relais are really switched on and set 500V output
-        if (not contactor_open) {
-            if (powersupply_DC_set(config.dc_isolation_voltage_V, 2)) {
-                powersupply_DC_on();
-                imd_start();
-
-                // wait until the voltage has rised to the target value
-                if (not wait_powersupply_DC_voltage_reached(config.dc_isolation_voltage_V)) {
-                    EVLOG_info << "Voltage did not rise to 500V within timeout";
-                    powersupply_DC_off();
-                    fail_session();
-                    ok = false;
-                    imd_stop();
-                } else {
-                    auto caps = get_powersupply_capabilities();
-                    // read out one new isolation resistance
-                    isolation_measurement.clear();
-                    types::isolation_monitor::IsolationMeasurement m;
-                    if (not isolation_measurement.wait_for(m, 10s)) {
-                        EVLOG_info << "Did not receive isolation measurement from IMD within 10 seconds.";
-                        powersupply_DC_off();
-                        ok = false;
-                        fail_session();
-                    } else {
-                        // wait until the voltage is back to safe level
-                        float minvoltage =
-                            (config.switch_to_minimum_voltage_after_cable_check ? caps.min_export_voltage_V
-                                                                                : config.dc_isolation_voltage_V);
-
-                        // We do not want to shut down power supply
-                        if (minvoltage < 60) {
-                            minvoltage = 60;
-                        }
-                        powersupply_DC_set(minvoltage, 2);
-
-                        if (not wait_powersupply_DC_below_voltage(minvoltage + 20)) {
-                            EVLOG_info << "Voltage did not go back to minimal voltage within timeout.";
-                            ok = false;
-                            fail_session();
-                        } else {
-                            // verify it is within ranges. Warning level is <500 Ohm/V_max_output_rating, Fault
-                            // is <100
-                            const double min_resistance_ok = 500. * caps.max_export_voltage_V;
-                            const double min_resistance_warning = 100. * caps.max_export_voltage_V;
-
-                            if (m.resistance_F_Ohm < min_resistance_warning) {
-                                session_log.evse(
-                                    false, fmt::format("Isolation measurement FAULT R_F {}.", m.resistance_F_Ohm));
-                                ok = true; // this just means that we are finished measuring, not that we are ok with
-                                           // the result
-                                r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::Fault);
-                                imd_stop();
-                                fail_session();
-                            } else if (m.resistance_F_Ohm < min_resistance_ok) {
-                                session_log.evse(
-                                    false, fmt::format("Isolation measurement WARNING R_F {}.", m.resistance_F_Ohm));
-                                ok = true;
-                                r_hlc[0]->call_update_isolation_status(
-                                    types::iso15118_charger::IsolationStatus::Warning);
-                            } else {
-                                session_log.evse(false,
-                                                 fmt::format("Isolation measurement Ok R_F {}.", m.resistance_F_Ohm));
-                                ok = true;
-                                r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::Valid);
-                            }
-                        }
-                    }
-                }
-            } else {
-                EVLOG_error << fmt::format("CableCheck Thread: Could not set DC power supply voltage and current.");
-                fail_session();
-            }
-        } else {
-            EVLOG_error << fmt::format("CableCheck Thread: Contactors are still open after timeout, giving up.");
-            fail_session();
+        // If relais are still open after timeout, give up
+        if (contactor_open) {
+            EVLOG_error << "CableCheck: Contactors are still open after timeout, giving up.";
+            fail_cable_check();
+            return;
         }
 
-        if (config.hack_pause_imd_during_precharge)
+        // Get correct voltage used to test the isolation
+        for (int retry_ev_info = 0; retry_ev_info < 10; retry_ev_info++) {
+            auto ev_info = get_ev_info();
+            if (ev_info.maximum_voltage_limit.has_value()) {
+                break;
+            }
+            std::this_thread::sleep_for(100ms);
+        }
+
+        float ev_max_voltage = 500.;
+
+        if (ev_info.maximum_voltage_limit.has_value()) {
+            EVLOG_info << "EV reports " << ev_info.maximum_voltage_limit.has_value() << " V as maximum voltage";
+            ev_max_voltage = ev_info.maximum_voltage_limit.value();
+        } else {
+            EVLOG_error << "CableCheck: Did not receive EV maximum voltage, falling back to 500V";
+        }
+
+        auto evse_caps = get_powersupply_capabilities();
+
+        double cable_check_voltage = get_cable_check_voltage(ev_max_voltage, evse_caps.max_export_voltage_V);
+
+        // Allow overriding the cable check voltage from a configuration value
+        if (config.dc_isolation_voltage_V > 0) {
+            cable_check_voltage = config.dc_isolation_voltage_V;
+        }
+
+        // Set the DC ouput voltage for testing
+        if (not powersupply_DC_set(cable_check_voltage, CABLECHECK_CURRENT_LIMIT)) {
+            EVLOG_error << "CableCheck: Could not set DC power supply voltage and current.";
+            fail_cable_check();
+            return;
+        } else {
+            EVLOG_info << "CableCheck: Using " << cable_check_voltage << " V";
+        }
+
+        // Switch on output voltage
+        powersupply_DC_on();
+
+        // Wait until the voltage has rised to the target value.
+        // This also handles the short circuit test according to IEC 61851-23 (2023) 6.3.1.109:
+        // CC.7.6.20.3: the maximum R for the short circuit test is 110 Ohms.
+        // CC.7.6.20.7: maximum current should be reduced to <5A within 1s. We set a current limit below 5A, so the
+        // power supply should always achieve that.
+        // Within 2.5s present voltage at side B must be below 60V. As the power supply ramp up speed varies greatly,
+        // we can only achieve this by limiting the current to I < cable_check_voltage/110 Ohm. The hard coded limit
+        // above fulfills that for all voltage ranges.
+        if (not wait_powersupply_DC_voltage_reached(cable_check_voltage)) {
+            EVLOG_error << "CableCheck: Voltage did not rise to " << cable_check_voltage << " V within timeout";
+            fail_cable_check();
+            return;
+        }
+
+        // CC 4.1.3: Now relais are closed, voltage is up. We need to perform a self test of the IMD device
+        if (config.cable_check_enable_imd_self_test) {
+            selftest_result.clear();
+            r_imd[0]->call_start_self_test(cable_check_voltage);
+            EVLOG_info << "CableCheck: IMD self test started.";
+
+            // Wait for the result of the self test
+            bool result{false};
+            bool result_received{false};
+
+            for (int wait_seconds = 0; wait_seconds < CABLECHECK_SELFTEST_TIMEOUT; wait_seconds++) {
+                if (cable_check_should_exit()) {
+                    EVLOG_warning << "Cancel cable check";
+                    fail_cable_check();
+                    return;
+                }
+                if (selftest_result.wait_for(result, 1s)) {
+                    result_received = true;
+                    break;
+                }
+            }
+
+            if (not result_received) {
+                EVLOG_error << "CableCheck: Did not get a self test result from IMD within timeout";
+                fail_cable_check();
+                return;
+            }
+
+            if (not result) {
+                EVLOG_error << "CableCheck: IMD Self test failed";
+                fail_cable_check();
+                return;
+            }
+        }
+
+        // CC.4.1.4: Perform the insulation resistance check
+        imd_start();
+
+        // read out new isolation resistance value
+        isolation_measurement.clear();
+        types::isolation_monitor::IsolationMeasurement m;
+
+        EVLOG_info << "CableCheck: Waiting for " << config.cable_check_wait_number_of_imd_measurements
+                   << " isolation measurement sample(s)";
+        // Wait for N isolation measurement values
+        for (int i = 0; i < config.cable_check_wait_number_of_imd_measurements; i++) {
+            if (not isolation_measurement.wait_for(m, 5s) or cable_check_should_exit()) {
+                EVLOG_info << "Did not receive isolation measurement from IMD within 5 seconds.";
+                imd_stop();
+                fail_cable_check();
+                return;
+            }
+        }
+
+        // Now the value is valid and can be trusted.
+        // Verify it is within ranges. Fault is <100 kOhm
+        // Note that 2023 edition removed the warning level which was included in the 2014 edition.
+        // Refer to IEC 61851-23 (2023) 6.3.1.105 and CC.4.1.2 / CC.4.1.4
+        if (not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
             imd_stop();
+            fail_cable_check();
+            return;
+        }
+
+        // We are done with the isolation measurement and can now report success to the EV,
+        // but before we do so we need to do a few things for cleanup
+
+        if (config.hack_pause_imd_during_precharge) {
+            imd_stop();
+        }
 
         // Sleep before submitting result to spend more time in cable check. This is needed for some solar inverters
-        // used as DC chargers for them to warm up.
-        sleep(config.hack_sleep_in_cable_check);
+        // used as DC chargers for them to warm up. Don't use it.
+        std::this_thread::sleep_for(std::chrono::seconds(config.hack_sleep_in_cable_check));
         if (car_manufacturer == types::evse_manager::CarManufacturer::VolkswagenGroup) {
-            sleep(config.hack_sleep_in_cable_check_volkswagen);
+            std::this_thread::sleep_for(std::chrono::seconds(config.hack_sleep_in_cable_check_volkswagen));
         }
 
-        // submit result to HLC
-        r_hlc[0]->call_cable_check_finished(ok);
+        // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
+        powersupply_DC_off();
+
+        if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
+            EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
+            imd_stop();
+            fail_cable_check();
+            return;
+        }
+
+        EVLOG_info << "CableCheck done, output is below " << CABLECHECK_SAFE_VOLTAGE << "V";
+
+        // Report CableCheck Finished with success to EV
+        r_hlc[0]->call_cable_check_finished(true);
     });
     // Detach thread and exit command handler right away
     t.detach();
@@ -1443,9 +1568,17 @@ void EvseManager::powersupply_DC_off() {
 bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
     // wait until the voltage has rised to the target value
     Timeout timeout;
-    timeout.start(30s);
+    timeout.start(10s);
     bool voltage_ok = false;
     while (not timeout.reached()) {
+        if (cable_check_should_exit()) {
+            EVLOG_warning << "Cancel cable check wait voltage reached";
+            powersupply_DC_off();
+            r_hlc[0]->call_cable_check_finished(false);
+            charger->set_hlc_error();
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+            break;
+        }
         types::power_supply_DC::VoltageCurrent m;
         if (powersupply_measurement.wait_for(m, 2000ms)) {
             if (fabs(m.voltage_V - target_voltage) < 10) {
@@ -1464,9 +1597,17 @@ bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
 bool EvseManager::wait_powersupply_DC_below_voltage(double target_voltage) {
     // wait until the voltage is below the target voltage
     Timeout timeout;
-    timeout.start(30s);
+    timeout.start(10s);
     bool voltage_ok = false;
     while (not timeout.reached()) {
+        if (cable_check_should_exit()) {
+            EVLOG_warning << "Cancel cable check wait below voltage";
+            powersupply_DC_off();
+            r_hlc[0]->call_cable_check_finished(false);
+            charger->set_hlc_error();
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+            break;
+        }
         types::power_supply_DC::VoltageCurrent m;
         if (powersupply_measurement.wait_for(m, 2000ms)) {
             if (m.voltage_V < target_voltage) {
@@ -1506,12 +1647,17 @@ types::energy::ExternalLimits EvseManager::getLocalEnergyLimits() {
     return local_energy_limits;
 }
 
-void EvseManager::fail_session() {
-    r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+void EvseManager::fail_cable_check() {
     if (config.charge_mode == "DC") {
         powersupply_DC_off();
+        // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
+        if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
+            EVLOG_error << "Voltage did not drop below 60V within timeout, sending CableCheck Finished(false) anyway";
+        }
+        r_hlc[0]->call_cable_check_finished(false);
     }
     charger->set_hlc_error();
+    r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
 }
 
 types::evse_manager::EVInfo EvseManager::get_ev_info() {

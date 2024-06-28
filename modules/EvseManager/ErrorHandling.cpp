@@ -21,8 +21,14 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                              const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& _r_hlc,
                              const std::vector<std::unique_ptr<connector_lockIntf>>& _r_connector_lock,
                              const std::vector<std::unique_ptr<ac_rcdIntf>>& _r_ac_rcd,
-                             const std::unique_ptr<evse_managerImplBase>& _p_evse) :
-    r_bsp(_r_bsp), r_hlc(_r_hlc), r_connector_lock(_r_connector_lock), r_ac_rcd(_r_ac_rcd), p_evse(_p_evse) {
+                             const std::unique_ptr<evse_managerImplBase>& _p_evse,
+                             const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd) :
+    r_bsp(_r_bsp),
+    r_hlc(_r_hlc),
+    r_connector_lock(_r_connector_lock),
+    r_ac_rcd(_r_ac_rcd),
+    p_evse(_p_evse),
+    r_imd(_r_imd) {
 
     if (r_hlc.size() > 0) {
         hlc = true;
@@ -144,6 +150,52 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                 output_error.error_severity = to_evse_manager_severity(error.severity);
 
                 if (modify_error_ac_rcd(error, false, evse_error)) {
+                    // signal to charger an error has been cleared that prevents charging
+                    output_error.error_code = evse_error;
+                    signal_error_cleared(output_error, true);
+                } else {
+                    // signal an error cleared that does not prevent charging
+                    output_error.error_code = evse_error;
+                    signal_error_cleared(output_error, false);
+                }
+
+                if (active_errors.all_cleared()) {
+                    // signal to charger that all errors are cleared now
+                    signal_all_errors_cleared();
+                    // clear errors with HLC stack
+                    if (hlc) {
+                        r_hlc[0]->call_reset_error();
+                    }
+                }
+            });
+    }
+
+    // Subscribe to ac_rcd to receive errors from IMD hardware
+    if (r_imd.size() > 0) {
+        r_imd[0]->subscribe_all_errors(
+            [this](const Everest::error::Error& error) {
+                types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
+                types::evse_manager::Error output_error;
+                output_error.error_description = error.description;
+                output_error.error_severity = to_evse_manager_severity(error.severity);
+
+                if (modify_error_imd(error, true, evse_error)) {
+                    // signal to charger a new error has been set that prevents charging
+                    output_error.error_code = evse_error;
+                    signal_error(output_error, true);
+                } else {
+                    // signal an error that does not prevent charging
+                    output_error.error_code = evse_error;
+                    signal_error(output_error, false);
+                }
+            },
+            [this](const Everest::error::Error& error) {
+                types::evse_manager::ErrorEnum evse_error{types::evse_manager::ErrorEnum::VendorWarning};
+                types::evse_manager::Error output_error;
+                output_error.error_description = error.description;
+                output_error.error_severity = to_evse_manager_severity(error.severity);
+
+                if (modify_error_imd(error, false, evse_error)) {
                     // signal to charger an error has been cleared that prevents charging
                     output_error.error_code = evse_error;
                     signal_error_cleared(output_error, true);
@@ -442,6 +494,12 @@ bool ErrorHandling::modify_error_bsp(const Everest::error::Error& error, bool ac
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }
+    } else if (error_type == "evse_board_support/CommunicationFault") {
+        active_errors.bsp.set(BspErrors::CommunicationFault, active);
+        evse_error = types::evse_manager::ErrorEnum::VendorError;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
     } else {
         // Errors that do not stop charging
         if (error_type == "evse_board_support/MREC3HighTemperature") {
@@ -571,6 +629,45 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
 
     } else {
         // Error does not stop charging, ignored here
+        return false;
+    }
+    // Error stops charging
+    return true;
+};
+
+bool ErrorHandling::modify_error_imd(const Everest::error::Error& error, bool active,
+                                     types::evse_manager::ErrorEnum& evse_error) {
+    const std::string& error_type = error.type;
+
+    if (active) {
+        EVLOG_error << "Raised error " << error_type << ": " << error.description << " (" << error.message << ")";
+    } else {
+        EVLOG_info << "Cleared error " << error_type << ": " << error.description << " (" << error.message << ")";
+    }
+
+    if (error_type == "isolation_monitor/DeviceFault") {
+        active_errors.imd.set(IMDErrors::DeviceFault, active);
+        evse_error = types::evse_manager::ErrorEnum::IMDFault;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
+    } else if (error_type == "isolation_monitor/CommunicationFault") {
+        active_errors.imd.set(IMDErrors::CommunicationFault, active);
+        evse_error = types::evse_manager::ErrorEnum::IMDFault;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
+    } else if (error_type == "isolation_monitor/VendorError") {
+        active_errors.connector_lock.set(ConnectorLockErrors::VendorError, active);
+        evse_error = types::evse_manager::ErrorEnum::VendorError;
+        if (hlc && active) {
+            r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        }
+    } else {
+        // Errors that do not stop charging
+        if (error_type == "isolation_monitor/VendorWarning") {
+            evse_error = types::evse_manager::ErrorEnum::VendorWarning;
+        }
         return false;
     }
     // Error stops charging

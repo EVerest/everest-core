@@ -4,8 +4,12 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.15.0
-  options: ["BUILD_TESTING OFF"]
+  git_tag: v0.15.2
+  options: [
+    "BUILD_TESTING OFF",
+    "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
+    "everest-framework_USE_PYTHON_VENV_PATH ${PROJECT_NAME}_USE_PYTHON_VENV_PATH",
+  ]
 sigslot:
   git: https://github.com/palacaze/sigslot
   git_tag: v1.2.0
@@ -56,18 +60,18 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.12.0
+  git_tag: v0.13.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2024.2.1
+  git_tag: 2024.6.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# OpenV2G
-ext-openv2g:
-  git: https://github.com/EVerest/ext-openv2g.git
-  git_tag: 2023.3.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_OPENV2G"
+# libcbv2g
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: v0.2.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
@@ -77,11 +81,10 @@ ext-mbedtls:
     - ENABLE_PROGRAMS OFF
     - ENABLE_TESTING OFF
     - MBEDTLS_FATAL_WARNINGS OFF  # disables setting warnings as errors  FIXME: workaround until upstream-fixes are included
-# everest-testing
+# everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.2.3
-  cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+  git_tag: v0.3.1
 
 # unit testing
 gtest:

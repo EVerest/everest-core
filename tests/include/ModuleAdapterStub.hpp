@@ -10,7 +10,6 @@
 #include <utils/error/error_factory.hpp>
 #include <utils/error/error_manager_impl.hpp>
 #include <utils/error/error_manager_req.hpp>
-#include <utils/error/error_manager_req_global.hpp>
 #include <utils/error/error_state_monitor.hpp>
 #include <utils/error/error_type_map.hpp>
 
@@ -36,9 +35,6 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         get_error_state_monitor_req = [this](const Requirement& req) {
             return this->get_error_state_monitor_req_fn(req);
         };
-        get_global_error_manager = [this]() { return this->get_global_error_manager_fn(); };
-        get_global_error_state_monitor = [this]() { return this->get_global_error_state_monitor_fn(); };
-
         ext_mqtt_publish = [this](const std::string& s1, const std::string& s2) { this->ext_mqtt_publish_fn(s1, s2); };
         ext_mqtt_subscribe = [this](const std::string& str, StringHandler sh) {
             return this->ext_mqtt_subscribe_fn(str, sh);
@@ -86,19 +82,6 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         std::printf("get_error_state_monitor_req_fn\n");
         return std::make_shared<Everest::error::ErrorStateMonitor>(
             Everest::error::ErrorStateMonitor(std::make_shared<Everest::error::ErrorDatabaseMap>()));
-    }
-    virtual std::shared_ptr<Everest::error::ErrorManagerReqGlobal> get_global_error_manager_fn() {
-        std::printf("get_global_error_manager_fn\n");
-        return std::make_shared<Everest::error::ErrorManagerReqGlobal>(
-            std::make_shared<Everest::error::ErrorTypeMap>(), std::make_shared<Everest::error::ErrorDatabaseMap>(),
-            [](const Everest::error::ErrorCallback&, const Everest::error::ErrorCallback&) {
-                std::printf("global_subscribe_all_errors\n");
-            });
-    }
-    virtual std::shared_ptr<Everest::error::ErrorStateMonitor> get_global_error_state_monitor_fn() {
-        std::printf("get_global_error_state_monitor\n");
-        return std::make_shared<Everest::error::ErrorStateMonitor>(
-            std::make_shared<Everest::error::ErrorDatabaseMap>());
     }
     virtual void ext_mqtt_publish_fn(const std::string&, const std::string&) {
         std::printf("ext_mqtt_publish_fn\n");

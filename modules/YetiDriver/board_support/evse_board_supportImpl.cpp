@@ -87,8 +87,12 @@ void evse_board_supportImpl::init() {
     mod->serial.signalCPState.connect([this](CpState cp_state) {
         if (cp_state not_eq last_cp_state) {
             auto event_cp_state = cast_event_type(cp_state);
-            EVLOG_info << "CP state changed: " << types::board_support_common::event_to_string(event_cp_state.event);
-            publish_event(event_cp_state);
+            EVLOG_info << "CP state changed: "
+                       << types::board_support_common::event_to_string(cast_event_type(last_cp_state).event) << " -> "
+                       << types::board_support_common::event_to_string(event_cp_state.event);
+            if (enabled) {
+                publish_event(event_cp_state);
+            }
 
             if (cp_state == CpState_STATE_A) {
                 mod->clear_errors_on_unplug();
@@ -149,8 +153,7 @@ void evse_board_supportImpl::wait_for_caps() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (i == 50) {
-        EVLOG_AND_THROW(
-            Everest::EverestTimeoutError("Did not receive hardware capabilities from Yeti hardware, exiting."));
+        EVLOG_error << "Did not receive hardware capabilities from Yeti hardware, using defaults.";
     }
 }
 
@@ -193,7 +196,9 @@ void evse_board_supportImpl::handle_evse_replug(int& value) {
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {
-    // Query CP state once and publish
+    enabled = true;
+    // Publish CP state once on enable
+    publish_event(cast_event_type(last_cp_state));
 }
 
 void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {

@@ -121,7 +121,44 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         }
     }
 
-    // validate
+    /** Check if validation of token shall be requested. In some situations its not useful to validate
+     * the token because either no connector is available anyways or the provided token does not match a present
+     * reservation. Yet it has to be checked if the incoming token can be used to stop an active transaction or if the
+     * parent id of the token (that is only known after validation) can be used to stop or start transactions
+     */
+
+    /* If no connector is available AND no parent_id is deposited at any connector and no master pass group id is
+    configured, we can immediately respond with NO_CONNECTOR_AVAILABLE */
+    if (!this->any_connector_available(referenced_connectors) and
+        !this->any_parent_id_present(referenced_connectors) and !this->master_pass_group_id.has_value()) {
+        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
+    }
+
+    /* If all connectors are reserved and the given identifier doesnt match any reserved identifier and no parent id is
+     * deposited for a reservation, we can immediately respond with NO_CONNECTOR_AVAILABLE */
+    bool all_connectors_reserved_and_tag_does_not_match = true;
+    for (const auto connector_id : referenced_connectors) {
+        const auto connector = this->connectors.at(connector_id)->connector;
+        if (!connector.reserved) {
+            all_connectors_reserved_and_tag_does_not_match = false;
+            break;
+        }
+        if (this->reservation_handler.matches_reserved_identifier(connector_id, provided_token.id_token.value,
+                                                                  std::nullopt)) {
+            all_connectors_reserved_and_tag_does_not_match = false;
+            break;
+        }
+        if (this->reservation_handler.has_reservation_parent_id(connector_id)) {
+            all_connectors_reserved_and_tag_does_not_match = false;
+            break;
+        }
+    }
+
+    if (all_connectors_reserved_and_tag_does_not_match) {
+        return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
+    }
+
+    // Validate the provided token using the available validators
     std::vector<ValidationResult> validation_results;
     // only validate if token is not prevalidated
     if (provided_token.prevalidated && provided_token.prevalidated.value()) {
@@ -349,6 +386,18 @@ bool AuthHandler::any_connector_available(const std::vector<int>& connector_ids)
     return false;
 }
 
+bool AuthHandler::any_parent_id_present(const std::vector<int> connector_ids) {
+    for (const auto connector_id : connector_ids) {
+        if (this->connectors.at(connector_id)->connector.identifier.has_value() and
+            this->connectors.at(connector_id)->connector.identifier.value().parent_id_token.has_value()) {
+            EVLOG_debug << "Parent id is currently present";
+            return true;
+        }
+    }
+    EVLOG_debug << "No parent id is currently present";
+    return false;
+}
+
 bool AuthHandler::equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token) {
     if (!this->master_pass_group_id.has_value()) {
         return false;
@@ -414,8 +463,8 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
             // an EV has been plugged in yet at the referenced connectors
             return this->get_latest_plugin(connectors);
         } else {
-            // no EV has been plugged in yet at the referenced connectors; choosing the first one where no transaction
-            // is active
+            // no EV has been plugged in yet at the referenced connectors; choosing the first one where no
+            // transaction is active
             for (const auto connector_id : connectors) {
                 const auto connector = this->connectors.at(connector_id)->connector;
                 if (!connector.transaction_active) {

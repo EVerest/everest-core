@@ -108,6 +108,9 @@ private:
 
     std::thread output_thread;
 
+    /// @brief Remember whether we already logged the meter's unavailability.
+    bool meter_is_unavailable{false};
+
     void init_default_values();
     void init_register_assignments(const json& loaded_registers);
     int assign_register_data(const json& registers, const PowermeterRegisters register_type,

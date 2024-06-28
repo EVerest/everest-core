@@ -248,13 +248,17 @@ void evSerial::readThread() {
     while (true) {
         if (readThreadHandle.shouldExit())
             break;
-        n = read(fd, buf, sizeof buf);
-        // printf ("read %u bytes.\n", n);
-        cobsDecode(buf, n);
+        if (fd > 0) {
+            n = read(fd, buf, sizeof buf);
+            cobsDecode(buf, n);
+        }
     }
 }
 
 bool evSerial::linkWrite(EverestToMcu* m) {
+    if (fd <= 0) {
+        return false;
+    }
     uint8_t tx_packet_buf[1024];
     uint8_t encode_buf[1500];
     pb_ostream_t ostream = pb_ostream_from_buffer(tx_packet_buf, sizeof(tx_packet_buf) - 4);

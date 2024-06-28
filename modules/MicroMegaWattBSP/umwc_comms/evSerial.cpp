@@ -18,6 +18,8 @@
 #include <everest/3rd_party/nanopb/pb_decode.h>
 #include <everest/3rd_party/nanopb/pb_encode.h>
 
+#include <gpio.hpp>
+
 #include "umwc.pb.h"
 
 evSerial::evSerial() {
@@ -151,10 +153,6 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             // detect connection timeout if keep_alive packets stop coming...
             last_keep_alive_lo_timestamp = date::utc_clock::now();
             break;
-        case McuToEverest_power_meter_tag:
-            // printf("Received power_meter %i\n", (int)(msg_in.payload.power_meter.voltage));
-            signalPowerMeter(msg_in.payload.power_meter);
-            break;
         case McuToEverest_telemetry_tag:
             /*printf("Received telemetry cp_hi %f cp_lo %f relais_on %i pwm_dc %f\n", msg_in.payload.telemetry.cp_hi,
                    msg_in.payload.telemetry.cp_lo, (int)msg_in.payload.telemetry.relais_on,
@@ -163,9 +161,6 @@ void evSerial::handlePacket(uint8_t* buf, int len) {
             break;
         case McuToEverest_cp_state_tag:
             signalCPState(msg_in.payload.cp_state);
-            break;
-        case McuToEverest_pp_state_tag:
-            signalPPState(msg_in.payload.pp_state);
             break;
         case McuToEverest_relais_state_tag:
             signalRelaisState(msg_in.payload.relais_state);
@@ -248,13 +243,18 @@ void evSerial::readThread() {
     while (true) {
         if (readThreadHandle.shouldExit())
             break;
-        int n = read(fd, buf, sizeof buf);
-        // printf ("read %u bytes.\n", n);
-        cobsDecode(buf, n);
+        if (fd > 0) {
+            int n = read(fd, buf, sizeof buf);
+            cobsDecode(buf, n);
+        }
     }
 }
 
 bool evSerial::linkWrite(EverestToMcu* m) {
+    if (fd <= 0) {
+        return false;
+    }
+
     uint8_t tx_packet_buf[1024];
     uint8_t encode_buf[1500];
     pb_ostream_t ostream = pb_ostream_from_buffer(tx_packet_buf, sizeof(tx_packet_buf) - 4);
@@ -357,22 +357,21 @@ void evSerial::setOutputVoltageCurrent(float v, float c) {
     linkWrite(&msg_out);
 }
 
-bool evSerial::reset(const int reset_pin) {
+bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
 
     reset_done_flag = false;
     forced_reset = true;
 
-    if (reset_pin > 0) {
+    if (not reset_chip.empty()) {
         // Try to hardware reset Yeti controller to be in a known state
-        char cmd[100];
-        sprintf(cmd, "echo %i >/sys/class/gpio/export", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo out > /sys/class/gpio/gpio%i/direction", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 0 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
-        sprintf(cmd, "echo 1 > /sys/class/gpio/gpio%i/value", reset_pin);
-        system(cmd);
+        Everest::Gpio reset_gpio;
+        reset_gpio.open(reset_chip, reset_line);
+        reset_gpio.set_output(true);
+        reset_gpio.set(true);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        reset_gpio.set(true);
     } else {
         // Try to soft reset Yeti controller to be in a known state
         EverestToMcu msg_out = EverestToMcu_init_default;

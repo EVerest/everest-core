@@ -26,3 +26,5 @@ vars:
     description: Measured dataset
     type: object
     $ref: /powermeter#/Powermeter
+errors:
+  - reference: /errors/powermeter
