@@ -133,10 +133,19 @@ function publish_event(mod, event) {
 function check_error_rcd(mod) {
   if (mod.simulation_data.rcd_current > 5.0) {
     if (!mod.rcd_error_reported) {
-      mod.provides.rcd.raise.ac_rcd_DC('Simulated fault event', 'High');
+      let error = mod.provides.board_support.error_factory.create_error(
+          'ac_rcd/DC',
+          '',
+          'Simulated fault event',
+          'High'
+      );
+      mod.provides.board_support.raise_error(error);
       mod.rcd_error_reported = true;
     }
   } else {
+    if (mod.rcd_error_reported) {
+      mod.provides.board_support.clear_error('ac_rcd/DC');
+    }
     mod.rcd_error_reported = false;
   }
   mod.provides.rcd.publish.rcd_current_mA = mod.simulation_data.rcd_current;

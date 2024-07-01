@@ -40,7 +40,7 @@ active_modules:
       slac:
         - implementation_id: ev
           module_id: slac
-    module: JsEvManager
+    module: EvManager
   energy_manager:
     connections:
       energy_trunk:

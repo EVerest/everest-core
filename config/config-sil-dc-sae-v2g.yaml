@@ -61,7 +61,7 @@ active_modules:
       main:
         selftest_success: true
   ev_manager:
-    module: JsEvManager
+    module: EvManager
     config_module:
       connector_id: 1
       auto_enable: true

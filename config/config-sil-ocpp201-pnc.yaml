@@ -81,7 +81,7 @@ active_modules:
   slac:
     module: JsSlacSimulator
   ev_manager_1:
-    module: JsEvManager
+    module: EvManager
     config_module:
       connector_id: 1
       auto_enable: true
@@ -98,7 +98,7 @@ active_modules:
         - module_id: slac
           implementation_id: ev
   ev_manager_2:
-    module: JsEvManager
+    module: EvManager
     config_module:
       connector_id: 2
       auto_enable: true

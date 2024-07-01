@@ -58,7 +58,7 @@ class ProbeModule:
         self._mod.call_command(car_sim_ff, 'enable', {'value': True})
 
         # start charging simulation
-        self._mod.call_command(car_sim_ff, 'executeChargingSession', {
+        self._mod.call_command(car_sim_ff, 'execute_charging_session', {
                                'value': 'sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 5;unplug'})
 
         expected_events = ['TransactionStarted', 'TransactionFinished']

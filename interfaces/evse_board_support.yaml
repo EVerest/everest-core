@@ -135,3 +135,4 @@ vars:
     $ref: /evse_manager#/StopTransactionRequest
 errors:
   - reference: /errors/evse_board_support
+  - reference: /errors/ac_rcd
