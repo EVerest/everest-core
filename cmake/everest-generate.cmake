@@ -27,6 +27,12 @@ set_target_properties(generate_cpp_files
 # out-of-tree interfaces/types/modules support
 #
 function(_ev_add_project)
+    # FIXME (aw): resort to proper argument handling!
+    if (ARGC EQUAL 2)
+        set (EVEREST_PROJECT_DIR ${ARGV0})
+        set (EVEREST_PROJECT_NAME ${ARGV1})
+    endif ()
+
     if (NOT EVEREST_PROJECT_DIR)
         # if we don't get a directory, we're assuming project directory
         set (EVEREST_PROJECT_DIR ${PROJECT_SOURCE_DIR})
@@ -120,12 +126,6 @@ function(_ev_add_project)
 endfunction()
 
 macro(ev_add_project)
-    # FIXME (aw): resort to proper argument handling!
-    # if (ARGC EQUAL 2)
-    #     set (EVEREST_PROJECT_DIR ${ARGV0})
-    #     set (EVEREST_PROJECT_NAME ${ARGV1})
-    # endif ()
-
     ev_setup_cmake_variables_python_wheel()
     option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
     set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
@@ -140,7 +140,12 @@ macro(ev_add_project)
         require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
     endif()
 
-    _ev_add_project()
+    # FIXME (aw): resort to proper argument handling!
+    if (ARGC EQUAL 2)
+        _ev_add_project(${ARGV0} ${ARGV1})
+    else()
+        _ev_add_project()
+    endif ()
 endmacro()
 
 #
