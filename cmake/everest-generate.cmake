@@ -129,10 +129,10 @@ macro(ev_add_project)
         PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
     )
 
+    setup_ev_cli()
     if(NOT ${${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV})
         require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
     endif()
-    setup_ev_cli()
 
     _ev_add_project()
 endmacro()
