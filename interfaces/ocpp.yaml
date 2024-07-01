@@ -66,6 +66,9 @@ cmds:
           minimum: 0
           type: object
           $ref: /ocpp#/SetVariableRequest
+      source:
+        description: Source of variable values
+        type: string
     result:
       description: >-
         List of SetVariableResult containing the result for every requested set operation

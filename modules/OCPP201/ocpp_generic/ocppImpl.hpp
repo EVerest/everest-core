@@ -39,7 +39,7 @@ protected:
     virtual std::vector<types::ocpp::GetVariableResult>
     handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) override;
     virtual std::vector<types::ocpp::SetVariableResult>
-    handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests) override;
+    handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests, std::string& source) override;
     virtual types::ocpp::ChangeAvailabilityResponse
     handle_change_availability(types::ocpp::ChangeAvailabilityRequest& request) override;
     virtual void handle_monitor_variables(std::vector<types::ocpp::ComponentVariable>& component_variables) override;

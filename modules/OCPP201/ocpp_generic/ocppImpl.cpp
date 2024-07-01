@@ -35,9 +35,9 @@ ocppImpl::handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& req
 }
 
 std::vector<types::ocpp::SetVariableResult>
-ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests) {
+ocppImpl::handle_set_variables(std::vector<types::ocpp::SetVariableRequest>& requests, std::string& source) {
     const auto _requests = conversions::to_ocpp_set_variable_data_vector(requests);
-    const auto response_map = this->mod->charge_point->set_variables(_requests);
+    const auto response_map = this->mod->charge_point->set_variables(_requests, source);
     std::vector<ocpp::v201::SetVariableResult> response;
     for (const auto& [set_variable_data, set_variable_result] : response_map) {
         response.push_back(set_variable_result);
