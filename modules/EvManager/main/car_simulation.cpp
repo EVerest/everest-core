@@ -273,6 +273,7 @@ bool CarSimulation::iso_wait_for_resume(const CmdArguments& arguments) {
 }
 
 bool CarSimulation::iso_start_bcb_toggle(const CmdArguments& arguments) {
+    sim_data.v2g_finished = false;
     sim_data.state = SimState::BCB_TOGGLE;
     if (sim_data.bcb_toggles >= std::stoul(arguments[0]) || sim_data.bcb_toggles == 3) {
         sim_data.bcb_toggles = 0;
