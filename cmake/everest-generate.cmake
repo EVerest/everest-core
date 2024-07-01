@@ -141,7 +141,7 @@ macro(ev_add_project)
     endif()
 
     # FIXME (aw): resort to proper argument handling!
-    if (ARGC EQUAL 2)
+    if (${ARGC} EQUAL 2)
         _ev_add_project(${ARGV0} ${ARGV1})
     else()
         _ev_add_project()
