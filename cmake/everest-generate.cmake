@@ -120,6 +120,12 @@ function(_ev_add_project)
 endfunction()
 
 macro(ev_add_project)
+    # FIXME (aw): resort to proper argument handling!
+    # if (ARGC EQUAL 2)
+    #     set (EVEREST_PROJECT_DIR ${ARGV0})
+    #     set (EVEREST_PROJECT_NAME ${ARGV1})
+    # endif ()
+
     ev_setup_cmake_variables_python_wheel()
     option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
     set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
