@@ -7,4 +7,7 @@ filegroup(
     srcs = glob(["errors/**/*.yaml"]),
 )
 
-exports_files(["dependencies.yaml"])
+exports_files([
+    "dependencies.yaml",
+    "WORKSPACE.bazel",
+])

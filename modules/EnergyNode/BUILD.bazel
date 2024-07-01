@@ -1,0 +1,20 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "energy_grid",
+    "external_limits",
+]
+
+cc_everest_module(
+    name = "EnergyNode",
+    impls = IMPLS,
+    deps = [
+        "@sigslot//:sigslot",
+    ],
+    srcs = glob(
+        [
+            "*.cpp",
+            "*.hpp",
+        ],
+    ),
+)

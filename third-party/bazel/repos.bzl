@@ -3,7 +3,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@rules_rust//crate_universe:defs.bzl", "crates_repository", "crate")
 load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencies")
-load("//third-party/bazel:edm.bzl", "edm_repositories")
+load("@everest-core//third-party/bazel:edm.bzl", "edm_repositories")
 
 
 def everest_core_repos():
@@ -21,7 +21,6 @@ def everest_core_repos():
         sha256 = "4f1f7e809960615ba8e40e3a96300acb8b4d7e6e2fb24423af7347383e4dd1bb",
         strip_prefix = "rules_boost-f02f84fac7673c56bbcfe69dea68044e6e40f92b",
     )
-
 
     crates_repository(
         name = "everest_core_crate_index",
@@ -52,7 +51,7 @@ def everest_core_repos():
 
     edm_repositories(
         name = "edm_deps",
-        dependencies_yaml = "//:dependencies.yaml",
+        dependencies_yaml = "@everest-core//:dependencies.yaml",
         build_files = [
             "@everest-core//third-party/bazel:BUILD.libmodbus.bazel",
             "@everest-core//third-party/bazel:BUILD.libtimer.bazel",

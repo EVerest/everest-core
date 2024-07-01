@@ -40,9 +40,6 @@ load("@rules_rust//crate_universe:repositories.bzl", "crate_universe_dependencie
 
 crate_universe_dependencies()
 
-
-
-
 load("//third-party/bazel:repos.bzl", "everest_core_repos")
 
 everest_core_repos()
@@ -50,7 +47,6 @@ everest_core_repos()
 load("//third-party/bazel:defs.bzl", "everest_core_defs")
 
 everest_core_defs()
-
 
 load("@everest-framework//third-party/bazel:repos.bzl", "everest_framework_repos")
 
