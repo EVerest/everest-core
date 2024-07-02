@@ -25,6 +25,11 @@ std::string LemDCBMTimeSyncHelper::generate_dcbm_ntp_config() {
     return config_json.dump();
 }
 
+void LemDCBMTimeSyncHelper::set_time_config_params(const std::string& meter_timezone, const std::string& meter_dst) {
+    this->meter_timezone = meter_timezone;
+    this->meter_dst = meter_dst;
+}
+
 void LemDCBMTimeSyncHelper::sync_if_deadline_expired(const HttpClientInterface& httpClient) {
     const std::lock_guard<std::recursive_mutex> lock(this->time_sync_state_lock);
 
@@ -54,6 +59,8 @@ void LemDCBMTimeSyncHelper::sync(const HttpClientInterface& httpClient) {
         this->set_ntp_settings_on_device(httpClient);
     } else {
         this->sync_system_time(httpClient);
+        this->sync_timezone(httpClient);
+        this->sync_dst(httpClient);
     }
 }
 
@@ -73,7 +80,6 @@ bool LemDCBMTimeSyncHelper::is_setting_write_safe() const {
 }
 
 void LemDCBMTimeSyncHelper::set_ntp_settings_on_device(const HttpClientInterface& httpClient) {
-
     HttpResponse response = httpClient.put("/v1/settings", this->generate_dcbm_ntp_config());
     if (response.status_code != 200) {
         throw LemDCBM400600Controller::UnexpectedDCBMResponseCode("/v1/settings", 200, response);
@@ -93,7 +99,8 @@ void LemDCBMTimeSyncHelper::set_ntp_settings_on_device(const HttpClientInterface
 
 void LemDCBMTimeSyncHelper::sync_system_time(const HttpClientInterface& httpClient) {
     std::string time_update = Everest::Date::to_rfc3339(date::utc_clock::now());
-    HttpResponse response = httpClient.put("/v1/settings", std::string(R"({"time":{"utc":")") + time_update + R"("}})");
+    std::string payload = R"({"time":{"utc":")" + time_update + R"("}})";
+    HttpResponse response = httpClient.put("/v1/settings", payload);
 
     if (response.status_code != 200) {
         throw LemDCBM400600Controller::UnexpectedDCBMResponseCode("/v1/settings", 200, response);
@@ -112,6 +119,52 @@ void LemDCBMTimeSyncHelper::sync_system_time(const HttpClientInterface& httpClie
             std::chrono::steady_clock::now() + this->timing_constants.min_time_between_sync_retries;
     }
 }
+
+void LemDCBMTimeSyncHelper::sync_timezone(const HttpClientInterface& httpClient) {
+    std::string payload = std::string(R"({"time": {"tz":")") + meter_timezone + R"("}})";
+    HttpResponse response = httpClient.put("/v1/settings", payload);
+
+    if (response.status_code != 200) {
+        throw LemDCBM400600Controller::UnexpectedDCBMResponseCode("/v1/settings", 200, response);
+    }
+    bool success = nlohmann::json::parse(response.body).at("result") == 1;
+    if (!success) {
+        throw LemDCBM400600Controller::UnexpectedDCBMResponseBody(
+            "/v1/settings", "Timezone setting was rejected by the device, e.g. because of an ongoing transaction.");
+    }
+
+    if (is_setting_write_safe()) {
+        this->deadline_for_next_sync =
+            std::chrono::steady_clock::now() + this->timing_constants.deadline_increment_after_sync;
+    } else {
+        this->deadline_for_next_sync =
+            std::chrono::steady_clock::now() + this->timing_constants.min_time_between_sync_retries;
+    }
+}
+
+void LemDCBMTimeSyncHelper::sync_dst(const HttpClientInterface& httpClient) {
+    std::string payload = std::string(R"({"time": {"dst":)") + meter_dst + R"(}})";
+    HttpResponse response = httpClient.put("/v1/settings", payload);
+
+    if (response.status_code != 200) {
+        throw LemDCBM400600Controller::UnexpectedDCBMResponseCode("/v1/settings", 200, response);
+    }
+    bool success = nlohmann::json::parse(response.body).at("result") == 1;
+    if (!success) {
+        throw LemDCBM400600Controller::UnexpectedDCBMResponseBody(
+            "/v1/settings",
+            "Daylight saving setting was rejected by the device, e.g. because of an ongoing transaction.");
+    }
+
+    if (is_setting_write_safe()) {
+        this->deadline_for_next_sync =
+            std::chrono::steady_clock::now() + this->timing_constants.deadline_increment_after_sync;
+    } else {
+        this->deadline_for_next_sync =
+            std::chrono::steady_clock::now() + this->timing_constants.min_time_between_sync_retries;
+    }
+}
+
 void LemDCBMTimeSyncHelper::restart_unsafe_period() {
     this->unsafe_period_start_time = std::chrono::steady_clock::now();
     deadline_for_next_sync = unsafe_period_start_time.value() + timing_constants.min_time_before_setting_write_is_safe;

@@ -27,6 +27,14 @@ config:
     description: The port (1-65535) fof the second NTP server.
     type: integer
     default: 123
+  meter_timezone:
+    description: The timezone offset (ignored if NTP servers are set) - it can go from -11 to +14 for hours and 00, 15, 30, 45 for minutes 
+    type: string
+    default: "+00:00"
+  meter_dst:
+    description: The Daylight Saving Time (DST) settings (ignored if NTP is set)
+    type: string
+    default: '{"activated": false, "offset": 60, "start": {"order": "last", "day": "sunday", "month": "march", "hour": "T01:00Z"}, "end": {"order": "last", "day": "sunday", "month": "october", "hour": "T01:00Z" }}'
   resilience_initial_connection_retries:
     description: For the controller resilience, the number of retries to connect to the powermeter at module initialization.
     type: integer
@@ -51,6 +59,19 @@ config:
     description: Used for a unique transaction tariff designation
     type: integer
     default: 0
+  SC:
+    description: SC (OCMF/transaction fields)
+    type: integer
+    default: 0
+  UV:
+    description: User SW Version (OCMF/transaction fields)
+    type: string
+    default: ""
+  UD:
+    description: UD (OCMF/transaction fields)
+    type: string
+    default: ""
+
 provides:
   main:
     description: This is the main unit of the module

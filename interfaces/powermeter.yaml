@@ -26,5 +26,8 @@ vars:
     description: Measured dataset
     type: object
     $ref: /powermeter#/Powermeter
+  publicKeyOcmf:
+    description: The public key for OCMF
+    type: string
 errors:
   - reference: /errors/powermeter
