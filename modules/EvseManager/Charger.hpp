@@ -350,6 +350,7 @@ private:
     // constants
     static constexpr float CHARGER_ABSOLUTE_MAX_CURRENT{1000.};
     constexpr static int LEGACY_WAKEUP_TIMEOUT{30000};
+    constexpr static int PREPARING_TIMEOUT_PAUSED_BY_EV{10000};
     // valid Length of BCB toggles
     static constexpr auto TP_EV_VALD_STATE_DURATION_MIN =
         std::chrono::milliseconds(200 - 50); // We give 50 msecs tolerance to the norm values (table 3 ISO15118-3)
