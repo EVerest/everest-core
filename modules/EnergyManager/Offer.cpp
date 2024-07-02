@@ -53,7 +53,7 @@ static void apply_limits(ScheduleReq& a, const ScheduleReq& b) {
         EVLOG_error << fmt::format("apply_limits: a({}) and b({}) do not have the same size.", a.size(), b.size());
         return;
     }
-    for (int i = 0; i < a.size(); i++) {
+    for (ScheduleReq::size_type i = 0; i < a.size(); i++) {
         // limits to leave are already merged to the root side, so we dont use them here
         apply_one_limit_if_smaller(a[i].limits_to_root.ac_max_current_A, b[i].limits_to_root.ac_max_current_A);
         apply_one_limit_if_smaller(a[i].limits_to_root.ac_max_phase_count, b[i].limits_to_root.ac_max_phase_count);
