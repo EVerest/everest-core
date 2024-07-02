@@ -92,6 +92,7 @@ active_modules:
     mapping:
       evse:
         evse: 1
+        connector: 1
       energy_grid:
         evse: 1
       token_provider:
