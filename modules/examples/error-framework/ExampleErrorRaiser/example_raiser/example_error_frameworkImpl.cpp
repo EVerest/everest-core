@@ -36,7 +36,7 @@ std::list<Condition> condition_3 = {Condition("example/ExampleErrorA", "some cus
 std::vector<std::list<Condition>> conditions = {condition_0, condition_1, condition_2, condition_3};
 
 void example_error_frameworkImpl::check_conditions() {
-    for (int i = 0; i < conditions.size(); i++) {
+    for (std::vector<std::list<Condition>>::size_type i = 0; i < conditions.size(); i++) {
         if (this->error_state_monitor->is_condition_satisfied(conditions.at(i))) {
             EVLOG_info << "Condition " << i << " satisfied";
         } else {

@@ -57,8 +57,8 @@ void InitSlacState::enter() {
     std::mt19937 rng(rnd_dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist256(0, 255);
 
-    for (auto i = 0; i < sizeof(run_id); ++i) {
-        run_id[i] = dist256(rng);
+    for (auto& id : this->run_id) {
+        id = dist256(rng);
     }
 }
 

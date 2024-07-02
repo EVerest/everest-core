@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -31,9 +31,9 @@ public:
                 std::unique_ptr<exampleIntf> r_example, Conf& config) :
         ModuleBase(info), p_example_user(std::move(p_example_user)), r_example(std::move(r_example)), config(config){};
 
-    const Conf& config;
     const std::unique_ptr<example_userImplBase> p_example_user;
     const std::unique_ptr<exampleIntf> r_example;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

@@ -617,6 +617,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
+
+        // missing AuthRequired, PrepareCharging and many more
     }
 
     // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet

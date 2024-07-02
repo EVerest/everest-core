@@ -5,7 +5,7 @@
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
-// template version 1
+// template version 2
 //
 
 #include "ld-ev.hpp"
@@ -37,11 +37,11 @@ public:
         r_kvs(std::move(r_kvs)),
         config(config){};
 
-    const Conf& config;
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<exampleImplBase> p_example;
     const std::unique_ptr<kvsImplBase> p_store;
     const std::unique_ptr<kvsIntf> r_kvs;
+    const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here

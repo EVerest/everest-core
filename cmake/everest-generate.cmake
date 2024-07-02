@@ -506,6 +506,13 @@ function (ev_add_cpp_module MODULE_NAME)
                     ${ATOMIC_LIBS}
             )
 
+            if(EVEREST_ENABLE_COMPILE_WARNINGS)
+                message(STATUS "Building ${MODULE_NAME} with the following compile options: ${EVEREST_COMPILE_OPTIONS}")
+                target_compile_options(${MODULE_NAME}
+                    PRIVATE ${EVEREST_COMPILE_OPTIONS}
+                )
+            endif()
+
             add_dependencies(${MODULE_NAME} generate_cpp_files)
 
             install(TARGETS ${MODULE_NAME}
