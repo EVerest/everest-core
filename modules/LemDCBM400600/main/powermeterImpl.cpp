@@ -25,7 +25,14 @@ void powermeterImpl::init() {
         LemDCBM400600Controller::Conf{mod->config.resilience_initial_connection_retries,
                                       mod->config.resilience_initial_connection_retry_delay,
                                       mod->config.resilience_transaction_request_retries,
-                                      mod->config.resilience_transaction_request_retry_delay});
+                                      mod->config.resilience_transaction_request_retry_delay,
+                                      mod->config.cable_id,
+                                      mod->config.tariff_id,
+                                      mod->config.meter_timezone,
+                                      mod->config.meter_dst,
+                                      mod->config.SC,
+                                      mod->config.UV,
+                                      mod->config.UD});
 
     this->controller->init();
 }
@@ -33,6 +40,7 @@ void powermeterImpl::init() {
 void powermeterImpl::ready() {
     // Start the live_measure_publisher thread, which periodically publishes the live measurements of the device
     this->live_measure_publisher_thread = std::thread([this] {
+        this->publish_publicKeyOcmf(this->controller->get_publicKeyOcmf());
         while (true) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             try {

@@ -31,6 +31,16 @@ public:
         const int cable_id;
         // Used for a unique transaction tariff designation
         const int tariff_id;
+        // meter time zone
+        const std::string meter_timezone;
+        // the meter Daylight Saving Time (DST) settings
+        const std::string meter_dst;
+        // SC
+        const int SC;
+        // UV
+        const std::string UV;
+        // UD
+        const std::string UD;
     };
 
     class DCBMUnexpectedResponseException : public std::exception {
@@ -78,17 +88,22 @@ public:
 
 private:
     const std::unique_ptr<HttpClientInterface> http_client;
-    std::string meter_id;
+    std::string meter_id = "";
+    std::string public_key = "";
+    std::string public_key_ocmf = "";
+    std::string version = "";
+    bool v2_capable = false;
+    bool trasaction_is_ongoing = false;
     Conf config;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
 
+    std::vector<std::string> split(const std::string& str, char delimiter);
     void fetch_meter_id_from_device();
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);
     void convert_livemeasure_to_powermeter(const std::string& livemeasure, types::powermeter::Powermeter& powermeter);
-    static std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request,
-                                                                 const int cable_id, const int tariff_id);
+    std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request);
     static std::pair<std::string, std::string> get_transaction_stop_time_bounds();
 
     template <typename Callable>
@@ -132,6 +147,7 @@ public:
     types::powermeter::TransactionStartResponse start_transaction(const types::powermeter::TransactionReq& value);
     types::powermeter::TransactionStopResponse stop_transaction(const std::string& transaction_id);
     types::powermeter::Powermeter get_powermeter();
+    inline std::string get_publicKeyOcmf() { return public_key_ocmf; }
 };
 
 } // namespace module::main

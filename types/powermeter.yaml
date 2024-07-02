@@ -299,3 +299,10 @@ types:
           This is intended for meters that only support signing a collection of meter values.
         type: object
         $ref: /units_signed#/SignedMeterValue
+      temperature1:
+        description: The powermeter first temperature sensor (if available)
+        type: number
+      temperature2:
+        description: The powermeter second temperature sensor (if available)
+        type: number
+

@@ -7,6 +7,7 @@ namespace module::main {
 
 void LemDCBM400600Controller::init() {
     try {
+        this->time_sync_helper->set_time_config_params(config.meter_timezone, config.meter_dst);
         call_with_retry([this]() { this->fetch_meter_id_from_device(); }, this->config.init_number_of_http_retries,
                         this->config.init_retry_wait_in_milliseconds);
     } catch (HttpClientError& http_client_error) {
@@ -22,6 +23,18 @@ void LemDCBM400600Controller::init() {
     this->time_sync_helper->restart_unsafe_period();
 }
 
+std::vector<std::string> LemDCBM400600Controller::split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::stringstream ss(str);
+
+    while (std::getline(ss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
 void LemDCBM400600Controller::fetch_meter_id_from_device() {
     auto status_response = this->http_client->get("/v1/status");
 
@@ -29,7 +42,13 @@ void LemDCBM400600Controller::fetch_meter_id_from_device() {
         throw UnexpectedDCBMResponseCode("/v1/status", 200, status_response);
     }
     try {
-        this->meter_id = json::parse(status_response.body).at("meterId");
+        json data = json::parse(status_response.body);
+        this->meter_id = data.at("meterId");
+        this->public_key_ocmf = data.at("publicKeyOcmf");
+        this->trasaction_is_ongoing = data.at("status").at("bits").at("transactionIsOnGoing");
+        std::string version = data.at("version").at("applicationFirmwareVersion");
+        auto components = split(version, '.');
+        this->v2_capable =  ((components.size() == 4) && (components[1] > "1")); // the major version must be newer than 1 
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(
             "/v1/status", fmt::format("Json error {} for body {}", json_error.what(), status_response.body));
@@ -62,11 +81,11 @@ LemDCBM400600Controller::start_transaction(const types::powermeter::TransactionR
 void LemDCBM400600Controller::request_device_to_start_transaction(const types::powermeter::TransactionReq& value) {
     this->time_sync_helper->sync(*this->http_client);
 
-    auto response = this->http_client->post(
-        "/v1/legal", module::main::LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(
-                         value, this->config.cable_id, this->config.tariff_id));
+    const std::string endpoint = v2_capable ? "/v2/legal" : "/v1/legal";
+    const std::string payload = this->transaction_start_request_to_dcbm_payload(value);
+    auto response = this->http_client->post(endpoint, payload);
     if (response.status_code != 201) {
-        throw UnexpectedDCBMResponseCode("/v1/legal", 201, response);
+        throw UnexpectedDCBMResponseCode(endpoint, 201, response);
     }
     try {
         bool running = json::parse(response.body).at("running");
@@ -75,7 +94,7 @@ void LemDCBM400600Controller::request_device_to_start_transaction(const types::p
                 "/v1/legal", fmt::format("Created transaction {} has state running = false.", value.transaction_id));
         }
     } catch (json::exception& json_error) {
-        throw UnexpectedDCBMResponseBody("/v1/legal",
+        throw UnexpectedDCBMResponseBody(endpoint,
                                          fmt::format("Json error {} for body '{}'", json_error.what(), response.body));
     }
 }
@@ -108,7 +127,7 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
 }
 
 void LemDCBM400600Controller::request_device_to_stop_transaction(const std::string& transaction_id) {
-    std::string endpoint = fmt::format("/v1/legal?transactionId={}", transaction_id);
+    std::string endpoint = v2_capable ? fmt::format("/v2/legal?transactionId={}", transaction_id) : fmt::format("/v1/legal?transactionId={}", transaction_id);
     auto legal_api_response = this->http_client->put(endpoint, R"({"running": false})");
 
     if (legal_api_response.status_code != 200) {
@@ -130,7 +149,7 @@ void LemDCBM400600Controller::request_device_to_stop_transaction(const std::stri
 }
 
 std::string LemDCBM400600Controller::fetch_ocmf_result(const std::string& transaction_id) {
-    const std::string ocmf_endpoint = fmt::format("/v1/ocmf?transactionId={}", transaction_id);
+    const std::string ocmf_endpoint = v2_capable ? fmt::format("/v2/ocmf?transactionId={}", transaction_id) : fmt::format("/v1/ocmf?transactionId={}", transaction_id);
     auto ocmf_api_response = this->http_client->get(ocmf_endpoint);
 
     if (ocmf_api_response.status_code != 200) {
@@ -147,16 +166,17 @@ std::string LemDCBM400600Controller::fetch_ocmf_result(const std::string& transa
 types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
     this->time_sync_helper->sync_if_deadline_expired(*this->http_client);
 
-    auto response = this->http_client->get("/v1/livemeasure");
+    const std::string endpoint = v2_capable ? "/v2/livemeasure" : "/v1/livemeasure";
+    auto response = this->http_client->get(endpoint);
     if (response.status_code != 200) {
-        throw UnexpectedDCBMResponseCode("/v1/livemeasure", 200, response);
+        throw UnexpectedDCBMResponseCode(endpoint, 200, response);
     }
     types::powermeter::Powermeter value;
     try {
         this->convert_livemeasure_to_powermeter(response.body, value);
         return value;
     } catch (json::exception& json_error) {
-        throw UnexpectedDCBMResponseBody("/v1/livemeasure", fmt::format("Json error '{}'", json_error.what()));
+        throw UnexpectedDCBMResponseBody(endpoint, fmt::format("Json error '{}'", json_error.what()));
     }
 }
 
@@ -174,17 +194,31 @@ void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::strin
     current.DC = data.at("current");
     powermeter.current_A.emplace(current);
     powermeter.power_W.emplace(types::units::Power{data.at("power")});
+    powermeter.temperature1 = data.at("temperatureH");
+    powermeter.temperature2 = data.at("temperatureL");
 }
+
 std::string
-LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request,
-                                                                   const int cable_id, const int tariff_id) {
-    return nlohmann::ordered_json{{"evseId", request.evse_id},
-                                  {"transactionId", request.transaction_id},
-                                  {"clientId", request.transaction_id},
-                                  {"tariffId", tariff_id},
-                                  {"cableId", cable_id},
-                                  {"userData", ""}}
-        .dump();
+LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request) {
+    if (this->v2_capable) {
+        return nlohmann::ordered_json{{"evseId", request.evse_id},
+                                    {"transactionId", request.transaction_id},
+                                    {"clientId", request.identification_data.value_or("")},
+                                    {"tariffId", this->config.tariff_id},
+                                    {"TT", request.tariff_text.value_or("")},
+                                    {"UV", this->config.UV},
+                                    {"UD", this->config.UD},
+                                    {"cableId", this->config.cable_id},
+                                    {"userData", ""},
+                                    {"SC", this->config.SC}}.dump();
+    } else {
+        return nlohmann::ordered_json{{"evseId", request.evse_id},
+                                    {"transactionId", request.transaction_id},
+                                    {"clientId", request.identification_data.value_or("")},
+                                    {"tariffId", this->config.tariff_id},
+                                    {"cableId", this->config.cable_id},
+                                    {"userData", ""}}.dump();
+    }
 }
 
 std::pair<std::string, std::string> LemDCBM400600Controller::get_transaction_stop_time_bounds() {
