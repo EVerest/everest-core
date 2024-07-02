@@ -147,7 +147,9 @@ public:
     types::powermeter::TransactionStartResponse start_transaction(const types::powermeter::TransactionReq& value);
     types::powermeter::TransactionStopResponse stop_transaction(const std::string& transaction_id);
     types::powermeter::Powermeter get_powermeter();
-    inline std::string get_publicKeyOcmf() { return public_key_ocmf; }
+    inline std::string get_publicKeyOcmf() {
+        return public_key_ocmf;
+    }
 };
 
 } // namespace module::main

@@ -30,7 +30,6 @@ void LemDCBMTimeSyncHelper::set_time_config_params(const std::string& meter_time
     this->meter_dst = meter_dst;
 }
 
-
 void LemDCBMTimeSyncHelper::sync_if_deadline_expired(const HttpClientInterface& httpClient) {
     const std::lock_guard<std::recursive_mutex> lock(this->time_sync_state_lock);
 
@@ -153,7 +152,8 @@ void LemDCBMTimeSyncHelper::sync_dst(const HttpClientInterface& httpClient) {
     bool success = nlohmann::json::parse(response.body).at("result") == 1;
     if (!success) {
         throw LemDCBM400600Controller::UnexpectedDCBMResponseBody(
-            "/v1/settings", "Daylight saving setting was rejected by the device, e.g. because of an ongoing transaction.");
+            "/v1/settings",
+            "Daylight saving setting was rejected by the device, e.g. because of an ongoing transaction.");
     }
 
     if (is_setting_write_safe()) {

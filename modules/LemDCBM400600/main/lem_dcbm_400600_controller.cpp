@@ -48,7 +48,8 @@ void LemDCBM400600Controller::fetch_meter_id_from_device() {
         this->trasaction_is_ongoing = data.at("status").at("bits").at("transactionIsOnGoing");
         std::string version = data.at("version").at("applicationFirmwareVersion");
         auto components = split(version, '.');
-        this->v2_capable =  ((components.size() == 4) && (components[1] > "1")); // the major version must be newer than 1 
+        this->v2_capable =
+            ((components.size() == 4) && (components[1] > "1")); // the major version must be newer than 1
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(
             "/v1/status", fmt::format("Json error {} for body {}", json_error.what(), status_response.body));
@@ -127,7 +128,8 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
 }
 
 void LemDCBM400600Controller::request_device_to_stop_transaction(const std::string& transaction_id) {
-    std::string endpoint = v2_capable ? fmt::format("/v2/legal?transactionId={}", transaction_id) : fmt::format("/v1/legal?transactionId={}", transaction_id);
+    std::string endpoint = v2_capable ? fmt::format("/v2/legal?transactionId={}", transaction_id)
+                                      : fmt::format("/v1/legal?transactionId={}", transaction_id);
     auto legal_api_response = this->http_client->put(endpoint, R"({"running": false})");
 
     if (legal_api_response.status_code != 200) {
@@ -149,7 +151,8 @@ void LemDCBM400600Controller::request_device_to_stop_transaction(const std::stri
 }
 
 std::string LemDCBM400600Controller::fetch_ocmf_result(const std::string& transaction_id) {
-    const std::string ocmf_endpoint = v2_capable ? fmt::format("/v2/ocmf?transactionId={}", transaction_id) : fmt::format("/v1/ocmf?transactionId={}", transaction_id);
+    const std::string ocmf_endpoint = v2_capable ? fmt::format("/v2/ocmf?transactionId={}", transaction_id)
+                                                 : fmt::format("/v1/ocmf?transactionId={}", transaction_id);
     auto ocmf_api_response = this->http_client->get(ocmf_endpoint);
 
     if (ocmf_api_response.status_code != 200) {
@@ -202,22 +205,24 @@ std::string
 LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request) {
     if (this->v2_capable) {
         return nlohmann::ordered_json{{"evseId", request.evse_id},
-                                    {"transactionId", request.transaction_id},
-                                    {"clientId", request.identification_data.value_or("")},
-                                    {"tariffId", this->config.tariff_id},
-                                    {"TT", request.tariff_text.value_or("")},
-                                    {"UV", this->config.UV},
-                                    {"UD", this->config.UD},
-                                    {"cableId", this->config.cable_id},
-                                    {"userData", ""},
-                                    {"SC", this->config.SC}}.dump();
+                                      {"transactionId", request.transaction_id},
+                                      {"clientId", request.identification_data.value_or("")},
+                                      {"tariffId", this->config.tariff_id},
+                                      {"TT", request.tariff_text.value_or("")},
+                                      {"UV", this->config.UV},
+                                      {"UD", this->config.UD},
+                                      {"cableId", this->config.cable_id},
+                                      {"userData", ""},
+                                      {"SC", this->config.SC}}
+            .dump();
     } else {
         return nlohmann::ordered_json{{"evseId", request.evse_id},
-                                    {"transactionId", request.transaction_id},
-                                    {"clientId", request.identification_data.value_or("")},
-                                    {"tariffId", this->config.tariff_id},
-                                    {"cableId", this->config.cable_id},
-                                    {"userData", ""}}.dump();
+                                      {"transactionId", request.transaction_id},
+                                      {"clientId", request.identification_data.value_or("")},
+                                      {"tariffId", this->config.tariff_id},
+                                      {"cableId", this->config.cable_id},
+                                      {"userData", ""}}
+            .dump();
     }
 }
 
