@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef MAIN_POWER_SUPPLY_DC_IMPL_HPP
 #define MAIN_POWER_SUPPLY_DC_IMPL_HPP
 
@@ -66,8 +67,11 @@ private:
     types::power_supply_DC::Mode mode;
     double connector_voltage;
     double connector_current;
+    double energy_import_total;
+    double energy_export_total;
     std::mutex power_supply_values_mutex;
     Everest::Thread power_supply_thread_handle;
+    types::powermeter::Powermeter power_meter_external();
     void power_supply_worker(void);
 
     static constexpr int LOOP_SLEEP_MS{500};

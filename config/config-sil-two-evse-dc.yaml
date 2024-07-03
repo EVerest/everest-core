@@ -76,7 +76,7 @@ active_modules:
   slac_1:
     module: JsSlacSimulator
   powersupply_dc:
-    module: JsDCSupplySimulator
+    module: DCSupplySimulator
   imd:
     module: IMDSimulator
     config_implementation:
