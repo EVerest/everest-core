@@ -38,7 +38,9 @@
             "1295e032d7ddbc20"
         ],
         "x": 1114,
-        "y": 439
+        "y": 439,
+        "w": 152,
+        "h": 82
     },
     {
         "id": "7140803fb3989089",
@@ -1411,7 +1413,7 @@
         "type": "ui_text",
         "z": "ed603c51db9dcbb9",
         "group": "b364f7eb4621082b",
-        "order": 5,
+        "order": 7,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1509,7 +1511,7 @@
         "type": "ui_level",
         "z": "ed603c51db9dcbb9",
         "group": "b364f7eb4621082b",
-        "order": 7,
+        "order": 9,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1611,7 +1613,7 @@
         "g": "af1e1eeac9c4b704",
         "name": "",
         "group": "b364f7eb4621082b",
-        "order": 6,
+        "order": 8,
         "width": 0,
         "height": 0,
         "gtype": "gage",
@@ -1706,7 +1708,7 @@
         "label": "Simulation enable (HIL)",
         "tooltip": "",
         "group": "b364f7eb4621082b",
-        "order": 10,
+        "order": 14,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -1737,7 +1739,7 @@
         "z": "ed603c51db9dcbb9",
         "name": "",
         "group": "b364f7eb4621082b",
-        "order": 8,
+        "order": 10,
         "width": "3",
         "height": "1",
         "passthru": false,
@@ -1764,7 +1766,7 @@
         "z": "ed603c51db9dcbb9",
         "name": "",
         "group": "b364f7eb4621082b",
-        "order": 9,
+        "order": 11,
         "width": "3",
         "height": "1",
         "passthru": false,
@@ -1801,9 +1803,10 @@
         "topic": "everest_external/nodered/#/cmd/set_max_current",
         "topicType": "str",
         "min": "6",
-        "max": "16",
+        "max": "32",
         "step": "0.1",
-        "x": 450,
+        "className": "",
+        "x": 410,
         "y": 700,
         "wires": [
             [
@@ -1820,7 +1823,7 @@
         "tooltip": "",
         "place": "Select option",
         "group": "b364f7eb4621082b",
-        "order": 10,
+        "order": 15,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -1939,7 +1942,7 @@
         "z": "ed603c51db9dcbb9",
         "name": "",
         "group": "b364f7eb4621082b",
-        "order": 9,
+        "order": 12,
         "width": "3",
         "height": "1",
         "passthru": false,
@@ -1967,7 +1970,7 @@
         "z": "ed603c51db9dcbb9",
         "name": "",
         "group": "b364f7eb4621082b",
-        "order": 9,
+        "order": 13,
         "width": "3",
         "height": "1",
         "passthru": false,
@@ -1986,6 +1989,94 @@
         "wires": [
             [
                 "620b0d248a89ece0"
+            ]
+        ]
+    },
+    {
+        "id": "28570cf62d9f5006",
+        "type": "mqtt in",
+        "z": "ed603c51db9dcbb9",
+        "name": "",
+        "topic": "everest_external/nodered/+/state/max_watt",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "fc8686af.48d178",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 260,
+        "y": 240,
+        "wires": [
+            [
+                "e24183e6e42983f5"
+            ]
+        ]
+    },
+    {
+        "id": "e24183e6e42983f5",
+        "type": "function",
+        "z": "ed603c51db9dcbb9",
+        "name": "Filter connector number",
+        "func": "if (msg.topic.indexOf(String(flow.get('connector_number'))) > -1) return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 240,
+        "wires": [
+            [
+                "3678e9b8efc6d106"
+            ]
+        ]
+    },
+    {
+        "id": "3678e9b8efc6d106",
+        "type": "ui_text",
+        "z": "ed603c51db9dcbb9",
+        "group": "b364f7eb4621082b",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Max Watt",
+        "format": "{{msg.payload | number: 1}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 880,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "4add60694840aaf9",
+        "type": "ui_slider",
+        "z": "ed603c51db9dcbb9",
+        "name": "MaxWatt Slider",
+        "label": "",
+        "tooltip": "",
+        "group": "b364f7eb4621082b",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "outs": "all",
+        "topic": "everest_external/nodered/#/cmd/set_max_watt",
+        "topicType": "str",
+        "min": "0",
+        "max": "22000",
+        "step": "1",
+        "className": "",
+        "x": 420,
+        "y": 660,
+        "wires": [
+            [
+                "361b3d846c4e6673"
             ]
         ]
     },

@@ -42,8 +42,6 @@ inline static types::authorization::ProvidedIdToken create_autocharge_token(std:
 }
 
 void EvseManager::init() {
-    local_three_phases = config.three_phases;
-
     random_delay_enabled = config.uk_smartcharging_random_delay_enable;
     random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
     if (random_delay_enabled) {
@@ -116,6 +114,39 @@ void EvseManager::init() {
 
     r_bsp->subscribe_request_stop_transaction(
         [this](types::evse_manager::StopTransactionRequest r) { charger->cancel_transaction(r); });
+
+    r_bsp->subscribe_capabilities([this](types::evse_board_support::HardwareCapabilities c) {
+        {
+            std::scoped_lock lock(hw_caps_mutex);
+            hw_capabilities = c;
+            // Maybe override with user setting for this EVSE
+            if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
+                hw_capabilities.max_current_A_import = config.max_current_import_A;
+            }
+            if (config.max_current_export_A < hw_capabilities.max_current_A_export) {
+                hw_capabilities.max_current_A_export = config.max_current_export_A;
+            }
+        }
+
+        if (ac_nr_ph_phases_active == 0) {
+            ac_nr_ph_phases_active = c.max_phase_count_import;
+        }
+
+        if (ac_nr_ph_phases_active > c.max_phase_count_import) {
+            ac_nr_ph_phases_active = c.min_phase_count_import;
+        }
+
+        bsp->set_three_phases(c.max_phase_count_import);
+        charger->set_connector_type(c.connector_type);
+        p_evse->publish_hw_capabilities(c);
+        if (config.charge_mode == "AC") {
+            EVLOG_info << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
+                                      hw_capabilities.max_phase_count_import);
+        }
+    });
+
+    // do not allow to update hardware capabilties until we are ready for it
+    hw_caps_mutex.lock();
 }
 
 void EvseManager::ready() {
@@ -128,10 +159,10 @@ void EvseManager::ready() {
     error_handling =
         std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd));
 
-    hw_capabilities = r_bsp->call_get_hw_capabilities();
+    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, r_powermeter_billing(), config.evse_id));
 
-    charger = std::unique_ptr<Charger>(
-        new Charger(bsp, error_handling, r_powermeter_billing(), hw_capabilities.connector_type, config.evse_id));
+    // Now incoming hardware capabilties can be processed
+    hw_caps_mutex.unlock();
 
     if (r_connector_lock.size() > 0) {
         bsp->signal_lock.connect([this]() { r_connector_lock[0]->call_lock(); });
@@ -208,10 +239,10 @@ void EvseManager::ready() {
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-            transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
-            if (config.three_phases) {
-                transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_three_phase_core);
-            }
+            // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
+            // modes from setup
+            // transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
+            transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_three_phase_core);
 
         } else if (config.charge_mode == "DC") {
             transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
@@ -574,34 +605,6 @@ void EvseManager::ready() {
         });
     }
 
-    // Maybe override with user setting for this EVSE
-    if (config.max_current_import_A < hw_capabilities.max_current_A_import) {
-        hw_capabilities.max_current_A_import = config.max_current_import_A;
-    }
-    if (config.max_current_export_A < hw_capabilities.max_current_A_export) {
-        hw_capabilities.max_current_A_export = config.max_current_export_A;
-    }
-
-    if (config.charge_mode == "AC") {
-        // by default we import energy
-        updateLocalMaxCurrentLimit(hw_capabilities.max_current_A_import);
-    }
-
-    // Maybe limit to single phase by user setting if possible with HW
-    if (not config.three_phases and hw_capabilities.min_phase_count_import == 1) {
-        hw_capabilities.max_phase_count_import = 1;
-        local_three_phases = false;
-    } else if (hw_capabilities.max_phase_count_import == 3) {
-        local_three_phases = true; // other configonfigurations currently not supported by HW
-    }
-
-    p_evse->publish_hw_capabilities(hw_capabilities);
-
-    if (config.charge_mode == "AC") {
-        EVLOG_info << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
-                                  hw_capabilities.max_phase_count_import);
-    }
-
     bsp->signal_event.connect([this](const CPEvent event) {
         // Forward events from BSP to SLAC module before we process the events in the charger
         if (slac_enabled) {
@@ -793,10 +796,11 @@ void EvseManager::ready() {
     if (config.ac_with_soc) {
         setup_fake_DC_mode();
     } else {
-        charger->setup(local_three_phases, config.has_ventilation, config.country_code,
+        charger->setup(config.has_ventilation,
                        (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), hlc_enabled,
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
-                       config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
+                       config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
+                       config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -946,6 +950,7 @@ types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() 
 }
 
 types::evse_board_support::HardwareCapabilities EvseManager::get_hw_capabilities() {
+    std::scoped_lock lock(hw_caps_mutex);
     return hw_capabilities;
 }
 
@@ -967,9 +972,10 @@ void EvseManager::switch_AC_mode() {
 // This sets up a fake DC mode that is just supposed to work until we get the SoC.
 // It is only used for AC<>DC<>AC<>DC mode to get AC charging with SoC.
 void EvseManager::setup_fake_DC_mode() {
-    charger->setup(local_three_phases, config.has_ventilation, config.country_code, Charger::ChargeMode::DC,
-                   hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
-                   config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
+    charger->setup(config.has_ventilation, Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent,
+                   config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
+                   config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
+                   config.switch_3ph1ph_cp_state);
 
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1004,9 +1010,10 @@ void EvseManager::setup_fake_DC_mode() {
 }
 
 void EvseManager::setup_AC_mode() {
-    charger->setup(local_three_phases, config.has_ventilation, config.country_code, Charger::ChargeMode::AC,
-                   hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, true,
-                   config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A);
+    charger->setup(config.has_ventilation, Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent,
+                   config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
+                   config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
+                   config.switch_3ph1ph_cp_state);
 
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1015,7 +1022,7 @@ void EvseManager::setup_AC_mode() {
 
     transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
 
-    if (config.three_phases) {
+    if (get_hw_capabilities().max_phase_count_import == 3) {
         transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_three_phase_core);
     }
 
@@ -1068,52 +1075,50 @@ void EvseManager::setup_v2h_mode() {
     external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
     external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
 
-    updateLocalEnergyLimit(external_limits);
+    update_local_energy_limit(external_limits);
 }
 
-bool EvseManager::updateLocalEnergyLimit(types::energy::ExternalLimits l) {
-
-    // received empty limits, fall back to hardware limits
-    if (not l.schedule_import.has_value() and not l.schedule_export.has_value()) {
-        EVLOG_info << "External limits are empty, defaulting to hardware limits";
-        if (config.charge_mode == "AC") {
-            // by default we import energy
-            updateLocalMaxCurrentLimit(hw_capabilities.max_current_A_import);
-        } else {
-            updateLocalMaxWattLimit(get_powersupply_capabilities().max_export_power_W);
-        }
-    } else {
-        // apply external limits if they are lower
-        local_energy_limits = l;
-    }
-
+bool EvseManager::update_local_energy_limit(types::energy::ExternalLimits l) {
+    std::scoped_lock lock(external_local_limits_mutex);
+    external_local_energy_limits = l;
     // wait for EnergyManager to assign optimized current on next opimizer run
-
     return true;
 }
 
-// Note: deprecated, use updateLocalEnergyLimit. Only kept for node red compat.
+// Note: deprecated. Only kept for node red compat.
 // This overwrites all other schedules set before.
-bool EvseManager::updateLocalMaxWattLimit(float max_watt) {
+void EvseManager::nodered_set_current_limit(float max_current) {
+    std::scoped_lock lock(external_local_limits_mutex);
+    update_max_current_limit(external_local_energy_limits, max_current);
+}
+
+// Note: deprecated. Only kept for node red compat.
+// This overwrites all other schedules set before.
+void EvseManager::nodered_set_watt_limit(float max_watt) {
+    std::scoped_lock lock(external_local_limits_mutex);
+    update_max_watt_limit(external_local_energy_limits, max_watt);
+}
+
+// Helper function to set a watt limit in an ExternalLimits type
+bool EvseManager::update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt) {
     types::energy::ScheduleReqEntry e;
     e.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
     if (max_watt >= 0) {
         e.limits_to_leaves.total_power_W = max_watt;
-        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
         e.limits_to_leaves.total_power_W = 0;
-        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
     } else {
         e.limits_to_leaves.total_power_W = -max_watt;
-        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
         e.limits_to_leaves.total_power_W = 0;
-        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
     }
     return true;
 }
 
-// Note: deprecated, use updateLocalEnergyLimit. Only kept for node red compat.
-// This overwrites all other schedules set before.
-bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
+// Helper function to set a current limit in an ExternalLimits type
+bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits, float max_current) {
     if (config.charge_mode == "DC") {
         return false;
     }
@@ -1123,14 +1128,14 @@ bool EvseManager::updateLocalMaxCurrentLimit(float max_current) {
 
     if (max_current >= 0) {
         e.limits_to_leaves.ac_max_current_A = max_current;
-        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
         e.limits_to_leaves.ac_max_current_A = 0;
-        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
     } else {
         e.limits_to_leaves.ac_max_current_A = -max_current;
-        local_energy_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, e);
         e.limits_to_leaves.ac_max_current_A = 0;
-        local_energy_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
+        limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, e);
     }
 
     return true;
@@ -1189,10 +1194,6 @@ void EvseManager::cancel_reservation(bool signal_event) {
 bool EvseManager::is_reserved() {
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_is_reserved);
     return reserved;
-}
-
-bool EvseManager::getLocalThreePhases() {
-    return local_three_phases;
 }
 
 bool EvseManager::get_hlc_enabled() {
@@ -1682,8 +1683,29 @@ void EvseManager::imd_start() {
     }
 }
 
-types::energy::ExternalLimits EvseManager::getLocalEnergyLimits() {
-    return local_energy_limits;
+// This returns our active local limits, which is either externally set limits
+// or hardware capabilties
+types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
+
+    types::energy::ExternalLimits active_local_limits;
+
+    std::scoped_lock lock(external_local_limits_mutex);
+
+    // external limits are empty
+    if (not external_local_energy_limits.schedule_import.has_value() and
+        not external_local_energy_limits.schedule_export.has_value()) {
+        if (config.charge_mode == "AC") {
+            // by default we import energy
+            update_max_current_limit(active_local_limits, get_hw_capabilities().max_current_A_import);
+        } else {
+            update_max_watt_limit(active_local_limits, get_powersupply_capabilities().max_export_power_W);
+        }
+    } else {
+        // apply external limits if they are lower
+        active_local_limits = external_local_energy_limits;
+    }
+
+    return active_local_limits;
 }
 
 void EvseManager::fail_cable_check() {

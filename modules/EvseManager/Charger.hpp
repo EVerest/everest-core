@@ -56,8 +56,7 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 class Charger {
 public:
     Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
-            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
-            const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id);
+            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& evse_id);
     ~Charger();
 
     enum class ChargeMode {
@@ -78,6 +77,7 @@ public:
         Finished,
         T_step_EF,
         T_step_X1,
+        SwitchPhases,
         Replug
     };
 
@@ -99,9 +99,10 @@ public:
 
     sigslot::signal<float> signal_max_current;
 
-    void setup(bool three_phases, bool has_ventilation, const std::string& country_code, const ChargeMode charge_mode,
-               bool ac_hlc_enabled, bool ac_hlc_use_5percent, bool ac_enforce_hlc, bool ac_with_soc_timeout,
-               float soft_over_current_tolerance_percent, float soft_over_current_measurement_noise_A);
+    void setup(bool has_ventilation, const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent,
+               bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
+               float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
+               const std::string switch_3ph1ph_cp_state);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -205,6 +206,10 @@ public:
     utils::Stopwatch& get_stopwatch() {
         return stopwatch;
     }
+    
+    void set_connector_type(types::evse_board_support::Connector_type t) {
+        connector_type = t;
+    }
 
 private:
     utils::Stopwatch stopwatch;
@@ -288,6 +293,7 @@ private:
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
         bool contactor_welded{false};
+        bool switch_3ph1ph_threephase{false};
 
         std::optional<types::units_signed::SignedMeterValue> stop_signed_meter_value;
         std::optional<types::units_signed::SignedMeterValue> start_signed_meter_value;
@@ -302,6 +308,10 @@ private:
         bool ac_hlc_enabled;
         // AC or DC
         ChargeMode charge_mode{0};
+        // Delay when switching from 1ph to 3ph or 3ph to 1ph
+        int switch_3ph1ph_delay_s{10};
+        // Use state F if true, otherwise use X1
+        bool switch_3ph1ph_cp_state_F{false};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -325,6 +335,8 @@ private:
         EvseState t_step_EF_return_state;
         float t_step_EF_return_pwm;
 
+        EvseState switching_phases_return_state;
+
         EvseState t_step_X1_return_state;
         float t_step_X1_return_pwm;
         std::chrono::time_point<std::chrono::steady_clock> last_over_current_event;
@@ -345,7 +357,10 @@ private:
 
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
-    const types::evse_board_support::Connector_type& connector_type;
+
+    std::atomic<types::evse_board_support::Connector_type> connector_type{
+        types::evse_board_support::Connector_type::IEC62196Type2Cable};
+
     const std::string evse_id;
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
 

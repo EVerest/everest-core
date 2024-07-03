@@ -134,10 +134,10 @@ function check_error_rcd(mod) {
   if (mod.simulation_data.rcd_current > 5.0) {
     if (!mod.rcd_error_reported) {
       let error = mod.provides.board_support.error_factory.create_error(
-          'ac_rcd/DC',
-          '',
-          'Simulated fault event',
-          'High'
+        'ac_rcd/DC',
+        '',
+        'Simulated fault event',
+        'High'
       );
       mod.provides.board_support.raise_error(error);
       mod.rcd_error_reported = true;
@@ -704,7 +704,7 @@ function error_lock_VendorError(mod, raise) {
 // Note that in real life the clearing of errors may differ between BSPs depending on the
 // hardware implementation.
 function clear_disconnect_errors(mod) {
-  if (mod.provides.board_support.error_state_monitor.is_error_active('evse_board_support/DiodeFault','')) {
+  if (mod.provides.board_support.error_state_monitor.is_error_active('evse_board_support/DiodeFault', '')) {
     error_DiodeFault(mod, false);
   }
 }
@@ -1036,9 +1036,9 @@ function read_from_car(mod) {
 
   if (mod.relais_on === true && mod.ev_three_phases > 0) amps1 = amps;
   else amps1 = 0;
-  if (mod.relais_on === true && mod.ev_three_phases > 1) amps2 = amps;
+  if (mod.relais_on === true && mod.ev_three_phases > 1 && mod.use_three_phases_confirmed) amps2 = amps;
   else amps2 = 0;
-  if (mod.relais_on === true && mod.ev_three_phases > 2) amps3 = amps;
+  if (mod.relais_on === true && mod.ev_three_phases > 2 && mod.use_three_phases_confirmed) amps3 = amps;
   else amps3 = 0;
 
   if (mod.pwm_running) {
@@ -1238,13 +1238,6 @@ boot_module(async ({
   }));
   setup.provides.powermeter.register.start_transaction(() => ({ status: 'OK' }));
 
-  setup.provides.board_support.register.setup((mod, args) => {
-    mod.three_phases = args.three_phases;
-    mod.has_ventilation = args.has_ventilation;
-    mod.country_code = args.country_code;
-    publish_ac_nr_of_phases_available(mod, (mod.use_three_phases_confirmed ? 3 : 1));
-  });
-
   setup.provides.board_support.register.ac_set_overcurrent_limit_A(() => {
   });
 
@@ -1269,18 +1262,6 @@ boot_module(async ({
     mod.use_three_phases = args.value;
     mod.use_three_phases_confirmed = args.value;
   });
-  setup.provides.board_support.register.get_hw_capabilities(() => ({
-    max_current_A_import: 32.0,
-    min_current_A_import: 6.0,
-    max_phase_count_import: 3,
-    min_phase_count_import: 1,
-    max_current_A_export: 16.0,
-    min_current_A_export: 0.0,
-    max_phase_count_export: 3,
-    min_phase_count_export: 1,
-    supports_changing_phases_during_charging: true,
-    connector_type: 'IEC62196Type2Cable',
-  }));
   setup.provides.board_support.register.ac_read_pp_ampacity((mod) => {
     const amp = { ampacity: read_pp_ampacity(mod) };
     return amp;
@@ -1451,6 +1432,20 @@ boot_module(async ({
 }).then((mod) => {
   mod.pubCnt = 0;
   clearData(mod);
+
+  mod.provides.board_support.publish.capabilities({
+    max_current_A_import: 32.0,
+    min_current_A_import: 6.0,
+    max_phase_count_import: 3,
+    min_phase_count_import: 1,
+    max_current_A_export: 16.0,
+    min_current_A_export: 0.0,
+    max_phase_count_export: 3,
+    min_phase_count_export: 1,
+    supports_changing_phases_during_charging: true,
+    connector_type: 'IEC62196Type2Cable',
+  });
+
   setInterval(simulation_loop, 250, mod);
   if (global_info.telemetry_enabled) {
     setInterval(telemetry_slow, 15000, mod);
