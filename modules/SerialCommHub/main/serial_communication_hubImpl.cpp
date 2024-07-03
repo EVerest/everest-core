@@ -40,6 +40,8 @@ void serial_communication_hubImpl::init() {
     rxtx_gpio_settings.line_number = config.rxtx_gpio_line;
     rxtx_gpio_settings.inverted = config.rxtx_gpio_tx_high;
 
+    system_error_logged = false;
+
     if (!modbus.open_device(config.serial_port, config.baudrate, config.ignore_echo, rxtx_gpio_settings,
                             static_cast<tiny_modbus::Parity>(config.parity), config.rtscts,
                             milliseconds(config.initial_timeout_ms), milliseconds(config.within_message_timeout_ms))) {
@@ -80,6 +82,13 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
                 EVLOG_warning << logmsg;
         } catch (const std::logic_error& e) {
             EVLOG_warning << "Logic error in Modbus implementation: " << e.what();
+        } catch (const std::system_error& e) {
+            // FIXME: report this to the infrastructure, as soon as an error interface for this is available
+            // Log this only once, as we are convinced this will not go away
+            if (not system_error_logged) {
+                EVLOG_error << "System error in accessing Modbus: [" << e.code() << "] " << e.what();
+                system_error_logged = true;
+            }
         }
 
         if (response.size() > 0)
@@ -92,6 +101,7 @@ serial_communication_hubImpl::perform_modbus_request(uint8_t device_address, tin
         EVLOG_debug << fmt::format("Process response (size {})", response.size());
         result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Success;
         result.value = vector_to_int(response);
+        system_error_logged = false; // reset after success
     } else {
         result.status_code = types::serial_comm_hub_requests::StatusCodeEnum::Error;
     }

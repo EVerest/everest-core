@@ -90,6 +90,7 @@ private:
     tiny_modbus::TinyModbusRTU modbus;
 
     std::mutex serial_mutex;
+    bool system_error_logged{false};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
