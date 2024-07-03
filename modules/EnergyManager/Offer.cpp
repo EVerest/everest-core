@@ -60,8 +60,10 @@ static void apply_limits(ScheduleReq& a, const ScheduleReq& b) {
         apply_one_limit_if_smaller(a[i].limits_to_root.total_power_W, b[i].limits_to_root.total_power_W);
         apply_one_limit_if_greater(a[i].limits_to_root.ac_min_phase_count, b[i].limits_to_root.ac_min_phase_count);
         apply_one_limit_if_greater(a[i].limits_to_root.ac_min_current_A, b[i].limits_to_root.ac_min_current_A);
-        // copy pricing if any
+
+        // copy other information if any
         a[i].price_per_kwh = b[i].price_per_kwh;
+        a[i].limits_to_root.ac_number_of_active_phases = b[i].limits_to_root.ac_number_of_active_phases;
     }
 }
 

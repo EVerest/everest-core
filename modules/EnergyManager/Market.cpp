@@ -178,11 +178,12 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                 a.limits_to_root.ac_max_current_A = (*r).limits_to_root.ac_max_current_A.value();
             }
             // all request limits have been merged on root side in available.
-            // copy pricing information data if any
+            // copy other information if any
             a.price_per_kwh = (*r).price_per_kwh;
             a.limits_to_root.ac_min_current_A = (*r).limits_to_root.ac_min_current_A;
             a.limits_to_root.ac_min_phase_count = (*r).limits_to_root.ac_min_phase_count;
             a.limits_to_root.ac_max_phase_count = (*r).limits_to_root.ac_max_phase_count;
+            a.limits_to_root.ac_number_of_active_phases = (*r).limits_to_root.ac_number_of_active_phases;
         }
     }
 
@@ -287,8 +288,10 @@ std::vector<Market*> Market::get_list_of_evses() {
 }
 
 static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
-    if (a.size() != b.size())
+    if (a.size() != b.size()) {
+        EVLOG_critical << "schedule_add: Schedules are not of the same size: a: " << a.size() << " b: " << b.size();
         return;
+    }
 
     for (int i = 0; i < a.size(); i++) {
         if (b[i].limits_to_root.ac_max_current_A.has_value()) {
@@ -307,7 +310,7 @@ static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
                     a[i].limits_to_root.ac_max_phase_count.value() = b[i].limits_to_root.ac_max_phase_count.value();
                 }
             } else {
-                a[i].limits_to_root.ac_max_phase_count.value() = b[i].limits_to_root.ac_max_phase_count.value();
+                a[i].limits_to_root.ac_max_phase_count = b[i].limits_to_root.ac_max_phase_count.value();
             }
         }
     }

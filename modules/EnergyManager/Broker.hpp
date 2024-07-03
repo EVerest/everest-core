@@ -27,6 +27,7 @@ protected:
     Market& local_market;
     std::vector<bool> first_trade;
     std::vector<SlotType> slot_type;
+    std::vector<int> num_phases;
 };
 
 } // namespace module

@@ -57,15 +57,10 @@ void evse_board_supportImpl::init() {
 }
 
 void evse_board_supportImpl::ready() {
-}
-
-void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {
-    // your code for cmd setup goes here
-}
-
-types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
-    std::scoped_lock lock(caps_mutex);
-    return caps;
+    {
+        std::scoped_lock lock(caps_mutex);
+        publish_capabilities(caps);
+    }
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {

@@ -66,10 +66,21 @@ bool EnergyManager::is_priority_request(const types::energy::EnergyFlowRequest& 
 void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits) {
     for (const auto& it : limits) {
         if (globals.debug)
-            EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W \033[1;0m", it.uuid,
+            EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W {} ph\033[1;0m", it.uuid,
                                       it.limits_root_side.value().ac_max_current_A.value_or(-9999),
-                                      it.limits_root_side.value().total_power_W.value_or(-9999));
+                                      it.limits_root_side.value().total_power_W.value_or(-9999),
+                                      it.limits_root_side.value().ac_max_phase_count.value_or(-9999));
         r_energy_trunk->call_enforce_limits(it);
+    }
+}
+
+static BrokerFastCharging::Switch1ph3phMode to_switch_1ph3ph_mode(const std::string& m) {
+    if (m == "Both") {
+        return BrokerFastCharging::Switch1ph3phMode::Both;
+    } else if (m == "Oneway") {
+        return BrokerFastCharging::Switch1ph3phMode::Oneway;
+    } else {
+        return BrokerFastCharging::Switch1ph3phMode::Never;
     }
 }
 
@@ -97,7 +108,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     for (auto m : evse_markets) {
         // FIXME: check for actual optimizer_targets and create correct broker for this evse
         // For now always create simple FastCharging broker
-        brokers.push_back(std::make_shared<BrokerFastCharging>(*m));
+        brokers.push_back(
+            std::make_shared<BrokerFastCharging>(*m, to_switch_1ph3ph_mode(config.switch_3ph1ph_while_charging_mode)));
         // EVLOG_info << fmt::format("Created broker for {}", m->energy_flow_request.uuid);
     }
 
@@ -172,7 +184,7 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
             optimized_values.push_back(l);
 
             if (globals.debug && l.limits_root_side.has_value()) {
-                EVLOG_info << "Sending enfored limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
+                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
             }
         }
     }

@@ -30,11 +30,11 @@ void evse_managerImpl::init() {
 
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/set_max_current", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxCurrentLimit(std::stof(data)); });
+        [&charger = mod->charger, this](std::string data) { mod->nodered_set_current_limit(std::stof(data)); });
 
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/set_max_watt", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxWattLimit(std::stof(data)); });
+        [&charger = mod->charger, this](std::string data) { mod->nodered_set_watt_limit(std::stof(data)); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) {
@@ -441,18 +441,8 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
 };
 
 void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->updateLocalEnergyLimit(value);
+    mod->update_local_energy_limit(value);
 }
-
-types::evse_manager::SwitchThreePhasesWhileChargingResult
-evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) {
-    // FIXME implement more sophisticated error code return once feature is really implemented
-    if (mod->charger->switch_three_phases_while_charging(three_phases)) {
-        return types::evse_manager::SwitchThreePhasesWhileChargingResult::Success;
-    } else {
-        return types::evse_manager::SwitchThreePhasesWhileChargingResult::Error_NotSupported;
-    }
-};
 
 void evse_managerImpl::handle_set_get_certificate_response(
     types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {

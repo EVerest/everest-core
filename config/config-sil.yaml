@@ -42,6 +42,9 @@ active_modules:
           module_id: slac
     module: EvManager
   energy_manager:
+    config_module:
+      switch_3ph1ph_while_charging_mode: Both
+      debug: false
     connections:
       energy_trunk:
         - implementation_id: energy_grid
@@ -55,7 +58,6 @@ active_modules:
       ac_nominal_voltage: 230
       charge_mode: AC
       connector_id: 1
-      country_code: DE
       ev_receipt_required: false
       evse_id: DE*PNX*E12345*1
       has_ventilation: true
@@ -66,7 +68,8 @@ active_modules:
       session_logging: true
       session_logging_path: /tmp/everest-logs
       session_logging_xml: false
-      three_phases: true
+      switch_3ph1ph_delay_s: 5
+      switch_3ph1ph_cp_state: X1
     connections:
       bsp:
         - implementation_id: board_support
@@ -108,6 +111,7 @@ active_modules:
     config_module:
       device: auto
       tls_security: allow
+      supported_DIN70121: false
     connections: {}
     module: EvseV2G
     connections:
