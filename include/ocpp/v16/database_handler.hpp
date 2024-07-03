@@ -72,6 +72,11 @@ public:
     /// table
     void update_transaction_csms_ack(const int32_t transaction_id);
 
+    /// \brief Updates the START_TRANSACTION_MESSAGE_ID column for the transaction with the given \p session_id in the
+    /// TRANSACTIONS table
+    void update_start_transaction_message_id(const std::string& session_id,
+                                             const std::string& start_transaction_message_id);
+
     /// \brief Updates the METER_LAST and METER_LAST_TIME column for the transaction with the given \p session_id in the
     /// TRANSACTIONS table
     void update_transaction_meter_value(const std::string& session_id, const int32_t value,

@@ -124,6 +124,10 @@ bool is_transaction_message(const TestMessageType message_type) {
     return (message_type == TestMessageType::TRANSACTIONAL) || (message_type == TestMessageType::TRANSACTIONAL_UPDATE);
 }
 
+bool is_start_transaction_message(const TestMessageType message_type) {
+    return false;
+}
+
 template <> bool ControlMessage<TestMessageType>::is_transaction_update_message() const {
     return this->messageType == TestMessageType::TRANSACTIONAL_UPDATE;
 }

@@ -136,6 +136,20 @@ void DatabaseHandler::update_transaction_csms_ack(const int32_t transaction_id) 
     }
 }
 
+void DatabaseHandler::update_start_transaction_message_id(const std::string& session_id,
+                                                          const std::string& start_transaction_message_id) {
+    std::string sql = "UPDATE TRANSACTIONS SET START_TRANSACTION_MESSAGE_ID=@start_transaction_message_id, "
+                      "LAST_UPDATE=@last_update WHERE ID==@session_id";
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_text("@last_update", ocpp::DateTime().to_rfc3339(), SQLiteString::Transient);
+    stmt->bind_text("@start_transaction_message_id", start_transaction_message_id);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
 void DatabaseHandler::update_transaction_meter_value(const std::string& session_id, const int32_t value,
                                                      const std::string& last_meter_time) {
     std::string sql = "UPDATE TRANSACTIONS SET METER_LAST=@meter_last, METER_LAST_TIME=@meter_last_time, "

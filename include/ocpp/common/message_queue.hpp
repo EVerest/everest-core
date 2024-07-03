@@ -113,6 +113,21 @@ bool is_transaction_message(const ocpp::v16::MessageType message_type);
 /// \return true if MessageType is TransactionEvent or SecurityEventNotification
 bool is_transaction_message(const ocpp::v201::MessageType message_type);
 
+/// \brief Indicates if the given \p message_type is a StartTransaction message
+/// \param message_type
+/// \return true if MessageType is a StartTransaction
+bool is_start_transaction_message(const ocpp::v16::MessageType message_type);
+
+/// \brief Indicates if the given \p message_type is a StartTransaction message.
+/// \param message_type
+/// \return Always return false
+bool is_start_transaction_message(const ocpp::v201::MessageType message_type);
+
+/// \brief Indicates if the given \p control_message is a start transaction message
+template <typename M> auto is_start_transaction_message(const ControlMessage<M>& control_message) {
+    return is_start_transaction_message(control_message.messageType);
+}
+
 /// \brief Indicates if the given \p control_message is a transaction related message
 template <typename M> auto is_transaction_message(const ControlMessage<M>& control_message) {
     return is_transaction_message(control_message.messageType);
@@ -185,6 +200,10 @@ private:
     // replace the transactionId within the MeterValue.req in case the transactionId was unknown at the time the message
     // was queued. This can happen when the CP has not received a StartTransaction.conf from the CSMS.
     std::map<std::string, std::vector<std::string>> start_transaction_mid_meter_values_mid_map;
+
+    // This callback is called when a StartTransaction.req message could not be delivered due to a timeout or CALL_ERROR
+    std::function<void(const std::string& new_message_id, const std::string& old_message_id)>
+        start_transaction_message_retry_callback;
 
     MessageId getMessageId(const json::array_t& json_message) {
         return MessageId(json_message.at(MESSAGE_ID).get<std::string>());
@@ -363,9 +382,12 @@ private:
 
 public:
     /// \brief Creates a new MessageQueue object with the provided \p configuration and \p send_callback
-    MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
-                 const std::vector<M>& external_notify,
-                 std::shared_ptr<common::DatabaseHandlerCommon> database_handler) :
+    MessageQueue(
+        const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
+        const std::vector<M>& external_notify, std::shared_ptr<common::DatabaseHandlerCommon> database_handler,
+        const std::function<void(const std::string& new_message_id, const std::string& old_message_id)>
+            start_transaction_message_retry_callback =
+                [](const std::string& new_message_id, const std::string& old_message_id) {}) :
         database_handler(std::move(database_handler)),
         config(config),
         external_notify(external_notify),
@@ -374,7 +396,8 @@ public:
         running(true),
         new_message(false),
         is_registration_status_accepted(false),
-        uuid_generator(boost::uuids::random_generator()) {
+        uuid_generator(boost::uuids::random_generator()),
+        start_transaction_message_retry_callback(start_transaction_message_retry_callback) {
 
         this->send_callback = send_callback;
         this->in_flight = nullptr;
@@ -446,10 +469,12 @@ public:
                     return false;
                 };
 
-                // Find the first allowed transaction message
+                // Transaction messages must persist the order, so only check the first in the queue
                 auto selected_transaction_message_it =
-                    std::find_if(transaction_message_queue.begin(), transaction_message_queue.end(),
-                                 is_transaction_message_available);
+                    (!transaction_message_queue.empty() and
+                     is_transaction_message_available(transaction_message_queue.front()))
+                        ? transaction_message_queue.begin()
+                        : transaction_message_queue.end();
 
                 if (selected_transaction_message_it != transaction_message_queue.end()) {
                     message = *selected_transaction_message_it;
@@ -808,6 +833,7 @@ public:
             if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
                 EVLOG_warning << "Message shall be persisted and will therefore be sent again";
                 // Generate a new message ID for the retry
+                const auto old_message_id = this->in_flight->message[MESSAGE_ID];
                 this->in_flight->message[MESSAGE_ID] = this->createMessageId();
                 if (this->config.transaction_message_retry_interval > 0) {
                     // exponential backoff
@@ -831,6 +857,10 @@ public:
                     this->transaction_message_queue.push_front(this->in_flight);
                 } else if (queue_type == QueueType::Normal) {
                     this->normal_message_queue.push_front(this->in_flight);
+                }
+                if (is_start_transaction_message(*this->in_flight)) {
+                    this->start_transaction_message_retry_callback(this->in_flight->message[MESSAGE_ID],
+                                                                   old_message_id);
                 }
                 this->notify_queue_timer.at(
                     [this]() {

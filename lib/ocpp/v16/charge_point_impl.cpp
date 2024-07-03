@@ -155,6 +155,26 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
 }
 
 std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> ChargePointImpl::create_message_queue() {
+
+    // The StartTransaction.conf handler attempts to get the transaction based on the message id. The message id changes
+    // in case of a message retry attempt, so we need to update it for the transaction as well
+    const auto start_transaction_message_retry_callback = [this](const std::string& new_message_id,
+                                                                 const std::string& old_message_id) {
+        auto transaction = this->transaction_handler->get_transaction(old_message_id);
+        if (transaction != nullptr) {
+            transaction->set_start_transaction_message_id(new_message_id);
+            try {
+                this->database_handler->update_start_transaction_message_id(transaction->get_session_id(),
+                                                                            new_message_id);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not update start transaction message id";
+            }
+        } else {
+            EVLOG_warning << "Could not find transaction with start_transaction_message_id: " << old_message_id
+                          << " and could therefore not replace it with: " << new_message_id;
+        }
+    };
+
     return std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         MessageQueueConfig{
@@ -162,7 +182,7 @@ std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> ChargePointImpl::create_me
             this->configuration->getTransactionMessageRetryInterval(),
             this->configuration->getMessageQueueSizeThreshold().value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
             this->configuration->getQueueAllMessages().value_or(false)},
-        this->external_notify, this->database_handler);
+        this->external_notify, this->database_handler, start_transaction_message_retry_callback);
 }
 
 void ChargePointImpl::init_websocket() {
