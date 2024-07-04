@@ -112,10 +112,10 @@ types::powermeter::Powermeter power_supply_DCImpl::power_meter_external() {
     powermeter.meter_id = "DC_POWERMETER";
 
     if (connector_current > 0) {
-        energy_import_total += (connector_voltage * connector_current * 0.5) / 3600;
+        energy_import_total += (connector_voltage * connector_current * LOOP_SLEEP_MS / 1000) / 3600;
     }
     if (connector_current < 0) {
-        energy_export_total += (connector_voltage * -connector_current * 0.5) / 3600;
+        energy_export_total += (connector_voltage * -connector_current * LOOP_SLEEP_MS / 1000) / 3600;
     }
 
     powermeter.energy_Wh_import = {static_cast<float>(energy_import_total)};
