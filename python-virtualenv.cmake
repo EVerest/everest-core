@@ -26,7 +26,11 @@ macro(ev_create_python_venv)
     execute_process(
         COMMAND
             ${Python3_EXECUTABLE} -m venv ${EV_CREATE_PYTHON_VENV_SYSTEM_SITE_PACKAGES_FLAG} ${EV_CREATE_PYTHON_VENV_PATH_TO_VENV}
+        RESULT_VARIABLE EV_CREATE_PYTHON_VENV_RESULT
     )
+    if(${EV_CREATE_PYTHON_VENV_RESULT} AND NOT ${EV_CREATE_PYTHON_VENV_RESULT} EQUAL 0)
+        message(FATAL_ERROR "Could not create python venv: ${EV_CREATE_PYTHON_VENV_PATH_TO_VENV}")
+    endif()
     message(STATUS "Created python venv: ${EV_CREATE_PYTHON_VENV_PATH_TO_VENV}")
 endmacro()
 
