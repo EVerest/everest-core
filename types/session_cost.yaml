@@ -1,5 +1,37 @@
 description: Types to provide the session price
 types:
+  IdlePrice:
+    description: >-
+      Price components when idle
+    type: object
+    additionalProperties: false
+    properties:
+      graceMinutes:
+        description: >-
+          Grace period in minutes before idle time is charged.
+          Grace minutes start counting from the timestamp of the message in which state
+          changed from "Charging" to "Idle".
+        type: integer
+      hourPrice:
+        description: >-
+          Price per hour while idle
+        type: number
+  ChargingPriceComponent:
+    description: >-
+      Charging price for a component
+    properties:
+      component:
+        description: >-
+          Component type for this charging price
+        type: string
+        enum:
+          - kWhPrice
+          - hourPrice
+          - flatFee
+      price:
+        description: >-
+          Price for this component
+        type: number
   SessionCostChunk:
     description: >-
       A chunk of the session cost. The total cost of the session is the sum of
@@ -17,6 +49,14 @@ types:
           Absolute timestamp for the end of this chunk in RFC3339 UTC format
         type: string
         format: date-time
+      metervalue_from:
+        description: >-
+          Metervalue for the start of this chunk
+        type: integer
+      metervalue_to:
+        description: >-
+          Metervalue for the end of this chunk
+        type: integer
       cost:
         description: >-
           Cost of the energy (or other things like time, base price, ...) 
@@ -24,6 +64,10 @@ types:
           price
         type: object
         $ref: /money#/MoneyAmount
+      costAmount:
+        description: >-
+          Cost in the currency specified in the configuration.
+        type: number
       category:
         description: >-
           Cost category. Typically this is energy or time.
@@ -32,6 +76,38 @@ types:
           - Energy
           - Time
           - Other
+      idlePrice:
+        description: >-
+          Prices for when the EV is idle.
+        type: object
+        $ref: /session_cost#/IdlePrice
+      chargingPrice:
+        description: >-
+          Charging prices.
+        type: array
+        items:
+          description: Charging price per type
+          type: object
+          $ref: /session_cost#/ChargingPriceComponent
+      message:
+        description: >-
+          Message to show to the user containing information about the price
+        type: array
+        items:
+          description: Message with pricing information in a specific language
+          type: object
+          properties:
+            language:
+              description: Language code of the message (RFC5646)
+              type: string
+            message:
+              description: Message in the given language
+              type: string
+      qrCode:
+        description: >-
+          QR Code with more information. For example when the charging is finished,
+          to download the invoice from
+        type: string
   SessionStatus:
     description: >-
       Session status enum. Session can be running or finished. Costs of the
@@ -39,6 +115,7 @@ types:
     type: string
     enum:
       - Running
+      - Idle
       - Finished
   SessionCost:
     description: >-
@@ -68,7 +145,12 @@ types:
         items:
           description: One chunk of the session cost
           type: object
-          $ref: /session_cost#/SessionCostChunk  
+          $ref: /session_cost#/SessionCostChunk
+      next_period:
+        description: >-
+          Charging prices for the next period, starting from the given date/time
+        type: object
+        $ref: /session_cost#/SessionCostChunk
       status:
         description: >-
           Session status. Session can be running or finished. Costs of the
