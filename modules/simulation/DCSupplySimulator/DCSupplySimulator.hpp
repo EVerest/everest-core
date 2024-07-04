@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright chargebyte GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef DCSUPPLY_SIMULATOR_HPP
 #define DCSUPPLY_SIMULATOR_HPP
 
@@ -12,6 +13,7 @@
 
 // headers for provided interface implementations
 #include <generated/interfaces/power_supply_DC/Implementation.hpp>
+#include <generated/interfaces/powermeter/Implementation.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -24,10 +26,12 @@ struct Conf {};
 class DCSupplySimulator : public Everest::ModuleBase {
 public:
     DCSupplySimulator() = delete;
-    DCSupplySimulator(const ModuleInfo& info, std::unique_ptr<power_supply_DCImplBase> p_main, Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config){};
+    DCSupplySimulator(const ModuleInfo& info, std::unique_ptr<power_supply_DCImplBase> p_main,
+                      std::unique_ptr<powermeterImplBase> p_powermeter, Conf& config) :
+        ModuleBase(info), p_main(std::move(p_main)), p_powermeter(std::move(p_powermeter)), config(config){};
 
     const std::unique_ptr<power_supply_DCImplBase> p_main;
+    const std::unique_ptr<powermeterImplBase> p_powermeter;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
