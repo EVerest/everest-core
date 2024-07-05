@@ -226,8 +226,9 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     result.reserve((byte_cnt + 1) / 2);
 
     for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
-        uint16_t t;
-        memcpy(&t, buf + i, 2);
+        uint16_t t = 0;
+        const size_t num_bytes_to_copy = (i < len - 1) ? 2 : 1;
+        memcpy(&t, buf + i, num_bytes_to_copy);
         t = be16toh(t);
         result.push_back(t);
     }
