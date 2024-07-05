@@ -677,6 +677,12 @@ void EvseManager::ready() {
                 latest_powermeter_data_billing = p;
             }
 
+            {
+                std::lock_guard<std::mutex> lg(powermeter_mutex);
+                initial_powermeter_value_received = true;
+            }
+            powermeter_cv.notify_one();
+
             // External Nodered interface
             if (p.phase_seq_error) {
                 mqtt.publish(fmt::format("everest_external/nodered/{}/powermeter/phaseSeqError", config.connector_id),
@@ -893,6 +899,11 @@ void EvseManager::ready() {
         }
     });
 
+    // wait for first powermeter value
+    std::unique_lock<std::mutex> lk(powermeter_mutex);
+    this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
+                                 [this] { return initial_powermeter_value_received; });
+
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
     charger->set_max_current(0.0F, date::utc_clock::now() + std::chrono::seconds(120));
@@ -919,6 +930,9 @@ void EvseManager::ready_to_start_charging() {
 
     this->p_evse->publish_ready(true);
     EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    if (!initial_powermeter_value_received) {
+        EVLOG_warning << "No powermeter value received yet!";
+    }
 }
 
 types::powermeter::Powermeter EvseManager::get_latest_powermeter_data_billing() {
