@@ -206,7 +206,6 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
     const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
-    const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
     module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
                                          imd);
@@ -293,7 +292,6 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
     const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
-    const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
     module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
                                          imd);
@@ -353,7 +351,6 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
     const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
-    const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
     module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
                                          imd);
@@ -425,20 +422,16 @@ TEST(ErrorHandlingTest, modify_error_imd) {
                                 "no description", id);
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(error, true, error_type);
+    bResult = error_handling.modify_error_imd(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::IMDFault);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(error, false, error_type);
+    bResult = error_handling.modify_error_imd(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::IMDFault);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -448,20 +441,16 @@ TEST(ErrorHandlingTest, modify_error_imd) {
     ehs.reset();
     Everest::error::Error warning("isolation_monitor/VendorWarning", "", "Will not stop charging session.",
                                   "no description", id);
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(warning, true, error_type);
+    bResult = error_handling.modify_error_imd(warning, true);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(warning, false, error_type);
+    bResult = error_handling.modify_error_imd(warning, false);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -478,7 +467,6 @@ TEST(ErrorHandlingTest, modify_error_evse_manager) {
     const std::vector<std::unique_ptr<ac_rcdIntf>> ac_rcd;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
     const std::unique_ptr<evse_managerImplBase> evse_managerImpl = std::make_unique<stub::evse_managerImplStub>();
-    const std::vector<std::unique_ptr<isolation_monitorIntf>> imd;
 
     module::ErrorHandling error_handling(evse_board_support, ISO15118_charger, connector_lock, ac_rcd, evse_managerImpl,
                                          imd);
