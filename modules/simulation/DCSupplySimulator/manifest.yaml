@@ -28,9 +28,13 @@ provides:
         description: Max supported current
         type: number
         default: 200.0
+  powermeter:
+    interface: powermeter
+    description: Power meter interface for simulation
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Cornelius Claussen (Pionix GmbH)
     - Fabian Hartung (chargebyte GmbH)
     - Mohannad Oraby (chargebyte GmbH)
+    - Sebastian Lukas (Pionix GmbH)

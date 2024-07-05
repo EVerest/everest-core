@@ -450,6 +450,7 @@ function registerAllCmds(mod) {
     registerCmd(mod, 'iso_wait_for_resume', 0, () => false);
 
     registerCmd(mod, 'iso_start_bcb_toggle', 1, (mod, c) => {
+      mod.v2g_finished = false;
       mod.state = 'bcb_toggle';
       if (mod.bcb_toggles >= c.args[0] || mod.bcb_toggles === 3) {
         mod.bcb_toggles = 0;
@@ -510,7 +511,7 @@ boot_module(async ({
 
   // register commands
   setup.provides.main.register.enable(enable);
-  setup.provides.main.register.executeChargingSession(execute_charging_session);
+  setup.provides.main.register.execute_charging_session(execute_charging_session);
 
   // subscribe vars of used modules
   setup.uses.ev_board_support.subscribe.bsp_event((mod, str) => {
