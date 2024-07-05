@@ -102,6 +102,33 @@ cmds:
         items:
           type: object
           $ref: /ocpp#/ComponentVariable
+  set_display_message:
+    description: >-
+      Command to set a display message.
+    arguments:
+      request:
+        description: >-
+          DisplayMessage request, like done in OCPP 2.0.1, also used for 1.6 as DisplayMessage is not implemented there.
+        $ref: /ocpp#/DisplayMessage
+      result:
+        description: >-
+          TODO: a useful result for both OCPP 2.0.1 and 1.6!!!
+        type: object
+        properties:
+          status:
+            description: Whether the charging station is able to display the message
+            $ref: /ocpp#/DisplayMessageStatusEnum
+          status_info:
+            description: Detailed status information
+            $ref: /ocpp#/StatusInfoType
+        required:
+          - status
+  get_display_messages:
+    description: Command to get one or more display messages.
+    arguments:
+      request:
+        description: TODO
+
 vars:
   ocpp_transaction_event:
     description: Emits events related to OCPP transactions
