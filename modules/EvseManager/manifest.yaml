@@ -235,7 +235,7 @@ config:
       This timeout in ms defines for how long the EvseManager waits for an initial meter value from a powermeter before it becomes ready to start charging.
       If configured to 0, the EvseManager will not wait for an initial meter value before it becomes ready to start charging.
     type: integer
-    default: 1000
+    default: 5000
 provides:
   evse:
     interface: evse_manager
