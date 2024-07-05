@@ -678,7 +678,7 @@ void EvseManager::ready() {
             }
 
             {
-                std::lock_guard<std::mutex> lg(powermeter_mutex);
+                std::scoped_lock<std::mutex> lk(powermeter_mutex);
                 initial_powermeter_value_received = true;
             }
             powermeter_cv.notify_one();
