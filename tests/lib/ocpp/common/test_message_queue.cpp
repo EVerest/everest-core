@@ -207,10 +207,18 @@ protected:
     }
 
     void init_message_queue() {
+        message_queue = std::make_unique<MessageQueue<TestMessageType>>(send_callback_mock.AsStdFunction(), config, db);
+        message_queue->start();
+        message_queue->set_registration_status_accepted();
+        message_queue->resume(std::chrono::seconds(0));
+    }
+
+    void restart_message_queue() {
         if (message_queue) {
             message_queue->stop();
         }
         message_queue = std::make_unique<MessageQueue<TestMessageType>>(send_callback_mock.AsStdFunction(), config, db);
+        message_queue->start();
         message_queue->set_registration_status_accepted();
         message_queue->resume(std::chrono::seconds(0));
     }
@@ -317,7 +325,7 @@ TEST_F(MessageQueueTest, test_non_queuing_up_of_non_transactional_messages) {
 // \brief Test that if queue_all_messages is set to true, non-transactional messages that are sent when online again
 TEST_F(MessageQueueTest, test_queuing_up_of_non_transactional_messages) {
     config.queue_all_messages = true;
-    init_message_queue();
+    restart_message_queue();
 
     int message_count = config.queues_total_size_threshold;
     testing::Sequence s;
@@ -352,7 +360,7 @@ TEST_F(MessageQueueTest, test_clean_up_non_transactional_queue) {
         20; // expect two messages to be dropped each round (3x), end up with 15-6=9 non-transactional remaining
     config.queue_all_messages = true;
     const int expected_skipped_transactional_messages = 6;
-    init_message_queue();
+    restart_message_queue();
 
     EXPECT_CALL(*db, insert_message_queue_message(testing::_, testing::_))
         .Times(sent_transactional_messages + sent_non_transactional_messages);
@@ -424,7 +432,7 @@ TEST_F(MessageQueueTest, test_clean_up_transactional_queue) {
     };
     const int expected_sent_messages = 13;
     config.queue_all_messages = true;
-    init_message_queue();
+    restart_message_queue();
 
     EXPECT_CALL(*db, insert_message_queue_message(testing::_, testing::_)).Times(30);
     EXPECT_CALL(*db, remove_message_queue_message(testing::_, testing::_)).Times(30).WillRepeatedly(testing::Return());

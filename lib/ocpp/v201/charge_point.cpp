@@ -90,7 +90,8 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     csr_attempt(1),
     client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
     v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
-    callbacks(callbacks) {
+    callbacks(callbacks),
+    stop_auth_cache_cleanup_handler(false) {
     // Make sure the received callback struct is completely filled early before we actually start running
     if (!this->callbacks.all_callbacks_valid()) {
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
@@ -162,6 +163,7 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     // configure logging
     this->configure_message_logging_format(message_log_path);
 
+    // TODO - this should this be dependency injected.
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         MessageQueueConfig{
@@ -177,7 +179,18 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     this->auth_cache_cleanup_thread = std::thread(&ChargePoint::cache_cleanup_handler, this);
 }
 
+ChargePoint::~ChargePoint() {
+    {
+        std::scoped_lock lk(this->auth_cache_cleanup_mutex);
+        this->stop_auth_cache_cleanup_handler = true;
+    }
+    this->auth_cache_cleanup_cv.notify_one();
+    this->auth_cache_cleanup_thread.join();
+}
+
 void ChargePoint::start(BootReasonEnum bootreason) {
+    this->message_queue->start();
+
     this->bootreason = bootreason;
     // Trigger all initial status notifications and callbacks related to component state
     // Should be done before sending the BootNotification.req so that the correct states can be reported
@@ -3593,13 +3606,18 @@ void ChargePoint::cache_cleanup_handler() {
         {
             // Wait for next wakeup or timeout
             std::unique_lock lk(this->auth_cache_cleanup_mutex);
-            if (this->auth_cache_cleanup_cv.wait_for(lk, std::chrono::minutes(15),
-                                                     [&]() { return this->auth_cache_cleanup_required; })) {
+            if (this->auth_cache_cleanup_cv.wait_for(lk, std::chrono::minutes(15), [&]() {
+                    return this->stop_auth_cache_cleanup_handler || this->auth_cache_cleanup_required;
+                })) {
                 EVLOG_debug << "Triggered authorization cache cleanup";
             } else {
                 EVLOG_debug << "Time based authorization cache cleanup";
             }
             this->auth_cache_cleanup_required = false;
+        }
+
+        if (this->stop_auth_cache_cleanup_handler) {
+            break;
         }
 
         auto lifetime = this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);

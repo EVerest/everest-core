@@ -423,6 +423,7 @@ private:
     std::condition_variable auth_cache_cleanup_cv;
     std::mutex auth_cache_cleanup_mutex;
     std::thread auth_cache_cleanup_thread;
+    std::atomic_bool stop_auth_cache_cleanup_handler;
 
     // states
     RegistrationStatusEnum registration_status;
@@ -815,6 +816,7 @@ public:
                 const std::string& core_database_path, const std::string& sql_init_path,
                 const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                 const Callbacks& callbacks);
+    ~ChargePoint();
 
     void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;
 
