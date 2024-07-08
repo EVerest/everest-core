@@ -95,6 +95,7 @@ public:
     // external input to charger: update max_current and new validUntil
     bool set_max_current(float ampere, std::chrono::time_point<date::utc_clock> validUntil);
     float get_max_current();
+
     sigslot::signal<float> signal_max_current;
 
     void setup(bool three_phases, bool has_ventilation, const std::string& country_code, const ChargeMode charge_mode,
@@ -206,6 +207,7 @@ private:
 
     bool errors_prevent_charging_internal();
     float get_max_current_internal();
+    float get_max_current_signalled_to_ev_internal();
     bool deauthorize_internal();
     bool pause_charging_wait_for_power_internal();
 
@@ -218,7 +220,8 @@ private:
 
     void update_pwm_now(float dc);
     void update_pwm_now_if_changed(float dc);
-    void update_pwm_max_every_5seconds(float dc);
+    void update_pwm_now_if_changed_ampere(float dc);
+    void update_pwm_max_every_5seconds_ampere(float dc);
     void pwm_off();
     void pwm_F();
 
@@ -327,6 +330,7 @@ private:
 
         bool pp_warning_printed{false};
         bool no_energy_warning_printed{false};
+        float pwm_set_last_ampere{0};
     } internal_context;
 
     // main Charger thread
@@ -368,6 +372,7 @@ private:
     // 4 seconds according to table 3 of ISO15118-3
     static constexpr int T_STEP_EF = 4000;
     static constexpr int SOFT_OVER_CURRENT_TIMEOUT = 7000;
+    static constexpr int IEC_PWM_MAX_UPDATE_INTERVAL = 5000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};
