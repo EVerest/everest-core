@@ -56,15 +56,30 @@ public:
 
         // parse into major, minor and revision
         if (tokens.size() >= 1) {
-            major = std::stoi(tokens[0]);
+            try {
+                major = std::stoi(tokens[0]);
+            } catch (...) {
+                // Set to 0 if we cannot parse it
+                major = 0;
+            }
         }
 
         if (tokens.size() >= 2) {
-            minor = std::stoi(tokens[1]);
+            try {
+                minor = std::stoi(tokens[1]);
+            } catch (...) {
+                // Set to 0 if we cannot parse it
+                minor = 0;
+            }
         }
 
         if (tokens.size() >= 3) {
-            revision = std::stoi(tokens[2]);
+            try {
+                revision = std::stoi(tokens[2]);
+            } catch (...) {
+                // Set to 0 if we cannot parse it
+                revision = 0;
+            }
         }
     }
 
