@@ -107,8 +107,8 @@ private:
 
     template <typename Callable>
     static auto call_with_retry(Callable func, int number_of_retries, int retry_wait_in_milliseconds,
-                                bool retry_on_http_client_error = true,
-                                bool retry_on_dcbm_reponse_error = true) -> decltype(func()) {
+                                bool retry_on_http_client_error = true, bool retry_on_dcbm_reponse_error = true) 
+        -> decltype(func()) {
         std::exception_ptr lastException = nullptr;
         for (int attempt = 0; attempt < 1 + number_of_retries; ++attempt) {
             try {

@@ -183,7 +183,8 @@ types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
     }
 }
 
-types::powermeter::Powermeter LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& livemeasure) {
+types::powermeter::Powermeter
+LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& livemeasure) {
     types::powermeter::Powermeter powermeter;
     json data = json::parse(livemeasure);
     powermeter.timestamp = data.at("timestamp");
