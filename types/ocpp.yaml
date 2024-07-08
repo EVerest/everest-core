@@ -160,6 +160,12 @@ types:
       - NotSupportedPriority
       - NotSupportedState
       - UnknownTransaction
+  ClearMessageResponseEnum:
+    description: Response on a clear display message request
+    type: string
+    enum:
+      - Accepted
+      - Unknown
   DisplayMessage:
     description: Message to show on a display
     type: object
