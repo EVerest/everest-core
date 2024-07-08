@@ -58,6 +58,12 @@ provides:
         description: Timeout in ms for subsequent packets.
         type: integer
         default: 100
+      retries:
+        description: Count of retries in case of error in Modbus query.
+        type: integer
+        minimum: 0
+        maximum: 10
+        default: 2
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:
