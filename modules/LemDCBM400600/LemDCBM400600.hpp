@@ -27,12 +27,17 @@ struct Conf {
     int ntp_server_1_port;
     std::string ntp_server_2_ip_addr;
     int ntp_server_2_port;
+    std::string meter_timezone;
+    std::string meter_dst;
     int resilience_initial_connection_retries;
     int resilience_initial_connection_retry_delay;
     int resilience_transaction_request_retries;
     int resilience_transaction_request_retry_delay;
     int cable_id;
     int tariff_id;
+    int SC;
+    std::string UV;
+    std::string UD;
 };
 
 class LemDCBM400600 : public Everest::ModuleBase {
