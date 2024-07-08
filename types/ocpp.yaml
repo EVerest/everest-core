@@ -132,7 +132,7 @@ types:
       personal_message:
         description: Personal message
         type: object
-        $ref: /ocpp#/MessageContent
+        $ref: /display_message#/MessageContent
   DataTransferStatus:
     description: Data Transfer Status enum
     type: string

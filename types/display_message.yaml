@@ -64,11 +64,13 @@ types:
         type: integer
       priority:
         description: Priority of the message
+        type: string
         $ref: /display_message#/MessagePriorityEnum
       state:
         description: >-
           During what state should this message be shown. When omitted, this message should be shown in any state of
           the Charging Station
+        type: string
         $ref: /display_message#/MessageStateEnum
       timestamp_from:
         description: >-
@@ -89,15 +91,18 @@ types:
         maxLength: 36
       message:
         $ref: /display_message#/MessageContent
+        type: object
         description: The message to show
       message_format:
         description: The format of the message
+        type: string
         $ref: /display_message#/MessageFormat
       display:
         description: >-
           When a Charging Station has multiple Displays, this field can be used to define to which Display this message
           belongs.
-        $ref: /display_message#/Component
+        $ref: /ocpp#/Component
+        type: object
     required:
       - id
       - priority

@@ -19,6 +19,7 @@ types:
   ChargingPriceComponent:
     description: >-
       Charging price for a component
+    type: object
     properties:
       component:
         description: >-
