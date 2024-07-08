@@ -1,54 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (C) 2022-2023 chargebyte GmbH
 // Copyright (C) 2022-2023 Contributors to EVerest
-#include "EvseV2G.hpp"
-#include "connection/connection.hpp"
+#include "IsoMux.hpp"
+#include "connection.hpp"
 #include "log.hpp"
 #include "sdp.hpp"
-#include <everest/logging.hpp>
-
-#ifndef EVEREST_MBED_TLS
-#include <csignal>
-#include <openssl_util.hpp>
-namespace {
-void log_handler(openssl::log_level_t level, const std::string& str) {
-    switch (level) {
-    case openssl::log_level_t::debug:
-        // ignore debug logs
-        break;
-    case openssl::log_level_t::warning:
-        EVLOG_warning << str;
-        break;
-    case openssl::log_level_t::error:
-    default:
-        EVLOG_error << str;
-        break;
-    }
-}
-} // namespace
-#endif // EVEREST_MBED_TLS
 
 struct v2g_context* v2g_ctx = nullptr;
 
 namespace module {
 
-void EvseV2G::init() {
+void IsoMux::init() {
     /* create v2g context */
-    v2g_ctx = v2g_ctx_create(&(*p_charger), &(*r_security));
+    v2g_ctx = v2g_ctx_create(&(*r_security));
 
     if (v2g_ctx == nullptr)
         return;
 
-#ifndef EVEREST_MBED_TLS
-    (void)openssl::set_log_handler(log_handler);
-    tls::Server::configure_signal_handler(SIGUSR1);
+    v2g_ctx->proxy_port_iso2 = config.proxy_port_iso2;
+    v2g_ctx->proxy_port_iso20 = config.proxy_port_iso20;
+    v2g_ctx->selected_iso20 = false;
+
     v2g_ctx->tls_server = &tls_server;
-#endif // EVEREST_MBED_TLS
 
     invoke_init(*p_charger);
 }
 
-void EvseV2G::ready() {
+void IsoMux::ready() {
     int rv = 0;
 
     dlog(DLOG_LEVEL_DEBUG, "Starting SDP responder");
@@ -60,13 +38,11 @@ void EvseV2G::ready() {
         goto err_out;
     }
 
-    if (config.enable_sdp_server) {
-        rv = sdp_init(v2g_ctx);
+    rv = sdp_init(v2g_ctx);
 
-        if (rv == -1) {
-            dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
-            goto err_out;
-        }
+    if (rv == -1) {
+        dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
+        goto err_out;
     }
 
     dlog(DLOG_LEVEL_DEBUG, "starting socket server(s)");
@@ -90,8 +66,12 @@ err_out:
     v2g_ctx_free(v2g_ctx);
 }
 
-EvseV2G::~EvseV2G() {
+IsoMux::~IsoMux() {
     v2g_ctx_free(v2g_ctx);
+}
+
+bool IsoMux::selected_iso20() {
+    return v2g_ctx->selected_iso20;
 }
 
 } // namespace module
