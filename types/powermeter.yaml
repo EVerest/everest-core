@@ -214,6 +214,19 @@ types:
     enum:
       - ASSIGNED
       - NOT_ASSIGNED
+  Temperature:
+    description: Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
+    type: object
+    additionalProperties: false
+    required:
+      - temperature
+    properties:
+      temperature:
+        description: The temperature of the sensor measured in C
+        type: number
+      identification:
+        description: A (vendor specific) ID if required
+        type: string
   Powermeter:
     description: Measured dataset (AC or DC)
     type: object
@@ -299,10 +312,12 @@ types:
           This is intended for meters that only support signing a collection of meter values.
         type: object
         $ref: /units_signed#/SignedMeterValue
-      temperature1:
-        description: The powermeter first temperature sensor (if available)
-        type: number
-      temperature2:
-        description: The powermeter second temperature sensor (if available)
-        type: number
+      temperatures:
+        description: >-
+          An array of temperature sensors expressed in C, their definition and meaning is product specific
+        type: array
+        items:
+          type: object
+          $ref: /powermeter#/Temperature
+
 

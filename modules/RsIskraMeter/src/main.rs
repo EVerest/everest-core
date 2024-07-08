@@ -629,8 +629,7 @@ impl ReadyState {
             signed_meter_value: None,
             var_signed: None,
             voltage_v_signed: None,
-            temperature_1: Option::None,
-            temperature_2: Option::None,
+            temperatures: None,
         };
         Ok(resp)
     }

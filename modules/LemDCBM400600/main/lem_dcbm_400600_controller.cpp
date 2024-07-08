@@ -23,7 +23,7 @@ void LemDCBM400600Controller::init() {
     this->time_sync_helper->restart_unsafe_period();
 }
 
-std::vector<std::string> LemDCBM400600Controller::split(const std::string& str, char delimiter) {
+std::vector<std::string> split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
     std::string token;
     std::stringstream ss(str);
@@ -197,8 +197,19 @@ void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::strin
     current.DC = data.at("current");
     powermeter.current_A.emplace(current);
     powermeter.power_W.emplace(types::units::Power{data.at("power")});
-    powermeter.temperature1 = data.at("temperatureH");
-    powermeter.temperature2 = data.at("temperatureL");
+    if (!powermeter.temperatures.has_value()) {
+        powermeter.temperatures.emplace({types::powermeter::Temperature{data.at("temperatureH"), "temperatureH"},   // The High temp as defined by the LEM
+                                         types::powermeter::Temperature{data.at("temperatureL"), "temperatureL"}}   // The Low temp as defined by the LEM
+        ); 
+    } else {
+        for (auto& sensor : *powermeter.temperatures) {
+            if (sensor.identification == "temperatureL") {
+                sensor.temperature = data.at("temperatureL");
+            } else if (sensor.identification == "temperatureH") {
+                    sensor.temperature = data.at("temperatureH");
+            }
+        }
+    }
 }
 
 std::string
