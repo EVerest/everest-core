@@ -11,11 +11,13 @@ void LemDCBM400600Controller::init() {
         call_with_retry([this]() { this->fetch_meter_id_from_device(); }, this->config.init_number_of_http_retries,
                         this->config.init_retry_wait_in_milliseconds);
     } catch (HttpClientError& http_client_error) {
-        EVLOG_error << "Initialization of LemDCBM400600Controller failed with http client error: "
+        EVLOG_error << "Initialization of LemDCBM400600Controller failed with http "
+                       "client error: "
                     << http_client_error.what();
         throw;
     } catch (DCBMUnexpectedResponseException& dcbm_error) {
-        EVLOG_error << "Initialization of LemDCBM400600Controller failed due an unexpected device response: "
+        EVLOG_error << "Initialization of LemDCBM400600Controller failed due an "
+                       "unexpected device response: "
                     << dcbm_error.what();
         throw;
     }
@@ -140,9 +142,9 @@ void LemDCBM400600Controller::request_device_to_stop_transaction(const std::stri
         int status = json::parse(legal_api_response.body).at("meterValue").at("transactionStatus");
         bool transaction_is_ongoing = (status & 0b100) != 0; //  third status bit "transactionIsOnGoing" must be false
         if (transaction_is_ongoing) {
-            throw UnexpectedDCBMResponseBody(
-                endpoint, fmt::format("Transaction stop request for transaction {} returned device status {}.",
-                                      transaction_id, status));
+            throw UnexpectedDCBMResponseBody(endpoint, fmt::format("Transaction stop request for transaction {} "
+                                                                   "returned device status {}.",
+                                                                   transaction_id, status));
         }
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(
@@ -198,15 +200,14 @@ void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::strin
     powermeter.current_A.emplace(current);
     powermeter.power_W.emplace(types::units::Power{data.at("power")});
     if (!powermeter.temperatures.has_value()) {
-        powermeter.temperatures.emplace({types::powermeter::Temperature{data.at("temperatureH"), "temperatureH"},   // The High temp as defined by the LEM
-                                         types::powermeter::Temperature{data.at("temperatureL"), "temperatureL"}}   // The Low temp as defined by the LEM
-        ); 
+        powermeter.temperatures.emplace({types::temperature::Temperature{data.at("temperatureH"), "temperatureH"},
+                                         types::temperature::Temperature{data.at("temperatureL"), "temperatureL"}});
     } else {
         for (auto& sensor : *powermeter.temperatures) {
             if (sensor.identification == "temperatureL") {
                 sensor.temperature = data.at("temperatureL");
             } else if (sensor.identification == "temperatureH") {
-                    sensor.temperature = data.at("temperatureH");
+                sensor.temperature = data.at("temperatureH");
             }
         }
     }
@@ -239,11 +240,12 @@ LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::
 
 std::pair<std::string, std::string> LemDCBM400600Controller::get_transaction_stop_time_bounds() {
     // The LEM DCBM 400/600 Operations manual (7.2.2.) states
-    // "Minimum duration for transactions is 2 minutes, to prevent potential memory storage weaknesses."
-    // Further, the communication protocol states (4.2.9.):
-    // "If after a period of 48h the time was not set, time synchronization expires (preventing new transactions and
-    // invalidating on-going one)."" Since during an ongoing transaction, now time can synced, the max duration is set
-    // to 48 hours (minus a small delta).
+    // "Minimum duration for transactions is 2 minutes, to prevent potential
+    // memory storage weaknesses." Further, the communication protocol states
+    // (4.2.9.): "If after a period of 48h the time was not set, time
+    // synchronization expires (preventing new transactions and invalidating
+    // on-going one)."" Since during an ongoing transaction, now time can synced,
+    // the max duration is set to 48 hours (minus a small delta).
     auto now = std::chrono::time_point<date::utc_clock>::clock::now();
     return {
         Everest::Date::to_rfc3339(now + std::chrono::minutes(2)),
