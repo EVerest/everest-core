@@ -22,7 +22,7 @@ protected:
 
     void TearDown() override {
         // reset the value to default
-        dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "10");
+        dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "10", "test");
     }
 };
 
@@ -34,11 +34,11 @@ TEST_F(DeviceModelTest, test_allow_zero) {
     ASSERT_EQ(r, 10);
 
     // try to set to value of 2, which is not allowed because minLimit of
-    auto sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "2");
+    auto sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "2", "test");
     ASSERT_EQ(sv_result, SetVariableStatusEnum::Rejected);
 
     // try to set to 0, which is allowed because 0 is an exception
-    sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "0");
+    sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "0", "test");
     ASSERT_EQ(sv_result, SetVariableStatusEnum::Accepted);
 
     r = dm->get_value<int>(cv, ocpp::v201::AttributeEnum::Actual);

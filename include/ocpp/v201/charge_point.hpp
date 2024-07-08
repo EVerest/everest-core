@@ -388,7 +388,7 @@ public:
     /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
     /// change
     virtual std::map<SetVariableData, SetVariableResult>
-    set_variables(const std::vector<SetVariableData>& set_variable_data_vector) = 0;
+    set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) = 0;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -524,11 +524,13 @@ private:
 
     /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
     /// \param set_variable_data_vector contains data of the variables to set
+    /// \param source   value source (who sets the value, for example 'csms' or 'libocpp')
     /// \param allow_read_only if true, setting VariableAttribute values with mutability ReadOnly is allowed
     /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
     /// change
     std::map<SetVariableData, SetVariableResult>
-    set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const bool allow_read_only);
+    set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
+                           const bool allow_read_only);
 
     MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
                                                const RequiredComponentVariable& component_variable);
@@ -743,7 +745,7 @@ private:
             ocpp::CallResult<ResponseType> call_result = enhanced_response.message;
             return call_result.msg;
         };
-    };
+    }
 
     /// \brief Checks if all connectors are effectively inoperative.
     /// If this is the case, calls the all_connectors_unavailable_callback
@@ -761,6 +763,31 @@ private:
     void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
 
 public:
+    /// \brief Construct a new ChargePoint object
+    /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
+    /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
+    /// the EVSEs have to increment starting with 1.
+    /// \param device_model_storage_address address to device model storage (e.g. location of SQLite database)
+    /// \param initialize_device_model  Set to true to initialize the device model database
+    /// \param device_model_migration_path  Path to the device model database migration files
+    /// \param device_model_schemas_path    Path to the device model schemas
+    /// \param config_path                  Path to the chargepoint configuration
+    /// \param ocpp_main_path Path where utility files for OCPP are read and written to
+    /// \param core_database_path Path to directory where core database is located
+    /// \param message_log_path Path to where logfiles are written to
+    /// \param evse_security Pointer to evse_security that manages security related operations; if nullptr
+    /// security_configuration must be set
+    /// \param callbacks Callbacks that will be registered for ChargePoint
+    /// \param security_configuration specifies the file paths that are required to set up the internal evse_security
+    /// implementation
+    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                const std::string& device_model_storage_address, const bool initialize_device_model,
+                const std::string& device_model_migration_path, const std::string& device_model_schemas_path,
+                const std::string& config_path, const std::string& ocpp_main_path,
+                const std::string& core_database_path, const std::string& sql_init_path,
+                const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+                const Callbacks& callbacks);
+
     /// \brief Construct a new ChargePoint object
     /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
     /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
@@ -875,7 +902,7 @@ public:
     std::vector<GetVariableResult> get_variables(const std::vector<GetVariableData>& get_variable_data_vector) override;
 
     std::map<SetVariableData, SetVariableResult>
-    set_variables(const std::vector<SetVariableData>& set_variable_data_vector) override;
+    set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) override;
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model

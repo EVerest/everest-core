@@ -1,38 +1,12 @@
 [
     {
-        "name": "UnitTestCtrlr",
-        "evse_id": 2,
-        "connector_id": 3,
-        "variables": {
-            "UnitTestPropertyB": {
-                "variable_name": "UnitTestPropertyBName",
-                "attributes": {
-                    "Actual": "test_value"
-                }
-            }
-        }
-    },
-    {
         "name": "EVSE",
         "evse_id": 1,
         "variables": {
-            "EVSEAvailable": {
-                "variable_name": "Available",
-                "attributes": {
-                    "Actual": false
-                }
-            },
-            "EVSEPower": {
-                "variable_name": "Power",
-                "attributes": {
-                    "MaxSet": 44000,
-                    "Actual": 2000
-                }
-            },
             "EVSESupplyPhases": {
                 "variable_name": "SupplyPhases",
                 "attributes": {
-                    "Actual": 6
+                    "Actual": 2
                 }
             }
         }
@@ -51,7 +25,7 @@
             "ConnectorType": {
                 "variable_name": "ConnectorType",
                 "attributes": {
-                    "Actual": "cChaoJi"
+                    "Actual": "OppCharge"
                 }
             }
         }
@@ -63,7 +37,7 @@
             "EVSEAvailable": {
                 "variable_name": "Available",
                 "attributes": {
-                    "Actual": true
+                    "Actual": false
                 }
             },
             "EVSEPower": {

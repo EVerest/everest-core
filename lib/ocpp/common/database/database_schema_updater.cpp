@@ -139,23 +139,6 @@ std::optional<std::vector<MigrationFile>> get_migration_file_sequence(const fs::
 DatabaseSchemaUpdater::DatabaseSchemaUpdater(DatabaseConnectionInterface* database) noexcept : database(database) {
 }
 
-uint32_t DatabaseSchemaUpdater::get_user_version() {
-    auto statement = this->database->new_statement("PRAGMA user_version");
-
-    if (statement->step() != SQLITE_ROW) {
-        throw std::runtime_error("Could not get user_version from database");
-    }
-    return statement->column_int(0);
-}
-
-void DatabaseSchemaUpdater::set_user_version(uint32_t version) {
-    using namespace std::string_literals;
-
-    if (!this->database->execute_statement("PRAGMA user_version = "s + std::to_string(version))) {
-        throw std::runtime_error("Could not set user_version in database");
-    }
-}
-
 bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file_directory,
                                                   uint32_t target_schema_version) {
     if (!fs::is_directory(migration_file_directory)) {
@@ -172,7 +155,7 @@ bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file
 
     try {
         this->database->open_connection();
-        current_version = this->get_user_version();
+        current_version = this->database->get_user_version();
         EVLOG_info << "Target version: " << target_schema_version << ", current version: " << current_version;
     } catch (std::runtime_error& e) {
         EVLOG_error << "Failure during migration file apply: " << e.what();
@@ -216,7 +199,7 @@ bool DatabaseSchemaUpdater::apply_migration_files(const fs::path& migration_file
             }
         }
 
-        this->set_user_version(target_schema_version);
+        this->database->set_user_version(target_schema_version);
         transaction->commit();
     } catch (std::exception& e) {
         EVLOG_error << "Failure during migration file apply: " << e.what();

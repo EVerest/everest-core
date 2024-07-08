@@ -231,7 +231,7 @@ GetVariableStatusEnum DeviceModel::request_value_internal(const Component& compo
 
 SetVariableStatusEnum DeviceModel::set_value(const Component& component, const Variable& variable,
                                              const AttributeEnum& attribute_enum, const std::string& value,
-                                             bool allow_read_only) {
+                                             const std::string& source, bool allow_read_only) {
 
     if (this->device_model.find(component) == this->device_model.end()) {
         return SetVariableStatusEnum::UnknownComponent;
@@ -266,7 +266,8 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
         return SetVariableStatusEnum::Rejected;
     }
 
-    const auto success = this->storage->set_variable_attribute_value(component, variable, attribute_enum, value);
+    const auto success =
+        this->storage->set_variable_attribute_value(component, variable, attribute_enum, value, source);
     return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
 };
 
@@ -276,10 +277,11 @@ DeviceModel::DeviceModel(std::unique_ptr<DeviceModelStorage> device_model_storag
 }
 
 SetVariableStatusEnum DeviceModel::set_read_only_value(const Component& component, const Variable& variable,
-                                                       const AttributeEnum& attribute_enum, const std::string& value) {
+                                                       const AttributeEnum& attribute_enum, const std::string& value,
+                                                       const std::string& source) {
 
     if (allow_set_read_only_value(component, variable, attribute_enum)) {
-        return this->set_value(component, variable, attribute_enum, value, true);
+        return this->set_value(component, variable, attribute_enum, value, source, true);
     }
     throw std::invalid_argument("Not allowed to set read only value for component " + component.name.get() +
                                 " and variable " + variable.name.get());

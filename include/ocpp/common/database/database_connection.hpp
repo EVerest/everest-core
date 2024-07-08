@@ -55,6 +55,12 @@ public:
 
     /// \brief Gets the last inserted rowid.
     virtual int64_t get_last_inserted_rowid() = 0;
+
+    /// \brief Helper function to set the user version of the database to \p version
+    virtual void set_user_version(uint32_t version) = 0;
+
+    /// \brief Helper function to get the user version of the database.
+    virtual uint32_t get_user_version() = 0;
 };
 
 class DatabaseConnection : public DatabaseConnectionInterface {
@@ -84,6 +90,9 @@ public:
     bool clear_table(const std::string& table) override;
 
     int64_t get_last_inserted_rowid() override;
+
+    uint32_t get_user_version() override;
+    void set_user_version(uint32_t version) override;
 };
 
 } // namespace ocpp::common

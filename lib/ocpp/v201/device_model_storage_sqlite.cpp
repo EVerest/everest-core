@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/v201/init_device_model_db.hpp"
+#include <ocpp/v201/device_model_storage_sqlite.hpp>
+
 #include <everest/logging.hpp>
 #include <ocpp/common/database/sqlite_statement.hpp>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v201/init_device_model_db.hpp>
 
 namespace ocpp {
 
@@ -14,12 +18,24 @@ namespace v201 {
 extern void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
                                      std::vector<VariableMonitoringMeta>& monitors);
 
-DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path) {
+DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, const fs::path& migration_files_path,
+                                                   const fs::path& schemas_path, const fs::path& config_path,
+                                                   const bool init_db) {
+    if (init_db) {
+        if (db_path.empty() || migration_files_path.empty() || schemas_path.empty() || config_path.empty()) {
+            EVLOG_AND_THROW(
+                DeviceModelStorageError("Can not initialize device model storage: one of the paths is empty."));
+        }
+        InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
+        init_device_model_db.initialize_database(schemas_path, false);
+        init_device_model_db.insert_config_and_default_values(schemas_path, config_path);
+    }
+
     db = std::make_unique<ocpp::common::DatabaseConnection>(db_path);
 
     if (!db->open_connection()) {
-        EVLOG_error << "Could not open database at provided path: " << db_path;
-        EVLOG_AND_THROW(std::runtime_error("Could not open device model database at provided path."));
+        EVLOG_AND_THROW(
+            std::runtime_error("Could not open device model database at provided path: " + db_path.string()));
     } else {
         EVLOG_info << "Established connection to device model database successfully: " << db_path;
     }
@@ -86,7 +102,7 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
         "vc.SUPPORTS_MONITORING, vc.UNIT, vc.MIN_LIMIT, vc.MAX_LIMIT, vc.VALUES_LIST "
         "FROM COMPONENT c "
         "JOIN VARIABLE v ON c.ID = v.COMPONENT_ID "
-        "JOIN VARIABLE_CHARACTERISTICS vc ON v.VARIABLE_CHARACTERISTICS_ID = vc.ID";
+        "JOIN VARIABLE_CHARACTERISTICS vc ON vc.VARIABLE_ID = v.ID";
 
     auto select_stmt = this->db->new_statement(select_query);
 
@@ -205,10 +221,11 @@ DeviceModelStorageSqlite::get_variable_attributes(const Component& component_id,
 
 bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
                                                             const AttributeEnum& attribute_enum,
-                                                            const std::string& value) {
+                                                            const std::string& value, const std::string& source) {
     auto transaction = this->db->begin_transaction();
 
-    std::string insert_query = "UPDATE VARIABLE_ATTRIBUTE SET VALUE = ? WHERE VARIABLE_ID = ? AND TYPE_ID = ?";
+    std::string insert_query =
+        "UPDATE VARIABLE_ATTRIBUTE SET VALUE = ?, VALUE_SOURCE = ? WHERE VARIABLE_ID = ? AND TYPE_ID = ?";
     auto insert_stmt = this->db->new_statement(insert_query);
 
     const auto _variable_id = this->get_variable_id(component_id, variable_id);
@@ -218,8 +235,9 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
     }
 
     insert_stmt->bind_text(1, value);
-    insert_stmt->bind_int(2, _variable_id);
-    insert_stmt->bind_int(3, static_cast<int>(attribute_enum));
+    insert_stmt->bind_text(2, source);
+    insert_stmt->bind_int(3, _variable_id);
+    insert_stmt->bind_int(4, static_cast<int>(attribute_enum));
     if (insert_stmt->step() != SQLITE_DONE) {
         EVLOG_error << this->db->get_error_message();
         return false;

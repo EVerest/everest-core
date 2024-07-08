@@ -80,7 +80,7 @@
         }
       ],
       "instance": "Cost",
-      "description": "Instance Cost: Wheter costs are enabled.",
+      "description": "Instance Cost: Whether costs are enabled.",
       "type": "boolean"
     },
     "TariffFallbackMessage": {

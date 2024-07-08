@@ -52,12 +52,6 @@
                     "Actual": true
                 }
             },
-            "EVSEPower": {
-                "variable_name": "Power",
-                "attributes": {
-                    "MaxSet": 22000
-                }
-            },
             "EVSESupplyPhases": {
                 "variable_name": "SupplyPhases",
                 "attributes": {
@@ -99,12 +93,6 @@
                 "variable_name": "Available",
                 "attributes": {
                     "Actual": true
-                }
-            },
-            "EVSEPower": {
-                "variable_name": "Power",
-                "attributes": {
-                    "MaxSet": 22000
                 }
             },
             "EVSESupplyPhases": {
@@ -431,8 +419,8 @@
                     "Actual": true
                 }
             },
-            "PncEnabled": {
-                "variable_name": "PncEnabled",
+            "PnCEnabled": {
+                "variable_name": "PnCEnabled",
                 "attributes": {
                     "Actual": true
                 }
@@ -570,24 +558,12 @@
                 "attributes": {
                     "Actual": true
                 }
-            },
-            "AuthCacheStorage": {
-                "variable_name": "Storage",
-                "attributes": {
-                    "Actual": 0
-                }
             }
         }
     },
     {
         "name": "ChargingStation",
         "variables": {
-            "ChargingStationAvailabilityState": {
-                "variable_name": "AvailabilityState",
-                "attributes": {
-                    "Actual": ""
-                }
-            },
             "ChargingStationAvailable": {
                 "variable_name": "Available",
                 "attributes": {
@@ -667,15 +643,13 @@
                 "variable_name": "ReportingValueSize",
                 "attributes": {
                     "Actual": 2500
-                },
-                "instance": "SetVariables"
+                }
             },
             "ValueSize": {
                 "variable_name": "ValueSize",
                 "attributes": {
                     "Actual": 2500
-                },
-                "instance": "SetVariables"
+                }
             },
             "DeviceDataCtrlrEnabled": {
                 "variable_name": "Enabled",
@@ -708,6 +682,7 @@
             },
             "TariffCostCtrlrEnabledCost": {
                 "variable_name": "Enabled",
+                "instance": "Cost",
                 "attributes": {
                     "Actual": false
                 }

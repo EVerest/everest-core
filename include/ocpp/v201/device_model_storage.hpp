@@ -84,9 +84,11 @@ public:
     /// \param variable_id
     /// \param attribute_enum
     /// \param value
+    /// \param source           The source of the value.
     /// \return true if the value could be set in the storage, else false
     virtual bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
-                                              const AttributeEnum& attribute_enum, const std::string& value) = 0;
+                                              const AttributeEnum& attribute_enum, const std::string& value,
+                                              const std::string& source) = 0;
 
     /// \brief Inserts or replaces a variable monitor in the database
     /// \param data Monitor data to set

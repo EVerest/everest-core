@@ -99,6 +99,10 @@ int SQLiteStatement::bind_null(const std::string& param) {
     return bind_null(index);
 }
 
+int SQLiteStatement::get_number_of_rows() {
+    return sqlite3_data_count(this->stmt);
+}
+
 int SQLiteStatement::column_type(const int idx) {
     return sqlite3_column_type(this->stmt, idx);
 }

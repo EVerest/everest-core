@@ -39,6 +39,7 @@ public:
     virtual int bind_null(const int idx) = 0;
     virtual int bind_null(const std::string& param) = 0;
 
+    virtual int get_number_of_rows() = 0;
     virtual int column_type(const int idx) = 0;
     virtual std::string column_text(const int idx) = 0;
     virtual std::optional<std::string> column_text_nullable(const int idx) = 0;
@@ -73,6 +74,7 @@ public:
     int bind_null(const int idx) override;
     int bind_null(const std::string& param) override;
 
+    int get_number_of_rows() override;
     int column_type(const int idx) override;
     std::string column_text(const int idx) override;
     std::optional<std::string> column_text_nullable(const int idx) override;

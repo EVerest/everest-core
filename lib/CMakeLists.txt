@@ -12,6 +12,7 @@ target_compile_definitions(ocpp
     PRIVATE
         MIGRATION_FILE_VERSION_V16=${MIGRATION_FILE_VERSION_V16}
         MIGRATION_FILE_VERSION_V201=${MIGRATION_FILE_VERSION_V201}
+        MIGRATION_DEVICE_MODEL_FILE_VERSION_V201=${MIGRATION_DEVICE_MODEL_FILE_VERSION_V201}
 )
 
 target_sources(ocpp
@@ -62,6 +63,7 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/device_model_storage_sqlite.cpp
             ocpp/v201/enums.cpp
             ocpp/v201/evse.cpp
+            ocpp/v201/init_device_model_db.cpp
             ocpp/v201/notify_report_requests_splitter.cpp
             ocpp/v201/message_queue.cpp
             ocpp/v201/ocpp_types.cpp

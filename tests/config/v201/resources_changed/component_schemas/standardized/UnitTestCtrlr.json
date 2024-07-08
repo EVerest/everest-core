@@ -10,7 +10,7 @@
       "variable_name": "UnitTestPropertyAName",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "boolean"
+        "dataType": "string"
       },
       "attributes": [
         {
@@ -19,7 +19,7 @@
         }
       ],
       "default": "1",
-      "type": "boolean"
+      "type": "string"
     },
     "UnitTestPropertyB": {
       "variable_name": "UnitTestPropertyBName",
@@ -39,7 +39,7 @@
       "variable_name": "UnitTestPropertyCName",
       "characteristics": {
         "supportsMonitoring": false,
-        "dataType": "integer"
+        "dataType": "decimal"
       },
       "attributes": [
         {
@@ -47,7 +47,7 @@
           "mutability": "ReadOnly"
         }
       ],
-      "type": "integer"
+      "type": "number"
     }
   },
   "required": [

@@ -14,7 +14,7 @@ public:
     MOCK_METHOD(std::vector<VariableAttribute>, get_variable_attributes,
                 (const Component&, const Variable&, const std::optional<AttributeEnum>&));
     MOCK_METHOD(bool, set_variable_attribute_value,
-                (const Component&, const Variable&, const AttributeEnum&, const std::string&));
+                (const Component&, const Variable&, const AttributeEnum&, const std::string&, const std::string&));
     MOCK_METHOD(std::optional<VariableMonitoringMeta>, set_monitoring_data,
                 (const SetMonitoringData&, const VariableMonitorType));
     MOCK_METHOD(std::vector<VariableMonitoringMeta>, get_monitoring_data,

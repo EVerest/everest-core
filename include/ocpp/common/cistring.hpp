@@ -30,6 +30,10 @@ public:
     CiString() : String<L>() {
     }
 
+    CiString(CiString&&) = default;
+    CiString& operator=(const CiString&) = default;
+    CiString& operator=(CiString&&) = default;
+
     /// \brief CaseInsensitive string implementation only allows printable ASCII characters
     bool is_valid(const std::string& data) {
         for (const char& character : data) {

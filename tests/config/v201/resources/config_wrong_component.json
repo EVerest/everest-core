@@ -1,0 +1,14 @@
+[
+    {
+        "name": "NotExistingComponent",
+        "evse_id": 1,
+        "variables": {
+            "EVSEAvailable": {
+                "variable_name": "Available",
+                "attributes": {
+                    "Actual": false
+                }
+            }
+        }
+    }
+]

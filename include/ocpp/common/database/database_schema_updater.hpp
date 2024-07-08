@@ -12,12 +12,6 @@ class DatabaseSchemaUpdater {
 private:
     DatabaseConnectionInterface* database;
 
-    /// \brief Helper function to get the user version of the database
-    uint32_t get_user_version();
-
-    /// \brief Helper function to set the user version of the database to \p version
-    void set_user_version(uint32_t version);
-
 public:
     /// \brief Class that can apply migration files to a database to update the schema
     /// \param database Interface for the database connection

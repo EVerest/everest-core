@@ -1,0 +1,15 @@
+[
+    {
+        "name": "UnitTestCtrlr",
+        "evse_id": 2,
+        "connector_id": 3,
+        "variables": {
+            "UnitTestPropertyB": {
+                "variable_name": "UnitTestPropertyBName",
+                "attributes": {
+                    "MaxSet": "test_value"
+                }
+            }
+        }
+    }
+]

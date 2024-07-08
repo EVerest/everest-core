@@ -165,21 +165,24 @@ public:
     /// \param variable_id
     /// \param attribute_enum
     /// \param value
+    /// \param source           The source of the value (for example 'csms' or 'default').
     /// \param allow_read_only If this is true, read-only variables can be changed,
     ///                        otherwise only non read-only variables can be changed. Defaults to false
     /// \return Result of the requested operation
     SetVariableStatusEnum set_value(const Component& component_id, const Variable& variable_id,
                                     const AttributeEnum& attribute_enum, const std::string& value,
-                                    const bool allow_read_only = false);
+                                    const std::string& source, const bool allow_read_only = false);
     /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
     /// attribute_enum for read only variables only. Only works on certain allowed components.
     /// \param component_id
     /// \param variable_id
     /// \param attribute_enum
     /// \param value
+    /// \param source           The source of the value (for example 'csms' or 'default').
     /// \return Result of the requested operation
     SetVariableStatusEnum set_read_only_value(const Component& component_id, const Variable& variable_id,
-                                              const AttributeEnum& attribute_enum, const std::string& value);
+                                              const AttributeEnum& attribute_enum, const std::string& value,
+                                              const std::string& source);
 
     /// \brief Gets the VariableMetaData for the given \p component_id and \p variable_id
     /// \param component_id

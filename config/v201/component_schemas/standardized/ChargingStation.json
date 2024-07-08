@@ -34,7 +34,8 @@
                 }
             ],
             "description": "This variable reports current availability state for the ChargingStation",
-            "type": "string"
+            "type": "string",
+            "default": ""
         },
         "ChargingStationPhaseRotation": {
             "variable_name": "PhaseRotation",

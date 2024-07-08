@@ -1,0 +1,14 @@
+[
+    {
+        "name": "EVSE",
+        "evse_id": 1,
+        "variables": {
+            "EVSEAvailable": {
+                "variable_name": "Available",
+                "attributes": {
+                    "NotExisting": false
+                }
+            }
+        }
+    }
+]

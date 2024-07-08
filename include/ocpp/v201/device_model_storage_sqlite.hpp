@@ -25,8 +25,20 @@ private:
 
 public:
     /// \brief Opens SQLite connection at given \p db_path
-    /// \param db_path  path to database
-    explicit DeviceModelStorageSqlite(const fs::path& db_path);
+    ///
+    /// If init_db is true, all other paths must be given as well.
+    ///
+    /// \param db_path              Path to database
+    /// \param migration_files_path Path to the migration files to initialize the database (only needs to be set if
+    ///                             `init_db` is true)
+    /// \param schemas_path         Path to the device model schemas (only needs to be set if `init_db` is true)
+    /// \param config_path          Path to the configuration file (only needs to be set if `init_db` is true)
+    /// \param init_db              True to initialize the database
+    ///
+    explicit DeviceModelStorageSqlite(const fs::path& db_path, const std::filesystem::path& migration_files_path = "",
+                                      const std::filesystem::path& schemas_path = "",
+                                      const std::filesystem::path& config_path = "", const bool init_db = false);
+
     ~DeviceModelStorageSqlite() = default;
 
     std::map<Component, std::map<Variable, VariableMetaData>> get_device_model() final;
@@ -38,7 +50,8 @@ public:
                                                            const std::optional<AttributeEnum>& attribute_enum) final;
 
     bool set_variable_attribute_value(const Component& component_id, const Variable& variable_id,
-                                      const AttributeEnum& attribute_enum, const std::string& value) final;
+                                      const AttributeEnum& attribute_enum, const std::string& value,
+                                      const std::string& source) final;
 
     std::optional<VariableMonitoringMeta> set_monitoring_data(const SetMonitoringData& data,
                                                               const VariableMonitorType type) final;
