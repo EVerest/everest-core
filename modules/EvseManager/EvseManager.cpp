@@ -899,10 +899,12 @@ void EvseManager::ready() {
         }
     });
 
-    // wait for first powermeter value
-    std::unique_lock<std::mutex> lk(powermeter_mutex);
-    this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
-                                 [this] { return initial_powermeter_value_received; });
+    {
+        // wait for first powermeter value
+        std::unique_lock<std::mutex> lk(powermeter_mutex);
+        this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
+                                     [this] { return initial_powermeter_value_received; });
+    }
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
