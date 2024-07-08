@@ -12,6 +12,18 @@ config:
     description: Path to the SQLite database for the device model
     type: string
     default: device_model_storage.db
+  DeviceModelDatabaseMigrationPath:
+    description: Path to the migration files for the device model
+    type: string
+    default: device_model_migrations
+  DeviceModelSchemaPath:
+    description: Path to the device model component schema directory
+    type: string
+    default: component_schemas
+  ConfigFilePath:
+    description: Path to the configuration file of libocpp
+    type: string
+    default: config.json
   EnableExternalWebsocketControl:
     description: If true websocket can be disconnected and connected externally
     type: boolean

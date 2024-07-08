@@ -513,6 +513,13 @@ void Charger::run_state_machine() {
                             internal_context.t_step_EF_return_pwm = ampere_to_duty_cycle(get_max_current_internal());
                             shared_context.current_state = EvseState::T_step_EF;
                         }
+
+                        // We are still here after the wakeup plus some extra delay, so probably the EV really does not
+                        // want to charge. Switch to ChargingPausedEV state.
+                        if (not shared_context.hlc_charging_active and shared_context.legacy_wakeup_done and
+                            time_in_current_state > PREPARING_TIMEOUT_PAUSED_BY_EV) {
+                            shared_context.current_state = EvseState::ChargingPausedEV;
+                        }
                     }
                 }
             }

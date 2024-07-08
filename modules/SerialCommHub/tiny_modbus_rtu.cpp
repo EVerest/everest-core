@@ -7,28 +7,60 @@
 // - implement GPIO to switch rx/tx
 
 #include "tiny_modbus_rtu.hpp"
-
+#include "crc16.hpp"
+#include <algorithm>
 #include <cstring>
 #include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fmt/core.h>
+#include <iomanip>
+#include <ios>
 #include <iostream>
+#include <iterator>
+#include <ostream>
+#include <sstream>
 #include <string>
-#include <type_traits>
-#include <unistd.h>
-
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/time.h>
-
-#include <algorithm>
-#include <fmt/core.h>
-#include <iterator>
-#include <ostream>
-
-#include "crc16.hpp"
+#include <system_error>
+#include <type_traits>
+#include <unistd.h>
 
 namespace tiny_modbus {
+
+std::string FunctionCode_to_string(FunctionCode fc) {
+    switch (fc) {
+    case FunctionCode::READ_COILS:
+        return "READ_COILS";
+    case FunctionCode::READ_DISCRETE_INPUTS:
+        return "READ_DISCRETE_INPUTS";
+    case FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS:
+        return "READ_MULTIPLE_HOLDING_REGISTERS";
+    case FunctionCode::READ_INPUT_REGISTERS:
+        return "READ_INPUT_REGISTERS";
+    case FunctionCode::WRITE_SINGLE_COIL:
+        return "WRITE_SINGLE_COIL";
+    case FunctionCode::WRITE_SINGLE_HOLDING_REGISTER:
+        return "WRITE_SINGLE_HOLDING_REGISTER";
+    case FunctionCode::WRITE_MULTIPLE_COILS:
+        return "WRITE_MULTIPLE_COILS";
+    case FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS:
+        return "WRITE_MULTIPLE_HOLDING_REGISTERS";
+    default:
+        return "unknown";
+    }
+}
+
+std::string FunctionCode_to_string_with_hex(FunctionCode fc) {
+    return fmt::format("{}({:#04x})", FunctionCode_to_string(fc), (unsigned int)fc);
+}
+
+std::ostream& operator<<(std::ostream& os, const FunctionCode& fc) {
+    os << FunctionCode_to_string_with_hex(fc);
+    return os;
+}
 
 // This is a replacement for system library tcdrain().
 // tcdrain() returns when all bytes are written to the UART, but it actually returns about 10msecs or more after the
@@ -53,7 +85,7 @@ static void clear_exception_bit(uint8_t& received_function_code) {
 static std::string hexdump(const uint8_t* msg, int msg_len) {
     std::stringstream ss;
     for (int i = 0; i < msg_len; i++) {
-        ss << std::hex << (int)msg[i] << " ";
+        ss << "<" << std::nouppercase << std::setfill('0') << std::setw(2) << std::hex << (int)msg[i] << ">";
     }
     return ss.str();
 }
@@ -79,18 +111,14 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
                                           FunctionCode function) {
     std::vector<uint16_t> result;
     if (len == 0) {
-        EVLOG_error << fmt::format("Packet receive timeout (device address {}).", expected_device_address);
-        return result;
+        throw TimeoutException("Packet receive timeout");
     } else if (len < MODBUS_MIN_REPLY_SIZE) {
-        EVLOG_error << fmt::format("Packet too small: {} bytes (device address {}).", len, expected_device_address);
-        return result;
+        throw ShortPacketException(fmt::format("Packet too small: only {} bytes", len));
     }
     if (expected_device_address != buf[DEVICE_ADDRESS_POS]) {
-        EVLOG_error << fmt::format("Device address mismatch: expected: {} received: {}", expected_device_address,
-                                   buf[DEVICE_ADDRESS_POS])
-                    << ": " << hexdump(buf, len);
-
-        return result;
+        throw AddressMismatchException(fmt::format("Device address mismatch: expected: {} received: {}",
+                                                   expected_device_address, buf[DEVICE_ADDRESS_POS]) +
+                                       ": " + hexdump(buf, len));
     }
 
     bool exception = false;
@@ -103,92 +131,113 @@ static std::vector<uint16_t> decode_reply(const uint8_t* buf, int len, uint8_t e
     }
 
     if (function != function_code_recvd) {
-        EVLOG_error << fmt::format("Function code mismatch: expected: {} received: {}",
-                                   static_cast<std::underlying_type_t<FunctionCode>>(function), function_code_recvd);
-        return result;
+        throw FunctionCodeMismatchException(fmt::format("Function code mismatch: expected: {} received: {}",
+                                                        static_cast<std::underlying_type_t<FunctionCode>>(function),
+                                                        function_code_recvd));
     }
 
     if (!validate_checksum(buf, len)) {
-        EVLOG_error << "Checksum error";
-        return result;
+        throw ChecksumErrorException("Retrieved Modbus checksum does not match calculated value.");
     }
 
-    if (!exception) {
-        // For a write reply we always get 4 bytes
-        uint8_t byte_cnt = 4;
-        int start_of_result = RES_TX_START_OF_PAYLOAD;
-
-        // Was it a read reply?
-        if (function == FunctionCode::READ_COILS || function == FunctionCode::READ_DISCRETE_INPUTS ||
-            function == FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS ||
-            function == FunctionCode::READ_INPUT_REGISTERS) {
-            // adapt byte count and starting pos
-            byte_cnt = buf[RES_RX_LEN_POS];
-            start_of_result = RES_RX_START_OF_PAYLOAD;
-        }
-
-        // check if result is completely in received data
-        if (start_of_result + byte_cnt > len) {
-            EVLOG_error << "Result data not completely in received message.";
-            return result;
-        }
-
-        // ready to copy actual result data to output
-        result.reserve(byte_cnt / 2);
-
-        for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
-            uint16_t t;
-            memcpy(&t, buf + i, 2);
-            t = be16toh(t);
-            result.push_back(t);
-        }
-        return result;
-    } else {
+    if (exception) {
         // handle exception message
         uint8_t err_code = buf[RES_EXCEPTION_CODE];
         switch (err_code) {
         case 0x01:
-            EVLOG_error << "Modbus exception: Illegal function";
+            throw ModbusException("Modbus exception: Illegal function");
             break;
         case 0x02:
-            EVLOG_error << "Modbus exception: Illegal data address";
+            throw ModbusException("Modbus exception: Illegal data address");
             break;
         case 0x03:
-            EVLOG_error << "Modbus exception: Illegal data value";
+            throw ModbusException("Modbus exception: Illegal data value");
             break;
         case 0x04:
-            EVLOG_error << "Modbus exception: Client device failure";
+            throw ModbusException("Modbus exception: Client device failure");
             break;
         case 0x05:
-            EVLOG_debug << "Modbus ACK";
+            throw ModbusException("Modbus ACK");
             break;
         case 0x06:
-            EVLOG_error << "Modbus exception: Client device busy";
+            throw ModbusException("Modbus exception: Client device busy");
             break;
         case 0x07:
-            EVLOG_error << "Modbus exception: NACK";
+            throw ModbusException("Modbus exception: NACK");
             break;
         case 0x08:
-            EVLOG_error << "Modbus exception: Memory parity error";
+            throw ModbusException("Modbus exception: Memory parity error");
             break;
         case 0x09:
-            EVLOG_error << "Modbus exception: Out of resources";
+            throw ModbusException("Modbus exception: Out of resources");
             break;
         case 0x0A:
-            EVLOG_error << "Modbus exception: Gateway path unavailable";
+            throw ModbusException("Modbus exception: Gateway path unavailable");
             break;
         case 0x0B:
-            EVLOG_error << "Modbus exception: Gateway target device failed to respond";
+            throw ModbusException("Modbus exception: Gateway target device failed to respond");
             break;
         default:
-            EVLOG_error << "Modbus exception: Unknown";
+            throw ModbusException("Modbus exception: Unknown");
         }
-        return result;
     }
+
+    // For a write reply we always get 4 bytes
+    uint8_t byte_cnt = 4;
+    int start_of_result = RES_TX_START_OF_PAYLOAD;
+    bool even_byte_cnt_expected = false;
+
+    // Was it a read reply?
+    switch (function) {
+    case FunctionCode::WRITE_SINGLE_COIL:
+    case FunctionCode::WRITE_SINGLE_HOLDING_REGISTER:
+    case FunctionCode::WRITE_MULTIPLE_COILS:
+    case FunctionCode::WRITE_MULTIPLE_HOLDING_REGISTERS:
+        // no - nothing to do
+        break;
+    case FunctionCode::READ_MULTIPLE_HOLDING_REGISTERS:
+    case FunctionCode::READ_INPUT_REGISTERS:
+        // yes - for 16-bit wide registers thus we can assume an even byte count
+        even_byte_cnt_expected = true;
+        [[fallthrough]];
+    case FunctionCode::READ_COILS:
+    case FunctionCode::READ_DISCRETE_INPUTS:
+        // yes
+        // adapt byte count and starting pos
+        byte_cnt = buf[RES_RX_LEN_POS];
+        start_of_result = RES_RX_START_OF_PAYLOAD;
+        break;
+    default:
+        throw std::logic_error("Missing implementation for function code " + FunctionCode_to_string_with_hex(function));
+    }
+
+    // check if result is completely in received data
+    if (start_of_result + byte_cnt > len) {
+        throw IncompletePacketException("Result data not completely in received message.");
+    }
+
+    // check even number of bytes
+    if (even_byte_cnt_expected && byte_cnt % 2 == 1) {
+        throw OddByteCountException("For " + FunctionCode_to_string_with_hex(function) +
+                                    " an even byte count is expected in the response.");
+    }
+
+    // ready to copy actual result data to output, so pre-allocate enough memory for the output
+    result.reserve((byte_cnt + 1) / 2);
+
+    for (int i = start_of_result; i < start_of_result + byte_cnt; i += 2) {
+        uint16_t t = 0;
+        const size_t num_bytes_to_copy = (i < len - 1) ? 2 : 1;
+        memcpy(&t, buf + i, num_bytes_to_copy);
+        t = be16toh(t);
+        result.push_back(t);
+    }
+
+    return result;
 }
 
 TinyModbusRTU::~TinyModbusRTU() {
-    if (fd)
+    if (fd != -1)
         close(fd);
 }
 
@@ -279,7 +328,7 @@ bool TinyModbusRTU::open_device(const std::string& device, int _baud, bool _igno
 }
 
 int TinyModbusRTU::read_reply(uint8_t* rxbuf, int rxbuf_len) {
-    if (fd <= 0) {
+    if (fd == -1) {
         return 0;
     }
 
@@ -425,7 +474,7 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
                                                uint16_t first_register_address, uint16_t register_quantity,
                                                bool wait_for_reply, std::vector<uint16_t> request) {
     {
-        if (fd <= 0) {
+        if (fd == -1) {
             return {};
         }
 
@@ -438,7 +487,17 @@ std::vector<uint16_t> TinyModbusRTU::txrx_impl(uint8_t device_address, FunctionC
 
         // write to serial port
         rxtx_gpio.set(false);
-        write(fd, req.data(), req.size());
+
+        uint8_t* buffer = req.data();
+        ssize_t written = 0;
+
+        while (written < req.size()) {
+            ssize_t c = write(fd, &buffer[written], req.size() - written);
+            if (c == -1)
+                throw std::system_error(errno, std::generic_category(), "Could not send Modbus request");
+            written += c;
+        }
+
         if (rxtx_gpio.is_ready()) {
             // if we are using GPIO to switch between RX/TX, use the fast version of tcdrain with exact timing
             fast_tcdrain(fd);

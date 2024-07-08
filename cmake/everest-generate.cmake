@@ -26,7 +26,7 @@ set_target_properties(generate_cpp_files
 #
 # out-of-tree interfaces/types/modules support
 #
-function(ev_add_project)
+function(_ev_add_project)
     # FIXME (aw): resort to proper argument handling!
     if (ARGC EQUAL 2)
         set (EVEREST_PROJECT_DIR ${ARGV0})
@@ -124,6 +124,29 @@ function(ev_add_project)
         DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
     )
 endfunction()
+
+macro(ev_add_project)
+    ev_setup_cmake_variables_python_wheel()
+    option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
+    set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
+
+    ev_setup_python_executable(
+        USE_PYTHON_VENV ${${PROJECT_NAME}_USE_PYTHON_VENV}
+        PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
+    )
+
+    setup_ev_cli()
+    if(NOT ${${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV})
+        require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
+    endif()
+
+    # FIXME (aw): resort to proper argument handling!
+    if (${ARGC} EQUAL 2)
+        _ev_add_project(${ARGV0} ${ARGV1})
+    else()
+        _ev_add_project()
+    endif ()
+endmacro()
 
 #
 # rust support

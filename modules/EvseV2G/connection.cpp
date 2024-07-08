@@ -103,6 +103,8 @@ static int connection_create_socket(struct sockaddr_in6* sockaddr) {
     if (bind(s, reinterpret_cast<struct sockaddr*>(sockaddr), addrlen) == -1) {
         if (!error_once) {
             dlog(DLOG_LEVEL_WARNING, "bind() failed: %s", strerror(errno));
+            dlog(DLOG_LEVEL_WARNING,
+                 "Verify that the configured interface has a valid IPv6 link local address configured.");
             error_once = true;
         }
         close(s);

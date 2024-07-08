@@ -8,6 +8,8 @@
 #define TINY_MODBUS_RTU
 
 #include <chrono>
+#include <ostream>
+#include <stdexcept>
 #include <stdint.h>
 #include <termios.h>
 
@@ -51,6 +53,38 @@ enum FunctionCode : uint8_t {
     WRITE_MULTIPLE_HOLDING_REGISTERS = 0x10,
 };
 
+std::string FunctionCode_to_string(FunctionCode fc);
+std::string FunctionCode_to_string_with_hex(FunctionCode fc);
+std::ostream& operator<<(std::ostream& os, const FunctionCode& fc);
+
+class TinyModbusException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+class TimeoutException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ShortPacketException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class AddressMismatchException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class FunctionCodeMismatchException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ChecksumErrorException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class IncompletePacketException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class OddByteCountException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+class ModbusException : public TinyModbusException {
+    using TinyModbusException::TinyModbusException;
+};
+
 class TinyModbusRTU {
 
 public:
@@ -66,7 +100,7 @@ public:
 
 private:
     // Serial interface
-    int fd{0};
+    int fd{-1};
     bool ignore_echo{false};
 
     std::vector<uint16_t> txrx_impl(uint8_t device_address, FunctionCode function, uint16_t first_register_address,

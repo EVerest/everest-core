@@ -16,6 +16,7 @@ target_compile_features(${MODULE_NAME} PUBLIC cxx_std_17)
 target_sources(${MODULE_NAME}
     PRIVATE
         "main/power_supply_DCImpl.cpp"
+        "powermeter/powermeterImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
