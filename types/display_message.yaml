@@ -82,6 +82,4 @@ types:
         type: object
         $ref: /ocpp#/Component
     required:
-      - id
-      - priority
       - message
