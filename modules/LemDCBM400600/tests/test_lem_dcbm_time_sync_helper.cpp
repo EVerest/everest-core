@@ -42,6 +42,10 @@ protected:
     const std::string expected_system_sync_request_regex{
         R"(\{"time":\{"utc":"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?Z"\}\})"};
 
+    const std::string expected_tz_sync_request_regex{R"(\{"time": \{"tz":""\}\})"};
+
+    const std::string expected_dst_sync_request_regex{R"(\{"time": \{"dst":\}\})"};
+
     const std::string expected_ntp_sync_request{
         R"({"ntp":{"servers":[{"ipAddress":"123.123.123.123","port":123},{"ipAddress":"213.213.213.213","port":213}],"syncPeriod":120,"ntpActivated":true}})"};
 
@@ -67,6 +71,12 @@ class LemDCBMTimeSyncHelperTestInvalidResponses
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_success_system_time) {
     std::string input_to_put;
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client,
                 put("/v1/settings", testing::ContainsRegex(this->expected_system_sync_request_regex)))
         .Times(1)
@@ -148,6 +158,12 @@ TEST_F(LemDCBMTimeSyncHelperTest, test_sync_exception_if_200_but_result_is_0_ntp
 /// \brief sync_if_deadline_expired() called twice will not send anything the second time if the first call succeeds
 TEST_F(LemDCBMTimeSyncHelperTest, test_sync_if_deadline_expired_twice_when_first_succeeds) {
     // Setup
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_dst_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
+    EXPECT_CALL(*this->http_client, put("/v1/settings", testing::ContainsRegex(this->expected_tz_sync_request_regex)))
+        .Times(1)
+        .WillOnce(testing::Return(HttpResponse{200, this->put_settings_response_success}));
     EXPECT_CALL(*this->http_client,
                 put("/v1/settings", testing::ContainsRegex(this->expected_system_sync_request_regex)))
         .Times(1)
