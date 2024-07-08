@@ -101,14 +101,14 @@ private:
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);
-    types::powermeter::Powermeter  convert_livemeasure_to_powermeter(const std::string& livemeasure);
+    types::powermeter::Powermeter convert_livemeasure_to_powermeter(const std::string& livemeasure);
     std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request);
     static std::pair<std::string, std::string> get_transaction_stop_time_bounds();
 
     template <typename Callable>
     static auto call_with_retry(Callable func, int number_of_retries, int retry_wait_in_milliseconds,
-                                bool retry_on_http_client_error = true, bool retry_on_dcbm_reponse_error = true)
-        -> decltype(func()) {
+                                bool retry_on_http_client_error = true,
+                                bool retry_on_dcbm_reponse_error = true) -> decltype(func()) {
         std::exception_ptr lastException = nullptr;
         for (int attempt = 0; attempt < 1 + number_of_retries; ++attempt) {
             try {
