@@ -176,17 +176,15 @@ types::powermeter::Powermeter LemDCBM400600Controller::get_powermeter() {
     if (response.status_code != 200) {
         throw UnexpectedDCBMResponseCode(endpoint, 200, response);
     }
-    types::powermeter::Powermeter value;
     try {
-        this->convert_livemeasure_to_powermeter(response.body, value);
-        return value;
+        return this->convert_livemeasure_to_powermeter(response.body);
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(endpoint, fmt::format("Json error '{}'", json_error.what()));
     }
 }
 
-void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& livemeasure,
-                                                                types::powermeter::Powermeter& powermeter) {
+types::powermeter::Powermeter LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& livemeasure) {
+    types::powermeter::Powermeter powermeter;
     json data = json::parse(livemeasure);
     powermeter.timestamp = data.at("timestamp");
     powermeter.meter_id.emplace(this->meter_id);
@@ -199,18 +197,9 @@ void LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::strin
     current.DC = data.at("current");
     powermeter.current_A.emplace(current);
     powermeter.power_W.emplace(types::units::Power{data.at("power")});
-    if (!powermeter.temperatures.has_value()) {
-        powermeter.temperatures.emplace({types::temperature::Temperature{data.at("temperatureH"), "temperatureH"},
-                                         types::temperature::Temperature{data.at("temperatureL"), "temperatureL"}});
-    } else {
-        for (auto& sensor : *powermeter.temperatures) {
-            if (sensor.identification == "temperatureL") {
-                sensor.temperature = data.at("temperatureL");
-            } else if (sensor.identification == "temperatureH") {
-                sensor.temperature = data.at("temperatureH");
-            }
-        }
-    }
+    powermeter.temperatures.emplace({types::temperature::Temperature{data.at("temperatureH"), "temperatureH"},
+                                     types::temperature::Temperature{data.at("temperatureL"), "temperatureL"}});
+    return powermeter;
 }
 
 std::string

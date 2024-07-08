@@ -101,7 +101,7 @@ private:
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);
-    void convert_livemeasure_to_powermeter(const std::string& livemeasure, types::powermeter::Powermeter& powermeter);
+    types::powermeter::Powermeter  convert_livemeasure_to_powermeter(const std::string& livemeasure);
     std::string transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request);
     static std::pair<std::string, std::string> get_transaction_stop_time_bounds();
 
