@@ -1,28 +1,6 @@
 description: >-
   Message to show on a display
 types:
-  MessageContent:
-    description: Contains message details
-    required:
-      - format
-      - content
-    type: object
-    properties:
-      format:
-        type: string
-        $ref: /display_message#/MessageFormat
-      language:
-        type: string
-      content:
-        type: string
-  MessageFormat:
-    description: Format of the message to be displayed
-    type: string
-    enum:
-      - ASCII
-      - HTML
-      - URI
-      - UTF8
   MessagePriorityEnum:
     description: Priority of the message
     type: string
@@ -89,20 +67,20 @@ types:
         type: string
         minLength: 0
         maxLength: 36
-      message:
-        $ref: /display_message#/MessageContent
+      message:  
         type: object
         description: The message to show
+        $ref: /ocpp#/MessageContent
       message_format:
         description: The format of the message
         type: string
-        $ref: /display_message#/MessageFormat
+        $ref: /ocpp#/MessageFormat
       display:
         description: >-
           When a Charging Station has multiple Displays, this field can be used to define to which Display this message
           belongs.
-        $ref: /ocpp#/Component
         type: object
+        $ref: /ocpp#/Component
     required:
       - id
       - priority
