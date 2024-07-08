@@ -1,0 +1,73 @@
+description: >-
+  This interface allows to add / remove / change messages that should be showed on the display.
+cmds:
+  set_display_message:
+    description: >-
+      Command to set or replace a display message.
+    arguments:
+      request:
+        description: >-
+          Request to set a display message
+        $ref: /display_message#/DisplayMessage
+      result:
+        description: >-
+          Response to the set display message request.
+        type: object
+        properties:
+          status:
+            description: Whether the charging station is able to display the message
+            $ref: /display_message#/DisplayMessageStatusEnum
+          status_info:
+            description: Detailed status information
+            $ref: /ocpp#/StatusInfoType
+        required:
+          - status
+  get_display_messages:
+    description: Command to get one or more display messages.
+    arguments:
+      request:
+        description: The request for display messages
+        type: object
+        properties:
+          id:
+            description: If provided the Charging Station shall return Display Messages of the given ids.
+            type: array
+            items:
+              type: integer
+          priority:
+            description: If provided the Charging Station shall return Display Messages with the given priority only.
+            $ref: /display_message#/MessagePriorityEnum
+          state:
+            description: If provided the Charging Station shall return Display Messages with the given state only.
+            $ref: /display_message#/MessageStateEnum
+      response:
+        description: The display messages or an empty array if there are none
+        type: object
+        properties:
+          status_info:
+            description: Detailed status information
+            $ref: /ocpp#/StatusInfoType
+          messages:
+            description: Requested messages, if any
+            type: array
+            items:
+              $ref: /display_message#/DisplayMessage
+  clear_display_message:
+    description: Command to remove a display message
+    request:
+      description: The request to clear a message
+      type: object
+      properties:
+        id:
+          description: Id of display message that should be removed from the charging station
+          type: integer
+    response:
+      description: Response on the clear message request
+      type: object
+      properties:
+        status:
+          $ref: /display_message#/ClearMessageResponseEnum
+        status_info:
+          $ref: /ocpp#/StatusInfoType
+      required:
+        - status
