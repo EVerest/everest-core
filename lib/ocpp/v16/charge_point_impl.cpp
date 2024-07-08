@@ -855,6 +855,7 @@ void ChargePointImpl::send_meter_value(int32_t connector, MeterValue meter_value
 }
 
 bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason) {
+    this->message_queue->start();
     this->bootreason = bootreason;
     this->init_state_machine(connector_status_map);
     this->init_websocket();
