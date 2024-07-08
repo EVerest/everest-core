@@ -10,7 +10,7 @@
 
 #include <memory>
 #include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/evse.hpp>
+#include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/transaction.hpp>
 
@@ -55,7 +55,7 @@ std::ostream& operator<<(std::ostream& os, const ProfileValidationResultEnum val
 /// to calculate the composite schedules
 class SmartChargingHandler {
 private:
-    std::map<int32_t, std::unique_ptr<EvseInterface>>& evses;
+    EvseManagerInterface& evse_manager;
     std::shared_ptr<DeviceModel>& device_model;
 
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
@@ -64,8 +64,7 @@ private:
     std::vector<ChargingProfile> station_wide_charging_profiles;
 
 public:
-    explicit SmartChargingHandler(std::map<int32_t, std::unique_ptr<EvseInterface>>& evses,
-                                  std::shared_ptr<DeviceModel>& device_model);
+    SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model);
 
     ///
     /// \brief validates the given \p profile according to the specification.

@@ -28,13 +28,13 @@ class EvseInterface {
 public:
     virtual ~EvseInterface();
 
-    /// \brief Returns an OCPP2.0.1 EVSE type
+    /// \brief Return the evse_id of this EVSE
     /// \return
-    virtual EVSE get_evse_info() = 0;
+    virtual int32_t get_id() const = 0;
 
     /// \brief Returns the number of connectors of this EVSE
     /// \return
-    virtual uint32_t get_number_of_connectors() = 0;
+    virtual uint32_t get_number_of_connectors() const = 0;
 
     /// \brief Opens a new transaction
     /// \param transaction_id id of the transaction
@@ -68,12 +68,12 @@ public:
 
     /// \brief Indicates if a transaction is active at this evse
     /// \return
-    virtual bool has_active_transaction() = 0;
+    virtual bool has_active_transaction() const = 0;
 
     /// \brief Indicates if a transaction is active at this evse at the given \p connector_id
     /// \param connector_id id of the connector of the evse
     /// \return
-    virtual bool has_active_transaction(const int32_t connector_id) = 0;
+    virtual bool has_active_transaction(const int32_t connector_id) const = 0;
 
     /// \brief Releases the reference of the transaction on this evse
     virtual void release_transaction() = 0;
@@ -137,10 +137,8 @@ private:
     int32_t evse_id;
     DeviceModel& device_model;
     std::map<int32_t, std::unique_ptr<Connector>> id_connector_map;
-    std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                       const std::optional<int32_t> reservation_id)>
-        transaction_meter_value_req;
-    std::function<void()> pause_charging_callback;
+    std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)> transaction_meter_value_req;
+    std::function<void(int32_t evse_id)> pause_charging_callback;
     std::unique_ptr<EnhancedTransaction> transaction; // pointer to active transaction (can be nullptr)
     MeterValue meter_value;                           // represents current meter value
     std::recursive_mutex meter_value_mutex;
@@ -164,19 +162,21 @@ public:
     /// \param evse_id id of the evse
     /// \param number_of_connectors of the evse
     /// \param device_model reference to the device model
-    /// \param status_notification_callback that is called when the status of a connector changes
+    /// \param database_handler shared_ptr to the database handler
+    /// \param component_state_manager shared_ptr to the component state manager
+    /// \param transaction_meter_value_req that is called to transmit a meter value request related to a transaction
     /// \param pause_charging_callback that is called when the charging should be paused due to max energy on
     /// invalid id being exceeded
     Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
          std::shared_ptr<DatabaseHandler> database_handler,
          std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
-         const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                                  const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
-         const std::function<void()> pause_charging_callback);
+         const std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)>&
+             transaction_meter_value_req,
+         const std::function<void(int32_t evse_id)>& pause_charging_callback);
 
-    EVSE get_evse_info();
+    int32_t get_id() const;
 
-    uint32_t get_number_of_connectors();
+    uint32_t get_number_of_connectors() const;
 
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const std::optional<IdToken>& id_token,
@@ -189,8 +189,8 @@ public:
 
     void start_checking_max_energy_on_invalid_id();
 
-    bool has_active_transaction();
-    bool has_active_transaction(const int32_t connector_id);
+    bool has_active_transaction() const;
+    bool has_active_transaction(const int32_t connector_id) const;
     void release_transaction();
     std::unique_ptr<EnhancedTransaction>& get_transaction();
 

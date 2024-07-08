@@ -46,9 +46,9 @@ EvseInterface::~EvseInterface() {
 Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceModel& device_model,
            std::shared_ptr<DatabaseHandler> database_handler,
            std::shared_ptr<ComponentStateManagerInterface> component_state_manager,
-           const std::function<void(const MeterValue& meter_value, const Transaction& transaction, const int32_t seq_no,
-                                    const std::optional<int32_t> reservation_id)>& transaction_meter_value_req,
-           const std::function<void()> pause_charging_callback) :
+           const std::function<void(const MeterValue& meter_value, EnhancedTransaction& transaction)>&
+               transaction_meter_value_req,
+           const std::function<void(int32_t evse_id)>& pause_charging_callback) :
     evse_id(evse_id),
     device_model(device_model),
     transaction_meter_value_req(transaction_meter_value_req),
@@ -62,12 +62,11 @@ Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceMode
     }
 }
 
-EVSE Evse::get_evse_info() {
-    EVSE evse{evse_id};
-    return evse;
+int32_t Evse::get_id() const {
+    return this->evse_id;
 }
 
-uint32_t Evse::get_number_of_connectors() {
+uint32_t Evse::get_number_of_connectors() const {
     return static_cast<uint32_t>(this->id_connector_map.size());
 }
 
@@ -104,10 +103,7 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
 
     if (sampled_data_tx_updated_interval > 0s) {
         transaction->sampled_tx_updated_meter_values_timer.interval_starting_from(
-            [this] {
-                this->transaction_meter_value_req(this->get_meter_value(), this->transaction->get_transaction(),
-                                                  transaction->get_seq_no(), this->transaction->reservation_id);
-            },
+            [this] { this->transaction_meter_value_req(this->get_meter_value(), *this->transaction); },
             sampled_data_tx_updated_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
     }
 
@@ -150,8 +146,7 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
                         .value_or(false)) {
                     meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_updated_interval);
                 }
-                this->transaction_meter_value_req(meter_value, this->transaction->get_transaction(),
-                                                  transaction->get_seq_no(), this->transaction->reservation_id);
+                this->transaction_meter_value_req(meter_value, *this->transaction);
                 this->aligned_data_updated.clear_values();
             },
             aligned_data_tx_updated_interval,
@@ -237,11 +232,11 @@ void Evse::start_checking_max_energy_on_invalid_id() {
     }
 }
 
-bool Evse::has_active_transaction() {
+bool Evse::has_active_transaction() const {
     return this->transaction != nullptr;
 }
 
-bool Evse::has_active_transaction(int32_t connector_id) {
+bool Evse::has_active_transaction(int32_t connector_id) const {
     if (!this->id_connector_map.count(connector_id)) {
         EVLOG_warning << "has_active_transaction called for invalid connector_id";
         return false;
@@ -312,7 +307,7 @@ void Evse::check_max_energy_on_invalid_id() {
             auto charged_energy = opt_energy_value.value() - active_energy_import_start_value.value();
 
             if (charged_energy > static_cast<float>(max_energy_on_invalid_id.value())) {
-                this->pause_charging_callback();
+                this->pause_charging_callback(this->evse_id);
                 transaction->check_max_active_import_energy = false; // No need to check anymore
             }
         }

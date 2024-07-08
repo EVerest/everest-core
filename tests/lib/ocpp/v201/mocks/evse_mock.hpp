@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+
+#pragma once
 
 #include "gmock/gmock.h"
 
@@ -8,8 +10,8 @@
 namespace ocpp::v201 {
 class EvseMock : public EvseInterface {
 public:
-    MOCK_METHOD(EVSE, get_evse_info, ());
-    MOCK_METHOD(uint32_t, get_number_of_connectors, ());
+    MOCK_METHOD(int32_t, get_id, (), (const));
+    MOCK_METHOD(uint32_t, get_number_of_connectors, (), (const));
     MOCK_METHOD(void, open_transaction,
                 (const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                  const MeterValue& meter_start, const std::optional<IdToken>& id_token,
@@ -21,8 +23,8 @@ public:
     MOCK_METHOD(void, close_transaction,
                 (const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason));
     MOCK_METHOD(void, start_checking_max_energy_on_invalid_id, ());
-    MOCK_METHOD(bool, has_active_transaction, ());
-    MOCK_METHOD(bool, has_active_transaction, (int32_t connector_id));
+    MOCK_METHOD(bool, has_active_transaction, (), (const));
+    MOCK_METHOD(bool, has_active_transaction, (int32_t connector_id), (const));
     MOCK_METHOD(void, release_transaction, ());
     MOCK_METHOD(std::unique_ptr<EnhancedTransaction>&, get_transaction, ());
     MOCK_METHOD(void, submit_event, (const int32_t connector_id, ConnectorEvent event));

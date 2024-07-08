@@ -127,53 +127,37 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     this->component_state_manager->set_connector_effective_availability_changed_callback(
         this->callbacks.connector_effective_operative_status_changed_callback);
 
-    // intantiate and initialize evses
-    for (auto const& [evse_id, number_of_connectors] : evse_connector_structure) {
-        auto evse_id_ = evse_id;
-        // used by evse to trigger StatusNotification.req
-        auto status_notification_callback = [this, evse_id_](const int32_t connector_id,
-                                                             const ConnectorStatusEnum& status) {
-            this->status_notification_req(evse_id_, connector_id, status);
-        };
-        // used by evse when TransactionEvent.req to transmit meter values
-        auto transaction_meter_value_callback = [this, evse_id_](const MeterValue& _meter_value,
-                                                                 const Transaction& transaction, const int32_t seq_no,
-                                                                 const std::optional<int32_t> reservation_id) {
-            if (_meter_value.sampledValue.empty() or !_meter_value.sampledValue.at(0).context.has_value()) {
-                EVLOG_info << "Not sending MeterValue due to no values";
-                return;
-            }
+    auto transaction_meter_value_callback = [this](const MeterValue& _meter_value, EnhancedTransaction& transaction) {
+        if (_meter_value.sampledValue.empty() or !_meter_value.sampledValue.at(0).context.has_value()) {
+            EVLOG_info << "Not sending MeterValue due to no values";
+            return;
+        }
 
-            auto type = _meter_value.sampledValue.at(0).context.value();
-            if (type != ReadingContextEnum::Sample_Clock and type != ReadingContextEnum::Sample_Periodic) {
-                EVLOG_info << "Not sending MeterValue due to wrong context";
-                return;
-            }
+        auto type = _meter_value.sampledValue.at(0).context.value();
+        if (type != ReadingContextEnum::Sample_Clock and type != ReadingContextEnum::Sample_Periodic) {
+            EVLOG_info << "Not sending MeterValue due to wrong context";
+            return;
+        }
 
-            const auto filter_vec = utils::get_measurands_vec(this->device_model->get_value<std::string>(
-                type == ReadingContextEnum::Sample_Clock
-                    ? ControllerComponentVariables::AlignedDataMeasurands
-                    : ControllerComponentVariables::SampledDataTxUpdatedMeasurands));
+        const auto filter_vec = utils::get_measurands_vec(this->device_model->get_value<std::string>(
+            type == ReadingContextEnum::Sample_Clock ? ControllerComponentVariables::AlignedDataMeasurands
+                                                     : ControllerComponentVariables::SampledDataTxUpdatedMeasurands));
 
-            const auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(_meter_value, filter_vec);
+        const auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(_meter_value, filter_vec);
 
-            if (!filtered_meter_value.sampledValue.empty()) {
-                const auto trigger = type == ReadingContextEnum::Sample_Clock ? TriggerReasonEnum::MeterValueClock
-                                                                              : TriggerReasonEnum::MeterValuePeriodic;
-                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction, trigger, seq_no,
-                                            std::nullopt, std::nullopt, std::nullopt,
-                                            std::vector<MeterValue>(1, filtered_meter_value), std::nullopt,
-                                            this->is_offline(), reservation_id);
-            }
-        };
+        if (!filtered_meter_value.sampledValue.empty()) {
+            const auto trigger = type == ReadingContextEnum::Sample_Clock ? TriggerReasonEnum::MeterValueClock
+                                                                          : TriggerReasonEnum::MeterValuePeriodic;
+            this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction, trigger,
+                                        transaction.get_seq_no(), std::nullopt, std::nullopt, std::nullopt,
+                                        std::vector<MeterValue>(1, filtered_meter_value), std::nullopt,
+                                        this->is_offline(), transaction.reservation_id);
+        }
+    };
 
-        auto pause_charging_callback = [this, evse_id_]() { this->callbacks.pause_charging_callback(evse_id_); };
-
-        this->evses.insert(
-            std::make_pair(evse_id, std::make_unique<Evse>(evse_id, number_of_connectors, *this->device_model,
-                                                           this->database_handler, component_state_manager,
-                                                           transaction_meter_value_callback, pause_charging_callback)));
-    }
+    this->evse_manager = std::make_unique<EvseManager>(
+        evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
+        transaction_meter_value_callback, this->callbacks.pause_charging_callback);
 
     // configure logging
     this->configure_message_logging_format(message_log_path);
@@ -316,7 +300,7 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
 }
 
 void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::PlugIn);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::PlugIn);
 }
 
 Get15118EVCertificateResponse
@@ -356,7 +340,8 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
                                          const std::optional<int32_t>& remote_start_id,
                                          const ChargingStateEnum charging_state) {
 
-    this->evses.at(evse_id)->open_transaction(
+    auto& evse_handle = this->evse_manager->get_evse(evse_id);
+    evse_handle.open_transaction(
         session_id, connector_id, timestamp, meter_start, id_token, group_id_token, reservation_id,
         std::chrono::seconds(
             this->device_model->get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval)),
@@ -365,7 +350,7 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
         std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval)),
         std::chrono::seconds(
             this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataTxEndedInterval)));
-    const auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
+    const auto& enhanced_transaction = evse_handle.get_transaction();
     enhanced_transaction->chargingState = charging_state;
     const auto meter_value = utils::get_meter_value_with_measurands_applied(
         meter_start, utils::get_measurands_vec(this->device_model->get_value<std::string>(
@@ -378,7 +363,7 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
         enhanced_transaction->remoteStartId = remote_start_id.value();
     }
 
-    auto evse = this->evses.at(evse_id)->get_evse_info();
+    EVSE evse{evse_id};
     evse.connectorId.emplace(connector_id);
 
     std::optional<std::vector<MeterValue>> opt_meter_value;
@@ -396,14 +381,15 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
                                           const std::optional<IdToken>& id_token,
                                           const std::optional<std::string>& signed_meter_value,
                                           const ChargingStateEnum charging_state) {
-    auto& enhanced_transaction = this->evses.at(evse_id)->get_transaction();
+    auto& evse_handle = this->evse_manager->get_evse(evse_id);
+    auto& enhanced_transaction = evse_handle.get_transaction();
     enhanced_transaction->chargingState = charging_state;
     if (enhanced_transaction == nullptr) {
         EVLOG_warning << "Received notification of finished transaction while no transaction was active";
         return;
     }
 
-    this->evses.at(evse_id)->close_transaction(timestamp, meter_stop, reason);
+    evse_handle.close_transaction(timestamp, meter_stop, reason);
     const auto transaction = enhanced_transaction->get_transaction();
     const auto transaction_id = enhanced_transaction->transactionId.get();
 
@@ -429,7 +415,7 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
     }
 
     const auto seq_no = enhanced_transaction->get_seq_no();
-    this->evses.at(evse_id)->release_transaction();
+    evse_handle.release_transaction();
 
     const auto trigger_reason = utils::stop_reason_to_trigger_reason_enum(reason);
 
@@ -460,15 +446,15 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
             // No evse id is given, whole charging station needs a reset. Wait
             // for last evse id to stop charging.
             bool is_charging = false;
-            for (auto const& [evse_id, evse] : this->evses) {
-                if (evse->has_active_transaction()) {
+            for (auto const& evse : *this->evse_manager) {
+                if (evse.has_active_transaction()) {
                     is_charging = true;
                     break;
                 }
             }
 
             if (is_charging) {
-                this->set_evse_connectors_unavailable(this->evses.at(evse_id), false);
+                this->set_evse_connectors_unavailable(evse_handle, false);
             } else {
                 send_reset = true;
             }
@@ -503,18 +489,17 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
 }
 
 void ChargePoint::on_session_finished(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::PlugOut);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::PlugOut);
 }
 
 void ChargePoint::on_authorized(const int32_t evse_id, const int32_t connector_id, const IdToken& id_token) {
-    if (this->evses.at(evse_id)->get_transaction() == nullptr) {
+    auto& evse = this->evse_manager->get_evse(evse_id);
+    if (!evse.has_active_transaction()) {
         // nothing to report in case transaction is not yet open
         return;
     }
 
-    std::unique_ptr<EnhancedTransaction>& transaction =
-        this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
-
+    std::unique_ptr<EnhancedTransaction>& transaction = evse.get_transaction();
     if (transaction->id_token.has_value()) {
         // if transactions id_token is already set, it is assumed it has already been reported
         return;
@@ -532,7 +517,7 @@ void ChargePoint::on_meter_value(const int32_t evse_id, const MeterValue& meter_
         // if evseId = 0 then store in the chargepoint metervalues
         this->aligned_data_evse0.set_values(meter_value);
     } else {
-        this->evses.at(evse_id)->on_meter_value(meter_value);
+        this->evse_manager->get_evse(evse_id).on_meter_value(meter_value);
         this->update_dm_evse_power(evse_id, meter_value);
     }
 }
@@ -609,45 +594,42 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
         !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
         log_to_file, log_to_html, log_security, session_logging, logging_callback);
 }
+
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Unavailable);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Unavailable);
 }
 
 void ChargePoint::on_enabled(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::UnavailableCleared);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::UnavailableCleared);
 }
 
 void ChargePoint::on_faulted(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Error);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Error);
 }
 
 void ChargePoint::on_reserved(const int32_t evse_id, const int32_t connector_id) {
-    this->evses.at(evse_id)->submit_event(connector_id, ConnectorEvent::Reserve);
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Reserve);
 }
 
 bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, const ChargingStateEnum charging_state,
                                             const TriggerReasonEnum trigger_reason) {
-    if (this->evses.find(static_cast<int32_t>(evse_id)) != this->evses.end()) {
-        std::unique_ptr<EnhancedTransaction>& transaction =
-            this->evses.at(static_cast<int32_t>(evse_id))->get_transaction();
-        if (transaction != nullptr) {
-            if (transaction->chargingState == charging_state) {
-                EVLOG_debug << "Trying to send charging state changed without actual change, dropping message";
-            } else {
-                transaction->chargingState = charging_state;
-                this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
-                                            trigger_reason, transaction->get_seq_no(), std::nullopt, std::nullopt,
-                                            std::nullopt, std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
-            }
-            return true;
-        } else {
-            EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
-        }
-    } else {
-        EVLOG_warning << "Can not change charging state: evse id invalid: " << evse_id;
+    auto& evse = this->evse_manager->get_evse(evse_id);
+
+    std::unique_ptr<EnhancedTransaction>& transaction = evse.get_transaction();
+    if (transaction == nullptr) {
+        EVLOG_warning << "Can not change charging state: no transaction for evse id " << evse_id;
+        return false;
     }
 
-    return false;
+    if (transaction->chargingState == charging_state) {
+        EVLOG_debug << "Trying to send charging state changed without actual change, dropping message";
+    } else {
+        transaction->chargingState = charging_state;
+        this->transaction_event_req(TransactionEventEnum::Updated, DateTime(), transaction->get_transaction(),
+                                    trigger_reason, transaction->get_seq_no(), std::nullopt, std::nullopt, std::nullopt,
+                                    std::nullopt, std::nullopt, this->is_offline(), std::nullopt);
+    }
+    return true;
 }
 
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
@@ -1362,6 +1344,11 @@ void ChargePoint::message_callback(const std::string& message) {
                 this->send(call_error);
             }
         }
+    } catch (const EvseOutOfRangeException& e) {
+        EVLOG_error << "Exception during handling of message: " << e.what();
+        auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()),
+                                    "OccurrenceConstraintViolation", e.what(), json({}));
+        this->send(call_error);
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
         if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
@@ -1393,8 +1380,8 @@ void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
 
     if (!transaction_active) {
         // execute change availability if possible
-        for (auto const& [evse_id, evse] : this->evses) {
-            if (!evse->has_active_transaction()) {
+        for (auto& evse : *this->evse_manager) {
+            if (!evse.has_active_transaction()) {
                 this->set_evse_connectors_unavailable(evse, false);
             }
         }
@@ -1405,25 +1392,25 @@ void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
         }
     } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
         // put all EVSEs to unavailable that do not have active transaction
-        for (auto const& [evse_id, evse] : this->evses) {
-            if (!evse->has_active_transaction()) {
+        for (auto& evse : *this->evse_manager) {
+            if (!evse.has_active_transaction()) {
                 this->set_evse_connectors_unavailable(evse, false);
             } else {
                 EVSE e;
-                e.id = evse_id;
+                e.id = evse.get_id();
                 msg.evse = e;
-                this->scheduled_change_availability_requests[evse_id] = {msg, false};
+                this->scheduled_change_availability_requests[evse.get_id()] = {msg, false};
             }
         }
     }
 }
 
 void ChargePoint::restore_all_connector_states() {
-    for (auto const& [evse_id, evse] : this->evses) {
-        uint32_t number_of_connectors = evse->get_number_of_connectors();
+    for (auto& evse : *this->evse_manager) {
+        uint32_t number_of_connectors = evse.get_number_of_connectors();
 
         for (uint32_t i = 1; i <= number_of_connectors; ++i) {
-            evse->restore_connector_operative_status(static_cast<int32_t>(i));
+            evse.restore_connector_operative_status(static_cast<int32_t>(i));
         }
     }
 }
@@ -1524,8 +1511,8 @@ void ChargePoint::update_aligned_data_interval() {
             // meter values
             if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
                     .value_or(false)) {
-                for (auto const& [evse_id, evse] : this->evses) {
-                    if (evse->has_active_transaction()) {
+                for (auto const& evse : *this->evse_manager) {
+                    if (evse.has_active_transaction()) {
                         return;
                     }
                 }
@@ -1548,15 +1535,15 @@ void ChargePoint::update_aligned_data_interval() {
             }
             this->aligned_data_evse0.clear_values();
 
-            for (auto const& [evse_id, evse] : this->evses) {
-                if (evse->has_active_transaction()) {
+            for (auto& evse : *this->evse_manager) {
+                if (evse.has_active_transaction()) {
                     continue;
                 }
 
                 // this will apply configured measurands and possibly reduce the entries of sampledValue
                 // according to the configuration
                 auto meter_value =
-                    get_latest_meter_value_filtered(evse->get_idle_meter_value(), ReadingContextEnum::Sample_Clock,
+                    get_latest_meter_value_filtered(evse.get_idle_meter_value(), ReadingContextEnum::Sample_Clock,
                                                     ControllerComponentVariables::AlignedDataMeasurands);
 
                 if (align_timestamps) {
@@ -1565,10 +1552,10 @@ void ChargePoint::update_aligned_data_interval() {
 
                 if (!meter_value.sampledValue.empty()) {
                     // J01.FR.14 this is the only case where we send a MeterValue.req
-                    this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value));
+                    this->meter_values_req(evse.get_id(), std::vector<ocpp::v201::MeterValue>(1, meter_value));
                     // clear the values
                 }
-                evse->clear_idle_meter_values();
+                evse.clear_idle_meter_values();
             }
         },
         interval, std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
@@ -1576,14 +1563,14 @@ void ChargePoint::update_aligned_data_interval() {
 
 bool ChargePoint::any_transaction_active(const std::optional<EVSE>& evse) {
     if (!evse.has_value()) {
-        for (auto const& [evse_id, evse] : this->evses) {
-            if (evse->has_active_transaction()) {
+        for (auto const& evse : *this->evse_manager) {
+            if (evse.has_active_transaction()) {
                 return true;
             }
         }
         return false;
     }
-    return this->evses.at(evse.value().id)->has_active_transaction();
+    return this->evse_manager->get_evse(evse.value().id).has_active_transaction();
 }
 
 bool ChargePoint::is_already_in_state(const ChangeAvailabilityRequest& request) {
@@ -1603,9 +1590,9 @@ bool ChargePoint::is_already_in_state(const ChangeAvailabilityRequest& request) 
 }
 
 bool ChargePoint::is_valid_evse(const EVSE& evse) {
-    return this->evses.count(evse.id) and
+    return this->evse_manager->does_evse_exist(evse.id) and
            (!evse.connectorId.has_value() or
-            this->evses.at(evse.id)->get_number_of_connectors() >= evse.connectorId.value());
+            this->evse_manager->get_evse(evse.id).get_number_of_connectors() >= evse.connectorId.value());
 }
 
 void ChargePoint::handle_scheduled_change_availability_requests(const int32_t evse_id) {
@@ -1799,10 +1786,10 @@ ChargePoint::set_variables_internal(const std::vector<SetVariableData>& set_vari
 }
 
 std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& transaction_id) {
-    for (auto const& [evse_id, evse] : evses) {
-        if (evse->has_active_transaction()) {
-            if (transaction_id == evse->get_transaction()->get_transaction().transactionId) {
-                return evse_id;
+    for (auto& evse : *this->evse_manager) {
+        if (evse.has_active_transaction()) {
+            if (transaction_id == evse.get_transaction()->get_transaction().transactionId) {
+                return evse.get_id();
             }
         }
     }
@@ -1810,18 +1797,17 @@ std::optional<int32_t> ChargePoint::get_transaction_evseid(const CiString<36>& t
     return std::nullopt;
 }
 
-bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<EvseInterface>& evse, const IdToken& id_token,
+bool ChargePoint::is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
                                              const std::optional<IdToken>& group_id_token) const {
-    const uint32_t connectors = evse->get_number_of_connectors();
+    const uint32_t connectors = evse.get_number_of_connectors();
     for (uint32_t i = 1; i <= connectors; ++i) {
         const ConnectorStatusEnum status =
-            evse->get_connector(static_cast<int32_t>(i))->get_effective_connector_status();
+            evse.get_connector(static_cast<int32_t>(i))->get_effective_connector_status();
         if (status == ConnectorStatusEnum::Reserved) {
             const std::optional<CiString<36>> groupIdToken =
                 group_id_token.has_value() ? group_id_token.value().idToken : std::optional<CiString<36>>{};
 
-            if (!callbacks.is_reservation_for_token_callback(evse->get_evse_info().id, id_token.idToken,
-                                                             groupIdToken)) {
+            if (!callbacks.is_reservation_for_token_callback(evse.get_id(), id_token.idToken, groupIdToken)) {
                 return true;
             }
         }
@@ -1829,17 +1815,17 @@ bool ChargePoint::is_evse_reserved_for_other(const std::unique_ptr<EvseInterface
     return false;
 }
 
-bool ChargePoint::is_evse_connector_available(const std::unique_ptr<EvseInterface>& evse) const {
-    if (evse->has_active_transaction()) {
+bool ChargePoint::is_evse_connector_available(EvseInterface& evse) const {
+    if (evse.has_active_transaction()) {
         // If an EV is connected and has no authorization yet then the status is 'Occupied' and the
         // RemoteStartRequest should still be accepted. So this is the 'occupied' check instead.
         return false;
     }
 
-    const uint32_t connectors = evse->get_number_of_connectors();
+    const uint32_t connectors = evse.get_number_of_connectors();
     for (uint32_t i = 1; i <= connectors; ++i) {
         const ConnectorStatusEnum status =
-            evse->get_connector(static_cast<int32_t>(i))->get_effective_connector_status();
+            evse.get_connector(static_cast<int32_t>(i))->get_effective_connector_status();
 
         // At least one of the connectors is available / not faulted.
         if (status != ConnectorStatusEnum::Faulted && status != ConnectorStatusEnum::Unavailable) {
@@ -1851,11 +1837,11 @@ bool ChargePoint::is_evse_connector_available(const std::unique_ptr<EvseInterfac
     return false;
 }
 
-void ChargePoint::set_evse_connectors_unavailable(const std::unique_ptr<EvseInterface>& evse, bool persist) {
-    uint32_t number_of_connectors = evse->get_number_of_connectors();
+void ChargePoint::set_evse_connectors_unavailable(EvseInterface& evse, bool persist) {
+    uint32_t number_of_connectors = evse.get_number_of_connectors();
 
     for (uint32_t i = 1; i <= number_of_connectors; ++i) {
-        evse->set_connector_operative_status(static_cast<int32_t>(i), OperationalStatusEnum::Inoperative, persist);
+        evse.set_connector_operative_status(static_cast<int32_t>(i), OperationalStatusEnum::Inoperative, persist);
     }
 }
 
@@ -2508,16 +2494,16 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
     bool transaction_active = false;
     std::set<int32_t> evse_active_transactions;
     std::set<int32_t> evse_no_transactions;
-    if (msg.evseId.has_value() && this->evses.at(msg.evseId.value())->has_active_transaction()) {
+    if (msg.evseId.has_value() && this->evse_manager->get_evse(msg.evseId.value()).has_active_transaction()) {
         transaction_active = true;
         evse_active_transactions.emplace(msg.evseId.value());
     } else {
-        for (const auto& [evse_id, evse] : this->evses) {
-            if (evse->has_active_transaction()) {
+        for (const auto& evse : *this->evse_manager) {
+            if (evse.has_active_transaction()) {
                 transaction_active = true;
-                evse_active_transactions.emplace(evse_id);
+                evse_active_transactions.emplace(evse.get_id());
             } else {
-                evse_no_transactions.emplace(evse_id);
+                evse_no_transactions.emplace(evse.get_id());
             }
         }
     }
@@ -2554,12 +2540,8 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
             }
         } else if (msg.type == ResetEnum::OnIdle && !evse_no_transactions.empty()) {
             for (const int32_t evse_id : evse_no_transactions) {
-                std::unique_ptr<EvseInterface>& evse = this->evses.at(evse_id);
-                if (evse) {
-                    this->set_evse_connectors_unavailable(evse, false);
-                } else {
-                    EVLOG_error << "No evse found with evse id " << evse_id;
-                }
+                auto& evse = this->evse_manager->get_evse(evse_id);
+                this->set_evse_connectors_unavailable(evse, false);
             }
         }
     }
@@ -2644,11 +2626,11 @@ void ChargePoint::handle_transaction_event_response(const EnhancedMessage<v201::
         evse_ids.push_back(original_msg.evse.value().id);
     } else {
         // add every evse_id with active transaction and given token
-        for (const auto& [evse_id, evse] : this->evses) {
-            const auto& transaction = evse->get_transaction();
+        for (auto& evse : *this->evse_manager) {
+            const auto& transaction = evse.get_transaction();
             if (transaction != nullptr and transaction->id_token.has_value()) {
                 if (transaction->id_token.value().idToken.get() == id_token.idToken.get()) {
-                    evse_ids.push_back(evse_id);
+                    evse_ids.push_back(evse.get_id());
                 }
             }
         }
@@ -2663,7 +2645,7 @@ void ChargePoint::handle_transaction_event_response(const EnhancedMessage<v201::
                     .has_value()) {
                 // Energy delivery to the EV SHALL be allowed until the amount of energy specified in
                 // MaxEnergyOnInvalidId has been reached.
-                this->evses.at(evse_id)->start_checking_max_energy_on_invalid_id();
+                this->evse_manager->get_evse(evse_id).start_checking_max_energy_on_invalid_id();
             } else {
                 this->callbacks.pause_charging_callback(evse_id);
             }
@@ -2710,9 +2692,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     if (msg.evse.has_value()) {
         int32_t evse_id = msg.evse.value().id;
-        if (this->evses.find(evse_id) != this->evses.end()) {
-            evse_ptr = this->evses.at(evse_id).get();
-        }
+        evse_ptr = &this->evse_manager->get_evse(evse_id);
     }
 
     // F06.FR.04: First send the TriggerMessageResponse before sending the requested message
@@ -2742,8 +2722,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         } else {
             const auto measurands = utils::get_measurands_vec(
                 this->device_model->get_value<std::string>(ControllerComponentVariables::AlignedDataMeasurands));
-            for (auto const& [evse_id, evse] : this->evses) {
-                if (utils::meter_value_has_any_measurand(evse->get_meter_value(), measurands)) {
+            for (auto& evse : *this->evse_manager) {
+                if (utils::meter_value_has_any_measurand(evse.get_meter_value(), measurands)) {
                     response.status = TriggerMessageStatusEnum::Accepted;
                     break;
                 }
@@ -2757,8 +2737,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
-            for (auto const& [evse_id, evse] : this->evses) {
-                if (evse->has_active_transaction()) {
+            for (auto const& evse : *this->evse_manager) {
+                if (evse.has_active_transaction()) {
                     response.status = TriggerMessageStatusEnum::Accepted;
                     break;
                 }
@@ -2812,8 +2792,8 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
         if (evse_ptr != nullptr) {
             send(msg.evse.value().id, *evse_ptr);
         } else {
-            for (auto const& [evse_id, evse] : this->evses) {
-                send(evse_id, *evse);
+            for (auto& evse : *this->evse_manager) {
+                send(evse.get_id(), evse);
             }
         }
     };
@@ -2926,39 +2906,33 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
     // Check if evse id is given.
     if (msg.evseId.has_value()) {
         const int32_t evse_id = msg.evseId.value();
-        const auto it_evse{this->evses.find(evse_id)};
+        auto& evse = this->evse_manager->get_evse(evse_id);
 
-        if (it_evse != this->evses.cend()) {
-            const auto& evse{it_evse->second};
-            // TODO F01.FR.26 If a Charging Station with support for Smart Charging receives a
-            // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond
-            // with RequestStartTransactionResponse with status = Rejected and optionally with reasonCode =
-            // "InvalidProfile" or "InvalidSchedule".
+        // TODO F01.FR.26 If a Charging Station with support for Smart Charging receives a
+        // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond
+        // with RequestStartTransactionResponse with status = Rejected and optionally with reasonCode =
+        // "InvalidProfile" or "InvalidSchedule".
 
-            // F01.FR.23: Faulted or unavailable. F01.FR.24 / F02.FR.25: Occupied. Send rejected.
-            const bool available = is_evse_connector_available(evse);
+        // F01.FR.23: Faulted or unavailable. F01.FR.24 / F02.FR.25: Occupied. Send rejected.
+        const bool available = is_evse_connector_available(evse);
 
-            // When available but there was a reservation for another token id or group token id:
-            //    send rejected (F01.FR.21 & F01.FR.22)
-            const bool reserved = is_evse_reserved_for_other(evse, call.msg.idToken, call.msg.groupIdToken);
+        // When available but there was a reservation for another token id or group token id:
+        //    send rejected (F01.FR.21 & F01.FR.22)
+        const bool reserved = is_evse_reserved_for_other(evse, call.msg.idToken, call.msg.groupIdToken);
 
-            if (!available || reserved) {
-                // Note: we only support TxStartPoint PowerPathClosed, so we did not implement starting a
-                // transaction first (and send TransactionEventRequest (eventType = Started). Only if a transaction
-                // is authorized, a TransactionEventRequest will be sent. Because of this, F01.FR.13 is not
-                // implemented as well, because in the current situation, this is an impossible state. (TODO: when
-                // more TxStartPoints are supported, add implementation for F01.FR.13 as well).
-                EVLOG_info << "Remote start transaction requested, but connector is not available or reserved.";
-            } else {
-                // F02: No active transaction yet and there is an available connector, so just send 'accepted'.
-                response.status = RequestStartStopStatusEnum::Accepted;
-
-                remote_start_id_per_evse[evse_id] = {msg.idToken, msg.remoteStartId};
-            }
+        if (!available || reserved) {
+            // Note: we only support TxStartPoint PowerPathClosed, so we did not implement starting a
+            // transaction first (and send TransactionEventRequest (eventType = Started). Only if a transaction
+            // is authorized, a TransactionEventRequest will be sent. Because of this, F01.FR.13 is not
+            // implemented as well, because in the current situation, this is an impossible state. (TODO: when
+            // more TxStartPoints are supported, add implementation for F01.FR.13 as well).
+            EVLOG_info << "Remote start transaction requested, but connector is not available or reserved.";
         } else {
-            EVLOG_warning << "Invalid evse id given. Can not remote start transaction.";
-        }
+            // F02: No active transaction yet and there is an available connector, so just send 'accepted'.
+            response.status = RequestStartStopStatusEnum::Accepted;
 
+            remote_start_id_per_evse[evse_id] = {msg.idToken, msg.remoteStartId};
+        }
     } else {
         // F01.FR.07 RequestStartTransactionRequest does not contain an evseId. The Charging Station MAY reject the
         // RequestStartTransactionRequest. We do this for now (send rejected) (TODO: eventually support the charging
@@ -3051,8 +3025,8 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
         if (evse_id == 0) {
             // The whole CS is being addressed - we need to prevent further transactions from starting.
             // To do that, make all EVSEs without an active transaction Inoperative
-            for (auto const& [evse_id, evse] : this->evses) {
-                if (!evse->has_active_transaction()) {
+            for (auto const& evse : *this->evse_manager) {
+                if (!evse.has_active_transaction()) {
                     // FIXME: This will linger after the update too! We probably need another mechanism...
                     this->set_evse_operative_status(evse_id, OperationalStatusEnum::Inoperative, false);
                 }
@@ -3060,9 +3034,9 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
         } else {
             // A single EVSE is being addressed. We need to prevent further transactions from starting on it.
             // To do that, make all connectors of the EVSE without an active transaction Inoperative.
-            int number_of_connectors = this->evses.at(evse_id)->get_number_of_connectors();
+            int number_of_connectors = this->evse_manager->get_evse(evse_id).get_number_of_connectors();
             for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
-                if (!this->evses.at(evse_id)->has_active_transaction(connector_id)) {
+                if (!this->evse_manager->get_evse(evse_id).has_active_transaction(connector_id)) {
                     // FIXME: This will linger after the update too! We probably need another mechanism...
                     this->set_connector_operative_status(evse_id, connector_id, OperationalStatusEnum::Inoperative,
                                                          false);
@@ -3704,46 +3678,26 @@ void ChargePoint::set_cs_operative_status(OperationalStatusEnum new_status, bool
 }
 
 void ChargePoint::set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist) {
-    this->evses.at(evse_id)->set_evse_operative_status(new_status, persist);
+    this->evse_manager->get_evse(evse_id).set_evse_operative_status(new_status, persist);
 }
 
 void ChargePoint::set_connector_operative_status(int32_t evse_id, int32_t connector_id,
                                                  OperationalStatusEnum new_status, bool persist) {
-    this->evses.at(evse_id)->set_connector_operative_status(connector_id, new_status, persist);
+    this->evse_manager->get_evse(evse_id).set_connector_operative_status(connector_id, new_status, persist);
 }
 
 bool ChargePoint::are_all_connectors_effectively_inoperative() {
     // Check that all connectors on all EVSEs are inoperative
-    for (auto& [evse_id, evse] : this->evses) {
-        if (evse != nullptr) {
-            for (int connector_id = 1; connector_id <= evse->get_number_of_connectors(); connector_id++) {
-                OperationalStatusEnum connector_status =
-                    this->component_state_manager->get_connector_effective_operational_status(evse_id, connector_id);
-                if (connector_status == OperationalStatusEnum::Operative) {
-                    return false;
-                }
+    for (const auto& evse : *this->evse_manager) {
+        for (int connector_id = 1; connector_id <= evse.get_number_of_connectors(); connector_id++) {
+            OperationalStatusEnum connector_status =
+                this->component_state_manager->get_connector_effective_operational_status(evse.get_id(), connector_id);
+            if (connector_status == OperationalStatusEnum::Operative) {
+                return false;
             }
         }
     }
     return true;
-}
-
-EvseInterface* ChargePoint::get_evse(int32_t evse_id) {
-    if (evse_id <= 0 || evse_id > this->evses.size()) {
-        std::stringstream err_msg;
-        err_msg << "EVSE ID " << evse_id << " out of bounds";
-        throw std::logic_error(err_msg.str());
-    }
-    return this->evses.at(evse_id).get();
-}
-
-Connector* ChargePoint::get_connector(int32_t evse_id, int32_t connector_id) {
-    if (evse_id <= 0 || evse_id > this->evses.size()) {
-        std::stringstream err_msg;
-        err_msg << "EVSE ID " << evse_id << " out of bounds";
-        throw std::logic_error(err_msg.str());
-    }
-    return this->evses.at(evse_id)->get_connector(connector_id);
 }
 
 void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest request, bool persist) {

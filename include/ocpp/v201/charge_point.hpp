@@ -15,7 +15,7 @@
 #include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/device_model_storage.hpp>
 #include <ocpp/v201/enums.hpp>
-#include <ocpp/v201/evse.hpp>
+#include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
 #include <ocpp/v201/types.hpp>
@@ -395,8 +395,7 @@ public:
 class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBase {
 
 private:
-    // reference to evses
-    std::map<int32_t, std::unique_ptr<EvseInterface>> evses;
+    std::unique_ptr<EvseManager> evse_manager;
 
     // utility
     std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -575,7 +574,7 @@ private:
     ///         If id_token is equal to reserved id_token or group_id_token is equal, return false.
     ///         If there is no reservation, return false.
     ///
-    bool is_evse_reserved_for_other(const std::unique_ptr<EvseInterface>& evse, const IdToken& id_token,
+    bool is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
                                     const std::optional<IdToken>& group_id_token) const;
 
     ///
@@ -584,7 +583,7 @@ private:
     /// \param evse Evse to check.
     /// \return True if at least one connector is not faulted or unavailable.
     ///
-    bool is_evse_connector_available(const std::unique_ptr<EvseInterface>& evse) const;
+    bool is_evse_connector_available(EvseInterface& evse) const;
 
     ///
     /// \brief Set all connectors of a given evse to unavailable.
@@ -592,7 +591,7 @@ private:
     /// \param persist  True if unavailability should persist. If it is set to false, there will be a check per
     ///                 connector if it was already set to true and if that is the case, it will be persisted anyway.
     ///
-    void set_evse_connectors_unavailable(const std::unique_ptr<EvseInterface>& evse, bool persist);
+    void set_evse_connectors_unavailable(EvseInterface& evse, bool persist);
 
     /// \brief Get the value optional offline flag
     /// \return true if the charge point is offline. std::nullopt if it is online;
@@ -751,12 +750,6 @@ private:
     /// If this is the case, calls the all_connectors_unavailable_callback
     /// This is used e.g. to allow firmware updates once all transactions have finished
     bool are_all_connectors_effectively_inoperative();
-
-    /// \brief Returns a pointer to the EVSE with ID \param evse_id
-    EvseInterface* get_evse(int32_t evse_id);
-
-    /// \brief Returns a pointer to the connector with ID \param connector_id in the EVSE with ID \param evse_id
-    Connector* get_connector(int32_t evse_id, int32_t connector_id);
 
     /// \brief Immediately execute the given \param request to change the operational state of a component
     /// If \param persist is set to true, the change will be persisted across a reboot
