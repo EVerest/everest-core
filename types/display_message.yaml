@@ -81,5 +81,9 @@ types:
           belongs.
         type: object
         $ref: /ocpp#/Component
+      qrCode:
+        description: >-
+          QR Code to scan for more information.
+        type: string
     required:
       - message
