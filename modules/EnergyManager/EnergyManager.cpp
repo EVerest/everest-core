@@ -30,8 +30,8 @@ void EnergyManager::ready() {
     invoke_ready(*p_main);
 
     // start thread to update energy optimization
-    std::thread([this] {
-        while (true) {
+    optimizer_thread = std::thread([this] {
+        while (running) {
             globals.init(date::utc_clock::now(), config.schedule_interval_duration, config.schedule_total_duration,
                          config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
             auto optimized_values = run_optimizer(energy_flow_request);
@@ -41,7 +41,12 @@ void EnergyManager::ready() {
                 mainloop_sleep_condvar.wait_for(lock, std::chrono::seconds(config.update_interval));
             }
         }
-    }).detach();
+    });
+}
+
+void EnergyManager::shutdown() {
+    running = false;
+    optimizer_thread.join();
 }
 
 // Check if any node set the priority request flag

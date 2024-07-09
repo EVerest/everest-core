@@ -99,7 +99,7 @@ void Setup::ready() {
     invoke_ready(*p_main);
 
     this->discover_network_thread = std::thread([this]() {
-        while (true) {
+        while (this->running) {
             if ((this->config.setup_wifi) && (wifi_scan_enabled)) {
                 this->discover_network();
             }
@@ -109,7 +109,7 @@ void Setup::ready() {
     });
 
     this->publish_application_info_thread = std::thread([this]() {
-        while (true) {
+        while (this->running) {
             this->publish_supported_features();
             this->publish_application_info();
             this->publish_ap_state();
@@ -224,6 +224,12 @@ void Setup::ready() {
         std::string disable_ap_cmd = this->cmd_base + "disable_ap";
         this->mqtt.subscribe(disable_ap_cmd, [this](const std::string& data) { disable_ap(); });
     }
+}
+
+void Setup::shutdown() {
+    this->running = false;
+    this->discover_network_thread.join();
+    this->publish_application_info_thread.join();
 }
 
 void Setup::publish_supported_features() {

@@ -71,6 +71,7 @@ private:
     friend class LdEverest;
     void init();
     void ready();
+    void shutdown();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
@@ -85,6 +86,8 @@ private:
 
     std::condition_variable mainloop_sleep_condvar;
     std::mutex mainloop_sleep_mutex;
+    std::thread optimizer_thread;
+    bool running = true;
 
 #ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
     FRIEND_TEST(EnergyManagerTest, empty);

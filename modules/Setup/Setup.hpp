@@ -139,6 +139,7 @@ private:
     friend class LdEverest;
     void init();
     void ready();
+    void shutdown();
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
@@ -149,6 +150,8 @@ private:
     std::thread publish_application_info_thread;
     bool wifi_scan_enabled = false;
     std::string ap_state = "unknown";
+    bool running = true;
+
     void publish_supported_features();
     void publish_application_info();
     void publish_hostname();

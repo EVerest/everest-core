@@ -625,4 +625,12 @@ void API::ready() {
     invoke_ready(*p_main);
 }
 
+void API::shutdown() {
+    invoke_shutdown(*p_main);
+    this->running = false;
+    for (auto& api_thread : this->api_threads) {
+        api_thread.join();
+    }
+}
+
 } // namespace module

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include "emptyImpl.hpp"
 
@@ -10,6 +10,9 @@ void emptyImpl::init() {
 }
 
 void emptyImpl::ready() {
+}
+
+void emptyImpl::shutdown() {
 }
 
 } // namespace main
