@@ -86,18 +86,13 @@ void server_loop_thread(struct v2g_context* ctx) {
     assert(ctx != nullptr);
     assert(ctx->tls_server != nullptr);
     const auto res = ctx->tls_server->serve([ctx](auto con) { handle_new_connection_cb(con, ctx); });
-    if (!res) {
+    if (res != tls::Server::state_t::stopped) {
         dlog(DLOG_LEVEL_ERROR, "tls::Server failed to serve");
     }
 }
 
-} // namespace
-
-namespace tls {
-
-int connection_init(struct v2g_context* ctx) {
+bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     assert(ctx != nullptr);
-    assert(ctx->tls_server != nullptr);
     assert(ctx->r_security != nullptr);
 
     using types::evse_security::CaCertificateType;
@@ -111,12 +106,17 @@ int connection_init(struct v2g_context* ctx) {
      * hence private keys are always encrypted.
      */
 
-    tls::Server::config_t config;
-    bool bResult = false;
+    bool bResult{false};
 
     config.cipher_list = "ECDHE-ECDSA-AES128-SHA256:ECDH-ECDSA-AES128-SHA256";
     config.ciphersuites = "";     // disable TLS 1.3
     config.verify_client = false; // contract certificate managed in-band in 15118-2
+
+    // use the existing configured socket
+    // TODO(james-ctc): switch to server socket init code otherwise there
+    //                  may be issues with reinitialisation
+    config.socket = ctx->tls_socket.fd;
+    config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
 
     // information from libevse-security
     const auto cert_info =
@@ -146,19 +146,57 @@ int connection_init(struct v2g_context* ctx) {
                 }
             }
 
-            // use the existing configured socket
-            config.socket = ctx->tls_socket.fd;
-            config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
-
-            ctx->tls_server->stop();
-            ctx->tls_server->wait_stopped();
-            bResult = ctx->tls_server->init(config);
+            bResult = true;
         } else {
             dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Empty response");
         }
     }
 
-    return (bResult) ? 0 : -1;
+    return bResult;
+}
+
+bool configure_ssl(tls::Server& server, struct v2g_context* ctx) {
+    tls::Server::config_t config;
+    bool bResult{false};
+
+    dlog(DLOG_LEVEL_WARNING, "configure_ssl");
+
+    // The config of interest is from Evse Security, no point in updating
+    // config when there is a problem
+    if (build_config(config, ctx)) {
+        bResult = server.update(config);
+    }
+
+    return bResult;
+}
+
+} // namespace
+
+namespace tls {
+
+int connection_init(struct v2g_context* ctx) {
+    using state_t = tls::Server::state_t;
+
+    assert(ctx != nullptr);
+    assert(ctx->tls_server != nullptr);
+    assert(ctx->r_security != nullptr);
+
+    int res{-1};
+    tls::Server::config_t config;
+
+    // build_config can fail due to issues with Evse Security,
+    // this can be retried later. Not treated as an error.
+    (void)build_config(config, ctx);
+
+    // apply config
+    ctx->tls_server->stop();
+    ctx->tls_server->wait_stopped();
+    const auto result = ctx->tls_server->init(config, [ctx](auto& server) { return configure_ssl(server, ctx); });
+    if ((result == state_t::init_complete) || (result == state_t::init_socket)) {
+        res = 0;
+    }
+
+    return res;
 }
 
 int connection_start_server(struct v2g_context* ctx) {
@@ -171,6 +209,10 @@ int connection_start_server(struct v2g_context* ctx) {
     try {
         ctx->tls_server->stop();
         ctx->tls_server->wait_stopped();
+        if (ctx->tls_server->state() == tls::Server::state_t::stopped) {
+            // need to re-initialise
+            tls::connection_init(ctx);
+        }
         std::thread serve_loop(server_loop_thread, ctx);
         serve_loop.detach();
         ctx->tls_server->wait_running();

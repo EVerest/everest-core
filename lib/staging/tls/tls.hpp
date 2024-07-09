@@ -39,6 +39,52 @@ struct server_ctx;
 struct client_ctx;
 
 // ----------------------------------------------------------------------------
+// ConfigItem - store configuration item allowing nullptr
+
+/**
+ * \brief class to hold configuration strings, behaves like const char *
+ *        but keeps a copy
+ *
+ * unlike std::string this class allows nullptr as a valid setting.
+ *
+ * unlike const char * it doesn't have scope issues since it holds
+ * a copy.
+ */
+class ConfigItem {
+private:
+    char* m_ptr{nullptr};
+
+public:
+    ConfigItem() = default;
+    ConfigItem(const char* value); // must not be explicit
+    ConfigItem& operator=(const char* value);
+    ConfigItem(const ConfigItem& obj);
+    ConfigItem& operator=(const ConfigItem& obj);
+    ConfigItem(ConfigItem&& obj) noexcept;
+    ConfigItem& operator=(ConfigItem&& obj) noexcept;
+
+    ~ConfigItem();
+
+    inline operator const char*() const {
+        return m_ptr;
+    }
+
+    bool operator==(const char* ptr) const;
+
+    inline bool operator!=(const char* ptr) const {
+        return !(*this == ptr);
+    }
+
+    inline bool operator==(const ConfigItem& obj) const {
+        return *this == obj.m_ptr;
+    }
+
+    inline bool operator!=(const ConfigItem& obj) const {
+        return !(*this == obj);
+    }
+};
+
+// ----------------------------------------------------------------------------
 // Cache of OCSP responses for status_request and status_request_v2 extensions
 
 /**
@@ -371,23 +417,24 @@ public:
      * \brief server state
      */
     enum class state_t : std::uint8_t {
-        need_init, //!< not initialised yet
-        init,      //!< initialised but not running
-        running,   //!< waiting for connections
-        stopped,   //!< stopped
+        init_needed,   //!< not initialised yet - call init()
+        init_socket,   //!< TCP listen socket initialised (but not SSL) - call update()
+        init_complete, //!< initialised but not running - call serve()
+        running,       //!< waiting for connections - fully initialised
+        stopped,       //!< stopped - reinitialisation will be needed
     };
 
     struct config_t {
-        const char* cipher_list{nullptr};  // nullptr means use default
-        const char* ciphersuites{nullptr}; // nullptr means use default, "" disables TSL 1.3
-        const char* certificate_chain_file{nullptr};
-        const char* private_key_file{nullptr};
-        const char* private_key_password{nullptr};
-        const char* verify_locations_file{nullptr};   // for client certificate
-        const char* verify_locations_path{nullptr};   // for client certificate
-        const char* host{nullptr};                    // see BIO_lookup_ex()
-        const char* service{nullptr};                 // TLS port number
-        std::vector<const char*> ocsp_response_files; // in certificate chain order
+        ConfigItem cipher_list{nullptr};  // nullptr means use default
+        ConfigItem ciphersuites{nullptr}; // nullptr means use default, "" disables TSL 1.3
+        ConfigItem certificate_chain_file{nullptr};
+        ConfigItem private_key_file{nullptr};
+        ConfigItem private_key_password{nullptr};
+        ConfigItem verify_locations_file{nullptr};   // for client certificate
+        ConfigItem verify_locations_path{nullptr};   // for client certificate
+        ConfigItem host{nullptr};                    // see BIO_lookup_ex()
+        ConfigItem service{nullptr};                 // TLS port number
+        std::vector<ConfigItem> ocsp_response_files; // in certificate chain order
         int socket{INVALID_SOCKET};     // use this specific socket - bypasses socket setup in init_socket() when set
         std::int32_t io_timeout_ms{-1}; // socket timeout in milliseconds
         bool ipv6_only{true};
@@ -400,12 +447,13 @@ private:
     bool m_running{false};
     std::int32_t m_timeout_ms{-1};
     std::atomic_bool m_exit{false};
-    std::atomic<state_t> m_state{state_t::need_init};
+    std::atomic<state_t> m_state{state_t::init_needed};
     std::mutex m_mutex;
     std::mutex m_cv_mutex;
     std::condition_variable m_cv;
     OcspCache m_cache;
     CertificateStatusRequestV2 m_status_request_v2;
+    std::function<bool(Server& server)> m_init_callback{nullptr};
 
     /**
      * \brief initialise the server socket
@@ -432,27 +480,43 @@ public:
     /**
      * \brief initialise the server socket and TLS configuration
      * \param[in] cfg server configuration
-     * \return true on success
-     * \note when the server certificate and key change then the server needs
-     *       to be stopped, initialised and start serving.
+     * \param[in] init_ssl function to collect certificates and keys, can be nullptr
+     * \return need_init - initialisation failed
+     *         socket_init - server socket created and ready for serve()
+     *         init_complete - SSL certificates and keys loaded
+     *
+     * It is possible to initialise the server and start listening for
+     * connections before certificates and keys are available.
+     * when init() returns socket_init the server will call init_ssl() with a
+     * reference to the object so that update() can be called with updated
+     * OCSP and SSL configuration.
+     *
+     * init_ssl() should return true when SSL has been configured so that the
+     * incoming connection is accepted.
      */
-    bool init(const config_t& cfg);
+    state_t init(const config_t& cfg, const std::function<bool(Server& server)>& init_ssl);
 
     /**
-     * \brief update the OCSP cache
+     * \brief update the OCSP cache and SSL certificates and keys
      * \param[in] cfg server configuration
      * \return true on success
-     * \note used to update OCSP caches
+     * \note used to update OCSP caches and SSL config
      */
-    bool update_ocsp(const config_t& cfg);
+    bool update(const config_t& cfg);
 
     /**
      * \brief wait for incomming connections
      * \param[in] handler called when there is a new connection
-     * \return false when there was an error listening for connections
-     * \note this is a blocking call that will not return until stop() has been called.
+     * \return stopped after it has been running, or init_ values when listening
+     *         can not start
+     * \note this is a blocking call that will not return until stop() has been
+     *       called (unless it couldn't start listening)
+     * \note changing socket configuration requires stopping the server and
+     *       calling init()
+     * \note after server() returns stopped init() will need to be called
+     *       before further connections can be managed
      */
-    bool serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler);
+    state_t serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler);
 
     /**
      * \brief stop listening for new connections

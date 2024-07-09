@@ -49,6 +49,7 @@ public:
 } // namespace std
 
 using ::openssl::log_error;
+using ::openssl::log_warning;
 
 namespace {
 
@@ -328,7 +329,7 @@ void ssl_shutdown(SSL* ctx, std::int32_t timeout_ms) {
 
 bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* cipher_list,
                        const char* certificate_chain_file, const char* private_key_file,
-                       const char* private_key_password) {
+                       const char* private_key_password, bool required) {
     bool bRes{true};
 
     if (ctx == nullptr) {
@@ -365,6 +366,8 @@ bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* ciphe
                 log_error("SSL_CTX_use_certificate_chain_file");
                 bRes = false;
             }
+        } else {
+            bRes = !required;
         }
 
         if (private_key_file != nullptr) {
@@ -385,6 +388,8 @@ bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* ciphe
                 log_error("SSL_CTX_check_private_key");
                 bRes = false;
             }
+        } else {
+            bRes = !required;
         }
     }
 
@@ -413,9 +418,53 @@ OCSP_RESPONSE* load_ocsp(const char* filename) {
     return resp;
 }
 
+constexpr char* dup(const char* value) {
+    char* res = nullptr;
+    if (value != nullptr) {
+        res = strdup(value);
+    }
+    return res;
+}
+
 } // namespace
 
 namespace tls {
+
+ConfigItem::ConfigItem(const char* value) : m_ptr(dup(value)) {
+}
+ConfigItem& ConfigItem::operator=(const char* value) {
+    m_ptr = dup(value);
+    return *this;
+}
+ConfigItem::ConfigItem(const ConfigItem& obj) : m_ptr(dup(obj.m_ptr)) {
+}
+ConfigItem& ConfigItem::operator=(const ConfigItem& obj) {
+    m_ptr = dup(obj.m_ptr);
+    return *this;
+}
+ConfigItem::ConfigItem(ConfigItem&& obj) noexcept : m_ptr(obj.m_ptr) {
+    obj.m_ptr = nullptr;
+}
+ConfigItem& ConfigItem::operator=(ConfigItem&& obj) noexcept {
+    m_ptr = obj.m_ptr;
+    obj.m_ptr = nullptr;
+    return *this;
+}
+ConfigItem::~ConfigItem() {
+    free(m_ptr);
+    m_ptr = nullptr;
+}
+
+bool ConfigItem::operator==(const char* ptr) const {
+    bool result{false};
+    if (m_ptr == ptr) {
+        // both nullptr, or both point to the same string
+        result = true;
+    } else if ((m_ptr != nullptr) && (ptr != nullptr)) {
+        result = strcmp(m_ptr, ptr) == 0;
+    }
+    return result;
+}
 
 using SSL_ptr = std::unique_ptr<SSL>;
 using SSL_CTX_ptr = std::unique_ptr<SSL_CTX>;
@@ -1001,7 +1050,7 @@ bool Server::init_ssl(const config_t& cfg) {
     const SSL_METHOD* method = TLS_server_method();
     auto* ctx = SSL_CTX_new(method);
     auto bRes = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.certificate_chain_file,
-                                  cfg.private_key_file, cfg.private_key_password);
+                                  cfg.private_key_file, cfg.private_key_password, true);
     if (bRes) {
         int mode = SSL_VERIFY_NONE;
 
@@ -1050,56 +1099,81 @@ bool Server::init_ssl(const config_t& cfg) {
     return ctx != nullptr;
 }
 
-bool Server::init(const config_t& cfg) {
+Server::state_t Server::init(const config_t& cfg, const std::function<bool(Server& server)>& init_ssl) {
     std::lock_guard lock(m_mutex);
-    (void)update_ocsp(cfg);
     m_timeout_ms = cfg.io_timeout_ms;
-    bool bRes = init_ssl(cfg);
-    bRes = bRes && init_socket(cfg);
-    m_state = state_t::init;
-    return bRes;
+    m_init_callback = init_ssl;
+    m_state = state_t::init_needed;
+    if (init_socket(cfg)) {
+        m_state = state_t::init_socket;
+        if (update(cfg)) {
+            m_state = state_t::init_complete;
+        }
+    }
+    return m_state;
 }
 
-bool Server::update_ocsp(const config_t& cfg) {
-    std::vector<OcspCache::ocsp_entry_t> entries;
-    auto chain = openssl::load_certificates(cfg.certificate_chain_file);
-    bool bRes = chain.size() == cfg.ocsp_response_files.size();
+bool Server::update(const config_t& cfg) {
+    bool bRes = init_ssl(cfg);
 
     if (bRes) {
-        for (std::size_t i = 0; i < chain.size(); i++) {
-            const auto& file = cfg.ocsp_response_files[i];
-            const auto& cert = chain[i];
+        std::vector<OcspCache::ocsp_entry_t> entries;
+        auto chain = openssl::load_certificates(cfg.certificate_chain_file);
+        if (chain.size() == cfg.ocsp_response_files.size()) {
+            for (std::size_t i = 0; i < chain.size(); i++) {
+                const auto& file = cfg.ocsp_response_files[i];
+                const auto& cert = chain[i];
 
-            if (file != nullptr) {
-                openssl::sha_256_digest_t digest{};
-                if (OcspCache::digest(digest, cert.get())) {
-                    entries.emplace_back(digest, file);
+                if (file != nullptr) {
+                    openssl::sha_256_digest_t digest{};
+                    if (OcspCache::digest(digest, cert.get())) {
+                        entries.emplace_back(digest, file);
+                    }
                 }
             }
-        }
 
-        bRes = m_cache.load(entries);
-    } else {
-        log_error(std::string("update_ocsp: ocsp files != ") + std::to_string(chain.size()));
+            bRes = m_cache.load(entries);
+        } else {
+            log_warning(std::string("update_ocsp: ocsp files != ") + std::to_string(chain.size()));
+        }
     }
 
     return bRes;
 }
 
-bool Server::serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler) {
+Server::state_t Server::serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler) {
     assert(m_context != nullptr);
     // prevent init() or server() being called while serve is running
     std::lock_guard lock(m_mutex);
     bool bRes = false;
+
+    state_t tmp = m_state;
+
+    switch (tmp) {
+    case state_t::init_socket:
+        if (m_init_callback != nullptr) {
+            bRes = m_socket != INVALID_SOCKET;
+        }
+        break;
+    case state_t::init_complete:
+        bRes = m_socket != INVALID_SOCKET;
+        break;
+    case state_t::init_needed:
+    case state_t::running:
+    case state_t::stopped:
+    default:
+        break;
+    }
+
     {
         std::lock_guard lock(m_cv_mutex);
         m_running = true;
     }
     m_cv.notify_all();
 
-    if (m_socket != INVALID_SOCKET) {
+    if (bRes) {
         m_exit = false;
-        m_state = state_t::running;
+        m_state = (m_state == state_t::init_complete) ? state_t::running : state_t::init_socket;
         while (!m_exit) {
             auto* peer = BIO_ADDR_new();
             if (peer == nullptr) {
@@ -1121,6 +1195,15 @@ bool Server::serve(const std::function<void(std::shared_ptr<ServerConnection>& c
                         }
                     }
                 };
+
+                if ((soc >= 0) && (m_state == state_t::init_socket)) {
+                    if (m_init_callback(*this)) {
+                        m_state = state_t::running;
+                    } else {
+                        BIO_closesocket(soc);
+                        soc = INVALID_SOCKET;
+                    }
+                }
 
                 if (m_exit) {
                     if (soc >= 0) {
@@ -1155,7 +1238,7 @@ bool Server::serve(const std::function<void(std::shared_ptr<ServerConnection>& c
         m_running = false;
     }
     m_cv.notify_all();
-    return bRes;
+    return m_state;
 }
 
 void Server::stop() {
@@ -1208,7 +1291,7 @@ bool Client::init(const config_t& cfg) {
     const SSL_METHOD* method = TLS_client_method();
     auto* ctx = SSL_CTX_new(method);
     auto bRes = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.certificate_chain_file,
-                                  cfg.private_key_file, cfg.private_key_password);
+                                  cfg.private_key_file, cfg.private_key_password, false);
     if (bRes) {
         int mode = SSL_VERIFY_NONE;
 

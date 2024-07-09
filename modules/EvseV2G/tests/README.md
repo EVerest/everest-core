@@ -17,7 +17,7 @@ $ ninja install
 ## Run EVerest in SIL
 
 1. start MQTT broker
-2. from `build/run-scripts` run `./run-sil-dc.sh`
+2. from `build/run-scripts` run `./run-sil-dc-tls.sh`
 3. from `build/run-scripts` run `./nodered-sil-dc.sh`
 4. open web browser [EVerest Node-RED dashboard](http://localhost:1880/ui/)
 

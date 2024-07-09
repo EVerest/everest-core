@@ -172,7 +172,7 @@ protected:
         server_config.service = "8444";
         server_config.ipv6_only = false;
         server_config.verify_client = false;
-        server_config.io_timeout_ms = 100;
+        server_config.io_timeout_ms = 500;
 
         client_config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
         // client_config.ciphersuites = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384";
@@ -194,8 +194,10 @@ protected:
         }
     }
 
-    void start() {
-        if (server.init(server_config)) {
+    void start(const std::function<bool(tls::Server& server)>& init_ssl = nullptr) {
+        using state_t = tls::Server::state_t;
+        const auto res = server.init(server_config, init_ssl);
+        if ((res == state_t::init_complete) || (res == state_t::init_socket)) {
             server_thread = std::thread(&run_server, std::ref(server));
             server.wait_running();
         }
@@ -228,6 +230,24 @@ protected:
     }
 };
 
+bool ssl_init(tls::Server& server) {
+    std::cout << "ssl_init" << std::endl;
+    tls::Server::config_t server_config;
+    server_config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
+    server_config.ciphersuites = "";
+    server_config.certificate_chain_file = "server_chain.pem";
+    server_config.private_key_file = "server_priv.pem";
+    server_config.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
+    server_config.host = "localhost";
+    server_config.service = "8444";
+    server_config.ipv6_only = false;
+    server_config.verify_client = false;
+    server_config.io_timeout_ms = 100;
+    const auto res = server.update(server_config);
+    EXPECT_TRUE(res);
+    return res;
+}
+
 // ----------------------------------------------------------------------------
 // The tests
 
@@ -239,6 +259,20 @@ TEST_F(OcspTest, NonBlocking) {
 TEST_F(OcspTest, NonBlockingConnect) {
     // test shouldn't hang
     start();
+    connect();
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_TRUE(is_reset(flags_t::status_request_cb));
+    EXPECT_TRUE(is_reset(flags_t::status_request));
+    EXPECT_TRUE(is_reset(flags_t::status_request_v2));
+}
+
+TEST_F(OcspTest, delayedConfig) {
+    // partial config
+    server_config.certificate_chain_file = nullptr;
+    server_config.private_key_file = nullptr;
+    server_config.ocsp_response_files.clear();
+
+    start(ssl_init);
     connect();
     EXPECT_TRUE(is_set(flags_t::connected));
     EXPECT_TRUE(is_reset(flags_t::status_request_cb));

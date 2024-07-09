@@ -86,7 +86,7 @@ int main() {
         server.stop();
     });
 
-    server.init(config);
+    server.init(config, nullptr);
     server.wait_stopped();
 
     // server.serve(&handle_connection);

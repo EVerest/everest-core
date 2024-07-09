@@ -329,34 +329,34 @@ bool signature_to_bn(bn_t& r, bn_t& s, const std::uint8_t* sig_p, std::size_t le
 };
 
 std::vector<Certificate_ptr> load_certificates(const char* filename) {
-    assert(filename != nullptr);
-
     std::vector<Certificate_ptr> result{};
-    auto* store = OSSL_STORE_open(filename, UI_null(), nullptr, nullptr, nullptr);
 
-    if (store != nullptr) {
-        while (OSSL_STORE_eof(store) != 1) {
-            auto* info = OSSL_STORE_load(store);
+    if (filename != nullptr) {
+        auto* store = OSSL_STORE_open(filename, UI_null(), nullptr, nullptr, nullptr);
+        if (store != nullptr) {
+            while (OSSL_STORE_eof(store) != 1) {
+                auto* info = OSSL_STORE_load(store);
 
-            if (info != nullptr) {
-                if (OSSL_STORE_error(store) == 1) {
-                    log_error("OSSL_STORE_load");
-                } else {
-                    const auto type = OSSL_STORE_INFO_get_type(info);
+                if (info != nullptr) {
+                    if (OSSL_STORE_error(store) == 1) {
+                        log_error("OSSL_STORE_load");
+                    } else {
+                        const auto type = OSSL_STORE_INFO_get_type(info);
 
-                    if (type == OSSL_STORE_INFO_CERT) {
-                        // get a copy of the certificate
-                        auto cert = OSSL_STORE_INFO_get1_CERT(info);
-                        result.push_back({cert, &X509_free});
+                        if (type == OSSL_STORE_INFO_CERT) {
+                            // get a copy of the certificate
+                            auto cert = OSSL_STORE_INFO_get1_CERT(info);
+                            result.push_back({cert, &X509_free});
+                        }
                     }
                 }
+
+                OSSL_STORE_INFO_free(info);
             }
-
-            OSSL_STORE_INFO_free(info);
         }
-    }
 
-    OSSL_STORE_close(store);
+        OSSL_STORE_close(store);
+    }
     return result;
 }
 
