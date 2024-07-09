@@ -299,3 +299,12 @@ types:
           This is intended for meters that only support signing a collection of meter values.
         type: object
         $ref: /units_signed#/SignedMeterValue
+      temperatures:
+        description: >-
+          An array of temperature sensors expressed in C, their definition and meaning is product specific
+        type: array
+        items:
+          type: object
+          $ref: /temperature#/Temperature
+
+

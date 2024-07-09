@@ -30,7 +30,6 @@
 
 #include <ocpp/v201/charge_point.hpp>
 #include <transaction_handler.hpp>
-
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -39,6 +38,9 @@ struct Conf {
     std::string MessageLogPath;
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
+    std::string DeviceModelDatabaseMigrationPath;
+    std::string DeviceModelSchemaPath;
+    std::string ConfigFilePath;
     bool EnableExternalWebsocketControl;
     int MessageQueueResumeDelay;
 };

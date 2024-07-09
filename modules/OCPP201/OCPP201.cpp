@@ -11,7 +11,7 @@
 #include <evse_security_ocpp.hpp>
 namespace module {
 
-const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
+const std::string SQL_CORE_MIGRATIONS = "core_migrations";
 const std::string CERTS_DIR = "certs";
 
 namespace fs = std::filesystem;
@@ -228,6 +228,34 @@ void OCPP201::ready() {
         }
     }();
 
+    const auto device_model_database_migration_path = [&]() {
+        const auto config_device_model_database_migration_path =
+            fs::path(this->config.DeviceModelDatabaseMigrationPath);
+        if (config_device_model_database_migration_path.is_relative()) {
+            return this->ocpp_share_path / config_device_model_database_migration_path;
+        } else {
+            return config_device_model_database_migration_path;
+        }
+    }();
+
+    const auto device_model_schema_path = [&]() {
+        const auto config_device_model_schema_path = fs::path(this->config.DeviceModelSchemaPath);
+        if (config_device_model_schema_path.is_relative()) {
+            return this->ocpp_share_path / config_device_model_schema_path;
+        } else {
+            return config_device_model_schema_path;
+        }
+    }();
+
+    const auto config_file_path = [&]() {
+        const auto config_config_file_path = fs::path(this->config.ConfigFilePath);
+        if (config_config_file_path.is_relative()) {
+            return this->ocpp_share_path / config_config_file_path;
+        } else {
+            return config_config_file_path;
+        }
+    }();
+
     if (!fs::exists(this->config.MessageLogPath)) {
         try {
             fs::create_directory(this->config.MessageLogPath);
@@ -436,13 +464,14 @@ void OCPP201::ready() {
         };
     }
 
-    const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRTATIONS;
+    const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, device_model_database_path, this->ocpp_share_path.string(),
-        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
-        std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+        evse_connector_structure, device_model_database_path, true, device_model_database_migration_path,
+        device_model_schema_path, config_file_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath,
+        sql_init_path.string(), this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security),
+        callbacks);
 
     const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
         ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"EVConnectionTimeOut"},
