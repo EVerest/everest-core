@@ -46,7 +46,6 @@ use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
-    OCMFUserIdentificationStatus, OCMFIdentificationType,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
@@ -945,6 +944,9 @@ fn main() {
 mod tests {
 
     use self::generated::types::powermeter::TransactionReq;
+    use self::generated::types::powermeter::{
+        OCMFIdentificationType, OCMFUserIdentificationStatus,
+    };
 
     use super::*;
     use mockall::predicate::eq;
@@ -1188,7 +1190,7 @@ mod tests {
                 identification_flags: Vec::new(),
                 identification_data: None,
                 identification_level: None,
-                tariff_text: None
+                tariff_text: None,
             });
         }
     }
@@ -1288,7 +1290,7 @@ mod tests {
             identification_flags: Vec::new(),
             identification_data: None,
             identification_level: None,
-            tariff_text: None
+            tariff_text: None,
         });
     }
 }
