@@ -9,8 +9,15 @@ namespace rcd_2 {
 void ac_rcdImpl::init() {
     mod->serial.signal_error_flags.connect([this](int connector, ErrorFlags error_flags) {
         if ((connector == 2) && error_flags.rcd_triggered) {
-            EVLOG_info << "[2] RCD triggered: " << error_flags.rcd_triggered;
-            // TODO: publish somewhere
+            if (error_flags.rcd_triggered and not last_error_flags.rcd_triggered) {
+                Everest::error::Error error_object = this->error_factory->create_error(
+                    "ac_rcd/MREC2GroundFailure", "", "Port 2 RCD triggered", Everest::error::Severity::High);
+                this->raise_error(error_object);
+            } else if (not error_flags.rcd_triggered and last_error_flags.rcd_triggered) {
+                this->clear_error("ac_rcd/MREC2GroundFailure");
+            }
+
+            last_error_flags = error_flags;
         }
     });
 }
