@@ -11,10 +11,10 @@ void ac_rcdImpl::init() {
         if ((connector == 2) && error_flags.rcd_triggered) {
             if (error_flags.rcd_triggered and not last_error_flags.rcd_triggered) {
                 Everest::error::Error error_object = this->error_factory->create_error(
-                    "ac_rcd/MREC2GroundFailure", "", "Port 2 RCD triggered", Everest::error::Severity::High);
+                    "ac_rcd/DC", "", "Port 2 RDC-MD triggered", Everest::error::Severity::High);
                 this->raise_error(error_object);
             } else if (not error_flags.rcd_triggered and last_error_flags.rcd_triggered) {
-                this->clear_error("ac_rcd/MREC2GroundFailure");
+                this->clear_error("ac_rcd/DC");
             }
 
             last_error_flags = error_flags;
