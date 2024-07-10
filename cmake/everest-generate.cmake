@@ -127,7 +127,6 @@ endfunction()
 
 macro(ev_add_project)
     ev_setup_cmake_variables_python_wheel()
-    option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
     set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
 
     ev_setup_python_executable(
@@ -136,7 +135,7 @@ macro(ev_add_project)
     )
 
     setup_ev_cli()
-    if(NOT ${${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV})
+    if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
         get_property(EVEREST_REQUIRED_EV_CLI_VERSION
             GLOBAL
             PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
