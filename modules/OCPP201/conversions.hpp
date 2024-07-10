@@ -169,11 +169,11 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
 
 /// \brief Converts a given ocpp::v201::MessageFormat \p message_format to a
 /// types::ocpp::MessageFormat
-types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
+types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
 
 /// \brief Converts a given ocpp::v201::MessageContent \p message_content to a
 /// types::ocpp::MessageContent
-types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
+types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
 
 /// \brief Converts a given ocpp::v201::TransactionEventResponse \p transaction_event_response to a
 /// types::ocpp::OcppTransactionEventResponse
@@ -225,6 +225,8 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
 /// types::ocpp::SetVariableStatusEnumType
 types::ocpp::SetVariableStatusEnumType
 to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
+
+// TODO conversions for the display message stuff
 
 } // namespace conversions
 } // namespace module

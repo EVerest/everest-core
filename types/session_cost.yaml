@@ -6,33 +6,57 @@ types:
     type: object
     additionalProperties: false
     properties:
-      graceMinutes:
+      grace_minutes:
         description: >-
           Grace period in minutes before idle time is charged.
           Grace minutes start counting from the timestamp of the message in which state
           changed from "Charging" to "Idle".
         type: integer
-      hourPrice:
+      hour_price:
         description: >-
           Price per hour while idle
         type: number
+  CostCategory:
+    description: Cost category
+    type: string
+    enum:
+      - Energy
+      - Time
+      - FlatFee
+      - Other
   ChargingPriceComponent:
     description: >-
-      Charging price for a component
+      Charging price for a category
     type: object
     properties:
-      component:
+      category:
         description: >-
           Component type for this charging price
         type: string
-        enum:
-          - kWhPrice
-          - hourPrice
-          - flatFee
+        $ref: /session_cost#/CostCategory
       price:
         description: >-
           Price for this component
-        type: number
+        type: object
+        $ref: /money#/MoneyAmount
+  NextPeriodPrice:
+    description: Pricing for the next period
+    type: object
+    properties:
+      timestamp_from:
+        description: Time when these prices become active.
+        type: string
+      charging_price:
+        description: Price components while charging
+        type: object
+        $ref: /session_cost#/ChargingPriceComponent
+      idle_price:
+        description: Price components while idle. Optional if no idle fee charged.
+        type: object
+        $ref: /session_cost#/IdlePrice
+    required:
+      - timestamp_from
+      - charging_price
   SessionCostChunk:
     description: >-
       A chunk of the session cost. The total cost of the session is the sum of
@@ -52,11 +76,11 @@ types:
         format: date-time
       metervalue_from:
         description: >-
-          Metervalue for the start of this chunk
+          Metervalue (energie Wh import) for the start of this chunk
         type: integer
       metervalue_to:
         description: >-
-          Metervalue for the end of this chunk
+          Metervalue (energie Wh import) for the end of this chunk
         type: integer
       cost:
         description: >-
@@ -65,24 +89,58 @@ types:
           price
         type: object
         $ref: /money#/MoneyAmount
-      costAmount:
-        description: >-
-          Cost in the currency specified in the configuration.
-        type: number
       category:
         description: >-
           Cost category. Typically this is energy or time.
         type: string
-        enum:
-          - Energy
-          - Time
-          - Other
-      idlePrice:
+        $ref: /session_cost#/CostCategory
+  SessionStatus:
+    description: >-
+      Session status enum. Session can be running or finished. Costs of the
+      running session are not final and can change.
+    type: string
+    enum:
+      - Running
+      - Idle
+      - Finished
+  SessionCost:
+    description: >-
+      Session cost object containing the total cost of the session and a list
+      of chunks
+    type: object
+    additionalProperties: false
+    required:
+      - session_id
+      - currency
+      - status
+    properties:
+      id_tag:
+        description: The id tag assigned to this transaction
+        type: object
+        $ref: /authorization#/ProvidedIdToken
+      session_id:
+        description: The session id
+        type: string
+      currency:
+        description: >-
+          Currency of the session cost. It applies to all chunks.
+        type: object
+        $ref: /money#/Currency
+      cost_chunks:
+        description: >-
+          List of cost chunks. The total cost of the session is the sum of
+          all chunks.
+        type: array
+        items:
+          description: One chunk of the session cost
+          type: object
+          $ref: /session_cost#/SessionCostChunk
+      idle_price:
         description: >-
           Prices for when the EV is idle.
         type: object
         $ref: /session_cost#/IdlePrice
-      chargingPrice:
+      charging_price:
         description: >-
           Charging prices.
         type: array
@@ -90,6 +148,19 @@ types:
           description: Charging price per type
           type: object
           $ref: /session_cost#/ChargingPriceComponent
+      next_period:
+        description: >-
+          Charging prices for the next period, starting from the given date/time
+        type: object
+        $ref: /session_cost#/NextPeriodPrice
+      status:
+        description: >-
+          Session status. Session can be running or finished. Costs of the
+          running session are not final and can change.
+          Only after the session is finished, the session cost can be committed
+          to bank and/or backend.
+        type: object
+        $ref: /session_cost#/SessionStatus
       message:
         description: >-
           Message to show to the user containing information about the price
@@ -109,54 +180,3 @@ types:
           QR Code with more information. For example when the charging is finished,
           to download the invoice from
         type: string
-  SessionStatus:
-    description: >-
-      Session status enum. Session can be running or finished. Costs of the
-      running session are not final and can change.
-    type: string
-    enum:
-      - Running
-      - Idle
-      - Finished
-  SessionCost:
-    description: >-
-      Session cost object containing the total cost of the session and a list
-      of chunks
-    type: object
-    additionalProperties: false
-    required:
-      - id_tag
-      - currency
-      - status
-    properties:
-      id_tag:
-        description: The id tag assigned to this transaction
-        type: object
-        $ref: /authorization#/ProvidedIdToken
-      currency:
-        description: >-
-          Currency of the session cost. It applies to all chunks.
-        type: object
-        $ref: /money#/Currency
-      cost_chunks:
-        description: >-
-          List of cost chunks. The total cost of the session is the sum of
-          all chunks.
-        type: array
-        items:
-          description: One chunk of the session cost
-          type: object
-          $ref: /session_cost#/SessionCostChunk
-      next_period:
-        description: >-
-          Charging prices for the next period, starting from the given date/time
-        type: object
-        $ref: /session_cost#/SessionCostChunk
-      status:
-        description: >-
-          Session status. Session can be running or finished. Costs of the
-          running session are not final and can change.
-          Only after the session is finished, the session cost can be committed
-          to bank and/or backend.
-        type: object
-        $ref: /session_cost#/SessionStatus

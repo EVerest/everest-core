@@ -32,6 +32,28 @@ types:
     enum:
       - Accepted
       - Unknown
+  MessageContent:
+    description: Contains message details
+    required:
+      - format
+      - content
+    type: object
+    properties:
+      format:
+        type: string
+        $ref: /display_message#/MessageFormat
+      language:
+        type: string
+      content:
+        type: string
+  MessageFormat:
+    description: Format of the message to be displayed
+    type: string
+    enum:
+      - ASCII
+      - HTML
+      - URI
+      - UTF8
   DisplayMessage:
     description: Message to show on a display
     type: object
@@ -60,30 +82,86 @@ types:
           Until what date-time should this message be shoen, after this date/time this message SHALL be removed.
         type: string
         format: date-time
-      transaction_id:
+      session_id:
         description: >-
-          During which transaction shall this message be shown. Message SHALL be removed by the Charging Station
-          after transaction has ended.
+          During which session shall this message be shown. Message SHALL be removed by the Charging Station
+          after session has ended.
         type: string
         minLength: 0
         maxLength: 36
       message:  
         type: object
         description: The message to show
-        $ref: /ocpp#/MessageContent
+        $ref: /display_message#/MessageContent
       message_format:
         description: The format of the message
         type: string
-        $ref: /ocpp#/MessageFormat
-      display:
-        description: >-
-          When a Charging Station has multiple Displays, this field can be used to define to which Display this message
-          belongs.
-        type: object
-        $ref: /ocpp#/Component
-      qrCode:
+        $ref: /display_message#/MessageFormat
+      qr_code:
         description: >-
           QR Code to scan for more information.
         type: string
     required:
       - message
+  SetDisplayMessageResponse:
+    description: >-
+      Response to the set display message request.
+    type: object
+    properties:
+      status:
+        description: Whether the charging station is able to display the message
+        $ref: /display_message#/DisplayMessageStatusEnum
+        type: object
+      status_info:
+        description: Detailed status information
+        type: string
+    required:
+      - status
+  GetDisplayMessageRequest:
+    description: Request display messages
+    type: object
+    properties:
+      id:
+        description: If provided the Charging Station shall return Display Messages of the given ids.
+        type: array
+        items:
+          type: integer
+      priority:
+        description: If provided the Charging Station shall return Display Messages with the given priority only.
+        $ref: /display_message#/MessagePriorityEnum
+        type: string
+      state:
+        description: If provided the Charging Station shall return Display Messages with the given state only.
+        $ref: /display_message#/MessageStateEnum
+        type: string
+  GetDisplayMessageResponse:
+    description: Reponse on the 'get display message' request. Will return the requested display messages.
+    type: object
+    properties:
+      status_info:
+        description: Detailed status information
+        type: string
+      messages:
+        description: Requested messages, if any
+        type: array
+        items:
+          type: object
+          $ref: /display_message#/DisplayMessage
+  ClearDisplayMessageRequest:
+    description: Request to remove a specific display message.
+    type: object
+    properties:
+      id:
+        description: Id of display message that should be removed from the charging station
+        type: integer
+  ClearDisplayMessageResponse:
+    description: Response on the clear display message request.
+    type: object
+    properties:
+      status:
+        type: object
+        $ref: /display_message#/ClearMessageResponseEnum
+      status_info:
+        type: string
+    required:
+      - status

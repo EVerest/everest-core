@@ -1,5 +1,9 @@
 description: >-
-  This interface allows to add / remove / change messages that should be showed on the display.
+  A module that implements this interface should be able to:
+  - store (add, remove, change) and retrieve predefined messages
+  - show messages on a display
+
+  When a display message contains a session id, the display message must be removed once the session has ended.
 cmds:
   set_display_message:
     description: >-
@@ -10,74 +14,30 @@ cmds:
           Request to set a display message
         type: object
         $ref: /display_message#/DisplayMessage
-      result:
-        description: >-
-          Response to the set display message request.
-        type: object
-        properties:
-          status:
-            description: Whether the charging station is able to display the message
-            $ref: /display_message#/DisplayMessageStatusEnum
-            type: object
-          status_info:
-            description: Detailed status information
-            $ref: /ocpp#/StatusInfoType
-            type: object
-        required:
-          - status
+    result:
+      description: >-
+        Response to the set display message request.
+      type: object
+      $ref: /display_message#/SetDisplayMessageResponse
   get_display_messages:
     description: Command to get one or more display messages.
     arguments:
       request:
         description: The request for display messages
         type: object
-        properties:
-          id:
-            description: If provided the Charging Station shall return Display Messages of the given ids.
-            type: array
-            items:
-              type: integer
-          priority:
-            description: If provided the Charging Station shall return Display Messages with the given priority only.
-            $ref: /display_message#/MessagePriorityEnum
-            type: string
-          state:
-            description: If provided the Charging Station shall return Display Messages with the given state only.
-            $ref: /display_message#/MessageStateEnum
-            type: string
-      response:
-        description: The display messages or an empty array if there are none
-        type: object
-        properties:
-          status_info:
-            description: Detailed status information
-            $ref: /ocpp#/StatusInfoType
-            type: object
-          messages:
-            description: Requested messages, if any
-            type: array
-            items:
-              type: object
-              $ref: /display_message#/DisplayMessage
+        $ref: /display_message#/GetDisplayMessageRequest
+    result:
+      description: The display messages or an empty array if there are none
+      type: object
+      $ref: /display_message#/GetDisplayMessageResponse
   clear_display_message:
     description: Command to remove a display message
     arguments:
       request:
         description: The request to clear a message
         type: object
-        properties:
-          id:
-            description: Id of display message that should be removed from the charging station
-            type: integer
-      response:
-        description: Response on the clear message request
-        type: object
-        properties:
-          status:
-            type: object
-            $ref: /display_message#/ClearMessageResponseEnum
-          status_info:
-            type: object
-            $ref: /ocpp#/StatusInfoType
-        required:
-          - status
+        $ref: /display_message#/ClearDisplayMessageRequest
+    result:
+      description: Response on the clear message request
+      type: object
+      $ref: /display_message#/ClearDisplayMessageResponse
