@@ -15,6 +15,7 @@ IMPLS = [
 cc_everest_module(
     name = "PhyVersoBSP",
     deps = [
+        "//modules/PhyVersoBSP/phyverso_gpio",
         "//modules/PhyVersoBSP/phyverso_mcu_comms",
     ],
     impls = IMPLS,

@@ -60,6 +60,7 @@ private:
     std::mutex caps_mutex;
     CpState last_cp_state;
     PpState last_pp_state; ///< The last pp state received from the MCU.
+    bool last_stop_button_state;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
