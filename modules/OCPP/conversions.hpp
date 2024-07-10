@@ -110,6 +110,17 @@ to_everest_boot_notification_response(const ocpp::v16::BootNotificationResponse&
 types::ocpp::RegistrationStatus
 to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration_status);
 
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority);
+ocpp::v201::MessagePriorityEnum to_ocpp_201_message_priority(const ocpp::v201::MessagePriorityEnum& priority);
+
+types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state);
+ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum &state);
+
+types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message);
+
+ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message);
+
 } // namespace conversions
 } // namespace module
 

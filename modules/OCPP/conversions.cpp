@@ -454,5 +454,110 @@ to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration
     }
 }
 
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority) {
+    switch (priority) {
+    case ocpp::v201::MessagePriorityEnum::AlwaysFront:
+        return types::display_message::MessagePriorityEnum::AlwaysFront;
+    case ocpp::v201::MessagePriorityEnum::InFront:
+        return types::display_message::MessagePriorityEnum::InFront;
+    case ocpp::v201::MessagePriorityEnum::NormalCycle:
+        return types::display_message::MessagePriorityEnum::NormalCycle;
+    default:
+        throw std::out_of_range(
+            "Could not convert ocpp::v201::MessagePriorityEnum to types::display_message::MessagePriorityEnum");
+    }
+}
+
+ocpp::v201::MessagePriorityEnum
+to_ocpp_201_message_priority(const types::display_message::MessagePriorityEnum& priority) {
+    switch (priority) {
+    case types::display_message::MessagePriorityEnum::AlwaysFront:
+        return ocpp::v201::MessagePriorityEnum::AlwaysFront;
+    case types::display_message::MessagePriorityEnum::InFront:
+        return ocpp::v201::MessagePriorityEnum::InFront;
+    case types::display_message::MessagePriorityEnum::NormalCycle:
+        return ocpp::v201::MessagePriorityEnum::NormalCycle;
+    default:
+        throw std::out_of_range(
+            "Could not convert types::display_message::MessagePriorityEnum to ocpp::v201::MessagePriorityEnum");
+    }
+}
+
+types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state) {
+    switch (state) {
+    case ocpp::v201::MessageStateEnum::Charging:
+        return types::display_message::MessageStateEnum::Charging;
+    case ocpp::v201::MessageStateEnum::Faulted:
+        return types::display_message::MessageStateEnum::Faulted;
+    case ocpp::v201::MessageStateEnum::Idle:
+        return types::display_message::MessageStateEnum::Idle;
+    case ocpp::v201::MessageStateEnum::Unavailable:
+        return types::display_message::MessageStateEnum::Unavailable;
+    default:
+        throw std::out_of_range(
+            "Could not convert ocpp::v201::MessageStateEnum to types::display_message::MessageStateEnum");
+    }
+}
+
+ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state) {
+    switch (state) {
+    case types::display_message::MessageStateEnum::Charging:
+        return ocpp::v201::MessageStateEnum::Charging;
+    case types::display_message::MessageStateEnum::Faulted:
+        return ocpp::v201::MessageStateEnum::Faulted;
+    case types::display_message::MessageStateEnum::Idle:
+        return ocpp::v201::MessageStateEnum::Idle;
+    case types::display_message::MessageStateEnum::Unavailable:
+        return ocpp::v201::MessageStateEnum::Unavailable;
+    default:
+        throw std::out_of_range(
+            "Could not convert types::display_message::MessageStateEnum to ocpp::v201::MessageStateEnum");
+    }
+}
+
+types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message) {
+    types::display_message::DisplayMessage m;
+    m.id = display_message.id;
+    // m.message = display_message.messages; // TODO
+    // m.message_format = m.message_format; // TODO
+    if (display_message.priority.has_value()) {
+        m.priority = to_everest_display_message_priority(display_message.priority.value());
+    }
+
+    m.qr_code = display_message.qr_code;
+    m.session_id = display_message.transaction_id; // TODO search for session id and make it session id. This works
+                                                   // for 2.0.1, but how to do it in 1.6???
+    if (display_message.state.has_value()) {
+        m.state = to_everest_display_message_state(display_message.state.value());
+    }
+
+    m.timestamp_from = display_message.timestamp_from->to_rfc3339();
+    m.timestamp_to = display_message.timestamp_to->to_rfc3339();
+
+    return m;
+}
+
+ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message) {
+    ocpp::DisplayMessage m;
+    m.id = display_message.id;
+    // m.messages.push_back(display_message.message); // TODO
+    if (display_message.priority.has_value()) {
+        m.priority = to_ocpp_201_message_priority(display_message.priority.value());
+    }
+
+    m.qr_code = display_message.qr_code;
+    m.transaction_id = display_message.session_id; // TODO OCPP 1.6 ???
+
+    if (display_message.state.has_value()) {
+        m.state = to_ocpp_201_display_message_state(display_message.state.value());
+    }
+
+    m.timestamp_from = display_message.timestamp_from;
+    m.timestamp_to = display_message.timestamp_to;
+
+    return m;
+}
+
 } // namespace conversions
 } // namespace module
