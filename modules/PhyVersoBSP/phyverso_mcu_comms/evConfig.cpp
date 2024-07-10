@@ -30,10 +30,7 @@ bool evConfig::open_file(std::string path) {
     return false;
 }
 
-// todo: needs to be refactored a lot
 bool evConfig::check_validity() {
-    std::cout << config_file.dump() << "\n\n"; // DEBUG
-
     std::vector<std::string> mandatory_config_keys = {"conn1_motor_lock_type", "conn2_motor_lock_type"};
 
     for (const std::string& key : mandatory_config_keys) {
