@@ -136,11 +136,14 @@ macro(ev_add_project)
 
     setup_ev_cli()
     if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
+        message(STATUS "Using system ev-cli instead of installing it in the build venv.")
         get_property(EVEREST_REQUIRED_EV_CLI_VERSION
             GLOBAL
             PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
         )
         require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
+    else()
+        message(STATUS "Installing ev-cli in the build venv.")
     endif()
 
     # FIXME (aw): resort to proper argument handling!
