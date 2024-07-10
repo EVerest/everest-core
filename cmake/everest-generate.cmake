@@ -137,6 +137,10 @@ macro(ev_add_project)
 
     setup_ev_cli()
     if(NOT ${${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV})
+        get_property(EVEREST_REQUIRED_EV_CLI_VERSION
+            GLOBAL
+            PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
+        )
         require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
     endif()
 
