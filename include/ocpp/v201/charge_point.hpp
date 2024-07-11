@@ -182,6 +182,9 @@ struct Callbacks {
     std::optional<std::function<void(const TransactionEventRequest& transaction_event,
                                      const TransactionEventResponse& transaction_event_response)>>
         transaction_event_response_callback;
+
+    /// \brief Callback function is called when the websocket connection status changes
+    std::optional<std::function<void(const bool is_connected)>> connection_state_changed_callback;
 };
 
 /// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes

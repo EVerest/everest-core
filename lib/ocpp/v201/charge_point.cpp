@@ -1002,6 +1002,10 @@ void ChargePoint::init_websocket() {
 
         // We have a connection again so next time it fails we should send the notification again
         this->skip_invalid_csms_certificate_notifications = false;
+
+        if (this->callbacks.connection_state_changed_callback.has_value()) {
+            this->callbacks.connection_state_changed_callback.value()(true);
+        }
     });
 
     this->websocket->register_disconnected_callback([this]() {
@@ -1015,6 +1019,9 @@ void ChargePoint::init_websocket() {
 
         this->client_certificate_expiration_check_timer.stop();
         this->v2g_certificate_expiration_check_timer.stop();
+        if (this->callbacks.connection_state_changed_callback.has_value()) {
+            this->callbacks.connection_state_changed_callback.value()(false);
+        }
     });
 
     this->websocket->register_closed_callback(
