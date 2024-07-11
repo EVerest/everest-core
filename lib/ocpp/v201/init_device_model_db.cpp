@@ -285,15 +285,20 @@ InitDeviceModelDb::read_component_schemas(const std::vector<std::filesystem::pat
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components;
     for (const std::filesystem::path& path : components_schema_path) {
         std::ifstream schema_file(path);
-        json data = json::parse(schema_file);
-        ComponentKey p = data;
-        if (data.contains("properties")) {
-            std::vector<DeviceModelVariable> variables =
-                get_all_component_properties(data.at("properties"), p.required);
-            components.insert({p, variables});
-        } else {
-            EVLOG_warning << "Component " << data.at("name") << " does not contain any properties";
-            continue;
+        try {
+            json data = json::parse(schema_file);
+            ComponentKey p = data;
+            if (data.contains("properties")) {
+                std::vector<DeviceModelVariable> variables =
+                    get_all_component_properties(data.at("properties"), p.required);
+                components.insert({p, variables});
+            } else {
+                EVLOG_warning << "Component " << data.at("name") << " does not contain any properties";
+                continue;
+            }
+        } catch (const json::parse_error& e) {
+            EVLOG_error << "Error while parsing schema file: " << path;
+            throw;
         }
     }
 
@@ -714,35 +719,39 @@ std::map<ComponentKey, std::vector<VariableAttributeKey>>
 InitDeviceModelDb::get_config_values(const std::filesystem::path& config_file_path) {
     std::map<ComponentKey, std::vector<VariableAttributeKey>> config_values;
     std::ifstream config_file(config_file_path);
-    json config_json = json::parse(config_file);
-    for (const auto& j : config_json.items()) {
-        ComponentKey p = j.value();
-        std::vector<VariableAttributeKey> attribute_keys;
-        for (const auto& variable : j.value().at("variables").items()) {
-            for (const auto& attributes : variable.value().at("attributes").items()) {
-                VariableAttributeKey key;
-                key.name = variable.value().at("variable_name");
-                try {
-                    key.attribute_type = conversions::string_to_attribute_enum(attributes.key());
-                } catch (const std::out_of_range& /* e*/) {
-                    EVLOG_error << "Could not find type " << attributes.key() << " of component " << p.name
-                                << " and variable " << key.name;
-                    throw InitDeviceModelDbError("Could not find type " + attributes.key() + " of component " + p.name +
-                                                 " and variable " + key.name);
-                }
+    try {
+        json config_json = json::parse(config_file);
+        for (const auto& j : config_json.items()) {
+            ComponentKey p = j.value();
+            std::vector<VariableAttributeKey> attribute_keys;
+            for (const auto& variable : j.value().at("variables").items()) {
+                for (const auto& attributes : variable.value().at("attributes").items()) {
+                    VariableAttributeKey key;
+                    key.name = variable.value().at("variable_name");
+                    try {
+                        key.attribute_type = conversions::string_to_attribute_enum(attributes.key());
+                    } catch (const std::out_of_range& /* e*/) {
+                        EVLOG_error << "Could not find type " << attributes.key() << " of component " << p.name
+                                    << " and variable " << key.name;
+                        throw InitDeviceModelDbError("Could not find type " + attributes.key() + " of component " +
+                                                     p.name + " and variable " + key.name);
+                    }
 
-                key.value = get_string_value_from_json(attributes.value());
-                if (variable.value().contains("instance")) {
-                    key.instance = variable.value().at("instance");
+                    key.value = get_string_value_from_json(attributes.value());
+                    if (variable.value().contains("instance")) {
+                        key.instance = variable.value().at("instance");
+                    }
+                    attribute_keys.push_back(key);
                 }
-                attribute_keys.push_back(key);
             }
+
+            config_values.insert({p, attribute_keys});
         }
-
-        config_values.insert({p, attribute_keys});
+        return config_values;
+    } catch (const json::parse_error& e) {
+        EVLOG_error << "Error while parsing OCPP config file: " << config_file_path;
+        throw;
     }
-
-    return config_values;
 }
 
 bool InitDeviceModelDb::insert_variable_attribute_value(const ComponentKey& component_key,
@@ -815,10 +824,10 @@ bool InitDeviceModelDb::insert_variable_attribute_value(const ComponentKey& comp
                                      conversions::attribute_enum_to_string(variable_attribute_key.attribute_type) +
                                      ": " + std::string(this->database->get_error_message()));
     } else if ((insert_variable_attribute_statement->changes() < 1) && warn_source_not_default) {
-        EVLOG_warning << "Could not set value of variable " + get_variable_name_for_logging(variable_attribute_key) +
-                             " (Component: " + get_component_name_for_logging(component_key) + ") attribute " +
-                             conversions::attribute_enum_to_string(variable_attribute_key.attribute_type) +
-                             ": value has already changed by other source";
+        EVLOG_debug << "Could not set value of variable " + get_variable_name_for_logging(variable_attribute_key) +
+                           " (Component: " + get_component_name_for_logging(component_key) + ") attribute " +
+                           conversions::attribute_enum_to_string(variable_attribute_key.attribute_type) +
+                           ": value has already changed by other source";
     }
 
     return true;
