@@ -93,10 +93,6 @@ types:
         type: object
         description: The message to show
         $ref: /display_message#/MessageContent
-      message_format:
-        description: The format of the message
-        type: string
-        $ref: /display_message#/MessageFormat
       qr_code:
         description: >-
           QR Code to scan for more information.

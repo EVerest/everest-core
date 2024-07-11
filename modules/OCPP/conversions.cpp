@@ -516,6 +516,35 @@ ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::disp
     }
 }
 
+types::display_message::MessageFormat
+to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+    switch (message_format) {
+    case ocpp::v201::MessageFormatEnum::ASCII:
+        return types::display_message::MessageFormat::ASCII;
+    case ocpp::v201::MessageFormatEnum::HTML:
+        return types::display_message::MessageFormat::HTML;
+    case ocpp::v201::MessageFormatEnum::URI:
+        return types::display_message::MessageFormat::URI;
+    case ocpp::v201::MessageFormatEnum::UTF8:
+        return types::display_message::MessageFormat::UTF8;
+    default:
+        throw std::out_of_range(
+            "Could not convert  ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
+    }
+}
+
+types::display_message::MessageContent
+to_everest_display_message_content(const ocpp::DisplayMessageContent& message_content) {
+    types::display_message::MessageContent message;
+    message.content = message_content.message;
+    if (message_content.message_format.has_value()) {
+        message.format = to_everest_display_message_format(message_content.message_format.value());
+    }
+    message.language = message_content.language;
+
+    return message;
+}
+
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message) {
     types::display_message::DisplayMessage m;
     m.id = display_message.id;
@@ -557,6 +586,74 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     m.timestamp_to = display_message.timestamp_to;
 
     return m;
+}
+
+types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::RunningCostState& state) {
+    switch (state) {
+    case ocpp::RunningCostState::Charging:
+        return types::session_cost::SessionStatus::Running;
+    case ocpp::RunningCostState::Idle:
+        return types::session_cost::SessionStatus::Idle;
+    case ocpp::RunningCostState::Finished:
+        return types::session_cost::SessionStatus::Finished;
+    default:
+        throw std::out_of_range("Could not convert ocpp::RunningCostState to types::session_cost::SessionStatus");
+    }
+}
+
+types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price,
+                                                                const types::session_cost::CostCategory category,
+                                                                const std::optional<ocpp::DateTime>& timestamp,
+                                                                const std::optional<uint32_t>& meter_value) {
+    types::session_cost::SessionCostChunk chunk;
+    chunk.cost->value = static_cast<int>(price * 100); // TODO
+    chunk.category = category;
+    if (timestamp.has_value()) {
+        chunk.timestamp_to = timestamp.value().to_rfc3339();
+    }
+    chunk.metervalue_to = meter_value;
+    return chunk;
+}
+
+types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost) {
+    types::session_cost::SessionCost cost;
+    cost.session_id = running_cost.transaction_id; // TODO get session id for 1.6
+    // cost.currency = running_cost.; // TODO something with currency. Remove from the SessionCost type?? Or add to
+    // RunningCost
+    cost.status = to_everest_running_cost_state(running_cost.state);
+    cost.qrCode = running_cost.qr_code_text;
+    if (running_cost.cost_messages.has_value()) {
+        for (const ocpp::DisplayMessageContent& message : running_cost.cost_messages.value()) {
+            types::display_message::MessageContent m = to_everest_display_message_content(message);
+            cost.message->push_back(m);
+        }
+    }
+
+    if (running_cost.charging_price.has_value()) {
+        const ocpp::RunningCostChargingPrice& price = running_cost.charging_price.value();
+        if (price.hour_price.has_value()) {
+            types::session_cost::SessionCostChunk chunk =
+                create_session_cost_chunk(price.hour_price.value(), types::session_cost::CostCategory::Time,
+                                          running_cost.timestamp, running_cost.meter_value);
+            cost.cost_chunks->push_back(chunk);
+        }
+        if (price.kWh_price.has_value()) {
+            types::session_cost::SessionCostChunk chunk =
+                create_session_cost_chunk(price.kWh_price.value(), types::session_cost::CostCategory::Energy,
+                                          running_cost.timestamp, running_cost.meter_value);
+            cost.cost_chunks->push_back(chunk);
+        }
+        if (price.flat_fee.has_value()) {
+            types::session_cost::SessionCostChunk chunk =
+                create_session_cost_chunk(price.flat_fee.value(), types::session_cost::CostCategory::FlatFee,
+                                          running_cost.timestamp, running_cost.meter_value);
+            cost.cost_chunks->push_back(chunk);
+        }
+    }
+
+    // TODO finish the conversion
+
+    return cost;
 }
 
 } // namespace conversions

@@ -7,6 +7,7 @@
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
 #include <generated/types/reservation.hpp>
+#include <generated/types/session_cost.hpp>
 #include <generated/types/system.hpp>
 
 #include <ocpp/common/types.hpp>

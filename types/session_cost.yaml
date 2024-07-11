@@ -168,13 +168,7 @@ types:
         items:
           description: Message with pricing information in a specific language
           type: object
-          properties:
-            language:
-              description: Language code of the message (RFC5646)
-              type: string
-            message:
-              description: Message in the given language
-              type: string
+          $ref: /display_message#/MessageContent
       qrCode:
         description: >-
           QR Code with more information. For example when the charging is finished,

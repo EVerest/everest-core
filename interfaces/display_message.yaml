@@ -12,8 +12,11 @@ cmds:
       request:
         description: >-
           Request to set a display message
-        type: object
-        $ref: /display_message#/DisplayMessage
+        type: array
+        items:
+          description: The display messages to set
+          type: object
+          $ref: /display_message#/DisplayMessage
     result:
       description: >-
         Response to the set display message request.
