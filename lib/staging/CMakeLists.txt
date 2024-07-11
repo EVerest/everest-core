@@ -1,5 +1,6 @@
 add_subdirectory(can_dpm1000)
 add_subdirectory(evse_security)
+add_subdirectory(tls)
 if(EVEREST_DEPENDENCY_ENABLED_LIBSLAC AND EVEREST_DEPENDENCY_ENABLED_LIBFSM)
     add_subdirectory(slac)
 endif()

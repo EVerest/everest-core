@@ -3,14 +3,15 @@
 // Copyright (C) 2023 Contributors to EVerest
 #include "v2g_server.hpp"
 
+#include <cstdint>
+#include <cstdlib>
 #include <inttypes.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <cstdint>
-
+#ifdef EVEREST_MBED_TLS
 #include <mbedtls/base64.h>
+#endif // EVEREST_MBED_TLS
 
 #include <cbv2g/app_handshake/appHand_Decoder.h>
 #include <cbv2g/app_handshake/appHand_Encoder.h>
@@ -117,6 +118,9 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
         tempbuff++;
     }
 
+    std::string EXI_Base64;
+
+#ifdef EVEREST_MBED_TLS
     unsigned char* base64_buffer = NULL;
     size_t base64_buffer_len = 0;
     mbedtls_base64_encode(NULL, 0, &base64_buffer_len, conn->buffer, (size_t)conn->payload_len + V2GTP_HEADER_LENGTH);
@@ -127,10 +131,18 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
         dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
     }
 
-    v2gMessage.V2G_Message_EXI_Base64 = std::string(reinterpret_cast<char const*>(base64_buffer), base64_buffer_len);
+    EXI_Base64 = std::string(reinterpret_cast<char const*>(base64_buffer), base64_buffer_len);
     if (base64_buffer != NULL) {
         free(base64_buffer);
     }
+#else
+    EXI_Base64 = openssl::base64_encode(conn->buffer, conn->payload_len + V2GTP_HEADER_LENGTH);
+    if (EXI_Base64.size() == 0) {
+        dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
+    }
+#endif // EVEREST_MBED_TLS
+
+    v2gMessage.V2G_Message_EXI_Base64 = EXI_Base64;
     v2gMessage.V2G_Message_ID = get_V2G_Message_ID(conn->ctx->current_v2g_msg, conn->ctx->selected_protocol, is_req);
     v2gMessage.V2G_Message_EXI_Hex = msg_as_hex_string;
     conn->ctx->p_charger->publish_V2G_Messages(v2gMessage);
@@ -142,10 +154,13 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
  * \return Returns 0 if the V2G-session was successfully stopped, otherwise -1.
  */
 static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
+    assert(conn != nullptr);
+    assert(conn->read != nullptr);
+
     int rv;
 
     /* read and process header */
-    rv = connection_read(conn, conn->buffer, V2GTP_HEADER_LENGTH);
+    rv = conn->read(conn, conn->buffer, V2GTP_HEADER_LENGTH);
     if (rv < 0) {
         dlog(DLOG_LEVEL_ERROR, "connection_read(header) failed: %s",
              (rv == -1) ? strerror(errno) : "connection terminated");
@@ -182,7 +197,7 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
         return -1;
     }
     /* read request */
-    rv = connection_read(conn, &conn->buffer[V2GTP_HEADER_LENGTH], conn->payload_len);
+    rv = conn->read(conn, &conn->buffer[V2GTP_HEADER_LENGTH], conn->payload_len);
     if (rv < 0) {
         dlog(DLOG_LEVEL_ERROR, "connection_read(payload) failed: %s",
              (rv == -1) ? strerror(errno) : "connection terminated");
@@ -205,12 +220,15 @@ static int v2g_incoming_v2gtp(struct v2g_connection* conn) {
  * \return Returns 0 if the v2g-session was successfully stopped, otherwise -1.
  */
 int v2g_outgoing_v2gtp(struct v2g_connection* conn) {
+    assert(conn != nullptr);
+    assert(conn->write != nullptr);
+
     /* fixup/create header */
     const auto len = exi_bitstream_get_length(&conn->stream);
 
     V2GTP_WriteHeader(conn->buffer, len - V2GTP_HEADER_LENGTH);
 
-    if (connection_write(conn, conn->buffer, len) == -1) {
+    if (conn->write(conn, conn->buffer, len) == -1) {
         dlog(DLOG_LEVEL_ERROR, "connection_write(header) failed: %s", strerror(errno));
         return -1;
     }
