@@ -1028,8 +1028,11 @@ function read_from_car(mod) {
   let amps2 = 0.0;
   let amps3 = 0.0;
 
+  let hlc_active = false;
+  if (mod.pwm_duty_cycle >= 0.03 && mod.pwm_duty_cycle <= 0.07) hlc_active = true;
+
   let amps = dutyCycleToAmps(mod.pwm_duty_cycle);
-  if (amps > mod.ev_max_current) amps = mod.ev_max_current;
+  if (amps > mod.ev_max_current || hlc_active === true) amps = mod.ev_max_current;
 
   if (mod.relais_on === true && mod.ev_three_phases > 0) amps1 = amps;
   else amps1 = 0;
