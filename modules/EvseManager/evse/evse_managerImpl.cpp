@@ -445,7 +445,7 @@ void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits&
 }
 
 void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
+    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 

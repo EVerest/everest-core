@@ -178,8 +178,8 @@ public:
     EvseState get_current_state();
     sigslot::signal<EvseState> signal_state;
 
-    void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DC_EVSEMaximumLimits& l);
-    types::iso15118_charger::DC_EVSEMaximumLimits get_evse_max_hlc_limits();
+    void inform_new_evse_max_hlc_limits(const types::iso15118_charger::DcEvseMaximumLimits& l);
+    types::iso15118_charger::DcEvseMaximumLimits get_evse_max_hlc_limits();
 
     void dlink_pause();
     void dlink_error();
@@ -269,7 +269,7 @@ private:
         bool iec_allow_close_contactor{false};
         bool hlc_charging_active{false};
         HlcTerminatePause hlc_charging_terminate_pause;
-        types::iso15118_charger::DC_EVSEMaximumLimits current_evse_max_limits;
+        types::iso15118_charger::DcEvseMaximumLimits current_evse_max_limits;
         bool pwm_running{false};
         std::optional<types::authorization::ProvidedIdToken>
             stop_transaction_id_token; // only set in case transaction was stopped locally
