@@ -2482,8 +2482,8 @@ void ChargePoint::handle_set_network_profile_req(Call<SetNetworkProfileRequest> 
 
     if (this->device_model->set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
                                       ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
-                                      AttributeEnum::Actual, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL,
-                                      network_connection_profiles.dump()) != SetVariableStatusEnum::Accepted) {
+                                      AttributeEnum::Actual, network_connection_profiles.dump(),
+                                      VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL) != SetVariableStatusEnum::Accepted) {
         EVLOG_warning
             << "CSMS attempted to set a network profile that could not be written to the device model storage";
         response.status = SetNetworkProfileStatusEnum::Rejected;
