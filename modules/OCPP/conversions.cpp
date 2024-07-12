@@ -602,17 +602,29 @@ types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::Run
 }
 
 types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price,
-                                                                const types::session_cost::CostCategory category,
                                                                 const std::optional<ocpp::DateTime>& timestamp,
                                                                 const std::optional<uint32_t>& meter_value) {
     types::session_cost::SessionCostChunk chunk;
     chunk.cost->value = static_cast<int>(price * 100); // TODO
-    chunk.category = category;
     if (timestamp.has_value()) {
         chunk.timestamp_to = timestamp.value().to_rfc3339();
     }
     chunk.metervalue_to = meter_value;
     return chunk;
+}
+
+types::session_cost::ChargingPriceComponent
+to_everest_charging_price_component(const double& price, const types::session_cost::CostCategory category) {
+    types::session_cost::ChargingPriceComponent c;
+    types::money::Price p;
+    types::money::Currency currency;
+    currency.code = types::money::CurrencyCode::EUR; // TODO get from settings
+    currency.decimals = 2;                           // TODO
+    p.currency = currency;
+    p.value.value = static_cast<int>(price * 100); // TODO
+    c.category = category;
+
+    return c;
 }
 
 types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost) {
@@ -623,35 +635,98 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
     cost.status = to_everest_running_cost_state(running_cost.state);
     cost.qrCode = running_cost.qr_code_text;
     if (running_cost.cost_messages.has_value()) {
+        cost.message = std::vector<types::display_message::MessageContent>();
         for (const ocpp::DisplayMessageContent& message : running_cost.cost_messages.value()) {
             types::display_message::MessageContent m = to_everest_display_message_content(message);
             cost.message->push_back(m);
         }
     }
 
+    types::session_cost::SessionCostChunk chunk =
+        create_session_cost_chunk(running_cost.cost.value(), running_cost.timestamp, running_cost.meter_value);
+    cost.cost_chunks = std::vector<types::session_cost::SessionCostChunk>();
+    cost.cost_chunks->push_back(chunk);
+
     if (running_cost.charging_price.has_value()) {
         const ocpp::RunningCostChargingPrice& price = running_cost.charging_price.value();
         if (price.hour_price.has_value()) {
-            types::session_cost::SessionCostChunk chunk =
-                create_session_cost_chunk(price.hour_price.value(), types::session_cost::CostCategory::Time,
-                                          running_cost.timestamp, running_cost.meter_value);
-            cost.cost_chunks->push_back(chunk);
+            types::session_cost::ChargingPriceComponent hour_price =
+                to_everest_charging_price_component(price.hour_price.value(), types::session_cost::CostCategory::Time);
+            cost.charging_price->push_back(hour_price);
         }
         if (price.kWh_price.has_value()) {
-            types::session_cost::SessionCostChunk chunk =
-                create_session_cost_chunk(price.kWh_price.value(), types::session_cost::CostCategory::Energy,
-                                          running_cost.timestamp, running_cost.meter_value);
-            cost.cost_chunks->push_back(chunk);
+            types::session_cost::ChargingPriceComponent energy_price =
+                to_everest_charging_price_component(price.kWh_price.value(), types::session_cost::CostCategory::Energy);
+            cost.charging_price->push_back(energy_price);
         }
         if (price.flat_fee.has_value()) {
-            types::session_cost::SessionCostChunk chunk =
-                create_session_cost_chunk(price.flat_fee.value(), types::session_cost::CostCategory::FlatFee,
-                                          running_cost.timestamp, running_cost.meter_value);
-            cost.cost_chunks->push_back(chunk);
+            types::session_cost::ChargingPriceComponent flat_fee_price =
+                to_everest_charging_price_component(price.flat_fee.value(), types::session_cost::CostCategory::FlatFee);
+            cost.charging_price->push_back(flat_fee_price);
         }
     }
 
-    // TODO finish the conversion
+    if (running_cost.idle_price.has_value()) {
+        types::session_cost::IdlePrice idle_price;
+        const ocpp::RunningCostIdlePrice& ocpp_idle_price = running_cost.idle_price.value();
+        if (ocpp_idle_price.idle_hour_price.has_value()) {
+            idle_price.hour_price = ocpp_idle_price.idle_hour_price.value();
+        }
+
+        if (ocpp_idle_price.idle_grace_minutes.has_value()) {
+            idle_price.grace_minutes = ocpp_idle_price.idle_grace_minutes.value();
+        }
+
+        cost.idle_price = idle_price;
+    }
+
+    if (running_cost.next_period_at_time.has_value() || running_cost.next_period_charging_price.has_value() ||
+        running_cost.next_period_idle_price.has_value()) {
+        types::session_cost::NextPeriodPrice next_period;
+        if (running_cost.next_period_at_time.has_value()) {
+            next_period.timestamp_from = running_cost.next_period_at_time.value().to_rfc3339();
+        }
+        if (running_cost.next_period_idle_price.has_value()) {
+            types::session_cost::IdlePrice next_period_idle_price;
+            const ocpp::RunningCostIdlePrice& ocpp_next_period_idle_price = running_cost.next_period_idle_price.value();
+            if (ocpp_next_period_idle_price.idle_hour_price.has_value()) {
+                next_period_idle_price.hour_price = ocpp_next_period_idle_price.idle_hour_price.value();
+            }
+
+            if (ocpp_next_period_idle_price.idle_grace_minutes.has_value()) {
+                next_period_idle_price.grace_minutes = ocpp_next_period_idle_price.idle_grace_minutes.value();
+            }
+
+            next_period.idle_price = next_period_idle_price;
+        }
+        if (running_cost.next_period_charging_price.has_value()) {
+            // next_period.charging_price.price->value = running_cost.next_period_charging_price.value() * 100; // TODO
+            const ocpp::RunningCostChargingPrice& next_period_charging_price =
+                running_cost.next_period_charging_price.value();
+
+            next_period.charging_price = std::vector<types::session_cost::ChargingPriceComponent>();
+
+            if (next_period_charging_price.hour_price.has_value()) {
+                types::session_cost::ChargingPriceComponent hour_price = to_everest_charging_price_component(
+                    next_period_charging_price.hour_price.value(), types::session_cost::CostCategory::Time);
+                next_period.charging_price.push_back(hour_price);
+            }
+
+            if (next_period_charging_price.kWh_price.has_value()) {
+                types::session_cost::ChargingPriceComponent energy_price = to_everest_charging_price_component(
+                    next_period_charging_price.kWh_price.value(), types::session_cost::CostCategory::Energy);
+                next_period.charging_price.push_back(energy_price);
+            }
+
+            if (next_period_charging_price.flat_fee.has_value()) {
+                types::session_cost::ChargingPriceComponent flat_fee_price = to_everest_charging_price_component(
+                    next_period_charging_price.flat_fee.value(), types::session_cost::CostCategory::FlatFee);
+                next_period.charging_price.push_back(flat_fee_price);
+            }
+        }
+
+        cost.next_period = next_period;
+    }
 
     return cost;
 }

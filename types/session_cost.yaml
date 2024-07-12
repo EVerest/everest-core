@@ -38,7 +38,7 @@ types:
         description: >-
           Price for this component
         type: object
-        $ref: /money#/MoneyAmount
+        $ref: /money#/Price
   NextPeriodPrice:
     description: Pricing for the next period
     type: object
@@ -48,8 +48,10 @@ types:
         type: string
       charging_price:
         description: Price components while charging
-        type: object
-        $ref: /session_cost#/ChargingPriceComponent
+        type: array
+        items:
+          type: object
+          $ref: /session_cost#/ChargingPriceComponent
       idle_price:
         description: Price components while idle. Optional if no idle fee charged.
         type: object
@@ -91,7 +93,7 @@ types:
         $ref: /money#/MoneyAmount
       category:
         description: >-
-          Cost category. Typically this is energy or time.
+          Cost category. Typically this is energy, time or a flat fee.
         type: string
         $ref: /session_cost#/CostCategory
   SessionStatus:
