@@ -1,104 +1,122 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 #include <iso15118/io/connection_ssl.hpp>
 
 #include <cassert>
 #include <cstring>
 #include <filesystem>
 #include <thread>
+#include <tuple>
+#include <unistd.h>
 
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/debug.h"
-#include "mbedtls/entropy.h"
-#include "mbedtls/error.h"
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/socket.h>
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include <iso15118/detail/helper.hpp>
 #include <iso15118/detail/io/socket_helper.hpp>
 
+namespace std {
+template <> class default_delete<SSL> {
+public:
+    void operator()(SSL* ptr) const {
+        ::SSL_free(ptr);
+    }
+};
+template <> class default_delete<SSL_CTX> {
+public:
+    void operator()(SSL_CTX* ptr) const {
+        ::SSL_CTX_free(ptr);
+    }
+};
+} // namespace std
+
 namespace iso15118::io {
 
+static constexpr auto DEFAULT_SOCKET_BACKLOG = 4;
+
+static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+
+static auto key_log_fd{-1};
+static sockaddr_in6 key_log_address;
+
 struct SSLContext {
-    SSLContext();
-
-    mbedtls_net_context accepting_net_ctx;
-    mbedtls_net_context connection_net_ctx;
-    mbedtls_ssl_context ssl;
-    mbedtls_ssl_config conf;
-    mbedtls_x509_crt server_certificate;
-    mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_entropy_context entropy;
-    mbedtls_pk_context pkey;
+    std::unique_ptr<SSL_CTX> ssl_ctx;
+    std::unique_ptr<SSL> ssl;
 };
 
-SSLContext::SSLContext() {
-    mbedtls_net_init(&accepting_net_ctx);
-    mbedtls_net_init(&connection_net_ctx);
-    mbedtls_ssl_init(&ssl);
-    mbedtls_ssl_config_init(&conf);
-    mbedtls_x509_crt_init(&server_certificate);
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-    mbedtls_entropy_init(&entropy);
-    mbedtls_pk_init(&pkey);
-};
-
-static void parse_crt_file(mbedtls_x509_crt* chain, const std::filesystem::path& path) {
-    const auto x509_crt_parse_result = mbedtls_x509_crt_parse_file(chain, path.c_str());
-    if (x509_crt_parse_result != 0) {
-        const std::string error = "Failed in mbedtls_x509_crt_parse_file() with file " + path.string();
-        log_and_raise_mbed_error(error.c_str(), x509_crt_parse_result);
+static std::tuple<int, sockaddr_in6> create_udp_socket(const char* interface_name, uint16_t port) {
+    int udp_socket = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (udp_socket < 0) {
+        const auto error_msg = adding_err_msg("Could not create socket");
+        logf(error_msg.c_str());
+        return {udp_socket, {}};
     }
+
+    // source setup
+
+    // find port between 49152-65535
+    auto could_bind = false;
+    auto source_port = 49152;
+    for (; source_port < 65535; source_port++) {
+        sockaddr_in6 source_address = {AF_INET6, htons(source_port)};
+        if (bind(udp_socket, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+            could_bind = true;
+            break;
+        }
+    }
+
+    if (!could_bind) {
+        const auto error_msg = adding_err_msg("Could not bind");
+        logf(error_msg.c_str());
+        return {-1, {}};
+    }
+
+    logf("UDP socket bound to source port: %u", source_port);
+
+    const auto index = if_nametoindex(interface_name);
+    auto mreq = ipv6_mreq{};
+    mreq.ipv6mr_interface = index;
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+        const auto error_msg = adding_err_msg("Failed to setup multicast address");
+        logf(error_msg.c_str());
+        return {-1, {}};
+    }
+    if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        const auto error_msg = adding_err_msg("Could not add multicast group membership");
+        logf(error_msg.c_str());
+        return {-1, {}};
+    }
+
+    if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+        const auto error_msg = adding_err_msg("Could not set interface name:" + std::string(interface_name));
+        logf(error_msg.c_str());
+    }
+
+    sockaddr_in6 dest_address = {AF_INET6, htons(port)};
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &dest_address.sin6_addr) <= 0) {
+        const auto error_msg = adding_err_msg("Failed to setup server address, reset key_log_fd");
+        logf(error_msg.c_str());
+        return {-1, {}};
+    }
+
+    return {udp_socket, dest_address};
 }
 
-static void parse_key_file(mbedtls_pk_context* pk_context, const std::filesystem::path& path,
-                           const std::string& password, mbedtls_ctr_drbg_context* drbg_context) {
-    const auto password_ptr = (password.length() == 0) ? nullptr : password.c_str();
-    const auto parse_key_result =
-#if MBEDTLS_VERSION_MAJOR == 3
-        mbedtls_pk_parse_keyfile(pk_context, path.c_str(), password_ptr, mbedtls_ctr_drbg_random, drbg_context);
-#else
-        mbedtls_pk_parse_keyfile(pk_context, path.c_str(), password_ptr);
-#endif
-
-    if (parse_key_result != 0) {
-        const std::string error = "Failed in mbedtls_pk_parse_keyfile() with file " + path.string();
-        log_and_raise_mbed_error(error.c_str(), parse_key_result);
-    }
-}
-
-static void load_certificates(SSLContext& ssl, const config::SSLConfig& ssl_config) {
-    if (ssl_config.backend == config::CertificateBackend::JOSEPPA_LAYOUT) {
-        const std::filesystem::path prefix(ssl_config.config_string);
-        auto chain = &ssl.server_certificate;
-
-        parse_crt_file(chain, prefix / "seccLeafCert.pem");
-        parse_crt_file(chain, prefix / "cpoSubCA2Cert.pem");
-        parse_crt_file(chain, prefix / "cpoSubCA1Cert.pem");
-        parse_key_file(&ssl.pkey, prefix / "seccLeaf.key", ssl_config.private_key_password, &ssl.ctr_drbg);
-    } else if (ssl_config.backend == config::CertificateBackend::EVEREST_LAYOUT) {
-        const std::filesystem::path prefix(ssl_config.config_string);
-
-        auto chain = &ssl.server_certificate;
-        parse_crt_file(chain, prefix / "client/cso/SECC_LEAF.pem");
-        parse_crt_file(chain, prefix / "ca/cso/CPO_SUB_CA2.pem");
-        parse_crt_file(chain, prefix / "ca/cso/CPO_SUB_CA1.pem");
-        parse_key_file(&ssl.pkey, prefix / "client/cso/SECC_LEAF.key", ssl_config.private_key_password, &ssl.ctr_drbg);
-    }
-}
-
-ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& interface_name,
+ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& interface_name_,
                              const config::SSLConfig& ssl_config) :
-    poll_manager(poll_manager_), ssl(std::make_unique<SSLContext>()) {
-
-#if MBEDTLS_VERSION_MAJOR == 3
-    // FIXME (aw): psa stuff?
-    psa_crypto_init();
-#endif
+    poll_manager(poll_manager_),
+    interface_name(interface_name_),
+    enable_ssl_logging(ssl_config.enable_ssl_logging),
+    ssl(std::make_unique<SSLContext>()) {
 
     sockaddr_in6 address;
-    if (not get_first_sockaddr_in6_for_interface(interface_name, address)) {
-        const auto msg = "Failed to get ipv6 socket address for interface " + interface_name;
+    if (not get_first_sockaddr_in6_for_interface(interface_name_, address)) {
+        const auto msg = "Failed to get ipv6 socket address for interface " + interface_name_;
         log_and_throw(msg.c_str());
     }
 
@@ -106,183 +124,253 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
 
     if (not address_name) {
         const auto msg =
-            "Failed to determine string representation of ipv6 socket address for interface " + interface_name;
+            "Failed to determine string representation of ipv6 socket address for interface " + interface_name_;
         log_and_throw(msg.c_str());
     }
 
+    // Todo(sl): Define constexpr -> 50000 is fixed?
     end_point.port = 50000;
     memcpy(&end_point.address, &address.sin6_addr, sizeof(address.sin6_addr));
 
-    //
-    // mbedtls specifica
-    //
+    // Openssl stuff missing!
+    init_ssl(ssl_config);
 
-    // initialize pseudo random number generator
-    // FIXME (aw): what is the custom argument about?
-    const auto ctr_drbg_seed_result =
-        mbedtls_ctr_drbg_seed(&ssl->ctr_drbg, mbedtls_entropy_func, &ssl->entropy, nullptr, 0);
-    if (ctr_drbg_seed_result != 0) {
-        log_and_raise_mbed_error("Failed in mbedtls_ctr_drbg_seed()", ctr_drbg_seed_result);
+    fd = socket(AF_INET6, SOCK_STREAM, 0);
+    if (fd == -1) {
+        log_and_throw("Failed to create an ipv6 socket");
     }
 
-    // load certificate
-    load_certificates(*ssl, ssl_config);
+    // before bind, set the port
+    address.sin6_port = htobe16(end_point.port);
 
-    const auto bind_result = mbedtls_net_bind(&ssl->accepting_net_ctx, address_name.get(),
-                                              std::to_string(end_point.port).c_str(), MBEDTLS_NET_PROTO_TCP);
-    if (bind_result != 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_net_bind()", bind_result);
+    const auto bind_result = bind(fd, reinterpret_cast<const struct sockaddr*>(&address), sizeof(address));
+    if (bind_result == -1) {
+        const auto error = "Failed to bind ipv6 socket to interface " + interface_name_;
+        log_and_throw(error.c_str());
     }
 
-    // setup ssl context configuration
-    const auto ssl_config_result = mbedtls_ssl_config_defaults(
-        &ssl->conf, MBEDTLS_SSL_IS_SERVER, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
-    if (ssl_config_result != 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_ssl_config_defaults()", ssl_config_result);
+    const auto listen_result = listen(fd, DEFAULT_SOCKET_BACKLOG);
+    if (listen_result == -1) {
+        log_and_throw("Listen on socket failed");
     }
 
-    mbedtls_ssl_conf_rng(&ssl->conf, mbedtls_ctr_drbg_random, &ssl->ctr_drbg);
-
-    mbedtls_ssl_conf_dbg(
-        &ssl->conf,
-        [](void* callback_context, int debug_level, const char* file_name, int line_number, const char* message) {
-            logf("mbedtls debug (level: %d) - %s\n", debug_level, message);
-        },
-        stdout);
-
-    if (ssl_config.enable_ssl_logging) {
-        mbedtls_debug_set_threshold(3);
-    }
-
-    mbedtls_ssl_conf_ca_chain(&ssl->conf, ssl->server_certificate.next, nullptr);
-    const auto own_cert_result = mbedtls_ssl_conf_own_cert(&ssl->conf, &ssl->server_certificate, &ssl->pkey);
-    if (own_cert_result != 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_ssl_conf_own_cert()", own_cert_result);
-    }
-
-    const auto ssl_setup_result = mbedtls_ssl_setup(&ssl->ssl, &ssl->conf);
-    if (ssl_setup_result != 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_ssl_setup()", ssl_setup_result);
-    }
-
-    poll_manager.register_fd(ssl->accepting_net_ctx.fd, [this]() { this->handle_connect(); });
+    poll_manager.register_fd(fd, [this]() { this->handle_connect(); });
 }
 
 ConnectionSSL::~ConnectionSSL() = default;
 
 void ConnectionSSL::set_event_callback(const ConnectionEventCallback& callback) {
-    this->event_callback = callback;
+    event_callback = callback;
 }
 
 Ipv6EndPoint ConnectionSSL::get_public_endpoint() const {
     return end_point;
 }
 
+void ConnectionSSL::init_ssl(const config::SSLConfig& ssl_config) {
+
+    // Note: openssl does not provide support for ECDH-ECDSA-AES128-SHA256 anymore
+    static constexpr auto TLS1_2_CIPHERSUITES = "ECDHE-ECDSA-AES128-SHA256";
+    static constexpr auto TLS1_3_CIPHERSUITES = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256";
+
+    const std::filesystem::path prefix(ssl_config.config_string);
+
+    const SSL_METHOD* method = TLS_server_method();
+    auto* ctx = SSL_CTX_new(method);
+
+    if (ctx == nullptr) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_new()");
+    }
+
+    if (SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION) == 0) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_set_min_proto_version()");
+    }
+
+    if (SSL_CTX_set_cipher_list(ctx, TLS1_2_CIPHERSUITES) == 0) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_set_cipher_list()");
+    }
+
+    if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_CIPHERSUITES) == 0) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_set_ciphersuites()");
+    }
+
+    // TODO(sl): Better cert path handling
+    const std::filesystem::path certificate_chain_file_path = prefix / "client/cso/CPO_CERT_CHAIN.pem";
+
+    if (SSL_CTX_use_certificate_chain_file(ctx, certificate_chain_file_path.c_str()) != 1) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_use_certificate_chain_file()");
+    }
+
+    // INFO: the password callback uses a non-const argument
+    std::string pass_str = ssl_config.private_key_password;
+    SSL_CTX_set_default_passwd_cb_userdata(ctx, pass_str.data());
+
+    const std::filesystem::path private_key_file_path = prefix / "client/cso/SECC_LEAF.key";
+    if (SSL_CTX_use_PrivateKey_file(ctx, private_key_file_path.c_str(), SSL_FILETYPE_PEM) != 1) {
+        log_and_raise_openssl_error("Failed in SSL_CTX_use_PrivateKey_file()");
+    }
+
+    // TODO(sl): How switch verify mode to none if tls 1.2 is used?
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, nullptr);
+
+    if (ssl_config.enable_ssl_logging) {
+
+        SSL_CTX_set_keylog_callback(ctx, [](const SSL* ssl, const char* line) {
+            logf("TLS handshake keys: %s\n", line);
+
+            if (key_log_fd == -1) {
+                logf("Error - key_log_fd is not available");
+                return;
+            }
+
+            const auto udp_send_result =
+                sendto(key_log_fd, line, strlen(line), 0, reinterpret_cast<const sockaddr*>(&key_log_address),
+                       sizeof(key_log_address));
+
+            if (udp_send_result != strlen(line)) {
+                const auto error_msg = adding_err_msg("UDP send() failed");
+                logf(error_msg.c_str());
+            }
+        });
+    }
+
+    ssl->ssl_ctx = std::unique_ptr<SSL_CTX>(ctx);
+}
+
 void ConnectionSSL::write(const uint8_t* buf, size_t len) {
-    assert(handshake_complete);
+    assert(handshake_complete); // TODO(sl): Adding states?
 
-    const auto ssl_write_result = mbedtls_ssl_write(&ssl->ssl, buf, len);
+    size_t writebytes = 0;
 
-    if (ssl_write_result < 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_ssl_write()", ssl_write_result);
-    } else if (ssl_write_result != len) {
+    const auto ssl_write_result = SSL_write_ex(ssl->ssl.get(), buf, len, &writebytes);
+
+    if (ssl_write_result <= 0) {
+        const auto ssl_err_raw = SSL_get_error(ssl->ssl.get(), ssl_write_result);
+        log_and_raise_openssl_error("Failed to SSL_write_ex(): " + std::to_string(ssl_err_raw));
+    } else if (writebytes != len) {
         log_and_throw("Didn't complete to write");
     }
 }
 
 ReadResult ConnectionSSL::read(uint8_t* buf, size_t len) {
-    // FIXME (aw): any assert best practices?
-    assert(handshake_complete);
+    assert(handshake_complete); // TODO(sl): Adding states?
 
-    const auto ssl_read_result = mbedtls_ssl_read(&ssl->ssl, buf, len);
+    size_t readbytes = 0;
+
+    const auto ssl_read_result = SSL_read_ex(ssl->ssl.get(), buf, len, &readbytes);
 
     if (ssl_read_result > 0) {
-        size_t bytes_read = ssl_read_result;
-        const auto would_block = (bytes_read < len);
-        return {would_block, bytes_read};
+        const auto would_block = (readbytes < len);
+        return {would_block, readbytes};
     }
 
-    if ((ssl_read_result == MBEDTLS_ERR_SSL_WANT_READ) or (ssl_read_result == MBEDTLS_ERR_SSL_WANT_WRITE)) {
+    const auto ssl_error = SSL_get_error(ssl->ssl.get(), ssl_read_result);
+
+    if ((ssl_error == SSL_ERROR_WANT_READ) or (ssl_error == SSL_ERROR_WANT_WRITE)) {
         return {true, 0};
     }
 
-    // FIXME (aw): error handling, when connection closed, i.e. ssl_read_result == 0
-    log_and_raise_mbed_error("Failed to mbedtls_ssl_read()", ssl_read_result);
+    log_and_raise_openssl_error("Failed to SSL_read_ex(): " + std::to_string(ssl_error));
+
     return {false, 0};
 }
 
 void ConnectionSSL::handle_connect() {
-    const auto accept_result =
-        mbedtls_net_accept(&ssl->accepting_net_ctx, &ssl->connection_net_ctx, nullptr, 0, nullptr);
-    if (accept_result != 0) {
-        log_and_raise_mbed_error("Failed to mbedtls_net_accept()", accept_result);
+
+    auto* peer = BIO_ADDR_new();
+    accept_fd = BIO_accept_ex(fd, peer, BIO_SOCK_NONBLOCK);
+
+    if (accept_fd < 0) {
+        log_and_raise_openssl_error("Failed to BIO_accept_ex");
     }
 
-    // setup callbacks for communcation
-    mbedtls_ssl_set_bio(&ssl->ssl, &ssl->connection_net_ctx, mbedtls_net_send, mbedtls_net_recv, NULL);
+    auto* ip = BIO_ADDR_hostname_string(peer, 1);
+    auto* service = BIO_ADDR_service_string(peer, 1);
 
-    // FIXME (aw): is it okay (according to iso15118 and mbedtls) to close the accepting socket here?
-    poll_manager.unregister_fd(ssl->accepting_net_ctx.fd);
-    mbedtls_net_free(&ssl->accepting_net_ctx);
+    logf("Incoming connection from [%s]:%s", ip, service);
 
-    publish_event(ConnectionEvent::ACCEPTED);
+    if (enable_ssl_logging) {
+        const auto port = std::stoul(service);
+        std::tie(key_log_fd, key_log_address) = create_udp_socket(interface_name.c_str(), port);
+    }
 
-    poll_manager.register_fd(ssl->connection_net_ctx.fd, [this]() { this->handle_data(); });
+    poll_manager.unregister_fd(fd);
+    ::close(fd);
+
+    call_if_available(event_callback, ConnectionEvent::ACCEPTED);
+
+    ssl->ssl = std::unique_ptr<SSL>(SSL_new(ssl->ssl_ctx.get()));
+    const auto socket_bio = BIO_new_socket(accept_fd, BIO_CLOSE);
+
+    SSL_set_bio(ssl->ssl.get(), socket_bio, socket_bio);
+    SSL_set_accept_state(ssl->ssl.get());
+    SSL_set_app_data(ssl->ssl.get(), this);
+
+    poll_manager.register_fd(accept_fd, [this]() { this->handle_data(); });
+
+    OPENSSL_free(ip);
+    OPENSSL_free(service);
+
+    BIO_ADDR_free(peer);
 }
 
 void ConnectionSSL::handle_data() {
     if (not handshake_complete) {
-        // FIXME (aw): proper handshake handling (howto?)
-        const auto ssl_handshake_result = mbedtls_ssl_handshake(&ssl->ssl);
+        const auto ssl_handshake_result = SSL_accept(ssl->ssl.get());
 
-        if (ssl_handshake_result != 0) {
-            if ((ssl_handshake_result == MBEDTLS_ERR_SSL_WANT_READ) or
-                (ssl_handshake_result == MBEDTLS_ERR_SSL_WANT_WRITE)) {
-                // assuming we need more data, so just return
+        if (ssl_handshake_result <= 0) {
+
+            const auto ssl_error = SSL_get_error(ssl->ssl.get(), ssl_handshake_result);
+
+            if ((ssl_error == SSL_ERROR_WANT_READ) or (ssl_error == SSL_ERROR_WANT_WRITE)) {
                 return;
             }
-
-            log_and_raise_mbed_error("Failed to mbedtls_ssl_handshake()", ssl_handshake_result);
+            log_and_raise_openssl_error("Failed to SSL_accept(): " + std::to_string(ssl_error));
         } else {
-            // handshake complete!
             logf("Handshake complete!\n");
 
             handshake_complete = true;
+            if (enable_ssl_logging) {
+                ::close(key_log_fd);
+                key_log_fd = -1;
+                key_log_address = {};
+            }
 
-            publish_event(ConnectionEvent::OPEN);
+            call_if_available(event_callback, ConnectionEvent::OPEN);
 
             return;
         }
     }
 
-    publish_event(ConnectionEvent::NEW_DATA);
+    call_if_available(event_callback, ConnectionEvent::NEW_DATA);
 }
 
 void ConnectionSSL::close() {
-
     /* tear down TLS connection gracefully */
     logf("Closing TLS connection\n");
 
     // Wait for 5 seconds [V2G20-1643]
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    poll_manager.unregister_fd(ssl->connection_net_ctx.fd);
+    const auto ssl_close_result = SSL_shutdown(ssl->ssl.get()); // TODO(sl): Correct shutdown handling
 
-    const auto ssl_close_result = mbedtls_ssl_close_notify(&ssl->ssl);
-
-    if (ssl_close_result != 0) {
-        if ((ssl_close_result != MBEDTLS_ERR_SSL_WANT_READ) and (ssl_close_result != MBEDTLS_ERR_SSL_WANT_WRITE)) {
-            log_and_raise_mbed_error("Failed to mbedtls_ssl_close_notify()", ssl_close_result);
+    if (ssl_close_result < 0) {
+        const auto ssl_error = SSL_get_error(ssl->ssl.get(), ssl_close_result);
+        if ((ssl_error != SSL_ERROR_WANT_READ) and (ssl_error != SSL_ERROR_WANT_WRITE)) {
+            log_and_raise_openssl_error("Failed to SSL_shutdown(): " + std::to_string(ssl_error));
         }
-    } else {
-        logf("TLS connection closed gracefully\n");
     }
 
-    publish_event(ConnectionEvent::CLOSED);
+    // TODO(sl): Test if correct
 
-    mbedtls_net_free(&ssl->connection_net_ctx);
+    poll_manager.unregister_fd(accept_fd);
 
-    mbedtls_ssl_free(&ssl->ssl);
+    logf("TLS connection closed gracefully");
+
+    SSL_free(ssl->ssl.get());
+    SSL_CTX_free(ssl->ssl_ctx.get());
+
+    call_if_available(event_callback, ConnectionEvent::CLOSED);
 }
 
 } // namespace iso15118::io

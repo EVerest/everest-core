@@ -21,6 +21,12 @@ option(ISO15118_LINK_CUSTOM_MBEDTLS "\
 Link against a pinned mbedtls library\
 " ON)
 
+option(USING_OPENSSL "Use OpenSSL" ON)
+
+if (USING_OPENSSL)
+    find_package(OpenSSL 3 REQUIRED)
+endif()
+
 # dependencies
 if (NOT DISABLE_EDM)
     evc_setup_edm()

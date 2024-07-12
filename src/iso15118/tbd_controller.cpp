@@ -7,8 +7,14 @@
 #include <cstdio>
 
 #include <iso15118/io/connection_plain.hpp>
-#include <iso15118/io/connection_ssl.hpp>
 #include <iso15118/session/iso.hpp>
+#ifdef LIBISO_OPENSSL
+#include <iso15118/io/connection_ssl.hpp>
+using ConnectionType = iso15118::io::ConnectionSSL;
+#else
+#include <iso15118/io/connection_tls.hpp>
+using ConnectionType = iso15118::io::ConnectionTLS;
+#endif
 
 #include <iso15118/detail/helper.hpp>
 
@@ -87,7 +93,7 @@ void TbdController::handle_sdp_server_input() {
 
     auto connection = [this](bool secure_connection) -> std::unique_ptr<io::IConnection> {
         if (secure_connection) {
-            return std::make_unique<io::ConnectionSSL>(poll_manager, config.interface_name, config.ssl);
+            return std::make_unique<ConnectionType>(poll_manager, config.interface_name, config.ssl);
         } else {
             return std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
         }
