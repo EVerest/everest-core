@@ -765,6 +765,28 @@ void OCPP::ready() {
             this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
         });
 
+    this->charge_point->register_session_cost_callback(
+        [this](const ocpp::RunningCost& session_cost) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::SessionCost cost = conversions::to_everest_session_cost(session_cost);
+            // TODO call set session cost function from interface
+            // TODO finish!!
+        });
+
+    this->charge_point->register_set_display_message_callback(
+        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
+            std::vector<types::display_message::DisplayMessage> display_messages;
+            for (const ocpp::DisplayMessage& message : messages) {
+                const types::display_message::DisplayMessage m = conversions::to_everest_display_message(message);
+                display_messages.push_back(m);
+            }
+
+            // this->
+
+            // TODO call set display messages function from interface
+            // TODO return values
+            // TODO finish!!
+        });
+
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request;

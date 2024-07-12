@@ -27,6 +27,8 @@ target_sources(${MODULE_NAME}
         "auth_provider/auth_token_providerImpl.cpp"
         "data_transfer/ocpp_data_transferImpl.cpp"
         "ocpp_generic/ocppImpl.cpp"
+        "display_message/display_messageImpl.cpp"
+        "session_cost/session_costImpl.cpp"
         "conversions.cpp"
 )
 

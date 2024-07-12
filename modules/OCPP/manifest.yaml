@@ -51,6 +51,12 @@ provides:
   ocpp_generic:
     description: Generic OCPP interface.
     interface: ocpp
+  display_message:
+    description: Set display message to some display
+    interface: display_message
+  session_cost:
+    description: Send session cost
+    interface: session_cost
 requires:
   evse_manager:
     interface: evse_manager

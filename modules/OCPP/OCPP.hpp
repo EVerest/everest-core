@@ -13,9 +13,11 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
+#include <generated/interfaces/display_message/Implementation.hpp>
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
+#include <generated/interfaces/session_cost/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
@@ -66,6 +68,8 @@ public:
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
+         std::unique_ptr<display_messageImplBase> p_display_message,
+         std::unique_ptr<session_costImplBase> p_session_cost,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
@@ -78,6 +82,8 @@ public:
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
+        p_display_message(std::move(p_display_message)),
+        p_session_cost(std::move(p_session_cost)),
         r_evse_manager(std::move(r_evse_manager)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_reservation(std::move(r_reservation)),
@@ -93,6 +99,8 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
+    const std::unique_ptr<display_messageImplBase> p_display_message;
+    const std::unique_ptr<session_costImplBase> p_session_cost;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
