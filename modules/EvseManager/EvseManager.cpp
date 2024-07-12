@@ -9,6 +9,7 @@
 #include "SessionLog.hpp"
 #include "Timeout.hpp"
 #include "scoped_lock_timeout.hpp"
+
 using namespace std::literals::chrono_literals;
 
 namespace module {
@@ -494,6 +495,7 @@ void EvseManager::ready() {
                 }
                 r_hlc[0]->call_authorization_response(types::authorization::AuthorizationStatus::Accepted,
                                                       types::authorization::CertificateStatus::NoCertificateAvailable);
+                charger->get_stopwatch().mark("Auth EIM Done");
             } else {
                 if (config.enable_autocharge) {
                     p_token_provider->publish_provided_token(autocharge_token);
@@ -726,6 +728,7 @@ void EvseManager::ready() {
             session_log.evse(true, fmt::format("D-LINK_READY ({})", value));
             if (hlc_enabled) {
                 r_hlc[0]->call_dlink_ready(value);
+                charger->get_stopwatch().mark("D-LINK_READY");
             }
         });
     }
@@ -1231,6 +1234,7 @@ void EvseManager::charger_was_authorized() {
                                               types::authorization::CertificateStatus::Accepted);
         hlc_waiting_for_auth_eim = false;
         hlc_waiting_for_auth_pnc = false;
+        charger->get_stopwatch().mark("Auth PnC Done");
     }
 
     if (hlc_waiting_for_auth_eim and charger->get_authorized_eim()) {
@@ -1238,6 +1242,7 @@ void EvseManager::charger_was_authorized() {
                                               types::authorization::CertificateStatus::NoCertificateAvailable);
         hlc_waiting_for_auth_eim = false;
         hlc_waiting_for_auth_pnc = false;
+        charger->get_stopwatch().mark("Auth EIM Done");
     }
 }
 
@@ -1290,6 +1295,8 @@ void EvseManager::cable_check() {
     // start cable check in a seperate thread.
     std::thread t([this]() {
         session_log.evse(true, "Start cable check...");
+        charger->get_stopwatch().report_phase();
+        charger->get_stopwatch().mark_phase("CableCheck");
 
         // Verify output is below 60V initially
         if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
@@ -1297,6 +1304,7 @@ void EvseManager::cable_check() {
             fail_cable_check();
             return;
         }
+        charger->get_stopwatch().mark("<60V");
 
         // normally contactors should be closed before entering cable check routine.
         // On some hardware implementation it may take some time until the confirmation arrives though,
@@ -1321,6 +1329,8 @@ void EvseManager::cable_check() {
             fail_cable_check();
             return;
         }
+
+        charger->get_stopwatch().mark("Relay On");
 
         // Get correct voltage used to test the isolation
         for (int retry_ev_info = 0; retry_ev_info < 10; retry_ev_info++) {
@@ -1349,6 +1359,8 @@ void EvseManager::cable_check() {
             cable_check_voltage = config.dc_isolation_voltage_V;
         }
 
+        charger->get_stopwatch().mark("EVInfo");
+
         // Set the DC ouput voltage for testing
         if (not powersupply_DC_set(cable_check_voltage, CABLECHECK_CURRENT_LIMIT)) {
             EVLOG_error << "CableCheck: Could not set DC power supply voltage and current.";
@@ -1374,6 +1386,8 @@ void EvseManager::cable_check() {
             fail_cable_check();
             return;
         }
+
+        charger->get_stopwatch().mark("VRampUp");
 
         // CC 4.1.3: Now relais are closed, voltage is up. We need to perform a self test of the IMD device
         if (config.cable_check_enable_imd_self_test) {
@@ -1409,6 +1423,7 @@ void EvseManager::cable_check() {
                 return;
             }
         }
+        charger->get_stopwatch().mark("Self test");
 
         // CC.4.1.4: Perform the insulation resistance check
         imd_start();
@@ -1428,6 +1443,8 @@ void EvseManager::cable_check() {
                 return;
             }
         }
+
+        charger->get_stopwatch().mark("Measure");
 
         // Now the value is valid and can be trusted.
         // Verify it is within ranges. Fault is <100 kOhm
@@ -1452,6 +1469,9 @@ void EvseManager::cable_check() {
         if (car_manufacturer == types::evse_manager::CarManufacturer::VolkswagenGroup) {
             std::this_thread::sleep_for(std::chrono::seconds(config.hack_sleep_in_cable_check_volkswagen));
         }
+        if (config.hack_sleep_in_cable_check > 0 or config.hack_sleep_in_cable_check_volkswagen > 0) {
+            charger->get_stopwatch().mark("Sleep");
+        }
 
         // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
         powersupply_DC_off();
@@ -1462,11 +1482,14 @@ void EvseManager::cable_check() {
             fail_cable_check();
             return;
         }
+        charger->get_stopwatch().mark("VRampDown");
 
         EVLOG_info << "CableCheck done, output is below " << CABLECHECK_SAFE_VOLTAGE << "V";
 
         // Report CableCheck Finished with success to EV
         r_hlc[0]->call_cable_check_finished(true);
+        charger->get_stopwatch().report_phase();
+        charger->get_stopwatch().mark_phase("PrepareCharging");
     });
     // Detach thread and exit command handler right away
     t.detach();
