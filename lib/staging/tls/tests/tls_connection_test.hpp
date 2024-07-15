@@ -107,7 +107,7 @@ struct ClientTest : public tls::Client {
 };
 
 void handler(std::shared_ptr<tls::ServerConnection>& con) {
-    if (con->accept()) {
+    if (con->accept() == tls::Connection::result_t::success) {
         std::uint32_t count{0};
         std::array<std::byte, 1024> buffer{};
         bool bExit = false;
@@ -121,7 +121,7 @@ void handler(std::shared_ptr<tls::ServerConnection>& con) {
                 case tls::Connection::result_t::success:
                     break;
                 case tls::Connection::result_t::timeout:
-                case tls::Connection::result_t::error:
+                case tls::Connection::result_t::closed:
                 default:
                     bExit = true;
                     break;
@@ -133,7 +133,7 @@ void handler(std::shared_ptr<tls::ServerConnection>& con) {
                     bExit = true;
                 }
                 break;
-            case tls::Connection::result_t::error:
+            case tls::Connection::result_t::closed:
             default:
                 bExit = true;
                 break;
@@ -243,7 +243,7 @@ protected:
         auto connection = client.connect("localhost", "8444", false, 1000);
         if (handler == nullptr) {
             if (connection) {
-                if (connection->connect()) {
+                if (connection->connect() == tls::Connection::result_t::success) {
                     set(ClientTest::flags_t::connected);
                     connection->shutdown();
                 }

@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
     // localhost works in some cases but not in the CI pipeline ip6-localhost is an option
     auto connection = client.connect("localhost", "8444", false, 1000);
     if (connection) {
-        if (connection->connect()) {
+        if (connection->connect() == tls::Connection::result_t::success) {
             const auto* cert = connection->peer_certificate();
             if (cert != nullptr) {
                 const auto subject = openssl::certificate_subject(cert);

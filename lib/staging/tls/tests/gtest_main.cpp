@@ -15,7 +15,7 @@ namespace {
 void log_handler(openssl::log_level_t level, const std::string& str) {
     switch (level) {
     case openssl::log_level_t::debug:
-        std::cout << "DEBUG:   " << str << std::endl;
+        // std::cout << "DEBUG:   " << str << std::endl;
         break;
     case openssl::log_level_t::warning:
         std::cout << "WARN:    " << str << std::endl;

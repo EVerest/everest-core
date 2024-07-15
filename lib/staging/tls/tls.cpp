@@ -134,11 +134,13 @@ constexpr ssl_error_t convert(const int err) {
 
 /// subset of OpenSSL results to simplify error recovery
 enum class ssl_result_t : std::uint8_t {
-    error,
-    error_syscall,
+    error,         //!< error - connection still active
+    error_syscall, //!< error - connection closed, socket no longer valid
     success,
     closed,
     timeout,
+    want_read,  //!< non-blocking - operation waiting for read available on socket
+    want_write, //!< non-blocking - operation waiting for write available on socket
 };
 
 /**
@@ -157,14 +159,16 @@ constexpr ssl_result_t convert(ssl_error_t err) {
         return ssl_result_t::error_syscall;
     case ssl_error_t::zero_return:
         return ssl_result_t::closed;
+    case ssl_error_t::want_read:
+        return ssl_result_t::want_read;
+    case ssl_error_t::want_write:
+        return ssl_result_t::want_write;
     case ssl_error_t::error:
-    case ssl_error_t::want_accept:
+    case ssl_error_t::want_accept:  // only from BIO_s_accept()
+    case ssl_error_t::want_connect: // only from BIO_s_connect()
     case ssl_error_t::want_async:
     case ssl_error_t::want_async_job:
-    case ssl_error_t::want_connect:
     case ssl_error_t::want_hello_cb:
-    case ssl_error_t::want_read:
-    case ssl_error_t::want_write:
     case ssl_error_t::want_x509_lookup:
     default:
         return ssl_result_t::error;
@@ -182,11 +186,15 @@ constexpr tls::Connection::result_t convert(ssl_result_t err) {
         return tls::Connection::result_t::success;
     case ssl_result_t::timeout:
         return tls::Connection::result_t::timeout;
+    case ssl_result_t::want_read:
+        return tls::Connection::result_t::want_read;
+    case ssl_result_t::want_write:
+        return tls::Connection::result_t::want_write;
     case ssl_result_t::closed:
     case ssl_result_t::error:
     case ssl_result_t::error_syscall:
     default:
-        return tls::Connection::result_t::error;
+        return tls::Connection::result_t::closed;
     }
 }
 
@@ -239,43 +247,36 @@ int wait_for_loop(int soc, bool forWrite, std::int32_t timeout_ms) {
  * \param[in] buf is where to place received data
  * \param[in] num is the size of buff (the maximum number of bytes to receive)
  * \param[out] readbytes number of bytes received
- * \param[in] timeout_ms how long to wait for bytes in milliseconds
  * \returns the result of the operation
  */
-[[nodiscard]] ssl_result_t ssl_read(SSL* ctx, std::byte* buf, std::size_t num, std::size_t& readbytes,
-                                    std::int32_t timeout_ms);
+[[nodiscard]] ssl_result_t ssl_read(SSL* ctx, std::byte* buf, std::size_t num, std::size_t& readbytes);
 /**
  * \brief write user data to a SSL connection
  * \param[in] ctx is SSL connection data
  * \param[in] buf is the data to send
  * \param[in] num is the size of buff
  * \param[out] writebytes number of bytes sent
- * \param[in] timeout_ms how long to wait in milliseconds
  * \returns the result of the operation
  */
-[[nodiscard]] ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, std::size_t num, std::size_t& writebytes,
-                                     std::int32_t timeout_ms);
+[[nodiscard]] ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, std::size_t num, std::size_t& writebytes);
 /**
  * \brief accept an incoming SSL connection, runs the TLS handshake (sever)
  * \param[in] ctx is SSL connection data
- * \param[in] timeout_ms how long to wait in milliseconds
  * \returns the result of the operation
  */
-[[nodiscard]] ssl_result_t ssl_accept(SSL* ctx, std::int32_t timeout_ms);
+[[nodiscard]] ssl_result_t ssl_accept(SSL* ctx);
 /**
  * \brief start a SSL connection, runs the TLS handshake (client)
  * \param[in] ctx is SSL connection data
- * \param[in] timeout_ms how long to wait in milliseconds
  * \returns the result of the operation
  */
-[[nodiscard]] ssl_result_t ssl_connect(SSL* ctx, std::int32_t timeout_ms);
+[[nodiscard]] ssl_result_t ssl_connect(SSL* ctx);
 /**
  * \brief close a SSL connection
  * \param[in] ctx is SSL connection data
- * \param[in] timeout_ms how long to wait in milliseconds
  * \returns the result of the operation
  */
-void ssl_shutdown(SSL* ctx, std::int32_t timeout_ms);
+ssl_result_t ssl_shutdown(SSL* ctx);
 
 /// operation being performed
 enum class operation_t : std::uint8_t {
@@ -312,111 +313,77 @@ const char* operation_str(operation_t operation) {
  * \brief manage the result from a SSL operation
  * \param[in] ctx is SSL connection data
  * \param[in] res is the result of the SSL operation
- * \param[in] result is the simplified result mapped from res
- * \param[in] timeout_ms how long to wait in milliseconds
- * \return true when the operation should be retried
+ * \return result is the simplified result mapped from res
  */
-bool process_result(SSL* ctx, operation_t operation, const int res, ssl_error_t& result, std::int32_t timeout_ms) {
-    bool bLoop = false;
+ssl_result_t process_result(SSL* ctx, operation_t operation, const int res) {
+    ssl_error_t result{ssl_error_t::error};
 
-    if (res <= 0) {
-        const auto sslerr_raw = SSL_get_error(ctx, res);
-        result = convert(sslerr_raw);
-        switch (result) {
-        case ssl_error_t::none:
-        case ssl_error_t::zero_return:
-            break;
-        case ssl_error_t::want_accept:
-        case ssl_error_t::want_connect:
-        case ssl_error_t::want_read:
-        case ssl_error_t::want_write: {
-            // wait for a read or write event on the socket
-            const auto res = wait_for(SSL_get_fd(ctx), result == ssl_error_t::want_write, timeout_ms);
-            bLoop = res > 0 || res == -2;  // event received or operation interrupted
-            result = ssl_error_t::timeout; // error or timeout
-            break;
-        }
-        case ssl_error_t::error_syscall:
-            // no further operation permitted on the connection
-            if (errno != 0) {
-                log_error(operation_str(operation) + std::string("SSL_ERROR_SYSCALL ") + std::to_string(errno));
-            }
-            break;
-        case ssl_error_t::error_ssl:
-            if (operation != operation_t::ssl_shutdown) {
+    if (ctx != nullptr) {
+        result = ssl_error_t::none; // success
+        if (res <= 0) {
+            const auto sslerr_raw = SSL_get_error(ctx, res);
+            result = convert(sslerr_raw);
+            switch (result) {
+            case ssl_error_t::none:
+            case ssl_error_t::zero_return:
+            case ssl_error_t::want_read:
+            case ssl_error_t::want_write:
+                break;
+            case ssl_error_t::error_syscall:
+                // no further operation permitted on the connection
+                if (errno != 0) {
+                    log_error(operation_str(operation) + std::string("SSL_ERROR_SYSCALL ") + std::to_string(errno));
+                }
+                break;
+            case ssl_error_t::error_ssl:
+                if (operation != operation_t::ssl_shutdown) {
+                    log_error(operation_str(operation) + std::to_string(res) + " " + std::to_string(sslerr_raw));
+                }
+                break;
+            case ssl_error_t::error:
+            case ssl_error_t::want_accept:
+            case ssl_error_t::want_async:
+            case ssl_error_t::want_async_job:
+            case ssl_error_t::want_connect:
+            case ssl_error_t::want_hello_cb:
+            case ssl_error_t::want_x509_lookup:
+            default:
                 log_error(operation_str(operation) + std::to_string(res) + " " + std::to_string(sslerr_raw));
+                break;
             }
-            break;
-        case ssl_error_t::error:
-        case ssl_error_t::want_async:
-        case ssl_error_t::want_async_job:
-        case ssl_error_t::want_hello_cb:
-        case ssl_error_t::want_x509_lookup:
-        default:
-            log_error(operation_str(operation) + std::to_string(res) + " " + std::to_string(sslerr_raw));
-            break;
         }
-    } else {
-        result = ssl_error_t::none; // no error i.e. success
     }
 
-    return bLoop;
+    return convert(result);
 }
 
-ssl_result_t ssl_read(SSL* ctx, std::byte* buf, const std::size_t num, std::size_t& readbytes,
-                      std::int32_t timeout_ms) {
-    ssl_error_t result = ssl_error_t::error;
-    bool bLoop = ctx != nullptr;
-    while (bLoop) {
-        const auto res = SSL_read_ex(ctx, buf, num, &readbytes);
-        bLoop = process_result(ctx, operation_t::ssl_read, res, result, timeout_ms);
-    }
-    return convert(result);
+ssl_result_t ssl_read(SSL* ctx, std::byte* buf, const std::size_t num, std::size_t& readbytes) {
+    const auto res = SSL_read_ex(ctx, buf, num, &readbytes);
+    return process_result(ctx, operation_t::ssl_read, res);
 };
 
-ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, const std::size_t num, std::size_t& writebytes,
-                       std::int32_t timeout_ms) {
-    ssl_error_t result = ssl_error_t::error;
-    bool bLoop = ctx != nullptr;
-    while (bLoop) {
-        const auto res = SSL_write_ex(ctx, buf, num, &writebytes);
-        bLoop = process_result(ctx, operation_t::ssl_write, res, result, timeout_ms);
-    }
-    return convert(result);
+ssl_result_t ssl_write(SSL* ctx, const std::byte* buf, const std::size_t num, std::size_t& writebytes) {
+    const auto res = SSL_write_ex(ctx, buf, num, &writebytes);
+    return process_result(ctx, operation_t::ssl_read, res);
 }
 
-ssl_result_t ssl_accept(SSL* ctx, std::int32_t timeout_ms) {
-    ssl_error_t result = ssl_error_t::error;
-    bool bLoop = ctx != nullptr;
-    while (bLoop) {
-        const auto res = SSL_accept(ctx);
-        // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
-        // < 0 is other error
-        bLoop = process_result(ctx, operation_t::ssl_accept, res, result, timeout_ms);
-    }
-    return convert(result);
+ssl_result_t ssl_accept(SSL* ctx) {
+    const auto res = SSL_accept(ctx);
+    // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
+    // < 0 is other error
+    return process_result(ctx, operation_t::ssl_read, res);
 }
 
-ssl_result_t ssl_connect(SSL* ctx, std::int32_t timeout_ms) {
-    ssl_error_t result = ssl_error_t::error;
-    bool bLoop = ctx != nullptr;
-
-    while (bLoop) {
-        const auto res = SSL_connect(ctx);
-        // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
-        // < 0 is other error
-        bLoop = process_result(ctx, operation_t::ssl_connect, res, result, timeout_ms);
-    }
-    return convert(result);
+ssl_result_t ssl_connect(SSL* ctx) {
+    const auto res = SSL_connect(ctx);
+    // 0 is handshake not successful (ssl_error_t::zero_return -> ssl_result_t::closed)
+    // < 0 is other error
+    return process_result(ctx, operation_t::ssl_read, res);
 }
 
-void ssl_shutdown(SSL* ctx, std::int32_t timeout_ms) {
-    ssl_error_t result = ssl_error_t::error;
-    bool bLoop = ctx != nullptr;
-    while (bLoop) {
-        const auto res = SSL_shutdown(ctx);
-        bLoop = process_result(ctx, operation_t::ssl_shutdown, res, result, timeout_ms);
-    }
+ssl_result_t ssl_shutdown(SSL* ctx) {
+    const auto res = SSL_shutdown(ctx);
+    return process_result(ctx, operation_t::ssl_read, res);
 }
 
 /**
@@ -608,23 +575,37 @@ Connection::~Connection() = default;
 Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size_t& readbytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
+    bool loop{true};
+    auto ctx = m_context->ctx.get();
+
     if (m_state == state_t::connected) {
-        result = ssl_read(m_context->ctx.get(), buf, num, readbytes, timeout_ms);
-        switch (result) {
-        case ssl_result_t::success:
-        case ssl_result_t::timeout:
-            break;
-        case ssl_result_t::error_syscall:
-            m_state = state_t::fault;
-            break;
-        case ssl_result_t::closed:
-            shutdown();
-            break;
-        case ssl_result_t::error:
-        default:
-            shutdown();
-            m_state = state_t::fault;
-            break;
+        while (loop) {
+            loop = false;
+            result = ssl_read(ctx, buf, num, readbytes);
+            switch (result) {
+            case ssl_result_t::success:
+            case ssl_result_t::timeout:
+                break;
+            case ssl_result_t::want_read:
+            case ssl_result_t::want_write:
+                if (timeout_ms != 0) {
+                    const auto res = ::wait_for_loop(SSL_get_fd(ctx), result == ssl_result_t::want_write, timeout_ms);
+                    loop = res > 0; // event received
+                    result = ssl_result_t::timeout;
+                }
+                break;
+            case ssl_result_t::error_syscall:
+                m_state = state_t::fault;
+                break;
+            case ssl_result_t::closed:
+                shutdown();
+                break;
+            case ssl_result_t::error:
+            default:
+                shutdown();
+                m_state = state_t::fault;
+                break;
+            }
         }
     }
     return convert(result);
@@ -633,34 +614,102 @@ Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size
 Connection::result_t Connection::write(const std::byte* buf, std::size_t num, std::size_t& writebytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
+    bool loop{true};
+    auto ctx = m_context->ctx.get();
+
     if (m_state == state_t::connected) {
-        result = ssl_write(m_context->ctx.get(), buf, num, writebytes, timeout_ms);
-        switch (result) {
-        case ssl_result_t::success:
-        case ssl_result_t::timeout:
-            break;
-        case ssl_result_t::error_syscall:
-            m_state = state_t::fault;
-            break;
-        case ssl_result_t::closed:
-            shutdown();
-            break;
-        case ssl_result_t::error:
-        default:
-            shutdown();
-            m_state = state_t::fault;
-            break;
+        while (loop) {
+            loop = false;
+            result = ssl_write(ctx, buf, num, writebytes);
+            switch (result) {
+            case ssl_result_t::success:
+            case ssl_result_t::timeout:
+                break;
+            case ssl_result_t::want_read:
+            case ssl_result_t::want_write:
+                if (timeout_ms != 0) {
+                    const auto res = ::wait_for_loop(SSL_get_fd(ctx), result == ssl_result_t::want_write, timeout_ms);
+                    loop = res > 0; // event received
+                    result = ssl_result_t::timeout;
+                }
+                break;
+            case ssl_result_t::error_syscall:
+                m_state = state_t::fault;
+                break;
+            case ssl_result_t::closed:
+                shutdown();
+                break;
+            case ssl_result_t::error:
+            default:
+                shutdown();
+                m_state = state_t::fault;
+                break;
+            }
         }
     }
     return convert(result);
 }
 
-void Connection::shutdown(int timeout_ms) {
+Connection::result_t Connection::shutdown(int timeout_ms) {
     assert(m_context != nullptr);
+    ssl_result_t result{ssl_result_t::error};
+    bool loop{true};
+    auto ctx = m_context->ctx.get();
+
     if (m_state == state_t::connected) {
-        ssl_shutdown(m_context->ctx.get(), timeout_ms);
-        m_state = state_t::closed;
+        while (loop) {
+            loop = false;
+            result = ssl_shutdown(ctx);
+            switch (result) {
+            case ssl_result_t::closed:
+            case ssl_result_t::success:
+            case ssl_result_t::timeout:
+                m_state = state_t::closed;
+                break;
+            case ssl_result_t::want_read:
+            case ssl_result_t::want_write:
+                if (timeout_ms != 0) {
+                    const auto res = ::wait_for_loop(SSL_get_fd(ctx), result == ssl_result_t::want_write, timeout_ms);
+                    loop = res > 0; // event received
+                    result = ssl_result_t::timeout;
+                }
+                break;
+            case ssl_result_t::error:
+            case ssl_result_t::error_syscall:
+            default:
+                m_state = state_t::fault;
+                break;
+            }
+        }
     }
+    return convert(result);
+}
+
+Connection::result_t Connection::wait_for(result_t action, int timeout_ms) {
+    result_t result{action};
+    auto ctx = m_context->ctx.get();
+
+    switch (action) {
+    case result_t::want_read:
+    case result_t::want_write: {
+        const auto res = wait_for_loop(SSL_get_fd(ctx), action == result_t::want_write, timeout_ms);
+        if (res == 0) {
+            result = result_t::timeout;
+        } else if (res == -1) {
+            result = result_t::closed;
+        } else {
+            result = result_t::success;
+        }
+        break;
+    }
+    case result_t::success:
+    case result_t::closed:
+    case result_t::timeout:
+    default:
+        break;
+    }
+
+    return result;
 }
 
 int Connection::socket() const {
@@ -701,29 +750,43 @@ ServerConnection::~ServerConnection() {
     m_cv.notify_all();
 }
 
-bool ServerConnection::accept(int timeout_ms) {
+Connection::result_t ServerConnection::accept(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
+    bool loop{true};
+    auto ctx = m_context->ctx.get();
+
     if (m_state == state_t::idle) {
-        result = ssl_accept(m_context->ctx.get(), timeout_ms);
-        switch (result) {
-        case ssl_result_t::success:
-            m_state = state_t::connected;
-            break;
-        case ssl_result_t::error_syscall:
-            m_state = state_t::fault;
-            break;
-        case ssl_result_t::closed:
-            shutdown();
-            break;
-        case ssl_result_t::error:
-        default:
-            shutdown();
-            m_state = state_t::fault;
-            break;
+        while (loop) {
+            loop = false;
+            result = ssl_accept(ctx);
+            switch (result) {
+            case ssl_result_t::success:
+                m_state = state_t::connected;
+                break;
+            case ssl_result_t::want_read:
+            case ssl_result_t::want_write:
+                if (timeout_ms != 0) {
+                    const auto res = ::wait_for_loop(SSL_get_fd(ctx), result == ssl_result_t::want_write, timeout_ms);
+                    loop = res > 0; // event received
+                    result = ssl_result_t::timeout;
+                }
+                break;
+            case ssl_result_t::error_syscall:
+                m_state = state_t::fault;
+                break;
+            case ssl_result_t::closed:
+                shutdown();
+                break;
+            case ssl_result_t::error:
+            default:
+                shutdown();
+                m_state = state_t::fault;
+                break;
+            }
         }
     }
-    return result == ssl_result_t::success;
+    return convert(result);
 }
 
 void ServerConnection::wait_all_closed() {
@@ -745,29 +808,43 @@ ClientConnection::ClientConnection(SslContext* ctx, int soc, const char* ip_in, 
 
 ClientConnection::~ClientConnection() = default;
 
-bool ClientConnection::connect(int timeout_ms) {
+Connection::result_t ClientConnection::connect(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
+    bool loop{true};
+    auto ctx = m_context->ctx.get();
+
     if (m_state == state_t::idle) {
-        result = ssl_connect(m_context->ctx.get(), timeout_ms);
-        switch (result) {
-        case ssl_result_t::success:
-            m_state = state_t::connected;
-            break;
-        case ssl_result_t::error_syscall:
-            m_state = state_t::fault;
-            break;
-        case ssl_result_t::closed:
-            shutdown();
-            break;
-        case ssl_result_t::error:
-        default:
-            shutdown();
-            m_state = state_t::fault;
-            break;
+        while (loop) {
+            loop = false;
+            result = ssl_connect(ctx);
+            switch (result) {
+            case ssl_result_t::success:
+                m_state = state_t::connected;
+                break;
+            case ssl_result_t::want_read:
+            case ssl_result_t::want_write:
+                if (timeout_ms != 0) {
+                    const auto res = ::wait_for_loop(SSL_get_fd(ctx), result == ssl_result_t::want_write, timeout_ms);
+                    loop = res > 0; // event received
+                    result = ssl_result_t::timeout;
+                }
+                break;
+            case ssl_result_t::error_syscall:
+                m_state = state_t::fault;
+                break;
+            case ssl_result_t::closed:
+                shutdown();
+                break;
+            case ssl_result_t::error:
+            default:
+                shutdown();
+                m_state = state_t::fault;
+                break;
+            }
         }
     }
-    return result == ssl_result_t::success;
+    return convert(result);
 }
 
 // ----------------------------------------------------------------------------

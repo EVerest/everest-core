@@ -18,14 +18,28 @@
 #include "tls_connection_test.hpp"
 
 #include <mutex>
+#include <poll.h>
 
 using namespace std::chrono_literals;
 
 namespace {
+using result_t = tls::Connection::result_t;
 using tls::status_request::ClientStatusRequestV2;
 
 constexpr auto server_root_CN = "00000000";
 constexpr auto alt_server_root_CN = "11111111";
+
+void do_poll(std::array<pollfd, 2>& fds, int server_soc, int client_soc) {
+    const std::int16_t events = POLLOUT | POLLIN;
+    fds[0].fd = server_soc;
+    fds[0].events = events;
+    fds[0].revents = 0;
+    fds[1].fd = client_soc;
+    fds[1].events = events;
+    fds[1].revents = 0;
+    auto poll_res = poll(fds.data(), fds.size(), -1);
+    ASSERT_NE(poll_res, -1);
+}
 
 bool ssl_init(tls::Server& server) {
     std::cout << "ssl_init" << std::endl;
@@ -50,7 +64,7 @@ bool ssl_init(tls::Server& server) {
 // ----------------------------------------------------------------------------
 // The tests
 
-TEST_F(TlsTest, NonBlocking) {
+TEST_F(TlsTest, StartStop) {
     // test shouldn't hang
     start();
 
@@ -62,7 +76,7 @@ TEST_F(TlsTest, NonBlocking) {
     }
 }
 
-TEST_F(TlsTest, NonBlockingConnect) {
+TEST_F(TlsTest, StartConnectDisconnect) {
     // test shouldn't hang
     start();
     connect();
@@ -72,20 +86,279 @@ TEST_F(TlsTest, NonBlockingConnect) {
     EXPECT_TRUE(is_reset(flags_t::status_request_v2));
 }
 
+TEST_F(TlsTest, NonBlocking) {
+    client_config.io_timeout_ms = 0;
+    server_config.io_timeout_ms = 0;
+    std::mutex mux;
+    mux.lock();
+
+    std::shared_ptr<tls::ServerConnection> server_connection;
+    std::unique_ptr<tls::ClientConnection> client_connection;
+
+    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
+        server_connection = connection;
+        mux.unlock();
+    };
+    start(server_handler_fn);
+
+    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+        if (connection) {
+            client_connection = std::move(connection);
+        }
+    };
+    connect(client_handler_fn);
+
+    mux.lock();
+    // check there is a TCP connection
+    ASSERT_TRUE(server_connection);
+    ASSERT_TRUE(client_connection);
+
+    int server_soc = server_connection->socket();
+    int client_soc = client_connection->socket();
+    std::array<pollfd, 2> fds;
+
+    EXPECT_EQ(server_connection->accept(0), result_t::want_read);
+    EXPECT_EQ(client_connection->connect(0), result_t::want_read);
+
+    bool s_complete{false};
+    bool c_complete{false};
+    std::uint32_t s_count{0};
+    std::uint32_t c_count{0};
+
+    while (!s_complete && !c_complete) {
+        do_poll(fds, server_soc, client_soc);
+        if (((fds[0].revents & POLLIN) != 0) || ((fds[0].revents & POLLOUT) != 0)) {
+            s_complete = server_connection->accept(0) == result_t::success;
+            s_count++;
+        }
+        if (((fds[1].revents & POLLIN) != 0) || ((fds[1].revents & POLLOUT) != 0)) {
+            c_complete = client_connection->connect(0) == result_t::success;
+            c_count++;
+        }
+
+        ASSERT_EQ(fds[0].revents & POLLHUP, 0);
+        ASSERT_EQ(fds[1].revents & POLLHUP, 0);
+        ASSERT_EQ(fds[0].revents & POLLERR, 0);
+        ASSERT_EQ(fds[1].revents & POLLERR, 0);
+    }
+
+    // std::cout << "counts: " << s_count << " " << c_count << std::endl;
+    EXPECT_GT(s_count, 0);
+    EXPECT_GT(c_count, 0);
+
+    const std::byte data{0xf3};
+
+    std::byte s_buf{0};
+    std::size_t s_readbytes{0};
+    std::size_t s_writebytes{0};
+    std::byte c_buf{0};
+    std::size_t c_readbytes{0};
+    std::size_t c_writebytes{0};
+
+    EXPECT_EQ(server_connection->read(&s_buf, sizeof(s_buf), s_readbytes, 0), result_t::want_read);
+    EXPECT_EQ(client_connection->read(&c_buf, sizeof(c_buf), c_readbytes, 0), result_t::want_read);
+
+    EXPECT_EQ(server_connection->write(&data, sizeof(data), s_writebytes, 0), result_t::success);
+    EXPECT_EQ(client_connection->write(&data, sizeof(data), c_writebytes, 0), result_t::success);
+
+    s_complete = false;
+    c_complete = false;
+    s_count = 0;
+    c_count = 0;
+
+    while (!s_complete && !c_complete) {
+        do_poll(fds, server_soc, client_soc);
+        if ((fds[0].revents & POLLIN) != 0) {
+            s_complete = server_connection->read(&s_buf, sizeof(s_buf), s_readbytes, 0) == result_t::success;
+            s_count++;
+        }
+        if ((fds[1].revents & POLLIN) != 0) {
+            c_complete = client_connection->read(&c_buf, sizeof(c_buf), c_readbytes, 0) == result_t::success;
+            c_count++;
+        }
+
+        ASSERT_EQ(fds[0].revents & POLLHUP, 0);
+        ASSERT_EQ(fds[1].revents & POLLHUP, 0);
+        ASSERT_EQ(fds[0].revents & POLLERR, 0);
+        ASSERT_EQ(fds[1].revents & POLLERR, 0);
+    }
+
+    EXPECT_EQ(s_readbytes, 1);
+    EXPECT_EQ(s_buf, data);
+    EXPECT_EQ(c_readbytes, 1);
+    EXPECT_EQ(c_buf, data);
+
+    // std::cout << "counts: " << s_count << " " << c_count << std::endl;
+    EXPECT_GT(s_count, 0);
+    EXPECT_GT(c_count, 0);
+
+    s_complete = false;
+    c_complete = false;
+    s_count = 0;
+    c_count = 0;
+
+    EXPECT_EQ(server_connection->read(&s_buf, sizeof(s_buf), s_readbytes, 0), result_t::want_read);
+    EXPECT_EQ(client_connection->shutdown(0), result_t::closed); // closed
+    while (!s_complete && !c_complete) {
+        do_poll(fds, server_soc, client_soc);
+        if (((fds[0].revents & POLLIN) != 0) || ((fds[0].revents & POLLOUT) != 0)) {
+            s_complete = server_connection->read(&s_buf, sizeof(s_buf), s_readbytes, 0) == result_t::closed;
+            s_count++;
+        }
+        if (((fds[1].revents & POLLIN) != 0) || ((fds[1].revents & POLLOUT) != 0)) {
+            c_complete = client_connection->shutdown(0) == result_t::success;
+            c_count++;
+        }
+
+        ASSERT_EQ(fds[0].revents & POLLERR, 0);
+        ASSERT_EQ(fds[1].revents & POLLERR, 0);
+    }
+
+    // std::cout << "counts: " << s_count << " " << c_count << std::endl;
+    EXPECT_GT(s_count, 0);
+    EXPECT_GT(c_count, 0);
+}
+
+TEST_F(TlsTest, NonBlockingClientClose) {
+    std::mutex mux;
+    mux.lock();
+
+    std::shared_ptr<tls::ServerConnection> server_connection;
+    std::unique_ptr<tls::ClientConnection> client_connection;
+
+    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
+        if (connection->accept() == result_t::success) {
+            server_connection = connection;
+            mux.unlock();
+        }
+    };
+    start(server_handler_fn);
+
+    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+        if (connection) {
+            if (connection->connect() == result_t::success) {
+                client_connection = std::move(connection);
+            }
+        }
+    };
+    connect(client_handler_fn);
+
+    mux.lock();
+    // check there is a TCP connection
+    ASSERT_TRUE(server_connection);
+    ASSERT_TRUE(client_connection);
+
+    int server_soc = server_connection->socket();
+    int client_soc = client_connection->socket();
+    std::array<pollfd, 2> fds;
+
+    bool s_complete{false};
+    bool c_complete{false};
+    std::uint32_t s_count{0};
+    std::uint32_t c_count{0};
+
+    std::byte buf{0};
+    std::size_t readbytes{0};
+
+    EXPECT_EQ(server_connection->read(&buf, sizeof(buf), readbytes, 0), result_t::want_read);
+    EXPECT_EQ(client_connection->shutdown(0), result_t::closed); // closed
+    while (!s_complete && !c_complete) {
+        do_poll(fds, server_soc, client_soc);
+        if (((fds[0].revents & POLLIN) != 0) || ((fds[0].revents & POLLOUT) != 0)) {
+            s_complete = server_connection->read(&buf, sizeof(buf), readbytes, 0) == result_t::closed;
+            s_count++;
+        }
+        if (((fds[1].revents & POLLIN) != 0) || ((fds[1].revents & POLLOUT) != 0)) {
+            c_complete = client_connection->shutdown(0) == result_t::closed;
+            c_count++;
+        }
+
+        ASSERT_EQ(fds[0].revents & POLLERR, 0);
+        ASSERT_EQ(fds[1].revents & POLLERR, 0);
+    }
+
+    // std::cout << "counts: " << s_count << " " << c_count << std::endl;
+    EXPECT_GT(s_count, 0);
+    EXPECT_GT(c_count, 0);
+}
+
+TEST_F(TlsTest, NonBlockingServerClose) {
+    std::mutex mux;
+    mux.lock();
+
+    std::shared_ptr<tls::ServerConnection> server_connection;
+    std::unique_ptr<tls::ClientConnection> client_connection;
+
+    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
+        if (connection->accept() == result_t::success) {
+            server_connection = connection;
+            mux.unlock();
+        }
+    };
+    start(server_handler_fn);
+
+    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+        if (connection) {
+            if (connection->connect() == result_t::success) {
+                client_connection = std::move(connection);
+            }
+        }
+    };
+    connect(client_handler_fn);
+
+    mux.lock();
+    // check there is a TCP connection
+    ASSERT_TRUE(server_connection);
+    ASSERT_TRUE(client_connection);
+
+    int server_soc = server_connection->socket();
+    int client_soc = client_connection->socket();
+    std::array<pollfd, 2> fds;
+
+    bool s_complete{false};
+    bool c_complete{false};
+    std::uint32_t s_count{0};
+    std::uint32_t c_count{0};
+
+    std::byte buf{0};
+    std::size_t readbytes{0};
+
+    EXPECT_EQ(server_connection->shutdown(0), result_t::closed); // closed
+    EXPECT_EQ(client_connection->read(&buf, sizeof(buf), readbytes, 0), result_t::want_read);
+    while (!s_complete && !c_complete) {
+        do_poll(fds, server_soc, client_soc);
+        if (((fds[0].revents & POLLIN) != 0) || ((fds[0].revents & POLLOUT) != 0)) {
+            s_complete = server_connection->shutdown(0) == result_t::closed;
+            s_count++;
+        }
+        if (((fds[1].revents & POLLIN) != 0) || ((fds[1].revents & POLLOUT) != 0)) {
+            c_complete = client_connection->read(&buf, sizeof(buf), readbytes, 0) == result_t::closed;
+            c_count++;
+        }
+
+        ASSERT_EQ(fds[0].revents & POLLERR, 0);
+        ASSERT_EQ(fds[1].revents & POLLERR, 0);
+    }
+
+    // std::cout << "counts: " << s_count << " " << c_count << std::endl;
+    EXPECT_GT(s_count, 0);
+    EXPECT_GT(c_count, 0);
+}
+
 TEST_F(TlsTest, ClientReadTimeout) {
     // test shouldn't hang
     client_config.io_timeout_ms = 50;
 
     auto client_handler_fn = [this](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 std::byte buffer{};
                 std::size_t readbytes{0};
                 auto res = connection->read(&buffer, sizeof(buffer), readbytes);
                 EXPECT_EQ(readbytes, 0);
-                EXPECT_EQ(res, tls::Connection::result_t::timeout);
-                if (res != tls::Connection::result_t::error) {
+                EXPECT_EQ(res, result_t::timeout);
+                if (res != result_t::closed) {
                     connection->shutdown();
                 }
                 connection->shutdown();
@@ -108,12 +381,12 @@ TEST_F(TlsTest, ClientWriteTimeout) {
     bool did_timeout{false};
     std::size_t count{0};
     std::mutex mux;
-    std::lock_guard lock(mux);
+    mux.lock();
 
     constexpr std::size_t max_bytes = 1024 * 1024 * 1024;
 
     auto server_handler_fn = [&mux](std::shared_ptr<tls::ServerConnection>& con) {
-        if (con->accept()) {
+        if (con->accept() == result_t::success) {
             mux.lock();
             con->shutdown();
         }
@@ -121,7 +394,7 @@ TEST_F(TlsTest, ClientWriteTimeout) {
 
     auto client_handler_fn = [this, &mux, &did_timeout, &count](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 std::array<std::byte, 1024> buffer{};
                 std::size_t writebytes{0};
@@ -130,16 +403,16 @@ TEST_F(TlsTest, ClientWriteTimeout) {
 
                 while (!exit) {
                     switch (connection->write(buffer.data(), buffer.size(), writebytes)) {
-                    case tls::Connection::result_t::success:
+                    case result_t::success:
                         count += writebytes;
                         exit = count > max_bytes;
                         break;
-                    case tls::Connection::result_t::timeout:
+                    case result_t::timeout:
                         // std::cout << "timeout: " << count << " bytes" << std::endl;
                         did_timeout = true;
                         exit = true;
                         break;
-                    case tls::Connection::result_t::error:
+                    case result_t::closed:
                     default:
                         exit = true;
                         break;
@@ -148,7 +421,7 @@ TEST_F(TlsTest, ClientWriteTimeout) {
                 mux.unlock();
                 std::size_t readbytes = 0;
                 auto res = connection->read(buffer.data(), buffer.size(), readbytes);
-                if (res != tls::Connection::result_t::error) {
+                if (res != result_t::closed) {
                     connection->shutdown();
                 }
             }
@@ -169,14 +442,14 @@ TEST_F(TlsTest, ServerReadTimeout) {
     // test shouldn't hang
     bool did_timeout{false};
     std::mutex mux;
-    std::lock_guard lock(mux);
+    mux.lock();
 
     auto server_handler_fn = [&mux, &did_timeout](std::shared_ptr<tls::ServerConnection>& con) {
-        if (con->accept()) {
+        if (con->accept() == result_t::success) {
             std::array<std::byte, 1024> buffer{};
             std::size_t readbytes = 0;
             auto res = con->read(buffer.data(), buffer.size(), readbytes);
-            did_timeout = res == tls::Connection::result_t::timeout;
+            did_timeout = res == result_t::timeout;
             mux.unlock();
             con->shutdown();
         }
@@ -184,7 +457,7 @@ TEST_F(TlsTest, ServerReadTimeout) {
 
     auto client_handler_fn = [this, &mux](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 mux.lock();
                 connection->shutdown();
@@ -206,12 +479,12 @@ TEST_F(TlsTest, ServerWriteTimeout) {
     bool did_timeout{false};
     std::size_t count{0};
     std::mutex mux;
-    std::lock_guard lock(mux);
+    mux.lock();
 
     constexpr std::size_t max_bytes = 1024 * 1024 * 1024;
 
     auto server_handler_fn = [&mux, &did_timeout, &count](std::shared_ptr<tls::ServerConnection>& con) {
-        if (con->accept()) {
+        if (con->accept() == result_t::success) {
             std::array<std::byte, 1024> buffer{};
             std::size_t writebytes{0};
 
@@ -219,16 +492,16 @@ TEST_F(TlsTest, ServerWriteTimeout) {
 
             while (!exit) {
                 switch (con->write(buffer.data(), buffer.size(), writebytes)) {
-                case tls::Connection::result_t::success:
+                case result_t::success:
                     count += writebytes;
                     exit = count > max_bytes;
                     break;
-                case tls::Connection::result_t::timeout:
+                case result_t::timeout:
                     // std::cout << "timeout: " << count << " bytes" << std::endl;
                     did_timeout = true;
                     exit = true;
                     break;
-                case tls::Connection::result_t::error:
+                case result_t::closed:
                 default:
                     exit = true;
                     break;
@@ -238,7 +511,7 @@ TEST_F(TlsTest, ServerWriteTimeout) {
             mux.unlock();
             std::size_t readbytes = 0;
             auto res = con->read(buffer.data(), buffer.size(), readbytes);
-            if (res != tls::Connection::result_t::error) {
+            if (res != result_t::closed) {
                 con->shutdown();
             }
         }
@@ -246,7 +519,7 @@ TEST_F(TlsTest, ServerWriteTimeout) {
 
     auto client_handler_fn = [this, &mux](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
             }
             mux.lock();
@@ -391,7 +664,7 @@ TEST_F(TlsTest, TCKeysNone) {
 
     auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 subject = openssl::certificate_subject(connection->peer_certificate());
                 connection->shutdown();
@@ -415,7 +688,7 @@ TEST_F(TlsTest, TCKeysCert) {
 
     auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 subject = openssl::certificate_subject(connection->peer_certificate());
                 connection->shutdown();
@@ -447,7 +720,7 @@ TEST_F(TlsTest, TCKeysKey) {
 
     auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 subject = openssl::certificate_subject(connection->peer_certificate());
                 connection->shutdown();
@@ -479,7 +752,7 @@ TEST_F(TlsTest, TCKeysName) {
 
     auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
         if (connection) {
-            if (connection->connect()) {
+            if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
                 subject = openssl::certificate_subject(connection->peer_certificate());
                 connection->shutdown();
@@ -544,7 +817,7 @@ TEST_F(TlsTest, TCKeysInvalid) {
     // use ip6-localhost
     auto connection = client.connect("localhost", "8444", false, 1000);
     if (connection) {
-        if (connection->connect()) {
+        if (connection->connect() == result_t::success) {
             set(ClientTest::flags_t::connected);
             subject = openssl::certificate_subject(connection->peer_certificate());
             connection->shutdown();

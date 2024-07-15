@@ -81,6 +81,22 @@ public:
  * \brief class representing a TLS connection
  * \note small timeout values (under 200ms) can cause connections to fail
  *       even on the loopback interface.
+ *
+ * Non-blocking I/O is configured on the underlying socket. Its use is controlled
+ * by the 'timeout_ms' parameter:
+ *
+ * timeout_ms is -1 means wait forever. The method will block until there is an
+ * event on the socket.
+
+ * timeout_ms is 0 means don't wait. The method will return want_read or
+ * want_write when it is unable to complete the operation. The method should be
+ * called with the same arguments once read/write is available on the socket -
+ * via select() or poll(). The underlying socket is available via socket().
+ * This supports waiting for events on many sockets.
+ * A helper method wait_for() is provided where waiting on only one socket is
+ * needed.
+ *
+ * timeout_ms > 0 means wait no more than timeout_ms.
  */
 class Connection {
 public:
@@ -95,9 +111,11 @@ public:
     };
 
     enum class result_t : std::uint8_t {
-        success,
-        error,
-        timeout,
+        success,    //!< operation completed successfully
+        closed,     //!< connection closed (possibly due to error)
+        timeout,    //!< operation timed out
+        want_read,  //!< non-blocking - operation waiting for read available on socket
+        want_write, //!< non-blocking - operation waiting for write available on socket
     };
 
 protected:
@@ -138,10 +156,10 @@ public:
      * \brief read bytes from the TLS connection
      * \param[out] buf pointer to output buffer
      * \param[in] num size of output buffer
-     * \param[in] timeout_ms time to wait in milliseconds
+     * \param[in] timeout_ms time to wait in milliseconds, -1 is wait forever, 0 is don't wait
      * \param[out] readBytes number of received bytes. May be less than num
      *             when there has been a timeout
-     * \return success, error, or timeout. On error the connection will have
+     * \return see result_t. On error the connection will have
      *         been closed
      */
     [[nodiscard]] result_t read(std::byte* buf, std::size_t num, std::size_t& readbytes, int timeout_ms);
@@ -153,10 +171,10 @@ public:
      * \brief write bytes to the TLS connection
      * \param[in] buf pointer to input buffer
      * \param[in] num size of input buffer
-     * \param[in] timeout_ms time to wait in milliseconds
+     * \param[in] timeout_ms time to wait in milliseconds, -1 is wait forever, 0 is don't wait
      * \param[out] writeBytes number of sent bytes. May be less than num
      *             when there has been a timeout
-     * \return success, error, or timeout. On error the connection will have
+     * \return see result_t. On error the connection will have
      *         been closed
      */
     [[nodiscard]] result_t write(const std::byte* buf, std::size_t num, std::size_t& writebytes, int timeout_ms);
@@ -167,10 +185,24 @@ public:
     /**
      * \brief close the TLS connection
      * \param[in] timeout_ms time to wait in milliseconds
+     * \return see result_t
+     * \note result_t::closed is more likely than result_t::success since the
+     *       connection is closed.
      */
-    void shutdown(int timeout_ms);
-    inline void shutdown() {
-        shutdown(c_shutdown_timeout_ms);
+    result_t shutdown(int timeout_ms);
+    inline result_t shutdown() {
+        return shutdown(c_shutdown_timeout_ms);
+    }
+
+    /**
+     * \brief wait for activity on the socket
+     * \param[in] action is result_t::want_read or result_t::want_write
+     * \param[in] timeout_ms time to wait in milliseconds, -1 is wait forever, 0 is don't wait
+     * \return see result_t
+     */
+    result_t wait_for(result_t action, int timeout_ms);
+    inline result_t wait_for(result_t action) {
+        return wait_for(action, m_timeout_ms);
     }
 
     /**
@@ -237,11 +269,12 @@ public:
 
     /**
      * \brief accept the incoming connection and run the TLS handshake
-     * \param[in] timeout_ms time to wait in milliseconds
-     * \return true when the TLS connection has been established
+     * \param[in] timeout_ms time to wait in milliseconds, -1 is wait forever, 0 is don't wait
+     * \return see result_t. On error the connection will have
+     *         been closed
      */
-    [[nodiscard]] bool accept(int timeout_ms);
-    [[nodiscard]] inline bool accept() {
+    [[nodiscard]] result_t accept(int timeout_ms);
+    [[nodiscard]] inline result_t accept() {
         return accept(m_timeout_ms);
     }
 
@@ -274,11 +307,12 @@ public:
 
     /**
      * \brief run the TLS handshake
-     * \param[in] timeout_ms time to wait in milliseconds
-     * \return true when the TLS connection has been established
+     * \param[in] timeout_ms time to wait in milliseconds, -1 is wait forever, 0 is don't wait
+     * \return see result_t. On error the connection will have
+     *         been closed
      */
-    [[nodiscard]] bool connect(int timeout_ms);
-    [[nodiscard]] inline bool connect() {
+    [[nodiscard]] result_t connect(int timeout_ms);
+    [[nodiscard]] inline result_t connect() {
         return connect(m_timeout_ms);
     }
 };

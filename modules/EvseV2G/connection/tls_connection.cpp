@@ -36,6 +36,9 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
 
 namespace {
 
+// used when ctx->network_read_timeout_tls is 0
+constexpr int default_timeout_ms = 1000;
+
 void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struct v2g_context* ctx) {
     assert(con != nullptr);
     assert(ctx != nullptr);
@@ -51,17 +54,33 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
 
     dlog(DLOG_LEVEL_INFO, "Incoming TLS connection");
 
-    if (con->accept()) {
-        // TODO(james-ctc) v2g_ctx->tls_key_logging
+    bool loop{true};
+    while (loop) {
+        loop = false;
+        const auto result = con->accept();
+        switch (result) {
+        case tls::Connection::result_t::success:
 
-        if (ctx->state == 0) {
-            const auto rv = ::v2g_handle_connection(connection.get());
-            dlog(DLOG_LEVEL_INFO, "v2g_dispatch_connection exited with %d", rv);
-        } else {
-            dlog(DLOG_LEVEL_INFO, "%s", "Closing tls-connection. v2g-session is already running");
+            // TODO(james-ctc) v2g_ctx->tls_key_logging
+
+            if (ctx->state == 0) {
+                const auto rv = ::v2g_handle_connection(connection.get());
+                dlog(DLOG_LEVEL_INFO, "v2g_dispatch_connection exited with %d", rv);
+            } else {
+                dlog(DLOG_LEVEL_INFO, "%s", "Closing tls-connection. v2g-session is already running");
+            }
+
+            con->shutdown();
+            break;
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            loop = con->wait_for(result, default_timeout_ms) == tls::Connection::result_t::success;
+            break;
+        case tls::Connection::result_t::closed:
+        case tls::Connection::result_t::timeout:
+        default:
+            break;
         }
-
-        con->shutdown();
     }
 
     ::connection_teardown(connection.get());
@@ -241,13 +260,19 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, const s
         std::size_t bytes_in{0};
         auto* ptr = reinterpret_cast<std::byte*>(&buf[bytes_read]);
 
-        switch (conn->tls_connection->read(ptr, remaining, bytes_in)) {
+        const auto read_res = conn->tls_connection->read(ptr, remaining, bytes_in);
+        switch (read_res) {
         case tls::Connection::result_t::success:
             bytes_read += bytes_in;
             break;
-        case tls::Connection::result_t::timeout:
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            conn->tls_connection->wait_for(read_res, default_timeout_ms);
             break;
-        case tls::Connection::result_t::error:
+        case tls::Connection::result_t::timeout:
+            // the MBedTLS code loops on timeout, is_sequence_timeout() is used instead
+            break;
+        case tls::Connection::result_t::closed:
         default:
             result = -1;
             break;
@@ -279,13 +304,19 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
         std::size_t bytes_out{0};
         const auto* ptr = reinterpret_cast<std::byte*>(&buf[bytes_written]);
 
-        switch (conn->tls_connection->write(ptr, remaining, bytes_out)) {
+        const auto write_res = conn->tls_connection->write(ptr, remaining, bytes_out);
+        switch (write_res) {
         case tls::Connection::result_t::success:
             bytes_written += bytes_out;
             break;
-        case tls::Connection::result_t::timeout:
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            conn->tls_connection->wait_for(write_res, default_timeout_ms);
             break;
-        case tls::Connection::result_t::error:
+        case tls::Connection::result_t::timeout:
+            // the MBedTLS code loops on timeout
+            break;
+        case tls::Connection::result_t::closed:
         default:
             result = -1;
             break;

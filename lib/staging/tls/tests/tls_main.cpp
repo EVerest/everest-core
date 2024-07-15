@@ -57,7 +57,7 @@ void parse_options(int argc, char** argv) {
 
 void handle_connection(std::shared_ptr<tls::ServerConnection>& con) {
     std::cout << "Connection" << std::endl;
-    if (con->accept()) {
+    if (con->accept() == tls::Connection::result_t::success) {
         std::uint32_t count{0};
         std::array<std::byte, 1024> buffer{};
         bool bExit = false;
@@ -71,7 +71,7 @@ void handle_connection(std::shared_ptr<tls::ServerConnection>& con) {
                 case tls::Connection::result_t::success:
                     break;
                 case tls::Connection::result_t::timeout:
-                case tls::Connection::result_t::error:
+                case tls::Connection::result_t::closed:
                 default:
                     bExit = true;
                     break;
@@ -83,7 +83,7 @@ void handle_connection(std::shared_ptr<tls::ServerConnection>& con) {
                     bExit = true;
                 }
                 break;
-            case tls::Connection::result_t::error:
+            case tls::Connection::result_t::closed:
             default:
                 bExit = true;
                 break;
