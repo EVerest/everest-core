@@ -102,6 +102,7 @@ bool DeviceModel::component_criteria_match(const Component& component,
     }
     return false;
 }
+
 bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>& component_variables,
                                             const ocpp::v201::Component& component,
                                             const ocpp::v201::Variable& variable) {
@@ -118,6 +119,7 @@ bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>
                            (component.instance == v.component.instance) and (variable == v.variable)); // B08.FR.23
                }) != component_variables.end();
 }
+
 bool validate_value(const VariableCharacteristics& characteristics, const std::string& value, bool allow_zero) {
     switch (characteristics.dataType) {
     case DataEnum::string:
@@ -243,7 +245,7 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
         return SetVariableStatusEnum::UnknownVariable;
     }
 
-    const auto characteristics = variable_map[variable].characteristics;
+    const auto& characteristics = variable_map[variable].characteristics;
     try {
         if (!validate_value(characteristics, value, allow_zero(component, variable))) {
             return SetVariableStatusEnum::Rejected;
@@ -268,6 +270,25 @@ SetVariableStatusEnum DeviceModel::set_value(const Component& component, const V
 
     const auto success =
         this->storage->set_variable_attribute_value(component, variable, attribute_enum, value, source);
+
+    // Only trigger for actual values
+    if ((attribute_enum == AttributeEnum::Actual) && success && variable_listener) {
+        const auto& monitors = variable_map[variable].monitors;
+
+        // If we had a variable value change, trigger the listener
+        if (!monitors.empty()) {
+            static const std::string EMPTY_VALUE{};
+
+            const std::string& value_previous = attribute.value().value.value_or(EMPTY_VALUE);
+            const std::string& value_current = value;
+
+            if (value_previous != value_current) {
+                variable_listener(monitors, component, variable, characteristics, attribute.value(), value_previous,
+                                  value_current);
+            }
+        }
+    }
+
     return success ? SetVariableStatusEnum::Accepted : SetVariableStatusEnum::Rejected;
 };
 
@@ -421,6 +442,63 @@ void DeviceModel::check_integrity(const std::map<int32_t, int32_t>& evse_connect
     }
 }
 
+bool DeviceModel::update_monitor_reference(int32_t monitor_id, const std::string& reference_value) {
+    bool found_monitor = false;
+    VariableMonitoringMeta* monitor_meta = nullptr;
+
+    // See if this is a trivial delta monitor and that it exists
+    for (auto& [component, variable_map] : this->device_model) {
+        bool found_monitor_id = false;
+
+        for (auto& [variable, variable_meta_data] : variable_map) {
+            auto it = variable_meta_data.monitors.find(monitor_id);
+            if (it != std::end(variable_meta_data.monitors)) {
+                auto& characteristics = variable_meta_data.characteristics;
+
+                if ((characteristics.dataType == DataEnum::boolean) || (characteristics.dataType == DataEnum::string) ||
+                    (characteristics.dataType == DataEnum::dateTime) ||
+                    (characteristics.dataType == DataEnum::OptionList) ||
+                    (characteristics.dataType == DataEnum::MemberList) ||
+                    (characteristics.dataType == DataEnum::SequenceList) &&
+                        (it->second.monitor.type == MonitorEnum::Delta)) {
+                    monitor_meta = &it->second;
+                    found_monitor = true;
+                } else {
+                    found_monitor = false;
+                }
+
+                found_monitor_id = true;
+                break; // Break inner loop
+            }
+        }
+
+        if (found_monitor_id) {
+            break; // Break outer loop
+        }
+    }
+
+    if (found_monitor) {
+        try {
+            if (this->storage->update_monitoring_reference(monitor_id, reference_value)) {
+                // Update value in-memory too
+                monitor_meta->reference_value = reference_value;
+                return true;
+            } else {
+                EVLOG_warning << "Could not update in DB trivial delta monitor with ID: " << monitor_id
+                              << ". Reference value not updated!";
+            }
+        } catch (const DatabaseException& e) {
+            EVLOG_error << "Exception while updating trivial delta monitor reference with ID: " << monitor_id;
+            throw DeviceModelStorageError(e.what());
+        }
+    } else {
+        EVLOG_warning << "Could not find trivial delta monitor with ID: " << monitor_id
+                      << ". Reference value not updated!";
+    }
+
+    return false;
+}
+
 std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<SetMonitoringData>& requests,
                                                            const VariableMonitorType type) {
     if (requests.empty()) {
@@ -432,36 +510,135 @@ std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<Set
     for (auto& request : requests) {
         SetMonitoringResult result;
 
+        // Set the com/var based on the request since it's required in a response
+        // even if it is 'UnknownComoponent/Variable'
+        result.component = request.component;
+        result.variable = request.variable;
+        result.severity = request.severity;
+        result.type = request.type;
+        result.id = request.id;
+
+        // N04.FR.16 - If we find a monitor with this ID, and there's a comp/var mismatch, send a rejected result
+        // N04.FR.13 - If we receive an ID but we can't find a monitor with this ID send a rejected result
+        bool request_has_id = request.id.has_value();
+        bool id_found = false;
+
+        if (request_has_id) {
+            // Search through all the ID's
+            for (const auto& [component, variable_map] : this->device_model) {
+                for (const auto& [variable, variable_meta] : variable_map) {
+                    if (variable_meta.monitors.find(request.id.value()) != std::end(variable_meta.monitors)) {
+                        id_found = true;
+                        break;
+                    }
+                }
+
+                if (id_found) {
+                    break;
+                }
+            }
+
+            if (!id_found) {
+                result.status = SetMonitoringStatusEnum::Rejected;
+                set_monitors_res.push_back(result);
+                continue;
+            }
+        }
+
         if (this->device_model.find(request.component) == this->device_model.end()) {
-            result.status = SetMonitoringStatusEnum::UnknownComponent;
+            // N04.FR.16
+            if (request_has_id && id_found) {
+                result.status = SetMonitoringStatusEnum::Rejected;
+            } else {
+                result.status = SetMonitoringStatusEnum::UnknownComponent;
+            }
+
             set_monitors_res.push_back(result);
             continue;
         }
-        result.component = request.component;
 
         auto& variable_map = this->device_model[request.component];
-        auto variable_it = variable_map.find(request.variable);
 
+        auto variable_it = variable_map.find(request.variable);
         if (variable_it == variable_map.end()) {
-            result.status = SetMonitoringStatusEnum::UnknownVariable;
+            // N04.FR.16
+            if (request_has_id && id_found) {
+                result.status = SetMonitoringStatusEnum::Rejected;
+            } else {
+                result.status = SetMonitoringStatusEnum::UnknownVariable;
+            }
+
             set_monitors_res.push_back(result);
             continue;
         }
-        result.variable = request.variable;
 
-        // TODO (ioan): see how we should handle the 'Duplicate' data
+        // Validate the data we want to set based on the characteristics and
+        // see if it is out of range or out of the variable list
+        const auto& characteristics = variable_it->second.characteristics;
+        bool valid_value = true;
+
+        if (characteristics.supportsMonitoring) {
+            EVLOG_debug << "Validating monitor request of type: [" << request << "] and characteristics: ["
+                        << characteristics << "]"
+                        << " and value: " << request.value;
+
+            // If the monitor is of type 'delta' (or periodic) and it is of a non-numeric type
+            // the value is ignored since all values will be reported (excepting negative values)
+            if (request.type == MonitorEnum::Delta && std::signbit(request.value)) {
+                // N04.FR.14
+                valid_value = false;
+            } else if (request.type == MonitorEnum::Delta && (characteristics.dataType != DataEnum::decimal &&
+                                                              characteristics.dataType != DataEnum::integer)) {
+                valid_value = true;
+            } else if (request.type == MonitorEnum::Periodic || request.type == MonitorEnum::PeriodicClockAligned) {
+                valid_value = true;
+            } else {
+                try {
+                    valid_value = validate_value(characteristics, std::to_string(request.value),
+                                                 allow_zero(request.component, request.variable));
+                } catch (const std::exception& e) {
+                    EVLOG_warning << "Could not validate monitor value: " << request.value
+                                  << " for component: " << request.component << " and variable: " << request.variable;
+                    valid_value = false;
+                }
+            }
+        } else {
+            valid_value = false;
+        }
+
+        if (!valid_value) {
+            result.status = SetMonitoringStatusEnum::Rejected;
+            set_monitors_res.push_back(result);
+            continue;
+        }
+
+        // 3.77 Duplicate - A monitor already exists for the given type/severity combination.
+        bool duplicate_value = false;
+
+        // Only test for duplicates if we do not receive an explicit monitor ID
+        if (!request_has_id) {
+            for (const auto& [id, monitor_meta] : variable_it->second.monitors) {
+                if (monitor_meta.monitor.type == request.type && monitor_meta.monitor.severity == request.severity) {
+                    duplicate_value = true;
+                    break;
+                }
+            }
+        }
+
+        if (duplicate_value) {
+            result.status = SetMonitoringStatusEnum::Duplicate;
+            set_monitors_res.push_back(result);
+            continue;
+        }
+
         try {
             auto monitor_meta = this->storage->set_monitoring_data(request, type);
 
             if (monitor_meta.has_value()) {
-                // If we had a successful insert, add it to the variable monitor map
-                variable_it->second.monitors.insert(
-                    std::pair{monitor_meta.value().monitor.id, std::move(monitor_meta.value())});
+                // If we had a successful insert, add/replace it to the variable monitor map
+                variable_it->second.monitors[monitor_meta.value().monitor.id] = std::move(monitor_meta.value());
 
-                result.type = request.type;
-                result.severity = request.severity;
                 result.id = monitor_meta.value().monitor.id;
-
                 result.status = SetMonitoringStatusEnum::Accepted;
             } else {
                 result.status = SetMonitoringStatusEnum::Rejected;
@@ -476,26 +653,35 @@ std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<Set
 
     return set_monitors_res;
 }
+
+std::vector<VariableMonitoringPeriodic> DeviceModel::get_periodic_monitors() {
+    std::vector<VariableMonitoringPeriodic> periodics;
+
+    for (const auto& [component, variable_map] : this->device_model) {
+        for (const auto& [variable, variable_metadata] : variable_map) {
+            std::vector<VariableMonitoringMeta> monitors;
+
+            for (const auto& [id, monitor_meta] : variable_metadata.monitors) {
+                if (monitor_meta.monitor.type == MonitorEnum::Periodic ||
+                    monitor_meta.monitor.type == MonitorEnum::PeriodicClockAligned) {
+                    monitors.push_back(monitor_meta);
+                }
+            }
+
+            if (!monitors.empty()) {
+                periodics.push_back({component, variable, monitors});
+            }
+        }
+    }
+
+    return periodics;
+}
+
 std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
                                                       const std::vector<ComponentVariable>& component_variables) {
     std::vector<MonitoringData> get_monitors_res{};
 
-    // N02.FR.11 - if criteria and component_variables are empty, return all existing monitors
-    if (criteria.empty() && component_variables.empty()) {
-        for (const auto& [component, variable_map] : this->device_model) {
-            for (const auto& [variable, variable_metadata] : variable_map) {
-                std::vector<VariableMonitoring> monitors;
-
-                for (const auto& [id, monitor_meta] : variable_metadata.monitors) {
-                    monitors.push_back(monitor_meta.monitor);
-                }
-
-                get_monitors_res.push_back({component, variable, monitors, std::nullopt});
-            }
-        }
-
-        return get_monitors_res;
-    } else {
+    if (!component_variables.empty()) {
         for (auto& component_variable : component_variables) {
             // Case not handled by spec, skipping
             if (this->device_model.find(component_variable.component) == this->device_model.end()) {
@@ -518,7 +704,9 @@ std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<Monitori
                         }
                     }
 
-                    get_monitors_res.push_back(std::move(monitor_data));
+                    if (!monitor_data.variableMonitoring.empty()) {
+                        get_monitors_res.push_back(std::move(monitor_data));
+                    }
                 }
             } else {
                 auto variable_it = variable_map.find(component_variable.variable.value());
@@ -541,7 +729,28 @@ std::vector<MonitoringData> DeviceModel::get_monitors(const std::vector<Monitori
                     }
                 }
 
-                get_monitors_res.push_back(std::move(monitor_data));
+                if (!monitor_data.variableMonitoring.empty()) {
+                    get_monitors_res.push_back(std::move(monitor_data));
+                }
+            }
+        }
+    } else {
+        // N02.FR.11 - if criteria and component_variables are empty, return all existing monitors
+        for (const auto& [component, variable_map] : this->device_model) {
+            for (const auto& [variable, variable_metadata] : variable_map) {
+                std::vector<VariableMonitoring> monitors;
+
+                for (const auto& [id, monitor_meta] : variable_metadata.monitors) {
+                    // Also handles the case when the criteria is empty,
+                    // since in that case N02.FR.11 applies (all monitors pass)
+                    if (filter_criteria_monitor(criteria, monitor_meta)) {
+                        monitors.push_back(monitor_meta.monitor);
+                    }
+                }
+
+                if (!monitors.empty()) {
+                    get_monitors_res.push_back({component, variable, monitors, std::nullopt});
+                }
             }
         }
     }

@@ -56,6 +56,8 @@ public:
     std::optional<VariableMonitoringMeta> set_monitoring_data(const SetMonitoringData& data,
                                                               const VariableMonitorType type) final;
 
+    bool update_monitoring_reference(const int32_t monitor_id, const std::string& reference_value) final;
+
     std::vector<VariableMonitoringMeta> get_monitoring_data(const std::vector<MonitoringCriterionEnum>& criteria,
                                                             const Component& component_id,
                                                             const Variable& variable_id) final;

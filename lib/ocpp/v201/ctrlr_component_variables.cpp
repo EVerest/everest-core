@@ -240,6 +240,13 @@ const ComponentVariable& WebsocketPongTimeout = {
         "WebsocketPongTimeout",
     }),
 };
+const ComponentVariable& MonitorsProcessingInterval = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "MonitorsProcessingInterval",
+    }),
+};
 const ComponentVariable& MaxCustomerInformationDataLength = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

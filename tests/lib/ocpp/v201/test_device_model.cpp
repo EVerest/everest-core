@@ -126,9 +126,9 @@ TEST_F(DeviceModelTest, test_set_monitors) {
     auto results = dm->set_monitors(requests);
     ASSERT_EQ(results.size(), requests.size());
 
-    for (auto& result : results) {
-        ASSERT_EQ(result.status, SetMonitoringStatusEnum::Accepted);
-    }
+    ASSERT_EQ(results[0].status, SetMonitoringStatusEnum::Accepted);
+    // Interval does not support monitoring
+    ASSERT_EQ(results[1].status, SetMonitoringStatusEnum::Rejected);
 }
 
 TEST_F(DeviceModelTest, test_get_monitors) {
@@ -155,13 +155,10 @@ TEST_F(DeviceModelTest, test_get_monitors) {
     };
 
     auto results = dm->get_monitors(criteria, components);
-    ASSERT_EQ(results.size(), 2);
+    ASSERT_EQ(results.size(), 1);
 
     ASSERT_EQ(results[0].variableMonitoring.size(), 1);
-    ASSERT_EQ(results[1].variableMonitoring.size(), 1);
-
     auto monitor1 = results[0].variableMonitoring[0];
-    auto monitor2 = results[1].variableMonitoring[0];
 
     // Valued used above
     const SetMonitoringData req_one{.value = 0.0,
@@ -169,16 +166,9 @@ TEST_F(DeviceModelTest, test_get_monitors) {
                                     .severity = 7,
                                     .component = component1,
                                     .variable = variable_comp1};
-    const SetMonitoringData req_two{.value = 4.579,
-                                    .type = MonitorEnum::UpperThreshold,
-                                    .severity = 3,
-                                    .component = component2,
-                                    .variable = variable_comp2};
 
     ASSERT_EQ(monitor1.severity, 7);
     ASSERT_EQ(monitor1.type, MonitorEnum::PeriodicClockAligned);
-    ASSERT_EQ(monitor2.severity, 3);
-    ASSERT_TRUE(abs(monitor2.value - 4.579) < 0.001); // Nearly equal since it's floating point
 }
 
 TEST_F(DeviceModelTest, test_clear_monitors) {
@@ -223,8 +213,14 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
     auto set_result = dm->set_monitors(requests, VariableMonitorType::HardWiredMonitor);
     std::vector<int> hardwired_monitor_ids;
 
+    ASSERT_EQ(set_result.size(), 2);
+    ASSERT_EQ(set_result[0].status, SetMonitoringStatusEnum::Accepted);
+    ASSERT_EQ(set_result[1].status, SetMonitoringStatusEnum::Rejected);
+
     for (auto& res : set_result) {
-        hardwired_monitor_ids.push_back(res.id.value());
+        if (res.status == SetMonitoringStatusEnum::Accepted) {
+            hardwired_monitor_ids.push_back(res.id.value());
+        }
     }
 
     auto current_results = dm->get_monitors(criteria, components);
@@ -238,10 +234,10 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
     }
 
     auto clear_result = dm->clear_custom_monitors();
-    ASSERT_EQ(clear_result, 2); // 2 custom should be deleted
+    ASSERT_EQ(clear_result, 1); // 1 custom should be deleted, since 1 is rejected
 
     auto results = dm->get_monitors(criteria, components);
-    ASSERT_EQ(results.size(), 2);
+    ASSERT_EQ(results.size(), 1);
 
     for (auto& result : results) {
         // Each have 1 hardwired monitor

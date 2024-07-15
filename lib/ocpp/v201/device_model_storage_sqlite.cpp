@@ -247,6 +247,28 @@ bool DeviceModelStorageSqlite::set_variable_attribute_value(const Component& com
     return true;
 }
 
+bool DeviceModelStorageSqlite::update_monitoring_reference(const int32_t monitor_id,
+                                                           const std::string& reference_value) {
+    auto transaction = this->db->begin_transaction();
+
+    std::string update_query = "UPDATE VARIABLE_MONITORING SET REFERENCE_VALUE = ? WHERE ID = ?";
+    auto update_stmt = this->db->new_statement(update_query);
+
+    update_stmt->bind_text(1, reference_value, SQLiteString::Transient);
+    update_stmt->bind_int(2, monitor_id);
+
+    if (update_stmt->step() != SQLITE_DONE) {
+        EVLOG_error << this->db->get_error_message();
+        return false;
+    }
+
+    transaction->commit();
+
+    int changes = update_stmt->changes();
+
+    return (changes == 1);
+}
+
 std::optional<VariableMonitoringMeta> DeviceModelStorageSqlite::set_monitoring_data(const SetMonitoringData& data,
                                                                                     const VariableMonitorType type) {
     const auto _variable_id = this->get_variable_id(data.component, data.variable);
@@ -275,12 +297,12 @@ std::optional<VariableMonitoringMeta> DeviceModelStorageSqlite::set_monitoring_d
 
     if (data.id.has_value()) {
         insert_query = "INSERT OR REPLACE INTO VARIABLE_MONITORING (VARIABLE_ID, SEVERITY, 'TRANSACTION', TYPE_ID, "
-                       "CONFIG_TYPE_ID, VALUE, REFERENCE_VALUE) "
-                       "VALUES (?, ?, ?, ?, ?, ?, ?)";
-    } else {
-        insert_query = "INSERT OR REPLACE INTO VARIABLE_MONITORING (VARIABLE_ID, SEVERITY, 'TRANSACTION', TYPE_ID, "
                        "CONFIG_TYPE_ID, VALUE, REFERENCE_VALUE, ID) "
                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    } else {
+        insert_query = "INSERT OR REPLACE INTO VARIABLE_MONITORING (VARIABLE_ID, SEVERITY, 'TRANSACTION', TYPE_ID, "
+                       "CONFIG_TYPE_ID, VALUE, REFERENCE_VALUE) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?)";
     }
 
     auto insert_stmt = this->db->new_statement(insert_query);

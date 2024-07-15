@@ -25,6 +25,11 @@ template <typename T> struct RequestDeviceModelResponse {
 /// \param value
 /// \return
 template <typename T> T to_specific_type(const std::string& value) {
+    static_assert(std::is_same<T, std::string>::value || std::is_same<T, int>::value ||
+                      std::is_same<T, double>::value || std::is_same<T, size_t>::value ||
+                      std::is_same<T, DateTime>::value || std::is_same<T, bool>::value,
+                  "Requested unknown datatype");
+
     if constexpr (std::is_same<T, std::string>::value) {
         return value;
     } else if constexpr (std::is_same<T, int>::value) {
@@ -32,18 +37,51 @@ template <typename T> T to_specific_type(const std::string& value) {
     } else if constexpr (std::is_same<T, double>::value) {
         return std::stod(value);
     } else if constexpr (std::is_same<T, size_t>::value) {
-        std::stringstream s(value);
-        size_t res;
-        s >> res;
+        size_t res = std::stoul(value);
         return res;
     } else if constexpr (std::is_same<T, DateTime>::value) {
         return DateTime(value);
     } else if constexpr (std::is_same<T, bool>::value) {
         return ocpp::conversions::string_to_bool(value);
-    } else {
-        EVLOG_AND_THROW(std::runtime_error("Requested unknown datatype"));
     }
 }
+
+template <DataEnum T> auto to_specific_type_auto(const std::string& value) {
+    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
+                      T == DataEnum::dateTime || T == DataEnum::boolean,
+                  "Requested unknown datatype");
+
+    if constexpr (T == DataEnum::string) {
+        return to_specific_type<std::string>(value);
+    } else if constexpr (T == DataEnum::integer) {
+        return to_specific_type<int>(value);
+    } else if constexpr (T == DataEnum::decimal) {
+        return to_specific_type<double>(value);
+    } else if constexpr (T == DataEnum::dateTime) {
+        return to_specific_type<DateTime>(value);
+    } else if constexpr (T == DataEnum::boolean) {
+        return to_specific_type<bool>(value);
+    }
+}
+
+template <DataEnum T> bool is_type_numeric() {
+    static_assert(T == DataEnum::string || T == DataEnum::integer || T == DataEnum::decimal ||
+                      T == DataEnum::dateTime || T == DataEnum::boolean || T == DataEnum::OptionList ||
+                      T == DataEnum::SequenceList || T == DataEnum::MemberList,
+                  "Requested unknown datatype");
+
+    if constexpr (T == DataEnum::integer || T == DataEnum::decimal) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+typedef std::function<void(const std::unordered_map<int64_t, VariableMonitoringMeta>& monitors,
+                           const Component& component, const Variable& variable,
+                           const VariableCharacteristics& characteristics, const VariableAttribute& attribute,
+                           const std::string& value_previous, const std::string& value_current)>
+    on_variable_changed;
 
 /// \brief This class manages access to the device model representation and to the device model storage and provides
 /// functionality to support the use cases defined in the functional block Provisioning
@@ -52,6 +90,9 @@ class DeviceModel {
 private:
     DeviceModelMap device_model;
     std::unique_ptr<DeviceModelStorage> storage;
+
+    /// \brief Listener for the internal change of a variable
+    on_variable_changed variable_listener;
 
     /// \brief Private helper method that does some checks with the device model representation in memory to evaluate if
     /// a value for the given parameters can be requested. If it can be requested it will be retrieved from the device
@@ -208,6 +249,10 @@ public:
     get_custom_report_data(const std::optional<std::vector<ComponentVariable>>& component_variables = std::nullopt,
                            const std::optional<std::vector<ComponentCriterionEnum>>& component_criteria = std::nullopt);
 
+    void register_variable_listener(on_variable_changed&& listener) {
+        variable_listener = std::move(listener);
+    }
+
     /// \brief Sets the given monitor \p requests in the device model
     /// \param request
     /// \param type The type of the set monitors. HardWiredMonitor - used for OEM specific monitors,
@@ -216,6 +261,10 @@ public:
     /// \return List of results of the requested operation
     std::vector<SetMonitoringResult> set_monitors(const std::vector<SetMonitoringData>& requests,
                                                   const VariableMonitorType type = VariableMonitorType::CustomMonitor);
+
+    bool update_monitor_reference(int32_t monitor_id, const std::string& reference_value);
+
+    std::vector<VariableMonitoringPeriodic> get_periodic_monitors();
 
     /// \brief Gets the Monitoring data for the request \p criteria and \p component_variables
     /// \param criteria

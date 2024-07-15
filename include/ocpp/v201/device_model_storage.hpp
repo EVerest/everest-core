@@ -22,6 +22,13 @@ struct VariableMonitoringMeta {
     std::optional<std::string> reference_value;
 };
 
+/// \brief Helper struct that contains all monitors related to a variable that are of a periodic type
+struct VariableMonitoringPeriodic {
+    Component component;
+    Variable variable;
+    std::vector<VariableMonitoringMeta> monitors;
+};
+
 /// \brief Helper struct that combines VariableCharacteristics and VariableMonitoring
 struct VariableMetaData {
     VariableCharacteristics characteristics;
@@ -95,6 +102,13 @@ public:
     /// \return true if the value could be inserted, or valse otherwise
     virtual std::optional<VariableMonitoringMeta> set_monitoring_data(const SetMonitoringData& data,
                                                                       const VariableMonitorType type) = 0;
+
+    /// \brief Updates the reference value for a monitor. The reference values is used for the
+    /// delta monitors to detect a trigger, and must be updated when a trigger is detected
+    /// \param monitor_id Id of the monitor that requires the reference changed
+    /// \param reference_value Value to replace the reference with
+    /// \return true if the reference value could be updated, false otherwise
+    virtual bool update_monitoring_reference(const int32_t monitor_id, const std::string& reference_value) = 0;
 
     /// \brief Returns all the monitors currently in the database based
     /// on the provided filtering criteria

@@ -84,9 +84,12 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle),
     bootreason(BootReasonEnum::PowerUp),
-    ocsp_updater(
-        OcspUpdater(this->evse_security, this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
-                                             MessageType::GetCertificateStatusResponse))),
+    ocsp_updater(this->evse_security, this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
+                                          MessageType::GetCertificateStatusResponse)),
+    device_model(std::make_shared<DeviceModel>(std::move(device_model_storage))),
+    monitoring_updater(
+        device_model, [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
+        [this]() { return this->is_offline(); }),
     csr_attempt(1),
     client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
     v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
@@ -97,7 +100,6 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         EVLOG_AND_THROW(std::invalid_argument("All non-optional callbacks must be supplied"));
     }
 
-    this->device_model = std::make_shared<DeviceModel>(std::move(device_model_storage));
     this->device_model->check_integrity(evse_connector_structure);
 
     auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db");
@@ -163,7 +165,9 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     // configure logging
     this->configure_message_logging_format(message_log_path);
 
-    // TODO - this should this be dependency injected.
+    // start monitoring
+    this->monitoring_updater.start_monitoring();
+
     this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
         MessageQueueConfig{
@@ -238,6 +242,7 @@ void ChargePoint::stop() {
     this->websocket_timer.stop();
     this->client_certificate_expiration_check_timer.stop();
     this->v2g_certificate_expiration_check_timer.stop();
+    this->monitoring_updater.stop_monitoring();
     this->disconnect_websocket(WebsocketCloseReason::Normal);
     this->message_queue->stop();
 }
@@ -1286,6 +1291,21 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
     case MessageType::CustomerInformation:
         this->handle_customer_information_req(json_message);
         break;
+    case MessageType::SetMonitoringBase:
+        this->handle_set_monitoring_base_req(json_message);
+        break;
+    case MessageType::SetMonitoringLevel:
+        this->handle_set_monitoring_level_req(json_message);
+        break;
+    case MessageType::SetVariableMonitoring:
+        this->handle_set_variable_monitoring_req(message);
+        break;
+    case MessageType::GetMonitoringReport:
+        this->handle_get_monitoring_report_req(json_message);
+        break;
+    case MessageType::ClearVariableMonitoring:
+        this->handle_clear_variable_monitoring_req(json_message);
+        break;
     default:
         if (message.messageTypeId == MessageTypeId::CALL) {
             const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
@@ -1718,6 +1738,9 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
 }
 
 void ChargePoint::handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results) {
+    // process all triggered monitors
+    this->monitoring_updater.process_triggered_monitors();
+
     // iterate over set_variable_results
     for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
         if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
@@ -3366,11 +3389,11 @@ void ChargePoint::handle_get_monitoring_report_req(Call<GetMonitoringReportReque
         return;
     }
 
+    auto criteria = msg.monitoringCriteria.value_or(std::vector<MonitoringCriterionEnum>());
     std::vector<MonitoringData> data{};
 
     try {
-        data = this->device_model->get_monitors(msg.monitoringCriteria.value_or(std::vector<MonitoringCriterionEnum>()),
-                                                component_variables);
+        data = this->device_model->get_monitors(criteria, component_variables);
 
         if (!data.empty()) {
             response.status = GenericDeviceModelStatusEnum::Accepted;

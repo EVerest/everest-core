@@ -69,6 +69,7 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/message_queue.cpp
             ocpp/v201/ocpp_types.cpp
             ocpp/v201/ocsp_updater.cpp
+            ocpp/v201/monitoring_updater.cpp
             ocpp/v201/transaction.cpp
             ocpp/v201/types.cpp
             ocpp/v201/utils.cpp

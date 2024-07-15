@@ -16,6 +16,7 @@
 #include <ocpp/v201/device_model_storage.hpp>
 #include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/evse_manager.hpp>
+#include <ocpp/v201/monitoring_updater.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
 #include <ocpp/v201/types.hpp>
@@ -476,6 +477,10 @@ private:
 
     /// \brief Handler for automatic or explicit OCSP cache updates
     OcspUpdater ocsp_updater;
+
+    /// \brief Updater for triggered monitors
+    MonitoringUpdater monitoring_updater;
+
     /// \brief optional delay to resumption of message queue after reconnecting to the CSMS
     std::chrono::seconds message_queue_resume_delay = std::chrono::seconds(0);
 

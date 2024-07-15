@@ -1656,111 +1656,115 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 ## Diagnostics - Get Monitoring report
 
-| ID        | Status | Remark |
-|-----------|--------|--------|
-| N02.FR.01 |        |        |
-| N02.FR.02 |        |        |
-| N02.FR.03 |        |        |
-| N02.FR.04 |        |        |
-| N02.FR.05 |        |        |
-| N02.FR.06 |        |        |
-| N02.FR.07 |        |        |
-| N02.FR.08 |        |        |
-| N02.FR.09 |        |        |
-| N02.FR.10 |        |        |
-| N02.FR.11 |        |        |
-| N02.FR.12 |        |        |
-| N02.FR.13 |        |        |
-| N02.FR.14 |        |        |
-| N02.FR.15 |        |        |
-| N02.FR.16 |        |        |
-| N02.FR.17 |        |        |
+| ID        | Status | Remark                                   |
+|-----------|--------|------------------------------------------|
+| N02.FR.01 | ✅     |                                          |
+| N02.FR.02 | ❎     | Everything is supported by our charger   |
+| N02.FR.03 | ✅     |                                          |
+| N02.FR.04 | ✅     |                                          |
+| N02.FR.05 | ✅     |                                          |
+| N02.FR.06 | ✅     |                                          |
+| N02.FR.07 | ✅     |                                          |
+| N02.FR.08 | ✅     |                                          |
+| N02.FR.09 | ✅     |                                          |
+| N02.FR.10 | ✅     |                                          |
+| N02.FR.11 | ✅     |                                          |
+| N02.FR.12 | ✅     |                                          |
+| N02.FR.13 | ✅     |                                          |
+| N02.FR.14 | ✅     |                                          |
+| N02.FR.15 | ✅     |                                          |
+| N02.FR.16 | ✅     |                                          |
+| N02.FR.17 | ✅     |                                          |
+| N02.FR.18 |        |                                          |
+| N02.FR.19 |        |                                          |
+| N02.FR.20 |        |                                          |
+| N02.FR.21 |        |                                          |
 
 ## Diagnostics - Set Monitoring Base
 
-| ID        | Status | Remark |
-|-----------|--------|--------|
-| N03.FR.01 |        |        |
-| N03.FR.02 |        |        |
-| N03.FR.03 |        |        |
-| N03.FR.04 |        |        |
-| N03.FR.05 |        |        |
+| ID        | Status | Remark                                   |
+|-----------|--------|------------------------------------------|
+| N03.FR.01 | ✅     |                                          |
+| N03.FR.02 | ❎     | Everything is supported on our charger   |
+| N03.FR.03 | ✅     |                                          |
+| N03.FR.04 | ✅     |                                          |
+| N03.FR.05 | ✅     |                                          |
 
 ## Diagnostics - Set Variable Monitoring
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| N04.FR.01 |        |        |
-| N04.FR.02 |        |        |
-| N04.FR.03 |        |        |
-| N04.FR.04 |        |        |
+| N04.FR.01 | ✅     |        |
+| N04.FR.02 | ✅     |        |
+| N04.FR.03 | ✅     |        |
+| N04.FR.04 | ✅     |        |
 | N04.FR.05 |        |        |
-| N04.FR.06 |        |        |
-| N04.FR.07 |        |        |
-| N04.FR.08 |        |        |
-| N04.FR.09 |        |        |
-| N04.FR.10 |        |        |
-| N04.FR.11 |        |        |
-| N04.FR.12 |        |        |
-| N04.FR.13 |        |        |
-| N04.FR.14 |        |        |
+| N04.FR.06 | ✅     |        |
+| N04.FR.07 | ✅     |        |
+| N04.FR.08 | ✅     |        |
+| N04.FR.09 | ✅     |        |
+| N04.FR.10 | ✅     |        |
+| N04.FR.11 | ✅     |        |
+| N04.FR.12 | ✅     |        |
+| N04.FR.13 | ✅     |        |
+| N04.FR.14 | ✅     |        |
 | N04.FR.15 |        |        |
-| N04.FR.16 |        |        |
+| N04.FR.16 | ✅     |        |
 | N04.FR.17 |        |        |
-| N04.FR.18 |        |        |
-| N04.FR.19 |        |        |
+| N04.FR.18 | ✅     |        |
+| N04.FR.19 | ✅     |        |
 
 ## Diagnostics - Set Monitoring Level
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| N05.FR.01 |        |        |
-| N05.FR.02 |        |        |
-| N05.FR.03 |        |        |
+| N05.FR.01 | ✅     |        |
+| N05.FR.02 | ✅     |        |
+| N05.FR.03 | ✅     |        |
 
 ## Diagnostics - Clear / Remove Monitoring
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| N06.FR.01 |        |        |
-| N06.FR.02 |        |        |
-| N06.FR.03 |        |        |
-| N06.FR.04 |        |        |
-| N06.FR.05 |        |        |
-| N06.FR.06 |        |        |
-| N06.FR.07 |        |        |
+| N06.FR.01 | ✅     |        |
+| N06.FR.02 | ✅     |        |
+| N06.FR.03 | ✅     |        |
+| N06.FR.04 | ✅     |        |
+| N06.FR.05 | ✅     |        |
+| N06.FR.06 | ✅     |        |
+| N06.FR.07 | ✅     |        |
 
 ## Diagnostics - Alert Event
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| N07.FR.02 |        |        |
-| N07.FR.03 |        |        |
-| N07.FR.04 |        |        |
+| N07.FR.02 | ✅     |        |
+| N07.FR.03 | ✅     |        |
+| N07.FR.04 | ✅     |        |
 | N07.FR.05 |        |        |
-| N07.FR.06 |        |        |
-| N07.FR.07 |        |        |
-| N07.FR.10 |        |        |
+| N07.FR.06 | ✅     |        |
+| N07.FR.07 | ✅     |        |
+| N07.FR.10 | ✅     |        |
 | N07.FR.11 |        |        |
 | N07.FR.12 |        |        |
-| N07.FR.13 |        |        |
+| N07.FR.13 | ✅     |        |
 | N07.FR.14 |        |        |
-| N07.FR.15 |        |        |
-| N07.FR.16 |        |        |
-| N07.FR.17 |        |        |
-| N07.FR.18 |        |        |
-| N07.FR.19 |        |        |
+| N07.FR.15 | ✅     |        |
+| N07.FR.16 | ✅     |        |
+| N07.FR.17 | ✅     |        |
+| N07.FR.18 | ✅     |        |
+| N07.FR.19 | ✅     |        |
 
 ## Diagnostics - Periodic Event
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| N08.FR.02 |        |        |
+| N08.FR.02 | ✅     |        |
 | N08.FR.03 |        |        |
-| N08.FR.04 |        |        |
-| N08.FR.05 |        |        |
-| N08.FR.06 |        |        |
-| N08.FR.07 |        |        |
+| N08.FR.04 | ✅     |        |
+| N08.FR.05 | ✅     |        |
+| N08.FR.06 | ✅     |        |
+| N08.FR.07 | ✅     |        |
 
 ## Diagnostics - Get Customer Information
 

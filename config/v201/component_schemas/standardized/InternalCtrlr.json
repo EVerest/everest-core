@@ -449,6 +449,22 @@
           "default": "5",
           "type": "integer"
       },
+      "MonitorsProcessingInterval": {
+          "variable_name": "MonitorsProcessingInterval",
+          "characteristics": {
+              "supportsMonitoring": false,
+              "dataType": "integer"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "Defines the interval at which the periodic monitors will be processed, in seconds",
+          "default": "1",
+          "type": "integer"
+      },
       "MaxCustomerInformationDataLength": {
           "variable_name": "MaxCustomerInformationDataLength",
           "characteristics": {
