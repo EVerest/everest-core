@@ -464,6 +464,10 @@ void OCPP201::ready() {
         };
     }
 
+    callbacks.connection_state_changed_callback = [this](const bool is_connected) {
+        this->p_ocpp_generic->publish_is_connected(is_connected);
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
