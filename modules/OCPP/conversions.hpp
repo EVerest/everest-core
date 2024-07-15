@@ -124,6 +124,8 @@ to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_f
 types::display_message::MessageContent
 to_everest_display_message_content(const ocpp::DisplayMessageContent& message_content);
 
+ocpp::v16::DataTransferResponse to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse &set_display_message_response);
+
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message);
 
 ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message);

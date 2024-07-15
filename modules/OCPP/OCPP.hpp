@@ -13,7 +13,6 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
-#include <generated/interfaces/display_message/Implementation.hpp>
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_1_6_charge_point/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
@@ -21,6 +20,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
+#include <generated/interfaces/display_message/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
@@ -68,13 +68,13 @@ public:
          std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
-         std::unique_ptr<display_messageImplBase> p_display_message,
          std::unique_ptr<session_costImplBase> p_session_cost,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
          std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security,
-         std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, Conf& config) :
+         std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer,
+         std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -82,7 +82,6 @@ public:
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
-        p_display_message(std::move(p_display_message)),
         p_session_cost(std::move(p_session_cost)),
         r_evse_manager(std::move(r_evse_manager)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
@@ -91,6 +90,7 @@ public:
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
+        r_display_message(std::move(r_display_message)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -99,7 +99,6 @@ public:
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
-    const std::unique_ptr<display_messageImplBase> p_display_message;
     const std::unique_ptr<session_costImplBase> p_session_cost;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
@@ -108,6 +107,7 @@ public:
     const std::unique_ptr<systemIntf> r_system;
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
+    const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

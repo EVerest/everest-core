@@ -545,6 +545,37 @@ to_everest_display_message_content(const ocpp::DisplayMessageContent& message_co
     return message;
 }
 
+ocpp::v16::DataTransferResponse
+to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse& set_display_message_response) {
+    ocpp::v16::DataTransferResponse response;
+    switch (set_display_message_response.status) {
+    case types::display_message::DisplayMessageStatusEnum::Accepted:
+        response.status = ocpp::v16::DataTransferStatus::Accepted;
+        break;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedMessageFormat:
+        response.status = ocpp::v16::DataTransferStatus::Rejected;
+        break;
+    case types::display_message::DisplayMessageStatusEnum::Rejected:
+        response.status = ocpp::v16::DataTransferStatus::Rejected;
+        break;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedPriority:
+        response.status = ocpp::v16::DataTransferStatus::Rejected;
+        break;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedState:
+        response.status = ocpp::v16::DataTransferStatus::Rejected;
+        break;
+    case types::display_message::DisplayMessageStatusEnum::UnknownTransaction:
+        response.status = ocpp::v16::DataTransferStatus::Rejected;
+        break;
+    default:
+        throw std::out_of_range(
+            "Could not convert types::display_message::DisplayMessageStatusEnum to ocpp::v16::DataTransferStatus");
+    }
+
+    response.data = set_display_message_response.status_info;
+    return response;
+}
+
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message) {
     types::display_message::DisplayMessage m;
     m.id = display_message.id;

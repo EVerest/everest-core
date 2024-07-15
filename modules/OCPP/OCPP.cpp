@@ -768,23 +768,35 @@ void OCPP::ready() {
     this->charge_point->register_session_cost_callback(
         [this](const ocpp::RunningCost& session_cost) -> ocpp::v16::DataTransferResponse {
             const types::session_cost::SessionCost cost = conversions::to_everest_session_cost(session_cost);
-            // TODO call set session cost function from interface
-            // TODO finish!!
+            ocpp::v16::DataTransferResponse response;
+            if (this->p_session_cost == nullptr) {
+                response.status = ocpp::v16::DataTransferStatus::Rejected;
+                return response;
+            }
+            this->p_session_cost->publish_session_cost(cost);
+            response.status = ocpp::v16::DataTransferStatus::Accepted;
+            return response;
         });
 
     this->charge_point->register_set_display_message_callback(
         [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
+            ocpp::v16::DataTransferResponse response;
+            if (this->r_display_message.empty()) {
+                EVLOG_warning << "No display message handler registered, dropping data transfer message";
+                response.status = ocpp::v16::DataTransferStatus::Rejected;
+                return response;
+            }
             std::vector<types::display_message::DisplayMessage> display_messages;
             for (const ocpp::DisplayMessage& message : messages) {
                 const types::display_message::DisplayMessage m = conversions::to_everest_display_message(message);
                 display_messages.push_back(m);
             }
 
-            // this->
+            const types::display_message::SetDisplayMessageResponse display_message_response =
+                this->r_display_message.at(0)->call_set_display_message(display_messages);
+            response = conversions::to_ocpp_data_transfer_response(display_message_response);
 
-            // TODO call set display messages function from interface
-            // TODO return values
-            // TODO finish!!
+            return response;
         });
 
     if (!this->r_data_transfer.empty()) {
