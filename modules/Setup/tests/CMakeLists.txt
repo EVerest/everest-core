@@ -11,6 +11,7 @@ target_sources(${TEST_TARGET_NAME} PRIVATE
 
 target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     GTest::gtest_main
+    nlohmann_json::nlohmann_json
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
