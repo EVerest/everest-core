@@ -2112,6 +2112,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         /* At first send mqtt charging phase signal to the customer interface */
         if (V2G_CHARGE_PARAMETER_DISCOVERY_MSG == conn->ctx->last_v2g_msg) {
             conn->ctx->p_charger->publish_Start_CableCheck(nullptr);
+            dlog(DLOG_LEVEL_INFO, "Isolation-phase started");
         }
 
         exi_out->V2G_Message.Body.CableCheckRes_isUsed = 1u;
@@ -2122,6 +2123,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_PRE_CHARGE_MSG;
         /* At first send  mqtt charging phase signal to the customer interface */
         if (conn->ctx->last_v2g_msg == V2G_CABLE_CHECK_MSG) {
+            conn->ctx->p_charger->publish_Start_PreCharge(nullptr);
             dlog(DLOG_LEVEL_INFO, "Precharge-phase started");
         }
 

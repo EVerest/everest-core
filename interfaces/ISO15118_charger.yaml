@@ -193,6 +193,9 @@ vars:
   Start_CableCheck:
     description: The charger should now start a cable check
     type: "null"
+  Start_PreCharge:
+    description: The charger should now start a pre charge
+    type: "null"
   DC_Open_Contactor:
     description: The contactor should be opened
     type: "null"
