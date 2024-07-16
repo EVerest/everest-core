@@ -705,7 +705,8 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (this->paused && !this->resuming && message->messageType != M::BootNotification) {
+            if (this->paused && !this->config.queue_all_messages && !this->resuming &&
+                message->messageType != M::BootNotification) {
                 // do not add a normal message to the queue if the queue is paused/offline
                 auto enhanced_message = EnhancedMessage<M>();
                 enhanced_message.offline = true;
