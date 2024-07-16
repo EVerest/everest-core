@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <everest/logging.hpp>
+#include <ocpp/common/database/database_exceptions.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/evse.hpp>
 
@@ -61,6 +62,13 @@ Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceMode
         this->id_connector_map.insert(
             std::make_pair(connector_id, std::make_unique<Connector>(evse_id, connector_id, component_state_manager)));
     }
+
+    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::ResumeTransactionsOnBoot)
+            .value_or(false)) {
+        this->try_resume_transaction();
+    } else {
+        this->delete_database_transaction();
+    }
 }
 
 int32_t Evse::get_id() const {
@@ -71,23 +79,60 @@ uint32_t Evse::get_number_of_connectors() const {
     return static_cast<uint32_t>(this->id_connector_map.size());
 }
 
+void Evse::try_resume_transaction() {
+    // Get an open transactions from the database and resume it if there is one
+    auto transaction = this->database_handler->transaction_get(evse_id);
+    if (transaction == nullptr) {
+        return;
+    }
+
+    if (this->id_connector_map.count(transaction->connector_id) != 0) {
+        this->transaction = std::move(transaction);
+        this->start_metering_timers(this->transaction->start_time);
+    } else {
+        EVLOG_error << "Can't resume transaction on evse_id " << evse_id << " for non existent connector "
+                    << transaction->connector_id;
+
+        try {
+            this->database_handler->transaction_delete(transaction->transactionId);
+        } catch (const QueryExecutionException& e) {
+            EVLOG_error << "Can't delete transaction: " << e.what();
+        }
+
+        // Todo: Can we drop the transaction like this or do we still want to transmit an ended message?
+    }
+}
+
+void Evse::delete_database_transaction() {
+    try {
+        auto transaction = this->database_handler->transaction_get(evse_id);
+        if (transaction != nullptr) {
+            this->database_handler->transaction_delete(transaction->transactionId);
+        }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_error << "Can't delete transaction: " << e.what();
+    }
+}
+
 void Evse::open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                             const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                             const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
-                            const std::chrono::seconds sampled_data_tx_updated_interval,
-                            const std::chrono::seconds sampled_data_tx_ended_interval,
-                            const std::chrono::seconds aligned_data_tx_updated_interval,
-                            const std::chrono::seconds aligned_data_tx_ended_interval) {
+                            const ChargingStateEnum charging_state) {
     if (!this->id_connector_map.count(connector_id)) {
         EVLOG_AND_THROW(std::runtime_error("Attempt to start transaction at invalid connector_id"));
     }
-    this->transaction = std::make_unique<EnhancedTransaction>();
+
+    bool tx_database_enabled =
+        this->device_model.get_optional_value<bool>(ControllerComponentVariables::ResumeTransactionsOnBoot)
+            .value_or(false);
+
+    this->transaction = std::make_unique<EnhancedTransaction>(*this->database_handler.get(), tx_database_enabled);
     this->transaction->transactionId = transaction_id;
-    this->transaction->reservation_id = reservation_id;
     this->transaction->connector_id = connector_id;
-    this->transaction->id_token = id_token;
-    this->transaction->group_id_token = group_id_token;
+    this->transaction->id_token_sent = id_token.has_value();
+    this->transaction->start_time = timestamp;
     this->transaction->active_energy_import_start_value = this->get_active_import_register_meter_value();
+    this->transaction->chargingState = charging_state;
 
     try {
         this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(), meter_start);
@@ -99,100 +144,15 @@ void Evse::open_transaction(const std::string& transaction_id, const int32_t con
                       << this->transaction->transactionId.get() << " into database: " << e.what();
     }
 
-    this->aligned_data_updated.clear_values();
-    this->aligned_data_tx_end.clear_values();
+    this->start_metering_timers(timestamp);
 
-    if (sampled_data_tx_updated_interval > 0s) {
-        transaction->sampled_tx_updated_meter_values_timer.interval_starting_from(
-            [this] { this->transaction_meter_value_req(this->get_meter_value(), *this->transaction); },
-            sampled_data_tx_updated_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
-    }
-
-    if (sampled_data_tx_ended_interval > 0s) {
-        transaction->sampled_tx_ended_meter_values_timer.interval_starting_from(
-            [this] {
-                try {
-                    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
-                                                                           this->get_meter_value());
-                } catch (const QueryExecutionException& e) {
-                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
-                                  << this->transaction->transactionId.get() << " into database: " << e.what();
-                } catch (const std::invalid_argument& e) {
-                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
-                                  << this->transaction->transactionId.get() << " into database: " << e.what();
-                }
-            },
-            sampled_data_tx_ended_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
-    }
-
-    if (aligned_data_tx_updated_interval > 0s) {
-        transaction->aligned_tx_updated_meter_values_timer.interval_starting_from(
-            [this, aligned_data_tx_updated_interval] {
-                if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
-                        .value_or(false)) {
-                    return;
-                }
-                auto meter_value = this->aligned_data_updated.retrieve_processed_values();
-
-                // If empty fallback on last updated metervalue
-                if (meter_value.sampledValue.empty()) {
-                    meter_value = get_meter_value();
-                }
-
-                for (auto& item : meter_value.sampledValue) {
-                    item.context = ReadingContextEnum::Sample_Clock;
-                }
-                if (this->device_model
-                        .get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
-                        .value_or(false)) {
-                    meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_updated_interval);
-                }
-                this->transaction_meter_value_req(meter_value, *this->transaction);
-                this->aligned_data_updated.clear_values();
-            },
-            aligned_data_tx_updated_interval,
-            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
-    }
-
-    if (aligned_data_tx_ended_interval > 0s) {
-        auto store_aligned_metervalue = [this, aligned_data_tx_ended_interval] {
-            auto meter_value = this->aligned_data_tx_end.retrieve_processed_values();
-
-            // If empty fallback on last updated metervalue
-            if (meter_value.sampledValue.empty()) {
-                meter_value = get_meter_value();
-            }
-
-            for (auto& item : meter_value.sampledValue) {
-                item.context = ReadingContextEnum::Sample_Clock;
-            }
-            if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
-                    .value_or(false)) {
-                meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_ended_interval);
-            }
-            try {
-                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
-                                                                       meter_value);
-            } catch (const QueryExecutionException& e) {
-                EVLOG_warning << "Could not insert transaction meter values of transaction: "
-                              << this->transaction->transactionId.get() << " into database: " << e.what();
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "Could not insert transaction meter values of transaction: "
-                              << this->transaction->transactionId.get() << " into database: " << e.what();
-            }
-            this->aligned_data_tx_end.clear_values();
-        };
-
-        auto next_interval = transaction->aligned_tx_ended_meter_values_timer.interval_starting_from(
-            store_aligned_metervalue, aligned_data_tx_ended_interval,
-            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
-
-        // Store an extra aligned metervalue to fix the edge case where a transaction is started just before an interval
-        // but this code is processed just after the interval.
-        // For example, aligned interval = 1 min, transaction started at 11:59:59.500 and we get here on 12:00:00.100.
-        // There is still the expectation for us to add a metervalue at timepoint 12:00:00.000 which we do with this.
-        if (date::utc_clock::to_sys(timestamp.to_time_point()) <= (next_interval - aligned_data_tx_ended_interval)) {
-            store_aligned_metervalue();
+    if (tx_database_enabled) {
+        try {
+            this->database_handler->transaction_insert(*this->transaction.get(), this->evse_id);
+        } catch (const QueryExecutionException& e) {
+            // Delete previous transactions that should not exist anyway and try again. Otherwise throw to higher level
+            this->delete_database_transaction();
+            this->database_handler->transaction_insert(*this->transaction.get(), this->evse_id);
         }
     }
 }
@@ -251,6 +211,12 @@ bool Evse::has_active_transaction(int32_t connector_id) const {
 }
 
 void Evse::release_transaction() {
+    try {
+        this->database_handler->transaction_metervalues_clear(this->transaction->transactionId);
+        this->database_handler->transaction_delete(this->transaction->transactionId);
+    } catch (const ocpp::common::DatabaseException& e) {
+        EVLOG_error << "Could not clear transaction meter values: " << e.what();
+    }
     this->transaction = nullptr;
 }
 
@@ -311,6 +277,115 @@ void Evse::check_max_energy_on_invalid_id() {
                 this->pause_charging_callback(this->evse_id);
                 transaction->check_max_active_import_energy = false; // No need to check anymore
             }
+        }
+    }
+}
+
+void Evse::start_metering_timers(const DateTime& timestamp) {
+
+    this->aligned_data_updated.clear_values();
+    this->aligned_data_tx_end.clear_values();
+
+    const auto sampled_data_tx_updated_interval = std::chrono::seconds(
+        this->device_model.get_value<int>(ControllerComponentVariables::SampledDataTxUpdatedInterval));
+    const auto sampled_data_tx_ended_interval = std::chrono::seconds(
+        this->device_model.get_value<int>(ControllerComponentVariables::SampledDataTxEndedInterval));
+    const auto aligned_data_tx_updated_interval =
+        std::chrono::seconds(this->device_model.get_value<int>(ControllerComponentVariables::AlignedDataInterval));
+    const auto aligned_data_tx_ended_interval = std::chrono::seconds(
+        this->device_model.get_value<int>(ControllerComponentVariables::AlignedDataTxEndedInterval));
+
+    if (sampled_data_tx_updated_interval > 0s) {
+        this->transaction->sampled_tx_updated_meter_values_timer.interval_starting_from(
+            [this] { this->transaction_meter_value_req(this->get_meter_value(), *this->transaction); },
+            sampled_data_tx_updated_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
+    }
+
+    if (sampled_data_tx_ended_interval > 0s) {
+        this->transaction->sampled_tx_ended_meter_values_timer.interval_starting_from(
+            [this] {
+                try {
+                    this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                           this->get_meter_value());
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                                  << this->transaction->transactionId.get() << " into database: " << e.what();
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                                  << this->transaction->transactionId.get() << " into database: " << e.what();
+                }
+            },
+            sampled_data_tx_ended_interval, date::utc_clock::to_sys(timestamp.to_time_point()));
+    }
+
+    if (aligned_data_tx_updated_interval > 0s) {
+        this->transaction->aligned_tx_updated_meter_values_timer.interval_starting_from(
+            [this, aligned_data_tx_updated_interval] {
+                if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
+                        .value_or(false)) {
+                    return;
+                }
+                auto meter_value = this->aligned_data_updated.retrieve_processed_values();
+
+                // If empty fallback on last updated metervalue
+                if (meter_value.sampledValue.empty()) {
+                    meter_value = this->get_meter_value();
+                }
+
+                for (auto& item : meter_value.sampledValue) {
+                    item.context = ReadingContextEnum::Sample_Clock;
+                }
+                if (this->device_model
+                        .get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
+                        .value_or(false)) {
+                    meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_updated_interval);
+                }
+                this->transaction_meter_value_req(meter_value, *this->transaction);
+                this->aligned_data_updated.clear_values();
+            },
+            aligned_data_tx_updated_interval,
+            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
+    }
+
+    if (aligned_data_tx_ended_interval > 0s) {
+        auto store_aligned_metervalue = [this, aligned_data_tx_ended_interval] {
+            auto meter_value = this->aligned_data_tx_end.retrieve_processed_values();
+
+            // If empty fallback on last updated metervalue
+            if (meter_value.sampledValue.empty()) {
+                meter_value = this->get_meter_value();
+            }
+
+            for (auto& item : meter_value.sampledValue) {
+                item.context = ReadingContextEnum::Sample_Clock;
+            }
+            if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
+                    .value_or(false)) {
+                meter_value.timestamp = utils::align_timestamp(DateTime{}, aligned_data_tx_ended_interval);
+            }
+            try {
+                this->database_handler->transaction_metervalues_insert(this->transaction->transactionId.get(),
+                                                                       meter_value);
+            } catch (const QueryExecutionException& e) {
+                EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                              << this->transaction->transactionId.get() << " into database: " << e.what();
+            } catch (const std::invalid_argument& e) {
+                EVLOG_warning << "Could not insert transaction meter values of transaction: "
+                              << this->transaction->transactionId.get() << " into database: " << e.what();
+            }
+            this->aligned_data_tx_end.clear_values();
+        };
+
+        auto next_interval = transaction->aligned_tx_ended_meter_values_timer.interval_starting_from(
+            store_aligned_metervalue, aligned_data_tx_ended_interval,
+            std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
+
+        // Store an extra aligned metervalue to fix the edge case where a transaction is started just before an interval
+        // but this code is processed just after the interval.
+        // For example, aligned interval = 1 min, transaction started at 11:59:59.500 and we get here on 12:00:00.100.
+        // There is still the expectation for us to add a metervalue at timepoint 12:00:00.000 which we do with this.
+        if (date::utc_clock::to_sys(timestamp.to_time_point()) <= (next_interval - aligned_data_tx_ended_interval)) {
+            store_aligned_metervalue();
         }
     }
 }

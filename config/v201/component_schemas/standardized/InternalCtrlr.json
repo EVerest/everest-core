@@ -629,6 +629,22 @@
           "description": "If enabled the metervalues configured with the AlignedDataCtrlr will be rounded to the exact time intervals",
           "default": false,
           "type": "boolean"
+      },
+      "ResumeTransactionsOnBoot": {
+          "variable_name": "ResumeTransactionsOnBoot",
+          "characteristics": {
+              "supportsMonitoring": false,
+              "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "If enabled the transactions that were active before shutdown will be resumed, if possible",
+          "default": false,
+          "type": "boolean"
       }
   },
   "required": [

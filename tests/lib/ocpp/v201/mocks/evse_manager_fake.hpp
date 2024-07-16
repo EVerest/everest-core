@@ -17,6 +17,8 @@ private:
     std::vector<std::unique_ptr<EvseInterface>> evses;
     std::vector<std::unique_ptr<EnhancedTransaction>> transactions;
 
+    DatabaseHandler db_handler{nullptr, ""}; // Only used to allow opening of transactions, will crash if actually used
+
 public:
     explicit EvseManagerFake(size_t nr_of_evses) {
         transactions.resize(nr_of_evses);
@@ -56,7 +58,7 @@ public:
 
     void open_transaction(int evse_id, const std::string& transaction_id) {
         auto& transaction = this->transactions.at(evse_id - 1);
-        transaction = std::make_unique<EnhancedTransaction>();
+        transaction = std::make_unique<EnhancedTransaction>(db_handler, false);
         transaction->transactionId = transaction_id;
 
         auto& mock = this->get_mock(evse_id);

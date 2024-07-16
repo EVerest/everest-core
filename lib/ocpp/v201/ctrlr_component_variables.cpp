@@ -296,6 +296,13 @@ const ComponentVariable& MaxMessageSize = {
         "MaxMessageSize",
     }),
 };
+const ComponentVariable& ResumeTransactionsOnBoot = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "ResumeTransactionsOnBoot",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,

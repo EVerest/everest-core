@@ -16,10 +16,7 @@ public:
                 (const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                  const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                  const std::optional<IdToken>& group_id_token, const std::optional<int32_t> reservation_id,
-                 const std::chrono::seconds sampled_data_tx_updated_interval,
-                 const std::chrono::seconds sampled_data_tx_ended_interval,
-                 const std::chrono::seconds aligned_data_tx_updated_interval,
-                 const std::chrono::seconds aligned_data_tx_ended_interval));
+                 ChargingStateEnum charging_state));
     MOCK_METHOD(void, close_transaction,
                 (const DateTime& timestamp, const MeterValue& meter_stop, const ReasonEnum& reason));
     MOCK_METHOD(void, start_checking_max_energy_on_invalid_id, ());

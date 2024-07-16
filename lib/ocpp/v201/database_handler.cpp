@@ -22,7 +22,12 @@ void DatabaseHandler::init_sql() {
         throw std::logic_error("SQLite must be in serialized thread mode");
     }
 
-    this->inintialize_enum_tables();
+    auto get_stmt = this->database->new_statement("SELECT * FROM TRANSACTIONS");
+    if (get_stmt->step() == SQLITE_ROW) {
+        EVLOG_info << "Not clearing tables as there is an ongoing transaction";
+    } else {
+        this->inintialize_enum_tables();
+    }
 }
 
 void DatabaseHandler::inintialize_enum_tables() {
@@ -614,6 +619,104 @@ OperationalStatusEnum DatabaseHandler::get_connector_availability(int32_t evse_i
     assert(evse_id > 0);
     assert(connector_id > 0);
     return this->get_availability(evse_id, connector_id);
+}
+
+// transactions
+void DatabaseHandler::transaction_insert(const EnhancedTransaction& transaction, int32_t evse_id) {
+    std::string sql =
+        "INSERT INTO TRANSACTIONS "
+        "(TRANSACTION_ID, EVSE_ID, CONNECTOR_ID, TIME_START, SEQ_NO, CHARGING_STATE, ID_TAG_SENT) VALUES"
+        "(@transaction_id, @evse_id, @connector_id, @time_start, @seq_no, @charging_state, @id_token_sent)";
+    auto insert_stmt = this->database->new_statement(sql);
+
+    insert_stmt->bind_text("@transaction_id", transaction.transactionId.get(), SQLiteString::Transient);
+    insert_stmt->bind_int("@evse_id", evse_id);
+    insert_stmt->bind_int("@connector_id", transaction.connector_id);
+    insert_stmt->bind_datetime("@time_start", transaction.start_time);
+    insert_stmt->bind_int("@seq_no", transaction.seq_no);
+    insert_stmt->bind_text("@charging_state",
+                           conversions::charging_state_enum_to_string(transaction.chargingState.value()),
+                           SQLiteString::Transient);
+    insert_stmt->bind_int("@id_token_sent", transaction.id_token_sent ? 1 : 0);
+
+    if (insert_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+std::unique_ptr<EnhancedTransaction> DatabaseHandler::transaction_get(const int32_t evse_id) {
+    std::string sql = "SELECT TRANSACTION_ID, CONNECTOR_ID, TIME_START, SEQ_NO, CHARGING_STATE, ID_TAG_SENT FROM "
+                      "TRANSACTIONS WHERE EVSE_ID = @evse_id";
+    auto get_stmt = this->database->new_statement(sql);
+    get_stmt->bind_int("@evse_id", evse_id);
+
+    if (get_stmt->step() != SQLITE_ROW) {
+        return nullptr;
+    }
+
+    // Hardcode database_enabled to true because we would not be here otherwise
+    auto transaction = std::make_unique<EnhancedTransaction>(*this, true);
+
+    // Fill transaction
+    transaction->transactionId = get_stmt->column_text(0);
+    transaction->connector_id = get_stmt->column_int(1);
+    transaction->start_time = get_stmt->column_datetime(2);
+    transaction->seq_no = get_stmt->column_int(3);
+    transaction->chargingState = conversions::string_to_charging_state_enum(get_stmt->column_text(4));
+    transaction->id_token_sent = get_stmt->column_int(5) != 0;
+
+    if (get_stmt->step() == SQLITE_ROW) {
+        // We should never have more than 1 transaction per evse_id in the database as per the UNIQUE constraint
+        EVLOG_error << "There are more than 1 transactions for evse_id " << evse_id << " in the database";
+    }
+
+    return transaction;
+}
+
+void DatabaseHandler::transaction_update_seq_no(const std::string& transaction_id, int32_t seq_no) {
+    std::string sql = "UPDATE TRANSACTIONS SET SEQ_NO = @seq_no WHERE TRANSACTION_ID = @transaction_id";
+    auto update_stmt = this->database->new_statement(sql);
+
+    update_stmt->bind_int("@seq_no", seq_no);
+    update_stmt->bind_text("@transaction_id", transaction_id);
+
+    if (update_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::transaction_update_charging_state(const std::string& transaction_id,
+                                                        const ChargingStateEnum charging_state) {
+    std::string sql = "UPDATE TRANSACTIONS SET CHARGING_STATE = @charging_state WHERE TRANSACTION_ID = @transaction_id";
+    auto update_stmt = this->database->new_statement(sql);
+
+    update_stmt->bind_text("@charging_state", conversions::charging_state_enum_to_string(charging_state));
+    update_stmt->bind_text("@transaction_id", transaction_id);
+
+    if (update_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::transaction_update_id_token_sent(const std::string& transaction_id, bool id_token_sent) {
+    std::string sql = "UPDATE TRANSACTIONS SET ID_TAG_SENT = @id_token_sent WHERE TRANSACTION_ID = @transaction_id";
+    auto update_stmt = this->database->new_statement(sql);
+
+    update_stmt->bind_int("@id_token_sent", id_token_sent ? 1 : 0);
+    update_stmt->bind_text("@transaction_id", transaction_id);
+
+    if (update_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::transaction_delete(const std::string& transaction_id) {
+    std::string sql = "DELETE FROM TRANSACTIONS WHERE TRANSACTION_ID = @transaction_id";
+    auto delete_stmt = this->database->new_statement(sql);
+    delete_stmt->bind_text("@transaction_id", transaction_id);
+    if (delete_stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
 }
 
 } // namespace v201
