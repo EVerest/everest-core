@@ -18,6 +18,7 @@ using namespace std::chrono_literals;
 const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 const std::string VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL = "internal";
 const std::string VARIABLE_ATTRIBUTE_VALUE_SOURCE_CSMS = "csms";
+const auto DEFAULT_WAIT_FOR_FUTURE_TIMEOUT = std::chrono::seconds(60);
 
 using DatabaseException = ocpp::common::DatabaseException;
 
@@ -323,13 +324,14 @@ void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connec
 
 Get15118EVCertificateResponse
 ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) {
+
+    Get15118EVCertificateResponse response;
+
     if (!this->device_model
              ->get_optional_value<bool>(ControllerComponentVariables::ContractCertificateInstallationEnabled)
              .value_or(false)) {
         EVLOG_warning << "Can not fulfill Get15118EVCertificateRequest because ContractCertificateInstallationEnabled "
                          "is configured as false!";
-
-        Get15118EVCertificateResponse response;
         response.status = Iso15118EVCertificateStatusEnum::Failed;
         return response;
     }
@@ -337,10 +339,16 @@ ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequ
     EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
     auto future_res = this->send_async<Get15118EVCertificateRequest>(
         ocpp::Call<Get15118EVCertificateRequest>(request, this->message_queue->createMessageId()));
+
+    if (future_res.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for Get15118EVCertificateRequest.conf future timed out!";
+        response.status = Iso15118EVCertificateStatusEnum::Failed;
+        return response;
+    }
+
     const auto response_message = future_res.get();
     EVLOG_debug << "Received Get15118EVCertificateResponse " << response_message.message;
     if (response_message.messageType != MessageType::Get15118EVCertificateResponse) {
-        Get15118EVCertificateResponse response;
         response.status = Iso15118EVCertificateStatusEnum::Failed;
         return response;
     }
@@ -2027,13 +2035,24 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
     req.certificate = certificate;
     req.iso15118CertificateHashData = ocsp_request_data;
 
+    AuthorizeResponse response;
+    response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
+
+    if (!this->websocket->is_connected()) {
+        return response;
+    }
+
     ocpp::Call<AuthorizeRequest> call(req, this->message_queue->createMessageId());
     auto future = this->send_async<AuthorizeRequest>(call);
+
+    if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for DataTransfer.conf(Authorize) future timed out!";
+        return response;
+    }
+
     const auto enhanced_message = future.get();
 
     if (enhanced_message.messageType != MessageType::AuthorizeResponse) {
-        AuthorizeResponse response;
-        response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
         return response;
     }
 
@@ -3502,6 +3521,12 @@ DataTransferResponse ChargePoint::data_transfer_req(const DataTransferRequest& r
     DataTransferResponse response;
     ocpp::Call<DataTransferRequest> call(request, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
+
+    if (data_transfer_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for DataTransfer.conf future timed out";
+        response.status = ocpp::v201::DataTransferStatusEnum::Rejected;
+        return response;
+    }
 
     auto enhanced_message = data_transfer_future.get();
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {

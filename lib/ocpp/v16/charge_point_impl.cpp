@@ -27,6 +27,7 @@ const auto INITIAL_CERTIFICATE_REQUESTS_DELAY = std::chrono::seconds(60);
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
 const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if BootNotification returns interval of 0.
+const auto DEFAULT_WAIT_FOR_FUTURE_TIMEOUT = std::chrono::seconds(60);
 
 ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
                                  const fs::path& user_config_path, const fs::path& database_path,
@@ -2851,6 +2852,12 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
     ocpp::Call<AuthorizeRequest> call(req, this->message_queue->createMessageId());
 
     auto authorize_future = this->send_async<AuthorizeRequest>(call);
+
+    if (authorize_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for Authorize.conf future timed out!";
+        return {AuthorizationStatus::Invalid, std::nullopt, std::nullopt};
+    }
+
     auto enhanced_message = authorize_future.get();
 
     IdTagInfo id_tag_info;
@@ -3046,6 +3053,11 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
         Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
         auto authorize_future = this->send_async<DataTransferRequest>(call);
 
+        if (authorize_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+            EVLOG_warning << "Waiting for DataTransfer.conf(Authorize) future timed out!";
+            return authorize_response;
+        }
+
         auto enhanced_message = authorize_future.get();
 
         if (enhanced_message.messageType == MessageType::DataTransferResponse) {
@@ -3147,6 +3159,12 @@ void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
 
     Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
     auto future = this->send_async<DataTransferRequest>(call);
+
+    if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for DataTransfer.conf(Get15118EVCertificate) future timed out!";
+        return;
+    }
+
     auto enhanced_message = future.get();
 
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {
@@ -3191,6 +3209,12 @@ void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v201:
 
     Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
     auto future = this->send_async<DataTransferRequest>(call);
+
+    if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for DataTransfer.conf(GetCertificateStatus) future timed out!";
+        return;
+    }
+
     auto enhanced_message = future.get();
 
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {
@@ -3439,18 +3463,26 @@ DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorI
     ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
+    if (data_transfer_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for DataTransfer.conf future timed out";
+        response.status = DataTransferStatus::Rejected;
+        return response;
+    }
+
     auto enhanced_message = data_transfer_future.get();
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {
         try {
             ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
             response = call_result.msg;
         } catch (json::exception& e) {
+            EVLOG_warning << "Could not parse DataTransfer.conf message from CSMS";
             // We can not parse the returned message, so we somehow have to indicate an error to the caller
             response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the
                                                             // best we have to indicate an error
         }
     }
     if (enhanced_message.offline) {
+        EVLOG_warning << "Did not receive DataTransfer.conf from CSMS because we are offline";
         // The charge point is offline or has a bad connection.
         response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the
                                                         // best we have to indicate an error
