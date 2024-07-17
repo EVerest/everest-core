@@ -111,6 +111,7 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
+    case Event::PluginTimeout:
     case Event::StoppingCharging:
     case Event::TransactionFinished:
         this->state = State::Finished;
@@ -138,7 +139,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         break;
     case Event::ReplugStarted:
     case Event::ReplugFinished:
-    case Event::PluginTimeout:
     default:
         break;
     }
