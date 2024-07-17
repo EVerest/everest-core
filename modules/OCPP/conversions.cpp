@@ -579,8 +579,12 @@ to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageRe
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message) {
     types::display_message::DisplayMessage m;
     m.id = display_message.id;
-    // m.message = display_message.messages; // TODO
-    // m.message_format = m.message_format; // TODO
+    m.message.content = display_message.message.message;
+    if (display_message.message.message_format.has_value()) {
+        m.message.format = to_everest_display_message_format(display_message.message.message_format.value());
+    }
+    m.message.language = display_message.message.language;
+
     if (display_message.priority.has_value()) {
         m.priority = to_everest_display_message_priority(display_message.priority.value());
     }
@@ -679,6 +683,7 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
     cost.cost_chunks->push_back(chunk);
 
     if (running_cost.charging_price.has_value()) {
+        cost.charging_price = std::vector<types::session_cost::ChargingPriceComponent>();
         const ocpp::RunningCostChargingPrice& price = running_cost.charging_price.value();
         if (price.hour_price.has_value()) {
             types::session_cost::ChargingPriceComponent hour_price =

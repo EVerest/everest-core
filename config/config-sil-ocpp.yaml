@@ -153,6 +153,15 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      display_message:
+        - module_id: display_message
+          implementation_id: display_message
+  display_message:
+    module: DisplayMessage
+    connections:
+      session_cost:
+        - module_id: ocpp
+          implementation_id: session_cost
   evse_security:
     module: EvseSecurity
     config_module:

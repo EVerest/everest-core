@@ -14,21 +14,20 @@ void display_messageImpl::ready() {
 
 types::display_message::SetDisplayMessageResponse
 display_messageImpl::handle_set_display_message(std::vector<types::display_message::DisplayMessage>& request) {
-    return this->mod->r_display_message.at(0)->call_set_display_message(request);
-    // types::display_message::SetDisplayMessageResponse response;
-    // if (request.empty()) {
-    //     response.status = types::display_message::DisplayMessageStatusEnum::Rejected;
-    //     response.status_info = "No request sent";
-    //     return response;
-    // }
+    types::display_message::SetDisplayMessageResponse response;
+    if (request.empty()) {
+        response.status = types::display_message::DisplayMessageStatusEnum::Rejected;
+        response.status_info = "No request sent";
+        return response;
+    }
 
-    // for (const types::display_message::DisplayMessage& message : request) {
-    //     EVLOG_debug << "New display message: " << message.message.content;
-    // }
+    for (const types::display_message::DisplayMessage& message : request) {
+        EVLOG_error << "New display message: " << message.message.content;
+    }
 
-    // response.status = types::display_message::DisplayMessageStatusEnum::Accepted;
-    // // TODO
-    // return response;
+    response.status = types::display_message::DisplayMessageStatusEnum::Accepted;
+    // TODO
+    return response;
 }
 
 types::display_message::GetDisplayMessageResponse

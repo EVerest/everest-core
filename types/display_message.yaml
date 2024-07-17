@@ -35,7 +35,6 @@ types:
   MessageContent:
     description: Contains message details
     required:
-      - format
       - content
     type: object
     properties:
