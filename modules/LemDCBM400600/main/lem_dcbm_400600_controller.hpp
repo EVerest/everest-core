@@ -98,6 +98,7 @@ private:
     Conf config;
 
     void fetch_meter_id_from_device();
+    std::string get_current_transaction();
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);

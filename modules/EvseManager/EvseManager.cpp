@@ -42,6 +42,9 @@ inline static types::authorization::ProvidedIdToken create_autocharge_token(std:
 }
 
 void EvseManager::init() {
+
+    store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
+
     random_delay_enabled = config.uk_smartcharging_random_delay_enable;
     random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
     if (random_delay_enabled) {
@@ -923,6 +926,8 @@ void EvseManager::ready() {
         this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
                                      [this] { return initial_powermeter_value_received; });
     }
+    // Cleanup left-over transaction from e.g. power loss
+    charger->cleanup_transactions_on_startup();
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.

@@ -25,12 +25,14 @@ namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
                  const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+                 const std::unique_ptr<PersistentStore>& _store,
                  const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id) :
     bsp(bsp),
     error_handling(error_handling),
-    connector_type(connector_type),
+    r_powermeter_billing(r_powermeter_billing),
+    store(_store) connector_type(connector_type),
     evse_id(evse_id),
-    r_powermeter_billing(r_powermeter_billing) {
+{
 
 #ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
@@ -1178,6 +1180,8 @@ bool Charger::start_transaction() {
         }
     }
 
+    store->store_session(shared_context.session_uuid);
+
     signal_transaction_started_event(shared_context.id_token);
     return true;
 }
@@ -1200,9 +1204,49 @@ void Charger::stop_transaction() {
         }
     }
 
+    store->clear_session();
+
     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
     signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
                                       shared_context.stop_transaction_id_token);
+}
+
+void Charger::cleanup_transactions_on_startup() {
+    // See if we have an open transaction in persistent storage
+    auto session_uuid = store->get_session();
+    if (not session_uuid.empty()) {
+        EVLOG_info << "Cleaning up transaction with UUID " << session_uuid << " on start up";
+        store->clear_session();
+
+        types::evse_manager::TransactionFinished transaction_finished;
+
+        // If yes, try to close nicely with the ID we remember and trigger a transaction finished event on success
+        for (const auto& meter : r_powermeter_billing) {
+            const auto response = meter->call_stop_transaction(session_uuid);
+            // If we fail to stop the transaction, it was probably just not active anymore
+            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+                EVLOG_warning << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+                break;
+            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+                // Fill in OCMF from the recovered transaction
+                transaction_finished.start_signed_meter_value = response.start_signed_meter_value;
+                transaction_finished.signed_meter_value = response.signed_meter_value;
+                break;
+            }
+        }
+
+        // Send out event to inform OCPP et al
+        std::optional<types::authorization::ProvidedIdToken> id_token;
+        signal_transaction_finished_event(types::evse_manager::StopTransactionReason::PowerLoss, id_token);
+    }
+
+    // Now we did what we could to clean up, so if there are still transactions going on in the power meter close them
+    // anyway. In this case we cannot generate a transaction finished event for OCPP et al since we cannot match it to
+    // our transaction anymore.
+    EVLOG_info << "Cleaning up any other transaction on start up";
+    for (const auto& meter : r_powermeter_billing) {
+        meter->call_stop_transaction("");
+    }
 }
 
 std::optional<types::units_signed::SignedMeterValue>
