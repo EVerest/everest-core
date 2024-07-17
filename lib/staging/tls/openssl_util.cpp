@@ -56,12 +56,10 @@ int add_error_str(const char* str, std::size_t len, void* u) {
 int password_cb(char* buf, int size, int rwflag, void* u) {
     int result{-1};
 
-    if ((u != nullptr) && (buf != nullptr)) {
-        const auto len = std::strlen(static_cast<const char*>(u));
-        if (len <= size) {
-            std::memcpy(buf, u, len);
-            result = len;
-        }
+    if ((u != nullptr) && (buf != nullptr) && (size > 0)) {
+        std::strncpy(buf, static_cast<const char*>(u), size);
+        buf[size - 1] = '\0';
+        result = static_cast<int>(std::strlen(buf));
     }
 
     return result;
