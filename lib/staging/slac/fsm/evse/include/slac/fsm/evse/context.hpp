@@ -166,7 +166,8 @@ struct EvseSlacConfig {
     struct chip_reset_struct {
         bool enabled = false;
         int timeout_ms = 500;
-        int delay_ms = 100;
+        int delay_before_reset_ms = 100;
+        int delay_after_reset_ms = 100;
     } chip_reset;
 
     // Settings for LINK_STATUS detection

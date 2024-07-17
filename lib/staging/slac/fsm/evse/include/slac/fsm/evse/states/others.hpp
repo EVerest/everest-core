@@ -15,11 +15,20 @@ struct ResetState : public FSMSimpleState {
 
     void enter() final;
     CallbackReturnType callback() final;
+};
+
+struct UpdateNMKState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
+
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
+    CallbackReturnType callback() final;
 
     // for now returns true if CM_SET_KEY_CNF is received
     bool handle_slac_message(slac::messages::HomeplugMessage&);
 
-    bool setup_has_been_send{false};
+    bool set_key_req_has_been_send{false};
 };
 
 struct ResetChipState : public FSMSimpleState {
@@ -37,10 +46,11 @@ struct ResetChipState : public FSMSimpleState {
     bool chip_reset_has_been_sent{false};
 
     enum class SubState {
-        DELAY,
+        DELAY_BEFORE_RESET,
         SEND_RESET,
+        DELAY_AFTER_RESET,
         DONE,
-    } sub_state{SubState::DELAY};
+    } sub_state{SubState::DELAY_BEFORE_RESET};
 };
 
 struct IdleState : public FSMSimpleState {
