@@ -60,7 +60,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 673bc5bf5db3a02d03f4f06cc2d9a575cbe53f39
+  git_tag: feature/data-transfer-return-immediately-when-offline
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
