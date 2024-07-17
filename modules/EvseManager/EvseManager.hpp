@@ -22,6 +22,7 @@
 #include <generated/interfaces/connector_lock/Interface.hpp>
 #include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/kvs/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
@@ -41,6 +42,7 @@
 #include "CarManufacturer.hpp"
 #include "Charger.hpp"
 #include "ErrorHandling.hpp"
+#include "PersistentStore.hpp"
 #include "SessionLog.hpp"
 #include "VarContainer.hpp"
 #include "scoped_lock_timeout.hpp"
@@ -110,7 +112,8 @@ public:
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
-                std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC, Conf& config) :
+                std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC,
+                std::vector<std::unique_ptr<kvsIntf>> r_store, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         telemetry(telemetry),
@@ -127,6 +130,7 @@ public:
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
+        r_store(std::move(r_store)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -144,6 +148,7 @@ public:
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
     const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
+    const std::vector<std::unique_ptr<kvsIntf>> r_store;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -191,6 +196,7 @@ public:
 
     std::unique_ptr<IECStateMachine> bsp;
     std::unique_ptr<ErrorHandling> error_handling;
+    std::unique_ptr<PersistentStore> store;
 
     std::atomic_bool random_delay_enabled{false};
     std::atomic_bool random_delay_running{false};

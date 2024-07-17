@@ -45,6 +45,7 @@
 #include "ErrorHandling.hpp"
 #include "EventQueue.hpp"
 #include "IECStateMachine.hpp"
+#include "PersistentStore.hpp"
 #include "scoped_lock_timeout.hpp"
 
 namespace module {
@@ -55,6 +56,7 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 class Charger {
 public:
     Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
+            const std::unique_ptr<PersistentStore>& store,
             const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& evse_id);
     ~Charger();
 
@@ -206,6 +208,8 @@ public:
         connector_type = t;
     }
 
+    void cleanup_transactions_on_startup();
+
 private:
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
@@ -350,6 +354,7 @@ private:
 
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
+    const std::unique_ptr<PersistentStore>& store;
 
     std::atomic<types::evse_board_support::Connector_type> connector_type{
         types::evse_board_support::Connector_type::IEC62196Type2Cable};

@@ -41,6 +41,9 @@ inline static types::authorization::ProvidedIdToken create_autocharge_token(std:
 }
 
 void EvseManager::init() {
+
+    store = std::unique_ptr<PersistentStore>(new PersistentStore(r_store, info.id));
+
     random_delay_enabled = config.uk_smartcharging_random_delay_enable;
     random_delay_max_duration = std::chrono::seconds(config.uk_smartcharging_random_delay_max_duration);
     if (random_delay_enabled) {
@@ -158,7 +161,7 @@ void EvseManager::ready() {
     error_handling =
         std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd));
 
-    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, r_powermeter_billing(), config.evse_id));
+    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, store, r_powermeter_billing(), config.evse_id));
 
     // Now incoming hardware capabilties can be processed
     hw_caps_mutex.unlock();
@@ -909,6 +912,8 @@ void EvseManager::ready() {
         this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
                                      [this] { return initial_powermeter_value_received; });
     }
+    // Cleanup left-over transaction from e.g. power loss
+    charger->cleanup_transactions_on_startup();
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
     //  caps.
