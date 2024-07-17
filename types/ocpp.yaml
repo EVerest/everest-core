@@ -163,6 +163,7 @@ types:
       - Rejected
       - UnknownMessageId
       - UnknownVendorId
+      - Offline
   DataTransferRequest:
     description: Type for data transfer request provided by OCPP
     type: object
