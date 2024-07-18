@@ -3,6 +3,7 @@ generate_config_run_script(CONFIG sil-two-evse)
 generate_config_run_script(CONFIG sil-ocpp)
 generate_config_run_script(CONFIG sil-ocpp201)
 generate_config_run_script(CONFIG sil-dc)
+generate_config_run_script(CONFIG sil-dc-tls)
 generate_config_run_script(CONFIG sil-dc-sae-v2g)
 generate_config_run_script(CONFIG sil-dc-sae-v2h)
 generate_config_run_script(CONFIG sil-two-evse-dc)
@@ -25,7 +26,7 @@ install(
 install(
     DIRECTORY "certs"
     DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
-    FILES_MATCHING PATTERN "*.pem" PATTERN "*.key" PATTERN "*.der" PATTERN "*.txt" PATTERN "*.jks" PATTERN "*.p12" 
+    FILES_MATCHING PATTERN "*.pem" PATTERN "*.key" PATTERN "*.der" PATTERN "*.txt" PATTERN "*.jks" PATTERN "*.p12"
 )
 
 install(

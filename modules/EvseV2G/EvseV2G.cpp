@@ -3,22 +3,51 @@
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "EvseV2G.hpp"
 #include "connection.hpp"
+#include "everest/logging.hpp"
 #include "log.hpp"
 #include "sdp.hpp"
 
-struct v2g_context* v2g_ctx = NULL;
+#ifndef EVEREST_MBED_TLS
+#include <openssl_util.hpp>
+namespace {
+void log_handler(openssl::log_level_t level, const std::string& str) {
+    switch (level) {
+    case openssl::log_level_t::debug:
+        // ignore debug logs
+        break;
+    case openssl::log_level_t::warning:
+        EVLOG_warning << str;
+        break;
+    case openssl::log_level_t::error:
+    default:
+        EVLOG_error << str;
+        break;
+    }
+}
+} // namespace
+#endif // EVEREST_MBED_TLS
+
+struct v2g_context* v2g_ctx = nullptr;
 
 namespace module {
 
 void EvseV2G::init() {
-    int rv = 0;
     /* create v2g context */
     v2g_ctx = v2g_ctx_create(&(*p_charger), &(*r_security));
 
-    if (v2g_ctx == NULL)
+    if (v2g_ctx == nullptr)
         return;
 
+#ifndef EVEREST_MBED_TLS
+    (void)openssl::set_log_handler(log_handler);
+    v2g_ctx->tls_server = &tls_server;
+#endif // EVEREST_MBED_TLS
+
     invoke_init(*p_charger);
+}
+
+void EvseV2G::ready() {
+    int rv = 0;
 
     dlog(DLOG_LEVEL_DEBUG, "Starting SDP responder");
 
@@ -42,14 +71,6 @@ void EvseV2G::init() {
         goto err_out;
     }
 
-    return;
-err_out:
-    v2g_ctx_free(v2g_ctx);
-}
-
-void EvseV2G::ready() {
-    int rv = 0;
-
     invoke_ready(*p_charger);
 
     rv = sdp_listen(v2g_ctx);
@@ -58,6 +79,8 @@ void EvseV2G::ready() {
         dlog(DLOG_LEVEL_ERROR, "sdp_listen() failed");
         goto err_out;
     }
+
+    return;
 
 err_out:
     v2g_ctx_free(v2g_ctx);
