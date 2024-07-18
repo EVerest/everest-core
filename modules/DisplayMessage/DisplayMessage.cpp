@@ -12,7 +12,7 @@ void DisplayMessage::init() {
             return;
         }
 
-        EVLOG_debug << "Session cost status: " << session_status_to_string(session_cost.status);
+        EVLOG_info << "Session cost status: " << session_status_to_string(session_cost.status);
         for (const types::session_cost::SessionCostChunk& chunk : session_cost.cost_chunks.value()) {
             if (chunk.cost.has_value()) {
                 EVLOG_info << "Session cost until now: " << static_cast<double>(chunk.cost.value().value) / 100.0;
@@ -39,9 +39,15 @@ void DisplayMessage::init() {
                 EVLOG_info << "Charging price for category " << category << ": " << price << std::endl;
             }
         }
-    });
 
-    // this->p_display_message
+        if (session_cost.message.has_value()) {
+            for (const types::display_message::MessageContent& message : session_cost.message.value()) {
+                EVLOG_info << "Charging price message"
+                           << (message.language.has_value() ? " (" + message.language.value() + ")" : "") << ": "
+                           << message.content;
+            }
+        }
+    });
 }
 
 void DisplayMessage::ready() {

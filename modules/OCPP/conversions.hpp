@@ -120,6 +120,7 @@ ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::disp
 
 types::display_message::MessageFormat
 to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format);
+ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format);
 
 types::display_message::MessageContent
 to_everest_display_message_content(const ocpp::DisplayMessageContent& message_content);
@@ -127,8 +128,9 @@ to_everest_display_message_content(const ocpp::DisplayMessageContent& message_co
 ocpp::v16::DataTransferResponse to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse &set_display_message_response);
 
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message);
-
 ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message);
+
+types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::RunningCostState& state);
 
 types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price,
                                                                 const std::optional<ocpp::DateTime>& timestamp,

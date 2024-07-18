@@ -33,14 +33,12 @@ display_messageImpl::handle_set_display_message(std::vector<types::display_messa
 
 types::display_message::GetDisplayMessageResponse
 display_messageImpl::handle_get_display_messages(types::display_message::GetDisplayMessageRequest& request) {
-    // your code for cmd get_display_messages goes here
-    return {};
+    return this->mod->r_display_message.at(0)->call_get_display_messages(request);
 }
 
 types::display_message::ClearDisplayMessageResponse
 display_messageImpl::handle_clear_display_message(types::display_message::ClearDisplayMessageRequest& request) {
-    // your code for cmd clear_display_message goes here
-    return {};
+    return this->mod->r_display_message.at(0)->call_clear_display_message(request);
 }
 
 } // namespace display_message

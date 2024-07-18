@@ -529,8 +529,23 @@ to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_f
         return types::display_message::MessageFormat::UTF8;
     default:
         throw std::out_of_range(
-            "Could not convert  ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
+            "Could not convert ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
     }
+}
+
+ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format) {
+    switch (format) {
+    case types::display_message::MessageFormat::ASCII:
+        return ocpp::v201::MessageFormatEnum::ASCII;
+    case types::display_message::MessageFormat::HTML:
+        return ocpp::v201::MessageFormatEnum::HTML;
+    case types::display_message::MessageFormat::URI:
+        return ocpp::v201::MessageFormatEnum::URI;
+    case types::display_message::MessageFormat::UTF8:
+        return ocpp::v201::MessageFormatEnum::UTF8;
+    }
+
+    throw std::out_of_range("Could not convert types::display_message::MessageFormat to ocpp::v201::MessageFormatEnum");
 }
 
 types::display_message::MessageContent
@@ -605,7 +620,12 @@ types::display_message::DisplayMessage to_everest_display_message(const ocpp::Di
 ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message) {
     ocpp::DisplayMessage m;
     m.id = display_message.id;
-    // m.messages.push_back(display_message.message); // TODO
+    m.message.message = display_message.message.content;
+    m.message.language = display_message.message.language;
+    if (display_message.message.format.has_value()) {
+        m.message.message_format = to_ocpp_201_message_format_enum(display_message.message.format.value());
+    }
+
     if (display_message.priority.has_value()) {
         m.priority = to_ocpp_201_message_priority(display_message.priority.value());
     }
@@ -640,6 +660,7 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
                                                                 const std::optional<ocpp::DateTime>& timestamp,
                                                                 const std::optional<uint32_t>& meter_value) {
     types::session_cost::SessionCostChunk chunk;
+    chunk.cost = types::money::MoneyAmount();
     chunk.cost->value = static_cast<int>(price * 100); // TODO
     if (timestamp.has_value()) {
         chunk.timestamp_to = timestamp.value().to_rfc3339();
@@ -658,6 +679,7 @@ to_everest_charging_price_component(const double& price, const types::session_co
     p.currency = currency;
     p.value.value = static_cast<int>(price * 100); // TODO
     c.category = category;
+    c.price = p;
 
     return c;
 }
@@ -736,7 +758,6 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
             next_period.idle_price = next_period_idle_price;
         }
         if (running_cost.next_period_charging_price.has_value()) {
-            // next_period.charging_price.price->value = running_cost.next_period_charging_price.value() * 100; // TODO
             const ocpp::RunningCostChargingPrice& next_period_charging_price =
                 running_cost.next_period_charging_price.value();
 
