@@ -3451,22 +3451,27 @@ void ChargePointImpl::handle_data_transfer_install_certificate(Call<DataTransfer
     this->send<DataTransferResponse>(call_result);
 }
 
-DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorId,
-                                                    const std::optional<CiString<50>>& messageId,
-                                                    const std::optional<std::string>& data) {
+std::optional<DataTransferResponse> ChargePointImpl::data_transfer(const CiString<255>& vendorId,
+                                                                   const std::optional<CiString<50>>& messageId,
+                                                                   const std::optional<std::string>& data) {
     DataTransferRequest req;
     req.vendorId = vendorId;
     req.messageId = messageId;
     req.data = data;
 
     DataTransferResponse response;
+    response.status = DataTransferStatus::Rejected;
     ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
+    if (!this->websocket->is_connected()) {
+        EVLOG_warning << "Attempting to send DataTransfer.req but charging station is offline";
+        return std::nullopt;
+    }
+
     if (data_transfer_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for DataTransfer.conf future timed out";
-        response.status = DataTransferStatus::Rejected;
-        return response;
+        return std::nullopt;
     }
 
     auto enhanced_message = data_transfer_future.get();
@@ -3484,8 +3489,7 @@ DataTransferResponse ChargePointImpl::data_transfer(const CiString<255>& vendorI
     if (enhanced_message.offline) {
         EVLOG_warning << "Did not receive DataTransfer.conf from CSMS because we are offline";
         // The charge point is offline or has a bad connection.
-        response.status = DataTransferStatus::Rejected; // Rejected is not completely correct, but the
-                                                        // best we have to indicate an error
+        return std::nullopt;
     }
 
     return response;

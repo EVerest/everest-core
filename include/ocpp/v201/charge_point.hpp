@@ -352,14 +352,15 @@ public:
     /// \param messageId
     /// \param data
     /// \return DataTransferResponse containing the result from CSMS
-    virtual DataTransferResponse data_transfer_req(const CiString<255>& vendorId,
-                                                   const std::optional<CiString<50>>& messageId,
-                                                   const std::optional<json>& data) = 0;
+    virtual std::optional<DataTransferResponse> data_transfer_req(const CiString<255>& vendorId,
+                                                                  const std::optional<CiString<50>>& messageId,
+                                                                  const std::optional<json>& data) = 0;
 
     /// \brief Data transfer mechanism initiated by charger
     /// \param request
-    /// \return DataTransferResponse containing the result from CSMS
-    virtual DataTransferResponse data_transfer_req(const DataTransferRequest& request) = 0;
+    /// \return DataTransferResponse containing the result from CSMS. In case no response is received from the CSMS
+    /// because the message timed out or the charging station is offline, std::nullopt is returned
+    virtual std::optional<DataTransferResponse> data_transfer_req(const DataTransferRequest& request) = 0;
 
     /// \brief Switches the operative status of the CS
     /// \param new_status: The new operative status to switch to
@@ -893,10 +894,11 @@ public:
 
     void on_variable_changed(const SetVariableData& set_variable_data) override;
 
-    DataTransferResponse data_transfer_req(const CiString<255>& vendorId, const std::optional<CiString<50>>& messageId,
-                                           const std::optional<json>& data) override;
+    std::optional<DataTransferResponse> data_transfer_req(const CiString<255>& vendorId,
+                                                          const std::optional<CiString<50>>& messageId,
+                                                          const std::optional<json>& data) override;
 
-    DataTransferResponse data_transfer_req(const DataTransferRequest& request) override;
+    std::optional<DataTransferResponse> data_transfer_req(const DataTransferRequest& request) override;
 
     void set_cs_operative_status(OperationalStatusEnum new_status, bool persist) override;
 

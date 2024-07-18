@@ -3489,9 +3489,9 @@ template <class T> bool ChargePoint::send(ocpp::CallResult<T> call_result) {
     return true;
 }
 
-DataTransferResponse ChargePoint::data_transfer_req(const CiString<255>& vendorId,
-                                                    const std::optional<CiString<50>>& messageId,
-                                                    const std::optional<json>& data) {
+std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const CiString<255>& vendorId,
+                                                                   const std::optional<CiString<50>>& messageId,
+                                                                   const std::optional<json>& data) {
     DataTransferRequest req;
     req.vendorId = vendorId;
     req.messageId = messageId;
@@ -3500,15 +3500,20 @@ DataTransferResponse ChargePoint::data_transfer_req(const CiString<255>& vendorI
     return this->data_transfer_req(req);
 }
 
-DataTransferResponse ChargePoint::data_transfer_req(const DataTransferRequest& request) {
+std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTransferRequest& request) {
     DataTransferResponse response;
+    response.status = DataTransferStatusEnum::Rejected;
+
     ocpp::Call<DataTransferRequest> call(request, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
+    if (!this->websocket->is_connected()) {
+        return std::nullopt;
+    }
+
     if (data_transfer_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for DataTransfer.conf future timed out";
-        response.status = ocpp::v201::DataTransferStatusEnum::Rejected;
-        return response;
+        return std::nullopt;
     }
 
     auto enhanced_message = data_transfer_future.get();
@@ -3517,7 +3522,7 @@ DataTransferResponse ChargePoint::data_transfer_req(const DataTransferRequest& r
         response = call_result.msg;
     }
     if (enhanced_message.offline) {
-        response.status = ocpp::v201::DataTransferStatusEnum::Rejected;
+        return std::nullopt;
     }
 
     return response;
