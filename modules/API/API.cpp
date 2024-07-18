@@ -111,6 +111,7 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
+    case Event::PluginTimeout:
     case Event::StoppingCharging:
     case Event::TransactionFinished:
         this->state = State::Finished;
@@ -138,7 +139,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         break;
     case Event::ReplugStarted:
     case Event::ReplugFinished:
-    case Event::PluginTimeout:
     default:
         break;
     }
@@ -525,7 +525,13 @@ void API::init() {
                                 << ", error: " << e.what();
                 }
             }
-            evse->call_force_unlock(connector_id); //
+            // match processing in ChargePointImpl::handleUnlockConnectorRequest
+            // so that OCPP UnlockConnector and everest_api/evse_manager/cmd/force_unlock
+            // perform the same action
+            types::evse_manager::StopTransactionRequest req;
+            req.reason = types::evse_manager::StopTransactionReason::UnlockCommand;
+            evse->call_stop_transaction(req);
+            evse->call_force_unlock(connector_id);
         });
 
         // Check if a uk_random_delay is connected that matches this evse_manager

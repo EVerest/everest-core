@@ -94,6 +94,12 @@ jobs:
         with:
           path: dist-wheels
           name: wheels
+      - name: Archive unit test results
+        if: always()
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: ctest-report
+          path: ${{ github.workspace }}/ctest-report
   integration-tests:
     name: Integration Tests
     needs: build
