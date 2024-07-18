@@ -656,12 +656,12 @@ types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::Run
     }
 }
 
-types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price,
+types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price, const uint32_t& number_of_decimals,
                                                                 const std::optional<ocpp::DateTime>& timestamp,
                                                                 const std::optional<uint32_t>& meter_value) {
     types::session_cost::SessionCostChunk chunk;
     chunk.cost = types::money::MoneyAmount();
-    chunk.cost->value = static_cast<int>(price * 100); // TODO
+    chunk.cost->value = static_cast<int>(price * (10 ^ number_of_decimals));
     if (timestamp.has_value()) {
         chunk.timestamp_to = timestamp.value().to_rfc3339();
     }
@@ -670,25 +670,29 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
 }
 
 types::session_cost::ChargingPriceComponent
-to_everest_charging_price_component(const double& price, const types::session_cost::CostCategory category) {
+to_everest_charging_price_component(const double& price, const uint32_t& number_of_decimals,
+                                    const types::session_cost::CostCategory category,
+                                    std::optional<types::money::CurrencyCode> currency_code) {
     types::session_cost::ChargingPriceComponent c;
     types::money::Price p;
     types::money::Currency currency;
-    currency.code = types::money::CurrencyCode::EUR; // TODO get from settings
-    currency.decimals = 2;                           // TODO
+    currency.code = currency_code;
+    currency.decimals = number_of_decimals;
     p.currency = currency;
-    p.value.value = static_cast<int>(price * 100); // TODO
+    p.value.value = static_cast<int>(price * (10 ^ number_of_decimals));
     c.category = category;
     c.price = p;
 
     return c;
 }
 
-types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost) {
+types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost,
+                                                         const uint32_t number_of_decimals,
+                                                         std::optional<types::money::CurrencyCode> currency_code) {
     types::session_cost::SessionCost cost;
     cost.session_id = running_cost.transaction_id; // TODO get session id for 1.6
-    // cost.currency = running_cost.; // TODO something with currency. Remove from the SessionCost type?? Or add to
-    // RunningCost
+    cost.currency.code = currency_code;
+    cost.currency.decimals = static_cast<int32_t>(number_of_decimals);
     cost.status = to_everest_running_cost_state(running_cost.state);
     cost.qrCode = running_cost.qr_code_text;
     if (running_cost.cost_messages.has_value()) {
@@ -699,8 +703,8 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
         }
     }
 
-    types::session_cost::SessionCostChunk chunk =
-        create_session_cost_chunk(running_cost.cost.value(), running_cost.timestamp, running_cost.meter_value);
+    types::session_cost::SessionCostChunk chunk = create_session_cost_chunk(
+        running_cost.cost.value(), number_of_decimals, running_cost.timestamp, running_cost.meter_value);
     cost.cost_chunks = std::vector<types::session_cost::SessionCostChunk>();
     cost.cost_chunks->push_back(chunk);
 
@@ -708,18 +712,18 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
         cost.charging_price = std::vector<types::session_cost::ChargingPriceComponent>();
         const ocpp::RunningCostChargingPrice& price = running_cost.charging_price.value();
         if (price.hour_price.has_value()) {
-            types::session_cost::ChargingPriceComponent hour_price =
-                to_everest_charging_price_component(price.hour_price.value(), types::session_cost::CostCategory::Time);
+            types::session_cost::ChargingPriceComponent hour_price = to_everest_charging_price_component(
+                price.hour_price.value(), number_of_decimals, types::session_cost::CostCategory::Time, currency_code);
             cost.charging_price->push_back(hour_price);
         }
         if (price.kWh_price.has_value()) {
-            types::session_cost::ChargingPriceComponent energy_price =
-                to_everest_charging_price_component(price.kWh_price.value(), types::session_cost::CostCategory::Energy);
+            types::session_cost::ChargingPriceComponent energy_price = to_everest_charging_price_component(
+                price.kWh_price.value(), number_of_decimals, types::session_cost::CostCategory::Energy, currency_code);
             cost.charging_price->push_back(energy_price);
         }
         if (price.flat_fee.has_value()) {
-            types::session_cost::ChargingPriceComponent flat_fee_price =
-                to_everest_charging_price_component(price.flat_fee.value(), types::session_cost::CostCategory::FlatFee);
+            types::session_cost::ChargingPriceComponent flat_fee_price = to_everest_charging_price_component(
+                price.flat_fee.value(), number_of_decimals, types::session_cost::CostCategory::FlatFee, currency_code);
             cost.charging_price->push_back(flat_fee_price);
         }
     }
@@ -765,19 +769,22 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
 
             if (next_period_charging_price.hour_price.has_value()) {
                 types::session_cost::ChargingPriceComponent hour_price = to_everest_charging_price_component(
-                    next_period_charging_price.hour_price.value(), types::session_cost::CostCategory::Time);
+                    next_period_charging_price.hour_price.value(), number_of_decimals,
+                    types::session_cost::CostCategory::Time, currency_code);
                 next_period.charging_price.push_back(hour_price);
             }
 
             if (next_period_charging_price.kWh_price.has_value()) {
                 types::session_cost::ChargingPriceComponent energy_price = to_everest_charging_price_component(
-                    next_period_charging_price.kWh_price.value(), types::session_cost::CostCategory::Energy);
+                    next_period_charging_price.kWh_price.value(), number_of_decimals,
+                    types::session_cost::CostCategory::Energy, currency_code);
                 next_period.charging_price.push_back(energy_price);
             }
 
             if (next_period_charging_price.flat_fee.has_value()) {
-                types::session_cost::ChargingPriceComponent flat_fee_price = to_everest_charging_price_component(
-                    next_period_charging_price.flat_fee.value(), types::session_cost::CostCategory::FlatFee);
+                types::session_cost::ChargingPriceComponent flat_fee_price =
+                    to_everest_charging_price_component(next_period_charging_price.flat_fee.value(), number_of_decimals,
+                                                        types::session_cost::CostCategory::FlatFee, currency_code);
                 next_period.charging_price.push_back(flat_fee_price);
             }
         }

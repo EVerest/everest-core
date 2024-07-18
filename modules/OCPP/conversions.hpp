@@ -116,7 +116,7 @@ to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& prior
 ocpp::v201::MessagePriorityEnum to_ocpp_201_message_priority(const ocpp::v201::MessagePriorityEnum& priority);
 
 types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state);
-ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum &state);
+ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state);
 
 types::display_message::MessageFormat
 to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format);
@@ -125,21 +125,26 @@ ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::displ
 types::display_message::MessageContent
 to_everest_display_message_content(const ocpp::DisplayMessageContent& message_content);
 
-ocpp::v16::DataTransferResponse to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse &set_display_message_response);
+ocpp::v16::DataTransferResponse
+to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse& set_display_message_response);
 
 types::display_message::DisplayMessage to_everest_display_message(const ocpp::DisplayMessage& display_message);
 ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::DisplayMessage& display_message);
 
 types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::RunningCostState& state);
 
-types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price,
+types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price, const uint32_t& number_of_decimals,
                                                                 const std::optional<ocpp::DateTime>& timestamp,
                                                                 const std::optional<uint32_t>& meter_value);
 
 types::session_cost::ChargingPriceComponent
-to_everest_charging_price_component(const double& price, const types::session_cost::CostCategory category);
+to_everest_charging_price_component(const double& price, const uint32_t& number_of_decimals,
+                                    const types::session_cost::CostCategory category,
+                                    std::optional<types::money::CurrencyCode> currency_code);
 
-types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost);
+types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost,
+                                                         const uint32_t number_of_decimals,
+                                                         std::optional<types::money::CurrencyCode> currency_code);
 
 } // namespace conversions
 } // namespace module

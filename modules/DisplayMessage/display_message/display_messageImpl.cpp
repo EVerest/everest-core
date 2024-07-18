@@ -32,14 +32,46 @@ display_messageImpl::handle_set_display_message(std::vector<types::display_messa
 
 types::display_message::GetDisplayMessageResponse
 display_messageImpl::handle_get_display_messages(types::display_message::GetDisplayMessageRequest& request) {
-    // your code for cmd get_display_messages goes here
-    return {};
+    EVLOG_info << "Get display messages request received"
+               << (request.priority.has_value() ? " for display messages with priority " +
+                                                      std::to_string(static_cast<int>(request.priority.value()))
+                                                : "")
+               << (request.state.has_value()
+                       ? " for display messages with state " + std::to_string(static_cast<int>(request.state.value()))
+                       : "");
+    if (request.id.has_value()) {
+        std::string ids;
+        for (const int32_t& id : request.id.value()) {
+            ids += std::to_string(id);
+            ids += " ";
+        }
+        EVLOG_info << "Get display messages for specific id's: " << ids;
+    }
+
+    types::display_message::GetDisplayMessageResponse response;
+    response.messages = std::vector<types::display_message::DisplayMessage>();
+    types::display_message::DisplayMessage test_message;
+    test_message.message.content = "This is a test message";
+    test_message.message.format = types::display_message::MessageFormat::UTF8;
+    test_message.message.language = "en";
+    response.messages->push_back(test_message);
+    types::display_message::DisplayMessage test_message_url;
+    test_message_url.message.content = "https://pionix.de";
+    test_message_url.message.format = types::display_message::MessageFormat::URI;
+    response.messages->push_back(test_message_url);
+
+    return response;
 }
 
 types::display_message::ClearDisplayMessageResponse
 display_messageImpl::handle_clear_display_message(types::display_message::ClearDisplayMessageRequest& request) {
-    // your code for cmd clear_display_message goes here
-    return {};
+    EVLOG_info << "Clear display message request received"
+               << (request.id.has_value() ? " for id: " + std::to_string(request.id.value()) : "");
+
+    types::display_message::ClearDisplayMessageResponse response;
+    response.status = types::display_message::ClearMessageResponseEnum::Accepted;
+    response.status_info = "Yes it is done!";
+    return response;
 }
 
 } // namespace display_message
