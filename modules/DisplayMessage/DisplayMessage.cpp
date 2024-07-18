@@ -12,10 +12,20 @@ void DisplayMessage::init() {
             return;
         }
 
+        uint32_t number_of_decimals = 0;
+        if (session_cost.currency.decimals.has_value()) {
+            if (session_cost.currency.decimals.value() < 0) {
+                EVLOG_warning << "Number of decimals for currency can not be negative.";
+            } else {
+                number_of_decimals = static_cast<uint32_t>(session_cost.currency.decimals.value());
+            }
+        }
+
         EVLOG_info << "Session cost status: " << session_status_to_string(session_cost.status);
         for (const types::session_cost::SessionCostChunk& chunk : session_cost.cost_chunks.value()) {
             if (chunk.cost.has_value()) {
-                EVLOG_info << "Session cost until now: " << static_cast<double>(chunk.cost.value().value) / 100.0;
+                EVLOG_info << "Session cost until now: "
+                           << static_cast<double>(chunk.cost.value().value) / (10 ^ number_of_decimals);
             }
         }
 
