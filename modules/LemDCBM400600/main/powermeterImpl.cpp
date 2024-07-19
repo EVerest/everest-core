@@ -56,8 +56,9 @@ void powermeterImpl::ready() {
             } catch (HttpClientError& client_error) {
                 EVLOG_error << "Failed to publish powermeter value due to an http error: " << client_error.what();
                 if (!this->error_state_monitor->is_condition_satisfied(condition)) {
-                    Error error = this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
-                                                                    "This error is raised due to communication timeout");
+                    Error error =
+                        this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
+                                                          "This error is raised due to communication timeout");
                     raise_error(error);
                 }
             }
