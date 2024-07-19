@@ -232,7 +232,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     types::authorization::ValidationResult validation_result = {types::authorization::AuthorizationStatus::Unknown};
     if (!validation_results.empty()) {
         bool authorized = false;
-        int i = 0;
+        std::vector<ValidationResult>::size_type i = 0;
         // iterate over validation results
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             validation_result = validation_results.at(i);
