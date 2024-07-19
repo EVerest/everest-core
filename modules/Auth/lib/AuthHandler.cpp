@@ -604,8 +604,38 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.reserved = false;
         break;
-    default:
-        // ignoring other events on purpose
+    /// explicitly fall through all the SessionEventEnum values we are not handling
+    case SessionEventEnum::Authorized:
+        [[fallthrough]];
+    case SessionEventEnum::Deauthorized:
+        [[fallthrough]];
+    case SessionEventEnum::AuthRequired:
+        [[fallthrough]];
+    case SessionEventEnum::PrepareCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEV:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEVSE:
+        [[fallthrough]];
+    case SessionEventEnum::WaitingForEnergy:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingResumed:
+        [[fallthrough]];
+    case SessionEventEnum::StoppingCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingFinished:
+        [[fallthrough]];
+    case SessionEventEnum::ErrorCleared:
+        [[fallthrough]];
+    case SessionEventEnum::PermanentFaultCleared:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugFinished:
+        [[fallthrough]];
+    case SessionEventEnum::PluginTimeout:
         break;
     }
     this->connectors.at(connector_id)->event_mutex.unlock();
