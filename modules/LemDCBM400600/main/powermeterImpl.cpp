@@ -13,7 +13,6 @@
 using Error = Everest::error::Error;
 using Condition = Everest::error::ErrorStateMonitor::StateCondition;
 
-
 namespace module::main {
 
 void powermeterImpl::init() {
