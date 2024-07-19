@@ -468,6 +468,17 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_is_connected(is_connected);
     };
 
+    callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
+                                               const std::optional<ocpp::CiString<255>>& tech_info) {
+        types::ocpp::SecurityEvent event;
+        event.type = event_type.get();
+        EVLOG_info << "Security Event in OCPP occured: " << event.type;
+        if (tech_info.has_value()) {
+            event.info = tech_info.value().get();
+        }
+        this->p_ocpp_generic->publish_security_event(event);
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
