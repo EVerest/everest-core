@@ -40,13 +40,13 @@ void powermeterImpl::ready() {
     // Start the live_measure_publisher thread, which periodically publishes the live measurements of the device
     this->live_measure_publisher_thread = std::thread([this] {
         this->publish_public_key_ocmf(this->controller->get_public_key_ocmf());
-        const Condition condition = Condition("powermeter/CommunicationFault", "Communication timed out", true);
         while (true) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             try {
                 this->publish_powermeter(this->controller->get_powermeter());
                 // if the communication error is set, clear the error
-                if (this->error_state_monitor->is_condition_satisfied(condition)) {
+                if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                               "Communication timed out")) {
                     clear_error("powermeter/CommunicationFault", "Communication timed out");
                 }
             } catch (LemDCBM400600Controller::DCBMUnexpectedResponseException& dcbm_exception) {
@@ -54,7 +54,8 @@ void powermeterImpl::ready() {
                             << dcbm_exception.what();
             } catch (HttpClientError& client_error) {
                 EVLOG_error << "Failed to publish powermeter value due to an http error: " << client_error.what();
-                if (!this->error_state_monitor->is_condition_satisfied(condition)) {
+                if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                                "Communication timed out")) {
                     Error error =
                         this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
                                                           "This error is raised due to communication timeout");
