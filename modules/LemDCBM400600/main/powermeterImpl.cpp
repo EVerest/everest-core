@@ -7,11 +7,6 @@
 #include <chrono>
 #include <string>
 #include <thread>
-#include <utils/error/error_factory.hpp>
-#include <utils/error/error_state_monitor.hpp>
-
-using Error = Everest::error::Error;
-using Condition = Everest::error::ErrorStateMonitor::StateCondition;
 
 namespace module::main {
 
@@ -56,7 +51,7 @@ void powermeterImpl::ready() {
                 EVLOG_error << "Failed to publish powermeter value due to an http error: " << client_error.what();
                 if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
                                                                 "Communication timed out")) {
-                    Error error =
+                    auto error =
                         this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
                                                           "This error is raised due to communication timeout");
                     raise_error(error);
