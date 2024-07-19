@@ -42,7 +42,7 @@ std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_
         csv.push_back(str);
     }
 
-    for (const auto tx_start_stop_point : csv) {
+    for (const auto& tx_start_stop_point : csv) {
         if (tx_start_stop_point == "ParkingBayOccupancy") {
             tx_start_stop_points.insert(TxStartStopPoint::ParkingBayOccupancy);
         } else if (tx_start_stop_point == "EVConnected") {
