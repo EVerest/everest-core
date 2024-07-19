@@ -146,6 +146,8 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
 
 std::string SessionInfo::state_to_string(SessionInfo::State s) {
     switch (s) {
+    case SessionInfo::State::Unknown:
+        return "Unknown";
     case SessionInfo::State::Unplugged:
         return "Unplugged";
     case SessionInfo::State::Disabled:
