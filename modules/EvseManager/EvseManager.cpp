@@ -143,7 +143,7 @@ void EvseManager::init() {
         p_evse->publish_hw_capabilities(c);
         if (config.charge_mode == "AC") {
             EVLOG_debug << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
-                                      hw_capabilities.max_phase_count_import);
+                                       hw_capabilities.max_phase_count_import);
         }
     });
 
@@ -912,7 +912,20 @@ void EvseManager::ready() {
         this->powermeter_cv.wait_for(lk, std::chrono::milliseconds(this->config.initial_meter_value_timeout_ms),
                                      [this] { return initial_powermeter_value_received; });
     }
-    // Cleanup left-over transaction from e.g. power loss
+
+    // Resuming left-over transaction from e.g. powerloss. This information allows other modules like to OCPP to be
+    // informed that the EvseManager is aware of previous sessions so that no individual cleanup is required
+    const auto session_id = store->get_session();
+    if (!session_id.empty()) {
+        types::evse_manager::SessionEvent session_event;
+        session_event.uuid = session_id;
+        session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+        session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
+        this->p_evse->publish_session_event(session_event);
+    }
+
+    // By default cleanup left-over transaction from e.g. power loss
+    // TOOD: Add resume handling
     charger->cleanup_transactions_on_startup();
 
     //  start with a limit of 0 amps. We will get a budget from EnergyManager that is locally limited by hw
