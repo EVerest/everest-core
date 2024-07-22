@@ -293,6 +293,11 @@ void OCPP::init_evse_subscriptions() {
                 return;
             }
 
+            if (session_event.event == types::evse_manager::SessionEventEnum::SessionResumed) {
+                this->resuming_session_ids.insert(session_event.uuid);
+                return;
+            }
+
             if (!this->started) {
                 EVLOG_info << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
                            << " that will be queued up: " << session_event.event;
@@ -788,7 +793,7 @@ void OCPP::ready() {
     }
 
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    if (this->charge_point->start({}, boot_reason)) {
+    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";
