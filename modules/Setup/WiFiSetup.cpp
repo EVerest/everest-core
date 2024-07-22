@@ -60,7 +60,6 @@ inline std::uint8_t nibble_to_hex_digit(std::uint8_t c) {
 }
 
 inline void int_to_hex(std::uint8_t& high, std::uint8_t& low, std::uint8_t c) {
-    bool result{false};
     high = nibble_to_hex_digit(c >> 4U);
     low = nibble_to_hex_digit(c);
 }
