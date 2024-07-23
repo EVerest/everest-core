@@ -108,6 +108,7 @@ private:
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
     std::mutex evse_ready_mutex;
+    std::mutex session_event_mutex;
     std::condition_variable evse_ready_cv;
     void init_evse_maps();
     bool all_evse_ready();
