@@ -22,11 +22,10 @@ display_messageImpl::handle_set_display_message(std::vector<types::display_messa
     }
 
     for (const types::display_message::DisplayMessage& message : request) {
-        EVLOG_error << "New display message: " << message.message.content;
+        EVLOG_info << "New display message: " << message.message.content;
     }
 
     response.status = types::display_message::DisplayMessageStatusEnum::Accepted;
-    // TODO
     return response;
 }
 

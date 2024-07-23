@@ -605,8 +605,7 @@ types::display_message::DisplayMessage to_everest_display_message(const ocpp::Di
     }
 
     m.qr_code = display_message.qr_code;
-    m.session_id = display_message.transaction_id; // TODO search for session id and make it session id. This works
-                                                   // for 2.0.1, but how to do it in 1.6???
+    m.session_id = display_message.transaction_id;
     if (display_message.state.has_value()) {
         m.state = to_everest_display_message_state(display_message.state.value());
     }
@@ -631,7 +630,7 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     }
 
     m.qr_code = display_message.qr_code;
-    m.transaction_id = display_message.session_id; // TODO OCPP 1.6 ???
+    m.transaction_id = display_message.session_id;
 
     if (display_message.state.has_value()) {
         m.state = to_ocpp_201_display_message_state(display_message.state.value());
@@ -690,7 +689,7 @@ types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost
                                                          const uint32_t number_of_decimals,
                                                          std::optional<types::money::CurrencyCode> currency_code) {
     types::session_cost::SessionCost cost;
-    cost.session_id = running_cost.transaction_id; // TODO get session id for 1.6
+    cost.session_id = running_cost.transaction_id;
     cost.currency.code = currency_code;
     cost.currency.decimals = static_cast<int32_t>(number_of_decimals);
     cost.status = to_everest_running_cost_state(running_cost.state);

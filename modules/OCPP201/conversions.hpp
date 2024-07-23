@@ -226,8 +226,6 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
 types::ocpp::SetVariableStatusEnumType
 to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
 
-// TODO conversions for the display message stuff
-
 } // namespace conversions
 } // namespace module
 
