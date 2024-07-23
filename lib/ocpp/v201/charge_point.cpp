@@ -397,6 +397,7 @@ void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t co
 
 void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime& timestamp,
                                           const MeterValue& meter_stop, const ReasonEnum reason,
+                                          const TriggerReasonEnum trigger_reason,
                                           const std::optional<IdToken>& id_token,
                                           const std::optional<std::string>& signed_meter_value,
                                           const ChargingStateEnum charging_state) {
@@ -432,8 +433,6 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
     } catch (const DatabaseException& e) {
         EVLOG_warning << "Could not get metervalues of transaction: " << e.what();
     }
-
-    const auto trigger_reason = utils::stop_reason_to_trigger_reason_enum(reason);
 
     // E07.FR.02 The field idToken is provided when the authorization of the transaction has been ended
     const std::optional<IdToken> transaction_id_token =

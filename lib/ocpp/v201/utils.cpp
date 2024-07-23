@@ -102,51 +102,6 @@ std::vector<MeterValue> get_meter_values_with_measurands_applied(
     return meter_values_result;
 }
 
-TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ReasonEnum& stop_reason) {
-    switch (stop_reason) {
-    case ReasonEnum::DeAuthorized:
-        return TriggerReasonEnum::Deauthorized;
-    case ReasonEnum::EmergencyStop:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::EnergyLimitReached:
-        return TriggerReasonEnum::EnergyLimitReached;
-    case ReasonEnum::EVDisconnected:
-        return TriggerReasonEnum::EVCommunicationLost;
-    case ReasonEnum::GroundFault:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::ImmediateReset:
-        return TriggerReasonEnum::ResetCommand;
-    case ReasonEnum::Local:
-        return TriggerReasonEnum::StopAuthorized;
-    case ReasonEnum::LocalOutOfCredit:
-        return TriggerReasonEnum::ChargingStateChanged;
-    case ReasonEnum::MasterPass:
-        return TriggerReasonEnum::StopAuthorized;
-    case ReasonEnum::Other:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::OvercurrentFault:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::PowerLoss:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::PowerQuality:
-        return TriggerReasonEnum::AbnormalCondition;
-    case ReasonEnum::Reboot:
-        return TriggerReasonEnum::ResetCommand;
-    case ReasonEnum::Remote:
-        return TriggerReasonEnum::RemoteStop;
-    case ReasonEnum::SOCLimitReached:
-        return TriggerReasonEnum::EnergyLimitReached;
-    case ReasonEnum::StoppedByEV:
-        return TriggerReasonEnum::StopAuthorized;
-    case ReasonEnum::TimeLimitReached:
-        return TriggerReasonEnum::TimeLimitReached;
-    case ReasonEnum::Timeout:
-        return TriggerReasonEnum::EVConnectTimeout;
-    default:
-        return TriggerReasonEnum::AbnormalCondition;
-    }
-}
-
 std::string sha256(const std::string& str) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     EVP_Digest(str.c_str(), str.size(), hash, NULL, EVP_sha256(), NULL);

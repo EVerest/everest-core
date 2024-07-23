@@ -264,7 +264,8 @@ public:
     /// \param signed_meter_value
     /// \param charging_state
     virtual void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
-                                         const ReasonEnum reason, const std::optional<IdToken>& id_token,
+                                         const ReasonEnum reason, const TriggerReasonEnum trigger_reason,
+                                         const std::optional<IdToken>& id_token,
                                          const std::optional<std::string>& signed_meter_value,
                                          const ChargingStateEnum charging_state) = 0;
 
@@ -859,7 +860,8 @@ public:
                                 const ChargingStateEnum charging_state) override;
 
     void on_transaction_finished(const int32_t evse_id, const DateTime& timestamp, const MeterValue& meter_stop,
-                                 const ReasonEnum reason, const std::optional<IdToken>& id_token,
+                                 const ReasonEnum reason, const TriggerReasonEnum trigger_reason,
+                                 const std::optional<IdToken>& id_token,
                                  const std::optional<std::string>& signed_meter_value,
                                  const ChargingStateEnum charging_state) override;
 

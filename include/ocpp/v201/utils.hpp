@@ -41,11 +41,6 @@ std::vector<MeterValue> get_meter_values_with_measurands_applied(
     const std::vector<MeasurandEnum>& aligned_tx_ended_measurands, ocpp::DateTime max_timestamp,
     bool include_sampled_signed = true, bool include_aligned_signed = true);
 
-/// \brief Converts the given \p stop_reason to a TriggerReasonEnum
-/// \param stop_reason
-/// \return
-TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ReasonEnum& stop_reason);
-
 /// \brief Returns the given \p str hashed using SHA256
 /// \param str
 /// \return
