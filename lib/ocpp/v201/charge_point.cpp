@@ -2563,7 +2563,24 @@ void ChargePoint::handle_reset_req(Call<ResetRequest> call) {
         }
     }
 
-    if (this->callbacks.is_reset_allowed_callback(msg.evseId, msg.type)) {
+    const auto is_reset_allowed = [&]() {
+        if (!this->callbacks.is_reset_allowed_callback(msg.evseId, msg.type)) {
+            return false;
+        }
+
+        // We dont need to check AllowReset if evseId is not set and can directly return true
+        if (!msg.evseId.has_value()) {
+            return true;
+        }
+
+        // B11.FR.10
+        const auto allow_reset_cv =
+            EvseComponentVariables::get_component_variable(msg.evseId.value(), EvseComponentVariables::AllowReset);
+        // allow reset if AllowReset is not set or set to   true
+        return this->device_model->get_optional_value<bool>(allow_reset_cv).value_or(true);
+    };
+
+    if (is_reset_allowed()) {
         // reset is allowed
         response.status = ResetStatusEnum::Accepted;
     } else {
