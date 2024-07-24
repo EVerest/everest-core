@@ -524,6 +524,10 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_security_event(event);
     };
 
+    callbacks.set_charging_profiles_callback = [this]() {
+        return;
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
