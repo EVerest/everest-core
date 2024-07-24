@@ -143,10 +143,11 @@ public:
     void raise_powermeter_transaction_start_failed_error(const std::string& description);
     void clear_powermeter_transaction_start_failed_error();
 
+private:
+
     void raise_permanent_fault_error(const std::string& description);
     void clear_permanent_fault_error();
 
-private:
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
     const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock;
