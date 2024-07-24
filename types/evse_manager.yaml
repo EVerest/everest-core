@@ -104,9 +104,6 @@ types:
         ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
         SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
-        Error: Signaled when an error occured. An error doesnt prevent further charging operations.
-        AllErrorsCleared: Signalled when all errors are cleared
-        PermanentFault: Signaled when there is a permanent fault at the EVSE. A permanent fault prevents further charging operations
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
         ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction

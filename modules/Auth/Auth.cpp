@@ -38,7 +38,7 @@ void Auth::ready() {
         });
 
         evse_manager->subscribe_error(
-            "evse_manager/PermanentFault",
+            "evse_manager/Inoperative",
             [this, connector_id](const Everest::error::Error& error) {
                 this->auth_handler->handle_permanent_fault_raised(connector_id);
             },

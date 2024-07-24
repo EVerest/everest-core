@@ -16,13 +16,13 @@ namespace module {
 
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
-const std::string PERMANENT_FAULT_TYPE = "evse_manager/PermanentFault";
+const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
 
 namespace fs = std::filesystem;
 
 /// \brief Converts the given \p error into the ErrorInfo that contains all necessary data for a
 /// StatusNotification.req
-static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, const bool is_fault) {
+static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
 
     const auto error_type = error.type;
     const auto uuid = error.uuid.uuid;
@@ -34,23 +34,22 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, c
     if (it != MREC_ERROR_MAP.end()) {
         // lambda to create MREC error info
         auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
-            return ocpp::v16::ErrorInfo{
-                uuid, code, true, error.description, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
+            return ocpp::v16::ErrorInfo{uuid, code, false, std::nullopt, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
         };
         return make_mrec_error_info(it->second.first, it->second.second);
     }
 
-    if (error_type == PERMANENT_FAULT_TYPE) {
-        return ocpp::v16::ErrorInfo{uuid,         ocpp::v16::ChargePointErrorCode::OtherError,
-                                    true,         error.description,
-                                    std::nullopt, "caused_by:" + error.sub_type};
+    if (error_type == INOPERATIVE_ERROR_TYPE) {
+        return ocpp::v16::ErrorInfo{uuid,      ocpp::v16::ChargePointErrorCode::OtherError,
+                                    true,      "EVSE is inoperative",
+                                    "EVerest", "caused_by:" + error.message};
     }
 
     // check if is VendorError
     if (error_type.find("VendorError") != std::string::npos) {
         return ocpp::v16::ErrorInfo{uuid,
                                     ocpp::v16::ChargePointErrorCode::OtherError,
-                                    is_fault,
+                                    false,
                                     error.description,
                                     error.origin.to_string(),
                                     error.sub_type};
@@ -58,7 +57,7 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, c
 
     // Default case
     return ocpp::v16::ErrorInfo{
-        uuid, ocpp::v16::ChargePointErrorCode::InternalError, is_fault, error.description, std::nullopt, error_type};
+        uuid, ocpp::v16::ChargePointErrorCode::InternalError, false, error.description, std::nullopt, error_type};
 }
 
 void create_empty_user_config(const fs::path& user_config_path) {
@@ -331,12 +330,12 @@ void OCPP::init() {
     invoke_init(*p_data_transfer);
 
     const auto error_handler = [this](const Everest::error::Error& error) {
-        // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
-        if (error.type == PERMANENT_FAULT_TYPE) {
+        // The error evse_manager/Inoperative is handled by seperate handler of the evse requirement
+        if (error.type == INOPERATIVE_ERROR_TYPE) {
             return;
         }
 
-        const auto error_info = get_error_info(error, false);
+        const auto error_info = get_error_info(error);
         if (this->started) {
             // TODO: Report correct evse_id once Error type includes it
             this->charge_point->on_error(0, error_info);
@@ -346,12 +345,13 @@ void OCPP::init() {
     };
 
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
-        if (error.type == PERMANENT_FAULT_TYPE) {
+        // The error evse_manager/Inoperative is handled by seperate handler of the evse requirement
+        if (error.type == INOPERATIVE_ERROR_TYPE) {
             return;
         }
 
         if (this->started) {
+             // TODO: Report correct evse_id once Error type includes it
             this->charge_point->on_error_cleared(0, error.uuid.uuid);
         } else {
             this->event_queue[0].push(error.uuid.uuid);
@@ -371,15 +371,15 @@ void OCPP::init() {
             }
         });
 
-        auto permanent_fault_error_handler = [this, evse_id](const Everest::error::Error& error) {
+        auto inoperative_error_handler = [this, evse_id](const Everest::error::Error& error) {
             if (this->started) {
-                this->charge_point->on_error(evse_id, get_error_info(error, true));
+                this->charge_point->on_error(evse_id, get_error_info(error));
             } else {
                 this->event_queue[evse_id].push(error.uuid.uuid);
             }
         };
 
-        auto permanent_fault_error_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
+        auto inoperative_error_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
             if (this->started) {
                 this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
             } else {
@@ -387,10 +387,10 @@ void OCPP::init() {
             }
         };
 
-        // only subscribe to evse_manager/PermanentFault error, other errors are handled by subscribe_global_all_errors
+        // only subscribe to evse_manager/Inoperative error, other errors are handled by subscribe_global_all_errors
         this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_error(PERMANENT_FAULT_TYPE, permanent_fault_error_handler,
-                              permanent_fault_error_cleared_handler);
+            ->subscribe_error(INOPERATIVE_ERROR_TYPE, inoperative_error_handler,
+                              inoperative_error_cleared_handler);
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {

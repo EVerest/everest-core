@@ -27,7 +27,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
         [this](const Everest::error::Error& error) {
             if (modify_error_bsp(error, true)) {
                 // signal to charger a new error has been set that prevents charging
-                raise_permanent_fault_error(error.description);
+                raise_inoperative_error(error);
             } else {
                 // signal an error that does not prevent charging
                 signal_error(false);
@@ -42,9 +42,9 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                 signal_error_cleared(false);
             }
 
-            if (active_errors.all_cleared()) {
+            if (active_errors.all_cleared_except_inoperative()) {
                 // signal to charger that all errors are cleared now
-                clear_permanent_fault_error();
+                clear_inoperative_error();
                 signal_all_errors_cleared();
                 // clear errors with HLC stack
                 if (hlc) {
@@ -59,7 +59,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_connector_lock(error, true)) {
                     // signal to charger a new error has been set that prevents charging
-                    raise_permanent_fault_error(error.description);
+                    raise_inoperative_error(error);
                 } else {
                     // signal an error that does not prevent charging
                     signal_error(false);
@@ -74,9 +74,9 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                     signal_error_cleared(false);
                 }
 
-                if (active_errors.all_cleared()) {
+                if (active_errors.all_cleared_except_inoperative()) {
                     // signal to charger that all errors are cleared now
-                    clear_permanent_fault_error();
+                    clear_inoperative_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
@@ -92,7 +92,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_ac_rcd(error, true)) {
                     // signal to charger a new error has been set that prevents charging
-                    raise_permanent_fault_error(error.description);
+                    raise_inoperative_error(error);
                 } else {
                     // signal an error that does not prevent charging
                     signal_error(false);
@@ -107,9 +107,9 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                     signal_error_cleared(false);
                 }
 
-                if (active_errors.all_cleared()) {
+                if (active_errors.all_cleared_except_inoperative()) {
                     // signal to charger that all errors are cleared now
-                    clear_permanent_fault_error();
+                    clear_inoperative_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
@@ -125,7 +125,7 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             [this](const Everest::error::Error& error) {
                 if (modify_error_imd(error, true)) {
                     // signal to charger a new error has been set that prevents charging
-                    raise_permanent_fault_error(error.description);
+                    raise_inoperative_error(error);
                 } else {
                     // signal an error that does not prevent charging
                     signal_error(false);
@@ -139,9 +139,9 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                     signal_error_cleared(false);
                 }
 
-                if (active_errors.all_cleared()) {
+                if (active_errors.all_cleared_except_inoperative()) {
                     // signal to charger that all errors are cleared now
-                    clear_permanent_fault_error();
+                    clear_inoperative_error();
                     signal_all_errors_cleared();
                     // clear errors with HLC stack
                     if (hlc) {
@@ -177,7 +177,7 @@ void ErrorHandling::clear_overcurrent_error() {
             signal_error_cleared(false);
         }
 
-        if (active_errors.all_cleared()) {
+        if (active_errors.all_cleared_except_inoperative()) {
             // signal to charger that all errors are cleared now
             signal_all_errors_cleared();
             // clear errors with HLC stack
@@ -188,24 +188,29 @@ void ErrorHandling::clear_overcurrent_error() {
     }
 }
 
-void ErrorHandling::raise_permanent_fault_error(const std::string& description) {
+void ErrorHandling::raise_inoperative_error(const Everest::error::Error& error) {
+    if (this->active_errors.evse_manager.is_set(EvseManagerErrors::Inoperative)) {
+        // dont raise if already raised
+        return;
+    }
+
     // raise externally
     Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/PermanentFault", "", description, Everest::error::Severity::High);
+        "evse_manager/Inoperative", "", error.type, Everest::error::Severity::High);
     p_evse->raise_error(error_object);
 
-    if (modify_error_evse_manager("evse_manager/PermanentFault", true)) {
+    if (modify_error_evse_manager("evse_manager/Inoperative", true)) {
         // signal to charger a new error has been set
         signal_error(true);
     };
 }
 
-void ErrorHandling::clear_permanent_fault_error() {
+void ErrorHandling::clear_inoperative_error() {
     // clear externally
-    if (active_errors.evse_manager.is_set(EvseManagerErrors::PermanentFault)) {
-        p_evse->clear_error("evse_manager/PermanentFault");
+    if (active_errors.evse_manager.is_set(EvseManagerErrors::Inoperative)) {
+        p_evse->clear_error("evse_manager/Inoperative");
 
-        if (modify_error_evse_manager("evse_manager/PermanentFault", false)) {
+        if (modify_error_evse_manager("evse_manager/Inoperative", false)) {
             // signal to charger an error has been cleared that prevents charging
             signal_error_cleared(true);
         } else {
@@ -504,8 +509,8 @@ bool ErrorHandling::modify_error_evse_manager(const std::string& error_type, boo
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }
-    } else if (error_type == "evse_manager/PermanentFault") {
-        active_errors.evse_manager.set(EvseManagerErrors::PermanentFault, active);
+    } else if (error_type == "evse_manager/Inoperative") {
+        active_errors.evse_manager.set(EvseManagerErrors::Inoperative, active);
         if (hlc && active) {
             r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
         }

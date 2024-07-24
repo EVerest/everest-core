@@ -645,7 +645,7 @@ void OCPP201::ready() {
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
-        evse->subscribe_error("evse_manager/PermanentFault", fault_handler, fault_cleared_handler);
+        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
 
         evse_id++;
     }

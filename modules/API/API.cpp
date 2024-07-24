@@ -320,7 +320,7 @@ void API::init() {
         });
 
         evse->subscribe_error(
-            "evse_manager/PermanentFault",
+            "evse_manager/Inoperative",
             [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(true); },
             [this, &session_info](const Everest::error::Error& error) { session_info->set_permanent_fault(false); });
 

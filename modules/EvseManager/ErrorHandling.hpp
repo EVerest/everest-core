@@ -72,8 +72,8 @@ enum class EvseManagerErrors : std::uint8_t {
     MREC4OverCurrentFailure,
     Internal,
     PowermeterTransactionStartFailed,
-    PermanentFault,
-    last = PermanentFault
+    Inoperative,
+    last = Inoperative
 };
 
 enum class AcRcdErrors : std::uint8_t {
@@ -115,6 +115,12 @@ struct ActiveErrors {
         return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() &&
                imd.all_reset();
     };
+
+    inline bool all_cleared_except_inoperative() {
+        return bsp.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() && imd.all_reset() &&
+               (evse_manager.all_reset() || (evse_manager.is_set(EvseManagerErrors::Inoperative) &&
+                                             evse_manager._value == evse_manager.bit(EvseManagerErrors::Inoperative)));
+    };
 };
 
 class ErrorHandling {
@@ -144,9 +150,8 @@ public:
     void clear_powermeter_transaction_start_failed_error();
 
 private:
-
-    void raise_permanent_fault_error(const std::string& description);
-    void clear_permanent_fault_error();
+    void raise_inoperative_error(const Everest::error::Error& error);
+    void clear_inoperative_error();
 
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
