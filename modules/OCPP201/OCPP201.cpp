@@ -525,6 +525,7 @@ void OCPP201::ready() {
     };
 
     callbacks.set_charging_profiles_callback = [this]() {
+        // TODO: implement once charging profiles are available in libocpp
         return;
     };
 
