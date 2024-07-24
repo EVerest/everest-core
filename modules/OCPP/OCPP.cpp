@@ -16,6 +16,7 @@ namespace module {
 
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
+const std::string PERMANENT_FAULT_TYPE = "evse_manager/PermanentFault";
 
 namespace fs = std::filesystem;
 
@@ -26,18 +27,23 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, c
     const auto error_type = error.type;
     const auto uuid = error.uuid.uuid;
 
-    // lambda to create MREC error info
-    auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
-        return ocpp::v16::ErrorInfo{
-            uuid, code, is_fault, error.description, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
-    };
-
     auto it = std::find_if(MREC_ERROR_MAP.begin(), MREC_ERROR_MAP.end(),
                            [&](const auto& entry) { return error_type.find(entry.first) != std::string::npos; });
 
     // is MREC error
     if (it != MREC_ERROR_MAP.end()) {
+        // lambda to create MREC error info
+        auto make_mrec_error_info = [&](ocpp::v16::ChargePointErrorCode code, const std::string& vendor_error_code) {
+            return ocpp::v16::ErrorInfo{
+                uuid, code, true, error.description, CHARGE_X_MREC_VENDOR_ID, vendor_error_code};
+        };
         return make_mrec_error_info(it->second.first, it->second.second);
+    }
+
+    if (error_type == PERMANENT_FAULT_TYPE) {
+        return ocpp::v16::ErrorInfo{uuid,         ocpp::v16::ChargePointErrorCode::OtherError,
+                                    true,         error.description,
+                                    std::nullopt, "caused_by:" + error.sub_type};
     }
 
     // check if is VendorError
@@ -52,7 +58,7 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error, c
 
     // Default case
     return ocpp::v16::ErrorInfo{
-        uuid, ocpp::v16::ChargePointErrorCode::InternalError, is_fault, error.description, "EVerest", error_type};
+        uuid, ocpp::v16::ChargePointErrorCode::InternalError, is_fault, error.description, std::nullopt, error_type};
 }
 
 void create_empty_user_config(const fs::path& user_config_path) {
@@ -252,7 +258,7 @@ void OCPP::init_evse_subscriptions() {
                 EVLOG_info << "OCPP not fully initialized, but received a session event on evse_id: " << evse_id
                            << " that will be queued up: " << session_event.event;
                 std::scoped_lock lock(this->session_event_mutex);
-                this->session_event_queue[evse_id].push(session_event);
+                this->event_queue[evse_id].push(session_event);
                 return;
             }
 
@@ -326,18 +332,30 @@ void OCPP::init() {
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
-        if (error.type != "evse_manager/PermanentFault") {
-            this->charge_point->on_error(0, get_error_info(error, false));
+        if (error.type == PERMANENT_FAULT_TYPE) {
+            return;
+        }
+
+        const auto error_info = get_error_info(error, false);
+        if (this->started) {
+            // TODO: Report correct evse_id once Error type includes it
+            this->charge_point->on_error(0, error_info);
+        } else {
+            this->event_queue[0].push(error_info);
         }
     };
 
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
         // The error evse_manager/PermanentFault is handled by seperate handler of the evse requirement
-        if (error.type == "evse_manager/PermanentFault") {
+        if (error.type == PERMANENT_FAULT_TYPE) {
             return;
         }
 
-        this->charge_point->on_error_cleared(0, error.uuid.uuid);
+        if (this->started) {
+            this->charge_point->on_error_cleared(0, error.uuid.uuid);
+        } else {
+            this->event_queue[0].push(error.uuid.uuid);
+        }
     };
 
     subscribe_global_all_errors(error_handler, error_cleared_handler);
@@ -354,16 +372,24 @@ void OCPP::init() {
         });
 
         auto permanent_fault_error_handler = [this, evse_id](const Everest::error::Error& error) {
-            this->charge_point->on_error(evse_id, get_error_info(error, true));
+            if (this->started) {
+                this->charge_point->on_error(evse_id, get_error_info(error, true));
+            } else {
+                this->event_queue[evse_id].push(error.uuid.uuid);
+            }
         };
 
         auto permanent_fault_error_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
-            this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
+            if (this->started) {
+                this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
+            } else {
+                this->event_queue[evse_id].push(error.uuid.uuid);
+            }
         };
 
         // only subscribe to evse_manager/PermanentFault error, other errors are handled by subscribe_global_all_errors
         this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_error("evse_manager/PermanentFault", permanent_fault_error_handler,
+            ->subscribe_error(PERMANENT_FAULT_TYPE, permanent_fault_error_handler,
                               permanent_fault_error_cleared_handler);
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
@@ -781,13 +807,30 @@ void OCPP::ready() {
 
         // process session event queue
         std::scoped_lock lock(this->session_event_mutex);
-        for (auto& [evse_id, evse_session_event_queue] : this->session_event_queue) {
-            while (!evse_session_event_queue.empty()) {
-                auto queued_session_event = evse_session_event_queue.front();
-                EVLOG_info << "Processing queued session event for evse_id: " << evse_id
-                           << ", event: " << queued_session_event.event;
-                this->process_session_event(evse_id, queued_session_event);
-                evse_session_event_queue.pop();
+        for (auto& [evse_id, evse_event_queue] : this->event_queue) {
+            // TODO: Probably we need a queue of std::variant here to be able to process raised errors as well
+            // Errors can only be processed after the start function, since only in there the ChargePointFSM is
+            // intialized
+            while (!evse_event_queue.empty()) {
+                auto queued_event = evse_event_queue.front();
+                if (std::holds_alternative<types::evse_manager::SessionEvent>(queued_event)) {
+                    const auto session_event = std::get<types::evse_manager::SessionEvent>(queued_event);
+                    EVLOG_info << "Processing queued event for evse_id: " << evse_id
+                               << ", event: " << session_event.event;
+                    this->process_session_event(evse_id, session_event);
+                } else if (std::holds_alternative<ocpp::v16::ErrorInfo>(queued_event)) {
+                    const auto error = std::get<ocpp::v16::ErrorInfo>(queued_event);
+                    EVLOG_info << "Processing queued error event for evse_id: " << evse_id
+                               << ", error id: " << error.uuid;
+                    this->charge_point->on_error(evse_id, error);
+                } else {
+                    // holds string -> is event to clear error
+                    const auto cleared_uuid = std::get<ClearedErrorId>(queued_event);
+                    EVLOG_info << "Processing queued cleared error event for evse_id: " << evse_id
+                               << ", error id: " << cleared_uuid;
+                    this->charge_point->on_error_cleared(evse_id, cleared_uuid);
+                }
+                evse_event_queue.pop();
             }
         }
     }
