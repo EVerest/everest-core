@@ -982,8 +982,8 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | ID        | Status | Remark |
 |-----------|--------|--------|
 | F05.FR.01 | ✅     |        |
-| F05.FR.02 | ⛽️     |        |
-| F05.FR.03 | ⛽️     |        |
+| F05.FR.02 | ✅     |        |
+| F05.FR.03 | ✅     |        |
 | F05.FR.04 | ⛽️     |        |
 | F05.FR.05 | ⛽️     |        |
 | F05.FR.06 | ⛽️     |        |
