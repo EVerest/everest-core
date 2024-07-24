@@ -330,31 +330,24 @@ void OCPP::init() {
     invoke_init(*p_data_transfer);
 
     const auto error_handler = [this](const Everest::error::Error& error) {
-        // The error evse_manager/Inoperative is handled by seperate handler of the evse requirement
-        if (error.type == INOPERATIVE_ERROR_TYPE) {
-            return;
-        }
-
+        const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
         const auto error_info = get_error_info(error);
         if (this->started) {
             // TODO: Report correct evse_id once Error type includes it
-            this->charge_point->on_error(0, error_info);
+            this->charge_point->on_error(evse_id, error_info);
         } else {
-            this->event_queue[0].push(error_info);
+            this->event_queue[evse_id].push(error_info);
         }
     };
 
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        // The error evse_manager/Inoperative is handled by seperate handler of the evse requirement
-        if (error.type == INOPERATIVE_ERROR_TYPE) {
-            return;
-        }
+        const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
 
         if (this->started) {
             // TODO: Report correct evse_id once Error type includes it
-            this->charge_point->on_error_cleared(0, error.uuid.uuid);
+            this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
         } else {
-            this->event_queue[0].push(error.uuid.uuid);
+            this->event_queue[evse_id].push(error.uuid.uuid);
         }
     };
 
@@ -370,26 +363,6 @@ void OCPP::init() {
                 this->evse_ready_cv.notify_one();
             }
         });
-
-        auto inoperative_error_handler = [this, evse_id](const Everest::error::Error& error) {
-            if (this->started) {
-                this->charge_point->on_error(evse_id, get_error_info(error));
-            } else {
-                this->event_queue[evse_id].push(error.uuid.uuid);
-            }
-        };
-
-        auto inoperative_error_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
-            if (this->started) {
-                this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
-            } else {
-                this->event_queue[evse_id].push(error.uuid.uuid);
-            }
-        };
-
-        // only subscribe to evse_manager/Inoperative error, other errors are handled by subscribe_global_all_errors
-        this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_error(INOPERATIVE_ERROR_TYPE, inoperative_error_handler, inoperative_error_cleared_handler);
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {

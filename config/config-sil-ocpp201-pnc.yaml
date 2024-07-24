@@ -18,6 +18,7 @@ active_modules:
       is_cert_install_needed: true
   evse_manager_1:
     module: EvseManager
+    evse: 1
     config_module:
       connector_id: 1
       evse_id: "DE*PNX*00001"
@@ -42,6 +43,7 @@ active_modules:
           implementation_id: charger
   evse_manager_2:
     module: EvseManager
+    evse: 2
     config_module:
       connector_id: 2
       evse_id: "2"
@@ -66,10 +68,12 @@ active_modules:
           implementation_id: charger
   yeti_driver_1:
     module: JsYetiSimulator
+    evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
+    evse: 2
     config_module:
       connector_id: 2
   slac:
