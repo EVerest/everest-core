@@ -42,6 +42,15 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
             output_error.error_description = error.description;
             output_error.error_severity = to_evse_manager_severity(error.severity);
 
+            if (error.origin.mapping.has_value()) {
+                auto& mapping = error.origin.mapping.value();
+                std::string connector;
+                if (mapping.connector.has_value()) {
+                    connector = " connector: " + std::to_string(mapping.connector.value());
+                }
+                EVLOG_info << "Error is associated with evse: " << mapping.evse << connector;
+            }
+
             if (modify_error_bsp(error, true, evse_error)) {
                 // signal to charger a new error has been set that prevents charging
                 output_error.error_code = evse_error;
