@@ -1234,7 +1234,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K01.FR.02 | 🌐     |                                                                                                 |
 | K01.FR.03 | 🌐 💂  | `TxProfile`s without `transactionId`s are rejected.                                             |
 | K01.FR.04 | ✅     |                                                                                                 |
-| K01.FR.05 |        |                                                                                                 |
+| K01.FR.05 | ✅     |                                                                                                 |
 | K01.FR.06 | 🌐     |                                                                                                 |
 | K01.FR.07 | ⛽️     | Notified through the `signal_set_charging_profiles` callback.                                   |
 | K01.FR.08 | 🌐     | `TxDefaultProfile`s are supported.                                                              |
@@ -1243,8 +1243,8 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K01.FR.11 |        |                                                                                                 |
 | K01.FR.12 |        |                                                                                                 |
 | K01.FR.13 |        |                                                                                                 |
-| K01.FR.14 |        |                                                                                                 |
-| K01.FR.15 |        |                                                                                                 |
+| K01.FR.14 | ✅     |                                                                                                 |
+| K01.FR.15 | ✅     |                                                                                                 |
 | K01.FR.16 |        |                                                                                                 |
 | K01.FR.17 |        |                                                                                                 |
 | K01.FR.19 |        |                                                                                                 |

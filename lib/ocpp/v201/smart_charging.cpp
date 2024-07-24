@@ -8,11 +8,11 @@
 #include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/enums.hpp"
 #include "ocpp/v201/evse.hpp"
+#include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include "ocpp/v201/transaction.hpp"
 #include <algorithm>
 #include <iterator>
-#include <memory>
 #include <ocpp/v201/smart_charging.hpp>
 #include <optional>
 
@@ -27,6 +27,8 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
         return "Valid";
     case ProfileValidationResultEnum::EvseDoesNotExist:
         return "EvseDoesNotExist";
+    case ProfileValidationResultEnum::ExistingChargingStationExternalConstraints:
+        return "ExstingChargingStationExternalConstraints";
     case ProfileValidationResultEnum::InvalidProfileType:
         return "InvalidProfileType";
     case ProfileValidationResultEnum::TxProfileMissingTransactionId:
@@ -110,6 +112,11 @@ ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfi
         if (result != ProfileValidationResultEnum::Valid) {
             return result;
         }
+    }
+
+    result = verify_no_conflicting_external_constraints_id(profile);
+    if (result != ProfileValidationResultEnum::Valid) {
+        return result;
     }
 
     if (evse_id != STATION_WIDE_ID) {
@@ -315,22 +322,59 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
     return ProfileValidationResultEnum::Valid;
 }
 
-void SmartChargingHandler::add_profile(int32_t evse_id, ChargingProfile& profile) {
-    if (STATION_WIDE_ID == evse_id) {
-        station_wide_charging_profiles.push_back(profile);
-    } else {
-        charging_profiles[evse_id].push_back(profile);
+SetChargingProfileResponse SmartChargingHandler::add_profile(int32_t evse_id, ChargingProfile& profile) {
+    SetChargingProfileResponse response;
+    response.status = ChargingProfileStatusEnum::Accepted;
+    auto found_profile = false;
+    for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
+        for (auto it = evse_profiles.begin(); it != evse_profiles.end(); it++) {
+            if (profile.id == it->id) {
+                evse_profiles.erase(it);
+                found_profile = true;
+                break;
+            }
+        }
+
+        if (found_profile) {
+            break;
+        }
     }
+
+    charging_profiles[evse_id].push_back(profile);
+
+    return response;
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_profiles() const {
+    std::vector<ChargingProfile> station_wide_profiles;
+    if (charging_profiles.count(STATION_WIDE_ID) > 0) {
+        station_wide_profiles = charging_profiles.at(STATION_WIDE_ID);
+    } else {
+        station_wide_profiles = {};
+    }
+
+    return station_wide_profiles;
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_profiles() const {
+    std::vector<ChargingProfile> all_profiles;
+    for (auto evse_profile_pair : charging_profiles) {
+        all_profiles.insert(all_profiles.end(), evse_profile_pair.second.begin(), evse_profile_pair.second.end());
+    }
+    return all_profiles;
 }
 
 std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
     std::vector<ChargingProfile> evse_specific_tx_default_profiles;
 
-    for (auto evse_profile_pair : charging_profiles) {
-        for (auto profile : evse_profile_pair.second)
-            if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
-                evse_specific_tx_default_profiles.push_back(profile);
+    for (auto& [evse_id, profiles] : charging_profiles) {
+        if (evse_id != STATION_WIDE_ID) {
+            for (auto profile : profiles) {
+                if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
+                    evse_specific_tx_default_profiles.push_back(profile);
+                }
             }
+        }
     }
 
     return evse_specific_tx_default_profiles;
@@ -338,7 +382,7 @@ std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_
 
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_profiles() const {
     std::vector<ChargingProfile> station_wide_tx_default_profiles;
-    for (auto profile : station_wide_charging_profiles) {
+    for (auto profile : this->get_station_wide_profiles()) {
         if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
             station_wide_tx_default_profiles.push_back(profile);
         }
@@ -380,6 +424,19 @@ bool SmartChargingHandler::is_overlapping_validity_period(int candidate_evse_id,
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
     profile.validFrom = profile.validFrom.value_or(ocpp::DateTime());
     profile.validTo = profile.validTo.value_or(ocpp::DateTime(date::utc_clock::time_point::max()));
+}
+
+ProfileValidationResultEnum
+SmartChargingHandler::verify_no_conflicting_external_constraints_id(const ChargingProfile& profile) const {
+    auto result = ProfileValidationResultEnum::Valid;
+    for (auto existing_profile : this->get_profiles()) {
+        if (existing_profile.id == profile.id &&
+            existing_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
+            result = ProfileValidationResultEnum::ExistingChargingStationExternalConstraints;
+        }
+    }
+
+    return result;
 }
 
 } // namespace ocpp::v201

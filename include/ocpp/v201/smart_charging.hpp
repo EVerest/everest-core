@@ -6,6 +6,7 @@
 
 #include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/enums.hpp"
+#include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include <limits>
 
 #include <memory>
@@ -21,6 +22,7 @@ const int DEFAULT_AND_MAX_NUMBER_PHASES = 3;
 enum class ProfileValidationResultEnum {
     Valid,
     EvseDoesNotExist,
+    ExistingChargingStationExternalConstraints,
     InvalidProfileType,
     TxProfileMissingTransactionId,
     TxProfileEvseIdNotGreaterThanZero,
@@ -61,7 +63,6 @@ private:
     std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
     // cppcheck-suppress unusedStructMember
     std::map<int32_t, std::vector<ChargingProfile>> charging_profiles;
-    std::vector<ChargingProfile> station_wide_charging_profiles;
 
 public:
     SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model);
@@ -76,7 +77,12 @@ public:
     ///
     /// \brief Adds a given \p profile and associated \p evse_id to our stored list of profiles
     ///
-    void add_profile(int32_t evse_id, ChargingProfile& profile);
+    SetChargingProfileResponse add_profile(int32_t evse_id, ChargingProfile& profile);
+
+    ///
+    /// \brief Retrieves existing profiles on system.
+    ///
+    std::vector<ChargingProfile> get_profiles() const;
 
 protected:
     ///
@@ -113,7 +119,14 @@ protected:
     ///
     bool is_overlapping_validity_period(int evse_id, const ChargingProfile& profile) const;
 
+    ///
+    /// \brief Checks a given \p profile does not have an id that conflicts with an existing profile
+    /// of type ChargingStationExternalConstraints
+    ///
+    ProfileValidationResultEnum verify_no_conflicting_external_constraints_id(const ChargingProfile& profile) const;
+
 private:
+    std::vector<ChargingProfile> get_station_wide_profiles() const;
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
     void conform_validity_periods(ChargingProfile& profile) const;

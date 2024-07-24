@@ -75,7 +75,7 @@ class UnexpectedMessageTypeFromCSMS : public std::runtime_error {
 
 struct Callbacks {
     ///\brief Function to check if the callback struct is completely filled. All std::functions should hold a function,
-    ///       all std::optional<std::functions> should either be emtpy or hold a function.
+    ///       all std::optional<std::functions> should either be empty or hold a function.
     ///
     ///\retval false if any of the normal callbacks are nullptr or any of the optional ones are filled with a nullptr
     ///        true otherwise
@@ -151,6 +151,9 @@ struct Callbacks {
     ///
     std::function<void(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info)>
         security_event_callback;
+
+    /// \brief Callback for indicating when a charging profile is received and was accepted.
+    std::function<void()> set_charging_profiles_callback;
 
     /// \brief  Callback for when a bootnotification response is received
     std::optional<std::function<void(const ocpp::v201::BootNotificationResponse& boot_notification_response)>>
