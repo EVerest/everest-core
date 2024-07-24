@@ -89,6 +89,8 @@ active_modules:
     module: EvseManager
     telemetry:
       id: 1
+    evse: 1
+    connector: 1
     mapping:
       evse:
         evse: 1
@@ -180,6 +182,8 @@ active_modules:
     module: JsYetiSimulator
     telemetry:
       id: 1
+    evse: 1
+    connector: 1
 'x-module-layout':
   api:
     position:
