@@ -195,8 +195,8 @@ void ErrorHandling::raise_inoperative_error(const Everest::error::Error& error) 
     }
 
     // raise externally
-    Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/Inoperative", "", error.type, Everest::error::Severity::High);
+    Everest::error::Error error_object =
+        p_evse->error_factory->create_error("evse_manager/Inoperative", "", error.type, Everest::error::Severity::High);
     p_evse->raise_error(error_object);
 
     if (modify_error_evse_manager("evse_manager/Inoperative", true)) {

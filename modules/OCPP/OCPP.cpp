@@ -351,7 +351,7 @@ void OCPP::init() {
         }
 
         if (this->started) {
-             // TODO: Report correct evse_id once Error type includes it
+            // TODO: Report correct evse_id once Error type includes it
             this->charge_point->on_error_cleared(0, error.uuid.uuid);
         } else {
             this->event_queue[0].push(error.uuid.uuid);
@@ -389,8 +389,7 @@ void OCPP::init() {
 
         // only subscribe to evse_manager/Inoperative error, other errors are handled by subscribe_global_all_errors
         this->r_evse_manager.at(evse_id - 1)
-            ->subscribe_error(INOPERATIVE_ERROR_TYPE, inoperative_error_handler,
-                              inoperative_error_cleared_handler);
+            ->subscribe_error(INOPERATIVE_ERROR_TYPE, inoperative_error_handler, inoperative_error_cleared_handler);
 
         // also use the the ready signal, TODO(kai): maybe warn about it's usage here`
         this->r_evse_manager.at(evse_id - 1)->subscribe_ready([this, evse_id](bool ready) {
