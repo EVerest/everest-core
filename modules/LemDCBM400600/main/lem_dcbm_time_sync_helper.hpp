@@ -43,10 +43,16 @@ public:
     }
 
     explicit LemDCBMTimeSyncHelper(ntp_server_spec ntp_spec, timing_config tc) :
-        timing_constants(tc), ntp_spec(std::move(ntp_spec)), unsafe_period_start_time({}) {
+        timing_constants(tc),
+        ntp_spec(std::move(ntp_spec)),
+        unsafe_period_start_time({}),
+        meter_timezone(""),
+        meter_dst("") {
     }
 
     virtual ~LemDCBMTimeSyncHelper() = default;
+
+    void set_time_config_params(const std::string& meter_timezone, const std::string& meter_dst);
 
     virtual void sync_if_deadline_expired(const HttpClientInterface& httpClient);
 
@@ -59,6 +65,10 @@ private:
     const ntp_server_spec ntp_spec;
     // Timing constants (can be overridden in a special constructor, e.g. during testing)
     const timing_config timing_constants;
+    // the meter timezone
+    std::string meter_timezone;
+    // the meter daylight saving time definition
+    std::string meter_dst;
 
     // RUNNING VARIABLES
     // The helper can be accessed by multiple threads, so we use a mutex to protect the data below
@@ -74,6 +84,8 @@ private:
 
     // sync_is_too_early is set if this is done earlier than MIN_TIME_BEFORE_SETTING_WRITE_IS_SAFE after init
     void sync_system_time(const HttpClientInterface& httpClient);
+    void sync_timezone(const HttpClientInterface& httpClient);
+    void sync_dst(const HttpClientInterface& httpClient);
 
     std::string generate_dcbm_ntp_config();
     [[nodiscard]] bool is_setting_write_safe() const;

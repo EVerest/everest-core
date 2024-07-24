@@ -1,0 +1,17 @@
+description: Temperature type
+types:
+  Temperature:
+    description: Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
+    type: object
+    additionalProperties: false
+    required:
+      - temperature
+    properties:
+      temperature:
+        description: The temperature of the sensor measured in C
+        type: number
+      identification:
+        description: A (vendor specific) ID if required
+        type: string
+
+

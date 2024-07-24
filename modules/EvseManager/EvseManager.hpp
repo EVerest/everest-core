@@ -94,6 +94,7 @@ struct Conf {
     bool uk_smartcharging_random_delay_enable;
     int uk_smartcharging_random_delay_max_duration;
     bool uk_smartcharging_random_delay_at_any_change;
+    int initial_meter_value_timeout_ms;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -324,6 +325,9 @@ private:
     static constexpr int CABLECHECK_SELFTEST_TIMEOUT{30};
 
     std::atomic_bool current_demand_active{false};
+    std::mutex powermeter_mutex;
+    std::condition_variable powermeter_cv;
+    bool initial_powermeter_value_received{false};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
