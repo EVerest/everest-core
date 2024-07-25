@@ -19,11 +19,11 @@ struct EnhancedTransaction : public Transaction {
     }
 
     bool id_token_sent = false;
-    int32_t connector_id;
+    int32_t connector_id = 0;
     int32_t seq_no = 0;
     std::optional<float> active_energy_import_start_value;
     DateTime start_time;
-    bool check_max_active_import_energy;
+    bool check_max_active_import_energy = false;
 
     ClockAlignedTimer sampled_tx_updated_meter_values_timer;
     ClockAlignedTimer sampled_tx_ended_meter_values_timer;
