@@ -214,7 +214,7 @@ public:
     utils::Stopwatch& get_stopwatch() {
         return stopwatch;
     }
-  
+
 private:
     utils::Stopwatch stopwatch;
 
