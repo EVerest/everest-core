@@ -203,10 +203,14 @@ public:
 
     types::evse_manager::EnableDisableSource get_last_enable_disable_source();
 
+    void set_connector_type(types::evse_board_support::Connector_type t) {
+        connector_type = t;
+    }
+
     utils::Stopwatch& get_stopwatch() {
         return stopwatch;
     }
-    
+
     void set_connector_type(types::evse_board_support::Connector_type t) {
         connector_type = t;
     }
