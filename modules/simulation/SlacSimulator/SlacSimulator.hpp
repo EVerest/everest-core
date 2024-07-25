@@ -30,6 +30,8 @@ public:
     SlacSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<slacImplBase> p_evse,
                   std::unique_ptr<ev_slacImplBase> p_ev, Conf& config) :
         ModuleBase(info), mqtt(mqtt_provider), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config){};
+        state_evse = STATE_UNMATCHED;
+        state_ev = STATE_UNMATCHED;
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<slacImplBase> p_evse;
@@ -45,18 +47,17 @@ public:
 
     State state_evse;
     State state_ev;
-    int cntmatching;
 
     std::string state_to_string(State s) {
         switch (s) {
-            case STATE_UNMATCHED:
-                return "UNMATCHED";
-            case STATE_MATCHING:
-                return "MATCHING";
-            case STATE_MATCHED:
-                return "MATCHED";
-            default:
-                return "";
+        case STATE_UNMATCHED:
+            return "UNMATCHED";
+        case STATE_MATCHING:
+            return "MATCHING";
+        case STATE_MATCHED:
+            return "MATCHED";
+        default:
+            return "";
         }
     }
 
@@ -71,8 +72,6 @@ public:
     // std::mutex slac_simulator_mutex;
     // Everest::Thread slac_simulator_thread_handle;
     void slac_simulator_worker(void);
-
-    static constexpr int LOOP_SLEEP_MS{250};
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 

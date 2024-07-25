@@ -16,7 +16,6 @@ void SlacSimulator::init() {
     cntmatching = 0;
 
     // this->slac_simulator_thread_handle = std::thread(&SlacSimulator::slac_simulator_worker, this);
-
 }
 
 void SlacSimulator::ready() {
@@ -69,11 +68,11 @@ void SlacSimulator::set_matched_evse() {
 void SlacSimulator::slac_simulator_worker(void) {
     while (true) {
         // if (this->slac_simulator_thread_handle.shouldExit()) {
-            // break;
+        // break;
         // }
 
         // set interval for publishing
-        std::this_thread::sleep_for(std::chrono::milliseconds(LOOP_SLEEP_MS));
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
         // std::scoped_lock access_lock(this->slac_simulator_thread_handle);
 
@@ -82,8 +81,6 @@ void SlacSimulator::slac_simulator_worker(void) {
             set_matched_ev();
             set_matched_evse();
         }
-
-
     }
 }
 
