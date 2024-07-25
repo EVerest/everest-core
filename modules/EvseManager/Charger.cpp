@@ -33,7 +33,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     evse_id(evse_id) {
 
 #ifdef EVEREST_USE_BACKTRACES
-        Everest::install_backtrace_handler();
+    Everest::install_backtrace_handler();
 #endif
 
     shared_context.connector_enabled = true;
