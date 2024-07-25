@@ -85,7 +85,7 @@ private:
     std::unique_ptr<std::promise<bool>> configure_sam_promise;
     std::unique_ptr<std::promise<PN532Response>> get_firmware_version_promise;
     std::unique_ptr<std::promise<PN532Response>> in_list_passive_target_promise;
-    size_t start_of_packet = 0;
+    ssize_t start_of_packet = 0;
     size_t packet_length = 0;
     bool preamble_start_seen = false;
     bool preamble_seen = false;

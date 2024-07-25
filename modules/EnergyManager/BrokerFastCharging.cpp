@@ -56,11 +56,11 @@ bool BrokerFastCharging::trade(Offer& _offer) {
 
         // in each timeslot: do we want to import or export energy?
         if (slot_type[i] == SlotType::Undecided) {
-            bool can_import = !(total_power_import.has_value() && total_power_import.value() == 0. ||
-                                max_current_import.has_value() && max_current_import.value() == 0.);
+            bool can_import = !((total_power_import.has_value() && total_power_import.value() == 0.) ||
+                                (max_current_import.has_value() && max_current_import.value() == 0.));
 
-            bool can_export = !(total_power_export.has_value() && total_power_export.value() == 0. ||
-                                max_current_export.has_value() && max_current_export.value() == 0.);
+            bool can_export = !((total_power_export.has_value() && total_power_export.value() == 0.) ||
+                                (max_current_export.has_value() && max_current_export.value() == 0.));
 
             if (can_import) {
                 slot_type[i] = SlotType::Import;
