@@ -19,9 +19,7 @@
 namespace module {
 namespace ev {
 
-struct Conf {
-    std::string ev_id;
-};
+struct Conf {};
 
 class ev_slacImpl : public ev_slacImplBase {
 public:
