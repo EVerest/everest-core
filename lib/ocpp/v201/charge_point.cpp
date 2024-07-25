@@ -3117,7 +3117,7 @@ void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest>
             for (auto const& evse : *this->evse_manager) {
                 if (!evse.has_active_transaction()) {
                     // FIXME: This will linger after the update too! We probably need another mechanism...
-                    this->set_evse_operative_status(evse_id, OperationalStatusEnum::Inoperative, false);
+                    this->set_evse_operative_status(evse.get_id(), OperationalStatusEnum::Inoperative, false);
                 }
             }
         } else {
