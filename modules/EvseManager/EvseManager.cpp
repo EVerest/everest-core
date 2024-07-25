@@ -141,7 +141,7 @@ void EvseManager::init() {
         p_evse->publish_hw_capabilities(c);
         if (config.charge_mode == "AC") {
             EVLOG_debug << fmt::format("Max AC hardware capabilities: {}A/{}ph", hw_capabilities.max_current_A_import,
-                                      hw_capabilities.max_phase_count_import);
+                                       hw_capabilities.max_phase_count_import);
         }
     });
 
