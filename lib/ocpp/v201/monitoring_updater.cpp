@@ -150,11 +150,15 @@ void MonitoringUpdater::start_monitoring() {
                         std::placeholders::_7);
     device_model->register_variable_listener(std::move(fn));
 
-    int process_interval_seconds =
-        this->device_model->get_optional_value<int>(ControllerComponentVariables::MonitorsProcessingInterval)
-            .value_or(1);
+    // No point in starting the monitor if this variable does not exist. It will never start to exist later on.
+    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::MonitoringCtrlrEnabled)
+            .has_value()) {
+        int process_interval_seconds =
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::MonitorsProcessingInterval)
+                .value_or(1);
 
-    monitors_timer.interval(std::chrono::seconds(process_interval_seconds));
+        monitors_timer.interval(std::chrono::seconds(process_interval_seconds));
+    }
 }
 
 void MonitoringUpdater::stop_monitoring() {
