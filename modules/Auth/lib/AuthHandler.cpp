@@ -232,7 +232,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     types::authorization::ValidationResult validation_result = {types::authorization::AuthorizationStatus::Unknown};
     if (!validation_results.empty()) {
         bool authorized = false;
-        int i = 0;
+        std::vector<ValidationResult>::size_type i = 0;
         // iterate over validation results
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             validation_result = validation_results.at(i);
@@ -603,6 +603,39 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::ReservationEnd:
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.reserved = false;
+        break;
+    /// explicitly fall through all the SessionEventEnum values we are not handling
+    case SessionEventEnum::Authorized:
+        [[fallthrough]];
+    case SessionEventEnum::Deauthorized:
+        [[fallthrough]];
+    case SessionEventEnum::AuthRequired:
+        [[fallthrough]];
+    case SessionEventEnum::PrepareCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEV:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEVSE:
+        [[fallthrough]];
+    case SessionEventEnum::WaitingForEnergy:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingResumed:
+        [[fallthrough]];
+    case SessionEventEnum::StoppingCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingFinished:
+        [[fallthrough]];
+    case SessionEventEnum::ErrorCleared:
+        [[fallthrough]];
+    case SessionEventEnum::PermanentFaultCleared:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugFinished:
+        [[fallthrough]];
+    case SessionEventEnum::PluginTimeout:
         break;
     }
     this->connectors.at(connector_id)->event_mutex.unlock();

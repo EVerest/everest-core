@@ -99,7 +99,7 @@ void CanBroker::set_state(bool enabled) {
     write_to_can(frame);
 
     // Do an extra module ON command as sometimes the bits in the header are not enough to actually switch on
-    auto status = set_data_int(dpm1000::def::SetValueType::SWITCH_ON_OFF_SETTING, (enabled ? 0 : 1));
+    set_data_int(dpm1000::def::SetValueType::SWITCH_ON_OFF_SETTING, (enabled ? 0 : 1));
 }
 
 CanBroker::AccessReturnType CanBroker::dispatch_frame(const struct can_frame& frame, uint16_t id,

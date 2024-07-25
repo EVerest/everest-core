@@ -42,7 +42,7 @@ std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_
         csv.push_back(str);
     }
 
-    for (const auto tx_start_stop_point : csv) {
+    for (const auto& tx_start_stop_point : csv) {
         if (tx_start_stop_point == "ParkingBayOccupancy") {
             tx_start_stop_points.insert(TxStartStopPoint::ParkingBayOccupancy);
         } else if (tx_start_stop_point == "EVConnected") {
@@ -712,6 +712,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
+
+        // missing AuthRequired, PrepareCharging and many more
     }
 
     // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
