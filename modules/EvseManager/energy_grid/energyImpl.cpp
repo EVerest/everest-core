@@ -61,7 +61,7 @@ void energyImpl::clear_import_request_schedule() {
     entry_import.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
     entry_import.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
-    entry_import.limits_to_root.ac_number_of_active_phases = mod->ac_nr_ph_phases_active;
+    entry_import.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
 
     if (mod->config.charge_mode == "DC") {
         // For DC, apply our power supply capabilities as limit on leaves side
@@ -86,7 +86,7 @@ void energyImpl::clear_export_request_schedule() {
     entry_export.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
     entry_export.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
-    entry_export.limits_to_root.ac_number_of_active_phases = mod->ac_nr_ph_phases_active;
+    entry_export.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
 
     if (mod->config.charge_mode == "DC") {
         // For DC, apply our power supply capabilities as limit on leaves side
@@ -179,7 +179,7 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
             e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
             e.limits_to_root.ac_supports_changing_phases_during_charging =
                 hw_caps.supports_changing_phases_during_charging;
-            e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_ph_phases_active;
+            e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
         }
 
         // copy complete external limit schedules for export
@@ -221,7 +221,7 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
             e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
             e.limits_to_root.ac_supports_changing_phases_during_charging =
                 hw_caps.supports_changing_phases_during_charging;
-            e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_ph_phases_active;
+            e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
         }
 
         if (mod->config.charge_mode == "DC") {
@@ -296,7 +296,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
 
         //   set hardware limit
         float limit = 0.;
-        int active_phasecount = mod->ac_nr_ph_phases_active;
+        int active_phasecount = mod->ac_nr_phases_active;
 
         // apply enforced limits
         if (value.limits_root_side.has_value()) {
@@ -311,7 +311,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 if (mod->get_hw_capabilities().supports_changing_phases_during_charging) {
                     if (mod->charger->switch_three_phases_while_charging(
                             value.limits_root_side.value().ac_max_phase_count.value() == 3)) {
-                        mod->ac_nr_ph_phases_active = value.limits_root_side.value().ac_max_phase_count.value();
+                        mod->ac_nr_phases_active = value.limits_root_side.value().ac_max_phase_count.value();
                         EVLOG_info << fmt::format("3ph/1ph: Switching #ph from {} to {}", active_phasecount,
                                                   value.limits_root_side.value().ac_max_phase_count.value());
                     } else {
@@ -333,7 +333,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                                   value.limits_root_side.value().total_power_W.value());
 
                 float a = value.limits_root_side.value().total_power_W.value() / mod->config.ac_nominal_voltage /
-                          mod->ac_nr_ph_phases_active;
+                          mod->ac_nr_phases_active;
                 if (a < limit) {
                     limit = a;
                 }

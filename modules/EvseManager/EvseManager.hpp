@@ -235,7 +235,7 @@ public:
             charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
         }
     }
-    std::atomic_int ac_nr_ph_phases_active{0};
+    std::atomic_int ac_nr_phases_active{0};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:

@@ -128,12 +128,12 @@ void EvseManager::init() {
             }
         }
 
-        if (ac_nr_ph_phases_active == 0) {
-            ac_nr_ph_phases_active = c.max_phase_count_import;
+        if (ac_nr_phases_active == 0) {
+            ac_nr_phases_active = c.max_phase_count_import;
         }
 
-        if (ac_nr_ph_phases_active > c.max_phase_count_import) {
-            ac_nr_ph_phases_active = c.min_phase_count_import;
+        if (ac_nr_phases_active > c.max_phase_count_import) {
+            ac_nr_phases_active = c.min_phase_count_import;
         }
 
         bsp->set_three_phases(c.max_phase_count_import);

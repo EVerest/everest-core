@@ -57,6 +57,10 @@ void evse_board_supportImpl::init() {
 }
 
 void evse_board_supportImpl::ready() {
+     {
+        std::scoped_lock lock(caps_mutex);
+        publish_capabilities(caps);
+    }
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {
