@@ -46,6 +46,7 @@
 #include "EventQueue.hpp"
 #include "IECStateMachine.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "utils.hpp"
 
 namespace module {
 
@@ -201,7 +202,13 @@ public:
 
     types::evse_manager::EnableDisableSource get_last_enable_disable_source();
 
+    utils::Stopwatch& get_stopwatch() {
+        return stopwatch;
+    }
+
 private:
+    utils::Stopwatch stopwatch;
+
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
 
