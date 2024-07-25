@@ -63,6 +63,51 @@ std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_
     return tx_start_stop_points;
 }
 
+ocpp::v201::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v201::ReasonEnum& stop_reason) {
+    switch (stop_reason) {
+    case ocpp::v201::ReasonEnum::DeAuthorized:
+        return ocpp::v201::TriggerReasonEnum::Deauthorized;
+    case ocpp::v201::ReasonEnum::EmergencyStop:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::EnergyLimitReached:
+        return ocpp::v201::TriggerReasonEnum::EnergyLimitReached;
+    case ocpp::v201::ReasonEnum::EVDisconnected:
+        return ocpp::v201::TriggerReasonEnum::EVCommunicationLost;
+    case ocpp::v201::ReasonEnum::GroundFault:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::ImmediateReset:
+        return ocpp::v201::TriggerReasonEnum::ResetCommand;
+    case ocpp::v201::ReasonEnum::Local:
+        return ocpp::v201::TriggerReasonEnum::StopAuthorized;
+    case ocpp::v201::ReasonEnum::LocalOutOfCredit:
+        return ocpp::v201::TriggerReasonEnum::ChargingStateChanged;
+    case ocpp::v201::ReasonEnum::MasterPass:
+        return ocpp::v201::TriggerReasonEnum::StopAuthorized;
+    case ocpp::v201::ReasonEnum::Other:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::OvercurrentFault:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::PowerLoss:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::PowerQuality:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    case ocpp::v201::ReasonEnum::Reboot:
+        return ocpp::v201::TriggerReasonEnum::ResetCommand;
+    case ocpp::v201::ReasonEnum::Remote:
+        return ocpp::v201::TriggerReasonEnum::RemoteStop;
+    case ocpp::v201::ReasonEnum::SOCLimitReached:
+        return ocpp::v201::TriggerReasonEnum::EnergyLimitReached;
+    case ocpp::v201::ReasonEnum::StoppedByEV:
+        return ocpp::v201::TriggerReasonEnum::StopAuthorized;
+    case ocpp::v201::ReasonEnum::TimeLimitReached:
+        return ocpp::v201::TriggerReasonEnum::TimeLimitReached;
+    case ocpp::v201::ReasonEnum::Timeout:
+        return ocpp::v201::TriggerReasonEnum::EVConnectTimeout;
+    default:
+        return ocpp::v201::TriggerReasonEnum::AbnormalCondition;
+    }
+}
+
 void OCPP201::init_evse_maps() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -612,6 +657,7 @@ void OCPP201::ready() {
 
 void OCPP201::process_session_event(const int32_t evse_id, const types::evse_manager::SessionEvent& session_event) {
     const auto connector_id = session_event.connector_id.value_or(1);
+    std::lock_guard<std::mutex> lg(this->session_event_mutex);
     switch (session_event.event) {
     case types::evse_manager::SessionEventEnum::SessionStarted: {
         this->process_session_started(evse_id, connector_id, session_event);
@@ -700,8 +746,9 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
             get_meter_value(session_event), ocpp::v201::ReadingContextEnum::Transaction_End,
             get_signed_meter_value(session_event));
         this->charge_point->on_transaction_finished(evse_id, transaction_data->timestamp, transaction_data->meter_value,
-                                                    transaction_data->stop_reason, transaction_data->id_token,
-                                                    std::nullopt, transaction_data->charging_state);
+                                                    transaction_data->stop_reason, transaction_data->trigger_reason,
+                                                    transaction_data->id_token, std::nullopt,
+                                                    transaction_data->charging_state);
         this->transaction_handler->reset_transaction_data(evse_id);
     }
 }
@@ -763,6 +810,7 @@ void OCPP201::process_session_finished(const int32_t evse_id, const int32_t conn
     if (transaction_data != nullptr) {
         transaction_data->charging_state = ocpp::v201::ChargingStateEnum::Idle;
         transaction_data->stop_reason = ocpp::v201::ReasonEnum::EVDisconnected;
+        transaction_data->trigger_reason = ocpp::v201::TriggerReasonEnum::EVCommunicationLost;
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::EV_DISCONNECTED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
@@ -851,10 +899,13 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
         } else if (tx_event == TxEvent::DEAUTHORIZED) {
             charging_state = ocpp::v201::ChargingStateEnum::EVConnected;
         }
+        transaction_data->trigger_reason = stop_reason_to_trigger_reason_enum(reason);
         transaction_data->stop_reason = reason;
         transaction_data->id_token = id_token;
         transaction_data->charging_state = charging_state;
     }
+
+    // tx_event could be DEAUTHORIZED or EV_DISCONNECTED
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, tx_event);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
 
@@ -866,6 +917,15 @@ void OCPP201::process_transaction_finished(const int32_t evse_id, const int32_t 
             this->charge_point->on_charging_state_changed(evse_id, ocpp::v201::ChargingStateEnum::EVConnected,
                                                           ocpp::v201::TriggerReasonEnum::StopAuthorized);
         }
+    } else {
+        // TODO(piet): If StopTxOnEVSideDisconnect is false, authorization shall still be present. This cannot only be
+        // handled within this module, but probably also within EvseManager and Auth
+
+        // authorization is always withdrawn in case of TransactionFinished, so in case we haven't updated the
+        // transaction handler yet, we have to do it
+        // now
+        const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::DEAUTHORIZED);
+        this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
     }
 }
 
