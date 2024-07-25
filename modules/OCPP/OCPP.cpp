@@ -793,7 +793,7 @@ void OCPP::ready() {
     }
 
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
-    if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
+    if (this->charge_point->start({}, boot_reason)) {
         // signal that we're started
         this->started = true;
         EVLOG_info << "OCPP initialized";

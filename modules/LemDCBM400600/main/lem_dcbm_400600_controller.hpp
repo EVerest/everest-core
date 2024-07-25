@@ -96,7 +96,6 @@ private:
     // transaction ongoing and current transaction are used ONLY at startup
     bool transaction_is_ongoing_at_startup = false;
     std::string current_transaction_id;
-    Conf config;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
     Conf config;
 

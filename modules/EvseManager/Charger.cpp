@@ -31,7 +31,6 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     store(_store),
     r_powermeter_billing(r_powermeter_billing),
     evse_id(evse_id) {
-    connector_type(connector_type),
 
 #ifdef EVEREST_USE_BACKTRACES
         Everest::install_backtrace_handler();
