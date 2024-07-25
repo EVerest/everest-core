@@ -47,6 +47,7 @@
 #include "IECStateMachine.hpp"
 #include "PersistentStore.hpp"
 #include "scoped_lock_timeout.hpp"
+#include "utils.hpp"
 
 namespace module {
 
@@ -210,7 +211,13 @@ public:
 
     void cleanup_transactions_on_startup();
 
+    utils::Stopwatch& get_stopwatch() {
+        return stopwatch;
+    }
+  
 private:
+    utils::Stopwatch stopwatch;
+
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
 

@@ -98,6 +98,7 @@ private:
     std::string current_transaction_id;
     Conf config;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
+    Conf config;
 
     void fetch_meter_id_from_device();
     std::string get_current_transaction();

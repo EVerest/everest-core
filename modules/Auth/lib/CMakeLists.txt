@@ -29,3 +29,8 @@ PRIVATE
 # needs c++ 14
 target_compile_features(auth_handler PRIVATE cxx_std_14)
 
+if(EVEREST_ENABLE_COMPILE_WARNINGS)
+    target_compile_options(auth_handler
+        PRIVATE ${EVEREST_COMPILE_OPTIONS}
+    )
+endif()

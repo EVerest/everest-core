@@ -94,6 +94,8 @@ enum class MutexDescription {
 
 static std::string to_string(MutexDescription d) {
     switch (d) {
+    case MutexDescription::Undefined:
+        return "Undefined";
     case MutexDescription::Charger_signal_loop:
         return "Charger.cpp: error_handling->signal_loop";
     case MutexDescription::Charger_signal_error:
