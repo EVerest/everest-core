@@ -780,9 +780,6 @@ void OCPP::ready() {
         // process session event queue
         std::scoped_lock lock(this->session_event_mutex);
         for (auto& [evse_id, evse_event_queue] : this->event_queue) {
-            // TODO: Probably we need a queue of std::variant here to be able to process raised errors as well
-            // Errors can only be processed after the start function, since only in there the ChargePointFSM is
-            // intialized
             while (!evse_event_queue.empty()) {
                 auto queued_event = evse_event_queue.front();
                 if (std::holds_alternative<types::evse_manager::SessionEvent>(queued_event)) {
