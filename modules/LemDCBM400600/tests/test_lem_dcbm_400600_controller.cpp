@@ -58,7 +58,7 @@ protected:
         std::nullopt};
 
     const std::string expected_start_transaction_request_body{
-        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":"","tariffId":0,"cableId":0,"userData":""})"};
+        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":",mock_transaction_id","tariffId":0,"cableId":0,"userData":""})"};
 
     const std::string put_legal_response = R"({
                                                 "paginationCounter": 6,
