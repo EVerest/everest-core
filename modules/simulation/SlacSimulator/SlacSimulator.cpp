@@ -62,7 +62,6 @@ void SlacSimulator::set_matched_evse() {
     state_evse = STATE_MATCHED;
     p_evse->publish_state(state_to_string(state_evse));
     p_evse->publish_dlink_ready(true);
-
 }
 
 void SlacSimulator::slac_simulator_worker(void) {

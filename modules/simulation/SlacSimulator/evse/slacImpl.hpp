@@ -19,8 +19,7 @@
 namespace module {
 namespace evse {
 
-struct Conf {
-};
+struct Conf {};
 
 class slacImpl : public slacImplBase {
 public:
