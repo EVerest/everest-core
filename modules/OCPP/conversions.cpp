@@ -660,7 +660,7 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
                                                                 const std::optional<uint32_t>& meter_value) {
     types::session_cost::SessionCostChunk chunk;
     chunk.cost = types::money::MoneyAmount();
-    chunk.cost->value = static_cast<int>(price * (10 ^ number_of_decimals));
+    chunk.cost->value = static_cast<int>(price * (pow(10, number_of_decimals)));
     if (timestamp.has_value()) {
         chunk.timestamp_to = timestamp.value().to_rfc3339();
     }
@@ -678,7 +678,7 @@ to_everest_charging_price_component(const double& price, const uint32_t& number_
     currency.code = currency_code;
     currency.decimals = number_of_decimals;
     p.currency = currency;
-    p.value.value = static_cast<int>(price * (10 ^ number_of_decimals));
+    p.value.value = static_cast<int>(price * (pow(10, number_of_decimals)));
     c.category = category;
     c.price = p;
 

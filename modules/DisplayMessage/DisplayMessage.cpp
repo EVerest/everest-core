@@ -25,7 +25,7 @@ void DisplayMessage::init() {
         for (const types::session_cost::SessionCostChunk& chunk : session_cost.cost_chunks.value()) {
             if (chunk.cost.has_value()) {
                 EVLOG_info << "Session cost until now: "
-                           << static_cast<double>(chunk.cost.value().value) / (10 ^ number_of_decimals);
+                           << static_cast<double>(chunk.cost.value().value) / (pow(10, number_of_decimals));
             }
         }
 
@@ -43,7 +43,7 @@ void DisplayMessage::init() {
                     if (charging_price.price.value().currency.decimals.has_value()) {
                         decimals = charging_price.price.value().currency.decimals.value();
                     }
-                    price = static_cast<double>(charging_price.price.value().value.value) / (10 ^ decimals);
+                    price = static_cast<double>(charging_price.price.value().value.value) / pow(10, decimals);
                 }
 
                 EVLOG_info << "Charging price for category " << category << ": " << price << std::endl;
