@@ -204,6 +204,7 @@ private:
     std::string telemetry_prefix;
     std::optional<TelemetryConfig> telemetry_config;
     bool telemetry_enabled;
+    std::optional<ModuleTierMappings> module_tier_mappings;
 
     void handle_ready(json data);
 

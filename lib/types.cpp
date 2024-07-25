@@ -26,9 +26,9 @@ bool Requirement::operator<(const Requirement& rhs) const {
     }
 }
 
-ImplementationIdentifier::ImplementationIdentifier(const std::string& module_id_,
-                                                   const std::string& implementation_id_) :
-    module_id(module_id_), implementation_id(implementation_id_) {
+ImplementationIdentifier::ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_,
+                                                   std::optional<Mapping> mapping_) :
+    module_id(module_id_), implementation_id(implementation_id_), mapping(mapping_) {
 }
 
 std::string ImplementationIdentifier::to_string() const {

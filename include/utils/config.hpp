@@ -59,6 +59,7 @@ private:
     json errors;
     schemas _schemas;
 
+    std::unordered_map<std::string, ModuleTierMappings> tier_mappings;
     std::unordered_map<std::string, std::optional<TelemetryConfig>> telemetry_configs;
 
     ///
@@ -101,6 +102,19 @@ private:
     /// \returns a json object containing module_id, module_name, impl_id and impl_intf
     json extract_implementation_info(const std::string& module_id, const std::string& impl_id) const;
     void resolve_all_requirements();
+
+    ///
+    /// \brief Parses the 3 tier model mappings in the config
+    /// You can set a EVSE id called "evse" and Connector id called "connector" for the whole module.
+    /// Additionally a "mapping" can be specified in the following way:
+    /// mapping:
+    ///   implementation_id:
+    ///     evse: 1
+    ///     connector: 1
+    /// If no mappings are found it will be assumed that the module is mapped to the charging station.
+    /// If only a module mapping is defined alle implementations are mapped to this module mapping.
+    /// Implementations can have overwritten mappings.
+    void parse_3_tier_model_mapping();
 
     // experimental caches
     std::unordered_map<std::string, std::string> module_names;
@@ -177,6 +191,18 @@ public:
     ///
     /// \returns a json object that contains the interface definition
     json get_interface_definition(const std::string& interface_name);
+
+    ///
+    /// \returns the 3 tier model mappings
+    std::unordered_map<std::string, ModuleTierMappings> get_3_tier_model_mappings();
+
+    //
+    /// \returns the 3 tier model mappings for the given \p module_id
+    std::optional<ModuleTierMappings> get_3_tier_model_mappings(const std::string& module_id);
+
+    //
+    /// \returns the 3 tier model mapping for the given \p module_id and \p impl_id
+    std::optional<Mapping> get_3_tier_model_mapping(const std::string& module_id, const std::string& impl_id);
 
     ///
     /// \brief turns then given \p module_id into a printable identifier

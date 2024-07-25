@@ -1,19 +1,35 @@
 from enum import Enum
-from typing import Callable, overload
+from typing import Callable, overload, Optional
 
 class Severity(Enum):
     Low = "Low",
     Medium = "Medium",
     High = "High"
 
+class Mapping:
+    @overload
+    def __init__(self, evse: int) -> None ...
+
+    @overload
+    def __init__(self, evse: int, connector: int) -> None ...
+
+    @property
+    def evse(self) -> int ...
+
+    @property
+    def connector(self) -> Optional[int] ...
+
 class ImplementationIdentifier:
-    def __init__(self, module_id: str, implementation_id: str) -> None: ...
+    def __init__(self, module_id: str, implementation_id: str, mapping: Optional[Mapping]) -> None: ...
 
     @property
     def module_id(self) -> str: ...
 
     @property
     def implementation_id(self) -> str: ...
+
+    @property
+    def mapping(self) -> Optional[Mapping]: ...
 
 class UUID:
     @overload

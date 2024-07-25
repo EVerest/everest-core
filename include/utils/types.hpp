@@ -84,6 +84,26 @@ struct TelemetryConfig {
     int id;
 };
 
+/// \brief A Mapping that can be used to map a module or implementation to a specific EVSE or optionally to a Connector
+struct Mapping {
+    int evse;                     ///< The EVSE id
+    std::optional<int> connector; ///< An optional Connector id
+
+    Mapping(int evse) : evse(evse) {
+    }
+
+    Mapping(int evse, int connector) : evse(evse), connector(connector) {
+    }
+};
+
+/// \brief A 3 tier mapping for a module and its individual implementations
+struct ModuleTierMappings {
+    std::optional<Mapping> module; ///< Mapping of the whole module to an EVSE id and optional Connector id. If this is
+                                   ///< absent the module is assumed to be mapped to the whole charging station
+    std::unordered_map<std::string, std::optional<Mapping>>
+        implementations; ///< Mappings for the individual implementations of the module
+};
+
 struct Requirement {
     Requirement(const std::string& requirement_id_, size_t index_);
     bool operator<(const Requirement& rhs) const;
@@ -92,13 +112,33 @@ struct Requirement {
 };
 
 struct ImplementationIdentifier {
-    ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_);
+    ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_,
+                             std::optional<Mapping> mapping_ = std::nullopt);
     std::string to_string() const;
     std::string module_id;
     std::string implementation_id;
+    std::optional<Mapping> mapping;
 };
 bool operator==(const ImplementationIdentifier& lhs, const ImplementationIdentifier& rhs);
 bool operator!=(const ImplementationIdentifier& lhs, const ImplementationIdentifier& rhs);
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+template <> struct adl_serializer<Mapping> {
+    static void to_json(json& j, const Mapping& m) {
+        j = {{"evse", m.evse}};
+        if (m.connector.has_value()) {
+            j["connector"] = m.connector.value();
+        }
+    }
+    static Mapping from_json(const json& j) {
+        auto m = Mapping(j.at("evse").get<int>());
+        if (j.contains("connector")) {
+            m.connector = j.at("connector").get<int>();
+        }
+        return m;
+    }
+};
+NLOHMANN_JSON_NAMESPACE_END
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
 

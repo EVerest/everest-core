@@ -19,13 +19,20 @@ template <> struct adl_serializer<Everest::error::Error> {
              {"state", Everest::error::state_to_string(e.state)},
              {"sub_type", e.sub_type},
              {"vendor_id", e.vendor_id}};
+        if (e.origin.mapping.has_value()) {
+            j["origin"]["mapping"] = e.origin.mapping.value();
+        }
     }
     static Everest::error::Error from_json(const json& j) {
         Everest::error::ErrorType type = j.at("type");
         std::string message = j.at("message");
         std::string description = j.at("description");
+        std::optional<Mapping> mapping;
+        if (j.at("origin").contains("mapping")) {
+            mapping = j.at("origin").at("mapping");
+        }
         ImplementationIdentifier origin =
-            ImplementationIdentifier(j.at("origin").at("module_id"), j.at("origin").at("implementation_id"));
+            ImplementationIdentifier(j.at("origin").at("module_id"), j.at("origin").at("implementation_id"), mapping);
         Everest::error::Severity severity = Everest::error::string_to_severity(j.at("severity"));
         Everest::error::Error::time_point timestamp = Everest::Date::from_rfc3339(j.at("timestamp"));
         Everest::error::UUID uuid(j.at("uuid"));

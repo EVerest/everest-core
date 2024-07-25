@@ -548,6 +548,7 @@ Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), mana
     }
 
     resolve_all_requirements();
+    parse_3_tier_model_mapping();
 }
 
 error::ErrorTypeMap Config::get_error_map() const {
@@ -802,6 +803,29 @@ json Config::get_interfaces() {
 json Config::get_interface_definition(const std::string& interface_name) {
     BOOST_LOG_FUNCTION();
     return this->interface_definitions.value(interface_name, json());
+}
+
+std::unordered_map<std::string, ModuleTierMappings> Config::get_3_tier_model_mappings() {
+    return this->tier_mappings;
+}
+
+std::optional<ModuleTierMappings> Config::get_3_tier_model_mappings(const std::string& module_id) {
+    if (this->tier_mappings.find(module_id) == this->tier_mappings.end()) {
+        return std::nullopt;
+    }
+    return this->tier_mappings.at(module_id);
+}
+
+std::optional<Mapping> Config::get_3_tier_model_mapping(const std::string& module_id, const std::string& impl_id) {
+    auto module_tier_mappings = this->get_3_tier_model_mappings(module_id);
+    if (not module_tier_mappings.has_value()) {
+        return std::nullopt;
+    }
+    auto& mapping = module_tier_mappings.value();
+    if (mapping.implementations.find(impl_id) == mapping.implementations.end()) {
+        return std::nullopt;
+    }
+    return mapping.implementations.at(impl_id);
 }
 
 json Config::load_schema(const fs::path& path) {
@@ -1144,4 +1168,45 @@ void Config::resolve_all_requirements() {
     }
     EVLOG_debug << "All module requirements resolved successfully...";
 }
+
+void Config::parse_3_tier_model_mapping() {
+    for (auto& element : this->main.items()) {
+        const auto& module_id = element.key();
+        auto impl_info = this->extract_implementation_info(module_id);
+        auto provides = this->manifests.at(impl_info.at("module_name")).at("provides");
+
+        ModuleTierMappings module_tier_mappings;
+        auto& module_config = element.value();
+        if (module_config.contains("evse")) {
+            auto mapping = Mapping(module_config.at("evse").get<int>());
+            if (module_config.contains("connector")) {
+                mapping.connector = module_config.at("connector").get<int>();
+            }
+            module_tier_mappings.module = mapping;
+        }
+        auto& mapping = module_config.at("mapping");
+        // an empty mapping means it is mapped to the charging station and gets no specific mapping attached
+        if (not mapping.empty()) {
+            for (auto& tier_mapping : mapping.items()) {
+                auto impl_id = tier_mapping.key();
+                auto tier_mapping_value = tier_mapping.value();
+                if (provides.contains(impl_id)) {
+                    if (tier_mapping_value.contains("connector")) {
+                        module_tier_mappings.implementations[impl_id] = Mapping(
+                            tier_mapping_value.at("evse").get<int>(), tier_mapping_value.at("connector").get<int>());
+                    } else {
+                        module_tier_mappings.implementations[impl_id] =
+                            Mapping(tier_mapping_value.at("evse").get<int>());
+                    }
+                } else {
+                    EVLOG_warning << fmt::format(
+                        "Mapping {} of module {} in config refers to a provides that does not exist, please fix this",
+                        impl_id, printable_identifier(module_id));
+                }
+            }
+        }
+        this->tier_mappings[module_id] = module_tier_mappings;
+    }
+}
+
 } // namespace Everest

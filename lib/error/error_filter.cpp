@@ -123,7 +123,8 @@ OriginFilter ErrorFilter::get_origin_filter() const {
         EVLOG_error << "Filter type is not OriginFilter. Defaulting to "
                        "'OriginFilter::ImplementationIdentifier(\"no-module-id-provided\", "
                        "\"no-implementation-id-provided\")'.";
-        return OriginFilter(ImplementationIdentifier("no-module-id-provided", "no-implementation-id-provided"));
+        return OriginFilter(
+            ImplementationIdentifier("no-module-id-provided", "no-implementation-id-provided", std::nullopt));
     }
     return std::get<OriginFilter>(filter);
 }

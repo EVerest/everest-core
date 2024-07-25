@@ -49,9 +49,10 @@ PYBIND11_MODULE(everestpy, m) {
         .export_values();
 
     py::class_<ImplementationIdentifier>(error_submodule, "ImplementationIdentifier")
-        .def(py::init<const std::string&, const std::string&>())
+        .def(py::init<const std::string&, const std::string&, std::optional<Mapping>>())
         .def_readwrite("module_id", &ImplementationIdentifier::module_id)
-        .def_readwrite("implementation_id", &ImplementationIdentifier::implementation_id);
+        .def_readwrite("implementation_id", &ImplementationIdentifier::implementation_id)
+        .def_readwrite("mapping", &ImplementationIdentifier::mapping);
 
     py::class_<Everest::error::UUID>(error_submodule, "UUID")
         .def(py::init<>())

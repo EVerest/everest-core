@@ -58,8 +58,8 @@ Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::s
 Error::Error(const ErrorType& type_, const ErrorSubType& sub_type_, const std::string& message_,
              const std::string& description_, const std::string& origin_module_,
              const std::string& origin_implementation_, const Severity& severity_) :
-    Error(type_, sub_type_, message_, description_, ImplementationIdentifier(origin_module_, origin_implementation_),
-          severity_) {
+    Error(type_, sub_type_, message_, description_,
+          ImplementationIdentifier(origin_module_, origin_implementation_, std::nullopt), severity_) {
 }
 
 Error::Error() :
