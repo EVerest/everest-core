@@ -20,16 +20,14 @@ namespace module {
 namespace ev {
 
 struct Conf {
-    std::string ev_id;
+    std::string ev_id = "PIONIX_SAYS_HELLO";
 };
 
 class ev_slacImpl : public ev_slacImplBase {
 public:
     ev_slacImpl() = delete;
     ev_slacImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<SlacSimulator>& mod, Conf& config) :
-        ev_slacImplBase(ev, "ev"), mod(mod), config(config) : {
-        config.ev_id = "PIONIX_SAYS_HELLO";
-    };
+        ev_slacImplBase(ev, "ev"), mod(mod), config(config), config.ev_id("PIONIX_SAYS_HELLO") {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 

@@ -29,11 +29,7 @@ public:
     SlacSimulator() = delete;
     SlacSimulator(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<slacImplBase> p_evse,
                   std::unique_ptr<ev_slacImplBase> p_ev, Conf& config) :
-        ModuleBase(info), mqtt(mqtt_provider), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config) : {
-        state_evse = STATE_UNMATCHED;
-        state_ev = STATE_UNMATCHED;
-        cntmatching = 0;
-    };
+        ModuleBase(info), mqtt(mqtt_provider), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config), config.state_evse(STATE_UNMATCHED), config.state_ev(STATE_UNMATCHED), config.cntmatched(0) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<slacImplBase> p_evse;
@@ -47,9 +43,9 @@ public:
         STATE_MATCHED
     };
 
-    State state_evse;
-    State state_ev;
-    int cntmatching;
+    State state_evse = STATE_UNMATCHED;
+    State state_ev = STATE_UNMATCHED;
+    int cntmatching = 0;
 
     std::string state_to_string(State s) {
         switch (s) {
