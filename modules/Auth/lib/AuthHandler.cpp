@@ -624,10 +624,6 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
         [[fallthrough]];
     case SessionEventEnum::ChargingFinished:
         [[fallthrough]];
-    case SessionEventEnum::ErrorCleared:
-        [[fallthrough]];
-    case SessionEventEnum::PermanentFaultCleared:
-        [[fallthrough]];
     case SessionEventEnum::ReplugStarted:
         [[fallthrough]];
     case SessionEventEnum::ReplugFinished:
