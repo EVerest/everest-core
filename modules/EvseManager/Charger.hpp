@@ -57,8 +57,9 @@ const std::string IEC62196Type2Socket = "IEC62196Type2Socket";
 class Charger {
 public:
     Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
+            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
             const std::unique_ptr<PersistentStore>& store,
-            const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing, const std::string& evse_id);
+            const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id);
     ~Charger();
 
     enum class ChargeMode {

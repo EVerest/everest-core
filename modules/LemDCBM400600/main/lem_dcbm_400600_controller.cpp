@@ -37,22 +37,6 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     return tokens;
 }
 
-std::string LemDCBM400600Controller::get_current_transaction() {
-    this->time_sync_helper->sync_if_deadline_expired(*this->http_client);
-
-    const std::string endpoint = v2_capable ? "/v2/legal" : "/v1/legal";
-    auto response = this->http_client->get(endpoint);
-    if (response.status_code != 200) {
-        throw UnexpectedDCBMResponseCode(endpoint, 200, response);
-    }
-    try {
-        json data = json::parse(response.body);
-        return data.at("transactionId");
-    } catch (json::exception& json_error) {
-        throw UnexpectedDCBMResponseBody(endpoint, fmt::format("Json error '{}'", json_error.what()));
-    }
-}
-
 void LemDCBM400600Controller::fetch_meter_id_from_device() {
     auto status_response = this->http_client->get("/v1/status");
 
@@ -63,20 +47,11 @@ void LemDCBM400600Controller::fetch_meter_id_from_device() {
         json data = json::parse(status_response.body);
         this->meter_id = data.at("meterId");
         this->public_key_ocmf = data.at("publicKeyOcmf");
-        this->transaction_is_ongoing_at_startup = data.at("status").at("bits").at("transactionIsOnGoing");
+        this->trasaction_is_ongoing = data.at("status").at("bits").at("transactionIsOnGoing");
         std::string version = data.at("version").at("applicationFirmwareVersion");
         auto components = split(version, '.');
         this->v2_capable =
             ((components.size() == 4) && (components[0] > "1")); // the major version must be newer than 1
-        if (this->transaction_is_ongoing_at_startup) {
-            // we need to get the current transaction id since we might receive a stop transaction with id 0
-            // meaning that the system had a failure and the transaction was started but id was not saved
-            // and we try to recover from the error, thus we need to cancel the transaction
-            EVLOG_warning
-                << "LEM DCBM 400/600: A transaction is already ongoing, trying to retrieve the current transaction id";
-            this->current_transaction_id = get_current_transaction();
-            EVLOG_warning << "LEM DCBM 400/600: The current transaction has the id:" << this->current_transaction_id;
-        }
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(
             "/v1/status", fmt::format("Json error {} for body {}", json_error.what(), status_response.body));
@@ -129,41 +104,25 @@ void LemDCBM400600Controller::request_device_to_start_transaction(const types::p
 
 types::powermeter::TransactionStopResponse
 LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
-    std::string tid = transaction_id;
-    if (!(this->transaction_is_ongoing_at_startup) && transaction_id.empty()) {
-        // return an error because there is no transaction initially ongoing (at start up time)
-        return types::powermeter::TransactionStopResponse{
-            types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, "No dangling transaction open"};
-    }
-    if (this->transaction_is_ongoing_at_startup && transaction_id == this->current_transaction_id) {
-        // transaction has been found and it is now going to close
-        this->transaction_is_ongoing_at_startup = false;
-    }
-    if (this->transaction_is_ongoing_at_startup && transaction_id.empty()) {
-        // transaction has NOT been found, we use the last known value of the transaction id
-        tid = this->current_transaction_id;
-        this->transaction_is_ongoing_at_startup = false;
-    }
     try {
         return call_with_retry(
-            [this, tid]() {
-                // special case if we started and a transaction is ongoing - the upper layers might not know the
-                // transaction id
-                this->request_device_to_stop_transaction(tid);
-                auto signed_meter_value = types::units_signed::SignedMeterValue{fetch_ocmf_result(tid), "", "OCMF"};
+            [this, transaction_id]() {
+                this->request_device_to_stop_transaction(transaction_id);
+                auto signed_meter_value =
+                    types::units_signed::SignedMeterValue{fetch_ocmf_result(transaction_id), "", "OCMF"};
                 return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
                                                                   {}, // Empty start_signed_meter_value
                                                                   signed_meter_value};
             },
             this->config.transaction_number_of_http_retries, this->config.transaction_retry_wait_in_milliseconds);
     } catch (DCBMUnexpectedResponseException& error) {
-        std::string error_message = fmt::format("Failed to stop transaction {}: {}", tid, error.what());
+        std::string error_message = fmt::format("Failed to stop transaction {}: {}", transaction_id, error.what());
         EVLOG_error << error_message;
         return types::powermeter::TransactionStopResponse{
             types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, error_message};
     } catch (HttpClientError& error) {
-        std::string error_message =
-            fmt::format("Failed to stop transaction {} - connection to device failed: {}", tid, error.what());
+        std::string error_message = fmt::format("Failed to stop transaction {} - connection to device failed: {}",
+                                                transaction_id, error.what());
         EVLOG_error << error_message;
         return types::powermeter::TransactionStopResponse{
             types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR, {}, {}, error_message};
@@ -246,13 +205,10 @@ LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& li
 
 std::string
 LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::powermeter::TransactionReq& request) {
-    std::string client_id = request.identification_data.value_or("") + ',' + request.transaction_id;
-    const int max_length_client_id = 37; // as defined by LEM documentation
-    client_id = (client_id.length() > max_length_client_id) ? client_id.substr(0, max_length_client_id) : client_id;
     if (this->v2_capable) {
         return nlohmann::ordered_json{{"evseId", request.evse_id},
                                       {"transactionId", request.transaction_id},
-                                      {"clientId", client_id},
+                                      {"clientId", request.identification_data.value_or("")},
                                       {"tariffId", this->config.tariff_id},
                                       {"TT", request.tariff_text.value_or("")},
                                       {"UV", this->config.UV},
@@ -262,9 +218,12 @@ LemDCBM400600Controller::transaction_start_request_to_dcbm_payload(const types::
                                       {"SC", this->config.SC}}
             .dump();
     } else {
-        return nlohmann::ordered_json{
-            {"evseId", request.evse_id},          {"transactionId", request.transaction_id}, {"clientId", client_id},
-            {"tariffId", this->config.tariff_id}, {"cableId", this->config.cable_id},        {"userData", ""}}
+        return nlohmann::ordered_json{{"evseId", request.evse_id},
+                                      {"transactionId", request.transaction_id},
+                                      {"clientId", request.identification_data.value_or("")},
+                                      {"tariffId", this->config.tariff_id},
+                                      {"cableId", this->config.cable_id},
+                                      {"userData", ""}}
             .dump();
     }
 }
