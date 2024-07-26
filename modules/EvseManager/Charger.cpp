@@ -28,9 +28,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                  const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id) :
     bsp(bsp),
     error_handling(error_handling),
-    r_powermeter_billing(r_powermeter_billing),
     connector_type(connector_type),
-    evse_id(evse_id) {
+    evse_id(evse_id),
+    r_powermeter_billing(r_powermeter_billing) {
 
 #ifdef EVEREST_USE_BACKTRACES
     Everest::install_backtrace_handler();
@@ -258,6 +258,7 @@ void Charger::run_state_machine() {
                     // enabling PWM.
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
+                    stopwatch.mark("HLC_PWM_5%_ON");
                 }
             }
 
@@ -537,6 +538,16 @@ void Charger::run_state_machine() {
         case EvseState::Charging:
             if (initialize_state) {
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
+                stopwatch.mark("Charging started");
+                stopwatch.report_phase();
+                auto report = stopwatch.report_all_phases();
+                if (config_context.charge_mode == ChargeMode::DC) {
+                    EVLOG_info << "Timing statistics (Plugin to CurrentDemand)";
+                    EVLOG_info << "-------------------------------------------";
+                    for (const auto& r : report) {
+                        EVLOG_info << r;
+                    }
+                }
             }
 
             // Wait here until all errors are cleared
@@ -784,6 +795,8 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == CPEvent::CarPluggedIn) {
+            stopwatch.reset();
+            stopwatch.mark_phase("ConnSetup");
             shared_context.current_state = EvseState::WaitingForAuthentication;
         }
         break;

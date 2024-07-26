@@ -149,7 +149,7 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                 break;
             }
             auto tp_r_2 = Everest::Date::from_rfc3339((*(ir + 1)).timestamp);
-            if (tp_a >= tp_r_1 && tp_a < tp_r_2 || (ir == request.begin() && tp_a < tp_r_1)) {
+            if ((tp_a >= tp_r_1 && tp_a < tp_r_2) || (ir == request.begin() && tp_a < tp_r_1)) {
                 r = ir;
                 break;
             }
@@ -191,7 +191,7 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
 
 ScheduleReq Market::get_available_energy(const ScheduleReq& max_available, bool add_sold) {
     ScheduleReq available = max_available;
-    for (int i = 0; i < available.size(); i++) {
+    for (ScheduleReq::size_type i = 0; i < available.size(); i++) {
         // FIXME: sold_root is the sum of all energy sold, but we need to limit indivdual paths as well
         // add config option for pure star type of cabling here as well.
 
@@ -222,7 +222,7 @@ ScheduleReq Market::get_available_energy_export() {
 
 Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const float __nominal_ac_voltage,
                Market* __parent) :
-    _nominal_ac_voltage(__nominal_ac_voltage), _parent(__parent), energy_flow_request(_energy_flow_request) {
+    energy_flow_request(_energy_flow_request), _parent(__parent), _nominal_ac_voltage(__nominal_ac_voltage) {
 
     // EVLOG_info << "Create market for " << _energy_flow_request.uuid;
 
@@ -290,7 +290,7 @@ static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
     if (a.size() != b.size())
         return;
 
-    for (int i = 0; i < a.size(); i++) {
+    for (ScheduleRes::size_type i = 0; i < a.size(); i++) {
         if (b[i].limits_to_root.ac_max_current_A.has_value()) {
             a[i].limits_to_root.ac_max_current_A =
                 b[i].limits_to_root.ac_max_current_A.value() + a[i].limits_to_root.ac_max_current_A.value_or(0);
