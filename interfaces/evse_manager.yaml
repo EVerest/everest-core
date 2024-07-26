@@ -108,16 +108,6 @@ cmds:
         description: UUID of node that this limit applies to
         type: object
         $ref: /energy#/ExternalLimits
-  switch_three_phases_while_charging:
-    description: Switch three phases while charging
-    arguments:
-      three_phases:
-        description: "True: switch to three phases, false: switch to single phase"
-        type: boolean
-    result:
-      description: Returns success or error code
-      type: string
-      $ref: /evse_manager#/SwitchThreePhasesWhileChargingResult
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)

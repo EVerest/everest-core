@@ -45,6 +45,7 @@ struct Conf {
     double slice_ampere;
     double slice_watt;
     bool debug;
+    std::string switch_3ph1ph_while_charging_mode;
 };
 
 class EnergyManager : public Everest::ModuleBase {
