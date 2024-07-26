@@ -1,0 +1,75 @@
+AllowOfflineTxForUnknownId:
+  - module_name: test123
+  - config_key: allow_offline_tx_for_unknown_id
+AuthorizationCacheEnabled:
+  - module_name:
+  - config_key:
+AuthorizeRemoteTxRequests:
+  - module_name:
+  - config_key:
+BlinkRepeat:
+  - module_name:
+  - config_key:
+ClockAlignedDataInterval:
+  - module_name:
+  - config_key:
+ConnectionTimeOut:
+  - module_name:
+  - config_key:
+ConnectorPhaseRotation:
+  - module_name:
+  - config_key:
+HeartbeatInterval:
+  - module_name:
+  - config_key:
+LightIntensity:
+  - module_name:
+  - config_key:
+LocalAuthorizeOffline:
+  - module_name:
+  - config_key:
+LocalPreAuthorize:
+  - module_name:
+  - config_key:
+MaxEnergyOnInvalidId:
+  - module_name:
+  - config_key:
+MeterValuesAlignedData:
+  - module_name:
+  - config_key:
+MeterValuesSampledData:
+  - module_name:
+  - config_key:
+MeterValueSampleInterval:
+  - module_name:
+  - config_key:
+MinimumStatusDuration:
+  - module_name:
+  - config_key:
+ResetRetries:
+  - module_name:
+  - config_key:
+StopTransactionOnEVSideDisconnect:
+  - module_name:
+  - config_key:
+StopTransactionOnInvalidId:
+  - module_name:
+  - config_key:
+StopTxnAlignedData:
+  - module_name:
+  - config_key:
+StopTxnSampledData:
+  - module_name:
+  - config_key:
+TransactionMessageAttempts:
+  - module_name:
+  - config_key:
+TransactionMessageRetryInterval:
+  - module_name:
+  - config_key:
+UnlockConnectorOnEVSideDisconnect:
+  - module_name:
+  - config_key:
+WebsocketPingInterval:
+  - module_name:
+  - config_key:

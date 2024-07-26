@@ -1,4 +1,10 @@
 active_modules:
+  ocpp-configuration-instance:
+    module: OCPPConfiguration
+    connections:
+      ocpp_module:
+        - module_id: ocpp
+          implementation_id: ocpp_generic
   iso15118_charger:
     module: EvseV2G
     config_module:
@@ -188,7 +194,7 @@ active_modules:
       fuse_limit_A: 40.0
       phase_count: 3
     connections:
-      price_information: []
+      price_information: [ ]
       energy_consumer:
         - module_id: evse_manager_1
           implementation_id: energy_grid
@@ -217,4 +223,4 @@ active_modules:
   system:
     module: System
 
-x-module-layout: {}
+x-module-layout: { }

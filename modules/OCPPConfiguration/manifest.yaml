@@ -1,0 +1,33 @@
+description: This module reacts to OCPP configuration changes.
+config:
+  monitor_variables:
+    description: Comma separated list of variables to monitor
+    type: string
+    default: >
+      AllowOfflineTxForUnknownId,AuthorizationCacheEnabled,AuthorizeRemoteTxRequests,
+      BlinkRepeat,ClockAlignedDataInterval,ConnectionTimeOut,ConnectorPhaseRotation,
+      HeartbeatInterval,LightIntensity,LocalAuthorizeOffline,LocalPreAuthorize,
+      MaxEnergyOnInvalidId,MeterValuesAlignedData,MeterValuesSampledData,
+      MeterValueSampleInterval,MinimumStatusDuration,ResetRetries,
+      StopTransactionOnEVSideDisconnect,StopTransactionOnInvalidId,StopTxnAlignedData,
+      StopTxnSampledData,TransactionMessageAttempts,TransactionMessageRetryInterval,
+      UnlockConnectorOnEVSideDisconnect,WebsocketPingInterval
+  user_config_path:
+    description: Path to the user configuration file
+    type: string
+    default: "../config/user-config/ocpp-remote-config.yaml"
+  mapping_file_path:
+    description: Path to the mapping file
+    type: string
+    default: "config-mapping.yaml"
+provides:
+  example_module:
+    interface: example_user
+    description: "todo: what should it provide?"
+requires:
+  ocpp_module:
+    interface: ocpp
+metadata:
+  license: https://spdx.org/licenses/Apache-2.0.html
+  authors:
+    - Tobias Marzell, Pionix GmbH
