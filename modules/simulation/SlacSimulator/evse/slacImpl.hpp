@@ -19,13 +19,21 @@
 namespace module {
 namespace evse {
 
-struct Conf {};
+struct Conf {
+    std::string evse_id;
+    std::string nid;
+    int number_of_sounds;
+};
 
 class slacImpl : public slacImplBase {
 public:
     slacImpl() = delete;
     slacImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<SlacSimulator>& mod, Conf& config) :
-        slacImplBase(ev, "evse"), mod(mod), config(config){};
+        slacImplBase(ev, "evse"), mod(mod), config(config) : {
+        config.evse_id = "PIONIX_SAYS_HELLO";
+        config.nid = "pionix!";
+        config.number_of_sounds = 10;
+        };
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1

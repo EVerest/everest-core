@@ -32,6 +32,7 @@ public:
         ModuleBase(info), mqtt(mqtt_provider), p_evse(std::move(p_evse)), p_ev(std::move(p_ev)), config(config) : {
         state_evse = STATE_UNMATCHED;
         state_ev = STATE_UNMATCHED;
+        cntmatching = 0;
     };
 
     Everest::MqttProvider& mqtt;
@@ -48,6 +49,7 @@ public:
 
     State state_evse;
     State state_ev;
+    int cntmatching;
 
     std::string state_to_string(State s) {
         switch (s) {
