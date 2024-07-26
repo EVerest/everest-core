@@ -212,7 +212,8 @@ void X509CertificateHierarchy::insert(X509Wrapper&& inserted_certificate) {
             auto& node = hierarchy[i];
             auto& state = node.state;
 
-            // If we have a temporary orphan
+            // If we have a temporary orphan, that is if we are in the roots
+            // and we are not self-signed then it means that we are an orphan
             if (state.is_selfsigned == 0) {
                 // Some sanity checks
                 if (state.is_hash_computed)
