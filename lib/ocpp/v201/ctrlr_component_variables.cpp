@@ -28,6 +28,13 @@ const Component& TariffCostCtrlr = {"TariffCostCtrlr"};
 const Component& TxCtrlr = {"TxCtrlr"};
 } // namespace ControllerComponents
 
+namespace StandardizedVariables {
+const Variable& Problem = {"Problem"};
+const Variable& Tripped = {"Tripped"};
+const Variable& Overload = {"Overload"};
+const Variable& Fallback = {"Fallback"};
+}; // namespace StandardizedVariables
+
 namespace ControllerComponentVariables {
 
 const ComponentVariable& InternalCtrlrEnabled = {

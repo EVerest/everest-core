@@ -16,11 +16,9 @@ extern const Component& AuthCacheCtrlr;
 extern const Component& AuthCtrlr;
 extern const Component& ChargingStation;
 extern const Component& ClockCtrlr;
-extern const Component& Connector;
 extern const Component& CustomizationCtrlr;
 extern const Component& DeviceDataCtrlr;
 extern const Component& DisplayMessageCtrlr;
-extern const Component& EVSE;
 extern const Component& ISO15118Ctrlr;
 extern const Component& LocalAuthListCtrlr;
 extern const Component& MonitoringCtrlr;
@@ -32,6 +30,13 @@ extern const Component& SmartChargingCtrlr;
 extern const Component& TariffCostCtrlr;
 extern const Component& TxCtrlr;
 } // namespace ControllerComponents
+
+namespace StandardizedVariables {
+extern const Variable& Problem;
+extern const Variable& Tripped;
+extern const Variable& Overload;
+extern const Variable& Fallback;
+}; // namespace StandardizedVariables
 
 // Provides access to standardized variables of OCPP2.0.1 spec
 namespace ControllerComponentVariables {

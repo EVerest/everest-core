@@ -2404,10 +2404,6 @@ void ChargePoint::handle_get_base_report_req(Call<GetBaseReportRequest> call) {
     GetBaseReportResponse response;
     response.status = GenericDeviceModelStatusEnum::Accepted;
 
-    if (msg.reportBase == ReportBaseEnum::SummaryInventory) {
-        response.status = GenericDeviceModelStatusEnum::NotSupported;
-    }
-
     ocpp::CallResult<GetBaseReportResponse> call_result(response, call.uniqueId);
     this->send<GetBaseReportResponse>(call_result);
 
