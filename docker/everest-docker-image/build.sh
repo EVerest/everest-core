@@ -7,8 +7,16 @@ usage() {
     echo -e "\t--conf: Path to EVerest config file - Required"
     echo -e "\t--ocpp-conf: Path to EVerest OCPP config file - Optional, no default"
     echo -e "\t--name: Name of the docker image - Optional, defaults to: everest-core"
+    echo -e "\t--build-date: Build date of the docker image, is reflected in its name and can have an effect on caching - Optional, defaults to the current datetime"
+    echo -e "\t--no-ssh: Do not append \"--ssh default\" to docker build - Optional"
+    echo -e "\t--container-runtime: Set container runtime (e.g. docker or podman) for build - Optional"
+    echo -e "\t--additional-cmake-parameters: Set additional cmake parameters for build - Optional, default \"-DEVEREST_BUILD_ALL_MODULES=ON\""
     exit 1
 }
+
+ssh_param="--ssh=default"
+container_runtime="docker"
+additional_cmake_parameters="-DEVEREST_BUILD_ALL_MODULES=ON"
 
 while [ ! -z "$1" ]; do
     if [ "$1" == "--repo" ]; then
@@ -25,6 +33,18 @@ while [ ! -z "$1" ]; do
         shift 2
     elif [ "$1" == "--branch" ]; then
         branch="${2}"
+        shift 2
+    elif [ "$1" == "--build-date" ]; then
+        build_date="${2}"
+        shift 2
+    elif [ "$1" == "--no-ssh" ]; then
+        ssh_param=""
+        shift 1
+    elif [ "$1" == "--container-runtime" ]; then
+        container_runtime="${2}"
+        shift 2
+    elif [ "$1" == "--additional-cmake-parameters" ]; then
+        additional_cmake_parameters="${2}"
         shift 2
     else
         usage
@@ -60,13 +80,22 @@ if [ -z "${branch}" ]; then
     branch="main"
 fi
 
-
 NOW=$(date +"%Y-%m-%d-%H-%M-%S")
-DOCKER_BUILDKIT=1 docker build \
+
+if [ -n "${build_date}" ]; then
+    NOW="${build_date}"
+fi
+
+echo "Build date: ${NOW}"
+echo "Using container runtime \"${container_runtime}\" for building. Version: $(${container_runtime} --version)"
+echo "Additional CMake parameters for EVerest build: \"${additional_cmake_parameters}\""
+trap 'echo "Build not successful"; exit 1' ERR
+DOCKER_BUILDKIT=1 ${container_runtime} build \
     --build-arg BUILD_DATE="${NOW}" \
     --build-arg REPO="${repo}" \
     --build-arg EVEREST_CONFIG="${conf}" \
     --build-arg OCPP_CONFIG="${ocpp_conf}" \
     --build-arg BRANCH="${branch}" \
-    -t "${name}" --ssh default .
-docker save "${name}":latest | gzip >"$name-${NOW}.tar.gz"
+    --build-arg ADDITIONAL_CMAKE_PARAMETERS="${additional_cmake_parameters}" \
+    -t "${name}" "${ssh_param}" .
+${container_runtime} save "${name}":latest | gzip >"$name-${NOW}.tar.gz"
