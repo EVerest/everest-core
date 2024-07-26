@@ -21,7 +21,7 @@
 #ifdef USING_TPM2
 
 // updates so that existing tests run with the OpenSSLProvider
-#include <evse_security/crypto/openssl/openssl_tpm.hpp>
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
 #include <openssl/provider.h>
 
 namespace evse_security {
@@ -277,7 +277,7 @@ TEST_F(EvseSecurityTests, verify_normal_keygen) {
     KeyHandle_ptr key;
 
     info.key_type = CryptoKeyType::RSA_3072;
-    info.generate_on_tpm = false;
+    info.generate_on_custom = false;
 
     info.public_key_file = fs::path("key/nrm_pubkey.key");
     info.private_key_file = fs::path("key/nrm_privkey.key");
@@ -291,7 +291,7 @@ TEST_F(EvseSecurityTests, verify_keygen_csr) {
     KeyHandle_ptr key;
 
     info.key_type = CryptoKeyType::EC_prime256v1;
-    info.generate_on_tpm = false;
+    info.generate_on_custom = false;
 
     info.public_key_file = fs::path("key/pubkey.key");
     info.private_key_file = fs::path("key/privkey.key");

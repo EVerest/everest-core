@@ -82,7 +82,7 @@ static bool is_keyfile(const fs::path& file_path) {
     if (fs::is_regular_file(file_path)) {
         if (file_path.has_extension()) {
             auto extension = file_path.extension();
-            if (extension == KEY_EXTENSION || extension == TPM_KEY_EXTENSION) {
+            if (extension == KEY_EXTENSION || extension == CUSTOM_KEY_EXTENSION) {
                 return true;
             }
         }
@@ -97,7 +97,7 @@ static fs::path get_private_key_path_of_certificate(const X509Wrapper& certifica
     // Before iterating the whole dir check by the filename first 'key_path'.key/.tkey
     if (certificate.get_file().has_value()) {
         // Check normal keyfile & tpm filename
-        for (const auto& extension : {KEY_EXTENSION, TPM_KEY_EXTENSION}) {
+        for (const auto& extension : {KEY_EXTENSION, CUSTOM_KEY_EXTENSION}) {
             fs::path potential_keyfile = certificate.get_file().value();
             potential_keyfile.replace_extension(extension);
 
@@ -1020,13 +1020,13 @@ GetCertificateSignRequestResult EvseSecurity::generate_certificate_signing_reque
                                                                                    const std::string& country,
                                                                                    const std::string& organization,
                                                                                    const std::string& common,
-                                                                                   bool use_tpm) {
+                                                                                   bool use_custom_provider) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
 
     // Make a difference between normal and tpm keys for identification
-    const auto file_name =
-        conversions::leaf_certificate_type_to_filename(certificate_type) +
-        filesystem_utils::get_random_file_name(use_tpm ? TPM_KEY_EXTENSION.string() : KEY_EXTENSION.string());
+    const auto file_name = conversions::leaf_certificate_type_to_filename(certificate_type) +
+                           filesystem_utils::get_random_file_name(use_custom_provider ? CUSTOM_KEY_EXTENSION.string()
+                                                                                      : KEY_EXTENSION.string());
 
     fs::path key_path;
     if (certificate_type == LeafCertificateType::CSMS) {
@@ -1060,10 +1060,10 @@ GetCertificateSignRequestResult EvseSecurity::generate_certificate_signing_reque
 #endif
 
     info.key_info.key_type = CryptoKeyType::EC_prime256v1;
-    info.key_info.generate_on_tpm = use_tpm;
+    info.key_info.generate_on_custom = use_custom_provider;
     info.key_info.private_key_file = key_path;
 
-    if ((use_tpm == false) && private_key_password.has_value()) {
+    if ((use_custom_provider == false) && private_key_password.has_value()) {
         info.key_info.private_key_pass = private_key_password;
     }
 

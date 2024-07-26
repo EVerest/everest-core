@@ -22,6 +22,8 @@ public:
     /// @brief If any TPM operations are supported
     static bool supports_tpm();
     static bool supports_tpm_key_creation();
+    /// @brief  If creation from a custom provider is supported
+    static bool supports_custom_key_creation();
 
 public: // Key utilities
     static bool generate_key(const KeyGenerationInfo& generation_info, KeyHandle_ptr& out_key);

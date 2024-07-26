@@ -13,7 +13,7 @@ namespace evse_security {
 const fs::path PEM_EXTENSION = ".pem";
 const fs::path DER_EXTENSION = ".der";
 const fs::path KEY_EXTENSION = ".key";
-const fs::path TPM_KEY_EXTENSION = ".tkey";
+const fs::path CUSTOM_KEY_EXTENSION = ".tkey";
 const fs::path CERT_HASH_EXTENSION = ".hash";
 
 enum class EncodingFormat {

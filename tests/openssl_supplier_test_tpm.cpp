@@ -4,8 +4,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-#include <evse_security/crypto/openssl/openssl_supplier.hpp>
-#include <evse_security/crypto/openssl/openssl_tpm.hpp>
+#include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
 
 using namespace evse_security;
 
@@ -23,18 +23,18 @@ protected:
     }
 };
 
-TEST_F(OpenSSLSupplierTpmTest, supports_tpm) {
+TEST_F(OpenSSLSupplierTpmTest, supports_provider_tpm) {
     OpenSSLProvider::cleanup();
-    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
+    ASSERT_FALSE(OpenSSLProvider::supports_provider_tpm());
     // calculates
     OpenSSLProvider provider;
     // returns cached
-    ASSERT_TRUE(OpenSSLProvider::supports_tpm());
+    ASSERT_TRUE(OpenSSLProvider::supports_provider_tpm());
 }
 
-TEST_F(OpenSSLSupplierTpmTest, supports_tpm_key_creation) {
+TEST_F(OpenSSLSupplierTpmTest, supports_provider_tpm_key_creation) {
     OpenSSLProvider::cleanup();
-    ASSERT_FALSE(OpenSSLProvider::supports_tpm());
+    ASSERT_FALSE(OpenSSLProvider::supports_provider_tpm());
     // should calculate
     ASSERT_TRUE(OpenSSLSupplier::supports_tpm_key_creation());
 }
@@ -51,7 +51,7 @@ TEST_F(OpenSSLSupplierTpmTest, generate_key_RSA_TPM20) {
 TEST_F(OpenSSLSupplierTpmTest, generate_key_RSA_3072) {
     // Enable this test manually only if your platform supports 3072 TPM keys
     GTEST_SKIP() << "Skipping TPM2.0 GEN_RSA_3072 test since it is a non-spec value"
-                    "which probably will not be supported on many platforms!";
+                    " which probably will not be supported on many platforms!";
 
     KeyGenerationInfo info = {
         CryptoKeyType::RSA_3072, true, std::nullopt, std::nullopt, std::nullopt,

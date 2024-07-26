@@ -12,6 +12,7 @@ public:
 
     static bool supports_tpm();
     static bool supports_tpm_key_creation();
+    static bool supports_custom_key_creation();
 
 public:
     static bool generate_key(const KeyGenerationInfo& key_info, KeyHandle_ptr& out_key);

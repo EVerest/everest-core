@@ -164,12 +164,14 @@ public:
     /// @param country
     /// @param organization
     /// @param common
-    /// @param use_tpm  If the TPM should be used for the CSR request
+    /// @param use_custom_provider  If the custom provider (which can be the TPM if using -DUSING_TPM2=ON) should be
+    /// used for the CSR request
     /// @return the status and an optional PEM formatted certificate signing request string
     GetCertificateSignRequestResult generate_certificate_signing_request(LeafCertificateType certificate_type,
                                                                          const std::string& country,
                                                                          const std::string& organization,
-                                                                         const std::string& common, bool use_tpm);
+                                                                         const std::string& common,
+                                                                         bool use_custom_provider);
 
     /// @brief Generates a certificate signing request for the given \p certificate_type , \p country , \p organization
     /// and \p common without using the TPM

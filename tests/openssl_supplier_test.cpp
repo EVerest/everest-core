@@ -2,7 +2,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-#include <evse_security/crypto/openssl/openssl_supplier.hpp>
+#include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
 #include <optional>
 
 // #define OUTPUT_CSR

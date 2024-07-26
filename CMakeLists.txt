@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-evse_security VERSION 0.6
+project(everest-evse_security VERSION 0.8
         DESCRIPTION "Implementation of EVSE related security operations"
 		LANGUAGES CXX C
 )
@@ -14,18 +14,30 @@ option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as depe
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(EVSE_SECURITY_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(USING_TPM2 "Include code for using OpenSSL 3 and the tpm2 provider" OFF)
+option(USING_CUSTOM_PROVIDER "Include code for using OpenSSL 3 and the custom provider" OFF)
 
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(LIBEVSE_SECURITY_BUILD_TESTING ON)
 endif()
 
-if(USING_TPM2)
-    # OpenSSL property string when using the default provider
-    set(PROPQUERY_DEFAULT "provider!=tpm2")
-    # OpenSSL property string when using the tpm2 provider
-    set(PROPQUERY_TPM2 "?provider=tpm2,tpm2.digest!=yes,tpm2.cipher!=yes")
+if(USING_TPM2 AND USING_CUSTOM_PROVIDER)
+    message(FATAL_ERROR, "TPM2 provider and custom provider are incompatible")
 endif()
 
+if(USING_TPM2)
+    set(CUSTOM_PROVIDER_NAME "tpm2")    
+endif()
+
+if(USING_CUSTOM_PROVIDER)
+    set(CUSTOM_PROVIDER_NAME "custom_provider")    
+endif()
+
+if(USING_TPM2 OR USING_CUSTOM_PROVIDER)
+# OpenSSL property string when using the default provider
+    set(PROPQUERY_PROVIDER_DEFAULT "provider!=${CUSTOM_PROVIDER_NAME}")
+    # OpenSSL property string when using the tpm2/custom provider
+    set(PROPQUERY_PROVIDER_CUSTOM "?provider=${CUSTOM_PROVIDER_NAME},${CUSTOM_PROVIDER_NAME}.digest!=yes,${CUSTOM_PROVIDER_NAME}.cipher!=yes")
+endif()
 
 # dependencies
 if (NOT DISABLE_EDM)

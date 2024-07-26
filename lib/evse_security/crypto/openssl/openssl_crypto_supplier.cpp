@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include <evse_security/crypto/openssl/openssl_supplier.hpp>
+#include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
 
 #include <evse_security/detail/openssl/openssl_types.hpp>
 #include <evse_security/utils/evse_filesystem.hpp>
@@ -22,7 +22,7 @@
 #include <openssl/sha.h>
 #include <openssl/x509v3.h>
 
-#include <evse_security/crypto/openssl/openssl_tpm.hpp>
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
 
 namespace evse_security {
 
@@ -68,7 +68,7 @@ const char* OpenSSLSupplier::get_supplier_name() {
 
 bool OpenSSLSupplier::supports_tpm_key_creation() {
     OpenSSLProvider provider;
-    return provider.supports_tpm();
+    return provider.supports_provider_tpm();
 }
 
 static bool export_key_internal(const KeyGenerationInfo& key_info, const EVP_PKEY_ptr& evp_key) {
@@ -218,8 +218,8 @@ bool OpenSSLSupplier::generate_key(const KeyGenerationInfo& key_info, KeyHandle_
     OpenSSLProvider provider;
     bool bResult = true;
 
-    if (key_info.generate_on_tpm) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+    if (key_info.generate_on_custom) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
 
     } else {
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
@@ -564,13 +564,13 @@ KeyValidationResult OpenSSLSupplier::x509_check_private_key(X509Handle* handle, 
 
     OpenSSLProvider provider;
 
-    const bool tpm_key = is_tpm_key_string(private_key);
-    if (tpm_key) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+    const bool custom_key = is_custom_private_key_string(private_key);
+    if (custom_key) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
     } else {
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }
-    EVLOG_debug << "TPM Key: " << tpm_key;
+    EVLOG_debug << "Is Custom Key: " << custom_key;
 
     BIO_ptr bio(BIO_new_mem_buf(private_key.c_str(), -1));
     // Passing password string since if NULL is provided, the password CB will be called
@@ -648,8 +648,8 @@ CertificateSignRequestResult OpenSSLSupplier::x509_generate_csr(const Certificat
     EVP_PKEY_CTX_ptr ctx;
     OpenSSLProvider provider;
 
-    if (csr_info.key_info.generate_on_tpm) {
-        provider.set_global_mode(OpenSSLProvider::mode_t::tpm2_provider);
+    if (csr_info.key_info.generate_on_custom) {
+        provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
     } else {
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }

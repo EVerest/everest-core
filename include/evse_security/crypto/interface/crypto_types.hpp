@@ -39,9 +39,10 @@ enum class CertificateSignRequestResult {
 struct KeyGenerationInfo {
     CryptoKeyType key_type;
 
-    /// @brief If the key should be generated on the TPM, should check before if
+    /// @brief If the key should be generated using the custom provider. The custom
+    /// provider can be the TPM if it was so configured. Should check before if
     /// the provider supports the operation, or the operation will fail by default
-    bool generate_on_tpm;
+    bool generate_on_custom;
 
     /// @brief If we should export the public key to a file
     std::optional<std::string> public_key_file;
