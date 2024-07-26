@@ -33,7 +33,7 @@ public:
         config.evse_id = "PIONIX_SAYS_HELLO";
         config.nid = "pionix!";
         config.number_of_sounds = 10;
-        };
+    };
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
