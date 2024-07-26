@@ -276,6 +276,18 @@ static int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, v
     return 0;
 }
 
+static int private_key_callback(char* buf, int size, int rwflag, void* userdata) {
+    const auto* password = static_cast<const std::string*>(userdata);
+    const std::size_t max_pass_len = (size - 1); // we exclude the endline
+    const std::size_t max_copy_chars =
+        std::min(max_pass_len, password->length()); // truncate if pass is too large and buffer too small
+
+    std::memset(buf, 0, size);
+    std::memcpy(buf, password->c_str(), max_copy_chars);
+
+    return max_copy_chars;
+}
+
 constexpr auto local_protocol_name = "lws-everest-client";
 static const struct lws_protocols protocols[] = {{local_protocol_name, callback_minimal, 0, 0, 0, NULL, 0},
                                                  LWS_PROTOCOL_LIST_TERM};
@@ -306,7 +318,10 @@ void WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, cons
             EVLOG_AND_THROW(std::runtime_error("Could not use client certificate file within SSL context"));
         }
 
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, reinterpret_cast<void*>(password.value_or("").data()));
+        if (password.has_value()) {
+            SSL_CTX_set_default_passwd_cb_userdata(ctx, &password.value());
+            SSL_CTX_set_default_passwd_cb(ctx, private_key_callback);
+        }
 
         if (1 != SSL_CTX_use_PrivateKey_file(ctx, path_key.c_str(), SSL_FILETYPE_PEM)) {
             ERR_print_errors_fp(stderr);
@@ -450,11 +465,13 @@ void WebsocketTlsTPM::client_loop() {
 
     info.fd_limit_per_thread = 1 + 1 + 1;
 
+    // Lifetime of this is important since we use the data from this in private_key_callback()
+    std::optional<std::string> private_key_password;
+
     if (this->connection_options.security_profile == 2 || this->connection_options.security_profile == 3) {
         // Setup context - need to know the key type first
         std::string path_key;
         std::string path_chain;
-        std::optional<std::string> password;
 
         if (this->connection_options.security_profile == 3) {
             const auto certificate_response =
@@ -478,7 +495,7 @@ void WebsocketTlsTPM::client_loop() {
             }
 
             path_key = certificate_info.key_path;
-            password = certificate_info.password;
+            private_key_password = certificate_info.password;
         }
 
         SSL_CTX* ssl_ctx = nullptr;
@@ -505,7 +522,7 @@ void WebsocketTlsTPM::client_loop() {
         }
 
         // Init TLS data
-        tls_init(ssl_ctx, path_chain, path_key, tpm_key, password);
+        tls_init(ssl_ctx, path_chain, path_key, tpm_key, private_key_password);
 
         // Setup our context
         info.provided_client_ssl_ctx = ssl_ctx;
