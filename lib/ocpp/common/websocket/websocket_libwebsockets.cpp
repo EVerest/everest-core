@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#include <evse_security/crypto/openssl/openssl_tpm.hpp>
+#include <evse_security/crypto/openssl/openssl_provider.hpp>
 #include <ocpp/common/websocket/websocket_libwebsockets.hpp>
 
 #include <everest/logging.hpp>
@@ -40,7 +40,7 @@ public:
 
 namespace ocpp {
 
-using evse_security::is_tpm_key_file;
+using evse_security::is_custom_private_key_file;
 using evse_security::OpenSSLProvider;
 
 enum class EConnectionState {
@@ -292,8 +292,8 @@ constexpr auto local_protocol_name = "lws-everest-client";
 static const struct lws_protocols protocols[] = {{local_protocol_name, callback_minimal, 0, 0, 0, NULL, 0},
                                                  LWS_PROTOCOL_LIST_TERM};
 
-void WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, const std::string& path_key, bool tpm_key,
-                               std::optional<std::string>& password) {
+void WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, const std::string& path_key,
+                               bool custom_key, std::optional<std::string>& password) {
     auto rc = SSL_CTX_set_cipher_list(ctx, this->connection_options.supported_ciphers_12.c_str());
     if (rc != 1) {
         EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
@@ -499,16 +499,16 @@ void WebsocketTlsTPM::client_loop() {
         }
 
         SSL_CTX* ssl_ctx = nullptr;
-        bool tpm_key = false;
+        bool custom_key = false;
 
         if (!path_key.empty()) {
-            tpm_key = is_tpm_key_file(path_key);
+            custom_key = is_custom_private_key_file(path_key);
         }
 
         OpenSSLProvider provider;
 
-        if (tpm_key) {
-            provider.set_tls_mode(OpenSSLProvider::mode_t::tpm2_provider);
+        if (custom_key) {
+            provider.set_tls_mode(OpenSSLProvider::mode_t::custom_provider);
         } else {
             provider.set_tls_mode(OpenSSLProvider::mode_t::default_provider);
         }
@@ -522,7 +522,7 @@ void WebsocketTlsTPM::client_loop() {
         }
 
         // Init TLS data
-        tls_init(ssl_ctx, path_chain, path_key, tpm_key, private_key_password);
+        tls_init(ssl_ctx, path_chain, path_key, custom_key, private_key_password);
 
         // Setup our context
         info.provided_client_ssl_ctx = ssl_ctx;

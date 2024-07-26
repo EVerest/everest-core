@@ -54,7 +54,7 @@ public:
     int process_callback(void* wsi_ptr, int callback_reason, void* user, void* in, size_t len);
 
 private:
-    void tls_init(struct ssl_ctx_st* ctx, const std::string& path_chain, const std::string& path_key, bool tpm_key,
+    void tls_init(struct ssl_ctx_st* ctx, const std::string& path_chain, const std::string& path_key, bool custom_key,
                   std::optional<std::string>& password);
     void client_loop();
     void recv_loop();
