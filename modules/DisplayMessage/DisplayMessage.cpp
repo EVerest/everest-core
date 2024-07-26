@@ -21,7 +21,8 @@ void DisplayMessage::init() {
             }
         }
 
-        EVLOG_info << "Session cost status: " << session_status_to_string(session_cost.status);
+        EVLOG_info << "Session cost status for session id " << session_cost.session_id << ": "
+                   << session_status_to_string(session_cost.status);
         for (const types::session_cost::SessionCostChunk& chunk : session_cost.cost_chunks.value()) {
             if (chunk.cost.has_value()) {
                 EVLOG_info << "Session cost until now: "
