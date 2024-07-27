@@ -26,6 +26,9 @@ cmds:
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
+      bidirectional:
+        description: Set true if the powersupply (AC or DC) supports bidi mode
+        type: boolean
   set_charging_parameters:
     description: >-
       At startup, set the the charging parameters at least once. May be updated later on.

@@ -10,11 +10,10 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
-#include "EvseV2G.hpp"
+#include "../EvseD20.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
-#include "v2g.hpp"
-extern struct v2g_context* v2g_ctx;
+// insert your custom include headers here
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -25,7 +24,7 @@ struct Conf {};
 class ISO15118_chargerImpl : public ISO15118_chargerImplBase {
 public:
     ISO15118_chargerImpl() = delete;
-    ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseV2G>& mod, Conf& config) :
+    ISO15118_chargerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseD20>& mod, Conf& config) :
         ISO15118_chargerImplBase(ev, "charger"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -67,7 +66,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<EvseV2G>& mod;
+    const Everest::PtrContainer<EvseD20>& mod;
     const Conf& config;
 
     virtual void init() override;
