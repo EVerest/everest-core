@@ -108,16 +108,6 @@ cmds:
         description: UUID of node that this limit applies to
         type: object
         $ref: /energy#/ExternalLimits
-  switch_three_phases_while_charging:
-    description: Switch three phases while charging
-    arguments:
-      three_phases:
-        description: "True: switch to three phases, false: switch to single phase"
-        type: boolean
-    result:
-      description: Returns success or error code
-      type: string
-      $ref: /evse_manager#/SwitchThreePhasesWhileChargingResult
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
@@ -127,7 +117,7 @@ cmds:
       certificate_response:
         description: The response raw exi stream and the status from the CSMS system
         type: object
-        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+        $ref: /iso15118_charger#/ResponseExiStreamStatus
   external_ready_to_start_charging:
     description: >-
       There are situations where another module needs to do some initialization after evse manager is in principle ready to start charging.
@@ -173,7 +163,7 @@ vars:
       to the currently valid contract of the vehicle.
       Response will be reported async via  set_get_certificate_response
     type: object
-    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+    $ref: /iso15118_charger#/RequestExiStreamSchema
   enforced_limits:
     description: Enforced limits for this node (coming from the EnergyManager)
     type: object

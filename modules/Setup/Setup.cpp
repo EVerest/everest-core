@@ -610,7 +610,6 @@ void Setup::check_online_status() {
 }
 
 void Setup::enable_ap() {
-    bool success = true;
     auto wpa_cli_output = run_application("wpa_cli", {"-i", this->config.ap_interface, "disconnect"});
     if (wpa_cli_output.exit_code != 0) {
         EVLOG_error << "Could not disconnect from wireless LAN";

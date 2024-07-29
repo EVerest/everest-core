@@ -94,7 +94,7 @@ void v2g_ctx_free(struct v2g_context* ctx);
 void stop_timer(struct event** event_timer, char const* const timer_name, struct v2g_context* ctx);
 
 /*!
- * \brief publish_DC_EVMaximumLimits This function publishes the DC_EVMaximumLimits
+ * \brief publish_dc_ev_maximum_limits This function publishes the dc_ev_maximum_limits
  * \param ctx  is a pointer of type \c v2g_context
  * \param v2g_dc_ev_max_current_limit is the EV max current limit
  * \param v2g_dc_ev_max_current_limit_is_used is set to \c true if used, otherwise \c false
@@ -103,34 +103,34 @@ void stop_timer(struct event** event_timer, char const* const timer_name, struct
  * \param v2g_dc_ev_max_voltage_limit is the EV max voltage limit
  * \param v2g_dc_ev_max_voltage_limit_is_used is set to \c true if used, otherwise \c false
  */
-void publish_DC_EVMaximumLimits(struct v2g_context* ctx, const float& v2g_dc_ev_max_current_limit,
-                                const unsigned int& v2g_dc_ev_max_current_limit_is_used,
-                                const float& v2g_dc_ev_max_power_limit,
-                                const unsigned int& v2g_dc_ev_max_power_limit_is_used,
-                                const float& v2g_dc_ev_max_voltage_limit,
-                                const unsigned int& v2g_dc_ev_max_voltage_limit_is_used);
+void publish_dc_ev_maximum_limits(struct v2g_context* ctx, const float& v2g_dc_ev_max_current_limit,
+                                  const unsigned int& v2g_dc_ev_max_current_limit_is_used,
+                                  const float& v2g_dc_ev_max_power_limit,
+                                  const unsigned int& v2g_dc_ev_max_power_limit_is_used,
+                                  const float& v2g_dc_ev_max_voltage_limit,
+                                  const unsigned int& v2g_dc_ev_max_voltage_limit_is_used);
 
 /*!
- * \brief publish_DC_EVMaximumLimits This function publishes the DC_EVTargetValues
+ * \brief publish_dc_ev_target_voltage_current This function publishes the DcEvTargetValues
  * \param ctx  is a pointer of type \c v2g_context
  * \param v2g_dc_ev_target_voltage is the EV target voltage
  * \param v2g_dc_ev_target_current is the EV target current
  */
-void publish_DC_EVTargetVoltageCurrent(struct v2g_context* ctx, const float& v2g_dc_ev_target_voltage,
-                                       const float& v2g_dc_ev_target_current);
+void publish_dc_ev_target_voltage_current(struct v2g_context* ctx, const float& v2g_dc_ev_target_voltage,
+                                          const float& v2g_dc_ev_target_current);
 
 /*!
- * \brief publish_DC_EVRemainingTime This function publishes the DC_EVRemainingTime
+ * \brief publish_dc_ev_remaining_time This function publishes the dc_ev_remaining_time
  * \param ctx is a pointer of type \c v2g_context
  * \param iso2_dc_ev_remaining_time_to_full_soc is the EV remaining time to full soc
  * \param iso2_dc_ev_remaining_time_to_full_soc_is_used is set to \c true if used, otherwise \c false
  * \param iso2_dc_ev_remaining_time_to_bulk_soc is the EV remaining time to bulk soc
  * \param iso2_dc_ev_remaining_time_to_bulk_soc_is_used is set to \c true if used, otherwise \c false
  */
-void publish_DC_EVRemainingTime(struct v2g_context* ctx, const float& iso2_dc_ev_remaining_time_to_full_soc,
-                                const unsigned int& iso2_dc_ev_remaining_time_to_full_soc_is_used,
-                                const float& iso2_dc_ev_remaining_time_to_bulk_soc,
-                                const unsigned int& iso2_dc_ev_remaining_time_to_bulk_soc_is_used);
+void publish_dc_ev_remaining_time(struct v2g_context* ctx, const float& iso2_dc_ev_remaining_time_to_full_soc,
+                                  const unsigned int& iso2_dc_ev_remaining_time_to_full_soc_is_used,
+                                  const float& iso2_dc_ev_remaining_time_to_bulk_soc,
+                                  const unsigned int& iso2_dc_ev_remaining_time_to_bulk_soc_is_used);
 
 /*!
  * \brief log_selected_energy_transfer_type This function logs the selected_energy_transfer_mode

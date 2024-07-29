@@ -24,7 +24,7 @@ bool ocppImpl::handle_restart() {
 }
 
 void ocppImpl::handle_security_event(std::string& type, std::string& info) {
-    // your code for cmd security_event goes here
+    this->mod->charge_point->on_security_event(type, info);
 }
 
 std::vector<types::ocpp::GetVariableResult>

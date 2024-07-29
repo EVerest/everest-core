@@ -94,8 +94,8 @@ private:
     std::string version;
     bool v2_capable = false;
     bool trasaction_is_ongoing = false;
-    Conf config;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
+    Conf config;
 
     void fetch_meter_id_from_device();
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);

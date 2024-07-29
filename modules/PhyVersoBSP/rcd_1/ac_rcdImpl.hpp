@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
 #ifndef RCD_1_AC_RCD_IMPL_HPP
 #define RCD_1_AC_RCD_IMPL_HPP
 
@@ -50,6 +49,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
+    ErrorFlags last_error_flags;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

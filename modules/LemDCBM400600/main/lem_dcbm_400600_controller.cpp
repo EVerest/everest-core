@@ -51,7 +51,7 @@ void LemDCBM400600Controller::fetch_meter_id_from_device() {
         std::string version = data.at("version").at("applicationFirmwareVersion");
         auto components = split(version, '.');
         this->v2_capable =
-            ((components.size() == 4) && (components[1] > "1")); // the major version must be newer than 1
+            ((components.size() == 4) && (components[0] > "1")); // the major version must be newer than 1
     } catch (json::exception& json_error) {
         throw UnexpectedDCBMResponseBody(
             "/v1/status", fmt::format("Json error {} for body {}", json_error.what(), status_response.body));

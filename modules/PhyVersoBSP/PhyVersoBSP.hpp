@@ -28,7 +28,6 @@ struct Conf {
     std::string serial_port;
     int baud_rate;
     int reset_gpio;
-    std::string mcu_config_file;
     int conn1_max_current_A_import;
     int conn1_min_current_A_import;
     int conn1_min_phase_count_import;
@@ -49,6 +48,10 @@ struct Conf {
     int conn2_max_phase_count_export;
     bool conn2_has_socket;
     bool conn2_dc;
+    int reset_gpio_bank;
+    int reset_gpio_pin;
+    int conn1_motor_lock_type;
+    int conn2_motor_lock_type;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {
@@ -74,7 +77,8 @@ public:
         p_phyverso_mcu_temperature(std::move(p_phyverso_mcu_temperature)),
         p_system_specific_data_1(std::move(p_system_specific_data_1)),
         p_system_specific_data_2(std::move(p_system_specific_data_2)),
-        config(config){};
+        config(config),
+        serial(verso_config){};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -107,6 +111,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     evConfig verso_config;
+    void everest_config_to_verso_config();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

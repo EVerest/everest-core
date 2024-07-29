@@ -155,7 +155,7 @@ void energyImpl::merge_price_into_schedule(std::vector<types::energy::ScheduleRe
         auto tp_schedule = Everest::Date::from_rfc3339(next_entry_schedule.timestamp);
         auto tp_price = Everest::Date::from_rfc3339(next_entry_price.timestamp);
 
-        if (tp_schedule < tp_price && it_schedule != schedule.end() || it_price == price.end()) {
+        if ((tp_schedule < tp_price && it_schedule != schedule.end()) || it_price == price.end()) {
             currently_valid_entry_schedule = next_entry_schedule;
             auto joined_entry = currently_valid_entry_schedule;
 
@@ -168,7 +168,7 @@ void energyImpl::merge_price_into_schedule(std::vector<types::energy::ScheduleRe
             continue;
         }
 
-        if (tp_price < tp_schedule && it_price != price.end() || it_schedule == schedule.end()) {
+        if ((tp_price < tp_schedule && it_price != price.end()) || it_schedule == schedule.end()) {
             currently_valid_entry_price = next_entry_price;
             auto joined_entry = currently_valid_entry_schedule;
             joined_entry.price_per_kwh = currently_valid_entry_price;

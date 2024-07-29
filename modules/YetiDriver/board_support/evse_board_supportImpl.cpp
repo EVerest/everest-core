@@ -81,7 +81,6 @@ void evse_board_supportImpl::init() {
         caps.max_current_A_export = 16;
         caps.min_phase_count_export = 1;
         caps.max_phase_count_export = 3;
-        caps.supports_changing_phases_during_charging = false;
     }
 
     mod->serial.signalCPState.connect([this](CpState cp_state) {
@@ -142,6 +141,11 @@ void evse_board_supportImpl::init() {
 
 void evse_board_supportImpl::ready() {
     wait_for_caps();
+    {
+        // Publish caps once in the beginning
+        std::lock_guard<std::mutex> lock(capsMutex);
+        publish_capabilities(caps);
+    }
 }
 
 void evse_board_supportImpl::wait_for_caps() {
@@ -155,12 +159,6 @@ void evse_board_supportImpl::wait_for_caps() {
     if (i == 50) {
         EVLOG_error << "Did not receive hardware capabilities from Yeti hardware, using defaults.";
     }
-}
-
-types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
-    wait_for_caps();
-    std::lock_guard<std::mutex> lock(capsMutex);
-    return caps;
 }
 
 void evse_board_supportImpl::handle_pwm_on(double& value) {
@@ -190,6 +188,7 @@ void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
 }
 
 void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& value) {
+    mod->serial.set_number_of_phases(value);
 }
 
 void evse_board_supportImpl::handle_evse_replug(int& value) {
@@ -199,9 +198,6 @@ void evse_board_supportImpl::handle_enable(bool& value) {
     enabled = true;
     // Publish CP state once on enable
     publish_event(cast_event_type(last_cp_state));
-}
-
-void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {
 }
 
 } // namespace board_support

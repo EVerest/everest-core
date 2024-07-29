@@ -77,13 +77,17 @@ public:
     double read_pp_ampacity();
     void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
-    void setup(bool three_phases, bool has_ventilation, std::string country_code);
+    void setup(bool has_ventilation);
 
     void set_overcurrent_limit(double amps);
 
     void set_pwm(double value);
     void set_pwm_off();
     void set_pwm_F();
+
+    void set_three_phases(bool t) {
+        three_phases = t;
+    }
 
     void enable(bool en);
 
@@ -115,6 +119,7 @@ private:
     bool power_on_allowed{false};
     bool last_power_on_allowed{false};
     std::atomic<double> last_amps{-1};
+    std::atomic_bool three_phases{true};
 
     bool car_plugged_in{false};
 
@@ -129,7 +134,6 @@ private:
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);
 
-    std::atomic_bool three_phases{true};
     std::atomic_bool is_locked{false};
     std::atomic_bool should_be_locked{false};
     std::atomic_bool force_unlocked{false};

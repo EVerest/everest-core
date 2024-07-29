@@ -9,12 +9,12 @@ namespace module {
 static const auto NOTIFICATION_PERIOD = std::chrono::seconds(1);
 
 SessionInfo::SessionInfo() :
-    state(State::Unknown),
     start_energy_import_wh(0),
     end_energy_import_wh(0),
-    latest_total_w(0),
     start_energy_export_wh(0),
-    end_energy_export_wh(0) {
+    end_energy_export_wh(0),
+    latest_total_w(0),
+    state(State::Unknown) {
     this->start_time_point = date::utc_clock::now();
     this->end_time_point = this->start_time_point;
 
@@ -111,6 +111,7 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
+    case Event::PluginTimeout:
     case Event::StoppingCharging:
     case Event::TransactionFinished:
         this->state = State::Finished;
@@ -138,7 +139,6 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         break;
     case Event::ReplugStarted:
     case Event::ReplugFinished:
-    case Event::PluginTimeout:
     default:
         break;
     }
@@ -146,6 +146,8 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
 
 std::string SessionInfo::state_to_string(SessionInfo::State s) {
     switch (s) {
+    case SessionInfo::State::Unknown:
+        return "Unknown";
     case SessionInfo::State::Unplugged:
         return "Unplugged";
     case SessionInfo::State::Disabled:
@@ -525,7 +527,13 @@ void API::init() {
                                 << ", error: " << e.what();
                 }
             }
-            evse->call_force_unlock(connector_id); //
+            // match processing in ChargePointImpl::handleUnlockConnectorRequest
+            // so that OCPP UnlockConnector and everest_api/evse_manager/cmd/force_unlock
+            // perform the same action
+            types::evse_manager::StopTransactionRequest req;
+            req.reason = types::evse_manager::StopTransactionReason::UnlockCommand;
+            evse->call_stop_transaction(req);
+            evse->call_force_unlock(connector_id);
         });
 
         // Check if a uk_random_delay is connected that matches this evse_manager

@@ -53,15 +53,17 @@ static void apply_limits(ScheduleReq& a, const ScheduleReq& b) {
         EVLOG_error << fmt::format("apply_limits: a({}) and b({}) do not have the same size.", a.size(), b.size());
         return;
     }
-    for (int i = 0; i < a.size(); i++) {
+    for (ScheduleReq::size_type i = 0; i < a.size(); i++) {
         // limits to leave are already merged to the root side, so we dont use them here
         apply_one_limit_if_smaller(a[i].limits_to_root.ac_max_current_A, b[i].limits_to_root.ac_max_current_A);
         apply_one_limit_if_smaller(a[i].limits_to_root.ac_max_phase_count, b[i].limits_to_root.ac_max_phase_count);
         apply_one_limit_if_smaller(a[i].limits_to_root.total_power_W, b[i].limits_to_root.total_power_W);
         apply_one_limit_if_greater(a[i].limits_to_root.ac_min_phase_count, b[i].limits_to_root.ac_min_phase_count);
         apply_one_limit_if_greater(a[i].limits_to_root.ac_min_current_A, b[i].limits_to_root.ac_min_current_A);
-        // copy pricing if any
+
+        // copy other information if any
         a[i].price_per_kwh = b[i].price_per_kwh;
+        a[i].limits_to_root.ac_number_of_active_phases = b[i].limits_to_root.ac_number_of_active_phases;
     }
 }
 
