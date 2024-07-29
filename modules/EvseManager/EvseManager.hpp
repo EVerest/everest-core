@@ -215,10 +215,10 @@ public:
         setup_physical_values.dc_energy_to_be_delivered = 10000;
         r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-        types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
-        evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;
-        evseMinLimits.EVSEMinimumVoltageLimit = powersupply_capabilities.min_export_voltage_V;
-        r_hlc[0]->call_update_dc_minimum_limits(evseMinLimits);
+        types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
+        evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
+        evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
+        r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
         // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
@@ -227,12 +227,12 @@ public:
         // limits are not yet included in request.
 
         // Inform charger about new max limits
-        types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
-        evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
-        evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
-        evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
+        types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
+        evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
+        evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
         if (charger) {
-            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
+            charger->inform_new_evse_max_hlc_limits(evse_max_limits);
         }
     }
     std::atomic_int ac_nr_phases_active{0};
