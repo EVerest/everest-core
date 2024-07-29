@@ -16,7 +16,7 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  EVEREST_CI_VERSION: v1.3.0
+  EVEREST_CI_VERSION: v1.3.1
 
 jobs:
   lint:
@@ -28,7 +28,7 @@ jobs:
         with:
           path: source
       - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.3.0
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.3.1
         with:
           source-dir: source
           extensions: hpp,cpp
@@ -47,7 +47,7 @@ jobs:
           echo "Setting up environment"
   build-and-push-build-kit:
     name: Build and Push Build Kit
-    uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.3.0
+    uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.3.1
     needs: setup-env
     secrets:
       SA_GITHUB_PAT: ${{ secrets.SA_GITHUB_PAT }}
