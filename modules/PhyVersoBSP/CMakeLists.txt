@@ -49,9 +49,12 @@ target_sources(${MODULE_NAME}
 )
 
 # install MCU configs
-install(
-    DIRECTORY "."
-    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
-)
+# List all JSON files in the current directory and subdirectories
+file(GLOB_RECURSE JSON_FILES "*.json")
+
+# Check if the list is not empty
+if(JSON_FILES)
+    # Install JSON files
+    install(FILES ${JSON_FILES} DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest")
+endif()
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
