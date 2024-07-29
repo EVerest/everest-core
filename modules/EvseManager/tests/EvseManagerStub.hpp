@@ -60,7 +60,7 @@ struct evse_managerImplStub : public evse_managerImplBase {
         return types::evse_manager::SwitchThreePhasesWhileChargingResult::Success;
     }
     virtual void
-    handle_set_get_certificate_response(types::iso15118_charger::Response_Exi_Stream_Status& certificate_response) {
+    handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
     }
     virtual bool handle_external_ready_to_start_charging() {
         return true;

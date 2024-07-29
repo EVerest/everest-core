@@ -43,6 +43,12 @@ types:
           Indicate whether phase switching is allowed during charging or
           not
         type: boolean
+      ac_number_of_active_phases:
+        description: >-
+          Number of phases currently offered to the vehicle (1ph or 3ph mode)
+        type: integer
+        minimum: 1
+        maximum: 3
   LimitsRes:
     description: Energy flow limiting object Result (Energy manager to Evses)
     type: object

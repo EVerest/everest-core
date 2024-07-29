@@ -59,9 +59,7 @@ struct Conf {
     bool session_logging;
     std::string session_logging_path;
     bool session_logging_xml;
-    bool three_phases;
     bool has_ventilation;
-    std::string country_code;
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
@@ -95,6 +93,8 @@ struct Conf {
     int uk_smartcharging_random_delay_max_duration;
     bool uk_smartcharging_random_delay_at_any_change;
     int initial_meter_value_timeout_ms;
+    int switch_3ph1ph_delay_s;
+    std::string switch_3ph1ph_cp_state;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -151,12 +151,16 @@ public:
     std::unique_ptr<Charger> charger;
     sigslot::signal<int> signalNrOfPhasesAvailable;
     types::powermeter::Powermeter get_latest_powermeter_data_billing();
+    std::mutex hw_caps_mutex;
     types::evse_board_support::HardwareCapabilities get_hw_capabilities();
-    bool updateLocalMaxCurrentLimit(float max_current); // deprecated
-    bool updateLocalMaxWattLimit(float max_watt);       // deprecated
-    bool updateLocalEnergyLimit(types::energy::ExternalLimits l);
-    types::energy::ExternalLimits getLocalEnergyLimits();
-    bool getLocalThreePhases();
+
+    std::mutex external_local_limits_mutex;
+    bool update_max_current_limit(types::energy::ExternalLimits& limits, float max_current); // deprecated
+    bool update_max_watt_limit(types::energy::ExternalLimits& limits, float max_watt);       // deprecated
+    bool update_local_energy_limit(types::energy::ExternalLimits l);
+    void nodered_set_current_limit(float max_current);
+    void nodered_set_watt_limit(float max_watt);
+    types::energy::ExternalLimits get_local_energy_limits();
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
@@ -211,10 +215,10 @@ public:
         setup_physical_values.dc_energy_to_be_delivered = 10000;
         r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-        types::iso15118_charger::DC_EVSEMinimumLimits evseMinLimits;
-        evseMinLimits.EVSEMinimumCurrentLimit = powersupply_capabilities.min_export_current_A;
-        evseMinLimits.EVSEMinimumVoltageLimit = powersupply_capabilities.min_export_voltage_V;
-        r_hlc[0]->call_update_dc_minimum_limits(evseMinLimits);
+        types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
+        evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
+        evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
+        r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
         // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
@@ -223,14 +227,15 @@ public:
         // limits are not yet included in request.
 
         // Inform charger about new max limits
-        types::iso15118_charger::DC_EVSEMaximumLimits evseMaxLimits;
-        evseMaxLimits.EVSEMaximumCurrentLimit = powersupply_capabilities.max_export_current_A;
-        evseMaxLimits.EVSEMaximumPowerLimit = powersupply_capabilities.max_export_power_W;
-        evseMaxLimits.EVSEMaximumVoltageLimit = powersupply_capabilities.max_export_voltage_V;
+        types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+        evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
+        evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
+        evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
         if (charger) {
-            charger->inform_new_evse_max_hlc_limits(evseMaxLimits);
+            charger->inform_new_evse_max_hlc_limits(evse_max_limits);
         }
     }
+    std::atomic_int ac_nr_phases_active{0};
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -253,8 +258,8 @@ private:
 
     Everest::Thread energyThreadHandle;
     types::evse_board_support::HardwareCapabilities hw_capabilities;
-    bool local_three_phases;
-    types::energy::ExternalLimits local_energy_limits;
+
+    types::energy::ExternalLimits external_local_energy_limits;
     const float EVSE_ABSOLUTE_MAX_CURRENT = 80.0;
     bool slac_enabled;
 

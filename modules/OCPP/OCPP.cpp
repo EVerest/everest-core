@@ -305,10 +305,10 @@ void OCPP::init_evse_subscriptions() {
         });
 
         evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](types::iso15118_charger::Request_Exi_Stream_Schema request) {
+            [this, evse_id](types::iso15118_charger::RequestExiStreamSchema request) {
                 this->charge_point->data_transfer_pnc_get_15118_ev_certificate(
-                    evse_id, request.exiRequest, request.iso15118SchemaVersion,
-                    conversions::to_ocpp_certificate_action_enum(request.certificateAction));
+                    evse_id, request.exi_request, request.iso15118_schema_version,
+                    conversions::to_ocpp_certificate_action_enum(request.certificate_action));
             });
 
         evse_id++;
@@ -718,10 +718,10 @@ void OCPP::ready() {
     this->charge_point->register_get_15118_ev_certificate_response_callback(
         [this](const int32_t connector_id, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
                const ocpp::v201::CertificateActionEnum& certificate_action) {
-            types::iso15118_charger::Response_Exi_Stream_Status response;
+            types::iso15118_charger::ResponseExiStreamStatus response;
             response.status = conversions::to_everest_iso15118_charger_status(certificate_response.status);
-            response.exiResponse.emplace(certificate_response.exiResponse.get());
-            response.certificateAction = conversions::to_everest_certificate_action_enum(certificate_action);
+            response.exi_response.emplace(certificate_response.exiResponse.get());
+            response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
             this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
                 ->call_set_get_certificate_response(response);
         });

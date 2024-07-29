@@ -624,15 +624,15 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](const types::iso15118_charger::Request_Exi_Stream_Schema& certificate_request) {
+            [this, evse_id](const types::iso15118_charger::RequestExiStreamSchema& certificate_request) {
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
                     conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
                 const auto everest_response_status =
                     conversions::to_everest_iso15118_charger_status(ocpp_response.status);
-                const types::iso15118_charger::Response_Exi_Stream_Status everest_response{
-                    everest_response_status, certificate_request.certificateAction, ocpp_response.exiResponse};
+                const types::iso15118_charger::ResponseExiStreamStatus everest_response{
+                    everest_response_status, certificate_request.certificate_action, ocpp_response.exiResponse};
                 this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
             });
 

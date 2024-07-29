@@ -141,6 +141,7 @@ types:
       - ReplugStarted
       - ReplugFinished
       - PluginTimeout
+      - SwitchingPhases
   SessionStarted:
     description: Data for the SessionStarted event
     type: object

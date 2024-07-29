@@ -432,10 +432,8 @@ void IECStateMachine::switch_three_phases_while_charging(bool n) {
 }
 
 // Forwards config parameters from EvseManager module config to BSP
-void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string country_code) {
-    r_bsp->call_setup(three_phases, has_ventilation, country_code);
+void IECStateMachine::setup(bool has_ventilation) {
     this->has_ventilation = has_ventilation;
-    this->three_phases = three_phases;
 }
 
 // enable/disable the charging port and CP signal

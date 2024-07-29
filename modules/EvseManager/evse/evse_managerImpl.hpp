@@ -48,10 +48,8 @@ protected:
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
     virtual bool handle_force_unlock(int& connector_id) override;
     virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
-    virtual types::evse_manager::SwitchThreePhasesWhileChargingResult
-    handle_switch_three_phases_while_charging(bool& three_phases) override;
     virtual void handle_set_get_certificate_response(
-        types::iso15118_charger::Response_Exi_Stream_Status& certificate_response) override;
+        types::iso15118_charger::ResponseExiStreamStatus& certificate_response) override;
     virtual bool handle_external_ready_to_start_charging() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
