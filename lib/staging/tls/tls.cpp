@@ -1198,14 +1198,16 @@ void Server::stop() {
 
 void Server::wait_running() {
     std::unique_lock lock(m_cv_mutex);
-    m_cv.wait(lock, [this] { return m_running; });
-    lock.unlock();
+    while (!m_running) {
+        m_cv.wait(lock);
+    }
 }
 
 void Server::wait_stopped() {
     std::unique_lock lock(m_cv_mutex);
-    m_cv.wait(lock, [this] { return !m_running; });
-    lock.unlock();
+    while (m_running) {
+        m_cv.wait(lock);
+    }
 }
 
 // ----------------------------------------------------------------------------
