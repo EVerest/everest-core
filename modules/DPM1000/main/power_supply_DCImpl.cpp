@@ -268,8 +268,9 @@ void power_supply_DCImpl::ready() {
     }
 }
 
-void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
-    if (value == types::power_supply_DC::Mode::Export) {
+void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
+                                         types::power_supply_DC::ChargingPhase& phase) {
+    if (mode == types::power_supply_DC::Mode::Export) {
         can_broker->set_state(true);
     } else {
         can_broker->set_state(false);

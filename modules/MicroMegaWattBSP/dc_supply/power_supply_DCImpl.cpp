@@ -42,9 +42,10 @@ void power_supply_DCImpl::ready() {
     publish_capabilities(caps);
 }
 
-void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
+void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
+                                         types::power_supply_DC::ChargingPhase& phase) {
     // your code for cmd setMode goes here
-    if (value == types::power_supply_DC::Mode::Export) {
+    if (mode == types::power_supply_DC::Mode::Export) {
         mod->serial.setOutputVoltageCurrent(req_voltage, req_current);
         is_on = true;
     } else {
