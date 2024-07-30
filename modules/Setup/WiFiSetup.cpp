@@ -261,7 +261,6 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
     }
 
     auto network_id_string = std::to_string(network_id);
-    // auto ssid_parameter = "\"" + ssid + "\"";
 
     // de-escaping SSID strings in wpa_supplicant is not reliable.
     // hence providing the SSID as a string of hex digits
