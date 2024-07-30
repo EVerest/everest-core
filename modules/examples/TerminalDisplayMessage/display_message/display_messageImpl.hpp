@@ -10,7 +10,7 @@
 
 #include <generated/interfaces/display_message/Implementation.hpp>
 
-#include "../DisplayMessage.hpp"
+#include "../TerminalDisplayMessage.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -24,7 +24,7 @@ struct Conf {};
 class display_messageImpl : public display_messageImplBase {
 public:
     display_messageImpl() = delete;
-    display_messageImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<DisplayMessage>& mod, Conf& config) :
+    display_messageImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<TerminalDisplayMessage>& mod, Conf& config) :
         display_messageImplBase(ev, "display_message"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
@@ -45,7 +45,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<DisplayMessage>& mod;
+    const Everest::PtrContainer<TerminalDisplayMessage>& mod;
     const Conf& config;
 
     virtual void init() override;

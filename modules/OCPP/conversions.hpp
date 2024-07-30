@@ -138,13 +138,13 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
                                                                 const std::optional<uint32_t>& meter_value);
 
 types::session_cost::ChargingPriceComponent
-to_everest_charging_price_component(const double& price, const uint32_t& number_of_decimals,
-                                    const types::session_cost::CostCategory category,
-                                    std::optional<types::money::CurrencyCode> currency_code);
+create_charging_price_component(const double& price, const uint32_t& number_of_decimals,
+                                const types::session_cost::CostCategory category,
+                                std::optional<types::money::CurrencyCode> currency_code);
 
-types::session_cost::SessionCost to_everest_session_cost(const ocpp::RunningCost& running_cost,
-                                                         const uint32_t number_of_decimals,
-                                                         std::optional<types::money::CurrencyCode> currency_code);
+types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& running_cost,
+                                                     const uint32_t number_of_decimals,
+                                                     std::optional<types::money::CurrencyCode> currency_code);
 
 } // namespace conversions
 } // namespace module

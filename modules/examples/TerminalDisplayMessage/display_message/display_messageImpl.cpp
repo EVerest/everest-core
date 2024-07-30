@@ -66,8 +66,7 @@ display_messageImpl::handle_get_display_messages(types::display_message::GetDisp
 
 types::display_message::ClearDisplayMessageResponse
 display_messageImpl::handle_clear_display_message(types::display_message::ClearDisplayMessageRequest& request) {
-    EVLOG_info << "Clear display message request received"
-               << (request.id.has_value() ? " for id: " + std::to_string(request.id.value()) : "");
+    EVLOG_info << "Clear display message request received for id: " << request.id;
 
     types::display_message::ClearDisplayMessageResponse response;
     response.status = types::display_message::ClearMessageResponseEnum::Accepted;

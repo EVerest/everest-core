@@ -769,7 +769,7 @@ void OCPP::ready() {
         [this](const ocpp::RunningCost& session_cost,
                const uint32_t number_of_decimals) -> ocpp::v16::DataTransferResponse {
             const types::session_cost::SessionCost cost =
-                conversions::to_everest_session_cost(session_cost, number_of_decimals, {});
+                conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
             if (this->p_session_cost == nullptr) {
                 response.status = ocpp::v16::DataTransferStatus::Rejected;

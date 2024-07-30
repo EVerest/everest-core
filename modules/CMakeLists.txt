@@ -1,6 +1,5 @@
 ev_add_module(API)
 ev_add_module(Auth)
-ev_add_module(DisplayMessage)
 ev_add_module(EnergyManager)
 ev_add_module(EnergyNode)
 ev_add_module(EvManager)

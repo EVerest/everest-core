@@ -24,10 +24,10 @@ namespace module {
 
 struct Conf {};
 
-class DisplayMessage : public Everest::ModuleBase {
+class TerminalDisplayMessage : public Everest::ModuleBase {
 public:
-    DisplayMessage() = delete;
-    DisplayMessage(const ModuleInfo& info, std::unique_ptr<display_messageImplBase> p_display_message,
+    TerminalDisplayMessage() = delete;
+    TerminalDisplayMessage(const ModuleInfo& info, std::unique_ptr<display_messageImplBase> p_display_message,
                    std::unique_ptr<session_costIntf> r_session_cost, Conf& config) :
         ModuleBase(info),
         p_display_message(std::move(p_display_message)),
