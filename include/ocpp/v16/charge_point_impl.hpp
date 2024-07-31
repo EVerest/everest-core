@@ -231,6 +231,12 @@ private:
     /// update can proceed
     void change_all_connectors_to_unavailable_for_firmware_update();
 
+    /// \brief Tries to resume the transactions given by \p resuming_session_ids . This function retrieves open
+    /// transactions from the internal database (e.g. because of power loss). In case the \p
+    /// resuming_session_ids contain the internal session_id, this function attempts to resume the transaction by
+    /// initializing it and adding it to the \ref transaction_handler. If the session_id is not part of \p
+    /// resuming_session_ids a StopTransaction.req is initiated to properly close the transaction.
+    void try_resume_transactions(const std::set<std::string>& resuming_session_ids);
     void stop_all_transactions();
     void stop_all_transactions(Reason reason);
     bool validate_against_cache_entries(CiString<20> id_tag);
@@ -238,9 +244,6 @@ private:
     // new transaction handling:
     void start_transaction(std::shared_ptr<Transaction> transaction);
 
-    /// \brief Sends StopTransaction.req for all transactions for which meter_stop or time_end is not set in the
-    /// database's Transaction table
-    void stop_pending_transactions();
     void stop_transaction(int32_t connector, Reason reason, std::optional<CiString<20>> id_tag_end);
 
     /// \brief Converts the given \p measurands_csv to a vector of Measurands
@@ -381,8 +384,14 @@ public:
     /// \param connector_status_map initial state of connectors including connector 0 with reduced set of states
     /// (Available, Unavailable, Faulted)
     /// \param bootreason reason for calling the start function
-    /// \return
-    bool start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason);
+    /// \param resuming_session_ids can optionally contain active session ids from previous executions. If empty and
+    /// libocpp has transactions in its internal database that have not been stopped yet, calling this function will
+    /// initiate a StopTransaction.req for those transactions. If this vector contains session_ids this function will
+    /// not stop transactions with this session_id even in case it has an internal database entry for this session and
+    /// it hasnt been stopped yet. Its ignored if this vector contains session_ids that are unknown to libocpp.
+    ///  \return
+    bool start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason,
+               const std::set<std::string>& resuming_session_ids);
 
     /// \brief Restarts the ChargePoint if it has been stopped before. The ChargePoint is reinitialized, connects to the
     /// websocket and starts to communicate OCPP messages again
