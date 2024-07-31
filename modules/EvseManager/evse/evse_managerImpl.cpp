@@ -353,14 +353,13 @@ void evse_managerImpl::ready() {
         publish_selected_protocol(this->mod->selected_protocol);
     });
 
-    mod->charger->signal_session_resumed_event.connect(
-        [this](const std::string& session_id) {
-            types::evse_manager::SessionEvent session_event;
-            session_event.uuid = session_id;
-            session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-            session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
-            publish_session_event(session_event);
-        });
+    mod->charger->signal_session_resumed_event.connect([this](const std::string& session_id) {
+        types::evse_manager::SessionEvent session_event;
+        session_event.uuid = session_id;
+        session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+        session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
+        publish_session_event(session_event);
+    });
 
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
     // Legacy external mqtt pubs
