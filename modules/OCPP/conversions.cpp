@@ -703,7 +703,7 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
     }
 
     types::session_cost::SessionCostChunk chunk = create_session_cost_chunk(
-        running_cost.cost.value(), number_of_decimals, running_cost.timestamp, running_cost.meter_value);
+        running_cost.cost, number_of_decimals, running_cost.timestamp, running_cost.meter_value);
     cost.cost_chunks = std::vector<types::session_cost::SessionCostChunk>();
     cost.cost_chunks->push_back(chunk);
 
@@ -767,23 +767,23 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
             next_period.charging_price = std::vector<types::session_cost::ChargingPriceComponent>();
 
             if (next_period_charging_price.hour_price.has_value()) {
-                types::session_cost::ChargingPriceComponent hour_price = create_charging_price_component(
-                    next_period_charging_price.hour_price.value(), number_of_decimals,
-                    types::session_cost::CostCategory::Time, currency_code);
+                types::session_cost::ChargingPriceComponent hour_price =
+                    create_charging_price_component(next_period_charging_price.hour_price.value(), number_of_decimals,
+                                                    types::session_cost::CostCategory::Time, currency_code);
                 next_period.charging_price.push_back(hour_price);
             }
 
             if (next_period_charging_price.kWh_price.has_value()) {
-                types::session_cost::ChargingPriceComponent energy_price = create_charging_price_component(
-                    next_period_charging_price.kWh_price.value(), number_of_decimals,
-                    types::session_cost::CostCategory::Energy, currency_code);
+                types::session_cost::ChargingPriceComponent energy_price =
+                    create_charging_price_component(next_period_charging_price.kWh_price.value(), number_of_decimals,
+                                                    types::session_cost::CostCategory::Energy, currency_code);
                 next_period.charging_price.push_back(energy_price);
             }
 
             if (next_period_charging_price.flat_fee.has_value()) {
                 types::session_cost::ChargingPriceComponent flat_fee_price =
                     create_charging_price_component(next_period_charging_price.flat_fee.value(), number_of_decimals,
-                                                        types::session_cost::CostCategory::FlatFee, currency_code);
+                                                    types::session_cost::CostCategory::FlatFee, currency_code);
                 next_period.charging_price.push_back(flat_fee_price);
             }
         }
