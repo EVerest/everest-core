@@ -89,13 +89,14 @@ void CarSimulation::state_machine() {
 };
 
 bool CarSimulation::sleep(const CmdArguments& arguments, size_t loop_interval_ms) {
-    if (!sim_data.sleep_ticks_left.has_value()) {
+    if (not sim_data.sleep_ticks_left.has_value()) {
         const auto sleep_time = std::stold(arguments[0]);
         const auto sleep_time_ms = sleep_time * 1000;
         sim_data.sleep_ticks_left = static_cast<long long>(sleep_time_ms / loop_interval_ms) + 1;
     }
-    sim_data.sleep_ticks_left.value() -= 1;
-    if (not(sim_data.sleep_ticks_left.value() > 0)) {
+    auto& sleep_ticks_left = sim_data.sleep_ticks_left.value();
+    sleep_ticks_left -= 1;
+    if (not(sleep_ticks_left > 0)) {
         sim_data.sleep_ticks_left.reset();
         return true;
     } else {
@@ -238,8 +239,9 @@ bool CarSimulation::iso_wait_for_stop(const CmdArguments& arguments, size_t loop
         const auto sleep_time_ms = std::stold(arguments[0]) * 1000;
         sim_data.sleep_ticks_left = static_cast<long long>(sleep_time_ms / loop_interval_ms) + 1;
     }
-    sim_data.sleep_ticks_left.value() -= 1;
-    if (not(sim_data.sleep_ticks_left.value() > 0)) {
+    auto& sleep_ticks_left = sim_data.sleep_ticks_left.value();
+    sleep_ticks_left -= 1;
+    if (not(sleep_ticks_left > 0)) {
         r_ev[0]->call_stop_charging();
         r_ev_board_support->call_allow_power_on(false);
         sim_data.state = SimState::PLUGGED_IN;
