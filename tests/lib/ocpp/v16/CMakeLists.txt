@@ -11,4 +11,5 @@ target_sources(libocpp_unit_tests PRIVATE
         test_smart_charging_handler.cpp
         database_tests.cpp
         test_message_queue.cpp
-        )
+        test_charge_point_state_machine.cpp
+)

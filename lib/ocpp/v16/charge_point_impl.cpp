@@ -1012,10 +1012,7 @@ void ChargePointImpl::connected_callback() {
         // on_open in a Booted state can happen after a successful reconnect.
         // according to spec, a charge point should not send a BootNotification after a reconnect
         // still we send StatusNotification.req for all connectors after a reconnect
-        for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
-                                      ocpp::DateTime());
-        }
+        this->status->trigger_status_notifications();
         break;
     }
     case ChargePointConnectionState::Pending: {
@@ -1298,10 +1295,7 @@ void ChargePointImpl::handleBootNotificationResponse(ocpp::CallResult<BootNotifi
         this->update_clock_aligned_meter_values_interval();
 
         // send initial StatusNotification.req
-        for (int32_t connector = 0; connector <= this->configuration->getNumberOfConnectors(); connector++) {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
-                                      ocpp::DateTime());
-        }
+        this->status->trigger_status_notifications();
 
         if (this->is_pnc_enabled()) {
             this->ocsp_request_timer->timeout(INITIAL_CERTIFICATE_REQUESTS_DELAY);
@@ -2216,12 +2210,17 @@ void ChargePointImpl::handleTriggerMessageRequest(ocpp::Call<TriggerMessageReque
         if (!call.msg.connectorId.has_value()) {
             // send a status notification for every connector
             for (int32_t c = 0; c <= this->configuration->getNumberOfConnectors(); c++) {
-                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c),
-                                          ocpp::DateTime(), std::nullopt, std::nullopt, std::nullopt, true);
+                ErrorInfo error_info =
+                    this->status->get_latest_error(c).value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+                this->status_notification(c, error_info.error_code, this->status->get_state(c), ocpp::DateTime(),
+                                          error_info.info, error_info.vendor_id, error_info.vendor_error_code, true);
             }
         } else {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
-                                      ocpp::DateTime(), std::nullopt, std::nullopt, std::nullopt, true);
+            ErrorInfo error_info =
+                this->status->get_latest_error(connector).value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+            this->status_notification(connector, error_info.error_code, this->status->get_state(connector),
+                                      ocpp::DateTime(), error_info.info, error_info.vendor_id,
+                                      error_info.vendor_error_code, true);
         }
         break;
     }
@@ -2331,12 +2330,17 @@ void ChargePointImpl::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTri
         if (!call.msg.connectorId.has_value()) {
             // send a status notification for every connector
             for (int32_t c = 0; c <= this->configuration->getNumberOfConnectors(); c++) {
-                this->status_notification(c, ChargePointErrorCode::NoError, this->status->get_state(c),
-                                          ocpp::DateTime(), std::nullopt, std::nullopt, std::nullopt, true);
+                ErrorInfo error_info =
+                    this->status->get_latest_error(c).value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+                this->status_notification(c, error_info.error_code, this->status->get_state(c), ocpp::DateTime(),
+                                          error_info.info, error_info.vendor_id, error_info.vendor_error_code, true);
             }
         } else {
-            this->status_notification(connector, ChargePointErrorCode::NoError, this->status->get_state(connector),
-                                      ocpp::DateTime(), std::nullopt, std::nullopt, std::nullopt, true);
+            ErrorInfo error_info =
+                this->status->get_latest_error(connector).value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+            this->status_notification(connector, error_info.error_code, this->status->get_state(connector),
+                                      ocpp::DateTime(), error_info.info, error_info.vendor_id,
+                                      error_info.vendor_error_code, true);
         }
         break;
     }
@@ -3811,16 +3815,16 @@ void ChargePointImpl::on_resume_charging(int32_t connector) {
     this->status->submit_event(connector, FSMEvent::StartCharging, ocpp::DateTime());
 }
 
-void ChargePointImpl::on_error(int32_t connector, const ChargePointErrorCode& error_code,
-                               const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
-                               const std::optional<CiString<50>>& vendor_error_code) {
-    this->status->submit_error(connector, error_code, ocpp::DateTime(), info, vendor_id, vendor_error_code);
+void ChargePointImpl::on_error(int32_t connector, const ErrorInfo& error_info) {
+    this->status->submit_error(connector, error_info);
 }
 
-void ChargePointImpl::on_fault(int32_t connector, const ChargePointErrorCode& error_code,
-                               const std::optional<CiString<50>>& info, const std::optional<CiString<255>>& vendor_id,
-                               const std::optional<CiString<50>>& vendor_error_code) {
-    this->status->submit_fault(connector, error_code, ocpp::DateTime(), info, vendor_id, vendor_error_code);
+void ChargePointImpl::on_error_cleared(int32_t connector, const std::string uuid) {
+    this->status->submit_error_cleared(connector, uuid);
+}
+
+void ChargePointImpl::on_all_errors_cleared(int32_t connector) {
+    this->status->submit_all_errors_cleared(connector);
 }
 
 void ChargePointImpl::on_log_status_notification(int32_t request_id, std::string log_status) {

@@ -298,6 +298,11 @@ public:
     /// \param connector_id     Faulted connector id
     virtual void on_faulted(const int32_t evse_id, const int32_t connector_id) = 0;
 
+    /// \brief Event handler that should be called when the fault on the connector on the given evse_id is cleared.
+    /// \param evse_id          EVSE id where fault was cleared
+    /// \param connector_id     Connector id where fault was cleared
+    virtual void on_fault_cleared(const int32_t evse_id, const int32_t connector_id) = 0;
+
     /// \brief Event handler that should be called when the connector on the given evse_id and connector_id is reserved.
     /// \param evse_id          Reserved EVSE id
     /// \param connector_id     Reserved connector id
@@ -879,6 +884,8 @@ public:
     void on_enabled(const int32_t evse_id, const int32_t connector_id) override;
 
     void on_faulted(const int32_t evse_id, const int32_t connector_id) override;
+
+    void on_fault_cleared(const int32_t evse_id, const int32_t connector_id) override;
 
     void on_reserved(const int32_t evse_id, const int32_t connector_id) override;
 

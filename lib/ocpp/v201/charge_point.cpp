@@ -633,6 +633,10 @@ void ChargePoint::on_faulted(const int32_t evse_id, const int32_t connector_id) 
     this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Error);
 }
 
+void ChargePoint::on_fault_cleared(const int32_t evse_id, const int32_t connector_id) {
+    this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::ErrorCleared);
+}
+
 void ChargePoint::on_reserved(const int32_t evse_id, const int32_t connector_id) {
     this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Reserve);
 }

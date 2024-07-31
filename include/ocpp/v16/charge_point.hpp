@@ -7,6 +7,7 @@
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/evse_security_impl.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
+#include <ocpp/v16/charge_point_state_machine.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 #include <ocpp/v16/smart_charging.hpp>
 #include <ocpp/v16/types.hpp>
@@ -242,28 +243,28 @@ public:
     /// \param connector
     void on_resume_charging(int32_t connector);
 
-    /// \brief This function should be called if an error with the given \p error_code is present. This function will
-    /// trigger a StatusNotification.req containing the given \p error_code . It will not change the present state of
-    /// the state machine.
+    /// \brief This function should be called if an error with the given \p error_info is present. This function will
+    /// trigger a StatusNotification.req containing the given \p error_info . It will change the present state of
+    /// the state machine to faulted, in case the corresponding flag is set in the given \p error_info. This function
+    /// can be called multiple times for different errors. Errors reported using this function stay active as long as
+    /// they are cleared by \ref on_error_cleared().
     /// \param connector
-    /// \param error_code
-    /// \param info Additional free format information related to the error
-    /// \param vendor_id This identifies the vendor-specific implementation
-    /// \param vendor_error_code This contains the vendor-specific error code
-    void on_error(int32_t connector, const ChargePointErrorCode& error_code,
-                  const std::optional<CiString<50>>& info = std::nullopt,
-                  const std::optional<CiString<255>>& vendor_id = std::nullopt,
-                  const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
+    /// \param error_info Additional information related to
+    /// the error
+    void on_error(int32_t connector, const ErrorInfo& error_info);
 
-    /// \brief This function should be called if a fault is detected that prevents further charging operations. The \p
-    /// error_code indicates the reason for the fault.
-    /// \param info Additional free format information related to the error
-    /// \param vendor_id This identifies the vendor-specific implementation
-    /// \param vendor_error_code This contains the vendor-specific error code
-    void on_fault(int32_t connector, const ChargePointErrorCode& error_code,
-                  const std::optional<CiString<50>>& info = std::nullopt,
-                  const std::optional<CiString<255>>& vendor_id = std::nullopt,
-                  const std::optional<CiString<50>>& vendor_error_code = std::nullopt);
+    /// \brief This function should be called if an error with the given \p uuid has been cleared. If this leads to the
+    /// fact that no other error is active anymore, this function will initiate a StatusNotification.req that reports
+    /// the current state and no error
+    ///  \param connector
+    /// \param uuid of a previously reported error. If uuid is not
+    /// known, the event will be ignored
+    void on_error_cleared(int32_t connector, const std::string uuid);
+
+    /// \brief Clears all previously reported errors at the same time for the given \p connector . This will
+    /// clear a previously reported "Faulted" state if present
+    ///  \param connector
+    void on_all_errors_cleared(int32_t connector);
 
     /// \brief Chargepoint notifies about new log status \p log_status . This function should be called during a
     /// Diagnostics / Log upload to indicate the current \p log_status .

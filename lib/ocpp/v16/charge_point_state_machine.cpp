@@ -103,20 +103,86 @@ static const FSMDefinition FSM_DEF_CONNECTOR_ZERO = {
      }},
 };
 
-ChargePointFSM::ChargePointFSM(const StatusNotificationCallback& status_notification_callback_,
-                               FSMState initial_state) :
-    status_notification_callback(status_notification_callback_),
-    state(initial_state),
-    error_code(ChargePointErrorCode::NoError),
-    faulted(false) {
-    // FIXME (aw): do we need to call the callback here already?
+ErrorInfo::ErrorInfo(const std::string uuid, const ChargePointErrorCode error_code, const bool is_fault) :
+    uuid(uuid), timestamp(DateTime()), error_code(error_code), is_fault(is_fault) {
 }
 
-FSMState ChargePointFSM::get_state() const {
-    if (faulted) {
+ErrorInfo::ErrorInfo(const std::string uuid, const ChargePointErrorCode error_code, const bool is_fault,
+                     const std::optional<std::string> info) :
+    ErrorInfo(uuid, error_code, is_fault) {
+    if (!info.has_value()) {
+        return;
+    }
+
+    // CiString for info is allowed to have max of 50 characters
+    if (info.value().size() > 50) {
+        this->info = info.value().substr(0, 50);
+    } else {
+        this->info = info;
+    }
+}
+
+ErrorInfo::ErrorInfo(const std::string uuid, const ChargePointErrorCode error_code, const bool is_fault,
+                     const std::optional<std::string> info, const std::optional<std::string> vendor_id) :
+    ErrorInfo(uuid, error_code, is_fault, info) {
+    if (!vendor_id.has_value()) {
+        return;
+    }
+
+    // CiString for vendor_id is allowed to have max of 50 characters
+    if (vendor_id.value().size() > 255) {
+        this->vendor_id = vendor_id.value().substr(0, 255);
+    } else {
+        this->vendor_id = vendor_id;
+    }
+}
+
+ErrorInfo::ErrorInfo(const std::string uuid, const ChargePointErrorCode error_code, const bool is_fault,
+                     const std::optional<std::string> info, const std::optional<std::string> vendor_id,
+                     const std::optional<std::string> vendor_error_code) :
+    ErrorInfo(uuid, error_code, is_fault, info, vendor_id) {
+    if (!vendor_error_code.has_value()) {
+        return;
+    }
+    // CiString for vendor_error_code is allowed to have max of 50 characters
+    if (vendor_error_code.value().size() > 50) {
+        this->vendor_error_code = vendor_error_code.value().substr(0, 50);
+    } else {
+        this->vendor_error_code = vendor_error_code;
+    }
+}
+
+ChargePointFSM::ChargePointFSM(const StatusNotificationCallback& status_notification_callback_,
+                               FSMState initial_state) :
+    status_notification_callback(status_notification_callback_), state(initial_state) {
+}
+
+FSMState ChargePointFSM::get_state() {
+    if (this->is_faulted()) {
         return FSMState::Faulted;
     }
     return state;
+}
+
+bool ChargePointFSM::is_faulted() {
+    // check if there is any active fault
+    return std::find_if(this->active_errors.begin(), this->active_errors.end(),
+                        [](const std::pair<std::string, ErrorInfo>& entry) { return entry.second.is_fault; }) !=
+           this->active_errors.end();
+}
+
+std::optional<ErrorInfo> ChargePointFSM::get_latest_error() {
+    if (this->active_errors.empty()) {
+        return std::nullopt;
+    }
+
+    auto latest_error = (*this->active_errors.begin()).second;
+    for (const auto& [uuid, error_info] : this->active_errors) {
+        if (error_info.timestamp > latest_error.timestamp) {
+            latest_error = error_info;
+        }
+    }
+    return latest_error;
 }
 
 bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp,
@@ -132,50 +198,72 @@ bool ChargePointFSM::handle_event(FSMEvent event, const ocpp::DateTime timestamp
     // fall through: transition found
     state = dest_state_it->second;
 
-    if (!faulted) {
-        status_notification_callback(state, this->error_code, timestamp, info, std::nullopt, std::nullopt);
+    const auto error_info = this->get_latest_error().value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+
+    // only send a StatusNotification.req with the updated state if not in faulted
+    if (!this->is_faulted()) {
+        status_notification_callback(state, error_info.error_code, timestamp, info, error_info.vendor_id,
+                                     error_info.vendor_error_code);
     }
 
     return true;
 }
 
-bool ChargePointFSM::handle_fault(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
-                                  const std::optional<CiString<50>>& info,
-                                  const std::optional<CiString<255>>& vendor_id,
-                                  const std::optional<CiString<50>>& vendor_error_code) {
-    if (error_code == this->error_code) {
+bool ChargePointFSM::handle_error(const ErrorInfo& error_info) {
+    if (this->active_errors.count(error_info.uuid)) {
         // has already been handled and reported
         return false;
     }
 
-    this->error_code = error_code;
-    if (this->error_code == ChargePointErrorCode::NoError) {
-        faulted = false;
-        status_notification_callback(state, this->error_code, timestamp, info, vendor_id, vendor_error_code);
+    this->active_errors.insert({error_info.uuid, error_info});
+
+    if (!this->is_faulted()) {
+        status_notification_callback(this->state, error_info.error_code, error_info.timestamp, error_info.info,
+                                     error_info.vendor_id, error_info.vendor_error_code);
     } else {
-        faulted = true;
-        status_notification_callback(FSMState::Faulted, error_code, timestamp, info, vendor_id, vendor_error_code);
+        status_notification_callback(FSMState::Faulted, error_info.error_code, error_info.timestamp, error_info.info,
+                                     error_info.vendor_id, error_info.vendor_error_code);
     }
+    return true;
+}
+
+bool ChargePointFSM::handle_error_cleared(const std::string uuid) {
+    this->active_errors.erase(uuid);
+
+    // dont report StatusNotification if still "Faulted"
+    if (this->is_faulted()) {
+        return false;
+    }
+
+    // dont report StatusNotification if errors are still active
+    if (this->active_errors.size() > 0) {
+        return false;
+    }
+
+    // no fault present and no error active, so we can send a StatusNotification.req and return to previous state
+    status_notification_callback(this->state, ChargePointErrorCode::NoError, DateTime(), std::nullopt, std::nullopt,
+                                 std::nullopt);
 
     return true;
 }
 
-bool ChargePointFSM::handle_error(const ChargePointErrorCode& error_code, const ocpp::DateTime& timestamp,
-                                  const std::optional<CiString<50>>& info,
-                                  const std::optional<CiString<255>>& vendor_id,
-                                  const std::optional<CiString<50>>& vendor_error_code) {
-    if (error_code == this->error_code) {
-        // has already been handled and reported
-        return false;
-    }
-
-    this->error_code = error_code;
-    if (!faulted) {
-        status_notification_callback(this->state, error_code, timestamp, info, vendor_id, vendor_error_code);
-    } else {
-        status_notification_callback(FSMState::Faulted, error_code, timestamp, info, vendor_id, vendor_error_code);
-    }
+bool ChargePointFSM::handle_all_errors_cleared() {
+    this->active_errors.clear();
+    status_notification_callback(this->state, ChargePointErrorCode::NoError, DateTime(), std::nullopt, std::nullopt,
+                                 std::nullopt);
     return true;
+}
+
+void ChargePointFSM::trigger_status_notification() {
+    // get latest error or report NoError
+    const auto error_info = this->get_latest_error().value_or(ErrorInfo("", ChargePointErrorCode::NoError, false));
+    if (!this->is_faulted()) {
+        status_notification_callback(this->state, error_info.error_code, error_info.timestamp, error_info.info,
+                                     error_info.vendor_id, error_info.vendor_error_code);
+    } else {
+        status_notification_callback(FSMState::Faulted, error_info.error_code, error_info.timestamp, error_info.info,
+                                     error_info.vendor_id, error_info.vendor_error_code);
+    }
 }
 
 ChargePointStates::ChargePointStates(const ConnectorStatusCallback& callback) : connector_status_callback(callback) {
@@ -219,7 +307,6 @@ void ChargePointStates::reset(std::map<int, ChargePointStatus> connector_status_
 void ChargePointStates::submit_event(const int connector_id, FSMEvent event, const ocpp::DateTime& timestamp,
                                      const std::optional<CiString<50>>& info) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-
     if (connector_id == 0) {
         this->state_machine_connector_zero->handle_event(event, timestamp, info);
     } else if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
@@ -227,27 +314,47 @@ void ChargePointStates::submit_event(const int connector_id, FSMEvent event, con
     }
 }
 
-void ChargePointStates::submit_fault(const int connector_id, const ChargePointErrorCode& error_code,
-                                     const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
-                                     const std::optional<CiString<255>>& vendor_id,
-                                     const std::optional<CiString<50>>& vendor_error_code) {
+void ChargePointStates::submit_error(const int connector_id, const ErrorInfo& error_info) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
-        this->state_machine_connector_zero->handle_fault(error_code, timestamp, info, vendor_id, vendor_error_code);
+        this->state_machine_connector_zero->handle_error(error_info);
     } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
-        state_machines.at(connector_id - 1).handle_fault(error_code, timestamp, info, vendor_id, vendor_error_code);
+        state_machines.at(connector_id - 1).handle_error(error_info);
     }
 }
 
-void ChargePointStates::submit_error(const int connector_id, const ChargePointErrorCode& error_code,
-                                     const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
-                                     const std::optional<CiString<255>>& vendor_id,
-                                     const std::optional<CiString<50>>& vendor_error_code) {
+void ChargePointStates::submit_error_cleared(const int connector_id, const std::string uuid) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
-        this->state_machine_connector_zero->handle_error(error_code, timestamp, info, vendor_id, vendor_error_code);
+        this->state_machine_connector_zero->handle_error_cleared(uuid);
     } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
-        state_machines.at(connector_id - 1).handle_error(error_code, timestamp, info, vendor_id, vendor_error_code);
+        state_machines.at(connector_id - 1).handle_error_cleared(uuid);
+    }
+}
+
+void ChargePointStates::submit_all_errors_cleared(const int32_t connector_id) {
+    const std::lock_guard<std::mutex> lck(state_machines_mutex);
+    if (connector_id == 0) {
+        this->state_machine_connector_zero->handle_all_errors_cleared();
+    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+        state_machines.at(connector_id - 1).handle_all_errors_cleared();
+    }
+}
+
+void ChargePointStates::trigger_status_notification(const int connector_id) {
+    const std::lock_guard<std::mutex> lck(state_machines_mutex);
+    if (connector_id == 0) {
+        this->state_machine_connector_zero->trigger_status_notification();
+    } else {
+        this->state_machines.at(connector_id - 1).trigger_status_notification();
+    }
+}
+
+void ChargePointStates::trigger_status_notifications() {
+    const std::lock_guard<std::mutex> lck(state_machines_mutex);
+    this->state_machine_connector_zero->trigger_status_notification();
+    for (size_t connector_id = 0; connector_id < state_machines.size(); ++connector_id) {
+        this->state_machines.at(connector_id).trigger_status_notification();
     }
 }
 
@@ -261,6 +368,15 @@ ChargePointStatus ChargePointStates::get_state(int connector_id) {
 
     // fall through on invalid id
     return ChargePointStatus::Unavailable;
+}
+
+std::optional<ErrorInfo> ChargePointStates::get_latest_error(int connector_id) {
+    const std::lock_guard<std::mutex> lck(state_machines_mutex);
+    if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+        return state_machines.at(connector_id - 1).get_latest_error();
+    } else {
+        return state_machine_connector_zero->get_latest_error();
+    }
 }
 
 } // namespace v16
