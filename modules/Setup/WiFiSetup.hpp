@@ -5,10 +5,49 @@
 
 #include <cstdint>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
+/**
+ * SSID encoding
+ * From Wikipedia:
+ * "SSIDs can be zero to 32 octets long, and are, for convenience, usually
+ *  in a natural language, such as English"
+ *
+ * wpa-cli escapes SSID strings in scan results; character values 32..126 are
+ * not converted. The following conversions are applied:
+ * - \"   double quote
+ * - \\   backslash
+ * - \e   escape (\033)
+ * - \n   newline
+ * - \r   return
+ * - \t   tab
+ * - \xnn for other values
+ *
+ * JSON strings are UTF-8 with \ converted to \\
+ */
+
 namespace module {
+
+class Ssid {
+private:
+    using fn_p = int (Ssid::*)(std::uint8_t c);
+    fn_p handler{nullptr};
+    std::uint8_t tmp{0};
+    bool error{false};
+
+    int standard(std::uint8_t c);
+    int backslash(std::uint8_t c);
+    int hex_1(std::uint8_t c);
+    int hex_2(std::uint8_t c);
+
+    void encode(int c, std::ostringstream& ss);
+
+public:
+    std::string to_hex(const std::string& ssid);
+    std::string from_hex(const std::string& hex);
+};
 
 class WpaCliSetup {
 public:
@@ -73,6 +112,9 @@ public:
     virtual WifiNetworkList list_networks(const std::string& interface);
     virtual WifiNetworkStatusList list_networks_status(const std::string& interface);
     virtual bool is_wifi_interface(const std::string& interface);
+
+    static std::string hex_to_ssid(const std::string& hex);
+    static std::string ssid_to_hex(const std::string& ssid);
 };
 
 } // namespace module
