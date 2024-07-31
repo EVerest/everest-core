@@ -333,6 +333,12 @@ private:
     std::mutex powermeter_mutex;
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};
+
+    std::atomic<types::power_supply_DC::ChargingPhase> power_supply_DC_charging_phase{
+        types::power_supply_DC::ChargingPhase::Other};
+
+    types::power_supply_DC::ChargingPhase last_power_supply_DC_charging_phase{
+        types::power_supply_DC::ChargingPhase::Other};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

@@ -45,22 +45,26 @@ void power_supply_DCImpl::ready() {
     publish_capabilities(get_capabilities_from_config(config));
 }
 
-void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& value) {
-    mode = value;
+void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& _mode,
+                                         types::power_supply_DC::ChargingPhase& phase) {
+    mode = _mode;
+
+    EVLOG_info << "Set mode: " << types::power_supply_DC::mode_to_string(mode)
+               << " ChargingPhase: " << types::power_supply_DC::charging_phase_to_string(phase);
 
     std::scoped_lock access_lock(power_supply_values_mutex);
-    if ((value == types::power_supply_DC::Mode::Off) || (value == types::power_supply_DC::Mode::Fault)) {
+    if ((mode == types::power_supply_DC::Mode::Off) || (mode == types::power_supply_DC::Mode::Fault)) {
         connector_voltage = 0.0;
         connector_current = 0.0;
-    } else if (value == types::power_supply_DC::Mode::Export) {
+    } else if (mode == types::power_supply_DC::Mode::Export) {
         connector_voltage = settings_connector_export_voltage;
         connector_current = settings_connector_max_export_current;
-    } else if (value == types::power_supply_DC::Mode::Import) {
+    } else if (mode == types::power_supply_DC::Mode::Import) {
         connector_voltage = settings_connector_import_voltage;
         connector_current = settings_connector_max_import_current;
     }
 
-    mod->p_main->publish_mode(value);
+    mod->p_main->publish_mode(mode);
 }
 
 void power_supply_DCImpl::clampVoltageCurrent(double& voltage, double& current) {
