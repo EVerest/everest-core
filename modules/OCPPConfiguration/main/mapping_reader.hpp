@@ -10,14 +10,21 @@
 #include <vector>
 
 namespace module {
+
+struct EverestModuleMapping {
+    std::string config_key;
+    std::string module_name;
+    std::string module_config_key;
+};
+
+using OcppToEverestModuleMapping = std::unordered_map<std::string, EverestModuleMapping>;
+
 class MappingReader {
 public:
-    using EverestConfigPair = std::tuple<std::string, std::string>;
-    using ConfigMap = std::unordered_map<std::string, EverestConfigPair>;
-
-    static ConfigMap readMapping(const std::string& file_path);
+    static OcppToEverestModuleMapping readMapping(const std::string& file_path);
 
 private:
-    static EverestConfigPair parseMappingNode(const ryml::NodeRef& node);
+    static EverestModuleMapping parseMappingNode(const ryml::NodeRef& node);
 };
+
 } // namespace module

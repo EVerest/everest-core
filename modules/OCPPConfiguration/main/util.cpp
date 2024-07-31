@@ -2,24 +2,29 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "util.hpp"
+#include "everest/logging.hpp"
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
 namespace module {
 
-ryml::Tree Util::load_yaml_file(const std::string& file_path) {
-    std::ifstream file(file_path);
+namespace Util {
+
+ryml::Tree load_yaml_file(const std::string& file_path_string) {
+    auto file_path =
+        std::filesystem::path{"modules"} / "OCPPConfiguration" / file_path_string; // TODO: this is very hacky
+    auto file = std::ifstream{file_path};
     if (!file.is_open()) {
-        throw std::runtime_error("Unable to open file: " + file_path);
+        throw std::runtime_error("Unable to open file: " + file_path.string());
     }
-    std::stringstream buffer;
+    auto buffer = std::stringstream{};
     buffer << file.rdbuf();
-    ryml::Tree tree;
-    //    ryml::parse_in_place(ryml::to_substr(buffer.str()), &tree);
-    return tree;
+    const auto data = buffer.str();
+    return ryml::parse_in_arena(ryml::to_csubstr(data));
 }
 
-void Util::save_yaml_file(const std::string& file_path, ryml::Tree& tree) {
+void save_yaml_file(const std::string& file_path, ryml::Tree& tree) {
     std::ofstream file(file_path);
     if (!file.is_open()) {
         throw std::runtime_error("Unable to open file: " + file_path);
@@ -27,4 +32,5 @@ void Util::save_yaml_file(const std::string& file_path, ryml::Tree& tree) {
     file << tree;
 }
 
+} // namespace Util
 } // namespace module

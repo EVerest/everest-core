@@ -7,10 +7,10 @@
 #include <ryml.hpp>
 
 namespace module {
-class Util {
-public:
-    static ryml::Tree load_yaml_file(const std::string& file_path);
-    static void save_yaml_file(const std::string& file_path, ryml::Tree& tree);
-};
+namespace Util {
 
+ryml::Tree load_yaml_file(const std::string& file_path_string);
+void save_yaml_file(const std::string& file_path, ryml::Tree& tree);
+
+}; // namespace Util
 } // namespace module

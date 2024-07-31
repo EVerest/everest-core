@@ -12,27 +12,42 @@ EventHandler::EventHandler(const std::string& config_mapping_path, const std::st
 }
 
 void EventHandler::handleEvent(const types::ocpp::EventData& event_data) {
-    EVLOG_critical << "Received event data:";
-    EVLOG_critical << event_data.component_variable.variable.name;
-    EVLOG_critical << event_data.actual_value;
-
     // lookup event in event_map
     const auto& event_name = event_data.component_variable.variable.name;
 
-    const auto& config_pair = find_event_in_map(event_name);
+    const auto& everest_module_mapping_opt = find_event_in_map_or_log_error(event_name);
+    if (!everest_module_mapping_opt.has_value()) {
+        return;
+    }
+
+    const auto& everest_module_mapping = everest_module_mapping_opt.value();
 
     // write event to config_pair
-    config_writer.write_to_config(std::get<0>(config_pair), std::get<1>(config_pair), event_data.actual_value);
+    config_writer.write_to_config(everest_module_mapping.config_key, everest_module_mapping.module_name,
+                                  <#initializer #>, event_data.actual_value);
     config_writer.save_config();
 }
 
-const EventHandler::EverestConfigPair EventHandler::find_event_in_map(const std::string& event_name) const {
+const std::optional<EverestModuleMapping>
+EventHandler::find_event_in_map_or_log_error(const std::string& event_name) const {
+    try {
+        const auto& everest_module_mapping = find_event_in_map(event_name);
+        return everest_module_mapping;
+    } catch (const std::runtime_error& e) {
+        EVLOG_error << e.what();
+        return std::nullopt;
+    }
+}
+
+const EverestModuleMapping EventHandler::find_event_in_map(const std::string& event_name) const {
     const auto& event = event_map.find(event_name);
 
     // check if event is in event_map
     if (event == event_map.end()) {
         throw std::runtime_error("Event not found in event map: " + std::string(event_name));
     }
+
+    return event->second;
 }
 
 } // namespace module

@@ -12,14 +12,13 @@
 namespace module {
 class ConfigWriter {
 public:
-    ConfigWriter(const std::string& user_config_file);
+    ConfigWriter(const std::string& user_config_file_in);
 
-    void write_to_config(const std::string& module_name, const std::string& config_key,
-                         const std::string& config_value);
+    void write_to_config(const EverestModuleMapping& module_mapping, const std::string& config_value);
     void save_config();
 
 private:
-    void update_yaml_node(ryml::NodeRef node, const std::vector<std::string>& path_parts, const std::string& value);
+    ryml::Tree load_existing_user_config(const std::string& user_config_file);
 
     ryml::Tree config_tree;
     const std::string user_config_file;

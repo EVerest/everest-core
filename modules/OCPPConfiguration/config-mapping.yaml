@@ -1,75 +1,100 @@
 AllowOfflineTxForUnknownId:
-  - module_name: test123
-  - config_key: allow_offline_tx_for_unknown_id
+  config_key: allow_offline_tx_for_unknown_id
+  module_name: testAllowOfflineTxForUnknownId
+  module_config_key: allow_offline_tx_for_unknown_id_config
 AuthorizationCacheEnabled:
-  - module_name:
-  - config_key:
+  config_key: authorization_cache_enabled
+  module_name: testAuthCacheEnabled
+  module_config_key: authorization_cache_enabled_config
 AuthorizeRemoteTxRequests:
-  - module_name:
-  - config_key:
+  config_key: authorize_remote_tx_requests
+  module_name: testAuthorizeRemoteTxRequests
+  module_config_key: authorize_remote_tx_requests_config
 BlinkRepeat:
-  - module_name:
-  - config_key:
+  config_key: blink_repeat
+  module_name: testBlinkRepeat
+  module_config_key: blink_repeat_config
 ClockAlignedDataInterval:
-  - module_name:
-  - config_key:
+  config_key: clock_aligned_data_interval
+  module_name: testClockAlignedDataInterval
+  module_config_key: clock_aligned_data_interval_config
 ConnectionTimeOut:
-  - module_name:
-  - config_key:
+  config_key: connection_time_out
+  module_name: testConnectionTimeOut
+  module_config_key: connection_time_out_config
 ConnectorPhaseRotation:
-  - module_name:
-  - config_key:
+  config_key: connector_phase_rotation
+  module_name: testConnectorPhaseRotation
+  module_config_key: connector_phase_rotation_config
 HeartbeatInterval:
-  - module_name:
-  - config_key:
+  config_key: heartbeat_interval
+  module_name: testHeartbeatInterval
+  module_config_key: heartbeat_interval_config
 LightIntensity:
-  - module_name:
-  - config_key:
+  config_key: light_intensity
+  module_name: testLightIntensity
+  module_config_key: light_intensity_config
 LocalAuthorizeOffline:
-  - module_name:
-  - config_key:
+  config_key: local_authorize_offline
+  module_name: testLocalAuthorizeOffline
+  module_config_key: local_authorize_offline_config
 LocalPreAuthorize:
-  - module_name:
-  - config_key:
+  config_key: local_pre_authorize
+  module_name: testLocalPreAuthorize
+  module_config_key: local_pre_authorize_config
 MaxEnergyOnInvalidId:
-  - module_name:
-  - config_key:
+  config_key: max_energy_on_invalid_id
+  module_name: testMaxEnergyOnInvalidId
+  module_config_key: max_energy_on_invalid_id_config
 MeterValuesAlignedData:
-  - module_name:
-  - config_key:
+  config_key: meter_values_aligned_data
+  module_name: testMeterValuesAlignedData
+  module_config_key: meter_values_aligned_data_config
 MeterValuesSampledData:
-  - module_name:
-  - config_key:
+  config_key: meter_values_sampled_data
+  module_name: testMeterValuesSampledData
+  module_config_key: meter_values_sampled_data_config
 MeterValueSampleInterval:
-  - module_name:
-  - config_key:
+  config_key: meter_value_sample_interval
+  module_name: testMeterValueSampleInterval
+  module_config_key: meter_value_sample_interval_config
 MinimumStatusDuration:
-  - module_name:
-  - config_key:
+  config_key: minimum_status_duration
+  module_name: testMinimumStatusDuration
+  module_config_key: minimum_status_duration_config
 ResetRetries:
-  - module_name:
-  - config_key:
+  config_key: reset_retries
+  module_name: testResetRetries
+  module_config_key: reset_retries_config
 StopTransactionOnEVSideDisconnect:
-  - module_name:
-  - config_key:
+  config_key: stop_transaction_on_ev_side_disconnect
+  module_name: testStopTransactionOnEVSideDisconnect
+  module_config_key: stop_transaction_on_ev_side_disconnect_config
 StopTransactionOnInvalidId:
-  - module_name:
-  - config_key:
+  config_key: stop_transaction_on_invalid_id
+  module_name: testStopTransactionOnInvalidId
+  module_config_key: stop_transaction_on_invalid_id_config
 StopTxnAlignedData:
-  - module_name:
-  - config_key:
+  config_key: stop_txn_aligned_data
+  module_name: testStopTxnAlignedData
+  module_config_key: stop_txn_aligned_data_config
 StopTxnSampledData:
-  - module_name:
-  - config_key:
+  config_key: stop_txn_sampled_data
+  module_name: testStopTxnSampledData
+  module_config_key: stop_txn_sampled_data_config
 TransactionMessageAttempts:
-  - module_name:
-  - config_key:
+  config_key: transaction_message_attempts
+  module_name: testTransactionMessageAttempts
+  module_config_key: transaction_message_attempts_config
 TransactionMessageRetryInterval:
-  - module_name:
-  - config_key:
+  config_key: transaction_message_retry_interval
+  module_name: testTransactionMessageRetryInterval
+  module_config_key: transaction_message_retry_interval_config
 UnlockConnectorOnEVSideDisconnect:
-  - module_name:
-  - config_key:
+  config_key: unlock_connector_on_ev_side_disconnect
+  module_name: testUnlockConnectorOnEVSideDisconnect
+  module_config_key: unlock_connector_on_ev_side_disconnect_config
 WebsocketPingInterval:
-  - module_name:
-  - config_key:
+  config_key: websocket_ping_interval
+  module_name: testWebsocketPingInterval
+  module_config_key: websocket_ping_interval_config

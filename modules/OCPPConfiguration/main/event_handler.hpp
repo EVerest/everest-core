@@ -15,12 +15,10 @@ public:
     void handleEvent(const types::ocpp::EventData& event_data);
 
 private:
-    using EventMap = MappingReader::ConfigMap;
-    using EverestConfigPair = MappingReader::EverestConfigPair;
+    const std::optional<EverestModuleMapping> find_event_in_map_or_log_error(const std::string& event_name) const;
+    const EverestModuleMapping find_event_in_map(const std::string& event_name) const;
 
-    const EventHandler::EverestConfigPair find_event_in_map(const std::string& event_name) const;
-
-    EventMap event_map;
+    OcppToEverestModuleMapping event_map;
     ConfigWriter config_writer;
 };
 
