@@ -45,6 +45,7 @@
 #include "ErrorHandling.hpp"
 #include "EventQueue.hpp"
 #include "IECStateMachine.hpp"
+#include "PersistentStore.hpp"
 #include "scoped_lock_timeout.hpp"
 #include "utils.hpp"
 
@@ -57,6 +58,7 @@ class Charger {
 public:
     Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
             const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+            const std::unique_ptr<PersistentStore>& store,
             const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id);
     ~Charger();
 
@@ -149,6 +151,7 @@ public:
 
     // Signal for EvseEvents
     sigslot::signal<types::evse_manager::SessionEventEnum> signal_simple_event;
+    sigslot::signal<std::string> signal_session_resumed_event;
     sigslot::signal<types::evse_manager::StartSessionReason, std::optional<types::authorization::ProvidedIdToken>>
         signal_session_started_event;
     sigslot::signal<types::authorization::ProvidedIdToken> signal_transaction_started_event;
@@ -211,6 +214,8 @@ public:
     void set_connector_type(types::evse_board_support::Connector_type t) {
         connector_type = t;
     }
+
+    void cleanup_transactions_on_startup();
 
 private:
     utils::Stopwatch stopwatch;
@@ -358,17 +363,15 @@ private:
 
     const std::unique_ptr<IECStateMachine>& bsp;
     const std::unique_ptr<ErrorHandling>& error_handling;
-
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
+    const std::unique_ptr<PersistentStore>& store;
     std::atomic<types::evse_board_support::Connector_type> connector_type{
         types::evse_board_support::Connector_type::IEC62196Type2Cable};
-
     const std::string evse_id;
-    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing;
 
     // ErrorHandling events
     enum class ErrorHandlingEvents : std::uint8_t {
         prevent_charging,
-        prevent_charging_welded,
         all_errors_cleared
     };
 

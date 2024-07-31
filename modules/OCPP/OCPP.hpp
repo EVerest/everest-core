@@ -36,6 +36,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <variant>
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
@@ -43,6 +44,10 @@
 #include <ocpp/v201/ocpp_types.hpp>
 
 using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
+using ClearedErrorId = std::string;
+using EventQueue =
+    std::map<int32_t,
+             std::queue<std::variant<types::evse_manager::SessionEvent, ocpp::v16::ErrorInfo, ClearedErrorId>>>;
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -136,26 +141,19 @@ private:
         connector_evse_index_map; // provides access to r_evse_manager index by using OCPP connector id
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
+    std::set<std::string> resuming_session_ids;
     std::mutex evse_ready_mutex;
     std::condition_variable evse_ready_cv;
     bool all_evse_ready();
 
     std::atomic_bool started{false};
     std::mutex session_event_mutex;
-    std::map<int32_t, std::queue<types::evse_manager::SessionEvent>> session_event_queue;
+    EventQueue event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
-// insert other definitions here
-/// \brief Contains information about an error
-struct ErrorInfo {
-    ocpp::v16::ChargePointErrorCode ocpp_error_code;
-    std::optional<std::string> info;
-    std::optional<std::string> vendor_id;
-    std::optional<std::string> vendor_error_code;
-};
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

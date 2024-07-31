@@ -18,6 +18,7 @@ target_sources(${MODULE_NAME}
         IECStateMachine.cpp
         ErrorHandling.cpp
         backtrace.cpp
+        PersistentStore.cpp
 )
 
 target_link_libraries(${MODULE_NAME}

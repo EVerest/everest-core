@@ -636,6 +636,17 @@ void OCPP201::ready() {
                 this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
             });
 
+        auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_faulted(evse_id, 1);
+        };
+
+        auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_fault_cleared(evse_id, 1);
+        };
+
+        // A permanent fault from the evse requirement indicates that the evse should move to faulted state
+        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
+
         evse_id++;
     }
     r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {

@@ -114,36 +114,6 @@ void evse_managerImpl::init() {
 
 void evse_managerImpl::ready() {
 
-    // Register callbacks for errors/permanent faults
-    mod->error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
-        types::evse_manager::SessionEvent se;
-
-        se.error = e;
-        se.uuid = mod->charger->get_session_id();
-
-        if (prevent_charging) {
-            se.event = types::evse_manager::SessionEventEnum::PermanentFault;
-        } else {
-            se.event = types::evse_manager::SessionEventEnum::Error;
-        }
-        publish_session_event(se);
-    });
-
-    mod->error_handling->signal_error_cleared.connect(
-        [this](const types::evse_manager::Error e, const bool prevent_charging) {
-            types::evse_manager::SessionEvent se;
-
-            se.error = e;
-            se.uuid = mod->charger->get_session_id();
-
-            if (prevent_charging) {
-                se.event = types::evse_manager::SessionEventEnum::PermanentFaultCleared;
-            } else {
-                se.event = types::evse_manager::SessionEventEnum::ErrorCleared;
-            }
-            publish_session_event(se);
-        });
-
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
 
@@ -353,6 +323,14 @@ void evse_managerImpl::ready() {
         publish_selected_protocol(this->mod->selected_protocol);
     });
 
+    mod->charger->signal_session_resumed_event.connect([this](const std::string& session_id) {
+        types::evse_manager::SessionEvent session_event;
+        session_event.uuid = session_id;
+        session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+        session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
+        publish_session_event(session_event);
+    });
+
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
     // Legacy external mqtt pubs
     mod->charger->signal_max_current.connect([this](float c) {
@@ -369,7 +347,6 @@ void evse_managerImpl::ready() {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/state", mod->config.connector_id),
                           static_cast<int>(s));
     });
-    // /Deprecated
 }
 
 types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
