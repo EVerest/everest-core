@@ -40,7 +40,8 @@
       "variable_name": "Currency",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "string",
+        "maxLimit": 3
       },
       "attributes": [
         {
@@ -87,7 +88,8 @@
       "variable_name": "TariffFallbackMessage",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "string",
+        "maxLimit": 255
       },
       "attributes": [
         {
@@ -102,7 +104,8 @@
       "variable_name": "TotalCostFallbackMessage",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "string",
+        "maxLimit": 255
       },
       "attributes": [
         {

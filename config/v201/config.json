@@ -185,7 +185,7 @@
             "NetworkConnectionProfiles": {
                 "variable_name": "NetworkConnectionProfiles",
                 "attributes": {
-                    "Actual": "[{\"configurationSlot\": 1, \"connectionData\": {\"messageTimeout\": 30, \"ocppCsmsUrl\": \"ws://localhost:9000/cp001\", \"ocppInterface\": \"Wired0\", \"ocppTransport\": \"JSON\", \"ocppVersion\": \"OCPP20\", \"securityProfile\": 1}}]"
+                    "Actual": "[{\"configurationSlot\": 1, \"connectionData\": {\"messageTimeout\": 30, \"ocppCsmsUrl\": \"ws://7d52373cc3c58608.octt.openchargealliance.org:10756\", \"ocppInterface\": \"Wired0\", \"ocppTransport\": \"JSON\", \"ocppVersion\": \"OCPP20\", \"securityProfile\": 1}}]"
                 }
             },
             "ChargeBoxSerialNumber": {
@@ -352,7 +352,7 @@
         "name": "DisplayMessageCtrlr",
         "variables": {
             "NumberOfDisplayMessages": {
-                "variable_name": "NumberOfDisplayMessages",
+                "variable_name": "DisplayMessages",
                 "attributes": {
                     "Actual": 42
                 }

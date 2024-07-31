@@ -20,7 +20,7 @@
       "type": "boolean"
     },
     "NumberOfDisplayMessages": {
-      "variable_name": "NumberOfDisplayMessages",
+      "variable_name": "DisplayMessages",
       "characteristics": {
         "supportsMonitoring": true,
         "dataType": "integer"

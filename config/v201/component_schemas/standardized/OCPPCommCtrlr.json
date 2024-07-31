@@ -22,7 +22,7 @@
       "variable_name": "ActiveNetworkProfile",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "integer"
       },
       "attributes": [
         {
@@ -31,8 +31,8 @@
         }
       ],
       "description": "Indicates the configuration profile the station uses at that moment to connect to the network.",
-      "default": "1",
-      "type": "string"
+      "default": 1,
+      "type": "integer"
     },
     "FileTransferProtocols": {
       "variable_name": "FileTransferProtocols",
