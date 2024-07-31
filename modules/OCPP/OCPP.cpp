@@ -333,7 +333,6 @@ void OCPP::init() {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
         const auto error_info = get_error_info(error);
         if (this->started) {
-            // TODO: Report correct evse_id once Error type includes it
             this->charge_point->on_error(evse_id, error_info);
         } else {
             this->event_queue[evse_id].push(error_info);
@@ -344,7 +343,6 @@ void OCPP::init() {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
 
         if (this->started) {
-            // TODO: Report correct evse_id once Error type includes it
             this->charge_point->on_error_cleared(evse_id, error.uuid.uuid);
         } else {
             this->event_queue[evse_id].push(error.uuid.uuid);

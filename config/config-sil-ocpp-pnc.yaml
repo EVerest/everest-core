@@ -73,7 +73,7 @@ active_modules:
       connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
-    evse: 1
+    evse: 2
     config_module:
       connector_id: 2
   slac:
