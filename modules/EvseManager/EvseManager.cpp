@@ -931,11 +931,7 @@ void EvseManager::ready() {
     // informed that the EvseManager is aware of previous sessions so that no individual cleanup is required
     const auto session_id = store->get_session();
     if (!session_id.empty()) {
-        types::evse_manager::SessionEvent session_event;
-        session_event.uuid = session_id;
-        session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
-        session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
-        this->p_evse->publish_session_event(session_event);
+        charger->signal_session_resumed_event(session_id);
     }
 
     // By default cleanup left-over transaction from e.g. power loss
