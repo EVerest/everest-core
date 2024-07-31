@@ -114,36 +114,6 @@ void evse_managerImpl::init() {
 
 void evse_managerImpl::ready() {
 
-    // Register callbacks for errors/permanent faults
-    mod->error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
-        types::evse_manager::SessionEvent se;
-
-        se.error = e;
-        se.uuid = mod->charger->get_session_id();
-
-        if (prevent_charging) {
-            se.event = types::evse_manager::SessionEventEnum::PermanentFault;
-        } else {
-            se.event = types::evse_manager::SessionEventEnum::Error;
-        }
-        publish_session_event(se);
-    });
-
-    mod->error_handling->signal_error_cleared.connect(
-        [this](const types::evse_manager::Error e, const bool prevent_charging) {
-            types::evse_manager::SessionEvent se;
-
-            se.error = e;
-            se.uuid = mod->charger->get_session_id();
-
-            if (prevent_charging) {
-                se.event = types::evse_manager::SessionEventEnum::PermanentFaultCleared;
-            } else {
-                se.event = types::evse_manager::SessionEventEnum::ErrorCleared;
-            }
-            publish_session_event(se);
-        });
-
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
 
