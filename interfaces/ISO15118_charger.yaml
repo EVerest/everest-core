@@ -193,6 +193,9 @@ vars:
   start_cable_check:
     description: The charger should now start a cable check
     type: "null"
+  start_pre_charge:
+    description: The charger should now start the pre charge phase
+    type: "null"
   dc_open_contactor:
     description: The contactor should be opened
     type: "null"

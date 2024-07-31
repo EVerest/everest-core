@@ -257,12 +257,21 @@ void EvseManager::ready() {
             r_hlc[0]->call_update_dc_present_values(present_values);
 
             // Cable check for DC charging
-            r_hlc[0]->subscribe_start_cable_check([this] { cable_check(); });
+            r_hlc[0]->subscribe_start_cable_check([this] {
+                power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::CableCheck;
+                cable_check();
+            });
+
+            // Cable check for DC charging
+            r_hlc[0]->subscribe_start_pre_charge(
+                [this] { power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::PreCharge; });
 
             // Notification that current demand has started
             r_hlc[0]->subscribe_current_demand_started([this] {
-                charger->notify_currentdemand_started();
+                power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Charging;
                 current_demand_active = true;
+                apply_new_target_voltage_current();
+                charger->notify_currentdemand_started();
             });
 
             r_hlc[0]->subscribe_current_demand_finished([this] {
@@ -1500,8 +1509,9 @@ void EvseManager::cable_check() {
 
 void EvseManager::powersupply_DC_on() {
     if (not powersupply_dc_is_on) {
-        session_log.evse(false, "DC power supply: switch ON called");
-        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+        session_log.evse(false, "DC power supply: switch ON called, ChargingPhase: " +
+                                    types::power_supply_DC::charging_phase_to_string(power_supply_DC_charging_phase));
+        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export, power_supply_DC_charging_phase);
         powersupply_dc_is_on = true;
     }
 }
@@ -1512,6 +1522,9 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
     double voltage = _voltage;
     double current = _current;
     static bool last_is_actually_exporting_to_grid{false};
+
+    const bool charging_phase_changed = last_power_supply_DC_charging_phase not_eq power_supply_DC_charging_phase;
+    last_power_supply_DC_charging_phase = power_supply_DC_charging_phase;
 
     // Some cars always request integer ampere values, so if we offer 14.34A they will request 14.0A.
     // On low power DC charging this makes quite a difference
@@ -1529,12 +1542,13 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     auto caps = get_powersupply_capabilities();
 
-    if ((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active and
-        is_actually_exporting_to_grid) {
+    if ((((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and is_actually_exporting_to_grid) or
+         charging_phase_changed) and
+        current_demand_active) {
         if (not last_is_actually_exporting_to_grid) {
             // switching from import from grid to export to grid
             session_log.evse(false, "DC power supply: switch ON in import mode");
-            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import);
+            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import, power_supply_DC_charging_phase);
         }
         last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
         // Hack: we are exporting to grid but are in ISO-2 mode
@@ -1565,11 +1579,13 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
 
-        if ((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active and
-            last_is_actually_exporting_to_grid) {
+        if ((((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
+              last_is_actually_exporting_to_grid) or
+             charging_phase_changed) and
+            current_demand_active) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
-            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export);
+            r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export, power_supply_DC_charging_phase);
             last_is_actually_exporting_to_grid = is_actually_exporting_to_grid;
         }
 
@@ -1600,9 +1616,10 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 }
 
 void EvseManager::powersupply_DC_off() {
+    power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
     if (powersupply_dc_is_on) {
         session_log.evse(false, "DC power supply OFF");
-        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off);
+        r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off, power_supply_DC_charging_phase);
         powersupply_dc_is_on = false;
     }
 }

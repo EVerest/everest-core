@@ -18,10 +18,17 @@ cmds:
   setMode:
     description: Set operation mode of the bidirectional DC power supply
     arguments:
-      value:
+      mode:
         description: Operation mode of power supply
         type: string
         $ref: /power_supply_DC#/Mode
+      phase:
+        description: >-
+          Charging phase for this mode change. This information should normally not be needed by the power supply,
+          as it should always just operate in CCCV mode. Some special setups however are handling CableCheck/PreCharge/Charge
+          a little bit different internally.
+        type: string
+        $ref: /power_supply_DC#/ChargingPhase
   setExportVoltageCurrent:
     description: Set output target voltage limit. Must be within reported limits.
     arguments:
