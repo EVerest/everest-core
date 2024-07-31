@@ -84,6 +84,28 @@ static BrokerFastCharging::Switch1ph3phMode to_switch_1ph3ph_mode(const std::str
     }
 }
 
+static BrokerFastCharging::StickyNess to_stickyness(const std::string& m) {
+    if (m == "DontChange") {
+        return BrokerFastCharging::StickyNess::DontChange;
+    } else if (m == "SinglePhase") {
+        return BrokerFastCharging::StickyNess::SinglePhase;
+    } else {
+        return BrokerFastCharging::StickyNess::ThreePhase;
+    }
+}
+
+static BrokerFastCharging::Config to_broker_fast_charging_config(Conf module_config) {
+    BrokerFastCharging::Config broker_conf;
+
+    broker_conf.max_nr_of_switches_per_session = module_config.switch_3ph1ph_max_nr_of_switches_per_session;
+    broker_conf.power_hyteresis_W = module_config.switch_3ph1ph_power_hyteresis_W;
+    broker_conf.switch_1ph_3ph_mode = to_switch_1ph3ph_mode(module_config.switch_3ph1ph_while_charging_mode);
+    broker_conf.time_hyteresis_s = module_config.switch_3ph1ph_time_hyteresis_s;
+    broker_conf.stickyness = to_stickyness(module_config.switch_3ph1ph_switch_limit_stickyness);
+
+    return broker_conf;
+}
+
 std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::energy::EnergyFlowRequest request) {
 
     std::scoped_lock lock(energy_mutex);
@@ -106,10 +128,19 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     auto evse_markets = market.get_list_of_evses();
 
     for (auto m : evse_markets) {
+        // Check if we need to clear the context
+        // Note that context is created here if it does not exist implicitly by operator[] of the map
+        if (m->energy_flow_request.evse_state == types::energy::EvseState::Unplugged or
+            m->energy_flow_request.evse_state == types::energy::EvseState::Finished) {
+            contexts[m->energy_flow_request.uuid].clear();
+            contexts[m->energy_flow_request.uuid].ts_1ph_optimal =
+                globals.start_time - std::chrono::seconds(config.switch_3ph1ph_time_hyteresis_s);
+        }
+
         // FIXME: check for actual optimizer_targets and create correct broker for this evse
         // For now always create simple FastCharging broker
-        brokers.push_back(
-            std::make_shared<BrokerFastCharging>(*m, to_switch_1ph3ph_mode(config.switch_3ph1ph_while_charging_mode)));
+        brokers.push_back(std::make_shared<BrokerFastCharging>(*m, contexts[m->energy_flow_request.uuid],
+                                                               to_broker_fast_charging_config(config)));
         // EVLOG_info << fmt::format("Created broker for {}", m->energy_flow_request.uuid);
     }
 

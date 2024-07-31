@@ -15,7 +15,22 @@ public:
         Oneway,
         Both,
     };
-    explicit BrokerFastCharging(Market& market, Switch1ph3phMode mode);
+
+    enum class StickyNess {
+        SinglePhase,
+        ThreePhase,
+        DontChange,
+    };
+
+    struct Config {
+        Switch1ph3phMode switch_1ph_3ph_mode{Switch1ph3phMode::Never};
+        StickyNess stickyness{StickyNess::DontChange};
+        int max_nr_of_switches_per_session{0};
+        int power_hyteresis_W{200};
+        int time_hyteresis_s{600};
+    };
+
+    explicit BrokerFastCharging(Market& market, BrokerContext& context, Config config);
     virtual bool trade(Offer& offer) override;
 
 private:
@@ -35,7 +50,7 @@ private:
     Offer* offer{nullptr};
     bool traded{false};
 
-    Switch1ph3phMode switch_1ph3ph_mode;
+    Config config;
 };
 
 } // namespace module

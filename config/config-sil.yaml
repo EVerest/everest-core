@@ -52,6 +52,12 @@ active_modules:
   energy_manager:
     config_module:
       switch_3ph1ph_while_charging_mode: Both
+      switch_3ph1ph_max_nr_of_switches_per_session: 5
+      switch_3ph1ph_time_hyteresis_s: 20
+      switch_3ph1ph_power_hyteresis_W: 1000
+      switch_3ph1ph_switch_limit_stickyness: SinglePhase
+      schedule_interval_duration: 60
+      schedule_total_duration: 10
       debug: false
     connections:
       energy_trunk:

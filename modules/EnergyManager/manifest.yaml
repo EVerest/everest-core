@@ -42,6 +42,40 @@ config:
       - Oneway
       - Both
     default: Never
+  switch_3ph1ph_max_nr_of_switches_per_session:
+    description: >-
+      Limit the maximum number of switches between 1ph and 3ph per charging session.
+      Set to 0 for no limit.
+    type: integer
+    default: 0
+  switch_3ph1ph_switch_limit_stickyness:
+    description: >-
+      If the maximum number of switches between 1ph and 3ph is reached, select what should happen:
+        - SinglePhase: Switch to 1ph mode
+        - ThreePhase: Switch to 3ph mode
+        - DontChange: Stay in the mode it is currently in
+    type: string
+    enum:
+      - SinglePhase
+      - ThreePhase
+      - DontChange
+    default: DontChange
+  switch_3ph1ph_power_hyteresis_W:
+    description: >-
+      Power based hysteresis in Watt. If set to 200W for example,
+      the hysteresis for PWM based charging will be 4.2kW to 4.4kW.
+      Actual values will depend on configured nominal AC voltage, and they may be different for
+      PWM vs ISO based charging in the future.
+    type: integer
+    default: 200
+  switch_3ph1ph_time_hyteresis_s:
+    description: >-
+      Time based hysteresis. It will only switch to 3 phases if the condition to select 3 phases
+      is stable for the configured number of seconds. It will always switch to 1ph mode without
+      waiting for this delay.
+      Set to 0 to disable time based hysteresis.
+    type: integer
+    default: 600
 provides:
   main:
     description: Main interface of the energy manager

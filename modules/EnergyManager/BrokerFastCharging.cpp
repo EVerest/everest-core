@@ -7,8 +7,37 @@
 
 namespace module {
 
-BrokerFastCharging::BrokerFastCharging(Market& _market, Switch1ph3phMode mode) :
-    Broker(_market), switch_1ph3ph_mode(mode) {
+BrokerFastCharging::BrokerFastCharging(Market& _market, BrokerContext& _context, Config _config) :
+    Broker(_market, _context), config(_config) {
+}
+
+static auto to_timestamp(const types::energy::ScheduleReqEntry& entry) {
+    return Everest::Date::from_rfc3339(entry.timestamp);
+}
+
+static bool time_slot_active(const int i, const ScheduleReq& offer) {
+    const auto& now = globals.start_time;
+    const auto t_i = to_timestamp(offer[i]);
+
+    int active_slot = 0;
+    // Get active slot:
+    if (now < to_timestamp(offer[0])) {
+        // First element already in the future
+        active_slot = 0;
+    } else if (now > to_timestamp(offer[offer.size() - 1])) {
+        // Last element in the past
+        active_slot = offer.size() - 1;
+    } else {
+        // Somewhere in between
+        for (int n = 0; n < offer.size() - 1; n++) {
+            if (now > to_timestamp(offer[n]) and now < to_timestamp(offer[n + 1])) {
+                active_slot = n;
+                break;
+            }
+        }
+    }
+
+    return active_slot == i;
 }
 
 bool BrokerFastCharging::trade(Offer& _offer) {
@@ -45,6 +74,8 @@ bool BrokerFastCharging::trade(Offer& _offer) {
 
     // if we have not bought anything, we first need to buy the minimal limits for ac_amp if any.
     for (int i = 0; i < globals.schedule_length; i++) {
+
+        bool time_slot_is_active = time_slot_active(i, offer->import_offer);
 
         // make this more readable
         auto& max_current_import = offer->import_offer[i].limits_to_root.ac_max_current_A;
@@ -89,33 +120,80 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                 // A current limit is set
 
                 // If an additional watt limit is set check phases, else it is max_phases (typically 3)
-                // First decide if we charge 1 phase or 3 phase (if switching is possible at all)
+                // First decide if we would like to charge 1 phase or 3 phase (if switching is possible at all)
                 //   - Check if we are below e.g. 4.2kW (min_current*voltage*3) -> we have to do single phase
-                //   - Check if we are above e.g. 7.4kW (max_current*voltage*1) -> we have to go three phase
+                //   - Check if we are above e.g. 4.4kW (min_current*voltage*3 + watt_hyteresis) -> we want to go three
+                //   phase
                 //   - If we are in between, use what is currently active (hysteresis)
-                // One problem is that we do not know the EV's limit, so the hysteresis does not work properly
-                // when the EV supports 16A and the EVSE supports 32A:
-                // Then in single phase, it will increase until 1ph/32A before it switches to 3ph, but the EV gets
-                // stuck at 3.6kW/1ph/16A because that is its limit.
 
                 int number_of_phases = ac_number_of_active_phases_import;
-                if (switch_1ph3ph_mode not_eq Switch1ph3phMode::Never and total_power_import.has_value() &&
-                    min_current_import.value() && min_current_import.value() > 0.) {
-                    if (total_power_import.value() <
-                        min_current_import.value() * max_phases_import * local_market.nominal_ac_voltage()) {
-                        // We have to do single phase, it is impossible with 3ph
-                        number_of_phases = min_phases_import;
-                    } else if (switch_1ph3ph_mode == Switch1ph3phMode::Both and
-                               total_power_import.value() >
-                                   max_current_import.value() * min_phases_import * local_market.nominal_ac_voltage()) {
-                        number_of_phases = max_phases_import;
+
+                const auto min_power_3ph =
+                    min_current_import.value_or(0) * max_phases_import * local_market.nominal_ac_voltage();
+
+                bool number_of_switching_cycles_reached = false;
+
+                if (first_trade[i]) {
+                    if (config.switch_1ph_3ph_mode not_eq Switch1ph3phMode::Never and total_power_import.has_value() &&
+                        min_power_3ph > 0.) {
+
+                        if (total_power_import.value() < min_power_3ph) {
+                            // We have to do single phase, it is impossible with 3ph
+                            number_of_phases = min_phases_import;
+                        } else if (config.switch_1ph_3ph_mode == Switch1ph3phMode::Both and
+                                   total_power_import.value() > min_power_3ph + config.power_hyteresis_W) {
+                            number_of_phases = max_phases_import;
+                        } else {
+                            // Keep number of phases as they are
+                            number_of_phases = ac_number_of_active_phases_import;
+                        }
+
+                        // Now we made the decision what the optimal number of phases would be (in variable
+                        // number_of_phases) We also have a time based hysteresis as well as some limits in maximum
+                        // number of switching cycles. This means we maybe cannot use the optimal number of phases just
+                        // now. Check those conditions and adjust number_of_phases accordingly.
+
+                        if (config.max_nr_of_switches_per_session > 0 and
+                            context.number_1ph3ph_cycles > config.max_nr_of_switches_per_session) {
+                            number_of_switching_cycles_reached = true;
+                            if (config.stickyness == StickyNess::SinglePhase) {
+                                number_of_phases = min_phases_import;
+                            } else if (config.stickyness == StickyNess::ThreePhase) {
+                                number_of_phases = max_phases_import;
+                            } else {
+                                number_of_phases = ac_number_of_active_phases_import;
+                            }
+                        }
+
+                        if (number_of_phases == min_phases_import) {
+                            context.ts_1ph_optimal = date::utc_clock::now();
+                        }
+
+                        if (config.time_hyteresis_s > 0 and time_slot_is_active) {
+                            // Check time based hysteresis:
+                            // - store timestamp whenever 1ph is optimal (update continously)
+                            // Then now-timestamp is the stable time period for a 3ph condition.
+                            // This should only be done in the currently active time slot. Ignore time hysteresis in
+                            // other slots in the future or past.
+                            // Only allow an actual change to 3ph if the time exceeds the configured hysteresis limit.
+                            const auto stable_3ph = std::chrono::duration_cast<std::chrono::seconds>(
+                                                        globals.start_time - context.ts_1ph_optimal)
+                                                        .count();
+
+                            if (stable_3ph < config.time_hyteresis_s and number_of_phases == max_phases_import) {
+                                number_of_phases = min_phases_import;
+                            }
+                        }
                     } else {
-                        // Keep number of phases as they are
-                        number_of_phases = ac_number_of_active_phases_import;
+                        number_of_phases = max_phases_import;
                     }
-                } else {
-                    number_of_phases = max_phases_import;
                 }
+
+                // store decision in context
+                if (ac_number_of_active_phases_import not_eq context.last_ac_number_of_active_phases_import) {
+                    context.number_1ph3ph_cycles++;
+                }
+                context.last_ac_number_of_active_phases_import = ac_number_of_active_phases_import;
 
                 if (first_trade[i] && min_current_import.has_value() && min_current_import.value() > 0.) {
                     num_phases[i] = number_of_phases;
@@ -123,18 +201,25 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                     // min_current_import.value();
                     //    try to buy minimal current_A if we are on AC, but don't buy less.
                     if (not buy_ampere_import(i, min_current_import.value(), false, number_of_phases) and
-                        switch_1ph3ph_mode not_eq Switch1ph3phMode::Never) {
+                        config.switch_1ph_3ph_mode not_eq Switch1ph3phMode::Never and
+                        not number_of_switching_cycles_reached) {
                         // If we cannot buy the minimum amount we need, try again in single phase mode (it may be due to
                         // a watt limit only)
                         number_of_phases = 1;
                         num_phases[i] = number_of_phases;
                         buy_ampere_import(i, min_current_import.value(), false, number_of_phases);
                     }
+
+                    /*EVLOG_info << "I: " << i << " -- 1ph3ph: " << min_power_3ph << " active_nr_phases "
+                               << ac_number_of_active_phases_import << " cycles " << context.number_1ph3ph_cycles
+                               << " number_of_phases " << number_of_phases << " time_slot_active "
+                               << time_slot_is_active;*/
                 } else {
                     // EVLOG_info << "I: Not first trade or nor min current needed.";
                     //  try to buy a slice but allow less to be bought
                     buy_ampere_import(i, globals.slice_ampere, true, num_phases[i]);
                 }
+
             } else if (total_power_import.has_value()) {
                 // only a watt limit is available
                 // EVLOG_info << "I: Only watt limit is set." << total_power_import.value();
