@@ -6,7 +6,15 @@ active_modules:
       evse_manager:
         - implementation_id: evse
           module_id: connector_1
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
     module: API
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
   auth:
     config_module:
       connection_timeout: 10

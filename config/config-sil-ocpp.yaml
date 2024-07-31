@@ -14,6 +14,7 @@ active_modules:
       device: auto
       supported_ISO15118_2: true
   evse_manager_1:
+    evse: 1
     module: EvseManager
     config_module:
       connector_id: 1
@@ -40,6 +41,7 @@ active_modules:
           implementation_id: charger
   evse_manager_2:
     module: EvseManager
+    evse: 2
     config_module:
       connector_id: 2
       evse_id: "2"
@@ -64,10 +66,12 @@ active_modules:
         - module_id: iso15118_charger
           implementation_id: charger
   yeti_driver_1:
+    evse: 1
     module: JsYetiSimulator
     config_module:
       connector_id: 1
   yeti_driver_2:
+    evse: 2
     module: JsYetiSimulator
     config_module:
       connector_id: 2
@@ -183,6 +187,14 @@ active_modules:
       ocpp:
         - module_id: ocpp
           implementation_id: ocpp_generic
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
   system:
     module: System
 

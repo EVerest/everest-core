@@ -72,7 +72,8 @@ enum class EvseManagerErrors : std::uint8_t {
     MREC4OverCurrentFailure,
     Internal,
     PowermeterTransactionStartFailed,
-    last = PowermeterTransactionStartFailed
+    Inoperative,
+    last = Inoperative
 };
 
 enum class AcRcdErrors : std::uint8_t {
@@ -114,6 +115,12 @@ struct ActiveErrors {
         return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() &&
                imd.all_reset();
     };
+
+    inline bool all_cleared_except_inoperative() {
+        return bsp.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() && imd.all_reset() &&
+               (evse_manager.all_reset() || (evse_manager.is_set(EvseManagerErrors::Inoperative) &&
+                                             evse_manager._value == evse_manager.bit(EvseManagerErrors::Inoperative)));
+    };
 };
 
 class ErrorHandling {
@@ -127,9 +134,9 @@ public:
                            const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd);
 
     // Signal that one error has been raised. Bool argument is true if it preventing charging.
-    sigslot::signal<types::evse_manager::Error, bool> signal_error;
+    sigslot::signal<bool> signal_error;
     // Signal that one error has been cleared. Bool argument is true if it was preventing charging.
-    sigslot::signal<types::evse_manager::Error, bool> signal_error_cleared;
+    sigslot::signal<bool> signal_error_cleared;
     // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
@@ -143,6 +150,9 @@ public:
     void clear_powermeter_transaction_start_failed_error();
 
 private:
+    void raise_inoperative_error(const Everest::error::Error& error);
+    void clear_inoperative_error();
+
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
     const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock;
@@ -150,15 +160,12 @@ private:
     const std::unique_ptr<evse_managerImplBase>& p_evse;
     const std::vector<std::unique_ptr<isolation_monitorIntf>>& r_imd;
 
-    bool modify_error_bsp(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_connector_lock(const Everest::error::Error& error, bool active,
-                                     types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_ac_rcd(const Everest::error::Error& error, bool active,
-                             types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_bsp(const Everest::error::Error& error, bool active);
+    bool modify_error_connector_lock(const Everest::error::Error& error, bool active);
+    bool modify_error_ac_rcd(const Everest::error::Error& error, bool active);
 
-    bool modify_error_evse_manager(const std::string& error_type, bool active,
-                                   types::evse_manager::ErrorEnum& evse_error);
-    bool modify_error_imd(const Everest::error::Error& error, bool active, types::evse_manager::ErrorEnum& evse_error);
+    bool modify_error_evse_manager(const std::string& error_type, bool active);
+    bool modify_error_imd(const Everest::error::Error& error, bool active);
     bool hlc{false};
 
     ActiveErrors active_errors;
