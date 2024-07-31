@@ -13,6 +13,8 @@ active_modules:
     config_module:
       device: auto
       supported_ISO15118_2: true
+  persistent_store:
+    module: PersistentStore
   evse_manager_1:
     evse: 1
     module: EvseManager
@@ -39,6 +41,9 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
+      store:
+        - module_id: persistent_store
+          implementation_id: main
   evse_manager_2:
     module: EvseManager
     evse: 2
