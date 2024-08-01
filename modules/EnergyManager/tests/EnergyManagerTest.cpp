@@ -456,6 +456,7 @@ types::energy::EnergyFlowRequest energy_flow_request{
     "evse_manager",                // UUID for this node
     types::energy::NodeType::Evse, // node_type
     false,                         // optional - bool priority_request
+    std::nullopt,                  // optional - EvseState
     std::nullopt,                  // optional - types::energy::OptimizerTarget
     c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
     std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
@@ -542,6 +543,7 @@ const types::energy::EnergyFlowRequest c_efr_evse_manager{
     "evse_manager",                   // UUID for this node
     types::energy::NodeType::Evse,    // node_type
     false,                            // optional - bool priority_request
+    std::nullopt,                     // optional - EvseState
     std::nullopt,                     // optional - types::energy::OptimizerTarget
     c_energy_usage_root_evse_manager, // optional - types::powermeter::Powermeter - root
     std::nullopt,                     // optional - types::powermeter::Powermeter - leaf
@@ -574,6 +576,7 @@ const types::energy::EnergyFlowRequest c_efr_cls_energy_node{
     "cls_energy_node",                   // UUID for this node
     types::energy::NodeType::Generic,    // node_type
     std::nullopt,                        // optional - bool priority_request
+    std::nullopt,                        // optional - EvseState
     std::nullopt,                        // optional - types::energy::OptimizerTarget
     std::nullopt,                        // optional - types::powermeter::Powermeter - root
     std::nullopt,                        // optional - types::powermeter::Powermeter - leaf
@@ -606,6 +609,7 @@ const types::energy::EnergyFlowRequest c_efr_grid_connection_point{
     "grid_connection_point",                   // UUID for this node
     types::energy::NodeType::Generic,          // node_type
     std::nullopt,                              // optional - bool priority_request
+    std::nullopt,                              // optional - EvseState
     std::nullopt,                              // optional - types::energy::OptimizerTarget
     std::nullopt,                              // optional - types::powermeter::Powermeter - root
     std::nullopt,                              // optional - types::powermeter::Powermeter - leaf
@@ -757,6 +761,7 @@ TEST(EnergyManagerTest, noSchedules) {
         types::energy::NodeType::Evse, // node_type
         false,                         // optional - bool priority_request
         std::nullopt,                  // optional - types::energy::OptimizerTarget
+        std::nullopt,                  // optional - EvseState
         c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
         std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
         std::nullopt,                  // optional - std::vector<types::energy::ScheduleReqEntry> - import
@@ -816,6 +821,7 @@ TEST(EnergyManagerTest, schedules) {
         "evse_manager",                // UUID for this node
         types::energy::NodeType::Evse, // node_type
         false,                         // optional - bool priority_request
+        std::nullopt,                  // optional - EvseState
         std::nullopt,                  // optional - types::energy::OptimizerTarget
         c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
         std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
