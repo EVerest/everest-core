@@ -60,7 +60,7 @@ config:
       - ThreePhase
       - DontChange
     default: DontChange
-  switch_3ph1ph_power_hyteresis_W:
+  switch_3ph1ph_power_hysteresis_W:
     description: >-
       Power based hysteresis in Watt. If set to 200W for example,
       the hysteresis for PWM based charging will be 4.2kW to 4.4kW.
@@ -68,7 +68,7 @@ config:
       PWM vs ISO based charging in the future.
     type: integer
     default: 200
-  switch_3ph1ph_time_hyteresis_s:
+  switch_3ph1ph_time_hysteresis_s:
     description: >-
       Time based hysteresis. It will only switch to 3 phases if the condition to select 3 phases
       is stable for the configured number of seconds. It will always switch to 1ph mode without

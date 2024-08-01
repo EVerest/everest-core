@@ -98,9 +98,9 @@ static BrokerFastCharging::Config to_broker_fast_charging_config(Conf module_con
     BrokerFastCharging::Config broker_conf;
 
     broker_conf.max_nr_of_switches_per_session = module_config.switch_3ph1ph_max_nr_of_switches_per_session;
-    broker_conf.power_hyteresis_W = module_config.switch_3ph1ph_power_hyteresis_W;
+    broker_conf.power_hysteresis_W = module_config.switch_3ph1ph_power_hysteresis_W;
     broker_conf.switch_1ph_3ph_mode = to_switch_1ph3ph_mode(module_config.switch_3ph1ph_while_charging_mode);
-    broker_conf.time_hyteresis_s = module_config.switch_3ph1ph_time_hyteresis_s;
+    broker_conf.time_hysteresis_s = module_config.switch_3ph1ph_time_hysteresis_s;
     broker_conf.stickyness = to_stickyness(module_config.switch_3ph1ph_switch_limit_stickyness);
 
     return broker_conf;
@@ -134,7 +134,7 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
             m->energy_flow_request.evse_state == types::energy::EvseState::Finished) {
             contexts[m->energy_flow_request.uuid].clear();
             contexts[m->energy_flow_request.uuid].ts_1ph_optimal =
-                globals.start_time - std::chrono::seconds(config.switch_3ph1ph_time_hyteresis_s);
+                globals.start_time - std::chrono::seconds(config.switch_3ph1ph_time_hysteresis_s);
         }
 
         // FIXME: check for actual optimizer_targets and create correct broker for this evse

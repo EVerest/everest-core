@@ -50,8 +50,8 @@ struct Conf {
     std::string switch_3ph1ph_while_charging_mode;
     int switch_3ph1ph_max_nr_of_switches_per_session;
     std::string switch_3ph1ph_switch_limit_stickyness;
-    int switch_3ph1ph_power_hyteresis_W;
-    int switch_3ph1ph_time_hyteresis_s;
+    int switch_3ph1ph_power_hysteresis_W;
+    int switch_3ph1ph_time_hysteresis_s;
 };
 
 class EnergyManager : public Everest::ModuleBase {

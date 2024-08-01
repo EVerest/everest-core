@@ -26,8 +26,8 @@ public:
         Switch1ph3phMode switch_1ph_3ph_mode{Switch1ph3phMode::Never};
         StickyNess stickyness{StickyNess::DontChange};
         int max_nr_of_switches_per_session{0};
-        int power_hyteresis_W{200};
-        int time_hyteresis_s{600};
+        int power_hysteresis_W{200};
+        int time_hysteresis_s{600};
     };
 
     explicit BrokerFastCharging(Market& market, BrokerContext& context, Config config);

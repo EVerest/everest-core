@@ -122,7 +122,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                 // If an additional watt limit is set check phases, else it is max_phases (typically 3)
                 // First decide if we would like to charge 1 phase or 3 phase (if switching is possible at all)
                 //   - Check if we are below e.g. 4.2kW (min_current*voltage*3) -> we have to do single phase
-                //   - Check if we are above e.g. 4.4kW (min_current*voltage*3 + watt_hyteresis) -> we want to go three
+                //   - Check if we are above e.g. 4.4kW (min_current*voltage*3 + watt_hysteresis) -> we want to go three
                 //   phase
                 //   - If we are in between, use what is currently active (hysteresis)
 
@@ -141,7 +141,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                             // We have to do single phase, it is impossible with 3ph
                             number_of_phases = min_phases_import;
                         } else if (config.switch_1ph_3ph_mode == Switch1ph3phMode::Both and
-                                   total_power_import.value() > min_power_3ph + config.power_hyteresis_W) {
+                                   total_power_import.value() > min_power_3ph + config.power_hysteresis_W) {
                             number_of_phases = max_phases_import;
                         } else {
                             // Keep number of phases as they are
@@ -169,7 +169,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                             context.ts_1ph_optimal = date::utc_clock::now();
                         }
 
-                        if (config.time_hyteresis_s > 0 and time_slot_is_active) {
+                        if (config.time_hysteresis_s > 0 and time_slot_is_active) {
                             // Check time based hysteresis:
                             // - store timestamp whenever 1ph is optimal (update continously)
                             // Then now-timestamp is the stable time period for a 3ph condition.
@@ -180,7 +180,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                                                         globals.start_time - context.ts_1ph_optimal)
                                                         .count();
 
-                            if (stable_3ph < config.time_hyteresis_s and number_of_phases == max_phases_import) {
+                            if (stable_3ph < config.time_hysteresis_s and number_of_phases == max_phases_import) {
                                 number_of_phases = min_phases_import;
                             }
                         }

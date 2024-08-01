@@ -201,7 +201,7 @@ To use this feature several things need to be enabled:
 - BSP driver capabilities: Also make sure that minimum phases are set to one and maximum phases to 3
 - BSP driver: make sure the ``ac_switch_three_phases_while_charging`` command is correctly implemented
 - EnergyManager: Adjust ``switch_3ph1ph_while_charging_mode``, ``switch_3ph1ph_max_nr_of_switches_per_session``,
-  ``switch_3ph1ph_switch_limit_stickyness``, ``switch_3ph1ph_power_hyteresis_W``, ``switch_3ph1ph_time_hyteresis_s``
+  ``switch_3ph1ph_switch_limit_stickyness``, ``switch_3ph1ph_power_hysteresis_W``, ``switch_3ph1ph_time_hysteresis_s``
   config options to your needs
 
 If all of this is properly set up, the EnergyManager will drive the 1ph/3ph switching. In order to do so,
