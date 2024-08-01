@@ -592,7 +592,7 @@ EvseSecurity::get_installed_certificates(const std::vector<CertificateType>& cer
         if (secc_key_pair.status == GetCertificateInfoStatus::Accepted) {
             fs::path certificate_path;
 
-            if (secc_key_pair.info.value().certificate.has_value() == false)
+            if (secc_key_pair.info.value().certificate.has_value())
                 certificate_path = secc_key_pair.info.value().certificate.value();
             else
                 certificate_path = secc_key_pair.info.value().certificate_single.value();
