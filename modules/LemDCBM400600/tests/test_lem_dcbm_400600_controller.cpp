@@ -24,7 +24,7 @@ public:
     MOCK_METHOD(void, sync_if_deadline_expired, (const HttpClientInterface& httpClient), (override));
     MOCK_METHOD(void, sync, (const HttpClientInterface& httpClient), (override));
     MOCK_METHOD(void, restart_unsafe_period, (), (override));
-    LemDCBMTimeSyncHelperMock() : LemDCBMTimeSyncHelper({}, {}){};
+    LemDCBMTimeSyncHelperMock() : LemDCBMTimeSyncHelper({}, {}) {};
 };
 
 // Fixture class providing
@@ -390,9 +390,7 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id) {
     EXPECT_CALL(*this->http_client, get("/v1/legal"))
         .Times(1)
         .InSequence(seq)
-        .WillOnce(testing::Return(HttpResponse{
-            200,
-            R"({"transactionId": "thetransactionid"})"}));
+        .WillOnce(testing::Return(HttpResponse{200, R"({"transactionId": "thetransactionid"})"}));
     EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(1).InSequence(seq);
     EXPECT_CALL(*this->time_sync_helper, sync_if_deadline_expired(testing::_)).Times(1).InSequence(seq);
     EXPECT_CALL(*this->http_client, get("/v1/livemeasure"))
@@ -438,9 +436,7 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id_retry_success) {
     EXPECT_CALL(*this->http_client, get("/v1/legal"))
         .Times(1)
         .InSequence(seq)
-        .WillOnce(testing::Return(HttpResponse{
-            200,
-            R"({"transactionId": "thetransactionid"})"}));
+        .WillOnce(testing::Return(HttpResponse{200, R"({"transactionId": "thetransactionid"})"}));
 
     EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(1).InSequence(seq);
     EXPECT_CALL(*this->http_client, get("/v1/livemeasure"))
