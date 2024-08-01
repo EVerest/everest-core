@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <pthread.h>
 #include <string>
 #include <unistd.h>
@@ -41,36 +42,17 @@ struct client_ctx;
  */
 class ConfigItem {
 private:
-    char* m_ptr{nullptr};
+    std::optional<std::string> value{};
 
 public:
     ConfigItem() = default;
-    ConfigItem(const char* value); // must not be explicit
-    ConfigItem& operator=(const char* value);
-    ConfigItem(const ConfigItem& obj);
-    ConfigItem& operator=(const ConfigItem& obj);
-    ConfigItem(ConfigItem&& obj) noexcept;
-    ConfigItem& operator=(ConfigItem&& obj) noexcept;
-
-    ~ConfigItem();
-
-    bool operator==(const char* ptr) const;
-
-    // must not be explicit
+    ConfigItem(const char* ptr) {
+        if (ptr != nullptr) {
+            value = ptr;
+        }
+    }
     inline operator const char*() const {
-        return m_ptr;
-    }
-
-    inline bool operator!=(const char* ptr) const {
-        return !(*this == ptr);
-    }
-
-    inline bool operator==(const ConfigItem& obj) const {
-        return *this == obj.m_ptr;
-    }
-
-    inline bool operator!=(const ConfigItem& obj) const {
-        return !(*this == obj);
+        return (value) ? value.value().c_str() : nullptr;
     }
 };
 

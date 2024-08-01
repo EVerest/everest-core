@@ -471,61 +471,9 @@ bool configure_ssl_ctx(SSL_CTX* ctx, const char* ciphersuites, const char* ciphe
     return result;
 }
 
-/**
- * \brief duplicate a string checking for nullptr
- * \param[in] value a pointer to a \0 terminated string or nullptr
- * \return a copy of the string (which must be freed) or nullptr
- */
-constexpr char* dup(const char* value) {
-    char* res = nullptr;
-    if (value != nullptr) {
-        res = strdup(value);
-    }
-    return res;
-}
-
 } // namespace
 
 namespace tls {
-
-ConfigItem::ConfigItem(const char* value) : m_ptr(dup(value)) {
-}
-ConfigItem& ConfigItem::operator=(const char* value) {
-    free(m_ptr);
-    m_ptr = dup(value);
-    return *this;
-}
-ConfigItem::ConfigItem(const ConfigItem& obj) : m_ptr(dup(obj.m_ptr)) {
-}
-ConfigItem& ConfigItem::operator=(const ConfigItem& obj) {
-    free(m_ptr);
-    m_ptr = dup(obj.m_ptr);
-    return *this;
-}
-ConfigItem::ConfigItem(ConfigItem&& obj) noexcept : m_ptr(obj.m_ptr) {
-    obj.m_ptr = nullptr;
-}
-ConfigItem& ConfigItem::operator=(ConfigItem&& obj) noexcept {
-    free(m_ptr);
-    m_ptr = obj.m_ptr;
-    obj.m_ptr = nullptr;
-    return *this;
-}
-ConfigItem::~ConfigItem() {
-    free(m_ptr);
-    m_ptr = nullptr;
-}
-
-bool ConfigItem::operator==(const char* ptr) const {
-    bool result{false};
-    if (m_ptr == ptr) {
-        // both nullptr, or both point to the same string
-        result = true;
-    } else if ((m_ptr != nullptr) && (ptr != nullptr)) {
-        result = strcmp(m_ptr, ptr) == 0;
-    }
-    return result;
-}
 
 using SSL_ptr = std::unique_ptr<SSL>;
 using SSL_CTX_ptr = std::unique_ptr<SSL_CTX>;
@@ -1198,16 +1146,12 @@ void Server::stop() {
 
 void Server::wait_running() {
     std::unique_lock lock(m_cv_mutex);
-    while (!m_running) {
-        m_cv.wait(lock);
-    }
+    m_cv.wait(lock, [this]() { return this->m_running; });
 }
 
 void Server::wait_stopped() {
     std::unique_lock lock(m_cv_mutex);
-    while (m_running) {
-        m_cv.wait(lock);
-    }
+    m_cv.wait(lock, [this]() { return !this->m_running; });
 }
 
 // ----------------------------------------------------------------------------

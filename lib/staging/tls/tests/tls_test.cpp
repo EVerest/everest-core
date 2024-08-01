@@ -52,6 +52,7 @@ TEST(string, use) {
 }
 
 TEST(ConfigItem, test) {
+    // tests reduced with new ConfigStore implementation
     tls::ConfigItem i1;
     tls::ConfigItem i2{nullptr};
     tls::ConfigItem i3{"Hello"};
@@ -64,7 +65,7 @@ TEST(ConfigItem, test) {
     EXPECT_EQ(i5, nullptr);
 
     EXPECT_EQ(i2, i5);
-    EXPECT_EQ(i3, i6);
+    EXPECT_STREQ(i3, i6);
 
     EXPECT_EQ(i1, i2);
     EXPECT_NE(i1, i3);
@@ -75,21 +76,21 @@ TEST(ConfigItem, test) {
 
     auto j1(std::move(i3));
     j2 = std::move(i6);
-    EXPECT_EQ(i6, i3);
-    EXPECT_EQ(j1, j2);
-    EXPECT_EQ(j1, "Hello");
+    EXPECT_STREQ(i6, i3);
+    EXPECT_STREQ(j1, j2);
+    EXPECT_STREQ(j1, "Hello");
     EXPECT_NE(j1, i6);
 
     EXPECT_NE(j1, nullptr);
     EXPECT_NE(j2, nullptr);
 
-    EXPECT_EQ(i3, nullptr);
-    EXPECT_EQ(i6, nullptr);
-    EXPECT_EQ(i6, i3);
+    // EXPECT_EQ(i3, nullptr);
+    // EXPECT_EQ(i6, nullptr);
+    // EXPECT_EQ(i6, i3);
 
     std::vector<tls::ConfigItem> j3 = {"one", "two", nullptr};
-    EXPECT_EQ(j3[0], "one");
-    EXPECT_EQ(j3[1], "two");
+    EXPECT_STREQ(j3[0], "one");
+    EXPECT_STREQ(j3[1], "two");
     EXPECT_EQ(j3[2], nullptr);
 
     const char* p = j1;
@@ -97,7 +98,20 @@ TEST(ConfigItem, test) {
     j1 = "Goodbye";
     EXPECT_STRNE(j1, "Hello");
     j1 = j2;
-    EXPECT_EQ(j1, j2);
+    EXPECT_STREQ(j1, j2);
+}
+
+TEST(ConfigItem, testB) {
+    tls::ConfigItem i1;
+    tls::ConfigItem i2{nullptr};
+    tls::ConfigItem i3{""};
+    tls::ConfigItem i4{"Hello"};
+
+    EXPECT_EQ(i1, nullptr);
+    EXPECT_EQ(i2, nullptr);
+    EXPECT_STREQ(i3, "");
+    EXPECT_STREQ(i4, "Hello");
+    EXPECT_STREQ("Hello", i4);
 }
 
 using namespace tls::trusted_ca_keys;

@@ -195,14 +195,14 @@ protected:
         server_config.service = "8444";
         server_config.ipv6_only = false;
         server_config.verify_client = false;
-        server_config.io_timeout_ms = 500; // no lower than 200ms
+        server_config.io_timeout_ms = 1000; // no lower than 200ms, valgrind need much higher
 
         client_config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
         // client_config.ciphersuites = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384";
         // client_config.certificate_chain_file = "client_chain.pem";
         // client_config.private_key_file = "client_priv.pem";
         client_config.verify_locations_file = "server_root_cert.pem";
-        client_config.io_timeout_ms = 200;
+        client_config.io_timeout_ms = 1000;
         client_config.verify_server = true;
         client_config.status_request = false;
         client_config.status_request_v2 = false;
