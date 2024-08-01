@@ -610,8 +610,13 @@ types::display_message::DisplayMessage to_everest_display_message(const ocpp::Di
         m.state = to_everest_display_message_state(display_message.state.value());
     }
 
-    m.timestamp_from = display_message.timestamp_from->to_rfc3339();
-    m.timestamp_to = display_message.timestamp_to->to_rfc3339();
+    if (display_message.timestamp_from.has_value()) {
+        m.timestamp_from = display_message.timestamp_from.value().to_rfc3339();
+    }
+
+    if (display_message.timestamp_to.has_value()) {
+        m.timestamp_to = display_message.timestamp_to.value().to_rfc3339();
+    }
 
     return m;
 }
