@@ -2,8 +2,10 @@
 // Copyright 2023 - 2023 Pionix GmbH and Contributors to EVerest
 #include <slac/fsm/ev/states/others.hpp>
 
+#include <chrono>
 #include <cstring>
 #include <random>
+#include <thread>
 
 #include <endian.h>
 
@@ -20,7 +22,13 @@ void ResetState::enter() {
 
 FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::TRIGGER_MATCHING) {
-        return sa.create_simple<InitSlacState>(ctx);
+        if (ctx.chip_reset.enabled) {
+            // If chip reset is enabled in config, go to ResetChipState and from there to InitSlacState
+            return sa.create_simple<ResetChipState>(ctx);
+        } else {
+            // If chip reset is disabled, go to InitSlacState directly
+            return sa.create_simple<InitSlacState>(ctx);
+        }
     } else {
         return sa.PASS_ON;
     }
@@ -30,6 +38,68 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
     ctx.log_info("Called callback of ResetState");
 
     return {};
+}
+
+void ResetChipState::enter() {
+    ctx.log_info("Entered HW Chip Reset state");
+}
+
+FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType& sa, Event ev) {
+    if (ev == Event::SLAC_MESSAGE) {
+        if (check_for_valid_reset_conf()) {
+            return sa.create_simple<InitSlacState>(ctx);
+        } else {
+            return sa.PASS_ON;
+        }
+    } else if (ev == Event::SUCCESS) {
+        return sa.create_simple<InitSlacState>(ctx);
+    } else {
+        return sa.PASS_ON;
+    }
+}
+
+FSMSimpleState::CallbackReturnType ResetChipState::callback() {
+    if (sub_state == SubState::DELAY) {
+        sub_state = SubState::SEND_RESET;
+        return ctx.chip_reset.delay_ms;
+
+    } else if (sub_state == SubState::SEND_RESET) {
+
+        if (ctx.modem_vendor == ModemVendor::Qualcomm) {
+            slac::messages::qualcomm::cm_reset_device_req reset_req;
+            ctx.log_info("Resetting HW Chip using RS_DEV.REQ");
+            ctx.send_slac_message(ctx.plc_mac, reset_req);
+            sub_state = SubState::DONE;
+            return ctx.chip_reset.timeout_ms;
+
+        } else if (ctx.modem_vendor == ModemVendor::Lumissil) {
+            slac::messages::lumissil::nscm_reset_device_req reset_req;
+            ctx.log_info("Resetting HW Chip using NSCM_RESET_DEVICE.REQ");
+            sub_state = SubState::DONE;
+            ctx.send_slac_message(ctx.plc_mac, reset_req);
+            // CG5317 does not reply to the reset packet
+            return Event::SUCCESS;
+
+        } else {
+            ctx.log_info("Chip reset not supported on this chip");
+        }
+    } else {
+        ctx.log_info("Reset timeout, no response received - failed to reset the chip");
+        return {};
+    }
+    return {};
+}
+
+bool ResetChipState::check_for_valid_reset_conf() {
+    const auto mmtype = ctx.slac_message.get_mmtype();
+    if (mmtype != (slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF)) {
+        // unexpected message
+        ctx.log_info("Received non-expected SLAC message");
+        return false;
+    } else {
+        ctx.log_info("Received RS_DEV.CNF");
+        return true;
+    }
 }
 
 FSMSimpleState::HandleEventReturnType InitSlacState::handle_event(AllocatorType& sa, Event ev) {
@@ -50,6 +120,12 @@ FSMSimpleState::HandleEventReturnType InitSlacState::handle_event(AllocatorType&
 }
 
 void InitSlacState::enter() {
+
+    if (ctx.chip_reset.enabled == true and ctx.modem_vendor == ModemVendor::Lumissil) {
+        std::this_thread::sleep_for(
+            std::chrono::seconds(10)); // FIXME we need to find out when Lumissil is ready after reset
+    }
+
     ctx.log_info("Entered init state");
 
     // generate random run_id
