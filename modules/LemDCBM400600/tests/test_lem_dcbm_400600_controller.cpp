@@ -24,7 +24,7 @@ public:
     MOCK_METHOD(void, sync_if_deadline_expired, (const HttpClientInterface& httpClient), (override));
     MOCK_METHOD(void, sync, (const HttpClientInterface& httpClient), (override));
     MOCK_METHOD(void, restart_unsafe_period, (), (override));
-    LemDCBMTimeSyncHelperMock() : LemDCBMTimeSyncHelper({}, {}) {};
+    LemDCBMTimeSyncHelperMock() : LemDCBMTimeSyncHelper({}, {}){};
 };
 
 // Fixture class providing
