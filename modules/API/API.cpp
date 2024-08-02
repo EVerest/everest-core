@@ -266,14 +266,13 @@ SessionInfo::operator std::string() {
 void API::init() {
     invoke_init(*p_main);
     this->limit_decimal_places = std::make_unique<LimitDecimalPlaces>(this->config);
-    std::string api_base = "everest_api/";
     std::vector<std::string> connectors;
-    std::string var_connectors = api_base + "connectors";
+    std::string var_connectors = this->api_base + "connectors";
 
     for (auto& evse : this->r_evse_manager) {
         auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
         auto& hw_caps = this->hw_capabilities_str.emplace_back("");
-        std::string evse_base = api_base + evse->module_id;
+        std::string evse_base = this->api_base + evse->module_id;
         connectors.push_back(evse->module_id);
 
         // API variables
@@ -552,8 +551,8 @@ void API::init() {
         }
     }
 
-    std::string var_ocpp_connection_status = api_base + "ocpp/var/connection_status";
-    std::string var_ocpp_schedule = api_base + "ocpp/var/charging_schedules";
+    std::string var_ocpp_connection_status = this->api_base + "ocpp/var/connection_status";
+    std::string var_ocpp_schedule = this->api_base + "ocpp/var/charging_schedules";
 
     if (this->r_ocpp.size() == 1) {
 
@@ -573,7 +572,7 @@ void API::init() {
         });
     }
 
-    std::string var_info = api_base + "info/var/info";
+    std::string var_info = this->api_base + "info/var/info";
 
     if (this->config.charger_information_file != "") {
         auto charger_information_path = std::filesystem::path(this->config.charger_information_file);
@@ -585,25 +584,6 @@ void API::init() {
                         << err.what();
         }
     }
-
-    std::string var_active_errors = api_base + "errors/var/active_errors";
-    this->api_threads.push_back(std::thread([this, var_active_errors]() {
-        auto next_tick = std::chrono::steady_clock::now();
-        while (this->running) {
-            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
-            // request active errors
-            types::error_history::FilterArguments filter;
-            filter.state_filter = types::error_history::State::Active;
-            auto active_errors = r_error_history->call_get_errors(filter);
-            json errors_json = json(active_errors);
-
-            // publish
-            this->mqtt.publish(var_active_errors, errors_json.dump());
-
-            next_tick += NOTIFICATION_PERIOD;
-            std::this_thread::sleep_until(next_tick);
-        }
-    }));
 
     this->api_threads.push_back(
         std::thread([this, var_connectors, connectors, var_info, var_ocpp_connection_status, var_ocpp_schedule]() {
@@ -631,6 +611,25 @@ void API::init() {
 
 void API::ready() {
     invoke_ready(*p_main);
+
+    std::string var_active_errors = this->api_base + "errors/var/active_errors";
+    this->api_threads.push_back(std::thread([this, var_active_errors]() {
+        auto next_tick = std::chrono::steady_clock::now();
+        while (this->running) {
+            std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
+            // request active errors
+            types::error_history::FilterArguments filter;
+            filter.state_filter = types::error_history::State::Active;
+            auto active_errors = r_error_history->call_get_errors(filter);
+            json errors_json = json(active_errors);
+
+            // publish
+            this->mqtt.publish(var_active_errors, errors_json.dump());
+
+            next_tick += NOTIFICATION_PERIOD;
+            std::this_thread::sleep_until(next_tick);
+        }
+    }));
 }
 
 } // namespace module
