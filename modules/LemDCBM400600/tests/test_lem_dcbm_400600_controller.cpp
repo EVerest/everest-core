@@ -58,7 +58,7 @@ protected:
         std::nullopt};
 
     const std::string expected_start_transaction_request_body{
-        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":"","tariffId":0,"cableId":0,"userData":""})"};
+        R"({"evseId":"mock_evse_id","transactionId":"mock_transaction_id","clientId":",mock_transaction_id","tariffId":0,"cableId":0,"userData":""})"};
 
     const std::string put_legal_response = R"({
                                                 "paginationCounter": 6,
@@ -376,23 +376,27 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id) {
     EXPECT_CALL(*this->http_client, get("/v1/livemeasure"))
         .Times(1)
         .InSequence(seq)
-        .WillRepeatedly(testing::Return(HttpResponse{
+        .WillOnce(testing::Return(HttpResponse{
             200,
             this->livemeasure_response,
         }));
     EXPECT_CALL(*this->http_client, get("/v1/status"))
         .Times(1)
         .InSequence(seq)
-        .WillRepeatedly(testing::Return(HttpResponse{
+        .WillOnce(testing::Return(HttpResponse{
             200,
             R"({ "meterId": "mock_meter_id",  "publicKeyOcmf": "KEY",   "status": {"bits": {"transactionIsOnGoing": false}},   "version":{"applicationFirmwareVersion":"0.1.2.3"},   "some_other_field": "other_value" })",
         }));
+    EXPECT_CALL(*this->http_client, get("/v1/legal"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, R"({"transactionId": "thetransactionid"})"}));
     EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(1).InSequence(seq);
     EXPECT_CALL(*this->time_sync_helper, sync_if_deadline_expired(testing::_)).Times(1).InSequence(seq);
     EXPECT_CALL(*this->http_client, get("/v1/livemeasure"))
         .Times(1)
         .InSequence(seq)
-        .WillRepeatedly(testing::Return(HttpResponse{
+        .WillOnce(testing::Return(HttpResponse{
             200,
             this->livemeasure_response,
         }));
@@ -428,6 +432,12 @@ TEST_F(LemDCBM400600ControllerTest, test_init_meter_id_retry_success) {
             200,
             R"({ "meterId": "mock_meter_id",  "publicKeyOcmf": "KEY",   "status": {"bits": {"transactionIsOnGoing": false}},   "version":{"applicationFirmwareVersion":"0.1.2.3"},   "some_other_field": "other_value" })",
         }));
+
+    EXPECT_CALL(*this->http_client, get("/v1/legal"))
+        .Times(1)
+        .InSequence(seq)
+        .WillOnce(testing::Return(HttpResponse{200, R"({"transactionId": "thetransactionid"})"}));
+
     EXPECT_CALL(*this->time_sync_helper, restart_unsafe_period()).Times(1).InSequence(seq);
     EXPECT_CALL(*this->http_client, get("/v1/livemeasure"))
         .Times(1)
