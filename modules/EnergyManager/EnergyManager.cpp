@@ -94,7 +94,7 @@ static BrokerFastCharging::StickyNess to_stickyness(const std::string& m) {
     }
 }
 
-static BrokerFastCharging::Config to_broker_fast_charging_config(Conf module_config) {
+static BrokerFastCharging::Config to_broker_fast_charging_config(const Conf& module_config) {
     BrokerFastCharging::Config broker_conf;
 
     broker_conf.max_nr_of_switches_per_session = module_config.switch_3ph1ph_max_nr_of_switches_per_session;
