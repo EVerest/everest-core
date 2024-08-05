@@ -133,7 +133,7 @@ public:
                            const std::unique_ptr<evse_managerImplBase>& _p_evse,
                            const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd);
 
-    // Signal that one error has been raised. Bool argument is true if it preventing charging.
+    // Signal that one error has been raised. Bool argument is true if it is preventing charging.
     sigslot::signal<bool> signal_error;
     // Signal that one error has been cleared. Bool argument is true if it was preventing charging.
     sigslot::signal<bool> signal_error_cleared;
