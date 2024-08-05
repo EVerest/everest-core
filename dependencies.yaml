@@ -54,7 +54,7 @@ libcurl:
 # and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 8a300f39b94fb6364759dfbb57e8501facb94b2f
+  git_tag: aec383634d4def547ea4e8a5743576b697ea9987
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP

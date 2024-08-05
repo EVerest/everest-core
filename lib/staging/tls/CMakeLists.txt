@@ -10,6 +10,10 @@ target_sources(tls
         tls.cpp
 )
 
+target_compile_definitions(tls PRIVATE
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
 target_include_directories(tls
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
