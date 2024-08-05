@@ -22,7 +22,7 @@ config:
     type: number
     default: 0.5
   slice_watt:
-    description: Watt slice for trading. Lower values will give more even distribution but increase processing time [A].
+    description: Watt slice for trading. Lower values will give more even distribution but increase processing time [W].
     type: number
     default: 500
   debug:

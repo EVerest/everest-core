@@ -12,7 +12,7 @@ find_package(everest-cmake 0.4
 )
 
 if (NOT everest-cmake_FOUND)
-    message(STATUS "Retreiving everest-cmake using FetchContent")
+    message(STATUS "Retrieving everest-cmake using FetchContent")
     include(FetchContent)
     FetchContent_Declare(
         everest-cmake
