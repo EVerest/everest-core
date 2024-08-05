@@ -15,9 +15,15 @@ target_sources(evse_security
 
         crypto/interface/crypto_supplier.cpp
         crypto/interface/crypto_types.cpp
-        crypto/openssl/openssl_crypto_supplier.cpp
-        crypto/openssl/openssl_provider.cpp
 )
+
+if (LIBEVSE_CRYPTO_SUPPLIER_OPENSSL)
+    target_sources(evse_security
+        PRIVATE                 
+            crypto/openssl/openssl_crypto_supplier.cpp
+            crypto/openssl/openssl_provider.cpp
+    )
+endif()
 
 target_include_directories(evse_security
     PUBLIC

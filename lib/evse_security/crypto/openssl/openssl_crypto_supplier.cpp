@@ -2,9 +2,6 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <evse_security/crypto/openssl/openssl_crypto_supplier.hpp>
 
-#include <evse_security/detail/openssl/openssl_types.hpp>
-#include <evse_security/utils/evse_filesystem.hpp>
-
 #include <everest/logging.hpp>
 
 #include <algorithm>
@@ -23,6 +20,8 @@
 #include <openssl/x509v3.h>
 
 #include <evse_security/crypto/openssl/openssl_provider.hpp>
+#include <evse_security/crypto/openssl/openssl_types.hpp>
+#include <evse_security/utils/evse_filesystem.hpp>
 
 namespace evse_security {
 

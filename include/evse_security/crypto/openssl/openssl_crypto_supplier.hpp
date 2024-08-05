@@ -2,6 +2,8 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#ifdef LIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+
 #include <evse_security/crypto/interface/crypto_supplier.hpp>
 
 namespace evse_security {
@@ -55,3 +57,5 @@ public:
 };
 
 } // namespace evse_security
+
+#endif

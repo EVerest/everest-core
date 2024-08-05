@@ -2,6 +2,8 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#ifdef LIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+
 #include <memory>
 #include <openssl/x509v3.h>
 
@@ -118,3 +120,5 @@ private:
 };
 
 } // namespace evse_security
+
+#endif
