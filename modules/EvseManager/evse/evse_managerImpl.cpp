@@ -30,11 +30,11 @@ void evse_managerImpl::init() {
 
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/set_max_current", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxCurrentLimit(std::stof(data)); });
+        [&charger = mod->charger, this](std::string data) { mod->nodered_set_current_limit(std::stof(data)); });
 
     mod->mqtt.subscribe(
         fmt::format("everest_external/nodered/{}/cmd/set_max_watt", mod->config.connector_id),
-        [&charger = mod->charger, this](std::string data) { mod->updateLocalMaxWattLimit(std::stof(data)); });
+        [&charger = mod->charger, this](std::string data) { mod->nodered_set_watt_limit(std::stof(data)); });
 
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/enable", mod->config.connector_id),
                         [&charger = mod->charger](const std::string& data) {
@@ -113,36 +113,6 @@ void evse_managerImpl::init() {
 }
 
 void evse_managerImpl::ready() {
-
-    // Register callbacks for errors/permanent faults
-    mod->error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
-        types::evse_manager::SessionEvent se;
-
-        se.error = e;
-        se.uuid = mod->charger->get_session_id();
-
-        if (prevent_charging) {
-            se.event = types::evse_manager::SessionEventEnum::PermanentFault;
-        } else {
-            se.event = types::evse_manager::SessionEventEnum::Error;
-        }
-        publish_session_event(se);
-    });
-
-    mod->error_handling->signal_error_cleared.connect(
-        [this](const types::evse_manager::Error e, const bool prevent_charging) {
-            types::evse_manager::SessionEvent se;
-
-            se.error = e;
-            se.uuid = mod->charger->get_session_id();
-
-            if (prevent_charging) {
-                se.event = types::evse_manager::SessionEventEnum::PermanentFaultCleared;
-            } else {
-                se.event = types::evse_manager::SessionEventEnum::ErrorCleared;
-            }
-            publish_session_event(se);
-        });
 
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
@@ -353,6 +323,14 @@ void evse_managerImpl::ready() {
         publish_selected_protocol(this->mod->selected_protocol);
     });
 
+    mod->charger->signal_session_resumed_event.connect([this](const std::string& session_id) {
+        types::evse_manager::SessionEvent session_event;
+        session_event.uuid = session_id;
+        session_event.timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+        session_event.event = types::evse_manager::SessionEventEnum::SessionResumed;
+        publish_session_event(session_event);
+    });
+
     // Note: Deprecated. Only kept for Node red compatibility, will be removed in the future
     // Legacy external mqtt pubs
     mod->charger->signal_max_current.connect([this](float c) {
@@ -369,7 +347,6 @@ void evse_managerImpl::ready() {
         mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/state", mod->config.connector_id),
                           static_cast<int>(s));
     });
-    // /Deprecated
 }
 
 types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
@@ -441,21 +418,11 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
 };
 
 void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->updateLocalEnergyLimit(value);
+    mod->update_local_energy_limit(value);
 }
 
-types::evse_manager::SwitchThreePhasesWhileChargingResult
-evse_managerImpl::handle_switch_three_phases_while_charging(bool& three_phases) {
-    // FIXME implement more sophisticated error code return once feature is really implemented
-    if (mod->charger->switch_three_phases_while_charging(three_phases)) {
-        return types::evse_manager::SwitchThreePhasesWhileChargingResult::Success;
-    } else {
-        return types::evse_manager::SwitchThreePhasesWhileChargingResult::Error_NotSupported;
-    }
-};
-
 void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& certificate_reponse) {
+    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 

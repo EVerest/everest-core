@@ -28,9 +28,9 @@ struct Connector {
     explicit Connector(int id) :
         id(id),
         transaction_active(false),
-        reserved(false),
+        state_machine(ConnectorState::AVAILABLE),
         is_reservable(true),
-        state_machine(ConnectorState::AVAILABLE){};
+        reserved(false){};
 
     int id;
 

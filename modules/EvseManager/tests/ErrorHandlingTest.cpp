@@ -172,11 +172,11 @@ struct ErrorHandlingSignals {
     }
 
     void register_callbacks(module::ErrorHandling& eh) {
-        eh.signal_error.connect([this](types::evse_manager::Error err, bool stop_charging) {
+        eh.signal_error.connect([this](bool stop_charging) {
             this->called_signal_error = true;
             this->signal_error = true;
         });
-        eh.signal_error_cleared.connect([this](types::evse_manager::Error err, bool stop_charging) {
+        eh.signal_error_cleared.connect([this](bool stop_charging) {
             this->called_signal_error_cleared = true;
             this->signal_error_cleared = true;
         });
@@ -220,20 +220,16 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
                                 "Vendor specific error code. Will stop charging session.", id);
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error, true, error_type);
+    bResult = error_handling.modify_error_bsp(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(error, false, error_type);
+    bResult = error_handling.modify_error_bsp(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorError);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -243,20 +239,16 @@ TEST(ErrorHandlingTest, modify_error_bsp) {
     ehs.reset();
     Everest::error::Error warning("evse_board_support/VendorWarning", "", "K2Faults::FAULT_CT_CLAMP",
                                   "Vendor specific error code. Will not stop charging session.", id);
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(warning, true, error_type);
+    bResult = error_handling.modify_error_bsp(warning, true);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_bsp(warning, false, error_type);
+    bResult = error_handling.modify_error_bsp(warning, false);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -314,20 +306,16 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
                                 "no description", id);
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_connector_lock(error, true, error_type);
+    bResult = error_handling.modify_error_connector_lock(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::ConnectorLockUnexpectedOpen);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_connector_lock(error, false, error_type);
+    bResult = error_handling.modify_error_connector_lock(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::ConnectorLockUnexpectedOpen);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -337,20 +325,16 @@ TEST(ErrorHandlingTest, modify_error_connector_lock) {
     ehs.reset();
     Everest::error::Error warning("connector_lock/VendorWarning", "", "Will not stop charging session.",
                                   "no description", id);
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_connector_lock(warning, true, error_type);
+    bResult = error_handling.modify_error_connector_lock(warning, true);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_connector_lock(warning, false, error_type);
+    bResult = error_handling.modify_error_connector_lock(warning, false);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -380,20 +364,16 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
     Everest::error::Error error("ac_rcd/AC", "", "Will stop charging session.", "no description", id);
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_ac_rcd(error, true, error_type);
+    bResult = error_handling.modify_error_ac_rcd(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::RCD_AC);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_ac_rcd(error, false, error_type);
+    bResult = error_handling.modify_error_ac_rcd(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::RCD_AC);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -402,20 +382,16 @@ TEST(ErrorHandlingTest, modify_error_ac_rcd) {
     // VendorWarning not treated as an active error
     ehs.reset();
     Everest::error::Error warning("ac_rcd/VendorWarning", "", "Will not stop charging session.", "no description", id);
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_ac_rcd(warning, true, error_type);
+    bResult = error_handling.modify_error_ac_rcd(warning, true);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_ac_rcd(warning, false, error_type);
+    bResult = error_handling.modify_error_ac_rcd(warning, false);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -446,20 +422,16 @@ TEST(ErrorHandlingTest, modify_error_imd) {
                                 "no description", id);
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(error, true, error_type);
+    bResult = error_handling.modify_error_imd(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::IMDFault);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(error, false, error_type);
+    bResult = error_handling.modify_error_imd(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::IMDFault);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -469,20 +441,16 @@ TEST(ErrorHandlingTest, modify_error_imd) {
     ehs.reset();
     Everest::error::Error warning("isolation_monitor/VendorWarning", "", "Will not stop charging session.",
                                   "no description", id);
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(warning, true, error_type);
+    bResult = error_handling.modify_error_imd(warning, true);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_imd(warning, false, error_type);
+    bResult = error_handling.modify_error_imd(warning, false);
     EXPECT_FALSE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::VendorWarning);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
@@ -512,20 +480,16 @@ TEST(ErrorHandlingTest, modify_error_evse_manager) {
     std::string error{"evse_manager/PowermeterTransactionStartFailed"};
 
     bool bResult;
-    auto error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_evse_manager(error, true, error_type);
+    bResult = error_handling.modify_error_evse_manager(error, true);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed);
     EXPECT_FALSE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);
     EXPECT_FALSE(ehs.called_signal_all_errors_cleared);
 
     ehs.reset();
-    error_type = types::evse_manager::ErrorEnum::PermanentFault;
-    bResult = error_handling.modify_error_evse_manager(error, false, error_type);
+    bResult = error_handling.modify_error_evse_manager(error, false);
     EXPECT_TRUE(bResult);
-    EXPECT_EQ(error_type, types::evse_manager::ErrorEnum::PowermeterTransactionStartFailed);
     EXPECT_TRUE(error_handling.active_errors.all_cleared());
     EXPECT_FALSE(ehs.called_signal_error);
     EXPECT_FALSE(ehs.called_signal_error_cleared);

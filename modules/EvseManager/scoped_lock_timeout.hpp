@@ -62,23 +62,23 @@ enum class MutexDescription {
     IEC_force_unlock,
     EVSE_set_ev_info,
     EVSE_publish_ev_info,
-    EVSE_subscribe_DC_EVMaximumLimits,
-    EVSE_subscribe_DepartureTime,
-    EVSE_subscribe_AC_EAmount,
-    EVSE_subscribe_AC_EVMaxVoltage,
-    EVSE_subscribe_AC_EVMaxCurrent,
-    EVSE_subscribe_AC_EVMinCurrent,
-    EVSE_subscribe_DC_EVEnergyCapacity,
-    EVSE_subscribe_DC_EVEnergyRequest,
-    EVSE_subscribe_DC_FullSOC,
-    EVSE_subscribe_DC_BulkSOC,
-    EVSE_subscribe_DC_EVRemainingTime,
-    EVSE_subscribe_DC_EVStatus,
-    EVSE_subscribe_Require_Auth_EIM,
+    EVSE_subscribe_dc_ev_maximum_limits,
+    EVSE_subscribe_departure_time,
+    EVSE_subscribe_ac_eamount,
+    EVSE_subscribe_ac_ev_max_voltage,
+    EVSE_subscribe_ac_ev_max_current,
+    EVSE_subscribe_ac_ev_min_current,
+    EVSE_subscribe_dc_ev_energy_capacity,
+    EVSE_subscribe_dc_ev_energy_request,
+    EVSE_subscribe_dc_full_soc,
+    EVSE_subscribe_dc_bulk_soc,
+    EVSE_subscribe_dc_ev_remaining_time,
+    EVSE_subscribe_dc_ev_status,
+    EVSE_subscribe_require_auth_eim,
     EVSE_publish_provided_token,
-    EVSE_subscribe_EVCCIDD,
-    EVSE_subscribe_Require_Auth_PnC,
-    EVSE_subscribe_Require_Auth_PnC2,
+    EVSE_subscribe_evcc_id,
+    EVSE_subscribe_require_auth_pnc,
+    EVSE_subscribe_require_auth_pnc2,
     EVSE_signal_event,
     EVSE_subscribe_powermeter,
     EVSE_get_latest_powermeter_data_billing,
@@ -94,6 +94,8 @@ enum class MutexDescription {
 
 static std::string to_string(MutexDescription d) {
     switch (d) {
+    case MutexDescription::Undefined:
+        return "Undefined";
     case MutexDescription::Charger_signal_loop:
         return "Charger.cpp: error_handling->signal_loop";
     case MutexDescription::Charger_signal_error:
@@ -184,40 +186,40 @@ static std::string to_string(MutexDescription d) {
         return "EvseManager.cpp: set ev_info present_voltage/current";
     case MutexDescription::EVSE_publish_ev_info:
         return "EvseManager.cpp: publish_ev_info";
-    case MutexDescription::EVSE_subscribe_DC_EVMaximumLimits:
-        return "EvseManager.cpp: subscribe_DC_EVMaximumLimits";
-    case MutexDescription::EVSE_subscribe_DepartureTime:
-        return "EvseManager.cpp: subscribe_DepartureTime";
-    case MutexDescription::EVSE_subscribe_AC_EAmount:
-        return "EvseManager.cpp: subscribe_AC_EAmount";
-    case MutexDescription::EVSE_subscribe_AC_EVMaxVoltage:
-        return "EvseManager.cpp: subscribe_AC_EVMaxVoltage";
-    case MutexDescription::EVSE_subscribe_AC_EVMaxCurrent:
-        return "EvseManager.cpp: subscribe_AC_EVMaxCurrent";
-    case MutexDescription::EVSE_subscribe_AC_EVMinCurrent:
-        return "EvseManager.cpp: subscribe_AC_EVMinCurrent";
-    case MutexDescription::EVSE_subscribe_DC_EVEnergyCapacity:
-        return "EvseManager.cpp: subscribe_DC_EVEnergyCapacity";
-    case MutexDescription::EVSE_subscribe_DC_EVEnergyRequest:
-        return "EvseManager.cpp: subscribe_DC_EVEnergyRequest";
-    case MutexDescription::EVSE_subscribe_DC_FullSOC:
-        return "EvseManager.cpp: subscribe_DC_FullSOC";
-    case MutexDescription::EVSE_subscribe_DC_BulkSOC:
-        return "EvseManager.cpp: subscribe_DC_BulkSOC";
-    case MutexDescription::EVSE_subscribe_DC_EVRemainingTime:
-        return "EvseManager.cpp: subscribe_DC_EVRemainingTime";
-    case MutexDescription::EVSE_subscribe_DC_EVStatus:
-        return "EvseManager.cpp subscribe_DC_EVStatus";
-    case MutexDescription::EVSE_subscribe_Require_Auth_EIM:
-        return "EvseManager.cpp: subscribe_Require_Auth_EIM";
+    case MutexDescription::EVSE_subscribe_dc_ev_maximum_limits:
+        return "EvseManager.cpp: subscribe_dc_ev_maximum_limits";
+    case MutexDescription::EVSE_subscribe_departure_time:
+        return "EvseManager.cpp: subscribe_departure_time";
+    case MutexDescription::EVSE_subscribe_ac_eamount:
+        return "EvseManager.cpp: subscribe_ac_eamount";
+    case MutexDescription::EVSE_subscribe_ac_ev_max_voltage:
+        return "EvseManager.cpp: subscribe_ac_ev_max_voltage";
+    case MutexDescription::EVSE_subscribe_ac_ev_max_current:
+        return "EvseManager.cpp: subscribe_ac_ev_max_current";
+    case MutexDescription::EVSE_subscribe_ac_ev_min_current:
+        return "EvseManager.cpp: subscribe_ac_ev_min_current";
+    case MutexDescription::EVSE_subscribe_dc_ev_energy_capacity:
+        return "EvseManager.cpp: subscribe_dc_ev_energy_capacity";
+    case MutexDescription::EVSE_subscribe_dc_ev_energy_request:
+        return "EvseManager.cpp: subscribe_dc_ev_energy_request";
+    case MutexDescription::EVSE_subscribe_dc_full_soc:
+        return "EvseManager.cpp: subscribe_dc_full_soc";
+    case MutexDescription::EVSE_subscribe_dc_bulk_soc:
+        return "EvseManager.cpp: subscribe_dc_bulk_soc";
+    case MutexDescription::EVSE_subscribe_dc_ev_remaining_time:
+        return "EvseManager.cpp: subscribe_dc_ev_remaining_time";
+    case MutexDescription::EVSE_subscribe_dc_ev_status:
+        return "EvseManager.cpp subscribe_dc_ev_status";
+    case MutexDescription::EVSE_subscribe_require_auth_eim:
+        return "EvseManager.cpp: subscribe_require_auth_eim";
     case MutexDescription::EVSE_publish_provided_token:
         return "EvseManager.cpp: publish_provided_token";
-    case MutexDescription::EVSE_subscribe_EVCCIDD:
-        return "EvseManager.cpp: subscribe_EVCCIDD";
-    case MutexDescription::EVSE_subscribe_Require_Auth_PnC:
-        return "EvseManager.cpp: subscribe_Require_Auth_PnC 1";
-    case MutexDescription::EVSE_subscribe_Require_Auth_PnC2:
-        return "EvseManager.cpp: subscribe_Require_Auth_PnC 2";
+    case MutexDescription::EVSE_subscribe_evcc_id:
+        return "EvseManager.cpp: subscribe_evcc_id";
+    case MutexDescription::EVSE_subscribe_require_auth_pnc:
+        return "EvseManager.cpp: subscribe_require_auth_pnc 1";
+    case MutexDescription::EVSE_subscribe_require_auth_pnc2:
+        return "EvseManager.cpp: subscribe_require_auth_pnc 2";
     case MutexDescription::EVSE_signal_event:
         return "EvseManager.cpp: bsp->signal_event.connect";
     case MutexDescription::EVSE_subscribe_powermeter:

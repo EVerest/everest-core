@@ -25,10 +25,12 @@ namespace module {
 
 Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_ptr<ErrorHandling>& error_handling,
                  const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing,
+                 const std::unique_ptr<PersistentStore>& _store,
                  const types::evse_board_support::Connector_type& connector_type, const std::string& evse_id) :
     bsp(bsp),
     error_handling(error_handling),
     r_powermeter_billing(r_powermeter_billing),
+    store(_store),
     connector_type(connector_type),
     evse_id(evse_id) {
 
@@ -73,13 +75,8 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                     case ErrorHandlingEvents::prevent_charging:
                         shared_context.error_prevent_charging_flag = true;
                         break;
-                    case ErrorHandlingEvents::prevent_charging_welded:
-                        shared_context.error_prevent_charging_flag = true;
-                        shared_context.contactor_welded = true;
-                        break;
                     case ErrorHandlingEvents::all_errors_cleared:
                         shared_context.error_prevent_charging_flag = false;
-                        shared_context.contactor_welded = false;
                         break;
                     default:
                         EVLOG_error << "ErrorHandlingEvents invalid value: "
@@ -93,19 +90,15 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_thread.detach();
 
     // Register callbacks for errors/error clearings
-    error_handling->signal_error.connect([this](const types::evse_manager::Error e, const bool prevent_charging) {
+    error_handling->signal_error.connect([this](const bool prevent_charging) {
         if (prevent_charging) {
-            if (e.error_code == types::evse_manager::ErrorEnum::MREC17EVSEContactorFault) {
-                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging_welded);
-            } else {
-                error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
-            }
+            // raise external error to signal we cannot charge anymore
+            error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
-        signal_simple_event(types::evse_manager::SessionEventEnum::AllErrorsCleared);
         error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
     });
 }
@@ -258,6 +251,7 @@ void Charger::run_state_machine() {
                     // enabling PWM.
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
+                    stopwatch.mark("HLC_PWM_5%_ON");
                 }
             }
 
@@ -279,8 +273,8 @@ void Charger::run_state_machine() {
             // If we have zero power, some cars will not like the ChargingParameter message.
             if (config_context.charge_mode == ChargeMode::DC) {
                 // Create a copy of the atomic struct
-                types::iso15118_charger::DC_EVSEMaximumLimits evse_limit = shared_context.current_evse_max_limits;
-                if (not(evse_limit.EVSEMaximumCurrentLimit > 0 and evse_limit.EVSEMaximumPowerLimit > 0)) {
+                types::iso15118_charger::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
+                if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying...";
                         internal_context.no_energy_warning_printed = true;
@@ -428,6 +422,23 @@ void Charger::run_state_machine() {
 
             break;
 
+        case EvseState::SwitchPhases:
+            if (initialize_state) {
+                session_log.evse(false, "Start switching phases");
+                signal_simple_event(types::evse_manager::SessionEventEnum::SwitchingPhases);
+                if (config_context.switch_3ph1ph_cp_state_F) {
+                    pwm_F();
+                } else {
+                    pwm_off();
+                }
+            }
+            if (time_in_current_state >= config_context.switch_3ph1ph_delay_s * 1000) {
+                session_log.evse(false, "Exit switching phases");
+                bsp->switch_three_phases_while_charging(shared_context.switch_3ph1ph_threephase);
+                shared_context.current_state = internal_context.switching_phases_return_state;
+            }
+            break;
+
         case EvseState::T_step_EF:
             if (initialize_state) {
                 session_log.evse(false, "Enter T_step_EF");
@@ -488,9 +499,9 @@ void Charger::run_state_machine() {
             }
 
             if (config_context.charge_mode == ChargeMode::AC) {
-                // In AC mode BASIC, iec_allow is sufficient.  The same is true for HLC mode when nominal PWM is used as
-                // the car can do BASIC and HLC charging any time. In AC HLC with 5 percent mode, we need to wait for
-                // both iec_allow and hlc_allow.
+                // In AC mode BASIC, iec_allow is sufficient.  The same is true for HLC mode when nominal PWM is
+                // used as the car can do BASIC and HLC charging any time. In AC HLC with 5 percent mode, we need to
+                // wait for both iec_allow and hlc_allow.
 
                 if (not power_available()) {
                     shared_context.current_state = EvseState::WaitingForEnergy;
@@ -503,7 +514,8 @@ void Charger::run_state_machine() {
                         signal_simple_event(types::evse_manager::SessionEventEnum::ChargingStarted);
                         shared_context.current_state = EvseState::Charging;
                     } else {
-                        // We have power and PWM is on, but EV did not proceed to state C yet (and/or HLC is not ready)
+                        // We have power and PWM is on, but EV did not proceed to state C yet (and/or HLC is not
+                        // ready)
                         if (not shared_context.hlc_charging_active and not shared_context.legacy_wakeup_done and
                             time_in_current_state > LEGACY_WAKEUP_TIMEOUT) {
                             session_log.evse(false, "EV did not transition to state C, trying one legacy wakeup "
@@ -537,6 +549,16 @@ void Charger::run_state_machine() {
         case EvseState::Charging:
             if (initialize_state) {
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
+                stopwatch.mark("Charging started");
+                stopwatch.report_phase();
+                auto report = stopwatch.report_all_phases();
+                if (config_context.charge_mode == ChargeMode::DC) {
+                    EVLOG_info << "Timing statistics (Plugin to CurrentDemand)";
+                    EVLOG_info << "-------------------------------------------";
+                    for (const auto& r : report) {
+                        EVLOG_info << r;
+                    }
+                }
             }
 
             // Wait here until all errors are cleared
@@ -612,8 +634,8 @@ void Charger::run_state_machine() {
                 }
 
                 // We come here by a state C->B transition but the ISO message may not have arrived yet,
-                // so we wait here until we know wether it is Terminate or Pause. Until we leave PWM on (should not be
-                // shut down before SessionStop.req)
+                // so we wait here until we know wether it is Terminate or Pause. Until we leave PWM on (should not
+                // be shut down before SessionStop.req)
 
                 if (shared_context.hlc_charging_terminate_pause == HlcTerminatePause::Terminate) {
                     // EV wants to terminate session
@@ -686,8 +708,8 @@ void Charger::run_state_machine() {
                         // this is a backup switch off, normally it should be switched off earlier by ISO protocol.
                         signal_dc_supply_off();
                     }
-                    // Car is maybe not unplugged yet, so for HLC(AC/DC) wait in this state. We will go to Finished once
-                    // car is unplugged.
+                    // Car is maybe not unplugged yet, so for HLC(AC/DC) wait in this state. We will go to Finished
+                    // once car is unplugged.
                 } else {
                     // For AC BASIC charging, we reached StoppingCharging because an unplug happend.
                     pwm_off();
@@ -784,6 +806,8 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
 
     case EvseState::Idle:
         if (cp_event == CPEvent::CarPluggedIn) {
+            stopwatch.reset();
+            stopwatch.mark_phase("ConnSetup");
             shared_context.current_state = EvseState::WaitingForAuthentication;
         }
         break;
@@ -1147,6 +1171,8 @@ bool Charger::start_transaction() {
         }
     }
 
+    store->store_session(shared_context.session_uuid);
+
     signal_transaction_started_event(shared_context.id_token);
     return true;
 }
@@ -1169,9 +1195,49 @@ void Charger::stop_transaction() {
         }
     }
 
+    store->clear_session();
+
     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingFinished);
     signal_transaction_finished_event(shared_context.last_stop_transaction_reason,
                                       shared_context.stop_transaction_id_token);
+}
+
+void Charger::cleanup_transactions_on_startup() {
+    // See if we have an open transaction in persistent storage
+    auto session_uuid = store->get_session();
+    if (not session_uuid.empty()) {
+        EVLOG_info << "Cleaning up transaction with UUID " << session_uuid << " on start up";
+        store->clear_session();
+
+        types::evse_manager::TransactionFinished transaction_finished;
+
+        // If yes, try to close nicely with the ID we remember and trigger a transaction finished event on success
+        for (const auto& meter : r_powermeter_billing) {
+            const auto response = meter->call_stop_transaction(session_uuid);
+            // If we fail to stop the transaction, it was probably just not active anymore
+            if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
+                EVLOG_warning << "Failed to stop a transaction on the power meter " << response.error.value_or("");
+                break;
+            } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
+                // Fill in OCMF from the recovered transaction
+                transaction_finished.start_signed_meter_value = response.start_signed_meter_value;
+                transaction_finished.signed_meter_value = response.signed_meter_value;
+                break;
+            }
+        }
+
+        // Send out event to inform OCPP et al
+        std::optional<types::authorization::ProvidedIdToken> id_token;
+        signal_transaction_finished_event(types::evse_manager::StopTransactionReason::PowerLoss, id_token);
+    }
+
+    // Now we did what we could to clean up, so if there are still transactions going on in the power meter close them
+    // anyway. In this case we cannot generate a transaction finished event for OCPP et al since we cannot match it to
+    // our transaction anymore.
+    EVLOG_info << "Cleaning up any other transaction on start up";
+    for (const auto& meter : r_powermeter_billing) {
+        meter->call_stop_transaction("");
+    }
 }
 
 std::optional<types::units_signed::SignedMeterValue>
@@ -1192,16 +1258,30 @@ std::optional<types::units_signed::SignedMeterValue> Charger::get_start_signed_m
 }
 
 bool Charger::switch_three_phases_while_charging(bool n) {
-    bsp->switch_three_phases_while_charging(n);
-    return false; // FIXME: implement real return value when protobuf has sync calls
+    if (shared_context.hlc_charging_active) {
+        return false;
+    }
+
+    if (shared_context.current_state == EvseState::Charging) {
+        // In charging state, we need to go via a helper state for the delay
+        shared_context.switch_3ph1ph_threephase = n;
+        internal_context.switching_phases_return_state = EvseState::PrepareCharging;
+        shared_context.current_state = EvseState::SwitchPhases;
+    } else if (shared_context.current_state == EvseState::SwitchPhases) {
+        shared_context.switch_3ph1ph_threephase = n;
+    } else {
+        // In all other states we can tell the bsp directly.
+        bsp->switch_three_phases_while_charging(n);
+    }
+    return true;
 }
 
-void Charger::setup(bool three_phases, bool has_ventilation, const std::string& country_code,
-                    const ChargeMode _charge_mode, bool _ac_hlc_enabled, bool _ac_hlc_use_5percent,
-                    bool _ac_enforce_hlc, bool _ac_with_soc_timeout, float _soft_over_current_tolerance_percent,
-                    float _soft_over_current_measurement_noise_A) {
+void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _ac_hlc_enabled,
+                    bool _ac_hlc_use_5percent, bool _ac_enforce_hlc, bool _ac_with_soc_timeout,
+                    float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
+                    const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state) {
     // set up board support package
-    bsp->setup(three_phases, has_ventilation, country_code);
+    bsp->setup(has_ventilation);
 
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_setup);
     // cache our config variables
@@ -1213,6 +1293,10 @@ void Charger::setup(bool three_phases, bool has_ventilation, const std::string& 
     shared_context.ac_with_soc_timer = 3600000;
     soft_over_current_tolerance_percent = _soft_over_current_tolerance_percent;
     soft_over_current_measurement_noise_A = _soft_over_current_measurement_noise_A;
+
+    config_context.switch_3ph1ph_delay_s = _switch_3ph1ph_delay_s;
+    config_context.switch_3ph1ph_cp_state_F = _switch_3ph1ph_cp_state == "F";
+
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
 }
@@ -1478,6 +1562,9 @@ std::string Charger::evse_state_to_string(EvseState s) {
     case EvseState::StoppingCharging:
         return ("StoppingCharging");
         break;
+    case EvseState::SwitchPhases:
+        return ("SwitchPhases");
+        break;
     }
     return "Invalid";
 }
@@ -1596,13 +1683,13 @@ void Charger::notify_currentdemand_started() {
 }
 
 void Charger::inform_new_evse_max_hlc_limits(
-    const types::iso15118_charger::DC_EVSEMaximumLimits& _currentEvseMaxLimits) {
+    const types::iso15118_charger::DcEvseMaximumLimits& _currentEvseMaxLimits) {
     Everest::scoped_lock_timeout lock(state_machine_mutex,
                                       Everest::MutexDescription::Charger_inform_new_evse_max_hlc_limits);
     shared_context.current_evse_max_limits = _currentEvseMaxLimits;
 }
 
-types::iso15118_charger::DC_EVSEMaximumLimits Charger::get_evse_max_hlc_limits() {
+types::iso15118_charger::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_evse_max_hlc_limits);
     return shared_context.current_evse_max_limits;
 }
@@ -1630,41 +1717,41 @@ void Charger::dlink_error() {
 
     // Is PWM on at the moment?
     if (not shared_context.pwm_running) {
-        // [V2G3-M07-04]: With receiving a D-LINK_ERROR.request from HLE in X1 state, the EVSE’s communication node
-        // shall perform a state X1 to state E/F to state X1 or X2 transition.
+        // [V2G3-M07-04]: With receiving a D-LINK_ERROR.request from HLE in X1 state, the EVSE’s
+        // communication node shall perform a state X1 to state E/F to state X1 or X2 transition.
     } else {
-        // [V2G3-M07-05]: With receiving a D-LINK_ERROR.request in X2 state from HLE, the EVSE’s communication node
-        // shall perform a state X2 to X1 to state E/F to state X1 or X2 transition.
+        // [V2G3-M07-05]: With receiving a D-LINK_ERROR.request in X2 state from HLE, the EVSE’s
+        // communication node shall perform a state X2 to X1 to state E/F to state X1 or X2 transition.
 
         // Are we in 5% mode or not?
         if (hlc_use_5percent_current_session) {
-            // [V2G3-M07-06] Within the control pilot state X1, the communication node shall leave the logical
-            // network and change the matching state to "Unmatched". [V2G3-M07-07] With reaching the state
-            // “Unmatched”, the EVSE shall switch to state E/F.
+            // [V2G3-M07-06] Within the control pilot state X1, the communication node shall leave the
+            // logical network and change the matching state to "Unmatched". [V2G3-M07-07] With reaching the
+            // state “Unmatched”, the EVSE shall switch to state E/F.
 
             // FIXME: We don't wait for SLAC to go to UNMATCHED in X1 for now but just do a normal 3 seconds
             // t_step_X1 instead. This should be more then sufficient for the SLAC module to reset.
 
             // Do t_step_X1 with a t_step_EF afterwards
-            // [V2G3-M07-08] The state E/F shall be applied at least T_step_EF: This is already handled in the
-            // t_step_EF state.
+            // [V2G3-M07-08] The state E/F shall be applied at least T_step_EF: This is already handled in
+            // the t_step_EF state.
             internal_context.t_step_X1_return_state = EvseState::T_step_EF;
             internal_context.t_step_X1_return_pwm = 0.;
             shared_context.current_state = EvseState::T_step_X1;
 
             // After returning from T_step_EF, go to Waiting for Auth (We are restarting the session)
             internal_context.t_step_EF_return_state = EvseState::WaitingForAuthentication;
-            // [V2G3-M07-09] After applying state E/F, the EVSE shall switch to contol pilot state X1 or X2 as soon
-            // as the EVSE is ready control for pilot incoming duty matching cycle requests: This is already handled
-            // in the Auth step.
+            // [V2G3-M07-09] After applying state E/F, the EVSE shall switch to contol pilot state X1 or X2
+            // as soon as the EVSE is ready control for pilot incoming duty matching cycle requests: This is
+            // already handled in the Auth step.
 
             // [V2G3-M07-05] says we need to go through X1 at the end of the sequence
             internal_context.t_step_EF_return_pwm = 0.;
         }
         // else {
-        // [V2G3-M07-10] Gives us two options for nominal PWM mode and HLC in case of error: We choose [V2G3-M07-12]
-        // (Don't interrupt basic AC charging just because an error in HLC happend)
-        // So we don't do anything here, SLAC will be notified anyway to reset
+        // [V2G3-M07-10] Gives us two options for nominal PWM mode and HLC in case of error: We choose
+        // [V2G3-M07-12] (Don't interrupt basic AC charging just because an error in HLC happend) So we
+        // don't do anything here, SLAC will be notified anyway to reset
         //}
     }
 }
@@ -1766,9 +1853,7 @@ void Charger::graceful_stop_charging() {
     }
 
     // open contactors
-    if (contactors_closed and not shared_context.contactor_welded) {
-        bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
-    }
+    bsp->allow_power_on(false, types::evse_board_support::Reason::PowerOff);
 }
 
 void Charger::clear_errors_on_unplug() {

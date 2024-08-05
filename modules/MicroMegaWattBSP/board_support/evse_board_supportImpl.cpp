@@ -42,7 +42,7 @@ static types::board_support_common::BspEvent cast_event_type(bool relais_state) 
 
 void evse_board_supportImpl::init() {
     {
-        std::lock_guard<std::mutex> lock(capsMutex);
+        std::scoped_lock lock(capsMutex);
 
         caps.min_current_A_import = 0;
         caps.max_current_A_import = 100;
@@ -83,15 +83,11 @@ void evse_board_supportImpl::init() {
 }
 
 void evse_board_supportImpl::ready() {
-}
-
-void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {
-    // your code for cmd setup goes here
-}
-
-types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
-    std::lock_guard<std::mutex> lock(capsMutex);
-    return caps;
+    {
+        // Publish caps once in the beginning
+        std::scoped_lock lock(capsMutex);
+        publish_capabilities(caps);
+    }
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {

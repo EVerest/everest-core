@@ -139,7 +139,7 @@ jobs:
       - name: Run integration tests
         run: |
           pushd source/.ci/e2e
-          docker-compose run \
+          docker compose run \
           e2e-test-server \
           run-script run_integration_tests
       - name: Upload result & report as artifact

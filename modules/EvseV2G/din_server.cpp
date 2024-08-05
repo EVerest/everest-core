@@ -120,11 +120,11 @@ static v2g_event din_validate_response_code(din_responseCodeType* const din_resp
 }
 
 /*!
- * \brief publish_DIN_DC_EVStatusType This function is a helper function to publish EVStatusType.
+ * \brief publish_DIN_DcEvStatus This function is a helper function to publish EVStatusType.
  * \param ctx is a pointer to the V2G context.
  * \param din_ev_status the structure the holds the EV Status elements.
  */
-static void publish_DIN_DC_EVStatusType(struct v2g_context* ctx, const struct din_DC_EVStatusType& din_ev_status) {
+static void publish_DIN_DcEvStatus(struct v2g_context* ctx, const struct din_DC_EVStatusType& din_ev_status) {
     if ((ctx->ev_v2g_data.din_dc_ev_status.EVErrorCode != din_ev_status.EVErrorCode) ||
         (ctx->ev_v2g_data.din_dc_ev_status.EVReady != din_ev_status.EVReady) ||
         (ctx->ev_v2g_data.din_dc_ev_status.EVRESSSOC != din_ev_status.EVRESSSOC)) {
@@ -132,11 +132,11 @@ static void publish_DIN_DC_EVStatusType(struct v2g_context* ctx, const struct di
         ctx->ev_v2g_data.din_dc_ev_status.EVReady = din_ev_status.EVReady;
         ctx->ev_v2g_data.din_dc_ev_status.EVRESSSOC = din_ev_status.EVRESSSOC;
 
-        types::iso15118_charger::DC_EVStatusType ev_status;
-        ev_status.DC_EVErrorCode = static_cast<types::iso15118_charger::DC_EVErrorCode>(din_ev_status.EVErrorCode);
-        ev_status.DC_EVReady = din_ev_status.EVReady;
-        ev_status.DC_EVRESSSOC = static_cast<float>(din_ev_status.EVRESSSOC);
-        ctx->p_charger->publish_DC_EVStatus(ev_status);
+        types::iso15118_charger::DcEvStatus ev_status;
+        ev_status.dc_ev_error_code = static_cast<types::iso15118_charger::DcEvErrorCode>(din_ev_status.EVErrorCode);
+        ev_status.dc_ev_ready = din_ev_status.EVReady;
+        ev_status.dc_ev_ress_soc = static_cast<float>(din_ev_status.EVRESSSOC);
+        ctx->p_charger->publish_dc_ev_status(ev_status);
     }
 }
 
@@ -162,7 +162,7 @@ publish_din_service_discovery_req(struct v2g_context* ctx,
  */
 static void publish_din_service_payment_selection_req(
     struct v2g_context* ctx, struct din_ServicePaymentSelectionReqType const* const v2g_payment_service_selection_req) {
-    // V2G values that can be published: SelectedPaymentOption, SelectedServiceList
+    // V2G values that can be published: selected_payment_option, SelectedServiceList
 }
 
 /*!
@@ -175,25 +175,25 @@ static void publish_din_charge_parameter_discovery_req(
     struct v2g_context* ctx,
     struct din_ChargeParameterDiscoveryReqType const* const v2g_charge_parameter_discovery_req) {
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    ctx->p_charger->publish_RequestedEnergyTransferMode(static_cast<types::iso15118_charger::EnergyTransferMode>(
+    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118_charger::EnergyTransferMode>(
         v2g_charge_parameter_discovery_req->EVRequestedEnergyTransferType));
     if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter_isUsed == (unsigned int)1) {
 
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity_isUsed == (unsigned int)1) {
-            ctx->p_charger->publish_DC_EVEnergyCapacity(calc_physical_value(
+            ctx->p_charger->publish_dc_ev_energy_capacity(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier));
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest_isUsed == (unsigned int)1) {
-            ctx->p_charger->publish_DC_EVEnergyRequest(calc_physical_value(
+            ctx->p_charger->publish_dc_ev_energy_request(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier));
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC_isUsed == (unsigned int)1) {
-            ctx->p_charger->publish_DC_FullSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
+            ctx->p_charger->publish_dc_full_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC_isUsed == (unsigned int)1) {
-            ctx->p_charger->publish_DC_BulkSOC(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
+            ctx->p_charger->publish_dc_bulk_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
         }
 
         float evMaximumCurrentLimit = calc_physical_value(
@@ -205,10 +205,11 @@ static void publish_din_charge_parameter_discovery_req(
         float evMaximumVoltageLimit = calc_physical_value(
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Value,
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumVoltageLimit.Multiplier);
-        publish_DC_EVMaximumLimits(ctx, evMaximumCurrentLimit, (unsigned int)1, evMaximumPowerLimit,
-                                   v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed,
-                                   evMaximumVoltageLimit, (unsigned int)1);
-        publish_DIN_DC_EVStatusType(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
+        publish_dc_ev_maximum_limits(
+            ctx, evMaximumCurrentLimit, (unsigned int)1, evMaximumPowerLimit,
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed, evMaximumVoltageLimit,
+            (unsigned int)1);
+        publish_DIN_DcEvStatus(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
     }
 }
 
@@ -220,13 +221,13 @@ static void publish_din_power_delivery_req(struct v2g_context* ctx,
                                            struct din_PowerDeliveryReqType const* const v2g_power_delivery_req) {
     // V2G values that can be published: ReadyToChargeState
     if (v2g_power_delivery_req->DC_EVPowerDeliveryParameter_isUsed == (unsigned int)1) {
-        ctx->p_charger->publish_DC_ChargingComplete(
+        ctx->p_charger->publish_dc_charging_complete(
             v2g_power_delivery_req->DC_EVPowerDeliveryParameter.ChargingComplete);
         if (v2g_power_delivery_req->DC_EVPowerDeliveryParameter.BulkChargingComplete_isUsed == (unsigned int)1) {
-            ctx->p_charger->publish_DC_BulkChargingComplete(
+            ctx->p_charger->publish_dc_bulk_charging_complete(
                 v2g_power_delivery_req->DC_EVPowerDeliveryParameter.BulkChargingComplete);
         }
-        publish_DIN_DC_EVStatusType(ctx, v2g_power_delivery_req->DC_EVPowerDeliveryParameter.DC_EVStatus);
+        publish_DIN_DcEvStatus(ctx, v2g_power_delivery_req->DC_EVPowerDeliveryParameter.DC_EVStatus);
     }
 }
 
@@ -237,11 +238,11 @@ static void publish_din_power_delivery_req(struct v2g_context* ctx,
  */
 static void publish_din_precharge_req(struct v2g_context* ctx,
                                       struct din_PreChargeReqType const* const v2g_precharge_req) {
-    publish_DC_EVTargetVoltageCurrent(
+    publish_dc_ev_target_voltage_current(
         ctx,
         calc_physical_value(v2g_precharge_req->EVTargetVoltage.Value, v2g_precharge_req->EVTargetVoltage.Multiplier),
         calc_physical_value(v2g_precharge_req->EVTargetCurrent.Value, v2g_precharge_req->EVTargetCurrent.Multiplier));
-    publish_DIN_DC_EVStatusType(ctx, v2g_precharge_req->DC_EVStatus);
+    publish_DIN_DcEvStatus(ctx, v2g_precharge_req->DC_EVStatus);
 }
 
 /*!
@@ -252,21 +253,21 @@ static void publish_din_current_demand_req(struct v2g_context* ctx,
                                            struct din_CurrentDemandReqType const* const v2g_current_demand_req) {
     if ((v2g_current_demand_req->BulkChargingComplete_isUsed == (unsigned int)1) &&
         (ctx->ev_v2g_data.bulk_charging_complete != v2g_current_demand_req->BulkChargingComplete)) {
-        ctx->p_charger->publish_DC_BulkChargingComplete(v2g_current_demand_req->BulkChargingComplete);
+        ctx->p_charger->publish_dc_bulk_charging_complete(v2g_current_demand_req->BulkChargingComplete);
         ctx->ev_v2g_data.bulk_charging_complete = v2g_current_demand_req->BulkChargingComplete;
     }
     if (ctx->ev_v2g_data.charging_complete != v2g_current_demand_req->ChargingComplete) {
-        ctx->p_charger->publish_DC_ChargingComplete(v2g_current_demand_req->ChargingComplete);
+        ctx->p_charger->publish_dc_charging_complete(v2g_current_demand_req->ChargingComplete);
         ctx->ev_v2g_data.charging_complete = v2g_current_demand_req->ChargingComplete;
     }
 
-    publish_DIN_DC_EVStatusType(ctx, v2g_current_demand_req->DC_EVStatus);
+    publish_DIN_DcEvStatus(ctx, v2g_current_demand_req->DC_EVStatus);
 
-    publish_DC_EVTargetVoltageCurrent(ctx,
-                                      calc_physical_value(v2g_current_demand_req->EVTargetVoltage.Value,
-                                                          v2g_current_demand_req->EVTargetVoltage.Multiplier),
-                                      calc_physical_value(v2g_current_demand_req->EVTargetCurrent.Value,
-                                                          v2g_current_demand_req->EVTargetCurrent.Multiplier));
+    publish_dc_ev_target_voltage_current(ctx,
+                                         calc_physical_value(v2g_current_demand_req->EVTargetVoltage.Value,
+                                                             v2g_current_demand_req->EVTargetVoltage.Multiplier),
+                                         calc_physical_value(v2g_current_demand_req->EVTargetCurrent.Value,
+                                                             v2g_current_demand_req->EVTargetCurrent.Multiplier));
 
     float evMaximumCurrentLimit = calc_physical_value(v2g_current_demand_req->EVMaximumCurrentLimit.Value,
                                                       v2g_current_demand_req->EVMaximumCurrentLimit.Multiplier);
@@ -274,9 +275,9 @@ static void publish_din_current_demand_req(struct v2g_context* ctx,
                                                     v2g_current_demand_req->EVMaximumPowerLimit.Multiplier);
     float evMaximumVoltageLimit = calc_physical_value(v2g_current_demand_req->EVMaximumVoltageLimit.Value,
                                                       v2g_current_demand_req->EVMaximumVoltageLimit.Multiplier);
-    publish_DC_EVMaximumLimits(ctx, evMaximumCurrentLimit, v2g_current_demand_req->EVMaximumCurrentLimit_isUsed,
-                               evMaximumPowerLimit, v2g_current_demand_req->EVMaximumPowerLimit_isUsed,
-                               evMaximumVoltageLimit, v2g_current_demand_req->EVMaximumVoltageLimit_isUsed);
+    publish_dc_ev_maximum_limits(ctx, evMaximumCurrentLimit, v2g_current_demand_req->EVMaximumCurrentLimit_isUsed,
+                                 evMaximumPowerLimit, v2g_current_demand_req->EVMaximumPowerLimit_isUsed,
+                                 evMaximumVoltageLimit, v2g_current_demand_req->EVMaximumVoltageLimit_isUsed);
 
     float v2g_dc_ev_remaining_time_to_full_soc =
         calc_physical_value(v2g_current_demand_req->RemainingTimeToFullSoC.Value,
@@ -285,7 +286,7 @@ static void publish_din_current_demand_req(struct v2g_context* ctx,
         calc_physical_value(v2g_current_demand_req->RemainingTimeToBulkSoC.Value,
                             v2g_current_demand_req->RemainingTimeToBulkSoC.Multiplier);
 
-    publish_DC_EVRemainingTime(
+    publish_dc_ev_remaining_time(
         ctx, v2g_dc_ev_remaining_time_to_full_soc, v2g_current_demand_req->RemainingTimeToFullSoC_isUsed,
         v2g_dc_ev_remaining_time_to_bulk_soc, v2g_current_demand_req->RemainingTimeToBulkSoC_isUsed);
 }
@@ -322,7 +323,7 @@ static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     else
         buffer[0] = '\0';
 
-    conn->ctx->p_charger->publish_EVCCIDD(buffer); // publish EVCC ID
+    conn->ctx->p_charger->publish_evcc_id(buffer); // publish EVCC ID
 
     dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
 
@@ -631,11 +632,11 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
     publish_din_power_delivery_req(conn->ctx, req);
 
     if (req->ReadyToChargeState == (int)0) {
-        conn->ctx->p_charger->publish_currentDemand_Finished(nullptr);
-        conn->ctx->p_charger->publish_DC_Open_Contactor(nullptr);
+        conn->ctx->p_charger->publish_current_demand_finished(nullptr);
+        conn->ctx->p_charger->publish_dc_open_contactor(nullptr);
         conn->ctx->session.is_charging = false;
     } else {
-        conn->ctx->p_charger->publish_V2G_Setup_Finished(nullptr);
+        conn->ctx->p_charger->publish_v2g_setup_finished(nullptr);
     }
 
     /* Now fill the evse response message */
@@ -713,7 +714,7 @@ static enum v2g_event handle_din_cable_check(struct v2g_connection* conn) {
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
 
     /* At first, publish the received EV request message to the MQTT interface */
-    publish_DIN_DC_EVStatusType(conn->ctx, req->DC_EVStatus);
+    publish_DIN_DcEvStatus(conn->ctx, req->DC_EVStatus);
 
     // TODO: Wait for CP state C [V2G-DC-547]
 
@@ -868,7 +869,7 @@ static enum v2g_event handle_din_welding_detection(struct v2g_connection* conn) 
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
 
     /* At first, publish the received EV request message to the MQTT interface */
-    publish_DIN_DC_EVStatusType(conn->ctx, req->DC_EVStatus);
+    publish_DIN_DcEvStatus(conn->ctx, req->DC_EVStatus);
 
     /* TODO: Waiting for CP-State B [V2G-DC-556]. */
 
@@ -940,7 +941,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
     if (exi_in->V2G_Message.Body.CurrentDemandReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling CurrentDemandReq");
         if (conn->ctx->last_v2g_msg == V2G_POWER_DELIVERY_MSG) {
-            conn->ctx->p_charger->publish_currentDemand_Started(nullptr);
+            conn->ctx->p_charger->publish_current_demand_started(nullptr);
             conn->ctx->session.is_charging = true;
         }
         conn->ctx->current_v2g_msg = V2G_CURRENT_DEMAND_MSG;
@@ -971,7 +972,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_AUTHORIZATION_MSG;
         if (conn->ctx->last_v2g_msg != V2G_AUTHORIZATION_MSG) {
             dlog(DLOG_LEVEL_INFO, "Auth-phase started");
-            conn->ctx->p_charger->publish_Require_Auth_EIM(nullptr);
+            conn->ctx->p_charger->publish_require_auth_eim(nullptr);
         }
         exi_out->V2G_Message.Body.ContractAuthenticationRes_isUsed = 1u;
         init_din_ContractAuthenticationResType(&exi_out->V2G_Message.Body.ContractAuthenticationRes);
@@ -997,7 +998,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
         dlog(DLOG_LEVEL_TRACE, "Handling CableCheckReq");
         conn->ctx->current_v2g_msg = V2G_CABLE_CHECK_MSG;
         if (conn->ctx->last_v2g_msg == V2G_CHARGE_PARAMETER_DISCOVERY_MSG) {
-            conn->ctx->p_charger->publish_Start_CableCheck(nullptr);
+            conn->ctx->p_charger->publish_start_cable_check(nullptr);
             dlog(DLOG_LEVEL_INFO, "Isolation-phase started");
         }
         exi_out->V2G_Message.Body.CableCheckRes_isUsed = 1u;
@@ -1007,6 +1008,7 @@ enum v2g_event din_handle_request(v2g_connection* conn) {
         dlog(DLOG_LEVEL_TRACE, "Handling PreChargeReq");
         conn->ctx->current_v2g_msg = V2G_PRE_CHARGE_MSG;
         if (conn->ctx->last_v2g_msg == V2G_CABLE_CHECK_MSG) {
+            conn->ctx->p_charger->publish_start_pre_charge(nullptr);
             dlog(DLOG_LEVEL_INFO, "Precharge-phase started");
         }
         exi_out->V2G_Message.Body.PreChargeRes_isUsed = 1u;

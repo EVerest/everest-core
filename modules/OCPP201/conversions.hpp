@@ -114,10 +114,10 @@ ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse);
 /// \brief Converts a given types::ocpp::AttributeEnum to ocpp::v201::AttributeEnum
 ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum);
 
-/// \brief Converts a given types::types::iso15118_charger::Request_Exi_Stream_Schema to
+/// \brief Converts a given types::types::iso15118_charger::RequestExiStreamSchema to
 /// ocpp::v201::Get15118EVCertificateRequest
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request);
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request);
 
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason

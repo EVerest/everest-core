@@ -18,7 +18,7 @@ void Auth::init() {
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
-            std::thread t([this, provided_token]() { const auto res = this->auth_handler->on_token(provided_token); });
+            std::thread t([this, provided_token]() { this->auth_handler->on_token(provided_token); });
             t.detach();
         });
     }
@@ -36,6 +36,15 @@ void Auth::ready() {
         evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(connector_id, session_event);
         });
+
+        evse_manager->subscribe_error(
+            "evse_manager/Inoperative",
+            [this, connector_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_raised(connector_id);
+            },
+            [this, connector_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_cleared(connector_id);
+            });
 
         evse_index++;
     }

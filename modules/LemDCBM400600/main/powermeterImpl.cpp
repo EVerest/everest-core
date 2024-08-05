@@ -39,11 +39,23 @@ void powermeterImpl::ready() {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             try {
                 this->publish_powermeter(this->controller->get_powermeter());
+                // if the communication error is set, clear the error
+                if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                               "Communication timed out")) {
+                    clear_error("powermeter/CommunicationFault", "Communication timed out");
+                }
             } catch (LemDCBM400600Controller::DCBMUnexpectedResponseException& dcbm_exception) {
                 EVLOG_error << "Failed to publish powermeter value due to an invalid device response: "
                             << dcbm_exception.what();
             } catch (HttpClientError& client_error) {
                 EVLOG_error << "Failed to publish powermeter value due to an http error: " << client_error.what();
+                if (!this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
+                                                                "Communication timed out")) {
+                    auto error =
+                        this->error_factory->create_error("powermeter/CommunicationFault", "Communication timed out",
+                                                          "This error is raised due to communication timeout");
+                    raise_error(error);
+                }
             }
         }
     });

@@ -42,7 +42,7 @@ std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_
         csv.push_back(str);
     }
 
-    for (const auto tx_start_stop_point : csv) {
+    for (const auto& tx_start_stop_point : csv) {
         if (tx_start_stop_point == "ParkingBayOccupancy") {
             tx_start_stop_points.insert(TxStartStopPoint::ParkingBayOccupancy);
         } else if (tx_start_stop_point == "EVConnected") {
@@ -524,6 +524,11 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_security_event(event);
     };
 
+    callbacks.set_charging_profiles_callback = [this]() {
+        // TODO: implement once charging profiles are available in libocpp
+        return;
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
@@ -619,17 +624,28 @@ void OCPP201::ready() {
         });
 
         evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](const types::iso15118_charger::Request_Exi_Stream_Schema& certificate_request) {
+            [this, evse_id](const types::iso15118_charger::RequestExiStreamSchema& certificate_request) {
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
                     conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
                 const auto everest_response_status =
                     conversions::to_everest_iso15118_charger_status(ocpp_response.status);
-                const types::iso15118_charger::Response_Exi_Stream_Status everest_response{
-                    everest_response_status, certificate_request.certificateAction, ocpp_response.exiResponse};
+                const types::iso15118_charger::ResponseExiStreamStatus everest_response{
+                    everest_response_status, certificate_request.certificate_action, ocpp_response.exiResponse};
                 this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
             });
+
+        auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_faulted(evse_id, 1);
+        };
+
+        auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
+            this->charge_point->on_fault_cleared(evse_id, 1);
+        };
+
+        // A permanent fault from the evse requirement indicates that the evse should move to faulted state
+        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
 
         evse_id++;
     }
@@ -707,6 +723,8 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
+
+        // missing AuthRequired, PrepareCharging and many more
     }
 
     // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
@@ -823,7 +841,7 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
 
     auto transaction_data = this->transaction_handler->get_transaction_data(evse_id);
     if (transaction_data == nullptr) {
-        EVLOG_warning << "Could not update transaction data because no tranasaction data is present. This might happen "
+        EVLOG_warning << "Could not update transaction data because no transaction data is present. This might happen "
                          "in case a TxStopPoint is already active when a TransactionStarted event occurs (e.g. "
                          "TxStopPoint is EnergyTransfer or ParkingBayOccupied)";
         this->charge_point->on_session_started(evse_id, connector_id);

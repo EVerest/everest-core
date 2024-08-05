@@ -814,11 +814,11 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
 }
 
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request) {
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request) {
     ocpp::v201::Get15118EVCertificateRequest _request;
-    _request.iso15118SchemaVersion = request.iso15118SchemaVersion;
-    _request.exiRequest = request.exiRequest;
-    _request.action = conversions::to_ocpp_certificate_action_enum(request.certificateAction);
+    _request.iso15118SchemaVersion = request.iso15118_schema_version;
+    _request.exiRequest = request.exi_request;
+    _request.action = conversions::to_ocpp_certificate_action_enum(request.certificate_action);
     return _request;
 }
 

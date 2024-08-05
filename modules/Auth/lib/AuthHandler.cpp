@@ -232,7 +232,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     types::authorization::ValidationResult validation_result = {types::authorization::AuthorizationStatus::Unknown};
     if (!validation_results.empty()) {
         bool authorized = false;
-        int i = 0;
+        std::vector<ValidationResult>::size_type i = 0;
         // iterate over validation results
         while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
             validation_result = validation_results.at(i);
@@ -523,6 +523,18 @@ void AuthHandler::call_reservation_cancelled(const int& connector_id) {
     this->reservation_cancelled_callback(this->connectors.at(connector_id)->evse_index);
 }
 
+void AuthHandler::handle_permanent_fault_raised(const int connector_id) {
+    if (not ignore_faults) {
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+    }
+}
+
+void AuthHandler::handle_permanent_fault_cleared(const int connector_id) {
+    if (not ignore_faults) {
+        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
+    }
+}
+
 void AuthHandler::handle_session_event(const int connector_id, const SessionEvent& event) {
 
     std::lock_guard<std::mutex> lk(this->timer_mutex);
@@ -573,21 +585,6 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
             this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
         }
         break;
-    case SessionEventEnum::AllErrorsCleared:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
-        }
-        break;
-    case SessionEventEnum::PermanentFault:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
-        }
-        break;
-    case SessionEventEnum::Error:
-        if (not ignore_faults) {
-            this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
-        }
-        break;
 
     case SessionEventEnum::Disabled:
         this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::DISABLE);
@@ -603,6 +600,35 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::ReservationEnd:
         this->connectors.at(connector_id)->connector.is_reservable = true;
         this->connectors.at(connector_id)->connector.reserved = false;
+        break;
+    /// explicitly fall through all the SessionEventEnum values we are not handling
+    case SessionEventEnum::Authorized:
+        [[fallthrough]];
+    case SessionEventEnum::Deauthorized:
+        [[fallthrough]];
+    case SessionEventEnum::AuthRequired:
+        [[fallthrough]];
+    case SessionEventEnum::PrepareCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEV:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingPausedEVSE:
+        [[fallthrough]];
+    case SessionEventEnum::WaitingForEnergy:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingResumed:
+        [[fallthrough]];
+    case SessionEventEnum::StoppingCharging:
+        [[fallthrough]];
+    case SessionEventEnum::ChargingFinished:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugStarted:
+        [[fallthrough]];
+    case SessionEventEnum::ReplugFinished:
+        [[fallthrough]];
+    case SessionEventEnum::PluginTimeout:
         break;
     }
     this->connectors.at(connector_id)->event_mutex.unlock();

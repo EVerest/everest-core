@@ -42,18 +42,10 @@ config:
     description: Log full XML messages for HLC
     type: boolean
     default: true
-  three_phases:
-    description: Limit to three phases (true) or one phase (false)
-    type: boolean
-    default: true
   has_ventilation:
     description: Allow ventilated charging or not
     type: boolean
     default: true
-  country_code:
-    description: Country Code
-    type: string
-    default: DE
   max_current_import_A:
     description: User configurable current limit for this EVSE in Ampere
     type: number
@@ -236,6 +228,23 @@ config:
       If configured to 0, the EvseManager will not wait for an initial meter value before it becomes ready to start charging.
     type: integer
     default: 5000
+  switch_3ph1ph_delay_s:
+    description: >-
+      Wait for n seconds when switching between 3ph/1ph mode.
+    type: integer
+    default: 10
+  switch_3ph1ph_cp_state:
+    description: >-
+      CP state to use for switching. 
+      WARNING: Some EVs may be permanently destroyed when switching from 1ph to 3ph. 
+      It is the responsibiltiy of the evse_board_support implementation to ensure the EV is capable of performing
+      the switch. If it is not, the capabilities must set the supports_changing_phases_during_charging to false.
+      Phase switching is only possible in basic charging mode.
+    type: string
+    enum:
+      - X1
+      - F
+    default: X1
 provides:
   evse:
     interface: evse_manager
@@ -282,6 +291,10 @@ requires:
     max_connections: 1
   powersupply_DC:
     interface: power_supply_DC
+    min_connections: 0
+    max_connections: 1
+  store:
+    interface: kvs
     min_connections: 0
     max_connections: 1
 enable_external_mqtt: true

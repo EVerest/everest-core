@@ -1,7 +1,7 @@
 description: >-
   Errors for EvseManager
 
-  All error codes that begin with MREC needs to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
+  All error codes that begin with MREC need to be implemented to fulfill the Minimum Required Error Codes defined by the ChargeX consortium:
 
   https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
 errors:
@@ -11,3 +11,5 @@ errors:
     description: Over current event
   - name: PowermeterTransactionStartFailed
     description: Transaction could not be started at the powermeter
+  - name: Inoperative
+    description: Charging is not possible. Usually caused by another error from one of the requirements.
