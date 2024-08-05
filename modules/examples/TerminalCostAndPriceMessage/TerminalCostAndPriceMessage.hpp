@@ -32,7 +32,7 @@ public:
         ModuleBase(info),
         p_display_message(std::move(p_display_message)),
         r_session_cost(std::move(r_session_cost)),
-        config(config) {};
+        config(config){};
 
     const std::unique_ptr<display_messageImplBase> p_display_message;
     const std::unique_ptr<session_costIntf> r_session_cost;
