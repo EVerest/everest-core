@@ -101,20 +101,20 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
             session.ack_timeout();
 
             if (session.state == MatchingSubState::WAIT_FOR_START_ATTEN_CHAR) {
-                session_log(ctx, session, "Waiting for CM_START_ATTEN_CHAR_IND timeouted -> failed");
+                session_log(ctx, session, "Waiting for CM_START_ATTEN_CHAR_IND timed out -> failed");
                 session.state = MatchingSubState::FAILED;
             } else if (session.state == MatchingSubState::SOUNDING) {
                 session_log(ctx, session,
-                            "Sounding not yet complete but timeouted, going to sub-state FINALIZE_SOUNDING");
+                            "Sounding not yet complete but timed out, going to sub-state FINALIZE_SOUNDING");
                 session.state = MatchingSubState::FINALIZE_SOUNDING;
                 session.set_next_timeout(FINALIZE_SOUNDING_DELAY_MS);
             } else if (session.state == MatchingSubState::FINALIZE_SOUNDING) {
                 finalize_sounding(session);
             } else if (session.state == MatchingSubState::WAIT_FOR_ATTEN_CHAR_RSP) {
-                session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timeouted -> failed");
+                session_log(ctx, session, "Waiting for CM_ATTEN_CHAR_RSP timed out -> failed");
                 session.state = MatchingSubState::FAILED;
             } else if (session.state == MatchingSubState::WAIT_FOR_SLAC_MATCH) {
-                session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timeouted -> failed");
+                session_log(ctx, session, "Wating for CM_SLAC_MATCH_REQ timed out -> failed");
                 session.state = MatchingSubState::FAILED;
             }
         }
