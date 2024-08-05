@@ -673,20 +673,24 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
     return chunk;
 }
 
-types::session_cost::ChargingPriceComponent
-create_charging_price_component(const double& price, const uint32_t& number_of_decimals,
-                                const types::session_cost::CostCategory category,
-                                std::optional<types::money::CurrencyCode> currency_code) {
-    types::session_cost::ChargingPriceComponent c;
+types::money::Price create_price(const double& price, const uint32_t& number_of_decimals,
+                                 std::optional<types::money::CurrencyCode> currency_code) {
     types::money::Price p;
     types::money::Currency currency;
     currency.code = currency_code;
     currency.decimals = number_of_decimals;
     p.currency = currency;
     p.value.value = static_cast<int>(price * (pow(10, number_of_decimals)));
-    c.category = category;
-    c.price = p;
+    return p;
+}
 
+types::session_cost::ChargingPriceComponent
+create_charging_price_component(const double& price, const uint32_t& number_of_decimals,
+                                const types::session_cost::CostCategory category,
+                                std::optional<types::money::CurrencyCode> currency_code) {
+    types::session_cost::ChargingPriceComponent c;
+    c.category = category;
+    c.price = create_price(price, number_of_decimals, currency_code);
     return c;
 }
 
@@ -736,7 +740,8 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
         types::session_cost::IdlePrice idle_price;
         const ocpp::RunningCostIdlePrice& ocpp_idle_price = running_cost.idle_price.value();
         if (ocpp_idle_price.idle_hour_price.has_value()) {
-            idle_price.hour_price = ocpp_idle_price.idle_hour_price.value();
+            idle_price.hour_price =
+                create_price(ocpp_idle_price.idle_hour_price.value(), number_of_decimals, currency_code);
         }
 
         if (ocpp_idle_price.idle_grace_minutes.has_value()) {
@@ -756,7 +761,8 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
             types::session_cost::IdlePrice next_period_idle_price;
             const ocpp::RunningCostIdlePrice& ocpp_next_period_idle_price = running_cost.next_period_idle_price.value();
             if (ocpp_next_period_idle_price.idle_hour_price.has_value()) {
-                next_period_idle_price.hour_price = ocpp_next_period_idle_price.idle_hour_price.value();
+                next_period_idle_price.hour_price = create_price(ocpp_next_period_idle_price.idle_hour_price.value(),
+                                                                 number_of_decimals, currency_code);
             }
 
             if (ocpp_next_period_idle_price.idle_grace_minutes.has_value()) {

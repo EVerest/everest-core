@@ -15,7 +15,8 @@ types:
       hour_price:
         description: >-
           Price per hour while idle
-        type: number
+        type: object
+        $ref: /money#/Price
   CostCategory:
     description: Cost category
     type: string

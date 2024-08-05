@@ -137,6 +137,9 @@ types::session_cost::SessionCostChunk create_session_cost_chunk(const double& pr
                                                                 const std::optional<ocpp::DateTime>& timestamp,
                                                                 const std::optional<uint32_t>& meter_value);
 
+types::money::Price create_price(const double& price, const uint32_t& number_of_decimals,
+                                 std::optional<types::money::CurrencyCode> currency_code);
+
 types::session_cost::ChargingPriceComponent
 create_charging_price_component(const double& price, const uint32_t& number_of_decimals,
                                 const types::session_cost::CostCategory category,
