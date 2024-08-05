@@ -168,16 +168,16 @@ void MatchingState::handle_cm_mnbc_sound_ind(const slac::messages::cm_mnbc_sound
     auto session = find_session(sessions, tmp_ev_mac, msg.run_id);
 
     if (!session) {
-        ctx.log_info("No session found for CM_MNNC_SOUND_IND");
+        ctx.log_info("No session found for CM_MNBC_SOUND_IND");
         return;
     }
 
     if (session->state != MatchingSubState::SOUNDING) {
-        session_log(ctx, *session, "needs to be in state SOUNDING for CM_MNNC_SOUND_IND");
+        session_log(ctx, *session, "needs to be in state SOUNDING for CM_MNBC_SOUND_IND");
         return;
     }
 
-    session_log(ctx, *session, "received CM_MNNC_SOUND_IND");
+    session_log(ctx, *session, "received CM_MNBC_SOUND_IND");
 
     session->received_mnbc_sound = true;
 }
