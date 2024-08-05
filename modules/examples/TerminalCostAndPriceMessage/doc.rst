@@ -1,4 +1,4 @@
-.. _everest_modules_handwritten_DisplayMessage:
+.. _everest_modules_handwritten_TerminalCostAndPriceMessage:
 
 ..  This file is a placeholder for an optional single file
     handwritten documentation for the DisplayMessage module.
@@ -15,8 +15,8 @@
     and will be converted to HTML and PDF by Sphinx.
 
 *******************************************
-DisplayMessage
+TerminalCostAndPriceMessage
 *******************************************
 
-:ref:`Link <everest_modules_DisplayMessage>` to the module's reference.
-Example display message module
+:ref:`Link <everest_modules_TerminalCostAndPriceMessage>` to the module's reference.
+Example terminal cost and price message module

@@ -157,7 +157,7 @@ active_modules:
         - module_id: display_message
           implementation_id: display_message
   display_message:
-    module: DisplayMessage
+    module: TerminalCostAndPriceMessage
     connections:
       session_cost:
         - module_id: ocpp

@@ -1,4 +1,4 @@
-description: Example display message module
+description: Example cost and price message module
 provides:
   display_message:
     description: module to show a message

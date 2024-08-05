@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include "TerminalDisplayMessage.hpp"
+#include "TerminalCostAndPriceMessage.hpp"
 
 namespace module {
 
-void TerminalDisplayMessage::init() {
+void TerminalCostAndPriceMessage::init() {
     invoke_init(*p_display_message);
     this->r_session_cost->subscribe_session_cost([](const types::session_cost::SessionCost& session_cost) {
         if (!session_cost.cost_chunks.has_value()) {
@@ -61,7 +61,7 @@ void TerminalDisplayMessage::init() {
     });
 }
 
-void TerminalDisplayMessage::ready() {
+void TerminalCostAndPriceMessage::ready() {
     invoke_ready(*p_display_message);
 }
 
