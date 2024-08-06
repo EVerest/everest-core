@@ -31,7 +31,7 @@ websocketpp:
   cmake_condition: "LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP"
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: 7624055c9a23c75e310ea7b3ebb7010063cf4c6c
+  git_tag: v0.8.0
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.3.3  
