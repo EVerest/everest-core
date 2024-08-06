@@ -364,7 +364,10 @@ public:
         bool ipv6_only{true};        //!< listen on IPv6 only, when false listen on IPv4 only
     };
 
-    using ServerConnection_t = std::shared_ptr<ServerConnection>;
+    using ConnectionPtr = std::unique_ptr<ServerConnection>;
+    using ConnectionHandler = std::function<void(ConnectionPtr&& ctx)>;
+    using OptionalConfig = std::optional<std::unique_ptr<config_t>>;
+    using ConfigurationCallback = std::function<OptionalConfig()>;
 
 private:
     using ServerStatusRequestV2 = status_request::ServerStatusRequestV2;
@@ -385,7 +388,7 @@ private:
     ServerTrustedCaKeys m_server_trusted_ca_keys;       //!< trusted ca keys extension handler
     pthread_t m_server_thread{};                        //!< serve() POSIX threads ID
     static int s_sig_int;                               //!< signal to use to wakeup serve()
-    std::function<bool(Server& server)> m_init_callback{nullptr}; //!< callback to retrieve SSL configuration
+    ConfigurationCallback m_init_callback{nullptr};     //!< callback to retrieve SSL configuration
 
     /**
      * \brief initialise the server socket
@@ -407,6 +410,12 @@ private:
      * \return true on success
      */
     bool init_certificates(const std::vector<certificate_config_t>& chain_files);
+
+    /**
+     * \brief waits for incoming connections
+     * \param[in] handler - called with the new connection socket
+     */
+    void wait_for_connection(const ConnectionHandler& handler);
 
 public:
     Server();
@@ -439,7 +448,7 @@ public:
      * init_ssl() should return true when SSL has been configured so that the
      * incoming connection is accepted.
      */
-    state_t init(const config_t& cfg, const std::function<bool(Server& server)>& init_ssl);
+    state_t init(const config_t& cfg, const ConfigurationCallback& init_ssl);
 
     /**
      * \brief update configuration
@@ -462,7 +471,7 @@ public:
      * \note after server() returns stopped init() will need to be called
      *       before further connections can be managed
      */
-    state_t serve(const std::function<void(std::shared_ptr<ServerConnection>& ctx)>& handler);
+    state_t serve(const ConnectionHandler& handler);
 
     /**
      * \brief stop listening for new connections
@@ -553,6 +562,8 @@ public:
         bool trusted_ca_keys{false};                 //!< include a trusted ca keys extension in the client hello
     };
 
+    using ConnectionPtr = std::unique_ptr<ClientConnection>;
+
 private:
     std::unique_ptr<client_ctx> m_context;                      //!< opaque object data
     std::int32_t m_timeout_ms{-1};                              //!< default operation timeout
@@ -591,10 +602,8 @@ public:
      * \param[in] timeout_ms how long to wait for a connection in milliseconds
      * \return a connection pointer (nullptr on error)
      */
-    [[nodiscard]] std::unique_ptr<ClientConnection> connect(const char* host, const char* service, bool ipv6_only,
-                                                            int timeout_ms);
-    [[nodiscard]] inline std::unique_ptr<ClientConnection> connect(const char* host, const char* service,
-                                                                   bool ipv6_only) {
+    [[nodiscard]] ConnectionPtr connect(const char* host, const char* service, bool ipv6_only, int timeout_ms);
+    [[nodiscard]] inline ConnectionPtr connect(const char* host, const char* service, bool ipv6_only) {
         return connect(host, service, ipv6_only, m_timeout_ms);
     }
 

@@ -17,6 +17,7 @@
 
 #include "tls_connection_test.hpp"
 
+#include <memory>
 #include <mutex>
 #include <poll.h>
 
@@ -41,24 +42,22 @@ void do_poll(std::array<pollfd, 2>& fds, int server_soc, int client_soc) {
     ASSERT_NE(poll_res, -1);
 }
 
-bool ssl_init(tls::Server& server) {
+tls::Server::OptionalConfig ssl_init() {
     std::cout << "ssl_init" << std::endl;
-    tls::Server::config_t server_config;
-    server_config.cipher_list = "ECDHE-ECDSA-AES128-SHA256";
-    server_config.ciphersuites = "";
-    server_config.chains.emplace_back();
-    server_config.chains[0].certificate_chain_file = "server_chain.pem";
-    server_config.chains[0].private_key_file = "server_priv.pem";
-    server_config.chains[0].trust_anchor_file = "server_root_cert.pem";
-    server_config.chains[0].ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
-    server_config.host = "localhost";
-    server_config.service = "8444";
-    server_config.ipv6_only = false;
-    server_config.verify_client = false;
-    server_config.io_timeout_ms = 500;
-    const auto res = server.update(server_config);
-    EXPECT_TRUE(res);
-    return res;
+    auto server_config = std::make_unique<tls::Server::config_t>();
+    server_config->cipher_list = "ECDHE-ECDSA-AES128-SHA256";
+    server_config->ciphersuites = "";
+    server_config->chains.emplace_back();
+    server_config->chains[0].certificate_chain_file = "server_chain.pem";
+    server_config->chains[0].private_key_file = "server_priv.pem";
+    server_config->chains[0].trust_anchor_file = "server_root_cert.pem";
+    server_config->chains[0].ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
+    server_config->host = "localhost";
+    server_config->service = "8444";
+    server_config->ipv6_only = false;
+    server_config->verify_client = false;
+    server_config->io_timeout_ms = 500;
+    return {{std::move(server_config)}};
 }
 
 // ----------------------------------------------------------------------------
@@ -92,16 +91,16 @@ TEST_F(TlsTest, NonBlocking) {
     std::mutex mux;
     mux.lock();
 
-    std::shared_ptr<tls::ServerConnection> server_connection;
-    std::unique_ptr<tls::ClientConnection> client_connection;
+    tls::Server::ConnectionPtr server_connection;
+    tls::Client::ConnectionPtr client_connection;
 
-    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
-        server_connection = connection;
+    auto server_handler_fn = [&server_connection, &mux](tls::Server::ConnectionPtr&& connection) {
+        server_connection = std::move(connection);
         mux.unlock();
     };
     start(server_handler_fn);
 
-    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [&client_connection](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             client_connection = std::move(connection);
         }
@@ -223,18 +222,18 @@ TEST_F(TlsTest, NonBlockingClientClose) {
     std::mutex mux;
     mux.lock();
 
-    std::shared_ptr<tls::ServerConnection> server_connection;
-    std::unique_ptr<tls::ClientConnection> client_connection;
+    tls::Server::ConnectionPtr server_connection;
+    tls::Client::ConnectionPtr client_connection;
 
-    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
+    auto server_handler_fn = [&server_connection, &mux](tls::Server::ConnectionPtr&& connection) {
         if (connection->accept() == result_t::success) {
-            server_connection = connection;
+            server_connection = std::move(connection);
             mux.unlock();
         }
     };
     start(server_handler_fn);
 
-    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [&client_connection](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 client_connection = std::move(connection);
@@ -286,18 +285,18 @@ TEST_F(TlsTest, NonBlockingServerClose) {
     std::mutex mux;
     mux.lock();
 
-    std::shared_ptr<tls::ServerConnection> server_connection;
-    std::unique_ptr<tls::ClientConnection> client_connection;
+    tls::Server::ConnectionPtr server_connection;
+    tls::Client::ConnectionPtr client_connection;
 
-    auto server_handler_fn = [&server_connection, &mux](std::shared_ptr<tls::ServerConnection>& connection) {
+    auto server_handler_fn = [&server_connection, &mux](tls::Server::ConnectionPtr&& connection) {
         if (connection->accept() == result_t::success) {
-            server_connection = connection;
+            server_connection = std::move(connection);
             mux.unlock();
         }
     };
     start(server_handler_fn);
 
-    auto client_handler_fn = [&client_connection](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [&client_connection](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 client_connection = std::move(connection);
@@ -349,7 +348,7 @@ TEST_F(TlsTest, ClientReadTimeout) {
     // test shouldn't hang
     client_config.io_timeout_ms = 50;
 
-    auto client_handler_fn = [this](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -385,14 +384,14 @@ TEST_F(TlsTest, ClientWriteTimeout) {
 
     constexpr std::size_t max_bytes = 1024 * 1024 * 1024;
 
-    auto server_handler_fn = [&mux](std::shared_ptr<tls::ServerConnection>& con) {
+    auto server_handler_fn = [&mux](tls::Server::ConnectionPtr&& con) {
         if (con->accept() == result_t::success) {
             mux.lock();
             con->shutdown();
         }
     };
 
-    auto client_handler_fn = [this, &mux, &did_timeout, &count](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &mux, &did_timeout, &count](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -444,7 +443,7 @@ TEST_F(TlsTest, ServerReadTimeout) {
     std::mutex mux;
     mux.lock();
 
-    auto server_handler_fn = [&mux, &did_timeout](std::shared_ptr<tls::ServerConnection>& con) {
+    auto server_handler_fn = [&mux, &did_timeout](tls::Server::ConnectionPtr&& con) {
         if (con->accept() == result_t::success) {
             std::array<std::byte, 1024> buffer{};
             std::size_t readbytes = 0;
@@ -455,7 +454,7 @@ TEST_F(TlsTest, ServerReadTimeout) {
         }
     };
 
-    auto client_handler_fn = [this, &mux](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &mux](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -483,7 +482,7 @@ TEST_F(TlsTest, ServerWriteTimeout) {
 
     constexpr std::size_t max_bytes = 1024 * 1024 * 1024;
 
-    auto server_handler_fn = [&mux, &did_timeout, &count](std::shared_ptr<tls::ServerConnection>& con) {
+    auto server_handler_fn = [&mux, &did_timeout, &count](tls::Server::ConnectionPtr&& con) {
         if (con->accept() == result_t::success) {
             std::array<std::byte, 1024> buffer{};
             std::size_t writebytes{0};
@@ -517,7 +516,7 @@ TEST_F(TlsTest, ServerWriteTimeout) {
         }
     };
 
-    auto client_handler_fn = [this, &mux](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &mux](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -662,7 +661,7 @@ TEST_F(TlsTest, TCKeysNone) {
     add_ta_key_hash("client_root_cert.pem");
     add_ta_name("client_root_cert.pem");
 
-    auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &subject](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -686,7 +685,7 @@ TEST_F(TlsTest, TCKeysCert) {
     client_config.verify_locations_file = "alt_server_root_cert.pem";
     add_ta_cert_hash("alt_server_root_cert.pem");
 
-    auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &subject](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -718,7 +717,7 @@ TEST_F(TlsTest, TCKeysKey) {
     client_config.verify_locations_file = "alt_server_root_cert.pem";
     add_ta_key_hash("alt_server_root_cert.pem");
 
-    auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &subject](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);
@@ -750,7 +749,7 @@ TEST_F(TlsTest, TCKeysName) {
     client_config.verify_locations_file = "alt_server_root_cert.pem";
     add_ta_name("alt_server_root_cert.pem");
 
-    auto client_handler_fn = [this, &subject](std::unique_ptr<tls::ClientConnection>& connection) {
+    auto client_handler_fn = [this, &subject](tls::Client::ConnectionPtr& connection) {
         if (connection) {
             if (connection->connect() == result_t::success) {
                 this->set(ClientTest::flags_t::connected);

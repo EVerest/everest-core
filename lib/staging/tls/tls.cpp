@@ -48,6 +48,18 @@ public:
         ::SSL_CTX_free(ptr);
     }
 };
+template <> class default_delete<BIO_ADDR> {
+public:
+    void operator()(BIO_ADDR* ptr) const {
+        ::BIO_ADDR_free(ptr);
+    }
+};
+template <> class default_delete<BIO_ADDRINFO> {
+public:
+    void operator()(BIO_ADDRINFO* ptr) const {
+        ::BIO_ADDRINFO_free(ptr);
+    }
+};
 } // namespace std
 
 using ::openssl::log_error;
@@ -701,10 +713,10 @@ ServerConnection::~ServerConnection() {
 Connection::result_t ServerConnection::accept(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
-    bool loop{true};
-    auto ctx = m_context->ctx.get();
 
     if (m_state == state_t::idle) {
+        auto ctx = m_context->ctx.get();
+        bool loop{true};
         while (loop) {
             loop = false;
             result = ssl_accept(ctx);
@@ -759,10 +771,10 @@ ClientConnection::~ClientConnection() = default;
 Connection::result_t ClientConnection::connect(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
-    bool loop{true};
-    auto ctx = m_context->ctx.get();
 
     if (m_state == state_t::idle) {
+        auto ctx = m_context->ctx.get();
+        bool loop{true};
         while (loop) {
             loop = false;
             result = ssl_connect(ctx);
@@ -811,20 +823,21 @@ Server::~Server() {
 bool Server::init_socket(const config_t& cfg) {
     bool result = false;
     if (cfg.socket == INVALID_SOCKET) {
-        BIO_ADDRINFO* addrinfo{nullptr};
+        BIO_ADDRINFO* addrinfo_tmp{nullptr};
         // AF_UNSPEC is another option but seems to prefer IPv4
         const int family{(cfg.ipv6_only) ? AF_INET6 : AF_INET};
 
-        result =
-            BIO_lookup_ex(cfg.host, cfg.service, BIO_LOOKUP_SERVER, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo) != 0;
+        result = BIO_lookup_ex(cfg.host, cfg.service, BIO_LOOKUP_SERVER, family, SOCK_STREAM, IPPROTO_TCP,
+                               &addrinfo_tmp) != 0;
 
         if (!result) {
             log_error("init_socket::BIO_lookup_ex");
         } else {
-            const auto sock_family = BIO_ADDRINFO_family(addrinfo);
-            const auto sock_type = BIO_ADDRINFO_socktype(addrinfo);
-            const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo);
-            const auto* sock_address = BIO_ADDRINFO_address(addrinfo);
+            std::unique_ptr<BIO_ADDRINFO> addrinfo(addrinfo_tmp);
+            const auto sock_family = BIO_ADDRINFO_family(addrinfo.get());
+            const auto sock_type = BIO_ADDRINFO_socktype(addrinfo.get());
+            const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo.get());
+            const auto* sock_address = BIO_ADDRINFO_address(addrinfo.get());
             m_socket = BIO_socket(sock_family, sock_type, sock_protocol, 0);
 
             if (m_socket == INVALID_SOCKET) {
@@ -846,8 +859,6 @@ bool Server::init_socket(const config_t& cfg) {
                 }
             }
         }
-
-        BIO_ADDRINFO_free(addrinfo);
     } else {
         // the code that sets cfg.socket is responsible for
         // all socket initialisation
@@ -992,6 +1003,67 @@ bool Server::init_certificates(const std::vector<certificate_config_t>& chain_fi
     return result;
 }
 
+void Server::wait_for_connection(const ConnectionHandler& handler) {
+    std::unique_ptr<BIO_ADDR> peer(BIO_ADDR_new());
+    if (peer == nullptr) {
+        log_error("serve::BIO_ADDR_new");
+        m_exit = true;
+    } else {
+        int soc{INVALID_SOCKET};
+        while ((soc < 0) && !m_exit) {
+            auto poll_res = wait_for(m_socket, false, c_serve_timeout_ms);
+            if (poll_res == -1) {
+                // poll() has failed
+                m_exit = true;
+            } else if ((poll_res == -2) || (poll_res == 0)) {
+                // EINTR is -2 - triggered by stop()
+                // timeout is 0
+                // nothing to accept, check for m_exit
+            } else {
+                soc = BIO_accept_ex(m_socket, peer.get(), BIO_SOCK_NONBLOCK);
+                if (BIO_sock_should_retry(soc) == 0) {
+                    break;
+                }
+            }
+        };
+
+        // attempt to get SSL configuration when not set yet
+        if ((soc >= 0) && (m_state == state_t::init_socket)) {
+            auto new_config = m_init_callback();
+            bool success{false};
+            if (new_config && new_config.value()) {
+                success = update(*new_config.value());
+            }
+            if (success) {
+                m_state = state_t::running;
+            } else {
+                // updated configuration failed
+                BIO_closesocket(soc);
+                soc = INVALID_SOCKET;
+            }
+        }
+
+        if (m_exit) {
+            if (soc >= 0) {
+                BIO_closesocket(soc);
+            }
+        } else {
+            if (soc < 0) {
+                log_error("serve::BIO_accept_ex");
+            } else {
+                // new connection, pass to handler
+                auto* ip = BIO_ADDR_hostname_string(peer.get(), 1);
+                auto* service = BIO_ADDR_service_string(peer.get(), 1);
+                auto connection =
+                    std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service, m_timeout_ms);
+                handler(std::move(connection));
+                OPENSSL_free(ip);
+                OPENSSL_free(service);
+            }
+        }
+    }
+}
+
 void Server::configure_signal_handler(int interrupt_signal) {
     s_sig_int = interrupt_signal;
     struct sigaction action {};
@@ -1002,10 +1074,10 @@ void Server::configure_signal_handler(int interrupt_signal) {
     }
 }
 
-Server::state_t Server::init(const config_t& cfg, const std::function<bool(Server& server)>& init_ssl) {
+Server::state_t Server::init(const config_t& cfg, const ConfigurationCallback& init_ssl_cb) {
     // prevent multiple calls to init, or calling init whilst serve() is running
     std::lock_guard lock(m_mutex);
-    m_init_callback = init_ssl; // save handler for later
+    m_init_callback = init_ssl_cb; // save handler for later
     m_state = state_t::init_needed;
     if (init_socket(cfg)) {
         m_state = state_t::init_socket;
@@ -1029,7 +1101,7 @@ bool Server::update(const config_t& cfg) {
     return result;
 }
 
-Server::state_t Server::serve(const std::function<void(ServerConnection_t& ctx)>& handler) {
+Server::state_t Server::serve(const ConnectionHandler& handler) {
     assert(m_context != nullptr);
     // prevent init() or server() being called while serve is running
     std::lock_guard lock(m_mutex);
@@ -1065,61 +1137,7 @@ Server::state_t Server::serve(const std::function<void(ServerConnection_t& ctx)>
         m_exit = false;
         m_state = (m_state == state_t::init_complete) ? state_t::running : state_t::init_socket;
         while (!m_exit) {
-            auto* peer = BIO_ADDR_new();
-            if (peer == nullptr) {
-                log_error("serve::BIO_ADDR_new");
-                m_exit = true;
-            } else {
-                int soc{INVALID_SOCKET};
-                while ((soc < 0) && !m_exit) {
-                    auto poll_res = wait_for(m_socket, false, c_serve_timeout_ms);
-                    if (poll_res == -1) {
-                        // poll() has failed
-                        m_exit = true;
-                    } else if ((poll_res == -2) || (poll_res == 0)) {
-                        // EINTR is -2 - triggered by stop()
-                        // timeout is 0
-                        // nothing to accept, check for m_exit
-                    } else {
-                        soc = BIO_accept_ex(m_socket, peer, BIO_SOCK_NONBLOCK);
-                        if (BIO_sock_should_retry(soc) == 0) {
-                            break;
-                        }
-                    }
-                };
-
-                // attempt to get SSL configuration when not set yet
-                if ((soc >= 0) && (m_state == state_t::init_socket)) {
-                    if (m_init_callback(*this)) {
-                        m_state = state_t::running;
-                    } else {
-                        // updated configuration failed
-                        BIO_closesocket(soc);
-                        soc = INVALID_SOCKET;
-                    }
-                }
-
-                if (m_exit) {
-                    if (soc >= 0) {
-                        BIO_closesocket(soc);
-                    }
-                } else {
-                    if (soc < 0) {
-                        log_error("serve::BIO_accept_ex");
-                    } else {
-                        // new connection, pass to handler
-                        auto* ip = BIO_ADDR_hostname_string(peer, 1);
-                        auto* service = BIO_ADDR_service_string(peer, 1);
-                        auto connection =
-                            std::make_shared<ServerConnection>(m_context->ctx.get(), soc, ip, service, m_timeout_ms);
-                        handler(connection);
-                        OPENSSL_free(ip);
-                        OPENSSL_free(service);
-                    }
-                }
-            }
-
-            BIO_ADDR_free(peer);
+            wait_for_connection(handler);
         }
 
         BIO_closesocket(m_socket);
@@ -1247,7 +1265,6 @@ bool Client::init(const config_t& cfg, const override_t& override) {
 
     if (result) {
         m_context->ctx = SSL_CTX_ptr(ctx);
-        // m_state = state_t::init;
     } else {
         SSL_CTX_free(ctx);
         ctx = nullptr;
@@ -1258,20 +1275,21 @@ bool Client::init(const config_t& cfg, const override_t& override) {
 
 std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* service, bool ipv6_only,
                                                   int timeout_ms) {
-    BIO_ADDRINFO* addrinfo{nullptr};
+    BIO_ADDRINFO* addrinfo_tmp{nullptr};
     std::unique_ptr<ClientConnection> result;
 
     const int family = (ipv6_only) ? AF_INET6 : AF_UNSPEC;
     const bool lookup_result =
-        BIO_lookup_ex(host, service, BIO_LOOKUP_CLIENT, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo) != 0;
+        BIO_lookup_ex(host, service, BIO_LOOKUP_CLIENT, family, SOCK_STREAM, IPPROTO_TCP, &addrinfo_tmp) != 0;
 
     if (!lookup_result) {
         log_error("connect::BIO_lookup_ex");
     } else {
-        const auto sock_family = BIO_ADDRINFO_family(addrinfo);
-        const auto sock_type = BIO_ADDRINFO_socktype(addrinfo);
-        const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo);
-        const auto* sock_address = BIO_ADDRINFO_address(addrinfo);
+        std::unique_ptr<BIO_ADDRINFO> addrinfo(addrinfo_tmp);
+        const auto sock_family = BIO_ADDRINFO_family(addrinfo.get());
+        const auto sock_type = BIO_ADDRINFO_socktype(addrinfo.get());
+        const auto sock_protocol = BIO_ADDRINFO_protocol(addrinfo.get());
+        const auto* sock_address = BIO_ADDRINFO_address(addrinfo.get());
 
         auto socket = BIO_socket(sock_family, sock_type, sock_protocol, 0);
 
@@ -1308,7 +1326,6 @@ std::unique_ptr<ClientConnection> Client::connect(const char* host, const char* 
         }
     }
 
-    BIO_ADDRINFO_free(addrinfo);
     return result;
 }
 

@@ -106,7 +106,7 @@ struct ClientTest : public tls::Client {
     }
 };
 
-void handler(std::shared_ptr<tls::ServerConnection>& con) {
+void handler(tls::Server::ConnectionPtr&& con) {
     if (con->accept() == tls::Connection::result_t::success) {
         std::uint32_t count{0};
         std::array<std::byte, 1024> buffer{};
@@ -163,17 +163,6 @@ protected:
         action.sa_handler = SIG_IGN;
         sigaction(SIGPIPE, &action, nullptr);
         tls::Server::configure_signal_handler(SIGUSR1);
-#if 0
-        // see gtest_main.cpp
-        if (std::system("./pki.sh > /dev/null") != 0) {
-            std::cerr << "Problem creating test certificates and keys" << std::endl;
-            char buf[PATH_MAX];
-            if (getcwd(&buf[0], sizeof(buf)) != nullptr) {
-                std::cerr << "./pki.sh not found in " << buf << std::endl;
-            }
-            exit(1);
-        }
-#endif
     }
 
     void SetUp() override {
@@ -217,7 +206,7 @@ protected:
         }
     }
 
-    void start(const std::function<bool(tls::Server& server)>& init_ssl = nullptr) {
+    void start(const tls::Server::ConfigurationCallback& init_ssl = nullptr) {
         using state_t = tls::Server::state_t;
         const auto res = server.init(server_config, init_ssl);
         if ((res == state_t::init_complete) || (res == state_t::init_socket)) {
@@ -226,7 +215,7 @@ protected:
         }
     }
 
-    void start(const std::function<void(std::shared_ptr<tls::ServerConnection>& con)>& handler) {
+    void start(const std::function<void(tls::Server::ConnectionPtr&& con)>& handler) {
         using state_t = tls::Server::state_t;
         const auto res = server.init(server_config, nullptr);
         if ((res == state_t::init_complete) || (res == state_t::init_socket)) {
@@ -235,7 +224,7 @@ protected:
         }
     }
 
-    void connect(const std::function<void(std::unique_ptr<tls::ClientConnection>& con)>& handler = nullptr) {
+    void connect(const std::function<void(tls::Client::ConnectionPtr& con)>& handler = nullptr) {
         client.init(client_config);
         client.reset();
         // localhost works in some cases but not in the CI pipeline for IPv6

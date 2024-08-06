@@ -3,9 +3,11 @@
 
 #include "tls_connection.hpp"
 #include "connection.hpp"
+#include "everest/logging.hpp"
 #include "log.hpp"
 #include "v2g.hpp"
 #include "v2g_server.hpp"
+#include <new>
 #include <tls.hpp>
 
 #include <cassert>
@@ -86,12 +88,14 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
     ::connection_teardown(connection.get());
 }
 
-void handle_new_connection_cb(std::shared_ptr<tls::ServerConnection> con, struct v2g_context* ctx) {
+void handle_new_connection_cb(tls::Server::ConnectionPtr&& con, struct v2g_context* ctx) {
     assert(con != nullptr);
     assert(ctx != nullptr);
     // create a thread to process this connection
     try {
-        std::thread connection_loop(process_connection_thread, con, ctx);
+        // passing unique pointers through thread parameters is problematic
+        std::shared_ptr<tls::ServerConnection> connection(con.release());
+        std::thread connection_loop(process_connection_thread, connection, ctx);
         connection_loop.detach();
     } catch (const std::system_error&) {
         // unable to start thread
@@ -103,7 +107,7 @@ void handle_new_connection_cb(std::shared_ptr<tls::ServerConnection> con, struct
 void server_loop_thread(struct v2g_context* ctx) {
     assert(ctx != nullptr);
     assert(ctx->tls_server != nullptr);
-    const auto res = ctx->tls_server->serve([ctx](auto con) { handle_new_connection_cb(con, ctx); });
+    const auto res = ctx->tls_server->serve([ctx](auto con) { handle_new_connection_cb(std::move(con), ctx); });
     if (res != tls::Server::state_t::stopped) {
         dlog(DLOG_LEVEL_ERROR, "tls::Server failed to serve");
     }
@@ -174,19 +178,21 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     return bResult;
 }
 
-bool configure_ssl(tls::Server& server, struct v2g_context* ctx) {
-    tls::Server::config_t config;
-    bool bResult{false};
+tls::Server::OptionalConfig configure_ssl(struct v2g_context* ctx) {
+    try {
+        dlog(DLOG_LEVEL_WARNING, "configure_ssl");
+        auto config = std::make_unique<tls::Server::config_t>();
 
-    dlog(DLOG_LEVEL_WARNING, "configure_ssl");
+        // The config of interest is from Evse Security, no point in updating
+        // config when there is a problem
 
-    // The config of interest is from Evse Security, no point in updating
-    // config when there is a problem
-    if (build_config(config, ctx)) {
-        bResult = server.update(config);
+        if (build_config(*config, ctx)) {
+            return {{std::move(config)}};
+        }
+    } catch (const std::bad_alloc&) {
+        dlog(DLOG_LEVEL_ERROR, "unable to create TLS config");
     }
-
-    return bResult;
+    return std::nullopt;
 }
 
 } // namespace
@@ -210,7 +216,7 @@ int connection_init(struct v2g_context* ctx) {
     // apply config
     ctx->tls_server->stop();
     ctx->tls_server->wait_stopped();
-    const auto result = ctx->tls_server->init(config, [ctx](auto& server) { return configure_ssl(server, ctx); });
+    const auto result = ctx->tls_server->init(config, [ctx]() { return configure_ssl(ctx); });
     if ((result == state_t::init_complete) || (result == state_t::init_socket)) {
         res = 0;
     }

@@ -55,7 +55,7 @@ void parse_options(int argc, char** argv) {
     }
 }
 
-void handle_connection(std::shared_ptr<tls::ServerConnection>& con) {
+void handle_connection(tls::Server::ConnectionPtr&& con) {
     std::cout << "Connection" << std::endl;
     if (con->accept() == tls::Connection::result_t::success) {
         std::uint32_t count{0};
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
     server.init(config, nullptr);
     server.wait_stopped();
 
-    server.serve([](auto con) { handle_connection(con); });
+    server.serve(&handle_connection);
     server.wait_stopped();
 
     stop.join();
