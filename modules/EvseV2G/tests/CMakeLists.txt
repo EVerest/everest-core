@@ -74,6 +74,7 @@ install(
     FILES
     ../../../lib/staging/tls/tests/pki/iso_pkey.asn1
     ../../../lib/staging/tls/tests/pki/openssl-pki.conf
+    ../../../lib/staging/tls/tests/pki/alt_openssl-pki.conf
     ../../../lib/staging/tls/tests/pki/ocsp_response.der
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
 )

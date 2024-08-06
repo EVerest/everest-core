@@ -17,13 +17,11 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
         // ignore debug logs
         break;
     case openssl::log_level_t::warning:
-        // avoid logging function and line number
-        BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::warning) << str;
+        EVLOG_warning << str;
         break;
     case openssl::log_level_t::error:
     default:
-        // avoid logging function and line number
-        BOOST_LOG_SEV(::global_logger::get(), ::Everest::Logging::error) << str;
+        EVLOG_error << str;
         break;
     }
 }
