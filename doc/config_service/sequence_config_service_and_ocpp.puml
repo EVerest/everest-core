@@ -6,7 +6,7 @@ participant libocpp order 20
 participant device_model order 30
 database ocpp_storage_impl order 40
 participant core order 50
-database everest_config_service order 60
+database config_service order 60
 participant everest_module order 70
 
 autonumber "<b><font color=red>"
@@ -21,10 +21,10 @@ loop For each variable defined in component schemas
         device_model->ocpp_storage_impl: get_value
         ocpp_storage_impl->device_model: get_value response
     else
-        device_model->everest_config_service: get_value
-        everest_config_service->everest_module: get_value
-        everest_module->everest_config_service: get_value response
-        everest_config_service->device_model: get_value response
+        device_model->config_service: get_config_param
+        config_service->everest_module: get_config_param
+        everest_module->config_service: get_config_param response
+        config_service->device_model: get_config_param response
     end
 end
 device_model->libocpp: get_device_model response
@@ -40,10 +40,10 @@ loop For each SetVariable request
             device_model->ocpp_storage_impl: set_value
             ocpp_storage_impl->device_model: set_value response
         else
-            device_model->everest_config_service: set_value
-            everest_config_service->everest_module: set_value
-            everest_module->everest_config_service: set_value response
-            everest_config_service->device_model: set_value response
+            device_model->config_service: set_config_param
+        config_service->everest_module: set_config_param
+        everest_module->config_service: set_config_param response
+        config_service->device_model: set_config_param response
         end
         device_model->libocpp: set_value response
     end
