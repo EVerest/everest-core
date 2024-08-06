@@ -456,8 +456,6 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
     // PnC only
 
     bool rv = true;
-    unsigned char* base64Buffer = NULL;
-    size_t olen;
     types::iso15118_charger::RequestExiStreamSchema certificate_request;
 
 #ifdef EVEREST_MBED_TLS
