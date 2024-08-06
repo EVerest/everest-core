@@ -503,22 +503,31 @@ InstallCertificateResult EvseSecurity::update_leaf_certificate(const std::string
         const auto file_path = cert_path / file_name;
         std::string str_cert = leaf_certificate.get_export_string();
 
-        // Also write chain to file
-        const auto chain_file_name = std::string("CPO_CERT_") +
-                                     conversions::leaf_certificate_type_to_filename(certificate_type) + "CHAIN_" +
-                                     extra_filename;
-
-        const auto chain_file_path = cert_path / chain_file_name;
-        std::string str_chain_cert = chain_certificate.to_export_string();
-
-        if (filesystem_utils::write_to_file(file_path, str_cert, std::ios::out) &&
-            filesystem_utils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
+        if (filesystem_utils::write_to_file(file_path, str_cert, std::ios::out)) {
 
             // Remove from managed certificate keys, the CSR is fulfilled, no need to delete the key
             // since it is not orphaned any more
             auto it = managed_csr.find(private_key_path);
             if (it != managed_csr.end()) {
                 managed_csr.erase(it);
+            }
+
+            // Do not presume that we received back a chain certificate that requires writing
+            // there can be no intermediate certificates in between
+            if (_certificate_chain.size() > 1) {
+                // Attempt to write the chain to file
+                const auto chain_file_name = std::string("CPO_CERT_") +
+                                             conversions::leaf_certificate_type_to_filename(certificate_type) +
+                                             "CHAIN_" + extra_filename;
+
+                const auto chain_file_path = cert_path / chain_file_name;
+                std::string str_chain_cert = chain_certificate.to_export_string();
+
+                if (false == filesystem_utils::write_to_file(chain_file_path, str_chain_cert, std::ios::out)) {
+                    // This is an error, since if we contain SUBCAs those are required for a connection
+                    EVLOG_error << "Could not write leaf certificate chain to file!";
+                    return InstallCertificateResult::WriteError;
+                }
             }
 
             // TODO(ioan): properly rename key path here for fast retrieval
