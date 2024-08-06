@@ -523,10 +523,10 @@ Connection::~Connection() = default;
 Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size_t& readbytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
-    bool loop{true};
-    auto ctx = m_context->ctx.get();
 
     if (m_state == state_t::connected) {
+        auto ctx = m_context->ctx.get();
+        bool loop{true};
         while (loop) {
             loop = false;
             result = ssl_read(ctx, buf, num, readbytes);
@@ -562,10 +562,10 @@ Connection::result_t Connection::read(std::byte* buf, std::size_t num, std::size
 Connection::result_t Connection::write(const std::byte* buf, std::size_t num, std::size_t& writebytes, int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
-    bool loop{true};
-    auto ctx = m_context->ctx.get();
 
     if (m_state == state_t::connected) {
+        auto ctx = m_context->ctx.get();
+        bool loop{true};
         while (loop) {
             loop = false;
             result = ssl_write(ctx, buf, num, writebytes);
@@ -601,10 +601,10 @@ Connection::result_t Connection::write(const std::byte* buf, std::size_t num, st
 Connection::result_t Connection::shutdown(int timeout_ms) {
     assert(m_context != nullptr);
     ssl_result_t result{ssl_result_t::error};
-    bool loop{true};
-    auto ctx = m_context->ctx.get();
 
     if (m_state == state_t::connected) {
+        auto ctx = m_context->ctx.get();
+        bool loop{true};
         while (loop) {
             loop = false;
             result = ssl_shutdown(ctx);

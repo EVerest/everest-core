@@ -266,13 +266,10 @@ bool ServerStatusRequestV2::set_ocsp_v2_response(const digest_list_t& digests, S
             }
         }
 
-        std::size_t resp_len{0};
-        std::uint8_t* resp{nullptr};
-
         // don't include the extension when there are no OCSP responses
         if (total_size > 0) {
-            resp_len = total_size;
-            resp = static_cast<std::uint8_t*>(OPENSSL_malloc(resp_len));
+            std::size_t resp_len = total_size;
+            auto* resp = static_cast<std::uint8_t*>(OPENSSL_malloc(resp_len));
             if (resp == nullptr) {
                 resp_len = 0;
             } else {
