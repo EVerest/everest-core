@@ -109,6 +109,7 @@ types:
         ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
         ReplugFinished: Signaled when the virtual replug process has finished
         PluginTimeout: Signaled when an EV has been plugged in but no authorization is present within specified ConnectionTimeout
+        SwitchingPhases: Signaled when the EVSE Manager starts switching phases
         SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
     type: string
     enum:
