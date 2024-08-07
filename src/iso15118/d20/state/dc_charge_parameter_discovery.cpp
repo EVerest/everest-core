@@ -59,7 +59,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_ChargeParameterDiscoveryRequest>()) {
         message_20::RationalNumber max_current;

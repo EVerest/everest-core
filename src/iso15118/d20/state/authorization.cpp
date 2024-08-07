@@ -95,7 +95,7 @@ FsmSimpleState::HandleEventReturnType Authorization::handle_event(AllocatorType&
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::AuthorizationRequest>()) {
         const auto res = handle_request(*req, ctx.session, authorization_status);

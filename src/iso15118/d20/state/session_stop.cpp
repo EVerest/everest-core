@@ -43,7 +43,7 @@ FsmSimpleState::HandleEventReturnType SessionStop::handle_event(AllocatorType& s
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
         const auto res = handle_request(*req, ctx.session);

@@ -4,6 +4,8 @@
 
 #include <functional>
 
+#include <iso15118/message/type.hpp>
+
 namespace iso15118::session {
 
 namespace feedback {
@@ -35,6 +37,7 @@ struct Callbacks {
     std::function<void(Signal)> signal;
     std::function<void(const DcChargeTarget&)> dc_charge_target;
     std::function<void(const DcMaximumLimits&)> dc_max_limits;
+    std::function<void(const message_20::Type&)> v2g_message;
 };
 
 } // namespace feedback
@@ -46,6 +49,7 @@ public:
     void signal(feedback::Signal) const;
     void dc_charge_target(const feedback::DcChargeTarget&) const;
     void dc_max_limits(const feedback::DcMaximumLimits&) const;
+    void v2g_message(const message_20::Type&) const;
 
 private:
     feedback::Callbacks callbacks;

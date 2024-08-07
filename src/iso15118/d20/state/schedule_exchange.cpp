@@ -72,7 +72,7 @@ FsmSimpleState::HandleEventReturnType ScheduleExchange::handle_event(AllocatorTy
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::ScheduleExchangeRequest>()) {
 

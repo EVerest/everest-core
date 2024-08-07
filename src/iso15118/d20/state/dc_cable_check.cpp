@@ -50,7 +50,7 @@ FsmSimpleState::HandleEventReturnType DC_CableCheck::handle_event(AllocatorType&
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_CableCheckRequest>()) {
         if (not cable_check_initiated) {

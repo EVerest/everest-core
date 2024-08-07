@@ -66,22 +66,39 @@ template <typename MessageType> size_t serialize(const MessageType&, const io::S
     }
 
 CREATE_TYPE_TRAIT(SupportedAppProtocolRequest, SupportedAppProtocolReq);
+CREATE_TYPE_TRAIT(SupportedAppProtocolResponse, SupportedAppProtocolRes);
 CREATE_TYPE_TRAIT(SessionSetupRequest, SessionSetupReq);
+CREATE_TYPE_TRAIT(SessionSetupResponse, SessionSetupRes);
 CREATE_TYPE_TRAIT(AuthorizationSetupRequest, AuthorizationSetupReq);
+CREATE_TYPE_TRAIT(AuthorizationSetupResponse, AuthorizationSetupRes);
 CREATE_TYPE_TRAIT(AuthorizationRequest, AuthorizationReq);
+CREATE_TYPE_TRAIT(AuthorizationResponse, AuthorizationRes);
 CREATE_TYPE_TRAIT(ServiceDiscoveryRequest, ServiceDiscoveryReq);
+CREATE_TYPE_TRAIT(ServiceDiscoveryResponse, ServiceDiscoveryRes);
 CREATE_TYPE_TRAIT(ServiceDetailRequest, ServiceDetailReq);
+CREATE_TYPE_TRAIT(ServiceDetailResponse, ServiceDetailRes);
 CREATE_TYPE_TRAIT(ServiceSelectionRequest, ServiceSelectionReq);
+CREATE_TYPE_TRAIT(ServiceSelectionResponse, ServiceSelectionRes);
 CREATE_TYPE_TRAIT(DC_ChargeParameterDiscoveryRequest, DC_ChargeParameterDiscoveryReq);
+CREATE_TYPE_TRAIT(DC_ChargeParameterDiscoveryResponse, DC_ChargeParameterDiscoveryRes);
 CREATE_TYPE_TRAIT(ScheduleExchangeRequest, ScheduleExchangeReq);
+CREATE_TYPE_TRAIT(ScheduleExchangeResponse, ScheduleExchangeRes);
 CREATE_TYPE_TRAIT(DC_CableCheckRequest, DC_CableCheckReq);
+CREATE_TYPE_TRAIT(DC_CableCheckResponse, DC_CableCheckRes);
 CREATE_TYPE_TRAIT(DC_PreChargeRequest, DC_PreChargeReq);
+CREATE_TYPE_TRAIT(DC_PreChargeResponse, DC_PreChargeRes);
 CREATE_TYPE_TRAIT(PowerDeliveryRequest, PowerDeliveryReq);
+CREATE_TYPE_TRAIT(PowerDeliveryResponse, PowerDeliveryRes);
 CREATE_TYPE_TRAIT(DC_ChargeLoopRequest, DC_ChargeLoopReq);
+CREATE_TYPE_TRAIT(DC_ChargeLoopResponse, DC_ChargeLoopRes);
 CREATE_TYPE_TRAIT(DC_WeldingDetectionRequest, DC_WeldingDetectionReq);
+CREATE_TYPE_TRAIT(DC_WeldingDetectionResponse, DC_WeldingDetectionRes);
 CREATE_TYPE_TRAIT(SessionStopRequest, SessionStopReq);
+CREATE_TYPE_TRAIT(SessionStopResponse, SessionStopRes);
 CREATE_TYPE_TRAIT(AC_ChargeParameterDiscoveryRequest, AC_ChargeParameterDiscoveryReq);
+CREATE_TYPE_TRAIT(AC_ChargeParameterDiscoveryResponse, AC_ChargeParameterDiscoveryRes);
 CREATE_TYPE_TRAIT(AC_ChargeLoopRequest, AC_ChargeLoopReq);
+CREATE_TYPE_TRAIT(AC_ChargeLoopResponse, AC_ChargeLoopRes);
 
 #ifdef CREATE_TYPE_TRAIT_PUSHED
 #define CREATE_TYPE_TRAIT CREATE_TYPE_TRAIT_PUSHED

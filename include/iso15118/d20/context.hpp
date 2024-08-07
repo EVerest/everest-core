@@ -26,15 +26,17 @@ public:
     MessageExchange(io::StreamOutputView);
 
     void set_request(std::unique_ptr<message_20::Variant> new_request);
-    std::unique_ptr<message_20::Variant> get_request();
+    std::unique_ptr<message_20::Variant> pull_request();
+    message_20::Type peek_request_type() const;
 
     template <typename MessageType> void set_response(const MessageType& msg) {
         response_size = message_20::serialize(msg, response);
         response_available = true;
         payload_type = message_20::PayloadTypeTrait<MessageType>::type;
+        response_type = message_20::TypeTrait<MessageType>::type;
     }
 
-    std::tuple<bool, size_t, io::v2gtp::PayloadType> check_and_clear_response();
+    std::tuple<bool, size_t, io::v2gtp::PayloadType, message_20::Type> check_and_clear_response();
 
 private:
     // input
@@ -45,6 +47,7 @@ private:
     size_t response_size{0};
     bool response_available{false};
     io::v2gtp::PayloadType payload_type;
+    message_20::Type response_type;
 };
 
 std::unique_ptr<MessageExchange> create_message_exchange(uint8_t* buf, const size_t len);
@@ -55,7 +58,8 @@ public:
     Context(MessageExchange&, const std::optional<ControlEvent>&, session::feedback::Callbacks, bool&,
             session::SessionLogger&, const d20::SessionConfig&);
 
-    std::unique_ptr<message_20::Variant> get_request();
+    std::unique_ptr<message_20::Variant> pull_request();
+    message_20::Type peek_request_type() const;
 
     template <typename MessageType> void respond(const MessageType& msg) {
         message_exchange.set_response(msg);

@@ -85,7 +85,7 @@ FsmSimpleState::HandleEventReturnType ServiceSelection::handle_event(AllocatorTy
         return sa.PASS_ON;
     }
 
-    const auto variant = ctx.get_request();
+    const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::ServiceDetailRequest>()) {
         logf("Requested info about ServiceID: %d\n", req->service);

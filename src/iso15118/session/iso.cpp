@@ -168,10 +168,13 @@ TimePoint const& Session::poll() {
 
         packet = {}; // reset the packet
 
+        const auto request_msg_type = ctx.peek_request_type();
+        ctx.feedback.v2g_message(request_msg_type);
+
         const auto res = fsm.handle_event(d20::FsmEvent::V2GTP_MESSAGE);
     }
 
-    const auto [got_response, payload_size, payload_type] = message_exchange.check_and_clear_response();
+    const auto [got_response, payload_size, payload_type, response_type] = message_exchange.check_and_clear_response();
 
     if (got_response) {
         const auto response_size = setup_response_header(response_buffer, payload_type, payload_size);
@@ -180,6 +183,8 @@ TimePoint const& Session::poll() {
         // FIXME (aw): this is hacky ...
         log.exi(static_cast<uint16_t>(payload_type), response_buffer + io::SdpPacket::V2GTP_HEADER_SIZE, payload_size,
                 session::logging::ExiMessageDirection::TO_EV);
+
+        ctx.feedback.v2g_message(response_type);
 
         if (session_stopped) {
             connection->close();
