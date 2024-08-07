@@ -15,7 +15,8 @@ on:
     - cron: '37 13,1 * * *'
 
 env:
-  BUILD_KIT_IMAGE: ghcr.io/everest/build-kit-alpine:v1.2.0
+  DOCKER_REGISTRY: ghcr.io
+  EVEREST_CI_VERSION: v1.3.1
 
 jobs:
   lint:
@@ -27,14 +28,49 @@ jobs:
         with:
           path: source
       - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.1.0
+        uses: everest/everest-ci/github-actions/run-clang-format@v1.3.1
         with:
           source-dir: source
           extensions: hpp,cpp
           exclude: cache
+
+  # Since env variables can't be passed to reusable workflows, we need to pass them as outputs
+  setup-env:
+    name: Setup Environment
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    outputs:
+      docker_registry: ${{ env.DOCKER_REGISTRY }}
+      everest_ci_version: ${{ env.EVEREST_CI_VERSION }}
+    steps:
+      - id: check
+        run: |
+          echo "Setting up environment"
+  build-and-push-build-kit:
+    name: Build and Push Build Kit
+    uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.3.1
+    needs: setup-env
+    secrets:
+      SA_GITHUB_PAT: ${{ secrets.SA_GITHUB_PAT }}
+      SA_GITHUB_USERNAME: ${{ secrets.SA_GITHUB_USERNAME }}
+    with:
+      image_name: ${{ github.event.repository.name }}/build-kit-everest-core
+      directory: .ci/build-kit/docker
+      docker_registry: ${{ needs.setup-env.outputs.docker_registry }}
+      github_ref_before: ${{ github.event.before }}
+      github_ref_after: ${{ github.event.after }}
+      platforms: linux/amd64
+      depends_on_paths: |
+        .ci/build-kit
+        .github/workflows/build_and_test.yaml
+      build_args: |
+        BASE_IMAGE_TAG=${{ needs.setup-env.outputs.everest_ci_version }}
+
   build:
     name: Build and Unit Tests
+    needs: build-and-push-build-kit
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
+    env:
+      BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
     steps:
       - name: Format branch name for cache key
         run: |
@@ -55,7 +91,7 @@ jobs:
       - name: Setup run scripts
         run: |
           mkdir scripts
-          rsync -a source/.ci/build-kit/ scripts
+          rsync -a source/.ci/build-kit/scripts/ scripts
       - name: Pull build-kit image
         run: |
           docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
@@ -102,7 +138,11 @@ jobs:
           path: ${{ github.workspace }}/ctest-report
   integration-tests:
     name: Integration Tests
-    needs: build
+    needs:
+      - build
+      - build-and-push-build-kit
+    env:
+      BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Download dist dir
@@ -124,7 +164,7 @@ jobs:
       - name: Setup run scripts
         run: |
           mkdir scripts
-          rsync -a source/.ci/build-kit/ scripts
+          rsync -a source/.ci/build-kit/scripts/ scripts
       - name: Pull build-kit image
         run: |
           docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
