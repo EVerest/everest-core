@@ -53,7 +53,7 @@ static std::tuple<int, sockaddr_in6> create_udp_socket(const char* interface_nam
     int udp_socket = socket(AF_INET6, SOCK_DGRAM, 0);
     if (udp_socket < 0) {
         const auto error_msg = adding_err_msg("Could not create socket");
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
         return {udp_socket, {}};
     }
 
@@ -72,35 +72,35 @@ static std::tuple<int, sockaddr_in6> create_udp_socket(const char* interface_nam
 
     if (!could_bind) {
         const auto error_msg = adding_err_msg("Could not bind");
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
         return {-1, {}};
     }
 
-    logf("UDP socket bound to source port: %u", source_port);
+    logf_info("UDP socket bound to source port: %u", source_port);
 
     const auto index = if_nametoindex(interface_name);
     auto mreq = ipv6_mreq{};
     mreq.ipv6mr_interface = index;
     if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
         const auto error_msg = adding_err_msg("Failed to setup multicast address");
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
         return {-1, {}};
     }
     if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         const auto error_msg = adding_err_msg("Could not add multicast group membership");
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
         return {-1, {}};
     }
 
     if (setsockopt(udp_socket, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
         const auto error_msg = adding_err_msg("Could not set interface name:" + std::string(interface_name));
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
     }
 
     sockaddr_in6 dest_address = {AF_INET6, htons(port)};
     if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &dest_address.sin6_addr) <= 0) {
         const auto error_msg = adding_err_msg("Failed to setup server address, reset key_log_fd");
-        logf(error_msg.c_str());
+        logf_error(error_msg.c_str());
         return {-1, {}};
     }
 
@@ -216,10 +216,10 @@ void ConnectionSSL::init_ssl(const config::SSLConfig& ssl_config) {
     if (ssl_config.enable_ssl_logging) {
 
         SSL_CTX_set_keylog_callback(ctx, [](const SSL* ssl, const char* line) {
-            logf("TLS handshake keys: %s\n", line);
+            logf_info("TLS handshake keys: %s\n", line);
 
             if (key_log_fd == -1) {
-                logf("Error - key_log_fd is not available");
+                logf_warning("Error - key_log_fd is not available");
                 return;
             }
 
@@ -229,7 +229,7 @@ void ConnectionSSL::init_ssl(const config::SSLConfig& ssl_config) {
 
             if (udp_send_result != strlen(line)) {
                 const auto error_msg = adding_err_msg("UDP send() failed");
-                logf(error_msg.c_str());
+                logf_error(error_msg.c_str());
             }
         });
     }
@@ -287,7 +287,7 @@ void ConnectionSSL::handle_connect() {
     auto* ip = BIO_ADDR_hostname_string(peer, 1);
     auto* service = BIO_ADDR_service_string(peer, 1);
 
-    logf("Incoming connection from [%s]:%s", ip, service);
+    logf_info("Incoming connection from [%s]:%s", ip, service);
 
     if (enable_ssl_logging) {
         const auto port = std::stoul(service);
@@ -327,7 +327,7 @@ void ConnectionSSL::handle_data() {
             }
             log_and_raise_openssl_error("Failed to SSL_accept(): " + std::to_string(ssl_error));
         } else {
-            logf("Handshake complete!\n");
+            logf_info("Handshake complete!\n");
 
             handshake_complete = true;
             if (enable_ssl_logging) {
@@ -347,7 +347,7 @@ void ConnectionSSL::handle_data() {
 
 void ConnectionSSL::close() {
     /* tear down TLS connection gracefully */
-    logf("Closing TLS connection\n");
+    logf_info("Closing TLS connection\n");
 
     // Wait for 5 seconds [V2G20-1643]
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -365,7 +365,7 @@ void ConnectionSSL::close() {
 
     poll_manager.unregister_fd(accept_fd);
 
-    logf("TLS connection closed gracefully");
+    logf_info("TLS connection closed gracefully");
 
     SSL_free(ssl->ssl.get());
     SSL_CTX_free(ssl->ssl_ctx.get());

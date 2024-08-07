@@ -91,7 +91,7 @@ void send_sequence_error(const message_20::Type req_type, d20::Context& ctx) {
         const auto res = handle_sequence_error<message_20::SessionStopResponse>(ctx.session);
         ctx.respond(res);
     } else {
-        logf("Unknown code type id: %d ", req_type);
+        logf_warning("Unknown code type id: %d ", req_type);
     }
 }
 

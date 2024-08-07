@@ -126,7 +126,7 @@ Variant::Variant(io::v2gtp::PayloadType payload_type, const io::StreamInputView&
     } else if (payload_type == PayloadType::Part20AC) {
         handle_ac(va);
     } else {
-        logf("Unknown type\n");
+        logf_warning("Unknown type\n");
     }
 
     if (data) {
@@ -134,7 +134,7 @@ Variant::Variant(io::v2gtp::PayloadType payload_type, const io::StreamInputView&
         assert(custom_deleter != nullptr);
         assert(type != Type::None);
     } else {
-        logf("Failed due to: %s\n", error.c_str());
+        logf_error("Failed due to: %s\n", error.c_str());
     }
 }
 

@@ -45,7 +45,7 @@ std::tuple<bool, size_t, io::v2gtp::PayloadType, message_20::Type> MessageExchan
 
 message_20::Type MessageExchange::peek_request_type() const {
     if (not request) {
-        logf("Warning: Tried to access V2G message, but there is none");
+        logf_warning("Tried to access V2G message, but there is none");
         return message_20::Type::None;
     }
     return request->get_type();

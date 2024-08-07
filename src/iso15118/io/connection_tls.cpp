@@ -146,7 +146,7 @@ ConnectionTLS::ConnectionTLS(PollManager& poll_manager_, const std::string& inte
     mbedtls_ssl_conf_dbg(
         &ssl->conf,
         [](void* callback_context, int debug_level, const char* file_name, int line_number, const char* message) {
-            logf("mbedtls debug (level: %d) - %s\n", debug_level, message);
+            logf_debug("mbedtls debug (level: %d) - %s\n", debug_level, message);
         },
         stdout);
 
@@ -245,7 +245,7 @@ void ConnectionTLS::handle_data() {
             log_and_raise_mbed_error("Failed to mbedtls_ssl_handshake()", ssl_handshake_result);
         } else {
             // handshake complete!
-            logf("Handshake complete!\n");
+            logf_info("Handshake complete!\n");
 
             handshake_complete = true;
 
@@ -261,7 +261,7 @@ void ConnectionTLS::handle_data() {
 void ConnectionTLS::close() {
 
     /* tear down TLS connection gracefully */
-    logf("Closing TLS connection\n");
+    logf_info("Closing TLS connection\n");
 
     // Wait for 5 seconds [V2G20-1643]
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -275,7 +275,7 @@ void ConnectionTLS::close() {
             log_and_raise_mbed_error("Failed to mbedtls_ssl_close_notify()", ssl_close_result);
         }
     } else {
-        logf("TLS connection closed gracefully\n");
+        logf_info("TLS connection closed gracefully\n");
     }
 
     publish_event(ConnectionEvent::CLOSED);

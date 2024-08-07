@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 #pragma once
+
+#include <iso15118/io/log_levels.hpp>
 
 #include <cstdarg>
 #include <cstdint>
@@ -10,10 +12,18 @@
 namespace iso15118 {
 
 void logf(const char* fmt, ...);
+void logf(const LogLevel&, const char* fmt, ...);
+
+void logf_error(const char* fmt, ...);
+void logf_warning(const char* fmt, ...);
+void logf_info(const char* fmt, ...);
+void logf_debug(const char* fmt, ...);
+void logf_trace(const char* fmt, ...);
 
 void vlogf(const char* fmt, va_list ap);
+void vlogf(const LogLevel&, const char* fmt, va_list ap);
 
-void log(const std::string&);
+void log(const LogLevel&, const std::string&);
 
 void log_and_throw(const char* msg);
 

@@ -87,7 +87,7 @@ ReadResult ConnectionPlain::read(uint8_t* buf, size_t len) {
     // should be an error
     if (errno != EAGAIN) {
         // in case the error is not due to blocking, log it
-        logf("ConnectionPlain::read failed with error code: %d", errno);
+        logf_error("ConnectionPlain::read failed with error code: %d", errno);
     }
 
     return {did_block, 0};
@@ -105,7 +105,7 @@ void ConnectionPlain::handle_connect() {
 
     const auto address_name = sockaddr_in6_to_name(address);
 
-    logf("Incoming connection from [%s]:%" PRIu16, address_name.get(), ntohs(address.sin6_port));
+    logf_info("Incoming connection from [%s]:%" PRIu16, address_name.get(), ntohs(address.sin6_port));
 
     poll_manager.unregister_fd(fd);
     ::close(fd);
@@ -128,7 +128,7 @@ void ConnectionPlain::handle_data() {
 void ConnectionPlain::close() {
 
     /* tear down TCP connection gracefully */
-    logf("Closing TCP connection\n");
+    logf_info("Closing TCP connection\n");
 
     // Wait for 5 seconds [V2G20-1643]
     std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -150,7 +150,7 @@ void ConnectionPlain::close() {
         log_and_throw("close() failed");
     }
 
-    logf("TCP connection closed gracefully");
+    logf_info("TCP connection closed gracefully");
 
     connection_open = false;
     call_if_available(event_callback, ConnectionEvent::CLOSED);

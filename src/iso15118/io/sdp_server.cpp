@@ -22,9 +22,9 @@ static void log_peer_hostname(const struct sockaddr_in6& address) {
                                                 hostname, hostname_len, nullptr, 0, NI_NUMERICHOST);
 
     if (0 == get_if_name_result) {
-        logf("Got SDP request from %s\n", hostname);
+        logf_info("Got SDP request from %s\n", hostname);
     } else {
-        logf("Got SDP request, but failed to get the address\n");
+        logf_warning("Got SDP request, but failed to get the address\n");
     }
 }
 
@@ -53,7 +53,7 @@ SdpServer::SdpServer() {
 
 SdpServer::~SdpServer() {
     // FIXME (aw): rather use some RAII class for this!
-    logf("Shutting down SDP server!");
+    logf_info("Shutting down SDP server!");
     if (fd != -1) {
         close(fd);
     }
@@ -76,7 +76,7 @@ PeerRequestContext SdpServer::get_peer_request() {
     log_peer_hostname(peer_address);
 
     if (read_result == sizeof(udp_buffer)) {
-        logf("Read on sdp server socket succeeded, but message is to big for the buffer");
+        logf_warning("Read on sdp server socket succeeded, but message is to big for the buffer");
         return PeerRequestContext{false};
     }
 
@@ -85,7 +85,7 @@ PeerRequestContext SdpServer::get_peer_request() {
 
     if (parse_sdp_result != V2GTP_ERROR__NO_ERROR) {
         // FIXME (aw): we should not die here immediately
-        logf("Sdp server received an unexpected payload");
+        logf_warning("Sdp server received an unexpected payload");
         return PeerRequestContext{false};
     }
 
@@ -132,31 +132,31 @@ void parse_sdp_request(uint8_t* packet) {
         log_and_throw("Failed to parse sdp header");
     }
 
-    logf("Got sdp payload of %d bytes\n", sdp_payload_len);
+    logf_info("Got sdp payload of %d bytes\n", sdp_payload_len);
     const uint8_t sdp_request_byte1 = packet[8];
 
     switch (static_cast<v2gtp::Security>(sdp_request_byte1)) {
     case v2gtp::Security::TLS:
-        logf(" -> TLS requested\n");
+        logf_info(" -> TLS requested\n");
         break;
     case v2gtp::Security::NO_TRANSPORT_SECURITY:
-        logf(" -> no security\n");
+        logf_info(" -> no security\n");
         break;
     default:
-        logf(" -> EXCEPTION: reserved value\n");
+        logf_info(" -> EXCEPTION: reserved value\n");
         break;
     }
 
     const uint8_t sdp_request_byte2 = packet[9];
     switch (static_cast<v2gtp::TransportProtocol>(sdp_request_byte2)) {
     case v2gtp::TransportProtocol::TCP:
-        logf(" -> TCP requested\n");
+        logf_info(" -> TCP requested\n");
         break;
     case v2gtp::TransportProtocol::RESERVED_FOR_UDP:
-        logf(" -> reserved for UDP\n");
+        logf_info(" -> reserved for UDP\n");
         break;
     default:
-        logf(" -> EXCEPTION: reserved value\n");
+        logf_info(" -> EXCEPTION: reserved value\n");
         break;
     }
 }
