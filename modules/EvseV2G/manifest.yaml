@@ -70,6 +70,11 @@ config:
       Write 0 if the EVSE should wait indefinitely for EIM authorization.
     type: integer
     default: 300
+  enable_sdp_server:
+    description: >-
+      Enable the built-in SDP server
+    type: boolean
+    default: true
 provides:
   charger:
     interface: ISO15118_charger

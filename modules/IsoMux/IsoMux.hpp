@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EVSE_V2G_HPP
-#define EVSE_V2G_HPP
+#ifndef ISO_MUX_HPP
+#define ISO_MUX_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -14,52 +14,48 @@
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include "v2g_ctx.hpp"
-#ifndef EVEREST_MBED_TLS
 #include <tls.hpp>
-#endif // EVEREST_MBED_TLS
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
 
 struct Conf {
     std::string device;
-    bool supported_DIN70121;
-    bool supported_ISO15118_2;
     std::string tls_security;
-    bool terminate_connection_on_failed_response;
     bool tls_key_logging;
-    std::string tls_key_logging_path;
     int tls_timeout;
-    bool verify_contract_cert_chain;
-    int auth_timeout_pnc;
-    int auth_timeout_eim;
-    bool enable_sdp_server;
+    int proxy_port_iso2;
+    int proxy_port_iso20;
 };
 
-class EvseV2G : public Everest::ModuleBase {
+class IsoMux : public Everest::ModuleBase {
 public:
-    EvseV2G() = delete;
-    EvseV2G(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-            std::unique_ptr<ISO15118_chargerImplBase> p_charger, std::unique_ptr<evse_securityIntf> r_security,
-            Conf& config) :
+    IsoMux() = delete;
+    IsoMux(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
+           std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<ISO15118_chargerIntf> r_iso2,
+           std::unique_ptr<ISO15118_chargerIntf> r_iso20, Conf& config) :
         ModuleBase(info),
-        mqtt(mqtt_provider),
         p_charger(std::move(p_charger)),
         r_security(std::move(r_security)),
+        r_iso2(std::move(r_iso2)),
+        r_iso20(std::move(r_iso20)),
         config(config){};
 
-    Everest::MqttProvider& mqtt;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
     const std::unique_ptr<evse_securityIntf> r_security;
+    const std::unique_ptr<ISO15118_chargerIntf> r_iso2;
+    const std::unique_ptr<ISO15118_chargerIntf> r_iso20;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
-    ~EvseV2G();
+    ~IsoMux();
+    bool selected_iso20();
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -74,9 +70,8 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-#ifndef EVEREST_MBED_TLS
+
     tls::Server tls_server;
-#endif // EVEREST_MBED_TLS
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
@@ -86,4 +81,4 @@ private:
 
 } // namespace module
 
-#endif // EVSE_V2G_HPP
+#endif // ISO_MUX_HPP

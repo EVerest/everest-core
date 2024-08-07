@@ -884,6 +884,10 @@ int Connection::socket() const {
     return m_context->soc;
 }
 
+SSL* Connection::ssl_context() const {
+    return m_context->ctx.get();
+}
+
 // ----------------------------------------------------------------------------
 // ServerConnection represents a TLS server connection
 

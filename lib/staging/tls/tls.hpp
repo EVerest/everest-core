@@ -13,6 +13,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <openssl/types.h>
 #include <string>
 #include <tuple>
 #include <unistd.h>
@@ -309,6 +310,19 @@ public:
      * \returns the underlying socket or INVALID_SOCKET on error
      */
     [[nodiscard]] int socket() const;
+
+    /**
+     * \brief obtain the underlying SSL context
+     * \returns the underlying SSL context pointer
+     */
+    [[nodiscard]] SSL* ssl_context() const;
+
+    /**
+     * \brief set the read timeout in ms
+     */
+    void set_read_timeout(int ms) {
+        m_timeout_ms = ms;
+    }
 };
 
 /**
