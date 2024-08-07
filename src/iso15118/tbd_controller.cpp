@@ -22,12 +22,20 @@ namespace iso15118 {
 
 TbdController::TbdController(TbdConfig config_, session::feedback::Callbacks callbacks_) :
     config(std::move(config_)), callbacks(std::move(callbacks_)) {
-    poll_manager.register_fd(sdp_server.get_fd(), [this]() { handle_sdp_server_input(); });
+    if (config.enable_sdp_server) {
+        sdp_server = std::make_unique<io::SdpServer>();
+        poll_manager.register_fd(sdp_server->get_fd(), [this]() { handle_sdp_server_input(); });
+    }
     session_config = d20::SessionConfig();
 }
 
 void TbdController::loop() {
     static constexpr auto POLL_MANAGER_TIMEOUT_MS = 50;
+
+    if (not config.enable_sdp_server) {
+        auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
+        const auto& new_session = sessions.emplace_back(std::move(connection), session_config, callbacks);
+    }
 
     auto next_event = get_current_time_point();
 
@@ -73,7 +81,7 @@ void TbdController::setup_session(const std::vector<message_20::Authorization>& 
 }
 
 void TbdController::handle_sdp_server_input() {
-    auto request = sdp_server.get_peer_request();
+    auto request = sdp_server->get_peer_request();
 
     if (not request) {
         return;
@@ -104,7 +112,7 @@ void TbdController::handle_sdp_server_input() {
     // Todo(sl): Check if session_config is empty
     const auto& new_session = sessions.emplace_back(std::move(connection), session_config, callbacks);
 
-    sdp_server.send_response(request, ipv6_endpoint);
+    sdp_server->send_response(request, ipv6_endpoint);
 }
 
 } // namespace iso15118
