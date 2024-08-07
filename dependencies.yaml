@@ -6,7 +6,7 @@ libfsm:
 catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
-  cmake_condition: "ISO15118_BUILD_TESTS"
+  cmake_condition: "ISO15118_BUILD_TESTING"
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
   git_tag: v0.2.0

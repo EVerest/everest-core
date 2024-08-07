@@ -6,7 +6,7 @@ cmake \
     -B build \
     -S "$EXT_MOUNT/source" \
     -G Ninja \
-    -DISO15118_BUILD_TESTS=ON \
+    -DBUILD_TESTING=ON  \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 ninja -j$(nproc) -C build
