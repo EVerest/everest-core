@@ -1209,8 +1209,6 @@ void Charger::cleanup_transactions_on_startup() {
         EVLOG_info << "Cleaning up transaction with UUID " << session_uuid << " on start up";
         store->clear_session();
 
-        types::evse_manager::TransactionFinished transaction_finished;
-
         // If yes, try to close nicely with the ID we remember and trigger a transaction finished event on success
         for (const auto& meter : r_powermeter_billing) {
             const auto response = meter->call_stop_transaction(session_uuid);
@@ -1220,8 +1218,8 @@ void Charger::cleanup_transactions_on_startup() {
                 break;
             } else if (response.status == types::powermeter::TransactionRequestStatus::OK) {
                 // Fill in OCMF from the recovered transaction
-                transaction_finished.start_signed_meter_value = response.start_signed_meter_value;
-                transaction_finished.signed_meter_value = response.signed_meter_value;
+                shared_context.start_signed_meter_value = response.start_signed_meter_value;
+                shared_context.stop_signed_meter_value = response.signed_meter_value;
                 break;
             }
         }
