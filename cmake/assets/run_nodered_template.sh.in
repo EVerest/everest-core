@@ -1,3 +1,6 @@
-cd @EVEREST_DOCKER_DIR@
-docker build -t everest-nodered .
-docker run --rm --network host --name everest_nodered --mount type=bind,source=@FLOW_FILE@,target=/data/flows.json everest-nodered
+docker volume create nodered-config-volume
+docker create -v nodered-config-volume:/data --name nodered-config-container tianon/true:latest true
+docker cp @FLOW_FILE@ nodered-config-container:/data/flows.json
+docker rm nodered-config-container
+
+docker run --rm --network host --name everest_nodered --mount type=volume,source=nodered-config-volume,target=/data ghcr.io/everest/everest-dev-environment/nodered:v0.7.0
