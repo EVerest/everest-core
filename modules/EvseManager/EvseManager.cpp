@@ -1558,7 +1558,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     auto caps = get_powersupply_capabilities();
 
-    if ((((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active) and
+    if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active) and
         is_actually_exporting_to_grid) {
         if (not last_is_actually_exporting_to_grid) {
             // switching from import from grid to export to grid
@@ -1593,7 +1593,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         return false;
 
     } else {
-        if ((((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
+        if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
               last_is_actually_exporting_to_grid) and current_demand_active) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
