@@ -129,6 +129,54 @@ void energyImpl::ready() {
     });
 }
 
+types::energy::EvseState to_energy_evse_state(const Charger::EvseState charger_state) {
+    switch (charger_state) {
+    case Charger::EvseState::Disabled:
+        return types::energy::EvseState::Disabled;
+        break;
+    case Charger::EvseState::Idle:
+        return types::energy::EvseState::Unplugged;
+        break;
+    case Charger::EvseState::WaitingForAuthentication:
+        return types::energy::EvseState::WaitForAuth;
+        break;
+    case Charger::EvseState::PrepareCharging:
+        return types::energy::EvseState::PrepareCharging;
+        break;
+    case Charger::EvseState::WaitingForEnergy:
+        return types::energy::EvseState::WaitForEnergy;
+        break;
+    case Charger::EvseState::Charging:
+        return types::energy::EvseState::Charging;
+        break;
+    case Charger::EvseState::ChargingPausedEV:
+        return types::energy::EvseState::PausedEV;
+        break;
+    case Charger::EvseState::ChargingPausedEVSE:
+        return types::energy::EvseState::PausedEVSE;
+        break;
+    case Charger::EvseState::StoppingCharging:
+        return types::energy::EvseState::Finished;
+        break;
+    case Charger::EvseState::Finished:
+        return types::energy::EvseState::Finished;
+        break;
+    case Charger::EvseState::T_step_EF:
+        return types::energy::EvseState::PrepareCharging;
+        break;
+    case Charger::EvseState::T_step_X1:
+        return types::energy::EvseState::PrepareCharging;
+        break;
+    case Charger::EvseState::SwitchPhases:
+        return types::energy::EvseState::Charging;
+        break;
+    case Charger::EvseState::Replug:
+        return types::energy::EvseState::PrepareCharging;
+        break;
+    }
+    return types::energy::EvseState::Disabled;
+}
+
 void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     std::lock_guard<std::mutex> lock(this->energy_mutex);
     clear_import_request_schedule();
@@ -250,6 +298,9 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     } else {
         energy_flow_request.priority_request = false;
     }
+
+    // Attach our state
+    energy_flow_request.evse_state = to_energy_evse_state(charger_state);
 
     publish_energy_flow_request(energy_flow_request);
     // EVLOG_info << "Outgoing request " << energy_flow_request;
