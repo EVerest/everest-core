@@ -7,6 +7,7 @@
 
 #include <websocketpp_utils/uri.hpp>
 
+#include <error_handling.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
 namespace module {
@@ -255,6 +256,26 @@ void OCPP201::init() {
             }
         });
     }
+
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
 
 void OCPP201::ready() {
@@ -645,7 +666,7 @@ void OCPP201::ready() {
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
-        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
+        evse->subscribe_error(EVSE_MANAGER_INOPERATIVE_ERROR, fault_handler, fault_cleared_handler);
 
         evse_id++;
     }
