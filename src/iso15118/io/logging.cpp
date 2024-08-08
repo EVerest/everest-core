@@ -53,19 +53,34 @@ void logf(const LogLevel& level, const char* fmt, ...) {
 }
 
 void logf_error(const char* fmt, ...) {
-    logf(LogLevel::Error, fmt);
+    va_list args;
+    va_start(args, fmt);
+    vlogf(LogLevel::Error, fmt, args);
+    va_end(args);
 }
 void logf_warning(const char* fmt, ...) {
-    logf(LogLevel::Warning, fmt);
+    va_list args;
+    va_start(args, fmt);
+    vlogf(LogLevel::Warning, fmt, args);
+    va_end(args);
 }
 void logf_info(const char* fmt, ...) {
-    logf(LogLevel::Info, fmt);
+    va_list args;
+    va_start(args, fmt);
+    vlogf(LogLevel::Info, fmt, args);
+    va_end(args);
 }
 void logf_debug(const char* fmt, ...) {
-    logf(LogLevel::Debug, fmt);
+    va_list args;
+    va_start(args, fmt);
+    vlogf(LogLevel::Debug, fmt, args);
+    va_end(args);
 }
 void logf_trace(const char* fmt, ...) {
-    logf(LogLevel::Trace, fmt);
+    va_list args;
+    va_start(args, fmt);
+    vlogf(LogLevel::Trace, fmt, args);
+    va_end(args);
 }
 
 namespace io {

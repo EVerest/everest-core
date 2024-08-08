@@ -1,4 +1,5 @@
 add_subdirectory(fsm)
+add_subdirectory(io)
 add_subdirectory(states)
 
 # add_executable(secc)
