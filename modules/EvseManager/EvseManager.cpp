@@ -1594,7 +1594,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
         if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
-              last_is_actually_exporting_to_grid) and current_demand_active) {
+              last_is_actually_exporting_to_grid) and 
+              current_demand_active) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export, power_supply_DC_charging_phase);
