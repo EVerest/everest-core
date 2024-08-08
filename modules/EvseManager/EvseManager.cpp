@@ -1593,7 +1593,6 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         return false;
 
     } else {
-
         if ((((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
               last_is_actually_exporting_to_grid) and current_demand_active) {
             // switching from export to grid to import from grid
