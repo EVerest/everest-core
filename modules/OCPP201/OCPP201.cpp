@@ -283,21 +283,12 @@ void OCPP201::ready() {
         }
     }();
 
-    const auto device_model_schema_path = [&]() {
-        const auto config_device_model_schema_path = fs::path(this->config.DeviceModelSchemaPath);
-        if (config_device_model_schema_path.is_relative()) {
-            return this->ocpp_share_path / config_device_model_schema_path;
+    const auto device_model_config_path = [&]() {
+        const auto config_device_model_config_path = fs::path(this->config.DeviceModelConfigPath);
+        if (config_device_model_config_path.is_relative()) {
+            return this->ocpp_share_path / config_device_model_config_path;
         } else {
-            return config_device_model_schema_path;
-        }
-    }();
-
-    const auto config_file_path = [&]() {
-        const auto config_config_file_path = fs::path(this->config.ConfigFilePath);
-        if (config_config_file_path.is_relative()) {
-            return this->ocpp_share_path / config_config_file_path;
-        } else {
-            return config_config_file_path;
+            return config_device_model_config_path;
         }
     }();
 
@@ -534,9 +525,8 @@ void OCPP201::ready() {
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
         evse_connector_structure, device_model_database_path, true, device_model_database_migration_path,
-        device_model_schema_path, config_file_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath,
-        sql_init_path.string(), this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security),
-        callbacks);
+        device_model_config_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath, sql_init_path.string(),
+        this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
     const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
         ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"EVConnectionTimeOut"},
