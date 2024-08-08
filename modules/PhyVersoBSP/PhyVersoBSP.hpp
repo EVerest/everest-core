@@ -19,6 +19,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include "phyverso_gpio/evGpio.h"
 #include "phyverso_mcu_comms/evSerial.h"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -52,6 +53,14 @@ struct Conf {
     int reset_gpio_pin;
     int conn1_motor_lock_type;
     int conn2_motor_lock_type;
+    bool conn1_gpio_stop_button_enabled;
+    int conn1_gpio_stop_button_bank;
+    int conn1_gpio_stop_button_pin;
+    bool conn1_gpio_stop_button_invert;
+    bool conn2_gpio_stop_button_enabled;
+    int conn2_gpio_stop_button_bank;
+    int conn2_gpio_stop_button_pin;
+    bool conn2_gpio_stop_button_invert;
 };
 
 class PhyVersoBSP : public Everest::ModuleBase {
@@ -78,7 +87,8 @@ public:
         p_system_specific_data_1(std::move(p_system_specific_data_1)),
         p_system_specific_data_2(std::move(p_system_specific_data_2)),
         config(config),
-        serial(verso_config){};
+        serial(verso_config),
+        gpio(verso_config){};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -96,6 +106,8 @@ public:
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
     evSerial serial;
+    evConfig verso_config;
+    evGpio gpio;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -110,7 +122,6 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    evConfig verso_config;
     void everest_config_to_verso_config();
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };

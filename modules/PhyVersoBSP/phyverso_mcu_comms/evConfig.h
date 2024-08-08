@@ -43,6 +43,14 @@ public:
         int reset_gpio_pin = 23;
         int conn1_motor_lock_type = 2;
         int conn2_motor_lock_type = 2;
+        bool conn1_gpio_stop_button_enabled = false;
+        int conn1_gpio_stop_button_bank = 1;
+        int conn1_gpio_stop_button_pin = 36;
+        bool conn1_gpio_stop_button_invert = false;
+        bool conn2_gpio_stop_button_enabled = false;
+        int conn2_gpio_stop_button_bank = 1;
+        int conn2_gpio_stop_button_pin = 37;
+        bool conn2_gpio_stop_button_invert = false;
     } conf;
 
     evConfig();

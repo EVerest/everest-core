@@ -54,6 +54,17 @@ void evse_board_supportImpl::init() {
         }
         last_pp_state = s;
     });
+
+    mod->gpio.signal_stop_button_state.connect([this](int connector, bool state) {
+        if (connector == 2 && (state != last_stop_button_state)) {
+            types::evse_manager::StopTransactionRequest request;
+            request.reason =
+                types::evse_manager::StopTransactionReason::Local; // is this the proper reason for user stop?
+            this->publish_request_stop_transaction(request);
+            EVLOG_info << "[2] Request stop button state: " << (state ? "PUSHED" : "RELEASED");
+            last_stop_button_state = state;
+        }
+    });
 }
 
 void evse_board_supportImpl::ready() {

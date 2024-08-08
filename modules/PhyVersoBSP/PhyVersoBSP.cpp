@@ -16,6 +16,12 @@ void PhyVersoBSP::init() {
         return;
     }
 
+    // init user gpios
+    if (not gpio.init_gpios()) {
+        EVLOG_error << "Could not initialize user GPIOs. Terminating.";
+        return;
+    }
+
     invoke_init(*p_connector_1);
     invoke_init(*p_connector_2);
     invoke_init(*p_rcd_1);
@@ -26,10 +32,6 @@ void PhyVersoBSP::init() {
     invoke_init(*p_system_specific_data_1);
     invoke_init(*p_system_specific_data_2);
 
-    // pass PhyVersoBSP module config values to evConfig (everest/standalone json config bridge to evSerial that is
-    // talking to MCU)
-    everest_config_to_verso_config();
-
     serial.signal_config_request.connect([&]() {
         serial.send_config();
         EVLOG_info << "Sent config packet to MCU";
@@ -38,6 +40,7 @@ void PhyVersoBSP::init() {
 
 void PhyVersoBSP::ready() {
     serial.run();
+    gpio.run();
 
     invoke_ready(*p_connector_1);
     invoke_ready(*p_connector_2);
@@ -61,13 +64,20 @@ void PhyVersoBSP::ready() {
 
 // fills evConfig bridge with config values from manifest/everest config
 void PhyVersoBSP::everest_config_to_verso_config() {
-    // TODO: fill evConfig Conf struct with this modules conf structure values
     verso_config.conf.serial_port = this->config.serial_port;
     verso_config.conf.baud_rate = this->config.baud_rate;
     verso_config.conf.reset_gpio_bank = this->config.reset_gpio_bank;
     verso_config.conf.reset_gpio_pin = this->config.reset_gpio_pin;
     verso_config.conf.conn1_motor_lock_type = this->config.conn1_motor_lock_type;
     verso_config.conf.conn2_motor_lock_type = this->config.conn2_motor_lock_type;
+    verso_config.conf.conn1_gpio_stop_button_enabled = this->config.conn1_gpio_stop_button_enabled;
+    verso_config.conf.conn1_gpio_stop_button_bank = this->config.conn1_gpio_stop_button_bank;
+    verso_config.conf.conn1_gpio_stop_button_pin = this->config.conn1_gpio_stop_button_pin;
+    verso_config.conf.conn1_gpio_stop_button_invert = this->config.conn1_gpio_stop_button_invert;
+    verso_config.conf.conn2_gpio_stop_button_enabled = this->config.conn2_gpio_stop_button_enabled;
+    verso_config.conf.conn2_gpio_stop_button_bank = this->config.conn2_gpio_stop_button_bank;
+    verso_config.conf.conn2_gpio_stop_button_pin = this->config.conn2_gpio_stop_button_pin;
+    verso_config.conf.conn2_gpio_stop_button_invert = this->config.conn2_gpio_stop_button_invert;
 }
 
 } // namespace module

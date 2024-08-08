@@ -140,6 +140,38 @@ config:
     description: Connector 2 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
     type: integer
     default: 2
+  conn1_gpio_stop_button_enabled:
+    description: Set to true to enable external charging stop button for connector 1 on a GPIO connected to the SOM
+    type: boolean
+    default: false
+  conn1_gpio_stop_button_bank:
+    description: GPIO peripheral bank for connector 1 stop button
+    type: integer
+    default: 1
+  conn1_gpio_stop_button_pin:
+    description: GPIO peripheral pin for connector 1 stop button
+    type: integer
+    default: 36
+  conn1_gpio_stop_button_invert:
+    description: Set to true to invert pin logic
+    type: boolean
+    default: false
+  conn2_gpio_stop_button_enabled:
+    description: Set to true to enable external charging stop button for connector 2 on a GPIO connected to the SOM
+    type: boolean
+    default: false
+  conn2_gpio_stop_button_bank:
+    description: GPIO peripheral bank for connector 2 stop button
+    type: integer
+    default: 1
+  conn2_gpio_stop_button_pin:
+    description: GPIO peripheral pin for connector 2 stop button
+    type: integer
+    default: 37
+  conn2_gpio_stop_button_invert:
+    description: Set to true to invert pin logic
+    type: boolean
+    default: false
 provides:
   connector_1:
     interface: evse_board_support
