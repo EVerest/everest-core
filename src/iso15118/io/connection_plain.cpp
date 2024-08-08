@@ -38,6 +38,17 @@ ConnectionPlain::ConnectionPlain(PollManager& poll_manager_, const std::string& 
     // before bind, set the port
     address.sin6_port = htobe16(end_point.port);
 
+    int optval_tmp{1};
+    const auto set_reuseaddr = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseaddr == -1) {
+        log_and_throw("setsockopt(SO_REUSEADDR) failed");
+    }
+
+    const auto set_reuseport = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseport == -1) {
+        log_and_throw("setsockopt(SO_REUSEPORT) failed");
+    }
+
     const auto bind_result = bind(fd, reinterpret_cast<const struct sockaddr*>(&address), sizeof(address));
     if (bind_result == -1) {
         const auto error = "Failed to bind ipv6 socket to interface " + interface_name;

@@ -115,6 +115,7 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
     ssl(std::make_unique<SSLContext>()) {
 
     sockaddr_in6 address;
+
     if (not get_first_sockaddr_in6_for_interface(interface_name_, address)) {
         const auto msg = "Failed to get ipv6 socket address for interface " + interface_name_;
         log_and_throw(msg.c_str());
@@ -142,6 +143,17 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
 
     // before bind, set the port
     address.sin6_port = htobe16(end_point.port);
+
+    int optval_tmp{1};
+    const auto set_reuseaddr = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseaddr == -1) {
+        log_and_throw("setsockopt(SO_REUSEADDR) failed");
+    }
+
+    const auto set_reuseport = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseport == -1) {
+        log_and_throw("setsockopt(SO_REUSEPORT) failed");
+    }
 
     const auto bind_result = bind(fd, reinterpret_cast<const struct sockaddr*>(&address), sizeof(address));
     if (bind_result == -1) {
@@ -366,9 +378,6 @@ void ConnectionSSL::close() {
     poll_manager.unregister_fd(accept_fd);
 
     logf_info("TLS connection closed gracefully");
-
-    SSL_free(ssl->ssl.get());
-    SSL_CTX_free(ssl->ssl_ctx.get());
 
     call_if_available(event_callback, ConnectionEvent::CLOSED);
 }

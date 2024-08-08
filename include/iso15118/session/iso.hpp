@@ -36,6 +36,10 @@ public:
     TimePoint const& poll();
     void push_control_event(const d20::ControlEvent&);
 
+    bool is_finished() const {
+        return ctx.session_stopped;
+    }
+
 private:
     std::unique_ptr<io::IConnection> connection;
     session::SessionLogger log;
@@ -59,8 +63,6 @@ private:
     d20::Fsm fsm;
 
     TimePoint next_session_event;
-
-    bool session_stopped{false};
 
     void handle_connection_event(io::ConnectionEvent event);
 };

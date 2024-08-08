@@ -121,9 +121,7 @@ static size_t setup_response_header(uint8_t* buffer, iso15118::io::v2gtp::Payloa
 
 Session::Session(std::unique_ptr<io::IConnection> connection_, const d20::SessionConfig& config,
                  const session::feedback::Callbacks& callbacks) :
-    connection(std::move(connection_)),
-    log(this),
-    ctx(message_exchange, active_control_event, callbacks, session_stopped, log, config) {
+    connection(std::move(connection_)), log(this), ctx(message_exchange, active_control_event, callbacks, log, config) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
     connection->set_event_callback([this](io::ConnectionEvent event) { this->handle_connection_event(event); });
@@ -187,9 +185,8 @@ TimePoint const& Session::poll() {
 
         ctx.feedback.v2g_message(response_type);
 
-        if (session_stopped) {
+        if (ctx.session_stopped) {
             connection->close();
-            session_stopped = false; // reset
             ctx.feedback.signal(session::feedback::Signal::DLINK_TERMINATE);
         }
     }

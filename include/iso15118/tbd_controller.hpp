@@ -41,7 +41,7 @@ private:
 
     d20::SessionConfig session_config;
 
-    std::list<Session> sessions;
+    std::unique_ptr<Session> session;
 
     // callbacks for sdp server
     void handle_sdp_server_input();

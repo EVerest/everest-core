@@ -52,13 +52,12 @@ message_20::Type MessageExchange::peek_request_type() const {
 }
 
 Context::Context(MessageExchange& message_exchange_, const std::optional<ControlEvent>& current_control_event_,
-                 session::feedback::Callbacks feedback_callbacks, bool& stopping_, session::SessionLogger& logger,
+                 session::feedback::Callbacks feedback_callbacks, session::SessionLogger& logger,
                  const d20::SessionConfig& config_) :
     current_control_event{current_control_event_},
     feedback(std::move(feedback_callbacks)),
     log(logger),
     message_exchange(message_exchange_),
-    session_stopped(stopping_),
     config(config_) {
 }
 

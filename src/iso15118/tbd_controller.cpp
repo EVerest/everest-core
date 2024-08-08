@@ -34,7 +34,7 @@ void TbdController::loop() {
 
     if (not config.enable_sdp_server) {
         auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
-        const auto& new_session = sessions.emplace_back(std::move(connection), session_config, callbacks);
+        session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
     }
 
     auto next_event = get_current_time_point();
@@ -45,22 +45,25 @@ void TbdController::loop() {
 
         next_event = offset_time_point_by_ms(get_current_time_point(), POLL_MANAGER_TIMEOUT_MS);
 
-        for (auto& session : sessions) {
-            const auto next_session_event = session.poll();
+        if (session) {
+            const auto next_session_event = session->poll();
             next_event = std::min(next_event, next_session_event);
+            if (session->is_finished()) {
+                session.reset();
+
+                if (not config.enable_sdp_server) {
+                    auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
+                    session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
+                }
+            }
         }
     }
 }
 
 void TbdController::send_control_event(const d20::ControlEvent& event) {
-    if (sessions.size() > 1) {
-        logf_warning("Inconsistent state, sessions.size() > 1 -- dropping control event");
-        return;
-    } else if (sessions.size() == 0) {
-        return;
+    if (session) {
+        session->push_control_event(event);
     }
-
-    sessions.front().push_control_event(event);
 }
 
 // Should be called once
@@ -110,7 +113,7 @@ void TbdController::handle_sdp_server_input() {
     const auto ipv6_endpoint = connection->get_public_endpoint();
 
     // Todo(sl): Check if session_config is empty
-    const auto& new_session = sessions.emplace_back(std::move(connection), session_config, callbacks);
+    session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
 
     sdp_server->send_response(request, ipv6_endpoint);
 }

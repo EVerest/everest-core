@@ -55,8 +55,8 @@ std::unique_ptr<MessageExchange> create_message_exchange(uint8_t* buf, const siz
 class Context {
 public:
     // FIXME (aw): bundle arguments
-    Context(MessageExchange&, const std::optional<ControlEvent>&, session::feedback::Callbacks, bool&,
-            session::SessionLogger&, const d20::SessionConfig&);
+    Context(MessageExchange&, const std::optional<ControlEvent>&, session::feedback::Callbacks, session::SessionLogger&,
+            const d20::SessionConfig&);
 
     std::unique_ptr<message_20::Variant> pull_request();
     message_20::Type peek_request_type() const;
@@ -89,7 +89,7 @@ public:
 
     const SessionConfig& config;
 
-    bool& session_stopped;
+    bool session_stopped{false};
 
 private:
     const std::optional<ControlEvent>& current_control_event;
