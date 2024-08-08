@@ -965,7 +965,8 @@ void EvseManager::ready_to_start_charging() {
     }
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1594,8 +1595,8 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     } else {
         if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
-              last_is_actually_exporting_to_grid) and 
-              current_demand_active) {
+             last_is_actually_exporting_to_grid) and
+            current_demand_active) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export, power_supply_DC_charging_phase);
