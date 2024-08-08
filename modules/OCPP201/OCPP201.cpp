@@ -7,6 +7,7 @@
 
 #include <websocketpp_utils/uri.hpp>
 
+#include <error_handling.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
 namespace module {
@@ -235,24 +236,6 @@ std::optional<ocpp::v201::IdToken> get_authorized_id_token(const types::evse_man
     return std::nullopt;
 }
 
-ocpp::v201::EventData get_event_data(const Everest:error::Error &error, const bool cleared) {
-    ocpp::v201::EventData event_data;
-    event_data.eventId = 1; //TODO: use proper id
-    event_data.timestamp = ocpp::DateTime(error.timestamp);
-    event_data.trigger = ocpp::v201::EventTriggerEnum::Alerting;
-    event_data.cause = std::nullopt; //TODO: use caused by when available within error object
-    event_data.actualValue = cleared ? "false" : "true";
-    event_data.techCode = ""; // MREC error if available
-    event_data.techInfo = ""; // free description (up to 500 characters)
-    event_data.cleared = cleared;
-    event_data.transactionId = std::nullopt; // TODO: Do we need to set this here?
-    event_data.variableMonitoringId = std::nullopt; // We dont need to set this for HardwiredNotification
-    event_data.eventNotificationType = ocpp::v201::EventNotificationEnum::HardWiredNotification;
-    
-    event_data.component = {"ChargingStation"}; // TODO: use origin of error for mapping to component?
-    event_data.variable = {"Problem"}; // TODO: use type of error for mapping to variable?
-};
-
 bool OCPP201::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -282,14 +265,21 @@ void OCPP201::init() {
     }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
-        const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
-        const auto event_data = get_event_data(error, false);
-        
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
     };
 
     const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
-        const auto event_data = get_event_data(error, true);
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
     };
 
     subscribe_global_all_errors(error_handler, error_cleared_handler);
@@ -673,7 +663,7 @@ void OCPP201::ready() {
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
-        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
+        evse->subscribe_error(EVSE_MANAGER_INOPERATIVE_ERROR, fault_handler, fault_cleared_handler);
 
         evse_id++;
     }
