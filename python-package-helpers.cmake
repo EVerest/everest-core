@@ -1,11 +1,24 @@
 function (ev_create_pip_install_dist_target)
+    set(oneValueArgs
+        PACKAGE_NAME
+        PACKAGE_SOURCE_DIRECTORY
+    )
+    set(multiValueArgs
+        DEPENDS
+    )
     cmake_parse_arguments(
         "EV_CREATE_PIP_INSTALL_DIST_TARGET"
         ""
-        "PACKAGE_NAME"
-        "DEPENDS"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
         ${ARGN}
     )
+    if ("${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}" STREQUAL "")
+        message(FATAL_ERROR "PACKAGE_NAME is required")
+    endif()
+    if ("${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
 
     set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist_installed")
     add_custom_command(
@@ -14,7 +27,7 @@ function (ev_create_pip_install_dist_target)
         COMMENT
             "Installing ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME} from distribution"
         WORKING_DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY}
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
@@ -33,13 +46,26 @@ function (ev_create_pip_install_dist_target)
 endfunction()
 
 function (ev_create_pip_install_local_target)
+    set(oneValueArgs
+        PACKAGE_NAME
+        PACKAGE_SOURCE_DIRECTORY
+    )
+    set(multiValueArgs
+        DEPENDS
+    )
     cmake_parse_arguments(
         "EV_CREATE_PIP_INSTALL_LOCAL_TARGET"
         ""
-        "PACKAGE_NAME"
-        "DEPENDS"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
         ${ARGN}
     )
+    if ("${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_NAME}" STREQUAL "")
+        message(FATAL_ERROR "PACKAGE_NAME is required")
+    endif()
+    if ("${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
 
     add_custom_target(${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_NAME}_pip_install_local
         # Remove build dir from pip
@@ -48,7 +74,7 @@ function (ev_create_pip_install_local_target)
         COMMAND
             ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
         WORKING_DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
             ${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_DEPENDS}
         COMMENT
@@ -57,32 +83,55 @@ function (ev_create_pip_install_local_target)
 endfunction()
 
 function(ev_create_pip_install_targets)
+    set(oneValueArgs
+        PACKAGE_NAME
+        PACKAGE_SOURCE_DIRECTORY
+    )
+    set(multiValueArgs
+        DIST_DEPENDS
+        LOCAL_DEPENDS
+    )
     cmake_parse_arguments(
         "EV_CREATE_PIP_INSTALL_TARGETS"
         ""
-        "PACKAGE_NAME"
-        "DIST_DEPENDS;LOCAL_DEPENDS"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
         ${ARGN}
     )
     ev_create_pip_install_dist_target(
         PACKAGE_NAME ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_NAME}
+        PACKAGE_SOURCE_DIRECTORY ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS ${EV_CREATE_PIP_INSTALL_TARGETS_DIST_DEPENDS}
     )
     ev_create_pip_install_local_target(
         PACKAGE_NAME ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_NAME}
+        PACKAGE_SOURCE_DIRECTORY ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS ${EV_CREATE_PIP_INSTALL_TARGETS_LOCAL_DEPENDS}
     )
 endfunction()
 
 function (ev_create_python_wheel_targets)
+    set(oneValueArgs
+        PACKAGE_NAME
+        PACKAGE_SOURCE_DIRECTORY
+        INSTALL_PREFIX
+    )
+    set(multiValueArgs
+        DEPENDS
+    )
     cmake_parse_arguments(
         "EV_CREATE_PYTHON_WHEEL_TARGETS"
         ""
-        "PACKAGE_NAME"
-        "DEPENDS;INSTALL_PREFIX"
+        "${oneValueArgs}"
+        "${multiValueArgs}"
         ${ARGN}
     )
-
+    if ("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}" STREQUAL "")
+        message(FATAL_ERROR "PACKAGE_NAME is required")
+    endif()
+    if ("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
     if (NOT DEFINED ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX})
         if ("${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}" STREQUAL "")
             message(FATAL_ERROR 
@@ -93,7 +142,7 @@ function (ev_create_python_wheel_targets)
         endif()
     endif()
 
-    set(WHEEL_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/dist)
+    set(WHEEL_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/dist_${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME})
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
         # Remove build dir from pip
         COMMAND
@@ -101,7 +150,7 @@ function (ev_create_python_wheel_targets)
         COMMAND
             ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .
         WORKING_DIRECTORY
-            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
             ${EV_CREATE_PYTHON_WHEEL_TARGETS_DEPENDS}
         COMMENT
