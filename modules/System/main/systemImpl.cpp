@@ -173,7 +173,7 @@ systemImpl::handle_signed_fimware_update(const types::system::FirmwareUpdateRequ
     }
 
     if (this->firmware_download_running) {
-        return types::system::UpdateFirmwareResponse::AcceptedCancelled;
+        return types::system::UpdateFirmwareResponse::AcceptedCanceled;
     } else if (this->firmware_installation_running) {
         return types::system::UpdateFirmwareResponse::Rejected;
     } else {
@@ -329,7 +329,7 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
     types::system::UploadLogsResponse response;
 
     if (this->log_upload_running) {
-        response.upload_logs_status = types::system::UploadLogsStatus::AcceptedCancelled;
+        response.upload_logs_status = types::system::UploadLogsStatus::AcceptedCanceled;
     } else {
         response.upload_logs_status = types::system::UploadLogsStatus::Accepted;
     }
