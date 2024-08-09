@@ -393,8 +393,12 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
             if (this->interrupt_log_upload) {
                 EVLOG_info << "Uploading Logs was interrupted, terminating upload script, requestId: "
                            << log_status.request_id;
+                // N01.FR.20
+                log_status.log_status = types::system::LogStatusEnum::AcceptedCanceled;
+                this->publish_log_status(log_status);
                 cmd.terminate();
             } else if (log_status.log_status != types::system::LogStatusEnum::Uploaded && retries <= total_retries) {
+                // command finished, but neither interrupted nor uploaded
                 std::this_thread::sleep_for(std::chrono::seconds(retry_interval));
             } else {
                 uploaded = true;
