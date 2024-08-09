@@ -8,7 +8,7 @@
 #include <slac/fsm/evse/states/matching.hpp>
 
 #include "../misc.hpp"
-
+#include <unistd.h>
 namespace slac::fsm::evse {
 
 static auto create_cm_set_key_req(uint8_t const* session_nmk) {
@@ -34,36 +34,54 @@ void ResetState::enter() {
 
 FSMSimpleState::HandleEventReturnType ResetState::handle_event(AllocatorType& sa, Event ev) {
     const auto& cfg = ctx.slac_config;
-    if (ev == Event::SLAC_MESSAGE) {
-        if (handle_slac_message(ctx.slac_message_payload)) {
-            if (cfg.chip_reset.enabled) {
-                // If chip reset is enabled in config, go to ResetChipState and from there to IdleState
-                return sa.create_simple<ResetChipState>(ctx);
-            } else {
-                // If chip reset is disabled, go to IdleState directly
-                return sa.create_simple<IdleState>(ctx);
-            }
+    if (ev == Event::RESET) {
+        // For Qualcomm, we need to do a config NMK and then a reset.
+        // For Lumissil, we do a reset first and then a config NMK
+        if (ctx.modem_vendor == ModemVendor::Lumissil and cfg.chip_reset.enabled) {
+            return sa.create_simple<ResetChipState>(ctx);
         } else {
-            return sa.PASS_ON;
+            return sa.create_simple<UpdateNMKState>(ctx);
         }
-    } else if (ev == Event::RESET) {
-        return sa.create_simple<ResetState>(ctx);
     } else {
         return sa.PASS_ON;
     }
 }
 
 FSMSimpleState::CallbackReturnType ResetState::callback() {
+    return Event::RESET;
+}
+
+void UpdateNMKState::enter() {
+    ctx.log_info("Entered UpdateNMKState state");
+    sleep(10); // FIXME we need to find out when Lumissil is ready after reset
+}
+
+FSMSimpleState::HandleEventReturnType UpdateNMKState::handle_event(AllocatorType& sa, Event ev) {
     const auto& cfg = ctx.slac_config;
-    if (setup_has_been_send == false) {
+    if (ev == Event::SLAC_MESSAGE) {
+        if (handle_slac_message(ctx.slac_message_payload)) {
+            if (cfg.chip_reset.enabled and ctx.modem_vendor == ModemVendor::Qualcomm) {
+                // If chip reset is enabled in config, go to ResetChipState and from there to IdleState
+                return sa.create_simple<ResetChipState>(ctx);
+            } else {
+                // If chip reset is disabled or not Qualcomm, go to IdleState directly
+                return sa.create_simple<IdleState>(ctx);
+            }
+        } else {
+            return sa.PASS_ON;
+        }
+    } else {
+        return sa.PASS_ON;
+    }
+}
+
+FSMSimpleState::CallbackReturnType UpdateNMKState::callback() {
+    const auto& cfg = ctx.slac_config;
+    if (set_key_req_has_been_send == false) {
         auto set_key_req = create_cm_set_key_req(cfg.session_nmk);
-
         ctx.log_info("New NMK key: " + format_nmk(cfg.session_nmk));
-
         ctx.send_slac_message(cfg.plc_peer_mac, set_key_req);
-
-        setup_has_been_send = true;
-
+        set_key_req_has_been_send = true;
         return cfg.set_key_timeout_ms;
     } else {
         ctx.log_info("CM_SET_KEY_REQ timeout - failed to setup NMK key");
@@ -71,7 +89,7 @@ FSMSimpleState::CallbackReturnType ResetState::callback() {
     }
 }
 
-bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
+bool UpdateNMKState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
     if (mmtype != (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
@@ -91,12 +109,20 @@ void ResetChipState::enter() {
 FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType& sa, Event ev) {
     if (ev == Event::SLAC_MESSAGE) {
         if (handle_slac_message(ctx.slac_message_payload)) {
-            return sa.create_simple<IdleState>(ctx);
+            if (ctx.modem_vendor == ModemVendor::Lumissil) {
+                return sa.create_simple<UpdateNMKState>(ctx);
+            } else {
+                return sa.create_simple<IdleState>(ctx);
+            }
         } else {
             return sa.PASS_ON;
         }
     } else if (ev == Event::SUCCESS) {
-        return sa.create_simple<IdleState>(ctx);
+        if (ctx.modem_vendor == ModemVendor::Lumissil) {
+            return sa.create_simple<UpdateNMKState>(ctx);
+        } else {
+            return sa.create_simple<IdleState>(ctx);
+        }
     } else {
         return sa.PASS_ON;
     }
@@ -104,9 +130,13 @@ FSMSimpleState::HandleEventReturnType ResetChipState::handle_event(AllocatorType
 
 FSMSimpleState::CallbackReturnType ResetChipState::callback() {
     const auto& cfg = ctx.slac_config;
-    if (sub_state == SubState::DELAY) {
+    if (sub_state == SubState::DELAY_BEFORE_RESET) {
         sub_state = SubState::SEND_RESET;
-        return cfg.chip_reset.delay_ms;
+        return cfg.chip_reset.delay_before_reset_ms;
+
+    } else if (sub_state == SubState::DELAY_AFTER_RESET) {
+        sub_state = SubState::DONE;
+        return Event::SUCCESS;
 
     } else if (sub_state == SubState::SEND_RESET) {
 
@@ -120,11 +150,10 @@ FSMSimpleState::CallbackReturnType ResetChipState::callback() {
         } else if (ctx.modem_vendor == ModemVendor::Lumissil) {
             slac::messages::lumissil::nscm_reset_device_req reset_req;
             ctx.log_info("Resetting HW Chip using NSCM_RESET_DEVICE.REQ");
-            sub_state = SubState::DONE;
+            sub_state = SubState::DELAY_AFTER_RESET;
             ctx.send_slac_message(cfg.plc_peer_mac, reset_req);
-            // CG5317 does not reply to the reset packet
-            return Event::SUCCESS;
-
+            // CG5317 does not reply to the reset packet, so just wait a configured delay
+            return cfg.chip_reset.delay_after_reset_ms;
         } else {
             ctx.log_info("Chip reset not supported on this chip");
         }
