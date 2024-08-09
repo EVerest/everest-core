@@ -51,7 +51,7 @@ types:
     enum:
       - Accepted
       - Rejected
-      - AcceptedCancelled
+      - AcceptedCanceled
       - InvalidCertificate
       - RevokedCertificate
   UploadLogsRequest:
@@ -105,7 +105,7 @@ types:
     enum:
       - Accepted
       - Rejected
-      - AcceptedCancelled
+      - AcceptedCanceled
   UploadLogsResponse:
     description: Response to a upload logs request
     type: object
@@ -139,6 +139,7 @@ types:
       - Uploaded
       - UploadFailure
       - Uploading
+      - AcceptedCanceled
   LogStatus:
     description: Type defining the status of a log upload
     type: object
