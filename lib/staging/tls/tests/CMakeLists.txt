@@ -9,6 +9,7 @@ target_include_directories(${TLS_GTEST_NAME} PRIVATE
 
 target_compile_definitions(${TLS_GTEST_NAME} PRIVATE
     -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
 )
 
 target_sources(${TLS_GTEST_NAME} PRIVATE

@@ -100,7 +100,6 @@ private:
      */
     types::system::UpdateFirmwareResponse
     handle_standard_firmware_update(const types::system::FirmwareUpdateRequest& firmware_update_request);
-    types::system::UpdateFirmwareResponse
 
     /**
      * @brief Handles the given \p firmware_update_request. If the download should not be started in the future it
@@ -109,6 +108,7 @@ private:
      *
      * @param firmware_update_request
      */
+    types::system::UpdateFirmwareResponse
     handle_signed_fimware_update(const types::system::FirmwareUpdateRequest& firmware_update_request);
 
     /**

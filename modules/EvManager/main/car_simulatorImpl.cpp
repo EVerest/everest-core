@@ -237,8 +237,10 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
     using types::board_support_common::BspMeasurement;
     mod->r_ev_board_support->subscribe_bsp_measurement([this](const auto& measurement) {
         car_simulation->set_pp(measurement.proximity_pilot.ampacity);
-        car_simulation->set_rcd_current(measurement.rcd_current_mA.value());
         car_simulation->set_pwm_duty_cycle(measurement.cp_pwm_duty_cycle);
+        if (measurement.rcd_current_mA.has_value()) {
+            car_simulation->set_rcd_current(measurement.rcd_current_mA.value());
+        }
     });
 
     // subscribe slac_state

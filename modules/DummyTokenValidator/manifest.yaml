@@ -21,7 +21,7 @@ provides:
         minLength: 5
         default: Token valid
       sleep:
-        description: Time to wait before returning the dumy validation result (in s)
+        description: Time to wait before returning the dummy validation result (in s)
         type: number
         minimum: 0
         maximum: 120

@@ -841,7 +841,7 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
 
     auto transaction_data = this->transaction_handler->get_transaction_data(evse_id);
     if (transaction_data == nullptr) {
-        EVLOG_warning << "Could not update transaction data because no tranasaction data is present. This might happen "
+        EVLOG_warning << "Could not update transaction data because no transaction data is present. This might happen "
                          "in case a TxStopPoint is already active when a TransactionStarted event occurs (e.g. "
                          "TxStopPoint is EnergyTransfer or ParkingBayOccupied)";
         this->charge_point->on_session_started(evse_id, connector_id);

@@ -202,6 +202,8 @@ private:
     json ocpp_charging_schedule;
     bool ocpp_charging_schedule_updated = false;
     std::string ocpp_connection_status = "unknown";
+
+    const std::string api_base = "everest_api/";
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

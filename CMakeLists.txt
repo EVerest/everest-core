@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14.7)
 
 project(everest-core
-    VERSION 2024.6.0
+    VERSION 2024.7.1
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -12,7 +12,7 @@ find_package(everest-cmake 0.4
 )
 
 if (NOT everest-cmake_FOUND)
-    message(STATUS "Retreiving everest-cmake using FetchContent")
+    message(STATUS "Retrieving everest-cmake using FetchContent")
     include(FetchContent)
     FetchContent_Declare(
         everest-cmake

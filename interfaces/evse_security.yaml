@@ -148,7 +148,7 @@ cmds:
         type: string
         $ref: /evse_security#/EncodingFormat
       include_ocsp:
-        description: Specifies whether per-certificate OCSP data  is also requested
+        description: Specifies whether per-certificate OCSP data is also requested
         type: boolean
     result:
       description: The response to the requested command
