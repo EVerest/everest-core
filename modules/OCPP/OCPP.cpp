@@ -758,10 +758,6 @@ void OCPP::ready() {
             const types::session_cost::SessionCost cost =
                 conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
-            if (this->p_session_cost == nullptr) {
-                response.status = ocpp::v16::DataTransferStatus::Rejected;
-                return response;
-            }
             this->p_session_cost->publish_session_cost(cost);
             response.status = ocpp::v16::DataTransferStatus::Accepted;
             return response;
