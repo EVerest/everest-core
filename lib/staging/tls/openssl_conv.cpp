@@ -3,7 +3,7 @@
 
 #include <openssl_conv.hpp>
 
-#include <evse_security/detail/openssl/openssl_types.hpp>
+#include <evse_security/crypto/openssl/openssl_types.hpp>
 #include <memory>
 #include <openssl/x509.h>
 
