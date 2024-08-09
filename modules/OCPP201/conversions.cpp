@@ -479,7 +479,7 @@ ocpp::v201::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatu
         return ocpp::v201::LogStatusEnum::Accepted;
     case types::system::UploadLogsStatus::Rejected:
         return ocpp::v201::LogStatusEnum::Rejected;
-    case types::system::UploadLogsStatus::AcceptedCancelled:
+    case types::system::UploadLogsStatus::AcceptedCanceled:
         return ocpp::v201::LogStatusEnum::AcceptedCanceled;
     default:
         throw std::runtime_error("Could not convert UploadLogsStatus");
@@ -500,7 +500,7 @@ to_ocpp_update_firmware_status_enum(const types::system::UpdateFirmwareResponse&
         return ocpp::v201::UpdateFirmwareStatusEnum::Accepted;
     case types::system::UpdateFirmwareResponse::Rejected:
         return ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
-    case types::system::UpdateFirmwareResponse::AcceptedCancelled:
+    case types::system::UpdateFirmwareResponse::AcceptedCanceled:
         return ocpp::v201::UpdateFirmwareStatusEnum::AcceptedCanceled;
     case types::system::UpdateFirmwareResponse::InvalidCertificate:
         return ocpp::v201::UpdateFirmwareStatusEnum::InvalidCertificate;
