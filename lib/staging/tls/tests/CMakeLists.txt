@@ -126,4 +126,4 @@ install(
 
 # tests don't run successfully in CI pipeline
 # pki.sh not installed or run from wrong directory
-# add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})

@@ -114,15 +114,15 @@ int main(int argc, char** argv) {
         config.ciphersuites = "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384";
     }
 
-    config.chains.emplace_back();
-    config.chains[0].certificate_chain_file = "server_chain.pem";
-    config.chains[0].private_key_file = "server_priv.pem";
-    config.chains[0].trust_anchor_file = "server_root_cert.pem";
-    config.chains[0].ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
-    config.chains.emplace_back();
-    config.chains[1].certificate_chain_file = "alt_server_chain.pem";
-    config.chains[1].private_key_file = "alt_server_priv.pem";
-    config.chains[1].trust_anchor_file = "alt_server_root_cert.pem";
+    auto& ref0 = config.chains.emplace_back();
+    ref0.certificate_chain_file = "server_chain.pem";
+    ref0.private_key_file = "server_priv.pem";
+    ref0.trust_anchor_file = "server_root_cert.pem";
+    ref0.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
+    auto& ref1 = config.chains.emplace_back();
+    ref1.certificate_chain_file = "alt_server_chain.pem";
+    ref1.private_key_file = "alt_server_priv.pem";
+    ref1.trust_anchor_file = "alt_server_root_cert.pem";
     config.verify_locations_file = "client_root_cert.pem";
 
     config.service = "8444";

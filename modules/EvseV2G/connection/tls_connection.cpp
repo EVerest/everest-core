@@ -154,10 +154,10 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
             // workaround (see above libevse-security comment)
             const auto key_password = info.password.value_or("");
 
-            config.chains.emplace_back();
-            config.chains[0].certificate_chain_file = cert_path.c_str();
-            config.chains[0].private_key_file = key_path.c_str();
-            config.chains[0].private_key_password = key_password.c_str();
+            auto& ref = config.chains.emplace_back();
+            ref.certificate_chain_file = cert_path.c_str();
+            ref.private_key_file = key_path.c_str();
+            ref.private_key_password = key_password.c_str();
 
             if (info.ocsp) {
                 for (const auto& ocsp : info.ocsp.value()) {
@@ -165,7 +165,7 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
                     if (ocsp.ocsp_path) {
                         file = ocsp.ocsp_path.value().c_str();
                     }
-                    config.chains[0].ocsp_response_files.push_back(file);
+                    ref.ocsp_response_files.push_back(file);
                 }
             }
 

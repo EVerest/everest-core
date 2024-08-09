@@ -47,11 +47,11 @@ tls::Server::OptionalConfig ssl_init() {
     auto server_config = std::make_unique<tls::Server::config_t>();
     server_config->cipher_list = "ECDHE-ECDSA-AES128-SHA256";
     server_config->ciphersuites = "";
-    server_config->chains.emplace_back();
-    server_config->chains[0].certificate_chain_file = "server_chain.pem";
-    server_config->chains[0].private_key_file = "server_priv.pem";
-    server_config->chains[0].trust_anchor_file = "server_root_cert.pem";
-    server_config->chains[0].ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
+    auto& ref = server_config->chains.emplace_back();
+    ref.certificate_chain_file = "server_chain.pem";
+    ref.private_key_file = "server_priv.pem";
+    ref.trust_anchor_file = "server_root_cert.pem";
+    ref.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
     server_config->host = "localhost";
     server_config->service = "8444";
     server_config->ipv6_only = false;
