@@ -24,3 +24,5 @@ vars:
     description: Emits all events related to current token validation
     type: object
     $ref: /authorization#/TokenValidationStatusMessage
+errors:
+  - reference: /errors/generic

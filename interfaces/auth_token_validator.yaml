@@ -13,3 +13,5 @@ cmds:
         Result object containing validation result
       type: object
       $ref: /authorization#/ValidationResult
+errors:
+  - reference: /errors/generic
