@@ -27,7 +27,7 @@ target_sources(${TLS_GTEST_NAME} PRIVATE
 )
 
 target_link_libraries(${TLS_GTEST_NAME} PRIVATE
-    GTest::gtest
+    GTest::gtest_main
     OpenSSL::SSL
     OpenSSL::Crypto
     everest::evse_security
