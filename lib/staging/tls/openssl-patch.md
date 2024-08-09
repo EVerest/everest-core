@@ -1,4 +1,3 @@
-
 # OpenSSL 3.0.8 patch
 
 The file `openssl-3.0.8-feat-updates-to-support-status_request_v2.patch` is a

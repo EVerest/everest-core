@@ -2,12 +2,13 @@
 // Copyright (C) 2022-2023 chargebyte GmbH
 // Copyright (C) 2022-2023 Contributors to EVerest
 #include "EvseV2G.hpp"
-#include "connection.hpp"
-#include "everest/logging.hpp"
+#include "connection/connection.hpp"
 #include "log.hpp"
 #include "sdp.hpp"
+#include <everest/logging.hpp>
 
 #ifndef EVEREST_MBED_TLS
+#include <csignal>
 #include <openssl_util.hpp>
 namespace {
 void log_handler(openssl::log_level_t level, const std::string& str) {
@@ -40,6 +41,7 @@ void EvseV2G::init() {
 
 #ifndef EVEREST_MBED_TLS
     (void)openssl::set_log_handler(log_handler);
+    tls::Server::configure_signal_handler(SIGUSR1);
     v2g_ctx->tls_server = &tls_server;
 #endif // EVEREST_MBED_TLS
 

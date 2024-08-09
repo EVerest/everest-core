@@ -403,7 +403,7 @@ struct v2g_connection {
     } conn;
 
     tls::Connection* tls_connection;
-    openssl::PKey_ptr* pubkey;
+    openssl::pkey_ptr* pubkey;
 #endif // EVEREST_MBED_TLS
 
     ssize_t (*read)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);
