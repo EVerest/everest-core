@@ -207,8 +207,10 @@ impl PaymentTerminalModule {
     /// The implementation of the `SessionCostClientSubscriber::on_session_cost`,
     /// but here we can return errors.
     fn on_session_cost_impl(&self, context: &Context, value: SessionCost) -> Result<()> {
+        let Some(id_tag) = value.id_tag else { return Ok(()) };
+
         // We only care about bank cards.
-        match value.id_tag.authorization_type {
+        match id_tag.authorization_type {
             AuthorizationType::BankCard => (),
             _ => return Ok(()),
         }
@@ -228,14 +230,14 @@ impl PaymentTerminalModule {
 
         let res = self
             .feig
-            .commit_transaction(&value.id_tag.id_token.value, total_cost as u64)?;
+            .commit_transaction(&id_tag.id_token.value, total_cost as u64)?;
 
         context
             .publisher
             .bank_transaction_summary
             .bank_transaction_summary(BankTransactionSummary {
                 session_token: Some(BankSessionToken {
-                    token: Some(value.id_tag.id_token.value.clone()),
+                    token: Some(id_tag.id_token.value.clone()),
                 }),
                 transaction_data: Some(format!("{:06}", res.trace_number.unwrap_or_default())),
             })?;
@@ -412,29 +414,47 @@ mod tests {
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::OCPP),
+                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::OCPP)),
                 status: SessionStatus::Finished,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::RFID),
+                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::RFID)),
                 status: SessionStatus::Finished,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::BankCard),
+                id_tag: Some(ProvidedIdToken::new(String::new(), AuthorizationType::BankCard)),
                 status: SessionStatus::Running,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
         ];
 
@@ -464,11 +484,17 @@ mod tests {
                 SessionCost {
                     cost_chunks: None,
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard)),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -476,11 +502,17 @@ mod tests {
                 SessionCost {
                     cost_chunks: Some(Vec::new()),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard)),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -491,13 +523,21 @@ mod tests {
                         cost: None,
                         timestamp_from: None,
                         timestamp_to: None,
+                        metervalue_from: None,
+                        metervalue_to: None,
                     }]),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard)),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -509,20 +549,30 @@ mod tests {
                             cost: Some(MoneyAmount { value: 1 }),
                             timestamp_from: None,
                             timestamp_to: None,
+                            metervalue_from: None,
+                            metervalue_to: None,
                         },
                         SessionCostChunk {
                             category: None,
                             cost: Some(MoneyAmount { value: 2 }),
                             timestamp_from: None,
                             timestamp_to: None,
+                            metervalue_from: None,
+                            metervalue_to: None,
                         },
                     ]),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard)),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 3,
             ),

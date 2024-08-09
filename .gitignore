@@ -5,3 +5,5 @@ workspace.yaml
 .vscode/
 /bazel-*
 /modules/target
+CMakeLists.txt.user
+.idea/
