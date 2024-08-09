@@ -8,7 +8,7 @@
 
 #include "component_state_manager.hpp"
 #include "database_handler.hpp"
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 #include <optional>
 
 namespace ocpp {

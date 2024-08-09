@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/v16/ocpp_types.hpp>
+
+#include <optional>
 #include <string>
 
 #include <nlohmann/json.hpp>
-#include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
-
-#include <ocpp/v16/ocpp_types.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 
 namespace ocpp {
 namespace v16 {
@@ -405,11 +407,13 @@ void to_json(json& j, const FirmwareType& k) {
     // the required parts of the message
     j = json{
         {"location", k.location},
-        {"retrieveDateTime", k.retrieveDateTime.to_rfc3339()},
         {"signingCertificate", k.signingCertificate},
         {"signature", k.signature},
     };
     // the optional parts of the message
+    if (k.retrieveDateTime) {
+        j["retrieveDateTime"] = k.retrieveDateTime.value().to_rfc3339();
+    }
     if (k.installDateTime) {
         j["installDateTime"] = k.installDateTime.value().to_rfc3339();
     }
@@ -419,12 +423,13 @@ void to_json(json& j, const FirmwareType& k) {
 void from_json(const json& j, FirmwareType& k) {
     // the required parts of the message
     k.location = j.at("location");
-    k.retrieveDateTime = ocpp::DateTime(std::string(j.at("retrieveDateTime")));
-    ;
     k.signingCertificate = j.at("signingCertificate");
     k.signature = j.at("signature");
 
     // the optional parts of the message
+    if (j.contains("retrieveDateTime")) {
+        k.retrieveDateTime.emplace(j.at("retrieveDateTime").get<std::string>());
+    }
     if (j.contains("installDateTime")) {
         k.installDateTime.emplace(j.at("installDateTime").get<std::string>());
     }

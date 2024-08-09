@@ -11,7 +11,7 @@
 
 #include "database_stub.hpp"
 #include "ocpp/common/types.hpp"
-#include "ocpp/v16/enums.hpp"
+#include "ocpp/v16/ocpp_enums.hpp"
 #include "ocpp/v16/smart_charging.hpp"
 #include "profile_tests_common.hpp"
 

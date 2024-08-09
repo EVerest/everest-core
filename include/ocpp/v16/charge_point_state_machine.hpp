@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 
 namespace ocpp {
 namespace v16 {

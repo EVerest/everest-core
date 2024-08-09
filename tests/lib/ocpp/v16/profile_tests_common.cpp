@@ -3,7 +3,7 @@
 
 #include "profile_tests_common.hpp"
 #include "ocpp/common/types.hpp"
-#include "ocpp/v16/enums.hpp"
+#include "ocpp/v16/ocpp_enums.hpp"
 
 // ----------------------------------------------------------------------------
 // helper functions

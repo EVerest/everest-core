@@ -1,6 +1,8 @@
 {% if first %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
 #ifndef OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
 #define OCPP_{{namespace | upper}}_OCPP_TYPES_HPP
 
@@ -9,7 +11,7 @@
 #include <optional>
 #include <nlohmann/json_fwd.hpp>
 
-#include <ocpp/{{namespace}}/enums.hpp>
+#include <ocpp/{{namespace}}/ocpp_enums.hpp>
 {% if namespace == "v16" %}
     #include <ocpp/v16/types.hpp>
 {% endif %}

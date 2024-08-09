@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
 #ifndef OCPP_V16_OCPP_TYPES_HPP
 #define OCPP_V16_OCPP_TYPES_HPP
 
@@ -9,7 +11,7 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 #include <ocpp/v16/types.hpp>
 
 namespace ocpp {
@@ -178,9 +180,9 @@ std::ostream& operator<<(std::ostream& os, const LocalAuthorizationList& k);
 
 struct FirmwareType {
     CiString<512> location;
-    ocpp::DateTime retrieveDateTime;
     CiString<5500> signingCertificate;
     CiString<800> signature;
+    std::optional<ocpp::DateTime> retrieveDateTime;
     std::optional<ocpp::DateTime> installDateTime;
 };
 /// \brief Conversion from a given FirmwareType \p k to a given json object \p j

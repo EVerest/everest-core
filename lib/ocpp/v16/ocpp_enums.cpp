@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#include <ocpp/v16/enums.hpp>
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/v16/ocpp_enums.hpp>
+
 #include <stdexcept>
 #include <string>
 
@@ -1301,8 +1304,6 @@ std::string unit_of_measure_to_string(UnitOfMeasure e) {
         return "Fahrenheit";
     case UnitOfMeasure::Percent:
         return "Percent";
-    case UnitOfMeasure::RevolutionsPerMinute:
-        return "RevolutionsPerMinute";
     }
 
     throw std::out_of_range("No known string conversion for provided enum of type UnitOfMeasure");
@@ -1359,9 +1360,6 @@ UnitOfMeasure string_to_unit_of_measure(const std::string& s) {
     }
     if (s == "Percent") {
         return UnitOfMeasure::Percent;
-    }
-    if (s == "RevolutionsPerMinute") {
-        return UnitOfMeasure::RevolutionsPerMinute;
     }
 
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UnitOfMeasure");

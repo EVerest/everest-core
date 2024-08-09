@@ -1,15 +1,17 @@
 {% if first %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
-#include <string>
-
-#include <optional>
-#include <nlohmann/json.hpp>
-
-#include <ocpp/{{namespace}}/enums.hpp>
-#include <ocpp/common/types.hpp>
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/{{namespace}}/ocpp_types.hpp>
+
+#include <string>
+#include <optional>
+
+#include <nlohmann/json.hpp>
+
+#include <ocpp/{{namespace}}/ocpp_enums.hpp>
+#include <ocpp/common/types.hpp>
 
 namespace ocpp {
 namespace {{namespace}} {
@@ -60,7 +62,11 @@ if (j.size() == 0) {
             }
 {% endif %}
             for (auto val : k.{{property.name}}.value()) {
+                {%- if property.type.endswith('Enum>') %}
+                j["{{property.name}}"].push_back(conversions::{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}_to_string(val));
+                {%- else%}
                 j["{{property.name}}"].push_back(val);
+                {%- endif%}
             }
 {% else %}
 {%- if property.enum %}
@@ -111,7 +117,11 @@ j["{{property.name}}"] = k.{{property.name}}.value();
             json arr = j.at("{{property.name}}");
             {{property.type}} vec;
             for (auto val : arr) {
+                {%- if property.type.endswith('Enum>') %}
+                vec.push_back(conversions::string_to_{{- property.type.replace('std::vector<','').replace('>','') | snake_case}}(val));
+                {%- else %}
                 vec.push_back(val);
+                {%- endif %}
             }
             k.{{property.name}}.emplace(vec);
 {% else %}

@@ -18,8 +18,8 @@
 
 #include <ocpp/common/cistring.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
-#include <ocpp/v16/enums.hpp>
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 
 using json = nlohmann::json;
 

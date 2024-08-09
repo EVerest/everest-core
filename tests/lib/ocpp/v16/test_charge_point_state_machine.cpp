@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ocpp/v16/charge_point_state_machine.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 
 using namespace ocpp::v16;

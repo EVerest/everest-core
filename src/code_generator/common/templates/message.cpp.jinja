@@ -1,15 +1,15 @@
 {% if action.is_request %}
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - {{year}} Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/{{namespace}}/messages/{{action.name}}.hpp>
 
 #include <ostream>
 #include <string>
-
 {% if uses_optional %}
 #include <optional>
 {% endif %}
-
-#include <ocpp/{{namespace}}/messages/{{action.name}}.hpp>
 
 using json = nlohmann::json;
 

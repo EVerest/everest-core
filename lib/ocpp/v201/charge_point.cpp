@@ -3362,7 +3362,7 @@ void ChargePoint::handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest
     SetMonitoringLevelResponse response;
     const auto& msg = call.msg;
 
-    if (msg.severity < MontoringLevelSeverity::MIN || msg.severity > MontoringLevelSeverity::MAX) {
+    if (msg.severity < MonitoringLevelSeverity::MIN || msg.severity > MonitoringLevelSeverity::MAX) {
         response.status = GenericStatusEnum::Rejected;
     } else {
         auto result = this->device_model->set_value(

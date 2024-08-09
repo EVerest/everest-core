@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
 #ifndef OCPP_V201_GET15118EVCERTIFICATE_HPP
 #define OCPP_V201_GET15118EVCERTIFICATE_HPP
 
@@ -7,7 +9,7 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace ocpp {
@@ -17,7 +19,7 @@ namespace v201 {
 struct Get15118EVCertificateRequest : public ocpp::Message {
     CiString<50> iso15118SchemaVersion;
     CertificateActionEnum action;
-    CiString<7500> exiRequest;
+    CiString<5600> exiRequest;
     std::optional<CustomData> customData;
 
     /// \brief Provides the type of this Get15118EVCertificate message as a human readable string
@@ -38,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const Get15118EVCertificateRequest& k
 /// \brief Contains a OCPP Get15118EVCertificateResponse message
 struct Get15118EVCertificateResponse : public ocpp::Message {
     Iso15118EVCertificateStatusEnum status;
-    CiString<7500> exiResponse;
+    CiString<5600> exiResponse;
     std::optional<CustomData> customData;
     std::optional<StatusInfo> statusInfo;
 

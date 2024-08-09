@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
-#include <ocpp/v201/enums.hpp>
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/v201/ocpp_enums.hpp>
+
 #include <stdexcept>
 #include <string>
 

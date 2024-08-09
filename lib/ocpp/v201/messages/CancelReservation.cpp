@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
-
-#include <ostream>
-#include <string>
-
-#include <optional>
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
 #include <ocpp/v201/messages/CancelReservation.hpp>
+
+#include <optional>
+#include <ostream>
+#include <string>
 
 using json = nlohmann::json;
 

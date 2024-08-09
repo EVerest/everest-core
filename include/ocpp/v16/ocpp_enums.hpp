@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#ifndef OCPP_V16_ENUMS_HPP
-#define OCPP_V16_ENUMS_HPP
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#ifndef OCPP_V16_OCPP_ENUMS_HPP
+#define OCPP_V16_OCPP_ENUMS_HPP
 
 #include <iosfwd>
 #include <string>
@@ -704,7 +706,6 @@ enum class UnitOfMeasure {
     Celsius,
     Fahrenheit,
     Percent,
-    RevolutionsPerMinute,
 };
 
 namespace conversions {
@@ -1143,4 +1144,4 @@ std::ostream& operator<<(std::ostream& os, const UnlockStatus& unlock_status);
 } // namespace v16
 } // namespace ocpp
 
-#endif // OCPP_V16_ENUMS_HPP
+#endif // OCPP_V16_OCPP_ENUMS_HPP

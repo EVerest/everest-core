@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
 #ifndef OCPP_V201_SETNETWORKPROFILE_HPP
 #define OCPP_V201_SETNETWORKPROFILE_HPP
 
@@ -7,7 +9,7 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace ocpp {

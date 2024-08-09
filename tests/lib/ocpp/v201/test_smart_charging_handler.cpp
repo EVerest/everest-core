@@ -23,8 +23,8 @@
 #include <evse_mock.hpp>
 #include <evse_security_mock.hpp>
 #include <ocpp/common/call_types.hpp>
-#include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/evse.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 #include <ocpp/v201/smart_charging.hpp>
 #include <optional>
 

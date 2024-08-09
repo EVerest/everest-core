@@ -4,7 +4,7 @@
 #pragma once
 
 #include "database_handler.hpp"
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v201/ocpp_enums.hpp>
 
 namespace ocpp::v201 {
 

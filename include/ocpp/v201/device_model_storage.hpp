@@ -10,6 +10,7 @@
 #include <ocpp/v201/comparators.hpp>
 #include <optional>
 
+#include <ocpp/v201/enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace ocpp {

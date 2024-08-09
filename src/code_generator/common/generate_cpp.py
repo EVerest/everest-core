@@ -95,8 +95,8 @@ message_hpp_template = env.get_template('message.hpp.jinja')
 message_cpp_template = env.get_template('message.cpp.jinja')
 messages_cmakelists_txt_template = env.get_template(
     'messages.cmakelists.txt.jinja')
-enums_hpp_template = env.get_template('enums.hpp.jinja')
-enums_cpp_template = env.get_template('enums.cpp.jinja')
+enums_hpp_template = env.get_template('ocpp_enums.hpp.jinja')
+enums_cpp_template = env.get_template('ocpp_enums.cpp.jinja')
 ocpp_types_hpp_template = env.get_template('ocpp_types.hpp.jinja')
 ocpp_types_cpp_template = env.get_template('ocpp_types.cpp.jinja')
 
@@ -384,8 +384,8 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
     if not generated_source_dir.exists():
         generated_source_dir.mkdir(parents=True)
 
-    enums_hpp_fn = Path(generated_header_dir, 'enums.hpp')
-    enums_cpp_fn = Path(generated_source_dir, 'enums.cpp')
+    enums_hpp_fn = Path(generated_header_dir, 'ocpp_enums.hpp')
+    enums_cpp_fn = Path(generated_source_dir, 'ocpp_enums.cpp')
     ocpp_types_hpp_fn = Path(generated_header_dir, 'ocpp_types.hpp')
     ocpp_types_cpp_fn = Path(generated_source_dir, 'ocpp_types.cpp')
     messages_header_dir = generated_header_dir / 'messages'

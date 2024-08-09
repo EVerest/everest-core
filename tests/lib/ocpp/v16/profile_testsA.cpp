@@ -6,7 +6,7 @@
 #include <chrono>
 
 #include "ocpp/common/types.hpp"
-#include "ocpp/v16/enums.hpp"
+#include "ocpp/v16/ocpp_enums.hpp"
 #include "ocpp/v16/profile.hpp"
 #include "profile_tests_common.hpp"
 #include <gtest/gtest.h>

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
+#include <ocpp/v16/messages/GetLocalListVersion.hpp>
 
 #include <ostream>
 #include <string>
-
-#include <ocpp/v16/messages/GetLocalListVersion.hpp>
 
 using json = nlohmann::json;
 

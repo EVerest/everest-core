@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
+
 #ifndef OCPP_V16_AUTHORIZE_HPP
 #define OCPP_V16_AUTHORIZE_HPP
 
@@ -7,7 +9,7 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
 
 namespace ocpp {

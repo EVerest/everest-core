@@ -791,7 +791,6 @@ std::optional<MeterValue> ChargePointImpl::get_latest_meter_value(int32_t connec
                 // RPM
                 const auto rpm = measurement.rpm;
                 if (rpm) {
-                    sample.unit.emplace(UnitOfMeasure::RevolutionsPerMinute);
                     if (rpm.value().location.has_value()) {
                         sample.location.emplace(conversions::string_to_location(rpm.value().location.value()));
                     } else {

@@ -11,7 +11,7 @@
 #include <everest/logging.hpp>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 
 using json = nlohmann::json;
 
