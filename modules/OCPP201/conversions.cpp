@@ -534,6 +534,8 @@ ocpp::v201::UploadLogStatusEnum to_ocpp_upload_logs_status_enum(types::system::L
         return ocpp::v201::UploadLogStatusEnum::UploadFailure;
     case types::system::LogStatusEnum::Uploading:
         return ocpp::v201::UploadLogStatusEnum::Uploading;
+    case types::system::LogStatusEnum::AcceptedCanceled:
+        return ocpp::v201::UploadLogStatusEnum::AcceptedCanceled;
     default:
         throw std::runtime_error("Could not convert UploadLogStatusEnum");
     }
