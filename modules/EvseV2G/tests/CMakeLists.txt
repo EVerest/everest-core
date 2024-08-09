@@ -86,4 +86,4 @@ install(
 )
 
 # runs fine locally, fails in CI
-# add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
