@@ -1238,29 +1238,29 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K01.FR.06 | 🌐     |                                                                                                 |
 | K01.FR.07 | ⛽️     | Notified through the `signal_set_charging_profiles` callback.                                   |
 | K01.FR.08 | 🌐     | `TxDefaultProfile`s are supported.                                                              |
-| K01.FR.09 |        |                                                                                                 |
+| K01.FR.09 | ✅     |                                                                                                 |
 | K01.FR.10 | ✅     |                                                                                                 |
 | K01.FR.11 |        |                                                                                                 |
 | K01.FR.12 |        |                                                                                                 |
 | K01.FR.13 |        |                                                                                                 |
 | K01.FR.14 | ✅     |                                                                                                 |
 | K01.FR.15 | ✅     |                                                                                                 |
-| K01.FR.16 |        |                                                                                                 |
+| K01.FR.16 | ✅     |                                                                                                 |
 | K01.FR.17 |        |                                                                                                 |
 | K01.FR.19 |        |                                                                                                 |
 | K01.FR.20 | ✅     | Suggests `ACPhaseSwitchingSupported` should be per EVSE, conflicting with the rest of the spec. |
 | K01.FR.21 |        |                                                                                                 |
 | K01.FR.22 |        |                                                                                                 |
-| K01.FR.26 |        |                                                                                                 |
-| K01.FR.27 |        |                                                                                                 |
-| K01.FR.28 |        |                                                                                                 |
+| K01.FR.26 | ✅     |                                                                                                 |
+| K01.FR.27 | ✅     |                                                                                                 |
+| K01.FR.28 | ✅     |                                                                                                 |
 | K01.FR.29 |        |                                                                                                 |
 | K01.FR.30 |        |                                                                                                 |
 | K01.FR.31 |        |                                                                                                 |
 | K01.FR.32 | ✅     |                                                                                                 |
-| K01.FR.33 |        |                                                                                                 |
+| K01.FR.33 | ✅     |                                                                                                 |
 | K01.FR.34 | ✅     |                                                                                                 |
-| K01.FR.35 |        |                                                                                                 |
+| K01.FR.35 | ✅     |                                                                                                 |
 | K01.FR.36 | ✅     |                                                                                                 |
 | K01.FR.37 |        |                                                                                                 |
 | K01.FR.38 | 🌐 💂  | `ChargingStationMaxProfile`s with `Relative` for `chargingProfileKind` are rejected.            |

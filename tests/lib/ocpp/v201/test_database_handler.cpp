@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
+#include "comparators.hpp"
 #include "database_testing_utils.hpp"
+#include "ocpp/v201/enums.hpp"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <ocpp/v201/database_handler.hpp>
@@ -144,4 +146,221 @@ TEST_F(DatabaseHandlerTest, TransactionDelete) {
 
 TEST_F(DatabaseHandlerTest, TransactionDeleteNotFound) {
     EXPECT_NO_THROW(this->database_handler.transaction_delete("txIdNotFound"));
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithNoData_InsertProfile) {
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+
+    auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
+
+    EXPECT_EQ(sut.size(), 1);
+    EXPECT_EQ(sut[1].size(), 1);        // Access the profiles at EVSE_ID 1
+    EXPECT_EQ(sut[1][0].id, 1);         // Access the profiles at EVSE_ID 1 and get the first profile
+    EXPECT_EQ(sut[1][0].stackLevel, 1); // Access the profiles at EVSE_ID 1 and get the first profile
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_UpdateProfile) {
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+
+    std::string sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
+    auto select_stmt = this->database->new_statement(sql);
+
+    EXPECT_EQ(select_stmt->step(), SQLITE_ROW);
+
+    auto count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 1);
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_InsertNewProfile) {
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+
+    std::string sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
+    auto select_stmt = this->database->new_statement(sql);
+
+    EXPECT_EQ(select_stmt->step(), SQLITE_ROW);
+
+    auto count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 2);
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_DeleteRemovesSpecifiedProfiles) {
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+
+    auto sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
+
+    auto select_stmt = this->database->new_statement(sql);
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    auto count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 2);
+
+    select_stmt->step();
+
+    this->database_handler.delete_charging_profile(1);
+
+    select_stmt->reset();
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 1);
+    select_stmt->step();
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_DeleteAllRemovesAllProfiles) {
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    this->database_handler.insert_or_update_charging_profile(
+        1, ChargingProfile{
+               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+
+    auto sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
+
+    auto select_stmt = this->database->new_statement(sql);
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    auto count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 2);
+    select_stmt->step();
+
+    this->database_handler.clear_charging_profiles();
+    select_stmt->reset();
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 0);
+    select_stmt->step();
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithNoProfileData_DeleteAllDoesNotFail) {
+
+    auto sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
+
+    auto select_stmt = this->database->new_statement(sql);
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    auto count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 0);
+    select_stmt->step();
+
+    this->database_handler.clear_charging_profiles();
+    select_stmt->reset();
+
+    EXPECT_NE(select_stmt->step(), SQLITE_DONE);
+    count = select_stmt->column_int(0);
+    EXPECT_EQ(count, 0);
+    select_stmt->step();
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithSingleProfileData_LoadsChargingProfile) {
+    auto profile = ChargingProfile{
+        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(1, profile);
+
+    auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
+
+    EXPECT_EQ(sut.size(), 1);
+
+    // The evse id is found
+    EXPECT_NE(sut.find(1), sut.end());
+
+    auto profiles = sut[1];
+
+    EXPECT_EQ(profiles.size(), 1);
+    EXPECT_EQ(profile, profiles[0]);
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileSameEvse_LoadsChargingProfile) {
+    auto p1 = ChargingProfile{
+        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+
+    this->database_handler.insert_or_update_charging_profile(1, p1);
+
+    auto p2 = ChargingProfile{
+        .id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(1, p2);
+
+    auto p3 = ChargingProfile{
+        .id = 3, .stackLevel = 3, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(1, p3);
+
+    auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
+
+    EXPECT_EQ(sut.size(), 1);
+
+    // The evse id is found
+    EXPECT_NE(sut.find(1), sut.end());
+
+    auto profiles = sut[1];
+
+    EXPECT_EQ(profiles.size(), 3);
+    EXPECT_EQ(profiles[0], p1);
+    EXPECT_EQ(profiles[1], p2);
+    EXPECT_EQ(profiles[2], p3);
+}
+
+TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileDiffEvse_LoadsChargingProfile) {
+    auto p1 = ChargingProfile{
+        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(1, p1);
+
+    auto p2 =
+        ChargingProfile{.id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    this->database_handler.insert_or_update_charging_profile(1, p2);
+
+    auto p3 = ChargingProfile{
+        .id = 3, .stackLevel = 3, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(2, p3);
+    auto p4 =
+        ChargingProfile{.id = 4, .stackLevel = 4, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    this->database_handler.insert_or_update_charging_profile(2, p4);
+
+    auto p5 = ChargingProfile{
+        .id = 5, .stackLevel = 5, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    this->database_handler.insert_or_update_charging_profile(3, p5);
+
+    auto p6 =
+        ChargingProfile{.id = 6, .stackLevel = 6, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    this->database_handler.insert_or_update_charging_profile(3, p6);
+
+    auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
+
+    EXPECT_EQ(sut.size(), 3);
+
+    EXPECT_NE(sut.find(1), sut.end());
+    EXPECT_NE(sut.find(2), sut.end());
+    EXPECT_NE(sut.find(3), sut.end());
+
+    auto profiles1 = sut[1];
+    auto profiles2 = sut[2];
+    auto profiles3 = sut[3];
+
+    EXPECT_EQ(profiles1.size(), 2);
+    EXPECT_EQ(profiles1[0], p1);
+    EXPECT_EQ(profiles1[1], p2);
+
+    EXPECT_EQ(profiles2.size(), 2);
+    EXPECT_EQ(profiles2[0], p3);
+    EXPECT_EQ(profiles2[1], p4);
+
+    EXPECT_EQ(profiles3.size(), 2);
+    EXPECT_EQ(profiles3[0], p5);
+    EXPECT_EQ(profiles3[1], p6);
 }

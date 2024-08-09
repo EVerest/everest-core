@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "everest/logging.hpp"
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/types.hpp>
@@ -717,6 +718,61 @@ void DatabaseHandler::transaction_delete(const std::string& transaction_id) {
     if (delete_stmt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());
     }
+}
+
+void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile) {
+    // add or replace
+    std::string sql =
+        "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, EVSE_ID, STACK_LEVEL, CHARGING_PROFILE_PURPOSE, PROFILE) VALUES "
+        "(@id, @evse_id, @stack_level, @charging_profile_purpose, @profile)";
+    auto stmt = this->database->new_statement(sql);
+
+    json json_profile(profile);
+
+    stmt->bind_int("@id", profile.id);
+    stmt->bind_int("@evse_id", evse_id);
+    stmt->bind_int("@stack_level", profile.stackLevel);
+    stmt->bind_text("@charging_profile_purpose",
+                    conversions::charging_profile_purpose_enum_to_string(profile.chargingProfilePurpose));
+    stmt->bind_text("@profile", json_profile.dump(), SQLiteString::Transient);
+
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::delete_charging_profile(const int profile_id) {
+    std::string sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @profile_id;";
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_int("@profile_id", profile_id);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+void DatabaseHandler::clear_charging_profiles() {
+    this->database->clear_table("CHARGING_PROFILES");
+}
+
+std::map<int32_t, std::vector<v201::ChargingProfile>> DatabaseHandler::get_all_charging_profiles_group_by_evse() {
+    std::map<int32_t, std::vector<v201::ChargingProfile>> map;
+
+    std::string sql = "SELECT EVSE_ID, PROFILE FROM CHARGING_PROFILES";
+
+    auto stmt = this->database->new_statement(sql);
+
+    while (stmt->step() != SQLITE_DONE) {
+        auto evse_id = stmt->column_int(0);
+        auto profile = json::parse(stmt->column_text(1));
+
+        auto profiles = map[evse_id];
+        profiles.emplace_back(profile);
+
+        map[evse_id] = profiles;
+    }
+
+    return map;
 }
 
 } // namespace v201

@@ -19,3 +19,11 @@ bool operator==(const ::ocpp::v201::GetCertificateStatusRequest& a,
 }
 
 } // namespace testing::internal
+
+namespace ocpp::v201 {
+
+bool operator==(const ChargingProfile& a, const ChargingProfile& b) {
+    return a.chargingProfileKind == b.chargingProfileKind && a.chargingProfilePurpose == b.chargingProfilePurpose &&
+           a.id == b.id && a.stackLevel == b.stackLevel;
+}
+} // namespace ocpp::v201

@@ -3,6 +3,7 @@
 
 #include "date/tz.h"
 #include "everest/logging.hpp"
+#include "ocpp/common/message_queue.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
 #include "ocpp/v201/device_model.hpp"
@@ -73,6 +74,45 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
 
     throw std::out_of_range("No known string conversion for provided enum of type ProfileValidationResultEnum");
 }
+
+std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum e) {
+    switch (e) {
+    case ProfileValidationResultEnum::Valid:
+        return "NoError";
+    case ProfileValidationResultEnum::DuplicateProfileValidityPeriod:
+    case ProfileValidationResultEnum::DuplicateTxDefaultProfileFound:
+    case ProfileValidationResultEnum::ExistingChargingStationExternalConstraints:
+        return "DuplicateProfile";
+    case ProfileValidationResultEnum::TxProfileTransactionNotOnEvse:
+    case ProfileValidationResultEnum::TxProfileEvseHasNoActiveTransaction:
+        return "TxNotFound";
+    case ProfileValidationResultEnum::TxProfileConflictingStackLevel:
+        return "InvalidStackLevel";
+    case ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported:
+        return "UnsupportedRateUnit";
+    case ProfileValidationResultEnum::ChargingProfileNoChargingSchedulePeriods:
+    case ProfileValidationResultEnum::ChargingProfileFirstStartScheduleIsNotZero:
+    case ProfileValidationResultEnum::ChargingProfileMissingRequiredStartSchedule:
+    case ProfileValidationResultEnum::ChargingProfileExtraneousStartSchedule:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodsOutOfOrder:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodInvalidPhaseToUse:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedNumberPhases:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodExtraneousPhaseValues:
+    case ProfileValidationResultEnum::ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported:
+        return "InvalidSchedule";
+    case ProfileValidationResultEnum::TxProfileMissingTransactionId:
+        return "MissingParam";
+    case ProfileValidationResultEnum::EvseDoesNotExist:
+    case ProfileValidationResultEnum::TxProfileEvseIdNotGreaterThanZero:
+    case ProfileValidationResultEnum::ChargingStationMaxProfileCannotBeRelative:
+    case ProfileValidationResultEnum::ChargingStationMaxProfileEvseIdGreaterThanZero:
+        return "InvalidValue";
+    case ProfileValidationResultEnum::InvalidProfileType:
+        return "InternalError";
+    }
+
+    throw std::out_of_range("No applicable reason code for provided enum of type ProfileValidationResultEnum");
+}
 } // namespace conversions
 
 std::ostream& operator<<(std::ostream& os, const ProfileValidationResultEnum validation_result) {
@@ -99,8 +139,25 @@ CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optiona
 }
 
 SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
-                                           std::shared_ptr<DeviceModel>& device_model) :
-    evse_manager(evse_manager), device_model(device_model) {
+                                           std::shared_ptr<DeviceModel>& device_model,
+                                           std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
+    evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
+}
+
+SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) {
+    SetChargingProfileResponse response;
+    response.status = ChargingProfileStatusEnum::Rejected;
+
+    auto result = this->validate_profile(profile, evse_id);
+    if (result == ProfileValidationResultEnum::Valid) {
+        response = this->add_profile(profile, evse_id);
+    } else {
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(result);
+        response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(result);
+    }
+
+    return response;
 }
 
 ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id) {
@@ -161,7 +218,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_charging_station_max_
         return ProfileValidationResultEnum::InvalidProfileType;
     }
 
-    if (is_overlapping_validity_period(evse_id, profile)) {
+    if (is_overlapping_validity_period(profile, evse_id)) {
         return ProfileValidationResultEnum::DuplicateProfileValidityPeriod;
     }
 
@@ -180,7 +237,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(Ch
                                                                               int32_t evse_id) const {
     auto profiles = evse_id == 0 ? get_evse_specific_tx_default_profiles() : get_station_wide_tx_default_profiles();
 
-    if (is_overlapping_validity_period(evse_id, profile)) {
+    if (is_overlapping_validity_period(profile, evse_id)) {
         return ProfileValidationResultEnum::DuplicateProfileValidityPeriod;
     }
 
@@ -245,6 +302,9 @@ ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const Char
 ProfileValidationResultEnum
 SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                                                  std::optional<EvseInterface*> evse_opt) const {
+    auto charging_station_supply_phases =
+        this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
+
     for (auto& schedule : profile.chargingSchedule) {
         // K01.FR.26; We currently need to do string conversions for this manually because our DeviceModel class does
         // not let us get a vector of ChargingScheduleChargingRateUnits.
@@ -298,7 +358,7 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
             if (phase_type == CurrentPhaseType::AC) {
                 // K01.FR.45; Once again rejecting invalid values
                 if (charging_schedule_period.numberPhases.has_value() &&
-                    charging_schedule_period.numberPhases > DEFAULT_AND_MAX_NUMBER_PHASES) {
+                    charging_schedule_period.numberPhases > charging_station_supply_phases) {
                     return ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedNumberPhases;
                 }
 
@@ -322,25 +382,37 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
     return ProfileValidationResultEnum::Valid;
 }
 
-SetChargingProfileResponse SmartChargingHandler::add_profile(int32_t evse_id, ChargingProfile& profile) {
+SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
-    auto found_profile = false;
-    for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
-        for (auto it = evse_profiles.begin(); it != evse_profiles.end(); it++) {
-            if (profile.id == it->id) {
-                evse_profiles.erase(it);
-                found_profile = true;
+
+    // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
+    try {
+        // K01.FR27 - add profiles to database when valid
+        this->database_handler->insert_or_update_charging_profile(evse_id, profile);
+
+        auto found_profile = false;
+        for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
+            for (auto it = evse_profiles.begin(); it != evse_profiles.end(); it++) {
+                if (profile.id == it->id) {
+                    evse_profiles.erase(it);
+                    found_profile = true;
+                    break;
+                }
+            }
+
+            if (found_profile) {
                 break;
             }
         }
+        charging_profiles[evse_id].push_back(profile);
 
-        if (found_profile) {
-            break;
-        }
+    } catch (const QueryExecutionException& e) {
+        EVLOG_error << "Could not store ChargingProfile in the database: " << e.what();
+        response.status = ChargingProfileStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InternalError";
     }
-
-    charging_profiles[evse_id].push_back(profile);
 
     return response;
 }
@@ -391,8 +463,8 @@ std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_p
     return station_wide_tx_default_profiles;
 }
 
-bool SmartChargingHandler::is_overlapping_validity_period(int candidate_evse_id,
-                                                          const ChargingProfile& candidate_profile) const {
+bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile& candidate_profile,
+                                                          int candidate_evse_id) const {
 
     if (candidate_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
         // This only applies to non TxProfile types.

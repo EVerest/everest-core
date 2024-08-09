@@ -15,4 +15,10 @@ bool operator==(const ::ocpp::v201::GetCertificateStatusRequest& a, const ::ocpp
 
 } // namespace testing::internal
 
+namespace ocpp::v201 {
+
+bool operator==(const ChargingProfile& a, const ChargingProfile& b);
+
+} // namespace ocpp::v201
+
 #endif // TESTS_OCPP_COMPARATORS_H

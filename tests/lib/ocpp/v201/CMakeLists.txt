@@ -4,6 +4,7 @@ target_include_directories(libocpp_unit_tests PUBLIC
 
 target_sources(libocpp_unit_tests PRIVATE
         test_charge_point.cpp
+        test_database_handler.cpp
         test_database_migration_files.cpp
         test_device_model_storage_sqlite.cpp
         test_notify_report_requests_splitter.cpp

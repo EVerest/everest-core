@@ -178,6 +178,9 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
         evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
 
+    this->smart_charging_handler =
+        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, this->database_handler);
+
     // configure logging
     this->configure_message_logging_format(message_log_path);
 
@@ -218,6 +221,8 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     // get transaction messages from db (if there are any) so they can be sent again.
     this->message_queue->get_persisted_messages_from_db();
     this->boot_notification_req(bootreason);
+    // K01.27 - call load_charging_profiles when system boots
+    this->load_charging_profiles();
     this->start_websocket();
 
     if (this->bootreason == BootReasonEnum::RemoteReset) {
@@ -1310,6 +1315,9 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
         break;
     case MessageType::CustomerInformation:
         this->handle_customer_information_req(json_message);
+        break;
+    case MessageType::SetChargingProfile:
+        this->handle_set_charging_profile_req(json_message);
         break;
     case MessageType::SetMonitoringBase:
         this->handle_set_monitoring_base_req(json_message);
@@ -3147,6 +3155,39 @@ void ChargePoint::handle_heartbeat_response(CallResult<HeartbeatResponse> call) 
     }
 }
 
+void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
+    EVLOG_debug << "Received SetChargingProfileRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    auto msg = call.msg;
+    SetChargingProfileResponse response;
+    response.status = ChargingProfileStatusEnum::Rejected;
+
+    // K01.FR.22: Reject ChargingStationExternalConstraints profiles in SetChargingProfileRequest
+    if (msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "InvalidValue";
+        response.statusInfo->additionalInfo = "ChargingStationExternalConstraintsInSetChargingProfileRequest";
+        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
+                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
+
+        ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
+        this->send<SetChargingProfileResponse>(call_result);
+
+        return;
+    }
+
+    response = this->smart_charging_handler->validate_and_add_profile(msg.chargingProfile, msg.evseId);
+    if (response.status == ChargingProfileStatusEnum::Accepted) {
+        EVLOG_debug << "Accepting SetChargingProfileRequest";
+        this->callbacks.set_charging_profiles_callback();
+    } else {
+        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
+                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
+    }
+
+    ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
+    this->send<SetChargingProfileResponse>(call_result);
+}
+
 void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
     EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
     if (call.msg.firmware.signingCertificate.has_value() or call.msg.firmware.signature.has_value()) {
@@ -3815,6 +3856,31 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
         }
     } else {
         this->set_cs_operative_status(request.operationalStatus, persist);
+    }
+}
+
+// K01.27 - load profiles from database
+void ChargePoint::load_charging_profiles() {
+    try {
+        auto evses = this->database_handler->get_all_charging_profiles_group_by_evse();
+        EVLOG_info << "Found " << evses.size() << " evse in the database";
+        for (const auto& [evse_id, profiles] : evses) {
+            for (auto profile : profiles) {
+                try {
+                    if (this->smart_charging_handler->validate_profile(profile, evse_id) ==
+                        ProfileValidationResultEnum::Valid) {
+                        this->smart_charging_handler->add_profile(profile, evse_id);
+                    } else {
+                        // delete if not valid anymore
+                        this->database_handler->delete_charging_profile(profile.id);
+                    }
+                } catch (const QueryExecutionException& e) {
+                    EVLOG_warning << "Failed database operation for ChargingProfiles: " << e.what();
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Unknown error while loading charging profiles from database: " << e.what();
     }
 }
 

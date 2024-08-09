@@ -19,6 +19,7 @@
 #include <ocpp/v201/monitoring_updater.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v201/smart_charging.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
@@ -52,6 +53,7 @@
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/messages/SetMonitoringBase.hpp>
 #include <ocpp/v201/messages/SetMonitoringLevel.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
@@ -525,8 +527,6 @@ private:
     /// device model
     void remove_network_connection_profiles_below_actual_security_profile();
 
-    void handle_message(const EnhancedMessage<v201::MessageType>& message);
-
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
 
@@ -724,6 +724,9 @@ private:
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
     void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
 
+    // Functional Block K: Smart Charging
+    void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
+
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
@@ -778,6 +781,12 @@ private:
     /// \brief Immediately execute the given \param request to change the operational state of a component
     /// If \param persist is set to true, the change will be persisted across a reboot
     void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
+
+protected:
+    std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;
+
+    void handle_message(const EnhancedMessage<v201::MessageType>& message);
+    void load_charging_profiles();
 
 public:
     /// \brief Construct a new ChargePoint object
