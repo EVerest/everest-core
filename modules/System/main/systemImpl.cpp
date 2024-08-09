@@ -339,7 +339,6 @@ systemImpl::handle_upload_logs(types::system::UploadLogsRequest& upload_logs_req
     const auto diagnostics_file_path = create_temp_file(fs::temp_directory_path(), "diagnostics-" + date_time);
     const auto diagnostics_file_name = diagnostics_file_path.filename().string();
 
-    response.upload_logs_status = types::system::UploadLogsStatus::Accepted;
     response.file_name = diagnostics_file_name;
 
     const auto fake_diagnostics_file = json({{"diagnostics", {{"key", "value"}}}});
