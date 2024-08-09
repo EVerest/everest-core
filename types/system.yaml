@@ -139,6 +139,7 @@ types:
       - Uploaded
       - UploadFailure
       - Uploading
+      - AcceptedCanceled
   LogStatus:
     description: Type defining the status of a log upload
     type: object
