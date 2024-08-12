@@ -4,6 +4,7 @@
 #pragma once
 
 #include <c4/yml/std/map.hpp>
+#include <filesystem>
 #include <ryml.hpp>
 #include <string>
 #include <unordered_map>
@@ -21,7 +22,7 @@ using OcppToEverestModuleMapping = std::unordered_map<std::string, EverestModule
 
 class MappingReader {
 public:
-    static OcppToEverestModuleMapping readMapping(const std::string& file_path);
+    static OcppToEverestModuleMapping readMapping(const std::filesystem::path& file_path_string);
 
 private:
     static EverestModuleMapping parseMappingNode(const ryml::NodeRef& node);

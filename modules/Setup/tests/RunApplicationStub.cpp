@@ -18,7 +18,7 @@ RunApplication::RunApplication() :
         {"disable_network", {{}, {{"OK"}}, 0}},
         {"select_network", {{}, {{"OK"}}, 0}},
         {"remove_network", {{}, {{"OK"}}, 0}},
-        {"save_config", {{}, {{"OK"}}, 0}},
+        {"save_config_tree_to_file", {{}, {{"OK"}}, 0}},
         // scan_wifi uses scan and scan_results
         {"scan", {{}, {{"OK"}}, 0}},
         {"scan_results",

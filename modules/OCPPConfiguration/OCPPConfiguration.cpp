@@ -13,11 +13,17 @@ void OCPPConfiguration::init() {
 void OCPPConfiguration::ready() {
     invoke_ready(*p_example_module);
 
-    event_handler = std::make_unique<EventHandler>(config.mapping_file_path, config.user_config_path);
+//    auto attached = false;
+//    while (!attached) {
+//    };
+
+    const auto mapping_file_path = std::filesystem::path{config.mapping_file_path};
+    event_handler = std::make_unique<EventHandler>(mapping_file_path);
 
     r_ocpp_module->call_monitor_variables(parseConfigMonitorVariables());
 
-    r_ocpp_module->subscribe_event_data([this](const auto& event_data) { event_handler->handleEvent(event_data); });
+    r_ocpp_module->subscribe_event_data(
+        [&](const auto& event_data) { event_handler->handleEvent(event_data, config.user_config_path); });
 }
 
 std::vector<types::ocpp::ComponentVariable> OCPPConfiguration::parseConfigMonitorVariables() {

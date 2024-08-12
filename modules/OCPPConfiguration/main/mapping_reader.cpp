@@ -26,8 +26,10 @@ EverestModuleMapping MappingReader::parseMappingNode(const ryml::NodeRef& node) 
     return {config_key, module_name, module_config_key};
 }
 
-OcppToEverestModuleMapping MappingReader::readMapping(const std::string& file_path) {
-    const auto tree = Util::load_yaml_file(file_path);
+OcppToEverestModuleMapping MappingReader::readMapping(const std::filesystem::path& file_path) {
+    const auto hacked_file_path =
+        std::filesystem::path{"modules"} / "OCPPConfiguration" / file_path; // TODO: this is very hacky
+    const auto tree = Util::load_existing_user_config(hacked_file_path);
 
     const auto root = tree.rootref();
 

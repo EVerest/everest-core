@@ -2,16 +2,17 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "event_handler.hpp"
+#include "util.hpp"
 #include <everest/logging.hpp>
 
 namespace module {
 
-EventHandler::EventHandler(const std::string& config_mapping_path, const std::string& user_config_path) :
-    event_map(MappingReader::readMapping(config_mapping_path)), config_writer(user_config_path) {
-    EVLOG_info << "EventHandler initialized";
+EventHandler::EventHandler(const std::filesystem::path& config_mapping_path) :
+    event_map(MappingReader::readMapping(config_mapping_path)) {
 }
 
-void EventHandler::handleEvent(const types::ocpp::EventData& event_data) {
+void EventHandler::handleEvent(const types::ocpp::EventData& event_data, const std::string& user_config_path_string) {
+
     // lookup event in event_map
     const auto& event_name = event_data.component_variable.variable.name;
 
@@ -22,10 +23,11 @@ void EventHandler::handleEvent(const types::ocpp::EventData& event_data) {
 
     const auto& everest_module_mapping = everest_module_mapping_opt.value();
 
-    // write event to config_pair
-    config_writer.write_to_config(everest_module_mapping.config_key, everest_module_mapping.module_name,
-                                  <#initializer #>, event_data.actual_value);
-    config_writer.save_config();
+    // write event to config
+    const auto user_config_path = std::filesystem::path{user_config_path_string};
+    auto tree = Util::load_existing_user_config(user_config_path);
+    tree = Util::write_value_to_tree(everest_module_mapping, event_data.actual_value, tree);
+    Util::save_tree_to_yaml_file(tree, user_config_path);
 }
 
 const std::optional<EverestModuleMapping>
