@@ -51,13 +51,13 @@ protected:
     }
 
     void addConnector(int id) {
-        auto connector = Connector{id};
+        auto connector = std::make_shared<Connector>(id);
 
         auto timer = std::unique_ptr<Everest::SteadyTimer>();
 
-        connector.transaction =
+        connector->transaction =
             std::make_shared<Transaction>(-1, id, "test", "test", 1, std::nullopt, ocpp::DateTime(), std::move(timer));
-        connectors[id] = std::make_shared<Connector>(connector);
+        connectors[id] = connector;
     }
 
     ChargingSchedule createChargeSchedule() {

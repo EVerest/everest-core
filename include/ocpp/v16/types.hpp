@@ -119,6 +119,7 @@ std::ostream& operator<<(std::ostream& os, const MessageType& message_type);
 enum SupportedFeatureProfiles {
     Internal,
     Core,
+    CostAndPrice,
     FirmwareManagement,
     LocalAuthListManagement,
     Reservation,

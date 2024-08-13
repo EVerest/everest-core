@@ -190,6 +190,13 @@ public:
     /// \returns The associated transaction if available or nullptr if not
     std::shared_ptr<Transaction> get_transaction(const std::string& start_transaction_message_id);
 
+    ///
+    /// \brief Returns the transaction associated with the given id tag.
+    /// \param id_tag   The id tag.
+    /// \return The associated transaction if available.
+    ///
+    std::shared_ptr<Transaction> get_transaction_from_id_tag(const std::string& id_tag);
+
     /// \brief Provides the connector on which a transaction with the given \p transaction_id is running
     /// \returns The connector or -1 if the transaction_id is unknown
     int32_t get_connector_from_transaction_id(int32_t transaction_id);

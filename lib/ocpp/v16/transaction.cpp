@@ -215,6 +215,21 @@ std::shared_ptr<Transaction> TransactionHandler::get_transaction(const std::stri
     return nullptr;
 }
 
+std::shared_ptr<Transaction> TransactionHandler::get_transaction_from_id_tag(const std::string& id_tag) {
+    std::lock_guard<std::mutex> lock(this->active_transactions_mutex);
+    for (const auto& transaction : this->active_transactions) {
+        if (transaction != nullptr && (transaction->get_id_tag().get() == id_tag)) {
+            return transaction;
+        }
+    }
+    for (auto transaction : this->stopped_transactions) {
+        if (transaction->get_id_tag().get() == id_tag) {
+            return transaction;
+        }
+    }
+    return nullptr;
+}
+
 int32_t TransactionHandler::get_connector_from_transaction_id(int32_t transaction_id) {
     std::lock_guard<std::mutex> lock(this->active_transactions_mutex);
     int32_t index = 0;

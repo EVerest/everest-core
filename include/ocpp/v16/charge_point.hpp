@@ -532,6 +532,17 @@ public:
     void register_is_token_reserved_for_connector_callback(
         const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
 
+    /// \brief Registers a callback function for the session cost datatransfer message (California Pricing Requirements)
+    /// \param session_cost_callback    The callback.
+    void register_session_cost_callback(
+        const std::function<DataTransferResponse(const RunningCost& session_cost, const uint32_t number_of_decimals)>&
+            session_cost_callback);
+
+    /// \brief Register a callback function for display messages (used in California Pricing Requirements)
+    /// \param set_display_message_callback The callback.
+    void register_set_display_message_callback(
+        const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback);
+
     /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
     /// \param delay The delay period (seconds)
     void set_message_queue_resume_delay(std::chrono::seconds delay);

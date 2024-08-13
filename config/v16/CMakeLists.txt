@@ -26,6 +26,7 @@ list(APPEND OCPP1_6_PROFILE_SCHEMAS
      SmartCharging.json
      Security.json
      PnC.json
+     CostAndPrice.json
 )
 
 list(TRANSFORM OCPP1_6_PROFILE_SCHEMAS

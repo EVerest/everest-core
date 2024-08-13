@@ -145,7 +145,8 @@ protected:
                 connectors[i] = std::make_shared<Connector>(i);
             } else {
                 // reset connector
-                *connectors[i] = Connector(i);
+                connectors[i] = nullptr;
+                connectors[i] = std::make_shared<Connector>(i);
             }
         }
     }

@@ -312,6 +312,81 @@ struct Measurement {
     friend std::ostream& operator<<(std::ostream& os, const Measurement& k);
 };
 
+struct DisplayMessageContent {
+    std::string message;
+    std::optional<std::string> language;
+    std::optional<v201::MessageFormatEnum> message_format;
+
+    friend void from_json(const json& j, DisplayMessageContent& m);
+    friend void to_json(json& j, const DisplayMessageContent& m);
+};
+
+struct DisplayMessage {
+    std::optional<int32_t> id;
+    std::optional<v201::MessagePriorityEnum> priority;
+    std::optional<v201::MessageStateEnum> state;
+    std::optional<DateTime> timestamp_from;
+    std::optional<DateTime> timestamp_to;
+    std::optional<std::string> transaction_id;
+    DisplayMessageContent message;
+    std::optional<std::string> qr_code;
+};
+
+struct RunningCostChargingPrice {
+    std::optional<double> kWh_price;
+    std::optional<double> hour_price;
+    std::optional<double> flat_fee;
+
+    friend void from_json(const json& j, RunningCostChargingPrice& c);
+    friend void to_json(json& j, const RunningCostChargingPrice& c);
+};
+
+struct RunningCostIdlePrice {
+    std::optional<uint32_t> idle_grace_minutes;
+    std::optional<double> idle_hour_price;
+
+    friend void from_json(const json& j, RunningCostIdlePrice& c);
+    friend void to_json(json& j, const RunningCostIdlePrice& c);
+};
+
+enum class RunningCostState {
+    Charging,
+    Idle,
+    Finished
+};
+
+namespace conversions {
+RunningCostState string_to_running_cost_state(const std::string& state);
+std::string running_cost_state_to_string(const RunningCostState& state);
+} // namespace conversions
+
+struct RunningCost {
+    std::string transaction_id;
+    std::optional<DateTime> timestamp;
+    std::optional<uint32_t> meter_value;
+    double cost;
+    // Running cost state: "Charging" or "Idle". When this is the final price, state will be "Finished".
+    RunningCostState state;
+    std::optional<RunningCostChargingPrice> charging_price;
+    std::optional<RunningCostIdlePrice> idle_price;
+    std::optional<DateTime> next_period_at_time;
+    std::optional<RunningCostChargingPrice> next_period_charging_price;
+    std::optional<RunningCostIdlePrice> next_period_idle_price;
+    std::optional<std::vector<DisplayMessageContent>> cost_messages;
+    std::optional<std::string> qr_code_text;
+
+    friend void from_json(const json& j, RunningCost& c);
+};
+
+struct TriggerMeterValue {
+    std::optional<DateTime> at_time;
+    std::optional<int> at_energy_kwh;
+    std::optional<int> at_power_kw;
+    std::vector<v16::ChargePointStatus> at_chargepoint_status;
+
+    friend void from_json(const json& j, TriggerMeterValue& t);
+};
+
 enum class CaCertificateType {
     V2G,
     MO,

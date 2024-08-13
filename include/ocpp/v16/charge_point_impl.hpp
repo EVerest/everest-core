@@ -112,6 +112,7 @@ private:
     std::unique_ptr<Everest::SteadyTimer> ocsp_request_timer;
     std::unique_ptr<Everest::SteadyTimer> client_certificate_timer;
     std::unique_ptr<Everest::SteadyTimer> v2g_certificate_timer;
+    std::unique_ptr<Everest::SystemTimer> change_time_offset_timer;
     std::chrono::time_point<date::utc_clock> clock_aligned_meter_values_time_point;
     std::mutex meter_values_mutex;
     std::mutex measurement_mutex;
@@ -188,6 +189,12 @@ private:
                        const ocpp::v201::CertificateActionEnum& certificate_action)>
         get_15118_ev_certificate_response_callback;
 
+    // tariff and cost callback
+    std::function<DataTransferResponse(const RunningCost& running_cost, const uint32_t number_of_decimals)>
+        session_cost_callback;
+    std::function<DataTransferResponse(const std::vector<DisplayMessage>& display_message)>
+        set_display_message_callback;
+
     /// \brief This function is called after a successful connection to the Websocket
     void connected_callback();
     void init_websocket();
@@ -213,6 +220,9 @@ private:
     MeterValue get_signed_meter_value(const std::string& signed_value, const ReadingContext& context,
                                       const ocpp::DateTime& datetime);
     void send_meter_value(int32_t connector, MeterValue meter_value, bool initiated_by_trigger_message = false);
+    void send_meter_value_on_pricing_trigger(const int32_t connector_number, std::shared_ptr<Connector> connector,
+                                             const Measurement& measurement);
+    void reset_pricing_triggers(const int32_t connector_number);
     void status_notification(const int32_t connector, const ChargePointErrorCode errorCode,
                              const ChargePointStatus status, const ocpp::DateTime& timestamp,
                              const std::optional<CiString<50>>& info = std::nullopt,
@@ -331,6 +341,23 @@ private:
     // Local Authorization List profile
     void handleSendLocalListRequest(Call<SendLocalListRequest> call);
     void handleGetLocalListVersionRequest(Call<GetLocalListVersionRequest> call);
+
+    // California Pricing
+    DataTransferResponse handle_set_user_price(const std::optional<std::string>& msg);
+    DataTransferResponse handle_set_session_cost(const RunningCostState& type,
+                                                 const std::optional<std::string>& message);
+    ///
+    /// \brief Set timer to trigger sending a metervalue at a specific time.
+    /// \param date_time    The date/time to send the metervalue.
+    /// \param connector    The connector to set the timer for.
+    ///
+    void set_connector_trigger_metervalue_timer(const DateTime& date_time, std::shared_ptr<Connector> connector);
+
+    ///
+    /// \brief Set offset timer to change the 'timezone' (time offset) at the given time.
+    /// \param date_time    The date / time to change the time offset.
+    ///
+    void set_time_offset_timer(const std::string& date_time);
 
     // //brief Preprocess a ChangeAvailabilityRequest: Determine response;
     // - if connector is 0, availability change is also propagated for all connectors
@@ -825,6 +852,12 @@ public:
     /// \param callback
     void register_is_token_reserved_for_connector_callback(
         const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
+
+    void register_session_cost_callback(
+        const std::function<DataTransferResponse(const RunningCost& running_cost, const uint32_t number_of_decimals)>&
+            session_cost_callback);
+    void register_set_display_message_callback(
+        const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback);
 
     /// \brief Gets the configured configuration key requested in the given \p request
     /// \param request specifies the keys that should be returned. If empty or not set, all keys will be reported

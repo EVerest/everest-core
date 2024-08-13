@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include "ocpp/common/types.hpp"
+
 #include <stdexcept>
 #include <thread>
 
@@ -9,6 +10,8 @@
 #include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/charge_point_impl.hpp>
 #include <ocpp/v16/utils.hpp>
+#include <ocpp/v201/messages/CostUpdated.hpp>
+#include <ocpp/v201/messages/SetDisplayMessage.hpp>
 #include <ocpp/v201/utils.hpp>
 
 #include <optional>
@@ -20,6 +23,7 @@ namespace ocpp {
 namespace v16 {
 
 const auto ISO15118_PNC_VENDOR_ID = "org.openchargealliance.iso15118pnc";
+const auto CALIFORNIA_PRICING_VENDOR_ID = "org.openchargealliance.costmsg";
 const auto CLIENT_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
 const auto V2G_CERTIFICATE_TIMER_INTERVAL = std::chrono::hours(12);
 const auto OCSP_REQUEST_TIMER_INTERVAL = std::chrono::hours(12);
@@ -28,6 +32,7 @@ const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
 const auto DEFAULT_BOOT_NOTIFICATION_INTERVAL_S = 60; // fallback interval if BootNotification returns interval of 0.
 const auto DEFAULT_WAIT_FOR_FUTURE_TIMEOUT = std::chrono::seconds(60);
+const auto DEFAULT_PRICE_NUMBER_OF_DECIMALS = 3;
 
 ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& share_path,
                                  const fs::path& user_config_path, const fs::path& database_path,
@@ -116,6 +121,27 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
                                               vendor_error_code);
                 },
                 std::chrono::seconds(this->configuration->getMinimumStatusDuration().value_or(0)));
+
+            // Check if the changed status should trigger to send a metervalue.
+            const std::shared_ptr<Connector>& c = this->connectors.at(connector);
+            if (!c->trigger_metervalue_on_status.has_value()) {
+                return;
+            }
+
+            for (const auto& cp_status : c->trigger_metervalue_on_status.value()) {
+                if (status == cp_status && (!c->previous_status.has_value() || c->previous_status.value() != status)) {
+                    const std::optional<MeterValue>& meter_value = get_latest_meter_value(
+                        connector, {{Measurand::Energy_Active_Import_Register, std::nullopt}}, ReadingContext::Other);
+                    if (!meter_value.has_value()) {
+                        EVLOG_error << "Send latest meter value because of chargepoint status trigger failed";
+                    } else {
+                        send_meter_value(connector, meter_value.value());
+                        break;
+                    }
+                }
+            }
+
+            c->previous_status = status;
         });
 
     for (int id = 0; id <= this->configuration->getNumberOfConnectors(); id++) {
@@ -152,6 +178,34 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
             this->update_ocsp_cache();
             this->ocsp_request_timer->interval(OCSP_REQUEST_TIMER_INTERVAL);
         });
+    }
+
+    // California pricing requirements
+    // Only enable the callbacks if display cost and price is enabled in the configuration.
+    if (this->configuration->getCustomDisplayCostAndPriceEnabled()) {
+        this->register_data_transfer_callback(
+            CALIFORNIA_PRICING_VENDOR_ID, "SetUserPrice",
+            [this](const std::optional<std::string>& message) -> DataTransferResponse {
+                return handle_set_user_price(message);
+            });
+
+        this->register_data_transfer_callback(
+            CALIFORNIA_PRICING_VENDOR_ID, "FinalCost",
+            [this](const std::optional<std::string>& message) -> DataTransferResponse {
+                return handle_set_session_cost(RunningCostState::Finished, message);
+            });
+
+        this->register_data_transfer_callback(
+            CALIFORNIA_PRICING_VENDOR_ID, "RunningCost",
+            [this](const std::optional<std::string>& message) -> DataTransferResponse {
+                return handle_set_session_cost(RunningCostState::Charging, message);
+            });
+
+        std::optional<std::string> time_offset_transition_date_time =
+            this->configuration->getNextTimeOffsetTransitionDateTime();
+        if (time_offset_transition_date_time.has_value()) {
+            set_time_offset_timer(time_offset_transition_date_time.value());
+        }
     }
 }
 
@@ -862,6 +916,93 @@ void ChargePointImpl::send_meter_value(int32_t connector, MeterValue meter_value
     this->send<MeterValuesRequest>(call, initiated_by_trigger_message);
 }
 
+void ChargePointImpl::send_meter_value_on_pricing_trigger(const int32_t connector_number,
+                                                          std::shared_ptr<Connector> connector,
+                                                          const Measurement& measurement) {
+    if (connector->trigger_metervalue_on_energy_kwh.has_value()) {
+        if (static_cast<double>(measurement.power_meter.energy_Wh_import.total) >=
+            (connector->trigger_metervalue_on_energy_kwh.value() * 1000)) {
+
+            MeasurandWithPhase measurand;
+            measurand.measurand = Measurand::Energy_Active_Import_Register;
+            const auto& meter_value = get_latest_meter_value(connector_number, {measurand}, ReadingContext::Other);
+
+            if (meter_value.has_value()) {
+                EVLOG_debug << "Sending meter value because of kWh pricing trigger";
+
+                send_meter_value(connector_number, meter_value.value());
+                // Metervalue sent, should not be sent again.
+                connector->trigger_metervalue_on_energy_kwh = std::nullopt;
+                return;
+            } else {
+                EVLOG_error << "Send latest meter value because of energy (kWh) trigger failed";
+            }
+        }
+    }
+
+    if (not connector->trigger_metervalue_on_power_kw.has_value() or not measurement.power_meter.power_W.has_value()) {
+        return;
+    }
+
+    // Store current power kW from measurement.
+    const double current_power_kw = static_cast<double>(measurement.power_meter.power_W.value().total) / 1000.0;
+
+    if (connector->last_triggered_metervalue_power_kw.has_value()) {
+        const double triggered_power_kw = connector->last_triggered_metervalue_power_kw.value();
+        const double trigger_metervalue_kw = connector->trigger_metervalue_on_power_kw.value();
+        // Hysteresis of 5% to avoid repetitive triggers when the power fluctuates around the trigger level.
+        const double hysteresis_kw = trigger_metervalue_kw * 0.05;
+
+        if ( // Check if trigger value is crossed in upward direction.
+            (triggered_power_kw < trigger_metervalue_kw &&
+             current_power_kw >= (trigger_metervalue_kw + hysteresis_kw)) ||
+            // Check if trigger value is crossed in downward direction.
+            (triggered_power_kw > trigger_metervalue_kw &&
+             current_power_kw <= (trigger_metervalue_kw - hysteresis_kw))) {
+
+            // Power threshold is crossed, send metervalues.
+            const auto& meter_value = get_latest_meter_value(connector_number,
+                                                             {{Measurand::Energy_Active_Import_Register, std::nullopt},
+                                                              {Measurand::Power_Active_Import, std::nullopt}},
+                                                             ReadingContext::Other);
+            if (!meter_value.has_value()) {
+                EVLOG_error << "Send latest meter value because of power (Wh) trigger failed";
+            } else {
+                send_meter_value(connector_number, meter_value.value());
+                // Store just sent power value to check next time.
+                connector->last_triggered_metervalue_power_kw = current_power_kw;
+            }
+        }
+    } else {
+        // Send metervalue anyway since we have no previous metervalue stored and don't know if we should send any
+        const auto& meter_value = get_latest_meter_value(
+            connector_number,
+            {{Measurand::Energy_Active_Import_Register, std::nullopt}, {Measurand::Power_Active_Import, std::nullopt}},
+            ReadingContext::Other);
+        if (!meter_value.has_value()) {
+            EVLOG_error << "Send latest meter value because of power (Wh) trigger failed";
+        } else {
+            send_meter_value(connector_number, meter_value.value());
+            // Store just sent power value to check for crossing next time.
+            connector->last_triggered_metervalue_power_kw = current_power_kw;
+        }
+    }
+}
+
+void ChargePointImpl::reset_pricing_triggers(const int32_t connector_number) {
+    std::shared_ptr<Connector> c = this->connectors.at(connector_number);
+    c->last_triggered_metervalue_power_kw = std::nullopt;
+    c->trigger_metervalue_on_power_kw = std::nullopt;
+    c->trigger_metervalue_on_energy_kwh = std::nullopt;
+    c->trigger_metervalue_on_status = std::nullopt;
+    c->previous_status = std::nullopt;
+
+    if (c->trigger_metervalue_at_time_timer != nullptr) {
+        c->trigger_metervalue_at_time_timer->stop();
+        c->trigger_metervalue_at_time_timer = nullptr;
+    }
+}
+
 bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_status_map, BootReasonEnum bootreason,
                             const std::set<std::string>& resuming_session_ids) {
     this->message_queue->start();
@@ -990,6 +1131,16 @@ bool ChargePointImpl::stop() {
         if (this->v2g_certificate_timer != nullptr) {
             this->v2g_certificate_timer->stop();
         }
+        if (this->change_time_offset_timer != nullptr) {
+            this->change_time_offset_timer->stop();
+        }
+
+        for (const auto& [id, connector] : this->connectors) {
+            if (connector->trigger_metervalue_at_time_timer != nullptr) {
+                connector->trigger_metervalue_at_time_timer->stop();
+            }
+        }
+
         this->websocket_timer.stop();
 
         this->stop_all_transactions();
@@ -1557,6 +1708,10 @@ void ChargePointImpl::handleChangeConfigurationRequest(ocpp::Call<ChangeConfigur
                         this->ocsp_request_timer->stop();
                         this->ocsp_request_timer->interval(
                             std::chrono::seconds(this->configuration->getOcspRequestInterval()));
+                    }
+                } else if (call.msg.key == "NextTimeOffsetTransitionDateTime") {
+                    if (this->configuration->getNextTimeOffsetTransitionDateTime().has_value()) {
+                        set_time_offset_timer(this->configuration->getNextTimeOffsetTransitionDateTime().value());
                     }
                 }
             }
@@ -2749,6 +2904,219 @@ void ChargePointImpl::handleGetLocalListVersionRequest(ocpp::Call<GetLocalListVe
     this->send<GetLocalListVersionResponse>(call_result);
 }
 
+DataTransferResponse ChargePointImpl::handle_set_user_price(const std::optional<std::string>& msg) {
+    std::optional<std::string> id_token = std::nullopt;
+    DataTransferResponse response;
+    response.status = DataTransferStatus::Rejected;
+    if (!msg.has_value()) {
+        EVLOG_error << "Data transfer for set user price does not contain any data.";
+        return response;
+    }
+
+    if (set_display_message_callback == nullptr) {
+        EVLOG_error << "Received data transfer for set user price, but no callback is registered.";
+        return response;
+    }
+
+    json data;
+    try {
+        data = json(msg.value());
+        if (data.is_string()) {
+            data = json::parse(msg.value());
+        }
+
+        if (data.contains("idToken")) {
+            id_token = data.at("idToken");
+        } else {
+            EVLOG_error << "No id token received, can not set user price.";
+            return response;
+        }
+    } catch (const std::exception& e) {
+        EVLOG_error << "Could not parse set user price datatransfer message: " << e.what();
+        return response;
+    }
+
+    // Find transaction with given id tag
+    std::vector<DisplayMessage> messages;
+    DisplayMessage message;
+    const auto t = this->transaction_handler->get_transaction_from_id_tag(id_token.value());
+
+    if (t == nullptr) {
+        EVLOG_error << "Set user price failed: could not get session id from transaction.";
+        return response;
+    }
+
+    std::string session_id = t->get_session_id();
+    message.transaction_id = session_id;
+
+    if (data.contains("priceText")) {
+        message.message.message = data.at("priceText");
+        if (this->configuration->getLanguage().has_value()) {
+            message.message.language = this->configuration->getLanguage().value();
+        }
+    }
+
+    messages.push_back(message);
+
+    if (this->configuration->getCustomMultiLanguageMessagesEnabled() && data.contains("priceTextExtra") &&
+        data.at("priceTextExtra").is_array()) {
+        for (const json& j : data.at("priceTextExtra")) {
+            DisplayMessage display_message;
+            display_message.transaction_id = session_id;
+            display_message.message = j;
+
+            messages.push_back(display_message);
+        }
+    }
+
+    response = this->set_display_message_callback(messages);
+    return response;
+}
+
+DataTransferResponse ChargePointImpl::handle_set_session_cost(const RunningCostState& type,
+                                                              const std::optional<std::string>& message) {
+    DataTransferResponse response;
+    response.status = DataTransferStatus::Rejected;
+
+    if (!message.has_value()) {
+        EVLOG_error << "Data transfer for RunningCost / FinalCost does not contain any data.";
+        return response;
+    }
+
+    if (session_cost_callback == nullptr) {
+        EVLOG_error << "Received data transfer for " << ocpp::conversions::running_cost_state_to_string(type)
+                    << ", but no callback is registered.";
+        return response;
+    }
+
+    RunningCost cost;
+    json data;
+
+    TriggerMeterValue trigger_meter_value;
+
+    try {
+        data = json::parse(message.value());
+        cost = data;
+
+        // Libocpp will handle those triggers, so they are not stored in the 'RunningCost' object.
+        if (data.contains("triggerMeterValue")) {
+            trigger_meter_value = data.at("triggerMeterValue");
+        }
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Set session cost: Parsing failed! " << e.what();
+        response.data = "json parsing failed";
+        return response;
+    }
+
+    int32_t connector_id = this->transaction_handler->get_connector_from_transaction_id(std::stoi(cost.transaction_id));
+    std::string session_id = cost.transaction_id;
+    if (connector_id == -1) {
+        EVLOG_warning << "Set session cost failed: Could not set session id because transaction with transaction id "
+                      << cost.transaction_id << " is not found.";
+        return response;
+    }
+
+    std::shared_ptr<Connector> connector = this->connectors.at(connector_id);
+    std::shared_ptr<Transaction> transaction = this->transaction_handler->get_transaction(connector_id);
+    if (transaction == nullptr) {
+        EVLOG_warning << "Set session cost failed: Could not set session id because transaction with transaction id "
+                      << cost.transaction_id << " for connector " << connector_id << " is not found.";
+        return response;
+    }
+
+    session_id = transaction->get_session_id();
+
+    cost.transaction_id = session_id;
+    cost.state = type;
+    static const uint32_t number_of_decimals =
+        this->configuration->getPriceNumberOfDecimalsForCostValues().value_or(DEFAULT_PRICE_NUMBER_OF_DECIMALS);
+
+    if (connector != nullptr) {
+        connector->trigger_metervalue_on_energy_kwh = trigger_meter_value.at_energy_kwh;
+        connector->trigger_metervalue_on_power_kw = trigger_meter_value.at_power_kw;
+        connector->trigger_metervalue_on_status = trigger_meter_value.at_chargepoint_status;
+
+        // Set timer to trigger sending a metervalue at a specific time.
+        if (trigger_meter_value.at_time.has_value()) {
+            set_connector_trigger_metervalue_timer(trigger_meter_value.at_time.value(), connector);
+        }
+    }
+
+    return session_cost_callback(cost, number_of_decimals);
+}
+
+void ChargePointImpl::set_connector_trigger_metervalue_timer(const DateTime& date_time,
+                                                             std::shared_ptr<Connector> connector) {
+    if (connector == nullptr) {
+        EVLOG_error << "Could not set display time offset: could not find connector";
+        return;
+    }
+
+    std::chrono::time_point<date::utc_clock> trigger_timepoint = date_time.to_time_point();
+    const std::chrono::time_point<date::utc_clock> now = date::utc_clock::now();
+
+    if (trigger_timepoint < now) {
+        EVLOG_error << "Could not set trigger metervalue because trigger time is in the past.";
+        return;
+    }
+
+    std::optional<std::string> time_offset = this->configuration->getDisplayTimeOffset();
+    if (time_offset.has_value()) {
+        const std::vector<std::string> times = split_string(time_offset.value(), ':');
+        if (times.size() != 2) {
+            EVLOG_error << "Could not set display time offset: format not correct (should be something like "
+                           "\"-05:00\", but is "
+                        << time_offset.value() << ")";
+        } else {
+            try {
+                trigger_timepoint += std::chrono::hours(std::stoi(times.at(0)));
+                trigger_timepoint += std::chrono::minutes(std::stoi(times.at(1)));
+            } catch (const std::exception& e) {
+                EVLOG_error << "Could not set display time offset: format not correct (should be something "
+                               "like \"-19:15\", but is "
+                            << time_offset.value() << "): " << e.what();
+            }
+        }
+    }
+
+    DateTime d(now);
+    int32_t connector_id = connector->id;
+
+    connector->trigger_metervalue_at_time_timer =
+        std::make_unique<Everest::SystemTimer>(&this->io_service, [this, connector_id]() {
+            const std::optional<MeterValue>& meter_value = get_latest_meter_value(
+                connector_id, {{Measurand::Energy_Active_Import_Register, std::nullopt}}, ReadingContext::Other);
+            if (!meter_value.has_value()) {
+                EVLOG_error << "Send latest meter value because of chargepoint time trigger failed";
+            } else {
+                send_meter_value(connector_id, meter_value.value());
+            }
+        });
+    connector->trigger_metervalue_at_time_timer->at(trigger_timepoint);
+}
+
+void ChargePointImpl::set_time_offset_timer(const std::string& date_time) {
+    if (this->change_time_offset_timer != nullptr) {
+        this->change_time_offset_timer->stop();
+        this->change_time_offset_timer = nullptr;
+    }
+
+    DateTime d(date_time);
+    if (d.to_time_point() < date::utc_clock::now()) {
+        // Not setting offset timer, because the date is in the past.
+        return;
+    }
+
+    this->change_time_offset_timer = std::make_unique<Everest::SystemTimer>(&this->io_service, [this]() {
+        const std::optional<std::string> next_offset = this->configuration->getTimeOffsetNextTransition();
+        if (next_offset.has_value()) {
+            this->configuration->setDisplayTimeOffset(next_offset.value());
+        }
+    });
+
+    this->change_time_offset_timer->at(d.to_time_point());
+}
+
 template <class T> bool ChargePointImpl::send(ocpp::Call<T> call, bool initiated_by_trigger_message) {
     const auto message_type = conversions::string_to_messagetype(json(call).at(CALL_ACTION));
     const auto message_transmission_priority = get_message_transmission_priority(
@@ -3521,9 +3889,15 @@ void ChargePointImpl::register_data_transfer_callback(
 
 void ChargePointImpl::on_meter_values(int32_t connector, const Measurement& measurement) {
     // FIXME: fix measurement to also work with dc
-    EVLOG_debug << "updating measurement for connector: " << connector;
-    std::lock_guard<std::mutex> lock(measurement_mutex);
-    this->connectors.at(connector)->measurement.emplace(measurement);
+    std::shared_ptr<Connector> c;
+    {
+        EVLOG_debug << "updating measurement for connector: " << connector;
+        std::lock_guard<std::mutex> lock(measurement_mutex);
+        c = this->connectors.at(connector);
+        c->measurement.emplace(measurement);
+    }
+
+    send_meter_value_on_pricing_trigger(connector, c, measurement);
 }
 
 void ChargePointImpl::on_max_current_offered(int32_t connector, int32_t max_current) {
@@ -3687,6 +4061,8 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
     this->transaction_handler->remove_active_transaction(connector);
     this->smart_charging_handler->clear_all_profiles_with_filter(std::nullopt, connector, std::nullopt,
                                                                  ChargingProfilePurposeType::TxProfile, false);
+
+    reset_pricing_triggers(connector);
 }
 
 void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::optional<CiString<20>> id_tag_end) {
@@ -4044,6 +4420,18 @@ void ChargePointImpl::register_security_event_callback(
 void ChargePointImpl::register_is_token_reserved_for_connector_callback(
     const std::function<bool(const int32_t connector, const std::string& id_token)>& callback) {
     this->is_token_reserved_for_connector_callback = callback;
+}
+
+void ChargePointImpl::register_session_cost_callback(
+    const std::function<DataTransferResponse(const RunningCost& running_cost, const uint32_t number_of_decimals)>&
+        session_cost_callback) {
+    this->session_cost_callback = session_cost_callback;
+}
+
+void ChargePointImpl::register_set_display_message_callback(
+    const std::function<DataTransferResponse(const std::vector<DisplayMessage>& display_message)>
+        set_display_message_callback) {
+    this->set_display_message_callback = set_display_message_callback;
 }
 
 void ChargePointImpl::on_reservation_start(int32_t connector) {

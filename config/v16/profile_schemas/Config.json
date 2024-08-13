@@ -39,6 +39,10 @@
         "PnC": {
             "type": "object",
             "$ref": "PnC.json"
+        },
+        "CostAndPrice": {
+            "type": "object",
+            "$ref": "CostAndPrice.json"
         }
     },
     "additionalProperties": false

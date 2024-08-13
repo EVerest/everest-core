@@ -57,6 +57,9 @@
         "ISO15118PnCEnabled": true,
         "ContractValidationOffline": true
     },
+    "CostAndPrice": {
+        "CustomDisplayCostAndPrice": false
+    },
     "Custom": {
         "ExampleConfigurationKey": "example"
     }

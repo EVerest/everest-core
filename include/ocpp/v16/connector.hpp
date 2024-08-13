@@ -19,8 +19,18 @@ struct Connector {
     std::shared_ptr<Transaction> transaction = nullptr;
     std::map<int, ChargingProfile> stack_level_tx_default_profiles_map;
     std::map<int, ChargingProfile> stack_level_tx_profiles_map;
+    std::optional<std::vector<ChargePointStatus>> trigger_metervalue_on_status;
+    std::optional<double> trigger_metervalue_on_power_kw;
+    std::optional<double> trigger_metervalue_on_energy_kwh;
+    std::unique_ptr<Everest::SystemTimer> trigger_metervalue_at_time_timer;
+    std::optional<ChargePointStatus> previous_status;
+    std::optional<double> last_triggered_metervalue_power_kw;
 
-    explicit Connector(const int id) : id(id){};
+    explicit Connector(const int id) : id(id) {
+    }
+    ~Connector() = default;
+    Connector& operator=(const Connector&) = delete;
+    Connector(const Connector&) = delete;
 };
 
 } // namespace v16

@@ -338,6 +338,17 @@ void ChargePoint::register_is_token_reserved_for_connector_callback(
     this->charge_point->register_is_token_reserved_for_connector_callback(callback);
 }
 
+void ChargePoint::register_session_cost_callback(
+    const std::function<DataTransferResponse(const RunningCost& running_cost, const uint32_t number_of_decimals)>&
+        session_cost_callback) {
+    this->charge_point->register_session_cost_callback(session_cost_callback);
+}
+
+void ChargePoint::register_set_display_message_callback(
+    const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback) {
+    this->charge_point->register_set_display_message_callback(set_display_message_callback);
+}
+
 void ChargePoint::set_message_queue_resume_delay(std::chrono::seconds delay) {
     this->charge_point->set_message_queue_resume_delay(delay);
 }

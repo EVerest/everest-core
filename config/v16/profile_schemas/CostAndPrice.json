@@ -1,0 +1,134 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Json schema for cost and price config",
+    "type": "object",
+    "required": [
+        "CustomDisplayCostAndPrice"
+    ],
+    "properties": {
+        "CustomDisplayCostAndPrice": {
+            "description": "Set to true if California Pricing Requirements is supported in this charging station.",
+            "type": "boolean",
+            "readOnly": true
+        },
+        "NumberOfDecimalsForCostValues": {
+            "description": "Number of decimals to use for cost / price calculations. Value is received as floating point, but is converted to an integer. This config will tell with how many decimals a number is sent.",
+            "type": "integer",
+            "readOnly": true
+        },
+        "DefaultPrice": {
+            "description": "Default pricing information to show to the user",
+            "type": "object",
+            "readOnly": false,
+            "minLength": 1,
+            "properties": {
+                "chargingPrice": {
+                    "type": "object",
+                    "description": "Structure with price components to use when starting a session while offline. Not needed if offline sessions are not allowed or not charged.",
+                    "properties": {
+                        "kWhPrice": {
+                            "type": "number"
+                        },
+                        "hourPrice": {
+                            "type": "number"
+                        },
+                        "flatFee": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "priceText": {
+                    "description": "Text for display of price information",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "priceTextOffline": {
+                    "description": "Alternative text for display when charge point is offline",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "required": [
+                "priceText"
+            ]
+        },
+        "DefaultPriceText": {
+            "description": "Default pricing information in 'other than default' languages to show to the user.",
+            "type": "object",
+            "readOnly": false,
+            "minLength": 1,
+            "properties": {
+                "priceTexts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "priceText": {
+                                "description": "Text for display of price information",
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "priceTextOffline": {
+                                "description": "Alternative text for display when charge point is offline",
+                                "type": "string",
+                                "minLength": 1
+                            },
+                            "language": {
+                                "description": "The language of the text, language code per RFC5646.",
+                                "type": "string",
+                                "minLength": 2
+                            }
+                        },
+                        "required": [
+                            "priceText",
+                            "language"
+                        ]
+                    }
+                }
+            }
+        },
+        "TimeOffset": {
+            "descrption": "Configured current local time offset in the format: '+01:00', '-02:00' etc. The time offset is for display purposes.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 1,
+            "maxLength": 10
+        },
+        "NextTimeOffsetTransitionDateTime": {
+            "description": "Date time of the next time offset transition. On this date time, the clock displayed to the EV driver will be given the new offset as configured via 'TimeOffsetNextTransition'. This can be used to manually configure the next start or end of a daylight saving time period.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 1,
+            "maxLength": 40
+        },
+        "TimeOffsetNextTransition": {
+            "description": "Next local time offset in the format: '+01:00', '-02:00' etc. New offset that will be set on the next time offset transition as configured via 'NextTimeOffsetTransitionDateTime'. This can be used to manually configure the offset for the start or end of the daylight saving time period",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 1,
+            "maxLength": 40
+        },
+        "CustomIdleFeeAfterStop": {
+            "description": "A Central System normally ends a transaction upon receiving the StopTransaction.req message. If the customization to calculate an idle fee after a transaction has stopped (until connector is unplugged) has been implemented, then this must be reported in a boolean configuration key 'CustomIdleFeeAfterStop' that reports 'true' to the Central System, so that it knows, that it has to extend the transaction until receipt of the DataTransfer 'ConnectorUnplugged'.",
+            "type": "boolean",
+            "readOnly": false
+        },
+        "MultiLanguageSupportedLanguages": {
+            "description": "Comma separated list of supported language codes, per RFC5646.",
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
+        },
+        "CustomMultiLanguageMessages": {
+            "description": "Set to true when the charge point provides multi language support for tariffs",
+            "type": "boolean",
+            "readOnly": true
+        },
+        "Language": {
+            "description": "Default language code for the stations UI. Can be changed by CSMS.",
+            "type": "string",
+            "readOnly": false,
+            "minLength": 1
+        }
+    }
+}

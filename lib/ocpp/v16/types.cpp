@@ -448,6 +448,8 @@ std::string supported_feature_profiles_to_string(SupportedFeatureProfiles e) {
         return "Security";
     case SupportedFeatureProfiles::PnC:
         return "PnC";
+    case SupportedFeatureProfiles::CostAndPrice:
+        return "CostAndPrice";
     case SupportedFeatureProfiles::Custom:
         return "Custom";
     }
@@ -484,6 +486,9 @@ SupportedFeatureProfiles string_to_supported_feature_profiles(const std::string&
     }
     if (s == "PnC") {
         return SupportedFeatureProfiles::PnC;
+    }
+    if (s == "CostAndPrice") {
+        return SupportedFeatureProfiles::CostAndPrice;
     }
     if (s == "Custom") {
         return SupportedFeatureProfiles::Custom;
