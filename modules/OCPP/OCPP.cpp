@@ -577,9 +577,12 @@ void OCPP::ready() {
         types::system::FirmwareUpdateRequest firmware_update_request;
         firmware_update_request.request_id = msg.requestId;
         firmware_update_request.location = msg.firmware.location;
-        firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.to_rfc3339());
         firmware_update_request.signature.emplace(msg.firmware.signature.get());
         firmware_update_request.signing_certificate.emplace(msg.firmware.signingCertificate.get());
+
+        if (msg.firmware.retrieveDateTime.has_value()) {
+            firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.value().to_rfc3339());
+        }
 
         if (msg.firmware.installDateTime.has_value()) {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());

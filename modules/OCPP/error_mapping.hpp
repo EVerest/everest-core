@@ -5,7 +5,7 @@
 
 #include <unordered_map>
 
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 
 namespace module {
 
