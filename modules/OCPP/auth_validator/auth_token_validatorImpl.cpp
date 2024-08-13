@@ -3,7 +3,7 @@
 #include "auth_token_validatorImpl.hpp"
 #include <conversions.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace module {
