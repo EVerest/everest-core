@@ -275,6 +275,70 @@
           "default": "log,html,security",
           "type": "string"
       },
+      "LogRotation": {
+          "variable_name": "LogRotation",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "Enable log rotation",
+          "default": false,
+          "type": "boolean"
+      },
+      "LogRotationDateSuffix": {
+          "variable_name": "LogRotationDateSuffix",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "Use a datetime suffix in log rotation files instead of the traditional .0, .1",
+          "default": false,
+          "type": "boolean"
+      },
+      "LogRotationMaximumFileSize": {
+          "variable_name": "LogRotationMaximumFileSize",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "integer"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "Maximum file size in bytes for the log file after which it will be rotated. Setting this to 0 disables log rotation.",
+          "default": 0,
+          "type": "integer"
+      },
+      "LogRotationMaximumFileCount": {
+          "variable_name": "LogRotationMaximumFileCount",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "integer"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "Maximum amount of files before rotated logs will be deleted. Setting this to 0 disables log rotation.",
+          "default": 0,
+          "type": "integer"
+      },
       "SupportedChargingProfilePurposeTypes": {
           "variable_name": "SupportedChargingProfilePurposeTypes",
           "characteristics": {

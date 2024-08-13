@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include <fstream>
 #include <future>
 #include <mutex>
@@ -321,6 +321,22 @@ std::vector<std::string> ChargePointConfiguration::getLogMessagesFormat() {
     return this->config["Internal"]["LogMessagesFormat"];
 }
 
+bool ChargePointConfiguration::getLogRotation() {
+    return this->config["Internal"]["LogRotation"];
+}
+
+bool ChargePointConfiguration::getLogRotationDateSuffix() {
+    return this->config["Internal"]["LogRotationDateSuffix"];
+}
+
+uint64_t ChargePointConfiguration::getLogRotationMaximumFileSize() {
+    return this->config["Internal"]["LogRotationMaximumFileSize"];
+}
+
+uint64_t ChargePointConfiguration::getLogRotationMaximumFileCount() {
+    return this->config["Internal"]["LogRotationMaximumFileCount"];
+}
+
 std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedChargingProfilePurposeTypes() {
     std::vector<ChargingProfilePurposeType> supported_purpose_types;
     const auto str_list = this->config["Internal"]["SupportedChargingProfilePurposeTypes"];
@@ -505,6 +521,38 @@ KeyValue ChargePointConfiguration::getLogMessagesFormatKeyValue() {
     kv.key = "LogMessagesFormat";
     kv.readonly = true;
     kv.value.emplace(to_csl(this->getLogMessagesFormat()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogRotationKeyValue() {
+    KeyValue kv;
+    kv.key = "LogRotation";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getLogRotation()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogRotationDateSuffixKeyValue() {
+    KeyValue kv;
+    kv.key = "LogRotationDateSuffix";
+    kv.readonly = true;
+    kv.value.emplace(ocpp::conversions::bool_to_string(this->getLogRotationDateSuffix()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogRotationMaximumFileSizeKeyValue() {
+    KeyValue kv;
+    kv.key = "LogRotationMaximumFileSize";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getLogRotationMaximumFileSize()));
+    return kv;
+}
+
+KeyValue ChargePointConfiguration::getLogRotationMaximumFileCountKeyValue() {
+    KeyValue kv;
+    kv.key = "LogRotationMaximumFileCount";
+    kv.readonly = true;
+    kv.value.emplace(std::to_string(this->getLogRotationMaximumFileCount()));
     return kv;
 }
 

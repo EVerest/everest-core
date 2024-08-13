@@ -156,6 +156,34 @@ const RequiredComponentVariable& LogMessagesFormat = {
         "LogMessagesFormat",
     }),
 };
+const ComponentVariable& LogRotation = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "LogRotation",
+    }),
+};
+const ComponentVariable& LogRotationDateSuffix = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "LogRotationDateSuffix",
+    }),
+};
+const ComponentVariable& LogRotationMaximumFileSize = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "LogRotationMaximumFileSize",
+    }),
+};
+const ComponentVariable& LogRotationMaximumFileCount = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "LogRotationMaximumFileCount",
+    }),
+};
 const ComponentVariable& SupportedCriteria = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

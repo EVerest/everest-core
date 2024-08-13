@@ -58,15 +58,15 @@
             "maxLength": 20
         },
         "HostName": {
-	     "type": "string",
-             "readOnly": true,
-             "minLength": 1
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1
         },
         "IFace": {
             "type": "string",
-                "readOnly": true,
-                "minLength": 1
-           },
+            "readOnly": true,
+            "minLength": 1
+        },
         "IMSI": {
             "type": "string",
             "readOnly": true,
@@ -158,6 +158,32 @@
                 "security"
             ]
         },
+        "LogRotation": {
+            "$comment": "Enable log rotation",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "LogRotationDateSuffix": {
+            "$comment": "Use a datetime suffix in log rotation files instead of the traditional .0, .1",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "LogRotationMaximumFileSize": {
+            "$comment": "Maximum file size in bytes for the log file after which it will be rotated. Setting this to 0 disables log rotation.",
+            "type": "integer",
+            "readOnly": true,
+            "default": 0,
+            "minimum": 0
+        },
+        "LogRotationMaximumFileCount": {
+            "$comment": "Maximum amount of files before rotated logs will be deleted. Setting this to 0 disables log rotation.",
+            "type": "integer",
+            "readOnly": true,
+            "default": 0,
+            "minimum": 0
+        },
         "SupportedChargingProfilePurposeTypes": {
             "$comment": "Indicates which ChargingProfilePurposeTypes are supported. SetChargingProfile.req for profiles not listed will be rejected.",
             "type": "array",
@@ -206,7 +232,7 @@
             "type": "boolean",
             "readOnly": false,
             "default": false
-        },        
+        },
         "OcspRequestInterval": {
             "$comment": "Interval in seconds used to request OCSP revocation status information on the CSO Sub-CA certificates",
             "type": "integer",

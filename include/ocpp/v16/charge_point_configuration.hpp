@@ -74,6 +74,14 @@ public:
     KeyValue getLogMessagesKeyValue();
     std::vector<std::string> getLogMessagesFormat();
     KeyValue getLogMessagesFormatKeyValue();
+    bool getLogRotation();
+    KeyValue getLogRotationKeyValue();
+    bool getLogRotationDateSuffix();
+    KeyValue getLogRotationDateSuffixKeyValue();
+    uint64_t getLogRotationMaximumFileSize();
+    KeyValue getLogRotationMaximumFileSizeKeyValue();
+    uint64_t getLogRotationMaximumFileCount();
+    KeyValue getLogRotationMaximumFileCountKeyValue();
     std::vector<ChargingProfilePurposeType> getSupportedChargingProfilePurposeTypes();
     KeyValue getSupportedChargingProfilePurposeTypesKeyValue();
     int32_t getMaxCompositeScheduleDuration();

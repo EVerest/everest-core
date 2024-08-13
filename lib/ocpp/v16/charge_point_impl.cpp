@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include "ocpp/common/types.hpp"
 
 #include <stdexcept>
@@ -68,9 +68,18 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     bool log_security = std::find(log_formats.begin(), log_formats.end(), "security") != log_formats.end();
     bool session_logging = std::find(log_formats.begin(), log_formats.end(), "session_logging") != log_formats.end();
 
-    this->logging = std::make_shared<ocpp::MessageLogging>(
-        this->configuration->getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
-        detailed_log_to_console, log_to_file, log_to_html, log_security, session_logging, nullptr);
+    if (this->configuration->getLogRotation()) {
+        this->logging = std::make_shared<ocpp::MessageLogging>(
+            this->configuration->getLogMessages(), this->message_log_path, "libocpp_16", log_to_console,
+            detailed_log_to_console, log_to_file, log_to_html, log_security, session_logging, nullptr,
+            ocpp::LogRotationConfig(this->configuration->getLogRotationDateSuffix(),
+                                    this->configuration->getLogRotationMaximumFileSize(),
+                                    this->configuration->getLogRotationMaximumFileCount()));
+    } else {
+        this->logging = std::make_shared<ocpp::MessageLogging>(
+            this->configuration->getLogMessages(), this->message_log_path, DateTime().to_rfc3339(), log_to_console,
+            detailed_log_to_console, log_to_file, log_to_html, log_security, session_logging, nullptr);
+    }
 
     this->boot_notification_timer =
         std::make_unique<Everest::SteadyTimer>(&this->io_service, [this]() { this->boot_notification(); });

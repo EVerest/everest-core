@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/charge_point.hpp>
@@ -616,14 +616,33 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
     bool session_logging = log_formats.find("session_logging") != log_formats.npos;
     bool message_callback = log_formats.find("callback") != log_formats.npos;
     std::function<void(const std::string& message, MessageDirection direction)> logging_callback = nullptr;
+    bool log_rotation =
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogRotation).value_or(false);
+    bool log_rotation_date_suffix =
+        this->device_model->get_optional_value<bool>(ControllerComponentVariables::LogRotationDateSuffix)
+            .value_or(false);
+    uint64_t log_rotation_maximum_file_size =
+        this->device_model->get_optional_value<uint64_t>(ControllerComponentVariables::LogRotationMaximumFileSize)
+            .value_or(0);
+    uint64_t log_rotation_maximum_file_count =
+        this->device_model->get_optional_value<uint64_t>(ControllerComponentVariables::LogRotationMaximumFileCount)
+            .value_or(0);
 
     if (message_callback) {
         logging_callback = this->callbacks.ocpp_messages_callback.value_or(nullptr);
     }
 
-    this->logging = std::make_shared<ocpp::MessageLogging>(
-        !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
-        log_to_file, log_to_html, log_security, session_logging, logging_callback);
+    if (log_rotation) {
+        this->logging = std::make_shared<ocpp::MessageLogging>(
+            !log_formats.empty(), message_log_path, "libocpp_201", log_to_console, detailed_log_to_console, log_to_file,
+            log_to_html, log_security, session_logging, logging_callback,
+            ocpp::LogRotationConfig(log_rotation_date_suffix, log_rotation_maximum_file_size,
+                                    log_rotation_maximum_file_count));
+    } else {
+        this->logging = std::make_shared<ocpp::MessageLogging>(
+            !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
+            log_to_file, log_to_html, log_security, session_logging, logging_callback);
+    }
 }
 
 void ChargePoint::on_unavailable(const int32_t evse_id, const int32_t connector_id) {
