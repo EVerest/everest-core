@@ -25,7 +25,7 @@ struct StatusNotificationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this StatusNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given StatusNotificationRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct StatusNotificationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this StatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given StatusNotificationResponse \p k to a given json object \p j

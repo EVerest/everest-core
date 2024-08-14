@@ -23,7 +23,7 @@ struct InstallCertificateRequest : public ocpp::Message {
 
     /// \brief Provides the type of this InstallCertificate message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given InstallCertificateRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct InstallCertificateResponse : public ocpp::Message {
 
     /// \brief Provides the type of this InstallCertificateResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given InstallCertificateResponse \p k to a given json object \p j

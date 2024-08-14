@@ -23,7 +23,7 @@ struct ResetRequest : public ocpp::Message {
 
     /// \brief Provides the type of this Reset message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ResetRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct ResetResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ResetResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ResetResponse \p k to a given json object \p j

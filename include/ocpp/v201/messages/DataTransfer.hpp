@@ -24,7 +24,7 @@ struct DataTransferRequest : public ocpp::Message {
 
     /// \brief Provides the type of this DataTransfer message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given DataTransferRequest \p k to a given json object \p j
@@ -46,7 +46,7 @@ struct DataTransferResponse : public ocpp::Message {
 
     /// \brief Provides the type of this DataTransferResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given DataTransferResponse \p k to a given json object \p j

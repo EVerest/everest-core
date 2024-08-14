@@ -20,7 +20,7 @@ struct GetLocalListVersionRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetLocalListVersion message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetLocalListVersionRequest \p k to a given json object \p j
@@ -40,7 +40,7 @@ struct GetLocalListVersionResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetLocalListVersionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetLocalListVersionResponse \p k to a given json object \p j

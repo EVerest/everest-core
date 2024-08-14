@@ -19,7 +19,7 @@ struct SignCertificateRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SignCertificate message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SignCertificateRequest \p k to a given json object \p j
@@ -38,7 +38,7 @@ struct SignCertificateResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SignCertificateResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SignCertificateResponse \p k to a given json object \p j

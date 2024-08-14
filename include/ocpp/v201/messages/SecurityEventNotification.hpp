@@ -23,7 +23,7 @@ struct SecurityEventNotificationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SecurityEventNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SecurityEventNotificationRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct SecurityEventNotificationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SecurityEventNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SecurityEventNotificationResponse \p k to a given json object \p j

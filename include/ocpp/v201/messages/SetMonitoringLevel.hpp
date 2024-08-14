@@ -22,7 +22,7 @@ struct SetMonitoringLevelRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SetMonitoringLevel message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetMonitoringLevelRequest \p k to a given json object \p j
@@ -43,7 +43,7 @@ struct SetMonitoringLevelResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SetMonitoringLevelResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetMonitoringLevelResponse \p k to a given json object \p j

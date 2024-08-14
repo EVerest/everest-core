@@ -24,7 +24,7 @@ struct GetCompositeScheduleRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetCompositeSchedule message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetCompositeScheduleRequest \p k to a given json object \p j
@@ -46,7 +46,7 @@ struct GetCompositeScheduleResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetCompositeScheduleResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetCompositeScheduleResponse \p k to a given json object \p j

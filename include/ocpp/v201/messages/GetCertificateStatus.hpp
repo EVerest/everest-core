@@ -22,7 +22,7 @@ struct GetCertificateStatusRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetCertificateStatus message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetCertificateStatusRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct GetCertificateStatusResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetCertificateStatusResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetCertificateStatusResponse \p k to a given json object \p j

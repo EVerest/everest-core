@@ -19,7 +19,7 @@ struct DiagnosticsStatusNotificationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this DiagnosticsStatusNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given DiagnosticsStatusNotificationRequest \p k to a given json object \p j
@@ -37,7 +37,7 @@ struct DiagnosticsStatusNotificationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this DiagnosticsStatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given DiagnosticsStatusNotificationResponse \p k to a given json object \p j

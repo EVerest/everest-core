@@ -23,7 +23,7 @@ struct SignedUpdateFirmwareRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SignedUpdateFirmware message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SignedUpdateFirmwareRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct SignedUpdateFirmwareResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SignedUpdateFirmwareResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SignedUpdateFirmwareResponse \p k to a given json object \p j

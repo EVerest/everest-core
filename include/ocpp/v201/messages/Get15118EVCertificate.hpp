@@ -24,7 +24,7 @@ struct Get15118EVCertificateRequest : public ocpp::Message {
 
     /// \brief Provides the type of this Get15118EVCertificate message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given Get15118EVCertificateRequest \p k to a given json object \p j
@@ -46,7 +46,7 @@ struct Get15118EVCertificateResponse : public ocpp::Message {
 
     /// \brief Provides the type of this Get15118EVCertificateResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given Get15118EVCertificateResponse \p k to a given json object \p j

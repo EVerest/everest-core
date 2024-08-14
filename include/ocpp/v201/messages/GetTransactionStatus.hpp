@@ -21,7 +21,7 @@ struct GetTransactionStatusRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetTransactionStatus message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetTransactionStatusRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct GetTransactionStatusResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetTransactionStatusResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetTransactionStatusResponse \p k to a given json object \p j

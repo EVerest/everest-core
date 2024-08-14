@@ -25,7 +25,7 @@ struct UpdateFirmwareRequest : public ocpp::Message {
 
     /// \brief Provides the type of this UpdateFirmware message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UpdateFirmwareRequest \p k to a given json object \p j
@@ -46,7 +46,7 @@ struct UpdateFirmwareResponse : public ocpp::Message {
 
     /// \brief Provides the type of this UpdateFirmwareResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UpdateFirmwareResponse \p k to a given json object \p j

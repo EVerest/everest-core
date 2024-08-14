@@ -24,7 +24,7 @@ struct NotifyEVChargingScheduleRequest : public ocpp::Message {
 
     /// \brief Provides the type of this NotifyEVChargingSchedule message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given NotifyEVChargingScheduleRequest \p k to a given json object \p j
@@ -45,7 +45,7 @@ struct NotifyEVChargingScheduleResponse : public ocpp::Message {
 
     /// \brief Provides the type of this NotifyEVChargingScheduleResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given NotifyEVChargingScheduleResponse \p k to a given json object \p j

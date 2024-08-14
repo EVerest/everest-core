@@ -38,7 +38,7 @@ struct {{ type.name }} : public ocpp::Message {
 
     /// \brief Provides the type of this {{ type.name | replace('Request', '') }} message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j

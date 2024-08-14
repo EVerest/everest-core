@@ -27,7 +27,7 @@ struct CustomerInformationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this CustomerInformation message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given CustomerInformationRequest \p k to a given json object \p j
@@ -48,7 +48,7 @@ struct CustomerInformationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this CustomerInformationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given CustomerInformationResponse \p k to a given json object \p j

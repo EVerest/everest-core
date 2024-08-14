@@ -22,7 +22,7 @@ struct SetVariablesRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SetVariables message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetVariablesRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct SetVariablesResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SetVariablesResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetVariablesResponse \p k to a given json object \p j

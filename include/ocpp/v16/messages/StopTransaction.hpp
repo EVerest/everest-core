@@ -26,7 +26,7 @@ struct StopTransactionRequest : public ocpp::Message {
 
     /// \brief Provides the type of this StopTransaction message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given StopTransactionRequest \p k to a given json object \p j
@@ -45,7 +45,7 @@ struct StopTransactionResponse : public ocpp::Message {
 
     /// \brief Provides the type of this StopTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given StopTransactionResponse \p k to a given json object \p j

@@ -23,7 +23,7 @@ struct GetBaseReportRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetBaseReport message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetBaseReportRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct GetBaseReportResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetBaseReportResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetBaseReportResponse \p k to a given json object \p j

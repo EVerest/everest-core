@@ -24,7 +24,7 @@ struct GetDiagnosticsRequest : public ocpp::Message {
 
     /// \brief Provides the type of this GetDiagnostics message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetDiagnosticsRequest \p k to a given json object \p j
@@ -43,7 +43,7 @@ struct GetDiagnosticsResponse : public ocpp::Message {
 
     /// \brief Provides the type of this GetDiagnosticsResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given GetDiagnosticsResponse \p k to a given json object \p j

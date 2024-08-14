@@ -19,7 +19,7 @@ struct FirmwareStatusNotificationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this FirmwareStatusNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given FirmwareStatusNotificationRequest \p k to a given json object \p j
@@ -37,7 +37,7 @@ struct FirmwareStatusNotificationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this FirmwareStatusNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given FirmwareStatusNotificationResponse \p k to a given json object \p j

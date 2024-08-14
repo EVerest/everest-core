@@ -23,7 +23,7 @@ struct SetNetworkProfileRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SetNetworkProfile message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetNetworkProfileRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct SetNetworkProfileResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SetNetworkProfileResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetNetworkProfileResponse \p k to a given json object \p j

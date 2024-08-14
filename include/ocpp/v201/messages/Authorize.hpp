@@ -24,7 +24,7 @@ struct AuthorizeRequest : public ocpp::Message {
 
     /// \brief Provides the type of this Authorize message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given AuthorizeRequest \p k to a given json object \p j
@@ -45,7 +45,7 @@ struct AuthorizeResponse : public ocpp::Message {
 
     /// \brief Provides the type of this AuthorizeResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given AuthorizeResponse \p k to a given json object \p j

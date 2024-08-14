@@ -23,7 +23,7 @@ struct ClearedChargingLimitRequest : public ocpp::Message {
 
     /// \brief Provides the type of this ClearedChargingLimit message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ClearedChargingLimitRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct ClearedChargingLimitResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ClearedChargingLimitResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ClearedChargingLimitResponse \p k to a given json object \p j

@@ -21,7 +21,7 @@ struct ChangeConfigurationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this ChangeConfiguration message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ChangeConfigurationRequest \p k to a given json object \p j
@@ -40,7 +40,7 @@ struct ChangeConfigurationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ChangeConfigurationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ChangeConfigurationResponse \p k to a given json object \p j

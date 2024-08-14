@@ -25,7 +25,7 @@ struct NotifyEventRequest : public ocpp::Message {
 
     /// \brief Provides the type of this NotifyEvent message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given NotifyEventRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct NotifyEventResponse : public ocpp::Message {
 
     /// \brief Provides the type of this NotifyEventResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given NotifyEventResponse \p k to a given json object \p j

@@ -21,7 +21,7 @@ struct ExtendedTriggerMessageRequest : public ocpp::Message {
 
     /// \brief Provides the type of this ExtendedTriggerMessage message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ExtendedTriggerMessageRequest \p k to a given json object \p j
@@ -40,7 +40,7 @@ struct ExtendedTriggerMessageResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ExtendedTriggerMessageResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ExtendedTriggerMessageResponse \p k to a given json object \p j

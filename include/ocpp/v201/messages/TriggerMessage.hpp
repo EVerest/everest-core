@@ -23,7 +23,7 @@ struct TriggerMessageRequest : public ocpp::Message {
 
     /// \brief Provides the type of this TriggerMessage message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given TriggerMessageRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct TriggerMessageResponse : public ocpp::Message {
 
     /// \brief Provides the type of this TriggerMessageResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given TriggerMessageResponse \p k to a given json object \p j

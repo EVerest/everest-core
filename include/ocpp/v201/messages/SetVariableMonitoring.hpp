@@ -22,7 +22,7 @@ struct SetVariableMonitoringRequest : public ocpp::Message {
 
     /// \brief Provides the type of this SetVariableMonitoring message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetVariableMonitoringRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct SetVariableMonitoringResponse : public ocpp::Message {
 
     /// \brief Provides the type of this SetVariableMonitoringResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given SetVariableMonitoringResponse \p k to a given json object \p j

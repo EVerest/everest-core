@@ -16,7 +16,7 @@ public:
     virtual ~DatabaseException() noexcept {
     }
 
-    virtual const char* what() const noexcept {
+    virtual const char* what() const noexcept override {
         return msg.c_str();
     }
 

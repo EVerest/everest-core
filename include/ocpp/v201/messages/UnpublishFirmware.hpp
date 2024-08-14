@@ -22,7 +22,7 @@ struct UnpublishFirmwareRequest : public ocpp::Message {
 
     /// \brief Provides the type of this UnpublishFirmware message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UnpublishFirmwareRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct UnpublishFirmwareResponse : public ocpp::Message {
 
     /// \brief Provides the type of this UnpublishFirmwareResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UnpublishFirmwareResponse \p k to a given json object \p j

@@ -23,7 +23,7 @@ struct UnlockConnectorRequest : public ocpp::Message {
 
     /// \brief Provides the type of this UnlockConnector message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UnlockConnectorRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct UnlockConnectorResponse : public ocpp::Message {
 
     /// \brief Provides the type of this UnlockConnectorResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given UnlockConnectorResponse \p k to a given json object \p j

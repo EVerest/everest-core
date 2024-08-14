@@ -23,7 +23,7 @@ struct RemoteStartTransactionRequest : public ocpp::Message {
 
     /// \brief Provides the type of this RemoteStartTransaction message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given RemoteStartTransactionRequest \p k to a given json object \p j
@@ -42,7 +42,7 @@ struct RemoteStartTransactionResponse : public ocpp::Message {
 
     /// \brief Provides the type of this RemoteStartTransactionResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given RemoteStartTransactionResponse \p k to a given json object \p j

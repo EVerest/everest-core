@@ -29,7 +29,7 @@ struct BootNotificationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this BootNotification message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given BootNotificationRequest \p k to a given json object \p j
@@ -50,7 +50,7 @@ struct BootNotificationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this BootNotificationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given BootNotificationResponse \p k to a given json object \p j

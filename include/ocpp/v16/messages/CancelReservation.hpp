@@ -19,7 +19,7 @@ struct CancelReservationRequest : public ocpp::Message {
 
     /// \brief Provides the type of this CancelReservation message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given CancelReservationRequest \p k to a given json object \p j
@@ -38,7 +38,7 @@ struct CancelReservationResponse : public ocpp::Message {
 
     /// \brief Provides the type of this CancelReservationResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given CancelReservationResponse \p k to a given json object \p j

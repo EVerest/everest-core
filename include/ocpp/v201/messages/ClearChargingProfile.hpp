@@ -23,7 +23,7 @@ struct ClearChargingProfileRequest : public ocpp::Message {
 
     /// \brief Provides the type of this ClearChargingProfile message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ClearChargingProfileRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct ClearChargingProfileResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ClearChargingProfileResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ClearChargingProfileResponse \p k to a given json object \p j

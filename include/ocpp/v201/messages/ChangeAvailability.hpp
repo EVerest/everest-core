@@ -23,7 +23,7 @@ struct ChangeAvailabilityRequest : public ocpp::Message {
 
     /// \brief Provides the type of this ChangeAvailability message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ChangeAvailabilityRequest \p k to a given json object \p j
@@ -44,7 +44,7 @@ struct ChangeAvailabilityResponse : public ocpp::Message {
 
     /// \brief Provides the type of this ChangeAvailabilityResponse message as a human readable string
     /// \returns the message type as a human readable string
-    std::string get_type() const;
+    std::string get_type() const override;
 };
 
 /// \brief Conversion from a given ChangeAvailabilityResponse \p k to a given json object \p j
