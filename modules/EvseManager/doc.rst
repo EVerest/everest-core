@@ -219,5 +219,74 @@ If the single phase and three phase intervals do not overlap, there is no hyster
 Note that many cars support 32A on 1ph even if they are limited to 16A on 3ph. Some however are limited to 16A
 in 1ph mode and will hence charge slower then expected in 1ph mode.
 
+Error Handling
+==============
 
+The control flow of this module can be influenced by the error implementation of its requirements. This section documents
+the side effects that can be caused by errors raised by a requirement.
+
+This module subscribes to all errors of the following requirements:
+* evse_board_support
+* connector_lock
+* ac_rcd
+* isolation_monitor
+
+A raised error can cause the EvseManager to become Inoperative. This means that charging is not possible until the error is cleared.
+If no charging session is currently running, it will prevent sessions from being started. If a charging session is currently running and an error is raised
+this will interrupt the charging session.
+
+The following sections provide an overview of errors that cause the EvseManager to become Inoperative until the error is cleared.
+
+evse_board_support
+------------------
+
+evse_board_support/DiodeFault
+evse_board_support/VentilationNotAvailable
+evse_board_support/BrownOut
+evse_board_support/EnergyManagement
+evse_board_support/PermanentFault
+evse_board_support/MREC2GroundFailure
+evse_board_support/MREC4OverCurrentFailure
+evse_board_support/MREC5OverVoltage
+evse_board_support/MREC6UnderVoltage
+evse_board_support/MREC8EmergencyStop
+evse_board_support/MREC10InvalidVehicleMode
+evse_board_support/MREC14PilotFault
+evse_board_support/MREC15PowerLoss
+evse_board_support/MREC17EVSEContactorFault
+evse_board_support/MREC19CableOverTempStop
+evse_board_support/MREC20PartialInsertion
+evse_board_support/MREC23ProximityFault
+evse_board_support/MREC24ConnectorVoltageHigh
+evse_board_support/MREC25BrokenLatch
+evse_board_support/MREC26CutCable
+evse_board_support/VendorError
+evse_board_support/CommunicationFault
+
+connector_lock
+--------------
+
+connector_lock/ConnectorLockCapNotCharged
+connector_lock/ConnectorLockUnexpectedClose
+connector_lock/ConnectorLockUnexpectedOpen
+connector_lock/ConnectorLockFailedLock
+connector_lock/ConnectorLockFailedUnlock
+connector_lock/MREC1ConnectorLockFailure
+connector_lock/VendorError
+
+ac_rcd
+------
+
+ac_rcd/MREC2GroundFailure
+ac_rcd/VendorError
+ac_rcd/Selftest
+ac_rcd/AC
+ac_rcd/DC
+
+isolation_monitor
+-----------------
+
+isolation_monitor/DeviceFault
+isolation_monitor/CommunicationFault
+isolation_monitor/VendorError
 
