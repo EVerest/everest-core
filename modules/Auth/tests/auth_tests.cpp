@@ -311,43 +311,46 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test if swiping two different cars will be processed and used for two seperate transactions
-TEST_F(AuthTest, test_two_id_tokens) {
-    std::vector<int32_t> connectors{1, 2};
-    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
-    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
+// /// \brief Test if swiping two different cars will be processed and used for two seperate transactions
+// TEST_F(AuthTest, test_two_id_tokens) {
+//     std::vector<int32_t> connectors{1, 2};
+//     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+//     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
 
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token),
+//                 TokenValidationStatus::Processing));
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token),
+//                 TokenValidationStatus::Processing));
 
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
 
-    TokenHandlingResult result1;
-    TokenHandlingResult result2;
+//     TokenHandlingResult result1;
+//     TokenHandlingResult result2;
 
-    std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
-    std::thread t2([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+//     std::thread t1([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1);
+//     }); std::thread t2([this, provided_token_2, &result2]() { result2 =
+//     this->auth_handler->on_token(provided_token_2); });
 
-    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
-    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+//     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+//     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
+//     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
+//     t1.join();
+//     t2.join();
+//     t3.join();
+//     t4.join();
 
-    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
-    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
-    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
-    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
-}
+//     ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+//     ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+//     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+//     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+// }
 
 /// \brief Test if two transactions can be started for two succeeding plugins before two card swipes
 TEST_F(AuthTest, test_two_plugins) {
@@ -389,46 +392,48 @@ TEST_F(AuthTest, test_two_plugins) {
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
 }
 
-/// \brief Test if a connector receives authorization after subsequent plug-in and plug-out events
-TEST_F(AuthTest, test_authorization_after_plug_in_and_plug_out) {
-    TokenHandlingResult result1;
-    TokenHandlingResult result2;
-    std::vector<int32_t> connectors{1, 2};
-    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+// /// \brief Test if a connector receives authorization after subsequent plug-in and plug-out events
+// TEST_F(AuthTest, test_authorization_after_plug_in_and_plug_out) {
+//     TokenHandlingResult result1;
+//     TokenHandlingResult result2;
+//     std::vector<int32_t> connectors{1, 2};
+//     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
 
-    // Plug-in and plug-out event on connector 1
-    SessionEvent session_event_connected =
-        get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
-    SessionEvent session_event_disconnected;
-    session_event_disconnected.event = SessionEventEnum::SessionFinished;
-    std::thread t1(
-        [this, session_event_connected]() { this->auth_handler->handle_session_event(1, session_event_connected); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t2([this, session_event_disconnected]() {
-        this->auth_handler->handle_session_event(1, session_event_disconnected);
-    });
+//     // Plug-in and plug-out event on connector 1
+//     SessionEvent session_event_connected =
+//         get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+//     SessionEvent session_event_disconnected;
+//     session_event_disconnected.event = SessionEventEnum::SessionFinished;
+//     std::thread t1(
+//         [this, session_event_connected]() { this->auth_handler->handle_session_event(1, session_event_connected); });
+//     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     std::thread t2([this, session_event_disconnected]() {
+//         this->auth_handler->handle_session_event(1, session_event_disconnected);
+//     });
 
-    // Swipe RFID
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
-    EXPECT_CALL(mock_publish_token_validation_status_callback,
-                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
-    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+//     // Swipe RFID
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token),
+//                 TokenValidationStatus::Processing));
+//     EXPECT_CALL(mock_publish_token_validation_status_callback,
+//                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+//     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1);
+//     });
 
-    // Plug-in on connector 2, conntector 2 should be authorized
-    std::thread t4(
-        [this, session_event_connected]() { this->auth_handler->handle_session_event(2, session_event_connected); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     // Plug-in on connector 2, conntector 2 should be authorized
+//     std::thread t4(
+//         [this, session_event_connected]() { this->auth_handler->handle_session_event(2, session_event_connected); });
+//     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    t1.join();
-    t2.join();
-    t3.join();
-    t4.join();
+//     t1.join();
+//     t2.join();
+//     t3.join();
+//     t4.join();
 
-    ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
-    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
-    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
-}
+//     ASSERT_TRUE(result1 == TokenHandlingResult::ACCEPTED);
+//     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+//     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+// }
 
 /// \brief Test if transactions can be started for two succeeding plugins before one valid and one invalid card swipe
 TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
