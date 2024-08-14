@@ -34,7 +34,7 @@ const static std::string VALID_TOKEN_2 = "VALID_RFID_2";
 const static std::string VALID_TOKEN_3 = "VALID_RFID_3"; // SAME PARENT_ID
 const static std::string INVALID_TOKEN = "INVALID_RFID";
 const static std::string PARENT_ID_TOKEN = "PARENT_RFID";
-const static int32_t CONNECTION_TIMEOUT = 3;
+const static int32_t CONNECTION_TIMEOUT = 1;
 
 static SessionEvent get_session_started_event(const types::evse_manager::StartSessionReason& reason) {
     SessionEvent session_event;
@@ -212,8 +212,6 @@ TEST_F(AuthTest, test_stop_transaction) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
     this->auth_handler->handle_session_event(1, session_event2);
-    // wait for state machine to process event
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
     // second swipe to finish transaction
     result = this->auth_handler->on_token(provided_token);
@@ -236,8 +234,6 @@ TEST_F(AuthTest, test_authorize_first) {
     TokenHandlingResult result;
 
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
 
@@ -273,10 +269,6 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     TokenHandlingResult result5;
 
     std::thread t1([this, provided_token, &result1]() { result1 = this->auth_handler->on_token(provided_token); });
-
-    // wait so that there is no race condition between the threads
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
     std::thread t2([this, provided_token, &result2]() { result2 = this->auth_handler->on_token(provided_token); });
     std::thread t3([this, provided_token, &result3]() { result3 = this->auth_handler->on_token(provided_token); });
     std::thread t4([this, provided_token, &result4]() { result4 = this->auth_handler->on_token(provided_token); });
@@ -289,11 +281,15 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
     t3.join();
     t4.join();
 
-    ASSERT_TRUE(result1 == TokenHandlingResult::TIMEOUT);
-    ASSERT_TRUE(result2 == TokenHandlingResult::ALREADY_IN_PROCESS);
-    ASSERT_TRUE(result3 == TokenHandlingResult::ALREADY_IN_PROCESS);
+    std::vector<TokenHandlingResult> results = {result1, result2, result3, result4};
 
-    ASSERT_TRUE(result4 == TokenHandlingResult::ALREADY_IN_PROCESS);
+    // Count occurrences of TIMEOUT and ALREADY_IN_PROCESS
+    int timeout_count = std::count(results.begin(), results.end(), TokenHandlingResult::TIMEOUT);
+    int in_process_count = std::count(results.begin(), results.end(), TokenHandlingResult::ALREADY_IN_PROCESS);
+
+    // Assert that exactly one result is TIMEOUT and the others are ALREADY_IN_PROCESS
+    ASSERT_EQ(timeout_count, 1);
+    ASSERT_EQ(in_process_count, 3);
 
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
@@ -335,7 +331,6 @@ TEST_F(AuthTest, test_two_id_tokens) {
 
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
     std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t4([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     t1.join();
@@ -358,7 +353,6 @@ TEST_F(AuthTest, test_two_plugins) {
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     std::vector<int32_t> connectors{1, 2};
@@ -401,12 +395,8 @@ TEST_F(AuthTest, test_authorization_after_plug_in_and_plug_out) {
         get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
     SessionEvent session_event_disconnected;
     session_event_disconnected.event = SessionEventEnum::SessionFinished;
-    std::thread t1(
-        [this, session_event_connected]() { this->auth_handler->handle_session_event(1, session_event_connected); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t2([this, session_event_disconnected]() {
-        this->auth_handler->handle_session_event(1, session_event_disconnected);
-    });
+    this->auth_handler->handle_session_event(1, session_event_connected);
+    this->auth_handler->handle_session_event(1, session_event_disconnected);
 
     // Swipe RFID
     EXPECT_CALL(mock_publish_token_validation_status_callback,
@@ -418,10 +408,7 @@ TEST_F(AuthTest, test_authorization_after_plug_in_and_plug_out) {
     // Plug-in on connector 2, conntector 2 should be authorized
     std::thread t4(
         [this, session_event_connected]() { this->auth_handler->handle_session_event(2, session_event_connected); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    t1.join();
-    t2.join();
     t3.join();
     t4.join();
 
@@ -439,7 +426,6 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
     SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event]() { this->auth_handler->handle_session_event(1, session_event); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t2([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
 
     std::vector<int32_t> connectors{1, 2};
@@ -479,12 +465,12 @@ TEST_F(AuthTest, test_faulted_state) {
     std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1); });
     std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
 
+    t1.join();
+    t2.join();
+
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
     ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_2, connectors);
-
-    // wait until state faulted events arrive at auth module
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
@@ -499,8 +485,6 @@ TEST_F(AuthTest, test_faulted_state) {
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
-    t1.join();
-    t2.join();
     t3.join();
     t4.join();
 
@@ -526,7 +510,6 @@ TEST_F(AuthTest, test_transaction_finish) {
     SessionEvent session_event3 = get_transaction_started_event(provided_token_2);
 
     std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t2([this, session_event1]() { this->auth_handler->handle_session_event(2, session_event1); });
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
@@ -545,15 +528,14 @@ TEST_F(AuthTest, test_transaction_finish) {
 
     std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
     std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
-
-    std::thread t5([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    std::thread t6([this, session_event3]() { this->auth_handler->handle_session_event(2, session_event3); });
-
     t1.join();
     t2.join();
     t3.join();
     t4.join();
+
+    std::thread t5([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
+    std::thread t6([this, session_event3]() { this->auth_handler->handle_session_event(2, session_event3); });
+
     t5.join();
     t6.join();
 
@@ -586,7 +568,7 @@ TEST_F(AuthTest, test_parent_id_finish) {
 
     SessionEvent session_event1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
-    std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
+    this->auth_handler->handle_session_event(1, session_event1);
 
     SessionEvent session_event2 = get_transaction_started_event(provided_token_1);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
@@ -601,10 +583,8 @@ TEST_F(AuthTest, test_parent_id_finish) {
 
     // swipe VALID_TOKEN_1
     std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
-
     std::thread t3([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
 
-    t1.join();
     t2.join();
     t3.join();
 
@@ -732,9 +712,7 @@ TEST_F(AuthTest, test_reservation) {
     reservation.reservation_id = 1;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
 
-    EVLOG_debug << "1";
     const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
-    EVLOG_debug << "2";
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 }
@@ -858,15 +836,10 @@ TEST_F(AuthTest, test_complete_event_flow) {
 
     // wait for state machine to process session finished event
     this->auth_handler->handle_session_event(1, session_event_2);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_3);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_4);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_5);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_handler->handle_session_event(1, session_event_6);
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
     this->auth_receiver->reset();
 
     this->auth_handler->handle_session_event(1, session_event_1);
@@ -1023,7 +996,6 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
     SessionEvent session_event1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event1]() { this->auth_handler->handle_session_event(1, session_event1); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     std::thread t2([this, session_event1]() { this->auth_handler->handle_session_event(2, session_event1); });
 
     std::vector<int32_t> connectors{1, 2};
@@ -1064,14 +1036,12 @@ TEST_F(AuthTest, test_two_transactions_start_stop) {
     std::thread t5([this, session_event2]() { this->auth_handler->handle_session_event(1, session_event2); });
     std::thread t6([this, session_event3]() { this->auth_handler->handle_session_event(2, session_event3); });
 
-    // sleeping because the order of t5,t6 happening before t7,t8 must be preserved
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    t5.join();
+    t6.join();
 
     std::thread t7([this, provided_token_2, &result3]() { result3 = this->auth_handler->on_token(provided_token_2); });
     std::thread t8([this, provided_token_1, &result4]() { result4 = this->auth_handler->on_token(provided_token_1); });
 
-    t5.join();
-    t6.join();
     t7.join();
     t8.join();
 
@@ -1216,8 +1186,6 @@ TEST_F(AuthTest, test_master_pass_group_id) {
 
     // check if group id token can stop transactions
     this->auth_handler->handle_session_event(1, session_event2);
-    // wait for state machine to process event
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
