@@ -46,7 +46,7 @@ if (NOT NODE_ADDON_API_PACKAGE_DIR)
     )
 
     if (NPM_INSTALL_NODE_ADDON_API_FAILED)
-        message(FATAL "Installation of node-addon-api failed")
+        message(FATAL_ERROR "Installation of node-addon-api failed")
     endif ()
 endif ()
 
