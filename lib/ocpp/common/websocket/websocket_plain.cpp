@@ -26,7 +26,7 @@ websocketpp::close::status::value close_reason_to_value(WebsocketCloseReason rea
         return websocketpp::close::status::service_restart;
     }
 
-    throw std::out_of_range("No known conversion for provided enum of type WebsocketCloseReason");
+    throw EnumToStringException{e, "WebsocketCloseReason"};
 }
 
 WebsocketCloseReason value_to_close_reason(websocketpp::close::status::value value) {

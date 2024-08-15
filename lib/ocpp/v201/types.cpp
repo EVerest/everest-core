@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
+#include <ocpp/common/types.hpp>
 #include <ocpp/v201/types.hpp>
 
 namespace ocpp {
@@ -270,7 +271,7 @@ std::string messagetype_to_string(MessageType m) {
     case MessageType::InternalError:
         return "InternalError";
     }
-    throw std::out_of_range("No known string conversion for provided enum of type MessageType");
+    throw EnumToStringException{m, "MessageType"};
 }
 
 MessageType string_to_messagetype(const std::string& s) {
@@ -533,7 +534,7 @@ MessageType string_to_messagetype(const std::string& s) {
     } else if (s == "InternalError") {
         return MessageType::InternalError;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type MessageType");
+    throw StringToEnumException{s, "MessageType"};
 }
 } // namespace conversions
 

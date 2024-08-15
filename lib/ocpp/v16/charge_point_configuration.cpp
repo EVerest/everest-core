@@ -71,7 +71,7 @@ ChargePointConfiguration::ChargePointConfiguration(const std::string& config, co
                 try {
                     this->supported_feature_profiles.insert(
                         conversions::string_to_supported_feature_profiles(component));
-                } catch (const std::out_of_range& e) {
+                } catch (const StringToEnumException& e) {
                     EVLOG_error << "Feature profile: \"" << component << "\" not recognized";
                     throw std::runtime_error("Unknown component in SupportedFeatureProfiles config option.");
                 }
@@ -246,7 +246,7 @@ void ChargePointConfiguration::init_supported_measurands() {
             default:
                 EVLOG_AND_THROW(std::runtime_error("Given SupportedMeasurands are invalid"));
             }
-        } catch (std::out_of_range& o) {
+        } catch (const StringToEnumException& o) {
             EVLOG_AND_THROW(std::runtime_error("Given SupportedMeasurands are invalid"));
         }
     }
@@ -777,7 +777,7 @@ bool ChargePointConfiguration::measurands_supported(std::string csv) {
     for (auto component : components) {
         try {
             conversions::string_to_measurand(component);
-        } catch (std::out_of_range& o) {
+        } catch (const StringToEnumException& o) {
             EVLOG_warning << "Measurand: " << component << " is not supported!";
             return false;
         }

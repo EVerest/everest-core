@@ -72,7 +72,7 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
         return "DuplicateProfileValidityPeriod";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ProfileValidationResultEnum");
+    throw EnumToStringException{e, "ProfileValidationResultEnum"};
 }
 
 std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum e) {

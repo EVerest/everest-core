@@ -4,8 +4,9 @@
 
 #include <ocpp/v16/ocpp_enums.hpp>
 
-#include <stdexcept>
 #include <string>
+
+#include <ocpp/common/types.hpp>
 
 namespace ocpp {
 namespace v16 {
@@ -26,7 +27,7 @@ std::string authorization_status_to_string(AuthorizationStatus e) {
         return "ConcurrentTx";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type AuthorizationStatus");
+    throw EnumToStringException{e, "AuthorizationStatus"};
 }
 
 AuthorizationStatus string_to_authorization_status(const std::string& s) {
@@ -46,7 +47,7 @@ AuthorizationStatus string_to_authorization_status(const std::string& s) {
         return AuthorizationStatus::ConcurrentTx;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type AuthorizationStatus");
+    throw StringToEnumException{s, "AuthorizationStatus"};
 }
 } // namespace conversions
 
@@ -67,7 +68,7 @@ std::string registration_status_to_string(RegistrationStatus e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type RegistrationStatus");
+    throw EnumToStringException{e, "RegistrationStatus"};
 }
 
 RegistrationStatus string_to_registration_status(const std::string& s) {
@@ -81,7 +82,7 @@ RegistrationStatus string_to_registration_status(const std::string& s) {
         return RegistrationStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type RegistrationStatus");
+    throw StringToEnumException{s, "RegistrationStatus"};
 }
 } // namespace conversions
 
@@ -100,7 +101,7 @@ std::string cancel_reservation_status_to_string(CancelReservationStatus e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CancelReservationStatus");
+    throw EnumToStringException{e, "CancelReservationStatus"};
 }
 
 CancelReservationStatus string_to_cancel_reservation_status(const std::string& s) {
@@ -111,7 +112,7 @@ CancelReservationStatus string_to_cancel_reservation_status(const std::string& s
         return CancelReservationStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CancelReservationStatus");
+    throw StringToEnumException{s, "CancelReservationStatus"};
 }
 } // namespace conversions
 
@@ -130,7 +131,7 @@ std::string certificate_signed_status_enum_type_to_string(CertificateSignedStatu
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CertificateSignedStatusEnumType");
+    throw EnumToStringException{e, "CertificateSignedStatusEnumType"};
 }
 
 CertificateSignedStatusEnumType string_to_certificate_signed_status_enum_type(const std::string& s) {
@@ -141,8 +142,7 @@ CertificateSignedStatusEnumType string_to_certificate_signed_status_enum_type(co
         return CertificateSignedStatusEnumType::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type CertificateSignedStatusEnumType");
+    throw StringToEnumException{s, "CertificateSignedStatusEnumType"};
 }
 } // namespace conversions
 
@@ -161,7 +161,7 @@ std::string availability_type_to_string(AvailabilityType e) {
         return "Operative";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type AvailabilityType");
+    throw EnumToStringException{e, "AvailabilityType"};
 }
 
 AvailabilityType string_to_availability_type(const std::string& s) {
@@ -172,7 +172,7 @@ AvailabilityType string_to_availability_type(const std::string& s) {
         return AvailabilityType::Operative;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type AvailabilityType");
+    throw StringToEnumException{s, "AvailabilityType"};
 }
 } // namespace conversions
 
@@ -193,7 +193,7 @@ std::string availability_status_to_string(AvailabilityStatus e) {
         return "Scheduled";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type AvailabilityStatus");
+    throw EnumToStringException{e, "AvailabilityStatus"};
 }
 
 AvailabilityStatus string_to_availability_status(const std::string& s) {
@@ -207,7 +207,7 @@ AvailabilityStatus string_to_availability_status(const std::string& s) {
         return AvailabilityStatus::Scheduled;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type AvailabilityStatus");
+    throw StringToEnumException{s, "AvailabilityStatus"};
 }
 } // namespace conversions
 
@@ -230,7 +230,7 @@ std::string configuration_status_to_string(ConfigurationStatus e) {
         return "NotSupported";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ConfigurationStatus");
+    throw EnumToStringException{e, "ConfigurationStatus"};
 }
 
 ConfigurationStatus string_to_configuration_status(const std::string& s) {
@@ -247,7 +247,7 @@ ConfigurationStatus string_to_configuration_status(const std::string& s) {
         return ConfigurationStatus::NotSupported;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ConfigurationStatus");
+    throw StringToEnumException{s, "ConfigurationStatus"};
 }
 } // namespace conversions
 
@@ -266,7 +266,7 @@ std::string clear_cache_status_to_string(ClearCacheStatus e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ClearCacheStatus");
+    throw EnumToStringException{e, "ClearCacheStatus"};
 }
 
 ClearCacheStatus string_to_clear_cache_status(const std::string& s) {
@@ -277,7 +277,7 @@ ClearCacheStatus string_to_clear_cache_status(const std::string& s) {
         return ClearCacheStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ClearCacheStatus");
+    throw StringToEnumException{s, "ClearCacheStatus"};
 }
 } // namespace conversions
 
@@ -298,7 +298,7 @@ std::string charging_profile_purpose_type_to_string(ChargingProfilePurposeType e
         return "TxProfile";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargingProfilePurposeType");
+    throw EnumToStringException{e, "ChargingProfilePurposeType"};
 }
 
 ChargingProfilePurposeType string_to_charging_profile_purpose_type(const std::string& s) {
@@ -312,8 +312,7 @@ ChargingProfilePurposeType string_to_charging_profile_purpose_type(const std::st
         return ChargingProfilePurposeType::TxProfile;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ChargingProfilePurposeType");
+    throw StringToEnumException{s, "ChargingProfilePurposeType"};
 }
 } // namespace conversions
 
@@ -332,7 +331,7 @@ std::string clear_charging_profile_status_to_string(ClearChargingProfileStatus e
         return "Unknown";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ClearChargingProfileStatus");
+    throw EnumToStringException{e, "ClearChargingProfileStatus"};
 }
 
 ClearChargingProfileStatus string_to_clear_charging_profile_status(const std::string& s) {
@@ -343,8 +342,7 @@ ClearChargingProfileStatus string_to_clear_charging_profile_status(const std::st
         return ClearChargingProfileStatus::Unknown;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type ClearChargingProfileStatus");
+    throw StringToEnumException{s, "ClearChargingProfileStatus"};
 }
 } // namespace conversions
 
@@ -367,7 +365,7 @@ std::string data_transfer_status_to_string(DataTransferStatus e) {
         return "UnknownVendorId";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type DataTransferStatus");
+    throw EnumToStringException{e, "DataTransferStatus"};
 }
 
 DataTransferStatus string_to_data_transfer_status(const std::string& s) {
@@ -384,7 +382,7 @@ DataTransferStatus string_to_data_transfer_status(const std::string& s) {
         return DataTransferStatus::UnknownVendorId;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type DataTransferStatus");
+    throw StringToEnumException{s, "DataTransferStatus"};
 }
 } // namespace conversions
 
@@ -405,7 +403,7 @@ std::string hash_algorithm_enum_type_to_string(HashAlgorithmEnumType e) {
         return "SHA512";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type HashAlgorithmEnumType");
+    throw EnumToStringException{e, "HashAlgorithmEnumType"};
 }
 
 HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s) {
@@ -419,7 +417,7 @@ HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s) {
         return HashAlgorithmEnumType::SHA512;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type HashAlgorithmEnumType");
+    throw StringToEnumException{s, "HashAlgorithmEnumType"};
 }
 } // namespace conversions
 
@@ -440,7 +438,7 @@ std::string delete_certificate_status_enum_type_to_string(DeleteCertificateStatu
         return "NotFound";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type DeleteCertificateStatusEnumType");
+    throw EnumToStringException{e, "DeleteCertificateStatusEnumType"};
 }
 
 DeleteCertificateStatusEnumType string_to_delete_certificate_status_enum_type(const std::string& s) {
@@ -454,8 +452,7 @@ DeleteCertificateStatusEnumType string_to_delete_certificate_status_enum_type(co
         return DeleteCertificateStatusEnumType::NotFound;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type DeleteCertificateStatusEnumType");
+    throw StringToEnumException{s, "DeleteCertificateStatusEnumType"};
 }
 } // namespace conversions
 
@@ -478,7 +475,7 @@ std::string diagnostics_status_to_string(DiagnosticsStatus e) {
         return "Uploading";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type DiagnosticsStatus");
+    throw EnumToStringException{e, "DiagnosticsStatus"};
 }
 
 DiagnosticsStatus string_to_diagnostics_status(const std::string& s) {
@@ -495,7 +492,7 @@ DiagnosticsStatus string_to_diagnostics_status(const std::string& s) {
         return DiagnosticsStatus::Uploading;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type DiagnosticsStatus");
+    throw StringToEnumException{s, "DiagnosticsStatus"};
 }
 } // namespace conversions
 
@@ -524,7 +521,7 @@ std::string message_trigger_enum_type_to_string(MessageTriggerEnumType e) {
         return "StatusNotification";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type MessageTriggerEnumType");
+    throw EnumToStringException{e, "MessageTriggerEnumType"};
 }
 
 MessageTriggerEnumType string_to_message_trigger_enum_type(const std::string& s) {
@@ -550,7 +547,7 @@ MessageTriggerEnumType string_to_message_trigger_enum_type(const std::string& s)
         return MessageTriggerEnumType::StatusNotification;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type MessageTriggerEnumType");
+    throw StringToEnumException{s, "MessageTriggerEnumType"};
 }
 } // namespace conversions
 
@@ -571,7 +568,7 @@ std::string trigger_message_status_enum_type_to_string(TriggerMessageStatusEnumT
         return "NotImplemented";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type TriggerMessageStatusEnumType");
+    throw EnumToStringException{e, "TriggerMessageStatusEnumType"};
 }
 
 TriggerMessageStatusEnumType string_to_trigger_message_status_enum_type(const std::string& s) {
@@ -585,8 +582,7 @@ TriggerMessageStatusEnumType string_to_trigger_message_status_enum_type(const st
         return TriggerMessageStatusEnumType::NotImplemented;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type TriggerMessageStatusEnumType");
+    throw StringToEnumException{s, "TriggerMessageStatusEnumType"};
 }
 } // namespace conversions
 
@@ -615,7 +611,7 @@ std::string firmware_status_to_string(FirmwareStatus e) {
         return "Installed";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type FirmwareStatus");
+    throw EnumToStringException{e, "FirmwareStatus"};
 }
 
 FirmwareStatus string_to_firmware_status(const std::string& s) {
@@ -641,7 +637,7 @@ FirmwareStatus string_to_firmware_status(const std::string& s) {
         return FirmwareStatus::Installed;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type FirmwareStatus");
+    throw StringToEnumException{s, "FirmwareStatus"};
 }
 } // namespace conversions
 
@@ -660,7 +656,7 @@ std::string charging_rate_unit_to_string(ChargingRateUnit e) {
         return "W";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargingRateUnit");
+    throw EnumToStringException{e, "ChargingRateUnit"};
 }
 
 ChargingRateUnit string_to_charging_rate_unit(const std::string& s) {
@@ -671,7 +667,7 @@ ChargingRateUnit string_to_charging_rate_unit(const std::string& s) {
         return ChargingRateUnit::W;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargingRateUnit");
+    throw StringToEnumException{s, "ChargingRateUnit"};
 }
 } // namespace conversions
 
@@ -690,7 +686,7 @@ std::string get_composite_schedule_status_to_string(GetCompositeScheduleStatus e
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type GetCompositeScheduleStatus");
+    throw EnumToStringException{e, "GetCompositeScheduleStatus"};
 }
 
 GetCompositeScheduleStatus string_to_get_composite_schedule_status(const std::string& s) {
@@ -701,8 +697,7 @@ GetCompositeScheduleStatus string_to_get_composite_schedule_status(const std::st
         return GetCompositeScheduleStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type GetCompositeScheduleStatus");
+    throw StringToEnumException{s, "GetCompositeScheduleStatus"};
 }
 } // namespace conversions
 
@@ -721,7 +716,7 @@ std::string certificate_use_enum_type_to_string(CertificateUseEnumType e) {
         return "ManufacturerRootCertificate";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CertificateUseEnumType");
+    throw EnumToStringException{e, "CertificateUseEnumType"};
 }
 
 CertificateUseEnumType string_to_certificate_use_enum_type(const std::string& s) {
@@ -732,7 +727,7 @@ CertificateUseEnumType string_to_certificate_use_enum_type(const std::string& s)
         return CertificateUseEnumType::ManufacturerRootCertificate;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateUseEnumType");
+    throw StringToEnumException{s, "CertificateUseEnumType"};
 }
 } // namespace conversions
 
@@ -751,8 +746,7 @@ std::string get_installed_certificate_status_enum_type_to_string(GetInstalledCer
         return "NotFound";
     }
 
-    throw std::out_of_range(
-        "No known string conversion for provided enum of type GetInstalledCertificateStatusEnumType");
+    throw EnumToStringException{e, "GetInstalledCertificateStatusEnumType"};
 }
 
 GetInstalledCertificateStatusEnumType string_to_get_installed_certificate_status_enum_type(const std::string& s) {
@@ -763,8 +757,7 @@ GetInstalledCertificateStatusEnumType string_to_get_installed_certificate_status
         return GetInstalledCertificateStatusEnumType::NotFound;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type GetInstalledCertificateStatusEnumType");
+    throw StringToEnumException{s, "GetInstalledCertificateStatusEnumType"};
 }
 } // namespace conversions
 
@@ -784,7 +777,7 @@ std::string log_enum_type_to_string(LogEnumType e) {
         return "SecurityLog";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type LogEnumType");
+    throw EnumToStringException{e, "LogEnumType"};
 }
 
 LogEnumType string_to_log_enum_type(const std::string& s) {
@@ -795,7 +788,7 @@ LogEnumType string_to_log_enum_type(const std::string& s) {
         return LogEnumType::SecurityLog;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type LogEnumType");
+    throw StringToEnumException{s, "LogEnumType"};
 }
 } // namespace conversions
 
@@ -816,7 +809,7 @@ std::string log_status_enum_type_to_string(LogStatusEnumType e) {
         return "AcceptedCanceled";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type LogStatusEnumType");
+    throw EnumToStringException{e, "LogStatusEnumType"};
 }
 
 LogStatusEnumType string_to_log_status_enum_type(const std::string& s) {
@@ -830,7 +823,7 @@ LogStatusEnumType string_to_log_status_enum_type(const std::string& s) {
         return LogStatusEnumType::AcceptedCanceled;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type LogStatusEnumType");
+    throw StringToEnumException{s, "LogStatusEnumType"};
 }
 } // namespace conversions
 
@@ -851,7 +844,7 @@ std::string install_certificate_status_enum_type_to_string(InstallCertificateSta
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type InstallCertificateStatusEnumType");
+    throw EnumToStringException{e, "InstallCertificateStatusEnumType"};
 }
 
 InstallCertificateStatusEnumType string_to_install_certificate_status_enum_type(const std::string& s) {
@@ -865,8 +858,7 @@ InstallCertificateStatusEnumType string_to_install_certificate_status_enum_type(
         return InstallCertificateStatusEnumType::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type InstallCertificateStatusEnumType");
+    throw StringToEnumException{s, "InstallCertificateStatusEnumType"};
 }
 } // namespace conversions
 
@@ -896,7 +888,7 @@ std::string upload_log_status_enum_type_to_string(UploadLogStatusEnumType e) {
         return "Uploading";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UploadLogStatusEnumType");
+    throw EnumToStringException{e, "UploadLogStatusEnumType"};
 }
 
 UploadLogStatusEnumType string_to_upload_log_status_enum_type(const std::string& s) {
@@ -922,7 +914,7 @@ UploadLogStatusEnumType string_to_upload_log_status_enum_type(const std::string&
         return UploadLogStatusEnumType::Uploading;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UploadLogStatusEnumType");
+    throw StringToEnumException{s, "UploadLogStatusEnumType"};
 }
 } // namespace conversions
 
@@ -953,7 +945,7 @@ std::string reading_context_to_string(ReadingContext e) {
         return "Other";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ReadingContext");
+    throw EnumToStringException{e, "ReadingContext"};
 }
 
 ReadingContext string_to_reading_context(const std::string& s) {
@@ -982,7 +974,7 @@ ReadingContext string_to_reading_context(const std::string& s) {
         return ReadingContext::Other;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ReadingContext");
+    throw StringToEnumException{s, "ReadingContext"};
 }
 } // namespace conversions
 
@@ -1001,7 +993,7 @@ std::string value_format_to_string(ValueFormat e) {
         return "SignedData";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ValueFormat");
+    throw EnumToStringException{e, "ValueFormat"};
 }
 
 ValueFormat string_to_value_format(const std::string& s) {
@@ -1012,7 +1004,7 @@ ValueFormat string_to_value_format(const std::string& s) {
         return ValueFormat::SignedData;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ValueFormat");
+    throw StringToEnumException{s, "ValueFormat"};
 }
 } // namespace conversions
 
@@ -1071,7 +1063,7 @@ std::string measurand_to_string(Measurand e) {
         return "RPM";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type Measurand");
+    throw EnumToStringException{e, "Measurand"};
 }
 
 Measurand string_to_measurand(const std::string& s) {
@@ -1142,7 +1134,7 @@ Measurand string_to_measurand(const std::string& s) {
         return Measurand::RPM;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type Measurand");
+    throw StringToEnumException{s, "Measurand"};
 }
 } // namespace conversions
 
@@ -1177,7 +1169,7 @@ std::string phase_to_string(Phase e) {
         return "L3-L1";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type Phase");
+    throw EnumToStringException{e, "Phase"};
 }
 
 Phase string_to_phase(const std::string& s) {
@@ -1212,7 +1204,7 @@ Phase string_to_phase(const std::string& s) {
         return Phase::L3_L1;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type Phase");
+    throw StringToEnumException{s, "Phase"};
 }
 } // namespace conversions
 
@@ -1237,7 +1229,7 @@ std::string location_to_string(Location e) {
         return "Body";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type Location");
+    throw EnumToStringException{e, "Location"};
 }
 
 Location string_to_location(const std::string& s) {
@@ -1257,7 +1249,7 @@ Location string_to_location(const std::string& s) {
         return Location::Body;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type Location");
+    throw StringToEnumException{s, "Location"};
 }
 } // namespace conversions
 
@@ -1306,7 +1298,7 @@ std::string unit_of_measure_to_string(UnitOfMeasure e) {
         return "Percent";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UnitOfMeasure");
+    throw EnumToStringException{e, "UnitOfMeasure"};
 }
 
 UnitOfMeasure string_to_unit_of_measure(const std::string& s) {
@@ -1362,7 +1354,7 @@ UnitOfMeasure string_to_unit_of_measure(const std::string& s) {
         return UnitOfMeasure::Percent;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UnitOfMeasure");
+    throw StringToEnumException{s, "UnitOfMeasure"};
 }
 } // namespace conversions
 
@@ -1383,7 +1375,7 @@ std::string charging_profile_kind_type_to_string(ChargingProfileKindType e) {
         return "Relative";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargingProfileKindType");
+    throw EnumToStringException{e, "ChargingProfileKindType"};
 }
 
 ChargingProfileKindType string_to_charging_profile_kind_type(const std::string& s) {
@@ -1397,7 +1389,7 @@ ChargingProfileKindType string_to_charging_profile_kind_type(const std::string& 
         return ChargingProfileKindType::Relative;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargingProfileKindType");
+    throw StringToEnumException{s, "ChargingProfileKindType"};
 }
 } // namespace conversions
 
@@ -1416,7 +1408,7 @@ std::string recurrency_kind_type_to_string(RecurrencyKindType e) {
         return "Weekly";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type RecurrencyKindType");
+    throw EnumToStringException{e, "RecurrencyKindType"};
 }
 
 RecurrencyKindType string_to_recurrency_kind_type(const std::string& s) {
@@ -1427,7 +1419,7 @@ RecurrencyKindType string_to_recurrency_kind_type(const std::string& s) {
         return RecurrencyKindType::Weekly;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type RecurrencyKindType");
+    throw StringToEnumException{s, "RecurrencyKindType"};
 }
 } // namespace conversions
 
@@ -1446,7 +1438,7 @@ std::string remote_start_stop_status_to_string(RemoteStartStopStatus e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type RemoteStartStopStatus");
+    throw EnumToStringException{e, "RemoteStartStopStatus"};
 }
 
 RemoteStartStopStatus string_to_remote_start_stop_status(const std::string& s) {
@@ -1457,7 +1449,7 @@ RemoteStartStopStatus string_to_remote_start_stop_status(const std::string& s) {
         return RemoteStartStopStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type RemoteStartStopStatus");
+    throw StringToEnumException{s, "RemoteStartStopStatus"};
 }
 } // namespace conversions
 
@@ -1482,7 +1474,7 @@ std::string reservation_status_to_string(ReservationStatus e) {
         return "Unavailable";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ReservationStatus");
+    throw EnumToStringException{e, "ReservationStatus"};
 }
 
 ReservationStatus string_to_reservation_status(const std::string& s) {
@@ -1502,7 +1494,7 @@ ReservationStatus string_to_reservation_status(const std::string& s) {
         return ReservationStatus::Unavailable;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ReservationStatus");
+    throw StringToEnumException{s, "ReservationStatus"};
 }
 } // namespace conversions
 
@@ -1521,7 +1513,7 @@ std::string reset_type_to_string(ResetType e) {
         return "Soft";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ResetType");
+    throw EnumToStringException{e, "ResetType"};
 }
 
 ResetType string_to_reset_type(const std::string& s) {
@@ -1532,7 +1524,7 @@ ResetType string_to_reset_type(const std::string& s) {
         return ResetType::Soft;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ResetType");
+    throw StringToEnumException{s, "ResetType"};
 }
 } // namespace conversions
 
@@ -1551,7 +1543,7 @@ std::string reset_status_to_string(ResetStatus e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ResetStatus");
+    throw EnumToStringException{e, "ResetStatus"};
 }
 
 ResetStatus string_to_reset_status(const std::string& s) {
@@ -1562,7 +1554,7 @@ ResetStatus string_to_reset_status(const std::string& s) {
         return ResetStatus::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ResetStatus");
+    throw StringToEnumException{s, "ResetStatus"};
 }
 } // namespace conversions
 
@@ -1581,7 +1573,7 @@ std::string update_type_to_string(UpdateType e) {
         return "Full";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateType");
+    throw EnumToStringException{e, "UpdateType"};
 }
 
 UpdateType string_to_update_type(const std::string& s) {
@@ -1592,7 +1584,7 @@ UpdateType string_to_update_type(const std::string& s) {
         return UpdateType::Full;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UpdateType");
+    throw StringToEnumException{s, "UpdateType"};
 }
 } // namespace conversions
 
@@ -1615,7 +1607,7 @@ std::string update_status_to_string(UpdateStatus e) {
         return "VersionMismatch";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateStatus");
+    throw EnumToStringException{e, "UpdateStatus"};
 }
 
 UpdateStatus string_to_update_status(const std::string& s) {
@@ -1632,7 +1624,7 @@ UpdateStatus string_to_update_status(const std::string& s) {
         return UpdateStatus::VersionMismatch;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UpdateStatus");
+    throw StringToEnumException{s, "UpdateStatus"};
 }
 } // namespace conversions
 
@@ -1653,7 +1645,7 @@ std::string charging_profile_status_to_string(ChargingProfileStatus e) {
         return "NotSupported";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargingProfileStatus");
+    throw EnumToStringException{e, "ChargingProfileStatus"};
 }
 
 ChargingProfileStatus string_to_charging_profile_status(const std::string& s) {
@@ -1667,7 +1659,7 @@ ChargingProfileStatus string_to_charging_profile_status(const std::string& s) {
         return ChargingProfileStatus::NotSupported;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargingProfileStatus");
+    throw StringToEnumException{s, "ChargingProfileStatus"};
 }
 } // namespace conversions
 
@@ -1686,7 +1678,7 @@ std::string generic_status_enum_type_to_string(GenericStatusEnumType e) {
         return "Rejected";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type GenericStatusEnumType");
+    throw EnumToStringException{e, "GenericStatusEnumType"};
 }
 
 GenericStatusEnumType string_to_generic_status_enum_type(const std::string& s) {
@@ -1697,7 +1689,7 @@ GenericStatusEnumType string_to_generic_status_enum_type(const std::string& s) {
         return GenericStatusEnumType::Rejected;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type GenericStatusEnumType");
+    throw StringToEnumException{s, "GenericStatusEnumType"};
 }
 } // namespace conversions
 
@@ -1740,7 +1732,7 @@ std::string firmware_status_enum_type_to_string(FirmwareStatusEnumType e) {
         return "SignatureVerified";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type FirmwareStatusEnumType");
+    throw EnumToStringException{e, "FirmwareStatusEnumType"};
 }
 
 FirmwareStatusEnumType string_to_firmware_status_enum_type(const std::string& s) {
@@ -1787,7 +1779,7 @@ FirmwareStatusEnumType string_to_firmware_status_enum_type(const std::string& s)
         return FirmwareStatusEnumType::SignatureVerified;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type FirmwareStatusEnumType");
+    throw StringToEnumException{s, "FirmwareStatusEnumType"};
 }
 } // namespace conversions
 
@@ -1812,7 +1804,7 @@ std::string update_firmware_status_enum_type_to_string(UpdateFirmwareStatusEnumT
         return "RevokedCertificate";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+    throw EnumToStringException{e, "UpdateFirmwareStatusEnumType"};
 }
 
 UpdateFirmwareStatusEnumType string_to_update_firmware_status_enum_type(const std::string& s) {
@@ -1832,8 +1824,7 @@ UpdateFirmwareStatusEnumType string_to_update_firmware_status_enum_type(const st
         return UpdateFirmwareStatusEnumType::RevokedCertificate;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type UpdateFirmwareStatusEnumType");
+    throw StringToEnumException{s, "UpdateFirmwareStatusEnumType"};
 }
 } // namespace conversions
 
@@ -1880,7 +1871,7 @@ std::string charge_point_error_code_to_string(ChargePointErrorCode e) {
         return "WeakSignal";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargePointErrorCode");
+    throw EnumToStringException{e, "ChargePointErrorCode"};
 }
 
 ChargePointErrorCode string_to_charge_point_error_code(const std::string& s) {
@@ -1933,7 +1924,7 @@ ChargePointErrorCode string_to_charge_point_error_code(const std::string& s) {
         return ChargePointErrorCode::WeakSignal;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargePointErrorCode");
+    throw StringToEnumException{s, "ChargePointErrorCode"};
 }
 } // namespace conversions
 
@@ -1966,7 +1957,7 @@ std::string charge_point_status_to_string(ChargePointStatus e) {
         return "Faulted";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ChargePointStatus");
+    throw EnumToStringException{e, "ChargePointStatus"};
 }
 
 ChargePointStatus string_to_charge_point_status(const std::string& s) {
@@ -1998,7 +1989,7 @@ ChargePointStatus string_to_charge_point_status(const std::string& s) {
         return ChargePointStatus::Faulted;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type ChargePointStatus");
+    throw StringToEnumException{s, "ChargePointStatus"};
 }
 } // namespace conversions
 
@@ -2035,7 +2026,7 @@ std::string reason_to_string(Reason e) {
         return "DeAuthorized";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type Reason");
+    throw EnumToStringException{e, "Reason"};
 }
 
 Reason string_to_reason(const std::string& s) {
@@ -2073,7 +2064,7 @@ Reason string_to_reason(const std::string& s) {
         return Reason::DeAuthorized;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type Reason");
+    throw StringToEnumException{s, "Reason"};
 }
 } // namespace conversions
 
@@ -2100,7 +2091,7 @@ std::string message_trigger_to_string(MessageTrigger e) {
         return "StatusNotification";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type MessageTrigger");
+    throw EnumToStringException{e, "MessageTrigger"};
 }
 
 MessageTrigger string_to_message_trigger(const std::string& s) {
@@ -2123,7 +2114,7 @@ MessageTrigger string_to_message_trigger(const std::string& s) {
         return MessageTrigger::StatusNotification;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type MessageTrigger");
+    throw StringToEnumException{s, "MessageTrigger"};
 }
 } // namespace conversions
 
@@ -2144,7 +2135,7 @@ std::string trigger_message_status_to_string(TriggerMessageStatus e) {
         return "NotImplemented";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type TriggerMessageStatus");
+    throw EnumToStringException{e, "TriggerMessageStatus"};
 }
 
 TriggerMessageStatus string_to_trigger_message_status(const std::string& s) {
@@ -2158,7 +2149,7 @@ TriggerMessageStatus string_to_trigger_message_status(const std::string& s) {
         return TriggerMessageStatus::NotImplemented;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type TriggerMessageStatus");
+    throw StringToEnumException{s, "TriggerMessageStatus"};
 }
 } // namespace conversions
 
@@ -2179,7 +2170,7 @@ std::string unlock_status_to_string(UnlockStatus e) {
         return "NotSupported";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UnlockStatus");
+    throw EnumToStringException{e, "UnlockStatus"};
 }
 
 UnlockStatus string_to_unlock_status(const std::string& s) {
@@ -2193,7 +2184,7 @@ UnlockStatus string_to_unlock_status(const std::string& s) {
         return UnlockStatus::NotSupported;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type UnlockStatus");
+    throw StringToEnumException{s, "UnlockStatus"};
 }
 } // namespace conversions
 

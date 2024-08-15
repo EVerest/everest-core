@@ -730,7 +730,7 @@ InitDeviceModelDb::get_config_values(const std::filesystem::path& config_file_pa
                     key.name = variable.value().at("variable_name");
                     try {
                         key.attribute_type = conversions::string_to_attribute_enum(attributes.key());
-                    } catch (const std::out_of_range& /* e*/) {
+                    } catch (const StringToEnumException& /* e*/) {
                         EVLOG_error << "Could not find type " << attributes.key() << " of component " << p.name
                                     << " and variable " << key.name;
                         throw InitDeviceModelDbError("Could not find type " + attributes.key() + " of component " +

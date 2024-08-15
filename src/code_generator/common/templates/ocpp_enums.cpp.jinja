@@ -6,7 +6,8 @@
 #include <ocpp/{{namespace}}/ocpp_enums.hpp>
 
 #include <string>
-#include <stdexcept>
+
+#include <ocpp/common/types.hpp>
 
 namespace ocpp {
 namespace {{namespace}} {
@@ -23,7 +24,7 @@ namespace conversions {
             {% endfor %}
         }
 
-        throw std::out_of_range("No known string conversion for provided enum of type {{ enum_type.name }}");
+        throw EnumToStringException{e, "{{ enum_type.name }}"};
     }
 
     {{ enum_type.name }} string_to_{{ enum_type.name | snake_case }}(const std::string& s) {
@@ -33,7 +34,7 @@ namespace conversions {
         }
         {% endfor %}
 
-        throw std::out_of_range("Provided string " + s + " could not be converted to enum of type {{ enum_type.name }}");
+        throw StringToEnumException{s, "{{ enum_type.name }}"};
     }
 }
 

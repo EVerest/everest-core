@@ -721,61 +721,54 @@ public:
     /// \brief Enhances a received \p json_message with additional meta information, checks if it is a valid CallResult
     /// with a corresponding Call message on top of the queue
     /// \returns the enhanced message
-    EnhancedMessage<M> receive(const std::string& message) {
+    EnhancedMessage<M> receive(std::string_view message) {
         EnhancedMessage<M> enhanced_message;
 
-        try {
-            enhanced_message.message = json::parse(message);
-            enhanced_message.uniqueId = this->getMessageId(enhanced_message.message);
-            enhanced_message.messageTypeId = this->getMessageTypeId(enhanced_message.message);
+        enhanced_message.message = json::parse(message);
+        enhanced_message.uniqueId = this->getMessageId(enhanced_message.message);
+        enhanced_message.messageTypeId = this->getMessageTypeId(enhanced_message.message);
 
-            if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
-                enhanced_message.messageType = this->string_to_messagetype(enhanced_message.message.at(CALL_ACTION));
-                enhanced_message.call_message = enhanced_message.message;
+        if (enhanced_message.messageTypeId == MessageTypeId::CALL) {
+            enhanced_message.messageType = this->string_to_messagetype(enhanced_message.message.at(CALL_ACTION));
+            enhanced_message.call_message = enhanced_message.message;
 
-                {
-                    std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
-                    // save the uid of the message we just received to ensure the next message we send is a response to
-                    // this message
-                    next_message_to_send.emplace(enhanced_message.uniqueId);
-                }
+            {
+                std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+                // save the uid of the message we just received to ensure the next message we send is a response to
+                // this message
+                next_message_to_send.emplace(enhanced_message.uniqueId);
             }
+        }
 
-            // TODO(kai): what happens if we receive a CallResult or CallError out of order?
-            if (enhanced_message.messageTypeId == MessageTypeId::CALLRESULT ||
-                enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
-                {
-                    std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
-                    next_message_to_send.reset();
-                }
-                // we need to remove Call messages from in_flight if we receive a CallResult OR a CallError
-
-                // TODO(kai): we need to do some error handling in the CallError case
-                std::unique_lock<std::recursive_mutex> lk(this->message_mutex);
-                if (this->in_flight == nullptr) {
-                    EVLOG_error
-                        << "Received a CALLRESULT OR CALLERROR without a message in flight, this should not happen";
-                    return enhanced_message;
-                }
-                if (this->in_flight->uniqueId() != enhanced_message.uniqueId) {
-                    EVLOG_error << "Received a CALLRESULT OR CALLERROR with mismatching uid: "
-                                << this->in_flight->uniqueId() << " != " << enhanced_message.uniqueId;
-                    return enhanced_message;
-                }
-                if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
-                    EVLOG_error << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
-                    // make sure the original call message is attached to the callerror
-                    enhanced_message.call_message = this->in_flight->message;
-                    lk.unlock();
-                    this->handle_timeout_or_callerror(enhanced_message);
-                } else {
-                    this->handle_call_result(enhanced_message);
-                }
+        // TODO(kai): what happens if we receive a CallResult or CallError out of order?
+        if (enhanced_message.messageTypeId == MessageTypeId::CALLRESULT ||
+            enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
+            {
+                std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
+                next_message_to_send.reset();
             }
+            // we need to remove Call messages from in_flight if we receive a CallResult OR a CallError
 
-        } catch (const std::exception& e) {
-            EVLOG_error << "json parse failed because: "
-                        << "(" << e.what() << ")";
+            // TODO(kai): we need to do some error handling in the CallError case
+            std::unique_lock<std::recursive_mutex> lk(this->message_mutex);
+            if (this->in_flight == nullptr) {
+                EVLOG_error << "Received a CALLRESULT OR CALLERROR without a message in flight, this should not happen";
+                return enhanced_message;
+            }
+            if (this->in_flight->uniqueId() != enhanced_message.uniqueId) {
+                EVLOG_error << "Received a CALLRESULT OR CALLERROR with mismatching uid: "
+                            << this->in_flight->uniqueId() << " != " << enhanced_message.uniqueId;
+                return enhanced_message;
+            }
+            if (enhanced_message.messageTypeId == MessageTypeId::CALLERROR) {
+                EVLOG_error << "Received a CALLERROR for message with UID: " << enhanced_message.uniqueId;
+                // make sure the original call message is attached to the callerror
+                enhanced_message.call_message = this->in_flight->message;
+                lk.unlock();
+                this->handle_timeout_or_callerror(enhanced_message);
+            } else {
+                this->handle_call_result(enhanced_message);
+            }
         }
 
         return enhanced_message;

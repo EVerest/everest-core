@@ -136,7 +136,7 @@ std::string session_started_reason_to_string(SessionStartedReason e) {
     case SessionStartedReason::EVConnected:
         return "EVConnected";
     }
-    throw std::out_of_range("No known string conversion for provided enum of type SessionStartedReason");
+    throw EnumToStringException{e, "SessionStartedReason"};
 }
 
 SessionStartedReason string_to_session_started_reason(const std::string& s) {
@@ -146,7 +146,7 @@ SessionStartedReason string_to_session_started_reason(const std::string& s) {
     if (s == "EVConnected") {
         return SessionStartedReason::EVConnected;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type SessionStartedReason");
+    throw StringToEnumException{s, "SessionStartedReason"};
 }
 } // namespace conversions
 
@@ -795,7 +795,7 @@ std::string ca_certificate_type_to_string(CaCertificateType e) {
         return "MF";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CaCertificateType");
+    throw EnumToStringException{e, "CaCertificateType"};
 }
 
 CaCertificateType string_to_ca_certificate_type(const std::string& s) {
@@ -808,7 +808,7 @@ CaCertificateType string_to_ca_certificate_type(const std::string& s) {
     } else if (s == "MF") {
         return CaCertificateType::MF;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
+    throw StringToEnumException{s, "CertificateType"};
 }
 } // namespace conversions
 
@@ -836,7 +836,7 @@ std::string certificate_validation_result_to_string(CertificateValidationResult 
         return "Unknown";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CertificateValidationResult");
+    throw EnumToStringException{e, "CertificateValidationResult"};
 }
 
 CertificateValidationResult string_to_certificate_validation_result(const std::string& s) {
@@ -861,8 +861,7 @@ CertificateValidationResult string_to_certificate_validation_result(const std::s
     if (s == "Unknown") {
         return CertificateValidationResult::Unknown;
     }
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type CertificateValidationResult");
+    throw StringToEnumException{s, "CertificateValidationResult"};
 }
 } // namespace conversions
 
@@ -894,7 +893,7 @@ std::string install_certificate_result_to_string(InstallCertificateResult e) {
         return "Accepted";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type UpdateFirmwareStatusEnumType");
+    throw EnumToStringException{e, "UpdateFirmwareStatusEnumType"};
 }
 
 InstallCertificateResult string_to_install_certificate_result(const std::string& s) {
@@ -925,8 +924,7 @@ InstallCertificateResult string_to_install_certificate_result(const std::string&
     if (s == "Accepted") {
         return InstallCertificateResult::Accepted;
     }
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type InstallCertificateResult");
+    throw StringToEnumException{s, "InstallCertificateResult"};
 }
 } // namespace conversions
 
@@ -946,7 +944,7 @@ std::string delete_certificate_result_to_string(DeleteCertificateResult e) {
         return "NotFound";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type DeleteCertificateResult");
+    throw EnumToStringException{e, "DeleteCertificateResult"};
 }
 
 DeleteCertificateResult string_to_delete_certificate_result(const std::string& s) {
@@ -960,7 +958,7 @@ DeleteCertificateResult string_to_delete_certificate_result(const std::string& s
         return DeleteCertificateResult::NotFound;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type DeleteCertificateResult");
+    throw StringToEnumException{s, "DeleteCertificateResult"};
 }
 } // namespace conversions
 
@@ -1051,7 +1049,7 @@ std::string hash_algorithm_enum_type_to_string(HashAlgorithmEnumType e) {
         return "SHA512";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type HashAlgorithmEnumType");
+    throw EnumToStringException{e, "HashAlgorithmEnumType"};
 }
 
 HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s) {
@@ -1065,7 +1063,7 @@ HashAlgorithmEnumType string_to_hash_algorithm_enum_type(const std::string& s) {
         return HashAlgorithmEnumType::SHA512;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type HashAlgorithmEnumType");
+    throw StringToEnumException{s, "HashAlgorithmEnumType"};
 }
 } // namespace conversions
 
@@ -1083,7 +1081,7 @@ std::string ocpp_protocol_version_to_string(OcppProtocolVersion e) {
         return "ocpp2.0.1";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type OcppProtocolVersion");
+    throw EnumToStringException{e, "OcppProtocolVersion"};
 }
 
 OcppProtocolVersion string_to_ocpp_protocol_version(const std::string& s) {
@@ -1093,7 +1091,7 @@ OcppProtocolVersion string_to_ocpp_protocol_version(const std::string& s) {
     if (s == "ocpp2.0.1") {
         return OcppProtocolVersion::v201;
     }
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type OcppProtocolVersion");
+    throw StringToEnumException{s, "OcppProtocolVersion"};
 }
 } // namespace conversions
 
@@ -1113,7 +1111,7 @@ std::string certificate_signing_use_enum_to_string(CertificateSigningUseEnum e) 
         return "ManufacturerCertificate";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CertificateSigningUseEnum");
+    throw EnumToStringException{e, "CertificateSigningUseEnum"};
 }
 
 CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::string& s) {
@@ -1127,8 +1125,7 @@ CertificateSigningUseEnum string_to_certificate_signing_use_enum(const std::stri
         return CertificateSigningUseEnum::ManufacturerCertificate;
     }
 
-    throw std::out_of_range("Provided string " + s +
-                            " could not be converted to enum of type CertificateSigningUseEnum");
+    throw StringToEnumException{s, "CertificateSigningUseEnum"};
 }
 } // namespace conversions
 
@@ -1152,7 +1149,7 @@ std::string certificate_type_to_string(CertificateType e) {
         return "MFRootCertificate";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type CertificateType");
+    throw EnumToStringException{e, "CertificateType"};
 }
 
 CertificateType string_to_certificate_type(const std::string& s) {
@@ -1172,7 +1169,7 @@ CertificateType string_to_certificate_type(const std::string& s) {
         return CertificateType::MFRootCertificate;
     }
 
-    throw std::out_of_range("Provided string " + s + " could not be converted to enum of type CertificateType");
+    throw StringToEnumException{s, "CertificateType"};
 }
 } // namespace conversions
 
@@ -1222,7 +1219,7 @@ std::string generate_certificate_signing_request_status_to_string(const GetCerti
     case GetCertificateSignRequestStatus::GenerationError:
         return "GenerationError";
     default:
-        throw std::out_of_range("Could not convert GetCertificateSignRequestStatus to string");
+        throw EnumToStringException(status, "GetCertificateSignRequestStatus");
     }
 }
 } // namespace conversions

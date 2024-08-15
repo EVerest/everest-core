@@ -373,8 +373,15 @@ ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequ
         return response;
     }
 
-    ocpp::CallResult<Get15118EVCertificateResponse> call_result = response_message.message;
-    return call_result.msg;
+    try {
+        ocpp::CallResult<Get15118EVCertificateResponse> call_result = response_message.message;
+        return call_result.msg;
+    } catch (const EnumConversionException& e) {
+        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        auto call_error = CallError(response_message.uniqueId, "FormationViolation", e.what(), json({}));
+        this->send(call_error);
+        return response;
+    }
 }
 
 void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t connector_id,
@@ -1363,7 +1370,21 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
 }
 
 void ChargePoint::message_callback(const std::string& message) {
-    auto enhanced_message = this->message_queue->receive(message);
+    EnhancedMessage<v201::MessageType> enhanced_message;
+    try {
+        enhanced_message = this->message_queue->receive(message);
+    } catch (const json::exception& e) {
+        this->logging->central_system("Unknown", message);
+        EVLOG_error << "JSON exception during reception of message: " << e.what();
+        this->send(CallError(MessageId("-1"), "RpcFrameworkError", e.what(), json({})));
+        return;
+    } catch (const EnumConversionException& e) {
+        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        auto call_error = CallError(MessageId("-1"), "FormationViolation", e.what(), json({}));
+        this->send(call_error);
+        return;
+    }
+
     enhanced_message.message_size = message.size();
     auto json_message = enhanced_message.message;
     this->logging->central_system(conversions::messagetype_to_string(enhanced_message.messageType), message);
@@ -1433,14 +1454,16 @@ void ChargePoint::message_callback(const std::string& message) {
         }
     } catch (const EvseOutOfRangeException& e) {
         EVLOG_error << "Exception during handling of message: " << e.what();
-        auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()),
-                                    "OccurrenceConstraintViolation", e.what(), json({}));
+        auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
+        this->send(call_error);
+    } catch (const EnumConversionException& e) {
+        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
         this->send(call_error);
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
         if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
-            auto call_error = CallError(MessageId(json_message.at(MESSAGE_ID).get<std::string>()), "FormationViolation",
-                                        e.what(), json({}));
+            auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
             this->send(call_error);
         }
     }
@@ -2095,8 +2118,15 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
         return response;
     }
 
-    ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
-    return call_result.msg;
+    try {
+        ocpp::CallResult<AuthorizeResponse> call_result = enhanced_message.message;
+        return call_result.msg;
+    } catch (const EnumConversionException& e) {
+        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
+        this->send(call_error);
+        return response;
+    }
 }
 
 void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t connector_id,
@@ -3622,8 +3652,15 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
 
     auto enhanced_message = data_transfer_future.get();
     if (enhanced_message.messageType == MessageType::DataTransferResponse) {
-        ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
-        response = call_result.msg;
+        try {
+            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
+            response = call_result.msg;
+        } catch (const EnumConversionException& e) {
+            EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+            auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
+            this->send(call_error);
+            return std::nullopt;
+        }
     }
     if (enhanced_message.offline) {
         return std::nullopt;

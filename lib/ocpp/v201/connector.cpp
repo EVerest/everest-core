@@ -30,7 +30,7 @@ std::string connector_event_to_string(ConnectorEvent e) {
         return "ErrorCleared";
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type ConnectorEvent");
+    throw EnumToStringException{e, "ConnectorEvent"};
 }
 
 } // namespace conversions

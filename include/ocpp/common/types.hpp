@@ -110,6 +110,37 @@ public:
     DateTime& operator=(const char* c);
 };
 
+/// \brief Base exception for when a conversion from string to enum or vice versa fails
+class EnumConversionException : public std::out_of_range {
+public:
+    using std::out_of_range::out_of_range;
+};
+
+/// \brief Exception used when conversion from enum to string fails
+class EnumToStringException : public EnumConversionException {
+public:
+    /// \brief Creates a new StringToEnumException
+    /// \param enumValue value of enum that failed to convert
+    /// \param type name of the enum trying to convert from
+    template <typename T>
+    explicit EnumToStringException(T enumValue, std::string_view type) :
+        EnumConversionException{std::string{"No known conversion from value '"} +
+                                std::to_string(static_cast<int>(enumValue)) + "' to " + type.data()} {
+    }
+};
+
+/// \brief Exception used when conversion from string to enum fails
+class StringToEnumException : public EnumConversionException {
+public:
+    /// \brief Creates a new StringToEnumException
+    /// \param str input string that failed to convert
+    /// \param type name of the enum trying to convert to
+    StringToEnumException(std::string_view str, std::string_view type) :
+        EnumConversionException{std::string{"Provided string '"} + str.data() + "' could not be converted to " +
+                                type.data()} {
+    }
+};
+
 /// \brief Contains the different connection states of the charge point
 enum SessionStartedReason {
     EVConnected,
