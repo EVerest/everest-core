@@ -1,0 +1,40 @@
+@startuml
+actor User
+participant Powermeter
+participant Error_Manager
+participant EVSE_Manager
+participant OCPP
+
+User -> EVSE_Manager: startChargingSession
+alt successful case
+EVSE_Manager -> Powermeter: startTransaction
+Powermeter -> EVSE_Manager: startTransaction Response (OK/ID)
+EVSE_Manager -> OCPP: persistTransaction (ID)
+else startTransaction failing due to power loss
+EVSE_Manager -> Powermeter: startTransaction
+Powermeter -> EVSE_Manager: startTransaction Response (FAIL)
+EVSE_Manager -> User: stopChargingSession
+end
+== Separation ==
+Powermeter -> Powermeter: livemeasure FAILED
+
+Powermeter -> Error_Manager: raiseError (CommunicationFault)
+Error_Manager -> EVSE_Manager: errorRaised Notification (CommunicationFault/Powermeter)
+EVSE_Manager -> User: stopChargingSession
+
+Powermeter -> Powermeter: livemeasure OK
+Powermeter -> Powermeter: get Powermeter status
+Powermeter -> Error_Manager: clearError (CommunicationFault)
+Error_Manager -> EVSE_Manager: errorCleared Notification (CommunicationFault/Powermeter)
+alt successful case
+EVSE_Manager -> Powermeter: stopTransaction (ID)
+Powermeter -> EVSE_Manager: stopTransaction Response (OK/OCMF)
+EVSE_Manager -> OCPP: saveTransaction (ID/stopReason:PowerLoss/OCMF)
+else stopTransaction failing due to subsequent power loss
+EVSE_Manager -> Powermeter: stopTransaction (ID)
+Powermeter -> Powermeter: livemeasure FAILED
+Powermeter -> EVSE_Manager: stopTransaction Response (FAIL)
+EVSE_Manager -> OCPP: saveTransaction (ID/stopReason:PowerLoss)
+end
+
+@enduml
