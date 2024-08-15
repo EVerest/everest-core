@@ -1,100 +1,75 @@
 AllowOfflineTxForUnknownId:
-  config_key: allow_offline_tx_for_unknown_id
-  module_name: testAllowOfflineTxForUnknownId
-  module_config_key: allow_offline_tx_for_unknown_id_config
+  module_id: allow_offline_tx_for_unknown_id
+  config_key: allow_offline_tx_for_unknown_id_config
 AuthorizationCacheEnabled:
-  config_key: authorization_cache_enabled
-  module_name: testAuthCacheEnabled
-  module_config_key: authorization_cache_enabled_config
+  module_id: authorization_cache_enabled
+  config_key: authorization_cache_enabled_config
 AuthorizeRemoteTxRequests:
-  config_key: authorize_remote_tx_requests
-  module_name: testAuthorizeRemoteTxRequests
-  module_config_key: authorize_remote_tx_requests_config
+  module_id: authorize_remote_tx_requests
+  config_key: authorize_remote_tx_requests_config
 BlinkRepeat:
-  config_key: blink_repeat
-  module_name: testBlinkRepeat
-  module_config_key: blink_repeat_config
+  module_id: blink_repeat
+  config_key: blink_repeat_config
 ClockAlignedDataInterval:
-  config_key: clock_aligned_data_interval
-  module_name: testClockAlignedDataInterval
-  module_config_key: clock_aligned_data_interval_config
+  module_id: clock_aligned_data_interval
+  config_key: clock_aligned_data_interval_config
 ConnectionTimeOut:
-  config_key: connection_time_out
-  module_name: testConnectionTimeOut
-  module_config_key: connection_time_out_config
+  module_id: connection_time_out
+  config_key: connection_time_out_config
 ConnectorPhaseRotation:
-  config_key: connector_phase_rotation
-  module_name: testConnectorPhaseRotation
-  module_config_key: connector_phase_rotation_config
+  module_id: connector_phase_rotation
+  config_key: connector_phase_rotation_config
 HeartbeatInterval:
-  config_key: heartbeat_interval
-  module_name: testHeartbeatInterval
-  module_config_key: heartbeat_interval_config
+  module_id: heartbeat_interval
+  config_key: heartbeat_interval_config
 LightIntensity:
-  config_key: light_intensity
-  module_name: testLightIntensity
-  module_config_key: light_intensity_config
+  module_id: light_intensity
+  config_key: light_intensity_config
 LocalAuthorizeOffline:
-  config_key: local_authorize_offline
-  module_name: testLocalAuthorizeOffline
-  module_config_key: local_authorize_offline_config
+  module_id: local_authorize_offline
+  config_key: local_authorize_offline_config
 LocalPreAuthorize:
-  config_key: local_pre_authorize
-  module_name: testLocalPreAuthorize
-  module_config_key: local_pre_authorize_config
+  module_id: local_pre_authorize
+  config_key: local_pre_authorize_config
 MaxEnergyOnInvalidId:
-  config_key: max_energy_on_invalid_id
-  module_name: testMaxEnergyOnInvalidId
-  module_config_key: max_energy_on_invalid_id_config
+  module_id: max_energy_on_invalid_id
+  config_key: max_energy_on_invalid_id_config
 MeterValuesAlignedData:
-  config_key: meter_values_aligned_data
-  module_name: testMeterValuesAlignedData
-  module_config_key: meter_values_aligned_data_config
+  module_id: meter_values_aligned_data
+  config_key: meter_values_aligned_data_config
 MeterValuesSampledData:
-  config_key: meter_values_sampled_data
-  module_name: testMeterValuesSampledData
-  module_config_key: meter_values_sampled_data_config
+  module_id: meter_values_sampled_data
+  config_key: meter_values_sampled_data_config
 MeterValueSampleInterval:
-  config_key: meter_value_sample_interval
-  module_name: testMeterValueSampleInterval
-  module_config_key: meter_value_sample_interval_config
+  module_id: meter_value_sample_interval
+  config_key: meter_value_sample_interval_config
 MinimumStatusDuration:
-  config_key: minimum_status_duration
-  module_name: testMinimumStatusDuration
-  module_config_key: minimum_status_duration_config
+  module_id: minimum_status_duration
+  config_key: minimum_status_duration_config
 ResetRetries:
-  config_key: reset_retries
-  module_name: testResetRetries
-  module_config_key: reset_retries_config
+  module_id: reset_retries
+  config_key: reset_retries_config
 StopTransactionOnEVSideDisconnect:
-  config_key: stop_transaction_on_ev_side_disconnect
-  module_name: testStopTransactionOnEVSideDisconnect
-  module_config_key: stop_transaction_on_ev_side_disconnect_config
+  module_id: stop_transaction_on_ev_side_disconnect
+  config_key: stop_transaction_on_ev_side_disconnect_config
 StopTransactionOnInvalidId:
-  config_key: stop_transaction_on_invalid_id
-  module_name: testStopTransactionOnInvalidId
-  module_config_key: stop_transaction_on_invalid_id_config
+  module_id: stop_transaction_on_invalid_id
+  config_key: stop_transaction_on_invalid_id_config
 StopTxnAlignedData:
-  config_key: stop_txn_aligned_data
-  module_name: testStopTxnAlignedData
-  module_config_key: stop_txn_aligned_data_config
+  module_id: stop_txn_aligned_data
+  config_key: stop_txn_aligned_data_config
 StopTxnSampledData:
-  config_key: stop_txn_sampled_data
-  module_name: testStopTxnSampledData
-  module_config_key: stop_txn_sampled_data_config
+  module_id: stop_txn_sampled_data
+  config_key: stop_txn_sampled_data_config
 TransactionMessageAttempts:
-  config_key: transaction_message_attempts
-  module_name: testTransactionMessageAttempts
-  module_config_key: transaction_message_attempts_config
+  module_id: transaction_message_attempts
+  config_key: transaction_message_attempts_config
 TransactionMessageRetryInterval:
-  config_key: transaction_message_retry_interval
-  module_name: testTransactionMessageRetryInterval
-  module_config_key: transaction_message_retry_interval_config
+  module_id: transaction_message_retry_interval
+  config_key: transaction_message_retry_interval_config
 UnlockConnectorOnEVSideDisconnect:
-  config_key: unlock_connector_on_ev_side_disconnect
-  module_name: testUnlockConnectorOnEVSideDisconnect
-  module_config_key: unlock_connector_on_ev_side_disconnect_config
+  module_id: unlock_connector_on_ev_side_disconnect
+  config_key: unlock_connector_on_ev_side_disconnect_config
 WebsocketPingInterval:
-  config_key: websocket_ping_interval
-  module_name: testWebsocketPingInterval
-  module_config_key: websocket_ping_interval_config
+  module_id: websocket_ping_interval
+  config_key: websocket_ping_interval_config

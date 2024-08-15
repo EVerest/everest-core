@@ -17,7 +17,7 @@ target_link_libraries(${MODULE_NAME}
 
 target_sources(${MODULE_NAME}
         PRIVATE
-        "example_module/example_userImpl.cpp"
+        "main/emptyImpl.cpp"
         "main/mapping_reader.cpp"
         "main/util.cpp"
         "main/event_handler.cpp"

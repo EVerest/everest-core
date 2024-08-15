@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/example_user/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ocpp/Interface.hpp>
@@ -32,14 +32,11 @@ struct Conf {
 class OCPPConfiguration : public Everest::ModuleBase {
 public:
     OCPPConfiguration() = delete;
-    OCPPConfiguration(const ModuleInfo& info, std::unique_ptr<example_userImplBase> p_example_module,
+    OCPPConfiguration(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
                       std::unique_ptr<ocppIntf> r_ocpp_module, Conf& config) :
-        ModuleBase(info),
-        p_example_module(std::move(p_example_module)),
-        r_ocpp_module(std::move(r_ocpp_module)),
-        config(config){};
+        ModuleBase(info), p_main(std::move(p_main)), r_ocpp_module(std::move(r_ocpp_module)), config(config){};
 
-    const std::unique_ptr<example_userImplBase> p_example_module;
+    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<ocppIntf> r_ocpp_module;
     const Conf& config;
 

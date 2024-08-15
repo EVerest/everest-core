@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EXAMPLE_MODULE_EXAMPLE_USER_IMPL_HPP
-#define EXAMPLE_MODULE_EXAMPLE_USER_IMPL_HPP
+#ifndef MAIN_EMPTY_IMPL_HPP
+#define MAIN_EMPTY_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 3
 //
 
-#include <generated/interfaces/example_user/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 #include "../OCPPConfiguration.hpp"
 
@@ -17,15 +17,15 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
-namespace example_module {
+namespace main {
 
 struct Conf {};
 
-class example_userImpl : public example_userImplBase {
+class emptyImpl : public emptyImplBase {
 public:
-    example_userImpl() = delete;
-    example_userImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPPConfiguration>& mod, Conf& config) :
-        example_userImplBase(ev, "example_module"), mod(mod), config(config){};
+    emptyImpl() = delete;
+    emptyImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPPConfiguration>& mod, Conf& config) :
+        emptyImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -54,7 +54,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace example_module
+} // namespace main
 } // namespace module
 
-#endif // EXAMPLE_MODULE_EXAMPLE_USER_IMPL_HPP
+#endif // MAIN_EMPTY_IMPL_HPP

@@ -21,9 +21,9 @@ config:
     type: string
     default: "config-mapping.yaml"
 provides:
-  example_module:
-    interface: example_user
-    description: "todo: what should it provide?"
+  main:
+    interface: empty
+    description: "doesn't provide anything"
 requires:
   ocpp_module:
     interface: ocpp

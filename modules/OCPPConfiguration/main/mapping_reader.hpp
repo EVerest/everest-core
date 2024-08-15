@@ -13,9 +13,8 @@
 namespace module {
 
 struct EverestModuleMapping {
+    std::string module_id;
     std::string config_key;
-    std::string module_name;
-    std::string module_config_key;
 };
 
 using OcppToEverestModuleMapping = std::unordered_map<std::string, EverestModuleMapping>;

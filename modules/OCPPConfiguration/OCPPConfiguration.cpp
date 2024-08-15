@@ -7,15 +7,11 @@
 namespace module {
 
 void OCPPConfiguration::init() {
-    invoke_init(*p_example_module);
+    invoke_init(*p_main);
 }
 
 void OCPPConfiguration::ready() {
-    invoke_ready(*p_example_module);
-
-//    auto attached = false;
-//    while (!attached) {
-//    };
+    invoke_ready(*p_main);
 
     const auto mapping_file_path = std::filesystem::path{config.mapping_file_path};
     event_handler = std::make_unique<EventHandler>(mapping_file_path);

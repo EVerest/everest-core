@@ -18,6 +18,9 @@ private:
     const EverestModuleMapping find_event_in_map(const std::string& event_name) const;
 
     OcppToEverestModuleMapping event_map;
+    void write_event_to_config(const types::ocpp::EventData& event_data, const std::string& user_config_path_string,
+                               const EverestModuleMapping& everest_module_mapping,
+                               const types::ocpp::Component& component);
 };
 
 } // namespace module

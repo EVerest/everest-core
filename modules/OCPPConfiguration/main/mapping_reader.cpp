@@ -15,15 +15,13 @@ EverestModuleMapping MappingReader::parseMappingNode(const ryml::NodeRef& node) 
         return std::string{val.str, val.len};
     };
 
+    const auto module_id_node = node["module_id"];
     const auto config_key_node = node["config_key"];
-    const auto module_name_node = node["module_name"];
-    const auto module_config_key_node = node["module_config_key"];
 
+    const auto module_id = parse_node(module_id_node);
     const auto config_key = parse_node(config_key_node);
-    const auto module_name = parse_node(module_name_node);
-    const auto module_config_key = parse_node(module_config_key_node);
 
-    return {config_key, module_name, module_config_key};
+    return {module_id, config_key};
 }
 
 OcppToEverestModuleMapping MappingReader::readMapping(const std::filesystem::path& file_path) {
