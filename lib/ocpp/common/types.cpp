@@ -682,7 +682,7 @@ void from_json(const json& j, RunningCost& c) {
     }
 
     if (j.contains("timestamp")) {
-        c.timestamp = j.at("timestamp");
+        c.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
     }
 
     if (j.contains("meterValue")) {
@@ -709,7 +709,7 @@ void from_json(const json& j, RunningCost& c) {
         const json& nextPeriod = j.at("nextPeriod");
         if (nextPeriod.is_object()) {
             if (nextPeriod.contains("atTime")) {
-                c.next_period_at_time = nextPeriod.at("atTime");
+                c.next_period_at_time = ocpp::DateTime(std::string(nextPeriod.at("atTime")));
             }
 
             if (nextPeriod.contains("chargingPrice")) {
@@ -752,7 +752,7 @@ void from_json(const json& j, RunningCost& c) {
 void from_json(const json& j, TriggerMeterValue& t) {
     if (j.is_object()) {
         if (j.contains("atTime")) {
-            t.at_time = j.at("atTime");
+            t.at_time = ocpp::DateTime(std::string(j.at("atTime")));
         }
 
         if (j.contains("atEnergykWh")) {
