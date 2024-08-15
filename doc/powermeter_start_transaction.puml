@@ -1,0 +1,40 @@
+@startuml
+autonumber "<b><font color=red>"
+participant Powermeter
+participant EVSE_Manager
+participant OCPP
+participant CSMS
+
+title Start of a Transaction
+
+== User plugs in EV and authorizes ==
+
+EVSE_Manager->OCPP: Event(SessionStarted)
+
+OCPP->CSMS: StatusNotification.req(Preparing)
+return StatusNotification.conf
+
+alt successful case
+EVSE_Manager -> Powermeter: startTransaction
+return startTransaction Response (OK/ID)
+
+EVSE_Manager -> OCPP: Event(TransactionStarted)
+OCPP->CSMS: StartTransaction.req
+return StartTransaction.conf
+
+note over EVSE_Manager: Transaction started successfully
+
+else startTransaction failing due to power loss
+EVSE_Manager -> Powermeter: startTransaction
+return startTransaction Response (FAIL)
+
+EVSE_Manager -> OCPP: Event(Deauthorized)
+
+OCPP->CSMS: StatusNotification.req(Finishing)
+return StatusNotification.conf
+
+note over EVSE_Manager: Transaction did not start
+
+end
+
+@enduml
