@@ -25,4 +25,16 @@ void Feedback::v2g_message(const message_20::Type& v2g_message) const {
     call_if_available(callbacks.v2g_message, v2g_message);
 }
 
+void Feedback::evcc_id(const std::string& evccid) const {
+    call_if_available(callbacks.evccid, evccid);
+}
+
+void Feedback::selected_protocol(const std::string& selected_protocol_) const {
+    call_if_available(callbacks.selected_protocol, selected_protocol_);
+}
+
+void Feedback::display_parameters(const feedback::DisplayParameters& display_parameters_) const {
+    call_if_available(callbacks.display_parameters, display_parameters_);
+}
+
 } // namespace iso15118::session

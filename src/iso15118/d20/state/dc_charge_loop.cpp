@@ -18,6 +18,24 @@ using Dynamic_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLRe
 using Scheduled_DC_Res = message_20::DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode;
 using Scheduled_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Scheduled_DC_CLResControlMode;
 
+static auto fill_parameters(const message_20::DisplayParameters& req_parameters) {
+    auto parameters = session::feedback::DisplayParameters{};
+
+    parameters.present_soc = req_parameters.present_soc;
+    parameters.minimum_soc = req_parameters.min_soc;
+    parameters.target_soc = req_parameters.target_soc;
+    parameters.maximum_soc = req_parameters.max_soc;
+    parameters.remaining_time_to_minimum_soc = req_parameters.remaining_time_to_min_soc;
+    parameters.remaining_time_to_target_soc = req_parameters.remaining_time_to_target_soc;
+    parameters.remaining_time_to_maximum_soc = req_parameters.remaining_time_to_max_soc;
+    if (req_parameters.battery_energy_capacity) {
+        parameters.battery_energy_capacity = message_20::from_RationalNumber(*req_parameters.battery_energy_capacity);
+    }
+    parameters.inlet_hot = req_parameters.inlet_hot;
+
+    return parameters;
+}
+
 std::tuple<message_20::DC_ChargeLoopResponse, std::optional<session::feedback::DcChargeTarget>>
 handle_request(const message_20::DC_ChargeLoopRequest& req, const d20::Session& session, const float present_voltage,
                const float present_current, const bool stop) {
@@ -130,6 +148,12 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
         }
 
         ctx.respond(res);
+
+        if (req->display_parameters.has_value()) {
+            const auto feedback_parameters = fill_parameters(*req->display_parameters);
+
+            ctx.feedback.display_parameters(feedback_parameters);
+        }
 
         if (res.response_code >= message_20::ResponseCode::FAILED) {
             ctx.session_stopped = true;

@@ -3,6 +3,8 @@
 #pragma once
 
 #include <functional>
+#include <optional>
+#include <string>
 
 #include <iso15118/message/type.hpp>
 
@@ -33,11 +35,26 @@ struct DcMaximumLimits {
     float power{-1};
 };
 
+struct DisplayParameters {
+    std::optional<float> present_soc;
+    std::optional<float> minimum_soc;
+    std::optional<float> target_soc;
+    std::optional<float> maximum_soc;
+    std::optional<float> remaining_time_to_minimum_soc;
+    std::optional<float> remaining_time_to_target_soc;
+    std::optional<float> remaining_time_to_maximum_soc;
+    std::optional<float> battery_energy_capacity;
+    std::optional<bool> inlet_hot;
+};
+
 struct Callbacks {
     std::function<void(Signal)> signal;
     std::function<void(const DcChargeTarget&)> dc_charge_target;
     std::function<void(const DcMaximumLimits&)> dc_max_limits;
     std::function<void(const message_20::Type&)> v2g_message;
+    std::function<void(const std::string&)> evccid;
+    std::function<void(const std::string&)> selected_protocol;
+    std::function<void(const DisplayParameters&)> display_parameters;
 };
 
 } // namespace feedback
@@ -50,6 +67,9 @@ public:
     void dc_charge_target(const feedback::DcChargeTarget&) const;
     void dc_max_limits(const feedback::DcMaximumLimits&) const;
     void v2g_message(const message_20::Type&) const;
+    void evcc_id(const std::string&) const;
+    void selected_protocol(const std::string&) const;
+    void display_parameters(const feedback::DisplayParameters&) const;
 
 private:
     feedback::Callbacks callbacks;
