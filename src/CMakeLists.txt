@@ -9,6 +9,7 @@ target_link_libraries(charge_point
         ocpp
         OpenSSL::SSL
         OpenSSL::Crypto
+        SQLite::SQLite3
 )
 
 install(TARGETS charge_point
