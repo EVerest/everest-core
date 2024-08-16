@@ -14,7 +14,7 @@ find_package(everest-cmake 0.1 REQUIRED
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
-option(LIBOCPP_BUILD_EXAMPLES "Build charge_point and central_system binaries." OFF)
+option(LIBOCPP16_BUILD_EXAMPLES "Build charge_point binary" OFF)
 option(OCPP_INSTALL "Install the library (shared data might be installed anyway)" ${EVC_MAIN_PROJECT})
 option(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP "Usage of deprecated websocket++ instead of libwebsockets" OFF)
 

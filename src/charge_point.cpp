@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         fs.close();
     }
 
-    const fs::path sql_init_path = share_path / "init.sql";
+    const fs::path sql_init_path = share_path / "core_migrations";
 
     // create the cso_path
     const fs::path cso_path = "/tmp/client/cso";
