@@ -108,6 +108,13 @@ ocpp::v201::TriggerReasonEnum stop_reason_to_trigger_reason_enum(const ocpp::v20
     }
 }
 
+int32_t get_connector_id_from_error(const Everest::error::Error& error) {
+    if (error.origin.mapping.has_value() and error.origin.mapping.value().connector.has_value()) {
+        return error.origin.mapping.value().connector.value();
+    }
+    return 1;
+}
+
 void OCPP201::init_evse_maps() {
     std::lock_guard<std::mutex> lk(this->evse_ready_mutex);
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -637,11 +644,11 @@ void OCPP201::ready() {
             });
 
         auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
-            this->charge_point->on_faulted(evse_id, 1);
+            this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
         };
 
         auto fault_cleared_handler = [this, evse_id](const Everest::error::Error& error) {
-            this->charge_point->on_fault_cleared(evse_id, 1);
+            this->charge_point->on_fault_cleared(evse_id, get_connector_id_from_error(error));
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
