@@ -926,9 +926,31 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     if (response.idTokenInfo.groupIdToken.has_value()) {
         validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
     }
+
     if (response.idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason.emplace(response.idTokenInfo.personalMessage.value().content.get());
+        validation_result.reason = types::authorization::TokenValidationStatusMessage();
+        validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        const types::display_message::MessageContent content =
+            to_everest_message_content(response.idTokenInfo.personalMessage.value());
+        validation_result.reason->messages->push_back(content);
     }
+
+    if (response.idTokenInfo.customData.has_value() && response.idTokenInfo.customData.value().contains("vendorId") &&
+        response.idTokenInfo.customData.value().at("vendorId").get<std::string>() ==
+            "org.openchargealliance.multilanguage" &&
+        response.idTokenInfo.customData.value().contains("personalMessageExtra")) {
+        if (!validation_result.reason->messages.has_value()) {
+            validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        }
+
+        const json& multi_language_personal_messages =
+            response.idTokenInfo.customData.value().at("personalMessageExtra");
+        for (const auto& messages : multi_language_personal_messages.items()) {
+            const types::display_message::MessageContent content = messages.value();
+            validation_result.reason->messages->push_back(content);
+        }
+    }
+
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
     }
@@ -1015,8 +1037,8 @@ to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum s
     case ocpp::v201::AuthorizeCertificateStatusEnum::ContractCancelled:
         return types::authorization::CertificateStatus::ContractCancelled;
     default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to types::authorization::CertificateStatus");
+        throw std::out_of_range("Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to "
+                                "types::authorization::CertificateStatus");
     }
 }
 
