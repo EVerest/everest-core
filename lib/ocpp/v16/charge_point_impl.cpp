@@ -160,6 +160,7 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
     this->smart_charging_handler = std::make_unique<SmartChargingHandler>(
         this->connectors, this->database_handler,
         this->configuration->getAllowChargingProfileWithoutStartSchedule().value_or(false));
+    this->load_charging_profiles();
 
     // ISO15118 PnC handlers
     if (this->configuration->getSupportedFeatureProfilesSet().count(SupportedFeatureProfiles::PnC)) {
@@ -1023,7 +1024,6 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     this->message_queue->get_persisted_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
     this->boot_notification();
     this->try_resume_transactions(resuming_session_ids);
-    this->load_charging_profiles();
     this->call_set_connection_timeout();
 
     switch (bootreason) {
