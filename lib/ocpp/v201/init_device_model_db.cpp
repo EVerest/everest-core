@@ -10,15 +10,17 @@
 
 #include <everest/logging.hpp>
 
-const static std::string STANDARDIZED_COMPONENT_SCHEMAS_DIR = "standardized";
-const static std::string CUSTOM_COMPONENT_SCHEMAS_DIR = "custom";
+const static std::string STANDARDIZED_COMPONENT_CONFIG_DIR = "standardized";
+const static std::string CUSTOM_COMPONENT_CONFIG_DIR = "custom";
 
 namespace ocpp::v201 {
 
 // Forward declarations.
+static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs);
+static std::optional<std::string> check_integrity_required_value(const DeviceModelVariable& variable);
+static std::vector<std::string> check_integrity_value_type(const DeviceModelVariable& variable);
+static bool value_is_of_type(const std::string& value, const DataEnum& type);
 static bool is_same_component_key(const ComponentKey& component_key1, const ComponentKey& component_key2);
-static bool is_same_variable_attribute_key(const VariableAttributeKey& attribute_key1,
-                                           const VariableAttributeKey& attribute_key2);
 static bool is_same_attribute_type(const VariableAttribute attribute1, const VariableAttribute& attribute2);
 static bool is_attribute_different(const VariableAttribute& attribute1, const VariableAttribute& attribute2);
 static bool variable_has_same_attributes(const std::vector<DbVariableAttribute>& attributes1,
@@ -26,15 +28,11 @@ static bool variable_has_same_attributes(const std::vector<DbVariableAttribute>&
 static bool is_characteristics_different(const VariableCharacteristics& c1, const VariableCharacteristics& c2);
 static bool is_same_variable(const DeviceModelVariable& v1, const DeviceModelVariable& v2);
 static bool is_variable_different(const DeviceModelVariable& v1, const DeviceModelVariable& v2);
+static bool has_attribute_actual_value(const VariableAttribute& attribute,
+                                       const std::optional<std::string>& default_actual_value);
 static std::string get_string_value_from_json(const json& value);
-static std::vector<std::string>
-check_config_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& database_components,
-                       const std::map<ComponentKey, std::vector<VariableAttributeKey>>& config);
-static std::string check_config_variable_integrity(const std::vector<DeviceModelVariable>& database_variables,
-                                                   const VariableAttributeKey& config_attribute_key,
-                                                   const ComponentKey& config_component);
 static std::string get_component_name_for_logging(const ComponentKey& component);
-static std::string get_variable_name_for_logging(const VariableAttributeKey& variable);
+static std::string get_variable_name_for_logging(const DeviceModelVariable& variable);
 
 InitDeviceModelDb::InitDeviceModelDb(const std::filesystem::path& database_path,
                                      const std::filesystem::path& migration_files_path) :
@@ -48,109 +46,32 @@ InitDeviceModelDb::~InitDeviceModelDb() {
     close_connection();
 }
 
-void InitDeviceModelDb::initialize_database(const std::filesystem::path& schemas_path,
-                                            bool delete_db_if_exists = true) {
+void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_path, bool delete_db_if_exists = true) {
     execute_init_sql(delete_db_if_exists);
 
-    // Get existing EVSE and Connector components from the database.
-    std::vector<ComponentKey> existing_components;
+    // Get existing components from the database.
+    std::map<ComponentKey, std::vector<DeviceModelVariable>> existing_components;
     DeviceModelMap device_model;
     if (this->database_exists) {
-        existing_components = get_all_connector_and_evse_components_from_db();
+        existing_components = get_all_components_from_db();
     }
 
     // Get component schemas from the filesystem.
-    std::map<ComponentKey, std::vector<DeviceModelVariable>> component_schemas =
-        get_all_component_schemas(schemas_path);
+    std::map<ComponentKey, std::vector<DeviceModelVariable>> component_configs = get_all_component_configs(config_path);
+
+    // Check if the config is consistent (fe has a value when required).
+    check_integrity(component_configs);
 
     // Remove components from db if they do not exist in the component schemas
     if (this->database_exists) {
-        remove_not_existing_components_from_db(component_schemas, existing_components);
+        remove_not_existing_components_from_db(component_configs, existing_components);
     }
 
     // Starting a transaction makes this a lot faster (inserting all components takes a few seconds without it and a
     // few milliseconds if it is done inside a transaction).
     std::unique_ptr<common::DatabaseTransactionInterface> transaction = database->begin_transaction();
-    insert_components(component_schemas, existing_components);
+    insert_components(component_configs, existing_components);
     transaction->commit();
-}
-
-bool InitDeviceModelDb::insert_config_and_default_values(const std::filesystem::path& schemas_path,
-                                                         const std::filesystem::path& config_path) {
-    bool success = true;
-    std::map<ComponentKey, std::vector<DeviceModelVariable>> components = get_all_components_from_db();
-
-    std::map<ComponentKey, std::vector<VariableAttributeKey>> default_values =
-        get_component_default_values(schemas_path);
-    std::map<ComponentKey, std::vector<VariableAttributeKey>> config_values = get_config_values(config_path);
-
-    const std::vector<std::string> errors = check_config_integrity(components, config_values);
-
-    if (!errors.empty()) {
-        const std::string output = std::accumulate(++errors.begin(), errors.end(), *errors.begin(),
-                                                   [](auto& a, auto& b) { return a + "\n" + b; });
-        EVLOG_AND_THROW(
-            InitDeviceModelDbError("Config not consistent with device model component schema's: \n" + output));
-    }
-
-    std::unique_ptr<common::DatabaseTransactionInterface> transaction = database->begin_transaction();
-    for (const auto& component_variables : config_values) {
-        for (const VariableAttributeKey& attribute_key : component_variables.second) {
-            if (!insert_variable_attribute_value(component_variables.first, attribute_key, true)) {
-                success = false;
-            }
-        }
-    }
-
-    for (const auto& component_variables : default_values) {
-        // Compare with config_values if the value is already added. If it is, don't add the default value,
-        // otherwise add the default value.
-        const auto& it = std::find_if(
-            config_values.begin(), config_values.end(),
-            [&component_variables](const std::pair<ComponentKey, std::vector<VariableAttributeKey>> config_value) {
-                if (is_same_component_key(config_value.first, component_variables.first)) {
-                    return true;
-                }
-
-                return false;
-            });
-        bool component_found = true;
-        std::vector<VariableAttributeKey> config_attribute_keys;
-        if (it == config_values.end()) {
-            // Not found, add all default values of this component.
-            component_found = false;
-        } else {
-            config_attribute_keys = it->second;
-        }
-
-        for (const VariableAttributeKey& attribute_key : component_variables.second) {
-            if (component_found) {
-                auto attribute_key_it =
-                    std::find_if(config_attribute_keys.begin(), config_attribute_keys.end(),
-                                 [attribute_key](const VariableAttributeKey& config_attribute_key) {
-                                     if (is_same_variable_attribute_key(attribute_key, config_attribute_key)) {
-                                         return true;
-                                     }
-                                     return false;
-                                 });
-
-                if (attribute_key_it != config_attribute_keys.end()) {
-                    // Attribute key is found in config, so we should not add a default value to the database.
-                    continue;
-                }
-            }
-
-            // Whole component is not found, or component is found but attribute is not found. Add default value to
-            // database. Do not warn if default value could not be set.
-            if (!insert_variable_attribute_value(component_variables.first, attribute_key, false)) {
-                success = false;
-            }
-        }
-    }
-
-    transaction->commit();
-
-    return success;
 }
 
 void InitDeviceModelDb::execute_init_sql(const bool delete_db_if_exists) {
@@ -183,7 +104,7 @@ void InitDeviceModelDb::execute_init_sql(const bool delete_db_if_exists) {
 }
 
 std::vector<std::filesystem::path>
-InitDeviceModelDb::get_component_schemas_from_directory(const std::filesystem::path& directory) {
+InitDeviceModelDb::get_component_config_from_directory(const std::filesystem::path& directory) {
     std::vector<std::filesystem::path> component_schema_files;
     for (const auto& p : std::filesystem::directory_iterator(directory)) {
         if (p.path().extension() == ".json") {
@@ -195,16 +116,16 @@ InitDeviceModelDb::get_component_schemas_from_directory(const std::filesystem::p
 }
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
-InitDeviceModelDb::get_all_component_schemas(const std::filesystem::path& directory) {
+InitDeviceModelDb::get_all_component_configs(const std::filesystem::path& directory) {
     const std::vector<std::filesystem::path> standardized_component_schema_files =
-        get_component_schemas_from_directory(directory / STANDARDIZED_COMPONENT_SCHEMAS_DIR);
+        get_component_config_from_directory(directory / STANDARDIZED_COMPONENT_CONFIG_DIR);
     const std::vector<std::filesystem::path> custom_component_schema_files =
-        get_component_schemas_from_directory(directory / CUSTOM_COMPONENT_SCHEMAS_DIR);
+        get_component_config_from_directory(directory / CUSTOM_COMPONENT_CONFIG_DIR);
 
     std::map<ComponentKey, std::vector<DeviceModelVariable>> standardized_components_map =
-        read_component_schemas(standardized_component_schema_files);
+        read_component_config(standardized_component_schema_files);
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components =
-        read_component_schemas(custom_component_schema_files);
+        read_component_config(custom_component_schema_files);
 
     // Merge the two maps so they can be used for the insert_component function with a single iterator. This will use
     // the custom components map as base and add not existing standardized components to the components map. So if the
@@ -214,17 +135,18 @@ InitDeviceModelDb::get_all_component_schemas(const std::filesystem::path& direct
     return components;
 }
 
-void InitDeviceModelDb::insert_components(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& components,
-                                          const std::vector<ComponentKey>& existing_components) {
-    for (std::pair<ComponentKey, std::vector<DeviceModelVariable>> component : components) {
+void InitDeviceModelDb::insert_components(
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& components,
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& existing_components) {
+    for (auto& component : components) {
         // Check if component already exists in the database.
-        std::optional<ComponentKey> component_db;
-        if (this->database_exists && (component.first.name == "EVSE" || component.first.name == "Connector") &&
+        std::optional<std::pair<ComponentKey, std::vector<DeviceModelVariable>>> component_db;
+        if (this->database_exists &&
             (component_db = component_exists_in_db(existing_components, component.first)).has_value()) {
             // Component exists in the database, update component if necessary.
             update_component_variables(component_db.value(), component.second);
-        } else if (!this->database_exists || (component.first.name == "EVSE" || component.first.name == "Connector")) {
-            // Database is new or component is evse or connector and component does not exist. Insert component.
+        } else {
+            // Database is new or component does not exist. Insert component.
             insert_component(component.first, component.second);
         }
     }
@@ -272,7 +194,7 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
     const int64_t component_id = this->database->get_last_inserted_rowid();
 
     // Loop over the properties of this component.
-    for (const DeviceModelVariable& variable : component_variables) {
+    for (const auto& variable : component_variables) {
         EVLOG_debug << "-- Inserting variable " << variable.name;
 
         // Add variable
@@ -281,9 +203,9 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
 }
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
-InitDeviceModelDb::read_component_schemas(const std::vector<std::filesystem::path>& components_schema_path) {
+InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path>& components_schema_path) {
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components;
-    for (const std::filesystem::path& path : components_schema_path) {
+    for (const auto& path : components_schema_path) {
         std::ifstream schema_file(path);
         try {
             json data = json::parse(schema_file);
@@ -465,7 +387,7 @@ void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, con
     const int64_t variable_id = this->database->get_last_inserted_rowid();
 
     insert_variable_characteristics(variable.characteristics, variable_id);
-    insert_attributes(variable.attributes, static_cast<uint64_t>(variable_id));
+    insert_attributes(variable.attributes, static_cast<uint64_t>(variable_id), variable.default_actual_value);
 }
 
 void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, const DeviceModelVariable& db_variable,
@@ -512,7 +434,8 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
     }
 
     if (!variable_has_same_attributes(variable.attributes, db_variable.attributes)) {
-        update_attributes(variable.attributes, db_variable.attributes, db_variable.db_id.value());
+        update_attributes(variable.attributes, db_variable.attributes, db_variable.db_id.value(),
+                          variable.default_actual_value);
     }
 }
 
@@ -541,7 +464,8 @@ void InitDeviceModelDb::delete_variable(const DeviceModelVariable& variable) {
     }
 }
 
-void InitDeviceModelDb::insert_attribute(const VariableAttribute& attribute, const uint64_t& variable_id) {
+void InitDeviceModelDb::insert_attribute(const VariableAttribute& attribute, const uint64_t& variable_id,
+                                         const std::optional<std::string>& default_actual_value) {
     static const std::string statement =
         "INSERT OR REPLACE INTO VARIABLE_ATTRIBUTE (VARIABLE_ID, MUTABILITY_ID, PERSISTENT, CONSTANT, TYPE_ID) "
         "VALUES(@variable_id, @mutability_id, @persistent, @constant, @type_id)";
@@ -570,20 +494,30 @@ void InitDeviceModelDb::insert_attribute(const VariableAttribute& attribute, con
     if (insert_attributes_statement->step() != SQLITE_DONE) {
         throw InitDeviceModelDbError("Could not insert attribute: " + std::string(this->database->get_error_message()));
     }
+
+    const int64_t attribute_id = this->database->get_last_inserted_rowid();
+
+    if (has_attribute_actual_value(attribute, default_actual_value)) {
+        insert_variable_attribute_value(
+            attribute_id, (attribute.value.has_value() ? attribute.value.value().get() : default_actual_value.value()),
+            true);
+    }
 }
 
 void InitDeviceModelDb::insert_attributes(const std::vector<DbVariableAttribute>& attributes,
-                                          const uint64_t& variable_id) {
-    for (const DbVariableAttribute& attribute : attributes) {
-        insert_attribute(attribute.variable_attribute, variable_id);
+                                          const uint64_t& variable_id,
+                                          const std::optional<std::string>& default_actual_value) {
+    for (const auto& attribute : attributes) {
+        insert_attribute(attribute.variable_attribute, variable_id, default_actual_value);
     }
 }
 
 void InitDeviceModelDb::update_attributes(const std::vector<DbVariableAttribute>& new_attributes,
                                           const std::vector<DbVariableAttribute>& db_attributes,
-                                          const uint64_t& variable_id) {
+                                          const uint64_t& variable_id,
+                                          const std::optional<std::string>& default_actual_value) {
     // First check if there are attributes in the database that are not in the config. They should be removed.
-    for (const DbVariableAttribute& db_attribute : db_attributes) {
+    for (const auto& db_attribute : db_attributes) {
         const auto& it = std::find_if(
             new_attributes.begin(), new_attributes.end(), [&db_attribute](const DbVariableAttribute& new_attribute) {
                 return is_same_attribute_type(db_attribute.variable_attribute, new_attribute.variable_attribute);
@@ -595,7 +529,7 @@ void InitDeviceModelDb::update_attributes(const std::vector<DbVariableAttribute>
     }
 
     // Check if the variable attributes in the config match the ones from the database. If not, add or update.
-    for (const DbVariableAttribute& new_attribute : new_attributes) {
+    for (const auto& new_attribute : new_attributes) {
         const auto& it = std::find_if(
             db_attributes.begin(), db_attributes.end(), [&new_attribute](const DbVariableAttribute& db_attribute) {
                 return is_same_attribute_type(new_attribute.variable_attribute, db_attribute.variable_attribute);
@@ -603,16 +537,17 @@ void InitDeviceModelDb::update_attributes(const std::vector<DbVariableAttribute>
 
         if (it == db_attributes.end()) {
             // Variable attribute does not exist in the db, add to db.
-            insert_attribute(new_attribute.variable_attribute, variable_id);
+            insert_attribute(new_attribute.variable_attribute, variable_id, default_actual_value);
         } else {
             if (is_attribute_different(new_attribute.variable_attribute, it->variable_attribute)) {
-                update_attribute(new_attribute.variable_attribute, *it);
+                update_attribute(new_attribute.variable_attribute, *it, default_actual_value);
             }
         }
     }
 }
 
-void InitDeviceModelDb::update_attribute(const VariableAttribute& attribute, const DbVariableAttribute& db_attribute) {
+void InitDeviceModelDb::update_attribute(const VariableAttribute& attribute, const DbVariableAttribute& db_attribute,
+                                         const std::optional<std::string>& default_actual_value) {
     if (!db_attribute.db_id.has_value()) {
         EVLOG_error << "Can not update attribute: id not found";
         return;
@@ -665,6 +600,15 @@ void InitDeviceModelDb::update_attribute(const VariableAttribute& attribute, con
         EVLOG_error << "Could not update variable attribute: " << this->database->get_error_message();
         throw InitDeviceModelDbError("Could not update attribute: " + std::string(this->database->get_error_message()));
     }
+
+    if (has_attribute_actual_value(attribute, default_actual_value)) {
+        if (!insert_variable_attribute_value(
+                static_cast<int64_t>(db_attribute.db_id.value()),
+                (attribute.value.has_value() ? attribute.value.value().get() : default_actual_value.value()), false)) {
+            EVLOG_error << "Can not update variable attribute (" << db_attribute.db_id.value()
+                        << ") value: " << attribute.value.value();
+        }
+    }
 }
 
 void InitDeviceModelDb::delete_attribute(const DbVariableAttribute& attribute) {
@@ -689,73 +633,8 @@ void InitDeviceModelDb::delete_attribute(const DbVariableAttribute& attribute) {
     }
 }
 
-std::map<ComponentKey, std::vector<VariableAttributeKey>>
-InitDeviceModelDb::get_component_default_values(const std::filesystem::path& schemas_path) {
-    std::map<ComponentKey, std::vector<DeviceModelVariable>> components = get_all_component_schemas(schemas_path);
-
-    std::map<ComponentKey, std::vector<VariableAttributeKey>> component_default_values;
-    for (auto const& [componentKey, variables] : components) {
-        std::vector<VariableAttributeKey> variable_attribute_keys;
-        for (const DeviceModelVariable& variable : variables) {
-            if (variable.default_actual_value.has_value()) {
-                VariableAttributeKey key;
-                key.name = variable.name;
-                if (variable.instance.has_value()) {
-                    key.instance = variable.instance.value();
-                }
-                key.attribute_type = AttributeEnum::Actual;
-                key.value = variable.default_actual_value.value();
-                variable_attribute_keys.push_back(key);
-            }
-        }
-
-        component_default_values.insert({componentKey, variable_attribute_keys});
-    }
-
-    return component_default_values;
-}
-
-std::map<ComponentKey, std::vector<VariableAttributeKey>>
-InitDeviceModelDb::get_config_values(const std::filesystem::path& config_file_path) {
-    std::map<ComponentKey, std::vector<VariableAttributeKey>> config_values;
-    std::ifstream config_file(config_file_path);
-    try {
-        json config_json = json::parse(config_file);
-        for (const auto& j : config_json.items()) {
-            ComponentKey p = j.value();
-            std::vector<VariableAttributeKey> attribute_keys;
-            for (const auto& variable : j.value().at("variables").items()) {
-                for (const auto& attributes : variable.value().at("attributes").items()) {
-                    VariableAttributeKey key;
-                    key.name = variable.value().at("variable_name");
-                    try {
-                        key.attribute_type = conversions::string_to_attribute_enum(attributes.key());
-                    } catch (const StringToEnumException& /* e*/) {
-                        EVLOG_error << "Could not find type " << attributes.key() << " of component " << p.name
-                                    << " and variable " << key.name;
-                        throw InitDeviceModelDbError("Could not find type " + attributes.key() + " of component " +
-                                                     p.name + " and variable " + key.name);
-                    }
-
-                    key.value = get_string_value_from_json(attributes.value());
-                    if (variable.value().contains("instance")) {
-                        key.instance = variable.value().at("instance");
-                    }
-                    attribute_keys.push_back(key);
-                }
-            }
-
-            config_values.insert({p, attribute_keys});
-        }
-        return config_values;
-    } catch (const json::parse_error& e) {
-        EVLOG_error << "Error while parsing OCPP config file: " << config_file_path;
-        throw;
-    }
-}
-
-bool InitDeviceModelDb::insert_variable_attribute_value(const ComponentKey& component_key,
-                                                        const VariableAttributeKey& variable_attribute_key,
+bool InitDeviceModelDb::insert_variable_attribute_value(const int64_t& variable_attribute_id,
+                                                        const std::string& variable_attribute_value,
                                                         const bool warn_source_not_default) {
     // Insert variable statement.
     // Use 'IS' when value can also be NULL
@@ -763,17 +642,7 @@ bool InitDeviceModelDb::insert_variable_attribute_value(const ComponentKey& comp
     // we don't overwrite that.
     static const std::string statement = "UPDATE VARIABLE_ATTRIBUTE "
                                          "SET VALUE = @value, VALUE_SOURCE = 'default' "
-                                         "WHERE VARIABLE_ID = ("
-                                         "SELECT VARIABLE.ID "
-                                         "FROM VARIABLE "
-                                         "JOIN COMPONENT ON COMPONENT.ID = VARIABLE.COMPONENT_ID "
-                                         "WHERE COMPONENT.NAME = @component_name "
-                                         "AND COMPONENT.INSTANCE IS @component_instance "
-                                         "AND COMPONENT.EVSE_ID IS @evse_id "
-                                         "AND COMPONENT.CONNECTOR_ID IS @connector_id "
-                                         "AND VARIABLE.NAME = @variable_name "
-                                         "AND VARIABLE.INSTANCE IS @variable_instance) "
-                                         "AND TYPE_ID = @type_id "
+                                         "WHERE ID = @variable_attribute_id "
                                          "AND (VALUE_SOURCE = 'default' OR VALUE_SOURCE = '' OR VALUE_SOURCE IS NULL)";
 
     std::unique_ptr<common::SQLiteStatementInterface> insert_variable_attribute_statement;
@@ -783,92 +652,21 @@ bool InitDeviceModelDb::insert_variable_attribute_value(const ComponentKey& comp
         throw InitDeviceModelDbError("Could not create statement " + statement);
     }
 
-    insert_variable_attribute_statement->bind_text("@value", variable_attribute_key.value,
+    insert_variable_attribute_statement->bind_int("@variable_attribute_id",
+                                                  static_cast<int32_t>(variable_attribute_id));
+    insert_variable_attribute_statement->bind_text("@value", variable_attribute_value,
                                                    ocpp::common::SQLiteString::Transient);
-    insert_variable_attribute_statement->bind_text("@component_name", component_key.name,
-                                                   ocpp::common::SQLiteString::Transient);
-    if (component_key.instance.has_value()) {
-        insert_variable_attribute_statement->bind_text("@component_instance", component_key.instance.value(),
-                                                       ocpp::common::SQLiteString::Transient);
-    } else {
-        insert_variable_attribute_statement->bind_null("@component_instance");
-    }
-
-    if (component_key.evse_id.has_value()) {
-        insert_variable_attribute_statement->bind_int("@evse_id", component_key.evse_id.value());
-    } else {
-        insert_variable_attribute_statement->bind_null("@evse_id");
-    }
-
-    if (component_key.connector_id.has_value()) {
-        insert_variable_attribute_statement->bind_int("@connector_id", component_key.connector_id.value());
-    } else {
-        insert_variable_attribute_statement->bind_null("@connector_id");
-    }
-
-    insert_variable_attribute_statement->bind_text("@variable_name", variable_attribute_key.name,
-                                                   ocpp::common::SQLiteString::Transient);
-
-    if (variable_attribute_key.instance.has_value()) {
-        insert_variable_attribute_statement->bind_text("@variable_instance", variable_attribute_key.instance.value(),
-                                                       ocpp::common::SQLiteString::Transient);
-    } else {
-        insert_variable_attribute_statement->bind_null("@variable_instance");
-    }
-
-    insert_variable_attribute_statement->bind_int("@type_id", static_cast<int>(variable_attribute_key.attribute_type));
 
     if (insert_variable_attribute_statement->step() != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Could not set value of variable " + variable_attribute_key.name +
-                                     " (component: " + component_key.name + ") attribute " +
-                                     conversions::attribute_enum_to_string(variable_attribute_key.attribute_type) +
-                                     ": " + std::string(this->database->get_error_message()));
+        throw InitDeviceModelDbError("Could not set value '" + variable_attribute_value +
+                                     "' of variable attribute id " + std::to_string(variable_attribute_id) + ": " +
+                                     std::string(this->database->get_error_message()));
     } else if ((insert_variable_attribute_statement->changes() < 1) && warn_source_not_default) {
-        EVLOG_debug << "Could not set value of variable " + get_variable_name_for_logging(variable_attribute_key) +
-                           " (Component: " + get_component_name_for_logging(component_key) + ") attribute " +
-                           conversions::attribute_enum_to_string(variable_attribute_key.attribute_type) +
-                           ": value has already changed by other source";
+        EVLOG_debug << "Could not set value '" + variable_attribute_value + "' of variable attribute id " +
+                           std::to_string(variable_attribute_id) + ": value has already changed by other source";
     }
 
     return true;
-}
-
-std::vector<ComponentKey> InitDeviceModelDb::get_all_connector_and_evse_components_from_db() {
-    std::vector<ComponentKey> components;
-
-    const std::string statement = "SELECT ID, NAME, INSTANCE, EVSE_ID, CONNECTOR_ID FROM COMPONENT "
-                                  "WHERE NAME == 'EVSE' COLLATE NOCASE OR NAME == 'Connector' COLLATE NOCASE ";
-
-    std::unique_ptr<common::SQLiteStatementInterface> select_statement;
-    try {
-        select_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
-        throw InitDeviceModelDbError("Could not create statement " + statement);
-    }
-
-    int status;
-    while ((status = select_statement->step()) == SQLITE_ROW) {
-        ComponentKey component_key;
-        component_key.db_id = select_statement->column_int(0);
-        component_key.name = select_statement->column_text(1);
-        component_key.instance = select_statement->column_text_nullable(2);
-        if (select_statement->column_type(3) != SQLITE_NULL) {
-            component_key.evse_id = select_statement->column_int(3);
-        }
-
-        if (select_statement->column_type(4) != SQLITE_NULL) {
-            component_key.connector_id = select_statement->column_int(4);
-        }
-
-        components.push_back(component_key);
-    }
-
-    if (status != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Could not get all connector and evse components from the database: " +
-                                     std::string(this->database->get_error_message()));
-    }
-
-    return components;
 }
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_all_components_from_db() {
@@ -977,17 +775,18 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
     }
 
     if (status != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Could not get all connector and evse components from the database: " +
+        throw InitDeviceModelDbError("Could not get all components from the database: " +
                                      std::string(this->database->get_error_message()));
     }
 
     return components;
 }
 
-std::optional<ComponentKey> InitDeviceModelDb::component_exists_in_db(const std::vector<ComponentKey>& db_components,
-                                                                      const ComponentKey& component) {
-    for (const ComponentKey& db_component : db_components) {
-        if (is_same_component_key(db_component, component)) {
+std::optional<std::pair<ComponentKey, std::vector<DeviceModelVariable>>>
+InitDeviceModelDb::component_exists_in_db(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& db_components,
+                                          const ComponentKey& component) {
+    for (const auto& db_component : db_components) {
+        if (is_same_component_key(db_component.first, component)) {
             return db_component;
         }
     }
@@ -1007,11 +806,11 @@ bool InitDeviceModelDb::component_exists_in_schemas(
 }
 
 void InitDeviceModelDb::remove_not_existing_components_from_db(
-    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_schemas,
-    const std::vector<ComponentKey>& db_components) {
-    for (const ComponentKey& component : db_components) {
-        if (!component_exists_in_schemas(component_schemas, component)) {
-            remove_component_from_db(component);
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_config,
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& db_components) {
+    for (const auto& component : db_components) {
+        if (!component_exists_in_schemas(component_config, component.first)) {
+            remove_component_from_db(component.first);
         }
     }
 }
@@ -1040,17 +839,19 @@ bool InitDeviceModelDb::remove_component_from_db(const ComponentKey& component) 
     return true;
 }
 
-void InitDeviceModelDb::update_component_variables(const ComponentKey& db_component,
-                                                   const std::vector<DeviceModelVariable>& variables) {
+void InitDeviceModelDb::update_component_variables(
+    const std::pair<ComponentKey, std::vector<DeviceModelVariable>>& db_component_variables,
+    const std::vector<DeviceModelVariable>& variables) {
+    const std::vector<DeviceModelVariable>& db_variables = db_component_variables.second;
+    const ComponentKey& db_component = db_component_variables.first;
+
     if (!db_component.db_id.has_value()) {
         EVLOG_error << "Can not update component " << db_component.name << ", because database id is unknown.";
         return;
     }
 
-    const std::vector<DeviceModelVariable> db_variables = get_variables_from_component_from_db(db_component);
-
     // Check for variables that do exist in the database but do not exist in the config. They should be removed.
-    for (const DeviceModelVariable& db_variable : db_variables) {
+    for (const auto& db_variable : db_variables) {
         auto it = std::find_if(variables.begin(), variables.end(), [&db_variable](const DeviceModelVariable& variable) {
             return is_same_variable(variable, db_variable);
         });
@@ -1063,7 +864,7 @@ void InitDeviceModelDb::update_component_variables(const ComponentKey& db_compon
 
     // Check for variables that do exist in the config. If they are not in the database, they should be added.
     // Otherwise, they should be updated.
-    for (const DeviceModelVariable& variable : variables) {
+    for (const auto& variable : variables) {
         auto it =
             std::find_if(db_variables.begin(), db_variables.end(), [&variable](const DeviceModelVariable& db_variable) {
                 return is_same_variable(db_variable, variable);
@@ -1078,70 +879,6 @@ void InitDeviceModelDb::update_component_variables(const ComponentKey& db_compon
             }
         }
     }
-}
-
-std::vector<DeviceModelVariable>
-InitDeviceModelDb::get_variables_from_component_from_db(const ComponentKey& db_component) {
-    if (!db_component.db_id.has_value()) {
-        EVLOG_error << "Can not update component " << db_component.name << ", because database id is unknown.";
-        return {};
-    }
-
-    std::vector<DeviceModelVariable> variables;
-
-    static const std::string select_variable_statement =
-        "SELECT v.ID, v.NAME, v.INSTANCE, v.REQUIRED, vc.ID, vc.DATATYPE_ID, vc.MAX_LIMIT, vc.MIN_LIMIT, "
-        "vc.SUPPORTS_MONITORING, vc.UNIT, vc.VALUES_LIST FROM VARIABLE v LEFT JOIN VARIABLE_CHARACTERISTICS vc "
-        "ON v.ID=vc.VARIABLE_ID WHERE v.COMPONENT_ID=@component_id";
-
-    std::unique_ptr<common::SQLiteStatementInterface> select_statement;
-    try {
-        select_statement = this->database->new_statement(select_variable_statement);
-    } catch (const common::QueryExecutionException&) {
-        throw InitDeviceModelDbError("Could not create statement " + select_variable_statement);
-    }
-
-    select_statement->bind_int("@component_id", static_cast<int>(db_component.db_id.value()));
-
-    int status;
-    while ((status = select_statement->step()) == SQLITE_ROW) {
-        DeviceModelVariable variable;
-        variable.db_id = select_statement->column_int(0);
-        variable.name = select_statement->column_text(1);
-        if (select_statement->column_type(2) != SQLITE_NULL) {
-            variable.instance = select_statement->column_text(2);
-        }
-        variable.required = (select_statement->column_int(3) == 1 ? true : false);
-        variable.variable_characteristics_db_id = select_statement->column_int(4);
-        variable.characteristics.dataType = static_cast<DataEnum>(select_statement->column_int(5));
-        if (select_statement->column_type(6) != SQLITE_NULL) {
-            variable.characteristics.maxLimit = select_statement->column_double(6);
-        }
-        if (select_statement->column_type(7) != SQLITE_NULL) {
-            variable.characteristics.minLimit = select_statement->column_double(7);
-        }
-        variable.characteristics.supportsMonitoring = (select_statement->column_int(8) == 1 ? true : false);
-        if (select_statement->column_type(9) != SQLITE_NULL) {
-            variable.characteristics.unit = select_statement->column_text(9);
-        }
-        if (select_statement->column_type(10) != SQLITE_NULL) {
-            variable.characteristics.valuesList = select_statement->column_text(10);
-        }
-
-        variables.push_back(variable);
-    }
-
-    if (status != SQLITE_DONE) {
-        throw InitDeviceModelDbError("Could not get variables from component " + db_component.name +
-                                     "from db: " + std::string(this->database->get_error_message()));
-    }
-
-    for (DeviceModelVariable& variable : variables) {
-        std::vector<DbVariableAttribute> attributes = get_variable_attributes_from_db(variable.db_id.value());
-        variable.attributes = attributes;
-    }
-
-    return variables;
 }
 
 std::vector<DbVariableAttribute> InitDeviceModelDb::get_variable_attributes_from_db(const uint64_t& variable_id) {
@@ -1259,30 +996,164 @@ void from_json(const json& j, DeviceModelVariable& c) {
         // I want the default value as string here as it is stored in the db as a string as well.
         const json& default_value = j.at("default");
         c.default_actual_value = get_string_value_from_json(default_value);
-        if (default_value.is_string()) {
-            c.default_actual_value = default_value;
-        } else if (default_value.is_boolean()) {
-            if (default_value.get<bool>()) {
-                // Convert to lower case if that is not the case currently.
-                c.default_actual_value = "true";
-            } else {
-                // Convert to lower case if that is not the case currently.
-                c.default_actual_value = "false";
-            }
-        } else if (default_value.is_array() || default_value.is_object()) {
-            EVLOG_warning << "Trying to get default value of variable " << c.name
-                          << " from json, but value is array or object: " << default_value.dump();
-            // Maybe this is correct and is just a string (json value string), so just return the string.
-            c.default_actual_value = default_value.dump();
-        } else {
-            c.default_actual_value = default_value.dump();
-        }
     }
 }
 
-/* Below functions check if components, attributes, variables, characteristics are the same / equal in the schema and
- * database. The 'is_same' functions check if two objects are the same, comparing their unique properties.
- * The is_..._different functions check if the objects properties are different (and as a result should be changed in
+/* Below functions check the integrity of the component config, for example if the type is correct or if a value is set
+ * when a variable is required.
+ */
+
+///
+/// \brief Check integrity of config.
+///
+/// This will do some checks if the config is correct, for example if all required attributes have a value.
+/// It will print all found integrity errors in the logging.
+///
+/// \param component_configs    Read config from the file system.
+/// \throws InitDeviceModelDbError when at least one of the components / variables / attributes has an error.
+///
+static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs) {
+    std::string final_error_message = "Check integrity failed:\n";
+    bool has_error = false;
+    for (const auto& [component_key, variables] : component_configs) {
+        bool has_component_error = false;
+        std::string component_errors = "- Component " + get_component_name_for_logging(component_key) + '\n';
+        for (const DeviceModelVariable& variable : variables) {
+            std::vector<std::string> error_messages;
+            if (variable.required) {
+                std::optional<std::string> error_message = check_integrity_required_value(variable);
+                if (error_message.has_value()) {
+                    error_messages.push_back(error_message.value());
+                }
+            }
+
+            std::vector<std::string> value_type_errors = check_integrity_value_type(variable);
+            for (const std::string& error : value_type_errors) {
+                error_messages.push_back(error);
+            }
+
+            if (!error_messages.empty()) {
+                has_error = true;
+                has_component_error = true;
+                std::string error = "  - Variable " + get_variable_name_for_logging(variable) + ", errors:\n";
+                for (const std::string& error_message : error_messages) {
+                    error += "    - " + error_message + '\n';
+                }
+                component_errors.append(error);
+            }
+        }
+
+        if (has_component_error) {
+            final_error_message.append(component_errors);
+        }
+    }
+
+    if (has_error) {
+        EVLOG_AND_THROW(InitDeviceModelDbError(final_error_message));
+    }
+}
+
+///
+/// \brief Check if a required device model variable has a value set or a default value.
+/// \param variable The variable to check.
+/// \return std::nullopt if the required variable has a value or default value. Error message if it is not.
+///
+static std::optional<std::string> check_integrity_required_value(const DeviceModelVariable& variable) {
+    // For now, we assume that if a variable is required, it should have an 'Actual' value. But the spec is not clear
+    // about this. There are some implicit signs in favor of having always at least an 'Actual' value, but it is not
+    // explicitly stated. Robert asked OCA about this.
+    const auto& actual_attribute =
+        std::find_if(variable.attributes.begin(), variable.attributes.end(), [](const DbVariableAttribute& attribute) {
+            if (attribute.variable_attribute.type.has_value() &&
+                attribute.variable_attribute.type.value() == AttributeEnum::Actual) {
+                return true;
+            }
+            return false;
+        });
+
+    if (actual_attribute == variable.attributes.end()) {
+        return "Could not find required Actual attribute.";
+    }
+
+    if (variable.default_actual_value.has_value()) {
+        // There is a default value set, so for this required variable, we have a value (maybe there is a
+        // value set as well but since we also have a default value, we don't have to check that)
+        return std::nullopt;
+    }
+
+    if (!actual_attribute->variable_attribute.value.has_value()) {
+        return "No value set for Actual attribute for required variable.";
+    }
+
+    return std::nullopt;
+}
+
+///
+/// \brief Check if the variable attributes have the given type.
+/// \param variable Variable to check the attributes from.
+/// \return The errors if there are any, otherwise an empty vector.
+///
+static std::vector<std::string> check_integrity_value_type(const DeviceModelVariable& variable) {
+    const DataEnum& type = variable.characteristics.dataType;
+    std::vector<std::string> errors;
+    if (variable.default_actual_value.has_value()) {
+        if (!value_is_of_type(variable.default_actual_value.value(), type)) {
+            errors.push_back("Default value (" + variable.default_actual_value.value() +
+                             ") has wrong type, type should have been " + conversions::data_enum_to_string(type) + ".");
+        }
+    }
+
+    for (const DbVariableAttribute& attribute : variable.attributes) {
+        if (attribute.variable_attribute.value.has_value()) {
+            if (!value_is_of_type(attribute.variable_attribute.value.value(), type)) {
+                errors.push_back(
+                    "Attribute " +
+                    (attribute.variable_attribute.type.has_value()
+                         ? "'" + conversions::attribute_enum_to_string(attribute.variable_attribute.type.value()) + "'"
+                         : "") +
+                    " value (" + attribute.variable_attribute.value.value().get() +
+                    ") has wrong type, type should have been: " + conversions::data_enum_to_string(type) + ".");
+            }
+        }
+    }
+
+    return errors;
+}
+
+///
+/// \brief Check if a value string is of the given enum type.
+/// \param value    The value to check.
+/// \param type     The type.
+/// \return True if value is of the given type.
+///
+static bool value_is_of_type(const std::string& value, const DataEnum& type) {
+    if (value.empty()) {
+        // We can not check if the type of the values that are empty are valid.
+        return true;
+    }
+
+    switch (type) {
+    case DataEnum::string:
+        return true;
+    case DataEnum::decimal:
+        return is_integer(value) || is_decimal_number(value);
+    case DataEnum::integer:
+        return is_integer(value);
+    case DataEnum::dateTime:
+        return is_rfc3339_datetime(value);
+    case DataEnum::boolean:
+        return is_boolean(value);
+    case DataEnum::OptionList:
+    case DataEnum::SequenceList:
+    case DataEnum::MemberList:
+        return true;
+    }
+    return false;
+}
+
+/* Below functions check if components, attributes, variables, characteristics are the same / equal in the schema
+ * and database. The 'is_same' functions check if two objects are the same, comparing their unique properties. The
+ * is_..._different functions check if the objects properties are different (and as a result should be changed in
  * the database).
  */
 
@@ -1298,25 +1169,6 @@ static bool is_same_component_key(const ComponentKey& component_key1, const Comp
         (component_key1.connector_id == component_key2.connector_id) &&
         (component_key1.instance == component_key2.instance)) {
         // We did not compare the 'required' here as that does not define a ComponentKey
-        return true;
-    }
-
-    return false;
-}
-
-///
-/// \brief Check if the variable attribute is the same given their unique properties (type, variable instance and
-///        variable name)
-/// \param attribute_key1   Attribute key 1
-/// \param attribute_key2   Attribute key 2
-/// \return True if they are the same.
-///
-static bool is_same_variable_attribute_key(const VariableAttributeKey& attribute_key1,
-                                           const VariableAttributeKey& attribute_key2) {
-    if ((attribute_key1.attribute_type == attribute_key2.attribute_type) &&
-        (attribute_key1.instance == attribute_key2.instance) && (attribute_key1.name == attribute_key2.name)) {
-        // We did not compare the 'value' here as we want to check if the attribute is the same and not the value of the
-        // attribute.
         return true;
     }
 
@@ -1345,15 +1197,16 @@ static bool is_same_attribute_type(const VariableAttribute attribute1, const Var
 static bool is_attribute_different(const VariableAttribute& attribute1, const VariableAttribute& attribute2) {
     // Constant and persistent are currently not set in the json file.
     if ((attribute1.type == attribute2.type) && /*(attribute1.constant == attribute2.constant) &&*/
-        (attribute1.mutability == attribute2.mutability) /* && (attribute1.persistent == attribute2.persistent)*/) {
+        (attribute1.mutability == attribute2.mutability) && (attribute1.value == attribute2.value)
+        /* && (attribute1.persistent == attribute2.persistent)*/) {
         return false;
     }
     return true;
 }
 
 ///
-/// \brief Check if a variable has the same attributes, or if there is for example an extra attribute added, removed or
-///        changed.
+/// \brief Check if a variable has the same attributes, or if there is for example an extra attribute added, removed
+///        or changed.
 /// \param attributes1 Attributes 1
 /// \param attributes2 Attributes 2
 /// \return True if they are the same.
@@ -1364,7 +1217,7 @@ static bool variable_has_same_attributes(const std::vector<DbVariableAttribute>&
         return false;
     }
 
-    for (const DbVariableAttribute& attribute : attributes1) {
+    for (const auto& attribute : attributes1) {
         const auto& it =
             std::find_if(attributes2.begin(), attributes2.end(), [&attribute](const DbVariableAttribute& a) {
                 if (!is_attribute_different(a.variable_attribute, attribute.variable_attribute)) {
@@ -1424,6 +1277,19 @@ static bool is_variable_different(const DeviceModelVariable& v1, const DeviceMod
 }
 
 ///
+/// \brief Check if the attribute has an actual value or a default value.
+/// \param attribute            The attribute to check.
+/// \param default_actual_value The default value.
+/// \return True when the attribute has an actual or default value.
+///
+static bool has_attribute_actual_value(const VariableAttribute& attribute,
+                                       const std::optional<std::string>& default_actual_value) {
+    return (attribute.value.has_value() ||
+            (attribute.type.has_value() && (attribute.type.value() == AttributeEnum::Actual) &&
+             default_actual_value.has_value()));
+}
+
+///
 /// \brief Get string value from json.
 ///
 /// The json value can have different types, but we want it as a string.
@@ -1443,90 +1309,9 @@ static std::string get_string_value_from_json(const json& value) {
     } else if (value.is_array() || value.is_object()) {
         EVLOG_warning << "String value " << value.dump()
                       << " from config is an object or array, but config values should be from a primitive type.";
-        return "";
+        return value.dump();
     } else {
         return value.dump();
-    }
-}
-
-///
-/// \brief Check if the config is correct compared with the database.
-/// \param database_components  The components from the database.
-/// \param config               The configuration.
-/// \return A list of components / variables / attributes that have errors, or an empty vector if there are none.
-///
-static std::vector<std::string>
-check_config_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& database_components,
-                       const std::map<ComponentKey, std::vector<VariableAttributeKey>>& config) {
-    std::vector<std::string> errors;
-    // Loop over all components from the configuration files and compare it with components from the database.
-    for (const auto& [config_component, config_variable_attributes] : config) {
-        bool component_found = false;
-        // Loop over database components to check if the component in the config exists and if so, check the
-        // variable and attribute that needs to be changed.
-        for (const auto& [database_component, database_variables] : database_components) {
-            if (is_same_component_key(config_component, database_component)) {
-                component_found = true;
-                // The component is found. Now compoare all variables of this component with the variables of the
-                // component in the database. So loop over the config variables.
-                for (const VariableAttributeKey& config_attribute_key : config_variable_attributes) {
-                    // And find the same variable in the database components variable list.
-                    const std::string error =
-                        check_config_variable_integrity(database_variables, config_attribute_key, config_component);
-                    if (!error.empty()) {
-                        errors.push_back(error);
-                    }
-                }
-            }
-        }
-
-        if (!component_found) {
-            errors.push_back("Component: " + get_component_name_for_logging(config_component));
-        }
-    }
-
-    return errors;
-}
-
-///
-/// \brief Check if config variable attribute (of a component) is correct compared with the database.
-/// \param database_variables       Variable from the database
-/// \param config_attribute_key     Configuration variable / attribute combination
-/// \param config_component         Config component (only used for logging)
-/// \return The component / variable / attribute string if there is an error, otherwise an empty string.
-///
-static std::string check_config_variable_integrity(const std::vector<DeviceModelVariable>& database_variables,
-                                                   const VariableAttributeKey& config_attribute_key,
-                                                   const ComponentKey& config_component) {
-    const auto& it_db_variables = std::find_if(
-        database_variables.begin(), database_variables.end(), [&config_attribute_key](const DeviceModelVariable& v) {
-            if (v.name == config_attribute_key.name && v.instance == config_attribute_key.instance) {
-                return true;
-            }
-            return false;
-        });
-    if (it_db_variables != database_variables.end()) {
-        // Variable is found!
-        // Now the variable is found, check the attribute whose value needs to change. Loop over all
-        // database attributes to check if it is the same attribute is the one from the config.
-        const auto& it_db_attributes =
-            std::find_if(it_db_variables->attributes.begin(), it_db_variables->attributes.end(),
-                         [&config_attribute_key](const DbVariableAttribute& attribute) {
-                             return (attribute.variable_attribute.type == config_attribute_key.attribute_type);
-                         });
-        if (it_db_attributes != it_db_variables->attributes.end()) {
-            // Attribute is found! No need to search any further.
-            return "";
-        } else {
-            // Attribute not found.
-            return "Attribute: " + conversions::attribute_enum_to_string(config_attribute_key.attribute_type) +
-                   " (of Component: " + get_component_name_for_logging(config_component) +
-                   " and Variable: " + get_variable_name_for_logging(config_attribute_key) + ")";
-        }
-    } else {
-        // Variable not found.
-        return "Variable: " + get_variable_name_for_logging(config_attribute_key) +
-               " (of Component: " + get_component_name_for_logging(config_component) + ")";
     }
 }
 
@@ -1555,10 +1340,9 @@ static std::string get_component_name_for_logging(const ComponentKey& component)
 /// \param variable    The variable to get the string from.
 /// \return The logging string.
 ///
-
-static std::string get_variable_name_for_logging(const VariableAttributeKey& variable) {
+static std::string get_variable_name_for_logging(const DeviceModelVariable& variable) {
     const std::string variable_name =
-        variable.name + (variable.instance.has_value() ? ", instance " + variable.instance.value() : "");
+        variable.name + (variable.instance.has_value() ? ", instance" + variable.instance.value() : "");
     return variable_name;
 }
 

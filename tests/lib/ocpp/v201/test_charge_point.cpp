@@ -23,8 +23,7 @@ static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 static const std::string TEMP_OUTPUT_PATH = "/tmp/ocpp201";
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_schemas";
-const static std::string CONFIG_PATH = "./resources/example_config/v201/config.json";
+const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_config";
 const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
 
@@ -64,7 +63,6 @@ public:
     void create_device_model_db(const std::string& path) {
         InitDeviceModelDb db(path, MIGRATION_FILES_PATH);
         db.initialize_database(SCHEMAS_PATH, true);
-        db.insert_config_and_default_values(SCHEMAS_PATH, CONFIG_PATH);
     }
 
     std::shared_ptr<DeviceModel>

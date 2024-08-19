@@ -1,0 +1,346 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for OCPPCommCtrlr",
+  "name": "OCPPCommCtrlr",
+  "type": "object",
+  "properties": {
+    "OCPPCommCtrlrEnabled": {
+      "variable_name": "Enabled",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": true
+        }
+      ],
+      "type": "boolean"
+    },
+    "ActiveNetworkProfile": {
+      "variable_name": "ActiveNetworkProfile",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Indicates the configuration profile the station uses at that moment to connect to the network.",
+      "default": 1,
+      "type": "integer"
+    },
+    "FileTransferProtocols": {
+      "variable_name": "FileTransferProtocols",
+      "characteristics": {
+        "valuesList": "FTP,FTPS,HTTP,HTTPS,SFTP",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": "FTP"
+        }
+      ],
+      "description": "List of supported file transfer protocols",
+      "type": "string"
+    },
+    "HeartbeatInterval": {
+      "variable_name": "HeartbeatInterval",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Interval of inactivity (no OCPP exchanges) with CSMS after which the Charging Station should send HeartbeatRequest.",
+      "default": "1800",
+      "type": "integer"
+    },
+    "MessageTimeout": {
+      "variable_name": "MessageTimeout",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly",
+          "value": 60
+        }
+      ],
+      "instance": "Default",
+      "description": "MessageTimeout(Default) specifies after which time a message times out. It is configured in the network connection profile.",
+      "default": "60",
+      "type": "integer"
+    },
+    "MessageAttemptInterval": {
+      "variable_name": "MessageAttemptInterval",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer",
+        "unit": "s"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 10
+        }
+      ],
+      "instance": "TransactionEvent",
+      "description": "MessageAttemptInterval(TransactionEvent) specifies long the Charging Station should wait before resubmitting a TransactionEventRequest message that the CSMS failed to process.",
+      "default": "10",
+      "type": "integer"
+    },
+    "MessageAttempts": {
+      "variable_name": "MessageAttempts",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 5
+        }
+      ],
+      "instance": "TransactionEvent",
+      "description": "MessageAttempts(TransactionEvent) specifies how often the Charging Station should try to submit a TransactionEventRequest message when the CSMS fails to process it.",
+      "default": "5",
+      "type": "integer"
+    },
+    "NetworkConfigurationPriority": {
+      "variable_name": "NetworkConfigurationPriority",
+      "characteristics": {
+        "valuesList": "1,2",
+        "supportsMonitoring": true,
+        "dataType": "SequenceList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 1
+        }
+      ],
+      "description": "A comma separated ordered list of the priority of the possible Network Connection Profiles.",
+      "default": "1",
+      "type": "string"
+    },
+    "NetworkProfileConnectionAttempts": {
+      "variable_name": "NetworkProfileConnectionAttempts",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 3
+        }
+      ],
+      "description": "Specifies the number of connection attempts the Charging Station executes before switching to a different profile.",
+      "default": "3",
+      "type": "integer"
+    },
+    "OfflineThreshold": {
+      "variable_name": "OfflineThreshold",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 60
+        }
+      ],
+      "description": "When the offline period of a Charging Station exceeds the OfflineThreshold it is recommended to send a StatusNotificationRequest for all its Connectors.",
+      "default": "60",
+      "type": "integer"
+    },
+    "PublicKeyWithSignedMeterValue": {
+      "variable_name": "PublicKeyWithSignedMeterValue",
+      "characteristics": {
+        "valuesList": "Never,OncePerTransaction,EveryMeterValue",
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "This Configuration Variable can be used to configure whether a public key needs to be sent with a signed meter value. Note, that the field is required, so it needs to be present as an empty string when the public key is not sent.",
+      "type": "string"
+    },
+    "QueueAllMessages": {
+      "variable_name": "QueueAllMessages",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "When this variable is set to true, the Charging Station will queue all message until they are delivered to the CSMS.",
+      "type": "boolean"
+    },
+    "ResetRetries": {
+      "variable_name": "ResetRetries",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 3
+        }
+      ],
+      "description": "Number of times to retry a reset of the Charging Station when a reset was unsuccessful",
+      "default": "3",
+      "type": "integer"
+    },
+    "RetryBackOffRandomRange": {
+      "variable_name": "RetryBackOffRandomRange",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 2
+        }
+      ],
+      "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable as the maximum value for the random part of the back-off time",
+      "default": "2",
+      "type": "integer"
+    },
+    "RetryBackOffRepeatTimes": {
+      "variable_name": "RetryBackOffRepeatTimes",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 2
+        }
+      ],
+      "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable for the amount of times it will double the previous back-off time.",
+      "default": "2",
+      "type": "integer"
+    },
+    "RetryBackOffWaitMinimum": {
+      "variable_name": "RetryBackOffWaitMinimum",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 1
+        }
+      ],
+      "description": "When the Charging Station is reconnecting, after a connection loss, it will use this variable as the minimum back-off time, the first time it tries to reconnect.",
+      "default": "1",
+      "type": "integer"
+    },
+    "UnlockOnEVSideDisconnect": {
+      "variable_name": "UnlockOnEVSideDisconnect",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "boolean"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": true
+        }
+      ],
+      "description": "When set to true, the Charging Station SHALL unlock the cable on the Charging Station side when the cable is unplugged at the EV. For an EVSE with only fixed cables, the mutability SHALL be ReadOnly and the actual value SHALL be false. For a charging station with fixed cables and sockets, the variable is only applicable to the sockets.",
+      "default": true,
+      "type": "boolean"
+    },
+    "WebSocketPingInterval": {
+      "variable_name": "WebSocketPingInterval",
+      "characteristics": {
+        "unit": "s",
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 10
+        }
+      ],
+      "description": "0 disables client side websocket Ping/Pong. In this case there is either no ping/pong or the server initiates the ping and client responds with Pong. Positive values are interpreted as number of seconds between pings. Negative values are not allowed.",
+      "default": "30",
+      "type": "integer"
+    },
+    "FieldLength": {
+      "variable_name": "FieldLength",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "This variable is used to report the length of <field> in <message> when it is larger than the length that is defined in the standard OCPP message schema.",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "FileTransferProtocols",
+    "MessageAttemptInterval",
+    "MessageAttempts",
+    "MessageTimeout",
+    "NetworkConfigurationPriority",
+    "NetworkProfileConnectionAttempts",
+    "OfflineThreshold",
+    "ResetRetries",
+    "RetryBackOffRandomRange",
+    "RetryBackOffRepeatTimes",
+    "RetryBackOffWaitMinimum",
+    "UnlockOnEVSideDisconnect",
+    "WebSocketPingInterval"
+  ]
+}

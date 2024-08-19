@@ -107,4 +107,8 @@ std::string trim_string(const std::string& string_to_trim) {
     return string_to_trim.substr(first, (last - first + 1));
 }
 
+bool is_boolean(const std::string& value) {
+    return iequals(value, "true") || iequals(value, "false");
+}
+
 } // namespace ocpp

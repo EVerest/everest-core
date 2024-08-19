@@ -31,12 +31,10 @@ public:
     /// \param db_path              Path to database
     /// \param migration_files_path Path to the migration files to initialize the database (only needs to be set if
     ///                             `init_db` is true)
-    /// \param schemas_path         Path to the device model schemas (only needs to be set if `init_db` is true)
-    /// \param config_path          Path to the configuration file (only needs to be set if `init_db` is true)
+    /// \param config_path          Path to the device model schemas (only needs to be set if `init_db` is true)
     /// \param init_db              True to initialize the database
     ///
     explicit DeviceModelStorageSqlite(const fs::path& db_path, const std::filesystem::path& migration_files_path = "",
-                                      const std::filesystem::path& schemas_path = "",
                                       const std::filesystem::path& config_path = "", const bool init_db = false);
 
     ~DeviceModelStorageSqlite() = default;

@@ -35,20 +35,16 @@ accordingly. Only the initial values will be set to the values in the config fil
 value, it will not be updated to the value from the config file.
 
 
-## Update component schemas
+## Update component config
 
-It is only possible to update the component schemas for `EVSE`'s and `Connector`s. All other components can not be updated.
-
-To update an `EVSE` or `Connector` component, just place the correct `EVSE` / `Connector` json schema in the 
-`component_schemas/custom` folder. When restarting the software, it will:
-- Check if there are `EVSE`'s or `Connector`s in the database that are not in the component schema's. Those will be 
-  removed.
-- Check if there are `EVSE`'s er `Connectors` in the component schema's that are not in the database. Those will be 
-  added.
-- Check if anything has changed inside the `EVSE`'s or `Connectors` (`Variable`, `Characteristics` or `Attributes`). 
-  Those will be removed, changed or added. Those will be removed, changed or added to the database as well. 
+To update a component, just place the correct json schema in the `component_config/custom` folder. When restarting the 
+software, it will:
+- Check if there are Components in the database that are not in the component config's. Those will be removed.
+- Check if there are Components in the component config's that are not in the database. Those will be added.
+- Check if anything has changed inside the Component (`Variable`, `Characteristics` or `Attributes`). 
+  Those will be removed, changed or added to the database as well. 
   
-Note: When the id of an `EVSE` Component is changed, this is seen as the removal of an `EVSE` and addition of a new 
-`EVSE`. The same applies to the `evse_id` or `connector_id` of a `Connector` component. 
+Note: When the `evse_id` or `connector_id` of a component is changed, this is seen as the removal of a Component and 
+addition of a new one. 
 
 Note: OCPP requires EVSE and Connector numbering starting from 1 counting upwards.

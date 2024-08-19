@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Schema for UnitTestCtrlr",
+  "name": "UnitTestCtrlr",
+  "type": "object",
+  "evse_id": 2,
+  "connector_id": 3,
+  "properties": {
+    "UnitTestPropertyA": {
+      "variable_name": "UnitTestPropertyAName",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "default": "1",
+      "type": "string"
+    },
+    "UnitTestPropertyB": {
+      "variable_name": "UnitTestPropertyBName",
+      "characteristics": {
+        "supportsMonitoring": false,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "UnitTestPropertyA"
+  ]
+}

@@ -19,6 +19,7 @@ std::tuple<bool, int> is_positive_integer(const std::string& value);
 bool is_decimal_number(const std::string& value);
 
 bool is_rfc3339_datetime(const std::string& value);
+bool is_boolean(const std::string& value);
 
 ///
 /// \brief Split string on a given character.

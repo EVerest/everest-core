@@ -1866,9 +1866,27 @@ void from_json(const json& j, VariableAttribute& k) {
     if (j.contains("type")) {
         k.type.emplace(conversions::string_to_attribute_enum(j.at("type")));
     }
+
     if (j.contains("value")) {
-        k.value.emplace(j.at("value"));
+        const json& value = j.at("value");
+        if (value.is_string()) {
+            k.value = value;
+        } else if (value.is_boolean()) {
+            if (value.get<bool>()) {
+                // Convert to lower case if that is not the case currently.
+                k.value = "true";
+            } else {
+                // Convert to lower case if that is not the case currently.
+                k.value = "false";
+            }
+        } else if (value.is_array() || value.is_object()) {
+            // Maybe this is correct and is just a string (json value string), so just return the string.
+            k.value = value.dump();
+        } else {
+            k.value = value.dump();
+        }
     }
+
     if (j.contains("mutability")) {
         k.mutability.emplace(conversions::string_to_mutability_enum(j.at("mutability")));
     }

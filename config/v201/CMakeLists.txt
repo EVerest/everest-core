@@ -23,7 +23,6 @@ set(MIGRATION_FILES_DEVICE_MODEL_SOURCE_DIR_V201 ${MIGRATION_FILES_DEVICE_MODEL_
 option(LIBOCPP_INSTALL_DEVICE_MODEL_DATABASE "Install device model database for OCPP201" ON)
 
 list(APPEND CONFIGS
-     config.json
      ../logging.ini
 )
 
@@ -34,17 +33,12 @@ install(
 
 if (LIBOCPP_INSTALL_DEVICE_MODEL_DATABASE)
 
-     if(NOT LIBOCPP_V201_CONFIG_FILE)
-          set(LIBOCPP_V201_CONFIG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config.json")
-     endif()
-
-     if (NOT LIBOCPP_COMPONENT_SCHEMAS_PATH)
-          set(LIBOCPP_COMPONENT_SCHEMAS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/component_schemas")
+     if (NOT LIBOCPP_COMPONENT_CONFIG_PATH)
+          set(LIBOCPP_COMPONENT_CONFIG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/component_config")
      endif()
 
      
-     message(STATUS "Using ocpp v201 config file path: ${LIBOCPP_V201_CONFIG_FILE}")
+     message(STATUS "Using ocpp v201 component config file path: ${LIBOCPP_COMPONENT_CONFIG_PATH}")
      
-     install(FILES ${LIBOCPP_V201_CONFIG_FILE} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201)
-     install(DIRECTORY ${LIBOCPP_COMPONENT_SCHEMAS_PATH} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201)
+     install(DIRECTORY ${LIBOCPP_COMPONENT_CONFIG_PATH} DESTINATION ${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201)
 endif()

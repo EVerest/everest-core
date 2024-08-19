@@ -19,16 +19,14 @@ extern void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>&
                                      std::vector<VariableMonitoringMeta>& monitors);
 
 DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, const fs::path& migration_files_path,
-                                                   const fs::path& schemas_path, const fs::path& config_path,
-                                                   const bool init_db) {
+                                                   const fs::path& config_path, const bool init_db) {
     if (init_db) {
-        if (db_path.empty() || migration_files_path.empty() || schemas_path.empty() || config_path.empty()) {
+        if (db_path.empty() || migration_files_path.empty() || config_path.empty()) {
             EVLOG_AND_THROW(
                 DeviceModelStorageError("Can not initialize device model storage: one of the paths is empty."));
         }
         InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
-        init_device_model_db.initialize_database(schemas_path, false);
-        init_device_model_db.insert_config_and_default_values(schemas_path, config_path);
+        init_device_model_db.initialize_database(config_path, false);
     }
 
     db = std::make_unique<ocpp::common::DatabaseConnection>(db_path);

@@ -256,7 +256,7 @@ public:
     /// \brief Sets the given monitor \p requests in the device model
     /// \param request
     /// \param type The type of the set monitors. HardWiredMonitor - used for OEM specific monitors,
-    /// PreconfiguredMonitor - monitors that were manually defined in the config.json,
+    /// PreconfiguredMonitor - monitors that were manually defined in the component config,
     /// CustomMonitor - used for monitors that are set by the CSMS,
     /// \return List of results of the requested operation
     std::vector<SetMonitoringResult> set_monitors(const std::vector<SetMonitoringData>& requests,

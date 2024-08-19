@@ -19,18 +19,18 @@ python3 generate_cpp.py --schemas ~/ocpp-schemas/v201/ --out ~/checkout/everest-
 ```
 
 ## JSON schema generator for v201 component schemas
-The script [generate_component_schemas.py](v201/generate_component_schemas.py) generates component schemas for v201 based on
-a modified version of the dm_component_vars.csv appendix of the OCPP2.0.1 specification. These component schema files can then
+The script [generate_component_config.py](v201/generate_component_config.py) generates component config files for v201 based on
+a modified version of the dm_component_vars.csv appendix of the OCPP2.0.1 specification. These component config files can then
 be used to initialize the device model storage database.
 
 ```bash
-python3 generate_component_schemas.py --csv <path-to-dm_component_vars.csv> --out <path-to-v201-components-standardized>
+python3 generate_component_config.py --csv <path-to-dm_component_vars.csv> --out <path-to-v201-components-standardized>
 ```
 
 e.g.
 
 ```bash
-python3 generate_component_schemas.py --csv ~/ocpp-v201-specification/appendix/dm_component_vars.csv --out ~/checkout/everest-workspace/libocpp/config/v201/component_schemas/standardized
+python3 generate_component_config.py --csv ~/ocpp-v201-specification/appendix/dm_component_vars.csv --out ~/checkout/everest-workspace/libocpp/config/v201/component_config/standardized
 ```
 
 ## C++ Code generator for ControllerComponentVariables
@@ -40,7 +40,7 @@ These files provide access to ComponentVariables with a role standardized in the
 ```bash
 python3 generate_ctrlr_component_vars.py --csv <path-to-dm_component_vars.csv> --out <path-to-v201-components-standardized>
 ```
-component_schemas/standardized
+component_config/standardized
 e.g.
 
 ```bash
@@ -58,5 +58,5 @@ python3 generate_ctrlr_component_vars.py --schemas <path-to-v201-components-stan
 e.g.
 
 ```bash
-python3 generate_ctrlr_component_vars.py --schemas ~/checkout/everest-workspace/libocpp/config/v201/component_schemas/standardized --out ~/checkout/everest-workspace/libocpp/config/v201
+python3 generate_ctrlr_component_vars.py --schemas ~/checkout/everest-workspace/libocpp/config/v201/component_config/standardized --out ~/checkout/everest-workspace/libocpp/config/v201
 ```
