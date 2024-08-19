@@ -439,21 +439,21 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
     }
 
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
+        // locks all referenced connectors for this request. Subsequent requests referencing one or more of the locked
+        // connectors are blocked until handle_token returns
         this->lock_plug_in_mutex(connectors);
         if (this->get_latest_plugin(connectors) == -1) {
             // no EV has been plugged in yet at the referenced connectors
-            this->unlock_plug_in_mutex(connectors);
             EVLOG_debug << "No connector in authorization queue. Waiting for a plug in...";
             std::unique_lock<std::mutex> lk(this->plug_in_mutex);
+            // blocks until respective plugin for connector occured or until timeout
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, connectors] { return this->get_latest_plugin(connectors) != -1; })) {
                 return -1;
             }
-            this->lock_plug_in_mutex(connectors);
             EVLOG_debug << "Plug in at connector occured";
         }
-        const auto connector_id = this->get_latest_plugin(connectors);
-        return connector_id;
+        return this->get_latest_plugin(connectors);
     } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {
         EVLOG_debug
             << "SelectionAlgorithm FindFirst: Selecting first available connector without an active transaction";
