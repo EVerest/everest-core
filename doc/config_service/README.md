@@ -49,10 +49,10 @@ As mentioned in the introduction the device model of OCPP2.0.1 can contain vario
   Examples: ConnectionTimeout, MasterPassGroupId
 
 ## Requirements for OCPP201 module
-* Pull device model implementation out of libocpp and provide external implementation of device model API
-* Implement Device model API as part of OCPP201 module
+* Provide external implementation of device model API
+* Implement `device_model_storage.hpp` as part of OCPP201 module
 * Device model implementation must differntiate between internally and externally managed variables
-  * Internally Managed: Owned, stored and accessed by OCPP201 module in device model storage
+  * Internally Managed: Owned, stored and accessed by OCPP201 module in device model storage (implementation in libocpp can be used)
   * Externally Managed: Owned, stored and accessed via EVerest config service
   * For externally managed variables a mapping to the EVerest configuration parameter needs to be defined
 * Add property for internally or externally managed to each variable in the component schemas
@@ -64,3 +64,28 @@ As mentioned in the introduction the device model of OCPP2.0.1 can contain vario
 ## Sequence of variable access for internally and externally managed variables
 
 ![Sequence Diagram for ChangeConfiguration.req](sequence_config_service_and_ocpp.png)
+
+## Class Diagram for Device Model
+
+The following class diagram describes the dependencies between libocpp and everest-core and its interfaces and implementations.
+
+![Class Diagram for Device Model](device_model_class_diagram.png)
+
+Clarification of the device model classes of this diagram:
+* DeviceModel: 
+  * Part of libocpp
+  * Contains device model representation and business logic to prevalidate requests to the storage
+  * Contains reference to device model storage implementation
+* DeviceModelStorage:
+  * Pure virtual class of libocpp
+  * Defines contract for storage implementations
+* LibocppDeviceModelStorage
+  * Implements DeviceModelStorage as part of libocpp
+  * Represents existing SQLite implementation of device model
+* EverestDeviceModelStorage
+  * Implements DeviceModelStorage as part of everest-core (OCPP201 module)
+  * Uses config service to interact with EVerest modules
+* ComposedDeviceModelStorage
+  * (Final) implementation of DeviceModelStorage as part of everest-core (OCPP201 module)
+  * A reference of this class will be passed to libocpp's ChargePoint constructor
+  * Differentiates between externally and internally managed variables

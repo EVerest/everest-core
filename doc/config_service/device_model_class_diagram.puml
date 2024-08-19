@@ -1,0 +1,50 @@
+@startuml
+
+package libocpp {
+
+class ChargePoint {
+  - device_model: DeviceModel
+}
+
+class DeviceModel {
+  - storage: DeviceModelStorage
+  + get_device_model(): DeviceModelRepresentation
+  + get_value(...): T
+  + set_value(...): SetVariableStatusEnum
+}
+
+interface DeviceModelStorage {
+  + get_device_model(): DeviceModelRepresentation
+  + get_variable_attribute(...): std::optional<VariableAttribute>
+  + set_variable_attribute_value(...): bool
+}
+
+class LibocppDeviceModelStorage implements DeviceModelStorage
+
+}
+
+package everest-core {
+
+class EverestDeviceModelStorage implements libocpp.DeviceModelStorage
+class ComposedDeviceModelStorage implements libocpp.DeviceModelStorage {
+    - everest_storage: EverestDeviceModelStorage
+    - libocpp_storage: LibocppDeviceModelStorage
+}
+
+}
+
+note left of ChargePoint
+  ChargePoint and DeviceModel are
+  implemented within the library.
+end note
+
+note right of ComposedDeviceModelStorage
+    This implementation will be passed to libocpp's constructor
+end note
+
+ChargePoint *-- DeviceModel
+DeviceModel *-- DeviceModelStorage
+ComposedDeviceModelStorage *-- EverestDeviceModelStorage
+ComposedDeviceModelStorage *-- LibocppDeviceModelStorage
+
+@enduml
