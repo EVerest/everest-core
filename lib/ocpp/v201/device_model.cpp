@@ -566,7 +566,9 @@ std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<Set
             }
         }
 
-        if (this->device_model.find(request.component) == this->device_model.end()) {
+        auto component_it = this->device_model.find(request.component);
+
+        if (component_it == this->device_model.end()) {
             // N04.FR.16
             if (request_has_id && id_found) {
                 result.status = SetMonitoringStatusEnum::Rejected;
@@ -656,6 +658,24 @@ std::vector<SetMonitoringResult> DeviceModel::set_monitors(const std::vector<Set
             auto monitor_meta = this->storage->set_monitoring_data(request, type);
 
             if (monitor_meta.has_value()) {
+                // N07.FR.11
+                // In case of an existing monitor update
+                if (request_has_id && monitor_update_listener) {
+                    auto attribute = this->storage->get_variable_attribute(component_it->first, variable_it->first,
+                                                                           AttributeEnum::Actual);
+
+                    if (attribute.has_value()) {
+                        static std::string empty_value{};
+                        const auto& current_value = attribute.value().value.value_or(empty_value);
+
+                        monitor_update_listener(monitor_meta.value(), component_it->first, variable_it->first,
+                                                characteristics, attribute.value(), current_value);
+                    } else {
+                        EVLOG_warning << "Could not notify monitor update listener, missing variable attribute: "
+                                      << variable_it->first;
+                    }
+                }
+
                 // If we had a successful insert, add/replace it to the variable monitor map
                 variable_it->second.monitors[monitor_meta.value().monitor.id] = std::move(monitor_meta.value());
 

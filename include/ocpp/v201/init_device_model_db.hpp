@@ -91,6 +91,8 @@ struct DeviceModelVariable {
     std::optional<std::string> instance;
     /// \brief Default value, if this is set in the schemas json
     std::optional<std::string> default_actual_value;
+    /// \brief Config monitors, if any
+    std::vector<VariableMonitoringMeta> monitors;
 };
 
 /// \brief Convert from json to a ComponentKey struct.
@@ -100,6 +102,10 @@ void from_json(const json& j, ComponentKey& c);
 /// \brief Convert from json to a DeviceModelVariable struct.
 /// The to_json is not implemented for this struct as we don't need to write the schema to a json file.
 void from_json(const json& j, DeviceModelVariable& c);
+
+/// \brief Convert from json to a VariableMonitoringMeta struct.
+/// The to_json is not implemented for this struct as we don't need to write the schema to a json file.
+void from_json(const json& j, VariableMonitoringMeta& c);
 
 ///
 /// \brief Error class to be able to throw a custom error within the class.
@@ -341,6 +347,31 @@ private: // Functions
                                          const bool warn_source_not_default);
 
     ///
+    /// \brief  Inserts a single monitor in the database
+    /// \param monitor Monitor data
+    /// \param variable_id  Variable ID for which we insert this monitor
+    void insert_variable_monitor(const VariableMonitoringMeta& monitor, const int64_t& variable_id);
+
+    ///
+    /// \brief same as \ref insert_variable_monitor but will simply iterate the monitors and call the function
+    void insert_variable_monitors(const std::vector<VariableMonitoringMeta>& monitors, const int64_t& variable_id);
+
+    ///
+    /// \brief Updates the monitor in the database, using the information from the new monitor
+    void update_variable_monitor(const VariableMonitoringMeta& new_monitor, const VariableMonitoringMeta& db_monitor,
+                                 const int64_t& variable_id);
+
+    ///
+    /// \brief Updates the monitors in the database, removing the monitors that do not exist
+    /// in the configuration file, and inserting the new ones that were newly added
+    void update_variable_monitors(const std::vector<VariableMonitoringMeta>& new_monitors,
+                                  const std::vector<VariableMonitoringMeta>& db_monitors, const int64_t& variable_id);
+
+    ///
+    /// \brief Deletes a single monitor related to the provided variable_id from the database
+    void delete_variable_monitor(const VariableMonitoringMeta& monitor, const int64_t& variable_id);
+
+    ///
     /// \brief Get all components with its variables (and characteristics / attributes) from the database.
     /// \return A map of Components with it Variables.
     ///
@@ -403,6 +434,12 @@ private: // Functions
     /// \throw InitDeviceModelDbError   When variable attributes could not be retrieved from the database.
     ///
     std::vector<DbVariableAttribute> get_variable_attributes_from_db(const uint64_t& variable_id);
+
+    ///
+    /// \brief Get monitors related to a variable from the DB
+    /// \param variable_id  The id of the variable to get the attributes from.
+    /// \return The monitors belonging to the given variables or an empty list
+    std::vector<VariableMonitoringMeta> get_variable_monitors_from_db(const uint64_t& variable_id);
 
 protected: // Functions
     // DatabaseHandlerCommon interface

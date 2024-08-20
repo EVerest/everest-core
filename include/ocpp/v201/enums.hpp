@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+// Manually added enums for OCPP, for the aut-generated ones see 'ocpp_enums.hpp'
 
 #ifndef OCPP_V201_ENUMS_HPP
 #define OCPP_V201_ENUMS_HPP
@@ -12,6 +13,12 @@ enum class VariableMonitorType {
     PreconfiguredMonitor,
     CustomMonitor,
 };
+
+namespace conversions {
+/// \brief Converts the given std::string \p s to VariableMonitorType
+/// \returns a VariableMonitorType from a string representation
+VariableMonitorType string_to_variable_monitor_type(const std::string& s);
+} // namespace conversions
 
 namespace MonitoringLevelSeverity {
 constexpr int32_t Danger = 0;

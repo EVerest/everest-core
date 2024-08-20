@@ -83,6 +83,11 @@ typedef std::function<void(const std::unordered_map<int64_t, VariableMonitoringM
                            const std::string& value_previous, const std::string& value_current)>
     on_variable_changed;
 
+typedef std::function<void(const VariableMonitoringMeta& updated_monitor, const Component& component,
+                           const Variable& variable, const VariableCharacteristics& characteristics,
+                           const VariableAttribute& attribute, const std::string& current_value)>
+    on_monitor_updated;
+
 /// \brief This class manages access to the device model representation and to the device model storage and provides
 /// functionality to support the use cases defined in the functional block Provisioning
 class DeviceModel {
@@ -93,6 +98,8 @@ private:
 
     /// \brief Listener for the internal change of a variable
     on_variable_changed variable_listener;
+    /// \brief Listener for the internal update of a monitor
+    on_monitor_updated monitor_update_listener;
 
     /// \brief Private helper method that does some checks with the device model representation in memory to evaluate if
     /// a value for the given parameters can be requested. If it can be requested it will be retrieved from the device
@@ -251,6 +258,10 @@ public:
 
     void register_variable_listener(on_variable_changed&& listener) {
         variable_listener = std::move(listener);
+    }
+
+    void register_monitor_listener(on_monitor_updated&& listener) {
+        monitor_update_listener = std::move(listener);
     }
 
     /// \brief Sets the given monitor \p requests in the device model
