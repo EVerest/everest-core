@@ -7,8 +7,10 @@
 
 #include <websocketpp_utils/uri.hpp>
 
+#include <../../utils/conversions.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
+
 namespace module {
 
 const std::string SQL_CORE_MIGRATIONS = "core_migrations";
@@ -496,6 +498,83 @@ void OCPP201::ready() {
                 conversions::to_everest_boot_notification_response(boot_notification_response);
             this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
         };
+
+    callbacks.set_display_message_callback =
+        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v201::SetDisplayMessageResponse {
+        ocpp::v201::SetDisplayMessageResponse response;
+        if (this->r_display_message.empty()) {
+            response.status = ocpp::v201::DisplayMessageStatusEnum::Rejected;
+            return response;
+        }
+
+        std::vector<types::display_message::DisplayMessage> display_messages;
+        for (const ocpp::DisplayMessage& message : messages) {
+            const types::display_message::DisplayMessage m = ::conversions::to_everest_display_message(message);
+            display_messages.push_back(m);
+        }
+
+        const types::display_message::SetDisplayMessageResponse display_message_response =
+            this->r_display_message.at(0)->call_set_display_message(display_messages);
+        response = conversions::to_ocpp_set_display_message_response(display_message_response);
+
+        return response;
+    };
+
+    callbacks.get_display_message_callback =
+        [this](const ocpp::v201::GetDisplayMessagesRequest& request) -> std::vector<ocpp::DisplayMessage> {
+        if (this->r_display_message.empty()) {
+            return {};
+        }
+        types::display_message::GetDisplayMessageRequest get_request;
+
+        types::display_message::GetDisplayMessageResponse response =
+            this->r_display_message.at(0)->call_get_display_messages(
+                conversions::to_everest_display_message_request(request));
+
+        if (!response.messages.has_value() || response.messages.value().empty()) {
+            return {};
+        }
+
+        std::vector<ocpp::DisplayMessage> ocpp_display_messages;
+        for (const auto& message : response.messages.value()) {
+            ocpp_display_messages.push_back(::conversions::to_ocpp_display_message(message));
+        }
+
+        return ocpp_display_messages;
+    };
+
+    callbacks.clear_display_message_callback =
+        [this](const ocpp::v201::ClearDisplayMessageRequest& request) -> ocpp::v201::ClearDisplayMessageResponse {
+        if (this->r_display_message.empty()) {
+            ocpp::v201::ClearDisplayMessageResponse response;
+            response.status = ocpp::v201::ClearMessageStatusEnum::Unknown;
+            return response;
+        }
+
+        types::display_message::ClearDisplayMessageResponse response =
+            this->r_display_message.at(0)->call_clear_display_message(
+                conversions::to_everest_clear_display_message_request(request));
+        return conversions::to_ocpp_clear_display_message_response(response);
+    };
+
+    if (this->p_session_cost != nullptr) {
+        callbacks.set_running_cost_callback = [this](const ocpp::RunningCost& running_cost,
+                                                     const uint32_t number_of_decimals,
+                                                     const std::optional<std::string>& currency_code) {
+            std::optional<types::money::CurrencyCode> currency;
+            if (currency_code.has_value()) {
+                try {
+                    currency = types::money::string_to_currency_code(currency_code.value());
+                } catch (const std::out_of_range& e) {
+                    // If conversion fails, we just don't add the currency code. But we want to see it in the logging.
+                    EVLOG_error << e.what();
+                }
+            }
+            const types::session_cost::SessionCost cost =
+                ::conversions::create_session_cost(running_cost, number_of_decimals, currency);
+            this->p_session_cost->publish_session_cost(cost);
+        };
+    }
 
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {

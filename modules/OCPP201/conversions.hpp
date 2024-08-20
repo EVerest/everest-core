@@ -10,10 +10,13 @@
 
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
+#include <ocpp/v201/messages/ClearDisplayMessage.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v201/messages/GetDisplayMessages.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
+#include <ocpp/v201/messages/SetDisplayMessage.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
@@ -225,6 +228,29 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
 /// types::ocpp::SetVariableStatusEnumType
 types::ocpp::SetVariableStatusEnumType
 to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
+
+ocpp::v201::DisplayMessageStatusEnum
+to_ocpp_display_message_status_enum(const types::display_message::DisplayMessageStatusEnum& from);
+
+ocpp::v201::SetDisplayMessageResponse
+to_ocpp_set_display_message_response(const types::display_message::SetDisplayMessageResponse& response);
+
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& priority);
+types::display_message::MessageStateEnum
+to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& message_state);
+
+types::display_message::GetDisplayMessageRequest
+to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& request);
+
+types::display_message::ClearDisplayMessageRequest
+to_everest_clear_display_message_request(const ocpp::v201::ClearDisplayMessageRequest& request);
+
+ocpp::v201::ClearMessageStatusEnum
+to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageResponseEnum& response_enum);
+
+ocpp::v201::ClearDisplayMessageResponse
+to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
 
 } // namespace conversions
 } // namespace module

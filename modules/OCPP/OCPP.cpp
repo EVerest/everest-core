@@ -4,6 +4,7 @@
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
+#include <../../utils/conversions.hpp>
 #include <fmt/core.h>
 #include <fstream>
 
@@ -759,7 +760,7 @@ void OCPP::ready() {
         [this](const ocpp::RunningCost& session_cost,
                const uint32_t number_of_decimals) -> ocpp::v16::DataTransferResponse {
             const types::session_cost::SessionCost cost =
-                conversions::create_session_cost(session_cost, number_of_decimals, {});
+                ::conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
             this->p_session_cost->publish_session_cost(cost);
             response.status = ocpp::v16::DataTransferStatus::Accepted;
@@ -770,13 +771,13 @@ void OCPP::ready() {
         [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
             ocpp::v16::DataTransferResponse response;
             if (this->r_display_message.empty()) {
-                EVLOG_warning << "No display message handler registered, dropping data transfer message";
+                EVLOG_warning << "No display message handler registered, dropping data transfer display message";
                 response.status = ocpp::v16::DataTransferStatus::Rejected;
                 return response;
             }
             std::vector<types::display_message::DisplayMessage> display_messages;
             for (const ocpp::DisplayMessage& message : messages) {
-                const types::display_message::DisplayMessage m = conversions::to_everest_display_message(message);
+                const types::display_message::DisplayMessage m = ::conversions::to_everest_display_message(message);
                 display_messages.push_back(m);
             }
 
