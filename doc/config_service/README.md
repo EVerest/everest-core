@@ -89,3 +89,15 @@ Clarification of the device model classes of this diagram:
   * (Final) implementation of DeviceModelStorage as part of everest-core (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
   * Differentiates between externally and internally managed variables
+
+## Next steps to adjust OCPP2.0.1 and libocpp
+
+* Keep libocpp untouched. Optionaly: Rename `DeviceModelStorage` class to `DeviceModelInterface`
+* Create a skeleton for the `ComposedDeviceModelStorage` class (implements the `DeviceModelInterface`) inside the OCPP201 module
+  * Create the skeleton for the `EverestDeviceModelStorage` class that implements the `DeviceModelInterface`
+  * Keep the `EverestDeviceModelStorage` empty for now / return defaults
+  * Make the `LibocppDeviceModelStorage` and `EverestDeviceModelStorage` fields of the `ComposedDeviceModelStorage`
+  * Add placeholders for internally and externally managed differentation within implementation of `ComposedDeviceModelStorage`
+  * For now only make use of the `LibocppDeviceModelStorage` inside the `ComposedDeviceModelStorage`
+  * Pass the `ComposedDeviceModelStorage` to the v201::ChargePoint constructor
+  * Goal: Device Model should behave exactly as it does currently, we have only added the skeleton to extend this 
