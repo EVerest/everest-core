@@ -333,7 +333,7 @@ bool WpaCliSetup::save_config(const std::string& interface) {
         return false;
     }
 
-    auto output = run_application(wpa_cli, {"-i", interface, "save_config_tree_to_file"});
+    auto output = run_application(wpa_cli, {"-i", interface, "save_config"});
     return output.exit_code == 0;
 }
 

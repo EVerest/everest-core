@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "everest_config_mapping.hpp"
+#include "generated/types/ocpp.hpp"
 #include <c4/yml/std/map.hpp>
 #include <filesystem>
 #include <ryml.hpp>
@@ -12,19 +14,22 @@
 
 namespace module {
 
-struct EverestModuleMapping {
-    std::string module_id;
-    std::string config_key;
-};
+using types::ocpp::Component;
+using types::ocpp::ComponentVariable;
+using types::ocpp::Variable;
 
-using OcppToEverestModuleMapping = std::unordered_map<std::string, EverestModuleMapping>;
+using OcppToEverestConfigMapping = std::unordered_map<ComponentVariable, EverestConfigMapping>;
 
 class MappingReader {
 public:
-    static OcppToEverestModuleMapping readMapping(const std::filesystem::path& file_path_string);
+    static OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_path);
 
 private:
-    static EverestModuleMapping parseMappingNode(const ryml::NodeRef& node);
+    static EverestConfigMapping parse_mapping_node(const ryml::NodeRef& node);
+    static types::ocpp::Component parse_component_node(const c4::yml::NodeRef& node);
+    static std::optional<types::ocpp::EVSE> parse_evse_node(const c4::yml::NodeRef node);
+    static types::ocpp::Variable parse_variable_node(std::string variable_name, const c4::yml::NodeRef node);
+    static ComponentVariable parse_component_variable_node(std::string variable_name, const c4::yml::NodeRef& node);
 };
 
 } // namespace module

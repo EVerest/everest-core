@@ -14,13 +14,14 @@ public:
     void handleEvent(const types::ocpp::EventData& event_data, const std::string& user_config_path_string);
 
 private:
-    const std::optional<EverestModuleMapping> find_event_in_map_or_log_error(const std::string& event_name) const;
-    const EverestModuleMapping find_event_in_map(const std::string& event_name) const;
+    const std::optional<EverestConfigMapping>
+    find_mapping_by_component_variable_or_log_error(const types::ocpp::ComponentVariable& component_variable) const;
+    const EverestConfigMapping
+    find_mapping_by_component_variable(const types::ocpp::ComponentVariable& component_variable) const;
 
-    OcppToEverestModuleMapping event_map;
+    OcppToEverestConfigMapping config_mapping;
     void write_event_to_config(const types::ocpp::EventData& event_data, const std::string& user_config_path_string,
-                               const EverestModuleMapping& everest_module_mapping,
-                               const types::ocpp::Component& component);
+                               const EverestConfigMapping& everest_module_mapping);
 };
 
 } // namespace module

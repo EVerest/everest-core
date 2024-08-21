@@ -19,9 +19,8 @@ ryml::Tree load_existing_user_config(const std::filesystem::path& user_config_fi
 ryml::Tree load_yaml_file(const std::filesystem::path& file_path);
 void save_tree_to_yaml_file(const ryml::Tree& tree, const std::filesystem::path& file_path);
 
-void write_value_to_tree(const EverestModuleMapping& module_mapping, const std::string& config_value,
-                         const types::ocpp::Component& component, ryml::Tree& config_tree);
-void add_component_if_exists(const types::ocpp::Component& component, c4::yml::NodeRef& module_id_node);
+void write_value_to_tree(const EverestConfigMapping& module_mapping, const std::string& config_value,
+                         ryml::Tree& config_tree);
 
 }; // namespace Util
 } // namespace module

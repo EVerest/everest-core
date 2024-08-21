@@ -13,6 +13,9 @@ void OCPPConfiguration::init() {
 void OCPPConfiguration::ready() {
     invoke_ready(*p_main);
 
+    auto wait_attached = false;
+    while (wait_attached) {
+    };
     const auto mapping_file_path = std::filesystem::path{config.mapping_file_path};
     event_handler = std::make_unique<EventHandler>(mapping_file_path);
 

@@ -21,6 +21,7 @@ target_sources(${MODULE_NAME}
         "main/mapping_reader.cpp"
         "main/util.cpp"
         "main/event_handler.cpp"
+        "main/everest_config_mapping.cpp"
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
