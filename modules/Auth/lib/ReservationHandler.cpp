@@ -13,6 +13,7 @@ void ReservationHandler::init_connector(int connector_id) {
 
 bool ReservationHandler::matches_reserved_identifier(int connector, const std::string& id_token,
                                                      std::optional<std::string> parent_id_token) {
+    std::lock_guard<std::mutex> lk(this->reservation_mutex);
     // return true if id tokens match or parent id tokens exists and match
     return this->reservations[connector].id_token == id_token ||
            (parent_id_token && this->reservations[connector].parent_id_token &&
@@ -20,6 +21,7 @@ bool ReservationHandler::matches_reserved_identifier(int connector, const std::s
 }
 
 bool ReservationHandler::has_reservation_parent_id(int connector) {
+    std::lock_guard<std::mutex> lk(this->reservation_mutex);
     if (!this->reservations.count(connector)) {
         return false;
     }
@@ -29,7 +31,7 @@ bool ReservationHandler::has_reservation_parent_id(int connector) {
 types::reservation::ReservationResult ReservationHandler::reserve(int connector, const ConnectorState& state,
                                                                   bool is_reservable,
                                                                   const types::reservation::Reservation& reservation) {
-
+    std::lock_guard<std::mutex> lk(this->reservation_mutex);
     if (connector == 0) {
         EVLOG_info << "Reservation for connector 0 is not supported";
         return types::reservation::ReservationResult::Rejected;
@@ -72,7 +74,7 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
 }
 
 int ReservationHandler::cancel_reservation(int reservation_id, bool execute_callback) {
-
+    std::lock_guard<std::mutex> lk(this->reservation_mutex);
     int connector = -1;
     for (const auto& reservation : this->reservations) {
         if (reservation.second.reservation_id == reservation_id) {

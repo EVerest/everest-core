@@ -41,8 +41,7 @@ struct Conf {
     std::string CoreDatabasePath;
     std::string DeviceModelDatabasePath;
     std::string DeviceModelDatabaseMigrationPath;
-    std::string DeviceModelSchemaPath;
-    std::string ConfigFilePath;
+    std::string DeviceModelConfigPath;
     bool EnableExternalWebsocketControl;
     int MessageQueueResumeDelay;
 };
