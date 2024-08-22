@@ -47,7 +47,7 @@ namespace module {
 
 struct EverestConfigMapping {
     std::string module_id;
-    std::string config_key;
+    std::string config_param;
 };
 
 } // namespace module

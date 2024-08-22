@@ -12,7 +12,7 @@
 #include <sstream>
 
 namespace module {
-namespace Util {
+namespace util {
 
 ryml::Tree load_existing_user_config(const std::filesystem::path& user_config_file_path);
 

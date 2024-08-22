@@ -1,17 +1,5 @@
-description: This module reacts to OCPP configuration changes.
+description: This module reacts to OCPP configuration change requests.
 config:
-  monitor_variables:
-    description: Comma separated list of variables to monitor
-    type: string
-    default: >
-      AllowOfflineTxForUnknownId,AuthorizationCacheEnabled,AuthorizeRemoteTxRequests,
-      BlinkRepeat,ClockAlignedDataInterval,ConnectionTimeOut,ConnectorPhaseRotation,
-      HeartbeatInterval,LightIntensity,LocalAuthorizeOffline,LocalPreAuthorize,
-      MaxEnergyOnInvalidId,MeterValuesAlignedData,MeterValuesSampledData,
-      MeterValueSampleInterval,MinimumStatusDuration,ResetRetries,
-      StopTransactionOnEVSideDisconnect,StopTransactionOnInvalidId,StopTxnAlignedData,
-      StopTxnSampledData,TransactionMessageAttempts,TransactionMessageRetryInterval,
-      UnlockConnectorOnEVSideDisconnect,WebsocketPingInterval
   user_config_path:
     description: Path to the user configuration file
     type: string
@@ -19,7 +7,7 @@ config:
   mapping_file_path:
     description: Path to the mapping file
     type: string
-    default: "config-mapping.yaml"
+    default: "example-config-mapping.yaml"
 provides:
   main:
     interface: empty

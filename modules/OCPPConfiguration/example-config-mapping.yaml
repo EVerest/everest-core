@@ -1,0 +1,14 @@
+- ocpp_definition:
+    component:
+      name: TxCtrlr
+    variable:
+      name: EVConnectionTimeOut
+  everest_definition:
+    module_id: auth
+    config_param: connection_timeout
+- ocpp_definition:
+    variable:
+      name: ConnectionTimeOut
+  everest_definition:
+    module_id: auth
+    config_param: connection_timeout

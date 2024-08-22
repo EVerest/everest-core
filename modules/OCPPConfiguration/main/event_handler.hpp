@@ -11,11 +11,12 @@ namespace module {
 class EventHandler {
 public:
     EventHandler(const std::filesystem::path& config_mapping_path);
-    void handle_event(const types::ocpp::EventData& event_data, const std::string& user_config_path_string);
+    void try_handle_event(const types::ocpp::EventData& event_data, const std::string& user_config_path_string) noexcept;
+    std::vector<types::ocpp::ComponentVariable> get_monitor_variables() const noexcept;
 
 private:
     const std::optional<EverestConfigMapping>
-    find_mapping_by_component_variable_or_log_error(const types::ocpp::ComponentVariable& component_variable) const;
+    get_optional_mapping_by_component_variable(const types::ocpp::ComponentVariable& component_variable) const noexcept;
     const EverestConfigMapping
     find_mapping_by_component_variable(const types::ocpp::ComponentVariable& component_variable) const;
 

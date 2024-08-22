@@ -10,7 +10,7 @@
 
 namespace module {
 
-namespace Util {
+namespace util {
 
 ryml::Tree load_existing_user_config(const std::filesystem::path& user_config_file_path) {
     try {
@@ -62,10 +62,10 @@ void write_value_to_tree(const EverestConfigMapping& module_mapping, const std::
     auto config_module_node = module_id_node["config_module"];
     config_module_node |= ryml::MAP;
 
-    const auto config_key_csubstr = ryml::to_csubstr(module_mapping.config_key.c_str());
-    auto config_key_node = config_module_node[config_key_csubstr];
+    const auto config_param_csubstr = ryml::to_csubstr(module_mapping.config_param.c_str());
+    auto config_param_node = config_module_node[config_param_csubstr];
     const auto config_value_csubstr = ryml::to_csubstr(config_value.c_str());
-    config_key_node << config_value_csubstr;
+    config_param_node << config_value_csubstr;
 }
 
 } // namespace Util
