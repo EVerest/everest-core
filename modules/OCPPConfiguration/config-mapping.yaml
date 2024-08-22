@@ -1,337 +1,312 @@
-AllowOfflineTxForUnknownId:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: allow_offline_tx_for_unknown_id
-        config_key: allow_offline_tx_for_unknown_id_config
-  - mapping:
-      component:
-        name: ocpp
-        instance: 2
-        evse:
-          id: 2
-          connector_id: 2
-      variable:
-        instance: 2
-      maps_to:
-        module_id: allow_offline_tx_for_unknown_id
-        config_key: allow_offline_tx_for_unknown_id_config
-AuthorizationCacheEnabled:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: authorization_cache_enabled
-        config_key: authorization_cache_enabled_config
-AuthorizeRemoteTxRequests:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: authorize_remote_tx_requests
-        config_key: authorize_remote_tx_requests_config
-BlinkRepeat:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: blink_repeat
-        config_key: blink_repeat_config
-ClockAlignedDataInterval:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: clock_aligned_data_interval
-        config_key: clock_aligned_data_interval_config
-ConnectionTimeOut:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: connection_time_out
-        config_key: connection_time_out_config
-ConnectorPhaseRotation:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: connector_phase_rotation
-        config_key: connector_phase_rotation_config
-HeartbeatInterval:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: heartbeat_interval
-        config_key: heartbeat_interval_config
-LightIntensity:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: light_intensity
-        config_key: light_intensity_config
-LocalAuthorizeOffline:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: local_authorize_offline
-        config_key: local_authorize_offline_config
-LocalPreAuthorize:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: local_pre_authorize
-        config_key: local_pre_authorize_config
-MaxEnergyOnInvalidId:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: max_energy_on_invalid_id
-        config_key: max_energy_on_invalid_id_config
-MeterValuesAlignedData:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: meter_values_aligned_data
-        config_key: meter_values_aligned_data_config
-MeterValuesSampledData:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: meter_values_sampled_data
-        config_key: meter_values_sampled_data_config
-MeterValueSampleInterval:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: meter_value_sample_interval
-        config_key: meter_value_sample_interval_config
-MinimumStatusDuration:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: minimum_status_duration
-        config_key: minimum_status_duration_config
-ResetRetries:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: reset_retries
-        config_key: reset_retries_config
-StopTransactionOnEVSideDisconnect:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: stop_transaction_on_ev_side_disconnect
-        config_key: stop_transaction_on_ev_side_disconnect_config
-StopTransactionOnInvalidId:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: stop_transaction_on_invalid_id
-        config_key: stop_transaction_on_invalid_id_config
-StopTxnAlignedData:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: stop_txn_aligned_data
-        config_key: stop_txn_aligned_data_config
-StopTxnSampledData:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: stop_txn_sampled_data
-        config_key: stop_txn_sampled_data_config
-TransactionMessageAttempts:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: transaction_message_attempts
-        config_key: transaction_message_attempts_config
-TransactionMessageRetryInterval:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: transaction_message_retry_interval
-        config_key: transaction_message_retry_interval_config
-UnlockConnectorOnEVSideDisconnect:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: unlock_connector_on_ev_side_disconnect
-        config_key: unlock_connector_on_ev_side_disconnect_config
-WebsocketPingInterval:
-  - mapping:
-      component:
-        name: ocpp
-        instance: 1
-        evse:
-          id: 1
-          connector: 1
-      variable:
-        instance: 1
-      maps_to:
-        module_id: websocket_ping_interval
-        config_key: websocket_ping_interval_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: AllowOfflineTxForUnknownId
+    instance: 1
+  maps_to:
+    module_id: allow_offline_tx_for_unknown_id
+    config_key: allow_offline_tx_for_unknown_id_config
+- component:
+    name: ocpp
+    instance: 2
+    evse:
+      id: 2
+      connector_id: 2
+  variable:
+    name: AllowOfflineTxForUnknownId
+    instance: 2
+  maps_to:
+    module_id: allow_offline_tx_for_unknown_id
+    config_key: allow_offline_tx_for_unknown_id_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: AuthorizationCacheEnabled
+    instance: 1
+  maps_to:
+    module_id: authorization_cache_enabled
+    config_key: authorization_cache_enabled_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: AuthorizeRemoteTxRequests
+    instance: 1
+  maps_to:
+    module_id: authorize_remote_tx_requests
+    config_key: authorize_remote_tx_requests_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: BlinkRepeat
+    instance: 1
+  maps_to:
+    module_id: blink_repeat
+    config_key: blink_repeat_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: ClockAlignedDataInterval
+    instance: 1
+  maps_to:
+    module_id: clock_aligned_data_interval
+    config_key: clock_aligned_data_interval_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: ConnectionTimeOut
+    instance: 1
+  maps_to:
+    module_id: connection_time_out
+    config_key: connection_time_out_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: ConnectorPhaseRotation
+    instance: 1
+  maps_to:
+    module_id: connector_phase_rotation
+    config_key: connector_phase_rotation_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: HeartbeatInterval
+    instance: 1
+  maps_to:
+    module_id: heartbeat_interval
+    config_key: heartbeat_interval_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: LightIntensity
+    instance: 1
+  maps_to:
+    module_id: light_intensity
+    config_key: light_intensity_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: LocalAuthorizeOffline
+    instance: 1
+  maps_to:
+    module_id: local_authorize_offline
+    config_key: local_authorize_offline_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: LocalPreAuthorize
+    instance: 1
+  maps_to:
+    module_id: local_pre_authorize
+    config_key: local_pre_authorize_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: MaxEnergyOnInvalidId
+    instance: 1
+  maps_to:
+    module_id: max_energy_on_invalid_id
+    config_key: max_energy_on_invalid_id_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: MeterValuesAlignedData
+    instance: 1
+  maps_to:
+    module_id: meter_values_aligned_data
+    config_key: meter_values_aligned_data_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: MeterValuesSampledData
+    instance: 1
+  maps_to:
+    module_id: meter_values_sampled_data
+    config_key: meter_values_sampled_data_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: MeterValueSampleInterval
+    instance: 1
+  maps_to:
+    module_id: meter_value_sample_interval
+    config_key: meter_value_sample_interval_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: MinimumStatusDuration
+    instance: 1
+  maps_to:
+    module_id: minimum_status_duration
+    config_key: minimum_status_duration_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: ResetRetries
+    instance: 1
+  maps_to:
+    module_id: reset_retries
+    config_key: reset_retries_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: StopTransactionOnEVSideDisconnect
+    instance: 1
+  maps_to:
+    module_id: stop_transaction_on_ev_side_disconnect
+    config_key: stop_transaction_on_ev_side_disconnect_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: StopTransactionOnInvalidId
+    instance: 1
+  maps_to:
+    module_id: stop_transaction_on_invalid_id
+    config_key: stop_transaction_on_invalid_id_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: StopTxnAlignedData
+    instance: 1
+  maps_to:
+    module_id: stop_txn_aligned_data
+    config_key: stop_txn_aligned_data_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: StopTxnSampledData
+    instance: 1
+  maps_to:
+    module_id: stop_txn_sampled_data
+    config_key: stop_txn_sampled_data_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: TransactionMessageAttempts
+    instance: 1
+  maps_to:
+    module_id: transaction_message_attempts
+    config_key: transaction_message_attempts_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: TransactionMessageRetryInterval
+    instance: 1
+  maps_to:
+    module_id: transaction_message_retry_interval
+    config_key: transaction_message_retry_interval_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: UnlockConnectorOnEVSideDisconnect
+    instance: 1
+  maps_to:
+    module_id: unlock_connector_on_ev_side_disconnect
+    config_key: unlock_connector_on_ev_side_disconnect_config
+- component:
+    name: ocpp
+    instance: 1
+    evse:
+      id: 1
+      connector: 1
+  variable:
+    name: WebsocketPingInterval
+    instance: 1
+  maps_to:
+    module_id: websocket_ping_interval
+    config_key: websocket_ping_interval_config

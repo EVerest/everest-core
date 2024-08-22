@@ -25,11 +25,13 @@ public:
     static OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_path);
 
 private:
-    static EverestConfigMapping parse_mapping_node(const ryml::NodeRef& node);
+    static std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node);
+    static EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node);
     static types::ocpp::Component parse_component_node(const c4::yml::NodeRef& node);
     static std::optional<types::ocpp::EVSE> parse_evse_node(const c4::yml::NodeRef node);
-    static types::ocpp::Variable parse_variable_node(std::string variable_name, const c4::yml::NodeRef node);
-    static ComponentVariable parse_component_variable_node(std::string variable_name, const c4::yml::NodeRef& node);
+    static Variable parse_variable_node(const c4::yml::NodeRef node);
+    static ComponentVariable parse_component_variable_node(const c4::yml::NodeRef& node);
+    static OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root);
 };
 
 } // namespace module
