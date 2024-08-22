@@ -755,6 +755,38 @@ void OCPP::ready() {
             this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
         });
 
+    this->charge_point->register_session_cost_callback(
+        [this](const ocpp::RunningCost& session_cost,
+               const uint32_t number_of_decimals) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::SessionCost cost =
+                conversions::create_session_cost(session_cost, number_of_decimals, {});
+            ocpp::v16::DataTransferResponse response;
+            this->p_session_cost->publish_session_cost(cost);
+            response.status = ocpp::v16::DataTransferStatus::Accepted;
+            return response;
+        });
+
+    this->charge_point->register_set_display_message_callback(
+        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
+            ocpp::v16::DataTransferResponse response;
+            if (this->r_display_message.empty()) {
+                EVLOG_warning << "No display message handler registered, dropping data transfer message";
+                response.status = ocpp::v16::DataTransferStatus::Rejected;
+                return response;
+            }
+            std::vector<types::display_message::DisplayMessage> display_messages;
+            for (const ocpp::DisplayMessage& message : messages) {
+                const types::display_message::DisplayMessage m = conversions::to_everest_display_message(message);
+                display_messages.push_back(m);
+            }
+
+            const types::display_message::SetDisplayMessageResponse display_message_response =
+                this->r_display_message.at(0)->call_set_display_message(display_messages);
+            response = conversions::to_ocpp_data_transfer_response(display_message_response);
+
+            return response;
+        });
+
     if (!this->r_data_transfer.empty()) {
         this->charge_point->register_data_transfer_callback([this](const ocpp::v16::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request;

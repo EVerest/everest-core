@@ -21,7 +21,9 @@ void CarSimulation::state_machine() {
             // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
 
             sim_data.slac_state = "UNMATCHED";
-            r_ev[0]->call_stop_charging();
+            if (!r_ev.empty()) {
+                r_ev[0]->call_stop_charging();
+            }
         }
         break;
     case SimState::PLUGGED_IN:
