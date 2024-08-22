@@ -172,7 +172,7 @@
         {
           "type": "Actual",
           "mutability": "ReadOnly",
-          "value": ""
+          "value": "A,W"
         }
       ],
       "description": "A list of supported quantities for use in a ChargingSchedule. Allowed values: 'A' and 'W\ufffd",

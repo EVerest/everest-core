@@ -39,6 +39,7 @@ static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
+static const int DEFAULT_REQUEST_ID = 1;
 static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
 const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_config";
@@ -156,6 +157,45 @@ protected:
                                .validFrom = validFrom,
                                .validTo = validTo,
                                .transactionId = transaction_id};
+    }
+
+    ChargingProfileCriterion create_charging_profile_criteria(
+        std::optional<std::vector<ocpp::v201::ChargingLimitSourceEnum>> sources = std::nullopt,
+        std::optional<std::vector<int32_t>> ids = std::nullopt,
+        std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
+        std::optional<int32_t> stack_level = std::nullopt) {
+        ChargingProfileCriterion criteria;
+        criteria.chargingLimitSource = sources;
+        criteria.chargingProfileId = ids;
+        criteria.chargingProfilePurpose = purpose;
+        criteria.stackLevel = stack_level;
+        return criteria;
+    }
+
+    GetChargingProfilesRequest create_get_charging_profile_request(int32_t request_id,
+                                                                   ChargingProfileCriterion criteria,
+                                                                   std::optional<int32_t> evse_id = std::nullopt) {
+        GetChargingProfilesRequest req;
+        req.requestId = request_id;
+        req.chargingProfile = criteria;
+        req.evseId = evse_id;
+        return req;
+    }
+
+    ClearChargingProfileRequest
+    create_clear_charging_profile_request(std::optional<int32_t> id = std::nullopt,
+                                          std::optional<ClearChargingProfile> criteria = std::nullopt) {
+        ClearChargingProfileRequest req;
+        req.chargingProfileId = id;
+        req.chargingProfileCriteria = criteria;
+        return req;
+    }
+
+    ClearChargingProfile create_clear_charging_profile(std::optional<int32_t> evse_id = std::nullopt,
+                                                       std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
+                                                       std::optional<int32_t> stack_level = std::nullopt) {
+        return ClearChargingProfile{
+            .customData = {}, .evseId = evse_id, .chargingProfilePurpose = purpose, .stackLevel = stack_level};
     }
 
     void create_device_model_db(const std::string& path) {
@@ -1163,6 +1203,235 @@ TEST_F(ChargepointTestFixtureV201, K01_ValidateAndAdd_AddsValidProfiles) {
     EXPECT_THAT(sut.statusInfo.has_value(), testing::IsFalse());
 
     auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Contains(profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_EvseId) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile1 = create_charging_profile(
+        1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    auto profile2 = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(2));
+
+    auto reported_profiles = handler.get_reported_profiles(
+        create_get_charging_profile_request(DEFAULT_REQUEST_ID, create_charging_profile_criteria(), STATION_WIDE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+
+    auto reported_profile = reported_profiles.at(0);
+    EXPECT_THAT(profile1, testing::Eq(reported_profile.profile));
+
+    reported_profiles = handler.get_reported_profiles(
+        create_get_charging_profile_request(DEFAULT_REQUEST_ID, create_charging_profile_criteria(), DEFAULT_EVSE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+
+    reported_profile = reported_profiles.at(0);
+    EXPECT_THAT(profile2, testing::Eq(reported_profile.profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_NoEvseId) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile1 = create_charging_profile(
+        1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    auto profile2 = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(2));
+
+    auto reported_profiles = handler.get_reported_profiles(
+        create_get_charging_profile_request(DEFAULT_REQUEST_ID, create_charging_profile_criteria()));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(2));
+
+    EXPECT_THAT(profiles, testing::Contains(reported_profiles.at(0).profile));
+    EXPECT_THAT(profiles, testing::Contains(reported_profiles.at(1).profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_ProfileId) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile1 = create_charging_profile(
+        1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    auto profile2 = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(2));
+
+    std::vector<int32_t> requested_profile_ids{1};
+    auto reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID, create_charging_profile_criteria(std::nullopt, requested_profile_ids)));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+
+    EXPECT_THAT(profile1, testing::Eq(reported_profiles.at(0).profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_EvseIdAndStackLevel) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile1 = create_charging_profile(
+        1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), std::nullopt,
+        ChargingProfileKindEnum::Absolute, 2); // contains different stackLevel(2)
+    auto profile2 = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods,
+                               ocpp::DateTime("2024-01-17T17:00:00"))); // contains default stackLevel(1)
+
+    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(2));
+
+    auto reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID,
+        create_charging_profile_criteria(std::nullopt, std::nullopt, std::nullopt, DEFAULT_STACK_LEVEL),
+        DEFAULT_EVSE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+    EXPECT_THAT(profile2, testing::Eq(reported_profiles.at(0).profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_EvseIdAndSource) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut1 = handler.validate_and_add_profile(profile, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(1));
+
+    std::vector<ChargingLimitSourceEnum> requested_sources_cso{ChargingLimitSourceEnum::CSO};
+    std::vector<ChargingLimitSourceEnum> requested_sources_ems{ChargingLimitSourceEnum::EMS};
+
+    auto reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID, create_charging_profile_criteria(requested_sources_cso), DEFAULT_EVSE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+    EXPECT_THAT(profile, testing::Eq(reported_profiles.at(0).profile));
+
+    reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID, create_charging_profile_criteria(requested_sources_ems), DEFAULT_EVSE_ID));
+
+    EXPECT_THAT(reported_profiles, testing::SizeIs(0));
+}
+
+TEST_F(ChargepointTestFixtureV201, K09_GetChargingProfiles_EvseIdAndPurposeAndStackLevel) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile1 = create_charging_profile(
+        1, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    auto profile2 = create_charging_profile(
+        2, ChargingProfilePurposeEnum::TxDefaultProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+
+    auto sut1 = handler.validate_and_add_profile(profile1, STATION_WIDE_ID);
+    auto sut2 = handler.validate_and_add_profile(profile2, DEFAULT_EVSE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::SizeIs(2));
+
+    auto reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID,
+        create_charging_profile_criteria(std::nullopt, std::nullopt, ChargingProfilePurposeEnum::TxDefaultProfile),
+        DEFAULT_EVSE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+    EXPECT_THAT(profile2, testing::Eq(reported_profiles.at(0).profile));
+
+    reported_profiles = handler.get_reported_profiles(create_get_charging_profile_request(
+        DEFAULT_REQUEST_ID,
+        create_charging_profile_criteria(std::nullopt, std::nullopt, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                         DEFAULT_STACK_LEVEL),
+        DEFAULT_EVSE_ID));
+    EXPECT_THAT(reported_profiles, testing::SizeIs(1));
+    EXPECT_THAT(profile2, testing::Eq(reported_profiles.at(0).profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K10_ClearChargingProfile_ClearsId) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    handler.validate_and_add_profile(profile, STATION_WIDE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Contains(profile));
+
+    auto sut = handler.clear_profiles(create_clear_charging_profile_request(DEFAULT_PROFILE_ID));
+    EXPECT_THAT(sut.status, testing::Eq(ClearChargingProfileStatusEnum::Accepted));
+
+    profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Not(testing::Contains(profile)));
+}
+
+TEST_F(ChargepointTestFixtureV201, K10_ClearChargingProfile_ClearsStackLevelPurposeCombination) {
+    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Not(testing::IsEmpty()));
+
+    auto sut = handler.clear_profiles(create_clear_charging_profile_request(
+        std::nullopt, create_clear_charging_profile(std::nullopt, ChargingProfilePurposeEnum::TxDefaultProfile,
+                                                    DEFAULT_STACK_LEVEL)));
+    EXPECT_THAT(sut.status, testing::Eq(ClearChargingProfileStatusEnum::Accepted));
+
+    profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::IsEmpty());
+}
+
+TEST_F(ChargepointTestFixtureV201, K10_ClearChargingProfile_UnknownStackLevelPurposeCombination) {
+    install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Not(testing::IsEmpty()));
+
+    auto sut = handler.clear_profiles(create_clear_charging_profile_request(
+        std::nullopt, create_clear_charging_profile(std::nullopt, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+                                                    STATION_WIDE_ID)));
+    EXPECT_THAT(sut.status, testing::Eq(ClearChargingProfileStatusEnum::Unknown));
+
+    profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Not(testing::IsEmpty()));
+}
+
+TEST_F(ChargepointTestFixtureV201, K10_ClearChargingProfile_UnknownId) {
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::ChargingStationMaxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+    handler.validate_and_add_profile(profile, STATION_WIDE_ID);
+
+    auto profiles = handler.get_profiles();
+    EXPECT_THAT(profiles, testing::Contains(profile));
+
+    auto sut = handler.clear_profiles(create_clear_charging_profile_request(178));
+    EXPECT_THAT(sut.status, testing::Eq(ClearChargingProfileStatusEnum::Unknown));
+
+    profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Contains(profile));
 }
 

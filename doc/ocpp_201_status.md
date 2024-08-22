@@ -1355,26 +1355,26 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| K09.FR.01 |        |        |
-| K09.FR.02 |        |        |
-| K09.FR.03 |        |        |
-| K09.FR.04 |        |        |
-| K09.FR.05 |        |        |
-| K09.FR.06 |        |        |
+| K09.FR.01 | ✅     |        |
+| K09.FR.02 | ✅     |        |
+| K09.FR.03 | 🌐     |        |
+| K09.FR.04 | ✅     |        |
+| K09.FR.05 | ✅     |        |
+| K09.FR.06 | ✅     |        |
 
 ## SmartCharging - Clear Charging Profile
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| K10.FR.01 |        |        |
-| K10.FR.02 | ❎     |        |
-| K10.FR.03 |        |        |
-| K10.FR.04 |        |        |
-| K10.FR.05 |        |        |
-| K10.FR.06 |        |        |
-| K10.FR.07 |        |        |
-| K10.FR.08 |        |        |
-| K10.FR.09 |        |        |
+| K10.FR.01 | ✅     |        |
+| K10.FR.02 | 🌐     |        |
+| K10.FR.03 | ✅     |        |
+| K10.FR.04 | ✅     |        |
+| K10.FR.05 | ⛽️     |        |
+| K10.FR.06 | 🌐     |        |
+| K10.FR.07 | ⛽️     |        |
+| K10.FR.08 | ✅     |        |
+| K10.FR.09 | ✅     |        |
 
 ## SmartCharging - Set / Update External Charging Limit With Ongoing Transaction
 

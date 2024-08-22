@@ -29,11 +29,13 @@
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/ClearCache.hpp>
+#include <ocpp/v201/messages/ClearChargingProfile.hpp>
 #include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
 #include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/DeleteCertificate.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
+#include <ocpp/v201/messages/GetChargingProfiles.hpp>
 #include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
 #include <ocpp/v201/messages/GetLocalListVersion.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
@@ -48,6 +50,7 @@
 #include <ocpp/v201/messages/NotifyEvent.hpp>
 #include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
 #include <ocpp/v201/messages/NotifyReport.hpp>
+#include <ocpp/v201/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
@@ -683,6 +686,12 @@ private:
     void meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values,
                           const bool initiated_by_trigger_message = false);
 
+    // Functional Block K: Smart Charging
+    void report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
+                                     const ChargingLimitSourceEnum source, const std::vector<ChargingProfile>& profiles,
+                                     const bool tbc);
+    void report_charging_profile_req(const ReportChargingProfilesRequest& req);
+
     // Functional Block N: Diagnostics
     void notify_event_req(const std::vector<EventData>& events);
     void notify_customer_information_req(const std::string& data, const int32_t request_id);
@@ -726,6 +735,8 @@ private:
 
     // Functional Block K: Smart Charging
     void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
+    void handle_clear_charging_profile_req(Call<ClearChargingProfileRequest> call);
+    void handle_get_charging_profiles_req(Call<GetChargingProfilesRequest> call);
 
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
