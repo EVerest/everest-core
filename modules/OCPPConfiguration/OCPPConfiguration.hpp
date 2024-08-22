@@ -56,7 +56,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    std::vector<types::ocpp::ComponentVariable> parseConfigMonitorVariables();
+    std::vector<types::ocpp::ComponentVariable> parse_config_monitor_variables();
 
     std::unique_ptr<EventHandler> event_handler;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

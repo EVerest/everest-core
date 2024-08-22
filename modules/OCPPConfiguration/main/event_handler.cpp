@@ -11,7 +11,7 @@ EventHandler::EventHandler(const std::filesystem::path& config_mapping_path) :
     config_mapping(MappingReader::read_mapping(config_mapping_path)) {
 }
 
-void EventHandler::handleEvent(const types::ocpp::EventData& event_data, const std::string& user_config_path_string) {
+void EventHandler::handle_event(const types::ocpp::EventData& event_data, const std::string& user_config_path_string) {
 
     const auto& everest_module_mapping_opt =
         find_mapping_by_component_variable_or_log_error(event_data.component_variable);

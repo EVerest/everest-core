@@ -11,7 +11,7 @@ namespace module {
 class EventHandler {
 public:
     EventHandler(const std::filesystem::path& config_mapping_path);
-    void handleEvent(const types::ocpp::EventData& event_data, const std::string& user_config_path_string);
+    void handle_event(const types::ocpp::EventData& event_data, const std::string& user_config_path_string);
 
 private:
     const std::optional<EverestConfigMapping>
