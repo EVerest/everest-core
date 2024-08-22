@@ -12,7 +12,7 @@ namespace module {
 
 namespace util {
 
-ryml::Tree load_existing_user_config(const std::filesystem::path& user_config_file_path) {
+ryml::Tree try_to_load_existing_user_config(const std::filesystem::path& user_config_file_path) noexcept {
     try {
         // file exists
         return load_yaml_file(user_config_file_path);
@@ -68,5 +68,5 @@ void write_value_to_tree(const EverestConfigMapping& module_mapping, const std::
     config_param_node << config_value_csubstr;
 }
 
-} // namespace Util
+} // namespace util
 } // namespace module

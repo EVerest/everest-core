@@ -45,9 +45,12 @@ template <> struct std::hash<types::ocpp::ComponentVariable> {
 
 namespace module {
 
+/**
+ * Data structure to hold the user configuration mapping information.
+ */
 struct EverestConfigMapping {
-    std::string module_id;
-    std::string config_param;
+    std::string module_id;    /// The module id as defined in the everest config schema.
+    std::string config_param; /// The key for the `config_module` mapping in the config file.
 };
 
 } // namespace module

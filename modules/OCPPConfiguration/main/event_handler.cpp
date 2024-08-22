@@ -9,7 +9,7 @@
 namespace module {
 
 EventHandler::EventHandler(const std::filesystem::path& config_mapping_path) :
-    config_mapping(MappingReader::read_mapping(config_mapping_path)) {
+    config_mapping(mapping_reader::read_mapping(config_mapping_path)) {
 }
 
 void EventHandler::try_handle_event(const types::ocpp::EventData& event_data,
@@ -45,7 +45,7 @@ void EventHandler::write_event_to_config(const types::ocpp::EventData& event_dat
                                          const std::string& user_config_path_string,
                                          const EverestConfigMapping& everest_module_mapping) {
     const auto user_config_path = std::filesystem::path{user_config_path_string};
-    auto tree = util::load_existing_user_config(user_config_path);
+    auto tree = util::try_to_load_existing_user_config(user_config_path);
     util::write_value_to_tree(everest_module_mapping, event_data.actual_value, tree);
     util::save_tree_to_yaml_file(tree, user_config_path);
 }

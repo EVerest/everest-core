@@ -20,18 +20,19 @@ using types::ocpp::Variable;
 
 using OcppToEverestConfigMapping = std::unordered_map<ComponentVariable, EverestConfigMapping>;
 
-class MappingReader {
-public:
-    static OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_path);
+/**
+ * Collection of functions to read the mapping file.
+ */
+namespace mapping_reader {
 
-private:
-    static std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node);
-    static EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node);
-    static types::ocpp::Component parse_component_node(const c4::yml::NodeRef& node);
-    static std::optional<types::ocpp::EVSE> parse_evse_node(const c4::yml::NodeRef node);
-    static Variable parse_variable_node(const c4::yml::NodeRef node);
-    static ComponentVariable parse_component_variable_node(const c4::yml::NodeRef& node);
-    static OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root);
-};
+/**
+ * Reads the mapping file and returns the mapping.
+ *
+ * @param file_path The path to the mapping file.
+ * @return The mapping.
+ */
+OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_path);
+
+}; // namespace mapping_reader
 
 } // namespace module

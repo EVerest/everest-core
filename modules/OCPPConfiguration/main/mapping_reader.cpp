@@ -7,16 +7,16 @@
 #include <iostream>
 
 namespace module {
-OcppToEverestConfigMapping MappingReader::read_mapping(const std::filesystem::path& file_path) {
-    const auto hacked_file_path =
-        std::filesystem::path{"modules"} / "OCPPConfiguration" / file_path; // TODO: this is very hacky
+namespace {
+OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root);
+std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node);
+EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node);
+types::ocpp::Component parse_component_node(const c4::yml::NodeRef& node);
+std::optional<types::ocpp::EVSE> parse_evse_node(const c4::yml::NodeRef node);
+Variable parse_variable_node(const c4::yml::NodeRef node);
+ComponentVariable parse_component_variable_node(const c4::yml::NodeRef& node);
 
-    const auto tree = util::load_yaml_file(hacked_file_path);
-    const auto root = tree.rootref();
-
-    return parse_mapping(root);
-}
-OcppToEverestConfigMapping MappingReader::parse_mapping(const c4::yml::NodeRef& root) {
+OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root) {
     auto mapping = OcppToEverestConfigMapping{};
 
     for (const auto& mapping_node : root) {
@@ -25,14 +25,14 @@ OcppToEverestConfigMapping MappingReader::parse_mapping(const c4::yml::NodeRef& 
     }
     return mapping;
 }
-std::pair<ComponentVariable, EverestConfigMapping>
-MappingReader::parse_mapping_node(const c4::yml::NodeRef& mapping_node) {
+
+std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node) {
     auto component_variable = parse_component_variable_node(mapping_node["ocpp_definition"]);
     auto module_mapping = parse_maps_to_node(mapping_node["everest_definition"]);
     return {std::move(component_variable), std::move(module_mapping)};
 }
 
-ComponentVariable MappingReader::parse_component_variable_node(const c4::yml::NodeRef& node) {
+ComponentVariable parse_component_variable_node(const c4::yml::NodeRef& node) {
     // component is optional
     auto component = node.has_child("component") ? parse_component_node(node["component"]) : Component{};
 
@@ -41,7 +41,7 @@ ComponentVariable MappingReader::parse_component_variable_node(const c4::yml::No
     return {std::move(component), std::move(variable)};
 }
 
-Component MappingReader::parse_component_node(const c4::yml::NodeRef& node) {
+Component parse_component_node(const c4::yml::NodeRef& node) {
     auto evse = node.has_child("evse") ? parse_evse_node(node["evse"]) : std::nullopt;
 
     const auto instance_optinal_val = node.has_child("instance") ? std::optional{node["instance"].val()} : std::nullopt;
@@ -53,7 +53,7 @@ Component MappingReader::parse_component_node(const c4::yml::NodeRef& node) {
     return {std::move(component_name), std::move(instance), std::move(evse)};
 }
 
-Variable MappingReader::parse_variable_node(const c4::yml::NodeRef node) {
+Variable parse_variable_node(const c4::yml::NodeRef node) {
     const auto node_has_name = node.has_child("name");
     if (!node_has_name) {
         throw std::runtime_error("Variable node must have a name");
@@ -76,7 +76,7 @@ Variable MappingReader::parse_variable_node(const c4::yml::NodeRef node) {
     return {std::move(variable_name), std::move(instance)};
 }
 
-std::optional<types::ocpp::EVSE> MappingReader::parse_evse_node(const c4::yml::NodeRef node) {
+std::optional<types::ocpp::EVSE> parse_evse_node(const c4::yml::NodeRef node) {
     if (!node.has_child("id")) {
         throw std::runtime_error("EVSE node must have an id");
     }
@@ -92,7 +92,7 @@ std::optional<types::ocpp::EVSE> MappingReader::parse_evse_node(const c4::yml::N
     return types::ocpp::EVSE{std::move(id), std::move(connector_id)};
 }
 
-EverestConfigMapping MappingReader::parse_maps_to_node(const ryml::NodeRef& node) {
+EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node) {
 
     const auto parse_node = [](const auto& node) {
         const auto val = node.val();
@@ -106,6 +106,18 @@ EverestConfigMapping MappingReader::parse_maps_to_node(const ryml::NodeRef& node
     const auto config_param = parse_node(config_param_node);
 
     return {module_id, config_param};
+}
+
+} // namespace
+
+OcppToEverestConfigMapping mapping_reader::read_mapping(const std::filesystem::path& file_path) {
+    const auto hacked_file_path =
+        std::filesystem::path{"modules"} / "OCPPConfiguration" / file_path; // TODO: this is very hacky
+
+    const auto tree = util::load_yaml_file(hacked_file_path);
+    const auto root = tree.rootref();
+
+    return parse_mapping(root);
 }
 
 } // namespace module
