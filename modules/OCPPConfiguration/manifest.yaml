@@ -3,7 +3,6 @@ config:
   user_config_path:
     description: Path to the user configuration file
     type: string
-    default: "config/user-config/ocpp-remote-config.yaml"
   mapping_file_path:
     description: Path to the mapping file
     type: string

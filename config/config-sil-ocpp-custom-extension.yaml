@@ -1,4 +1,12 @@
 active_modules:
+  ocpp-configuration-instance:
+    module: OCPPConfiguration
+    connections:
+      ocpp_module:
+        - module_id: ocpp
+          implementation_id: ocpp_generic
+    config_module:
+      user_config_path: "config/user-config/ocpp-remote-config.yaml"
   iso15118_charger:
     module: EvseV2G
     config_module:
