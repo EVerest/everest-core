@@ -89,6 +89,28 @@ Clarification of the device model classes of this diagram:
   * (Final) implementation of DeviceModelStorage as part of everest-core (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
   * Differentiates between externally and internally managed variables
+  
+## Variable attributes and variable characteristics for externally managed variables
+
+There is some extra (metadata) information in the variable attributes and characteristics that are specific for OCPP, 
+like the support of monitoring, component and instance name. Maybe also the possible allowed values, but that is 
+something that can be shared as well. An example is language: which languages the UI supports. This metadata can still 
+be managed by libocpp, or we can choose to let everest core manage the information. 
+
+In case it is managed by libocpp, all metadata / information has to be included in the component config schema. All 
+information will be added to the database, and the value will be empty in the database and can be requested via 
+ComposedDeviceModelStorage. 
+Advantage of this is that we only have one directory with component schema's and all metadata is stored in one place. 
+Drawback is that we are not be able to change or read the metadata for a specific 'config item', like the 'MaxSet' or 
+'Target' value, or the possible allowed values. 
+
+In case (some of) the metadata for the externally managed variables is also stored in everest core, the 
+DeviceModelStorage interface must be extended with some more calls and the EverestDeviceModelStorage needs to keep more 
+information about the values / variables than everest core currently does. We can still have a component config so we 
+know which Variable / config item belongs to wich Component, but the other metadata must be requested via the interface. 
+Advantage of this is that we give everest core maximum control over those config items / variables. 
+Drawback is that we have to extend the interface and implementation quite a bit and there are a lot more changes 
+involved.
 
 ## Next steps to adjust OCPP2.0.1 and libocpp
 
