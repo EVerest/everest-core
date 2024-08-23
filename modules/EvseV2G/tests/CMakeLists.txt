@@ -1,8 +1,28 @@
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 find_package(libevent)
 
+set(TLS_TEST_FILES
+        alt_openssl-pki.conf
+        iso_pkey.asn1
+        openssl-pki.conf
+        ocsp_response.der
+        pki.sh
+)
+
+add_custom_command(
+    OUTPUT ${TLS_TEST_FILES}
+    COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/pki
+    COMMAND cd pki && cp ${TLS_TEST_FILES} ${CMAKE_CURRENT_BINARY_DIR}/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}../../../../lib/staging/tls/tests/
+)
+
+add_custom_target(v2g_test_files_target
+    DEPENDS ${TLS_TEST_FILES}
+)
+
 set(TLS_GTEST_NAME v2g_openssl_test)
 add_executable(${TLS_GTEST_NAME})
+add_dependencies(${TLS_GTEST_NAME} v2g_test_files_target)
 
 add_dependencies(${TLS_GTEST_NAME} generate_cpp_files)
 
@@ -70,19 +90,5 @@ target_link_libraries(${V2G_MAIN_NAME} PRIVATE
     -levent -lpthread -levent_pthreads
 )
 
-install(
-    FILES
-    ../../../lib/staging/tls/tests/pki/iso_pkey.asn1
-    ../../../lib/staging/tls/tests/pki/openssl-pki.conf
-    ../../../lib/staging/tls/tests/pki/ocsp_response.der
-    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
-)
-
-install(
-    PROGRAMS
-    ../../../lib/staging/tls/tests/pki/pki.sh
-    DESTINATION "${CMAKE_CURRENT_BINARY_DIR}"
-)
-
 # runs fine locally, fails in CI
-# add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
