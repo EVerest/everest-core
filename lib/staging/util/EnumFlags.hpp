@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
+
 #ifndef ENUMFLAGS_HPP
 #define ENUMFLAGS_HPP
 
 #include <atomic>
-#include <cstdint>
 #include <type_traits>
 
 namespace util {
 
-template <typename T, typename B> struct AtomicEnumFlags {
-    static_assert(std::is_enum<T>() == true, "Not enum");
-    static_assert(std::is_integral<B>() == true, "Not integer");
+template <typename T, typename B> class AtomicEnumFlags {
+    static_assert(std::is_enum<T>(), "Not enum");
+    static_assert(std::is_integral<B>(), "Not integer");
     static_assert((sizeof(B) * 8) >= static_cast<std::size_t>(T::last) + 1, "Underlying flag type too small");
     std::atomic<B> _value{0ULL};
 
+public:
     constexpr std::size_t bit(const T& flag) const {
         return 1ULL << static_cast<std::underlying_type_t<T>>(flag);
     }

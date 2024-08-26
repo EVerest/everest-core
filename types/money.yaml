@@ -456,8 +456,6 @@ types:
       unit according to ISO 4217.
     type: object
     additionalProperties: false
-    required:
-      - code
     properties:
       code:
         description: >-

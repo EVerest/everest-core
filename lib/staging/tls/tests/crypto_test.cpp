@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 
 #include "gtest/gtest.h"
 
@@ -15,7 +15,6 @@
 namespace {
 
 using evse_security::HashAlgorithm;
-using evse_security::X509CertificateHierarchy;
 using evse_security::X509Wrapper;
 using openssl::load_certificates;
 using openssl::conversions::to_X509Wrapper;

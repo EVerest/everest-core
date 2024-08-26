@@ -373,7 +373,7 @@ verify_result_t verify_certificate(Certificate_ptr& contract_crt, const void* ch
                                    const char* mo_root_cert_path, bool debugMode) {
     Certificate_ptr contract_root_crt;
     uint32_t flags;
-    verify_result_t result{verify_result_t::verified};
+    verify_result_t result{verify_result_t::Verified};
 
     /* Load supported V2G/MO root certificates */
     if (load_contract_root_cert(contract_root_crt, v2g_root_cert_path, mo_root_cert_path)) {
