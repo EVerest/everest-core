@@ -27,7 +27,8 @@ template <typename T> struct RequestDeviceModelResponse {
 template <typename T> T to_specific_type(const std::string& value) {
     static_assert(std::is_same<T, std::string>::value || std::is_same<T, int>::value ||
                       std::is_same<T, double>::value || std::is_same<T, size_t>::value ||
-                      std::is_same<T, DateTime>::value || std::is_same<T, bool>::value,
+                      std::is_same<T, DateTime>::value || std::is_same<T, bool>::value ||
+                      std::is_same<T, uint64_t>::value,
                   "Requested unknown datatype");
 
     if constexpr (std::is_same<T, std::string>::value) {
@@ -43,6 +44,8 @@ template <typename T> T to_specific_type(const std::string& value) {
         return DateTime(value);
     } else if constexpr (std::is_same<T, bool>::value) {
         return ocpp::conversions::string_to_bool(value);
+    } else if constexpr (std::is_same<T, uint64_t>::value) {
+        return std::stoull(value);
     }
 }
 
