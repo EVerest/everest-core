@@ -422,7 +422,7 @@ private:
     std::unique_ptr<EvseManager> evse_manager;
 
     // utility
-    std::unique_ptr<MessageQueue<v201::MessageType>> message_queue;
+    std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::shared_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
 
@@ -507,6 +507,7 @@ private:
     bool send(CallError call_error);
 
     // internal helper functions
+    void initialize(const std::map<int32_t, int32_t>& evse_connector_structure, const std::string& message_log_path);
     void init_websocket();
     WebsocketConnectionOptions get_ws_connection_options(const int32_t configuration_slot);
     void init_certificate_expiration_check_timers();
@@ -857,6 +858,22 @@ public:
                 const std::string& core_database_path, const std::string& sql_init_path,
                 const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                 const Callbacks& callbacks);
+
+    /// \brief Construct a new ChargePoint object
+    /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
+    /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
+    /// the EVSEs have to increment starting with 1.
+    /// \param device_model_storage device model storage instance
+    /// \param database_handler database handler instance
+    /// \param message_queue message queue instance
+    /// \param message_log_path Path to where logfiles are written to
+    /// \param evse_security Pointer to evse_security that manages security related operations
+    /// \param callbacks Callbacks that will be registered for ChargePoint
+    ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
+                std::shared_ptr<DatabaseHandler> database_handler,
+                std::shared_ptr<MessageQueue<v201::MessageType>> message_queue, const std::string& message_log_path,
+                const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
+
     ~ChargePoint();
 
     void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;

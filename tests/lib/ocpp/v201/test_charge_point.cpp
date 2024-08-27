@@ -60,6 +60,13 @@ public:
         charge_point->stop();
     }
 
+    std::map<int32_t, int32_t> create_evse_connector_structure() {
+        std::map<int32_t, int32_t> evse_connector_structure;
+        evse_connector_structure.insert_or_assign(1, 1);
+        evse_connector_structure.insert_or_assign(2, 1);
+        return evse_connector_structure;
+    }
+
     void create_device_model_db(const std::string& path) {
         InitDeviceModelDb db(path, MIGRATION_FILES_PATH);
         db.initialize_database(SCHEMAS_PATH, true);
@@ -70,7 +77,6 @@ public:
         create_device_model_db(DEVICE_MODEL_DB_IN_MEMORY_PATH);
         auto device_model_storage = std::make_unique<DeviceModelStorageSqlite>(DEVICE_MODEL_DB_IN_MEMORY_PATH);
         auto device_model = std::make_shared<DeviceModel>(std::move(device_model_storage));
-
         // Defaults
         const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
         device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
@@ -173,6 +179,27 @@ public:
     std::unique_ptr<TestChargePoint> charge_point = create_charge_point();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 
+    std::shared_ptr<DatabaseHandler> create_database_handler() {
+        auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
+        return std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
+    }
+
+    std::shared_ptr<MessageQueue<v201::MessageType>>
+    create_message_queue(std::shared_ptr<DatabaseHandler>& database_handler) {
+        const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
+        return std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
+            [this](json message) -> bool { return false; },
+            MessageQueueConfig{
+                this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
+                this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
+                this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
+                    .value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
+                this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages)
+                    .value_or(false),
+                this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
+            database_handler);
+    }
+
     void configure_callbacks_with_mocks() {
         callbacks.is_reset_allowed_callback = is_reset_allowed_callback_mock.AsStdFunction();
         callbacks.reset_callback = reset_callback_mock.AsStdFunction();
@@ -241,6 +268,68 @@ public:
     testing::MockFunction<void()> set_charging_profiles_callback_mock;
     ocpp::v201::Callbacks callbacks;
 };
+
+TEST_F(ChargePointFixture, CreateChargePoint) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+    auto message_queue = create_message_queue(database_handler);
+
+    EXPECT_NO_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler, message_queue,
+                                            "/tmp", evse_security, callbacks));
+}
+
+TEST_F(ChargePointFixture, CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelStorageError) {
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+    auto message_queue = create_message_queue(database_handler);
+
+    auto evse_connector_structure = std::map<int32_t, int32_t>();
+
+    EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler, message_queue,
+                                         "/tmp", evse_security, callbacks),
+                 DeviceModelStorageError);
+}
+
+TEST_F(ChargePointFixture, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArgument) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+    auto message_queue = std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
+        [this](json message) -> bool { return false; }, MessageQueueConfig{}, database_handler);
+
+    EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, nullptr, database_handler, message_queue, "/tmp",
+                                         evse_security, callbacks),
+                 std::invalid_argument);
+}
+
+TEST_F(ChargePointFixture, CreateChargePoint_MissingDatabaseHandler_ThrowsInvalidArgument) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+    auto message_queue = std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
+        [this](json message) -> bool { return false; }, MessageQueueConfig{}, nullptr);
+
+    auto database_handler = nullptr;
+
+    EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler, message_queue,
+                                         "/tmp", evse_security, callbacks),
+                 std::invalid_argument);
+}
+
+TEST_F(ChargePointFixture, CreateChargePoint_CallbacksNotValid_ThrowsInvalidArgument) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    auto message_queue = create_message_queue(database_handler);
+
+    EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler, message_queue,
+                                         "/tmp", evse_security, callbacks),
+                 std::invalid_argument);
+}
 
 /*
  * K01.FR.02 states
@@ -616,6 +705,58 @@ TEST_F(ChargePointFixture, K01FR22_SetChargingProfileRequest_RejectsChargingStat
 
     EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(0);
     EXPECT_CALL(set_charging_profiles_callback_mock, Call).Times(0);
+
+    charge_point->handle_message(set_charging_profile_req);
+}
+
+TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCallError) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+
+    const auto cv = ControllerComponentVariables::SmartChargingCtrlrAvailable;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "false", "TEST", true);
+
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    SetChargingProfileRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.chargingProfile = profile;
+
+    auto set_charging_profile_req =
+        request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
+
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(testing::_, testing::_)).Times(0);
+
+    charge_point->handle_message(set_charging_profile_req);
+}
+
+TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValidateAndAddProfile) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+
+    const auto cv = ControllerComponentVariables::SmartChargingCtrlrAvailable;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "true", "TEST", true);
+
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    SetChargingProfileRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.chargingProfile = profile;
+
+    auto set_charging_profile_req =
+        request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
+
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
 
     charge_point->handle_message(set_charging_profile_req);
 }

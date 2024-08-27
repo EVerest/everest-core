@@ -308,7 +308,7 @@ TEST_F(ChargepointTestFixtureV201, K01FR09_IfTxProfileEvseHasNoActiveTransaction
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::TxProfileEvseHasNoActiveTransaction));
 }
 
-TEST_F(ChargepointTestFixtureV201, K01FR19_NumberPhasesOtherThan1AndPhaseToUseSet_ThenProfileInvalid) {
+TEST_F(ChargepointTestFixtureV201, K01FR48FR19_NumberPhasesOtherThan1AndPhaseToUseSet_ThenProfileInvalid) {
     auto periods = create_charging_schedule_periods_with_phases(0, 0, 1);
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
@@ -320,7 +320,8 @@ TEST_F(ChargepointTestFixtureV201, K01FR19_NumberPhasesOtherThan1AndPhaseToUseSe
     EXPECT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodInvalidPhaseToUse));
 }
 
-TEST_F(ChargepointTestFixtureV201, K01FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedUndefined_ThenProfileIsInvalid) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR48FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedUndefined_ThenProfileIsInvalid) {
     // As a device model with ac switching supported default set to 'true', we want to create a new database with the
     // ac switching support not set. But this is an in memory database, which is kept open until all handles to it are
     // closed. So we close all connections to the database.
@@ -344,7 +345,7 @@ TEST_F(ChargepointTestFixtureV201, K01FR20_IfPhaseToUseSetAndACPhaseSwitchingSup
                 testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported));
 }
 
-TEST_F(ChargepointTestFixtureV201, K01FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedFalse_ThenProfileIsInvalid) {
+TEST_F(ChargepointTestFixtureV201, K01FR48FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedFalse_ThenProfileIsInvalid) {
     // As a device model with ac switching supported default set to 'true', we want to create a new database with the
     // ac switching support not set. But this is an in memory database, which is kept open until all handles to it are
     // closed. So we close all connections to the database.
@@ -368,7 +369,8 @@ TEST_F(ChargepointTestFixtureV201, K01FR20_IfPhaseToUseSetAndACPhaseSwitchingSup
                 testing::Eq(ProfileValidationResultEnum::ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported));
 }
 
-TEST_F(ChargepointTestFixtureV201, K01FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedTrue_ThenProfileIsNotInvalid) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR48FR20_IfPhaseToUseSetAndACPhaseSwitchingSupportedTrue_ThenProfileIsNotInvalid) {
     auto periods = create_charging_schedule_periods_with_phases(0, 1, 1);
     auto profile = create_charging_profile(
         DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,

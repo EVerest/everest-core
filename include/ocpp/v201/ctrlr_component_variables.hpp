@@ -194,7 +194,7 @@ extern const RequiredComponentVariable& OrganizationName;
 extern const RequiredComponentVariable& SecurityProfile;
 extern const ComponentVariable& ACPhaseSwitchingSupported;
 extern const ComponentVariable& SmartChargingCtrlrAvailable;
-extern const ComponentVariable& SmartChargingCtrlrAvailableEnabled;
+extern const ComponentVariable& SmartChargingCtrlrEnabled;
 extern const RequiredComponentVariable& EntriesChargingProfiles;
 extern const ComponentVariable& ExternalControlSignalsEnabled;
 extern const RequiredComponentVariable& LimitChangeSignificance;

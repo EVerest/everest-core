@@ -40,8 +40,8 @@ jobs:
           rsync -a source/.ci/build-kit/ scripts
       - name: Pull docker container
         run: |
-          docker pull --platform=linux/x86_64 --quiet ghcr.io/everest/build-kit-alpine:latest
-          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
+          docker pull --platform=linux/x86_64 --quiet ghcr.io/everest/everest-ci/build-kit-base:latest
+          docker image tag ghcr.io/everest/everest-ci/build-kit-base:latest build-kit
       - name: Run install with tests
         run: |
           docker run \

@@ -391,12 +391,12 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
 
         for (auto i = 0; i < schedule.chargingSchedulePeriod.size(); i++) {
             auto& charging_schedule_period = schedule.chargingSchedulePeriod[i];
-            // K01.FR.19
+            // K01.FR.48 and K01.FR.19
             if (charging_schedule_period.numberPhases != 1 && charging_schedule_period.phaseToUse.has_value()) {
                 return ProfileValidationResultEnum::ChargingSchedulePeriodInvalidPhaseToUse;
             }
 
-            // K01.FR.20
+            // K01.FR.48 and K01.FR.20
             if (charging_schedule_period.phaseToUse.has_value() &&
                 !device_model->get_optional_value<bool>(ControllerComponentVariables::ACPhaseSwitchingSupported)
                      .value_or(false)) {
