@@ -6,7 +6,7 @@ active_modules:
         - module_id: ocpp
           implementation_id: ocpp_generic
     config_module:
-      user_config_path: "config/user-config/ocpp-remote-config.yaml"
+      user_config_file_name: "config-sil-ocpp-custom-extension.yaml"
   iso15118_charger:
     module: EvseV2G
     config_module:

@@ -5,6 +5,7 @@
 
 #include "everest_config_mapping.hpp"
 #include "generated/types/ocpp.hpp"
+
 #include <c4/yml/std/map.hpp>
 #include <filesystem>
 #include <ryml.hpp>
@@ -28,10 +29,10 @@ namespace mapping_reader {
 /**
  * Reads the mapping file and returns the mapping.
  *
- * @param file_path The path to the mapping file.
+ * @param file_name The file name of the mapping file.
  * @return The mapping.
  */
-OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_path);
+OcppToEverestConfigMapping read_mapping(const std::filesystem::path& file_name);
 
 }; // namespace mapping_reader
 

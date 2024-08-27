@@ -24,8 +24,8 @@
 namespace module {
 
 struct Conf {
-    std::string user_config_path;
-    std::string mapping_file_path;
+    std::string user_config_file_name;
+    std::string mapping_file_name;
 };
 
 class OCPPConfiguration : public Everest::ModuleBase {

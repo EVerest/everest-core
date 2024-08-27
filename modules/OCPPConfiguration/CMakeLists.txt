@@ -29,4 +29,17 @@ target_sources(${MODULE_NAME}
 # insert other things like install cmds etc here
 target_compile_features(${MODULE_NAME} PRIVATE cxx_std_17)
 set_target_properties(${MODULE_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+
+# add a compiler definition of the config install directory so that it can be accessed in code
+set(
+        "${PROJECT_NAME}_${MODULE_NAME}_USER_CONFIG_INSTALL_DIRECTORY"
+        "${CMAKE_INSTALL_PREFIX}/etc/everest/user-config"
+)
+target_compile_definitions(
+        ${MODULE_NAME}
+        PRIVATE
+        USER_CONFIG_INSTALL_DIRECTORY="${${PROJECT_NAME}_${MODULE_NAME}_USER_CONFIG_INSTALL_DIRECTORY}"
+)
+
+add_subdirectory(mappings)
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

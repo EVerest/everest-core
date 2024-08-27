@@ -4,16 +4,17 @@
 #include "event_handler.hpp"
 #include "util.hpp"
 #include <everest/logging.hpp>
+
 #include <unordered_set>
 
 namespace module {
 
-EventHandler::EventHandler(const std::filesystem::path& config_mapping_path) :
-    config_mapping(mapping_reader::read_mapping(config_mapping_path)) {
+EventHandler::EventHandler(const std::filesystem::path& config_mapping_file_name) :
+    config_mapping(mapping_reader::read_mapping(config_mapping_file_name)) {
 }
 
 void EventHandler::try_handle_event(const types::ocpp::EventData& event_data,
-                                    const std::string& user_config_path_string) noexcept {
+                                    const std::filesystem::path& user_config_file_name) noexcept {
     try {
         const auto& everest_module_mapping_opt =
             get_optional_mapping_by_component_variable(event_data.component_variable);
@@ -24,10 +25,13 @@ void EventHandler::try_handle_event(const types::ocpp::EventData& event_data,
 
         const auto& everest_module_mapping = everest_module_mapping_opt.value();
 
-        write_event_to_config(event_data, user_config_path_string, everest_module_mapping);
+        write_event_to_config(event_data, user_config_file_name, everest_module_mapping);
+
+        EVLOG_info << "Handled ocpp configuration request: " << event_data.component_variable.variable.name << " "
+                   << event_data.actual_value;
 
     } catch (const std::runtime_error& e) {
-        EVLOG_info << "Couldn't handle event: " << e.what();
+        EVLOG_info << "Couldn't handle ocpp configuration request: " << e.what();
     }
 }
 
@@ -42,9 +46,9 @@ std::vector<types::ocpp::ComponentVariable> EventHandler::get_monitor_variables(
 }
 
 void EventHandler::write_event_to_config(const types::ocpp::EventData& event_data,
-                                         const std::string& user_config_path_string,
+                                         const std::filesystem::path& user_config_file_name,
                                          const EverestConfigMapping& everest_module_mapping) {
-    const auto user_config_path = std::filesystem::path{user_config_path_string};
+    const auto user_config_path = std::filesystem::path{USER_CONFIG_INSTALL_DIRECTORY} / user_config_file_name;
     auto tree = util::try_to_load_existing_user_config(user_config_path);
     util::write_value_to_tree(everest_module_mapping, event_data.actual_value, tree);
     util::save_tree_to_yaml_file(tree, user_config_path);

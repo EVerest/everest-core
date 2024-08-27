@@ -1,10 +1,10 @@
 description: This module reacts to OCPP configuration change requests.
 config:
-  user_config_path:
-    description: Path to the user configuration file
+  user_config_file_name:
+    description: Name of the user configuration file
     type: string
-  mapping_file_path:
-    description: Path to the mapping file
+  mapping_file_name:
+    description: Name of the mapping file (in the `mappings` directory).
     type: string
     default: "example-config-mapping.yaml"
 provides:

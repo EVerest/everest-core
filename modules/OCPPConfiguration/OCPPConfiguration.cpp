@@ -13,7 +13,7 @@ void OCPPConfiguration::init() {
 void OCPPConfiguration::ready() {
     invoke_ready(*p_main);
 
-    const auto mapping_file_path = std::filesystem::path{config.mapping_file_path};
+    const auto mapping_file_path = std::filesystem::path{config.mapping_file_name};
 
     try {
         event_handler = std::make_unique<EventHandler>(mapping_file_path);
@@ -25,7 +25,7 @@ void OCPPConfiguration::ready() {
     r_ocpp_module->call_monitor_variables(event_handler->get_monitor_variables());
 
     r_ocpp_module->subscribe_event_data(
-        [&](const auto& event_data) { event_handler->try_handle_event(event_data, config.user_config_path); });
+        [&](const auto& event_data) { event_handler->try_handle_event(event_data, config.user_config_file_name); });
 }
 
 } // namespace module

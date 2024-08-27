@@ -2,8 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "util.hpp"
-#include "everest/logging.hpp"
-#include "generated/types/ocpp.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <sstream>

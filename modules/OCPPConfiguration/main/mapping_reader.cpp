@@ -4,6 +4,7 @@
 #include "mapping_reader.hpp"
 #include "everest/logging.hpp"
 #include "util.hpp"
+
 #include <iostream>
 
 namespace module {
@@ -110,11 +111,10 @@ EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node) {
 
 } // namespace
 
-OcppToEverestConfigMapping mapping_reader::read_mapping(const std::filesystem::path& file_path) {
-    const auto hacked_file_path =
-        std::filesystem::path{"modules"} / "OCPPConfiguration" / file_path; // TODO: this is very hacky
+OcppToEverestConfigMapping mapping_reader::read_mapping(const std::filesystem::path& file_name) {
+    const auto mapping_file_path = MAPPING_INSTALL_DIRECTORY / file_name;
 
-    const auto tree = util::load_yaml_file(hacked_file_path);
+    const auto tree = util::load_yaml_file(mapping_file_path);
     const auto root = tree.rootref();
 
     return parse_mapping(root);
