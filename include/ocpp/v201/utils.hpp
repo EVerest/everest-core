@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef V201_UTILS_HPP
 #define V201_UTILS_HPP
 
@@ -59,6 +59,9 @@ ocpp::DateTime align_timestamp(const DateTime timestamp, std::chrono::seconds al
 
 /// \brief Returns the total Power_Active_Import value from the \p meter_value or std::nullopt if it is not present
 std::optional<float> get_total_power_active_import(const MeterValue& meter_value);
+
+/// \brief Determines if a given \p security_event is critical as defined in the OCPP 2.0.1 appendix
+bool is_critical(const std::string& security_event);
 
 } // namespace utils
 } // namespace v201

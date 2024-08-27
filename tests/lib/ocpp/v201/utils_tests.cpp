@@ -47,5 +47,29 @@ TEST_F(V201UtilsTest, test_valid_generate_token_hash) {
               ocpp::v201::utils::generate_token_hash(valid_iso15693_token));
 }
 
+TEST_F(V201UtilsTest, test_is_critical_security_event) {
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::FIRMWARE_UPDATED));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::SETTINGSYSTEMTIME));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::STARTUP_OF_THE_DEVICE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::RESET_OR_REBOOT));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::SECURITYLOGWASCLEARED));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::MEMORYEXHAUSTION));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::TAMPERDETECTIONACTIVATED));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDFIRMWARESIGNATURE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDCSMSCERTIFICATE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDCHARGINGSTATIONCERTIFICATE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDTLSVERSION));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDTLSCIPHERSUITE));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::MAINTENANCELOGINACCEPTED));
+    EXPECT_TRUE(ocpp::v201::utils::is_critical(ocpp::security_events::MAINTENANCELOGINFAILED));
+
+    EXPECT_FALSE(ocpp::v201::utils::is_critical(ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS));
+    EXPECT_FALSE(ocpp::v201::utils::is_critical(ocpp::security_events::CSMSFAILEDTOAUTHENTICATE));
+    EXPECT_FALSE(ocpp::v201::utils::is_critical(ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS));
+    EXPECT_FALSE(ocpp::v201::utils::is_critical(ocpp::security_events::INVALIDMESSAGES));
+    EXPECT_FALSE(ocpp::v201::utils::is_critical(ocpp::security_events::ATTEMPTEDREPLAYATTACKS));
+}
+
 } // namespace common
 } // namespace ocpp

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef OCPP_COMMON_TYPES_HPP
 #define OCPP_COMMON_TYPES_HPP
 
@@ -774,6 +774,8 @@ inline const std::string INVALIDCHARGINGSTATIONCERTIFICATE = "InvalidChargingSta
 inline const std::string INVALIDCHARGEPOINTCERTIFICATE = "InvalidChargePointCertificate"; // for OCPP1.6
 inline const std::string INVALIDTLSVERSION = "InvalidTLSVersion";
 inline const std::string INVALIDTLSCIPHERSUITE = "InvalidTLSCipherSuite";
+inline const std::string MAINTENANCELOGINACCEPTED = "MaintenanceLoginAccepted";
+inline const std::string MAINTENANCELOGINFAILED = "MaintenanceLoginFailed";
 } // namespace security_events
 
 enum class MessageDirection {

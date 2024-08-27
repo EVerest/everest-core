@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
 
@@ -145,6 +145,42 @@ std::optional<float> get_total_power_active_import(const MeterValue& meter_value
         }
     }
     return std::nullopt;
+}
+
+bool is_critical(const std::string& security_event) {
+    if (security_event == ocpp::security_events::FIRMWARE_UPDATED) {
+        return true;
+    } else if (security_event == ocpp::security_events::SETTINGSYSTEMTIME) {
+        return true;
+    } else if (security_event == ocpp::security_events::STARTUP_OF_THE_DEVICE) {
+        return true;
+    } else if (security_event == ocpp::security_events::RESET_OR_REBOOT) {
+        return true;
+    } else if (security_event == ocpp::security_events::SECURITYLOGWASCLEARED) {
+        return true;
+    } else if (security_event == ocpp::security_events::MEMORYEXHAUSTION) {
+        return true;
+    } else if (security_event == ocpp::security_events::TAMPERDETECTIONACTIVATED) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDFIRMWARESIGNATURE) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDCSMSCERTIFICATE) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDCHARGINGSTATIONCERTIFICATE) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDTLSVERSION) {
+        return true;
+    } else if (security_event == ocpp::security_events::INVALIDTLSCIPHERSUITE) {
+        return true;
+    } else if (security_event == ocpp::security_events::MAINTENANCELOGINACCEPTED) {
+        return true;
+    } else if (security_event == ocpp::security_events::MAINTENANCELOGINFAILED) {
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace utils

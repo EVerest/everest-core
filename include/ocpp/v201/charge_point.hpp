@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #pragma once
 
@@ -354,7 +354,11 @@ public:
     /// CSMS
     /// \param type type of the security event
     /// \param tech_info additional info of the security event
-    virtual void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) = 0;
+    /// \param critical if set this overwrites the default criticality recommended in the OCPP 2.0.1 appendix. A
+    /// critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the
+    /// security log
+    virtual void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                                   const std::optional<bool>& critical = std::nullopt) = 0;
 
     /// \brief Event handler that will update the variable internally when it has been changed on the fly.
     /// \param set_variable_data contains data of the variable to set
@@ -937,7 +941,8 @@ public:
 
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) override;
 
-    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) override;
+    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                           const std::optional<bool>& critical = std::nullopt) override;
 
     void on_variable_changed(const SetVariableData& set_variable_data) override;
 

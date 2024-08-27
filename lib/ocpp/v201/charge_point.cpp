@@ -933,8 +933,15 @@ void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t
     this->send<LogStatusNotificationRequest>(call);
 }
 
-void ChargePoint::on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info) {
-    this->security_event_notification_req(event_type, tech_info, false, false);
+void ChargePoint::on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                                    const std::optional<bool>& critical) {
+    auto critical_security_event = true;
+    if (critical.has_value()) {
+        critical_security_event = critical.value();
+    } else {
+        critical_security_event = utils::is_critical(event_type);
+    }
+    this->security_event_notification_req(event_type, tech_info, false, critical_security_event);
 }
 
 void ChargePoint::on_variable_changed(const SetVariableData& set_variable_data) {
