@@ -663,6 +663,9 @@ void OCPP201::ready() {
     // In case (for some reason) EvseManager ready signals are sent after this point, this will prevent a hang
     lk.unlock();
 
+    // HACK: wait until we are sure to have received a correct connector status from EvseManager
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
     const auto boot_reason = conversions::to_ocpp_boot_reason(this->r_system->call_get_boot_reason());
     this->charge_point->set_message_queue_resume_delay(std::chrono::seconds(this->config.MessageQueueResumeDelay));
     this->charge_point->start(boot_reason);
