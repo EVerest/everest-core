@@ -9,8 +9,9 @@
 
 namespace module {
 
-EventHandler::EventHandler(const std::filesystem::path& config_mapping_file_name) :
-    config_mapping(mapping_reader::read_mapping(config_mapping_file_name)) {
+EventHandler::EventHandler(const std::filesystem::path& config_mapping_file_name,
+                           const std::filesystem::path& mapping_schema_file_name) :
+    config_mapping(mapping_reader::read_mapping(config_mapping_file_name, mapping_schema_file_name)) {
 }
 
 void EventHandler::try_handle_event(const types::ocpp::EventData& event_data,

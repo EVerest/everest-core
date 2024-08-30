@@ -4,12 +4,14 @@
 #include "mapping_reader.hpp"
 #include "everest/logging.hpp"
 #include "util.hpp"
+#include <nlohmann/json-schema.hpp>
+#include <nlohmann/json.hpp>
 
 #include <iostream>
 
 namespace module {
 namespace {
-OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root);
+void validate_mapping_schema(const std::filesystem::path& mapping_path, const std::filesystem::path& schema_path);
 std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node);
 EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node);
 types::ocpp::Component parse_component_node(const c4::yml::NodeRef& node);
@@ -25,6 +27,16 @@ OcppToEverestConfigMapping parse_mapping(const c4::yml::NodeRef& root) {
         mapping.insert(std::move(mapped_node));
     }
     return mapping;
+}
+
+void validate_mapping_schema(const std::filesystem::path& mapping_path, const std::filesystem::path& schema_path) {
+    const auto config_as_json = Everest::load_yaml(mapping_path);
+    const auto schema_as_json = Everest::load_yaml(schema_path);
+
+    // validate the mapping file with the schema
+    auto validator = nlohmann::json_schema::json_validator{};
+    validator.set_root_schema(schema_as_json);
+    validator.validate(config_as_json);
 }
 
 std::pair<ComponentVariable, EverestConfigMapping> parse_mapping_node(const c4::yml::NodeRef& mapping_node) {
@@ -111,8 +123,12 @@ EverestConfigMapping parse_maps_to_node(const ryml::NodeRef& node) {
 
 } // namespace
 
-OcppToEverestConfigMapping mapping_reader::read_mapping(const std::filesystem::path& file_name) {
-    const auto mapping_file_path = MAPPING_INSTALL_DIRECTORY / file_name;
+OcppToEverestConfigMapping mapping_reader::read_mapping(const std::filesystem::path& mapping_file_name,
+                                                        const std::filesystem::path& schema_file_name) {
+    const auto mapping_file_path = MAPPING_INSTALL_DIRECTORY / mapping_file_name;
+    const auto mapping_schema_file_path = MAPPING_SCHEMA_INSTALL_DIRECTORY / schema_file_name;
+
+    validate_mapping_schema(mapping_file_path, mapping_schema_file_path);
 
     const auto tree = util::load_yaml_file(mapping_file_path);
     const auto root = tree.rootref();

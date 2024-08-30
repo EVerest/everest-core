@@ -13,12 +13,13 @@ void OCPPConfiguration::init() {
 void OCPPConfiguration::ready() {
     invoke_ready(*p_main);
 
-    const auto mapping_file_path = std::filesystem::path{config.mapping_file_name};
-
     try {
-        event_handler = std::make_unique<EventHandler>(mapping_file_path);
+        event_handler = std::make_unique<EventHandler>(config.mapping_file_name, config.schema_file_name);
     } catch (const std::runtime_error& e) {
-        EVLOG_warning << "Failed to create event handler: " << e.what() << ".\nNo events will be handled!";
+        EVLOG_warning << "Failed to create event handler: " << e.what() << "No events will be handled!";
+        return;
+    } catch (const std::exception& e) {
+        EVLOG_warning << "Failed to create event handler: " << e.what() << "No events will be handled!";
         return;
     }
 

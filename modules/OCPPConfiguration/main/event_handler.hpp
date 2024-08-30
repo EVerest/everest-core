@@ -20,8 +20,10 @@ public:
      * Create an EventHandler with the given mapping file.
      *
      * @param config_mapping_file_name Name of the mapping file.
+     * @param mapping_schema_file_name Name of the schema file.
      */
-    explicit EventHandler(const std::filesystem::path& config_mapping_file_name);
+    EventHandler(const std::filesystem::path& config_mapping_file_name,
+                 const std::filesystem::path& mapping_schema_file_name);
 
     /**
      * Try to handle the given event. If successful, the event will be written to the user configuration file given.
