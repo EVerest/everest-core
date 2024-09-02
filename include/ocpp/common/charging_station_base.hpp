@@ -8,7 +8,7 @@
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/common/evse_security_impl.hpp>
 #include <ocpp/common/message_queue.hpp>
-#include <ocpp/common/websocket/websocket.hpp>
+#include <ocpp/common/ocpp_logging.hpp>
 
 namespace ocpp {
 
@@ -16,10 +16,8 @@ namespace ocpp {
 class ChargingStationBase {
 
 protected:
-    std::unique_ptr<Websocket> websocket;
     std::shared_ptr<EvseSecurity> evse_security;
     std::shared_ptr<MessageLogging> logging;
-    Everest::SteadyTimer websocket_timer;
 
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;

@@ -94,6 +94,8 @@ private:
     UploadLogStatusEnumType log_status;
     std::string message_log_path;
 
+    std::unique_ptr<Websocket> websocket;
+    Everest::SteadyTimer websocket_timer;
     std::unique_ptr<MessageQueue<v16::MessageType>> message_queue;
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
     std::unique_ptr<SmartChargingHandler> smart_charging_handler;

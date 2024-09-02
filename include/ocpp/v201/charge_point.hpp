@@ -10,6 +10,7 @@
 #include <ocpp/common/charging_station_base.hpp>
 
 #include <ocpp/v201/average_meter_values.hpp>
+#include <ocpp/v201/connectivity_manager.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/device_model.hpp>
@@ -211,9 +212,6 @@ public:
     /// \param bootreason   Optional bootreason (default: PowerUp).
     virtual void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) = 0;
 
-    /// \brief Starts the websocket
-    virtual void start_websocket() = 0;
-
     /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
     virtual void stop() = 0;
 
@@ -221,11 +219,7 @@ public:
     virtual void connect_websocket() = 0;
 
     /// \brief Disconnects the the websocket connection to the CSMS if it is connected
-    /// \param code Optional websocket close status code (default: normal).
-
-    /// \brief Disconnects the the websocket connection to the CSMS if it is connected
-    /// \param code Optional websocket close status code (default: normal).
-    virtual void disconnect_websocket(const WebsocketCloseReason code = WebsocketCloseReason::Normal) = 0;
+    virtual void disconnect_websocket() = 0;
 
     /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
     ///        called during a Firmware Update to indicate the current firmware_update_status.
@@ -424,6 +418,7 @@ class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBa
 
 private:
     std::unique_ptr<EvseManager> evse_manager;
+    std::unique_ptr<ConnectivityManager> connectivity_manager;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -463,8 +458,6 @@ private:
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
     BootReasonEnum bootreason;
-    int network_configuration_priority;
-    bool disable_automatic_websocket_reconnects;
     bool skip_invalid_csms_certificate_notifications;
 
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
@@ -512,24 +505,18 @@ private:
 
     // internal helper functions
     void initialize(const std::map<int32_t, int32_t>& evse_connector_structure, const std::string& message_log_path);
-    void init_websocket();
-    WebsocketConnectionOptions get_ws_connection_options(const int32_t configuration_slot);
     void init_certificate_expiration_check_timers();
     void scheduled_check_client_certificate_expiration();
     void scheduled_check_v2g_certificate_expiration();
+    void websocket_connected_callback(const int security_profile);
+    void websocket_disconnected_callback();
+    void websocket_connection_failed(ConnectionFailedReason reason);
     void update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                       const ConnectorStatusEnum status);
     void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 
     void trigger_authorization_cache_cleanup();
     void cache_cleanup_handler();
-
-    /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
-    /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
-    /// present \param network_configuration_priority \return
-    std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot);
-    /// \brief Moves websocket network_configuration_priority to next profile
-    void next_network_configuration_priority();
 
     /// \brief Removes all network connection profiles below the actual security profile and stores the new list in the
     /// device model
@@ -882,13 +869,10 @@ public:
 
     void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;
 
-    void start_websocket() override;
-
     void stop() override;
 
-    void connect_websocket() override;
-
-    void disconnect_websocket(const WebsocketCloseReason code = WebsocketCloseReason::Normal) override;
+    virtual void connect_websocket() override;
+    virtual void disconnect_websocket() override;
 
     void on_firmware_update_status_notification(int32_t request_id,
                                                 const FirmwareStatusEnum& firmware_update_status) override;
