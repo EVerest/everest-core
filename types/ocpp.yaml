@@ -32,6 +32,8 @@ types:
         type: integer
       stack_level:
         type: integer
+      phase_to_use:
+        type: integer
   ChargingSchedule:
     description: >-
       Element providing information on an OCPP charging schedule.
