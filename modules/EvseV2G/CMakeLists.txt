@@ -59,7 +59,7 @@ target_sources(${MODULE_NAME}
 if(USING_MBED_TLS)
 # needed for header file enum definition
 target_include_directories(${MODULE_NAME} PRIVATE
-        ../../lib/staging/tls
+        ../../lib/staging/tls ../../lib/staging/util
 )
 target_link_libraries(${MODULE_NAME}
     PRIVATE

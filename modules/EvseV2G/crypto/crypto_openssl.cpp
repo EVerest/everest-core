@@ -127,7 +127,7 @@ bool check_iso2_signature(const struct iso2_SignatureType* iso2_signature, EVP_P
     return bRes;
 }
 
-bool load_contract_root_cert(::openssl::CertificateList& trust_anchors, const char* V2G_file_path,
+bool load_contract_root_cert(::openssl::certificate_list& trust_anchors, const char* V2G_file_path,
                              const char* MO_file_path) {
     // note the file(s) may contain more than one certificate (hence must be PEM)
     // try MO_file_path first then fallback to V2G_file_path
@@ -145,7 +145,7 @@ bool load_contract_root_cert(::openssl::CertificateList& trust_anchors, const ch
     return !trust_anchors.empty();
 }
 
-int load_certificate(::openssl::CertificateList* chain, const std::uint8_t* bytes, std::uint16_t bytesLen) {
+int load_certificate(::openssl::certificate_list* chain, const std::uint8_t* bytes, std::uint16_t bytesLen) {
     assert(chain != nullptr);
     int result{-1};
 
@@ -158,12 +158,12 @@ int load_certificate(::openssl::CertificateList* chain, const std::uint8_t* byte
     return result;
 }
 
-int parse_contract_certificate(::openssl::Certificate_ptr& crt, const std::uint8_t* buf, std::size_t buflen) {
+int parse_contract_certificate(::openssl::certificate_ptr& crt, const std::uint8_t* buf, std::size_t buflen) {
     crt = ::openssl::der_to_certificate(buf, buflen);
     return (crt == nullptr) ? -1 : 0;
 }
 
-std::string getEmaidFromContractCert(const ::openssl::Certificate_ptr& crt) {
+std::string getEmaidFromContractCert(const ::openssl::certificate_ptr& crt) {
     std::string cert_emaid;
     const auto subject = ::openssl::certificate_subject(crt.get());
     if (auto itt = subject.find("CN"); itt != subject.end()) {
@@ -173,7 +173,7 @@ std::string getEmaidFromContractCert(const ::openssl::Certificate_ptr& crt) {
     return cert_emaid;
 }
 
-std::string chain_to_pem(const ::openssl::Certificate_ptr& cert, const ::openssl::CertificateList* chain) {
+std::string chain_to_pem(const ::openssl::certificate_ptr& cert, const ::openssl::certificate_list* chain) {
     assert(chain != nullptr);
 
     std::string contract_cert_chain_pem(::openssl::certificate_to_pem(cert.get()));
@@ -189,13 +189,13 @@ std::string chain_to_pem(const ::openssl::Certificate_ptr& cert, const ::openssl
     return contract_cert_chain_pem;
 }
 
-verify_result_t verify_certificate(const ::openssl::Certificate_ptr& cert, const ::openssl::CertificateList* chain,
+verify_result_t verify_certificate(const ::openssl::certificate_ptr& cert, const ::openssl::certificate_list* chain,
                                    const char* v2g_root_cert_path, const char* mo_root_cert_path,
                                    bool /* debugMode */) {
     assert(chain != nullptr);
 
-    verify_result_t result{verify_result_t::verified};
-    ::openssl::CertificateList trust_anchors;
+    verify_result_t result{verify_result_t::Verified};
+    ::openssl::certificate_list trust_anchors;
 
     if (!load_contract_root_cert(trust_anchors, v2g_root_cert_path, mo_root_cert_path)) {
         result = verify_result_t::NoCertificateAvailable;

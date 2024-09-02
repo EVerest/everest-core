@@ -270,7 +270,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
 
     if (stop) {
         // spawn new thread to not block command handler
-        std::thread([this, stop] {
+        std::thread([stop] {
             // try to gracefully shutdown charging session
             v2g_ctx->evse_v2g_data.evse_notification = iso2_EVSENotificationType_StopCharging;
             memset(v2g_ctx->evse_v2g_data.evse_status_code, iso2_DC_EVSEStatusCodeType_EVSE_Shutdown,
