@@ -15,11 +15,11 @@ void car_simulatorImpl::init() {
     subscribe_to_variables_on_init();
 
     std::thread(&car_simulatorImpl::run, this).detach();
+
+    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
 }
 
 void car_simulatorImpl::ready() {
-
-    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
 
     setup_ev_parameters();
 
