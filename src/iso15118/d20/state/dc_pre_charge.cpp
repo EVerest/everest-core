@@ -37,7 +37,7 @@ FsmSimpleState::HandleEventReturnType DC_PreCharge::handle_event(AllocatorType& 
     if (ev == FsmEvent::CONTROL_MESSAGE) {
         const auto control_data = ctx.get_control_event<PresentVoltageCurrent>();
         if (not control_data) {
-            // FIXME (aw): error handling
+            // Ignore control message
             return sa.HANDLED_INTERNALLY;
         }
 

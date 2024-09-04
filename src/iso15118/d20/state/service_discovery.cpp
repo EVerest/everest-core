@@ -97,8 +97,8 @@ FsmSimpleState::HandleEventReturnType ServiceDiscovery::handle_event(AllocatorTy
             }
         }
 
-        const auto res = handle_request(*req, ctx.session, ctx.config.supported_energy_transfer_services,
-                                        ctx.config.supported_vas_services);
+        const auto res = handle_request(*req, ctx.session, ctx.session_config.supported_energy_transfer_services,
+                                        ctx.session_config.supported_vas_services);
 
         ctx.respond(res);
 

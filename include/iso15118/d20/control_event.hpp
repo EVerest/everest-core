@@ -4,6 +4,8 @@
 
 #include <variant>
 
+#include <iso15118/d20/limits.hpp>
+
 namespace iso15118::d20 {
 class CableCheckFinished {
 public:
@@ -49,6 +51,7 @@ private:
     bool stop;
 };
 
-using ControlEvent = std::variant<CableCheckFinished, PresentVoltageCurrent, AuthorizationResponse, StopCharging>;
+using ControlEvent =
+    std::variant<CableCheckFinished, PresentVoltageCurrent, AuthorizationResponse, StopCharging, DcTransferLimits>;
 
 } // namespace iso15118::d20

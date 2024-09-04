@@ -18,6 +18,30 @@ using Dynamic_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLRe
 using Scheduled_DC_Res = message_20::DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode;
 using Scheduled_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Scheduled_DC_CLResControlMode;
 
+template <typename In, typename Out> void convert(Out& out, const In& in);
+
+template <> void convert(Scheduled_DC_Res& out, const d20::DcTransferLimits& in) {
+    out.max_charge_power = in.charge_limits.power.max;
+    out.min_charge_power = in.charge_limits.power.min;
+    out.max_charge_current = in.charge_limits.current.max;
+    out.max_voltage = in.voltage.max;
+}
+
+template <> void convert(Scheduled_BPT_DC_Res& out, const d20::DcTransferLimits& in) {
+    out.max_charge_power = in.charge_limits.power.max;
+    out.min_charge_power = in.charge_limits.power.min;
+    out.max_charge_current = in.charge_limits.current.max;
+    out.max_voltage = in.voltage.max;
+    out.min_voltage = in.voltage.min;
+
+    if (in.discharge_limits.has_value()) {
+        auto& discharge_limits = in.discharge_limits.value();
+        out.max_discharge_power = discharge_limits.power.max;
+        out.min_discharge_power = discharge_limits.power.min;
+        out.max_discharge_current = discharge_limits.current.max;
+    }
+}
+
 static auto fill_parameters(const message_20::DisplayParameters& req_parameters) {
     auto parameters = session::feedback::DisplayParameters{};
 
@@ -38,7 +62,7 @@ static auto fill_parameters(const message_20::DisplayParameters& req_parameters)
 
 std::tuple<message_20::DC_ChargeLoopResponse, std::optional<session::feedback::DcChargeTarget>>
 handle_request(const message_20::DC_ChargeLoopRequest& req, const d20::Session& session, const float present_voltage,
-               const float present_current, const bool stop) {
+               const float present_current, const bool stop, const DcTransferLimits& dc_limits) {
 
     message_20::DC_ChargeLoopResponse res;
     std::optional<session::feedback::DcChargeTarget> charge_target{std::nullopt};
@@ -61,6 +85,7 @@ handle_request(const message_20::DC_ChargeLoopRequest& req, const d20::Session& 
         };
 
         auto& mode = res.control_mode.emplace<Scheduled_DC_Res>();
+        convert(mode, dc_limits);
 
     } else if (std::holds_alternative<Scheduled_BPT_DC_Req>(req.control_mode)) {
 
@@ -68,14 +93,20 @@ handle_request(const message_20::DC_ChargeLoopRequest& req, const d20::Session& 
             return {response_with_code(res, message_20::ResponseCode::FAILED), charge_target};
         }
 
+        if (not dc_limits.discharge_limits.has_value()) {
+            logf_error("Transfer mode is BPT, but only dc limits without discharge limits are provided!");
+            return {response_with_code(res, message_20::ResponseCode::FAILED), charge_target};
+        }
+
+        auto& mode = res.control_mode.emplace<Scheduled_BPT_DC_Res>();
+        convert(mode, dc_limits);
+
         const auto& req_mode = std::get<Scheduled_BPT_DC_Req>(req.control_mode);
 
         charge_target = {
             message_20::from_RationalNumber(req_mode.target_voltage),
             message_20::from_RationalNumber(req_mode.target_current),
         };
-
-        auto& mode = res.control_mode.emplace<Scheduled_BPT_DC_Res>();
     }
 
     res.present_voltage = iso15118::message_20::from_float(present_voltage);
@@ -101,10 +132,9 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
             present_current = control_data->current;
         } else if (const auto control_data = ctx.get_control_event<StopCharging>()) {
             stop = *control_data;
-        } else {
-            // FIXME (aw): error handling
         }
 
+        // Ignore control message
         return sa.HANDLED_INTERNALLY;
     }
 
@@ -141,7 +171,8 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
             first_entry_in_charge_loop = false;
         }
 
-        const auto [res, charge_target] = handle_request(*req, ctx.session, present_voltage, present_current, stop);
+        const auto [res, charge_target] =
+            handle_request(*req, ctx.session, present_voltage, present_current, stop, ctx.session_config.dc_limits);
 
         if (charge_target) {
             ctx.feedback.dc_charge_target(charge_target.value());

@@ -30,7 +30,7 @@ struct SessionState {
 
 class Session {
 public:
-    Session(std::unique_ptr<io::IConnection>, const d20::SessionConfig&, const session::feedback::Callbacks&);
+    Session(std::unique_ptr<io::IConnection>, d20::SessionConfig, const session::feedback::Callbacks&);
     ~Session();
 
     TimePoint const& poll();

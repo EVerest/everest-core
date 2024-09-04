@@ -20,13 +20,13 @@ using ConnectionType = iso15118::io::ConnectionTLS;
 
 namespace iso15118 {
 
-TbdController::TbdController(TbdConfig config_, session::feedback::Callbacks callbacks_) :
-    config(std::move(config_)), callbacks(std::move(callbacks_)) {
+TbdController::TbdController(TbdConfig config_, session::feedback::Callbacks callbacks_, d20::EvseSetupConfig setup_) :
+    config(std::move(config_)), callbacks(std::move(callbacks_)), evse_setup(std::move(setup_)) {
+
     if (config.enable_sdp_server) {
         sdp_server = std::make_unique<io::SdpServer>();
         poll_manager.register_fd(sdp_server->get_fd(), [this]() { handle_sdp_server_input(); });
     }
-    session_config = d20::SessionConfig();
 }
 
 void TbdController::loop() {
@@ -34,7 +34,8 @@ void TbdController::loop() {
 
     if (not config.enable_sdp_server) {
         auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
-        session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
+        session =
+            std::make_unique<Session>(std::move(connection), std::move(d20::SessionConfig(evse_setup)), callbacks);
     }
 
     auto next_event = get_current_time_point();
@@ -53,7 +54,8 @@ void TbdController::loop() {
 
                 if (not config.enable_sdp_server) {
                     auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
-                    session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
+                    session = std::make_unique<Session>(std::move(connection),
+                                                        std::move(d20::SessionConfig(evse_setup)), callbacks);
                 }
             }
         }
@@ -66,21 +68,25 @@ void TbdController::send_control_event(const d20::ControlEvent& event) {
     }
 }
 
-// Should be called once
-void TbdController::setup_config() {
+void TbdController::update_authorization_services(const std::vector<message_20::Authorization>& services,
+                                                  bool cert_install_service) {
+
+    evse_setup.enable_certificate_install_service = cert_install_service;
+
+    if (services.empty()) {
+        logf_warning("The authorization services are not updated because services are empty!");
+        return;
+    }
+    evse_setup.authorization_services = services;
 }
 
-// Should be called before every session
-void TbdController::setup_session(const std::vector<message_20::Authorization>& auth_services,
-                                  bool cert_install_service) {
+void TbdController::update_dc_limits(const d20::DcTransferLimits& limits) {
 
-    if (auth_services.empty() == false) {
-        session_config.authorization_services = auth_services;
-    } else {
-        session_config.authorization_services = {{message_20::Authorization::EIM}};
+    evse_setup.dc_limits = limits;
+
+    if (session) {
+        session->push_control_event(limits);
     }
-
-    session_config.cert_install_service = cert_install_service;
 }
 
 void TbdController::handle_sdp_server_input() {
@@ -112,8 +118,7 @@ void TbdController::handle_sdp_server_input() {
 
     const auto ipv6_endpoint = connection->get_public_endpoint();
 
-    // Todo(sl): Check if session_config is empty
-    session = std::make_unique<Session>(std::move(connection), session_config, callbacks);
+    session = std::make_unique<Session>(std::move(connection), std::move(d20::SessionConfig(evse_setup)), callbacks);
 
     sdp_server->send_response(request, ipv6_endpoint);
 }

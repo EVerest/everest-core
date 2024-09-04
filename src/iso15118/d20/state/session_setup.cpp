@@ -57,7 +57,7 @@ FsmSimpleState::HandleEventReturnType SessionSetup::handle_event(AllocatorType& 
             ctx.session = Session();
         }
 
-        evse_id = ctx.config.evse_id;
+        evse_id = ctx.session_config.evse_id;
 
         const auto res = handle_request(*req, ctx.session, evse_id, new_session);
 

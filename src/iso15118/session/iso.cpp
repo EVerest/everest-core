@@ -119,9 +119,11 @@ static size_t setup_response_header(uint8_t* buffer, iso15118::io::v2gtp::Payloa
     return size + iso15118::io::SdpPacket::V2GTP_HEADER_SIZE;
 }
 
-Session::Session(std::unique_ptr<io::IConnection> connection_, const d20::SessionConfig& config,
+Session::Session(std::unique_ptr<io::IConnection> connection_, d20::SessionConfig session_config,
                  const session::feedback::Callbacks& callbacks) :
-    connection(std::move(connection_)), log(this), ctx(message_exchange, active_control_event, callbacks, log, config) {
+    connection(std::move(connection_)),
+    log(this),
+    ctx(message_exchange, active_control_event, callbacks, log, std::move(session_config)) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
     connection->set_event_callback([this](io::ConnectionEvent event) { this->handle_connection_event(event); });
@@ -154,6 +156,11 @@ TimePoint const& Session::poll() {
 
     // send all of our queued control events
     while (active_control_event = control_event_queue.pop()) {
+
+        if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
+            ctx.session_config.dc_limits = *control_data;
+        }
+
         const auto res = fsm.handle_event(d20::FsmEvent::CONTROL_MESSAGE);
         // FIXME (aw): check result!
     }

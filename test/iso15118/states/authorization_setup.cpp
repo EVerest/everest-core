@@ -16,10 +16,11 @@ SCENARIO("Authorization setup state handling") {
         req.header.timestamp = 1691411798;
 
         session = d20::Session();
-        d20::SessionConfig config;
 
-        const auto res =
-            d20::state::handle_request(req, session, config.cert_install_service, config.authorization_services);
+        const auto cert_install_service = false;
+        const std::vector<message_20::Authorization> authorization_services = {message_20::Authorization::EIM};
+
+        const auto res = d20::state::handle_request(req, session, cert_install_service, authorization_services);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
             REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
@@ -39,12 +40,10 @@ SCENARIO("Authorization setup state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        d20::SessionConfig config;
-        config.cert_install_service = false;
-        config.authorization_services = {message_20::Authorization::EIM};
+        const auto cert_install_service = false;
+        const std::vector<message_20::Authorization> authorization_services = {message_20::Authorization::EIM};
 
-        const auto res =
-            d20::state::handle_request(req, session, config.cert_install_service, config.authorization_services);
+        const auto res = d20::state::handle_request(req, session, cert_install_service, authorization_services);
 
         THEN("ResponseCode: Ok, cert_install = false, authorization_servie = EIM") {
             REQUIRE(res.response_code == message_20::ResponseCode::OK);
@@ -65,12 +64,10 @@ SCENARIO("Authorization setup state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        d20::SessionConfig config;
-        config.cert_install_service = false;
-        config.authorization_services = {message_20::Authorization::PnC};
+        const auto cert_install_service = false;
+        const std::vector<message_20::Authorization> authorization_services = {message_20::Authorization::PnC};
 
-        const auto res =
-            d20::state::handle_request(req, session, config.cert_install_service, config.authorization_services);
+        const auto res = d20::state::handle_request(req, session, cert_install_service, authorization_services);
 
         THEN("ResponseCode: Ok, cert_install = false, authorization_servie = PnC, authorization_mode = PnC_Mode") {
             REQUIRE(res.response_code == message_20::ResponseCode::OK);
@@ -94,12 +91,11 @@ SCENARIO("Authorization setup state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        d20::SessionConfig config;
-        config.cert_install_service = true;
-        config.authorization_services = {message_20::Authorization::PnC, message_20::Authorization::EIM};
+        const auto cert_install_service = true;
+        const std::vector<message_20::Authorization> authorization_services = {message_20::Authorization::PnC,
+                                                                               message_20::Authorization::EIM};
 
-        const auto res =
-            d20::state::handle_request(req, session, config.cert_install_service, config.authorization_services);
+        const auto res = d20::state::handle_request(req, session, cert_install_service, authorization_services);
 
         THEN("ResponseCode: Ok, cert_install = true, authorization_servie = EIM & PnC, authorization_mode = PnC_Mode") {
             REQUIRE(res.response_code == message_20::ResponseCode::OK);

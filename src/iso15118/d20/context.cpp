@@ -53,12 +53,12 @@ message_20::Type MessageExchange::peek_request_type() const {
 
 Context::Context(MessageExchange& message_exchange_, const std::optional<ControlEvent>& current_control_event_,
                  session::feedback::Callbacks feedback_callbacks, session::SessionLogger& logger,
-                 const d20::SessionConfig& config_) :
+                 d20::SessionConfig session_config_) :
     current_control_event{current_control_event_},
     feedback(std::move(feedback_callbacks)),
     log(logger),
     message_exchange(message_exchange_),
-    config(config_) {
+    session_config(std::move(session_config_)) {
 }
 
 std::unique_ptr<message_20::Variant> Context::pull_request() {
