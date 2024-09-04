@@ -3,24 +3,23 @@
 
 #pragma once
 
-#include <everest_device_model_storage.hpp>
+#include <device_model/everest_device_model_storage.hpp>
 #include <ocpp/v201/device_model_interface.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 
 namespace module::device_model {
 class ComposedDeviceModelStorage : public ocpp::v201::DeviceModelInterface {
-private:
+private: // Members
     std::unique_ptr<EverestDeviceModelStorage> everest_device_model_storage;
     std::unique_ptr<ocpp::v201::DeviceModelStorageSqlite> libocpp_device_model_storage;
+    ocpp::v201::DeviceModelMap device_model_map;
 
 public:
     ComposedDeviceModelStorage(const std::string& libocpp_device_model_storage_address,
                                const bool libocpp_initialize_device_model,
                                const std::string& device_model_migration_path,
                                const std::string& device_model_config_path);
-
-    // DeviceModelInterface interface
-public:
+    virtual ~ComposedDeviceModelStorage() override = default;
     virtual ocpp::v201::DeviceModelMap get_device_model() override;
     virtual std::optional<ocpp::v201::VariableAttribute>
     get_variable_attribute(const ocpp::v201::Component& component_id, const ocpp::v201::Variable& variable_id,
@@ -41,5 +40,16 @@ public:
     virtual ocpp::v201::ClearMonitoringStatusEnum clear_variable_monitor(int monitor_id, bool allow_protected) override;
     virtual int32_t clear_custom_variable_monitors() override;
     virtual void check_integrity() override;
+
+private: // Functions
+         ///
+         /// \brief Get variable source of given variable.
+         /// \param component    Component the variable belongs to.
+         /// \param variable     The variable to get the source from.
+         /// \return The variable source. Defaults to 'OCPP'.
+         /// \throws DeviceModelError    When source is something else than 'OCPP' (not implemented yet)
+         ///
+    ocpp::v201::VariableSource get_variable_source(const ocpp::v201::Component& component,
+                                                   const ocpp::v201::Variable& variable);
 };
 } // namespace module::device_model

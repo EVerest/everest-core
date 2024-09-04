@@ -8,6 +8,7 @@
 namespace module::device_model {
     class EverestDeviceModelStorage : public ocpp::v201::DeviceModelInterface {
         public:
+            virtual ~EverestDeviceModelStorage() override = default;
             virtual ocpp::v201::DeviceModelMap get_device_model() override;
             virtual std::optional<ocpp::v201::VariableAttribute> get_variable_attribute(const ocpp::v201::Component &component_id, const ocpp::v201::Variable &variable_id, const ocpp::v201::AttributeEnum &attribute_enum) override;
             virtual std::vector<ocpp::v201::VariableAttribute> get_variable_attributes(const ocpp::v201::Component &component_id, const ocpp::v201::Variable &variable_id, const std::optional<ocpp::v201::AttributeEnum> &attribute_enum) override;
