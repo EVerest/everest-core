@@ -174,6 +174,14 @@ void Charger::run_state_machine() {
         auto time_in_current_state =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.current_state_started).count();
 
+        // Clean up ongoing 1ph 3ph switching operation?
+        if (internal_context.last_state == EvseState::SwitchPhases and
+            shared_context.current_state not_eq EvseState::SwitchPhases and
+            shared_context.switch_3ph1ph_threephase_ongoing) {
+            bsp->switch_three_phases_while_charging(shared_context.switch_3ph1ph_threephase);
+            shared_context.switch_3ph1ph_threephase_ongoing = false;
+        }
+
         switch (shared_context.current_state) {
         case EvseState::Disabled:
             if (initialize_state) {
@@ -435,6 +443,7 @@ void Charger::run_state_machine() {
             if (time_in_current_state >= config_context.switch_3ph1ph_delay_s * 1000) {
                 session_log.evse(false, "Exit switching phases");
                 bsp->switch_three_phases_while_charging(shared_context.switch_3ph1ph_threephase);
+                shared_context.switch_3ph1ph_threephase_ongoing = false;
                 shared_context.current_state = internal_context.switching_phases_return_state;
             }
             break;
@@ -1261,10 +1270,16 @@ bool Charger::switch_three_phases_while_charging(bool n) {
     if (shared_context.current_state == EvseState::Charging) {
         // In charging state, we need to go via a helper state for the delay
         shared_context.switch_3ph1ph_threephase = n;
+        shared_context.switch_3ph1ph_threephase_ongoing = true;
         internal_context.switching_phases_return_state = EvseState::PrepareCharging;
         shared_context.current_state = EvseState::SwitchPhases;
     } else if (shared_context.current_state == EvseState::SwitchPhases) {
         shared_context.switch_3ph1ph_threephase = n;
+    } else if (shared_context.current_state == EvseState::WaitingForEnergy) {
+        shared_context.switch_3ph1ph_threephase = n;
+        shared_context.switch_3ph1ph_threephase_ongoing = true;
+        internal_context.switching_phases_return_state = EvseState::WaitingForEnergy;
+        shared_context.current_state = EvseState::SwitchPhases;
     } else {
         // In all other states we can tell the bsp directly.
         bsp->switch_three_phases_while_charging(n);

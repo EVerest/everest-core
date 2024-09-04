@@ -300,6 +300,7 @@ private:
         bool ac_with_soc_timeout;
         bool contactor_welded{false};
         bool switch_3ph1ph_threephase{false};
+        bool switch_3ph1ph_threephase_ongoing{false};
 
         std::optional<types::units_signed::SignedMeterValue> stop_signed_meter_value;
         std::optional<types::units_signed::SignedMeterValue> start_signed_meter_value;
