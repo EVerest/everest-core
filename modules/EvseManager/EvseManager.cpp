@@ -1176,7 +1176,7 @@ bool EvseManager::reserve(int32_t id) {
     }
 
     // is the evse faulted?
-    if (charger->errors_prevent_charging()) {
+    if (charger->stop_charging_on_fatal_error()) {
         return false;
     }
 
