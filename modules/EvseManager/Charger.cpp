@@ -493,7 +493,7 @@ void Charger::run_state_machine() {
             }
 
             // Wait here until all errors are cleared
-            if (errors_prevent_charging_internal()) {
+            if (stop_charging_on_fatal_error_internal()) {
                 // reset the time counter for the wake-up sequence if we are blocked by errors
                 internal_context.current_state_started = now;
                 break;
@@ -569,7 +569,7 @@ void Charger::run_state_machine() {
             }
 
             // Wait here until all errors are cleared
-            if (errors_prevent_charging_internal()) {
+            if (stop_charging_on_fatal_error_internal()) {
                 break;
             }
 
@@ -671,7 +671,7 @@ void Charger::run_state_machine() {
                     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
                 } else {
                     // update PWM if it has changed and 5 seconds have passed since last update
-                    if (not errors_prevent_charging_internal()) {
+                    if (not stop_charging_on_fatal_error_internal()) {
                         update_pwm_max_every_5seconds_ampere(get_max_current_internal());
                     }
                 }
@@ -1840,17 +1840,21 @@ bool Charger::bcb_toggle_detected() {
     return false;
 }
 
-bool Charger::errors_prevent_charging() {
+bool Charger::stop_charging_on_fatal_error() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_errors_prevent_charging);
-    return errors_prevent_charging_internal();
+    return stop_charging_on_fatal_error_internal();
 }
 
-bool Charger::errors_prevent_charging_internal() {
+bool Charger::stop_charging_on_fatal_error_internal() {
+    bool err = false;
     if (shared_context.error_prevent_charging_flag) {
-        graceful_stop_charging();
-        return true;
+        if (not shared_context.last_error_prevent_charging_flag) {
+            graceful_stop_charging();
+        }
+        err = true;
     }
-    return false;
+    shared_context.last_error_prevent_charging_flag = shared_context.error_prevent_charging_flag;
+    return err;
 }
 
 void Charger::graceful_stop_charging() {

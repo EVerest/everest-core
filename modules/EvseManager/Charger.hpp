@@ -191,7 +191,7 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
-    bool errors_prevent_charging();
+    bool stop_charging_on_fatal_error();
 
     /// @brief Returns the OCMF start data.
     ///
@@ -223,7 +223,7 @@ private:
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
 
-    bool errors_prevent_charging_internal();
+    bool stop_charging_on_fatal_error_internal();
     float get_max_current_internal();
     float get_max_current_signalled_to_ev_internal();
     bool deauthorize_internal();
@@ -295,6 +295,7 @@ private:
         types::evse_manager::StartSessionReason last_start_session_reason;
         float current_drawn_by_vehicle[3];
         bool error_prevent_charging_flag{false};
+        bool last_error_prevent_charging_flag{false};
         int ac_with_soc_timer;
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
