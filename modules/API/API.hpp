@@ -155,7 +155,7 @@ public:
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
         std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay,
-        std::unique_ptr<error_historyIntf> r_error_history, Conf& config) :
+        std::vector<std::unique_ptr<error_historyIntf>> r_error_history, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -170,7 +170,7 @@ public:
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
     const std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay;
-    const std::unique_ptr<error_historyIntf> r_error_history;
+    const std::vector<std::unique_ptr<error_historyIntf>> r_error_history;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

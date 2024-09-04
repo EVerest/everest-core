@@ -187,6 +187,8 @@ requires:
     max_connections: 128
   error_history:
     interface: error_history
+    min_connections: 0
+    max_connections: 1
 enable_external_mqtt: true
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
