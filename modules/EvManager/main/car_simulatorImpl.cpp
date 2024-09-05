@@ -18,7 +18,7 @@ void car_simulatorImpl::init() {
 }
 
 void car_simulatorImpl::ready() {
-    this->is_ready = true;
+    is_ready = true;
 
     car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
 
@@ -35,7 +35,7 @@ void car_simulatorImpl::ready() {
 }
 
 void car_simulatorImpl::handle_enable(bool& value) {
-    if (not this->is_ready) {
+    if (not is_ready) {
         // ignore if not yet ready
         EVLOG_warning << "Not ready yet, ignoring enable!";
         return;
