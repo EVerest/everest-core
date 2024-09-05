@@ -21,6 +21,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <condition_variable>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -191,6 +192,12 @@ private:
     // insert your private definitions here
     std::vector<std::thread> api_threads;
     bool running = true;
+
+    std::condition_variable evse_manager_cv;
+    std::mutex evse_manager_mux;
+    std::int8_t evse_manager_ready{0};
+    void wait_evse_manager_ready();
+    void notify_evse_manager_ready(bool ready);
 
     std::list<std::unique_ptr<SessionInfo>> info;
     std::list<std::string> hw_capabilities_str;
