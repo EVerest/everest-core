@@ -174,6 +174,14 @@ void Charger::run_state_machine() {
         auto time_in_current_state =
             std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.current_state_started).count();
 
+        // Clean up ongoing 1ph 3ph switching operation?
+        if (internal_context.last_state == EvseState::SwitchPhases and
+            shared_context.current_state not_eq EvseState::SwitchPhases and
+            shared_context.switch_3ph1ph_threephase_ongoing) {
+            bsp->switch_three_phases_while_charging(shared_context.switch_3ph1ph_threephase);
+            shared_context.switch_3ph1ph_threephase_ongoing = false;
+        }
+
         switch (shared_context.current_state) {
         case EvseState::Disabled:
             if (initialize_state) {
@@ -435,6 +443,7 @@ void Charger::run_state_machine() {
             if (time_in_current_state >= config_context.switch_3ph1ph_delay_s * 1000) {
                 session_log.evse(false, "Exit switching phases");
                 bsp->switch_three_phases_while_charging(shared_context.switch_3ph1ph_threephase);
+                shared_context.switch_3ph1ph_threephase_ongoing = false;
                 shared_context.current_state = internal_context.switching_phases_return_state;
             }
             break;
@@ -484,7 +493,7 @@ void Charger::run_state_machine() {
             }
 
             // Wait here until all errors are cleared
-            if (errors_prevent_charging_internal()) {
+            if (stop_charging_on_fatal_error_internal()) {
                 // reset the time counter for the wake-up sequence if we are blocked by errors
                 internal_context.current_state_started = now;
                 break;
@@ -560,7 +569,7 @@ void Charger::run_state_machine() {
             }
 
             // Wait here until all errors are cleared
-            if (errors_prevent_charging_internal()) {
+            if (stop_charging_on_fatal_error_internal()) {
                 break;
             }
 
@@ -662,7 +671,7 @@ void Charger::run_state_machine() {
                     signal_simple_event(types::evse_manager::SessionEventEnum::ChargingPausedEV);
                 } else {
                     // update PWM if it has changed and 5 seconds have passed since last update
-                    if (not errors_prevent_charging_internal()) {
+                    if (not stop_charging_on_fatal_error_internal()) {
                         update_pwm_max_every_5seconds_ampere(get_max_current_internal());
                     }
                 }
@@ -1261,10 +1270,16 @@ bool Charger::switch_three_phases_while_charging(bool n) {
     if (shared_context.current_state == EvseState::Charging) {
         // In charging state, we need to go via a helper state for the delay
         shared_context.switch_3ph1ph_threephase = n;
+        shared_context.switch_3ph1ph_threephase_ongoing = true;
         internal_context.switching_phases_return_state = EvseState::PrepareCharging;
         shared_context.current_state = EvseState::SwitchPhases;
     } else if (shared_context.current_state == EvseState::SwitchPhases) {
         shared_context.switch_3ph1ph_threephase = n;
+    } else if (shared_context.current_state == EvseState::WaitingForEnergy) {
+        shared_context.switch_3ph1ph_threephase = n;
+        shared_context.switch_3ph1ph_threephase_ongoing = true;
+        internal_context.switching_phases_return_state = EvseState::WaitingForEnergy;
+        shared_context.current_state = EvseState::SwitchPhases;
     } else {
         // In all other states we can tell the bsp directly.
         bsp->switch_three_phases_while_charging(n);
@@ -1825,17 +1840,21 @@ bool Charger::bcb_toggle_detected() {
     return false;
 }
 
-bool Charger::errors_prevent_charging() {
+bool Charger::stop_charging_on_fatal_error() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_errors_prevent_charging);
-    return errors_prevent_charging_internal();
+    return stop_charging_on_fatal_error_internal();
 }
 
-bool Charger::errors_prevent_charging_internal() {
+bool Charger::stop_charging_on_fatal_error_internal() {
+    bool err = false;
     if (shared_context.error_prevent_charging_flag) {
-        graceful_stop_charging();
-        return true;
+        if (not shared_context.last_error_prevent_charging_flag) {
+            graceful_stop_charging();
+        }
+        err = true;
     }
-    return false;
+    shared_context.last_error_prevent_charging_flag = shared_context.error_prevent_charging_flag;
+    return err;
 }
 
 void Charger::graceful_stop_charging() {

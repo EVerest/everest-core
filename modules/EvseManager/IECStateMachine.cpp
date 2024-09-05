@@ -258,6 +258,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (pwm_running) { // C2
                 // 1) When we come from state B: switch on if we are allowed to
                 // 2) When we are in C2 for a while now and finally get a delayed power_on_allowed: also switch on
+
                 if (power_on_allowed && (!last_power_on_allowed || last_cp_state == RawCPState::B)) {
                     // Table A.6: Sequence 4 EV ready to charge.
                     // Must enable power within 3 seconds.
@@ -293,7 +294,9 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             connector_unlock();
             timer = TimerControl::stop;
             call_allow_power_on_bsp(false);
-            pwm_running = false;
+            if (last_cp_state not_eq RawCPState::F) {
+                pwm_running = false;
+            }
             if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C || last_cp_state == RawCPState::D) {
                 events.push(CPEvent::BCDtoEF);
             }
@@ -372,6 +375,7 @@ void IECStateMachine::set_pwm_F() {
 
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
+    EVLOG_info << "Allow power on: " << value << " Reason: " << reason;
     {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_allow_power_on);
         // Only set the flags here in case of power on.
