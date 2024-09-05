@@ -347,6 +347,7 @@ libocpp, in OCPP2.0.1 the configuration and telemtry variables that can be part 
 control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2.0.1
 that do influence the control flow of libocpp. Therefore it is requirement to make a distinction between externally and
 internally managed variables of the device model inside the device model implementation:
+
 * Internally managed variables: Internally managed variables influence the control flow or can be reported by libocpp
   and are therefore owned by libocpp. If the mutability of such a variable is ReadWrite, the CSMS or the consumer of
   libocpp can set its value and the OCPP201 module is responsible for updating this value in the device model.
@@ -364,9 +365,11 @@ OCPP201 module
 * Provide external implementation of device model API
 * Implement device_model_interface.hpp as part of OCPP201 module
 * Device model implementation must differentiate between internally and externally managed variables
+
   * Internally Managed: Owned, stored and accessed in libocpp in device model storage
   * Externally Managed: Owned, stored and accessed via EVerest config service
   * For externally managed variables a mapping to the EVerest configuration parameter needs to be defined
+
 * Property for internally or externally managed for each variable in the component schemas: The component config has
   a `source` member defined of `Variable`. If `source` is `OCPP`, it means this is an internally managed variable. If
   nothing is defined, this also means it is an internally managed variable.
@@ -382,19 +385,28 @@ Class diagram for device model
 Clarification of the device model classes of this diagram:
 
 * DeviceModel:
+
   * Part of libocpp
   * Contains device model representation and business logic to prevalidate requests to the storage
   * Contains reference to device model interface implementation
+
 * DeviceModelInterface:
+
   * Pure virtual class of libocpp
   * Defines contract for storage implementations
+
 * LibocppDeviceModelStorage
+
   * Implements DeviceModelInterface as part of libocpp
   * Represents existing SQLite implementation of device model
+
 * EverestDeviceModelStorage
+
   * Implements DeviceModelInterface as part of everest-core (OCPP201 module)
   * Uses config service to interact with EVerest modules
+
 * ComposedDeviceModelStorage
+
   * (Final) implementation of DeviceModelInterface as part of everest-core (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
   * Differentiates between externally and internally managed variables
