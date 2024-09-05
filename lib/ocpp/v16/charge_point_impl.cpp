@@ -124,6 +124,12 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         [this](const int32_t connector, const ChargePointErrorCode errorCode, const ChargePointStatus status,
                const ocpp::DateTime& timestamp, const std::optional<CiString<50>>& info,
                const std::optional<CiString<255>>& vendor_id, const std::optional<CiString<50>>& vendor_error_code) {
+            if (connector >= this->status_notification_timers.size() or connector >= this->connectors.size()) {
+                EVLOG_error << "Attempting to stop status notification timer for connector " << connector
+                            << " when there are only " << this->status_notification_timers.size() << " timers and "
+                            << this->connectors.size() << " connectors including connector 0.";
+                return;
+            }
             this->status_notification_timers.at(connector)->stop();
             this->status_notification_timers.at(connector)->timeout(
                 [this, connector, errorCode, status, timestamp, info, vendor_id, vendor_error_code]() {
