@@ -71,6 +71,7 @@ private:
 
     bool enabled{false};
     std::atomic<bool> execution_active{false};
+    std::atomic<bool> is_ready{false};
     size_t loop_interval_ms{};
 
     std::queue<SimulationCommand> command_queue;
