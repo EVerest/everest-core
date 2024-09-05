@@ -195,7 +195,7 @@ private:
 
     std::condition_variable evse_manager_cv;
     std::mutex evse_manager_mux;
-    std::int8_t evse_manager_ready{0};
+    std::int16_t evse_manager_ready{0};
     void wait_evse_manager_ready();
     void notify_evse_manager_ready(bool ready);
 
