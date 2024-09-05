@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
-// Manually added enums for OCPP, for the aut-generated ones see 'ocpp_enums.hpp'
+// Manually added enums for OCPP, for the auto-generated ones see 'ocpp_enums.hpp'
 
 #ifndef OCPP_V201_ENUMS_HPP
 #define OCPP_V201_ENUMS_HPP

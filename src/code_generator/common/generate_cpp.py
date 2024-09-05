@@ -235,7 +235,7 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
     - number
     - boolean
     - array
-    - object (will be parsed recursivly)
+    - object (will be parsed recursively)
     """
 
     prop_type = None

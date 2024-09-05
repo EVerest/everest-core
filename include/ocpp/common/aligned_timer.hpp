@@ -25,7 +25,7 @@ private:
         auto now = std::chrono::system_clock::now();
         auto diff = now - this->start_point;
         auto time_to_next = 0s;
-        // Only calculate next time if it is positve. Otherwise we would end up before the start point
+        // Only calculate next time if it is positive. Otherwise we would end up before the start point
         if (diff > 0s) {
             time_to_next = ((std::chrono::duration_cast<std::chrono::seconds>(diff) / this->call_interval) + 1) *
                            this->call_interval;

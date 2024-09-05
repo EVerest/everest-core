@@ -28,6 +28,10 @@ std::string connector_event_to_string(ConnectorEvent e) {
         return "Error";
     case ConnectorEvent::ErrorCleared:
         return "ErrorCleared";
+    case ConnectorEvent::Unavailable:
+        return "Unavailable";
+    case ConnectorEvent::UnavailableCleared:
+        return "UnavailableCleared";
     }
 
     throw EnumToStringException{e, "ConnectorEvent"};
