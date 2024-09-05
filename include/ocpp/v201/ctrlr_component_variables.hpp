@@ -165,6 +165,7 @@ extern const RequiredComponentVariable& NetworkConfigurationPriority;
 extern const RequiredComponentVariable& NetworkProfileConnectionAttempts;
 extern const RequiredComponentVariable& OfflineThreshold;
 extern const ComponentVariable& QueueAllMessages;
+extern const ComponentVariable& MessageTypesDiscardForQueueing;
 extern const RequiredComponentVariable& ResetRetries;
 extern const RequiredComponentVariable& RetryBackOffRandomRange;
 extern const RequiredComponentVariable& RetryBackOffRepeatTimes;

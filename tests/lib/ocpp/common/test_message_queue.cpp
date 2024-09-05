@@ -154,7 +154,7 @@ class MessageQueueTest : public ::testing::Test {
     int call_count{0};
 
 protected:
-    MessageQueueConfig config{};
+    MessageQueueConfig<TestMessageType> config{};
     std::shared_ptr<DatabaseHandlerBaseMock> db;
     std::mutex call_marker_mutex;
     std::condition_variable call_marker_cond_var;
@@ -225,7 +225,7 @@ protected:
 
     void SetUp() override {
         call_count = 0;
-        config = MessageQueueConfig{1, 1, 2, false};
+        config = MessageQueueConfig<TestMessageType>{1, 1, 2, false};
         db = std::make_shared<DatabaseHandlerBaseMock>();
         init_message_queue();
     }

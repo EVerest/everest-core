@@ -241,13 +241,31 @@ std::unique_ptr<ocpp::MessageQueue<v16::MessageType>> ChargePointImpl::create_me
         }
     };
 
+    std::set<v16::MessageType> message_types_discard_for_queueing;
+
+    if (this->configuration->getMessageTypesDiscardForQueueing().has_value()) {
+        try {
+            const auto message_types_discard_for_queueing_csl =
+                ocpp::split_string(this->configuration->getMessageTypesDiscardForQueueing().value(), ',');
+            std::transform(message_types_discard_for_queueing_csl.begin(), message_types_discard_for_queueing_csl.end(),
+                           std::inserter(message_types_discard_for_queueing, message_types_discard_for_queueing.end()),
+                           [](const std::string element) { return conversions::string_to_messagetype(element); });
+        } catch (const StringToEnumException& e) {
+            EVLOG_warning << "Could not convert configured MessageType value of MessageTypesDiscardForQueueing. Please "
+                             "check you configurationMessageTypesDiscardForQueueing: "
+                          << e.what();
+        } catch (...) {
+            EVLOG_warning << "Could not apply MessageTypesDiscardForQueueing configuration";
+        }
+    }
+
     return std::make_unique<ocpp::MessageQueue<v16::MessageType>>(
         [this](json message) -> bool { return this->websocket->send(message.dump()); },
-        MessageQueueConfig{
+        MessageQueueConfig<v16::MessageType>{
             this->configuration->getTransactionMessageAttempts(),
             this->configuration->getTransactionMessageRetryInterval(),
             this->configuration->getMessageQueueSizeThreshold().value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
-            this->configuration->getQueueAllMessages().value_or(false)},
+            this->configuration->getQueueAllMessages().value_or(false), message_types_discard_for_queueing},
         this->external_notify, this->database_handler, start_transaction_message_retry_callback);
 }
 

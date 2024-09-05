@@ -194,13 +194,14 @@ public:
         const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
         return std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
             [this](json message) -> bool { return false; },
-            MessageQueueConfig{
+            MessageQueueConfig<v201::MessageType>{
                 this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
                 this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
                 this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
                     .value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
                 this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages)
                     .value_or(false),
+                {},
                 this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
             database_handler);
     }
@@ -330,7 +331,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArg
     auto evse_security = std::make_shared<EvseSecurityMock>();
     configure_callbacks_with_mocks();
     auto message_queue = std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
-        [this](json message) -> bool { return false; }, MessageQueueConfig{}, database_handler);
+        [this](json message) -> bool { return false; }, MessageQueueConfig<v201::MessageType>{}, database_handler);
 
     EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, nullptr, database_handler, message_queue, "/tmp",
                                          evse_security, callbacks),
@@ -342,7 +343,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_MissingDatabaseHandler_ThrowsInvali
     auto evse_security = std::make_shared<EvseSecurityMock>();
     configure_callbacks_with_mocks();
     auto message_queue = std::make_shared<ocpp::MessageQueue<v201::MessageType>>(
-        [this](json message) -> bool { return false; }, MessageQueueConfig{}, nullptr);
+        [this](json message) -> bool { return false; }, MessageQueueConfig<v201::MessageType>{}, nullptr);
 
     auto database_handler = nullptr;
 

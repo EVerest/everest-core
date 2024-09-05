@@ -209,6 +209,21 @@
       "description": "When this variable is set to true, the Charging Station will queue all message until they are delivered to the CSMS.",
       "type": "boolean"
     },
+    "MessageTypesDiscardForQueueing": {
+      "variable_name": "MessageTypesDiscardForQueueing",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "SequenceList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Comma seperated list of message types that shall not be queued (when offline) even in case QueueAllMessages is true. If QueueAllMessages is false, the configuration of this paramater has no effect.",
+      "type": "string"
+    },
     "ResetRetries": {
       "variable_name": "ResetRetries",
       "characteristics": {

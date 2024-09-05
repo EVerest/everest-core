@@ -9,6 +9,7 @@
 #include <future>
 #include <mutex>
 #include <queue>
+#include <set>
 #include <thread>
 
 #include <boost/uuid/uuid.hpp>
@@ -29,7 +30,7 @@ namespace ocpp {
 
 using QueryExecutionException = common::QueryExecutionException;
 
-struct MessageQueueConfig {
+template <typename M> struct MessageQueueConfig {
     int transaction_message_attempts;
     int transaction_message_retry_interval; // seconds
 
@@ -37,12 +38,20 @@ struct MessageQueueConfig {
     // messages are potentially dropped in accordance with OCPP 2.0.1. Specification (cf. QueueAllMessages parameter)
     int queues_total_size_threshold;
 
-    bool queue_all_messages; // cf. OCPP 2.0.1. "QueueAllMessages" in OCPPCommCtrlr
+    bool queue_all_messages{false};                 // cf. OCPP 2.0.1. "QueueAllMessages" in OCPPCommCtrlr
+    std::set<M> message_types_discard_for_queueing; // allows to discard certain message types for offline queuing (e.g.
+                                                    // Heartbeat)
 
     int message_timeout_seconds = 30;
     int boot_notification_retry_interval_seconds =
         60; // interval for BootNotification.req in case response by CSMS is CALLERROR or CSMS does not respond at all
             // (within specified MessageTimeout)
+
+    /// \brief Returns true if the given \p message_type shall be queued based on the configuration of
+    /// queue_all_messages and message_types_discard_for_queueing
+    bool check_queue(const M& message_type) {
+        return queue_all_messages and !message_types_discard_for_queueing.count(message_type);
+    };
 };
 
 /// \brief Contains a OCPP message in json form with additional information
@@ -158,7 +167,7 @@ bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& t
 /// \brief contains a message queue that makes sure that OCPPs synchronicity requirements are met
 template <typename M> class MessageQueue {
 private:
-    MessageQueueConfig config;
+    MessageQueueConfig<M> config;
     std::shared_ptr<ocpp::common::DatabaseHandlerCommon> database_handler;
 
     std::thread worker_thread;
@@ -241,7 +250,7 @@ private:
             } else {
                 this->normal_message_queue.push_back(message);
             }
-            if (this->config.queue_all_messages) {
+            if (this->config.check_queue(message->messageType)) {
                 ocpp::common::DBTransactionMessage db_message{
                     message->message, messagetype_to_string(message->messageType), message->message_attempts,
                     message->timestamp, message->uniqueId()};
@@ -383,7 +392,7 @@ private:
 public:
     /// \brief Creates a new MessageQueue object with the provided \p configuration and \p send_callback
     MessageQueue(
-        const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
+        const std::function<bool(json message)>& send_callback, const MessageQueueConfig<M>& config,
         const std::vector<M>& external_notify, std::shared_ptr<common::DatabaseHandlerCommon> database_handler,
         const std::function<void(const std::string& new_message_id, const std::string& old_message_id)>
             start_transaction_message_retry_callback =
@@ -403,7 +412,7 @@ public:
         this->in_flight = nullptr;
     }
 
-    MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig& config,
+    MessageQueue(const std::function<bool(json message)>& send_callback, const MessageQueueConfig<M>& config,
                  std::shared_ptr<common::DatabaseHandlerCommon> databaseHandler) :
         MessageQueue(send_callback, config, {}, databaseHandler) {
     }
@@ -528,7 +537,7 @@ public:
                         if (this->in_flight->message.at(CALL_ACTION) == "TransactionEvent") {
                             this->in_flight->message.at(CALL_PAYLOAD)["offline"] = true;
                         }
-                    } else if (this->config.queue_all_messages) {
+                    } else if (this->config.check_queue(this->in_flight->messageType)) {
                         EVLOG_info << "The message in flight  will be sent again once the connection can be "
                                       "established again since QueueAllMessages is set to 'true'.";
                     } else {
@@ -643,7 +652,7 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (!this->paused || this->resuming || this->config.queue_all_messages ||
+            if (!this->paused || this->resuming || this->config.check_queue(control_message->messageType) ||
                 control_message->messageType == M::BootNotification) {
                 this->add_to_normal_message_queue(control_message);
             }
@@ -705,7 +714,7 @@ public:
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
             // TODO: decide if we only want to allow this for a subset of messages
-            if (this->paused && !this->config.queue_all_messages && !this->resuming &&
+            if (this->paused && !this->config.check_queue(message->messageType) && !this->resuming &&
                 message->messageType != M::BootNotification) {
                 // do not add a normal message to the queue if the queue is paused/offline
                 auto enhanced_message = EnhancedMessage<M>();
@@ -788,7 +797,7 @@ public:
 
             const auto queue_type =
                 is_transaction_message(*this->in_flight) ? QueueType::Transaction : QueueType::Normal;
-            if (is_transaction_message(*this->in_flight) or this->config.queue_all_messages) {
+            if (is_transaction_message(*this->in_flight) or this->config.check_queue(this->in_flight->messageType)) {
                 try {
                     // We only remove the message as soon as a response is received. Otherwise we might miss a message
                     // if the charging station just boots after sending, but before receiving the result.
@@ -826,7 +835,7 @@ public:
         }
 
         const auto queue_type = is_transaction_message(*this->in_flight) ? QueueType::Transaction : QueueType::Normal;
-        if (is_transaction_message(*this->in_flight) or this->config.queue_all_messages) {
+        if (is_transaction_message(*this->in_flight) or this->config.check_queue(this->in_flight->messageType)) {
             if (this->in_flight->message_attempts < this->config.transaction_message_attempts) {
                 EVLOG_warning << "Message shall be persisted and will therefore be sent again";
                 // Generate a new message ID for the retry

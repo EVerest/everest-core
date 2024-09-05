@@ -133,6 +133,9 @@ public:
     std::optional<bool> getQueueAllMessages();
     std::optional<KeyValue> getQueueAllMessagesKeyValue();
 
+    std::optional<std::string> getMessageTypesDiscardForQueueing();
+    std::optional<KeyValue> getMessageTypesDiscardForQueueingKeyValue();
+
     std::optional<int> getMessageQueueSizeThreshold();
     std::optional<KeyValue> getMessageQueueSizeThresholdKeyValue();
 
