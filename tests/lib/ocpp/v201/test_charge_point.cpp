@@ -8,6 +8,7 @@
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/messages/SetChargingProfile.hpp"
+#include "ocpp/v201/ocpp_enums.hpp"
 #include "ocpp/v201/smart_charging.hpp"
 #include "ocpp/v201/types.hpp"
 #include "smart_charging_handler_mock.hpp"
@@ -278,6 +279,32 @@ TEST_F(ChargePointFixture, CreateChargePoint) {
 
     EXPECT_NO_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler, message_queue,
                                             "/tmp", evse_security, callbacks));
+}
+
+TEST_F(ChargePointFixture, CreateChargePoint_InitializeInCorrectOrder) {
+    auto evse_connector_structure = create_evse_connector_structure();
+    auto database_handler = create_database_handler();
+    database_handler->open_connection();
+    auto evse_security = std::make_shared<EvseSecurityMock>();
+    configure_callbacks_with_mocks();
+    auto message_queue = create_message_queue(database_handler);
+
+    const auto cv = ControllerComponentVariables::ResumeTransactionsOnBoot;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "false", "TEST", true);
+
+    auto profile = create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                           create_charge_schedule(ChargingRateUnitEnum::A,
+                                                                  create_charging_schedule_periods({0, 1, 2}),
+                                                                  ocpp::DateTime("2024-01-17T17:00:00")),
+                                           DEFAULT_TX_ID);
+    database_handler->insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile);
+
+    ocpp::v201::ChargePoint charge_point(evse_connector_structure, device_model, database_handler, message_queue,
+                                         "/tmp", evse_security, callbacks);
+
+    EXPECT_NO_FATAL_FAILURE(charge_point.start(BootReasonEnum::PowerUp));
+
+    charge_point.stop();
 }
 
 TEST_F(ChargePointFixture, CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelStorageError) {

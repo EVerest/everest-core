@@ -953,8 +953,6 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
                              const std::string& message_log_path) {
     this->device_model->check_integrity(evse_connector_structure);
     this->database_handler->open_connection();
-    this->smart_charging_handler =
-        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, this->database_handler);
     this->component_state_manager = std::make_shared<ComponentStateManager>(
         evse_connector_structure, database_handler,
         [this](auto evse_id, auto connector_id, auto status, bool initiated_by_trigger_message) {
@@ -1009,6 +1007,9 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
     this->evse_manager = std::make_unique<EvseManager>(
         evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
+
+    this->smart_charging_handler =
+        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, this->database_handler);
 
     this->configure_message_logging_format(message_log_path);
     this->monitoring_updater.start_monitoring();
