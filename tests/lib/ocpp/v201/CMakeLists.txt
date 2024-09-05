@@ -16,4 +16,10 @@ target_sources(libocpp_unit_tests PRIVATE
         test_smart_charging_handler.cpp
         utils_tests.cpp
         comparators.cpp
-        test_message_queue.cpp)
+        test_message_queue.cpp
+        test_composite_schedule.cpp
+        test_profile.cpp
+        smart_charging_test_utils.hpp)
+
+# Copy the json files used for testing to the destination directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION ${TEST_PROFILES_LOCATION_V201})

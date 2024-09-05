@@ -11,9 +11,11 @@
 #include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include "ocpp/v201/ocpp_enums.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/transaction.hpp"
+#include "ocpp/v201/profile.hpp"
+#include "ocpp/v201/utils.hpp"
 #include <algorithm>
 #include <iterator>
+#include <ocpp/common/constants.hpp>
 #include <ocpp/v201/smart_charging.hpp>
 #include <optional>
 
@@ -546,6 +548,32 @@ SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& re
     return profiles;
 }
 
+std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id) {
+    std::vector<ChargingProfile> valid_profiles;
+
+    if (charging_profiles.count(evse_id) > 0) {
+        auto& evse_profiles = this->charging_profiles.at(evse_id);
+        for (auto profile : evse_profiles) {
+            if (this->validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
+                valid_profiles.push_back(profile);
+            }
+        }
+    }
+
+    return valid_profiles;
+}
+
+std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(int32_t evse_id) {
+    std::vector<ChargingProfile> valid_profiles = get_valid_profiles_for_evse(evse_id);
+
+    if (evse_id != STATION_WIDE_ID) {
+        auto station_wide_profiles = get_valid_profiles_for_evse(STATION_WIDE_ID);
+        valid_profiles.insert(valid_profiles.end(), station_wide_profiles.begin(), station_wide_profiles.end());
+    }
+
+    return valid_profiles;
+}
+
 std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
     std::vector<ChargingProfile> evse_specific_tx_default_profiles;
 
@@ -619,6 +647,63 @@ SmartChargingHandler::verify_no_conflicting_external_constraints_id(const Chargi
     }
 
     return result;
+}
+
+CompositeSchedule SmartChargingHandler::calculate_composite_schedule(
+    std::vector<ChargingProfile>& valid_profiles, const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+    const int32_t evse_id, std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+
+    std::optional<ocpp::DateTime> session_start{};
+
+    if (this->evse_manager.does_evse_exist(evse_id) and evse_id != 0 and
+        this->evse_manager.get_evse(evse_id).get_transaction() != nullptr) {
+        const auto& transaction = this->evse_manager.get_evse(evse_id).get_transaction();
+        session_start = transaction->start_time;
+    }
+
+    std::vector<period_entry_t> charging_station_external_constraints_periods{};
+    std::vector<period_entry_t> charge_point_max_periods{};
+    std::vector<period_entry_t> tx_default_periods{};
+    std::vector<period_entry_t> tx_periods{};
+
+    for (const auto& profile : valid_profiles) {
+        std::vector<period_entry_t> periods{};
+        periods = ocpp::v201::calculate_profile(start_time, end_time, session_start, profile);
+
+        switch (profile.chargingProfilePurpose) {
+        case ChargingProfilePurposeEnum::ChargingStationExternalConstraints:
+            charging_station_external_constraints_periods.insert(charging_station_external_constraints_periods.end(),
+                                                                 periods.begin(), periods.end());
+            break;
+        case ChargingProfilePurposeEnum::ChargingStationMaxProfile:
+            charge_point_max_periods.insert(charge_point_max_periods.end(), periods.begin(), periods.end());
+            break;
+        case ChargingProfilePurposeEnum::TxDefaultProfile:
+            tx_default_periods.insert(tx_default_periods.end(), periods.begin(), periods.end());
+            break;
+        case ChargingProfilePurposeEnum::TxProfile:
+            tx_periods.insert(tx_periods.end(), periods.begin(), periods.end());
+            break;
+        default:
+            break;
+        }
+    }
+
+    auto charging_station_external_constraints = ocpp::v201::calculate_composite_schedule(
+        charging_station_external_constraints_periods, start_time, end_time, charging_rate_unit);
+    auto composite_charge_point_max =
+        ocpp::v201::calculate_composite_schedule(charge_point_max_periods, start_time, end_time, charging_rate_unit);
+    auto composite_tx_default =
+        ocpp::v201::calculate_composite_schedule(tx_default_periods, start_time, end_time, charging_rate_unit);
+    auto composite_tx = ocpp::v201::calculate_composite_schedule(tx_periods, start_time, end_time, charging_rate_unit);
+
+    CompositeSchedule composite_schedule = ocpp::v201::calculate_composite_schedule(
+        charging_station_external_constraints, composite_charge_point_max, composite_tx_default, composite_tx);
+
+    // Set the EVSE ID for the resulting CompositeSchedule
+    composite_schedule.evseId = evse_id;
+
+    return composite_schedule;
 }
 
 } // namespace ocpp::v201

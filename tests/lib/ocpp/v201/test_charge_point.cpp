@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
+
 #include "comparators.hpp"
 #include "everest/logging.hpp"
 #include "evse_security_mock.hpp"
@@ -7,6 +10,7 @@
 #include "ocpp/v201/charge_point.hpp"
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
+#include "ocpp/v201/messages/GetCompositeSchedule.hpp"
 #include "ocpp/v201/messages/SetChargingProfile.hpp"
 #include "ocpp/v201/ocpp_enums.hpp"
 #include "ocpp/v201/smart_charging.hpp"
@@ -786,6 +790,79 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValida
     EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
 
     charge_point->handle_message(set_charging_profile_req);
+}
+
+TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeSchedule) {
+    GetCompositeScheduleRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto get_composite_schedule_req =
+        request_to_enhanced_message<GetCompositeScheduleRequest, MessageType::GetCompositeSchedule>(req);
+
+    EXPECT_CALL(*smart_charging_handler, calculate_composite_schedule(testing::_, testing::_, testing::_,
+                                                                      DEFAULT_EVSE_ID, req.chargingRateUnit));
+
+    charge_point->handle_message(get_composite_schedule_req);
+}
+
+TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeScheduleWithValidProfiles) {
+    GetCompositeScheduleRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto get_composite_schedule_req =
+        request_to_enhanced_message<GetCompositeScheduleRequest, MessageType::GetCompositeSchedule>(req);
+
+    std::vector<ChargingProfile> profiles = {
+        create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                create_charge_schedule(ChargingRateUnitEnum::A,
+                                                       create_charging_schedule_periods({0, 1, 2}),
+                                                       ocpp::DateTime("2024-01-17T17:00:00")),
+                                DEFAULT_TX_ID),
+    };
+
+    ON_CALL(*smart_charging_handler, get_valid_profiles(DEFAULT_EVSE_ID)).WillByDefault(testing::Return(profiles));
+    EXPECT_CALL(*smart_charging_handler,
+                calculate_composite_schedule(profiles, testing::_, testing::_, DEFAULT_EVSE_ID, req.chargingRateUnit));
+
+    charge_point->handle_message(get_composite_schedule_req);
+}
+
+TEST_F(ChargePointFixture, K08FR05_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForNonexistentEVSE) {
+    GetCompositeScheduleRequest req;
+    req.evseId = DEFAULT_EVSE_ID + 3;
+    req.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto get_composite_schedule_req =
+        request_to_enhanced_message<GetCompositeScheduleRequest, MessageType::GetCompositeSchedule>(req);
+
+    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler,
+                calculate_composite_schedule(testing::_, testing::_, testing::_, testing::_, testing::_))
+        .Times(0);
+
+    charge_point->handle_message(get_composite_schedule_req);
+}
+
+TEST_F(ChargePointFixture, K08FR07_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForIncorrectChargingRateUnit) {
+    GetCompositeScheduleRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.chargingRateUnit = ChargingRateUnitEnum::W;
+
+    auto get_composite_schedule_req =
+        request_to_enhanced_message<GetCompositeScheduleRequest, MessageType::GetCompositeSchedule>(req);
+
+    const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
+    device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
+                            AttributeEnum::Actual, "A", "test", true);
+
+    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler,
+                calculate_composite_schedule(testing::_, testing::_, testing::_, testing::_, testing::_))
+        .Times(0);
+
+    charge_point->handle_message(get_composite_schedule_req);
 }
 
 } // namespace ocpp::v201

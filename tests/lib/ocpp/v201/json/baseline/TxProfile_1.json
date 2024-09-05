@@ -1,0 +1,24 @@
+{
+    "id": 1,
+    "chargingProfilePurpose": "TxProfile",
+    "chargingProfileKind": "Recurring",
+    "recurrencyKind": "Daily",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 2000.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                }
+            ],
+            "duration": 1080,
+            "minChargingRate": 0.0,
+            "startSchedule": "2024-01-17T18:00:00.000Z"
+        }
+    ],
+    "stackLevel": 1,
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab7"
+}

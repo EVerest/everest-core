@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+
 #ifndef OCPP_COMMON_TYPES_HPP
 #define OCPP_COMMON_TYPES_HPP
 

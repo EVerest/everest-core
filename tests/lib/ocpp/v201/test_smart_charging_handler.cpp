@@ -34,7 +34,7 @@
 
 namespace ocpp::v201 {
 
-static const int NR_OF_EVSES = 1;
+static const int NR_OF_EVSES = 2;
 static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
@@ -243,6 +243,19 @@ protected:
             profile_id, ChargingProfilePurposeEnum::TxDefaultProfile, create_charge_schedule(ChargingRateUnitEnum::A),
             {}, ChargingProfileKindEnum::Absolute, DEFAULT_STACK_LEVEL, validFrom, validTo);
         handler.add_profile(existing_profile, evse_id);
+    }
+
+    std::optional<ChargingProfile> add_valid_profile_to(int evse_id, int profile_id) {
+        auto periods = create_charging_schedule_periods({0, 1, 2});
+        auto profile = create_charging_profile(
+            profile_id, ChargingProfilePurposeEnum::TxDefaultProfile,
+            create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")));
+        auto response = handler.validate_and_add_profile(profile, evse_id);
+        if (response.status == ChargingProfileStatusEnum::Accepted) {
+            return profile;
+        } else {
+            return {};
+        }
     }
 
     // Default values used within the tests
@@ -1435,6 +1448,67 @@ TEST_F(ChargepointTestFixtureV201, K10_ClearChargingProfile_UnknownId) {
 
     profiles = handler.get_profiles();
     EXPECT_THAT(profiles, testing::Contains(profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfNoProfiles_ThenNoValidProfilesReturned) {
+    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
+    EXPECT_THAT(profiles, testing::IsEmpty());
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfEvseHasProfiles_ThenThoseProfilesReturned) {
+    auto profile = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    ASSERT_TRUE(profile.has_value());
+
+    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
+    EXPECT_THAT(profiles, testing::Contains(profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfOtherEvseHasProfiles_ThenThoseProfilesAreNotReturned) {
+    auto profile1 = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
+    ASSERT_TRUE(profile1.has_value());
+    auto profile2 = add_valid_profile_to(DEFAULT_EVSE_ID + 1, DEFAULT_PROFILE_ID + 1);
+    ASSERT_TRUE(profile2.has_value());
+
+    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
+    EXPECT_THAT(profiles, testing::Contains(profile1));
+    EXPECT_THAT(profiles, testing::Not(testing::Contains(profile2)));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturned) {
+    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    ASSERT_TRUE(profile.has_value());
+
+    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
+    EXPECT_THAT(profiles, testing::Contains(profile));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturnedOnce) {
+    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
+    ASSERT_TRUE(profile.has_value());
+
+    auto profiles = handler.get_valid_profiles(STATION_WIDE_ID);
+    EXPECT_THAT(profiles, testing::Contains(profile));
+    EXPECT_THAT(profiles.size(), testing::Eq(1));
+}
+
+TEST_F(ChargepointTestFixtureV201, K08_GetValidProfiles_IfInvalidProfileExists_ThenThatProfileIsNotReturned) {
+    auto extraneous_start_schedule = ocpp::DateTime("2024-01-17T17:00:00");
+    auto periods = create_charging_schedule_periods(0);
+    auto invalid_profile =
+        create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+                                create_charge_schedule(ChargingRateUnitEnum::A, periods, extraneous_start_schedule),
+                                DEFAULT_TX_ID, ChargingProfileKindEnum::Relative, 1);
+    handler.add_profile(invalid_profile, DEFAULT_EVSE_ID);
+
+    auto invalid_station_wide_profile =
+        create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
+                                create_charge_schedule(ChargingRateUnitEnum::A, periods, extraneous_start_schedule),
+                                DEFAULT_TX_ID, ChargingProfileKindEnum::Relative, 1);
+    handler.add_profile(invalid_station_wide_profile, STATION_WIDE_ID);
+
+    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
+    EXPECT_THAT(profiles, testing::Not(testing::Contains(invalid_profile)));
+    EXPECT_THAT(profiles, testing::Not(testing::Contains(invalid_station_wide_profile)));
 }
 
 } // namespace ocpp::v201

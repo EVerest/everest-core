@@ -67,6 +67,7 @@ public:
 class ComponentStateManagerTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        testing::FLAGS_gmock_verbose = "error";
     }
 
     ComponentStateManager component_state_manager(std::shared_ptr<DatabaseHandler> database,

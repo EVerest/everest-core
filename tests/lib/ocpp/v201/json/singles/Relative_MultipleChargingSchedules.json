@@ -1,0 +1,58 @@
+{
+    "id": 66,
+    "chargingProfileKind": "Relative",
+    "chargingProfilePurpose": "TxProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 11.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 12.0,
+                    "numberPhases": 1,
+                    "startPeriod": 10
+                }
+            ],
+            "duration": 19,
+            "minChargingRate": 0.0
+        },
+        {
+            "id": 1,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 31.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 31.0,
+                    "numberPhases": 1,
+                    "startPeriod": 8
+                }
+            ],
+            "duration": 37,
+            "minChargingRate": 0.0
+        },
+        {
+            "id": 2,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 71.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                }
+            ],
+            "duration": 79,
+            "minChargingRate": 0.0
+        }
+    ],
+    "stackLevel": 1,
+    "transactionId": "g1522902-1170-416f-8e43-9e3bce28fab7"
+}

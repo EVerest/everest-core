@@ -1,0 +1,44 @@
+{
+    "id": 100,
+    "stackLevel": 0,
+    "chargingProfilePurpose": "TxProfile",
+    "chargingProfileKind": "Recurring",
+    "recurrencyKind": "Daily",
+    "chargingSchedule": [
+        {
+            "id": 1,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 11000.0,
+                    "numberPhases": 3,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 6000.0,
+                    "numberPhases": 3,
+                    "startPeriod": 28800
+                },
+                {
+                    "limit": 12000.0,
+                    "numberPhases": 3,
+                    "startPeriod": 72100
+                },
+                {
+                    "limit": 12005.0,
+                    "numberPhases": 3,
+                    "startPeriod": 73010
+                },
+                {
+                    "limit": 12010.0,
+                    "numberPhases": 3,
+                    "startPeriod": 74020
+                }
+            ],
+            "duration": 86400,
+            "minChargingRate": 0.0,
+            "startSchedule": "2023-01-17T17:00:00.000Z"
+        }
+    ],
+    "transactionId": "f1522902-1170-416f-8e43-9e3bce28fab8"
+}

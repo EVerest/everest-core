@@ -12,4 +12,8 @@ target_sources(libocpp_unit_tests PRIVATE
         database_tests.cpp
         test_message_queue.cpp
         test_charge_point_state_machine.cpp
+        test_composite_schedule.cpp
 )
+
+# Copy the json files used for testing to the destination directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION ${TEST_PROFILES_LOCATION_V16})

@@ -1,0 +1,138 @@
+{
+    "id": 24,
+    "chargingProfileKind": "Recurring",
+    "chargingProfilePurpose": "ChargingStationMaxProfile",
+    "chargingSchedule": [
+        {
+            "id": 0,
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [
+                {
+                    "limit": 10.0,
+                    "numberPhases": 1,
+                    "startPeriod": 0
+                },
+                {
+                    "limit": 20.0,
+                    "numberPhases": 1,
+                    "startPeriod": 3600
+                },
+                {
+                    "limit": 30.0,
+                    "numberPhases": 1,
+                    "startPeriod": 7200
+                },
+                {
+                    "limit": 40.0,
+                    "numberPhases": 1,
+                    "startPeriod": 10800
+                },
+                {
+                    "limit": 50.0,
+                    "numberPhases": 1,
+                    "startPeriod": 14400
+                },
+                {
+                    "limit": 60.0,
+                    "numberPhases": 1,
+                    "startPeriod": 18000
+                },
+                {
+                    "limit": 70.0,
+                    "numberPhases": 1,
+                    "startPeriod": 21600
+                },
+                {
+                    "limit": 80.0,
+                    "numberPhases": 1,
+                    "startPeriod": 25200
+                },
+                {
+                    "limit": 90.0,
+                    "numberPhases": 1,
+                    "startPeriod": 28800
+                },
+                {
+                    "limit": 100.0,
+                    "numberPhases": 1,
+                    "startPeriod": 32400
+                },
+                {
+                    "limit": 110.0,
+                    "numberPhases": 1,
+                    "startPeriod": 36000
+                },
+                {
+                    "limit": 120.0,
+                    "numberPhases": 1,
+                    "startPeriod": 39600
+                },
+                {
+                    "limit": 130.0,
+                    "numberPhases": 1,
+                    "startPeriod": 43200
+                },
+                {
+                    "limit": 140.0,
+                    "numberPhases": 1,
+                    "startPeriod": 46800
+                },
+                {
+                    "limit": 150.0,
+                    "numberPhases": 1,
+                    "startPeriod": 50400
+                },
+                {
+                    "limit": 160.0,
+                    "numberPhases": 1,
+                    "startPeriod": 54000
+                },
+                {
+                    "limit": 170.0,
+                    "numberPhases": 1,
+                    "startPeriod": 57600
+                },
+                {
+                    "limit": 180.0,
+                    "numberPhases": 1,
+                    "startPeriod": 61200
+                },
+                {
+                    "limit": 190.0,
+                    "numberPhases": 1,
+                    "startPeriod": 64800
+                },
+                {
+                    "limit": 200.0,
+                    "numberPhases": 1,
+                    "startPeriod": 68400
+                },
+                {
+                    "limit": 210.0,
+                    "numberPhases": 1,
+                    "startPeriod": 72000
+                },
+                {
+                    "limit": 220.0,
+                    "numberPhases": 1,
+                    "startPeriod": 75600
+                },
+                {
+                    "limit": 230.0,
+                    "numberPhases": 1,
+                    "startPeriod": 79200
+                },
+                {
+                    "limit": 240.0,
+                    "numberPhases": 1,
+                    "startPeriod": 82800
+                }
+            ],
+            "duration": 86400,
+            "minChargingRate": 0.0,
+            "startSchedule": "2024-01-17T00:00:00.000Z"
+        }
+    ],
+    "recurrencyKind": "Daily",
+    "stackLevel": 0
+}
