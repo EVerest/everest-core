@@ -13,6 +13,11 @@ namespace iso15118::message_20 {
 template <>
 void convert(const struct iso20_Scheduled_EVPPTControlModeType& in,
              PowerDeliveryRequest::Scheduled_EVPPTControlMode& out) {
+    if (in.PowerToleranceAcceptance_isUsed) {
+        out.power_tolerance_acceptance =
+            static_cast<message_20::PowerDeliveryRequest::PowerToleranceAcceptance>(in.PowerToleranceAcceptance);
+    }
+    out.selected_schedule = in.SelectedScheduleTupleID;
 }
 
 template <> void convert(const struct iso20_PowerScheduleEntryType& in, PowerDeliveryRequest::PowerScheduleEntry& out) {

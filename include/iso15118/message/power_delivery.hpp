@@ -36,7 +36,7 @@ struct PowerDeliveryRequest {
 
     struct Scheduled_EVPPTControlMode {
         NumericID selected_schedule;
-        PowerToleranceAcceptance power_tolerance_acceptance;
+        std::optional<PowerToleranceAcceptance> power_tolerance_acceptance;
     };
 
     struct PowerProfile {
