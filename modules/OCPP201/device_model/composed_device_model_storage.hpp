@@ -49,7 +49,6 @@ private: // Functions
          /// \return The variable source. Defaults to 'OCPP'.
          /// \throws DeviceModelError    When source is something else than 'OCPP' (not implemented yet)
          ///
-    ocpp::v201::VariableSource get_variable_source(const ocpp::v201::Component& component,
-                                                   const ocpp::v201::Variable& variable);
+    std::string get_variable_source(const ocpp::v201::Component& component, const ocpp::v201::Variable& variable);
 };
 } // namespace module::device_model
