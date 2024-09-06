@@ -156,6 +156,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     if (power_meter.energy_Wh_import_signed.has_value()) {
         sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
                                               "Wh", std::nullopt);
+        sampled_value.value = power_meter.energy_Wh_import.total;
         const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
         if (energy_Wh_import_signed.total.has_value()) {
             sampled_value.signedMeterValue = to_ocpp_signed_meter_value(energy_Wh_import_signed.total.value());
