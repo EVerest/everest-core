@@ -22,7 +22,6 @@ types:
     required:
       - start_period
       - limit
-      - stack_level
     properties:
       start_period:
         type: integer
@@ -39,15 +38,12 @@ types:
       Element providing information on an OCPP charging schedule.
     type: object
     required:
-      - connector
+      - evse
       - charging_rate_unit
       - charging_schedule_period
     properties:
       evse:
         description: The OCPP 2.0.1 EVSE ID (not used in OCPP 1.6).
-        type: integer
-        minimum: 0
-      connector:
         type: integer
         minimum: 0
       charging_rate_unit:

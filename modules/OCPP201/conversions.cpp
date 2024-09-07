@@ -1263,14 +1263,13 @@ to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& 
 
 types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule) {
     types::ocpp::ChargingSchedule charging_schedule;
-    charging_schedule.connector =
-        composite_schedule.evseId; // TODO: I think we can remove connector from the EVerest type
+    charging_schedule.evse = composite_schedule.evseId;
     charging_schedule.charging_rate_unit =
         ocpp::v201::conversions::charging_rate_unit_enum_to_string(composite_schedule.chargingRateUnit);
     charging_schedule.evse = composite_schedule.evseId;
     charging_schedule.duration = composite_schedule.duration;
     charging_schedule.start_schedule = composite_schedule.scheduleStart.to_rfc3339();
-    // TODO: min_charging_rate ?
+    // min_charging_rate is not given as part of a OCPP2.0.1 composite schedule
     for (const auto& charging_schedule_period : composite_schedule.chargingSchedulePeriod) {
         charging_schedule.charging_schedule_period.push_back(
             to_everest_charging_schedule_period(charging_schedule_period));
@@ -1283,7 +1282,6 @@ to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& pe
     types::ocpp::ChargingSchedulePeriod _period;
     _period.start_period = period.startPeriod;
     _period.limit = period.limit;
-    _period.stack_level = 0; // TODO: Find a solution for this
     _period.number_phases = period.numberPhases;
     _period.phase_to_use = period.phaseToUse;
     return _period;

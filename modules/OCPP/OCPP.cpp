@@ -122,7 +122,7 @@ void OCPP::publish_charging_schedules(
     types::ocpp::ChargingSchedules schedules;
     for (const auto& charging_schedule : charging_schedules) {
         types::ocpp::ChargingSchedule sch = conversions::to_charging_schedule(charging_schedule.second);
-        sch.connector = charging_schedule.first;
+        sch.evse = charging_schedule.first;
         schedules.schedules.emplace_back(std::move(sch));
     }
     this->p_ocpp_generic->publish_charging_schedules(schedules);
