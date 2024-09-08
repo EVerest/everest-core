@@ -1863,8 +1863,18 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
     }
 
-    if (!common.has_value() or !country.has_value() or !organization.has_value()) {
-        EVLOG_warning << "Missing configuration of either organizationName, commonName or country to generate CSR";
+    if (!common.has_value()) {
+        EVLOG_warning << "Missing configuration of commonName to generate CSR";
+        return;
+    }
+
+    if (!country.has_value()) {
+        EVLOG_warning << "Missing configuration country to generate CSR";
+        return;
+    }
+
+    if (!organization.has_value()) {
+        EVLOG_warning << "Missing configuration of organizationName to generate CSR";
         return;
     }
 

@@ -794,7 +794,15 @@ void WebsocketTlsTPM::reconnect(long delay) {
 
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
-        this->reconnect_timer_tpm.timeout([this]() { this->reconnect_callback(); }, std::chrono::milliseconds(delay));
+        this->reconnect_timer_tpm.timeout(
+            [this]() {
+                if (this->reconnect_callback) {
+                    this->reconnect_callback();
+                } else {
+                    EVLOG_error << "Invalid reconnect callback!";
+                }
+            },
+            std::chrono::milliseconds(delay));
     }
 }
 
@@ -824,8 +832,17 @@ void WebsocketTlsTPM::close(const WebsocketCloseReason code, const std::string& 
     recv_buffered_message.clear();
 
     this->push_deferred_callback([this]() {
-        this->closed_callback(WebsocketCloseReason::Normal);
-        this->disconnected_callback();
+        if (this->closed_callback) {
+            this->closed_callback(WebsocketCloseReason::Normal);
+        } else {
+            EVLOG_error << "Closed callback not registered!";
+        }
+
+        if (this->disconnected_callback) {
+            this->disconnected_callback();
+        } else {
+            EVLOG_error << "Disconnected callback not registered!";
+        }
     });
 }
 
@@ -839,7 +856,13 @@ void WebsocketTlsTPM::on_conn_connected() {
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    this->push_deferred_callback([this]() { this->connected_callback(this->connection_options.security_profile); });
+    this->push_deferred_callback([this]() {
+        if (connected_callback) {
+            this->connected_callback(this->connection_options.security_profile);
+        } else {
+            EVLOG_error << "Connected callback not registered!";
+        }
+    });
 }
 
 void WebsocketTlsTPM::on_conn_close() {
@@ -856,8 +879,17 @@ void WebsocketTlsTPM::on_conn_close() {
     recv_buffered_message.clear();
 
     this->push_deferred_callback([this]() {
-        this->closed_callback(WebsocketCloseReason::Normal);
-        this->disconnected_callback();
+        if (this->closed_callback) {
+            this->closed_callback(WebsocketCloseReason::Normal);
+        } else {
+            EVLOG_error << "Closed callback not registered!";
+        }
+
+        if (this->disconnected_callback) {
+            this->disconnected_callback();
+        } else {
+            EVLOG_error << "Disconnected callback not registered!";
+        }
     });
 }
 
@@ -866,7 +898,13 @@ void WebsocketTlsTPM::on_conn_fail() {
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
     if (this->m_is_connected) {
-        this->push_deferred_callback([this]() { this->disconnected_callback(); });
+        this->push_deferred_callback([this]() {
+            if (this->disconnected_callback) {
+                this->disconnected_callback();
+            } else {
+                EVLOG_error << "Disconnected callback not registered!";
+            }
+        });
     }
 
     this->m_is_connected = false;
@@ -1155,8 +1193,13 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
             if (!verify_csms_cn(this->connection_options.csms_uri.get_hostname(), (len == 1),
                                 reinterpret_cast<X509_STORE_CTX*>(user),
                                 this->connection_options.verify_csms_allow_wildcards)) {
-                this->push_deferred_callback(
-                    [this]() { this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate); });
+                this->push_deferred_callback([this]() {
+                    if (this->connection_failed_callback) {
+                        this->connection_failed_callback(ConnectionFailedReason::InvalidCSMSCertificate);
+                    } else {
+                        EVLOG_error << "Connection failed callback not registered!";
+                    }
+                });
                 // Return 1 to fail the cert
                 return 1;
             }
@@ -1363,6 +1406,11 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
 }
 
 void WebsocketTlsTPM::push_deferred_callback(const std::function<void()>& callback) {
+    if (!callback) {
+        EVLOG_error << "Attempting to push stale callback in deferred queue!";
+        return;
+    }
+
     std::scoped_lock tmp_lock(this->deferred_callback_mutex);
     this->deferred_callback_queue.push(callback);
     this->deferred_callback_cv.notify_one();
@@ -1385,7 +1433,11 @@ void WebsocketTlsTPM::handle_deferred_callback_queue() {
         }
         // This needs to be out of lock scope otherwise we still keep the mutex locked while executing the callback.
         // This would block the callers of push_deferred_callback()
-        callback();
+        if (callback) {
+            callback();
+        } else {
+            EVLOG_error << "Stale callback in deferred queue!";
+        }
     }
 }
 
