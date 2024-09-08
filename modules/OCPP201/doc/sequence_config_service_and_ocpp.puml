@@ -1,58 +1,45 @@
 @startuml
 'https://plantuml.com/sequence-diagram
 !pragma teoz true
-participant csms order 10
+participant CSMS order 10
 participant libocpp order 20
-participant device_model order 30
-database ocpp_storage_impl order 40
-participant core order 50
-database config_service order 60
-participant everest_module order 70
+participant ComposedDeviceModel order 30
+database InternalStorage order 40
+database ExternalStorage order 50
 
 autonumber "<b><font color=red>"
 skinparam sequenceArrowThickness 2
 
 == Get Device Model at startup == 
 
-libocpp->libocpp: Initialize device model based on schemas
-libocpp->device_model: get_device_model
-loop For each variable defined in component schemas
+ComposedDeviceModel->ComposedDeviceModel: Initialize device model based on component config
+libocpp->ComposedDeviceModel: get_device_model
+loop For each variable defined in component config
     alt internally managed variable
-        device_model->ocpp_storage_impl: get_value
-        ocpp_storage_impl->device_model: get_value response
-    else
-        device_model->config_service: get_config_param
-        config_service->everest_module: get_config_param
-        everest_module->config_service: get_config_param response
-        config_service->device_model: get_config_param response
+        ComposedDeviceModel->InternalStorage: get_value
+        InternalStorage->ComposedDeviceModel: get_value response
+    else externally managed variable
+        ComposedDeviceModel->ExternalStorage: get_value
+        ExternalStorage->ComposedDeviceModel: get_value response
     end
 end
-device_model->libocpp: get_device_model response
+ComposedDeviceModel->libocpp: get_device_model response
 
 == SetVariables.req by CSMS ==
-csms->libocpp: SetVariables.req
+CSMS->libocpp: SetVariables.req
 loop For each SetVariable request
     libocpp->libocpp: Logical internal validation
     libocpp->libocpp: Device Model validation
     alt request is valid
-        libocpp->device_model: set_value
+        libocpp->ComposedDeviceModel: set_value
         alt internally managed variable
-            device_model->ocpp_storage_impl: set_value
-            ocpp_storage_impl->device_model: set_value response
-        else
-            device_model->config_service: set_config_param
-        config_service->everest_module: set_config_param
-        everest_module->config_service: set_config_param response
-        config_service->device_model: set_config_param response
+            ComposedDeviceModel->InternalStorage: set_value
+            InternalStorage->ComposedDeviceModel: set_value response
+        else externally managed variable
+            ComposedDeviceModel->ExternalStorage: set_value
+            ExternalStorage->ComposedDeviceModel: set_value response
         end
-        device_model->libocpp: set_value response
-    end
-end
-libocpp->csms: SetVariables.conf
-loop For each SetVariable request
-    alt if request was accepted
-        libocpp->libocpp: Handle variable changed internally
-        libocpp->core: variable_changed_callback
+        ComposedDeviceModel->libocpp: set_value response
     end
 end
 

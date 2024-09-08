@@ -19,7 +19,7 @@ interface DeviceModelInterface {
   + set_variable_attribute_value(...): bool
 }
 
-class LibocppDeviceModelStorage implements DeviceModelInterface
+class DeviceModelStorageSqlite implements DeviceModelInterface
 
 }
 
@@ -28,7 +28,7 @@ package everest-core {
 class EverestDeviceModelStorage implements libocpp.DeviceModelInterface
 class ComposedDeviceModelStorage implements libocpp.DeviceModelInterface {
     - everest_storage: EverestDeviceModelStorage
-    - libocpp_storage: LibocppDeviceModelStorage
+    - libocpp_storage: DeviceModelStorageSqlite
 }
 }
 
@@ -44,6 +44,6 @@ end note
 ChargePoint *-- DeviceModel
 DeviceModel *-- DeviceModelInterface
 ComposedDeviceModelStorage *-- EverestDeviceModelStorage
-ComposedDeviceModelStorage *-- LibocppDeviceModelStorage
+ComposedDeviceModelStorage *-- DeviceModelStorageSqlite
 
 @enduml
