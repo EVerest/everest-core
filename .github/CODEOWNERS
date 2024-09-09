@@ -45,6 +45,7 @@
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
 /modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 /modules/rust_examples/ @SirVer @dorezyuk
+/modules/YetiSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 **/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
 **/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
 

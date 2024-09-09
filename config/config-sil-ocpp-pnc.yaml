@@ -75,14 +75,14 @@ active_modules:
         - module_id: iso15118_charger
           implementation_id: charger
   yeti_driver_1:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
-    module: JsYetiSimulator
+    module: YetiSimulator
     mapping:
       module:
         evse: 2
