@@ -418,12 +418,12 @@ public:
 class ChargePoint : public ChargePointInterface, private ocpp::ChargingStationBase {
 
 private:
+    std::shared_ptr<DeviceModel> device_model;
     std::unique_ptr<EvseManager> evse_manager;
     std::unique_ptr<ConnectivityManager> connectivity_manager;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
-    std::shared_ptr<DeviceModel> device_model;
     std::shared_ptr<DatabaseHandler> database_handler;
 
     std::map<int32_t, AvailabilityChange> scheduled_change_availability_requests;
