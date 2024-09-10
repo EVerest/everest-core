@@ -56,6 +56,10 @@ public:
         return id <= this->evses.size();
     }
 
+    size_t get_number_of_evses() const override {
+        return this->evses.size();
+    }
+
     void open_transaction(int evse_id, const std::string& transaction_id) {
         auto& transaction = this->transactions.at(evse_id - 1);
         transaction = std::make_unique<EnhancedTransaction>(db_handler, false);

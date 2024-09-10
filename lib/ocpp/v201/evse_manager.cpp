@@ -47,5 +47,9 @@ bool EvseManager::does_evse_exist(int32_t id) const {
     return id <= this->evses.size();
 }
 
+size_t EvseManager::get_number_of_evses() const {
+    return this->evses.size();
+}
+
 } // namespace v201
 } // namespace ocpp

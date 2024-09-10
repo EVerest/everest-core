@@ -412,6 +412,21 @@ public:
     /// change
     virtual std::map<SetVariableData, SetVariableResult>
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) = 0;
+
+    /// \brief Gets a composite schedule based on the given \p request
+    /// \param request specifies different options for the request
+    /// \return GetCompositeScheduleResponse containing the status of the operation and the composite schedule if the
+    /// operation was successful
+    virtual GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) = 0;
+
+    /// \brief Gets composite schedules for all evse_ids (including 0) for the given \p duration and \p unit . If no
+    /// valid profiles are given for an evse for the specified period, the composite schedule will be empty for this
+    /// evse.
+    /// \param duration of the request from. Composite schedules will be retrieved from now to (now + duration)
+    /// \param unit of the period entries of the composite schedules
+    /// \return vector of composite schedules, one for each evse_id including 0.
+    virtual std::vector<CompositeSchedule> get_all_composite_schedules(const int32_t duration,
+                                                                       const ChargingRateUnitEnum& unit) = 0;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -518,6 +533,7 @@ private:
 
     void trigger_authorization_cache_cleanup();
     void cache_cleanup_handler();
+    GetCompositeScheduleResponse get_composite_schedule_internal(const GetCompositeScheduleRequest& request);
 
     /// \brief Removes all network connection profiles below the actual security profile and stores the new list in the
     /// device model
@@ -953,6 +969,11 @@ public:
 
     std::map<SetVariableData, SetVariableResult>
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) override;
+
+    GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
+
+    std::vector<CompositeSchedule> get_all_composite_schedules(const int32_t duration,
+                                                               const ChargingRateUnitEnum& unit) override;
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model

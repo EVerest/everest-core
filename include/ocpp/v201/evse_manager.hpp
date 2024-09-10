@@ -44,6 +44,9 @@ public:
     /// \brief Check if an evse with \p id exists
     virtual bool does_evse_exist(int32_t id) const = 0;
 
+    /// \brief Get the number of evses
+    virtual size_t get_number_of_evses() const = 0;
+
     /// \brief Gets an iterator pointing to the first evse
     virtual EvseIterator begin() = 0;
     /// \brief Gets an iterator pointing past the last evse
@@ -66,6 +69,8 @@ public:
     const EvseInterface& get_evse(int32_t id) const override;
 
     bool does_evse_exist(int32_t id) const override;
+
+    size_t get_number_of_evses() const override;
 
     EvseIterator begin() override;
     EvseIterator end() override;

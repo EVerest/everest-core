@@ -3215,35 +3215,7 @@ void ChargePoint::handle_get_charging_profiles_req(Call<GetChargingProfilesReque
 
 void ChargePoint::handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call) {
     EVLOG_debug << "Received GetCompositeScheduleRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    auto msg = call.msg;
-    GetCompositeScheduleResponse response;
-    response.status = GenericStatusEnum::Rejected;
-
-    auto supported_charging_rate_units =
-        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
-    auto unit_supported = supported_charging_rate_units.find(conversions::charging_rate_unit_enum_to_string(
-                              msg.chargingRateUnit.value())) != supported_charging_rate_units.npos;
-
-    // K01.FR.05 & K01.FR.07
-    if (this->evse_manager->does_evse_exist(msg.evseId) && unit_supported) {
-        auto start_time = ocpp::DateTime();
-        auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(msg.duration));
-
-        std::vector<ChargingProfile> valid_profiles = this->smart_charging_handler->get_valid_profiles(msg.evseId);
-        auto schedule = this->smart_charging_handler->calculate_composite_schedule(valid_profiles, start_time, end_time,
-                                                                                   msg.evseId, msg.chargingRateUnit);
-
-        response.status = GenericStatusEnum::Accepted;
-        response.schedule = schedule;
-    } else {
-        auto reason = unit_supported ? ProfileValidationResultEnum::EvseDoesNotExist
-                                     : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
-        response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(reason);
-        response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(reason);
-        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
-                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
-    }
+    const auto response = this->get_composite_schedule_internal(call.msg);
 
     ocpp::CallResult<GetCompositeScheduleResponse> call_result(response, call.uniqueId);
     this->send<GetCompositeScheduleResponse>(call_result);
@@ -3914,6 +3886,39 @@ void ChargePoint::cache_cleanup_handler() {
     }
 }
 
+GetCompositeScheduleResponse ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& request) {
+    GetCompositeScheduleResponse response;
+    response.status = GenericStatusEnum::Rejected;
+
+    auto supported_charging_rate_units =
+        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
+    auto unit_supported = supported_charging_rate_units.find(conversions::charging_rate_unit_enum_to_string(
+                              request.chargingRateUnit.value())) != supported_charging_rate_units.npos;
+
+    // K01.FR.05 & K01.FR.07
+    if (this->evse_manager->does_evse_exist(request.evseId) && unit_supported) {
+        auto start_time = ocpp::DateTime();
+        auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(request.duration));
+
+        std::vector<ChargingProfile> valid_profiles = this->smart_charging_handler->get_valid_profiles(request.evseId);
+
+        auto schedule = this->smart_charging_handler->calculate_composite_schedule(
+            valid_profiles, start_time, end_time, request.evseId, request.chargingRateUnit);
+
+        response.schedule = schedule;
+        response.status = GenericStatusEnum::Accepted;
+    } else {
+        auto reason = unit_supported ? ProfileValidationResultEnum::EvseDoesNotExist
+                                     : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(reason);
+        response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(reason);
+        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
+                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
+    }
+    return response;
+}
+
 void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                                const ConnectorStatusEnum status) {
     ComponentVariable charging_station = ControllerComponentVariables::ChargingStationAvailabilityState;
@@ -4050,6 +4055,33 @@ ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data
     const auto response = this->set_variables_internal(set_variable_data_vector, source, true);
     this->handle_variables_changed(response);
     return response;
+}
+
+GetCompositeScheduleResponse ChargePoint::get_composite_schedule(const GetCompositeScheduleRequest& request) {
+    return this->get_composite_schedule_internal(request);
+}
+
+std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const int32_t duration_s,
+                                                                        const ChargingRateUnitEnum& unit) {
+    std::vector<CompositeSchedule> composite_schedules;
+
+    const auto number_of_evses = this->evse_manager->get_number_of_evses();
+    // get all composite schedules including the one for evse_id == 0
+    for (int32_t evse_id = 0; evse_id < number_of_evses; evse_id++) {
+        GetCompositeScheduleRequest request;
+        request.duration = duration_s;
+        request.evseId = evse_id;
+        request.chargingRateUnit = unit;
+        auto composite_schedule_response = this->get_composite_schedule_internal(request);
+        if (composite_schedule_response.status == GenericStatusEnum::Accepted and
+            composite_schedule_response.schedule.has_value()) {
+            composite_schedules.push_back(composite_schedule_response.schedule.value());
+        } else {
+            EVLOG_warning << "Could not internally retrieve composite schedule: " << composite_schedule_response;
+        }
+    }
+
+    return composite_schedules;
 }
 
 } // namespace v201
