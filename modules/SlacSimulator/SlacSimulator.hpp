@@ -54,7 +54,7 @@ private:
     // insert your private definitions here
     void run();
 
-    size_t loop_interval_ms{};
+    static constexpr size_t loop_interval_ms{250};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

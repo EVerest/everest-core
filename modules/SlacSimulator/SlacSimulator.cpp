@@ -17,7 +17,6 @@ void SlacSimulator::ready() {
     invoke_ready(*p_evse);
     invoke_ready(*p_ev);
 
-    loop_interval_ms = 250;
     std::thread(&SlacSimulator::run, this).detach();
 }
 
