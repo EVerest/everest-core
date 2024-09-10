@@ -146,14 +146,14 @@ jobs:
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Download dist dir
-        uses: actions/download-artifact@v4.1.2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: dist
       - name: Extract dist.tar.gz
         run: |
           tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
       - name: Download wheels
-        uses: actions/download-artifact@v4.1.2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: wheels
           path: wheels
