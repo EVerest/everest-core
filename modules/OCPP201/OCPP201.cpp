@@ -235,7 +235,7 @@ std::optional<ocpp::v201::IdToken> get_authorized_id_token(const types::evse_man
     return std::nullopt;
 }
 
-ocpp::v201::ChargingRateUnitEnum get_unit_or_default(const std::string unit_string) {
+ocpp::v201::ChargingRateUnitEnum get_unit_or_default(const std::string& unit_string) {
     try {
         return ocpp::v201::conversions::string_to_charging_rate_unit_enum(unit_string);
     } catch (const std::out_of_range& e) {
