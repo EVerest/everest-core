@@ -235,6 +235,16 @@ std::optional<ocpp::v201::IdToken> get_authorized_id_token(const types::evse_man
     return std::nullopt;
 }
 
+ocpp::v201::ChargingRateUnitEnum get_unit_or_default(const std::string unit_string) {
+    try {
+        return ocpp::v201::conversions::string_to_charging_rate_unit_enum(unit_string);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << "RequestCompositeScheduleUnit configured incorrectly with: " << unit_string
+                      << ". Defaulting to using Amps.";
+        return ocpp::v201::ChargingRateUnitEnum::A;
+    }
+}
+
 bool OCPP201::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -522,12 +532,13 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_security_event(event);
     };
 
+    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
+
     // this callback publishes the schedules within EVerest and applies the schedules for the individual evse_manager(s)
     // and the connector_zero_sink
-    const auto charging_schedules_callback = [this]() {
-        const auto unit = ocpp::v201::ChargingRateUnitEnum::A; // TODO: add logic to use appropriate unit?
-        const auto composite_schedules =
-            this->charge_point->get_all_composite_schedules(this->config.RequestCompositeScheduleDurationS, unit);
+    const auto charging_schedules_callback = [this, composite_schedule_unit]() {
+        const auto composite_schedules = this->charge_point->get_all_composite_schedules(
+            this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
         this->publish_charging_schedules(composite_schedules);
         this->set_external_limits(composite_schedules);
     };
