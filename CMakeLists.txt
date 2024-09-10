@@ -25,9 +25,9 @@ option(ISO15118_LINK_CUSTOM_MBEDTLS "\
 Link against a pinned mbedtls library\
 " ON)
 
-option(USING_OPENSSL "Use OpenSSL" ON)
+option(USE_OPENSSL "Use OpenSSL" ON)
 
-if (USING_OPENSSL)
+if (USE_OPENSSL)
     find_package(OpenSSL 3 REQUIRED)
 endif()
 

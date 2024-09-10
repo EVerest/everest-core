@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Pionix GmbH and Contributors to EVerest
-#include <iso15118/io/connection_tls.hpp>
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
+#include <iso15118/io/connection_ssl.hpp>
 
 #include <cassert>
 #include <cstring>
 #include <filesystem>
-#include <thread>
 
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/debug.h"
@@ -15,7 +14,54 @@
 #include "mbedtls/ssl.h"
 
 #include <iso15118/detail/helper.hpp>
+#include <iso15118/detail/io/helper_mbedtls.hpp>
 #include <iso15118/detail/io/socket_helper.hpp>
+
+namespace std {
+template <> class default_delete<mbedtls_ssl_context> {
+public:
+    void operator()(mbedtls_ssl_context* ptr) const {
+        ::mbedtls_ssl_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_net_context> {
+public:
+    void operator()(mbedtls_net_context* ptr) const {
+        ::mbedtls_net_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_ssl_config> {
+public:
+    void operator()(mbedtls_ssl_config* ptr) const {
+        ::mbedtls_ssl_config_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_x509_crt> {
+public:
+    void operator()(mbedtls_x509_crt* ptr) const {
+        ::mbedtls_x509_crt_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_ctr_drbg_context> {
+public:
+    void operator()(mbedtls_ctr_drbg_context* ptr) const {
+        ::mbedtls_ctr_drbg_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_entropy_context> {
+public:
+    void operator()(mbedtls_entropy_context* ptr) const {
+        ::mbedtls_entropy_free(ptr);
+    }
+};
+template <> class default_delete<mbedtls_pk_context> {
+public:
+    void operator()(mbedtls_pk_context* ptr) const {
+        ::mbedtls_pk_free(ptr);
+    }
+};
+
+} // namespace std
 
 namespace iso15118::io {
 
@@ -87,7 +133,7 @@ static void load_certificates(SSLContext& ssl, const config::SSLConfig& ssl_conf
     }
 }
 
-ConnectionTLS::ConnectionTLS(PollManager& poll_manager_, const std::string& interface_name,
+ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& interface_name,
                              const config::SSLConfig& ssl_config) :
     poll_manager(poll_manager_), ssl(std::make_unique<SSLContext>()) {
 
@@ -168,17 +214,17 @@ ConnectionTLS::ConnectionTLS(PollManager& poll_manager_, const std::string& inte
     poll_manager.register_fd(ssl->accepting_net_ctx.fd, [this]() { this->handle_connect(); });
 }
 
-ConnectionTLS::~ConnectionTLS() = default;
+ConnectionSSL::~ConnectionSSL() = default;
 
-void ConnectionTLS::set_event_callback(const ConnectionEventCallback& callback) {
+void ConnectionSSL::set_event_callback(const ConnectionEventCallback& callback) {
     this->event_callback = callback;
 }
 
-Ipv6EndPoint ConnectionTLS::get_public_endpoint() const {
+Ipv6EndPoint ConnectionSSL::get_public_endpoint() const {
     return end_point;
 }
 
-void ConnectionTLS::write(const uint8_t* buf, size_t len) {
+void ConnectionSSL::write(const uint8_t* buf, size_t len) {
     assert(handshake_complete);
 
     const auto ssl_write_result = mbedtls_ssl_write(&ssl->ssl, buf, len);
@@ -190,7 +236,7 @@ void ConnectionTLS::write(const uint8_t* buf, size_t len) {
     }
 }
 
-ReadResult ConnectionTLS::read(uint8_t* buf, size_t len) {
+ReadResult ConnectionSSL::read(uint8_t* buf, size_t len) {
     // FIXME (aw): any assert best practices?
     assert(handshake_complete);
 
@@ -211,7 +257,7 @@ ReadResult ConnectionTLS::read(uint8_t* buf, size_t len) {
     return {false, 0};
 }
 
-void ConnectionTLS::handle_connect() {
+void ConnectionSSL::handle_connect() {
     const auto accept_result =
         mbedtls_net_accept(&ssl->accepting_net_ctx, &ssl->connection_net_ctx, nullptr, 0, nullptr);
     if (accept_result != 0) {
@@ -222,15 +268,15 @@ void ConnectionTLS::handle_connect() {
     mbedtls_ssl_set_bio(&ssl->ssl, &ssl->connection_net_ctx, mbedtls_net_send, mbedtls_net_recv, NULL);
 
     // FIXME (aw): is it okay (according to iso15118 and mbedtls) to close the accepting socket here?
+    // NOTE (sl): Closed when the SSLContext object is deleted by the default_delete
     poll_manager.unregister_fd(ssl->accepting_net_ctx.fd);
-    mbedtls_net_free(&ssl->accepting_net_ctx);
 
-    publish_event(ConnectionEvent::ACCEPTED);
+    call_if_available(event_callback, ConnectionEvent::ACCEPTED);
 
     poll_manager.register_fd(ssl->connection_net_ctx.fd, [this]() { this->handle_data(); });
 }
 
-void ConnectionTLS::handle_data() {
+void ConnectionSSL::handle_data() {
     if (not handshake_complete) {
         // FIXME (aw): proper handshake handling (howto?)
         const auto ssl_handshake_result = mbedtls_ssl_handshake(&ssl->ssl);
@@ -249,22 +295,19 @@ void ConnectionTLS::handle_data() {
 
             handshake_complete = true;
 
-            publish_event(ConnectionEvent::OPEN);
+            call_if_available(event_callback, ConnectionEvent::OPEN);
 
             return;
         }
     }
 
-    publish_event(ConnectionEvent::NEW_DATA);
+    call_if_available(event_callback, ConnectionEvent::NEW_DATA);
 }
 
-void ConnectionTLS::close() {
+void ConnectionSSL::close() {
 
     /* tear down TLS connection gracefully */
     logf_info("Closing TLS connection\n");
-
-    // Wait for 5 seconds [V2G20-1643]
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     poll_manager.unregister_fd(ssl->connection_net_ctx.fd);
 
@@ -278,11 +321,7 @@ void ConnectionTLS::close() {
         logf_info("TLS connection closed gracefully\n");
     }
 
-    publish_event(ConnectionEvent::CLOSED);
-
-    mbedtls_net_free(&ssl->connection_net_ctx);
-
-    mbedtls_ssl_free(&ssl->ssl);
+    call_if_available(event_callback, ConnectionEvent::CLOSED);
 }
 
 } // namespace iso15118::io

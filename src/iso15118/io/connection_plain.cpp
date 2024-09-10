@@ -3,13 +3,13 @@
 #include <iso15118/io/connection_plain.hpp>
 
 #include <cassert>
+#include <chrono>
 #include <cinttypes>
 #include <cstring>
+#include <thread>
 
 #include <endian.h>
 #include <unistd.h>
-
-#include <thread>
 
 #include <iso15118/detail/helper.hpp>
 #include <iso15118/detail/io/socket_helper.hpp>
@@ -140,9 +140,6 @@ void ConnectionPlain::close() {
 
     /* tear down TCP connection gracefully */
     logf_info("Closing TCP connection\n");
-
-    // Wait for 5 seconds [V2G20-1643]
-    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     const auto shutdown_result = shutdown(fd, SHUT_RDWR);
 

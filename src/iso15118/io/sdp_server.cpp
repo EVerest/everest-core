@@ -8,6 +8,9 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
+#include <net/if.h>
+
 #include <cbv2g/exi_v2gtp.h>
 
 #include <iso15118/detail/helper.hpp>
@@ -119,6 +122,70 @@ void SdpServer::send_response(const PeerRequestContext& request, const Ipv6EndPo
     const auto peer_addr_len = sizeof(request.address);
 
     sendto(fd, v2g_packet, sizeof(v2g_packet), 0, reinterpret_cast<const sockaddr*>(&request.address), peer_addr_len);
+}
+TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port) {
+    static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+
+    fd = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        const auto error_msg = adding_err_msg("Could not create socket");
+        log_and_throw(error_msg.c_str()); // FIXME(sl): Find better handling
+    }
+
+    // source setup
+
+    // find port between 49152-65535
+    auto could_bind = false;
+    auto source_port = 49152;
+    for (; source_port < 65535; source_port++) {
+        sockaddr_in6 source_address = {AF_INET6, htons(source_port)};
+        if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+            could_bind = true;
+            break;
+        }
+    }
+
+    if (!could_bind) {
+        const auto error_msg = adding_err_msg("Could not bind");
+        log_and_throw(error_msg.c_str());
+    }
+
+    logf_info("UDP socket bound to source port: %u", source_port);
+
+    const auto index = if_nametoindex(interface_name.c_str());
+    auto mreq = ipv6_mreq{};
+    mreq.ipv6mr_interface = index;
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+        const auto error_msg = adding_err_msg("Failed to setup multicast address");
+        log_and_throw(error_msg.c_str());
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        const auto error_msg = adding_err_msg("Could not add multicast group membership");
+        log_and_throw(error_msg.c_str());
+    }
+
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+        const auto error_msg = adding_err_msg("Could not set interface name:" + std::string(interface_name));
+        log_and_throw(error_msg.c_str());
+    }
+
+    destination_address = {AF_INET6, htons(port)};
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
+        const auto error_msg = adding_err_msg("Failed to setup server address, reset key_log_fd");
+        log_and_throw(error_msg.c_str());
+    }
+}
+
+TlsKeyLoggingServer::~TlsKeyLoggingServer() {
+    logf_info("Shutting down TlsKeyLoggingServer server!");
+    if (fd != -1) {
+        close(fd);
+    }
+}
+
+ssize_t TlsKeyLoggingServer::send(const char* line) {
+    return sendto(fd, line, strlen(line), 0, reinterpret_cast<const sockaddr*>(&destination_address),
+                  sizeof(destination_address));
 }
 
 #if 0

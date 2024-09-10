@@ -21,6 +21,7 @@ struct SSLConfig {
     std::string config_string;
     std::string private_key_password;
     bool enable_ssl_logging{false};
+    bool enable_tls_key_logging{false};
 };
 
 } // namespace iso15118::config
