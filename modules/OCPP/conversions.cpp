@@ -418,7 +418,6 @@ types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChar
         0,
         ocpp::v16::conversions::charging_rate_unit_to_string(schedule.chargingRateUnit),
         {},
-        std::nullopt,
         schedule.duration,
         std::nullopt,
         schedule.minChargingRate};
