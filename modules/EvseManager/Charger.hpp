@@ -105,7 +105,7 @@ public:
     void setup(bool has_ventilation, const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent,
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
-               const std::string switch_3ph1ph_cp_state);
+               const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -320,6 +320,8 @@ private:
         int switch_3ph1ph_delay_s{10};
         // Use state F if true, otherwise use X1
         bool switch_3ph1ph_cp_state_F{false};
+        // Tolerate soft over current for given time
+        int soft_over_current_timeout_ms{7000};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -399,7 +401,6 @@ private:
     static constexpr int T_STEP_X1 = 3000;
     // 4 seconds according to table 3 of ISO15118-3
     static constexpr int T_STEP_EF = 4000;
-    static constexpr int SOFT_OVER_CURRENT_TIMEOUT = 7000;
     static constexpr int IEC_PWM_MAX_UPDATE_INTERVAL = 5000;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
