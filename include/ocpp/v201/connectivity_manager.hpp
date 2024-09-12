@@ -4,11 +4,11 @@
 #pragma once
 
 #include <ocpp/common/websocket/websocket.hpp>
+#include <ocpp/v201/messages/SetNetworkProfile.hpp>
 
 #include <functional>
 #include <future>
 #include <optional>
-
 namespace ocpp {
 namespace v201 {
 
@@ -44,6 +44,10 @@ private:
     Everest::SteadyTimer websocket_timer;
     bool disable_automatic_websocket_reconnects;
     int network_configuration_priority;
+    /// @brief Local cached network connection profiles
+    std::vector<SetNetworkProfileRequest> network_connection_profiles;
+    /// @brief local cached network conenction priorities
+    std::vector<std::string> network_connection_priorities;
     WebsocketConnectionOptions current_connection_options{};
 
 public:
@@ -81,7 +85,8 @@ public:
 
     /// \brief Gets the configured NetworkConnectionProfile based on the given \p configuration_slot . The
     /// central system uri ofthe connection options will not contain ws:// or wss:// because this method removes it if
-    /// present \param network_configuration_priority \return
+    /// present. This returns the value from the cached network connection profiles. \param
+    /// network_configuration_priority \return
     std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot);
 
     /// \brief Check if the websocket is connected
@@ -123,6 +128,9 @@ private:
     /// \brief Moves websocket network_configuration_priority to next profile
     ///
     void next_network_configuration_priority();
+
+    /// @brief Cache all the network connection profiles. Must be called once during initialization
+    void cache_network_connection_profiles();
 };
 
 } // namespace v201
