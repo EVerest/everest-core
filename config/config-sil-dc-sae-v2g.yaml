@@ -53,7 +53,7 @@ active_modules:
     config_module:
       connector_id: 1
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   imd:
     module: IMDSimulator
     config_implementation:
