@@ -251,6 +251,11 @@ config:
     type: integer
     minimum: 6000
     default: 7000
+  lock_connector_in_state_b:
+    description: >-
+      Indicates if the connector lock should be locked in state B. If set to false, connector will remain unlocked in CP state B
+    type: boolean
+    default: true
 provides:
   evse:
     interface: evse_manager

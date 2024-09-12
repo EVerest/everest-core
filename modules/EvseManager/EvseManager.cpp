@@ -153,7 +153,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
+    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b));
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
