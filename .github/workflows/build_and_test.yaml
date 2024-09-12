@@ -71,7 +71,7 @@ jobs:
 
   build:
     name: Build and Unit Tests
-    needs: build-and-push-build-kit
+    # needs: build-and-push-build-kit
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     env:
       # Currently the build-kit-base image is used to allow running ci on PRs from forks
@@ -146,7 +146,7 @@ jobs:
     name: Integration Tests
     needs:
       - build
-      - build-and-push-build-kit
+      # - build-and-push-build-kit
     env:
       # Currently the build-kit-base image is used to allow running ci on PRs from forks
       # BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
