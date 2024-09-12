@@ -5,8 +5,7 @@
 
 #include <string>
 
-namespace module {
-namespace util {
+namespace module::util {
 
 enum class State : uint8_t {
     UNMATCHED = 0,
@@ -16,5 +15,4 @@ enum class State : uint8_t {
 
 std::string state_to_string(State state);
 
-} // namespace util
-} // namespace module
+} // namespace module::util

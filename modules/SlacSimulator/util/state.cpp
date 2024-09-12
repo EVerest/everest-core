@@ -2,8 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "state.hpp"
 
-namespace module {
-namespace util {
+namespace module::util {
 
 std::string state_to_string(State state) {
     switch (state) {
@@ -17,5 +16,5 @@ std::string state_to_string(State state) {
         return "";
     }
 }
-} // namespace util
-} // namespace module
+
+} // namespace module::util
