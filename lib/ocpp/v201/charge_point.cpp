@@ -4067,7 +4067,7 @@ std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const in
 
     const auto number_of_evses = this->evse_manager->get_number_of_evses();
     // get all composite schedules including the one for evse_id == 0
-    for (int32_t evse_id = 0; evse_id < number_of_evses; evse_id++) {
+    for (int32_t evse_id = 0; evse_id <= number_of_evses; evse_id++) {
         GetCompositeScheduleRequest request;
         request.duration = duration_s;
         request.evseId = evse_id;
