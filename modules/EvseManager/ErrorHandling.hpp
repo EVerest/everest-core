@@ -17,10 +17,6 @@
 
 #include "ld-ev.hpp"
 
-#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
-#include <gtest/gtest_prod.h>
-#endif
-
 #include <chrono>
 #include <mutex>
 #include <queue>
@@ -32,6 +28,7 @@
 #include <generated/interfaces/evse_manager/Implementation.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
+#include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <sigslot/signal.hpp>
 
 #include "EnumFlags.hpp"
@@ -39,89 +36,6 @@
 #include "utils/thread.hpp"
 
 namespace module {
-
-// bit field to track which errors are active at the moment. Only tracks errors that stop charging.
-
-enum class BspErrors : std::uint8_t {
-    DiodeFault,
-    VentilationNotAvailable,
-    BrownOut,
-    EnergyManagement,
-    PermanentFault,
-    MREC2GroundFailure,
-    MREC4OverCurrentFailure,
-    MREC5OverVoltage,
-    MREC6UnderVoltage,
-    MREC8EmergencyStop,
-    MREC10InvalidVehicleMode,
-    MREC14PilotFault,
-    MREC15PowerLoss,
-    MREC17EVSEContactorFault,
-    MREC19CableOverTempStop,
-    MREC20PartialInsertion,
-    MREC23ProximityFault,
-    MREC24ConnectorVoltageHigh,
-    MREC25BrokenLatch,
-    MREC26CutCable,
-    VendorError,
-    CommunicationFault,
-    last = CommunicationFault
-};
-
-enum class EvseManagerErrors : std::uint8_t {
-    MREC4OverCurrentFailure,
-    Internal,
-    PowermeterTransactionStartFailed,
-    Inoperative,
-    last = Inoperative
-};
-
-enum class AcRcdErrors : std::uint8_t {
-    MREC2GroundFailure,
-    VendorError,
-    Selftest,
-    AC,
-    DC,
-    last = DC
-};
-
-enum class ConnectorLockErrors : std::uint8_t {
-    ConnectorLockCapNotCharged,
-    ConnectorLockUnexpectedOpen,
-    ConnectorLockUnexpectedClose,
-    ConnectorLockFailedLock,
-    ConnectorLockFailedUnlock,
-    MREC1ConnectorLockFailure,
-    VendorError,
-    last = VendorError
-};
-
-enum class IMDErrors : std::uint8_t {
-    DeviceFault,
-    CommunicationFault,
-    VendorWarning,
-    VendorError,
-    last = VendorError
-};
-
-struct ActiveErrors {
-    AtomicEnumFlags<BspErrors, std::uint32_t> bsp;
-    AtomicEnumFlags<EvseManagerErrors, std::uint8_t> evse_manager;
-    AtomicEnumFlags<AcRcdErrors, std::uint8_t> ac_rcd;
-    AtomicEnumFlags<ConnectorLockErrors, std::uint8_t> connector_lock;
-    AtomicEnumFlags<IMDErrors, std::uint8_t> imd;
-
-    inline bool all_cleared() {
-        return bsp.all_reset() && evse_manager.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() &&
-               imd.all_reset();
-    };
-
-    inline bool all_cleared_except_inoperative() {
-        return bsp.all_reset() && ac_rcd.all_reset() && connector_lock.all_reset() && imd.all_reset() &&
-               (evse_manager.all_reset() || (evse_manager.is_set(EvseManagerErrors::Inoperative) &&
-                                             evse_manager._value == evse_manager.bit(EvseManagerErrors::Inoperative)));
-    };
-};
 
 class ErrorHandling {
 public:
@@ -131,12 +45,12 @@ public:
                            const std::vector<std::unique_ptr<connector_lockIntf>>& r_connector_lock,
                            const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd,
                            const std::unique_ptr<evse_managerImplBase>& _p_evse,
-                           const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd);
+                           const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
+                           const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply);
 
-    // Signal that one error has been raised. Bool argument is true if it is preventing charging.
+    // Signal that error set has changed. Bool argument is true if it is preventing charging at the moment and false if
+    // charging can continue.
     sigslot::signal<bool> signal_error;
-    // Signal that one error has been cleared. Bool argument is true if it was preventing charging.
-    sigslot::signal<bool> signal_error_cleared;
     // Signal that all errors are cleared (both those preventing charging and not)
     sigslot::signal<> signal_all_errors_cleared;
 
@@ -150,8 +64,20 @@ public:
     void clear_powermeter_transaction_start_failed_error();
 
 private:
-    void raise_inoperative_error(const Everest::error::Error& error);
+    void process_error();
+    void raise_inoperative_error();
     void clear_inoperative_error();
+    bool errors_prevent_charging();
+
+    // p_evse. We need to ignore Inoperative here as this is the result of this check.
+    const std::list<Everest::error::ErrorType> ignore_errors_evse{"evse_manager/Inoperative"};
+    const std::list<Everest::error::ErrorType> ignore_errors_bsp{"evse_board_support/MREC3HighTemperature",
+                                                                 "evse_board_support/MREC18CableOverTempDerate",
+                                                                 "evse_board_support/VendorWarning"};
+    const std::list<Everest::error::ErrorType> ignore_errors_connector_lock{"connector_lock/VendorWarning"};
+    const std::list<Everest::error::ErrorType> ignore_errors_ac_rcd{"ac_rcd/VendorWarning"};
+    const std::list<Everest::error::ErrorType> ignore_errors_imd{"isolation_monitor/VendorWarning"};
+    const std::list<Everest::error::ErrorType> ignore_errors_powersupply{"power_supply_DC/VendorWarning"};
 
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;
@@ -159,24 +85,7 @@ private:
     const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd;
     const std::unique_ptr<evse_managerImplBase>& p_evse;
     const std::vector<std::unique_ptr<isolation_monitorIntf>>& r_imd;
-
-    bool modify_error_bsp(const Everest::error::Error& error, bool active);
-    bool modify_error_connector_lock(const Everest::error::Error& error, bool active);
-    bool modify_error_ac_rcd(const Everest::error::Error& error, bool active);
-
-    bool modify_error_evse_manager(const std::string& error_type, bool active);
-    bool modify_error_imd(const Everest::error::Error& error, bool active);
-    bool hlc{false};
-
-    ActiveErrors active_errors;
-
-#ifdef BUILD_TESTING_MODULE_EVSE_MANAGER
-    FRIEND_TEST(ErrorHandlingTest, modify_error_bsp);
-    FRIEND_TEST(ErrorHandlingTest, modify_error_connector_lock);
-    FRIEND_TEST(ErrorHandlingTest, modify_error_ac_rcd);
-    FRIEND_TEST(ErrorHandlingTest, modify_error_imd);
-    FRIEND_TEST(ErrorHandlingTest, modify_error_evse_manager);
-#endif
+    const std::vector<std::unique_ptr<power_supply_DCIntf>>& r_powersupply;
 };
 
 } // namespace module

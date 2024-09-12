@@ -75,6 +75,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                     case ErrorHandlingEvents::prevent_charging:
                         shared_context.error_prevent_charging_flag = true;
                         break;
+                    case ErrorHandlingEvents::all_errors_preventing_charging_cleared:
+                        shared_context.error_prevent_charging_flag = false;
+                        break;
                     case ErrorHandlingEvents::all_errors_cleared:
                         shared_context.error_prevent_charging_flag = false;
                         break;
@@ -94,6 +97,9 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
         if (prevent_charging) {
             // raise external error to signal we cannot charge anymore
             error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
+        } else {
+            EVLOG_info << "All errors cleared that prevented charging";
+            error_handling_event_queue.push(ErrorHandlingEvents::all_errors_preventing_charging_cleared);
         }
     });
 
