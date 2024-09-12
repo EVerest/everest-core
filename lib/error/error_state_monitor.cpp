@@ -23,8 +23,8 @@ bool ErrorStateMonitor::is_error_active(const ErrorType& type, const ErrorSubTyp
     return database->get_errors(filters).size() > 0;
 }
 
-int ErrorStateMonitor::get_ative_error_count() const {
-    return database->get_errors({}).size();
+std::list<ErrorPtr> ErrorStateMonitor::get_active_errors() const {
+    return database->get_errors({});
 }
 
 bool ErrorStateMonitor::is_condition_satisfied(const StateCondition& condition) const {

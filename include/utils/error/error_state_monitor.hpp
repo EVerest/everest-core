@@ -45,10 +45,10 @@ public:
     bool is_error_active(const ErrorType& type, const ErrorSubType& sub_type) const;
 
     ///
-    /// \brief get_active_error_count returns the amount of active errors for this error state monitor
-    /// \return Amount of active errors
+    /// \brief get_active_errors returns the list of active errors for this error state monitor
+    /// \return List of active errors
     ///
-    int get_ative_error_count() const;
+    std::list<ErrorPtr> get_active_errors() const;
 
     ///
     /// \brief is_condition_satisfied checks if a certain condition is satisfied
