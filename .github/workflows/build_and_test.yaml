@@ -36,6 +36,8 @@ jobs:
 
   # Since env variables can't be passed to reusable workflows, we need to pass them as outputs
   setup-env:
+    # This job is currently disabled to allow running ci on PRs from forks
+    if: false
     name: Setup Environment
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     outputs:
@@ -46,6 +48,8 @@ jobs:
         run: |
           echo "Setting up environment"
   build-and-push-build-kit:
+    # This job is currently disabled to allow running ci on PRs from forks
+    if: false
     name: Build and Push Build Kit
     uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.3.1
     needs: setup-env
@@ -67,10 +71,12 @@ jobs:
 
   build:
     name: Build and Unit Tests
-    needs: build-and-push-build-kit
+    # needs: build-and-push-build-kit
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     env:
-      BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
+      # Currently the build-kit-base image is used to allow running ci on PRs from forks
+      # BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
+      BUILD_KIT_IMAGE: ghcr.io/everest/everest-ci/build-kit-base:v1.3.1
     steps:
       - name: Format branch name for cache key
         run: |
@@ -140,9 +146,11 @@ jobs:
     name: Integration Tests
     needs:
       - build
-      - build-and-push-build-kit
+      # - build-and-push-build-kit
     env:
-      BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
+      # Currently the build-kit-base image is used to allow running ci on PRs from forks
+      # BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
+      BUILD_KIT_IMAGE: ghcr.io/everest/everest-ci/build-kit-base:v1.3.1
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Download dist dir
