@@ -52,7 +52,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    [[noreturn]] void run();
+    void run();
 
     static constexpr size_t loop_interval_ms{250};
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1

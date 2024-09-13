@@ -20,7 +20,7 @@ void SlacSimulator::ready() {
     std::thread(&SlacSimulator::run, this).detach();
 }
 
-[[noreturn]] void SlacSimulator::run() {
+void SlacSimulator::run() {
     auto& evse = dynamic_cast<evse::slacImpl&>(*p_evse);
     auto& ev = dynamic_cast<ev::ev_slacImpl&>(*p_ev);
     while (true) {
