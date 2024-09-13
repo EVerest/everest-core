@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#ifndef EVEREST_CORE_MODULES_SLACSIMULATOR_UTIL_STATE_HPP
-#define EVEREST_CORE_MODULES_SLACSIMULATOR_UTIL_STATE_HPP
+#ifndef UTIL_STATE_HPP
+#define UTIL_STATE_HPP
 
 #include <cstdint>
 #include <string>
