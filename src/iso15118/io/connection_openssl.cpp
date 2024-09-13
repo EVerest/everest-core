@@ -154,6 +154,17 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
     // before bind, set the port
     address.sin6_port = htobe16(end_point.port);
 
+    int optval_tmp{1};
+    const auto set_reuseaddr = setsockopt(ssl->fd, SOL_SOCKET, SO_REUSEADDR, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseaddr == -1) {
+        log_and_throw("setsockopt(SO_REUSEADDR) failed");
+    }
+
+    const auto set_reuseport = setsockopt(ssl->fd, SOL_SOCKET, SO_REUSEPORT, &optval_tmp, sizeof(optval_tmp));
+    if (set_reuseport == -1) {
+        log_and_throw("setsockopt(SO_REUSEPORT) failed");
+    }
+
     const auto bind_result = bind(ssl->fd, reinterpret_cast<const struct sockaddr*>(&address), sizeof(address));
     if (bind_result == -1) {
         const auto error = "Failed to bind ipv6 socket to interface " + interface_name_;
@@ -317,9 +328,6 @@ void ConnectionSSL::close() {
     poll_manager.unregister_fd(ssl->accept_fd);
 
     logf_info("TLS connection closed gracefully");
-
-    SSL_free(ssl_ptr);
-    SSL_CTX_free(ssl->ssl_ctx.get());
 
     call_if_available(event_callback, ConnectionEvent::CLOSED);
 }
