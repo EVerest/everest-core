@@ -23,7 +23,7 @@ namespace evse {
 struct Conf {
     std::string evse_id;
     std::string nid;
-    int number_of_sounds;
+    [[maybe_unused]] int number_of_sounds;
 };
 
 class slacImpl : public slacImplBase {

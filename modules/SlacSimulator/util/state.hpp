@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#pragma once
+#ifndef EVEREST_CORE_MODULES_SLACSIMULATOR_UTIL_STATE_HPP
+#define EVEREST_CORE_MODULES_SLACSIMULATOR_UTIL_STATE_HPP
 
+#include <cstdint>
 #include <string>
 
 namespace module::util {
@@ -16,3 +18,5 @@ enum class State : uint8_t {
 std::string state_to_string(State state);
 
 } // namespace module::util
+
+#endif
