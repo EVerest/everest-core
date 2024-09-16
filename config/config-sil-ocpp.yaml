@@ -28,6 +28,7 @@ active_modules:
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
       external_ready_to_start_charging: true
+      request_zero_power_in_idle: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -57,6 +58,7 @@ active_modules:
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
       external_ready_to_start_charging: true
+      request_zero_power_in_idle: true
     connections:
       bsp:
         - module_id: yeti_driver_2
@@ -159,6 +161,9 @@ active_modules:
       display_message:
         - module_id: display_message
           implementation_id: display_message
+      connector_zero_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
   display_message:
     module: TerminalCostAndPriceMessage
     connections:

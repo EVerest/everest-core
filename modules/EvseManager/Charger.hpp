@@ -344,6 +344,7 @@ private:
 
         EvseState t_step_EF_return_state;
         float t_step_EF_return_pwm;
+        float t_step_EF_return_ampere;
 
         EvseState switching_phases_return_state;
 
@@ -360,6 +361,7 @@ private:
         bool pp_warning_printed{false};
         bool no_energy_warning_printed{false};
         float pwm_set_last_ampere{0};
+        bool t_step_ef_x1_pause{false};
     } internal_context;
 
     // main Charger thread
@@ -402,6 +404,10 @@ private:
     // 4 seconds according to table 3 of ISO15118-3
     static constexpr int T_STEP_EF = 4000;
     static constexpr int IEC_PWM_MAX_UPDATE_INTERVAL = 5000;
+    // EV READY certification requires a small pause of 500-1000 ms in X1 after a t_step_EF sequence before going to X2-
+    // This is not required by IEC61851-1, but it is allowed by the IEC. It helps some older EVs to start charging
+    // after the wake-up sequence.
+    static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};

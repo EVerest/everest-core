@@ -348,6 +348,7 @@ void Charger::run_state_machine() {
                                 // Figure 4 of ISO15118-3: X1 start, PnC and EIM
                                 internal_context.t_step_EF_return_state = target_state;
                                 internal_context.t_step_EF_return_pwm = 0.;
+                                internal_context.t_step_EF_return_ampere = 0.;
                                 // fall back to nominal PWM after the t_step_EF break. Note that
                                 // ac_hlc_enabled_current_session remains untouched as HLC can still start later in
                                 // nominal PWM mode
@@ -363,6 +364,7 @@ void Charger::run_state_machine() {
                                                "t_step_X1 and disable 5 percent.");
                                     internal_context.t_step_X1_return_state = target_state;
                                     internal_context.t_step_X1_return_pwm = 0.;
+                                    internal_context.t_step_EF_return_ampere = 0.;
                                     hlc_use_5percent_current_session = false;
                                     shared_context.current_state = EvseState::T_step_X1;
                                 } else {
@@ -451,16 +453,23 @@ void Charger::run_state_machine() {
         case EvseState::T_step_EF:
             if (initialize_state) {
                 session_log.evse(false, "Enter T_step_EF");
+                internal_context.t_step_ef_x1_pause = false;
                 pwm_F();
             }
-            if (time_in_current_state >= T_STEP_EF) {
+            if (time_in_current_state >= T_STEP_EF + STAY_IN_X1_AFTER_TSTEP_EF_MS) {
                 session_log.evse(false, "Exit T_step_EF");
                 if (internal_context.t_step_EF_return_pwm == 0.) {
                     pwm_off();
                 } else {
                     update_pwm_now(internal_context.t_step_EF_return_pwm);
+                    internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
                 }
                 shared_context.current_state = internal_context.t_step_EF_return_state;
+            } else if (time_in_current_state >= T_STEP_EF and not internal_context.t_step_ef_x1_pause) {
+                internal_context.t_step_ef_x1_pause = true;
+                // stay in X1 for a little while as required by EV READY regulations
+                session_log.evse(false, "Pause in X1 for EV READY regulations");
+                pwm_off();
             }
             break;
 
@@ -475,6 +484,7 @@ void Charger::run_state_machine() {
                     pwm_off();
                 } else {
                     update_pwm_now(internal_context.t_step_X1_return_pwm);
+                    internal_context.pwm_set_last_ampere = internal_context.t_step_EF_return_ampere;
                 }
                 shared_context.current_state = internal_context.t_step_X1_return_state;
             }
@@ -532,6 +542,7 @@ void Charger::run_state_machine() {
                             shared_context.legacy_wakeup_done = true;
                             internal_context.t_step_EF_return_state = EvseState::PrepareCharging;
                             internal_context.t_step_EF_return_pwm = ampere_to_duty_cycle(get_max_current_internal());
+                            internal_context.t_step_EF_return_ampere = get_max_current_internal();
                             shared_context.current_state = EvseState::T_step_EF;
                         } else if (not shared_context.hlc_charging_active and shared_context.legacy_wakeup_done and
                                    time_in_current_state > PREPARING_TIMEOUT_PAUSED_BY_EV) {
@@ -1672,6 +1683,7 @@ void Charger::request_error_sequence() {
     if (shared_context.current_state == EvseState::WaitingForAuthentication or
         shared_context.current_state == EvseState::PrepareCharging) {
         internal_context.t_step_EF_return_state = shared_context.current_state;
+        internal_context.t_step_EF_return_ampere = 0.;
         shared_context.current_state = EvseState::T_step_EF;
         signal_slac_reset();
         if (hlc_use_5percent_current_session) {
@@ -1751,6 +1763,7 @@ void Charger::dlink_error() {
             // the t_step_EF state.
             internal_context.t_step_X1_return_state = EvseState::T_step_EF;
             internal_context.t_step_X1_return_pwm = 0.;
+            internal_context.t_step_EF_return_ampere = 0.;
             shared_context.current_state = EvseState::T_step_X1;
 
             // After returning from T_step_EF, go to Waiting for Auth (We are restarting the session)
@@ -1761,6 +1774,7 @@ void Charger::dlink_error() {
 
             // [V2G3-M07-05] says we need to go through X1 at the end of the sequence
             internal_context.t_step_EF_return_pwm = 0.;
+            internal_context.t_step_EF_return_ampere = 0.;
         }
         // else {
         // [V2G3-M07-10] Gives us two options for nominal PWM mode and HLC in case of error: We choose

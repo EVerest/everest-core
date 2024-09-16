@@ -226,6 +226,18 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
 types::ocpp::SetVariableStatusEnumType
 to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
 
+/// \brief Converts a given vector of ocpp::v201::CompositeSchedule \p composite_schedules to a
+/// types::ocpp::ChargingSchedules
+types::ocpp::ChargingSchedules
+to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
+
+/// \brief Converts a given ocpp::v201::CompositeSchedule \p composite_schedule to a types::ocpp::ChargingSchedule
+types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule);
+
+/// \brief Converst a given ocpp::v201::ChargingSchedulePeriod \p period to a types::ocpp::ChargingSchedulePeriod
+types::ocpp::ChargingSchedulePeriod
+to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period);
+
 } // namespace conversions
 } // namespace module
 
