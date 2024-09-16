@@ -812,11 +812,11 @@ void EvseManager::ready() {
     if (config.ac_with_soc) {
         setup_fake_DC_mode();
     } else {
-        charger->setup(config.has_ventilation,
-                       (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC), hlc_enabled,
-                       config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
-                       config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
-                       config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state);
+        charger->setup(
+            config.has_ventilation, (config.charge_mode == "DC" ? Charger::ChargeMode::DC : Charger::ChargeMode::AC),
+            hlc_enabled, config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
+            config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
+            config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1002,7 +1002,7 @@ void EvseManager::setup_fake_DC_mode() {
     charger->setup(config.has_ventilation, Charger::ChargeMode::DC, hlc_enabled, config.ac_hlc_use_5percent,
                    config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
-                   config.switch_3ph1ph_cp_state);
+                   config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms);
 
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1040,7 +1040,7 @@ void EvseManager::setup_AC_mode() {
     charger->setup(config.has_ventilation, Charger::ChargeMode::AC, hlc_enabled, config.ac_hlc_use_5percent,
                    config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
-                   config.switch_3ph1ph_cp_state);
+                   config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms);
 
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
