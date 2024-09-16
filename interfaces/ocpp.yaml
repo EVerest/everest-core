@@ -24,15 +24,12 @@ cmds:
         false
   security_event:
     description: >-
-      Triggers a SecurityEventNotification.req at the CSMS. This event is queued with a guaranteed delivery
-      to the CSMS.
+      Triggers a SecurityEventNotification.req at the CSMS if it is deemed critical, either by setting the flag in this event or if absent automatically by libocpp
     arguments:
-      type:
-        description: type of the security event
-        type: string
-      info:
-        description: Additional information about the occurred security event
-        type: string
+      event:
+        description: A security event
+        type: object
+        $ref: /ocpp#/SecurityEvent
   get_variables:
     description: >-
       Command to get a variable from OCPP.

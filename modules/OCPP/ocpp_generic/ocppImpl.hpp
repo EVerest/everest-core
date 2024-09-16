@@ -35,7 +35,7 @@ protected:
     // command handler functions (virtual)
     virtual bool handle_stop() override;
     virtual bool handle_restart() override;
-    virtual void handle_security_event(std::string& type, std::string& info) override;
+    virtual void handle_security_event(types::ocpp::SecurityEvent& event) override;
     virtual std::vector<types::ocpp::GetVariableResult>
     handle_get_variables(std::vector<types::ocpp::GetVariableRequest>& requests) override;
     virtual std::vector<types::ocpp::SetVariableResult>
