@@ -186,9 +186,6 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (lock_connector_in_state_b) {
                 connector_lock();
             } else {
-                EVLOG_warning <<
-                    "Unlock connector in CP state B. "
-                    "This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and should not be used in public environments!";
                 connector_unlock();
             }
 
