@@ -30,6 +30,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+#include "StartupMonitor.hpp"
 #include "limit_decimal_places.hpp"
 
 namespace module {
@@ -193,11 +194,7 @@ private:
     std::vector<std::thread> api_threads;
     bool running = true;
 
-    std::condition_variable evse_manager_cv;
-    std::mutex evse_manager_mux;
-    std::int16_t evse_manager_ready{0};
-    void wait_evse_manager_ready();
-    void notify_evse_manager_ready(bool ready);
+    StartupMonitor evse_manager_check;
 
     std::list<std::unique_ptr<SessionInfo>> info;
     std::list<std::string> hw_capabilities_str;
