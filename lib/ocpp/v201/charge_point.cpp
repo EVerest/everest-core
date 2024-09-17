@@ -442,6 +442,8 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
                                 trigger_reason, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
                                 transaction_id_token, meter_values, std::nullopt, this->is_offline(), std::nullopt);
 
+    // K02.FR.05 The transaction is over, so delete the TxProfiles associated with the transaction.
+    smart_charging_handler->delete_transaction_tx_profiles(enhanced_transaction->get_transaction().transactionId);
     evse_handle.release_transaction();
 
     bool send_reset = false;
@@ -2920,7 +2922,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 }
 
 void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call) {
-    const auto msg = call.msg;
+    auto msg = call.msg;
 
     RequestStartTransactionResponse response;
     response.status = RequestStartStopStatusEnum::Rejected;
@@ -2929,11 +2931,6 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
     if (msg.evseId.has_value()) {
         const int32_t evse_id = msg.evseId.value();
         auto& evse = this->evse_manager->get_evse(evse_id);
-
-        // TODO F01.FR.26 If a Charging Station with support for Smart Charging receives a
-        // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond
-        // with RequestStartTransactionResponse with status = Rejected and optionally with reasonCode =
-        // "InvalidProfile" or "InvalidSchedule".
 
         // F01.FR.23: Faulted or unavailable. F01.FR.24 / F02.FR.25: Occupied. Send rejected.
         const bool available = is_evse_connector_available(evse);
@@ -2954,6 +2951,36 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
             response.status = RequestStartStopStatusEnum::Accepted;
 
             remote_start_id_per_evse[evse_id] = {msg.idToken, msg.remoteStartId};
+        }
+
+        // F01.FR.26 If a Charging Station with support for Smart Charging receives a
+        // RequestStartTransactionRequest with an invalid ChargingProfile: The Charging Station SHALL respond
+        // with RequestStartTransactionResponse with status = Rejected and optionally with reasonCode =
+        // "InvalidProfile" or "InvalidSchedule".
+
+        bool is_smart_charging_enabled =
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::SmartChargingCtrlrEnabled)
+                .value_or(false);
+
+        if (is_smart_charging_enabled) {
+            if (msg.chargingProfile.has_value()) {
+
+                auto charging_profile = msg.chargingProfile.value();
+
+                if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
+
+                    const auto add_profile_response = this->smart_charging_handler->validate_and_add_profile(
+                        msg.chargingProfile.value(), evse_id, AddChargingProfileSource::RequestStartTransactionRequest);
+                    if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
+                        EVLOG_debug << "Accepting SetChargingProfileRequest";
+                    } else {
+                        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: "
+                                    << add_profile_response.statusInfo->reasonCode.get()
+                                    << "\nadditionalInfo: " << add_profile_response.statusInfo->additionalInfo->get();
+                        response.statusInfo = add_profile_response.statusInfo;
+                    }
+                }
+            }
         }
     } else {
         // F01.FR.07 RequestStartTransactionRequest does not contain an evseId. The Charging Station MAY reject the

@@ -1266,7 +1266,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K01.FR.40 | ✅     | `Absolute`/`Recurring` profiles without `startSchedule` fields are rejected.                    |
 | K01.FR.41 | ✅     | `Relative` profiles with `startSchedule` fields are rejected.                                   |
 | K01.FR.42 | ⛽️     |                                                                                                 |
-| K01.FR.43 |        |  Open question to OCA - https://oca.causewaynow.com/wg/OCA-TWG/mail/thread/4254                 |
+| K01.FR.43 |        |  Open question to OCA - https://oca.causewaynow.com/wg/OCA-TWG/mail/thread/4254                |
 | K01.FR.44 | ✅     | We reject invalid profiles instead of modifying and accepting them.                             |
 | K01.FR.45 | ✅     | We reject invalid profiles instead of modifying and accepting them.                             |
 | K01.FR.46 | ⛽️     | K08                                                                                             |
@@ -1285,8 +1285,8 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | K02.FR.01 | ❎     |                                                  |
 | K02.FR.02 | ❎     | This should be handled by the user of `libocpp`. |
 | K02.FR.03 | ❎     |                                                  |
-| K02.FR.04 |        |                                                  |
-| K02.FR.05 |        |                                                  |
+| K02.FR.04 | ✅     |                                                  |
+| K02.FR.05 | ✅     |                                                  |
 | K02.FR.06 |        | The same as K01.FR.21                            |
 | K02.FR.07 |        | The same as K01.FR.22                            |
 | K02.FR.08 |        |                                                  |
@@ -1308,7 +1308,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark                                           |
 |-----------|--------|--------------------------------------------------|
-| K04.FR.01 |        |                                                  |
+| K04.FR.01 | ✅     |                                                  |
 | K04.FR.02 |        |                                                  |
 | K04.FR.03 | ✅     |                                                  |
 | K04.FR.04 |        | The same as K01.FR.21                            |
@@ -1319,10 +1319,10 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | ID        | Status | Remark |
 |-----------|--------|--------|
 | K05.FR.01 | ❎     |        |
-| K05.FR.02 |        |        |
-| K05.FR.03 |        |        |
-| K05.FR.04 |        |        |
-| K05.FR.05 |        |        |
+| K05.FR.02 | ✅     |        |
+| K05.FR.03 | ✅     |        |
+| K05.FR.04 | ✅     |        |
+| K05.FR.05 | ✅     |        |
 
 ## SmartCharging - Offline Behavior Smart Charging During Transaction
 

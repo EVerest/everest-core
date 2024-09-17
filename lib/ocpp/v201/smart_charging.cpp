@@ -14,6 +14,7 @@
 #include "ocpp/v201/profile.hpp"
 #include "ocpp/v201/utils.hpp"
 #include <algorithm>
+#include <cstring>
 #include <iterator>
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v201/smart_charging.hpp>
@@ -72,6 +73,8 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
         return "DuplicateTxDefaultProfileFound";
     case ProfileValidationResultEnum::DuplicateProfileValidityPeriod:
         return "DuplicateProfileValidityPeriod";
+    case ProfileValidationResultEnum::RequestStartTransactionNonTxProfile:
+        return "RequestStartTransactionNonTxProfile";
     }
 
     throw EnumToStringException{e, "ProfileValidationResultEnum"};
@@ -108,6 +111,7 @@ std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum
     case ProfileValidationResultEnum::TxProfileEvseIdNotGreaterThanZero:
     case ProfileValidationResultEnum::ChargingStationMaxProfileCannotBeRelative:
     case ProfileValidationResultEnum::ChargingStationMaxProfileEvseIdGreaterThanZero:
+    case ProfileValidationResultEnum::RequestStartTransactionNonTxProfile:
         return "InvalidValue";
     case ProfileValidationResultEnum::InvalidProfileType:
         return "InternalError";
@@ -215,11 +219,26 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
-SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id) {
+void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
+    for (auto& [evse_id, profiles] : charging_profiles) {
+        auto iter = profiles.begin();
+        while (iter != profiles.end()) {
+            if (transaction_id.compare(iter->transactionId.value()) == 0) {
+                this->database_handler->delete_charging_profile(iter->id);
+                iter = profiles.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+    }
+}
+
+SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                                          AddChargingProfileSource source_of_request) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
-    auto result = this->validate_profile(profile, evse_id);
+    auto result = this->validate_profile(profile, evse_id, source_of_request);
     if (result == ProfileValidationResultEnum::Valid) {
         response = this->add_profile(profile, evse_id);
     } else {
@@ -231,10 +250,20 @@ SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(Chargi
     return response;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id) {
-    conform_validity_periods(profile);
+ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfile& profile, int32_t evse_id,
+                                                                   AddChargingProfileSource source_of_request) {
 
     auto result = ProfileValidationResultEnum::Valid;
+
+    if (source_of_request == AddChargingProfileSource::RequestStartTransactionRequest) {
+        result = validate_request_start_transaction_profile(profile);
+        if (result != ProfileValidationResultEnum::Valid) {
+            return result;
+        }
+    }
+
+    conform_validity_periods(profile);
+
     if (evse_id != STATION_WIDE_ID) {
         result = this->validate_evse_exists(evse_id);
         if (result != ProfileValidationResultEnum::Valid) {
@@ -265,7 +294,7 @@ ProfileValidationResultEnum SmartChargingHandler::validate_profile(ChargingProfi
         result = this->validate_tx_default_profile(profile, evse_id);
         break;
     case ChargingProfilePurposeEnum::TxProfile:
-        result = this->validate_tx_profile(profile, evse_id);
+        result = this->validate_tx_profile(profile, evse_id, source_of_request);
         break;
     case ChargingProfilePurposeEnum::ChargingStationExternalConstraints:
         // TODO: How do we check this? We shouldn't set it in
@@ -323,12 +352,9 @@ ProfileValidationResultEnum SmartChargingHandler::validate_tx_default_profile(Ch
     return ProfileValidationResultEnum::Valid;
 }
 
-ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile,
-                                                                      int32_t evse_id) const {
-    if (!profile.transactionId.has_value()) {
-        return ProfileValidationResultEnum::TxProfileMissingTransactionId;
-    }
-
+ProfileValidationResultEnum
+SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_t evse_id,
+                                          AddChargingProfileSource source_of_request) const {
     if (evse_id <= 0) {
         return ProfileValidationResultEnum::TxProfileEvseIdNotGreaterThanZero;
     }
@@ -337,6 +363,16 @@ ProfileValidationResultEnum SmartChargingHandler::validate_tx_profile(const Char
     auto result = this->validate_evse_exists(evse_id);
     if (result != ProfileValidationResultEnum::Valid) {
         return result;
+    }
+
+    // we can return valid here since the following checks verify the transactionId which is not given if the source is
+    // RequestStartTransactionRequest
+    if (source_of_request == AddChargingProfileSource::RequestStartTransactionRequest) {
+        return ProfileValidationResultEnum::Valid;
+    }
+
+    if (!profile.transactionId.has_value()) {
+        return ProfileValidationResultEnum::TxProfileMissingTransactionId;
     }
 
     auto& evse = evse_manager.get_evse(evse_id);
@@ -453,6 +489,14 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
     return ProfileValidationResultEnum::Valid;
 }
 
+ProfileValidationResultEnum
+SmartChargingHandler::validate_request_start_transaction_profile(const ChargingProfile& profile) const {
+    if (ChargingProfilePurposeEnum::TxProfile != profile.chargingProfilePurpose) {
+        return ProfileValidationResultEnum::RequestStartTransactionNonTxProfile;
+    }
+    return ProfileValidationResultEnum::Valid;
+}
+
 SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
@@ -489,14 +533,7 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
 }
 
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_profiles() const {
-    std::vector<ChargingProfile> station_wide_profiles;
-    if (charging_profiles.count(STATION_WIDE_ID) > 0) {
-        station_wide_profiles = charging_profiles.at(STATION_WIDE_ID);
-    } else {
-        station_wide_profiles = {};
-    }
-
-    return station_wide_profiles;
+    return this->get_profiles_on_evse(STATION_WIDE_ID);
 }
 
 std::vector<ChargingProfile> SmartChargingHandler::get_profiles() const {
@@ -544,7 +581,14 @@ SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& re
             }
         }
     }
+    return profiles;
+}
 
+std::vector<ChargingProfile> SmartChargingHandler::get_profiles_on_evse(int32_t evse_id) const {
+    std::vector<ChargingProfile> profiles;
+    if (charging_profiles.count(evse_id)) {
+        profiles = charging_profiles.at(evse_id);
+    }
     return profiles;
 }
 

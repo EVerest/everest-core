@@ -8,6 +8,7 @@
 #include "ocpp/common/call_types.hpp"
 #include "ocpp/common/message_queue.hpp"
 #include "ocpp/v201/charge_point.hpp"
+#include "ocpp/v201/ctrlr_component_variables.hpp"
 #include "ocpp/v201/device_model_storage_sqlite.hpp"
 #include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/messages/GetCompositeSchedule.hpp"
@@ -26,6 +27,8 @@
 static const int DEFAULT_EVSE_ID = 1;
 static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
+static const ocpp::v201::AddChargingProfileSource DEFAULT_REQUEST_TO_ADD_PROFILE_SOURCE =
+    ocpp::v201::AddChargingProfileSource::SetChargingProfile;
 static const std::string TEMP_OUTPUT_PATH = "/tmp/ocpp201";
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
 const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_config";
@@ -92,6 +95,11 @@ public:
                                 AttributeEnum::Actual, ac_phase_switching_supported.value_or(""), "test", true);
 
         return device_model;
+    }
+
+    std::shared_ptr<DatabaseHandler> create_database_handler() {
+        auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
+        return std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
     }
 
     std::unique_ptr<TestChargePoint> create_charge_point() {
@@ -183,11 +191,6 @@ public:
     std::shared_ptr<SmartChargingHandlerMock> smart_charging_handler = std::make_shared<SmartChargingHandlerMock>();
     std::unique_ptr<TestChargePoint> charge_point = create_charge_point();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
-
-    std::shared_ptr<DatabaseHandler> create_database_handler() {
-        auto database_connection = std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
-        return std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
-    }
 
     std::shared_ptr<MessageQueue<v201::MessageType>>
     create_message_queue(std::shared_ptr<DatabaseHandler>& database_handler) {
@@ -665,7 +668,8 @@ TEST_F(ChargePointFixture, K01_SetChargingProfileRequest_ValidatesAndAddsProfile
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
+    EXPECT_CALL(*smart_charging_handler,
+                validate_and_add_profile(profile, DEFAULT_EVSE_ID, DEFAULT_REQUEST_TO_ADD_PROFILE_SOURCE));
 
     charge_point->handle_message(set_charging_profile_req);
 }
@@ -762,9 +766,32 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCa
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(testing::_, testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(0);
 
     charge_point->handle_message(set_charging_profile_req);
+}
+
+TEST_F(ChargePointFixture, K05FR05_RequestStartTransactionRequest_SmartChargingCtrlrEnabledTrue_ValidatesTxProfiles) {
+    const auto cv = ControllerComponentVariables::SmartChargingCtrlrEnabled;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "true", "TEST", true);
+
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    RequestStartTransactionRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.idToken = IdToken{.idToken = "Local", .type = IdTokenEnum::Local};
+    req.chargingProfile = profile;
+
+    auto start_transaction_req =
+        request_to_enhanced_message<RequestStartTransactionRequest, MessageType::RequestStartTransaction>(req);
+
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(1);
+
+    charge_point->handle_message(start_transaction_req);
 }
 
 TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValidateAndAddProfile) {
@@ -788,7 +815,7 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValida
     auto set_charging_profile_req =
         request_to_enhanced_message<SetChargingProfileRequest, MessageType::SetChargingProfile>(req);
 
-    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile(profile, DEFAULT_EVSE_ID));
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(1);
 
     charge_point->handle_message(set_charging_profile_req);
 }
@@ -864,6 +891,51 @@ TEST_F(ChargePointFixture, K08FR07_GetCompositeSchedule_DoesNotCalculateComposit
         .Times(0);
 
     charge_point->handle_message(get_composite_schedule_req);
+}
+
+TEST_F(ChargePointFixture,
+       K05FR04_RequestStartTransactionRequest_SmartChargingCtrlrEnabledFalse_DoesNotValidateTxProfiles) {
+    const auto cv = ControllerComponentVariables::SmartChargingCtrlrEnabled;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "false", "TEST", true);
+
+    auto periods = create_charging_schedule_periods({0, 1, 2});
+
+    auto profile = create_charging_profile(
+        DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
+        create_charge_schedule(ChargingRateUnitEnum::A, periods, ocpp::DateTime("2024-01-17T17:00:00")), DEFAULT_TX_ID);
+
+    RequestStartTransactionRequest req;
+    req.evseId = DEFAULT_EVSE_ID;
+    req.idToken = IdToken{.idToken = "Local", .type = IdTokenEnum::Local};
+    req.chargingProfile = profile;
+
+    auto start_transaction_req =
+        request_to_enhanced_message<RequestStartTransactionRequest, MessageType::RequestStartTransaction>(req);
+
+    EXPECT_CALL(*smart_charging_handler, validate_and_add_profile).Times(0);
+
+    charge_point->handle_message(start_transaction_req);
+}
+
+TEST_F(ChargePointFixture, K02FR05_TransactionEnds_WillDeleteTxProfilesWithTransactionID) {
+    auto database_handler = create_database_handler();
+    database_handler->open_connection();
+    const auto cv = ControllerComponentVariables::ResumeTransactionsOnBoot;
+    this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "true", "TEST", true);
+    int32_t connector_id = 1;
+    std::string session_id = "some-session-id";
+    ocpp::DateTime timestamp("2024-01-17T17:00:00");
+
+    charge_point->on_transaction_started(DEFAULT_EVSE_ID, connector_id, session_id, timestamp,
+                                         ocpp::v201::TriggerReasonEnum::Authorized, MeterValue(), {}, {}, {}, {},
+                                         ChargingStateEnum::EVConnected);
+    auto transaction = database_handler->transaction_get(DEFAULT_EVSE_ID);
+    ASSERT_THAT(transaction, testing::NotNull());
+
+    EXPECT_CALL(*smart_charging_handler,
+                delete_transaction_tx_profiles(transaction->get_transaction().transactionId.get()));
+    charge_point->on_transaction_finished(DEFAULT_EVSE_ID, timestamp, MeterValue(), ReasonEnum::StoppedByEV,
+                                          TriggerReasonEnum::StopAuthorized, {}, {}, ChargingStateEnum::EVConnected);
 }
 
 } // namespace ocpp::v201
