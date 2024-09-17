@@ -6,6 +6,7 @@
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
+#include <generated/types/reservation.hpp>
 #include <generated/types/system.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
@@ -118,6 +119,9 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
 /// ocpp::v201::Get15118EVCertificateRequest
 ocpp::v201::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request);
+
+/// \brief Converts a given types::reservation::ReservationResult to ocpp::v201::ReserveNowStatusEnum
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
 
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason
@@ -237,6 +241,9 @@ types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::Com
 /// \brief Converst a given ocpp::v201::ChargingSchedulePeriod \p period to a types::ocpp::ChargingSchedulePeriod
 types::ocpp::ChargingSchedulePeriod
 to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period);
+
+/// \brief Convert a given ocpp::v201::ConnectorEnum connector type to a types::evse_manager::ConnectorTypeEnum
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type);
 
 } // namespace conversions
 } // namespace module

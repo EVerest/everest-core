@@ -825,6 +825,23 @@ to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiS
     return _request;
 }
 
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
+    switch (result) {
+    case types::reservation::ReservationResult::Accepted:
+        return ocpp::v201::ReserveNowStatusEnum::Accepted;
+    case types::reservation::ReservationResult::Faulted:
+        return ocpp::v201::ReserveNowStatusEnum::Faulted;
+    case types::reservation::ReservationResult::Occupied:
+        return ocpp::v201::ReserveNowStatusEnum::Occupied;
+    case types::reservation::ReservationResult::Rejected:
+        return ocpp::v201::ReserveNowStatusEnum::Rejected;
+    case types::reservation::ReservationResult::Unavailable:
+        return ocpp::v201::ReserveNowStatusEnum::Unavailable;
+    }
+
+    throw std::out_of_range("Could not convert ReservationResult");
+}
+
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();
@@ -1018,8 +1035,8 @@ to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum s
     case ocpp::v201::AuthorizeCertificateStatusEnum::ContractCancelled:
         return types::authorization::CertificateStatus::ContractCancelled;
     default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to types::authorization::CertificateStatus");
+        throw std::out_of_range("Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to "
+                                "types::authorization::CertificateStatus");
     }
 }
 
@@ -1285,6 +1302,57 @@ to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& pe
     _period.number_phases = period.numberPhases;
     _period.phase_to_use = period.phaseToUse;
     return _period;
+}
+
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type) {
+    switch (connector_type) {
+    case ocpp::v201::ConnectorEnum::cCCS1:
+        return types::evse_manager::ConnectorTypeEnum::cCCS1;
+    case ocpp::v201::ConnectorEnum::cCCS2:
+        return types::evse_manager::ConnectorTypeEnum::cCCS2;
+    case ocpp::v201::ConnectorEnum::cG105:
+        return types::evse_manager::ConnectorTypeEnum::cG105;
+    case ocpp::v201::ConnectorEnum::cTesla:
+        return types::evse_manager::ConnectorTypeEnum::cTesla;
+    case ocpp::v201::ConnectorEnum::cType1:
+        return types::evse_manager::ConnectorTypeEnum::cType1;
+    case ocpp::v201::ConnectorEnum::cType2:
+        return types::evse_manager::ConnectorTypeEnum::cType2;
+    case ocpp::v201::ConnectorEnum::s309_1P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_16A;
+    case ocpp::v201::ConnectorEnum::s309_1P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_32A;
+    case ocpp::v201::ConnectorEnum::s309_3P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_16A;
+    case ocpp::v201::ConnectorEnum::s309_3P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_32A;
+    case ocpp::v201::ConnectorEnum::sBS1361:
+        return types::evse_manager::ConnectorTypeEnum::sBS1361;
+    case ocpp::v201::ConnectorEnum::sCEE_7_7:
+        return types::evse_manager::ConnectorTypeEnum::sCEE_7_7;
+    case ocpp::v201::ConnectorEnum::sType2:
+        return types::evse_manager::ConnectorTypeEnum::sType2;
+    case ocpp::v201::ConnectorEnum::sType3:
+        return types::evse_manager::ConnectorTypeEnum::sType3;
+    case ocpp::v201::ConnectorEnum::Other1PhMax16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhMax16A;
+    case ocpp::v201::ConnectorEnum::Other1PhOver16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhOver16A;
+    case ocpp::v201::ConnectorEnum::Other3Ph:
+        return types::evse_manager::ConnectorTypeEnum::Other3Ph;
+    case ocpp::v201::ConnectorEnum::Pan:
+        return types::evse_manager::ConnectorTypeEnum::Pan;
+    case ocpp::v201::ConnectorEnum::wInductive:
+        return types::evse_manager::ConnectorTypeEnum::wInductive;
+    case ocpp::v201::ConnectorEnum::wResonant:
+        return types::evse_manager::ConnectorTypeEnum::wResonant;
+    case ocpp::v201::ConnectorEnum::Undetermined:
+        return types::evse_manager::ConnectorTypeEnum::Undetermined;
+    case ocpp::v201::ConnectorEnum::Unknown:
+        return types::evse_manager::ConnectorTypeEnum::Unknown;
+    }
+
+    throw std::out_of_range("Could not convert ConnectorEnum");
 }
 
 } // namespace conversions

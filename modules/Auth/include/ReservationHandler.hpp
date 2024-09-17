@@ -57,12 +57,13 @@ public:
      * @brief Function tries to reserve the given \p connector using the given \p reservation
      *
      * @param connector
+     * @param type      The connector type.
      * @param state Current state of the connector
      * @param is_reservable
      * @param reservation
      * @return types::reservation::ReservationResult
      */
-    types::reservation::ReservationResult reserve(int connector, const ConnectorState& state, bool is_reservable,
+    types::reservation::ReservationResult reserve(int connector, const types::evse_manager::ConnectorTypeEnum type, const ConnectorState& state, bool is_reservable,
                                                   const types::reservation::Reservation& reservation);
 
     /**

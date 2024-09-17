@@ -28,12 +28,14 @@ bool ReservationHandler::has_reservation_parent_id(int connector) {
     return this->reservations.at(connector).parent_id_token.has_value();
 }
 
-types::reservation::ReservationResult ReservationHandler::reserve(int connector, const ConnectorState& state,
-                                                                  bool is_reservable,
+types::reservation::ReservationResult ReservationHandler::reserve(int connector,
+                                                                  const types::evse_manager::ConnectorTypeEnum type,
+                                                                  const ConnectorState& state, bool is_reservable,
                                                                   const types::reservation::Reservation& reservation) {
     std::lock_guard<std::mutex> lk(this->reservation_mutex);
     if (connector == 0) {
         EVLOG_info << "Reservation for connector 0 is not supported";
+        // TODO mz this should be supported for 2.0.1
         return types::reservation::ReservationResult::Rejected;
     }
 
@@ -55,6 +57,11 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
     if (!is_reservable) {
         EVLOG_debug << "Rejecting reservation because connector is not in state AVAILABLE";
         return types::reservation::ReservationResult::Occupied;
+    }
+
+    if (reservation.connector_type.has_value() && reservation.connector_type.value() != type) {
+        EVLOG_debug << "Rejecting reservation because connector type is not equal.";
+        return types::reservation::ReservationResult::Rejected;
     }
 
     if (!this->reservations.count(connector)) {

@@ -12,6 +12,7 @@
 
 #include <ConnectorStateMachine.hpp>
 #include <generated/types/authorization.hpp>
+#include <generated/types/evse_manager.hpp>
 
 namespace module {
 
@@ -30,7 +31,8 @@ struct Connector {
         transaction_active(false),
         state_machine(ConnectorState::AVAILABLE),
         is_reservable(true),
-        reserved(false){};
+        reserved(false),
+        type(types::evse_manager::ConnectorTypeEnum::Unknown){}
 
     int id;
 
@@ -42,6 +44,7 @@ struct Connector {
 
     bool is_reservable;
     bool reserved;
+    types::evse_manager::ConnectorTypeEnum type;
 
     /**
      * @brief Submits the given \p event to the state machine
@@ -63,7 +66,7 @@ struct Connector {
 
 struct ConnectorContext {
 
-    ConnectorContext(int connector_id, int evse_index) : evse_index(evse_index), connector(connector_id){};
+    ConnectorContext(int connector_id, int evse_index) : evse_index(evse_index), connector(connector_id){}
 
     int evse_index;
     Connector connector;

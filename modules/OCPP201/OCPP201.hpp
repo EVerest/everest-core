@@ -24,6 +24,7 @@
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
+#include "generated/interfaces/reservation/Interface.hpp"
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -58,7 +59,7 @@ public:
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
-            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink, Conf& config) :
+            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink, std::vector<std::unique_ptr<reservationIntf>> r_reservation, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -72,6 +73,7 @@ public:
         r_data_transfer(std::move(r_data_transfer)),
         r_auth(std::move(r_auth)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
+        r_reservation(std::move(r_reservation)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -86,6 +88,7 @@ public:
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
     const std::unique_ptr<authIntf> r_auth;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
+    const std::vector<std::unique_ptr<reservationIntf>> r_reservation;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

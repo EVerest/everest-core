@@ -37,6 +37,10 @@ types:
       parent_id_token:
         description: parent_id
         type: string
+      connector_type:
+        description: The connector type to make a reservation for
+        type: string
+        $ref: /evse_manager#/ConnectorTypeEnum
   ReservationEndReason:
     description: >-
       Reason for reservation end

@@ -545,6 +545,40 @@ void OCPP201::ready() {
 
     callbacks.set_charging_profiles_callback = charging_schedules_callback;
 
+    callbacks.reserve_now_callback =
+        [this](const int32_t id, const ocpp::DateTime& expiry_date_time, const ocpp::v201::IdToken& id_token,
+               const std::optional<ocpp::v201::ConnectorEnum> connector_type, const std::optional<uint32_t> evse_id,
+               const std::optional<ocpp::v201::IdToken>& group_id_token) -> ocpp::v201::ReserveNowStatusEnum {
+        ocpp::v201::ReserveNowResponse response;
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            return ocpp::v201::ReserveNowStatusEnum::Rejected;
+        }
+
+        const int32_t evse = (evse_id.has_value() ? static_cast<int32_t>(evse_id.value()) : 0);
+        types::reservation::Reservation reservation;
+        reservation.reservation_id = id;
+        reservation.expiry_time = expiry_date_time.to_rfc3339();
+        reservation.id_token = id_token.idToken;
+        if (group_id_token.has_value()) {
+            reservation.parent_id_token = group_id_token.value().idToken;
+        }
+        if (connector_type.has_value()) {
+            reservation.connector_type = conversions::to_everest_connector_type_enum(connector_type.value());
+        }
+
+        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(evse, reservation);
+        return conversions::to_ocpp_reservation_status(result);
+    };
+
+    callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
+        ocpp::v201::CancelReservationResponse response;
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            return false;
+        }
+
+        return this->r_reservation.at(0)->call_cancel_reservation(reservation_id);
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();

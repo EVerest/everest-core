@@ -42,7 +42,7 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
     selection_algorithm(selection_algorithm),
     connection_timeout(connection_timeout),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
-    ignore_faults(ignore_faults){};
+    ignore_faults(ignore_faults) {};
 
 AuthHandler::~AuthHandler() {
 }
@@ -508,8 +508,24 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
 
 types::reservation::ReservationResult AuthHandler::handle_reservation(int connector_id,
                                                                       const Reservation& reservation) {
-    return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.get_state(),
-                                             this->connectors.at(connector_id)->connector.is_reservable, reservation);
+    if (connector_id == 0) {
+        for (auto& [connector_id, connector] : this->connectors) {
+            if (connector->connector.is_reservable && connector->connector.get_state() == ConnectorState::AVAILABLE &&
+                (connector->connector.type == ConnectorTypeEnum::Unknown || !reservation.connector_type.has_value() ||
+                 connector->connector.type == reservation.connector_type.value())) {
+                return this->reservation_handler.reserve(connector_id, connector->connector.type,
+                                                         connector->connector.get_state(),
+                                                         connector->connector.is_reservable, reservation);
+            }
+        }
+        // TODO mz return correct result depending on the status of the connector.
+        return types::reservation::ReservationResult::Rejected;
+    } else {
+        return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.type,
+                                                 this->connectors.at(connector_id)->connector.get_state(),
+                                                 this->connectors.at(connector_id)->connector.is_reservable,
+                                                 reservation);
+    }
 }
 
 int AuthHandler::handle_cancel_reservation(int reservation_id) {
