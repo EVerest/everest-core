@@ -19,6 +19,12 @@
 namespace ocpp {
 namespace v201 {
 
+/// \brief Helper class for retrieving authorization cache entries from the database
+struct AuthorizationCacheEntry {
+    IdTokenInfo id_token_info;
+    DateTime last_used;
+};
+
 class DatabaseHandler : public common::DatabaseHandlerCommon {
 private:
     void init_sql() override;
@@ -55,7 +61,7 @@ public:
     /// \brief Gets cache entry for given \p id_token_hash if present
     /// \param id_token_hash
     /// \return
-    std::optional<IdTokenInfo> authorization_cache_get_entry(const std::string& id_token_hash);
+    std::optional<AuthorizationCacheEntry> authorization_cache_get_entry(const std::string& id_token_hash);
 
     /// \brief Deletes the cache entry for the given \p id_token_hash
     /// \param id_token_hash

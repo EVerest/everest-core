@@ -553,7 +553,7 @@ std::string ChargePoint::get_customer_information(const std::optional<Certificat
             const auto entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
             if (entry.has_value()) {
                 s << "Hashed id_token stored in cache: " + hashed_id_token + "\n";
-                s << "IdTokenInfo: " << entry.value();
+                s << "IdTokenInfo: " << entry->id_token_info;
             }
         } catch (const DatabaseException& e) {
             EVLOG_warning << "Could not get authorization cache entry from database";
@@ -852,25 +852,35 @@ AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std:
         try {
             const auto cache_entry = this->database_handler->authorization_cache_get_entry(hashed_id_token);
             if (cache_entry.has_value()) {
-                if ((cache_entry.value().cacheExpiryDateTime.has_value() and
-                     cache_entry.value().cacheExpiryDateTime.value().to_time_point() < DateTime().to_time_point())) {
-                    EVLOG_info
-                        << "Found valid entry in AuthCache but expiry date passed: Removing from cache and sending "
-                           "new request";
+                const auto now = DateTime();
+                const IdTokenInfo& id_token_info = cache_entry->id_token_info;
+
+                const auto lifetime =
+                    this->device_model->get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
+                const bool lifetime_expired =
+                    lifetime.has_value() && ((cache_entry->last_used.to_time_point() +
+                                              std::chrono::seconds(lifetime.value())) < now.to_time_point());
+                const bool cache_expiry_passed =
+                    id_token_info.cacheExpiryDateTime.has_value() and (id_token_info.cacheExpiryDateTime.value() < now);
+
+                if (lifetime_expired || cache_expiry_passed) {
+                    EVLOG_info << "Found valid entry in AuthCache but "
+                               << (lifetime_expired ? "lifetime expired" : "expiry date passed")
+                               << ": Removing from cache and sending new request";
                     this->database_handler->authorization_cache_delete_entry(hashed_id_token);
                     this->update_authorization_cache_size();
                 } else if (this->device_model->get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
-                           cache_entry.value().status == AuthorizationStatusEnum::Accepted) {
+                           id_token_info.status == AuthorizationStatusEnum::Accepted) {
                     EVLOG_info << "Found valid entry in AuthCache";
                     this->database_handler->authorization_cache_update_last_used(hashed_id_token);
-                    response.idTokenInfo = cache_entry.value();
+                    response.idTokenInfo = id_token_info;
                     return response;
                 } else if (this->device_model
                                ->get_optional_value<bool>(ControllerComponentVariables::AuthCacheDisablePostAuthorize)
                                .value_or(false)) {
                     EVLOG_info << "Found invalid entry in AuthCache: Not sending new request because "
                                   "AuthCacheDisablePostAuthorize is enabled";
-                    response.idTokenInfo = cache_entry.value();
+                    response.idTokenInfo = id_token_info;
                     return response;
                 } else {
                     EVLOG_info << "Found invalid entry in AuthCache: Sending new request";

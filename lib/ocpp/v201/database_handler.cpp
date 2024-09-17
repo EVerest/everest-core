@@ -120,8 +120,9 @@ void DatabaseHandler::authorization_cache_update_last_used(const std::string& id
     }
 }
 
-std::optional<IdTokenInfo> DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash) {
-    std::string sql = "SELECT ID_TOKEN_INFO FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
+std::optional<AuthorizationCacheEntry>
+DatabaseHandler::authorization_cache_get_entry(const std::string& id_token_hash) {
+    std::string sql = "SELECT ID_TOKEN_INFO, LAST_USED FROM AUTH_CACHE WHERE ID_TOKEN_HASH = @id_token_hash";
     auto select_stmt = this->database->new_statement(sql);
 
     select_stmt->bind_text("@id_token_hash", id_token_hash);
@@ -133,7 +134,7 @@ std::optional<IdTokenInfo> DatabaseHandler::authorization_cache_get_entry(const 
     }
 
     if (status == SQLITE_ROW) {
-        return IdTokenInfo(json::parse(select_stmt->column_text(0)));
+        return AuthorizationCacheEntry{json::parse(select_stmt->column_text(0)), select_stmt->column_datetime(1)};
     }
 
     throw QueryExecutionException(this->database->get_error_message());
