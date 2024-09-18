@@ -38,6 +38,7 @@
 namespace module {
 
 class ErrorHandling {
+
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
     explicit ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& r_bsp,
@@ -65,19 +66,9 @@ public:
 
 private:
     void process_error();
-    void raise_inoperative_error();
+    void raise_inoperative_error(const std::string& caused_by);
     void clear_inoperative_error();
-    bool errors_prevent_charging();
-
-    // p_evse. We need to ignore Inoperative here as this is the result of this check.
-    const std::list<Everest::error::ErrorType> ignore_errors_evse{"evse_manager/Inoperative"};
-    const std::list<Everest::error::ErrorType> ignore_errors_bsp{"evse_board_support/MREC3HighTemperature",
-                                                                 "evse_board_support/MREC18CableOverTempDerate",
-                                                                 "evse_board_support/VendorWarning"};
-    const std::list<Everest::error::ErrorType> ignore_errors_connector_lock{"connector_lock/VendorWarning"};
-    const std::list<Everest::error::ErrorType> ignore_errors_ac_rcd{"ac_rcd/VendorWarning"};
-    const std::list<Everest::error::ErrorType> ignore_errors_imd{"isolation_monitor/VendorWarning"};
-    const std::list<Everest::error::ErrorType> ignore_errors_powersupply{"power_supply_DC/VendorWarning"};
+    std::pair<bool, std::string> errors_prevent_charging();
 
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;

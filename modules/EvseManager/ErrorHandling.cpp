@@ -5,6 +5,18 @@
 
 namespace module {
 
+using ErrorList = std::list<Everest::error::ErrorType>;
+static const struct IgnoreErrors {
+    // p_evse. We need to ignore Inoperative here as this is the result of this check.
+    ErrorList evse{"evse_manager/Inoperative"};
+    ErrorList bsp{"evse_board_support/MREC3HighTemperature", "evse_board_support/MREC18CableOverTempDerate",
+                  "evse_board_support/VendorWarning"};
+    ErrorList connector_lock{"connector_lock/VendorWarning"};
+    ErrorList ac_rcd{"ac_rcd/VendorWarning"};
+    ErrorList imd{"isolation_monitor/VendorWarning"};
+    ErrorList powersupply{"power_supply_DC/VendorWarning"};
+} ignore_errors;
+
 ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_bsp,
                              const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& _r_hlc,
                              const std::vector<std::unique_ptr<connector_lockIntf>>& _r_connector_lock,
@@ -67,9 +79,10 @@ void ErrorHandling::clear_overcurrent_error() {
 
 // Find out if the current error set is fatal to charging or not
 void ErrorHandling::process_error() {
-    if (errors_prevent_charging()) {
+    const auto fatal = errors_prevent_charging();
+    if (std::get<bool>(fatal)) {
         // signal to charger a new error has been set that prevents charging
-        raise_inoperative_error();
+        raise_inoperative_error(std::get<std::string>(fatal));
     } else {
         // signal an error that does not prevent charging
         clear_inoperative_error();
@@ -77,13 +90,19 @@ void ErrorHandling::process_error() {
 
     // All errors cleared signal is for OCPP 1.6. It is triggered when there are no errors anymore,
     // even those that did not block charging.
-    const int error_count =
-        p_evse->error_state_monitor->get_active_errors().size() +
-        r_bsp->error_state_monitor->get_active_errors().size() +
-        (r_connector_lock.size() > 0 ? r_connector_lock[0]->error_state_monitor->get_active_errors().size() : 0) +
-        (r_ac_rcd.size() > 0 ? r_ac_rcd[0]->error_state_monitor->get_active_errors().size() : 0) +
-        (r_imd.size() > 0 ? r_imd[0]->error_state_monitor->get_active_errors().size() : 0) +
-        (r_powersupply.size() > 0 ? r_powersupply[0]->error_state_monitor->get_active_errors().size() : 0);
+
+    auto number_of_active_errors = [](const auto& impl) {
+        if (impl.size() > 0) {
+            return static_cast<int>(impl[0]->error_state_monitor->get_active_errors().size());
+        } else {
+            return 0;
+        }
+    };
+
+    const int error_count = p_evse->error_state_monitor->get_active_errors().size() +
+                            r_bsp->error_state_monitor->get_active_errors().size() +
+                            number_of_active_errors(r_connector_lock) + number_of_active_errors(r_ac_rcd) +
+                            number_of_active_errors(r_imd) + number_of_active_errors(r_powersupply);
 
     if (error_count == 0) {
         signal_all_errors_cleared();
@@ -91,54 +110,59 @@ void ErrorHandling::process_error() {
 }
 
 // Check all errors from p_evse and all requirements to see if they block charging
-bool ErrorHandling::errors_prevent_charging() {
-    auto contains = [](auto v, auto e) {
-        if (std::find(v.begin(), v.end(), e) != v.end()) {
-            return true;
-        } else {
-            return false;
-        }
-    };
+std::pair<bool, std::string> ErrorHandling::errors_prevent_charging() {
 
-    auto is_fatal = [contains](auto errors, auto ignore_list) {
+    auto is_fatal = [](auto errors, auto ignore_list) -> std::pair<bool, std::string> {
         for (const auto e : errors) {
-            if (not contains(ignore_list, e->type)) {
-                return true;
+            if (std::none_of(ignore_list.begin(), ignore_list.end(), [e](const auto& ign) { return e->type == ign; })) {
+                return {true, e->type};
             }
         }
-        return false;
+        return {false, ""};
     };
 
-    if (is_fatal(p_evse->error_state_monitor->get_active_errors(), ignore_errors_evse)) {
-        return true;
+    auto fatal = is_fatal(p_evse->error_state_monitor->get_active_errors(), ignore_errors.evse);
+    if (std::get<bool>(fatal)) {
+        return fatal;
     }
 
-    if (is_fatal(r_bsp->error_state_monitor->get_active_errors(), ignore_errors_bsp)) {
-        return true;
+    fatal = is_fatal(r_bsp->error_state_monitor->get_active_errors(), ignore_errors.bsp);
+    if (std::get<bool>(fatal)) {
+        return fatal;
     }
 
-    if (r_connector_lock.size() > 0 and
-        is_fatal(r_connector_lock[0]->error_state_monitor->get_active_errors(), ignore_errors_connector_lock)) {
-        return true;
+    if (r_connector_lock.size() > 0) {
+        fatal = is_fatal(r_connector_lock[0]->error_state_monitor->get_active_errors(), ignore_errors.connector_lock);
+        if (std::get<bool>(fatal)) {
+            return fatal;
+        }
     }
 
-    if (r_ac_rcd.size() > 0 and is_fatal(r_ac_rcd[0]->error_state_monitor->get_active_errors(), ignore_errors_ac_rcd)) {
-        return true;
+    if (r_ac_rcd.size() > 0) {
+        fatal = is_fatal(r_ac_rcd[0]->error_state_monitor->get_active_errors(), ignore_errors.ac_rcd);
+        if (std::get<bool>(fatal)) {
+            return fatal;
+        }
     }
 
-    if (r_imd.size() > 0 and is_fatal(r_imd[0]->error_state_monitor->get_active_errors(), ignore_errors_imd)) {
-        return true;
+    if (r_imd.size() > 0) {
+        fatal = is_fatal(r_imd[0]->error_state_monitor->get_active_errors(), ignore_errors.imd);
+        if (std::get<bool>(fatal)) {
+            return fatal;
+        }
     }
 
-    if (r_powersupply.size() > 0 and
-        is_fatal(r_powersupply[0]->error_state_monitor->get_active_errors(), ignore_errors_powersupply)) {
-        return true;
+    if (r_powersupply.size() > 0) {
+        fatal = is_fatal(r_powersupply[0]->error_state_monitor->get_active_errors(), ignore_errors.powersupply);
+        if (std::get<bool>(fatal)) {
+            return fatal;
+        }
     }
 
-    return false;
+    return {false, ""};
 }
 
-void ErrorHandling::raise_inoperative_error() {
+void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
     if (p_evse->error_state_monitor->is_error_active("evse_manager/Inoperative", "")) {
         // dont raise if already raised
         return;
@@ -149,8 +173,8 @@ void ErrorHandling::raise_inoperative_error() {
     }
 
     // raise externally
-    Everest::error::Error error_object = p_evse->error_factory->create_error(
-        "evse_manager/Inoperative", "", "FIXME add some info for causing error", Everest::error::Severity::High);
+    Everest::error::Error error_object =
+        p_evse->error_factory->create_error("evse_manager/Inoperative", "", caused_by, Everest::error::Severity::High);
     p_evse->raise_error(error_object);
 
     signal_error(true);
