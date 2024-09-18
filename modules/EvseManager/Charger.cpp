@@ -72,10 +72,13 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                 Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
                 for (auto& event : events) {
                     switch (event) {
-                    case ErrorHandlingEvents::prevent_charging:
+                    case ErrorHandlingEvents::PreventCharging:
                         shared_context.error_prevent_charging_flag = true;
                         break;
-                    case ErrorHandlingEvents::all_errors_cleared:
+                    case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
+                        shared_context.error_prevent_charging_flag = false;
+                        break;
+                    case ErrorHandlingEvents::AllErrorCleared:
                         shared_context.error_prevent_charging_flag = false;
                         break;
                     default:
@@ -93,13 +96,16 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_handling->signal_error.connect([this](const bool prevent_charging) {
         if (prevent_charging) {
             // raise external error to signal we cannot charge anymore
-            error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
+            error_handling_event_queue.push(ErrorHandlingEvents::PreventCharging);
+        } else {
+            EVLOG_info << "All errors cleared that prevented charging";
+            error_handling_event_queue.push(ErrorHandlingEvents::AllErrorsPreventingChargingCleared);
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
-        error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
+        error_handling_event_queue.push(ErrorHandlingEvents::AllErrorCleared);
     });
 }
 
