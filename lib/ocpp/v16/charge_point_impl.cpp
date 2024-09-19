@@ -2340,6 +2340,11 @@ void ChargePointImpl::handleClearChargingProfileRequest(ocpp::Call<ClearCharging
 
     ocpp::CallResult<ClearChargingProfileResponse> call_result(response, call.uniqueId);
     this->send<ClearChargingProfileResponse>(call_result);
+
+    if (response.status == ClearChargingProfileStatus::Accepted and
+        this->signal_set_charging_profiles_callback != nullptr) {
+        this->signal_set_charging_profiles_callback();
+    }
 }
 
 void ChargePointImpl::handleTriggerMessageRequest(ocpp::Call<TriggerMessageRequest> call) {
@@ -4096,9 +4101,12 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
     this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
     this->stop_transaction(connector, reason, id_tag_end);
     this->transaction_handler->remove_active_transaction(connector);
-    this->smart_charging_handler->clear_all_profiles_with_filter(std::nullopt, connector, std::nullopt,
-                                                                 ChargingProfilePurposeType::TxProfile, false);
 
+    const auto profile_cleared = this->smart_charging_handler->clear_all_profiles_with_filter(
+        std::nullopt, connector, std::nullopt, ChargingProfilePurposeType::TxProfile, false);
+    if (profile_cleared and this->signal_set_charging_profiles_callback != nullptr) {
+        this->signal_set_charging_profiles_callback();
+    }
     reset_pricing_triggers(connector);
 }
 
