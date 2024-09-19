@@ -3265,7 +3265,24 @@ void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
     } else {
         this->firmware_status_before_installing = FirmwareStatusEnum::Downloaded;
     }
-    UpdateFirmwareResponse response = callbacks.update_firmware_request_callback(call.msg);
+
+    UpdateFirmwareResponse response;
+    const auto msg = call.msg;
+    bool cert_valid_or_not_set = true;
+
+    // L01.FR.22 check if certificate is valid
+    if (msg.firmware.signingCertificate.has_value() and
+        this->evse_security->verify_certificate(msg.firmware.signingCertificate.value().get(),
+                                                ocpp::LeafCertificateType::MF) !=
+            ocpp::CertificateValidationResult::Valid) {
+        response.status = UpdateFirmwareStatusEnum::InvalidCertificate;
+        cert_valid_or_not_set = false;
+    }
+
+    if (cert_valid_or_not_set) {
+        // execute firwmare update callback
+        response = callbacks.update_firmware_request_callback(msg);
+    }
 
     ocpp::CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
     this->send<UpdateFirmwareResponse>(call_result);
