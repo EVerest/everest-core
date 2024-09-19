@@ -107,7 +107,7 @@ static SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
                 return;
             }
             const auto result = key_logging_server.send(line);
-            if (result != strlen(line)) {
+            if (not cmp_equal(result, strlen(line))) {
                 const auto error_msg = adding_err_msg("key_logging_server send() failed");
                 logf_error(error_msg.c_str());
             }

@@ -100,8 +100,10 @@ SCENARIO("Feedback Tests") {
     }
 
     GIVEN("Test display_parameters") {
-        const feedback::DisplayParameters expected{40, std::nullopt, 95};
-        feedback.display_parameters({40, std::nullopt, 95});
+        const feedback::DisplayParameters expected{40,           std::nullopt, 95,           std::nullopt, std::nullopt,
+                                                   std::nullopt, std::nullopt, std::nullopt, std::nullopt};
+        feedback.display_parameters(
+            {40, std::nullopt, 95, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt});
 
         THEN("display_parameters should be like expected") {
             REQUIRE(feedback_results.display_parameters.present_soc.has_value() == true);

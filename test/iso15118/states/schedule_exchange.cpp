@@ -21,7 +21,7 @@ SCENARIO("Schedule Exchange state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        auto& req_out = req.control_mode.emplace<Scheduled_ModeReq>();
+        req.control_mode.emplace<Scheduled_ModeReq>();
 
         message_20::RationalNumber max_power = {0, 0};
 
@@ -49,7 +49,7 @@ SCENARIO("Schedule Exchange state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        auto& req_out = req.control_mode.emplace<Dynamic_ModeReq>();
+        req.control_mode.emplace<Dynamic_ModeReq>();
 
         message_20::RationalNumber max_power = {0, 0};
 
@@ -77,7 +77,7 @@ SCENARIO("Schedule Exchange state handling") {
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
 
-        auto& req_out = req.control_mode.emplace<Scheduled_ModeReq>();
+        req.control_mode.emplace<Scheduled_ModeReq>();
 
         message_20::RationalNumber max_power = {22, 3};
 

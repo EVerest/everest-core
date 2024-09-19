@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 
-#include <sys/poll.h>
+#include <poll.h>
 namespace iso15118::io {
 
 using PollCallback = const std::function<void()>;

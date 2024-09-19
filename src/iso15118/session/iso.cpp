@@ -20,7 +20,7 @@ static constexpr auto SESSION_IDLE_TIMEOUT_MS = 5000;
 static void log_sdp_packet(const iso15118::io::SdpPacket& sdp) {
     static constexpr auto ESCAPED_BYTE_CHAR_COUNT = 4;
     auto payload_string_buffer = std::make_unique<char[]>(sdp.get_payload_length() * ESCAPED_BYTE_CHAR_COUNT + 1);
-    for (auto i = 0; i < sdp.get_payload_length(); ++i) {
+    for (std::size_t i = 0; i < sdp.get_payload_length(); ++i) {
         snprintf(payload_string_buffer.get() + i * ESCAPED_BYTE_CHAR_COUNT, ESCAPED_BYTE_CHAR_COUNT + 1, "\\x%02hx",
                  sdp.get_payload_buffer()[i]);
     }
@@ -125,7 +125,7 @@ Session::Session(std::unique_ptr<io::IConnection> connection_, d20::SessionConfi
                  const session::feedback::Callbacks& callbacks) :
     connection(std::move(connection_)),
     log(this),
-    ctx(message_exchange, active_control_event, callbacks, log, std::move(session_config)) {
+    ctx(callbacks, log, std::move(session_config), active_control_event, message_exchange) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
     connection->set_event_callback([this](io::ConnectionEvent event) { this->handle_connection_event(event); });
@@ -157,13 +157,13 @@ TimePoint const& Session::poll() {
     }
 
     // send all of our queued control events
-    while (active_control_event = control_event_queue.pop()) {
+    while ((active_control_event = control_event_queue.pop()) != std::nullopt) {
 
         if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
             ctx.session_config.dc_limits = *control_data;
         }
 
-        const auto res = fsm.handle_event(d20::FsmEvent::CONTROL_MESSAGE);
+        [[maybe_unused]] const auto res = fsm.handle_event(d20::FsmEvent::CONTROL_MESSAGE);
         // FIXME (aw): check result!
     }
 
@@ -179,7 +179,8 @@ TimePoint const& Session::poll() {
         const auto request_msg_type = ctx.peek_request_type();
         ctx.feedback.v2g_message(request_msg_type);
 
-        const auto res = fsm.handle_event(d20::FsmEvent::V2GTP_MESSAGE);
+        [[maybe_unused]] const auto res = fsm.handle_event(d20::FsmEvent::V2GTP_MESSAGE);
+        // FIXME(sl): check result!
     }
 
     const auto [got_response, payload_size, payload_type, response_type] = message_exchange.check_and_clear_response();

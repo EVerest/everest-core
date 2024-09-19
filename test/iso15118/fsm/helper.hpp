@@ -18,14 +18,15 @@ using namespace iso15118;
 class FsmStateHelper {
 public:
     FsmStateHelper(const d20::SessionConfig& config) :
-        log(this), ctx(msg_exch, active_control_event, callbacks, log, config){};
+        log(this), ctx(callbacks, log, config, active_control_event, msg_exch){};
 
     d20::Context& get_context();
 
     template <typename RequestType, typename StateType>
     fsm::states::HandleEventResult handle_request(StateType& state, io::v2gtp::PayloadType payload_type,
                                                   const RequestType& request) {
-        const auto encoded_size = message_20::serialize_helper(request, output_stream_view);
+        // Note: return value is not used here
+        message_20::serialize_helper(request, output_stream_view);
 
         msg_exch.set_request(std::make_unique<message_20::Variant>(payload_type, output_stream_view));
 

@@ -138,7 +138,7 @@ TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint
     auto could_bind = false;
     auto source_port = 49152;
     for (; source_port < 65535; source_port++) {
-        sockaddr_in6 source_address = {AF_INET6, htons(source_port)};
+        sockaddr_in6 source_address = {AF_INET6, htons(source_port), 0, {}, 0};
         if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
             could_bind = true;
             break;
@@ -169,7 +169,7 @@ TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint
         log_and_throw(error_msg.c_str());
     }
 
-    destination_address = {AF_INET6, htons(port)};
+    destination_address = {AF_INET6, htons(port), 0, {}, 0};
     if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
         const auto error_msg = adding_err_msg("Failed to setup server address, reset key_log_fd");
         log_and_throw(error_msg.c_str());

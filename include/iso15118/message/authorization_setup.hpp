@@ -21,8 +21,8 @@ struct AuthorizationSetupResponse {
     static constexpr auto GEN_CHALLENGE_LENGTH = 16;
 
     AuthorizationSetupResponse() :
-        certificate_installation_service(false),
         authorization_services({Authorization::EIM}),
+        certificate_installation_service(false),
         authorization_mode(std::in_place_type<AuthorizationSetupResponse::EIM_ASResAuthorizationMode>){};
 
     Header header;

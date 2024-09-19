@@ -121,3 +121,5 @@ endif()
 
 # FIXME (aw): do we want to have this public here?
 target_compile_features(iso15118 PUBLIC cxx_std_17)
+
+target_compile_options(iso15118 PRIVATE ${ISO15118_COMPILE_OPTIONS_WARNING})

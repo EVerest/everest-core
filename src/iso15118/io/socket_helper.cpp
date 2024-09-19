@@ -20,7 +20,6 @@ bool get_first_sockaddr_in6_for_interface(const std::string& interface_name, soc
     if (get_if_addrs_result == -1) {
         log_and_throw("Failed to call getifaddrs");
     }
-    auto current_if = if_list_head;
 
     bool found_interface = false;
 

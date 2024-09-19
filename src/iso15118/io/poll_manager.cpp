@@ -5,8 +5,8 @@
 #include <type_traits>
 #include <vector>
 
+#include <poll.h>
 #include <sys/eventfd.h>
-#include <sys/poll.h>
 #include <unistd.h>
 
 #include <iso15118/detail/helper.hpp>
@@ -73,7 +73,7 @@ void PollManager::poll(int timeout_ms) {
     }
 
     // check fds
-    for (auto i = 0; i < pollfds.size() - 1; ++i) {
+    for (std::size_t i = 0; i < pollfds.size() - 1; ++i) {
         if (pollfds[i].revents & POLLIN) {
             (*poll_set.callbacks[i])();
         }

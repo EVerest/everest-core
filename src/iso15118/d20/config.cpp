@@ -31,9 +31,9 @@ static std::vector<message_20::DcBptParameterList> get_default_dc_bpt_parameter_
 
 SessionConfig::SessionConfig(EvseSetupConfig config) :
     evse_id(std::move(config.evse_id)),
-    supported_energy_transfer_services(std::move(config.supported_energy_services)),
     cert_install_service(config.enable_certificate_install_service),
     authorization_services(std::move(config.authorization_services)),
+    supported_energy_transfer_services(std::move(config.supported_energy_services)),
     dc_limits(std::move(config.dc_limits)) {
 
     const auto is_bpt_service = [](message_20::ServiceCategory service) {

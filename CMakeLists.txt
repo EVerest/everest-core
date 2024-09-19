@@ -31,6 +31,10 @@ if (USE_OPENSSL)
     find_package(OpenSSL 3 REQUIRED)
 endif()
 
+# list of compile options
+set(ISO15118_COMPILE_OPTIONS_WARNING "-Wall;-Wextra;-Wno-unused-function;-Werror" CACHE STRING "A list of compile options used")
+message(STATUS "Building libiso15118 with the following compile options: ${ISO15118_COMPILE_OPTIONS_WARNING}")
+
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(ISO15118_BUILD_TESTING ON)
 endif()

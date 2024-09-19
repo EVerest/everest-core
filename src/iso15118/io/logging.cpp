@@ -6,8 +6,10 @@
 #include <cstdio>
 #include <iostream>
 
-static std::function<void(iso15118::LogLevel, std::string)> logging_callback =
-    [](const iso15118::LogLevel& level, const std::string& msg) { std::cout << msg; };
+static std::function<void(iso15118::LogLevel, std::string)> logging_callback = [](const iso15118::LogLevel& level,
+                                                                                  const std::string& msg) {
+    std::cout << msg << ", level: " << static_cast<int>(level);
+};
 
 namespace iso15118 {
 

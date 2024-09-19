@@ -16,7 +16,7 @@ template <> void convert(const struct iso20_AuthorizationSetupReqType& in, Autho
 
 struct AuthorizationModeVisitor {
     AuthorizationModeVisitor(iso20_AuthorizationSetupResType& out_) : out(out_){};
-    void operator()(const AuthorizationSetupResponse::EIM_ASResAuthorizationMode& in) {
+    void operator()([[maybe_unused]] const AuthorizationSetupResponse::EIM_ASResAuthorizationMode& in) {
         CB_SET_USED(out.EIM_ASResAuthorizationMode);
         init_iso20_EIM_ASResAuthorizationModeType(&out.EIM_ASResAuthorizationMode);
     }

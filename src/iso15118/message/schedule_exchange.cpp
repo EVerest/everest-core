@@ -171,7 +171,7 @@ struct ModeResponseVisitor {
             throw std::runtime_error("array is too large");
         }
 
-        for (auto i = 0; i < in.schedule_tuple.size(); i++) {
+        for (std::size_t i = 0; i < in.schedule_tuple.size(); i++) {
             convert(in.schedule_tuple[i], out.ScheduleTuple.array[i]);
         }
         out.ScheduleTuple.arrayLen = in.schedule_tuple.size();
