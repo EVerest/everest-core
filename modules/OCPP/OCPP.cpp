@@ -50,7 +50,7 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
         return ocpp::v16::ErrorInfo{uuid,
                                     ocpp::v16::ChargePointErrorCode::OtherError,
                                     false,
-                                    error.description,
+                                    error.message,
                                     error.origin.to_string(),
                                     error.sub_type};
     }
