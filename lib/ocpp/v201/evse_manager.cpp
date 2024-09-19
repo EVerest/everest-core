@@ -30,14 +30,14 @@ EvseManager::EvseIterator EvseManager::end() {
 }
 
 EvseInterface& EvseManager::get_evse(int32_t id) {
-    if (id > this->evses.size()) {
+    if (id == 0 or id > this->evses.size()) {
         throw EvseOutOfRangeException(id);
     }
     return *this->evses.at(id - 1);
 }
 
 const EvseInterface& EvseManager::get_evse(int32_t id) const {
-    if (id > this->evses.size()) {
+    if (id == 0 or id > this->evses.size()) {
         throw EvseOutOfRangeException(id);
     }
     return *this->evses.at(id - 1);
