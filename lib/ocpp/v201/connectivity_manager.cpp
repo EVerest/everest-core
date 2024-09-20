@@ -267,8 +267,8 @@ void ConnectivityManager::cache_network_connection_profiles() {
     this->network_connection_profiles =
         json::parse(this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
 
-    this->network_connection_priorities = ocpp::get_vector_from_csv(
-        this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority));
+    this->network_connection_priorities = ocpp::split_string(
+        this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority), ',');
 
     if (this->network_connection_priorities.empty()) {
         EVLOG_AND_THROW(std::runtime_error("NetworkConfigurationPriority must not be empty"));

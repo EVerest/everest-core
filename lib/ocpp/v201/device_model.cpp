@@ -175,7 +175,7 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
         if (!characteristics.valuesList.has_value()) {
             return true;
         }
-        const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
+        const auto values_list = ocpp::split_string(characteristics.valuesList.value().get(), ',');
         return std::find(values_list.begin(), values_list.end(), value) != values_list.end();
     }
     default: // same validation for MemberList or SequenceList
@@ -186,8 +186,8 @@ bool validate_value(const VariableCharacteristics& characteristics, const std::s
             if (!characteristics.valuesList.has_value()) {
                 return true;
             }
-            const auto values_list = ocpp::get_vector_from_csv(characteristics.valuesList.value().get());
-            const auto value_csv = get_vector_from_csv(value);
+            const auto values_list = ocpp::split_string(characteristics.valuesList.value().get(), ',');
+            const auto value_csv = ocpp::split_string(value, ',');
             for (const auto& v : value_csv) {
                 if (std::find(values_list.begin(), values_list.end(), v) == values_list.end()) {
                     return false;

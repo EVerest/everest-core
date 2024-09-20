@@ -210,7 +210,7 @@ std::string to_csl(const std::vector<std::string>& vec) {
 }
 
 void ChargePointConfiguration::init_supported_measurands() {
-    const auto _supported_measurands = ocpp::get_vector_from_csv(this->config["Internal"]["SupportedMeasurands"]);
+    const auto _supported_measurands = ocpp::split_string(this->config["Internal"]["SupportedMeasurands"], ',');
     for (const auto& measurand : _supported_measurands) {
         try {
             const auto _measurand = conversions::string_to_measurand(measurand);

@@ -1090,8 +1090,8 @@ void ChargePoint::remove_network_connection_profiles_below_actual_security_profi
                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
 
     // Update the NetworkConfigurationPriority so only remaining profiles are in there
-    const auto network_priority = ocpp::get_vector_from_csv(
-        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority));
+    const auto network_priority = ocpp::split_string(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority), ',');
 
     auto in_network_profiles = [&network_connection_profiles](const std::string& item) {
         auto is_same_slot = [&item](const SetNetworkProfileRequest& profile) {
@@ -1691,7 +1691,7 @@ void ChargePoint::handle_variables_changed(const std::map<SetVariableData, SetVa
 bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data) {
     ComponentVariable cv = {set_variable_data.component, std::nullopt, set_variable_data.variable};
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
-        const auto network_configuration_priorities = ocpp::get_vector_from_csv(set_variable_data.attributeValue.get());
+        const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =
             this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
         for (const auto configuration_slot : network_configuration_priorities) {

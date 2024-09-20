@@ -4173,7 +4173,7 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
 
 std::vector<Measurand> ChargePointImpl::get_measurands_vec(const std::string& measurands_csv) {
     std::vector<Measurand> measurands;
-    std::vector<std::string> measurands_strings = ocpp::get_vector_from_csv(measurands_csv);
+    std::vector<std::string> measurands_strings = ocpp::split_string(measurands_csv, ',');
 
     for (const auto& measurand_string : measurands_strings) {
         try {

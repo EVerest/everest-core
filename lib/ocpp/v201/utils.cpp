@@ -16,7 +16,7 @@ namespace utils {
 
 std::vector<MeasurandEnum> get_measurands_vec(const std::string& measurands_csv) {
     std::vector<MeasurandEnum> measurands;
-    std::vector<std::string> measurands_strings = ocpp::get_vector_from_csv(measurands_csv);
+    std::vector<std::string> measurands_strings = ocpp::split_string(measurands_csv, ',');
 
     for (const auto& measurand_string : measurands_strings) {
         try {
