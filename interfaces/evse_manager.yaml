@@ -101,13 +101,6 @@ cmds:
     result:
       description: Returns true if unlocking sequence was successfully executed
       type: boolean
-  set_external_limits:
-    description: Set additional external energy flow limits at this node.
-    arguments:
-      value:
-        description: UUID of node that this limit applies to
-        type: object
-        $ref: /energy#/ExternalLimits
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
