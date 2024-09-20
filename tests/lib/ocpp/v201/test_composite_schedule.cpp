@@ -47,7 +47,7 @@ static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_schemas";
+const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_config";
 const static std::string CONFIG_PATH = "./resources/example_config/v201/config.json";
 const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 
@@ -62,7 +62,7 @@ public:
     using SmartChargingHandler::SmartChargingHandler;
 };
 
-class ChargepointTestFixtureV201 : public DatabaseTestingUtils {
+class CompositeScheduleTestFixtureV201 : public DatabaseTestingUtils {
 protected:
     void SetUp() override {
     }
@@ -208,7 +208,7 @@ protected:
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest_Grid) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest_Grid) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/grid/");
     const DateTime start_time = ocpp::DateTime("2024-01-17T00:00:00");
@@ -346,7 +346,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_FoundationTest
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_SameStartTime) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_SameStartTime) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered/");
 
@@ -435,7 +435,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Sa
     }
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_FutureStartTime) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_FutureStartTime) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
 
@@ -460,7 +460,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurri
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_PreviousStartTime) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_PreviousStartTime) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_file("singles/TXProfile_Absolute_Start18-04.json");
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:00:00");
@@ -489,7 +489,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredTest_Pr
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_PreviousStartTime) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurringTest_PreviousStartTime) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/layered_recurring/");
     const DateTime start_time = ocpp::DateTime("2024-02-19T18:00:00");
@@ -531,7 +531,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_LayeredRecurri
 /**
  * Calculate Composite Schedule
  */
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaselineProfileVector) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaselineProfileVector) {
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
     std::vector<ChargingProfile> profiles = SmartChargingTestUtils::get_baseline_profile_vector();
@@ -563,7 +563,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ValidateBaseli
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_minutia) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_minutia) {
     const DateTime start_time = ocpp::DateTime("2024-05-17T05:00:00");
     const DateTime end_time = ocpp::DateTime("2024-05-17T06:00:00");
 
@@ -592,7 +592,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfil
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_e2e) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfile_e2e) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/relative/");
     this->evse_manager->open_transaction(DEFAULT_EVSE_ID, profiles.at(0).transactionId.value());
@@ -626,7 +626,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_RelativeProfil
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17th) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17th) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
     ChargingProfile relative_profile = profiles.front();
@@ -663,7 +663,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_17
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19th) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19th) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/case_one/");
     ChargingProfile first_profile = profiles.front();
@@ -697,7 +697,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_DemoCaseOne_19
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridesHigherLimits) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridesHigherLimits) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/max/");
 
@@ -726,7 +726,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridesHi
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridenByLowerLimits) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridenByLowerLimits) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/max/");
 
@@ -755,7 +755,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_MaxOverridenBy
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverridesHigherLimits) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverridesHigherLimits) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/external/");
 
@@ -784,7 +784,7 @@ TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverri
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(ChargepointTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverridenByLowerLimits) {
+TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_ExternalOverridenByLowerLimits) {
     std::vector<ChargingProfile> profiles =
         SmartChargingTestUtils::get_charging_profiles_from_directory(BASE_JSON_PATH + "/external/");
 

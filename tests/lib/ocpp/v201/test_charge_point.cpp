@@ -53,11 +53,11 @@ public:
     }
 };
 
-class ChargePointFixture : public DatabaseTestingUtils {
+class ChargepointTestFixtureV201 : public DatabaseTestingUtils {
 public:
-    ChargePointFixture() {
+    ChargepointTestFixtureV201() {
     }
-    ~ChargePointFixture() {
+    ~ChargepointTestFixtureV201() {
     }
 
     void SetUp() override {
@@ -278,7 +278,7 @@ public:
     ocpp::v201::Callbacks callbacks;
 };
 
-TEST_F(ChargePointFixture, CreateChargePoint) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
@@ -289,7 +289,7 @@ TEST_F(ChargePointFixture, CreateChargePoint) {
                                             "/tmp", evse_security, callbacks));
 }
 
-TEST_F(ChargePointFixture, CreateChargePoint_InitializeInCorrectOrder) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint_InitializeInCorrectOrder) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     database_handler->open_connection();
@@ -315,7 +315,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_InitializeInCorrectOrder) {
     charge_point.stop();
 }
 
-TEST_F(ChargePointFixture, CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelStorageError) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelStorageError) {
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
     configure_callbacks_with_mocks();
@@ -328,7 +328,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_EVSEConnectorStructureDefinedBadly_
                  DeviceModelStorageError);
 }
 
-TEST_F(ChargePointFixture, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArgument) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArgument) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
@@ -341,7 +341,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArg
                  std::invalid_argument);
 }
 
-TEST_F(ChargePointFixture, CreateChargePoint_MissingDatabaseHandler_ThrowsInvalidArgument) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint_MissingDatabaseHandler_ThrowsInvalidArgument) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto evse_security = std::make_shared<EvseSecurityMock>();
     configure_callbacks_with_mocks();
@@ -355,7 +355,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_MissingDatabaseHandler_ThrowsInvali
                  std::invalid_argument);
 }
 
-TEST_F(ChargePointFixture, CreateChargePoint_CallbacksNotValid_ThrowsInvalidArgument) {
+TEST_F(ChargepointTestFixtureV201, CreateChargePoint_CallbacksNotValid_ThrowsInvalidArgument) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
@@ -383,7 +383,7 @@ TEST_F(ChargePointFixture, CreateChargePoint_CallbacksNotValid_ThrowsInvalidArgu
  * is provided.
  */
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSetChargingProfilesCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfSetChargingProfilesCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.set_charging_profiles_callback = nullptr;
 
@@ -395,93 +395,94 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSetChargingProfilesC
  * all_callbacks_valid.
  */
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksAreInvalidWhenNotProvided) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksAreInvalidWhenNotProvided) {
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksAreValidWhenAllRequiredCallbacksProvided) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksAreValidWhenAllRequiredCallbacksProvided) {
     configure_callbacks_with_mocks();
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfResetIsAllowedCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfResetIsAllowedCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.is_reset_allowed_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfResetCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfResetCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.reset_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfStopTransactionCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfStopTransactionCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.stop_transaction_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfPauseChargingCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfPauseChargingCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.pause_charging_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfConnectorEffectiveOperativeStatusChangedCallbackExists) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfConnectorEffectiveOperativeStatusChangedCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.connector_effective_operative_status_changed_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfGetLogRequestCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfGetLogRequestCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.get_log_request_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfUnlockConnectorCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfUnlockConnectorCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.unlock_connector_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfRemoteStartTransactionCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfRemoteStartTransactionCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.remote_start_transaction_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfIsReservationForTokenCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfIsReservationForTokenCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.is_reservation_for_token_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfUpdateFirmwareRequestCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfUpdateFirmwareRequestCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.update_firmware_request_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfSecurityEventCallbackExists) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfSecurityEventCallbackExists) {
     configure_callbacks_with_mocks();
     callbacks.security_event_callback = nullptr;
 
     EXPECT_FALSE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalVariableChangedCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalVariableChangedCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.variable_changed_callback = nullptr;
@@ -492,7 +493,8 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalVariableChan
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalVariableNetworkProfileCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfOptionalVariableNetworkProfileCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.validate_network_profile_callback = nullptr;
@@ -505,7 +507,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalVariableNetw
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture,
+TEST_F(ChargepointTestFixtureV201,
        K01FR02_CallbacksValidityChecksIfOptionalConfigureNetworkConnectionProfileCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
@@ -519,7 +521,7 @@ TEST_F(ChargePointFixture,
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTimeSyncCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalTimeSyncCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.time_sync_callback = nullptr;
@@ -530,7 +532,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTimeSyncCall
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalBootNotificationCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalBootNotificationCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.boot_notification_callback = nullptr;
@@ -541,7 +543,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalBootNotifica
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalOCPPMessagesCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalOCPPMessagesCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.ocpp_messages_callback = nullptr;
@@ -552,7 +554,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalOCPPMessages
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture,
+TEST_F(ChargepointTestFixtureV201,
        K01FR02_CallbacksValidityChecksIfOptionalCSEffectiveOperativeStatusChangedCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
@@ -566,7 +568,7 @@ TEST_F(ChargePointFixture,
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture,
+TEST_F(ChargepointTestFixtureV201,
        K01FR02_CallbacksValidityChecksIfOptionalEvseEffectiveOperativeStatusChangedCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
@@ -580,7 +582,8 @@ TEST_F(ChargePointFixture,
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalGetCustomerInformationCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfOptionalGetCustomerInformationCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.get_customer_information_callback = nullptr;
@@ -594,7 +597,8 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalGetCustomerI
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalClearCustomerInformationCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfOptionalClearCustomerInformationCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.clear_customer_information_callback = nullptr;
@@ -608,7 +612,8 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalClearCustome
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalAllConnectorsUnavailableCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfOptionalAllConnectorsUnavailableCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.all_connectors_unavailable_callback = nullptr;
@@ -619,7 +624,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalAllConnector
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalDataTransferCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalDataTransferCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.data_transfer_callback = nullptr;
@@ -630,7 +635,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalDataTransfer
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTransactionEventCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201, K01FR02_CallbacksValidityChecksIfOptionalTransactionEventCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.transaction_event_callback = nullptr;
@@ -641,7 +646,8 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTransactionE
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTransactionEventResponseCallbackIsNotSetOrNotNull) {
+TEST_F(ChargepointTestFixtureV201,
+       K01FR02_CallbacksValidityChecksIfOptionalTransactionEventResponseCallbackIsNotSetOrNotNull) {
     configure_callbacks_with_mocks();
 
     callbacks.transaction_event_response_callback = nullptr;
@@ -654,7 +660,7 @@ TEST_F(ChargePointFixture, K01FR02_CallbacksValidityChecksIfOptionalTransactionE
     EXPECT_TRUE(callbacks.all_callbacks_valid());
 }
 
-TEST_F(ChargePointFixture, K01_SetChargingProfileRequest_ValidatesAndAddsProfile) {
+TEST_F(ChargepointTestFixtureV201, K01_SetChargingProfileRequest_ValidatesAndAddsProfile) {
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
     auto profile = create_charging_profile(
@@ -674,7 +680,7 @@ TEST_F(ChargePointFixture, K01_SetChargingProfileRequest_ValidatesAndAddsProfile
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K01FR07_SetChargingProfileRequest_TriggersCallbackWhenValid) {
+TEST_F(ChargepointTestFixtureV201, K01FR07_SetChargingProfileRequest_TriggersCallbackWhenValid) {
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
     auto profile = create_charging_profile(
@@ -697,7 +703,7 @@ TEST_F(ChargePointFixture, K01FR07_SetChargingProfileRequest_TriggersCallbackWhe
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K01FR07_SetChargingProfileRequest_DoesNotTriggerCallbackWhenInvalid) {
+TEST_F(ChargepointTestFixtureV201, K01FR07_SetChargingProfileRequest_DoesNotTriggerCallbackWhenInvalid) {
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
     auto profile = create_charging_profile(
@@ -725,7 +731,7 @@ TEST_F(ChargePointFixture, K01FR07_SetChargingProfileRequest_DoesNotTriggerCallb
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K01FR22_SetChargingProfileRequest_RejectsChargingStationExternalConstraints) {
+TEST_F(ChargepointTestFixtureV201, K01FR22_SetChargingProfileRequest_RejectsChargingStationExternalConstraints) {
     auto periods = create_charging_schedule_periods({0, 1, 2});
 
     auto profile = create_charging_profile(
@@ -745,7 +751,7 @@ TEST_F(ChargePointFixture, K01FR22_SetChargingProfileRequest_RejectsChargingStat
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCallError) {
+TEST_F(ChargepointTestFixtureV201, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCallError) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
@@ -771,7 +777,8 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsFalse_RespondsCa
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K05FR05_RequestStartTransactionRequest_SmartChargingCtrlrEnabledTrue_ValidatesTxProfiles) {
+TEST_F(ChargepointTestFixtureV201,
+       K05FR05_RequestStartTransactionRequest_SmartChargingCtrlrEnabledTrue_ValidatesTxProfiles) {
     const auto cv = ControllerComponentVariables::SmartChargingCtrlrEnabled;
     this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "true", "TEST", true);
 
@@ -794,7 +801,7 @@ TEST_F(ChargePointFixture, K05FR05_RequestStartTransactionRequest_SmartChargingC
     charge_point->handle_message(start_transaction_req);
 }
 
-TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValidateAndAddProfile) {
+TEST_F(ChargepointTestFixtureV201, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValidateAndAddProfile) {
     auto evse_connector_structure = create_evse_connector_structure();
     auto database_handler = create_database_handler();
     auto evse_security = std::make_shared<EvseSecurityMock>();
@@ -820,7 +827,7 @@ TEST_F(ChargePointFixture, K01FR29_SmartChargingCtrlrAvailableIsTrue_CallsValida
     charge_point->handle_message(set_charging_profile_req);
 }
 
-TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeSchedule) {
+TEST_F(ChargepointTestFixtureV201, K08_GetCompositeSchedule_CallsCalculateGetCompositeSchedule) {
     GetCompositeScheduleRequest req;
     req.evseId = DEFAULT_EVSE_ID;
     req.chargingRateUnit = ChargingRateUnitEnum::W;
@@ -834,7 +841,7 @@ TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeSc
     charge_point->handle_message(get_composite_schedule_req);
 }
 
-TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeScheduleWithValidProfiles) {
+TEST_F(ChargepointTestFixtureV201, K08_GetCompositeSchedule_CallsCalculateGetCompositeScheduleWithValidProfiles) {
     GetCompositeScheduleRequest req;
     req.evseId = DEFAULT_EVSE_ID;
     req.chargingRateUnit = ChargingRateUnitEnum::W;
@@ -857,7 +864,7 @@ TEST_F(ChargePointFixture, K08_GetCompositeSchedule_CallsCalculateGetCompositeSc
     charge_point->handle_message(get_composite_schedule_req);
 }
 
-TEST_F(ChargePointFixture, K08FR05_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForNonexistentEVSE) {
+TEST_F(ChargepointTestFixtureV201, K08FR05_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForNonexistentEVSE) {
     GetCompositeScheduleRequest req;
     req.evseId = DEFAULT_EVSE_ID + 3;
     req.chargingRateUnit = ChargingRateUnitEnum::W;
@@ -873,7 +880,8 @@ TEST_F(ChargePointFixture, K08FR05_GetCompositeSchedule_DoesNotCalculateComposit
     charge_point->handle_message(get_composite_schedule_req);
 }
 
-TEST_F(ChargePointFixture, K08FR07_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForIncorrectChargingRateUnit) {
+TEST_F(ChargepointTestFixtureV201,
+       K08FR07_GetCompositeSchedule_DoesNotCalculateCompositeScheduleForIncorrectChargingRateUnit) {
     GetCompositeScheduleRequest req;
     req.evseId = DEFAULT_EVSE_ID;
     req.chargingRateUnit = ChargingRateUnitEnum::W;
@@ -893,7 +901,7 @@ TEST_F(ChargePointFixture, K08FR07_GetCompositeSchedule_DoesNotCalculateComposit
     charge_point->handle_message(get_composite_schedule_req);
 }
 
-TEST_F(ChargePointFixture,
+TEST_F(ChargepointTestFixtureV201,
        K05FR04_RequestStartTransactionRequest_SmartChargingCtrlrEnabledFalse_DoesNotValidateTxProfiles) {
     const auto cv = ControllerComponentVariables::SmartChargingCtrlrEnabled;
     this->device_model->set_value(cv.component, cv.variable.value(), AttributeEnum::Actual, "false", "TEST", true);
@@ -917,7 +925,7 @@ TEST_F(ChargePointFixture,
     charge_point->handle_message(start_transaction_req);
 }
 
-TEST_F(ChargePointFixture, K02FR05_TransactionEnds_WillDeleteTxProfilesWithTransactionID) {
+TEST_F(ChargepointTestFixtureV201, K02FR05_TransactionEnds_WillDeleteTxProfilesWithTransactionID) {
     auto database_handler = create_database_handler();
     database_handler->open_connection();
     const auto cv = ControllerComponentVariables::ResumeTransactionsOnBoot;
