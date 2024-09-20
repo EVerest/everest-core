@@ -156,6 +156,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     if (power_meter.energy_Wh_import_signed.has_value()) {
         sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
                                               "Wh", std::nullopt);
+        sampled_value.value = power_meter.energy_Wh_import.total;
         const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
         if (energy_Wh_import_signed.total.has_value()) {
             sampled_value.signedMeterValue = to_ocpp_signed_meter_value(energy_Wh_import_signed.total.value());
@@ -479,7 +480,7 @@ ocpp::v201::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatu
         return ocpp::v201::LogStatusEnum::Accepted;
     case types::system::UploadLogsStatus::Rejected:
         return ocpp::v201::LogStatusEnum::Rejected;
-    case types::system::UploadLogsStatus::AcceptedCancelled:
+    case types::system::UploadLogsStatus::AcceptedCanceled:
         return ocpp::v201::LogStatusEnum::AcceptedCanceled;
     default:
         throw std::runtime_error("Could not convert UploadLogsStatus");
@@ -500,7 +501,7 @@ to_ocpp_update_firmware_status_enum(const types::system::UpdateFirmwareResponse&
         return ocpp::v201::UpdateFirmwareStatusEnum::Accepted;
     case types::system::UpdateFirmwareResponse::Rejected:
         return ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
-    case types::system::UpdateFirmwareResponse::AcceptedCancelled:
+    case types::system::UpdateFirmwareResponse::AcceptedCanceled:
         return ocpp::v201::UpdateFirmwareStatusEnum::AcceptedCanceled;
     case types::system::UpdateFirmwareResponse::InvalidCertificate:
         return ocpp::v201::UpdateFirmwareStatusEnum::InvalidCertificate;
@@ -534,6 +535,8 @@ ocpp::v201::UploadLogStatusEnum to_ocpp_upload_logs_status_enum(types::system::L
         return ocpp::v201::UploadLogStatusEnum::UploadFailure;
     case types::system::LogStatusEnum::Uploading:
         return ocpp::v201::UploadLogStatusEnum::Uploading;
+    case types::system::LogStatusEnum::AcceptedCanceled:
+        return ocpp::v201::UploadLogStatusEnum::AcceptedCanceled;
     default:
         throw std::runtime_error("Could not convert UploadLogStatusEnum");
     }
@@ -1247,6 +1250,41 @@ to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum
     default:
         throw std::out_of_range("Could not convert GetVariableStatusEnumType");
     }
+}
+
+types::ocpp::ChargingSchedules
+to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
+    types::ocpp::ChargingSchedules charging_schedules;
+    for (const auto& composite_schedule : composite_schedules) {
+        charging_schedules.schedules.push_back(conversions::to_everest_charging_schedule(composite_schedule));
+    }
+    return charging_schedules;
+}
+
+types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule) {
+    types::ocpp::ChargingSchedule charging_schedule;
+    charging_schedule.evse = composite_schedule.evseId;
+    charging_schedule.charging_rate_unit =
+        ocpp::v201::conversions::charging_rate_unit_enum_to_string(composite_schedule.chargingRateUnit);
+    charging_schedule.evse = composite_schedule.evseId;
+    charging_schedule.duration = composite_schedule.duration;
+    charging_schedule.start_schedule = composite_schedule.scheduleStart.to_rfc3339();
+    // min_charging_rate is not given as part of a OCPP2.0.1 composite schedule
+    for (const auto& charging_schedule_period : composite_schedule.chargingSchedulePeriod) {
+        charging_schedule.charging_schedule_period.push_back(
+            to_everest_charging_schedule_period(charging_schedule_period));
+    }
+    return charging_schedule;
+}
+
+types::ocpp::ChargingSchedulePeriod
+to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period) {
+    types::ocpp::ChargingSchedulePeriod _period;
+    _period.start_period = period.startPeriod;
+    _period.limit = period.limit;
+    _period.number_phases = period.numberPhases;
+    _period.phase_to_use = period.phaseToUse;
+    return _period;
 }
 
 } // namespace conversions

@@ -105,7 +105,7 @@ public:
     void setup(bool has_ventilation, const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent,
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
-               const std::string switch_3ph1ph_cp_state);
+               const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -191,7 +191,7 @@ public:
     void set_hlc_charging_active();
     void set_hlc_allow_close_contactor(bool on);
 
-    bool errors_prevent_charging();
+    bool stop_charging_on_fatal_error();
 
     /// @brief Returns the OCMF start data.
     ///
@@ -223,7 +223,7 @@ private:
     std::optional<types::units_signed::SignedMeterValue>
     take_signed_meter_data(std::optional<types::units_signed::SignedMeterValue>& data);
 
-    bool errors_prevent_charging_internal();
+    bool stop_charging_on_fatal_error_internal();
     float get_max_current_internal();
     float get_max_current_signalled_to_ev_internal();
     bool deauthorize_internal();
@@ -295,11 +295,13 @@ private:
         types::evse_manager::StartSessionReason last_start_session_reason;
         float current_drawn_by_vehicle[3];
         bool error_prevent_charging_flag{false};
+        bool last_error_prevent_charging_flag{false};
         int ac_with_soc_timer;
         // non standard compliant option: time out after a while and switch back to DC to get SoC update
         bool ac_with_soc_timeout;
         bool contactor_welded{false};
         bool switch_3ph1ph_threephase{false};
+        bool switch_3ph1ph_threephase_ongoing{false};
 
         std::optional<types::units_signed::SignedMeterValue> stop_signed_meter_value;
         std::optional<types::units_signed::SignedMeterValue> start_signed_meter_value;
@@ -318,6 +320,8 @@ private:
         int switch_3ph1ph_delay_s{10};
         // Use state F if true, otherwise use X1
         bool switch_3ph1ph_cp_state_F{false};
+        // Tolerate soft over current for given time
+        int soft_over_current_timeout_ms{7000};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -340,6 +344,7 @@ private:
 
         EvseState t_step_EF_return_state;
         float t_step_EF_return_pwm;
+        float t_step_EF_return_ampere;
 
         EvseState switching_phases_return_state;
 
@@ -356,6 +361,7 @@ private:
         bool pp_warning_printed{false};
         bool no_energy_warning_printed{false};
         float pwm_set_last_ampere{0};
+        bool t_step_ef_x1_pause{false};
     } internal_context;
 
     // main Charger thread
@@ -371,8 +377,9 @@ private:
 
     // ErrorHandling events
     enum class ErrorHandlingEvents : std::uint8_t {
-        prevent_charging,
-        all_errors_cleared
+        PreventCharging,
+        AllErrorsPreventingChargingCleared,
+        AllErrorCleared
     };
 
     EventQueue<ErrorHandlingEvents> error_handling_event_queue;
@@ -397,8 +404,11 @@ private:
     static constexpr int T_STEP_X1 = 3000;
     // 4 seconds according to table 3 of ISO15118-3
     static constexpr int T_STEP_EF = 4000;
-    static constexpr int SOFT_OVER_CURRENT_TIMEOUT = 7000;
     static constexpr int IEC_PWM_MAX_UPDATE_INTERVAL = 5000;
+    // EV READY certification requires a small pause of 500-1000 ms in X1 after a t_step_EF sequence before going to X2-
+    // This is not required by IEC61851-1, but it is allowed by the IEC. It helps some older EVs to start charging
+    // after the wake-up sequence.
+    static constexpr int STAY_IN_X1_AFTER_TSTEP_EF_MS = 750;
 
     types::evse_manager::EnableDisableSource active_enable_disable_source{
         types::evse_manager::Enable_source::Unspecified, types::evse_manager::Enable_state::Unassigned, 10000};

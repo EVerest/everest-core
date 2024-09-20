@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright 2024 Pionix GmbH and Contributors to EVerest
 
 #ifndef OPENSSL_UTIL_HPP_
 #define OPENSSL_UTIL_HPP_
+
+#include "extensions/tls_types.hpp"
 
 #include <array>
 #include <cstddef>
@@ -11,16 +13,17 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <vector>
 
 struct evp_pkey_st;
+struct ssl_st;
 struct x509_st;
 
 namespace openssl {
 
+/// X509 certificate verification result
 enum class verify_result_t : std::uint8_t {
-    verified,
+    Verified,
     CertChainError,
     CertificateExpired,
     CertificateRevoked,
@@ -31,26 +34,139 @@ enum class verify_result_t : std::uint8_t {
 constexpr std::size_t signature_size = 64;
 constexpr std::size_t signature_n_size = 32;
 constexpr std::size_t signature_der_size = 128;
+constexpr std::size_t sha_1_digest_size = 20;
 constexpr std::size_t sha_256_digest_size = 32;
 constexpr std::size_t sha_384_digest_size = 48;
 constexpr std::size_t sha_512_digest_size = 64;
 
 enum class digest_alg_t : std::uint8_t {
+    sha1,
     sha256,
     sha384,
     sha512,
 };
 
+using sha_1_digest_t = std::array<std::uint8_t, sha_1_digest_size>;
 using sha_256_digest_t = std::array<std::uint8_t, sha_256_digest_size>;
 using sha_384_digest_t = std::array<std::uint8_t, sha_384_digest_size>;
 using sha_512_digest_t = std::array<std::uint8_t, sha_512_digest_size>;
 using bn_t = std::array<std::uint8_t, signature_n_size>;
 using bn_const_t = std::array<const std::uint8_t, signature_n_size>;
 
-using Certificate_ptr = std::unique_ptr<x509_st, void (*)(x509_st*)>;
-using CertificateList = std::vector<Certificate_ptr>;
-using DER_Signature_ptr = std::unique_ptr<std::uint8_t, void (*)(std::uint8_t*)>;
-using PKey_ptr = std::unique_ptr<evp_pkey_st, void (*)(evp_pkey_st*)>;
+using certificate_ptr = std::unique_ptr<x509_st, void (*)(x509_st*)>;
+using certificate_list = std::vector<certificate_ptr>;
+using der_underlying_t = std::uint8_t;
+using der_ptr = std::unique_ptr<der_underlying_t, void (*)(der_underlying_t*)>;
+using pkey_ptr = std::unique_ptr<evp_pkey_st, void (*)(evp_pkey_st*)>;
+
+/**
+ * \brief represents DER encoded ASN1 data
+ *
+ * This class simplifies managing DER data ensuring that it is managed and
+ * supporting equality tests.
+ */
+class DER {
+private:
+    der_ptr ptr{nullptr, nullptr}; //!< pointer to the data
+    std::size_t len{0};            //!< length of the data
+
+public:
+    DER() = default;
+    /**
+     * \brief create space for DER data of specified size
+     * \param[in] size to allocate (note data is zeroed)
+     */
+    explicit DER(std::size_t size);
+    /**
+     * \brief create a copy of the supplied DER data
+     * \param[in] crc pointer to the DER data
+     * \param[in] size of the DER data
+     */
+    DER(const der_underlying_t* src, std::size_t size);
+    /**
+     * \brief move a unique pointer and size to this object
+     * \param[in] der a unique pointer to DER data
+     * \param[in] size the size of the DER data
+     */
+    DER(der_ptr&& der, std::size_t size) : ptr(std::move(der)), len(size) {
+    }
+
+    DER(const DER& obj);
+    DER& operator=(const DER& obj);
+
+    DER(DER&& obj) noexcept;
+    DER& operator=(DER&& obj) noexcept;
+
+    bool operator==(const DER& rhs) const;
+    inline bool operator!=(const DER& rhs) const {
+        return !(*this == rhs);
+    }
+    bool operator==(const der_underlying_t* rhs) const;
+    inline bool operator!=(const der_underlying_t* rhs) const {
+        return !(*this == rhs);
+    }
+    explicit operator bool() const;
+
+    [[nodiscard]] inline der_underlying_t* get() {
+        return ptr.get();
+    }
+
+    /**
+     * \brief release the pointer, must be freed using DER::free()
+     * \return the pointer to DER data (or nullptr)
+     */
+    [[nodiscard]] inline der_underlying_t* release() {
+        len = 0;
+        return ptr.release();
+    }
+
+    [[nodiscard]] inline const der_underlying_t* get() const {
+        return ptr.get();
+    }
+
+    [[nodiscard]] inline std::size_t size() const {
+        return len;
+    }
+
+    /**
+     * \brief create unmanaged copy which must be freed using DER::free()
+     * \param[in] obj copy the memory contents from this object
+     * \return a pointer to newly allocated heap memory
+     */
+    static der_underlying_t* dup(const DER& obj);
+
+    /**
+     * \brief free memory allocated by DER::dup()
+     * \param[in] ptr pointer to the allocated memory (can be nullptr)
+     */
+    static void free(der_underlying_t* ptr);
+};
+
+/// contains filenames for the leaf, intermediate CAs and roots
+struct chain_filenames_t {
+    const char* leaf;
+    const char* chain;
+    const char* root;
+};
+
+using chain_filenames_list_t = std::vector<chain_filenames_t>;
+
+/// contains the X509 certificates for leaf, intermediate CAs and roots
+struct chain_info_t {
+    certificate_ptr leaf;
+    certificate_list chain;
+    certificate_list trust_anchors;
+};
+
+using chain_info_list_t = std::vector<chain_info_t>;
+
+/// X509 certificate chain and the private key for the leaf certificate
+struct chain_t {
+    chain_info_t chain{{nullptr, nullptr}, {}, {}};
+    pkey_ptr private_key{nullptr, nullptr};
+};
+
+using chain_list = std::vector<chain_t>;
 
 /**
  * \brief sign using ECDSA on curve secp256r1/prime256v1/P-256 of a SHA 256 digest
@@ -104,6 +220,15 @@ bool verify(evp_pkey_st* pkey, const std::uint8_t* r, const std::uint8_t* s, con
  */
 bool verify(evp_pkey_st* pkey, const unsigned char* sig, std::size_t siglen, const unsigned char* tbs,
             std::size_t tbslen);
+
+/**
+ * \brief calculate the SHA1 digest over an array of bytes
+ * \param[in] data the start of the data
+ * \param[in] len the length of the data
+ * \param[out] the SHA1 digest
+ * \return true on success
+ */
+bool sha_1(const void* data, std::size_t len, sha_1_digest_t& digest);
 
 /**
  * \brief calculate the SHA256 digest over an array of bytes
@@ -179,20 +304,26 @@ template <typename T> constexpr void zero(T& mem) {
 }
 
 /**
+ * \brief load a private key from file
+ * \param mem the structure to zero
+ */
+pkey_ptr load_private_key(const char* filename, const char* password);
+
+/**
  * \brief convert R, S BIGNUM to DER signature
  * \param[in] r the BIGNUM R component of the signature
  * \param[in] s the BIGNUM S component of the signature
- * \return The DER signature and it's length
+ * \return The DER signature and its length
  */
-std::tuple<DER_Signature_ptr, std::size_t> bn_to_signature(const bn_t& r, const bn_t& s);
+DER bn_to_signature(const bn_t& r, const bn_t& s);
 
 /**
  * \brief convert R, S BIGNUM to DER signature
  * \param[in] r the BIGNUM R component of the signature (0-padded 32 bytes)
  * \param[in] s the BIGNUM S component of the signature (0-padded 32 bytes)
- * \return The DER signature and it's length
+ * \return The DER signature and its length
  */
-std::tuple<DER_Signature_ptr, std::size_t> bn_to_signature(const std::uint8_t* r, const std::uint8_t* s);
+DER bn_to_signature(const std::uint8_t* r, const std::uint8_t* s);
 
 /**
  * \brief convert DER signature into BIGNUM R and S components
@@ -209,7 +340,73 @@ bool signature_to_bn(openssl::bn_t& r, openssl::bn_t& s, const std::uint8_t* sig
  * \param[in] filename
  * \return a list of 0 or more certificates
  */
-CertificateList load_certificates(const char* filename);
+certificate_list load_certificates(const char* filename);
+
+/**
+ * \brief load any PEM encoded certificates from list of files
+ * \param[in] filenames
+ * \return a list of 0 or more certificates
+ */
+certificate_list load_certificates(const std::vector<const char*>& filenames);
+
+/**
+ * \brief load a PKI chain from leaf to root
+ * \param[in] leaf_file is the server certificate
+ * \param[in] chain_file is the file of intermediate certificates
+ * \param[in] root_file is the self signed trust anchor
+ * \return the certificate chain. chain_info_t::leaf will be nullptr when a chain
+ *         cannot be built
+ * \note when leaf_file is null pointer the server certificate is the first certificate in the chain_file
+ */
+chain_info_t load_certificates(const char* leaf_file, const char* chain_file, const char* root_file);
+
+/**
+ * \brief load a PKI chain from leaf to root
+ * \param[in] chain is the structure containing the three filenames
+ * \return the certificate chain. chain_info_t::leaf will be nullptr when a chain
+ *         cannot be built
+ * \note when leaf_file is null pointer the server certificate is the first certificate in the chain_file
+ */
+static inline chain_info_t load_certificates(const chain_filenames_t& chain) {
+    return load_certificates(chain.leaf, chain.chain, chain.root);
+}
+
+/**
+ * \brief load a PKI chains from leaf to root from a list of chain filenames
+ * \param[in] chains is a list of structures containing the three filenames
+ * \return a list of valid certificate chains (can be an empty list)
+ */
+chain_info_list_t load_certificates(const chain_filenames_list_t& chains);
+
+/**
+ * \brief check that a private key is associated with a certificate
+ * \param[in] cert is the certificate
+ * \param[in] pkey is the private key
+ * \return true when the key matches the certificate
+ */
+bool verify_certificate_key(const x509_st* cert, const evp_pkey_st* pkey);
+
+/**
+ * \brief verify a certificate chain from leaf to trust anchor(s)
+ * \param[in] chain the structure containing the certificates
+ * \return true when there is a valid chain
+ */
+bool verify_chain(const chain_info_t& chain);
+
+/**
+ * \brief verify a certificate chain from leaf to trust anchor(s) and that
+ *        the private key is associated with the leaf certificate
+ * \param[in] chain the structure containing the certificates and private key
+ * \return true when there is a valid chain and the key matches
+ */
+bool verify_chain(const chain_t& chain);
+
+/**
+ * \brief apply the certificates and private key to the SSL session
+ * \param[in] chain the structure containing the certificates and private key
+ * \return true when successfully applied
+ */
+bool use_certificate_and_key(ssl_st* ssl, const chain_t& chain);
 
 /**
  * \brief convert a certificate to a PEM string
@@ -224,7 +421,7 @@ std::string certificate_to_pem(const x509_st* cert);
  * \param[in] len the length of the DER encoded certificate
  * \return the certificate or empty unique_ptr on error
  */
-Certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len);
+certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len);
 
 /**
  * \brief verify a certificate against a certificate chain and trust anchors
@@ -235,8 +432,8 @@ Certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len);
  * \param[in] untrusted intermediate CAs needed to form a chain from the leaf
  *            certificate to one of the supplied trust anchors
  */
-verify_result_t verify_certificate(const x509_st* cert, const CertificateList& trust_anchors,
-                                   const CertificateList& untrusted);
+verify_result_t verify_certificate(const x509_st* cert, const certificate_list& trust_anchors,
+                                   const certificate_list& untrusted);
 
 /**
  * \brief extract the certificate subject as a dictionary of name/value pairs
@@ -248,11 +445,34 @@ verify_result_t verify_certificate(const x509_st* cert, const CertificateList& t
 std::map<std::string, std::string> certificate_subject(const x509_st* cert);
 
 /**
+ * \brief extract the certificate subject as DER encoded data
+ * \param cert the certificate
+ * \return the DER encoded subject or nullptr on error
+ */
+DER certificate_subject_der(const x509_st* cert);
+
+/**
  * \brief extract the subject public key from the certificate
  * \param[in] cert the certificate
  * \return a unique_ptr holding the key or empty on error
  */
-PKey_ptr certificate_public_key(x509_st* cert);
+pkey_ptr certificate_public_key(x509_st* cert);
+
+/**
+ * \brief calculate SHA1 hash over the DER certificate
+ * \param[out] digest the SHA1 digest of the certificate
+ * \param[in] cert the certificate
+ * \return true on success
+ */
+bool certificate_sha_1(openssl::sha_1_digest_t& digest, const x509_st* cert);
+
+/**
+ * \brief calculate SHA1 hash over the DER certificate's subject public key
+ * \param[out] digest the SHA1 digest of the public key
+ * \param[in] cert the certificate
+ * \return true on success
+ */
+bool certificate_subject_public_key_sha_1(openssl::sha_1_digest_t& digest, const x509_st* cert);
 
 enum class log_level_t : std::uint8_t {
     debug,

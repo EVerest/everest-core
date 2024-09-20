@@ -12,10 +12,7 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 )
 
 target_sources(${TEST_TARGET_NAME} PRIVATE
-    EnumFlagsTest.cpp
-    ErrorHandlingTest.cpp
     EventQueueTest.cpp
-    ../ErrorHandling.cpp
     IECStateMachineTest.cpp
     ../IECStateMachine.cpp
     ../backtrace.cpp

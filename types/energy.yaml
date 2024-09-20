@@ -7,6 +7,19 @@ types:
       - Undefined
       - Evse
       - Generic
+  EvseState:
+    description: Enum for simplified EVSE state
+    type: string
+    enum:
+      - Unplugged
+      - WaitForAuth
+      - WaitForEnergy
+      - PrepareCharging
+      - PausedEV
+      - PausedEVSE
+      - Charging
+      - Finished
+      - Disabled
   LimitsReq:
     description: Energy flow limiting object request (Evses to EnergyManager)
     type: object
@@ -180,6 +193,10 @@ types:
           If set to true, this is a high priority request that needs to be handled now. 
           Otherwise energymanager may merge multiple requests and address them later.
         type: boolean
+      evse_state:
+        description: State of the EVSE
+        type: object
+        $ref: /energy#/EvseState
       optimizer_target:
         description: User defined optimizer targets for this evse
         type: object

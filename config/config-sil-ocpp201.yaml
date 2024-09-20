@@ -25,6 +25,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      request_zero_power_in_idle: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -50,6 +51,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      request_zero_power_in_idle: true
     connections:
       bsp:
         - module_id: yeti_driver_2
@@ -125,6 +127,9 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      connector_zero_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
   persistent_store:
     module: PersistentStore
   evse_security:

@@ -21,7 +21,9 @@ void CarSimulation::state_machine() {
             // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
 
             sim_data.slac_state = "UNMATCHED";
-            r_ev[0]->call_stop_charging();
+            if (!r_ev.empty()) {
+                r_ev[0]->call_stop_charging();
+            }
         }
         break;
     case SimState::PLUGGED_IN:
@@ -36,8 +38,10 @@ void CarSimulation::state_machine() {
             // do not draw power if EVSE paused by stopping PWM
             if (sim_data.pwm_duty_cycle > 7.0 && sim_data.pwm_duty_cycle < 97.0) {
                 r_ev_board_support->call_set_cp_state(EvCpState::C);
+                r_ev_board_support->call_allow_power_on(true);
             } else {
                 r_ev_board_support->call_set_cp_state(EvCpState::B);
+                r_ev_board_support->call_allow_power_on(false);
             }
         }
         break;
@@ -47,6 +51,7 @@ void CarSimulation::state_machine() {
             // Also draw power if EVSE stopped PWM - this is a break the rules simulator->mode to test the charging
             // implementation!
             r_ev_board_support->call_set_cp_state(EvCpState::C);
+            r_ev_board_support->call_allow_power_on(true);
         }
         break;
 
@@ -70,6 +75,7 @@ void CarSimulation::state_machine() {
     case SimState::ISO_CHARGING_REGULATED:
         if (state_has_changed) {
             r_ev_board_support->call_set_cp_state(EvCpState::C);
+            r_ev_board_support->call_allow_power_on(true);
         }
         break;
     case SimState::BCB_TOGGLE:
