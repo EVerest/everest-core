@@ -101,16 +101,19 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
         limits.schedule_import.emplace(schedule_import);
 
         if (connector_id == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
+            if (!this->r_evse_manager_energy_sink.empty()) {
                 EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
+                this->r_evse_manager_energy_sink.at(0)->call_set_external_limits(limits);
             } else {
                 EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
                                "sink is configured.";
             }
         } else {
+            if (this->r_evse_manager_energy_sink.size() <= connector_id) {
+                EVLOG_warning << "Missing connection to evse_manager_energy_sink for evse_id: " << connector_id;
+            }
             EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
-            this->r_evse_manager.at(connector_id - 1)->call_set_external_limits(limits);
+            this->r_evse_manager_energy_sink.at(connector_id)->call_set_external_limits(limits);
         }
     }
 }

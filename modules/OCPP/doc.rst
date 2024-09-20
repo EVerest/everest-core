@@ -298,6 +298,20 @@ This module currently deviates from the MREC specification in the following poin
   **Faulted** value as follows: "When a Charge Point or connector has reported an error and is not available for energy delivery.  
   (Inoperative)." This module, therefore, only reports **Faulted** when the Charge Point is not available for energy delivery.
 
+Energy Management and Smart Charging Integration
+================================================
+
+OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
+This module integrates the composite schedule(s) within EVerests energy management. For further information about smart charging and the
+composite schedule calculation please refer to the OCPP1.6 specification.
+
+The integration of the composite schedules are implemented by the optional requirement(s) `evse_manager_energy_sink` of this module.
+Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
+for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
+has two EVSEs you need to connect three modules that implement the `evse_manager_energy_sink` interface: One representing evse id 0 and 
+two representing your actual EVSEs. Note that it is important to specify the connections in the EVerest config file in the correct order
+(0,1,2).
+
 Certificate Management
 ----------------------
 

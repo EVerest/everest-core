@@ -662,8 +662,8 @@ void OCPP201::ready() {
 
     const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
 
-    // this callback publishes the schedules within EVerest and applies the schedules for the individual evse_manager(s)
-    // and the connector_zero_sink
+    // this callback publishes the schedules within EVerest and applies the schedules for the individual
+    // r_evse_manager_energy_sink
     const auto charging_schedules_callback = [this, composite_schedule_unit]() {
         const auto composite_schedules = this->charge_point->get_all_composite_schedules(
             this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
@@ -1223,17 +1223,21 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
         limits.schedule_import = schedule_import;
 
         if (composite_schedule.evseId == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
+            if (!this->r_evse_manager_energy_sink.empty()) {
                 EVLOG_debug << "OCPP sets the following external limits for evse 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
+                this->r_evse_manager_energy_sink.at(0)->call_set_external_limits(limits);
             } else {
                 EVLOG_debug << "OCPP cannot set external limits for evse 0. No "
                                "sink is configured.";
             }
         } else {
+            if (this->r_evse_manager_energy_sink.size() <= composite_schedule.evseId) {
+                EVLOG_warning << "Missing connection to evse_manager_energy_sink for evse_id: "
+                              << composite_schedule.evseId;
+            }
             EVLOG_debug << "OCPP sets the following external limits for evse " << composite_schedule.evseId << ": \n"
                         << limits;
-            this->r_evse_manager.at(composite_schedule.evseId - 1)->call_set_external_limits(limits);
+            this->r_evse_manager_energy_sink.at(composite_schedule.evseId)->call_set_external_limits(limits);
         }
     }
 }
