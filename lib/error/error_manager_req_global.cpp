@@ -37,20 +37,17 @@ void ErrorManagerReqGlobal::on_error_raised(const Error& error) {
         EVLOG_error << "Error type '" << error.type << "' is not defined, ignoring error";
         return;
     }
-    std::list<ErrorPtr> errors = database->get_errors({
-        ErrorFilter(TypeFilter(error.type)),
-        ErrorFilter(SubTypeFilter(error.sub_type)),
-    });
+    std::list<ErrorPtr> errors =
+        database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
+                              ErrorFilter(OriginFilter(error.origin))});
     if (!errors.empty()) {
         EVLOG_error << "Error of type '" << error.type << "' and sub type '" << error.sub_type
                     << "' is already raised, ignoring new error";
         return;
     }
     database->add_error(std::make_shared<Error>(error));
-    errors = database->get_errors({
-        ErrorFilter(TypeFilter(error.type)),
-        ErrorFilter(SubTypeFilter(error.sub_type)),
-    });
+    errors = database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
+                                   ErrorFilter(OriginFilter(error.origin))});
     if (errors.size() != 1) {
         EVLOG_error << "Error wasn't added, type: " << error.type << ", sub type: " << error.sub_type;
         return;
@@ -65,19 +62,17 @@ void ErrorManagerReqGlobal::on_error_cleared(const Error& error) {
         EVLOG_error << "Error type '" << error.type << "' is not defined, ignoring error";
         return;
     }
-    std::list<ErrorPtr> errors = database->get_errors({
-        ErrorFilter(TypeFilter(error.type)),
-        ErrorFilter(SubTypeFilter(error.sub_type)),
-    });
+    std::list<ErrorPtr> errors =
+        database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
+                              ErrorFilter(OriginFilter(error.origin))});
     if (errors.empty()) {
         EVLOG_error << "Error of type '" << error.type << "' and sub type '" << error.sub_type
                     << "' is not raised, ignoring clear error";
         return;
     }
-    std::list<ErrorPtr> res = database->remove_errors({
-        ErrorFilter(TypeFilter(error.type)),
-        ErrorFilter(SubTypeFilter(error.sub_type)),
-    });
+    std::list<ErrorPtr> res =
+        database->remove_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
+                                 ErrorFilter(OriginFilter(error.origin))});
     if (res.size() > 1) {
         EVLOG_error << "More than one error is cleared, type: " << error.type << ", sub type: " << error.sub_type;
         return;
