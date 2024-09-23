@@ -36,7 +36,7 @@ To build this library you need [everest-cmake](https://github.com/EVerest/everes
 cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # Run cmake with disabled compiler warnings
-cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DISO15118_COMPILE_OPTIONS_WARNING_WARNING=""
+cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DISO15118_COMPILE_OPTIONS_WARNING=""
 
 # Build
 ninja -C build
