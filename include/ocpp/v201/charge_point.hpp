@@ -352,8 +352,10 @@ public:
     /// \param critical if set this overwrites the default criticality recommended in the OCPP 2.0.1 appendix. A
     /// critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the
     /// security log
+    /// \param timestamp when this security event occured, if absent the current datetime is assumed
     virtual void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
-                                   const std::optional<bool>& critical = std::nullopt) = 0;
+                                   const std::optional<bool>& critical = std::nullopt,
+                                   const std::optional<DateTime>& timestamp = std::nullopt) = 0;
 
     /// \brief Event handler that will update the variable internally when it has been changed on the fly.
     /// \param set_variable_data contains data of the variable to set
@@ -662,7 +664,8 @@ private:
 
     // Functional Block A: Security
     void security_event_notification_req(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
-                                         const bool triggered_internally, const bool critical);
+                                         const bool triggered_internally, const bool critical,
+                                         const std::optional<DateTime>& timestamp = std::nullopt);
     void sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
                               const bool initiated_by_trigger_message = false);
 
@@ -944,7 +947,8 @@ public:
     void on_log_status_notification(UploadLogStatusEnum status, int32_t requestId) override;
 
     void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
-                           const std::optional<bool>& critical = std::nullopt) override;
+                           const std::optional<bool>& critical = std::nullopt,
+                           const std::optional<DateTime>& timestamp = std::nullopt) override;
 
     void on_variable_changed(const SetVariableData& set_variable_data) override;
 

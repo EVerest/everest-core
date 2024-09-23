@@ -337,8 +337,9 @@ private:
     void handleInstallCertificateRequest(Call<InstallCertificateRequest> call);
     void handleGetLogRequest(Call<GetLogRequest> call);
     void handleSignedUpdateFirmware(Call<SignedUpdateFirmwareRequest> call);
-    void securityEventNotification(const std::string& type, const std::string& tech_info,
-                                   const bool triggered_internally);
+    void securityEventNotification(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                                   const bool triggered_internally, const std::optional<bool>& critical = std::nullopt,
+                                   const std::optional<DateTime>& timestamp = std::nullopt);
     void switchSecurityProfile(int32_t new_security_profile, int32_t max_connection_attempts);
     // Local Authorization List profile
     void handleSendLocalListRequest(Call<SendLocalListRequest> call);
@@ -647,9 +648,15 @@ public:
 
     /// \brief Notifies chargepoint that a SecurityEvent occurs. This will send a SecurityEventNotification.req to the
     /// CSMS
-    /// \param type type of the security event
+    /// \param event_type type of the security event
     /// \param tech_info additional info of the security event
-    void on_security_event(const std::string& type, const std::string& tech_info);
+    /// \param critical if set this overwrites the default criticality recommended in the OCPP 1.6 security whitepaper.
+    /// A critical security event is transmitted as a message to the CSMS, a non-critical one is just written to the
+    /// security log
+    /// \param timestamp when this security event occured, if absent the current datetime is assumed
+    void on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                           const std::optional<bool>& critical = std::nullopt,
+                           const std::optional<DateTime>& timestamp = std::nullopt);
 
     /// \brief Handles an internal ChangeAvailabilityRequest (in the same way as if it was emitted by the CSMS).
     /// \param request

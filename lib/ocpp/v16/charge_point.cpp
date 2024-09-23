@@ -172,8 +172,9 @@ void ChargePoint::on_plugin_timeout(int32_t connector) {
     this->charge_point->on_plugin_timeout(connector);
 }
 
-void ChargePoint::on_security_event(const std::string& type, const std::string& tech_info) {
-    this->charge_point->on_security_event(type, tech_info);
+void ChargePoint::on_security_event(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
+                                    const std::optional<bool>& critical, const std::optional<DateTime>& timestamp) {
+    this->charge_point->on_security_event(event_type, tech_info, critical, timestamp);
 }
 
 ChangeAvailabilityResponse ChargePoint::on_change_availability(const ChangeAvailabilityRequest& request) {

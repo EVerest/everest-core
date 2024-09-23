@@ -46,6 +46,7 @@ if(LIBOCPP_ENABLE_V16)
             ocpp/v16/ocpp_enums.cpp
             ocpp/v16/ocpp_types.cpp
             ocpp/v16/types.cpp
+            ocpp/v16/utils.cpp
     )
     add_subdirectory(ocpp/v16/messages)
 endif()
