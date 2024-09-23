@@ -86,6 +86,8 @@ public:
         }
     };
 
+    void update_lem_status();
+
 private:
     const std::unique_ptr<HttpClientInterface> http_client;
     std::string meter_id;

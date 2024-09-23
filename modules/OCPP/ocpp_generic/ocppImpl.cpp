@@ -102,7 +102,7 @@ void ocppImpl::ready() {
 }
 
 bool ocppImpl::handle_stop() {
-    std::lock_guard<std::mutex>(this->chargepoint_state_mutex);
+    std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->stop();
     bool success = mod->charge_point->stop();
     if (success) {
@@ -112,7 +112,7 @@ bool ocppImpl::handle_stop() {
 }
 
 bool ocppImpl::handle_restart() {
-    std::lock_guard<std::mutex>(this->chargepoint_state_mutex);
+    std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->interval(std::chrono::seconds(this->mod->config.PublishChargingScheduleIntervalS));
     bool success = mod->charge_point->restart();
     if (success) {

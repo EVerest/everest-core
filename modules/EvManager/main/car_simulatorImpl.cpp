@@ -11,7 +11,6 @@ namespace module::main {
 void car_simulatorImpl::init() {
     loop_interval_ms = constants::DEFAULT_LOOP_INTERVAL_MS;
     register_all_commands();
-    subscribe_to_external_mqtt();
     subscribe_to_variables_on_init();
 
     std::thread(&car_simulatorImpl::run, this).detach();
@@ -20,6 +19,7 @@ void car_simulatorImpl::init() {
 }
 
 void car_simulatorImpl::ready() {
+    subscribe_to_external_mqtt();
 
     setup_ev_parameters();
 

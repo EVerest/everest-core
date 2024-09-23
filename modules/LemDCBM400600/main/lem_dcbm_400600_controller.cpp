@@ -51,6 +51,33 @@ std::string LemDCBM400600Controller::get_current_transaction() {
     }
 }
 
+void LemDCBM400600Controller::update_lem_status() {
+    // should call this after a communication error to figure out what has been happening
+    auto status_response = this->http_client->get("/v1/status");
+
+    if (status_response.status_code != 200) {
+        throw UnexpectedDCBMResponseCode("/v1/status", 200, status_response);
+    }
+    try {
+        json data = json::parse(status_response.body);
+        this->transaction_is_ongoing_at_startup = data.at("status").at("bits").at("transactionIsOnGoing");
+        this->current_transaction_id = get_current_transaction();
+        if (this->transaction_is_ongoing_at_startup) {
+            // we need to get the current transaction id or the last known transaction id since we might
+            // receive a stop transaction with id 0 or with the last known transaction if
+            // meaning that the system had a failure and the transaction was started but id was not saved
+            // and we try to recover from the error, thus we need to cancel the transaction
+            EVLOG_warning << "LEM DCBM 400/600: A transaction is already ongoing and it has the id:"
+                          << this->current_transaction_id;
+        } else {
+            EVLOG_info << "LEM DCBM 400/600: The last known transaction has the id:" << this->current_transaction_id;
+        }
+    } catch (json::exception& json_error) {
+        throw UnexpectedDCBMResponseBody(
+            "/v1/status", fmt::format("Json error {} for body {}", json_error.what(), status_response.body));
+    }
+}
+
 void LemDCBM400600Controller::fetch_meter_id_from_device() {
     auto status_response = this->http_client->get("/v1/status");
 
@@ -240,15 +267,15 @@ LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& li
     json data = json::parse(livemeasure);
     powermeter.timestamp = data.at("timestamp");
     powermeter.meter_id.emplace(this->meter_id);
-    powermeter.energy_Wh_import = {data.at("energyImportTotal")};
-    powermeter.energy_Wh_export.emplace(types::units::Energy{data.at("energyExportTotal")});
+    powermeter.energy_Wh_import = {data.at("energyImportTotal").get<float>() * 1000.0f};
+    powermeter.energy_Wh_export.emplace(types::units::Energy{data.at("energyExportTotal").get<float>() * 1000.0f});
     auto voltage = types::units::Voltage{};
     voltage.DC = data.at("voltage");
     powermeter.voltage_V.emplace(voltage);
     auto current = types::units::Current{};
     current.DC = data.at("current");
     powermeter.current_A.emplace(current);
-    powermeter.power_W.emplace(types::units::Power{data.at("power")});
+    powermeter.power_W.emplace(types::units::Power{data.at("power").get<float>() * 1000.0f});
     powermeter.temperatures.emplace({types::temperature::Temperature{data.at("temperatureH"), "temperatureH"},
                                      types::temperature::Temperature{data.at("temperatureL"), "temperatureL"}});
     return powermeter;
