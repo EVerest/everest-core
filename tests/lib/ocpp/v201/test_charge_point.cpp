@@ -31,7 +31,7 @@ static const ocpp::v201::AddChargingProfileSource DEFAULT_REQUEST_TO_ADD_PROFILE
     ocpp::v201::AddChargingProfileSource::SetChargingProfile;
 static const std::string TEMP_OUTPUT_PATH = "/tmp/ocpp201";
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-const static std::string SCHEMAS_PATH = "./resources/example_config/v201/component_config";
+const static std::string CONFIG_PATH = "./resources/example_config/v201/component_config";
 const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
 
@@ -77,7 +77,7 @@ public:
 
     void create_device_model_db(const std::string& path) {
         InitDeviceModelDb db(path, MIGRATION_FILES_PATH);
-        db.initialize_database(SCHEMAS_PATH, true);
+        db.initialize_database(CONFIG_PATH, true);
     }
 
     std::shared_ptr<DeviceModel>

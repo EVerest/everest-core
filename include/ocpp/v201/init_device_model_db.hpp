@@ -7,19 +7,19 @@
 /// @details @copydetails ocpp::v201::InitDeviceModelDb
 ///
 /// @class ocpp::v201::InitDeviceModelDb
-/// @brief Class to initialize the device model db using the schema's and config file
+/// @brief Class to initialize the device model db using the component config files
 ///
-/// This class will read the device model schemas and config file and put them in the device model database.
+/// This class will read the device model config files and put them in the device model database.
 ///
 /// If the database already exists and there are some changes on components, this class will make the changes in the
 /// database accordingly.
 ///
-/// It will also re-apply the config file. Config items will only be replaced if they are changed and the value in the
-/// database is not set by an external source, like the CSMS.
+/// It will also re-apply the component config. Config items will only be replaced if they are changed and the value in
+/// the database is not set by an external source, like the CSMS.
 ///
-/// The data from the schema json files or database are read into some structs. Some structs could be reused from
-/// the DeviceModelStorage class, but some members are missing there and and to prevent too many database reads, some
-/// structs are 'redefined' in this class with the proper members.
+/// The data from the component config json files or database are read into some structs. Some structs could be reused
+/// from the DeviceModelStorage class, but some members are missing there and and to prevent too many database reads,
+/// some structs are 'redefined' in this class with the proper members.
 ///
 /// Since the DeviceModel class creates a map based on the device model database in the constructor, this class should
 /// first be finished with the initialization before creating the DeviceModel class.
@@ -43,7 +43,7 @@ namespace ocpp::v201 {
 /// \brief Class that holds a component.
 ///
 /// When the component is read from the database, the component id will be set.
-/// When the component is read from the schema file, the 'required' vector will be filled.
+/// When the component is read from the component config file, the 'required' vector will be filled.
 ///
 struct ComponentKey {
     std::optional<uint64_t> db_id;       ///< \brief Component id in the database.
@@ -89,22 +89,22 @@ struct DeviceModelVariable {
     bool required;
     /// \brief Variable instance
     std::optional<std::string> instance;
-    /// \brief Default value, if this is set in the schemas json
+    /// \brief Default value, if this is set in the component config json
     std::optional<std::string> default_actual_value;
     /// \brief Config monitors, if any
     std::vector<VariableMonitoringMeta> monitors;
 };
 
 /// \brief Convert from json to a ComponentKey struct.
-/// The to_json is not implemented as we don't need to write the schema to a json file.
+/// The to_json is not implemented as we don't need to write the component config to a json file.
 void from_json(const json& j, ComponentKey& c);
 
 /// \brief Convert from json to a DeviceModelVariable struct.
-/// The to_json is not implemented for this struct as we don't need to write the schema to a json file.
+/// The to_json is not implemented for this struct as we don't need to write the component config to a json file.
 void from_json(const json& j, DeviceModelVariable& c);
 
 /// \brief Convert from json to a VariableMonitoringMeta struct.
-/// The to_json is not implemented for this struct as we don't need to write the schema to a json file.
+/// The to_json is not implemented for this struct as we don't need to write the component config to a json file.
 void from_json(const json& j, VariableMonitoringMeta& c);
 
 ///
@@ -147,8 +147,8 @@ public:
     virtual ~InitDeviceModelDb();
 
     ///
-    /// \brief Initialize the database schema.
-    /// \param config_path         Path to the database schemas.
+    /// \brief Initialize the database schema and component config.
+    /// \param config_path          Path to the component config.
     /// \param delete_db_if_exists  Set to true to delete the database if it already exists.
     ///
     /// \throws InitDeviceModelDbError  - When database could not be initialized or
@@ -157,7 +157,7 @@ public:
     /// \throws std::runtime_error      If something went wrong during migration
     /// \throws DatabaseMigrationException  If something went wrong during migration
     /// \throws DatabaseConnectionException If the database could not be opened
-    /// \throws std::filesystem::filesystem_error   If the schemas path does not exist
+    /// \throws std::filesystem::filesystem_error   If the component config path does not exist
     ///
     ///
     void initialize_database(const std::filesystem::path& config_path, const bool delete_db_if_exists);
@@ -183,8 +183,8 @@ private: // Functions
     std::vector<std::filesystem::path> get_component_config_from_directory(const std::filesystem::path& directory);
 
     ///
-    /// \brief Read all component schema's from the given directory and create a map holding the structure.
-    /// \param directory    The parent directory containing the standardized and custom schema's.
+    /// \brief Read all component config files from the given directory and create a map holding the structure.
+    /// \param directory    The parent directory containing the standardized and custom component config files.
     /// \return A map with the device model components, variables, characteristics and attributes.
     ///
     std::map<ComponentKey, std::vector<DeviceModelVariable>>
@@ -209,12 +209,12 @@ private: // Functions
                           const std::vector<DeviceModelVariable>& component_variables);
 
     ///
-    /// \brief Read component schemas from given files.
-    /// \param components_schema_path   The paths to the component schema files.
+    /// \brief Read component config from given files.
+    /// \param components_config_path   The paths to the component config files.
     /// \return A map holding the components with its variables, characteristics and attributes.
     ///
     std::map<ComponentKey, std::vector<DeviceModelVariable>>
-    read_component_config(const std::vector<std::filesystem::path>& components_schema_path);
+    read_component_config(const std::vector<std::filesystem::path>& components_config_path);
 
     ///
     /// \brief Get all component properties (variables) from the given (component) json.
@@ -388,13 +388,13 @@ private: // Functions
                            const ComponentKey& component);
 
     ///
-    /// \brief Check if a component exist in the component schema.
-    /// \param component_schema The map of component / variables read from the json component schema.
+    /// \brief Check if a component exist in the component config.
+    /// \param component_config The map of component / variables read from the json component config.
     /// \param component    The component to check.
-    /// \return True when the component exists in the schema.
+    /// \return True when the component exists in the config.
     ///
-    bool component_exists_in_schemas(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_schema,
-                                     const ComponentKey& component);
+    bool component_exists_in_config(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_config,
+                                    const ComponentKey& component);
 
     ///
     /// \brief Remove components from db that do not exist in the component config.

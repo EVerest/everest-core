@@ -62,13 +62,13 @@ void InitDeviceModelDb::initialize_database(const std::filesystem::path& config_
         existing_components = get_all_components_from_db();
     }
 
-    // Get component schemas from the filesystem.
+    // Get component config files from the filesystem.
     std::map<ComponentKey, std::vector<DeviceModelVariable>> component_configs = get_all_component_configs(config_path);
 
     // Check if the config is consistent (fe has a value when required).
     check_integrity(component_configs);
 
-    // Remove components from db if they do not exist in the component schemas
+    // Remove components from db if they do not exist in the component config
     if (this->database_exists) {
         remove_not_existing_components_from_db(component_configs, existing_components);
     }
@@ -111,27 +111,27 @@ void InitDeviceModelDb::execute_init_sql(const bool delete_db_if_exists) {
 
 std::vector<std::filesystem::path>
 InitDeviceModelDb::get_component_config_from_directory(const std::filesystem::path& directory) {
-    std::vector<std::filesystem::path> component_schema_files;
+    std::vector<std::filesystem::path> component_config_files;
     for (const auto& p : std::filesystem::directory_iterator(directory)) {
         if (p.path().extension() == ".json") {
-            component_schema_files.push_back(p.path());
+            component_config_files.push_back(p.path());
         }
     }
 
-    return component_schema_files;
+    return component_config_files;
 }
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
 InitDeviceModelDb::get_all_component_configs(const std::filesystem::path& directory) {
-    const std::vector<std::filesystem::path> standardized_component_schema_files =
+    const std::vector<std::filesystem::path> standardized_component_config_files =
         get_component_config_from_directory(directory / STANDARDIZED_COMPONENT_CONFIG_DIR);
-    const std::vector<std::filesystem::path> custom_component_schema_files =
+    const std::vector<std::filesystem::path> custom_component_config_files =
         get_component_config_from_directory(directory / CUSTOM_COMPONENT_CONFIG_DIR);
 
     std::map<ComponentKey, std::vector<DeviceModelVariable>> standardized_components_map =
-        read_component_config(standardized_component_schema_files);
+        read_component_config(standardized_component_config_files);
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components =
-        read_component_config(custom_component_schema_files);
+        read_component_config(custom_component_config_files);
 
     // Merge the two maps so they can be used for the insert_component function with a single iterator. This will use
     // the custom components map as base and add not existing standardized components to the components map. So if the
@@ -209,12 +209,12 @@ void InitDeviceModelDb::insert_component(const ComponentKey& component_key,
 }
 
 std::map<ComponentKey, std::vector<DeviceModelVariable>>
-InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path>& components_schema_path) {
+InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path>& components_config_path) {
     std::map<ComponentKey, std::vector<DeviceModelVariable>> components;
-    for (const auto& path : components_schema_path) {
-        std::ifstream schema_file(path);
+    for (const auto& path : components_config_path) {
+        std::ifstream config_file(path);
         try {
-            json data = json::parse(schema_file);
+            json data = json::parse(config_file);
             ComponentKey p = data;
             if (data.contains("properties")) {
                 std::vector<DeviceModelVariable> variables =
@@ -225,7 +225,7 @@ InitDeviceModelDb::read_component_config(const std::vector<std::filesystem::path
                 continue;
             }
         } catch (const json::parse_error& e) {
-            EVLOG_error << "Error while parsing schema file: " << path;
+            EVLOG_error << "Error while parsing config file: " << path;
             throw;
         }
     }
@@ -939,10 +939,10 @@ InitDeviceModelDb::component_exists_in_db(const std::map<ComponentKey, std::vect
     return std::nullopt;
 }
 
-bool InitDeviceModelDb::component_exists_in_schemas(
-    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_schema, const ComponentKey& component) {
-    for (const auto& component_in_schema : component_schema) {
-        if (is_same_component_key(component, component_in_schema.first)) {
+bool InitDeviceModelDb::component_exists_in_config(
+    const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_config, const ComponentKey& component) {
+    for (const auto& component_in_config : component_config) {
+        if (is_same_component_key(component, component_in_config.first)) {
             return true;
         }
     }
@@ -954,7 +954,7 @@ void InitDeviceModelDb::remove_not_existing_components_from_db(
     const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_config,
     const std::map<ComponentKey, std::vector<DeviceModelVariable>>& db_components) {
     for (const auto& component : db_components) {
-        if (!component_exists_in_schemas(component_config, component.first)) {
+        if (!component_exists_in_config(component_config, component.first)) {
             remove_component_from_db(component.first);
         }
     }
@@ -1197,8 +1197,8 @@ void from_json(const json& j, DeviceModelVariable& c) {
         c.instance = j.at("instance");
     }
 
-    // Required is normally not in the schema here but somewhere else, but well, if it is occasionally or just later on,
-    // it will be added here as well.
+    // Required is normally not in the config here but somewhere else, but well, if it is occasionally or just later
+    // on, it will be added here as well.
     if (j.contains("required")) {
         c.required = j.at("required");
     }
@@ -1376,7 +1376,7 @@ static bool value_is_of_type(const std::string& value, const DataEnum& type) {
     return false;
 }
 
-/* Below functions check if components, attributes, variables, characteristics are the same / equal in the schema
+/* Below functions check if components, attributes, variables, characteristics are the same / equal in the config
  * and database. The 'is_same' functions check if two objects are the same, comparing their unique properties. The
  * is_..._different functions check if the objects properties are different (and as a result should be changed in
  * the database).

@@ -19,11 +19,11 @@ class InitDeviceModelDbTest : public DatabaseTestingUtils {
 protected:
     const std::string DATABASE_PATH = "file::memory:?cache=shared";
     const std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-    const std::string SCHEMAS_PATH = "./resources/config/v201/component_config";
-    const std::string SCHEMAS_PATH_CHANGED = "./resources/config/v201/changed/component_config";
-    const std::string SCHEMAS_PATH_REQUIRED_NO_VALUE =
+    const std::string CONFIGS_PATH = "./resources/config/v201/component_config";
+    const std::string CONFIGS_PATH_CHANGED = "./resources/config/v201/changed/component_config";
+    const std::string CONFIGS_PATH_REQUIRED_NO_VALUE =
         "./resources/config/v201/wrong/component_config_required_no_value";
-    const std::string SCHEMAS_PATH_WRONG_VALUE_TYPE = "./resources/config/v201/wrong/component_config_wrong_value_type";
+    const std::string CONFIGS_PATH_WRONG_VALUE_TYPE = "./resources/config/v201/wrong/component_config_wrong_value_type";
 
 public:
     InitDeviceModelDbTest() {
@@ -154,8 +154,8 @@ public:
 
 TEST_F(InitDeviceModelDbTest, init_db) {
     /* This test tests if the initialization of the database is running successfully. It will first initialize with
-     * a given schema and check some variables and attributes to see if they exist. It will then initialize again, but
-     * with a changed schema, which should update the database (in some cases).
+     * a given component config and check some variables and attributes to see if they exist. It will then initialize
+     * again, but with a changed component config, which should update the database (in some cases).
      * Because we test with an in memory database, and we never know what the order is of the tests, we test both cases
      * in one test.
      *
@@ -188,7 +188,7 @@ TEST_F(InitDeviceModelDbTest, init_db) {
     // Database should not exist yet. But since it does a filesystem check and we have an in memory database, we
     // explicitly set the variable here.
     db.database_exists = false;
-    ASSERT_NO_THROW(db.initialize_database(std::filesystem::path(SCHEMAS_PATH), true));
+    ASSERT_NO_THROW(db.initialize_database(std::filesystem::path(CONFIGS_PATH), true));
 
     // Tables should have been created now.
     EXPECT_TRUE(check_all_tables_exist({"COMPONENT", "VARIABLE", "DATATYPE", "MONITOR", "MUTABILITY", "SEVERITY",
@@ -292,7 +292,7 @@ TEST_F(InitDeviceModelDbTest, init_db) {
     // This time, the database does exist (again: std::filesystem::exists, which is automatically used, will not work
     // here because we use an in memory database, so we set the member ourselves).
     db2.database_exists = true;
-    ASSERT_NO_THROW(db2.initialize_database(SCHEMAS_PATH_CHANGED, false));
+    ASSERT_NO_THROW(db2.initialize_database(CONFIGS_PATH_CHANGED, false));
 
     // So now some records should have been changed !
     EXPECT_TRUE(attribute_exists("EVSE", std::nullopt, 1, std::nullopt, "AllowReset", std::nullopt,
@@ -409,11 +409,11 @@ TEST_F(InitDeviceModelDbTest, init_db) {
 TEST_F(InitDeviceModelDbTest, wrong_migration_file_path) {
     InitDeviceModelDb db(DATABASE_PATH, "/tmp/thisdoesnotexisthopefully");
     // The migration script is not correct (there is none in the given folder), this should throw an exception.
-    EXPECT_THROW(db.initialize_database(SCHEMAS_PATH, true), DatabaseMigrationException);
+    EXPECT_THROW(db.initialize_database(CONFIGS_PATH, true), DatabaseMigrationException);
 }
 
-TEST_F(InitDeviceModelDbTest, wrong_schemas_path) {
-    // Wrong schemas path while initializing database
+TEST_F(InitDeviceModelDbTest, wrong_config_path) {
+    // Wrong component config path while initializing database
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);
     EXPECT_THROW(db.initialize_database("/tmp/thisdoesnotexisthopefully", true), std::filesystem::filesystem_error);
 }
@@ -421,16 +421,16 @@ TEST_F(InitDeviceModelDbTest, wrong_schemas_path) {
 TEST_F(InitDeviceModelDbTest, default_device_model_config) {
     // Test if the default device model config is correct and will create a valid database with valid values.
     const static std::string MIGRATION_FILES_PATH_DEFAULT = "./resources/v201/device_model_migration_files";
-    const static std::string SCHEMAS_PATH_DEFAULT = "./resources/example_config/v201/component_config";
+    const static std::string CONFIG_PATH_DEFAULT = "./resources/example_config/v201/component_config";
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH_DEFAULT);
-    EXPECT_NO_THROW(db.initialize_database(SCHEMAS_PATH_DEFAULT, true));
+    EXPECT_NO_THROW(db.initialize_database(CONFIG_PATH_DEFAULT, true));
 }
 
 TEST_F(InitDeviceModelDbTest, missing_required_values) {
     // Test if initializing fails when there is a missing required value.
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);
     try {
-        db.initialize_database(SCHEMAS_PATH_REQUIRED_NO_VALUE, true);
+        db.initialize_database(CONFIGS_PATH_REQUIRED_NO_VALUE, true);
         FAIL() << "Expected InitDeviceModelDbError, but no exception was thrown";
     } catch (const InitDeviceModelDbError& exception) {
         EXPECT_EQ(std::string(exception.what()), "Check integrity failed:\n"
@@ -449,7 +449,7 @@ TEST_F(InitDeviceModelDbTest, wrong_type) {
     // Test if initializing fails when there is a missing required value.
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH);
     try {
-        db.initialize_database(SCHEMAS_PATH_WRONG_VALUE_TYPE, true);
+        db.initialize_database(CONFIGS_PATH_WRONG_VALUE_TYPE, true);
         FAIL() << "Expected InitDeviceModelDbError, but no exception was thrown";
     } catch (const InitDeviceModelDbError& exception) {
         EXPECT_EQ(std::string(exception.what()),
