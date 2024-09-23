@@ -139,6 +139,8 @@ void EvseManager::init() {
             ac_nr_phases_active = c.min_phase_count_import;
         }
 
+        signalNrOfPhasesAvailable(ac_nr_phases_active);
+
         bsp->set_three_phases(c.max_phase_count_import);
         charger->set_connector_type(c.connector_type);
         p_evse->publish_hw_capabilities(c);

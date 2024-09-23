@@ -26,6 +26,13 @@ void evse_managerImpl::init() {
     limits.nr_of_phases_available = 1;
     limits.max_current = 0.;
 
+    mod->signalNrOfPhasesAvailable.connect([this](const int n) {
+        if (n >= 1 && n <= 3) {
+            limits.nr_of_phases_available = n;
+            publish_limits(limits);
+        }
+    });
+
     // Interface to Node-RED debug UI
 
     mod->mqtt.subscribe(
@@ -116,13 +123,6 @@ void evse_managerImpl::ready() {
 
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
-
-    mod->signalNrOfPhasesAvailable.connect([this](const int n) {
-        if (n >= 1 && n <= 3) {
-            limits.nr_of_phases_available = n;
-            publish_limits(limits);
-        }
-    });
 
     mod->r_bsp->subscribe_telemetry([this](types::evse_board_support::Telemetry telemetry) {
         // external Nodered interface
