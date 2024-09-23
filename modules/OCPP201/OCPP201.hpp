@@ -61,7 +61,7 @@ public:
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
-            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink, 
+            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
             std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
@@ -78,7 +78,8 @@ public:
         r_auth(std::move(r_auth)),
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_display_message(std::move(r_display_message)),
-        config(config) {};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;
