@@ -17,21 +17,23 @@ class ReservationHandler {
 
 private:
     std::map<int, types::reservation::Reservation> reservations;
+    std::vector<types::reservation::Reservation> global_reservations;
 
     std::mutex timer_mutex;
     std::mutex reservation_mutex;
-    std::map<int, std::unique_ptr<Everest::SteadyTimer>> connector_to_reservation_timeout_timer_map;
+    // std::map<int, std::unique_ptr<Everest::SteadyTimer>> connector_to_reservation_timeout_timer_map;
+    std::map<int, std::unique_ptr<Everest::SteadyTimer>> reservation_id_to_reservation_timeout_timer_map;
 
     std::function<void(const int& connector_id)> reservation_cancelled_callback;
 
 public:
-    /**
-     * @brief Initializes a connector with the given \p connector_id . This creates an entry in the map of timers of the
-     * handler.
-     *
-     * @param connector_id
-     */
-    void init_connector(int connector_id);
+    // /**
+    //  * @brief Initializes a connector with the given \p connector_id . This creates an entry in the map of timers of the
+    //  * handler.
+    //  *
+    //  * @param connector_id
+    //  */
+    // void init_connector(int connector_id);
 
     /**
      * @brief Function checks if the given \p id_token or \p parent_id_token matches the reserved token of the given \p

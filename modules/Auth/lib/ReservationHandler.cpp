@@ -7,21 +7,38 @@
 
 namespace module {
 
-void ReservationHandler::init_connector(int connector_id) {
-    this->connector_to_reservation_timeout_timer_map[connector_id] = std::make_unique<Everest::SteadyTimer>();
-}
+// TODO mz make evse 0 available so it does not only have maps with connectors but also reservations without connectors
+
+// void ReservationHandler::init_connector(int connector_id) {
+//     this->reservation_id_to_reservation_timeout_timer_map[reservation_id] = std::make_unique<Everest::SteadyTimer>();
+// }
 
 bool ReservationHandler::matches_reserved_identifier(int connector, const std::string& id_token,
                                                      std::optional<std::string> parent_id_token) {
     std::lock_guard<std::mutex> lk(this->reservation_mutex);
     // return true if id tokens match or parent id tokens exists and match
-    return this->reservations[connector].id_token == id_token ||
-           (parent_id_token && this->reservations[connector].parent_id_token &&
-            parent_id_token.value() == this->reservations[connector].parent_id_token.value());
+    if (connector > 0) {
+        return this->reservations[connector].id_token == id_token ||
+               (parent_id_token && this->reservations[connector].parent_id_token &&
+                parent_id_token.value() == this->reservations[connector].parent_id_token.value());
+    } else {
+        for (const auto& reservation : this->global_reservations) {
+            if (reservation.id_token == id_token ||
+                (parent_id_token.has_value() && reservation.parent_id_token.has_value() &&
+                 parent_id_token.value() == reservation.parent_id_token.value())) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+
+    // TODO mz what if connector is not 0?
 }
 
 bool ReservationHandler::has_reservation_parent_id(int connector) {
     std::lock_guard<std::mutex> lk(this->reservation_mutex);
+    // TODO mz also check for global reservations?
     if (!this->reservations.count(connector)) {
         return false;
     }
@@ -67,7 +84,9 @@ types::reservation::ReservationResult ReservationHandler::reserve(int connector,
     if (!this->reservations.count(connector)) {
         this->reservations[connector] = reservation;
         std::lock_guard<std::mutex> lk(this->timer_mutex);
-        this->connector_to_reservation_timeout_timer_map[connector]->at(
+        this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
+            std::make_unique<Everest::SteadyTimer>();
+        this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id]->at(
             [this, reservation, connector]() {
                 EVLOG_info << "Reservation expired for connector#" << connector;
                 this->cancel_reservation(reservation.reservation_id, true);
@@ -88,19 +107,48 @@ int ReservationHandler::cancel_reservation(int reservation_id, bool execute_call
             connector = reservation.first;
         }
     }
-    if (connector != -1) {
+
+    {
         std::lock_guard<std::mutex> lk(this->timer_mutex);
-        this->connector_to_reservation_timeout_timer_map[connector]->stop();
-        auto it = this->reservations.find(connector);
-        this->reservations.erase(it);
-        if (execute_callback) {
-            this->reservation_cancelled_callback(connector);
+        auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
+        if (reservation_id_timer_it == this->reservation_id_to_reservation_timeout_timer_map.end()) {
+            // TODO mz log error etc
+        } else {
+            reservation_id_timer_it->second->stop();
+            this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
         }
     }
+
+    if (connector != -1) {
+
+        auto it = this->reservations.find(connector);
+        this->reservations.erase(it);
+
+    } else {
+        // No connector, search in global reservations
+        const auto& it = std::find_if(this->global_reservations.begin(), this->global_reservations.end(),
+                                      [reservation_id](const types::reservation::Reservation& reservation) {
+                                          return reservation.reservation_id == reservation_id;
+                                      });
+
+        if (it != this->global_reservations.end()) {
+            this->global_reservations.erase(it);
+            connector = 0;
+        }
+    }
+
+    if (connector != -1 && execute_callback) {
+        this->reservation_cancelled_callback(connector);
+    }
+
     return connector;
 }
 
 void ReservationHandler::on_reservation_used(int connector) {
+    // TODO mz cancel reservation for evse 0
+    // TODO mz we need more information on the reservation id for connector 0.
+    if (connector == 0) {
+    }
     if (this->cancel_reservation(this->reservations[connector].reservation_id, false)) {
         EVLOG_info << "Reservation for connector#" << connector << " used and cancelled";
     } else {

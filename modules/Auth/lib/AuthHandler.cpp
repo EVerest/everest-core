@@ -50,7 +50,7 @@ AuthHandler::~AuthHandler() {
 void AuthHandler::init_connector(const int connector_id, const int evse_index) {
     std::unique_ptr<ConnectorContext> ctx = std::make_unique<ConnectorContext>(connector_id, evse_index);
     this->connectors.emplace(connector_id, std::move(ctx));
-    this->reservation_handler.init_connector(connector_id);
+    // this->reservation_handler.init_connector(connector_id);
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -506,19 +506,61 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
     this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
+// TODO mz H01.FR.02 replace reservation with new reservation if the id in the ReserveNowRequest matches.
+// TODO mz when no evse id is given, should the reservation be done for all evse's or just make a reservation for one of
+// them?
+// TODO mz when someone made a reservation (on evse id 0) and starts charging on another evse id, the reservation must
+// be cancelled as well.
+
 types::reservation::ReservationResult AuthHandler::handle_reservation(int connector_id,
                                                                       const Reservation& reservation) {
     if (connector_id == 0) {
+        uint32_t connector_state_unavailable = 0;
+        uint32_t connector_state_reserved_or_occupied = 0;
+        uint32_t connector_state_faulted = 0;
+
         for (auto& [connector_id, connector] : this->connectors) {
+            // Make a reservation for the first available connector.
+            // TODO mz do not make a reservation for a single connector, but for all connectors.
             if (connector->connector.is_reservable && connector->connector.get_state() == ConnectorState::AVAILABLE &&
                 (connector->connector.type == ConnectorTypeEnum::Unknown || !reservation.connector_type.has_value() ||
                  connector->connector.type == reservation.connector_type.value())) {
                 return this->reservation_handler.reserve(connector_id, connector->connector.type,
                                                          connector->connector.get_state(),
                                                          connector->connector.is_reservable, reservation);
+            } else {
+                switch (connector->connector.get_state()) {
+                case ConnectorState::UNAVAILABLE:
+                    connector_state_unavailable++;
+                    break;
+                case ConnectorState::UNAVAILABLE_FAULTED:
+                case ConnectorState::FAULTED:
+                case ConnectorState::FAULTED_OCCUPIED:
+                    connector_state_faulted++;
+                    break;
+                case ConnectorState::AVAILABLE: // Then we should be able to make a reservation
+                case ConnectorState::OCCUPIED:  // Handled later in 'if' statement
+                    break;
+                }
+
+                if (connector->connector.get_state() == ConnectorState::OCCUPIED || connector->connector.reserved) {
+                    connector_state_reserved_or_occupied++;
+                }
             }
         }
-        // TODO mz return correct result depending on the status of the connector.
+
+        // H01.FR.11, H01.FR.12 and H01.FR.13 say that if (all) targeted EVSE's have status ..., it shall return ...
+        // But it does not describe what to do if there is one occupied, one faulted and one unavailable. Therefore, We
+        // keep the order of the result to return here, so if one of the charging stations is reserved or occupied, and
+        // one unavailable, we return 'occupied'.
+        if (connector_state_reserved_or_occupied > 0) {
+            return types::reservation::ReservationResult::Occupied;
+        } else if (connector_state_faulted > 0) {
+            return types::reservation::ReservationResult::Faulted;
+        } else if (connector_state_unavailable > 0) {
+            return types::reservation::ReservationResult::Unavailable;
+        }
+
         return types::reservation::ReservationResult::Rejected;
     } else {
         return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.type,
