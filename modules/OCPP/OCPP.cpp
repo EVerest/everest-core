@@ -47,12 +47,9 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
 
     // check if is VendorError
     if (error_type.find("VendorError") != std::string::npos) {
-        return ocpp::v16::ErrorInfo{uuid,
-                                    ocpp::v16::ChargePointErrorCode::OtherError,
-                                    false,
-                                    error.description,
-                                    error.origin.to_string(),
-                                    error.sub_type};
+        return ocpp::v16::ErrorInfo{
+            uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
+            error.sub_type};
     }
 
     // Default case
@@ -122,7 +119,7 @@ void OCPP::publish_charging_schedules(
     types::ocpp::ChargingSchedules schedules;
     for (const auto& charging_schedule : charging_schedules) {
         types::ocpp::ChargingSchedule sch = conversions::to_charging_schedule(charging_schedule.second);
-        sch.connector = charging_schedule.first;
+        sch.evse = charging_schedule.first;
         schedules.schedules.emplace_back(std::move(sch));
     }
     this->p_ocpp_generic->publish_charging_schedules(schedules);

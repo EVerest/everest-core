@@ -126,9 +126,9 @@ TEST_F(LemDCBM400600ControllerTest, test_get_powermeter) {
 
     // Verify
     EXPECT_EQ(powermeter.timestamp, "2023-09-10T21:10:08.068773");
-    EXPECT_THAT(powermeter.energy_Wh_import.total, testing::FloatEq(1.0));
-    EXPECT_THAT(powermeter.energy_Wh_export->total, testing::FloatEq(2.0));
-    EXPECT_THAT(powermeter.power_W->total, testing::FloatEq(3.0));
+    EXPECT_THAT(powermeter.energy_Wh_import.total, testing::FloatEq(1000.0));
+    EXPECT_THAT(powermeter.energy_Wh_export->total, testing::FloatEq(2000.0));
+    EXPECT_THAT(powermeter.power_W->total, testing::FloatEq(3000.0));
     EXPECT_THAT(powermeter.current_A->DC.value(), testing::FloatEq(4.0));
     EXPECT_THAT(powermeter.voltage_V->DC.value(), testing::FloatEq(4.2));
     EXPECT_THAT(powermeter.meter_id.value(), ""); // not initialized

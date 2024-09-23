@@ -1,0 +1,18 @@
+cc_library(
+    name = "phyverso_gpio",
+    deps = [
+        "//modules/PhyVersoBSP/phyverso_mcu_comms",
+        "//lib/staging/gpio",
+        "@sigslot//:sigslot",
+    ],
+    srcs = glob([
+        "**/*.h",
+        "**/*.c",
+        "**/*.cpp",
+    ]),
+    visibility = ["//visibility:public"],
+    includes = [
+        ".",
+    ],
+    copts = ["-std=c++17"],
+)

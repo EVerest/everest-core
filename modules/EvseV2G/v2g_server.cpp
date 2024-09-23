@@ -95,8 +95,10 @@ static types::iso15118_charger::V2gMessageId get_v2g_message_id(enum V2gMsgTypeI
     case V2G_SESSION_STOP_MSG:
         return is_req == true ? types::iso15118_charger::V2gMessageId::SessionStopReq
                               : types::iso15118_charger::V2gMessageId::SessionStopRes;
+    case V2G_UNKNOWN_MSG:
+    default:
+        return types::iso15118_charger::V2gMessageId::UnknownMessage;
     }
-    return types::iso15118_charger::V2gMessageId::UnknownMessage;
 }
 
 /*!

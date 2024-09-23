@@ -199,8 +199,10 @@ To use this feature several things need to be enabled:
 - In the BSP driver, set ``supports_changing_phases_during_charging`` to true in the reported capabilities.
   If your bsp hardware detects e.g. the Zoe, you can set that flag to false and publish updated capabilities any time.
 - BSP driver capabilities: Also make sure that minimum phases are set to one and maximum phases to 3
-- BSP driver: make sure the ``ac_switch_three_phases_while_charging`` command correctly
-- EnergyManager: Adjust ``switch_3ph1ph_while_charging_mode`` config option to your needs
+- BSP driver: make sure the ``ac_switch_three_phases_while_charging`` command is correctly implemented
+- EnergyManager: Adjust ``switch_3ph1ph_while_charging_mode``, ``switch_3ph1ph_max_nr_of_switches_per_session``,
+  ``switch_3ph1ph_switch_limit_stickyness``, ``switch_3ph1ph_power_hysteresis_W``, ``switch_3ph1ph_time_hysteresis_s``
+  config options to your needs
 
 If all of this is properly set up, the EnergyManager will drive the 1ph/3ph switching. In order to do so,
 it needs an (external) limit to be set. There are two options: The external limit can be in Watt (not in Ampere),
@@ -211,13 +213,9 @@ The second option is to set a limit in Ampere and set a limitation on the number
 This will enforce switching and can be used to decide the switching time externally. EnergyManager does not have the
 freedom to make the choice in this case.
 
-In general, it works best in a configuration with 32A per phase and a limit in Watt.
-In this scenario there is an actual hysteresis as the two intervals overlap:
-1ph charging can be done from 1.3kW to 7.4kW and 3ph charging works from 4.2kW to 22kW(or 11kW)
-
-If the single phase and three phase intervals do not overlap, there is no hysteresis.
-Note that many cars support 32A on 1ph even if they are limited to 16A on 3ph. Some however are limited to 16A
-in 1ph mode and will hence charge slower then expected in 1ph mode.
+Take care especially with the power(watt) and time based hysteresis settings. They should be adjusted to the
+actual use case to avoid relays wearing due too a lot of switching cycles. Consider also to limit the maximum
+number of switching cycles per charging session.
 
 Error Handling
 ==============

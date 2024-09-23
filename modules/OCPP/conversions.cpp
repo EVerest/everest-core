@@ -145,7 +145,7 @@ ocpp::v16::LogStatusEnumType to_ocpp_log_status_enum_type(const types::system::U
         return ocpp::v16::LogStatusEnumType::Accepted;
     case types::system::UploadLogsStatus::Rejected:
         return ocpp::v16::LogStatusEnumType::Rejected;
-    case types::system::UploadLogsStatus::AcceptedCancelled:
+    case types::system::UploadLogsStatus::AcceptedCanceled:
         return ocpp::v16::LogStatusEnumType::AcceptedCanceled;
     default:
         throw std::out_of_range("Could not convert types::system::UploadLogsStatus to ocpp::v16::LogStatusEnumType");
@@ -159,7 +159,7 @@ to_ocpp_update_firmware_status_enum_type(const types::system::UpdateFirmwareResp
         return ocpp::v16::UpdateFirmwareStatusEnumType::Accepted;
     case types::system::UpdateFirmwareResponse::Rejected:
         return ocpp::v16::UpdateFirmwareStatusEnumType::Rejected;
-    case types::system::UpdateFirmwareResponse::AcceptedCancelled:
+    case types::system::UpdateFirmwareResponse::AcceptedCanceled:
         return ocpp::v16::UpdateFirmwareStatusEnumType::AcceptedCanceled;
     case types::system::UpdateFirmwareResponse::InvalidCertificate:
         return ocpp::v16::UpdateFirmwareStatusEnumType::InvalidCertificate;
@@ -418,7 +418,6 @@ types::ocpp::ChargingSchedule to_charging_schedule(const ocpp::v16::EnhancedChar
         0,
         ocpp::v16::conversions::charging_rate_unit_to_string(schedule.chargingRateUnit),
         {},
-        std::nullopt,
         schedule.duration,
         std::nullopt,
         schedule.minChargingRate};

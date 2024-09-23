@@ -617,15 +617,17 @@ void API::ready() {
         auto next_tick = std::chrono::steady_clock::now();
         while (this->running) {
             std::string datetime_str = Everest::Date::to_rfc3339(date::utc_clock::now());
-            // request active errors
-            types::error_history::FilterArguments filter;
-            filter.state_filter = types::error_history::State::Active;
-            auto active_errors = r_error_history->call_get_errors(filter);
-            json errors_json = json(active_errors);
 
-            // publish
-            this->mqtt.publish(var_active_errors, errors_json.dump());
+            if (not r_error_history.empty()) {
+                // request active errors
+                types::error_history::FilterArguments filter;
+                filter.state_filter = types::error_history::State::Active;
+                auto active_errors = r_error_history.at(0)->call_get_errors(filter);
+                json errors_json = json(active_errors);
 
+                // publish
+                this->mqtt.publish(var_active_errors, errors_json.dump());
+            }
             next_tick += NOTIFICATION_PERIOD;
             std::this_thread::sleep_until(next_tick);
         }

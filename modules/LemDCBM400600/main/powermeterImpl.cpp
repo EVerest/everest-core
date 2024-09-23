@@ -42,6 +42,8 @@ void powermeterImpl::ready() {
                 // if the communication error is set, clear the error
                 if (this->error_state_monitor->is_error_active("powermeter/CommunicationFault",
                                                                "Communication timed out")) {
+                    // need to update LEM status since we have recovered from a communication loss
+                    this->controller->update_lem_status();
                     clear_error("powermeter/CommunicationFault", "Communication timed out");
                 }
             } catch (LemDCBM400600Controller::DCBMUnexpectedResponseException& dcbm_exception) {

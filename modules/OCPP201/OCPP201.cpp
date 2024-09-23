@@ -235,6 +235,16 @@ std::optional<ocpp::v201::IdToken> get_authorized_id_token(const types::evse_man
     return std::nullopt;
 }
 
+ocpp::v201::ChargingRateUnitEnum get_unit_or_default(const std::string& unit_string) {
+    try {
+        return ocpp::v201::conversions::string_to_charging_rate_unit_enum(unit_string);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << "RequestCompositeScheduleUnit configured incorrectly with: " << unit_string
+                      << ". Defaulting to using Amps.";
+        return ocpp::v201::ChargingRateUnitEnum::A;
+    }
+}
+
 bool OCPP201::all_evse_ready() {
     for (auto const& [evse, ready] : this->evse_ready_map) {
         if (!ready) {
@@ -522,10 +532,18 @@ void OCPP201::ready() {
         this->p_ocpp_generic->publish_security_event(event);
     };
 
-    callbacks.set_charging_profiles_callback = [this]() {
-        // TODO: implement once charging profiles are available in libocpp
-        return;
+    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
+
+    // this callback publishes the schedules within EVerest and applies the schedules for the individual evse_manager(s)
+    // and the connector_zero_sink
+    const auto charging_schedules_callback = [this, composite_schedule_unit]() {
+        const auto composite_schedules = this->charge_point->get_all_composite_schedules(
+            this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
+        this->publish_charging_schedules(composite_schedules);
+        this->set_external_limits(composite_schedules);
     };
+
+    callbacks.set_charging_profiles_callback = charging_schedules_callback;
 
     callbacks.time_sync_callback = [this](const ocpp::DateTime& current_time) {
         this->r_system->call_set_system_time(current_time.to_rfc3339());
@@ -538,6 +556,14 @@ void OCPP201::ready() {
         evse_connector_structure, device_model_database_path, true, device_model_database_migration_path,
         device_model_config_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath, sql_init_path.string(),
         this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+
+    // publish charging schedules at least once on startup
+    charging_schedules_callback();
+
+    if (this->config.CompositeScheduleIntervalS > 0) {
+        this->charging_schedules_timer.interval(charging_schedules_callback,
+                                                std::chrono::seconds(this->config.CompositeScheduleIntervalS));
+    }
 
     const auto ev_connection_timeout_request_value_response = this->charge_point->request_value<int32_t>(
         ocpp::v201::Component{"TxCtrlr"}, ocpp::v201::Variable{"EVConnectionTimeOut"},
@@ -1020,6 +1046,55 @@ void OCPP201::process_deauthorized(const int32_t evse_id, const int32_t connecto
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::DEAUTHORIZED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
+}
+
+void OCPP201::publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
+    const auto everest_schedules = conversions::to_everest_charging_schedules(composite_schedules);
+    this->p_ocpp_generic->publish_charging_schedules(everest_schedules);
+}
+
+void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
+    const auto start_time = ocpp::DateTime();
+
+    // iterate over all schedules reported by the libocpp to create ExternalLimits
+    // for each connector
+
+    for (const auto& composite_schedule : composite_schedules) {
+        types::energy::ExternalLimits limits;
+        std::vector<types::energy::ScheduleReqEntry> schedule_import;
+
+        for (const auto& period : composite_schedule.chargingSchedulePeriod) {
+            types::energy::ScheduleReqEntry schedule_req_entry;
+            types::energy::LimitsReq limits_req;
+            const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
+            schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (composite_schedule.chargingRateUnit == ocpp::v201::ChargingRateUnitEnum::A) {
+                limits_req.ac_max_current_A = period.limit;
+                if (period.numberPhases.has_value()) {
+                    limits_req.ac_max_phase_count = period.numberPhases.value();
+                }
+            } else {
+                limits_req.total_power_W = period.limit;
+            }
+            schedule_req_entry.limits_to_leaves = limits_req;
+            schedule_import.push_back(schedule_req_entry);
+        }
+        limits.schedule_import = schedule_import;
+
+        if (composite_schedule.evseId == 0) {
+            if (!this->r_connector_zero_sink.empty()) {
+                EVLOG_debug << "OCPP sets the following external limits for evse 0: \n" << limits;
+                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
+            } else {
+                EVLOG_debug << "OCPP cannot set external limits for evse 0. No "
+                               "sink is configured.";
+            }
+        } else {
+            EVLOG_debug << "OCPP sets the following external limits for evse " << composite_schedule.evseId << ": \n"
+                        << limits;
+            this->r_evse_manager.at(composite_schedule.evseId - 1)->call_set_external_limits(limits);
+        }
+    }
 }
 
 } // namespace module
