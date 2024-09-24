@@ -77,8 +77,9 @@ const std::string cpevent_to_string(CPEvent e) {
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
-IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp, bool lock_connector_in_state_b) :
-    r_bsp(r_bsp), lock_connector_in_state_b(lock_connector_in_state_b) {
+IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
+                                 bool lock_connector_in_state_b_) :
+    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
 
