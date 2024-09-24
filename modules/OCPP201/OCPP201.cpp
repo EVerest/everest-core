@@ -624,6 +624,10 @@ void OCPP201::ready() {
 
     callbacks.set_charging_profiles_callback = charging_schedules_callback;
 
+    callbacks.time_sync_callback = [this](const ocpp::DateTime& current_time) {
+        this->r_system->call_set_system_time(current_time.to_rfc3339());
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
