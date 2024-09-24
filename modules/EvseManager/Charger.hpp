@@ -377,8 +377,9 @@ private:
 
     // ErrorHandling events
     enum class ErrorHandlingEvents : std::uint8_t {
-        prevent_charging,
-        all_errors_cleared
+        PreventCharging,
+        AllErrorsPreventingChargingCleared,
+        AllErrorCleared
     };
 
     EventQueue<ErrorHandlingEvents> error_handling_event_queue;

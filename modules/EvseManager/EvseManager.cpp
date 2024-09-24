@@ -159,11 +159,11 @@ void EvseManager::ready() {
         bsp->set_ev_simplified_mode_evse_limit(true);
     }
 
-    error_handling =
-        std::unique_ptr<ErrorHandling>(new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd));
+    error_handling = std::unique_ptr<ErrorHandling>(
+        new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC));
 
-    charger = std::unique_ptr<Charger>(new Charger(bsp, error_handling, r_powermeter_billing(), store,
-                                                   hw_capabilities.connector_type, config.evse_id));
+    charger = std::make_unique<Charger>(bsp, error_handling, r_powermeter_billing(), store,
+                                        hw_capabilities.connector_type, config.evse_id);
 
     // Now incoming hardware capabilties can be processed
     hw_caps_mutex.unlock();

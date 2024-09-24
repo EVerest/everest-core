@@ -13,13 +13,13 @@ void car_simulatorImpl::init() {
     register_all_commands();
     subscribe_to_variables_on_init();
 
+    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
+
     std::thread(&car_simulatorImpl::run, this).detach();
 }
 
 void car_simulatorImpl::ready() {
     subscribe_to_external_mqtt();
-
-    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
 
     setup_ev_parameters();
 

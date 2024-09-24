@@ -162,7 +162,7 @@ active_modules:
         nid: pionix!
         number_of_sounds: 10
     connections: {}
-    module: JsSlacSimulator
+    module: SlacSimulator
   token_provider:
     config_implementation:
       main:
