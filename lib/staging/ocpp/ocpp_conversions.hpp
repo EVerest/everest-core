@@ -44,4 +44,4 @@ create_charging_price_component(const double& price, const uint32_t& number_of_d
 types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& running_cost,
                                                      const uint32_t number_of_decimals,
                                                      std::optional<types::money::CurrencyCode> currency_code);
-}; // namespace conversions
+}; // namespace ocpp_conversions
