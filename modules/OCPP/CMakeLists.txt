@@ -17,6 +17,7 @@ target_link_libraries(${MODULE_NAME}
         OpenSSL::Crypto
         everest::ocpp
         everest::ocpp_evse_security
+        everest::ocpp_conversions
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
