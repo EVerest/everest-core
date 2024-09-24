@@ -1,8 +1,8 @@
-#include "conversions.hpp"
+#include "ocpp_conversions.hpp"
 
 #include "generated/types/display_message.hpp"
 
-namespace conversions {
+namespace ocpp_conversions {
 types::display_message::MessagePriorityEnum
 to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority) {
     switch (priority) {
@@ -144,7 +144,7 @@ types::display_message::DisplayMessage to_everest_display_message(const ocpp::Di
     m.message.language = display_message.message.language;
 
     if (display_message.priority.has_value()) {
-        m.priority = ::conversions::to_everest_display_message_priority(display_message.priority.value());
+        m.priority = ocpp_conversions::to_everest_display_message_priority(display_message.priority.value());
     }
 
     m.qr_code = display_message.qr_code;
@@ -178,7 +178,7 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     }
 
     if (display_message.priority.has_value()) {
-        m.priority = ::conversions::to_ocpp_201_message_priority(display_message.priority.value());
+        m.priority = ocpp_conversions::to_ocpp_201_message_priority(display_message.priority.value());
     }
 
     m.qr_code = display_message.qr_code;
@@ -354,4 +354,4 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
 
     return cost;
 }
-} // namespace conversions
+} // namespace ocpp_conversions

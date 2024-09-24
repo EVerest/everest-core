@@ -6,7 +6,7 @@
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_enums.hpp>
 
-namespace conversions {
+namespace ocpp_conversions {
 types::display_message::MessagePriorityEnum
 to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority);
 ocpp::v201::MessagePriorityEnum

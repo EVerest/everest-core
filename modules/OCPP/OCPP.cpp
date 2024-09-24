@@ -4,9 +4,9 @@
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
-#include <../../utils/conversions.hpp>
 #include <fmt/core.h>
 #include <fstream>
+#include <ocpp_conversions.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
@@ -757,7 +757,7 @@ void OCPP::ready() {
         [this](const ocpp::RunningCost& session_cost,
                const uint32_t number_of_decimals) -> ocpp::v16::DataTransferResponse {
             const types::session_cost::SessionCost cost =
-                ::conversions::create_session_cost(session_cost, number_of_decimals, {});
+                ocpp_conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
             this->p_session_cost->publish_session_cost(cost);
             response.status = ocpp::v16::DataTransferStatus::Accepted;
@@ -774,7 +774,7 @@ void OCPP::ready() {
             }
             std::vector<types::display_message::DisplayMessage> display_messages;
             for (const ocpp::DisplayMessage& message : messages) {
-                const types::display_message::DisplayMessage m = ::conversions::to_everest_display_message(message);
+                const types::display_message::DisplayMessage m = ocpp_conversions::to_everest_display_message(message);
                 display_messages.push_back(m);
             }
 

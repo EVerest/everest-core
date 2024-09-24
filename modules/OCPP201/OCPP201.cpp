@@ -7,9 +7,9 @@
 
 #include <websocketpp_utils/uri.hpp>
 
-#include <../../utils/conversions.hpp>
 #include <conversions.hpp>
 #include <evse_security_ocpp.hpp>
+#include <ocpp_conversions.hpp>
 
 namespace module {
 
@@ -517,7 +517,7 @@ void OCPP201::ready() {
 
         std::vector<types::display_message::DisplayMessage> display_messages;
         for (const ocpp::DisplayMessage& message : messages) {
-            const types::display_message::DisplayMessage m = ::conversions::to_everest_display_message(message);
+            const types::display_message::DisplayMessage m = ocpp_conversions::to_everest_display_message(message);
             display_messages.push_back(m);
         }
 
@@ -545,7 +545,7 @@ void OCPP201::ready() {
 
         std::vector<ocpp::DisplayMessage> ocpp_display_messages;
         for (const auto& message : response.messages.value()) {
-            ocpp_display_messages.push_back(::conversions::to_ocpp_display_message(message));
+            ocpp_display_messages.push_back(ocpp_conversions::to_ocpp_display_message(message));
         }
 
         return ocpp_display_messages;
@@ -579,7 +579,7 @@ void OCPP201::ready() {
                 }
             }
             const types::session_cost::SessionCost cost =
-                ::conversions::create_session_cost(running_cost, number_of_decimals, currency);
+                ocpp_conversions::create_session_cost(running_cost, number_of_decimals, currency);
             this->p_session_cost->publish_session_cost(cost);
         };
     }
