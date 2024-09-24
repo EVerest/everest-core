@@ -245,6 +245,12 @@ config:
       - X1
       - F
     default: X1
+  soft_over_current_timeout_ms:
+    description: >-
+      Allow for over current to be present for N ms in soft over current checking during AC charging.
+    type: integer
+    minimum: 6000
+    default: 7000
 provides:
   evse:
     interface: evse_manager

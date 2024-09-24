@@ -47,12 +47,9 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
 
     // check if is VendorError
     if (error_type.find("VendorError") != std::string::npos) {
-        return ocpp::v16::ErrorInfo{uuid,
-                                    ocpp::v16::ChargePointErrorCode::OtherError,
-                                    false,
-                                    error.description,
-                                    error.origin.to_string(),
-                                    error.sub_type};
+        return ocpp::v16::ErrorInfo{
+            uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
+            error.sub_type};
     }
 
     // Default case
