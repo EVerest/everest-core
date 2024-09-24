@@ -20,11 +20,7 @@
 namespace module {
 namespace evse {
 
-struct Conf {
-    std::string evse_id;
-    std::string nid;
-    int number_of_sounds;
-};
+struct Conf {};
 
 class slacImpl : public slacImplBase {
 public:
