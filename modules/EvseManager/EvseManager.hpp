@@ -97,6 +97,7 @@ struct Conf {
     int initial_meter_value_timeout_ms;
     int switch_3ph1ph_delay_s;
     std::string switch_3ph1ph_cp_state;
+    int soft_over_current_timeout_ms;
 };
 
 class EvseManager : public Everest::ModuleBase {

@@ -5,7 +5,7 @@ config:
   csms_ca_bundle:
     description: Path to csms_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
-    default: ca/v2g/V2G_ROOT_CA.pem
+    default: ca/csms/CSMS_ROOT_CA.pem
   mf_ca_bundle:
     description: Path to mf_ca_bundle file. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string

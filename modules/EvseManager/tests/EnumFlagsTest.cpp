@@ -11,7 +11,7 @@ enum class ErrorHandlingFlags : std::uint8_t {
     prevent_charging,
     prevent_charging_welded,
     all_errors_cleared,
-    last = all_errors_cleared
+    last = AllErrorCleared
 };
 
 enum class BspErrors : std::uint8_t {
@@ -53,9 +53,9 @@ TEST(AtomicEnumFlagsTest, set_reset_one) {
     module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::all_errors_cleared);
+    flags.set(ErrorHandlingFlags::AllErrorCleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::all_errors_cleared);
+    flags.reset(ErrorHandlingFlags::AllErrorCleared);
     EXPECT_TRUE(flags.all_reset());
 }
 
@@ -63,13 +63,13 @@ TEST(AtomicEnumFlagsTest, set_reset_two) {
     module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::all_errors_cleared);
+    flags.set(ErrorHandlingFlags::AllErrorCleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.set(ErrorHandlingFlags::prevent_charging);
+    flags.set(ErrorHandlingFlags::PreventCharging);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::all_errors_cleared);
+    flags.reset(ErrorHandlingFlags::AllErrorCleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::prevent_charging);
+    flags.reset(ErrorHandlingFlags::PreventCharging);
     EXPECT_TRUE(flags.all_reset());
 }
 
@@ -77,9 +77,9 @@ TEST(AtomicEnumFlagsTest, set_reset_three) {
     module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::all_errors_cleared);
+    flags.set(ErrorHandlingFlags::AllErrorCleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.set(ErrorHandlingFlags::prevent_charging);
+    flags.set(ErrorHandlingFlags::PreventCharging);
     EXPECT_FALSE(flags.all_reset());
     flags.set(ErrorHandlingFlags::prevent_charging_welded);
     EXPECT_FALSE(flags.all_reset());
