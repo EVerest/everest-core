@@ -32,6 +32,7 @@
 /modules/Setup @hikinggrass @corneliusclaussen @pietfried
 /modules/YetiDriver @corneliusclaussen @hikinggrass
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
+/modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 /modules/rust_examples/ @SirVer @golovasteek @dorezyuk
 **/Cargo.toml @SirVer @golovasteek @dorezyuk
 **/Cargo.lock @SirVer @golovasteek @dorezyuk
