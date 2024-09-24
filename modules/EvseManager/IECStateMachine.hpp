@@ -106,7 +106,7 @@ private:
     void connector_unlock();
     void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
-    bool lock_connector_in_state_b{false};
+    bool lock_connector_in_state_b{true};
 
     bool pwm_running{false};
     bool last_pwm_running{false};
