@@ -98,6 +98,54 @@
       ],
       "description": "List of the priorities supported by this Charging Station.",
       "type": "string"
+    },
+    "DisplayMessageSupportedStates": {
+      "variable_name": "SupportedStates",
+      "characteristics": {
+        "valuesList": "Charging,Faulted,Idle,Unavailable",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "List of the priorities supported by this Charging Station.",
+      "type": "string",
+      "default": "Charging,Faulted,Idle,Unavailable"
+    },
+    "QRCodeDisplayCapable": {
+      "variable_name": "QRCodeDisplayCapable",
+      "characteristics": {
+        "dataType": "boolean",
+        "supportsMonitoring": true
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadOnly"
+        }
+      ],
+      "description": "Whether the station can display QR codes or not.",
+      "type": "boolean"
+    },
+    "DisplayMessageLanguage": {
+      "variable_name": "Language",
+      "characteristics": {
+        "valuesList": "en_US,de,nl",
+        "supportsMonitoring": true,
+        "dataType": "OptionList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Default language of the charging station. Note: set all supported languages by this charging station in 'valuesList' of this Variable.",
+      "type": "string"
     }
   },
   "required": [

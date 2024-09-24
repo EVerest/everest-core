@@ -3002,14 +3002,19 @@ DataTransferResponse ChargePointImpl::handle_set_user_price(const std::optional<
     std::vector<DisplayMessage> messages;
     DisplayMessage message;
     const auto t = this->transaction_handler->get_transaction_from_id_tag(id_token.value());
+    std::string identifier_id;
+    IdentifierType identifier_type;
 
     if (t == nullptr) {
-        EVLOG_error << "Set user price failed: could not get session id from transaction.";
-        return response;
+        identifier_id = id_token.value();
+        identifier_type = IdentifierType::IdToken;
+    } else {
+        identifier_id = t->get_session_id();
+        identifier_type = IdentifierType::SessionId;
     }
 
-    std::string session_id = t->get_session_id();
-    message.transaction_id = session_id;
+    message.identifier_id = identifier_id;
+    message.identifier_type = identifier_type;
 
     if (data.contains("priceText")) {
         message.message.message = data.at("priceText");
@@ -3024,7 +3029,8 @@ DataTransferResponse ChargePointImpl::handle_set_user_price(const std::optional<
         data.at("priceTextExtra").is_array()) {
         for (const json& j : data.at("priceTextExtra")) {
             DisplayMessage display_message;
-            display_message.transaction_id = session_id;
+            display_message.identifier_id = identifier_id;
+            display_message.identifier_type = identifier_type;
             display_message.message = j;
 
             messages.push_back(display_message);

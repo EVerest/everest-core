@@ -218,7 +218,7 @@ bool include_in_summary_inventory(const ComponentVariable& cv, const VariableAtt
 
 GetVariableStatusEnum DeviceModel::request_value_internal(const Component& component_id, const Variable& variable_id,
                                                           const AttributeEnum& attribute_enum, std::string& value,
-                                                          bool allow_write_only) {
+                                                          bool allow_write_only) const {
     const auto component_it = this->device_model.find(component_id);
     if (component_it == this->device_model.end()) {
         EVLOG_debug << "unknown component in " << component_id.name << "." << variable_id.name;

@@ -102,6 +102,15 @@ std::vector<MeterValue> get_meter_values_with_measurands_applied(
     return meter_values_result;
 }
 
+MeterValue set_meter_value_reading_context(const MeterValue& meter_value, const ReadingContextEnum reading_context) {
+    MeterValue return_value = meter_value;
+    for (auto& sampled_value : return_value.sampledValue) {
+        sampled_value.context = reading_context;
+    }
+
+    return return_value;
+}
+
 std::string sha256(const std::string& str) {
     unsigned char hash[SHA256_DIGEST_LENGTH];
     EVP_Digest(str.c_str(), str.size(), hash, NULL, EVP_sha256(), NULL);

@@ -56,6 +56,7 @@ if(LIBOCPP_ENABLE_V201)
         PRIVATE
             ocpp/v201/average_meter_values.cpp
             ocpp/v201/charge_point.cpp
+            ocpp/v201/charge_point_callbacks.cpp
             ocpp/v201/smart_charging.cpp
             ocpp/v201/connector.cpp
             ocpp/v201/ctrlr_component_variables.cpp

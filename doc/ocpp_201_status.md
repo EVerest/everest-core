@@ -1125,50 +1125,50 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I01.FR.01 |        |        |
-| I01.FR.02 |        |        |
-| I01.FR.03 |        |        |
+| I01.FR.01 | 🌐      |        |
+| I01.FR.02 | 🌐      |        |
+| I01.FR.03 | ⛽️      |        |
 
 ## TariffAndCost - Show EV Driver Running Total Cost During Charging
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I02.FR.01 |        |        |
-| I02.FR.02 |        |        |
-| I02.FR.03 |        |        |
-| I02.FR.04 |        |        |
+| I02.FR.01 | 🌐      |        |
+| I02.FR.02 | ✅      |        |
+| I02.FR.03 | ⛽️      |        |
+| I02.FR.04 | ⛽️      |        |
 
 ## TariffAndCost -  Show EV Driver Final Total Cost After Charging
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I03.FR.01 |        |        |
-| I03.FR.02 |        |        |
-| I03.FR.03 |        |        |
-| I03.FR.04 |        |        |
-| I03.FR.05 |        |        |
+| I03.FR.01 | ✅      |        |
+| I03.FR.02 | 🌐      |        |
+| I03.FR.03 | ⛽️      |        |
+| I03.FR.04 | 🌐      |        |
+| I03.FR.05 | ⛽️      |        |
 
 ## TariffAndCost - Show Fallback Tariff Information
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I04.FR.01 |        |        |
-| I04.FR.02 |        |        |
+| I04.FR.01 | ⛽️      |        |
+| I04.FR.02 | 🌐      |        |
 
 ## TariffAndCost - Show Fallback Total Cost Message
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I05.FR.01 |        |        |
-| I05.FR.02 |        |        |
+| I05.FR.01 | 🌐      |        |
+| I05.FR.02 | ⛽️      |        |
 
 ## TariffAndCost - Update Tariff Information During Transaction
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| I06.FR.01 |        |        |
-| I06.FR.02 |        |        |
-| I06.FR.03 |        |        |
+| I06.FR.01 | 🌐      |        |
+| I06.FR.02 | 🌐      |        |
+| I06.FR.03 | ⛽️      |        |
 
 ## MeterValues - Sending Meter Values not related to a transaction
 
@@ -1795,80 +1795,81 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O01.FR.01 |        |        |
-| O01.FR.02 |        |        |
-| O01.FR.03 |        |        |
-| O01.FR.04 |        |        |
-| O01.FR.05 |        |        |
-| O01.FR.06 |        |        |
-| O01.FR.07 |        |        |
-| O01.FR.08 |        |        |
-| O01.FR.09 |        |        |
-| O01.FR.10 |        |        |
-| O01.FR.11 |        |        |
-| O01.FR.12 |        |        |
-| O01.FR.13 |        |        |
-| O01.FR.14 |        |        |
-| O01.FR.15 |        |        |
-| O01.FR.16 |        |        |
-| O01.FR.17 |        |        |
+| O01.FR.01 | ✅      |        |
+| O01.FR.02 | ✅      |        |
+| O01.FR.03 | ✅      |        |
+| O01.FR.04 | 🌐      |        |
+| O01.FR.05 | 🌐      |        |
+| O01.FR.06 | ⛽️      |        |
+| O01.FR.07 | ⛽️      |        |
+| O01.FR.08 | ⛽️      |        |
+| O01.FR.09 | ⛽️      |        |
+| O01.FR.10 | ⛽️      |        |
+| O01.FR.11 | ⛽️      |        |
+| O01.FR.12 | ⛽️      |        |
+| O01.FR.13 | ⛽️      |        |
+| O01.FR.14 | ⛽️      |        |
+| O01.FR.15 | ⛽️      |        |
+| O01.FR.16 | ⛽️      |        |
+| O01.FR.17 | ⛽️ / 🌐  |        |
 
 ## DisplayMessage - Set DisplayMessage for Transaction
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O02.FR.01 |        |        |
-| O02.FR.02 |        |        |
-| O02.FR.03 |        |        |
-| O02.FR.04 |        |        |
-| O02.FR.05 |        |        |
-| O02.FR.06 |        |        |
-| O02.FR.07 |        |        |
-| O02.FR.08 |        |        |
-| O02.FR.09 |        |        |
-| O02.FR.10 |        |        |
-| O02.FR.11 |        |        |
-| O02.FR.12 |        |        |
-| O02.FR.14 |        |        |
-| O02.FR.15 |        |        |
-| O02.FR.16 |        |        |
-| O02.FR.17 |        |        |
-| O02.FR.18 |        |        |
+| O02.FR.01 | ✅      |        |
+| O02.FR.02 | ⛽️      |        |
+| O02.FR.03 | ✅      |        |
+| O02.FR.04 | ✅      |        |
+| O02.FR.05 | ✅      |        |
+| O02.FR.06 | ⛽️      |        |
+| O02.FR.07 | ⛽️      |        |
+| O02.FR.08 | ⛽️      |        |
+| O02.FR.09 | ⛽️      |        |
+| O02.FR.10 | ⛽️      |        |
+| O02.FR.11 | ⛽️      |        |
+| O02.FR.12 | ⛽️ / 🌐  |        |
+| O02.FR.14 | ⛽️      |        |
+| O02.FR.15 | ⛽️      |        |
+| O02.FR.16 | ⛽️      |        |
+| O02.FR.17 | ⛽️      |        |
+| O02.FR.18 | ⛽️      |        |
 
 ## DisplayMessage - Get All DisplayMessages
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O03.FR.02 |        |        |
+| O03.FR.01 | ✅      |        |
+| O03.FR.02 | ✅      |        |
 | O03.FR.03 |        |        |
 | O03.FR.04 |        |        |
 | O03.FR.05 |        |        |
-| O03.FR.06 |        |        |
+| O03.FR.06 | ✅      |        |
 
 ## DisplayMessage - Get Specific DisplayMessages
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O04.FR.01 |        |        |
-| O04.FR.02 |        |        |
-| O04.FR.03 |        |        |
+| O04.FR.01 | ✅      |        |
+| O04.FR.02 | ✅      |        |
+| O04.FR.03 | ✅      |        |
 | O04.FR.04 |        |        |
 | O04.FR.05 |        |        |
 | O04.FR.06 |        |        |
-| O04.FR.07 |        |        |
+| O04.FR.07 | ✅      |        |
 
 ## DisplayMessage - Clear a DisplayMessage
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O05.FR.01 |        |        |
-| O05.FR.02 |        |        |
+| O05.FR.01 | ⛽️      |        |
+| O05.FR.02 | ⛽️      |        |
 
 ## DisplayMessage - Replace DisplayMessage
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
-| O06.FR.01 |        |        |
+| O06.FR.01 | ⛽️      |        |
 
 ## DataTransfer - Data Transfer to the Charging Station
 

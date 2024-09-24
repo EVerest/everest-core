@@ -41,6 +41,14 @@ std::vector<MeterValue> get_meter_values_with_measurands_applied(
     const std::vector<MeasurandEnum>& aligned_tx_ended_measurands, ocpp::DateTime max_timestamp,
     bool include_sampled_signed = true, bool include_aligned_signed = true);
 
+///
+/// \brief Set reading context of metervalue sampled values.
+/// \param meter_value      The meter value to set context on
+/// \param reading_context  Reading context to set.
+/// \return The metervalue with the reading context
+///
+MeterValue set_meter_value_reading_context(const MeterValue& meter_value, const ReadingContextEnum reading_context);
+
 /// \brief Returns the given \p str hashed using SHA256
 /// \param str
 /// \return

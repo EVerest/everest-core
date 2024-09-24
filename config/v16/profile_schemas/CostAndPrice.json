@@ -113,7 +113,7 @@
             "type": "boolean",
             "readOnly": false
         },
-        "MultiLanguageSupportedLanguages": {
+        "SupportedLanguages": {
             "description": "Comma separated list of supported language codes, per RFC5646.",
             "type": "string",
             "readOnly": true,

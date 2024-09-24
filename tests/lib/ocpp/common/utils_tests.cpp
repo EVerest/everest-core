@@ -64,6 +64,20 @@ TEST(Utils, test_split_string) {
     ASSERT_EQ(result.size(), 2);
     EXPECT_EQ(result.at(0), "This is a test");
     EXPECT_EQ(result.at(1), " It is performed using google test");
+
+    result = split_string("Aa, Bb, Cc, Dd", ',', false);
+    ASSERT_EQ(result.size(), 4);
+    EXPECT_EQ(result.at(0), "Aa");
+    EXPECT_EQ(result.at(1), " Bb");
+    EXPECT_EQ(result.at(2), " Cc");
+    EXPECT_EQ(result.at(3), " Dd");
+
+    result = split_string("Aa, Bb, Cc, Dd", ',', true);
+    ASSERT_EQ(result.size(), 4);
+    EXPECT_EQ(result.at(0), "Aa");
+    EXPECT_EQ(result.at(1), "Bb");
+    EXPECT_EQ(result.at(2), "Cc");
+    EXPECT_EQ(result.at(3), "Dd");
 }
 
 TEST(Utils, test_trim_string) {

@@ -36,5 +36,11 @@ public:
                 (int32_t connector_id, OperationalStatusEnum new_status, bool persist));
     MOCK_METHOD(void, restore_connector_operative_status, (int32_t connector_id));
     MOCK_METHOD(CurrentPhaseType, get_current_phase_type, ());
+    MOCK_METHOD(void, set_meter_value_pricing_triggers,
+                (std::optional<double> trigger_metervalue_on_power_kw,
+                 std::optional<double> trigger_metervalue_on_energy_kwh,
+                 std::optional<DateTime> trigger_metervalue_at_time,
+                 std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
+                 boost::asio::io_service& io_service));
 };
 } // namespace ocpp::v201

@@ -115,7 +115,7 @@ private:
     /// \return GetVariableStatusEnum that indicates the result of the request
     GetVariableStatusEnum request_value_internal(const Component& component_id, const Variable& variable_id,
                                                  const AttributeEnum& attribute_enum, std::string& value,
-                                                 bool allow_write_only);
+                                                 bool allow_write_only) const;
 
     /// \brief Iterates over the given \p component_criteria and converts this to the variable names
     /// (Active,Available,Enabled,Problem). If any of the variables can not be found as part of a component this
@@ -149,7 +149,7 @@ public:
     /// \return the requested value from the device model storage
     template <typename T>
     T get_value(const RequiredComponentVariable& component_variable,
-                const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
+                const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
         std::string value;
         auto response = GetVariableStatusEnum::UnknownVariable;
         if (component_variable.variable.has_value()) {
@@ -175,7 +175,7 @@ public:
     /// requested from the storage and a value is present for this combination, else std::nullopt .
     template <typename T>
     std::optional<T> get_optional_value(const ComponentVariable& component_variable,
-                                        const AttributeEnum& attribute_enum = AttributeEnum::Actual) {
+                                        const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
         std::string value;
         auto response = GetVariableStatusEnum::UnknownVariable;
         if (component_variable.variable.has_value()) {

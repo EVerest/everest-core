@@ -32,6 +32,38 @@
       ],
       "description": "Custom implementation <vendorId> has been enabled.",
       "type": "boolean"
+    },
+    "CustomImplementationCaliforniaPricingEnabled": {
+        "variable_name":  "CustomImplementationEnabled",
+        "instance": "org.openchargealliance.costmsg",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadWrite"
+          }
+        ],
+        "description": "Custom implementation org.openchargealliance.costmsg (California Pricing) has been enabled.",
+        "type": "boolean"
+    },
+    "CustomImplementationMultiLanguageEnabled": {
+        "variable_name":  "CustomImplementationEnabled",
+        "instance": "org.openchargealliance.multilanguage",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadWrite"
+          }
+        ],
+        "description": "Custom implementation org.openchargealliance.multilanguage has been enabled.",
+        "type": "boolean"
     }
   },
   "required": []

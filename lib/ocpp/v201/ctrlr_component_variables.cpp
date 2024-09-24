@@ -586,6 +586,16 @@ const ComponentVariable& CustomImplementationEnabled = {
         "CustomImplementationEnabled",
     }),
 };
+const ComponentVariable& CustomImplementationCaliforniaPricingEnabled = {
+    ControllerComponents::CustomizationCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"CustomImplementationEnabled", std::nullopt, "org.openchargealliance.costmsg"}),
+};
+const ComponentVariable& CustomImplementationMultiLanguageEnabled = {
+    ControllerComponents::CustomizationCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"CustomImplementationEnabled", std::nullopt, "org.openchargealliance.multilanguage"}),
+};
 const RequiredComponentVariable& BytesPerMessageGetReport = {
     ControllerComponents::DeviceDataCtrlr,
     std::nullopt,
@@ -658,6 +668,17 @@ const RequiredComponentVariable& DisplayMessageSupportedPriorities = {
         "SupportedPriorities",
     }),
 };
+const ComponentVariable& DisplayMessageSupportedStates = {
+    ControllerComponents::DisplayMessageCtrlr, std::nullopt,
+    std::optional<Variable>({"SupportedStates", std::nullopt, std::nullopt})};
+
+const ComponentVariable& DisplayMessageQRCodeDisplayCapable = {
+    ControllerComponents::DisplayMessageCtrlr, std::nullopt,
+    std::optional<Variable>({"QRCodeDisplayCapable", std::nullopt, std::nullopt})};
+
+const ComponentVariable& DisplayMessageLanguage = {ControllerComponents::DisplayMessageCtrlr, std::nullopt,
+                                                   std::optional<Variable>({"Language", std::nullopt, std::nullopt})};
+
 const ComponentVariable& CentralContractValidationAllowed = {
     ControllerComponents::ISO15118Ctrlr,
     std::nullopt,
@@ -1190,6 +1211,11 @@ const RequiredComponentVariable& TotalCostFallbackMessage = {
         "TotalCostFallbackMessage",
     }),
 };
+
+const ComponentVariable& NumberOfDecimalsForCostValues = {
+    ControllerComponents::TariffCostCtrlr, std::nullopt,
+    std::optional<Variable>({"NumberOfDecimalsForCostValues", std::nullopt, std::nullopt})};
+
 const RequiredComponentVariable& EVConnectionTimeOut = {
     ControllerComponents::TxCtrlr,
     std::nullopt,

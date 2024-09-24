@@ -119,6 +119,101 @@
       ],
       "description": "Message to be shown to an EV Driver when the Charging Station cannot retrieve the cost for a transaction at the end of the transaction.",
       "type": "string"
+    },
+    "OfflineChargingPricekWhPrice": {
+      "variable_name": "OfflineChargingPrice",
+      "instance": "kWhPrice",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Charging kWh price in the default currency when charging station is offline.",
+      "type": "number"
+    },
+    "OfflineChargingPriceHourPrice": {
+      "variable_name": "OfflineChargingPrice",
+      "instance": "hourPrice",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "decimal"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Charging kWh price in the default currency when charging station is offline.",
+      "type": "number"
+    },
+    "TariffFallbackMessageEn": {
+      "variable_name": "TariffFallbackMessage",
+      "instance": "en-US",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message (and / or tariff information) to be shown to an EV Driver when there is no driver specific tariff information available. Note: Add a TariffFallbackMessage with correct instance for every supported language!!",
+      "type": "string"
+    },
+    "OfflineTariffFallbackMessageEn": {
+      "variable_name": "OfflineTariffFallbackMessage",
+      "instance": "en",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message (and/or tariff information) to be shown to an EV Driver when Charging Station is offline. Note: Add a OfflineTariffFallbackMessage with correct instance for every supported language!!",
+      "type": "string"
+    },
+    "TotalCostFallbackMessageEn": {
+      "variable_name": "TotalCostFallbackMessage",
+      "instance": "en-US",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "string"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Message to be shown to an EV Driver when the Charging Station cannot retrieve the cost for a transaction at the end of the transaction. Note: Add a TotalCostFallbackMessage with correct instance for every supported language!!",
+      "type": "string"
+    },
+    "NumberOfDecimalsForCostValues": {
+      "variable_name": "NumberOfDecimalsForCostValues",
+      "characteristics": {
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite"
+        }
+      ],
+      "description": "Number of decimals for the cost values. Value will be ",
+      "type": "integer"
     }
   },
   "required": [

@@ -71,6 +71,13 @@ Evse::Evse(const int32_t evse_id, const int32_t number_of_connectors, DeviceMode
     }
 }
 
+Evse::~Evse() {
+    if (this->trigger_metervalue_at_time_timer != nullptr) {
+        this->trigger_metervalue_at_time_timer->stop();
+        this->trigger_metervalue_at_time_timer = nullptr;
+    }
+}
+
 int32_t Evse::get_id() const {
     return this->evse_id;
 }
@@ -218,6 +225,8 @@ void Evse::release_transaction() {
         EVLOG_error << "Could not clear transaction meter values: " << e.what();
     }
     this->transaction = nullptr;
+
+    this->reset_pricing_triggers();
 }
 
 std::unique_ptr<EnhancedTransaction>& Evse::get_transaction() {
@@ -234,6 +243,7 @@ void Evse::on_meter_value(const MeterValue& meter_value) {
     this->aligned_data_updated.set_values(meter_value);
     this->aligned_data_tx_end.set_values(meter_value);
     this->check_max_energy_on_invalid_id();
+    this->send_meter_value_on_pricing_trigger(meter_value);
 }
 
 MeterValue Evse::get_meter_value() {
@@ -380,13 +390,155 @@ void Evse::start_metering_timers(const DateTime& timestamp) {
             store_aligned_metervalue, aligned_data_tx_ended_interval,
             std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
 
-        // Store an extra aligned metervalue to fix the edge case where a transaction is started just before an interval
-        // but this code is processed just after the interval.
-        // For example, aligned interval = 1 min, transaction started at 11:59:59.500 and we get here on 12:00:00.100.
-        // There is still the expectation for us to add a metervalue at timepoint 12:00:00.000 which we do with this.
+        // Store an extra aligned metervalue to fix the edge case where a transaction is started just before an
+        // interval but this code is processed just after the interval. For example, aligned interval = 1 min,
+        // transaction started at 11:59:59.500 and we get here on 12:00:00.100. There is still the expectation for
+        // us to add a metervalue at timepoint 12:00:00.000 which we do with this.
         if (date::utc_clock::to_sys(timestamp.to_time_point()) <= (next_interval - aligned_data_tx_ended_interval)) {
             store_aligned_metervalue();
         }
+    }
+}
+
+void Evse::set_meter_value_pricing_triggers(
+    std::optional<double> trigger_metervalue_on_power_kw, std::optional<double> trigger_metervalue_on_energy_kwh,
+    std::optional<DateTime> trigger_metervalue_at_time,
+    std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
+    boost::asio::io_service& io_service) {
+
+    EVLOG_debug << "Set metervalue pricing triggers: "
+                << (trigger_metervalue_at_time.has_value()
+                        ? "at time: " + trigger_metervalue_at_time.value().to_rfc3339()
+                        : "no time pricing trigger")
+                << (trigger_metervalue_on_energy_kwh.has_value()
+                        ? ", on energy kWh: " + std::to_string(trigger_metervalue_on_energy_kwh.value())
+                        : ", No energy kWh trigger, ")
+                << (trigger_metervalue_on_power_kw.has_value()
+                        ? ", on power kW: " + std::to_string(trigger_metervalue_on_power_kw.value())
+                        : ", No power kW trigger");
+
+    this->send_metervalue_function = send_metervalue_function;
+    this->trigger_metervalue_on_power_kw = trigger_metervalue_on_power_kw;
+    this->trigger_metervalue_on_energy_kwh = trigger_metervalue_on_energy_kwh;
+    if (this->trigger_metervalue_at_time_timer != nullptr and trigger_metervalue_at_time.has_value()) {
+        this->trigger_metervalue_at_time_timer->stop();
+        this->trigger_metervalue_at_time_timer = nullptr;
+    }
+
+    std::chrono::time_point<date::utc_clock> trigger_timepoint = trigger_metervalue_at_time.value().to_time_point();
+    const std::chrono::time_point<date::utc_clock> now = date::utc_clock::now();
+
+    if (trigger_timepoint < now) {
+        EVLOG_error << "Could not set trigger metervalue because trigger time is in the past.";
+        return;
+    }
+
+    // Start a timer for the trigger 'atTime'.
+    this->trigger_metervalue_at_time_timer = std::make_unique<Everest::SystemTimer>(&io_service, [this]() {
+        EVLOG_error << "Sending metervalue in timer";
+
+        const MeterValue meter_value = utils::get_meter_value_with_measurands_applied(
+            this->get_meter_value(), {MeasurandEnum::Energy_Active_Import_Register});
+        if (meter_value.sampledValue.empty()) {
+            EVLOG_error << "Send latest meter value because of chargepoint time trigger failed";
+        } else {
+            const MeterValue mv = utils::set_meter_value_reading_context(meter_value, ReadingContextEnum::Other);
+            this->send_metervalue_function({mv});
+        }
+    });
+    EVLOG_error << "Set trigger metervalue at time " << trigger_timepoint;
+
+    this->trigger_metervalue_at_time_timer->at(trigger_timepoint);
+}
+
+void Evse::reset_pricing_triggers() {
+    this->last_triggered_metervalue_power_kw = std::nullopt;
+    this->trigger_metervalue_on_power_kw = std::nullopt;
+    this->trigger_metervalue_on_energy_kwh = std::nullopt;
+    this->send_metervalue_function = nullptr;
+
+    if (this->trigger_metervalue_at_time_timer != nullptr) {
+        this->trigger_metervalue_at_time_timer->stop();
+        this->trigger_metervalue_at_time_timer = nullptr;
+    }
+}
+
+void Evse::send_meter_value_on_pricing_trigger(const MeterValue& meter_value) {
+    bool meter_value_sent = false;
+    // Check if there is a kwh trigger and if the value is exceeded.
+    if (this->trigger_metervalue_on_energy_kwh.has_value()) {
+        const double trigger_energy_kwh = this->trigger_metervalue_on_energy_kwh.value();
+        if (this->send_metervalue_function == nullptr) {
+            EVLOG_error << "Cost and price metervalue kwh trigger: Can not send metervalue because the send metervalue "
+                           "function is not set.";
+            this->trigger_metervalue_on_energy_kwh.reset();
+        } else {
+            const std::optional<float> active_import_register_meter_value_wh = get_active_import_register_meter_value();
+            if (active_import_register_meter_value_wh.has_value() and
+                static_cast<double>(active_import_register_meter_value_wh.value()) >= trigger_energy_kwh * 1000) {
+                const MeterValue active_import_meter_value = utils::get_meter_value_with_measurands_applied(
+                    meter_value, {MeasurandEnum::Energy_Active_Import_Register, MeasurandEnum::Power_Active_Import});
+                if (active_import_meter_value.sampledValue.empty()) {
+                    EVLOG_error
+                        << "No current active import register metervalue found. Can not send trigger metervalue.";
+                } else {
+                    const MeterValue to_send =
+                        utils::set_meter_value_reading_context(active_import_meter_value, ReadingContextEnum::Other);
+                    this->send_metervalue_function({to_send});
+                    this->trigger_metervalue_on_energy_kwh.reset();
+                    meter_value_sent = true;
+                }
+            }
+        }
+    }
+
+    // Check if there is a power kw trigger and if that is triggered. For the power kw trigger, we added hysterisis to
+    // prevent constant triggering.
+    const std::optional<float> active_power_meter_value = utils::get_total_power_active_import(meter_value);
+
+    if (!this->trigger_metervalue_on_power_kw.has_value() or !active_power_meter_value.has_value()) {
+        return;
+    }
+
+    const double trigger_power_kw = this->trigger_metervalue_on_power_kw.value();
+    if (this->send_metervalue_function == nullptr) {
+        EVLOG_error << "Cost and price metervalue wh trigger: Can not send metervalue because the send metervalue "
+                       "function is not set.";
+        // Remove trigger because next time function is not set as well (this is probably a bug because it should be
+        // set in the `set_meter_value_pricing_triggers` function together with the trigger values).
+        this->trigger_metervalue_on_energy_kwh.reset();
+        return;
+    }
+
+    if (this->last_triggered_metervalue_power_kw.has_value()) {
+        // Hysteresis of 5% to avoid repetitive triggers when the power fluctuates around the trigger level.
+        const double hysterisis_kw = trigger_power_kw * 0.05;
+        const double triggered_power_kw = this->last_triggered_metervalue_power_kw.value();
+        const double current_metervalue_w = static_cast<double>(active_power_meter_value.value());
+        const double current_metervalue_kw = current_metervalue_w / 1000;
+
+        if ( // Check if trigger value is crossed in upward direction.
+            (triggered_power_kw < trigger_power_kw and current_metervalue_kw >= (trigger_power_kw + hysterisis_kw)) or
+            // Check if trigger value is crossed in downward direction.
+            (triggered_power_kw > trigger_power_kw and current_metervalue_kw <= (trigger_power_kw - hysterisis_kw))) {
+
+            // Power threshold is crossed, send metervalues.
+            if (!meter_value_sent) {
+                // Only send metervalue if it is not sent yet, otherwise only the last triggered metervalue is set.
+                const MeterValue mv = utils::set_meter_value_reading_context(meter_value, ReadingContextEnum::Other);
+                this->send_metervalue_function({mv});
+            }
+
+            // Also when metervalue is sent, we want to set the last triggered metervalue.
+            this->last_triggered_metervalue_power_kw = current_metervalue_kw;
+        }
+    } else {
+        // Send metervalue anyway since we have no previous metervalue stored and don't know if we should send any
+        if (!meter_value_sent) {
+            // Only send metervalue if it is not sent yet, otherwise only the last triggered metervalue is set.
+            this->send_metervalue_function({meter_value});
+        }
+        this->last_triggered_metervalue_power_kw = active_power_meter_value.value() / 1000;
     }
 }
 
@@ -407,7 +559,7 @@ OperationalStatusEnum Evse::get_effective_operational_status() {
 }
 
 Connector* Evse::get_connector(int32_t connector_id) {
-    if (connector_id <= 0 || connector_id > this->get_number_of_connectors()) {
+    if (connector_id <= 0 or connector_id > this->get_number_of_connectors()) {
         std::stringstream err_msg;
         err_msg << "ConnectorID " << connector_id << " out of bounds for EVSE " << this->evse_id;
         throw std::logic_error(err_msg.str());
@@ -421,7 +573,7 @@ CurrentPhaseType Evse::get_current_phase_type() {
     auto supply_phases = this->device_model.get_optional_value<int32_t>(evse_variable);
     if (supply_phases == std::nullopt) {
         return CurrentPhaseType::Unknown;
-    } else if (*supply_phases == 1 || *supply_phases == 3) {
+    } else if (*supply_phases == 1 or *supply_phases == 3) {
         return CurrentPhaseType::AC;
     } else if (*supply_phases == 0) {
         return CurrentPhaseType::DC;
