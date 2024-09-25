@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
     VERSION 2024.9.0

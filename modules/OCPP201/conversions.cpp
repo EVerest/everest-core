@@ -929,9 +929,31 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     if (response.idTokenInfo.groupIdToken.has_value()) {
         validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
     }
+
     if (response.idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason.emplace(response.idTokenInfo.personalMessage.value().content.get());
+        validation_result.reason = types::authorization::TokenValidationStatusMessage();
+        validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        const types::display_message::MessageContent content =
+            to_everest_message_content(response.idTokenInfo.personalMessage.value());
+        validation_result.reason->messages->push_back(content);
     }
+
+    if (response.idTokenInfo.customData.has_value() && response.idTokenInfo.customData.value().contains("vendorId") &&
+        response.idTokenInfo.customData.value().at("vendorId").get<std::string>() ==
+            "org.openchargealliance.multilanguage" &&
+        response.idTokenInfo.customData.value().contains("personalMessageExtra")) {
+        if (!validation_result.reason->messages.has_value()) {
+            validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        }
+
+        const json& multi_language_personal_messages =
+            response.idTokenInfo.customData.value().at("personalMessageExtra");
+        for (const auto& messages : multi_language_personal_messages.items()) {
+            const types::display_message::MessageContent content = messages.value();
+            validation_result.reason->messages->push_back(content);
+        }
+    }
+
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
     }
@@ -1018,8 +1040,8 @@ to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum s
     case ocpp::v201::AuthorizeCertificateStatusEnum::ContractCancelled:
         return types::authorization::CertificateStatus::ContractCancelled;
     default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to types::authorization::CertificateStatus");
+        throw std::out_of_range("Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to "
+                                "types::authorization::CertificateStatus");
     }
 }
 
@@ -1285,6 +1307,113 @@ to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& pe
     _period.number_phases = period.numberPhases;
     _period.phase_to_use = period.phaseToUse;
     return _period;
+}
+
+ocpp::v201::DisplayMessageStatusEnum
+to_ocpp_display_message_status_enum(const types::display_message::DisplayMessageStatusEnum& from) {
+    switch (from) {
+    case types::display_message::DisplayMessageStatusEnum::Accepted:
+        return ocpp::v201::DisplayMessageStatusEnum::Accepted;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedMessageFormat:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedMessageFormat;
+    case types::display_message::DisplayMessageStatusEnum::Rejected:
+        return ocpp::v201::DisplayMessageStatusEnum::Rejected;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedPriority:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedPriority;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedState:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedState;
+    case types::display_message::DisplayMessageStatusEnum::UnknownTransaction:
+        return ocpp::v201::DisplayMessageStatusEnum::UnknownTransaction;
+    }
+
+    throw std::out_of_range("Could not convert DisplayMessageStatusEnum");
+}
+
+ocpp::v201::SetDisplayMessageResponse
+to_ocpp_set_display_message_response(const types::display_message::SetDisplayMessageResponse& response) {
+    ocpp::v201::SetDisplayMessageResponse ocpp_response;
+    ocpp_response.status = to_ocpp_display_message_status_enum(response.status);
+    if (response.status_info.has_value()) {
+        ocpp_response.statusInfo = ocpp::v201::StatusInfo();
+        ocpp_response.statusInfo.value().additionalInfo = response.status_info.value();
+    }
+
+    return ocpp_response;
+}
+
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& priority) {
+    switch (priority) {
+    case ocpp::v201::MessagePriorityEnum::AlwaysFront:
+        return types::display_message::MessagePriorityEnum::AlwaysFront;
+    case ocpp::v201::MessagePriorityEnum::InFront:
+        return types::display_message::MessagePriorityEnum::InFront;
+    case ocpp::v201::MessagePriorityEnum::NormalCycle:
+        return types::display_message::MessagePriorityEnum::NormalCycle;
+    }
+
+    throw std::out_of_range("Could not convert MessagePriorityEnum");
+}
+
+types::display_message::MessageStateEnum
+to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& message_state) {
+    switch (message_state) {
+    case ocpp::v201::MessageStateEnum::Charging:
+        return types::display_message::MessageStateEnum::Charging;
+    case ocpp::v201::MessageStateEnum::Faulted:
+        return types::display_message::MessageStateEnum::Faulted;
+    case ocpp::v201::MessageStateEnum::Idle:
+        return types::display_message::MessageStateEnum::Idle;
+    case ocpp::v201::MessageStateEnum::Unavailable:
+        return types::display_message::MessageStateEnum::Unavailable;
+    }
+
+    throw std::out_of_range("Could not convert display message state enum.");
+}
+
+types::display_message::GetDisplayMessageRequest
+to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& request) {
+    types::display_message::GetDisplayMessageRequest result_request;
+    result_request.id = request.id;
+    if (request.priority.has_value()) {
+        result_request.priority = to_everest_display_message_priority_enum(request.priority.value());
+    }
+    if (request.state.has_value()) {
+        result_request.state = to_everest_display_message_state_enum(request.state.value());
+    }
+
+    return result_request;
+}
+
+types::display_message::ClearDisplayMessageRequest
+to_everest_clear_display_message_request(const ocpp::v201::ClearDisplayMessageRequest& request) {
+    types::display_message::ClearDisplayMessageRequest result_request;
+    result_request.id = request.id;
+    return result_request;
+}
+
+ocpp::v201::ClearMessageStatusEnum
+to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageResponseEnum& response_enum) {
+    switch (response_enum) {
+    case types::display_message::ClearMessageResponseEnum::Accepted:
+        return ocpp::v201::ClearMessageStatusEnum::Accepted;
+    case types::display_message::ClearMessageResponseEnum::Unknown:
+        return ocpp::v201::ClearMessageStatusEnum::Unknown;
+    }
+
+    throw std::out_of_range("Could not convert ClearMessageResponseEnum");
+}
+
+ocpp::v201::ClearDisplayMessageResponse
+to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response) {
+    ocpp::v201::ClearDisplayMessageResponse result_response;
+    result_response.status = to_ocpp_clear_message_response_enum(response.status);
+    if (response.status_info.has_value()) {
+        result_response.statusInfo = ocpp::v201::StatusInfo();
+        result_response.statusInfo.value().additionalInfo = response.status_info.value();
+    }
+
+    return result_response;
 }
 
 } // namespace conversions
