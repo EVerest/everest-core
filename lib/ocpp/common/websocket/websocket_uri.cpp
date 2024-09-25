@@ -86,6 +86,10 @@ Uri Uri::parse_and_validate(std::string uri, std::string chargepoint_id, int sec
         path = path_without_base;
     }
 
+    if (path.back() != '/') {
+        path.push_back('/');
+    }
+
     return Uri(uri_temp.get_secure(), uri_temp.get_host(), uri_temp.get_port(), path, chargepoint_id);
 }
 
