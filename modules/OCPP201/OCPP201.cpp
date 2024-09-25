@@ -30,9 +30,22 @@ TxEvent get_tx_event(const ocpp::v201::ReasonEnum reason) {
         return TxEvent::EV_DISCONNECTED;
     case ocpp::v201::ReasonEnum::ImmediateReset:
         return TxEvent::IMMEDIATE_RESET;
-    default:
+    // FIXME(kai): these reasons definitely do not all map to NONE
+    case ocpp::v201::ReasonEnum::EmergencyStop:
+    case ocpp::v201::ReasonEnum::EnergyLimitReached:
+    case ocpp::v201::ReasonEnum::GroundFault:
+    case ocpp::v201::ReasonEnum::LocalOutOfCredit:
+    case ocpp::v201::ReasonEnum::Other:
+    case ocpp::v201::ReasonEnum::OvercurrentFault:
+    case ocpp::v201::ReasonEnum::PowerLoss:
+    case ocpp::v201::ReasonEnum::PowerQuality:
+    case ocpp::v201::ReasonEnum::Reboot:
+    case ocpp::v201::ReasonEnum::SOCLimitReached:
+    case ocpp::v201::ReasonEnum::TimeLimitReached:
+    case ocpp::v201::ReasonEnum::Timeout:
         return TxEvent::NONE;
     }
+    return TxEvent::NONE;
 }
 
 std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_stop_point_csl) {
@@ -829,8 +842,21 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
-
-        // missing AuthRequired, PrepareCharging and many more
+    // explicitly ignore the following session events for now
+    // TODO(kai): implement
+    case types::evse_manager::SessionEventEnum::AuthRequired:
+    case types::evse_manager::SessionEventEnum::PrepareCharging:
+    case types::evse_manager::SessionEventEnum::WaitingForEnergy:
+    case types::evse_manager::SessionEventEnum::StoppingCharging:
+    case types::evse_manager::SessionEventEnum::ChargingFinished:
+    case types::evse_manager::SessionEventEnum::ReservationStart:
+    case types::evse_manager::SessionEventEnum::ReservationEnd:
+    case types::evse_manager::SessionEventEnum::ReplugStarted:
+    case types::evse_manager::SessionEventEnum::ReplugFinished:
+    case types::evse_manager::SessionEventEnum::PluginTimeout:
+    case types::evse_manager::SessionEventEnum::SwitchingPhases:
+    case types::evse_manager::SessionEventEnum::SessionResumed:
+        break;
     }
 
     // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
