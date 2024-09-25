@@ -15,9 +15,10 @@ namespace module {
 
 class ReservationHandler {
 
-private:
+private: // Members
     std::map<int, types::reservation::Reservation> reservations;
     std::vector<types::reservation::Reservation> global_reservations;
+    std::map<int, types::evse_manager::ConnectorTypeEnum> connectors;
 
     std::mutex timer_mutex;
     std::mutex reservation_mutex;
@@ -27,26 +28,27 @@ private:
     std::function<void(const int& connector_id)> reservation_cancelled_callback;
 
 public:
-    // /**
-    //  * @brief Initializes a connector with the given \p connector_id . This creates an entry in the map of timers of the
-    //  * handler.
-    //  *
-    //  * @param connector_id
-    //  */
-    // void init_connector(int connector_id);
+    /**
+     * @brief Initializes a connector with the given \p connector_id . This creates an entry in the map of timers of
+     the
+     * handler.
+     *
+     * @param connector_id
+     * @param connector_type    The connector type
+     */
+    void init_connector(const int connector_id, const types::evse_manager::ConnectorTypeEnum connector_type);
 
     /**
      * @brief Function checks if the given \p id_token or \p parent_id_token matches the reserved token of the given \p
      * connector
      *
-     * @param connector
-     * @param id_token
-     * @param parent_id_token
-     * @return true
-     * @return false
+     * @param connector         Connector id
+     * @param id_token          Id token
+     * @param parent_id_token   Parent id token
+     * @return The reservation id when there is a matching identifier, otherwise std::nullopt.
      */
-    bool matches_reserved_identifier(int connector, const std::string& id_token,
-                                     std::optional<std::string> parent_id_token);
+    std::optional<int32_t> matches_reserved_identifier(int connector, const std::string& id_token,
+                                                       std::optional<std::string> parent_id_token);
 
     /**
      * @brief Functions check if reservation at the given \p connector contains a parent_id
@@ -59,14 +61,16 @@ public:
      * @brief Function tries to reserve the given \p connector using the given \p reservation
      *
      * @param connector
-     * @param type      The connector type.
      * @param state Current state of the connector
      * @param is_reservable
      * @param reservation
+     * @param available_connectors  The number of connectors available for this connector type. Only needed when
+     *                              connector id is 0.
      * @return types::reservation::ReservationResult
      */
-    types::reservation::ReservationResult reserve(int connector, const types::evse_manager::ConnectorTypeEnum type, const ConnectorState& state, bool is_reservable,
-                                                  const types::reservation::Reservation& reservation);
+    types::reservation::ReservationResult reserve(int connector, const ConnectorState& state, bool is_reservable,
+                                                  const types::reservation::Reservation& reservation,
+                                                  const std::optional<uint32_t> available_connectors);
 
     /**
      * @brief Function tries to cancel reservation with the given \p reservation_id .
@@ -80,9 +84,10 @@ public:
     /**
      * @brief Handler that is called when a reservation was started / used.
      *
-     * @param connector
+     * @param connector         Connector on which the car is charging
+     * @param reservation_id    The reservation id
      */
-    void on_reservation_used(int connector);
+    void on_reservation_used(int connector, const int32_t reservation_id);
 
     /**
      * @brief Registers the given \p callback that is called when a reservation should be cancelled.
@@ -90,6 +95,10 @@ public:
      * @param callback
      */
     void register_reservation_cancelled_callback(const std::function<void(const int& connector_id)>& callback);
+
+private: // Functions
+    bool is_connector_type_available(const types::evse_manager::ConnectorTypeEnum connector_type);
+    void set_reservation_timer(const types::reservation::Reservation& reservation, const int32_t connector);
 };
 
 } // namespace module

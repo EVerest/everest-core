@@ -71,10 +71,17 @@ void Auth::ready() {
             this->r_evse_manager.at(evse_index)->call_stop_transaction(request);
         });
     this->auth_handler->register_reserved_callback([this](const int32_t evse_index, const int32_t& reservation_id) {
-        this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
+        // Only call the evse manager to store the reservation if it is done for a specific evse.
+        if (evse_index > 0) {
+            this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
+        }
     });
-    this->auth_handler->register_reservation_cancelled_callback(
-        [this](const int32_t evse_index) { this->r_evse_manager.at(evse_index)->call_cancel_reservation(); });
+    this->auth_handler->register_reservation_cancelled_callback([this](const int32_t evse_index) {
+        // Only call the evse manager to cancel the reservation if it was for a specific evse
+        if (evse_index > 0) {
+            this->r_evse_manager.at(evse_index)->call_cancel_reservation();
+        }
+    });
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {

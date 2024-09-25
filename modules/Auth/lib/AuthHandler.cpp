@@ -143,8 +143,11 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             all_connectors_reserved_and_tag_does_not_match = false;
             break;
         }
-        if (this->reservation_handler.matches_reserved_identifier(connector_id, provided_token.id_token.value,
-                                                                  std::nullopt)) {
+
+        const std::optional<int32_t> reservation_id = this->reservation_handler.matches_reserved_identifier(
+            connector_id, provided_token.id_token.value, std::nullopt);
+
+        if (reservation_id.has_value()) {
             all_connectors_reserved_and_tag_does_not_match = false;
             break;
         }
@@ -269,10 +272,12 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         if (validation_result.parent_id_token.has_value()) {
                             parent_id_token = validation_result.parent_id_token.value().value;
                         }
-                        if (this->reservation_handler.matches_reserved_identifier(
-                                connector_id, provided_token.id_token.value, parent_id_token)) {
+                        const std::optional<int32_t> reservation_id =
+                            this->reservation_handler.matches_reserved_identifier(
+                                connector_id, provided_token.id_token.value, parent_id_token);
+                        if (reservation_id.has_value()) {
                             EVLOG_info << "Connector is reserved and token is valid for this reservation";
-                            this->reservation_handler.on_reservation_used(connector_id);
+                            this->reservation_handler.on_reservation_used(connector_id, reservation_id.value());
                             authorized = true;
                         } else {
                             EVLOG_info << "Connector is reserved but token is not valid for this reservation";
@@ -518,16 +523,18 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
         uint32_t connector_state_unavailable = 0;
         uint32_t connector_state_reserved_or_occupied = 0;
         uint32_t connector_state_faulted = 0;
+        uint32_t available_connectors = 0;
 
         for (auto& [connector_id, connector] : this->connectors) {
-            // Make a reservation for the first available connector.
+            // Make a reservation if there is at least one available connector.
             // TODO mz do not make a reservation for a single connector, but for all connectors.
             if (connector->connector.is_reservable && connector->connector.get_state() == ConnectorState::AVAILABLE &&
                 (connector->connector.type == ConnectorTypeEnum::Unknown || !reservation.connector_type.has_value() ||
                  connector->connector.type == reservation.connector_type.value())) {
-                return this->reservation_handler.reserve(connector_id, connector->connector.type,
-                                                         connector->connector.get_state(),
-                                                         connector->connector.is_reservable, reservation);
+                // return this->reservation_handler.reserve(connector_id, connector->connector.type,
+                //                                          connector->connector.get_state(),
+                //                                          connector->connector.is_reservable, reservation);
+                available_connectors++;
             } else {
                 switch (connector->connector.get_state()) {
                 case ConnectorState::UNAVAILABLE:
@@ -549,6 +556,14 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
             }
         }
 
+        if (available_connectors == 0) {
+            types::reservation::ReservationResult result =
+                this->reservation_handler.reserve(0, ConnectorState::UNAVAILABLE, false, reservation, 0);
+            if (result != types::reservation::ReservationResult::Occupied) {
+                return result;
+            }
+        }
+
         // H01.FR.11, H01.FR.12 and H01.FR.13 say that if (all) targeted EVSE's have status ..., it shall return ...
         // But it does not describe what to do if there is one occupied, one faulted and one unavailable. Therefore, We
         // keep the order of the result to return here, so if one of the charging stations is reserved or occupied, and
@@ -561,12 +576,11 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
             return types::reservation::ReservationResult::Unavailable;
         }
 
-        return types::reservation::ReservationResult::Rejected;
+        return types::reservation::ReservationResult::Occupied;
     } else {
-        return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.type,
-                                                 this->connectors.at(connector_id)->connector.get_state(),
+        return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.get_state(),
                                                  this->connectors.at(connector_id)->connector.is_reservable,
-                                                 reservation);
+                                                 reservation, std::nullopt);
     }
 }
 
@@ -578,7 +592,11 @@ void AuthHandler::call_reserved(const int& connector_id, const int reservation_i
     this->reserved_callback(this->connectors.at(connector_id)->evse_index, reservation_id);
 }
 void AuthHandler::call_reservation_cancelled(const int& connector_id) {
-    this->reservation_cancelled_callback(this->connectors.at(connector_id)->evse_index);
+    int32_t evse_index = 0;
+    if (connector_id > 0) {
+        evse_index = this->connectors.at(connector_id)->evse_index;
+    }
+    this->reservation_cancelled_callback(evse_index);
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int connector_id) {
