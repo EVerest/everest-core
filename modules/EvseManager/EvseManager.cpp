@@ -153,7 +153,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp));
+    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b));
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -161,6 +161,10 @@ void EvseManager::ready() {
 
     error_handling = std::unique_ptr<ErrorHandling>(
         new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC));
+    if (not config.lock_connector_in_state_b) {
+        EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
+                         "should not be used in public environments!";
+    }
 
     charger = std::make_unique<Charger>(bsp, error_handling, r_powermeter_billing(), store,
                                         hw_capabilities.connector_type, config.evse_id);

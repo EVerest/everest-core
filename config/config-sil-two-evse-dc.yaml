@@ -70,7 +70,7 @@ active_modules:
     config_module:
       connector_id: 2
   slac_1:
-    module: JsSlacSimulator
+    module: SlacSimulator
   powersupply_dc:
     module: DCSupplySimulator
   imd:

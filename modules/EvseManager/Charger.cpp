@@ -843,7 +843,6 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
             session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
             shared_context.iec_allow_close_contactor = true;
         } else if (cp_event == CPEvent::CarRequestedStopPower) {
-            session_log.car(false, "C->B transition at this stage violates IEC61851-1");
             shared_context.iec_allow_close_contactor = false;
         }
         break;
@@ -1078,7 +1077,8 @@ bool Charger::pause_charging_wait_for_power() {
 
 // pause charging since no power is available at the moment
 bool Charger::pause_charging_wait_for_power_internal() {
-    if (shared_context.current_state == EvseState::Charging) {
+    if (shared_context.current_state == EvseState::Charging or
+        shared_context.current_state == EvseState::ChargingPausedEV) {
         shared_context.current_state = EvseState::WaitingForEnergy;
         return true;
     }
