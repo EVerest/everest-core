@@ -1218,19 +1218,11 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
             auto& str = this->connection_options.hostName.value();
             EVLOG_info << "User-Host is set to " << str;
 
-            if (0 != lws_add_http_header_by_token(wsi, lws_token_indexes::WSI_TOKEN_HOST,
-                                                  reinterpret_cast<const unsigned char*>(str.c_str()), str.length(),
-                                                  ptr, end_header)) {
-                EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
-            }
-
-            /*
             if (0 != lws_add_http_header_by_name(wsi, reinterpret_cast<const unsigned char*>("User-Host"),
                                                  reinterpret_cast<const unsigned char*>(str.c_str()), str.length(), ptr,
                                                  end_header)) {
-                EVLOG_AND_THROW(std::runtime_error("Could not append authorization header."));
+                EVLOG_AND_THROW(std::runtime_error("Could not append User-Host header."));
             }
-            */
         }
 
         if (this->connection_options.security_profile == 1 || this->connection_options.security_profile == 2) {
