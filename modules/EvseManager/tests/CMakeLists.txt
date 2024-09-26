@@ -31,3 +31,15 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+
+set(UTIL_TEST_TARGET ${MODULE_NAME}_util)
+add_executable(${UTIL_TEST_TARGET} util.cpp)
+
+target_compile_definitions(${UTIL_TEST_TARGET} PRIVATE
+    BUILD_TESTING_MODULE_EVSE_MANAGER
+)
+
+target_link_libraries(${UTIL_TEST_TARGET}
+    PRIVATE
+        Catch2::Catch2WithMain
+)
