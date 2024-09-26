@@ -77,7 +77,9 @@ const std::string cpevent_to_string(CPEvent e) {
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
-IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp) : r_bsp(r_bsp) {
+IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
+                                 bool lock_connector_in_state_b_) :
+    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
 
@@ -182,7 +184,11 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             // Table A.6: Sequence 7 EV stops charging
             // Table A.6: Sequence 8.2 EV supply equipment
             // responds to EV opens S2 (w/o PWM)
-            connector_lock();
+            if (lock_connector_in_state_b) {
+                connector_lock();
+            } else {
+                connector_unlock();
+            }
 
             if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 

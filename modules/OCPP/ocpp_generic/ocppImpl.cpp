@@ -121,8 +121,16 @@ bool ocppImpl::handle_restart() {
     return success;
 }
 
-void ocppImpl::handle_security_event(std::string& type, std::string& info) {
-    this->mod->charge_point->on_security_event(type, info);
+void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
+    std::optional<ocpp::DateTime> timestamp;
+    if (event.timestamp.has_value()) {
+        try {
+            timestamp = ocpp::DateTime(event.timestamp.value());
+        } catch (...) {
+            EVLOG_warning << "Timestamp in security event could not be parsed, using current datetime.";
+        }
+    }
+    this->mod->charge_point->on_security_event(event.type, event.info, event.critical, timestamp);
 }
 
 std::vector<types::ocpp::GetVariableResult>
