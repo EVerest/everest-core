@@ -9,22 +9,6 @@
 namespace ocpp {
 namespace v201 {
 
-/// \brief Exception used when an evse that does not exist is accessed.
-class EvseOutOfRangeException : public std::exception {
-public:
-    explicit EvseOutOfRangeException(int32_t id) : msg{"Evse with id " + std::to_string(id) + " does not exist"} {
-    }
-
-    ~EvseOutOfRangeException() noexcept override = default;
-
-    const char* what() const noexcept override {
-        return msg.c_str();
-    }
-
-private:
-    std::string msg;
-};
-
 /// \brief Class used to access the Evse instances
 class EvseManagerInterface {
 public:
