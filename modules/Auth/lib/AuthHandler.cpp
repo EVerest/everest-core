@@ -48,9 +48,10 @@ AuthHandler::~AuthHandler() {
 }
 
 void AuthHandler::init_connector(const int connector_id, const int evse_index) {
+    // TODO mz in reservation: support multiple connectors per evse
     std::unique_ptr<ConnectorContext> ctx = std::make_unique<ConnectorContext>(connector_id, evse_index);
+    this->reservation_handler.init_connector(evse_index, connector_id, ctx->connector.type);
     this->connectors.emplace(connector_id, std::move(ctx));
-    // this->reservation_handler.init_connector(connector_id);
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -511,15 +512,13 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
     this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
-// TODO mz H01.FR.02 replace reservation with new reservation if the id in the ReserveNowRequest matches.
-// TODO mz when no evse id is given, should the reservation be done for all evse's or just make a reservation for one of
-// them?
 // TODO mz when someone made a reservation (on evse id 0) and starts charging on another evse id, the reservation must
 // be cancelled as well.
 
-types::reservation::ReservationResult AuthHandler::handle_reservation(int connector_id,
+types::reservation::ReservationResult AuthHandler::handle_reservation(std::optional<int> evse_id,
                                                                       const Reservation& reservation) {
-    if (connector_id == 0) {
+    // TODO mz not connectors but evse's!!
+    if (!evse_id.has_value() || evse_id.value() == 0) {
         uint32_t connector_state_unavailable = 0;
         uint32_t connector_state_reserved_or_occupied = 0;
         uint32_t connector_state_faulted = 0;
@@ -527,13 +526,9 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
 
         for (auto& [connector_id, connector] : this->connectors) {
             // Make a reservation if there is at least one available connector.
-            // TODO mz do not make a reservation for a single connector, but for all connectors.
             if (connector->connector.is_reservable && connector->connector.get_state() == ConnectorState::AVAILABLE &&
                 (connector->connector.type == ConnectorTypeEnum::Unknown || !reservation.connector_type.has_value() ||
                  connector->connector.type == reservation.connector_type.value())) {
-                // return this->reservation_handler.reserve(connector_id, connector->connector.type,
-                //                                          connector->connector.get_state(),
-                //                                          connector->connector.is_reservable, reservation);
                 available_connectors++;
             } else {
                 switch (connector->connector.get_state()) {
@@ -557,30 +552,48 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(int connec
         }
 
         if (available_connectors == 0) {
+            // No available connectors, but maybe the reservation should be overwritten because the reservation it is
+            // the same (H01.FR.02). So just try to make the reservation.
             types::reservation::ReservationResult result =
                 this->reservation_handler.reserve(0, ConnectorState::UNAVAILABLE, false, reservation, 0);
             if (result != types::reservation::ReservationResult::Occupied) {
                 return result;
             }
-        }
 
-        // H01.FR.11, H01.FR.12 and H01.FR.13 say that if (all) targeted EVSE's have status ..., it shall return ...
-        // But it does not describe what to do if there is one occupied, one faulted and one unavailable. Therefore, We
-        // keep the order of the result to return here, so if one of the charging stations is reserved or occupied, and
-        // one unavailable, we return 'occupied'.
-        if (connector_state_reserved_or_occupied > 0) {
+            // H01.FR.11, H01.FR.12 and H01.FR.13 say that if (all) targeted EVSE's have status ..., it shall return ...
+            // But it does not describe what to do if there is one occupied, one faulted and one unavailable. Therefore,
+            // We keep the order of the result to return here, so if one of the charging stations is reserved or
+            // occupied, and one unavailable, we return 'occupied'.
+            if (connector_state_reserved_or_occupied > 0) {
+                return types::reservation::ReservationResult::Occupied;
+            } else if (connector_state_faulted > 0) {
+                return types::reservation::ReservationResult::Faulted;
+            } else if (connector_state_unavailable > 0) {
+                return types::reservation::ReservationResult::Unavailable;
+            }
+
             return types::reservation::ReservationResult::Occupied;
-        } else if (connector_state_faulted > 0) {
-            return types::reservation::ReservationResult::Faulted;
-        } else if (connector_state_unavailable > 0) {
-            return types::reservation::ReservationResult::Unavailable;
+        } else {
+            return this->reservation_handler.reserve(evse_id, ConnectorState::AVAILABLE, true, reservation,
+                                                     available_connectors);
         }
 
-        return types::reservation::ReservationResult::Occupied;
     } else {
-        return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.get_state(),
-                                                 this->connectors.at(connector_id)->connector.is_reservable,
-                                                 reservation, std::nullopt);
+        for (const auto& connector : this->connectors) {
+            // TODO mz evse_id - 1???
+            if (connector.second->evse_index == evse_id &&
+                (connector.second->connector.type == ConnectorTypeEnum::Unknown ||
+                 !reservation.connector_type.has_value() ||
+                 reservation.connector_type.value() == connector.second->connector.type)) {
+                return this->reservation_handler.reserve(evse_id, connector.second->connector.get_state(),
+                                                         connector.second->connector.is_reservable, reservation,
+                                                         std::nullopt);
+            }
+        }
+        // TODO mz enable and fix 'connector_id'
+        // return this->reservation_handler.reserve(evse_id, this->connectors.at(connector_id)->connector.get_state(),
+        //                                          this->connectors.at(connector_id)->connector.is_reservable,
+        //                                          reservation, std::nullopt);
     }
 }
 
@@ -588,13 +601,23 @@ int AuthHandler::handle_cancel_reservation(int reservation_id) {
     return this->reservation_handler.cancel_reservation(reservation_id, true);
 }
 
-void AuthHandler::call_reserved(const int& connector_id, const int reservation_id) {
-    this->reserved_callback(this->connectors.at(connector_id)->evse_index, reservation_id);
+bool AuthHandler::handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
+                                                  std::optional<std::string>& group_id_token) {
+    std::optional<int32_t> reservation_id =
+        this->reservation_handler.matches_reserved_identifier(evse_id, id_token, group_id_token);
+    return reservation_id.has_value();
 }
-void AuthHandler::call_reservation_cancelled(const int& connector_id) {
+
+void AuthHandler::call_reserved(const std::optional<int>& evse_id, const int reservation_id) {
+    if (evse_id.has_value() && evse_id.value() > 0) {
+        this->reserved_callback(evse_id.value(), reservation_id);
+    }
+}
+
+void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id) {
     int32_t evse_index = 0;
-    if (connector_id > 0) {
-        evse_index = this->connectors.at(connector_id)->evse_index;
+    if (evse_id.has_value() && evse_id.value() > 0) {
+        evse_index = evse_id.value();
     }
     this->reservation_cancelled_callback(evse_index);
 }

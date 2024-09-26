@@ -419,11 +419,20 @@ void OCPP201::ready() {
         return conversions::to_ocpp_get_log_response(response);
     };
 
-    callbacks.is_reservation_for_token_callback = [](const int32_t evse_id, const ocpp::CiString<36> idToken,
-                                                     const std::optional<ocpp::CiString<36>> groupIdToken) {
-        // FIXME: This is just a stub, replace with functionality
-        EVLOG_warning << "is_reservation_for_token_callback is still a stub";
-        return false;
+    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
+                                                         const std::optional<ocpp::CiString<36>> groupIdToken) {
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            return false;
+        }
+
+        types::reservation::ReservationCheck reservation_check_request;
+        reservation_check_request.connector_id = evse_id;
+        reservation_check_request.id_token = idToken.get();
+        if (groupIdToken.has_value()) {
+            reservation_check_request.group_id_token = groupIdToken.value().get();
+        }
+
+        return this->r_reservation.at(0)->call_is_reservation_for_token(reservation_check_request);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
@@ -649,7 +658,10 @@ void OCPP201::ready() {
             reservation.connector_type = conversions::to_everest_connector_type_enum(connector_type.value());
         }
 
-        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(evse, reservation);
+        types::reservation::ReserveNowRequest request;
+        request.evse_id = evse;
+        request.reservation = reservation;
+        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(request);
         return conversions::to_ocpp_reservation_status(result);
     };
 

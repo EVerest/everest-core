@@ -52,7 +52,7 @@ public:
         r_token_provider(std::move(r_token_provider)),
         r_token_validator(std::move(r_token_validator)),
         r_evse_manager(std::move(r_evse_manager)),
-        config(config){};
+        config(config) {};
 
     const std::unique_ptr<authImplBase> p_main;
     const std::unique_ptr<reservationImplBase> p_reservation;

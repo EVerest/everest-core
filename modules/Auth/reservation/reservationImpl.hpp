@@ -25,7 +25,7 @@ class reservationImpl : public reservationImplBase {
 public:
     reservationImpl() = delete;
     reservationImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Auth>& mod, Conf& config) :
-        reservationImplBase(ev, "reservation"), mod(mod), config(config){};
+        reservationImplBase(ev, "reservation"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -34,8 +34,9 @@ public:
 protected:
     // command handler functions (virtual)
     virtual types::reservation::ReservationResult
-    handle_reserve_now(int& connector_id, types::reservation::Reservation& reservation) override;
+    handle_reserve_now(types::reservation::ReserveNowRequest& request) override;
     virtual bool handle_cancel_reservation(int& reservation_id) override;
+    virtual bool handle_is_reservation_for_token(types::reservation::ReservationCheck& request) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
