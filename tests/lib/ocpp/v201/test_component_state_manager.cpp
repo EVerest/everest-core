@@ -148,18 +148,18 @@ TEST_F(ComponentStateManagerTest, test_check_evse_and_connector_ids) {
     auto state_mgr = this->component_state_manager(mock_database, {1, 2});
 
     // Act & Verify
-    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(0), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(-1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(3), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(0, 1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(-1, 1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(3, 1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, -1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, 0), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, 2), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, -1), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, 0), std::out_of_range);
-    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, 3), std::out_of_range);
+    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(0), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(-1), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_evse_effective_operational_status(3), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(0, 1), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(-1, 1), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(3, 1), EvseOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, -1), ConnectorOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, 0), ConnectorOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(1, 2), ConnectorOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, -1), ConnectorOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, 0), ConnectorOutOfRangeException);
+    ASSERT_THROW(state_mgr.get_connector_effective_operational_status(2, 3), ConnectorOutOfRangeException);
 }
 
 /// \brief Test that the ComponentStateManager assumes missing states are Operative

@@ -1476,6 +1476,10 @@ void ChargePoint::message_callback(const std::string& message) {
         EVLOG_error << "Exception during handling of message: " << e.what();
         auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
         this->send(call_error);
+    } catch (const ConnectorOutOfRangeException& e) {
+        EVLOG_error << "Exception during handling of message: " << e.what();
+        auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
+        this->send(call_error);
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
         auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));

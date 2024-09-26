@@ -80,9 +80,7 @@ int32_t ComponentStateManager::num_evses() {
 
 void ComponentStateManager::check_evse_id(int32_t evse_id) {
     if (evse_id <= 0 || evse_id > this->num_evses()) {
-        std::stringstream errmsg;
-        errmsg << "EVSE ID " << evse_id << " out of bounds.";
-        throw std::out_of_range(errmsg.str());
+        throw EvseOutOfRangeException(evse_id);
     }
 }
 
@@ -94,9 +92,7 @@ int32_t ComponentStateManager::num_connectors(int32_t evse_id) {
 void ComponentStateManager::check_evse_and_connector_id(int32_t evse_id, int32_t connector_id) {
     this->check_evse_id(evse_id);
     if (connector_id <= 0 || connector_id > this->num_connectors(evse_id)) {
-        std::stringstream errmsg;
-        errmsg << "Connector ID " << connector_id << "out of bounds for EVSE ID " << evse_id << ".";
-        throw std::out_of_range(errmsg.str());
+        throw ConnectorOutOfRangeException(connector_id, evse_id);
     }
 }
 

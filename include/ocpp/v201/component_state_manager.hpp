@@ -8,6 +8,40 @@
 
 namespace ocpp::v201 {
 
+/// \brief Exception used when an evse that does not exist is accessed.
+class EvseOutOfRangeException : public std::exception {
+public:
+    explicit EvseOutOfRangeException(int32_t id) : msg{"Evse with id " + std::to_string(id) + " does not exist"} {
+    }
+
+    ~EvseOutOfRangeException() noexcept override = default;
+
+    const char* what() const noexcept override {
+        return msg.c_str();
+    }
+
+private:
+    std::string msg;
+};
+
+/// \brief Exception used when an connector_id that does not exist is accessed.
+class ConnectorOutOfRangeException : public std::exception {
+public:
+    explicit ConnectorOutOfRangeException(int32_t connector_id, int32_t evse_id) :
+        msg{"Connector with id " + std::to_string(connector_id) + " does not exist for evse with id " +
+            std::to_string(evse_id)} {
+    }
+
+    ~ConnectorOutOfRangeException() noexcept override = default;
+
+    const char* what() const noexcept override {
+        return msg.c_str();
+    }
+
+private:
+    std::string msg;
+};
+
 /// \brief Describes the individual state of a single connector
 struct FullConnectorStatus {
     /// \brief Operative/Inoperative status, usually set by the CSMS
