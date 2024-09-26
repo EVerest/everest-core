@@ -362,7 +362,9 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
                                                   this->configuration->getVerifyCsmsCommonName(),
                                                   this->configuration->getUseTPM(),
                                                   this->configuration->getVerifyCsmsAllowWildcards(),
-                                                  this->configuration->getIFace()};
+                                                  this->configuration->getIFace(),
+                                                  this->configuration->getEnableTLSKeylog(),
+                                                  this->configuration->getTLSKeylogFile()};
     return connection_options;
 }
 

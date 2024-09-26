@@ -103,6 +103,9 @@ public:
     int getMaxMessageSize();
     KeyValue getMaxMessageSizeKeyValue();
 
+    bool getEnableTLSKeylog();
+    std::string getTLSKeylogFile();
+
     int32_t getRetryBackoffRandomRange();
     void setRetryBackoffRandomRange(int32_t retry_backoff_random_range);
     KeyValue getRetryBackoffRandomRangeKeyValue();

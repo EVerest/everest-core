@@ -300,6 +300,18 @@
             "readOnly": true,
             "minimum": 32000,
             "default": 65000
+        },
+        "TLSKeylogFile": {
+            "$comment": "The file to which the OCPP TLS keylog in SSLKEYLOGFILE format is written to.",
+            "type": "string",
+            "readOnly": true,
+            "default": "/tmp/ocpp_tls_keylog.txt"
+        },
+        "EnableTLSKeylog": {
+            "$comment": "If the TLS keylogging is enabled.",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
         }
     },
     "additionalProperties": false

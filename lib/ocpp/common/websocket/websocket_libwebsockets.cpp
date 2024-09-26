@@ -8,6 +8,7 @@
 #include <libwebsockets.h>
 
 #include <atomic>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -23,6 +24,19 @@
 #else
 #define SSL_CTX_new_ex(LIB, PROP, METHOD) SSL_CTX_new(METHOD)
 #endif
+
+namespace {
+std::optional<std::filesystem::path> keylog_file;
+
+void keylog_callback(const SSL* ssl, const char* line) {
+    if (keylog_file.has_value()) {
+        std::ofstream keylog_ofs;
+        keylog_ofs.open(keylog_file.value(), std::ofstream::out | std::ofstream::app);
+        keylog_ofs << line << std::endl;
+        keylog_ofs.close();
+    }
+}
+} // namespace
 
 template <> class std::default_delete<lws_context> {
 public:
@@ -550,6 +564,12 @@ void WebsocketTlsTPM::client_loop() {
             // Notify conn waiter
             conn_cv.notify_one();
             return;
+        }
+
+        if (this->connection_options.enable_tls_keylog and this->connection_options.keylog_file.has_value()) {
+            EVLOG_info << "Logging TLS secrets to: " << this->connection_options.keylog_file.value().string();
+            keylog_file = this->connection_options.keylog_file;
+            SSL_CTX_set_keylog_callback(ssl_ctx, keylog_callback);
         }
 
         // Init TLS data

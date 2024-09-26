@@ -475,6 +475,36 @@
         "default": "",
         "type": "string"
       },
+      "EnableTLSKeylog": {
+        "variable_name": "EnableTLSKeylog",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadWrite"
+            }
+        ],
+        "default": false,
+        "type": "boolean"
+      },
+      "TLSKeylogFile": {
+        "variable_name": "TLSKeylogFile",
+        "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "string"
+        },
+        "attributes": [
+            {
+                "type": "Actual",
+                "mutability": "ReadOnly"
+            }
+        ],
+        "default": "/tmp/ocpp_tlskey.log",
+        "type": "string"
+      },
       "OcspRequestInterval": {
           "variable_name": "OcspRequestInterval",
           "characteristics": {

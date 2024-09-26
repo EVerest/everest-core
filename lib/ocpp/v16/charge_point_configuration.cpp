@@ -636,6 +636,14 @@ KeyValue ChargePointConfiguration::getMaxMessageSizeKeyValue() {
     return kv;
 }
 
+bool ChargePointConfiguration::getEnableTLSKeylog() {
+    return this->config["Internal"]["EnableTLSKeylog"];
+}
+
+std::string ChargePointConfiguration::getTLSKeylogFile() {
+    return this->config["Internal"]["TLSKeylogFile"];
+}
+
 KeyValue ChargePointConfiguration::getWebsocketPingPayloadKeyValue() {
     KeyValue kv;
     kv.key = "WebsocketPingPayload";

@@ -254,6 +254,20 @@ const ComponentVariable& IFace = {
         "IFace",
     }),
 };
+const ComponentVariable& EnableTLSKeylog = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "EnableTLSKeylog",
+    }),
+};
+const ComponentVariable& TLSKeylogFile = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "TLSKeylogFile",
+    }),
+};
 const ComponentVariable& OcspRequestInterval = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

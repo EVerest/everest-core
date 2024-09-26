@@ -36,6 +36,8 @@ struct WebsocketConnectionOptions {
     bool use_tpm_tls;
     bool verify_csms_allow_wildcards;
     std::optional<std::string> iface; // Optional interface where the socket is created. Only usable for libwebsocket
+    bool enable_tls_keylog = false;   ///< If set to true enables logging of TLS secrets to the keylog_file
+    std::optional<std::filesystem::path> keylog_file; ///< Optional path to a keylog file
 };
 
 ///

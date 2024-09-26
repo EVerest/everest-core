@@ -71,6 +71,8 @@ extern const ComponentVariable& VerifyCsmsCommonName;
 extern const ComponentVariable& UseTPM;
 extern const ComponentVariable& VerifyCsmsAllowWildcards;
 extern const ComponentVariable& IFace;
+extern const ComponentVariable& EnableTLSKeylog;
+extern const ComponentVariable& TLSKeylogFile;
 extern const ComponentVariable& OcspRequestInterval;
 extern const ComponentVariable& WebsocketPingPayload;
 extern const ComponentVariable& WebsocketPongTimeout;
