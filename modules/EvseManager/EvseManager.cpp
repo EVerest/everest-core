@@ -989,7 +989,8 @@ void EvseManager::ready_to_start_charging() {
     }
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1652,12 +1653,12 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 }
 
 void EvseManager::powersupply_DC_off() {
-    power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
     if (powersupply_dc_is_on) {
         session_log.evse(false, "DC power supply OFF");
         r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Off, power_supply_DC_charging_phase);
         powersupply_dc_is_on = false;
     }
+    power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
 }
 
 bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
@@ -1668,6 +1669,7 @@ bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
     while (not timeout.reached()) {
         if (cable_check_should_exit()) {
             EVLOG_warning << "Cancel cable check wait voltage reached";
+            power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
             powersupply_DC_off();
             r_hlc[0]->call_cable_check_finished(false);
             charger->set_hlc_error();
@@ -1682,6 +1684,7 @@ bool EvseManager::wait_powersupply_DC_voltage_reached(double target_voltage) {
             }
         } else {
             EVLOG_info << "Did not receive voltage measurement from power supply within 2 seconds.";
+            power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
             powersupply_DC_off();
             break;
         }
@@ -1697,6 +1700,7 @@ bool EvseManager::wait_powersupply_DC_below_voltage(double target_voltage) {
     while (not timeout.reached()) {
         if (cable_check_should_exit()) {
             EVLOG_warning << "Cancel cable check wait below voltage";
+            power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
             powersupply_DC_off();
             r_hlc[0]->call_cable_check_finished(false);
             charger->set_hlc_error();
@@ -1711,6 +1715,7 @@ bool EvseManager::wait_powersupply_DC_below_voltage(double target_voltage) {
             }
         } else {
             EVLOG_info << "Did not receive voltage measurement from power supply within 2 seconds.";
+            power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
             powersupply_DC_off();
             break;
         }
@@ -1765,6 +1770,7 @@ types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
 
 void EvseManager::fail_cable_check() {
     if (config.charge_mode == "DC") {
+        power_supply_DC_charging_phase = types::power_supply_DC::ChargingPhase::Other;
         powersupply_DC_off();
         // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
         if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
