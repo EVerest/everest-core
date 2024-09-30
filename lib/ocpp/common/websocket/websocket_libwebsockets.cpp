@@ -213,6 +213,17 @@ static bool verify_csms_cn(const std::string& hostname, bool preverified, const 
                             << " with wildcards: " << allow_wildcards;
             }
 
+            if (not allow_wildcards) {
+                int wildcard_result = X509_check_host(server_cert, hostname.c_str(), hostname.length(),
+                                                      X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS, nullptr);
+                if (result != wildcard_result) {
+                    EVLOG_error << "Failed to verify server certificate hostname: \"" << hostname
+                                << "\". Server certificate common name \"" << common_name
+                                << "\" likely contains wildcards. Please check your OCPP configuration and set "
+                                   "VerifyCsmsAllowWildcards to true if you want to allow wildcard certificates.";
+                }
+            }
+
             return false;
         }
     }
