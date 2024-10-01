@@ -43,6 +43,20 @@ config:
       Enable the built-in SDP server
     type: boolean
     default: true
+  supported_dynamic_mode:
+    description: The EVSE should support dynamic mode
+    type: boolean
+    default: true
+  supported_mobility_needs_mode_provided_by_secc:
+    description: >-
+      The EVSE should support the mobility needs mode provided by the SECC.
+      Mobility needs mode provided by the EVCC is always provided.
+    type: boolean
+    default: false
+  supported_scheduled_mode:
+    description: The EVSE should support scheduled mode
+    type: boolean
+    default: false
 provides:
   charger:
     interface: ISO15118_charger

@@ -28,6 +28,9 @@ struct Conf {
     bool enable_ssl_logging;
     bool enable_tls_key_logging;
     bool enable_sdp_server;
+    bool supported_dynamic_mode;
+    bool supported_mobility_needs_mode_provided_by_secc;
+    bool supported_scheduled_mode;
 };
 
 class Evse15118D20 : public Everest::ModuleBase {
