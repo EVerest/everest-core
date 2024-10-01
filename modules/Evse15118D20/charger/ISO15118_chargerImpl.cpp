@@ -56,6 +56,30 @@ convert_display_parameters(const iso15118::session::feedback::DisplayParameters&
             in.inlet_hot};
 }
 
+types::iso15118_charger::DcChargeDynamicModeValues
+convert_dynamic_values(const iso15118::session::feedback::DcChargeDynamicMode& in) {
+
+    std::optional<float> departure_time{std::nullopt};
+    if (in.departure_time.has_value()) {
+        departure_time = static_cast<float>(*in.departure_time);
+    }
+
+    return {in.target_energy_request,
+            in.max_energy_request,
+            in.min_energy_request,
+            in.max_charge_power,
+            in.min_charge_power,
+            in.max_charge_current,
+            in.max_voltage,
+            in.min_voltage,
+            departure_time,
+            in.max_discharge_power,
+            in.min_discharge_power,
+            in.max_discharge_current,
+            in.max_v2x_energy_request,
+            in.min_v2x_energy_request};
+}
+
 } // namespace
 
 void ISO15118_chargerImpl::init() {
@@ -112,16 +136,51 @@ void ISO15118_chargerImpl::ready() {
     };
     const auto callbacks = create_callbacks();
 
+    if (mod->config.supported_dynamic_mode) {
+        setup_config.control_mobility_modes.push_back(
+            {iso15118::message_20::ControlMode::Dynamic, iso15118::message_20::MobilityNeedsMode::ProvidedByEvcc});
+        if (mod->config.supported_mobility_needs_mode_provided_by_secc) {
+            setup_config.control_mobility_modes.push_back(
+                {iso15118::message_20::ControlMode::Dynamic, iso15118::message_20::MobilityNeedsMode::ProvidedBySecc});
+        }
+    }
+
+    if (mod->config.supported_scheduled_mode) {
+        setup_config.control_mobility_modes.push_back(
+            {iso15118::message_20::ControlMode::Scheduled, iso15118::message_20::MobilityNeedsMode::ProvidedByEvcc});
+    }
+
+    if (setup_config.control_mobility_modes.empty()) {
+        EVLOG_warning << "Control mobility modes are empty! Setting dynamic mode as default!";
+        setup_config.control_mobility_modes.push_back(
+            {iso15118::message_20::ControlMode::Dynamic, iso15118::message_20::MobilityNeedsMode::ProvidedByEvcc});
+    }
+
     controller = std::make_unique<iso15118::TbdController>(tbd_config, callbacks, setup_config);
-    controller->loop();
+
+    try {
+        controller->loop();
+    } catch (const std::exception& e) {
+        EVLOG_error << e.what();
+    }
 }
 
 iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() {
     iso15118::session::feedback::Callbacks callbacks;
 
-    callbacks.dc_charge_target = [this](const iso15118::session::feedback::DcChargeTarget& charge_target) {
-        publish_dc_ev_target_voltage_current({charge_target.voltage, charge_target.current});
+    callbacks.dc_pre_charge_target_voltage = [this](float target_voltage) {
+        publish_dc_ev_target_voltage_current({target_voltage, 0});
     };
+
+    callbacks.dc_charge_scheduled_mode = [this](const iso15118::session::feedback::DcChargeScheduledMode&
+                                                    dc_charge_schedule) {
+        publish_dc_ev_target_voltage_current({dc_charge_schedule.target_voltage, dc_charge_schedule.target_current});
+    };
+
+    callbacks.dc_charge_dynamic_mode =
+        [this](const iso15118::session::feedback::DcChargeDynamicMode& dc_charge_dynamic) {
+            publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(dc_charge_dynamic));
+        };
 
     callbacks.dc_max_limits = [this](const iso15118::session::feedback::DcMaximumLimits& max_limits) {
         publish_dc_ev_maximum_limits({max_limits.current, max_limits.power, max_limits.voltage});
@@ -171,6 +230,15 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
     callbacks.display_parameters = [this](const iso15118::session::feedback::DisplayParameters parameters) {
         publish_display_parameters(convert_display_parameters(parameters));
+    };
+
+    callbacks.dc_present_voltage = [this](float present_voltage) { publish_dc_ev_present_voltage(present_voltage); };
+
+    callbacks.meter_info_requested = [this](bool meter_info_requested) {
+        if (meter_info_requested) {
+            EVLOG_info << "Meter info is requested from EV";
+            publish_meter_info_requested(nullptr);
+        }
     };
 
     return callbacks;
