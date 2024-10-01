@@ -243,21 +243,28 @@ void EvseManager::ready() {
         auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-        std::vector<types::iso15118_charger::EnergyTransferMode> transfer_modes;
+        std::vector<types::iso15118_charger::SupportedEnergyMode> transfer_modes;
         if (config.charge_mode == "AC") {
             types::iso15118_charger::SetupPhysicalValues setup_physical_values;
             setup_physical_values.ac_nominal_voltage = config.ac_nominal_voltage;
             r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
+            constexpr auto support_bidi = false;
+
             // FIXME: we cannot change this during run time at the moment. Refactor ISO interface to exclude transfer
             // modes from setup
             // transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
-            transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_three_phase_core);
+            transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::AC_three_phase_core, support_bidi});
 
         } else if (config.charge_mode == "DC") {
-            transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
+            transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_extended, false});
 
-            update_powersupply_capabilities(get_powersupply_capabilities());
+            const auto caps = get_powersupply_capabilities();
+            update_powersupply_capabilities(caps);
+
+            if (caps.bidirectional) {
+                transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_extended, true});
+            }
 
             // Set present measurements on HLC to sane defaults
             types::iso15118_charger::DcEvsePresentVoltageCurrent present_values;
@@ -594,10 +601,8 @@ void EvseManager::ready() {
 
         // Install debug V2G Messages handler if session logging is enabled
         if (config.session_logging) {
-            r_hlc[0]->subscribe_v2g_messages([this](types::iso15118_charger::V2gMessages v2g_messages) {
-                json v2g = v2g_messages;
-                log_v2g_message(v2g);
-            });
+            r_hlc[0]->subscribe_v2g_messages(
+                [this](types::iso15118_charger::V2gMessages v2g_messages) { log_v2g_message(v2g_messages); });
 
             r_hlc[0]->subscribe_selected_protocol(
                 [this](std::string selected_protocol) { this->selected_protocol = selected_protocol; });
@@ -1013,12 +1018,13 @@ void EvseManager::setup_fake_DC_mode() {
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118_charger::EnergyTransferMode> transfer_modes;
+    std::vector<types::iso15118_charger::SupportedEnergyMode> transfer_modes;
+    constexpr auto support_bidi = false;
 
-    transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_core);
-    transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_extended);
-    transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_combo_core);
-    transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::DC_unique);
+    transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_core, support_bidi});
+    transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_extended, support_bidi});
+    transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_combo_core, support_bidi});
+    transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::DC_unique, support_bidi});
 
     types::iso15118_charger::DcEvsePresentVoltageCurrent present_values;
     present_values.evse_present_voltage = 400; // FIXME: set a correct values
@@ -1037,7 +1043,7 @@ void EvseManager::setup_fake_DC_mode() {
     evse_min_limits.evse_minimum_voltage_limit = 0;
     r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
-    const auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
+    constexpr auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
 
     r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
 }
@@ -1051,17 +1057,18 @@ void EvseManager::setup_AC_mode() {
     types::iso15118_charger::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
     // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
-    std::vector<types::iso15118_charger::EnergyTransferMode> transfer_modes;
+    std::vector<types::iso15118_charger::SupportedEnergyMode> transfer_modes;
+    constexpr auto support_bidi = false;
 
-    transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_single_phase_core);
+    transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::AC_single_phase_core, support_bidi});
 
     if (get_hw_capabilities().max_phase_count_import == 3) {
-        transfer_modes.push_back(types::iso15118_charger::EnergyTransferMode::AC_three_phase_core);
+        transfer_modes.push_back({types::iso15118_charger::EnergyTransferMode::AC_three_phase_core, support_bidi});
     }
 
     types::iso15118_charger::SetupPhysicalValues setup_physical_values;
 
-    const auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
+    constexpr auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
 
     if (get_hlc_enabled()) {
         r_hlc[0]->call_setup(evseid, transfer_modes, sae_mode, config.session_logging);
@@ -1089,6 +1096,8 @@ void EvseManager::setup_v2h_mode() {
         powersupply_capabilities.min_import_voltage_V.has_value()) {
         evse_min_limits.evse_minimum_current_limit = -powersupply_capabilities.min_import_current_A.value();
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_import_voltage_V.value();
+        evse_min_limits.evse_minimum_power_limit =
+            evse_min_limits.evse_minimum_current_limit * evse_min_limits.evse_minimum_voltage_limit;
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
     } else {
         EVLOG_error << "No Import Current, Power or Voltage is available!!!";
@@ -1239,24 +1248,19 @@ bool EvseManager::get_hlc_waiting_for_auth_pnc() {
     return hlc_waiting_for_auth_pnc;
 }
 
-void EvseManager::log_v2g_message(Object m) {
-    std::string msg = m["v2g_message_id"];
+void EvseManager::log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages) {
 
-    std::string xml = "";
-    std::string json_str = "";
-    if (m["v2g_message_xml"].is_null() and m["v2g_message_json"].is_string()) {
-        json_str = m["v2g_message_json"];
-    } else if (m["v2g_message_xml"].is_string()) {
-        xml = m["v2g_message_xml"];
-    }
+    const std::string msg = types::iso15118_charger::v2g_message_id_to_string(v2g_messages.id);
+    const std::string xml = v2g_messages.xml.value_or("");
+    const std::string json_str = v2g_messages.v2g_json.value_or("");
+    const std::string exi_hex = v2g_messages.exi.value_or("");
+    const std::string exi_base64 = v2g_messages.exi_base64.value_or("");
 
     // All messages from EVSE contain Req and all originating from Car contain Res
     if (msg.find("Res") == std::string::npos) {
-        session_log.car(true, fmt::format("V2G {}", msg), xml, m["v2g_message_exi_hex"], m["v2g_message_exi_base64"],
-                        json_str);
+        session_log.car(true, fmt::format("V2G {}", msg), xml, exi_hex, exi_base64, json_str);
     } else {
-        session_log.evse(true, fmt::format("V2G {}", msg), xml, m["v2g_message_exi_hex"], m["v2g_message_exi_base64"],
-                         json_str);
+        session_log.evse(true, fmt::format("V2G {}", msg), xml, exi_hex, exi_base64, json_str);
     }
 }
 

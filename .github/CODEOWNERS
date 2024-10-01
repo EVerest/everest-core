@@ -22,6 +22,7 @@
 /modules/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
 /modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried
 /modules/EvManager/ @SebaLukas @pietfried @MarzellT
+/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen
 /modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
 /modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc
 /modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
