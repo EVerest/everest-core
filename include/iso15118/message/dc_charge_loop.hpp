@@ -94,9 +94,9 @@ struct DC_ChargeLoopResponse {
 
     RationalNumber present_current;
     RationalNumber present_voltage;
-    bool power_limit_achieved;
-    bool current_limit_achieved;
-    bool voltage_limit_achieved;
+    bool power_limit_achieved{false};
+    bool current_limit_achieved{false};
+    bool voltage_limit_achieved{false};
 
     std::variant<Scheduled_DC_CLResControlMode, BPT_Scheduled_DC_CLResControlMode, Dynamic_DC_CLResControlMode,
                  BPT_Dynamic_DC_CLResControlMode>

@@ -36,7 +36,7 @@ message_20::AuthorizationResponse handle_request(const message_20::Authorization
             res, message_20::ResponseCode::WARNING_AuthorizationSelectionInvalid); // [V2G20-2226] Handling if warning
     }
 
-    message_20::ResponseCode response_code;
+    auto response_code = message_20::ResponseCode::OK;
 
     switch (req.selected_authorization_service) {
     case message_20::Authorization::EIM:
