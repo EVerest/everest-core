@@ -152,6 +152,14 @@ active_modules:
       error_history:
         - module_id: error_history
           implementation_id: error_history
+  ev_api:
+    module: EvAPI
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager_1
+        - implementation_id: ev_manager
+          module_id: ev_manager_2
   error_history:
     module: ErrorHistory
     config_implementation:
