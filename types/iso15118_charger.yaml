@@ -537,7 +537,7 @@ types:
     properties:
       energy_transfer_mode:
         description: The energy mode supported by the SECC 
-        ype: string
+        type: string
         $ref: /iso15118_charger#/EnergyTransferMode
       bidirectional:
         description: Set true if the powersupply (AC or DC) supports bidi mode
