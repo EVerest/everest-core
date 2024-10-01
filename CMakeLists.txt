@@ -102,7 +102,7 @@ else()
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
-    find_packahe(iso15118 REQUIRED)
+    find_package(iso15118 REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 
