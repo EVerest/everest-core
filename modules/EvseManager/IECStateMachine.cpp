@@ -381,7 +381,6 @@ void IECStateMachine::set_pwm_F() {
 
 // The higher level state machine in Charger.cpp calls this to indicate it allows contactors to be switched on
 void IECStateMachine::allow_power_on(bool value, types::evse_board_support::Reason reason) {
-    EVLOG_info << "Allow power on: " << value << " Reason: " << reason;
     {
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_allow_power_on);
         // Only set the flags here in case of power on.
