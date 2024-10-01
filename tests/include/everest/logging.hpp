@@ -32,4 +32,13 @@ public:
 #define EVLOG_warning  UTestLogger(std::cout, "Warning:  ", __FILE__, __LINE__)
 #define EVLOG_info     UTestLogger(std::cout, "Info:     ", __FILE__, __LINE__)
 #define EVLOG_debug    UTestLogger(std::cout, "Debug:    ", __FILE__, __LINE__)
+#define EVLOG_AND_THROW(ex)                                                                                            \
+    do {                                                                                                               \
+        try {                                                                                                          \
+            throw ex;                                                                                                  \
+        } catch (std::exception & e) {                                                                                 \
+            EVLOG_error << e.what();                                                                                   \
+            throw;                                                                                                     \
+        }                                                                                                              \
+    } while (0)
 } // namespace
