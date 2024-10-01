@@ -76,10 +76,17 @@ config:
     description: Support three phase
     type: boolean
     default: true
+  soc:
+    description: SoC at start of a simulated charging process
+    type: integer
+    default: 30
 provides:
   main:
     interface: car_simulator
     description: This implements the car simulator
+  ev_manager:
+    interface: ev_manager
+    description: TODO
 requires:
   ev_board_support:
     interface: ev_board_support

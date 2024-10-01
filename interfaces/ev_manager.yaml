@@ -1,0 +1,24 @@
+description: >-
+  This interface defines the ev manager. An ev manager represents the
+  charging logic of the ev side
+cmds: {}
+vars:
+  session_event:
+    description: Emits all events related to sessions
+    type: object
+    $ref: /evse_manager#/SessionEvent
+  ev_info:
+    description: More details about the EV if available
+    type: object
+    $ref: /evse_manager#/EVInfo
+  bsp_event:
+    description: >-
+      Events from CP/Relais
+    type: object
+    $ref: /board_support_common#/BspEvent
+  car_manufacturer:
+    description: Car manufacturer (if known)
+    type: string
+    $ref: /evse_manager#/CarManufacturer
+errors:
+  - reference: /errors/evse_manager
