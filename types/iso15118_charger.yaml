@@ -528,7 +528,7 @@ types:
         type: string
         maxLength: 512
   SupportedEnergyMode:
-    description: Supported energy mode & if the mode supports bidirectional
+    description: Supported energy mode and if the mode supports bidirectional
     type: object
     additionalProperties: false
     required:
