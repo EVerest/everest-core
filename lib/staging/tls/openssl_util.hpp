@@ -499,6 +499,7 @@ bool certificate_subject_public_key_sha_1(openssl::sha_1_digest_t& digest, const
 
 enum class log_level_t : std::uint8_t {
     debug,
+    info,
     warning,
     error,
 };
@@ -521,6 +522,10 @@ static inline void log_warning(const std::string& str) {
 
 static inline void log_debug(const std::string& str) {
     log(log_level_t::debug, str);
+}
+
+static inline void log_info(const std::string& str) {
+    log(log_level_t::info, str);
 }
 
 using log_handler_t = void (*)(log_level_t level, const std::string& err);
