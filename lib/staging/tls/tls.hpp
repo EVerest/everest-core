@@ -380,6 +380,9 @@ public:
         ConfigItem service{nullptr}; //!< TLS port number as a string
         int socket{INVALID_SOCKET};  //!< use this specific socket - bypasses socket setup in init_socket() when set
         bool ipv6_only{true};        //!< listen on IPv6 only, when false listen on IPv4 only
+
+        bool tls_key_logging{false};      //!< tls key logging is active when true
+        std::string tls_key_logging_path; //!< tls key logging file path
     };
 
     using ConnectionPtr = std::unique_ptr<ServerConnection>;

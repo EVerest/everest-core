@@ -17,6 +17,9 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
     case openssl::log_level_t::debug:
         // std::cout << "DEBUG:   " << str << std::endl;
         break;
+    case openssl::log_level_t::info:
+        std::cout << "INFO:    " << str << std::endl;
+        break;
     case openssl::log_level_t::warning:
         std::cout << "WARN:    " << str << std::endl;
         break;
