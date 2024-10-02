@@ -362,6 +362,18 @@ void EvseManager::ready() {
                 if (config.hack_skoda_enyaq and (v.dc_ev_target_voltage < 300 or v.dc_ev_target_current < 0))
                     return;
 
+                // Limit voltage/current for broken EV implementations
+                auto ev = get_ev_info();
+                if (ev.maximum_current_limit.has_value() and
+                    v.dc_ev_target_current > ev.maximum_current_limit.value()) {
+                    v.dc_ev_target_current = ev.maximum_current_limit.value();
+                }
+
+                if (ev.maximum_voltage_limit.has_value() and
+                    v.dc_ev_target_voltage > ev.maximum_voltage_limit.value()) {
+                    v.dc_ev_target_voltage = ev.maximum_voltage_limit.value();
+                }
+
                 if (v.dc_ev_target_voltage not_eq latest_target_voltage or
                     v.dc_ev_target_current not_eq latest_target_current) {
                     latest_target_voltage = v.dc_ev_target_voltage;
