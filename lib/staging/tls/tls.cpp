@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <netinet/in.h>
@@ -63,6 +65,7 @@ public:
 } // namespace std
 
 using ::openssl::log_error;
+using ::openssl::log_info;
 using ::openssl::log_warning;
 
 namespace {
@@ -692,6 +695,26 @@ std::uint32_t ServerConnection::m_count{0};
 std::mutex ServerConnection::m_cv_mutex;
 std::condition_variable ServerConnection::m_cv;
 
+namespace {
+
+std::unique_ptr<std::filesystem::path> keylog_file;
+
+void keylog_callback(const SSL* ssl, const char* line) {
+    std::string key_log_msg = "TLS Handshake keys: " + std::string(line);
+    log_info(key_log_msg);
+
+    if (keylog_file) {
+        std::ofstream ofs;
+        ofs.open(keylog_file->string(), std::ofstream::out | std::ofstream::app);
+        ofs << line << std::endl;
+        ofs.close();
+    }
+
+    keylog_file.reset();
+}
+
+} // namespace
+
 ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in,
                                    std::int32_t timeout_ms) :
     Connection(ctx, soc, ip_in, service_in, timeout_ms), m_tck_data{m_trusted_ca_keys, m_flags} {
@@ -885,6 +908,13 @@ bool Server::init_ssl(const config_t& cfg) {
         // use the first server chain
         result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.chains[0], true);
         if (result) {
+
+            if (cfg.tls_key_logging) {
+                const auto file_path = std::filesystem::path(cfg.tls_key_logging_path) /= "tls_session_keys.log";
+                keylog_file = std::make_unique<std::filesystem::path>(file_path);
+                SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+            }
+
             int mode = SSL_VERIFY_NONE;
 
             // TODO(james-ctc): verify may need to change based on TLS version
