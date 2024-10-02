@@ -363,7 +363,7 @@ void EvseManager::ready() {
                     return;
 
                 // Limit voltage/current for broken EV implementations
-                auto ev = get_ev_info();
+                const auto ev = get_ev_info();
                 if (ev.maximum_current_limit.has_value() and
                     v.dc_ev_target_current > ev.maximum_current_limit.value()) {
                     v.dc_ev_target_current = ev.maximum_current_limit.value();
