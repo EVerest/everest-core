@@ -130,14 +130,14 @@ static bool v2g_sniff_apphandshake(struct v2g_connection* conn, bool& iso20) {
              proto_ns, app_proto->VersionNumberMajor, app_proto->VersionNumberMinor, app_proto->SchemaID,
              app_proto->Priority);
 
-        free(proto_ns);
-
         // Check if it supports ISO-20
         const char* iso20_urn = "urn:iso:std:iso:15118:-20";
         if (strncmp(iso20_urn, proto_ns, strlen(iso20_urn)) == 0) {
             iso20 = true;
             return true;
         }
+
+        free(proto_ns);
     }
     return true;
 }
