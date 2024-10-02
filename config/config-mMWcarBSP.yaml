@@ -1,0 +1,5 @@
+settings:
+  telemetry_enabled: true
+active_modules:
+  test_rig:
+    module: mMWcarBSP
