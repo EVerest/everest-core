@@ -21,11 +21,14 @@
 
 namespace {
 
+// used when ctx->network_read_timeout_tls is 0
+constexpr int default_timeout_ms = 1000;
+
 void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struct v2g_context* ctx) {
     assert(con != nullptr);
     assert(ctx != nullptr);
 
-    openssl::PKey_ptr contract_public_key{nullptr, nullptr};
+    openssl::pkey_ptr contract_public_key{nullptr, nullptr};
     auto connection = std::make_unique<v2g_connection>();
     connection->ctx = ctx;
     connection->is_tls_connection = true;
@@ -35,26 +38,46 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
     connection->tls_connection = con.get();
     connection->pubkey = &contract_public_key;
 
-    if (con->accept()) {
-        // TODO(james-ctc) v2g_ctx->tls_key_logging
+    dlog(DLOG_LEVEL_INFO, "Incoming TLS connection");
 
-        if (ctx->state == 0) {
-            const auto rv = ::connection_handle(connection.get());
-            dlog(DLOG_LEVEL_INFO, "connection_handle exited with %d", rv);
-        } else {
-            dlog(DLOG_LEVEL_INFO, "%s", "Closing tls-connection. v2g-session is already running");
+    bool loop{true};
+    while (loop) {
+        loop = false;
+        const auto result = con->accept();
+        switch (result) {
+        case tls::Connection::result_t::success:
+
+            // TODO(james-ctc) v2g_ctx->tls_key_logging
+
+            if (ctx->state == 0) {
+                const auto rv = ::connection_handle(connection.get());
+                 dlog(DLOG_LEVEL_INFO, "connection_handle exited with %d", rv);
+            } else {
+                dlog(DLOG_LEVEL_INFO, "%s", "Closing tls-connection. v2g-session is already running");
+            }
+
+            con->shutdown();
+            break;
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            loop = con->wait_for(result, default_timeout_ms) == tls::Connection::result_t::success;
+            break;
+        case tls::Connection::result_t::closed:
+        case tls::Connection::result_t::timeout:
+        default:
+            break;
         }
-
-        con->shutdown();
     }
 }
 
-void handle_new_connection_cb(std::shared_ptr<tls::ServerConnection> con, struct v2g_context* ctx) {
+void handle_new_connection_cb(tls::Server::ConnectionPtr&& con, struct v2g_context* ctx) {
     assert(con != nullptr);
     assert(ctx != nullptr);
     // create a thread to process this connection
     try {
-        std::thread connection_loop(process_connection_thread, con, ctx);
+        // passing unique pointers through thread parameters is problematic
+        std::shared_ptr<tls::ServerConnection> connection(con.release());
+        std::thread connection_loop(process_connection_thread, connection, ctx);
         connection_loop.detach();
     } catch (const std::system_error&) {
         // unable to start thread
@@ -66,15 +89,11 @@ void handle_new_connection_cb(std::shared_ptr<tls::ServerConnection> con, struct
 void server_loop_thread(struct v2g_context* ctx) {
     assert(ctx != nullptr);
     assert(ctx->tls_server != nullptr);
-    const auto res = ctx->tls_server->serve([ctx](auto con) { handle_new_connection_cb(con, ctx); });
+    const auto res = ctx->tls_server->serve([ctx](auto con) { handle_new_connection_cb(std::move(con), ctx); });
     if (res != tls::Server::state_t::stopped) {
         dlog(DLOG_LEVEL_ERROR, "tls::Server failed to serve");
     }
 }
-
-} // namespace
-
-namespace tls {
 
 bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     assert(ctx != nullptr);
@@ -117,9 +136,10 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
             // workaround (see above libevse-security comment)
             const auto key_password = info.password.value_or("");
 
-            config.certificate_chain_file = cert_path.c_str();
-            config.private_key_file = key_path.c_str();
-            config.private_key_password = key_password.c_str();
+            auto& ref = config.chains.emplace_back();
+            ref.certificate_chain_file = cert_path.c_str();
+            ref.private_key_file = key_path.c_str();
+            ref.private_key_password = key_password.c_str();
 
             if (info.ocsp) {
                 for (const auto& ocsp : info.ocsp.value()) {
@@ -127,7 +147,7 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
                     if (ocsp.ocsp_path) {
                         file = ocsp.ocsp_path.value().c_str();
                     }
-                    config.ocsp_response_files.push_back(file);
+                    ref.ocsp_response_files.push_back(file);
                 }
             }
 
@@ -140,20 +160,26 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     return bResult;
 }
 
-bool configure_ssl(tls::Server& server, struct v2g_context* ctx) {
-    tls::Server::config_t config;
-    bool bResult{false};
+tls::Server::OptionalConfig configure_ssl(struct v2g_context* ctx) {
+    try {
+        dlog(DLOG_LEVEL_WARNING, "configure_ssl");
+        auto config = std::make_unique<tls::Server::config_t>();
 
-    dlog(DLOG_LEVEL_WARNING, "configure_ssl");
+        // The config of interest is from Evse Security, no point in updating
+        // config when there is a problem
 
-    // The config of interest is from Evse Security, no point in updating
-    // config when there is a problem
-    if (build_config(config, ctx)) {
-        bResult = server.update(config);
+        if (build_config(*config, ctx)) {
+            return {{std::move(config)}};
+        }
+    } catch (const std::bad_alloc&) {
+        dlog(DLOG_LEVEL_ERROR, "unable to create TLS config");
     }
-
-    return bResult;
+    return std::nullopt;
 }
+
+} // namespace
+
+namespace tls {
 
 int connection_init(struct v2g_context* ctx) {
     using state_t = tls::Server::state_t;
@@ -172,7 +198,7 @@ int connection_init(struct v2g_context* ctx) {
     // apply config
     ctx->tls_server->stop();
     ctx->tls_server->wait_stopped();
-    const auto result = ctx->tls_server->init(config, [ctx](auto& server) { return configure_ssl(server, ctx); });
+    const auto result = ctx->tls_server->init(config, [ctx]() { return configure_ssl(ctx); });
     if ((result == state_t::init_complete) || (result == state_t::init_socket)) {
         res = 0;
     }
@@ -222,13 +248,19 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, const s
         std::size_t bytes_in{0};
         auto* ptr = reinterpret_cast<std::byte*>(&buf[bytes_read]);
 
-        switch (conn->tls_connection->read(ptr, remaining, bytes_in)) {
+        const auto read_res = conn->tls_connection->read(ptr, remaining, bytes_in);
+        switch (read_res) {
         case tls::Connection::result_t::success:
             bytes_read += bytes_in;
             break;
-        case tls::Connection::result_t::timeout:
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            conn->tls_connection->wait_for(read_res, default_timeout_ms);
             break;
-        case tls::Connection::result_t::error:
+        case tls::Connection::result_t::timeout:
+            // the MBedTLS code loops on timeout, is_sequence_timeout() is used instead
+            break;
+        case tls::Connection::result_t::closed:
         default:
             result = -1;
             break;
@@ -264,13 +296,19 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
         std::size_t bytes_out{0};
         const auto* ptr = reinterpret_cast<std::byte*>(&buf[bytes_written]);
 
-        switch (conn->tls_connection->write(ptr, remaining, bytes_out)) {
+        const auto write_res = conn->tls_connection->write(ptr, remaining, bytes_out);
+        switch (write_res) {
         case tls::Connection::result_t::success:
             bytes_written += bytes_out;
             break;
-        case tls::Connection::result_t::timeout:
+        case tls::Connection::result_t::want_read:
+        case tls::Connection::result_t::want_write:
+            conn->tls_connection->wait_for(write_res, default_timeout_ms);
             break;
-        case tls::Connection::result_t::error:
+        case tls::Connection::result_t::timeout:
+            // the MBedTLS code loops on timeout
+            break;
+        case tls::Connection::result_t::closed:
         default:
             result = -1;
             break;

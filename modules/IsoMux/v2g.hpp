@@ -167,7 +167,7 @@ struct v2g_connection {
     } conn;
 
     tls::Connection* tls_connection;
-    openssl::PKey_ptr* pubkey;
+    openssl::pkey_ptr* pubkey;
 
     ssize_t (*read)(struct v2g_connection* conn, unsigned char* buf, std::size_t count, bool read_complete);
     ssize_t (*write)(struct v2g_connection* conn, unsigned char* buf, std::size_t count);

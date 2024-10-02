@@ -8,7 +8,7 @@
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
 using namespace std::chrono_literals;
-using BidiMode = types::iso15118_charger::SAE_J2847_Bidi_Mode;
+using BidiMode = types::iso15118_charger::SaeJ2847BidiMode;
 
 namespace module {
 namespace charger {
@@ -40,102 +40,102 @@ void ISO15118_chargerImpl::init() {
     v2g_ctx->certs_path = mod->info.paths.etc / CERTS_SUB_DIR;
 
     // Subscribe all vars
-    mod->r_iso2->subscribe_Require_Auth_EIM([this]() {
+    mod->r_iso2->subscribe_require_auth_eim([this]() {
         if (not mod->selected_iso20()) {
-            publish_Require_Auth_EIM(nullptr);
+            publish_require_auth_eim(nullptr);
         }
     });
-    mod->r_iso20->subscribe_Require_Auth_EIM([this]() {
+    mod->r_iso20->subscribe_require_auth_eim([this]() {
         if (mod->selected_iso20()) {
-            publish_Require_Auth_EIM(nullptr);
+            publish_require_auth_eim(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_Require_Auth_PnC([this](const auto value) {
+    mod->r_iso2->subscribe_require_auth_pnc([this](const auto value) {
         if (not mod->selected_iso20()) {
-            publish_Require_Auth_PnC(value);
+            publish_require_auth_pnc(value);
         }
     });
-    mod->r_iso20->subscribe_Require_Auth_PnC([this](const auto value) {
+    mod->r_iso20->subscribe_require_auth_pnc([this](const auto value) {
         if (mod->selected_iso20()) {
-            publish_Require_Auth_PnC(value);
+            publish_require_auth_pnc(value);
         }
     });
 
-    mod->r_iso2->subscribe_AC_Close_Contactor([this]() {
+    mod->r_iso2->subscribe_ac_close_contactor([this]() {
         if (not mod->selected_iso20()) {
-            publish_AC_Close_Contactor(nullptr);
+            publish_ac_close_contactor(nullptr);
         }
     });
-    mod->r_iso20->subscribe_AC_Close_Contactor([this]() {
+    mod->r_iso20->subscribe_ac_close_contactor([this]() {
         if (mod->selected_iso20()) {
-            publish_AC_Close_Contactor(nullptr);
+            publish_ac_close_contactor(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_AC_Open_Contactor([this]() {
+    mod->r_iso2->subscribe_ac_open_contactor([this]() {
         if (not mod->selected_iso20()) {
-            publish_AC_Open_Contactor(nullptr);
+            publish_ac_open_contactor(nullptr);
         }
     });
-    mod->r_iso20->subscribe_AC_Open_Contactor([this]() {
+    mod->r_iso20->subscribe_ac_open_contactor([this]() {
         if (mod->selected_iso20()) {
-            publish_AC_Open_Contactor(nullptr);
+            publish_ac_open_contactor(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_Start_CableCheck([this]() {
+    mod->r_iso2->subscribe_start_cable_check([this]() {
         if (not mod->selected_iso20()) {
-            publish_Start_CableCheck(nullptr);
+            publish_start_cable_check(nullptr);
         }
     });
-    mod->r_iso20->subscribe_Start_CableCheck([this]() {
+    mod->r_iso20->subscribe_start_cable_check([this]() {
         if (mod->selected_iso20()) {
-            publish_Start_CableCheck(nullptr);
+            publish_start_cable_check(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_DC_Open_Contactor([this]() {
+    mod->r_iso2->subscribe_dc_open_contactor([this]() {
         if (not mod->selected_iso20()) {
-            publish_DC_Open_Contactor(nullptr);
+            publish_dc_open_contactor(nullptr);
         }
     });
-    mod->r_iso20->subscribe_DC_Open_Contactor([this]() {
+    mod->r_iso20->subscribe_dc_open_contactor([this]() {
         if (mod->selected_iso20()) {
-            publish_DC_Open_Contactor(nullptr);
+            publish_dc_open_contactor(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_V2G_Setup_Finished([this]() {
+    mod->r_iso2->subscribe_v2g_setup_finished([this]() {
         if (not mod->selected_iso20()) {
-            publish_V2G_Setup_Finished(nullptr);
+            publish_v2g_setup_finished(nullptr);
         }
     });
-    mod->r_iso20->subscribe_V2G_Setup_Finished([this]() {
+    mod->r_iso20->subscribe_v2g_setup_finished([this]() {
         if (mod->selected_iso20()) {
-            publish_V2G_Setup_Finished(nullptr);
+            publish_v2g_setup_finished(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_currentDemand_Started([this]() {
+    mod->r_iso2->subscribe_current_demand_started([this]() {
         if (not mod->selected_iso20()) {
-            publish_currentDemand_Started(nullptr);
+            publish_current_demand_started(nullptr);
         }
     });
-    mod->r_iso20->subscribe_currentDemand_Started([this]() {
+    mod->r_iso20->subscribe_current_demand_started([this]() {
         if (mod->selected_iso20()) {
-            publish_currentDemand_Started(nullptr);
+            publish_current_demand_started(nullptr);
         }
     });
 
-    mod->r_iso2->subscribe_currentDemand_Finished([this]() {
+    mod->r_iso2->subscribe_current_demand_finished([this]() {
         if (not mod->selected_iso20()) {
-            publish_currentDemand_Finished(nullptr);
+            publish_current_demand_finished(nullptr);
         }
     });
-    mod->r_iso20->subscribe_currentDemand_Finished([this]() {
+    mod->r_iso20->subscribe_current_demand_finished([this]() {
         if (mod->selected_iso20()) {
-            publish_currentDemand_Finished(nullptr);
+            publish_current_demand_finished(nullptr);
         }
     });
 
@@ -150,212 +150,212 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
-    mod->r_iso2->subscribe_EVCCIDD([this](const auto id) {
+    mod->r_iso2->subscribe_evcc_id([this](const auto id) {
         if (not mod->selected_iso20()) {
-            publish_EVCCIDD(id);
+            publish_evcc_id(id);
         }
     });
-    mod->r_iso20->subscribe_EVCCIDD([this](const auto id) {
+    mod->r_iso20->subscribe_evcc_id([this](const auto id) {
         if (mod->selected_iso20()) {
-            publish_EVCCIDD(id);
+            publish_evcc_id(id);
         }
     });
 
-    mod->r_iso2->subscribe_SelectedPaymentOption([this](const auto o) {
+    mod->r_iso2->subscribe_selected_payment_option([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_SelectedPaymentOption(o);
+            publish_selected_payment_option(o);
         }
     });
-    mod->r_iso20->subscribe_SelectedPaymentOption([this](const auto o) {
+    mod->r_iso20->subscribe_selected_payment_option([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_SelectedPaymentOption(o);
+            publish_selected_payment_option(o);
         }
     });
 
-    mod->r_iso2->subscribe_RequestedEnergyTransferMode([this](const auto o) {
+    mod->r_iso2->subscribe_requested_energy_transfer_mode([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_RequestedEnergyTransferMode(o);
+            publish_requested_energy_transfer_mode(o);
         }
     });
-    mod->r_iso20->subscribe_RequestedEnergyTransferMode([this](const auto o) {
+    mod->r_iso20->subscribe_requested_energy_transfer_mode([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_RequestedEnergyTransferMode(o);
+            publish_requested_energy_transfer_mode(o);
         }
     });
 
-    mod->r_iso2->subscribe_DepartureTime([this](const auto o) {
+    mod->r_iso2->subscribe_departure_time([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DepartureTime(o);
+            publish_departure_time(o);
         }
     });
-    mod->r_iso20->subscribe_DepartureTime([this](const auto o) {
+    mod->r_iso20->subscribe_departure_time([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DepartureTime(o);
+            publish_departure_time(o);
         }
     });
 
-    mod->r_iso2->subscribe_AC_EAmount([this](const auto o) {
+    mod->r_iso2->subscribe_ac_eamount([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_AC_EAmount(o);
+            publish_ac_eamount(o);
         }
     });
-    mod->r_iso20->subscribe_AC_EAmount([this](const auto o) {
+    mod->r_iso20->subscribe_ac_eamount([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_AC_EAmount(o);
+            publish_ac_eamount(o);
         }
     });
 
-    mod->r_iso2->subscribe_AC_EVMaxVoltage([this](const auto o) {
+    mod->r_iso2->subscribe_ac_ev_max_voltage([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_AC_EVMaxVoltage(o);
+            publish_ac_ev_max_voltage(o);
         }
     });
-    mod->r_iso20->subscribe_AC_EVMaxVoltage([this](const auto o) {
+    mod->r_iso20->subscribe_ac_ev_max_voltage([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_AC_EVMaxVoltage(o);
+            publish_ac_ev_max_voltage(o);
         }
     });
 
-    mod->r_iso2->subscribe_AC_EVMaxCurrent([this](const auto o) {
+    mod->r_iso2->subscribe_ac_ev_max_current([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_AC_EVMaxCurrent(o);
+            publish_ac_ev_max_current(o);
         }
     });
-    mod->r_iso20->subscribe_AC_EVMaxCurrent([this](const auto o) {
+    mod->r_iso20->subscribe_ac_ev_max_current([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_AC_EVMaxCurrent(o);
+            publish_ac_ev_max_current(o);
         }
     });
 
-    mod->r_iso2->subscribe_AC_EVMinCurrent([this](const auto o) {
+    mod->r_iso2->subscribe_ac_ev_min_current([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_AC_EVMinCurrent(o);
+            publish_ac_ev_min_current(o);
         }
     });
-    mod->r_iso20->subscribe_AC_EVMinCurrent([this](const auto o) {
+    mod->r_iso20->subscribe_ac_ev_min_current([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_AC_EVMinCurrent(o);
+            publish_ac_ev_min_current(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVEnergyCapacity([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_energy_capacity([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVEnergyCapacity(o);
+            publish_dc_ev_energy_capacity(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVEnergyCapacity([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_energy_capacity([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVEnergyCapacity(o);
+            publish_dc_ev_energy_capacity(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVEnergyRequest([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_energy_request([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVEnergyRequest(o);
+            publish_dc_ev_energy_request(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVEnergyRequest([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_energy_request([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVEnergyRequest(o);
+            publish_dc_ev_energy_request(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_FullSOC([this](const auto o) {
+    mod->r_iso2->subscribe_dc_full_soc([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_FullSOC(o);
+            publish_dc_full_soc(o);
         }
     });
-    mod->r_iso20->subscribe_DC_FullSOC([this](const auto o) {
+    mod->r_iso20->subscribe_dc_full_soc([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_FullSOC(o);
+            publish_dc_full_soc(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_BulkSOC([this](const auto o) {
+    mod->r_iso2->subscribe_dc_bulk_soc([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_BulkSOC(o);
+            publish_dc_bulk_soc(o);
         }
     });
-    mod->r_iso20->subscribe_DC_BulkSOC([this](const auto o) {
+    mod->r_iso20->subscribe_dc_bulk_soc([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_BulkSOC(o);
+            publish_dc_bulk_soc(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVStatus([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_status([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVStatus(o);
+            publish_dc_ev_status(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVStatus([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_status([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVStatus(o);
+            publish_dc_ev_status(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_BulkChargingComplete([this](const auto o) {
+    mod->r_iso2->subscribe_dc_bulk_charging_complete([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_BulkChargingComplete(o);
+            publish_dc_bulk_charging_complete(o);
         }
     });
-    mod->r_iso20->subscribe_DC_BulkChargingComplete([this](const auto o) {
+    mod->r_iso20->subscribe_dc_bulk_charging_complete([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_BulkChargingComplete(o);
+            publish_dc_bulk_charging_complete(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_ChargingComplete([this](const auto o) {
+    mod->r_iso2->subscribe_dc_charging_complete([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_ChargingComplete(o);
+            publish_dc_charging_complete(o);
         }
     });
-    mod->r_iso20->subscribe_DC_ChargingComplete([this](const auto o) {
+    mod->r_iso20->subscribe_dc_charging_complete([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_ChargingComplete(o);
+            publish_dc_charging_complete(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVTargetVoltageCurrent([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_target_voltage_current([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVTargetVoltageCurrent(o);
+            publish_dc_ev_target_voltage_current(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVTargetVoltageCurrent([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_target_voltage_current([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVTargetVoltageCurrent(o);
+            publish_dc_ev_target_voltage_current(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVMaximumLimits([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_maximum_limits([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVMaximumLimits(o);
+            publish_dc_ev_maximum_limits(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVMaximumLimits([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_maximum_limits([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVMaximumLimits(o);
+            publish_dc_ev_maximum_limits(o);
         }
     });
 
-    mod->r_iso2->subscribe_DC_EVRemainingTime([this](const auto o) {
+    mod->r_iso2->subscribe_dc_ev_remaining_time([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_DC_EVRemainingTime(o);
+            publish_dc_ev_remaining_time(o);
         }
     });
-    mod->r_iso20->subscribe_DC_EVRemainingTime([this](const auto o) {
+    mod->r_iso20->subscribe_dc_ev_remaining_time([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_DC_EVRemainingTime(o);
+            publish_dc_ev_remaining_time(o);
         }
     });
 
-    mod->r_iso2->subscribe_Certificate_Request([this](const auto o) {
+    mod->r_iso2->subscribe_certificate_request([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_Certificate_Request(o);
+            publish_certificate_request(o);
         }
     });
-    mod->r_iso20->subscribe_Certificate_Request([this](const auto o) {
+    mod->r_iso20->subscribe_certificate_request([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_Certificate_Request(o);
+            publish_certificate_request(o);
         }
     });
 
@@ -392,36 +392,47 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
-    mod->r_iso2->subscribe_EV_AppProtocol([this](const auto o) {
+    mod->r_iso2->subscribe_ev_app_protocol([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_EV_AppProtocol(o);
+            publish_ev_app_protocol(o);
         }
     });
-    mod->r_iso20->subscribe_EV_AppProtocol([this](const auto o) {
+    mod->r_iso20->subscribe_ev_app_protocol([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_EV_AppProtocol(o);
+            publish_ev_app_protocol(o);
         }
     });
 
-    mod->r_iso2->subscribe_V2G_Messages([this](const auto o) {
+    mod->r_iso2->subscribe_v2g_messages([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_V2G_Messages(o);
+            publish_v2g_messages(o);
         }
     });
-    mod->r_iso20->subscribe_V2G_Messages([this](const auto o) {
+    mod->r_iso20->subscribe_v2g_messages([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_V2G_Messages(o);
+            publish_v2g_messages(o);
         }
     });
 
-    mod->r_iso2->subscribe_Selected_Protocol([this](const auto o) {
+    mod->r_iso2->subscribe_selected_protocol([this](const auto o) {
         if (not mod->selected_iso20()) {
-            publish_Selected_Protocol(o);
+            publish_selected_protocol(o);
         }
     });
-    mod->r_iso20->subscribe_Selected_Protocol([this](const auto o) {
+    mod->r_iso20->subscribe_selected_protocol([this](const auto o) {
         if (mod->selected_iso20()) {
-            publish_Selected_Protocol(o);
+            publish_selected_protocol(o);
+        }
+    });
+
+    mod->r_iso2->subscribe_display_parameters([this](const auto o) {
+        if (not mod->selected_iso20()) {
+            publish_display_parameters(o);
+        }
+    });
+    mod->r_iso20->subscribe_display_parameters([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_display_parameters(o);
         }
     });
 }
@@ -431,10 +442,16 @@ void ISO15118_chargerImpl::ready() {
 
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) {
+    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
+    types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     mod->r_iso20->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
     mod->r_iso2->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
+}
+
+void ISO15118_chargerImpl::handle_set_charging_parameters(
+    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+    mod->r_iso20->call_set_charging_parameters(physical_values);
+    mod->r_iso2->call_set_charging_parameters(physical_values);
 }
 
 void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
@@ -444,7 +461,7 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
 }
 
 void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& exi_stream_status) {
+    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
     if (mod->selected_iso20()) {
         mod->r_iso20->call_certificate_response(exi_stream_status);
     } else {
@@ -499,25 +516,19 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
-void ISO15118_chargerImpl::handle_set_charging_parameters(
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
-    mod->r_iso20->call_set_charging_parameters(physical_values);
-    mod->r_iso2->call_set_charging_parameters(physical_values);
-}
-
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     mod->r_iso20->call_update_ac_max_current(max_current);
     mod->r_iso2->call_update_ac_max_current(max_current);
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
-    types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) {
+    types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
     mod->r_iso20->call_update_dc_maximum_limits(maximum_limits);
     mod->r_iso2->call_update_dc_maximum_limits(maximum_limits);
 }
 
 void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
-    types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
+    types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
     mod->r_iso20->call_update_dc_minimum_limits(minimum_limits);
     mod->r_iso2->call_update_dc_minimum_limits(minimum_limits);
 }
@@ -531,7 +542,7 @@ void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charge
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
-    types::iso15118_charger::DC_EVSEPresentVoltage_Current& present_voltage_current) {
+    types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
     mod->r_iso20->call_update_dc_present_values(present_voltage_current);
     mod->r_iso2->call_update_dc_present_values(present_voltage_current);
 }
