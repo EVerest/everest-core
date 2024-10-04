@@ -1,4 +1,5 @@
-// Copyright Pionix GmbH
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef M_MWCAR_BSP_HPP
 #define M_MWCAR_BSP_HPP
 
