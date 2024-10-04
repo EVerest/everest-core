@@ -65,6 +65,8 @@ ev_setup_python_executable(
     PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
 )
 
+set(EVEREST_SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
+
 # Already include CTest here to allow it to find tests defined in subdirectories like lib and modules
 if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
