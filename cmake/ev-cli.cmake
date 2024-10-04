@@ -1,11 +1,4 @@
 macro(setup_ev_cli)
-    if(NOT TARGET ev-cli)
-        add_custom_target(ev-cli)
-    endif()
-    if(${EV_CLI})
-        message(FATAL_ERROR "EV_CLI is already defined.")
-        return()
-    endif()
     if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
         find_program(EV_CLI ev-cli REQUIRED)
     else()
@@ -15,9 +8,28 @@ macro(setup_ev_cli)
         if(NOT ${IS_PYTHON_VENV_ACTIVE})
             message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
         endif()
-        set(EV_CLI "${${PROJECT_NAME}_PYTHON_VENV_PATH}/bin/ev-cli")
-        add_dependencies(ev-cli
-            ev-dev-tools_pip_install_dist
+        find_program(EV_CLI ev-cli REQUIRED)
+
+        find_program(EV_GET_PACKAGE_LOCATION
+            NAMES get_package_location.py
+            PATHS "${EVEREST_SCRIPTS_DIR}"
+            NO_DEFAULT_PATH
+        )
+        execute_process(
+            COMMAND ${EV_GET_PACKAGE_LOCATION} --package-name ev-dev-tools
+            OUTPUT_VARIABLE EV_CLI_PACKAGE_LOCATION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE
+            EV_GET_PACKAGE_LOCATION_RESULT
+        )
+        if(EV_GET_PACKAGE_LOCATION_RESULT AND NOT EV_GET_PACKAGE_LOCATION_RESULT EQUAL 0)
+            # TODO: this probably does not have to be a FATAL_ERROR
+            message(FATAL_ERROR "Could not get ev-dev-tools package location")
+        endif()
+        message(STATUS "Using ev-cli package: ${EV_CLI_PACKAGE_LOCATION}")
+        set_property(
+            GLOBAL
+            PROPERTY EV_CLI_TEMPLATES_DIR "${EV_CLI_PACKAGE_LOCATION}/src/ev_cli/templates"
         )
     endif()
 endmacro()

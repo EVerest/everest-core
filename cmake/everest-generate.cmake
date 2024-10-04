@@ -307,13 +307,18 @@ function (_ev_add_interfaces)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.interfaces_generated_${EVEREST_PROJECT_NAME}")
+    get_property(EV_CLI_TEMPLATES_DIR
+        GLOBAL
+        PROPERTY EV_CLI_TEMPLATES_DIR
+    )
 
     add_custom_command(
         OUTPUT
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            ${EV_CLI_TEMPLATES_DIR}/interface-Base.hpp.j2
+            ${EV_CLI_TEMPLATES_DIR}/interface-Exports.hpp.j2
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -346,13 +351,17 @@ function (_ev_add_types)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.types_generated_${EVEREST_PROJECT_NAME}")
+    get_property(EV_CLI_TEMPLATES_DIR
+        GLOBAL
+        PROPERTY EV_CLI_TEMPLATES_DIR
+    )
 
     add_custom_command(
         OUTPUT
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            ${EV_CLI_TEMPLATES_DIR}/types.hpp.j2
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -484,6 +493,11 @@ function (ev_add_cpp_module MODULE_NAME)
             set(GENERATED_MODULE_DIR "${GENERATED_OUTPUT_DIR}/modules")
             set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
 
+            get_property(EV_CLI_TEMPLATES_DIR
+                GLOBAL
+                PROPERTY EV_CLI_TEMPLATES_DIR
+            )
+
             add_custom_command(
                 OUTPUT
                     ${MODULE_LOADER_DIR}/ld-ev.hpp
@@ -496,7 +510,8 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
-                    ev-cli
+                    ${EV_CLI_TEMPLATES_DIR}/ld-ev.cpp.j2
+                    ${EV_CLI_TEMPLATES_DIR}/ld-ev.hpp.j2
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
