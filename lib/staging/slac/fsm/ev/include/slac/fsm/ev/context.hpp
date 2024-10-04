@@ -37,6 +37,23 @@ template <> struct MMTYPE<slac::messages::cm_set_key_req> {
     static const uint16_t value = slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_REQ;
 };
 
+template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_req> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::qualcomm::cm_reset_device_cnf> {
+    static const uint16_t value = slac::defs::qualcomm::MMTYPE_CM_RESET_DEVICE | slac::defs::MMTYPE_MODE_CNF;
+};
+
+// This message has no CNF counterpart
+template <> struct MMTYPE<slac::messages::lumissil::nscm_reset_device_req> {
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_RESET_DEVICE | slac::defs::MMTYPE_MODE_REQ;
+};
+
+template <> struct MMTYPE<slac::messages::lumissil::nscm_get_version_req> {
+    static const uint16_t value = slac::defs::lumissil::MMTYPE_NSCM_GET_VERSION | slac::defs::MMTYPE_MODE_REQ;
+};
+
 template <typename SlacMessageType> struct MMV {
     // this is the default value for homeplug av 2.0 messages, which are
     // backward compatible with homeplug av 1.1 messages
@@ -45,7 +62,28 @@ template <typename SlacMessageType> struct MMV {
     // older av 1.0 message need to use AV_1_0
     static constexpr auto value = slac::defs::MMV::AV_1_1;
 };
+
+template <> struct MMV<slac::messages::qualcomm::cm_reset_device_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
+};
+
+template <> struct MMV<slac::messages::qualcomm::cm_reset_device_cnf> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0;
+};
+
+template <> struct MMV<slac::messages::lumissil::nscm_reset_device_req> {
+    static constexpr auto value = slac::defs::MMV::AV_1_0; // FIXME this is unclear
+};
+
 } // namespace _context_detail
+
+// FIXME (aw): this should be moved to common headers (in libslac)
+enum class ModemVendor {
+    Unknown,
+    Qualcomm,
+    Lumissil,
+    VertexCom,
+};
 
 struct ContextCallbacks {
     std::function<void(slac::messages::HomeplugMessage&)> send_raw_slac{nullptr};
@@ -58,6 +96,13 @@ struct Context {
 
     // MAC address of our PLC modem (EV side)
     uint8_t plc_mac[ETH_ALEN] = {0x00, 0xB0, 0x52, 0x00, 0x00, 0x01};
+
+    // Settings CM_DEVICE_RESET.REQ
+    struct chip_reset_struct {
+        bool enabled = false;
+        int timeout_ms = 500;
+        int delay_ms = 100;
+    } chip_reset;
 
     // event specific payloads
     // FIXME (aw): due to the synchroneous nature of the fsm, this could be even a ptr/ref
@@ -78,6 +123,8 @@ struct Context {
 
     // logging util
     void log_info(const std::string& text);
+
+    ModemVendor modem_vendor{ModemVendor::Unknown};
 
 private:
     const ContextCallbacks& callbacks;
