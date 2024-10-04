@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_DATABASE_HANDLER_HPP
 #define OCPP_V201_DATABASE_HANDLER_HPP
 
+#include "ocpp/v201/types.hpp"
 #include "sqlite3.h"
 #include <deque>
 #include <fstream>
@@ -178,16 +179,40 @@ public:
     /// charging profiles
 
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
-    void insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile);
+    void insert_or_update_charging_profile(
+        const int evse_id, const v201::ChargingProfile& profile,
+        const ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO);
 
     /// \brief Deletes the profile with the given \p profile_id
-    void delete_charging_profile(const int profile_id);
+    bool delete_charging_profile(const int profile_id);
+
+    /// \brief Deletes the profiles with the given \p transaction_id
+    void delete_charging_profile_by_transaction_id(const std::string& transaction_id);
 
     /// \brief Deletes all profiles from table CHARGING_PROFILES
-    void clear_charging_profiles();
+    bool clear_charging_profiles();
+
+    /// \brief Deletes all profiles from table CHARGING_PROFILES matching \p profile_id or \p criteria
+    bool clear_charging_profiles_matching_criteria(const std::optional<int32_t> profile_id,
+                                                   const std::optional<ClearChargingProfile>& criteria);
+
+    /// \brief Get all profiles from table CHARGING_PROFILES matching \p profile_id or \p criteria
+    std::vector<ReportedChargingProfile>
+    get_charging_profiles_matching_criteria(const std::optional<int32_t> evse_id,
+                                            const ChargingProfileCriterion& criteria);
+
+    /// \brief Retrieves the charging profiles stored on \p evse_id
+    std::vector<v201::ChargingProfile> get_charging_profiles_for_evse(const int evse_id);
 
     /// \brief Retrieves all ChargingProfiles
+    std::vector<v201::ChargingProfile> get_all_charging_profiles();
+
+    /// \brief Retrieves all ChargingProfiles grouped by EVSE ID
     virtual std::map<int32_t, std::vector<v201::ChargingProfile>> get_all_charging_profiles_group_by_evse();
+
+    ChargingLimitSourceEnum get_charging_limit_source_for_profile(const int profile_id);
+
+    std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql);
 };
 
 } // namespace v201

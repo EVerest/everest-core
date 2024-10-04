@@ -2,10 +2,18 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include "everest/logging.hpp"
+#include "ocpp/common/database/sqlite_statement.hpp"
+#include "ocpp/v201/ocpp_enums.hpp"
+#include "ocpp/v201/ocpp_types.hpp"
+#include <boost/algorithm/string/join.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <numeric>
 #include <ocpp/common/message_queue.hpp>
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
+#include <string>
+#include <vector>
 
 namespace ocpp {
 
@@ -721,11 +729,13 @@ void DatabaseHandler::transaction_delete(const std::string& transaction_id) {
     }
 }
 
-void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile) {
+void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile,
+                                                        const ChargingLimitSourceEnum charging_limit_source) {
     // add or replace
     std::string sql =
-        "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, EVSE_ID, STACK_LEVEL, CHARGING_PROFILE_PURPOSE, PROFILE) VALUES "
-        "(@id, @evse_id, @stack_level, @charging_profile_purpose, @profile)";
+        "INSERT OR REPLACE INTO CHARGING_PROFILES (ID, EVSE_ID, STACK_LEVEL, CHARGING_PROFILE_PURPOSE, "
+        "TRANSACTION_ID, PROFILE, CHARGING_LIMIT_SOURCE) VALUES "
+        "(@id, @evse_id, @stack_level, @charging_profile_purpose, @transaction_id, @profile, @charging_limit_source)";
     auto stmt = this->database->new_statement(sql);
 
     json json_profile(profile);
@@ -734,15 +744,23 @@ void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const
     stmt->bind_int("@evse_id", evse_id);
     stmt->bind_int("@stack_level", profile.stackLevel);
     stmt->bind_text("@charging_profile_purpose",
-                    conversions::charging_profile_purpose_enum_to_string(profile.chargingProfilePurpose));
+                    conversions::charging_profile_purpose_enum_to_string(profile.chargingProfilePurpose),
+                    SQLiteString::Transient);
+    if (profile.transactionId.has_value()) {
+        stmt->bind_text("@transaction_id", profile.transactionId.value().get(), SQLiteString::Transient);
+    } else {
+        stmt->bind_null("@transaction_id");
+    }
+
     stmt->bind_text("@profile", json_profile.dump(), SQLiteString::Transient);
+    stmt->bind_text("@charging_limit_source", conversions::charging_limit_source_enum_to_string(charging_limit_source));
 
     if (stmt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());
     }
 }
 
-void DatabaseHandler::delete_charging_profile(const int profile_id) {
+bool DatabaseHandler::delete_charging_profile(const int profile_id) {
     std::string sql = "DELETE FROM CHARGING_PROFILES WHERE ID = @profile_id;";
     auto stmt = this->database->new_statement(sql);
 
@@ -750,10 +768,199 @@ void DatabaseHandler::delete_charging_profile(const int profile_id) {
     if (stmt->step() != SQLITE_DONE) {
         throw QueryExecutionException(this->database->get_error_message());
     }
+
+    return stmt->changes() > 0;
 }
 
-void DatabaseHandler::clear_charging_profiles() {
-    this->database->clear_table("CHARGING_PROFILES");
+void DatabaseHandler::delete_charging_profile_by_transaction_id(const std::string& transaction_id) {
+    std::string sql = "DELETE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = @transaction_id";
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_text("@transaction_id", transaction_id);
+    if (stmt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+}
+
+bool DatabaseHandler::clear_charging_profiles() {
+    return this->database->clear_table("CHARGING_PROFILES");
+}
+
+bool DatabaseHandler::clear_charging_profiles_matching_criteria(const std::optional<int32_t> profile_id,
+                                                                const std::optional<ClearChargingProfile>& criteria) {
+    // K10.FR.03, K10.FR.09
+    if (profile_id.has_value()) {
+        return this->delete_charging_profile(profile_id.value());
+    }
+
+    // criteria has no value, so clear all
+    if (!criteria.has_value()) {
+        return this->clear_charging_profiles();
+    }
+
+    if (criteria->chargingProfilePurpose.has_value() || criteria->evseId.has_value() ||
+        criteria->stackLevel.has_value()) {
+        std::string delete_query = "DELETE FROM CHARGING_PROFILES";
+        // Start with K10.FR.04, prevent deleting external constraints
+        std::vector<std::string> filters = {"CHARGING_PROFILE_PURPOSE != 'ChargingStationExternalConstraints'"};
+
+        if (criteria->chargingProfilePurpose.has_value()) {
+            filters.push_back("CHARGING_PROFILE_PURPOSE = @charging_profile_purpose");
+        }
+
+        if (criteria->stackLevel.has_value()) {
+            filters.push_back("STACK_LEVEL = @stack_level");
+        }
+
+        if (criteria->evseId.has_value()) {
+            filters.push_back("EVSE_ID = @evse_id");
+        }
+
+        delete_query += " WHERE " + boost::algorithm::join(filters, " AND ");
+
+        auto stmt = this->database->new_statement(delete_query);
+        if (criteria->chargingProfilePurpose.has_value()) {
+            stmt->bind_text(
+                "@charging_profile_purpose",
+                conversions::charging_profile_purpose_enum_to_string(criteria->chargingProfilePurpose.value()),
+                SQLiteString::Transient);
+        }
+
+        if (criteria->stackLevel.has_value()) {
+            stmt->bind_int("@stack_level", criteria->stackLevel.value());
+        }
+
+        if (criteria->evseId.has_value()) {
+            stmt->bind_int("@evse_id", criteria->evseId.value());
+        }
+
+        if (stmt->step() != SQLITE_DONE) {
+            throw QueryExecutionException(this->database->get_error_message());
+        }
+
+        return stmt->changes() > 0;
+    }
+
+    return false;
+}
+
+std::vector<ReportedChargingProfile>
+DatabaseHandler::get_charging_profiles_matching_criteria(const std::optional<int32_t> evse_id,
+                                                         const ChargingProfileCriterion& criteria) {
+    auto results = std::vector<ReportedChargingProfile>();
+
+    std::string select_stmt = "SELECT EVSE_ID, PROFILE, CHARGING_LIMIT_SOURCE FROM CHARGING_PROFILES";
+    std::vector<std::string> where_clauses;
+
+    if (evse_id.has_value()) {
+        where_clauses.push_back("EVSE_ID = @evse_id");
+    }
+
+    if (criteria.chargingProfileId.has_value() && !criteria.chargingProfileId->empty()) {
+        std::string profile_ids =
+            boost::algorithm::join(criteria.chargingProfileId.value() |
+                                       boost::adaptors::transformed([](int32_t id) { return std::to_string(id); }),
+                                   ", ");
+
+        where_clauses.push_back("ID IN (" + profile_ids + ")");
+
+        select_stmt += " WHERE " + boost::algorithm::join(where_clauses, " AND ");
+
+        auto stmt = this->database->new_statement(select_stmt);
+
+        if (evse_id.has_value()) {
+            stmt->bind_int("@evse_id", evse_id.value());
+        }
+
+        while (stmt->step() != SQLITE_DONE) {
+            results.push_back(ReportedChargingProfile(
+                json::parse(stmt->column_text(1)),                                      // profile
+                stmt->column_int(0),                                                    // EVSE ID
+                conversions::string_to_charging_limit_source_enum(stmt->column_text(2)) // source
+                ));
+        }
+        return results;
+    }
+
+    if (criteria.chargingProfilePurpose.has_value()) {
+        where_clauses.push_back("CHARGING_PROFILE_PURPOSE = @charging_profile_purpose");
+    }
+
+    if (criteria.stackLevel.has_value()) {
+        where_clauses.push_back("STACK_LEVEL = @stack_level");
+    }
+
+    if (criteria.chargingLimitSource.has_value() && !criteria.chargingLimitSource->empty()) {
+        std::string sources = boost::algorithm::join(
+            criteria.chargingLimitSource.value() | boost::adaptors::transformed([](ChargingLimitSourceEnum source) {
+                return "'" + conversions::charging_limit_source_enum_to_string(source) + "'";
+            }),
+            ", ");
+
+        where_clauses.push_back("CHARGING_LIMIT_SOURCE IN (" + sources + ")");
+    }
+
+    if (!where_clauses.empty()) {
+        select_stmt += " WHERE " + boost::algorithm::join(where_clauses, " AND ");
+    }
+
+    auto stmt = this->database->new_statement(select_stmt);
+
+    if (criteria.chargingProfilePurpose.has_value()) {
+        stmt->bind_text("@charging_profile_purpose",
+                        conversions::charging_profile_purpose_enum_to_string(criteria.chargingProfilePurpose.value()),
+                        SQLiteString::Transient);
+    }
+
+    if (criteria.stackLevel.has_value()) {
+        stmt->bind_int("@stack_level", criteria.stackLevel.value());
+    }
+
+    if (evse_id.has_value()) {
+        stmt->bind_int("@evse_id", evse_id.value());
+    }
+
+    while (stmt->step() != SQLITE_DONE) {
+        results.push_back(
+            ReportedChargingProfile(json::parse(stmt->column_text(1)),                                      // profile
+                                    stmt->column_int(0),                                                    // EVSE ID
+                                    conversions::string_to_charging_limit_source_enum(stmt->column_text(2)) // source
+                                    ));
+    }
+
+    return results;
+}
+
+std::vector<v201::ChargingProfile> DatabaseHandler::get_charging_profiles_for_evse(const int evse_id) {
+    std::vector<v201::ChargingProfile> profiles;
+
+    std::string sql = "SELECT PROFILE FROM CHARGING_PROFILES WHERE EVSE_ID = @evse_id";
+
+    auto stmt = this->database->new_statement(sql);
+
+    stmt->bind_int("@evse_id", evse_id);
+
+    while (stmt->step() != SQLITE_DONE) {
+        auto profile = json::parse(stmt->column_text(0));
+        profiles.push_back(profile);
+    }
+
+    return profiles;
+}
+
+std::vector<v201::ChargingProfile> DatabaseHandler::get_all_charging_profiles() {
+    std::vector<v201::ChargingProfile> profiles;
+
+    std::string sql = "SELECT PROFILE FROM CHARGING_PROFILES";
+
+    auto stmt = this->database->new_statement(sql);
+
+    while (stmt->step() != SQLITE_DONE) {
+        auto profile = json::parse(stmt->column_text(0));
+        profiles.push_back(profile);
+    }
+
+    return profiles;
 }
 
 std::map<int32_t, std::vector<v201::ChargingProfile>> DatabaseHandler::get_all_charging_profiles_group_by_evse() {
@@ -774,6 +981,30 @@ std::map<int32_t, std::vector<v201::ChargingProfile>> DatabaseHandler::get_all_c
     }
 
     return map;
+}
+
+ChargingLimitSourceEnum DatabaseHandler::get_charging_limit_source_for_profile(const int profile_id) {
+    std::string sql = "SELECT CHARGING_LIMIT_SOURCE FROM CHARGING_PROFILES WHERE ID = @profile_id;";
+
+    auto stmnt = this->database->new_statement(sql);
+
+    stmnt->bind_int("@profile_id", profile_id);
+
+    if (stmnt->step() != SQLITE_ROW) {
+        EVLOG_warning << "No record found for " << profile_id;
+    }
+
+    auto res = conversions::string_to_charging_limit_source_enum(stmnt->column_text(0));
+
+    if (stmnt->step() != SQLITE_DONE) {
+        throw QueryExecutionException(this->database->get_error_message());
+    }
+
+    return res;
+}
+
+std::unique_ptr<SQLiteStatementInterface> DatabaseHandler::new_statement(const std::string& sql) {
+    return this->database->new_statement(sql);
 }
 
 } // namespace v201

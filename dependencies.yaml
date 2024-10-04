@@ -3,7 +3,7 @@ nlohmann_json:
   git: https://github.com/nlohmann/json
   git_tag: v3.11.2
   options: ["JSON_BuildTests OFF", "JSON_MultipleHeaders ON"]
-nlohmann_json_schema_validator:
+pboettch_json_schema_validator:
   git: https://github.com/pboettch/json-schema-validator
   git_tag: 2.3.0
   options:

@@ -183,8 +183,8 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     // get transaction messages from db (if there are any) so they can be sent again.
     this->message_queue->get_persisted_messages_from_db();
     this->boot_notification_req(bootreason);
-    // K01.27 - call load_charging_profiles when system boots
-    this->load_charging_profiles();
+    // call clear_invalid_charging_profiles when system boots
+    this->clear_invalid_charging_profiles();
     this->connectivity_manager->start();
 
     const std::string firmware_version =
@@ -3144,7 +3144,8 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
                 if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
 
                     const auto add_profile_response = this->smart_charging_handler->validate_and_add_profile(
-                        msg.chargingProfile.value(), evse_id, AddChargingProfileSource::RequestStartTransactionRequest);
+                        msg.chargingProfile.value(), evse_id, ChargingLimitSourceEnum::CSO,
+                        AddChargingProfileSource::RequestStartTransactionRequest);
                     if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
                         EVLOG_debug << "Accepting SetChargingProfileRequest";
                     } else {
@@ -4431,19 +4432,15 @@ void ChargePoint::execute_change_availability_request(ChangeAvailabilityRequest 
     }
 }
 
-// K01.27 - load profiles from database
-void ChargePoint::load_charging_profiles() {
+void ChargePoint::clear_invalid_charging_profiles() {
     try {
         auto evses = this->database_handler->get_all_charging_profiles_group_by_evse();
         EVLOG_info << "Found " << evses.size() << " evse in the database";
         for (const auto& [evse_id, profiles] : evses) {
             for (auto profile : profiles) {
                 try {
-                    if (this->smart_charging_handler->validate_profile(profile, evse_id) ==
+                    if (this->smart_charging_handler->validate_profile(profile, evse_id) !=
                         ProfileValidationResultEnum::Valid) {
-                        this->smart_charging_handler->add_profile(profile, evse_id);
-                    } else {
-                        // delete if not valid anymore
                         this->database_handler->delete_charging_profile(profile.id);
                     }
                 } catch (const QueryExecutionException& e) {

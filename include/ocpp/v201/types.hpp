@@ -3,6 +3,8 @@
 #ifndef V201_TYPES_HPP
 #define V201_TYPES_HPP
 
+#include <ocpp/v201/ocpp_types.hpp>
+
 #include <ostream>
 #include <string>
 
@@ -140,6 +142,19 @@ enum class MessageType {
     UpdateFirmware,
     UpdateFirmwareResponse,
     InternalError, // not in spec, for internal use
+};
+
+/// \brief This enhances the ChargingProfile type by additional paramaters that are required in the
+/// ReportChargingProfilesRequest (EvseId, ChargingLimitSourceEnum)
+struct ReportedChargingProfile {
+    ChargingProfile profile;
+    int32_t evse_id;
+    ChargingLimitSourceEnum source;
+
+    ReportedChargingProfile(const ChargingProfile& profile, const int32_t evse_id,
+                            const ChargingLimitSourceEnum source) :
+        profile(profile), evse_id(evse_id), source(source) {
+    }
 };
 
 namespace conversions {

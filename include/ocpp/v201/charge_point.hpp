@@ -735,7 +735,7 @@ protected:
     std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;
 
     void handle_message(const EnhancedMessage<v201::MessageType>& message);
-    void load_charging_profiles();
+    void clear_invalid_charging_profiles();
 
 public:
     /// \brief Construct a new ChargePoint object

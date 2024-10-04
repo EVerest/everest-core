@@ -3,6 +3,7 @@
 
 #include "date/tz.h"
 #include "everest/logging.hpp"
+#include "ocpp/common/database/sqlite_statement.hpp"
 #include "ocpp/common/message_queue.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v201/ctrlr_component_variables.hpp"
@@ -126,75 +127,6 @@ std::ostream& operator<<(std::ostream& os, const ProfileValidationResultEnum val
     return os;
 }
 
-bool charging_limit_source_exists_and_is_not_CSO(const ChargingProfileCriterion& criteria) {
-    return criteria.chargingLimitSource.has_value() and
-           std::find(criteria.chargingLimitSource.value().begin(), criteria.chargingLimitSource.value().end(),
-                     ChargingLimitSourceEnum::CSO) == criteria.chargingLimitSource.value().end();
-}
-
-template <typename T>
-bool value_exists_and_is_different(const std::optional<T>& requested_value, const T& actual_value) {
-    return requested_value.has_value() and requested_value.value() != actual_value;
-}
-
-/// \brief Checks if the given filter \p criteria and \p evse_id matches the given \p profile
-bool profile_matches_clear_criteria(const ChargingProfile& profile, const std::optional<int32_t> profile_id,
-                                    const std::optional<ClearChargingProfile>& criteria, const int32_t evse_id) {
-    if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
-        // K10.FR.04; profiles with ChargingStationExternalConstraints shall not be removed
-        return false;
-    }
-
-    // // K10.FR.03, K10.FR.09
-    if (profile_id.has_value() and profile_id.value() == profile.id) {
-        return true;
-    }
-
-    if (profile_id.has_value()) {
-        // profile_id has value but doesnt match
-        return false;
-    }
-
-    if (!criteria.has_value()) {
-        // criteria has no value, so clear all
-        return true;
-    }
-
-    const auto _criteria = criteria.value();
-
-    if (value_exists_and_is_different(_criteria.chargingProfilePurpose, profile.chargingProfilePurpose) or
-        value_exists_and_is_different(_criteria.stackLevel, profile.stackLevel) or
-        value_exists_and_is_different(_criteria.evseId, evse_id)) {
-        return false;
-    }
-
-    return true;
-}
-
-/// \brief Checks if the given filter \p criteria and \p evse_id matches the given \p profile
-bool profile_matches_get_criteria(const ChargingProfile& profile, const ChargingProfileCriterion& criteria,
-                                  const std::optional<int32_t> requested_evse_id, const int32_t profile_evse_id) {
-
-    if (criteria.chargingProfileId.has_value()) {
-        const auto profile_ids = criteria.chargingProfileId.value();
-        return std::find(profile_ids.begin(), profile_ids.end(), profile.id) != profile_ids.end();
-    }
-
-    if (criteria.chargingProfileId.has_value()) {
-        // no profile matches the id, no need to do check match of the criteria
-        return false;
-    }
-
-    if (charging_limit_source_exists_and_is_not_CSO(criteria) or
-        value_exists_and_is_different(criteria.chargingProfilePurpose, profile.chargingProfilePurpose) or
-        value_exists_and_is_different(criteria.stackLevel, profile.stackLevel) or
-        value_exists_and_is_different(requested_evse_id, profile_evse_id)) {
-        return false;
-    }
-
-    return true;
-}
-
 const int32_t STATION_WIDE_ID = 0;
 
 CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const {
@@ -220,27 +152,18 @@ SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
 }
 
 void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
-    for (auto& [evse_id, profiles] : charging_profiles) {
-        auto iter = profiles.begin();
-        while (iter != profiles.end()) {
-            if (transaction_id.compare(iter->transactionId.value()) == 0) {
-                this->database_handler->delete_charging_profile(iter->id);
-                iter = profiles.erase(iter);
-            } else {
-                ++iter;
-            }
-        }
-    }
+    this->database_handler->delete_charging_profile_by_transaction_id(transaction_id);
 }
 
 SetChargingProfileResponse SmartChargingHandler::validate_and_add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                                          ChargingLimitSourceEnum charging_limit_source,
                                                                           AddChargingProfileSource source_of_request) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Rejected;
 
     auto result = this->validate_profile(profile, evse_id, source_of_request);
     if (result == ProfileValidationResultEnum::Valid) {
-        response = this->add_profile(profile, evse_id);
+        response = this->add_profile(profile, evse_id, charging_limit_source);
     } else {
         response.statusInfo = StatusInfo();
         response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(result);
@@ -385,15 +308,17 @@ SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_
         return ProfileValidationResultEnum::TxProfileTransactionNotOnEvse;
     }
 
-    auto conflicts_with = [&profile](const std::pair<int32_t, std::vector<ChargingProfile>>& candidate) {
-        return std::any_of(candidate.second.begin(), candidate.second.end(),
-                           [&profile](const ChargingProfile& candidateProfile) {
-                               return candidateProfile.transactionId == profile.transactionId &&
-                                      candidateProfile.stackLevel == profile.stackLevel;
-                           });
-    };
+    auto conflicts_stmt = this->database_handler->new_statement(
+        "SELECT PROFILE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = @transaction_id AND STACK_LEVEL = @stack_level");
+    conflicts_stmt->bind_int("@stack_level", profile.stackLevel);
+    if (profile.transactionId.has_value()) {
+        conflicts_stmt->bind_text("@transaction_id", profile.transactionId.value().get(),
+                                  common::SQLiteString::Transient);
+    } else {
+        conflicts_stmt->bind_null("@transaction_id");
+    }
 
-    if (std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with)) {
+    if (conflicts_stmt->step() == SQLITE_ROW) {
         return ProfileValidationResultEnum::TxProfileConflictingStackLevel;
     }
 
@@ -497,31 +422,15 @@ SmartChargingHandler::validate_request_start_transaction_profile(const ChargingP
     return ProfileValidationResultEnum::Valid;
 }
 
-SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id) {
+SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& profile, int32_t evse_id,
+                                                             ChargingLimitSourceEnum charging_limit_source) {
     SetChargingProfileResponse response;
     response.status = ChargingProfileStatusEnum::Accepted;
 
-    // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
     try {
+        // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
         // K01.FR27 - add profiles to database when valid
-        this->database_handler->insert_or_update_charging_profile(evse_id, profile);
-
-        auto found_profile = false;
-        for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
-            for (auto it = evse_profiles.begin(); it != evse_profiles.end(); it++) {
-                if (profile.id == it->id) {
-                    evse_profiles.erase(it);
-                    found_profile = true;
-                    break;
-                }
-            }
-
-            if (found_profile) {
-                break;
-            }
-        }
-        charging_profiles[evse_id].push_back(profile);
-
+        this->database_handler->insert_or_update_charging_profile(evse_id, profile, charging_limit_source);
     } catch (const QueryExecutionException& e) {
         EVLOG_error << "Could not store ChargingProfile in the database: " << e.what();
         response.status = ChargingProfileStatusEnum::Rejected;
@@ -532,75 +441,30 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
     return response;
 }
 
-std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_profiles() const {
-    return this->get_profiles_on_evse(STATION_WIDE_ID);
-}
-
-std::vector<ChargingProfile> SmartChargingHandler::get_profiles() const {
-    std::vector<ChargingProfile> all_profiles;
-    for (auto evse_profile_pair : charging_profiles) {
-        all_profiles.insert(all_profiles.end(), evse_profile_pair.second.begin(), evse_profile_pair.second.end());
-    }
-    return all_profiles;
-}
-
 ClearChargingProfileResponse SmartChargingHandler::clear_profiles(const ClearChargingProfileRequest& request) {
     ClearChargingProfileResponse response;
-
-    const auto profile_id = request.chargingProfileId;
-    const auto criteria = request.chargingProfileCriteria;
-
     response.status = ClearChargingProfileStatusEnum::Unknown;
 
-    for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
-        for (auto it = evse_profiles.begin(); it != evse_profiles.end();) {
-            // K10.FR.04: logical AND between the filters, if not set, the filter does not apply
-            if (profile_matches_clear_criteria(*it, profile_id, criteria, existing_evse_id)) {
-                response.status = ClearChargingProfileStatusEnum::Accepted;
-                it = evse_profiles.erase(it);
-                this->database_handler->delete_charging_profile(it->id);
-            } else {
-                // At least one of the filters did not match
-                ++it;
-            }
-        }
+    if (this->database_handler->clear_charging_profiles_matching_criteria(request.chargingProfileId,
+                                                                          request.chargingProfileCriteria)) {
+        response.status = ClearChargingProfileStatusEnum::Accepted;
     }
+
     return response;
 }
 
 std::vector<ReportedChargingProfile>
 SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& request) const {
-    std::vector<ReportedChargingProfile> profiles;
-
-    for (auto& [existing_evse_id, evse_profiles] : charging_profiles) {
-        for (auto& profile : evse_profiles) {
-            if (profile_matches_get_criteria(profile, request.chargingProfile, request.evseId, existing_evse_id)) {
-                profiles.push_back(
-                    ReportedChargingProfile(profile, existing_evse_id,
-                                            ChargingLimitSourceEnum::CSO)); // TODO: Add correct source when available
-            }
-        }
-    }
-    return profiles;
-}
-
-std::vector<ChargingProfile> SmartChargingHandler::get_profiles_on_evse(int32_t evse_id) const {
-    std::vector<ChargingProfile> profiles;
-    if (charging_profiles.count(evse_id)) {
-        profiles = charging_profiles.at(evse_id);
-    }
-    return profiles;
+    return this->database_handler->get_charging_profiles_matching_criteria(request.evseId, request.chargingProfile);
 }
 
 std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id) {
     std::vector<ChargingProfile> valid_profiles;
 
-    if (charging_profiles.count(evse_id) > 0) {
-        auto& evse_profiles = this->charging_profiles.at(evse_id);
-        for (auto profile : evse_profiles) {
-            if (this->validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
-                valid_profiles.push_back(profile);
-            }
+    auto evse_profiles = this->database_handler->get_charging_profiles_for_evse(evse_id);
+    for (auto profile : evse_profiles) {
+        if (this->validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
+            valid_profiles.push_back(profile);
         }
     }
 
@@ -621,14 +485,11 @@ std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(int32_t ev
 std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
     std::vector<ChargingProfile> evse_specific_tx_default_profiles;
 
-    for (auto& [evse_id, profiles] : charging_profiles) {
-        if (evse_id != STATION_WIDE_ID) {
-            for (auto profile : profiles) {
-                if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
-                    evse_specific_tx_default_profiles.push_back(profile);
-                }
-            }
-        }
+    auto stmt = this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE "
+                                                      "EVSE_ID != 0 AND CHARGING_PROFILE_PURPOSE = 'TxDefaultProfile'");
+    while (stmt->step() != SQLITE_DONE) {
+        ChargingProfile profile = json::parse(stmt->column_text(0));
+        evse_specific_tx_default_profiles.push_back(profile);
     }
 
     return evse_specific_tx_default_profiles;
@@ -636,10 +497,12 @@ std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_
 
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_profiles() const {
     std::vector<ChargingProfile> station_wide_tx_default_profiles;
-    for (auto profile : this->get_station_wide_profiles()) {
-        if (profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxDefaultProfile) {
-            station_wide_tx_default_profiles.push_back(profile);
-        }
+
+    auto stmt = this->database_handler->new_statement(
+        "SELECT PROFILE FROM CHARGING_PROFILES WHERE EVSE_ID = 0 AND CHARGING_PROFILE_PURPOSE = 'TxDefaultProfile'");
+    while (stmt->step() != SQLITE_DONE) {
+        ChargingProfile profile = json::parse(stmt->column_text(0));
+        station_wide_tx_default_profiles.push_back(profile);
     }
 
     return station_wide_tx_default_profiles;
@@ -653,26 +516,25 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
         return false;
     }
 
-    auto conflicts_with = [candidate_evse_id, &candidate_profile](
-                              const std::pair<int32_t, std::vector<ChargingProfile>>& existing_profiles) {
-        auto existing_evse_id = existing_profiles.first;
-        if (existing_evse_id == candidate_evse_id) {
-            return std::any_of(existing_profiles.second.begin(), existing_profiles.second.end(),
-                               [&candidate_profile](const ChargingProfile& existing_profile) {
-                                   if (existing_profile.stackLevel == candidate_profile.stackLevel &&
-                                       existing_profile.chargingProfileKind == candidate_profile.chargingProfileKind &&
-                                       existing_profile.id != candidate_profile.id) {
+    auto overlap_stmt = this->database_handler->new_statement(
+        "SELECT PROFILE, json_extract(PROFILE, '$.chargingProfileKind') AS KIND FROM CHARGING_PROFILES WHERE EVSE_ID = "
+        "@evse_id AND ID != @profile_id AND CHARGING_PROFILES.STACK_LEVEL = @stack_level AND KIND = @kind");
 
-                                       return candidate_profile.validFrom <= existing_profile.validTo &&
-                                              candidate_profile.validTo >= existing_profile.validFrom; // reject
-                                   }
-                                   return false;
-                               });
+    overlap_stmt->bind_int("@evse_id", candidate_evse_id);
+    overlap_stmt->bind_int("@profile_id", candidate_profile.id);
+    overlap_stmt->bind_int("@stack_level", candidate_profile.stackLevel);
+    overlap_stmt->bind_text("@kind",
+                            conversions::charging_profile_kind_enum_to_string(candidate_profile.chargingProfileKind),
+                            common::SQLiteString::Transient);
+    while (overlap_stmt->step() != SQLITE_DONE) {
+        ChargingProfile existing_profile = json::parse(overlap_stmt->column_text(0));
+        if (candidate_profile.validFrom <= existing_profile.validTo &&
+            candidate_profile.validTo >= existing_profile.validFrom) {
+            return true;
         }
-        return false;
-    };
+    }
 
-    return std::any_of(charging_profiles.begin(), charging_profiles.end(), conflicts_with);
+    return false;
 }
 
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
@@ -683,11 +545,13 @@ void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) co
 ProfileValidationResultEnum
 SmartChargingHandler::verify_no_conflicting_external_constraints_id(const ChargingProfile& profile) const {
     auto result = ProfileValidationResultEnum::Valid;
-    for (auto existing_profile : this->get_profiles()) {
-        if (existing_profile.id == profile.id &&
-            existing_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
-            result = ProfileValidationResultEnum::ExistingChargingStationExternalConstraints;
-        }
+    auto conflicts_stmt =
+        this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE ID = @profile_id AND "
+                                              "CHARGING_PROFILE_PURPOSE = 'ChargingStationExternalConstraints'");
+
+    conflicts_stmt->bind_int("@profile_id", profile.id);
+    if (conflicts_stmt->step() == SQLITE_ROW) {
+        result = ProfileValidationResultEnum::ExistingChargingStationExternalConstraints;
     }
 
     return result;
