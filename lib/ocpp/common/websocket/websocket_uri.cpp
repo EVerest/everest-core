@@ -60,16 +60,16 @@ Uri Uri::parse_and_validate(std::string uri, std::string chargepoint_id, int sec
         case security::SecurityProfile::UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION:
             if (uri_temp.get_secure()) {
                 throw std::invalid_argument(
-                    "secure schema 'ws://' in URI does not fit with insecure security-profile = " +
-                    std::to_string(security_profile));
+                    "secure schema '" + uri_temp.get_scheme() +
+                    "://' in URI does not fit with insecure security-profile = " + std::to_string(security_profile));
             }
             break;
         case security::SecurityProfile::TLS_WITH_BASIC_AUTHENTICATION:
         case security::SecurityProfile::TLS_WITH_CLIENT_SIDE_CERTIFICATES:
             if (!uri_temp.get_secure()) {
                 throw std::invalid_argument(
-                    "insecure schema 'ws://' in URI does not fit with secure security-profile = " +
-                    std::to_string(security_profile));
+                    "insecure schema '" + uri_temp.get_scheme() +
+                    "://' in URI does not fit with secure security-profile = " + std::to_string(security_profile));
             }
             break;
         default:
