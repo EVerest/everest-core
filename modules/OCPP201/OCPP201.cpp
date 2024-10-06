@@ -904,6 +904,7 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
     if (transaction_data == nullptr) {
         throw std::runtime_error("Could not start transaction because no tranasaction data is present");
     }
+    // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
     transaction_data->timestamp = ocpp::DateTime(session_event.timestamp);
 
     if (tx_event_effect == TxEventEffect::START_TRANSACTION) {
@@ -959,6 +960,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
             trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
         }
     }
+    // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
     const auto timestamp = ocpp::DateTime(session_event.timestamp);
     const auto reservation_id = session_started.reservation_id;
 
@@ -1199,6 +1201,7 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
             types::energy::ScheduleReqEntry schedule_req_entry;
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
+            // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (composite_schedule.chargingRateUnit == ocpp::v201::ChargingRateUnitEnum::A) {
                 limits_req.ac_max_current_A = period.limit;
