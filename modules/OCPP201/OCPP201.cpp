@@ -395,14 +395,23 @@ void OCPP201::ready() {
             provided_token.connectors = std::vector<int32_t>{request.evseId.value()};
         }
         this->p_auth_provider->publish_provided_token(provided_token);
+
+        return ocpp::v201::RequestStartStopStatusEnum::Accepted;
     };
 
     callbacks.stop_transaction_callback = [this](const int32_t evse_id, const ocpp::v201::ReasonEnum& stop_reason) {
         if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
             types::evse_manager::StopTransactionRequest req;
             req.reason = conversions::to_everest_stop_transaction_reason(stop_reason);
-            this->r_evse_manager.at(evse_id - 1)->call_stop_transaction(req);
+            auto success = this->r_evse_manager.at(evse_id - 1)->call_stop_transaction(req);
+            if (success) {
+                return ocpp::v201::RequestStartStopStatusEnum::Accepted;
+            } else {
+                return ocpp::v201::RequestStartStopStatusEnum::Rejected;
+            }
         }
+
+        return ocpp::v201::RequestStartStopStatusEnum::Rejected;
     };
 
     callbacks.pause_charging_callback = [this](const int32_t evse_id) {
