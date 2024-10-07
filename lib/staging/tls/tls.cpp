@@ -6,6 +6,7 @@
 #include "extensions/trusted_ca_keys.hpp"
 #include "openssl_util.hpp"
 
+#include <arpa/inet.h>
 #include <array>
 #include <cassert>
 #include <csignal>
@@ -17,6 +18,7 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
@@ -698,19 +700,29 @@ std::condition_variable ServerConnection::m_cv;
 namespace {
 
 std::unique_ptr<std::filesystem::path> keylog_file;
+std::unique_ptr<TlsKeyLoggingServer> keylog_server;
 
 void keylog_callback(const SSL* ssl, const char* line) {
     std::string key_log_msg = "TLS Handshake keys: " + std::string(line);
     log_info(key_log_msg);
+
+    if (keylog_server and keylog_server->get_fd() != -1) {
+        const auto result = keylog_server->send(line);
+        if (result not_eq strlen(line)) {
+            log_error("key_logging_server send() failed!");
+        }
+
+        keylog_server.reset();
+    }
 
     if (keylog_file) {
         std::ofstream ofs;
         ofs.open(keylog_file->string(), std::ofstream::out | std::ofstream::app);
         ofs << line << std::endl;
         ofs.close();
-    }
 
-    keylog_file.reset();
+        keylog_file.reset();
+    }
 }
 
 } // namespace
@@ -913,6 +925,7 @@ bool Server::init_ssl(const config_t& cfg) {
                 const auto file_path = std::filesystem::path(cfg.tls_key_logging_path) /= "tls_session_keys.log";
                 keylog_file = std::make_unique<std::filesystem::path>(file_path);
                 SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+                this->m_tls_key_interface = cfg.host;
             }
 
             int mode = SSL_VERIFY_NONE;
@@ -1088,6 +1101,12 @@ void Server::wait_for_connection(const ConnectionHandler& handler) {
                 // new connection, pass to handler
                 auto* ip = BIO_ADDR_hostname_string(peer.get(), 1);
                 auto* service = BIO_ADDR_service_string(peer.get(), 1);
+
+                if (m_tls_key_interface) {
+                    const auto port = std::stoul(service);
+                    keylog_server = std::make_unique<TlsKeyLoggingServer>(std::string(m_tls_key_interface), port);
+                }
+
                 auto connection =
                     std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service, m_timeout_ms);
                 handler(std::move(connection));
@@ -1369,6 +1388,74 @@ Client::override_t Client::default_overrides() {
         &ClientStatusRequestV2::status_request_v2_cb,       &ClientTrustedCaKeys::trusted_ca_keys_add,
         &ClientTrustedCaKeys::trusted_ca_keys_free,
     };
+}
+
+TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port) {
+    static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+
+    fd = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        log_error("Could not create socket");
+        return;
+    }
+
+    // source setup
+
+    // find port between 49152-65535
+    auto could_bind = false;
+    auto source_port = 49152;
+    for (; source_port < 65535; source_port++) {
+        sockaddr_in6 source_address = {AF_INET6, htons(source_port), 0, {}, 0};
+        if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+            could_bind = true;
+            break;
+        }
+    }
+
+    if (!could_bind) {
+        log_error("Could not bind");
+        close(fd);
+        return;
+    }
+
+    log_info("UDP socket bound to source port: " + std::to_string(source_port));
+
+    const auto index = if_nametoindex(interface_name.c_str());
+    auto mreq = ipv6_mreq{};
+    mreq.ipv6mr_interface = index;
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+        close(fd);
+        log_error("Failed to setup multicast address");
+        return;
+    }
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        close(fd);
+        log_error("Could not add multicast group membership");
+        return;
+    }
+
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+        close(fd);
+        log_error("Could not set interface name:" + interface_name);
+        return;
+    }
+
+    destination_address = {AF_INET6, htons(port), 0, {}, 0};
+    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
+        close(fd);
+        log_error("Failed to setup server address, reset key_log_fd");
+    }
+}
+
+TlsKeyLoggingServer::~TlsKeyLoggingServer() {
+    if (fd != -1) {
+        close(fd);
+    }
+}
+
+ssize_t TlsKeyLoggingServer::send(const char* line) {
+    return sendto(fd, line, strlen(line), 0, reinterpret_cast<const sockaddr*>(&destination_address),
+                  sizeof(destination_address));
 }
 
 } // namespace tls
