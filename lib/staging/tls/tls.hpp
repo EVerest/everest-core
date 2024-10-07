@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <netinet/in.h>
 #include <openssl/types.h>
 #include <optional>
 #include <pthread.h>
@@ -412,6 +413,8 @@ private:
     static int s_sig_int;                               //!< signal to use to wakeup serve()
     ConfigurationCallback m_init_callback{nullptr};     //!< callback to retrieve SSL configuration
 
+    ConfigItem m_tls_key_interface{nullptr};
+
     /**
      * \brief initialise the server socket
      * \param[in] cfg server configuration
@@ -633,6 +636,23 @@ public:
      * \brief the default SSL callbacks
      */
     static override_t default_overrides();
+};
+
+class TlsKeyLoggingServer {
+public:
+    TlsKeyLoggingServer(const std::string& interface_name, uint16_t port);
+    ~TlsKeyLoggingServer();
+
+    ssize_t send(const char* line);
+
+    auto get_fd() const {
+        return fd;
+    }
+
+private:
+    int fd{-1};
+    uint8_t buffer[2048];
+    sockaddr_in6 destination_address{};
 };
 
 } // namespace tls
