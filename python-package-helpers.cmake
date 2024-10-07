@@ -143,12 +143,23 @@ function (ev_create_python_wheel_targets)
     endif()
 
     set(WHEEL_OUTDIR ${CMAKE_CURRENT_BINARY_DIR}/dist_${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME})
+    set(CHECK_DONE_FILE ${CMAKE_CURRENT_BINARY_DIR}/${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel_done)
+
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
+        DEPENDS
+            "${CHECK_DONE_FILE}"
+    )
+
+    add_custom_command(
+        OUTPUT
+            "${CHECK_DONE_FILE}"
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
             ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .
+        COMMAND
+            ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY
             ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
