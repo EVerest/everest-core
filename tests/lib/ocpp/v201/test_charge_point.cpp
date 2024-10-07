@@ -257,7 +257,8 @@ public:
         is_reset_allowed_callback_mock;
     testing::MockFunction<void(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)>
         reset_callback_mock;
-    testing::MockFunction<void(const int32_t evse_id, const ReasonEnum& stop_reason)> stop_transaction_callback_mock;
+    testing::MockFunction<RequestStartStopStatusEnum(const int32_t evse_id, const ReasonEnum& stop_reason)>
+        stop_transaction_callback_mock;
     testing::MockFunction<void(const int32_t evse_id)> pause_charging_callback_mock;
     testing::MockFunction<void(const int32_t evse_id, const int32_t connector_id,
                                const OperationalStatusEnum new_status)>
@@ -265,7 +266,8 @@ public:
     testing::MockFunction<GetLogResponse(const GetLogRequest& request)> get_log_request_callback_mock;
     testing::MockFunction<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)>
         unlock_connector_callback_mock;
-    testing::MockFunction<void(const RequestStartTransactionRequest& request, const bool authorize_remote_start)>
+    testing::MockFunction<RequestStartStopStatusEnum(const RequestStartTransactionRequest& request,
+                                                     const bool authorize_remote_start)>
         remote_start_transaction_callback_mock;
     testing::MockFunction<bool(const int32_t evse_id, const CiString<36> idToken,
                                const std::optional<CiString<36>> groupIdToken)>

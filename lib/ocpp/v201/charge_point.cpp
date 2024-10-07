@@ -3165,14 +3165,13 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
         EVLOG_warning << "No evse id given. Can not remote start transaction.";
     }
 
-    const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, call.uniqueId);
-    this->send<RequestStartTransactionResponse>(call_result);
-
     if (response.status == RequestStartStopStatusEnum::Accepted) {
-        // F01.FR.01 and F01.FR.02
-        this->callbacks.remote_start_transaction_callback(
+        response.status = this->callbacks.remote_start_transaction_callback(
             msg, this->device_model->get_value<bool>(ControllerComponentVariables::AuthorizeRemoteStart));
     }
+
+    const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, call.uniqueId);
+    this->send<RequestStartTransactionResponse>(call_result);
 }
 
 void ChargePoint::handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call) {
@@ -3189,12 +3188,12 @@ void ChargePoint::handle_remote_stop_transaction_request(Call<RequestStopTransac
         response.status = RequestStartStopStatusEnum::Rejected;
     }
 
+    if (response.status == RequestStartStopStatusEnum::Accepted) {
+        response.status = this->callbacks.stop_transaction_callback(evseid.value(), ReasonEnum::Remote);
+    }
+
     const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, call.uniqueId);
     this->send<RequestStopTransactionResponse>(call_result);
-
-    if (response.status == RequestStartStopStatusEnum::Accepted) {
-        this->callbacks.stop_transaction_callback(evseid.value(), ReasonEnum::Remote);
-    }
 }
 
 void ChargePoint::handle_change_availability_req(Call<ChangeAvailabilityRequest> call) {

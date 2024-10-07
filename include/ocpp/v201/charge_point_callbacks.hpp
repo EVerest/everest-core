@@ -33,7 +33,8 @@ struct Callbacks {
     std::function<bool(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)>
         is_reset_allowed_callback;
     std::function<void(const std::optional<const int32_t> evse_id, const ResetEnum& reset_type)> reset_callback;
-    std::function<void(const int32_t evse_id, const ReasonEnum& stop_reason)> stop_transaction_callback;
+    std::function<RequestStartStopStatusEnum(const int32_t evse_id, const ReasonEnum& stop_reason)>
+        stop_transaction_callback;
     std::function<void(const int32_t evse_id)> pause_charging_callback;
 
     /// \brief Used to notify the user of libocpp that the Operative/Inoperative state of the charging station changed
@@ -65,7 +66,8 @@ struct Callbacks {
     std::function<UnlockConnectorResponse(const int32_t evse_id, const int32_t connecor_id)> unlock_connector_callback;
     // callback to be called when the request can be accepted. authorize_remote_start indicates if Authorize.req needs
     // to follow or not
-    std::function<void(const RequestStartTransactionRequest& request, const bool authorize_remote_start)>
+    std::function<RequestStartStopStatusEnum(const RequestStartTransactionRequest& request,
+                                             const bool authorize_remote_start)>
         remote_start_transaction_callback;
     ///
     /// \brief Check if the current reservation for the given evse id is made for the id token / group id token.
