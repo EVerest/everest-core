@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright Pionix GmbH and Contributors to EVerest
-#ifndef BOARD_SUPPORT_EXTENDED_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
-#define BOARD_SUPPORT_EXTENDED_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
+// Copyright Pionix GmbH
+#ifndef BOARD_SUPPORT_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
+#define BOARD_SUPPORT_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -27,7 +26,7 @@ public:
     ev_board_support_extendedImpl() = delete;
     ev_board_support_extendedImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<mMWcarBSP>& mod,
                                   Conf& config) :
-        ev_board_support_extendedImplBase(ev, "board_support_extended"), mod(mod), config(config){};
+        ev_board_support_extendedImplBase(ev, "board_support"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -63,4 +62,4 @@ private:
 } // namespace board_support_extended
 } // namespace module
 
-#endif // BOARD_SUPPORT_EXTENDED_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
+#endif // BOARD_SUPPORT_EV_BOARD_SUPPORT_EXTENDED_IMPL_HPP
