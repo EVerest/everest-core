@@ -4120,6 +4120,10 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
                     << ", with session_id: " << session_id;
         return;
     }
+    if (connector <= 0 or connector > this->connectors.size()) {
+        EVLOG_error << "Attempting to stop transaction for invalid connector id: " << connector;
+    }
+
     if (signed_meter_value) {
         const auto meter_value =
             this->get_signed_meter_value(signed_meter_value.value(), ReadingContext::Transaction_End, timestamp);
@@ -4131,6 +4135,7 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
     this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
     this->stop_transaction(connector, reason, id_tag_end);
     this->transaction_handler->remove_active_transaction(connector);
+    this->connectors.at(connector)->transaction = nullptr;
 
     const auto profile_cleared = this->smart_charging_handler->clear_all_profiles_with_filter(
         std::nullopt, connector, std::nullopt, ChargingProfilePurposeType::TxProfile, false);
