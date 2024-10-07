@@ -142,6 +142,7 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
 
     config.tls_key_logging = ctx->tls_key_logging;
     config.tls_key_logging_path = ctx->tls_key_logging_path;
+    config.host = ctx->if_name;
 
     // information from libevse-security
     const auto cert_info =
