@@ -975,6 +975,10 @@ function publish_ev_board_support(mod) {
     rcd_current_mA: mod.simulation_data.rcd_current,
     proximity_pilot: pp,
   });
+
+  mod.provides.ev_board_support.publish.bsp_event({
+    event: event_to_enum(mod.current_state)
+  });
 }
 
 function simulate_powermeter(mod) {

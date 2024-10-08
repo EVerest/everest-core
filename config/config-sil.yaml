@@ -10,6 +10,12 @@ active_modules:
         - module_id: error_history
           implementation_id: error_history
     module: API
+  ev_api:
+    connections:
+      ev_manager:
+        - implementation_id: ev_manager
+          module_id: ev_manager
+    module: EvAPI
   error_history:
     module: ErrorHistory
     config_implementation:

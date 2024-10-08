@@ -13,7 +13,8 @@ void car_simulatorImpl::init() {
     register_all_commands();
     subscribe_to_variables_on_init();
 
-    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac);
+    car_simulation = std::make_unique<CarSimulation>(mod->r_ev_board_support, mod->r_ev, mod->r_slac, mod->p_ev_manager,
+                                                     mod->config);
 
     std::thread(&car_simulatorImpl::run, this).detach();
 }
@@ -241,6 +242,11 @@ void car_simulatorImpl::subscribe_to_variables_on_init() {
         if (measurement.rcd_current_mA.has_value()) {
             car_simulation->set_rcd_current(measurement.rcd_current_mA.value());
         }
+    });
+
+    using types::board_support_common::BspEvent;
+    mod->r_ev_board_support->subscribe_bsp_event([this](const auto& bsp_event) {
+        mod->p_ev_manager->publish_bsp_event(bsp_event);
     });
 
     // subscribe slac_state
