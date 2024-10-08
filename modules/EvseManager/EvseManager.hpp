@@ -217,6 +217,8 @@ public:
         std::scoped_lock lock(powersupply_capabilities_mutex);
         powersupply_capabilities = caps;
 
+        EVLOG_info << "Updating capabilties for DC PSU: " << caps;
+
         // Inform HLC layer about update of physical values
         types::iso15118_charger::SetupPhysicalValues setup_physical_values;
         setup_physical_values.dc_current_regulation_tolerance = powersupply_capabilities.current_regulation_tolerance_A;
