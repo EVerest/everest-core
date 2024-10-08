@@ -972,11 +972,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
             }
 
-            if (err != 0) {
-                memset(res, 0, sizeof(*res));
-                goto error_out;
-            }
-
             dlog(DLOG_LEVEL_INFO, "Validation of the contract certificate was successful!");
 
             // contract chain ocsp data can only be retrieved if the MO root is present and the chain could be verified
