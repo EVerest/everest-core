@@ -224,67 +224,45 @@ The control flow of this module can be influenced by the error implementation of
 the side effects that can be caused by errors raised by a requirement.
 
 This module subscribes to all errors of the following requirements:
+
 * evse_board_support
 * connector_lock
 * ac_rcd
 * isolation_monitor
+* power_supply_DC
 
 A raised error can cause the EvseManager to become Inoperative. This means that charging is not possible until the error is cleared.
 If no charging session is currently running, it will prevent sessions from being started. If a charging session is currently running and an error is raised
 this will interrupt the charging session.
 
-The following sections provide an overview of errors that cause the EvseManager to become Inoperative until the error is cleared.
+Almost all errors that are reported from the requirements of this module cause the EvseManager to become Inoperative until the error is cleared. 
+The following sections provide an overview of the errors that do **not** cause the EvseManager to become Inoperative.
 
 evse_board_support
 ------------------
 
-evse_board_support/DiodeFault
-evse_board_support/VentilationNotAvailable
-evse_board_support/BrownOut
-evse_board_support/EnergyManagement
-evse_board_support/PermanentFault
-evse_board_support/MREC2GroundFailure
-evse_board_support/MREC4OverCurrentFailure
-evse_board_support/MREC5OverVoltage
-evse_board_support/MREC6UnderVoltage
-evse_board_support/MREC8EmergencyStop
-evse_board_support/MREC10InvalidVehicleMode
-evse_board_support/MREC14PilotFault
-evse_board_support/MREC15PowerLoss
-evse_board_support/MREC17EVSEContactorFault
-evse_board_support/MREC19CableOverTempStop
-evse_board_support/MREC20PartialInsertion
-evse_board_support/MREC23ProximityFault
-evse_board_support/MREC24ConnectorVoltageHigh
-evse_board_support/MREC25BrokenLatch
-evse_board_support/MREC26CutCable
-evse_board_support/VendorError
-evse_board_support/CommunicationFault
+* evse_board_support/MREC3HighTemperature
+* evse_board_support/MREC18CableOverTempDerate
+* evse_board_support/VendorWarning
 
 connector_lock
 --------------
 
-connector_lock/ConnectorLockCapNotCharged
-connector_lock/ConnectorLockUnexpectedClose
-connector_lock/ConnectorLockUnexpectedOpen
-connector_lock/ConnectorLockFailedLock
-connector_lock/ConnectorLockFailedUnlock
-connector_lock/MREC1ConnectorLockFailure
-connector_lock/VendorError
+* connector_lock/VendorWarning
 
 ac_rcd
 ------
 
-ac_rcd/MREC2GroundFailure
-ac_rcd/VendorError
-ac_rcd/Selftest
-ac_rcd/AC
-ac_rcd/DC
+* ac_rcd/VendorWarning
 
 isolation_monitor
 -----------------
 
-isolation_monitor/DeviceFault
-isolation_monitor/CommunicationFault
-isolation_monitor/VendorError
+* isolation_monitor/VendorWarning
+
+power_supply_DC
+---------------
+
+* power_supply_DC/VendorWarning
+
 
