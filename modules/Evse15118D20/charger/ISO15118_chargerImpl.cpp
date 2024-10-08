@@ -108,6 +108,7 @@ void ISO15118_chargerImpl::ready() {
         },
         mod->config.device,
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
+        mod->config.enable_sdp_server,
     };
     const auto callbacks = create_callbacks();
 

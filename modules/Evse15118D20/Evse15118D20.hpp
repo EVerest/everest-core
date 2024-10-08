@@ -27,6 +27,7 @@ struct Conf {
     std::string private_key_password;
     bool enable_ssl_logging;
     bool enable_tls_key_logging;
+    bool enable_sdp_server;
 };
 
 class Evse15118D20 : public Everest::ModuleBase {

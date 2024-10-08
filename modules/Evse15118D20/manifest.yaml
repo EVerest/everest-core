@@ -38,6 +38,11 @@ config:
       simulation purpose only
     type: boolean
     default: false
+  enable_sdp_server:
+    description: >-
+      Enable the built-in SDP server
+    type: boolean
+    default: true
 provides:
   charger:
     interface: ISO15118_charger
