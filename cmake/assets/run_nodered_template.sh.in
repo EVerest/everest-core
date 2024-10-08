@@ -5,7 +5,7 @@
 docker volume create nodered-config-volume
 
 # Create temporarily container to copy nodered config into the created volume
-docker create -v nodered-config-volume:/data --name nodered-config-container tianon/true:latest true
+docker create -v nodered-config-volume:/data --name nodered-config-container debian:12-slim true
 
 # Copy nodered config to the created volume with the temporarily created container
 docker cp @FLOW_FILE@ nodered-config-container:/data/flows.json
