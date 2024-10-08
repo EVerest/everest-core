@@ -6,6 +6,27 @@
 #include "log.hpp"
 #include "sdp.hpp"
 
+#include <openssl_util.hpp>
+namespace {
+void log_handler(openssl::log_level_t level, const std::string& str) {
+    switch (level) {
+    case openssl::log_level_t::debug:
+        // ignore debug logs
+        break;
+    case openssl::log_level_t::info:
+        EVLOG_info << str;
+        break;
+    case openssl::log_level_t::warning:
+        EVLOG_warning << str;
+        break;
+    case openssl::log_level_t::error:
+    default:
+        EVLOG_error << str;
+        break;
+    }
+}
+} // namespace
+
 struct v2g_context* v2g_ctx = nullptr;
 
 namespace module {
@@ -21,6 +42,9 @@ void IsoMux::init() {
     v2g_ctx->proxy_port_iso20 = config.proxy_port_iso20;
     v2g_ctx->selected_iso20 = false;
 
+    v2g_ctx->tls_key_logging = config.tls_key_logging;
+
+    (void)openssl::set_log_handler(log_handler);
     v2g_ctx->tls_server = &tls_server;
 
     invoke_init(*p_charger);

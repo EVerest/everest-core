@@ -146,6 +146,8 @@ struct v2g_context {
     } tls_socket;
     tls::Server* tls_server;
 
+    bool tls_key_logging;
+
     enum V2gMsgTypeId current_v2g_msg;         /* holds the last v2g msg type */
     int state;                                 /* holds the current state id */
     std::atomic_bool is_connection_terminated; /* Is set to true if the connection is terminated (CP State A/F, shutdown
