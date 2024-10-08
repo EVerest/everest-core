@@ -26,13 +26,6 @@ pugixml:
   git_tag: v1.12.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_PUGIXML"
 
-# Auth module
-libtimer:
-  git: https://github.com/EVerest/libtimer.git
-  git_tag: v0.1.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBTIMER"
-  options: ["BUILD_EXAMPLES OFF"]
-
 # Slac module
 libslac:
   git: https://github.com/EVerest/libslac.git

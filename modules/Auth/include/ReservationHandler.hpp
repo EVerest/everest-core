@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <Connector.hpp>
-#include <everest/timer.hpp>
+#include <async_timer.hpp>
 #include <generated/types/reservation.hpp>
 #include <utils/types.hpp>
 

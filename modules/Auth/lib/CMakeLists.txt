@@ -20,7 +20,7 @@ add_dependencies(auth_handler generate_cpp_files)
 
 target_link_libraries(auth_handler
 PRIVATE
-    everest::timer
+    everest::async_timer
     date::date
     date::date-tz
     everest::framework

@@ -23,7 +23,7 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 #
 target_link_libraries(${TEST_TARGET_NAME} PRIVATE
         GTest::gmock_main
-        everest::timer
+        everest::async_timer
         everest::framework
         nlohmann_json::nlohmann_json
         CURL::libcurl
@@ -58,7 +58,7 @@ target_include_directories(${TEST_TARGET_NAME} PRIVATE
 #
 target_link_libraries(${TEST_TARGET_NAME} PRIVATE
         GTest::gmock_main
-        everest::timer
+        everest::async_timer
         everest::framework
         nlohmann_json::nlohmann_json
         CURL::libcurl
@@ -83,7 +83,7 @@ target_include_directories(integration_test_http_client PRIVATE
 #
 target_link_libraries(integration_test_http_client PRIVATE
         GTest::gmock_main
-        everest::timer
+        everest::async_timer
         everest::framework
         nlohmann_json::nlohmann_json
         CURL::libcurl

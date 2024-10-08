@@ -15,10 +15,6 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST EvseManager)
 
 ev_define_dependency(
-    DEPENDENCY_NAME libtimer
-    DEPENDENT_MODULES_LIST Auth LemDCBM400600 System)
-
-ev_define_dependency(
     DEPENDENCY_NAME libslac
     DEPENDENT_MODULES_LIST EvSlac EvseSlac)
 

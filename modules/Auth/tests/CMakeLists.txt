@@ -15,7 +15,7 @@ target_include_directories(${TEST_TARGET_NAME} PUBLIC
 target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     GTest::gmock
     GTest::gtest_main
-    everest::timer
+    everest::async_timer
     ${CMAKE_DL_LIBS}
     everest::log
     everest::framework
