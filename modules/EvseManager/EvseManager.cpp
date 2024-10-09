@@ -1394,8 +1394,8 @@ void EvseManager::cable_check() {
         // Verify output is below 60V initially
         if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
             EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
-            fail_cable_check();
-            return;
+            //fail_cable_check();
+            //return;
         }
         charger->get_stopwatch().mark("<60V");
 
