@@ -418,7 +418,8 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
 };
 
 void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->update_local_energy_limit(value);
+    // FIXME: enable again
+    //mod->update_local_energy_limit(value);
 }
 
 void evse_managerImpl::handle_set_get_certificate_response(

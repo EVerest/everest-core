@@ -469,9 +469,6 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
             // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
             // FIXME: multiply by conversion_efficiency here!
 
-// FIXME REMVOE ME
- value.limits_root_side.value().total_power_W = 10000;
-
             if (value.limits_root_side.has_value() && value.limits_root_side.value().total_power_W.has_value()) {
                 float watt_leave_side = value.limits_root_side.value().total_power_W.value();
                 float ampere_root_side = value.limits_root_side.value().ac_max_current_A.value();
