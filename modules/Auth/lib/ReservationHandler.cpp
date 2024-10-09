@@ -64,7 +64,6 @@ bool ReservationHandler::has_reservation_parent_id(int evse) {
     return false;
 }
 
-// TODO mz rename available_connectors to available_evse's?
 types::reservation::ReservationResult ReservationHandler::reserve(std::optional<int> evse, const ConnectorState& state,
                                                                   bool is_reservable,
                                                                   const types::reservation::Reservation& reservation,
@@ -244,18 +243,25 @@ void ReservationHandler::register_reservation_cancelled_callback(
 
 bool ReservationHandler::is_connector_type_available(const types::evse_manager::ConnectorTypeEnum connector_type) {
     // TODO mz this does not work if an evse has multiple connector types.
+    // (TODO mz also because distracting the two can have a negative number as output???)
+    // TODO mz what to do if one of the connectors is faulted???
 
     uint32_t number_of_reserved_evses = 0;
     if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
         number_of_reserved_evses = global_reservations.size();
     } else {
-        auto reserved_evses = std::count_if(global_reservations.begin(), global_reservations.end(),
-                                            [connector_type](const types::reservation::Reservation& reservation) {
-                                                return !reservation.connector_type.has_value() ||
-                                                       reservation.connector_type.value() ==
-                                                           types::evse_manager::ConnectorTypeEnum::Unknown ||
-                                                       reservation.connector_type.value() == connector_type;
-                                            });
+        const uint32_t total_number_of_evses = evses.size();
+        const uint32_t number_of_evses_with_connector_type = get_no_evses_with_connector_type(connector_type);
+        const uint32_t total_number_of_reservations = global_reservations.size();
+        int32_t reserved_evses = 0;
+        reserved_evses =
+            static_cast<int32_t>(std::count_if(global_reservations.begin(), global_reservations.end(),
+                                               [connector_type](const types::reservation::Reservation& reservation) {
+                                                   return !reservation.connector_type.has_value() ||
+                                                          reservation.connector_type.value() ==
+                                                              types::evse_manager::ConnectorTypeEnum::Unknown ||
+                                                          reservation.connector_type.value() == connector_type;
+                                               }));
         if (reserved_evses >= 0) {
             number_of_reserved_evses = static_cast<uint32_t>(reserved_evses);
         } else {
@@ -273,6 +279,7 @@ bool ReservationHandler::is_connector_type_available(const types::evse_manager::
         }
     }
 
+    // TODO mz euh... is this correct???
     return (number_of_available_evses - number_of_reserved_evses) > 0;
 }
 
@@ -314,6 +321,18 @@ bool ReservationHandler::evse_has_connector_type(const int32_t evse_id,
     }
 
     return false;
+}
+
+uint32_t
+ReservationHandler::get_no_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type) {
+    uint32_t evses_with_connector_type = 0;
+    for (const auto& evse : evses) {
+        if (evse_has_connector_type(evse.first, connector_type)) {
+            evses_with_connector_type++;
+        }
+    }
+
+    return evses_with_connector_type;
 }
 
 } // namespace module

@@ -26,13 +26,15 @@ struct Identifier {
 };
 
 struct Connector {
-    explicit Connector(int id) :
+    explicit Connector(
+        int id, const types::evse_manager::ConnectorTypeEnum type = types::evse_manager::ConnectorTypeEnum::Unknown) :
         id(id),
         transaction_active(false),
         state_machine(ConnectorState::AVAILABLE),
         is_reservable(true),
         reserved(false),
-        type(types::evse_manager::ConnectorTypeEnum::Unknown){}
+        type(type) {
+    }
 
     int id;
 
@@ -66,7 +68,11 @@ struct Connector {
 
 struct ConnectorContext {
 
-    ConnectorContext(int connector_id, int evse_index) : evse_index(evse_index), connector(connector_id){}
+    ConnectorContext(
+        int connector_id, int evse_index,
+        const types::evse_manager::ConnectorTypeEnum connector_type = types::evse_manager::ConnectorTypeEnum::Unknown) :
+        evse_index(evse_index), connector(connector_id, connector_type) {
+    }
 
     int evse_index;
     Connector connector;

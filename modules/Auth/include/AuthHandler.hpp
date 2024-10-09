@@ -57,8 +57,11 @@ public:
      *
      * @param connector_id
      * @param evse_index
+     * @param connector_type    The connector type. Defaults to Unknown
      */
-    void init_connector(const int connector_id, const int evse_index);
+    void init_connector(
+        const int connector_id, const int evse_index,
+        const types::evse_manager::ConnectorTypeEnum& connector_type = types::evse_manager::ConnectorTypeEnum::Unknown);
 
     /**
      * @brief Handler for a new incoming \p provided_token
@@ -74,7 +77,8 @@ public:
      * @param reservation
      * @return types::reservation::ReservationResult
      */
-    types::reservation::ReservationResult handle_reservation(std::optional<int> evse_id, const Reservation& reservation);
+    types::reservation::ReservationResult handle_reservation(std::optional<int> evse_id,
+                                                             const Reservation& reservation);
 
     /**
      * @brief Handler for incoming cancel reservation request for the given \p reservation_id .
@@ -84,7 +88,7 @@ public:
      */
     int handle_cancel_reservation(int reservation_id);
 
-    bool handle_is_reservation_for_token(const std::optional<int> &evse_id, std::string& id_token,
+    bool handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
                                          std::optional<std::string>& group_id_token);
 
     /**
@@ -101,7 +105,7 @@ public:
      *
      * @param evse_id
      */
-    void call_reservation_cancelled(const std::optional<int> &evse_id);
+    void call_reservation_cancelled(const std::optional<int>& evse_id);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the

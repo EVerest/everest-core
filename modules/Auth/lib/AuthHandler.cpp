@@ -47,9 +47,11 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
 AuthHandler::~AuthHandler() {
 }
 
-void AuthHandler::init_connector(const int connector_id, const int evse_index) {
+void AuthHandler::init_connector(const int connector_id, const int evse_index,
+                                 const types::evse_manager::ConnectorTypeEnum& connector_type) {
     // TODO mz in reservation: support multiple connectors per evse
-    std::unique_ptr<ConnectorContext> ctx = std::make_unique<ConnectorContext>(connector_id, evse_index);
+    std::unique_ptr<ConnectorContext> ctx =
+        std::make_unique<ConnectorContext>(connector_id, evse_index, connector_type);
     this->reservation_handler.init_connector(evse_index, connector_id, ctx->connector.type);
     this->connectors.emplace(connector_id, std::move(ctx));
 }
@@ -590,10 +592,11 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(std::optio
                                                          std::nullopt);
             }
         }
-        // TODO mz enable and fix 'connector_id'
-        // return this->reservation_handler.reserve(evse_id, this->connectors.at(connector_id)->connector.get_state(),
-        //                                          this->connectors.at(connector_id)->connector.is_reservable,
-        //                                          reservation, std::nullopt);
+
+        // No evse / connector found with given connector type or evse id. Call 'reserve' with 'unavailable' and 'not
+        // reservable'.
+        return this->reservation_handler.reserve(evse_id, ConnectorState::UNAVAILABLE, false, reservation,
+                                                 std::nullopt);
     }
 }
 

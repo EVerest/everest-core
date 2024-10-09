@@ -132,15 +132,15 @@ protected:
             return validation_results;
         });
 
-        this->auth_handler->register_reservation_cancelled_callback([this](const int32_t evse_index) {
-            EVLOG_info << "Signaling reservating cancelled to evse#" << evse_index;
-        });
+        this->auth_handler->register_reservation_cancelled_callback(
+            [](const int32_t evse_index) { EVLOG_info << "Signaling reservating cancelled to evse#" << evse_index; });
 
         this->auth_handler->register_publish_token_validation_status_callback(
             mock_publish_token_validation_status_callback.AsStdFunction());
 
-        this->auth_handler->init_connector(1, 0);
-        this->auth_handler->init_connector(2, 1);
+        this->auth_handler->init_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+        this->auth_handler->init_connector(1, 1, types::evse_manager::ConnectorTypeEnum::sType2);
+        this->auth_handler->init_connector(2, 1, types::evse_manager::ConnectorTypeEnum::cCCS2);
     }
 
     void TearDown() override {
@@ -710,6 +710,7 @@ TEST_F(AuthTest, test_reservation) {
     Reservation reservation;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
 
     const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
@@ -722,6 +723,7 @@ TEST_F(AuthTest, test_reservation_in_past) {
     Reservation reservation;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() - std::chrono::hours(1)));
 
     const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
@@ -737,6 +739,7 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     Reservation reservation;
     reservation.id_token = VALID_TOKEN_2;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
     const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);

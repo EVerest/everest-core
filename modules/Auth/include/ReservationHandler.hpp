@@ -110,6 +110,7 @@ public:
 private: // Functions
     void set_reservation_timer(const types::reservation::Reservation& reservation, const std::optional<int32_t> evse);
     bool evse_has_connector_type(const int32_t evse_id, const types::evse_manager::ConnectorTypeEnum type);
+    uint32_t get_no_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type);
 };
 
 } // namespace module
