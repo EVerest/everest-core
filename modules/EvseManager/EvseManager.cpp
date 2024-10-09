@@ -1392,11 +1392,11 @@ void EvseManager::cable_check() {
         charger->get_stopwatch().mark_phase("CableCheck");
 
         // Verify output is below 60V initially
-        /*if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
+        if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
             EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
             fail_cable_check();
             return;
-        }*/
+        }
         charger->get_stopwatch().mark("<60V");
 
         // normally contactors should be closed before entering cable check routine.
@@ -1474,11 +1474,11 @@ void EvseManager::cable_check() {
         // Within 2.5s present voltage at side B must be below 60V. As the power supply ramp up speed varies greatly,
         // we can only achieve this by limiting the current to I < cable_check_voltage/110 Ohm. The hard coded limit
         // above fulfills that for all voltage ranges.
-        if (not wait_powersupply_DC_voltage_reached(cable_check_voltage)) {
+       /* if (not wait_powersupply_DC_voltage_reached(cable_check_voltage)) {
             EVLOG_error << "CableCheck: Voltage did not rise to " << cable_check_voltage << " V within timeout";
             fail_cable_check();
             return;
-        }
+        }*/
 
         charger->get_stopwatch().mark("VRampUp");
 
