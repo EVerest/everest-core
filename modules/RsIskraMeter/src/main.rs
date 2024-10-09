@@ -855,9 +855,9 @@ impl generated::OnReadySubscriber for IskraMeter {
             let res = ready_state_clone.read_meter_value();
             match res {
                 Ok(meter) => {
-                    log::info!("Got meter value {:?}", meter);
+                    log::debug!("Got meter value {:?}", meter);
                     match power_meter_clone.powermeter(meter) {
-                        Ok(_) => log::info!("Successfully published meter value"),
+                        Ok(_) => log::debug!("Successfully published meter value"),
                         Err(e) => log::error!("Failed to post meter values {:?}", e),
                     }
                 }
