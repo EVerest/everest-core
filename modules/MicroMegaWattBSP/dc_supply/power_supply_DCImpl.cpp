@@ -75,14 +75,6 @@ void power_supply_DCImpl::ready() {
     caps.current_regulation_tolerance_A = 1;
     caps.peak_current_ripple_A = 0;
 
-    EVLOG_critical << "UMWC publish capabilties";
-
-    publish_capabilities(caps);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    publish_capabilities(caps);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    publish_capabilities(caps);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     publish_capabilities(caps);
 }
 
