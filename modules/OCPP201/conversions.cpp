@@ -137,6 +137,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
                     const ocpp::v201::ReadingContextEnum& reading_context,
                     const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
+    // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
     meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
 
     // signed_meter_value is intended for OCMF style blobs of signed meter value reports during transaction start or end

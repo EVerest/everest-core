@@ -82,6 +82,7 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::ScheduleReqEntry schedule_req_entry;
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
+            // FIXME:: ocpp::DateTime can throw an exception, what do we want to do here?
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
@@ -141,6 +142,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                    << "Received TransactionStarted";
         const auto transaction_started = session_event.transaction_started.value();
 
+        // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
         const auto timestamp = ocpp::DateTime(session_event.timestamp);
         const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
@@ -177,6 +179,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                     << "Received TransactionFinished";
 
         const auto transaction_finished = session_event.transaction_finished.value();
+        // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
         const auto timestamp = ocpp::DateTime(session_event.timestamp);
         const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
         const auto signed_meter_value = transaction_finished.signed_meter_value;

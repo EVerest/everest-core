@@ -185,8 +185,16 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
         m.state = to_ocpp_201_display_message_state(display_message.state.value());
     }
 
-    m.timestamp_from = display_message.timestamp_from;
-    m.timestamp_to = display_message.timestamp_to;
+    try {
+        if (display_message.timestamp_from.has_value()) {
+            m.timestamp_from = ocpp::DateTime(display_message.timestamp_from.value());
+        }
+        if (display_message.timestamp_to.has_value()) {
+            m.timestamp_to = ocpp::DateTime(display_message.timestamp_to.value());
+        }
+    } catch (const ocpp::TimePointParseException& e) {
+        // should this log a warning?
+    }
 
     return m;
 }
