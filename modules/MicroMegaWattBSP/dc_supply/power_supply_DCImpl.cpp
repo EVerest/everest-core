@@ -65,7 +65,7 @@ void power_supply_DCImpl::init() {
 
 void power_supply_DCImpl::ready() {
     types::power_supply_DC::Capabilities caps;
-    caps.bidirectional = false;
+    caps.bidirectional = true;
     caps.conversion_efficiency_export = 0.9;
     caps.max_export_current_A = 25;
     caps.max_export_voltage_V = mod->config.dc_max_voltage;
