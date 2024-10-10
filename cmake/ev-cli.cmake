@@ -8,7 +8,6 @@ macro(setup_ev_cli)
         if(NOT ${IS_PYTHON_VENV_ACTIVE})
             message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
         endif()
-        find_program(EV_CLI ev-cli REQUIRED)
 
         find_program(EV_GET_PACKAGE_LOCATION
             NAMES get_package_location.py
@@ -16,7 +15,7 @@ macro(setup_ev_cli)
             NO_DEFAULT_PATH
         )
         execute_process(
-            COMMAND ${EV_GET_PACKAGE_LOCATION} --package-name ev-dev-tools
+            COMMAND ${Python3_EXECUTABLE} ${EV_GET_PACKAGE_LOCATION} --package-name ev-dev-tools
             OUTPUT_VARIABLE EV_CLI_PACKAGE_LOCATION
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE
@@ -27,6 +26,9 @@ macro(setup_ev_cli)
             message(FATAL_ERROR "Could not get ev-dev-tools package location")
         endif()
         message(STATUS "Using ev-cli package: ${EV_CLI_PACKAGE_LOCATION}")
+
+        find_program(EV_CLI ev-cli PATHS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
+
         set_property(
             GLOBAL
             PROPERTY EV_CLI_TEMPLATES_DIR "${EV_CLI_PACKAGE_LOCATION}/src/ev_cli/templates"
