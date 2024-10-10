@@ -416,12 +416,26 @@ bool use_certificate_and_key(ssl_st* ssl, const chain_t& chain);
 std::string certificate_to_pem(const x509_st* cert);
 
 /**
+ * \brief convert a PEM string to a certificate
+ * \param[in] pem the PEM string
+ * \return the certificate or empty unique_ptr on error
+ */
+certificate_ptr pem_to_certificate(const std::string& pem);
+
+/**
  * \brief parse a DER (ASN.1) encoded certificate
  * \param[in] der a pointer to the DER encoded certificate
  * \param[in] len the length of the DER encoded certificate
  * \return the certificate or empty unique_ptr on error
  */
 certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len);
+
+/**
+ * \brief encode a certificate to DER (ASN.1)
+ * \param[in] cert the certificate
+ * \return the DER encoded certificate or nullptr on error
+ */
+DER certificate_to_der(const x509_st* cert);
 
 /**
  * \brief verify a certificate against a certificate chain and trust anchors
@@ -463,6 +477,7 @@ pkey_ptr certificate_public_key(x509_st* cert);
  * \param[out] digest the SHA1 digest of the certificate
  * \param[in] cert the certificate
  * \return true on success
+ * \note this is the hash of the whole certificate including signature
  */
 bool certificate_sha_1(openssl::sha_1_digest_t& digest, const x509_st* cert);
 
