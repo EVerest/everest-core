@@ -2,6 +2,8 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <ReservationHandler.hpp>
+
+#include <ReservationEVSEs.h>
 #include <everest/logging.hpp>
 #include <utils/date.hpp>
 
@@ -12,6 +14,7 @@ void ReservationHandler::init_connector(const int evse_id, const int connector_i
     // Evse index here starts with 0.
     // TODO mz do we want that?
     evses[evse_id].push_back({connector_id, connector_type});
+    e.add_connector(evse_id, connector_id, connector_type);
 }
 
 // TODO mz everywhere where we have a connector id that can be zero, we should replace it for std::optional.
@@ -180,7 +183,7 @@ types::reservation::ReservationResult ReservationHandler::reserve(std::optional<
             return types::reservation::ReservationResult::Accepted;
         }
 
-        return types::reservation::ReservationResult::Occupied;
+        return types::reservation::ReservationResult::Unavailable;
     }
 }
 
@@ -240,6 +243,16 @@ void ReservationHandler::register_reservation_cancelled_callback(
     const std::function<void(const int& connector_id)>& callback) {
     this->reservation_cancelled_callback = callback;
 }
+
+// evse1 2 connectors: ccs and chademo      -> not reserved
+// evse2 2 connectors: ccs and chademo      -> not reserved
+// evse3 2 connectors: ccs and chademo      -> not reserved
+// evse4 2 connectors: ccs and chademo      -> CCS reserved
+// evse5 1 connector: chademo
+
+// Global reserved: CCS x 2, Chademo x 1
+
+// Try to reserve CCS
 
 bool ReservationHandler::is_connector_type_available(const types::evse_manager::ConnectorTypeEnum connector_type) {
     // TODO mz this does not work if an evse has multiple connector types.

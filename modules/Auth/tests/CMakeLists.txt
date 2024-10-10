@@ -1,5 +1,5 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_auth_tests)
-add_executable(${TEST_TARGET_NAME} auth_tests.cpp)
+add_executable(${TEST_TARGET_NAME} auth_tests.cpp reservation_tests.cpp)
 
 set(INCLUDE_DIR 
     "${PROJECT_SOURCE_DIR}/modules/Auth/include"

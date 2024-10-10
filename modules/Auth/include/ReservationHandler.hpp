@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <Connector.hpp>
+#include <ReservationEVSEs.h>
 #include <everest/timer.hpp>
 #include <generated/types/reservation.hpp>
 #include <utils/types.hpp>
@@ -32,6 +33,7 @@ private: // Members
     std::map<int, std::unique_ptr<Everest::SteadyTimer>> reservation_id_to_reservation_timeout_timer_map;
 
     std::function<void(const int& connector_id)> reservation_cancelled_callback;
+    ReservationEVSEs e;
 
 public:
     /**
