@@ -17,10 +17,6 @@ sigslot:
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
     - "SIGSLOT_COMPILE_TESTS OFF"
-libmodbus:
-  git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
