@@ -592,6 +592,20 @@ std::string certificate_to_pem(const X509* cert) {
     return result;
 }
 
+certificate_ptr pem_to_certificate(const std::string& pem) {
+    certificate_ptr result{nullptr, nullptr};
+    auto* mem = BIO_new_mem_buf(pem.c_str(), static_cast<int>(pem.size()));
+    X509* cert = nullptr;
+
+    if (PEM_read_bio_X509(mem, &cert, nullptr, nullptr) == nullptr) {
+        log_error("PEM_read_bio_X509");
+    } else {
+        result = certificate_ptr{cert, &X509_free};
+    }
+    BIO_free(mem);
+    return result;
+}
+
 certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len) {
     certificate_ptr result{nullptr, nullptr};
     const auto* ptr = der;
@@ -602,6 +616,18 @@ certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len) {
         result = certificate_ptr{cert, &X509_free};
     }
     return result;
+}
+
+DER certificate_to_der(const x509_st* cert) {
+    assert(cert != nullptr);
+
+    unsigned char* data{nullptr};
+
+    // DO NOT FREE - internal pointers to certificate
+    int len = i2d_X509(cert, &data);
+
+    // move data to DER
+    return {der_ptr{data, &DER::free}, static_cast<std::size_t>(len)};
 }
 
 verify_result_t verify_certificate(const X509* cert, const certificate_list& trust_anchors,
@@ -753,16 +779,9 @@ bool certificate_sha_1(openssl::sha_1_digest_t& digest, const X509* cert) {
     assert(cert != nullptr);
 
     bool bResult{false};
-    const ASN1_BIT_STRING* signature{nullptr};
-    const X509_ALGOR* alg{nullptr};
-    X509_get0_signature(&signature, &alg, cert);
-    if (signature != nullptr) {
-        unsigned char* data{nullptr};
-        const auto len = i2d_ASN1_BIT_STRING(signature, &data);
-        if (len > 0) {
-            bResult = openssl::sha_1(data, len, digest);
-        }
-        OPENSSL_free(data);
+    auto der = certificate_to_der(cert);
+    if (der) {
+        bResult = openssl::sha_1(der.get(), der.size(), digest);
     }
 
     return bResult;
