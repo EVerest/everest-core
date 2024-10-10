@@ -103,7 +103,7 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
         if (connector_id == 0) {
             if (!this->r_evse_manager_energy_sink.empty()) {
                 EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_evse_manager_energy_sink.at(0)->call_set_external_limits(limits);
+                this->r_evse_manager_energy_sink.first()->call_set_external_limits(limits);
             } else {
                 EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
                                "sink is configured.";
