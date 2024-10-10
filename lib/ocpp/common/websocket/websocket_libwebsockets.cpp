@@ -862,9 +862,9 @@ void WebsocketTlsTPM::close(const WebsocketCloseReason code, const std::string& 
     // Clear any irrelevant data after a DC
     recv_buffered_message.clear();
 
-    this->push_deferred_callback([this]() {
+    this->push_deferred_callback([this, code]() {
         if (this->closed_callback) {
-            this->closed_callback(WebsocketCloseReason::Normal);
+            this->closed_callback(code);
         } else {
             EVLOG_error << "Closed callback not registered!";
         }

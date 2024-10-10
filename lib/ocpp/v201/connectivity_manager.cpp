@@ -108,7 +108,9 @@ void ConnectivityManager::connect() {
 
 void ConnectivityManager::disconnect_websocket(WebsocketCloseReason code) {
     if (this->websocket != nullptr) {
-        this->disable_automatic_websocket_reconnects = true;
+        if (code != WebsocketCloseReason::ServiceRestart) {
+            this->disable_automatic_websocket_reconnects = true;
+        }
         this->websocket->disconnect(code);
     }
 }
