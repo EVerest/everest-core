@@ -677,7 +677,6 @@ void from_json(const json& j, CompositeSchedule& k) {
     k.evseId = j.at("evseId");
     k.duration = j.at("duration");
     k.scheduleStart = ocpp::DateTime(std::string(j.at("scheduleStart")));
-    ;
     k.chargingRateUnit = conversions::string_to_charging_rate_unit_enum(j.at("chargingRateUnit"));
 
     // the optional parts of the message
@@ -1146,7 +1145,6 @@ void from_json(const json& j, MeterValue& k) {
         k.sampledValue.push_back(val);
     }
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
-    ;
 
     // the optional parts of the message
     if (j.contains("customData")) {
@@ -1718,7 +1716,6 @@ void from_json(const json& j, EventData& k) {
     // the required parts of the message
     k.eventId = j.at("eventId");
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
-    ;
     k.trigger = conversions::string_to_event_trigger_enum(j.at("trigger"));
     k.actualValue = j.at("actualValue");
     k.component = j.at("component");
@@ -1866,7 +1863,6 @@ void from_json(const json& j, VariableAttribute& k) {
     if (j.contains("type")) {
         k.type.emplace(conversions::string_to_attribute_enum(j.at("type")));
     }
-
     if (j.contains("value")) {
         const json& value = j.at("value");
         if (value.is_string()) {
@@ -1886,7 +1882,6 @@ void from_json(const json& j, VariableAttribute& k) {
             k.value = value.dump();
         }
     }
-
     if (j.contains("mutability")) {
         k.mutability.emplace(conversions::string_to_mutability_enum(j.at("mutability")));
     }
@@ -2526,7 +2521,6 @@ void from_json(const json& j, Firmware& k) {
     // the required parts of the message
     k.location = j.at("location");
     k.retrieveDateTime = ocpp::DateTime(std::string(j.at("retrieveDateTime")));
-    ;
 
     // the optional parts of the message
     if (j.contains("customData")) {

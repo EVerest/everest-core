@@ -190,8 +190,6 @@ enum_types['ExtendedTriggerMessageRequest'] = dict()
 enum_types['ExtendedTriggerMessageRequest']['requestedMessage'] = 'MessageTriggerEnumType'
 enum_types['ExtendedTriggerMessageResponse'] = dict()
 enum_types['ExtendedTriggerMessageResponse']['status'] = 'TriggerMessageStatusEnumType'
-enum_types['SecurityEventNotificationRequest'] = dict()
-enum_types['SecurityEventNotificationRequest']['type'] = 'SecurityEvent'
 
 
 def object_exists(name: str) -> bool:

@@ -100,7 +100,7 @@ j["{{property.name}}"] = k.{{property.name}}.value();
  conversions::string_to_{{- property.type | snake_case}}(j.at("{{property.name}}"))
     {%- else %}
         {%- if property.type == 'ocpp::DateTime' %}
- ocpp::DateTime(std::string(j.at("{{property.name}}")));
+ ocpp::DateTime(std::string(j.at("{{property.name}}")))
         {%- else %}
  j.at("{{property.name}}")
         {%- endif %}
@@ -131,7 +131,27 @@ j["{{property.name}}"] = k.{{property.name}}.value();
         {%- if property.type == 'ocpp::DateTime' %}
             k.{{property.name}}.emplace(j.at("{{property.name}}").get<std::string>());
         {%- else %}
+{% if type.name == "VariableAttribute" and property.name == "value"%}
+        const json& value = j.at("value");
+        if (value.is_string()) {
+            k.value = value;
+        } else if (value.is_boolean()) {
+            if (value.get<bool>()) {
+                // Convert to lower case if that is not the case currently.
+                k.value = "true";
+            } else {
+                // Convert to lower case if that is not the case currently.
+                k.value = "false";
+            }
+        } else if (value.is_array() || value.is_object()) {
+            // Maybe this is correct and is just a string (json value string), so just return the string.
+            k.value = value.dump();
+        } else {
+            k.value = value.dump();
+        }
+{% else %}
             k.{{property.name}}.emplace(j.at("{{property.name}}"));
+{% endif %}
         {%- endif %}
 {% endif %}
 {% endif %}

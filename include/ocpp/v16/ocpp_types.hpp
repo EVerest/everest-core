@@ -180,9 +180,9 @@ std::ostream& operator<<(std::ostream& os, const LocalAuthorizationList& k);
 
 struct FirmwareType {
     CiString<512> location;
+    ocpp::DateTime retrieveDateTime;
     CiString<5500> signingCertificate;
     CiString<800> signature;
-    std::optional<ocpp::DateTime> retrieveDateTime;
     std::optional<ocpp::DateTime> installDateTime;
 };
 /// \brief Conversion from a given FirmwareType \p k to a given json object \p j

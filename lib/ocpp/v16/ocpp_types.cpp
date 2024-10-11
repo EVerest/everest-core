@@ -301,7 +301,6 @@ void to_json(json& j, const MeterValue& k) {
 void from_json(const json& j, MeterValue& k) {
     // the required parts of the message
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
-    ;
     for (auto val : j.at("sampledValue")) {
         k.sampledValue.push_back(val);
     }
@@ -407,13 +406,11 @@ void to_json(json& j, const FirmwareType& k) {
     // the required parts of the message
     j = json{
         {"location", k.location},
+        {"retrieveDateTime", k.retrieveDateTime.to_rfc3339()},
         {"signingCertificate", k.signingCertificate},
         {"signature", k.signature},
     };
     // the optional parts of the message
-    if (k.retrieveDateTime) {
-        j["retrieveDateTime"] = k.retrieveDateTime.value().to_rfc3339();
-    }
     if (k.installDateTime) {
         j["installDateTime"] = k.installDateTime.value().to_rfc3339();
     }
@@ -423,13 +420,11 @@ void to_json(json& j, const FirmwareType& k) {
 void from_json(const json& j, FirmwareType& k) {
     // the required parts of the message
     k.location = j.at("location");
+    k.retrieveDateTime = ocpp::DateTime(std::string(j.at("retrieveDateTime")));
     k.signingCertificate = j.at("signingCertificate");
     k.signature = j.at("signature");
 
     // the optional parts of the message
-    if (j.contains("retrieveDateTime")) {
-        k.retrieveDateTime.emplace(j.at("retrieveDateTime").get<std::string>());
-    }
     if (j.contains("installDateTime")) {
         k.installDateTime.emplace(j.at("installDateTime").get<std::string>());
     }
@@ -456,7 +451,6 @@ void to_json(json& j, const TransactionData& k) {
 void from_json(const json& j, TransactionData& k) {
     // the required parts of the message
     k.timestamp = ocpp::DateTime(std::string(j.at("timestamp")));
-    ;
     for (auto val : j.at("sampledValue")) {
         k.sampledValue.push_back(val);
     }
