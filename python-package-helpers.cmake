@@ -196,3 +196,55 @@ macro(ev_setup_cmake_variables_python_wheel)
     endif()
     message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX=${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}")
 endmacro()
+
+
+function(ev_pip_install_local)
+    set(oneValueArgs
+        PACKAGE_NAME
+        PACKAGE_SOURCE_DIRECTORY
+    )
+    set(multiValueArgs
+        DEPENDS
+    )
+    cmake_parse_arguments(
+        "EV_PIP_INSTALL_LOCAL"
+        ""
+        "${oneValueArgs}"
+        "${multiValueArgs}"
+        ${ARGN}
+    )
+    if ("${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME}" STREQUAL "")
+        message(FATAL_ERROR "PACKAGE_NAME is required")
+    endif()
+    if ("${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
+
+    execute_process(
+        COMMAND
+            ${Python3_EXECUTABLE} -c "from setuptools import setup; setup()" --version
+        WORKING_DIRECTORY
+            ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
+        OUTPUT_VARIABLE
+            EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+
+    set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME}_pip_install_local_installed_${EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION}")
+    if(NOT EXISTS "${CHECK_DONE_FILE}")
+        message(STATUS "${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME} not found, installing.")
+        execute_process(
+            COMMAND
+                ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
+            WORKING_DIRECTORY
+                ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
+            RESULTS_VARIABLE EV_RESULTS
+        )
+        execute_process(
+            COMMAND
+                ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
+            RESULTS_VARIABLE EV_RESULTS
+        )
+    endif()
+    message(STATUS "Using ${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME} from ${CMAKE_CURRENT_SOURCE_DIR} version: ${EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION}")
+endfunction()
