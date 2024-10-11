@@ -493,7 +493,7 @@ void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_
         this->connectors.at(connector_id)->timeout_timer.stop();
         this->connectors.at(connector_id)
             ->timeout_timer.timeout(
-                [this, evse_index, connector_id]() {
+                [this, evse_index, connector_id, provided_token]() {
                     EVLOG_info << "Authorization timeout for evse#" << evse_index;
                     this->connectors.at(connector_id)->connector.identifier.reset();
                     this->withdraw_authorization_callback(evse_index);
