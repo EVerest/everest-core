@@ -128,19 +128,19 @@ macro(ev_setup_python_executable)
                 Interpreter
         )
     else()
-        message(STATUS "Using python venv: ${${PROJECT_NAME}_PYTHON_VENV_PATH}")
+        message(STATUS "Using python venv: ${EV_SETUP_PYTHON_EXECUTABLE_PYTHON_VENV_PATH}")
         ev_is_directory_python_venv(
-            DIRECTORY ${${PROJECT_NAME}_PYTHON_VENV_PATH}
+            DIRECTORY ${EV_SETUP_PYTHON_EXECUTABLE_PYTHON_VENV_PATH}
             RESULT_VAR IS_DIRECTORY_PYTHON_VENV
         )
         if(NOT ${IS_DIRECTORY_PYTHON_VENV})
             ev_create_python_venv(
                 PATH_TO_VENV
-                    "${${PROJECT_NAME}_PYTHON_VENV_PATH}"
+                    "${EV_SETUP_PYTHON_EXECUTABLE_PYTHON_VENV_PATH}"
                 INCLUDE_SYSTEM_SITE_PACKAGES
             )
         endif()
-        ev_activate_python_venv(PATH_TO_VENV "${${PROJECT_NAME}_PYTHON_VENV_PATH}")
+        ev_activate_python_venv(PATH_TO_VENV "${EV_SETUP_PYTHON_EXECUTABLE_PYTHON_VENV_PATH}")
     endif()
     message(STATUS "Set up python executable with Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endmacro()
