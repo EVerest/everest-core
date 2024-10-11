@@ -245,12 +245,8 @@ Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const flo
 
     // Recursion: create one Market for each child
     for (auto& flow_child : _energy_flow_request.children) {
-        _children.emplace_back(flow_child, _nominal_ac_voltage, this);
+        _children.emplace_back(std::make_unique<Market>(flow_child, _nominal_ac_voltage, this));
     }
-}
-
-const std::vector<Market>& Market::children() {
-    return _children;
 }
 
 ScheduleRes Market::get_sold_energy() {
@@ -271,7 +267,7 @@ void Market::get_list_of_evses(std::vector<Market*>& list) {
     }
 
     for (auto& child : _children) {
-        child.get_list_of_evses(list);
+        child->get_list_of_evses(list);
     }
 }
 
@@ -282,7 +278,7 @@ std::vector<Market*> Market::get_list_of_evses() {
     }
 
     for (auto& child : _children) {
-        child.get_list_of_evses(list);
+        child->get_list_of_evses(list);
     }
     return list;
 }
