@@ -62,35 +62,43 @@ endfunction()
 
 function(set_ev_cli_template_properties)
     message(STATUS "Setting template properties for ev-cli target")
+    get_target_property(EVEREST_SCHEMA_DIR generate_cpp_files EVEREST_SCHEMA_DIR)
+
     execute_process(
-        COMMAND ${EV_CLI} interface get-templates
+        COMMAND ${EV_CLI} interface get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_INTERFACE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
         EV_CLI_INTERFACE_TEMPLATES_RESULT
     )
 
-    message(STATUS "interface templates: ${EV_CLI_INTERFACE_TEMPLATES}")
+    if(EV_CLI_INTERFACE_TEMPLATES_RESULT)
+        message(FATAL_ERROR "Could not get interface templates from ev-cli.")
+    endif()
 
     execute_process(
-        COMMAND ${EV_CLI} module get-templates
+        COMMAND ${EV_CLI} module get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_MODULE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
         EV_CLI_MODULE_TEMPLATES_RESULT
     )
 
-    message(STATUS "module templates: ${EV_CLI_MODULE_TEMPLATES}")
+    if(EV_CLI_MODULE_TEMPLATES_RESULT)
+        message(FATAL_ERROR "Could not get module loader templates from ev-cli.")
+    endif()
 
     execute_process(
-        COMMAND ${EV_CLI} types get-templates
+        COMMAND ${EV_CLI} types get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_TYPES_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
         EV_CLI_TYPES_TEMPLATES_RESULT
     )
 
-    message(STATUS "types templates: ${EV_CLI_TYPES_TEMPLATES}")
+    if(EV_CLI_TYPES_TEMPLATES_RESULT)
+        message(FATAL_ERROR "Could not get module loader templates from ev-cli.")
+    endif()
 
     set_target_properties(ev-cli
         PROPERTIES
