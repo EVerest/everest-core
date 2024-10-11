@@ -77,6 +77,60 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     initialize(evse_connector_structure, message_log_path);
 }
 
+ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                         std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
+                         const std::string& core_database_path, const std::string& sql_init_path,
+                         const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
+                         const Callbacks& callbacks) :
+    ChargePoint(
+        evse_connector_structure, std::make_shared<DeviceModel>(std::move(device_model_storage)),
+        std::make_shared<DatabaseHandler>(
+            std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db"), sql_init_path),
+        nullptr /* message_queue initialized in this constructor */, message_log_path, evse_security, callbacks) {
+    std::set<v201::MessageType> message_types_discard_for_queueing;
+    try {
+        const auto message_types_discard_for_queueing_csl = ocpp::split_string(
+            this->device_model
+                ->get_optional_value<std::string>(ControllerComponentVariables::MessageTypesDiscardForQueueing)
+                .value_or(""),
+            ',');
+        std::transform(message_types_discard_for_queueing_csl.begin(), message_types_discard_for_queueing_csl.end(),
+                       std::inserter(message_types_discard_for_queueing, message_types_discard_for_queueing.end()),
+                       [](const std::string element) { return conversions::string_to_messagetype(element); });
+    } catch (const StringToEnumException& e) {
+        EVLOG_warning << "Could not convert configured MessageType value of MessageTypesDiscardForQueueing. Please "
+                         "check you configuration: "
+                      << e.what();
+    } catch (...) {
+        EVLOG_warning << "Could not apply MessageTypesDiscardForQueueing configuration";
+    }
+
+    this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
+        [this](json message) -> bool { return this->connectivity_manager->send_to_websocket(message.dump()); },
+        MessageQueueConfig<v201::MessageType>{
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
+            this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
+                .value_or(DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD),
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::QueueAllMessages)
+                .value_or(false),
+            message_types_discard_for_queueing,
+            this->device_model->get_value<int>(ControllerComponentVariables::MessageTimeout)},
+        this->database_handler);
+}
+
+ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
+                         const std::string& device_model_storage_address, const bool initialize_device_model,
+                         const std::string& device_model_migration_path, const std::string& device_model_config_path,
+                         const std::string& ocpp_main_path, const std::string& core_database_path,
+                         const std::string& sql_init_path, const std::string& message_log_path,
+                         const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks) :
+    ChargePoint(evse_connector_structure,
+                std::make_unique<DeviceModelStorageSqlite>(device_model_storage_address, device_model_migration_path,
+                                                           device_model_config_path, initialize_device_model),
+                ocpp_main_path, core_database_path, sql_init_path, message_log_path, evse_security, callbacks) {
+}
+
 ChargePoint::~ChargePoint() {
     {
         std::scoped_lock lk(this->auth_cache_cleanup_mutex);
