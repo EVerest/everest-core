@@ -28,20 +28,21 @@
 /modules/OCPP/ @hikinggrass @pietfried @maaikez
 /modules/OCPP201/ @hikinggrass @pietfried @maaikez
 /modules/PacketSniffer @corneliusclaussen @SebaLukas @hikinggrass
+/modules/PhyVersoBSP @pietfried @hikinggrass @corneliusclaussen @dorezyuk
 /modules/PyEvJosev @SebaLukas @corneliusclaussen @pietfried
 /modules/Setup @hikinggrass @corneliusclaussen @pietfried
 /modules/YetiDriver @corneliusclaussen @hikinggrass
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
 /modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/rust_examples/ @SirVer @golovasteek @dorezyuk
-**/Cargo.toml @SirVer @golovasteek @dorezyuk
-**/Cargo.lock @SirVer @golovasteek @dorezyuk
+/modules/rust_examples/ @SirVer @dorezyuk
+**/Cargo.toml @SirVer @dorezyuk
+**/Cargo.lock @SirVer @dorezyuk
 
 
 # Rust & Bazel
-*.rs @SirVer @golovasteek @dorezyuk
-*.bazel @SirVer @golovasteek @dorezyuk
-*.bzl @SirVer @golovasteek @dorezyuk
+*.rs @SirVer @dorezyuk
+*.bazel @SirVer @dorezyuk
+*.bzl @SirVer @dorezyuk
 
 # third-party/bazel
-/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @golovasteek @dorezyuk
+/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @dorezyuk
