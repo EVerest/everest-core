@@ -1,5 +1,9 @@
 macro(setup_ev_cli)
+    if(NOT TARGET ev-cli)
+        add_custom_target(ev-cli)
+    endif()
     if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
+        message(STATUS "Using system ev-cli instead of installing it in the build venv.")
         find_program(EV_CLI ev-cli REQUIRED)
     else()
         ev_is_python_venv_active(
@@ -16,24 +20,25 @@ macro(setup_ev_cli)
         )
         execute_process(
             COMMAND ${Python3_EXECUTABLE} ${EV_GET_PACKAGE_LOCATION} --package-name ev-dev-tools
-            OUTPUT_VARIABLE EV_CLI_PACKAGE_LOCATION
+            OUTPUT_VARIABLE EV_DEV_TOOLS_PACKAGE_LOCATION
             OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE
             EV_GET_PACKAGE_LOCATION_RESULT
         )
-        if(EV_GET_PACKAGE_LOCATION_RESULT AND NOT EV_GET_PACKAGE_LOCATION_RESULT EQUAL 0)
-            # TODO: this probably does not have to be a FATAL_ERROR
-            message(FATAL_ERROR "Could not get ev-dev-tools package location")
-        endif()
-        message(STATUS "Using ev-cli package: ${EV_CLI_PACKAGE_LOCATION}")
+
+        message(STATUS "Using ev-dev-tool package: ${EV_DEV_TOOLS_PACKAGE_LOCATION}")
 
         find_program(EV_CLI ev-cli PATHS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
-
-        set_property(
-            GLOBAL
-            PROPERTY EV_CLI_TEMPLATES_DIR "${EV_CLI_PACKAGE_LOCATION}/src/ev_cli/templates"
-        )
+        message(STATUS "Using ev-cli from: ${EV_CLI}")
     endif()
+
+    get_property(EVEREST_REQUIRED_EV_CLI_VERSION
+        GLOBAL
+        PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
+    )
+    require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
+
+    set_ev_cli_template_properties()
 endmacro()
 
 function(require_ev_cli_version EV_CLI_VERSION_REQUIRED)
@@ -53,4 +58,44 @@ function(require_ev_cli_version EV_CLI_VERSION_REQUIRED)
     else()
         message(FATAL_ERROR "ev-cli version ${EV_CLI_VERSION_REQUIRED} or higher is required. However your ev-cli version is '${EV_CLI_VERSION}'. Please upgrade ev-cli.")
     endif()
+endfunction()
+
+function(set_ev_cli_template_properties)
+    message(STATUS "Setting template properties for ev-cli target")
+    execute_process(
+        COMMAND ${EV_CLI} interface get-templates
+        OUTPUT_VARIABLE EV_CLI_INTERFACE_TEMPLATES
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE
+        EV_CLI_INTERFACE_TEMPLATES_RESULT
+    )
+
+    message(STATUS "interface templates: ${EV_CLI_INTERFACE_TEMPLATES}")
+
+    execute_process(
+        COMMAND ${EV_CLI} module get-templates
+        OUTPUT_VARIABLE EV_CLI_MODULE_TEMPLATES
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE
+        EV_CLI_MODULE_TEMPLATES_RESULT
+    )
+
+    message(STATUS "module templates: ${EV_CLI_MODULE_TEMPLATES}")
+
+    execute_process(
+        COMMAND ${EV_CLI} types get-templates
+        OUTPUT_VARIABLE EV_CLI_TYPES_TEMPLATES
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE
+        EV_CLI_TYPES_TEMPLATES_RESULT
+    )
+
+    message(STATUS "types templates: ${EV_CLI_TYPES_TEMPLATES}")
+
+    set_target_properties(ev-cli
+        PROPERTIES
+            EV_CLI_INTERFACE_TEMPLATES "${EV_CLI_INTERFACE_TEMPLATES}"
+            EV_CLI_MODULE_TEMPLATES "${EV_CLI_MODULE_TEMPLATES}"
+            EV_CLI_TYPES_TEMPLATES "${EV_CLI_TYPES_TEMPLATES}"
+    )
 endfunction()

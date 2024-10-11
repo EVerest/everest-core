@@ -135,16 +135,6 @@ macro(ev_add_project)
     )
 
     setup_ev_cli()
-    if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
-        message(STATUS "Using system ev-cli instead of installing it in the build venv.")
-        get_property(EVEREST_REQUIRED_EV_CLI_VERSION
-            GLOBAL
-            PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
-        )
-        require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
-    else()
-        message(STATUS "Installing ev-cli in the build venv.")
-    endif()
 
     # FIXME (aw): resort to proper argument handling!
     if (${ARGC} EQUAL 2)
@@ -307,18 +297,13 @@ function (_ev_add_interfaces)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.interfaces_generated_${EVEREST_PROJECT_NAME}")
-    get_property(EV_CLI_TEMPLATES_DIR
-        GLOBAL
-        PROPERTY EV_CLI_TEMPLATES_DIR
-    )
 
     add_custom_command(
         OUTPUT
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ${EV_CLI_TEMPLATES_DIR}/interface-Base.hpp.j2
-            ${EV_CLI_TEMPLATES_DIR}/interface-Exports.hpp.j2
+            "$<TARGET_PROPERTY:ev-cli,EV_CLI_INTERFACE_TEMPLATES>"
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -351,17 +336,13 @@ function (_ev_add_types)
     # FIXME (aw): check for duplicates here!
     get_target_property(GENERATED_OUTPUT_DIR generate_cpp_files EVEREST_GENERATED_OUTPUT_DIR)
     set(CHECK_DONE_FILE "${GENERATED_OUTPUT_DIR}/.types_generated_${EVEREST_PROJECT_NAME}")
-    get_property(EV_CLI_TEMPLATES_DIR
-        GLOBAL
-        PROPERTY EV_CLI_TEMPLATES_DIR
-    )
 
     add_custom_command(
         OUTPUT
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ${EV_CLI_TEMPLATES_DIR}/types.hpp.j2
+            "$<TARGET_PROPERTY:ev-cli,EV_CLI_TYPES_TEMPLATES>"
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -493,11 +474,6 @@ function (ev_add_cpp_module MODULE_NAME)
             set(GENERATED_MODULE_DIR "${GENERATED_OUTPUT_DIR}/modules")
             set(MODULE_LOADER_DIR ${GENERATED_MODULE_DIR}/${MODULE_NAME})
 
-            get_property(EV_CLI_TEMPLATES_DIR
-                GLOBAL
-                PROPERTY EV_CLI_TEMPLATES_DIR
-            )
-
             add_custom_command(
                 OUTPUT
                     ${MODULE_LOADER_DIR}/ld-ev.hpp
@@ -510,8 +486,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
-                    ${EV_CLI_TEMPLATES_DIR}/ld-ev.cpp.j2
-                    ${EV_CLI_TEMPLATES_DIR}/ld-ev.hpp.j2
+                    "$<TARGET_PROPERTY:ev-cli,EV_CLI_MODULE_TEMPLATES>"
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
