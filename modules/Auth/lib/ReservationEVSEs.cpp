@@ -220,16 +220,22 @@ void ReservationEVSEs::make_new_current_scenario(std::optional<uint32_t> evse_id
     // print_scenarios(current_scenarios);
 }
 
-// bool ReservationEVSEs::has_evse_connector_type(const EVSE_Connectors& evse,
-//                                                const types::evse_manager::ConnectorTypeEnum connector_type) {
-//     // for (const auto& type : evse.connector_type) {
-//     //     if (type == connector_type) {
-//     //         return true;
-//     //     }
-//     // }
+bool ReservationEVSEs::has_evse_connector_type(std::vector<EvseConnectorType> evse_connectors,
+                                               const types::evse_manager::ConnectorTypeEnum connector_type) {
 
-//     // return false;
-// }
+    if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
+        return true;
+    }
+
+    for (const auto& type : evse_connectors) {
+        if (type.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown &&
+            type.connector_type == connector_type) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void ReservationEVSEs::create(std::vector<uint32_t> evse_ids, Scenario* scenario) {
     for (const auto& [evse_id, connector_types] : evses) {
@@ -292,6 +298,18 @@ ReservationEVSEs::add_scenario(std::vector<Scenario> scenarios, const uint32_t e
 
 bool ReservationEVSEs::is_scenario_available(std::vector<types::evse_manager::ConnectorTypeEnum> connectors) {
     bool result = false;
+
+    // for (uint32_t i = 0; i < connectors.size(); ++i) {
+    //     // TODO mz does evses.at(i) look for evse with id i?? I want to have the i'rd/st evse in row
+    //     if (has_evse_connector_type(evses.at(i), connectors.at(i))) {
+    //         if (i + 1 == connectors.size()) {
+    //             return true;
+    //         } else {
+    //             continue;
+    //         }
+    //     }
+    // }
+
     for (const auto& scenario : max_scenarios) {
         if (scenario.evse_connector.size() < connectors.size()) {
             // TODO mz Return false? Because all scenarios should have the same size.
@@ -309,7 +327,8 @@ bool ReservationEVSEs::is_scenario_available(std::vector<types::evse_manager::Co
             if (scenario.evse_connector.at(i).connector_type != connectors.at(i)) {
                 // TODO mz is evse id needed here? Because it has another connector available as well and we need to
                 // know if both options are not ok or if there is still one option (it is an or).
-                if (i + 1 == connectors.size() - 1) {
+                // TODO mz why does this make sense? I do not understand the '-1' (but it works???)
+                if (i + 1 == connectors.size() - 1 /* && !has_evse_connector_type(evses.at(i), connectors.at(i))*/) {
                     return false;
                 }
             }
@@ -319,6 +338,7 @@ bool ReservationEVSEs::is_scenario_available(std::vector<types::evse_manager::Co
         if (connectors_fit == connectors.size()) {
             scenario_possible = true;
             result = true;
+            return true;
         }
     }
 

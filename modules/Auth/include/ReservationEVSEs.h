@@ -57,7 +57,8 @@ private: // Functions
     std::vector<Scenario> create_scenarios();
     void make_new_current_scenario(std::optional<uint32_t> evse_id,
                                    const types::evse_manager::ConnectorTypeEnum connector_type);
-    // bool has_evse_connector_type(const EVSE_Connectors& evse, const types::evse_manager::ConnectorTypeEnum connector_type);
+    bool has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
+                                 const types::evse_manager::ConnectorTypeEnum connector_type);
     void create(std::vector<uint32_t> evse_id, Scenario* scenario);
     std::vector<Scenario> add_scenario(std::vector<Scenario> scenarios, const uint32_t evse_id1, const types::evse_manager::ConnectorTypeEnum connector_type1,
                                        const uint32_t evse_id2, const types::evse_manager::ConnectorTypeEnum connector_type2,
