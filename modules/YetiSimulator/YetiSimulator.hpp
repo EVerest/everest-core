@@ -19,7 +19,6 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include "util/mqtt_handler.hpp"
 #include "util/simulator.hpp"
 #include "util/state.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -86,8 +85,6 @@ private:
     void run_telemetry_fast();
 
     std::unique_ptr<state::ModuleState> module_state;
-    std::unique_ptr<MqttHandler> mqtt_handler;
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

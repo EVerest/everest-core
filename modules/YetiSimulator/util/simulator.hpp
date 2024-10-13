@@ -78,9 +78,6 @@ private:
     }
 
     void read_from_car(YetiSimulatorT* yeti_simulator) {
-        auto error_handler = ErrorHandler{&yeti_simulator->get_board_support(), &yeti_simulator->get_ac_rcd(),
-                                          &yeti_simulator->get_connector_lock()};
-
         auto& module_state = yeti_simulator->get_module_state();
 
         auto amps1 = double{};
@@ -140,13 +137,14 @@ private:
                 module_state.current_state = state::State::STATE_E;
                 drawPower(module_state, 0, 0, 0, 0);
             } else if (is_voltage_in_range(cpHi + cpLo, 0.0)) { // Diode fault
-                error_handler.error_DiodeFault(true);
+                // damn, this is so broken ...
+                // error_handler.error_DiodeFault(true);
                 drawPower(module_state, 0, 0, 0, 0);
             }
         } else if (is_voltage_in_range(cpHi, 12.0)) {
             // +12V State A IDLE (open circuit)
             // clear all errors that clear on disconnection
-            clear_disconnect_errors(error_handler, yeti_simulator->get_board_support());
+            // clear_disconnect_errors(error_handler, yeti_simulator->get_board_support());
             module_state.current_state = state::State::STATE_A;
             drawPower(module_state, 0, 0, 0, 0);
         } else if (is_voltage_in_range(cpHi, 9.0)) {

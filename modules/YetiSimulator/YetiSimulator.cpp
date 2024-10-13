@@ -4,6 +4,8 @@
 #include "board_support/evse_board_supportImpl.hpp"
 #include "util/util.hpp"
 
+#include "util/errors.hpp"
+
 namespace module {
 
 void YetiSimulator::init() {
@@ -15,9 +17,31 @@ void YetiSimulator::init() {
 
     clear_data();
 
-    mqtt_handler = std::make_unique<MqttHandler>(p_board_support.get(), p_rcd.get(), p_connector_lock.get());
     mqtt.subscribe("everest_external/nodered/" + std::to_string(config.connector_id) + "/carsim/error",
-                   [this](const std::string& payload) { mqtt_handler->handle_mqtt_payload(payload); });
+                   [this](const std::string& payload) {
+                       const auto [raise, error_definition] = parse_error(payload);
+
+                       if (not error_definition) {
+                           // log no error found, but probably expected?
+                           return;
+                       }
+
+                       const auto error = p_board_support->error_factory->create_error(
+                           error_definition->type, error_definition->sub_type, error_definition->message,
+                           error_definition->severity);
+
+                       switch (error_definition->target) {
+                       case ErrorTarget::BoardSupport:
+                           forward_error(*p_board_support, error, raise);
+                           break;
+                       case ErrorTarget::ConnectorLock:
+                           forward_error(*p_connector_lock, error, raise);
+                           break;
+                       case ErrorTarget::Rcd:
+                           forward_error(*p_rcd, error, raise);
+                           break;
+                       }
+                   });
 }
 
 void YetiSimulator::ready() {
