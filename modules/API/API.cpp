@@ -265,6 +265,17 @@ SessionInfo::operator std::string() {
 
 void API::init() {
     invoke_init(*p_main);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to and evse.");
+        }
+    }
+
     this->limit_decimal_places = std::make_unique<LimitDecimalPlaces>(this->config);
     std::vector<std::string> connectors;
     std::string var_connectors = this->api_base + "connectors";
@@ -489,37 +500,40 @@ void API::init() {
 
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
 
-        const auto& evse_energy_sink = this->r_evse_manager_energy_sink.at(evse_id);
+        if (this->is_evse_sink_configured(evse_id)) {
+            auto& evse_energy_sink = this->get_evse_sink_by_evse_id(evse_id);
 
-        this->mqtt.subscribe(cmd_set_limit, [&evse_manager_check = this->evse_manager_check,
-                                             &evse_energy_sink = evse_energy_sink,
-                                             evse_id](const std::string& data) {
-            try {
-                const auto external_limits = get_external_limits(data, false);
-                evse_manager_check.wait_ready();
-                evse_energy_sink->call_set_external_limits(external_limits);
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-            } catch (const std::out_of_range& e) {
-                EVLOG_warning << "Invalid limit: Out of range.";
-            }
-        });
+            this->mqtt.subscribe(cmd_set_limit, [&evse_manager_check = this->evse_manager_check,
+                                                 &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, false);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Invalid limit: Out of range.";
+                }
+            });
 
-        std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
+            std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
 
-        this->mqtt.subscribe(cmd_set_limit_watts, [&evse_manager_check = this->evse_manager_check,
-                                                   &evse_energy_sink = evse_energy_sink,
-                                                   evse_id](const std::string& data) {
-            try {
-                const auto external_limits = get_external_limits(data, true);
-                evse_manager_check.wait_ready();
-                evse_energy_sink->call_set_external_limits(external_limits);
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-            } catch (const std::out_of_range& e) {
-                EVLOG_warning << "Invalid limit: Out of range.";
-            }
-        });
+            this->mqtt.subscribe(cmd_set_limit_watts, [&evse_manager_check = this->evse_manager_check,
+                                                       &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, true);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Invalid limit: Out of range.";
+                }
+            });
+        } else {
+            EVLOG_warning << "No evse energy sink configured for evse_id: " << evse_id
+                          << ". API module does therefore not allow control of amps or power limits for this EVSE";
+        }
 
         std::string cmd_force_unlock = cmd_base + "force_unlock";
         this->mqtt.subscribe(cmd_force_unlock, [this, &evse](const std::string& data) {
@@ -634,6 +648,36 @@ void API::init() {
                 std::this_thread::sleep_until(next_tick);
             }
         }));
+}
+
+bool API::is_evse_sink_configured(const int32_t evse_id) {
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
+        }
+        if (evse_sink->get_mapping().value().evse == evse_id) {
+            return true;
+        }
+    }
+    return false;
+}
+
+external_energy_limitsIntf& API::get_evse_sink_by_evse_id(const int32_t evse_id) {
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
+        }
+        if (evse_sink->get_mapping().value().evse == evse_id) {
+            return *evse_sink;
+        }
+    }
+    throw std::runtime_error("No mapping configured for evse");
 }
 
 void API::ready() {

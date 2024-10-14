@@ -159,7 +159,7 @@ public:
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
         std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay,
         std::vector<std::unique_ptr<error_historyIntf>> r_error_history,
-        std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_manager_energy_sink, Conf& config) :
+        std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -167,7 +167,7 @@ public:
         r_ocpp(std::move(r_ocpp)),
         r_random_delay(std::move(r_random_delay)),
         r_error_history(std::move(r_error_history)),
-        r_evse_manager_energy_sink(std::move(r_evse_manager_energy_sink)),
+        r_evse_energy_sink(std::move(r_evse_energy_sink)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -176,7 +176,7 @@ public:
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
     const std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay;
     const std::vector<std::unique_ptr<error_historyIntf>> r_error_history;
-    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_manager_energy_sink;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -212,6 +212,9 @@ private:
     std::string ocpp_connection_status = "unknown";
 
     const std::string api_base = "everest_api/";
+
+    bool is_evse_sink_configured(const int32_t evse_id);
+    external_energy_limitsIntf& get_evse_sink_by_evse_id(const int32_t evse_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
