@@ -51,44 +51,44 @@ function(set_ev_cli_template_properties)
 
     execute_process(
         COMMAND ${EV_CLI} interface get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
-        OUTPUT_VARIABLE EV_CLI_INTERFACE_TEMPLATES
+        OUTPUT_VARIABLE INTERFACE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
-        EV_CLI_INTERFACE_TEMPLATES_RESULT
+        INTERFACE_TEMPLATES_RESULT
     )
 
-    if(EV_CLI_INTERFACE_TEMPLATES_RESULT)
+    if(INTERFACE_TEMPLATES_RESULT)
         message(FATAL_ERROR "Could not get interface templates from ev-cli.")
     endif()
 
     execute_process(
         COMMAND ${EV_CLI} module get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
-        OUTPUT_VARIABLE EV_CLI_MODULE_TEMPLATES
+        OUTPUT_VARIABLE MODULE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
-        EV_CLI_MODULE_TEMPLATES_RESULT
+        MODULE_TEMPLATES_RESULT
     )
 
-    if(EV_CLI_MODULE_TEMPLATES_RESULT)
+    if(MODULE_TEMPLATES_RESULT)
         message(FATAL_ERROR "Could not get module loader templates from ev-cli.")
     endif()
 
     execute_process(
         COMMAND ${EV_CLI} types get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
-        OUTPUT_VARIABLE EV_CLI_TYPES_TEMPLATES
+        OUTPUT_VARIABLE TYPES_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
-        EV_CLI_TYPES_TEMPLATES_RESULT
+        TYPES_TEMPLATES_RESULT
     )
 
-    if(EV_CLI_TYPES_TEMPLATES_RESULT)
+    if(TYPES_TEMPLATES_RESULT)
         message(FATAL_ERROR "Could not get module loader templates from ev-cli.")
     endif()
 
     set_target_properties(ev-cli
         PROPERTIES
-            EV_CLI_INTERFACE_TEMPLATES "${EV_CLI_INTERFACE_TEMPLATES}"
-            EV_CLI_MODULE_TEMPLATES "${EV_CLI_MODULE_TEMPLATES}"
-            EV_CLI_TYPES_TEMPLATES "${EV_CLI_TYPES_TEMPLATES}"
+            INTERFACE_TEMPLATES "${INTERFACE_TEMPLATES}"
+            MODULE_TEMPLATES "${MODULE_TEMPLATES}"
+            TYPES_TEMPLATES "${TYPES_TEMPLATES}"
     )
 endfunction()
