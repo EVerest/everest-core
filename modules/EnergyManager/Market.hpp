@@ -76,7 +76,7 @@ public:
 
 private:
     Market* _parent;
-    std::vector<std::unique_ptr<Market>> _children;
+    std::list<Market> _children;
     float _nominal_ac_voltage;
 
     // main data structures

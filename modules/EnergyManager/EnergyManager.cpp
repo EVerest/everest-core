@@ -185,7 +185,7 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     std::vector<types::energy::EnforcedLimits> optimized_values;
     optimized_values.reserve(brokers.size());
 
-    for (auto broker : brokers) {
+    for (auto& broker : brokers) {
         auto& local_market = broker->get_local_market();
         const auto sold_energy = local_market.get_sold_energy();
 
