@@ -79,7 +79,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     for (auto const& [connector_id, schedule] : charging_schedules) {
 
         if (not this->is_evse_sink_configured(connector_id)) {
-            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: " << connector_id;
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: "
+                          << connector_id;
             continue;
         }
 

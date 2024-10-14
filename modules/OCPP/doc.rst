@@ -309,8 +309,11 @@ The integration of the composite schedules are implemented through the optional 
 of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
 for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
 has two EVSEs you need to connect three modules that implement the `external_energy_limits` interface: One representing evse id 0 and 
-two representing your actual EVSEs. Note that it is important to specify the connections in the EVerest config file in the correct order
-(0,1,2).
+two representing your actual EVSEs.
+
+📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
+which requirement to use when communication the limits for the EVSEs. For more information about the module mapping please see 
+`3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
 
 This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
 the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements
