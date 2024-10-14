@@ -8,9 +8,13 @@ use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
+use std::sync::Once;
 use std::sync::RwLock;
 use std::sync::Weak;
 use thiserror::Error;
+
+/// Prevent calling the init of loggers more than once.
+static INIT_LOGGER_ONCE: Once = Once::new();
 
 // Reexport everything so the clients can use it.
 pub use serde;
@@ -155,22 +159,18 @@ mod ffi {
             name: String,
         );
 
+        /// Returns the `connections` block defined in the `config.yaml` for
+        /// the current module.
+        fn get_module_connections(self: &Module) -> Vec<RsModuleConnections>;
+
         /// Publishes the given `blob` under the `implementation_id` and `name`.
         fn publish_variable(self: &Module, implementation_id: &str, name: &str, blob: JsonBlob);
-
-        /// Returns the severity for the cxx logger.
-        fn get_log_level(self: &Module) -> i32;
 
         /// Returns the module config from cpp.
         fn get_module_configs(module_id: &str, prefix: &str, conf: &str) -> Vec<RsModuleConfig>;
 
-        /// Returns the `connections` block defined in the `config.yaml` for
-        /// the current module.
-        fn get_module_connections(
-            module_id: &str,
-            prefix: &str,
-            conf: &str,
-        ) -> Vec<RsModuleConnections>;
+        /// Call this once.
+        fn init_logging(module_id: &str, prefix: &str, conf: &str) -> i32;
 
         /// Logging sink for the EVerest module.
         fn log2cxx(level: i32, line: i32, file: &str, message: &str);
@@ -195,6 +195,7 @@ impl ffi::JsonBlob {
 /// Very simple logger to use by the Rust modules.
 mod logger {
     use super::ffi;
+    use crate::INIT_LOGGER_ONCE;
 
     pub(crate) struct Logger {
         level: log::Level,
@@ -237,19 +238,21 @@ mod logger {
         /// Init the logger for everest.
         ///
         /// Don't do this on your own as we must also control some cxx code.
-        pub(crate) fn init_logger(module: &ffi::Module) {
-            let level = match module.get_log_level() {
-                0 => log::Level::Trace,
-                1 => log::Level::Debug,
-                2 => log::Level::Info,
-                3 => log::Level::Warn,
-                4 => log::Level::Error,
-                _ => log::Level::Info,
-            };
+        pub(crate) fn init_logger(module_name: &str, prefix: &str, conf: &str) {
+            INIT_LOGGER_ONCE.call_once(|| {
+                let level = match ffi::init_logging(module_name, prefix, conf) {
+                    0 => log::Level::Trace,
+                    1 => log::Level::Debug,
+                    2 => log::Level::Info,
+                    3 => log::Level::Warn,
+                    4 => log::Level::Error,
+                    _ => log::Level::Info,
+                };
 
-            let logger = Self { level };
-            log::set_boxed_logger(Box::new(logger)).unwrap();
-            log::set_max_level(level.to_level_filter());
+                let logger = Self { level };
+                log::set_boxed_logger(Box::new(logger)).unwrap();
+                log::set_max_level(level.to_level_filter());
+            });
         }
     }
 }
@@ -395,13 +398,17 @@ impl Runtime {
     // TODO(hrapp): This function could use some error handling.
     pub fn new() -> Pin<Arc<Self>> {
         let args: Args = argh::from_env();
-        let cpp_module = ffi::create_module(
+        logger::Logger::init_logger(
             &args.module,
             &args.prefix.to_string_lossy(),
             &args.conf.to_string_lossy(),
         );
 
-        logger::Logger::init_logger(&cpp_module);
+        let cpp_module = ffi::create_module(
+            &args.module,
+            &args.prefix.to_string_lossy(),
+            &args.conf.to_string_lossy(),
+        );
 
         Arc::pin(Self {
             cpp_module,
@@ -428,7 +435,7 @@ impl Runtime {
             }
         }
 
-        let connections = get_module_connections();
+        let connections = self.get_module_connections();
 
         // Subscribe to all variables that might be of interest.
         for (implementation_id, requires) in manifest.requires {
@@ -451,6 +458,15 @@ impl Runtime {
         // TODO(hrapp): There were some doubts if this strategy is too inflexible, discuss design
         // again.
         (self.cpp_module).as_ref().unwrap().signal_ready(self);
+    }
+
+    /// The interface for fetching the module connections though the C++ runtime.
+    pub fn get_module_connections(&self) -> HashMap<String, usize> {
+        let raw_connections = self.cpp_module.as_ref().unwrap().get_module_connections();
+        raw_connections
+            .into_iter()
+            .map(|connection| (connection.implementation_id, connection.slots))
+            .collect()
     }
 }
 
@@ -505,8 +521,16 @@ impl TryFrom<&Config> for i64 {
 }
 
 /// Interface for fetching the configurations through the C++ runtime.
+///
+/// This is separetated from the module since the user might need the config
+/// to create the [Runtime].
 pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
     let args: Args = argh::from_env();
+    logger::Logger::init_logger(
+        &args.module,
+        &args.prefix.to_string_lossy(),
+        &args.conf.to_string_lossy(),
+    );
     let raw_config = ffi::get_module_configs(
         &args.module,
         &args.prefix.to_string_lossy(),
@@ -540,19 +564,4 @@ pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
     }
 
     out
-}
-
-/// The interface for fetching the module connections though the C++ runtime.
-pub fn get_module_connections() -> HashMap<String, usize> {
-    let args: Args = argh::from_env();
-    let raw_connections = ffi::get_module_connections(
-        &args.module,
-        &args.prefix.to_string_lossy(),
-        &args.conf.to_string_lossy(),
-    );
-
-    raw_connections
-        .into_iter()
-        .map(|connection| (connection.implementation_id, connection.slots))
-        .collect()
 }

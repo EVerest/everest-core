@@ -28,12 +28,6 @@ std::unique_ptr<Everest::Everest> create_everest_instance(const std::string& mod
                                               rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
 }
 
-std::unique_ptr<Everest::Config> create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs) {
-    // FIXME (aw): where to initialize the logger?
-    Everest::Logging::init(rs->logging_config_file);
-    return std::make_unique<Everest::Config>(rs);
-}
-
 JsonBlob json2blob(const json& j) {
     // I did not find a way to not copy the data at least once here.
     const std::string dumped = j.dump();
@@ -83,7 +77,7 @@ inline ConfigField get_config_field(const std::string& _name, int _value) {
 Module::Module(const std::string& module_id, const std::string& prefix, const std::string& config_file) :
     module_id_(module_id),
     rs_(std::make_shared<Everest::RuntimeSettings>(prefix, config_file)),
-    config_(create_config_instance(rs_)),
+    config_(std::make_unique<Everest::Config>(rs_)),
     handle_(create_everest_instance(module_id, rs_, *config_)) {
 }
 
@@ -161,11 +155,8 @@ rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id, rust::Str pref
     return out;
 }
 
-rust::Vec<RsModuleConnections> get_module_connections(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
-    const auto rs = std::make_shared<Everest::RuntimeSettings>(std::string(prefix), std::string(config_file));
-    Everest::Config config{rs};
-
-    const auto connections = config.get_main_config().at(std::string(module_id))["connections"];
+rust::Vec<RsModuleConnections> Module::get_module_connections() const {
+    const auto connections = config_->get_main_config().at(std::string(module_id_))["connections"];
 
     // Iterate over the connections block.
     rust::Vec<RsModuleConnections> out;
@@ -176,18 +167,25 @@ rust::Vec<RsModuleConnections> get_module_connections(rust::Str module_id, rust:
     return out;
 }
 
-int Module::get_log_level() const {
+int init_logging(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
+    using namespace boost::log;
+    using namespace Everest::Logging;
+
+    const std::string module_id_cpp{module_id};
+    const std::string prefix_cpp{prefix};
+    const std::string config_file_cpp{config_file};
+
+    // Init the CPP logger.
+    Everest::RuntimeSettings rs{prefix_cpp, config_file_cpp};
+    init(rs.logging_config_file, module_id_cpp);
+
     // Below is something really ugly. Boost's log filter rules may actually be
     // quite "complex" but the library does not expose any way to check the
     // already installed filters. We therefore reopen the config and construct
     // or own filter - and feed it with dummy values to determine its filtering
     // behaviour (the lowest severity which is accepted by the filter)
-    std::filesystem::path logging_path{rs_->logging_config_file};
+    std::filesystem::path logging_path{rs.logging_config_file};
     std::ifstream logging_config(logging_path.c_str());
-
-    using namespace boost::log;
-    using namespace Everest::Logging;
-
     if (!logging_config.is_open()) {
         return info;
     }

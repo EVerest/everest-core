@@ -105,7 +105,7 @@ impl Module {
 {% endfor %}
     ) -> ::std::sync::Arc<Self> {
         let runtime = ::everestrs::Runtime::new();
-        let connections = ::everestrs::get_module_connections();        
+        let connections = runtime.get_module_connections();
         let this = ::std::sync::Arc::new(Self {
             on_ready,
 {% for provide in provides %}
