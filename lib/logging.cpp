@@ -8,6 +8,12 @@
 #include <boost/log/attributes/current_process_id.hpp>
 #include <boost/log/attributes/current_process_name.hpp>
 #include <boost/log/attributes/current_thread_id.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/expressions/attr.hpp>
+#include <boost/log/expressions/formatter.hpp>
+#include <boost/log/expressions/formatters/c_decorator.hpp>
+#include <boost/log/expressions/formatters/format.hpp>
+#include <boost/log/expressions/formatters/stream.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
@@ -37,6 +43,7 @@ namespace fs = std::filesystem;
 #endif
 namespace logging = boost::log::BOOST_LOG_VERSION_NAMESPACE;
 namespace attrs = logging::attributes;
+namespace expr = logging::expressions;
 
 namespace Everest {
 namespace Logging {
@@ -100,12 +107,38 @@ std::istream& operator>>(std::istream& strm, severity_level& level) {
     return strm;
 }
 
+/// Custom formatter for escaped messages.
+///
+/// Not really clear but just a wrapper around the c_decor formatter.
+struct escaped_message_formatter {
+    explicit escaped_message_formatter(logging::attribute_name const& name) :
+        f_{expr::stream << expr::c_decor[expr::stream << expr::smessage]} {
+    }
+    void operator()(logging::record_view const& rec, logging::formatting_ostream& strm) const {
+        f_(rec, strm);
+    }
+
+private:
+    /// @brief The formatter itself.
+    boost::log::formatter f_;
+};
+
+/// The factory for the EscMessage formatter.
+struct escaped_message_formatter_factory : public logging::formatter_factory<char> {
+    formatter_type create_formatter(logging::attribute_name const& attr_name, args_map const& args) {
+        return formatter_type(escaped_message_formatter(attr_name));
+    }
+};
+
 void init(const std::string& logconf) {
     init(logconf, "");
 }
 
 void init(const std::string& logconf, std::string process_name) {
     BOOST_LOG_FUNCTION();
+
+    // First thing - register the custom formatter for EscMessage
+    logging::register_formatter_factory("EscapedMessage", boost::make_shared<escaped_message_formatter_factory>());
 
     // add useful attributes
     logging::add_common_attributes();
