@@ -38,6 +38,7 @@ struct Conf {
     bool verify_contract_cert_chain;
     int auth_timeout_pnc;
     int auth_timeout_eim;
+    bool enable_sdp_server;
 };
 
 class EvseV2G : public Everest::ModuleBase {

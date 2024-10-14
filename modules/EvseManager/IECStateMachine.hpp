@@ -46,6 +46,7 @@ enum class CPEvent {
     CarUnplugged,
     EFtoBCD,
     BCDtoEF,
+    BCDtoE,
     EvseReplugStarted,
     EvseReplugFinished,
 };
@@ -67,8 +68,7 @@ enum class RawCPState {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    explicit IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp);
-
+    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -107,6 +107,7 @@ private:
     void connector_unlock();
     void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
+    bool lock_connector_in_state_b{true};
 
     bool pwm_running{false};
     bool last_pwm_running{false};
@@ -125,6 +126,7 @@ private:
 
     RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
+    AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
     void feed_state_machine();
@@ -140,6 +142,9 @@ private:
 
     std::atomic_bool enabled{false};
     std::atomic_bool relais_on{false};
+
+    static constexpr std::chrono::seconds power_off_under_load_in_c1_timeout{6};
+    static constexpr std::chrono::seconds unlock_in_state_f_timeout{5};
 };
 
 } // namespace module

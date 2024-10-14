@@ -21,6 +21,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <condition_variable>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -29,6 +30,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+#include "StartupMonitor.hpp"
 #include "limit_decimal_places.hpp"
 
 namespace module {
@@ -191,6 +193,8 @@ private:
     // insert your private definitions here
     std::vector<std::thread> api_threads;
     bool running = true;
+
+    StartupMonitor evse_manager_check;
 
     std::list<std::unique_ptr<SessionInfo>> info;
     std::list<std::string> hw_capabilities_str;

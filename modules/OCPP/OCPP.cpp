@@ -6,6 +6,7 @@
 #include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
 #include <fstream>
+#include <ocpp_conversions.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
@@ -47,12 +48,9 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
 
     // check if is VendorError
     if (error_type.find("VendorError") != std::string::npos) {
-        return ocpp::v16::ErrorInfo{uuid,
-                                    ocpp::v16::ChargePointErrorCode::OtherError,
-                                    false,
-                                    error.description,
-                                    error.origin.to_string(),
-                                    error.sub_type};
+        return ocpp::v16::ErrorInfo{
+            uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
+            error.sub_type};
     }
 
     // Default case
@@ -579,10 +577,7 @@ void OCPP::ready() {
         firmware_update_request.location = msg.firmware.location;
         firmware_update_request.signature.emplace(msg.firmware.signature.get());
         firmware_update_request.signing_certificate.emplace(msg.firmware.signingCertificate.get());
-
-        if (msg.firmware.retrieveDateTime.has_value()) {
-            firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.value().to_rfc3339());
-        }
+        firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.to_rfc3339());
 
         if (msg.firmware.installDateTime.has_value()) {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
@@ -759,7 +754,7 @@ void OCPP::ready() {
         [this](const ocpp::RunningCost& session_cost,
                const uint32_t number_of_decimals) -> ocpp::v16::DataTransferResponse {
             const types::session_cost::SessionCost cost =
-                conversions::create_session_cost(session_cost, number_of_decimals, {});
+                ocpp_conversions::create_session_cost(session_cost, number_of_decimals, {});
             ocpp::v16::DataTransferResponse response;
             this->p_session_cost->publish_session_cost(cost);
             response.status = ocpp::v16::DataTransferStatus::Accepted;
@@ -770,13 +765,13 @@ void OCPP::ready() {
         [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
             ocpp::v16::DataTransferResponse response;
             if (this->r_display_message.empty()) {
-                EVLOG_warning << "No display message handler registered, dropping data transfer message";
+                EVLOG_warning << "No display message handler registered, dropping data transfer display message";
                 response.status = ocpp::v16::DataTransferStatus::Rejected;
                 return response;
             }
             std::vector<types::display_message::DisplayMessage> display_messages;
             for (const ocpp::DisplayMessage& message : messages) {
-                const types::display_message::DisplayMessage m = conversions::to_everest_display_message(message);
+                const types::display_message::DisplayMessage m = ocpp_conversions::to_everest_display_message(message);
                 display_messages.push_back(m);
             }
 

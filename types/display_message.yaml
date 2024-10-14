@@ -94,13 +94,24 @@ types:
           omitted, message can be shown 'forever' (until it is specifically removed).
         type: string
         format: date-time
-      session_id:
+      identifier_id:
         description: >-
-          During which session shall this message be shown. Message SHALL be removed by the Charging Station
-          after session has ended. If omitted, message is not tight to a session.
+          To which user / during which session shall this message be shown. User can be identified by id token (when
+          the session did not start yet), session id or transaction id. identifier_type will hold the type of
+          identifier_id (default session id).
+          Message SHALL be removed by the Charging Station after session has ended. If omitted, message is not tight to
+          a session.
         type: string
         minLength: 0
         maxLength: 36
+      identifier_type:
+        description: >-
+          The type of 'identifier_id'. If omitted, type will be session id.
+        type: string
+        enum:
+          - IdToken
+          - SessionId
+          - TransactionId
       message:  
         type: object
         description: The message to show

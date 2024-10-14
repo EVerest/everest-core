@@ -10,6 +10,8 @@
 #include <conversions.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
+#include <ocpp_conversions.hpp>
+
 namespace module {
 
 const std::string SQL_CORE_MIGRATIONS = "core_migrations";
@@ -29,9 +31,22 @@ TxEvent get_tx_event(const ocpp::v201::ReasonEnum reason) {
         return TxEvent::EV_DISCONNECTED;
     case ocpp::v201::ReasonEnum::ImmediateReset:
         return TxEvent::IMMEDIATE_RESET;
-    default:
+    // FIXME(kai): these reasons definitely do not all map to NONE
+    case ocpp::v201::ReasonEnum::EmergencyStop:
+    case ocpp::v201::ReasonEnum::EnergyLimitReached:
+    case ocpp::v201::ReasonEnum::GroundFault:
+    case ocpp::v201::ReasonEnum::LocalOutOfCredit:
+    case ocpp::v201::ReasonEnum::Other:
+    case ocpp::v201::ReasonEnum::OvercurrentFault:
+    case ocpp::v201::ReasonEnum::PowerLoss:
+    case ocpp::v201::ReasonEnum::PowerQuality:
+    case ocpp::v201::ReasonEnum::Reboot:
+    case ocpp::v201::ReasonEnum::SOCLimitReached:
+    case ocpp::v201::ReasonEnum::TimeLimitReached:
+    case ocpp::v201::ReasonEnum::Timeout:
         return TxEvent::NONE;
     }
+    return TxEvent::NONE;
 }
 
 std::set<TxStartStopPoint> get_tx_start_stop_points(const std::string& tx_start_stop_point_csl) {
@@ -401,14 +416,20 @@ void OCPP201::ready() {
             provided_token.connectors = std::vector<int32_t>{request.evseId.value()};
         }
         this->p_auth_provider->publish_provided_token(provided_token);
+        return ocpp::v201::RequestStartStopStatusEnum::Accepted;
     };
 
     callbacks.stop_transaction_callback = [this](const int32_t evse_id, const ocpp::v201::ReasonEnum& stop_reason) {
-        if (evse_id > 0 && evse_id <= this->r_evse_manager.size()) {
-            types::evse_manager::StopTransactionRequest req;
-            req.reason = conversions::to_everest_stop_transaction_reason(stop_reason);
-            this->r_evse_manager.at(evse_id - 1)->call_stop_transaction(req);
+        if (evse_id <= 0 or evse_id > this->r_evse_manager.size()) {
+            return ocpp::v201::RequestStartStopStatusEnum::Rejected;
         }
+
+        types::evse_manager::StopTransactionRequest req;
+        req.reason = conversions::to_everest_stop_transaction_reason(stop_reason);
+
+        return this->r_evse_manager.at(evse_id - 1)->call_stop_transaction(req)
+                   ? ocpp::v201::RequestStartStopStatusEnum::Accepted
+                   : ocpp::v201::RequestStartStopStatusEnum::Rejected;
     };
 
     callbacks.pause_charging_callback = [this](const int32_t evse_id) {
@@ -526,6 +547,83 @@ void OCPP201::ready() {
             this->p_ocpp_generic->publish_boot_notification_response(everest_boot_notification_response);
         };
 
+    callbacks.set_display_message_callback =
+        [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v201::SetDisplayMessageResponse {
+        ocpp::v201::SetDisplayMessageResponse response;
+        if (this->r_display_message.empty()) {
+            response.status = ocpp::v201::DisplayMessageStatusEnum::Rejected;
+            return response;
+        }
+
+        std::vector<types::display_message::DisplayMessage> display_messages;
+        for (const ocpp::DisplayMessage& message : messages) {
+            const types::display_message::DisplayMessage m = ocpp_conversions::to_everest_display_message(message);
+            display_messages.push_back(m);
+        }
+
+        const types::display_message::SetDisplayMessageResponse display_message_response =
+            this->r_display_message.at(0)->call_set_display_message(display_messages);
+        response = conversions::to_ocpp_set_display_message_response(display_message_response);
+
+        return response;
+    };
+
+    callbacks.get_display_message_callback =
+        [this](const ocpp::v201::GetDisplayMessagesRequest& request) -> std::vector<ocpp::DisplayMessage> {
+        if (this->r_display_message.empty()) {
+            return {};
+        }
+        types::display_message::GetDisplayMessageRequest get_request;
+
+        types::display_message::GetDisplayMessageResponse response =
+            this->r_display_message.at(0)->call_get_display_messages(
+                conversions::to_everest_display_message_request(request));
+
+        if (!response.messages.has_value() || response.messages.value().empty()) {
+            return {};
+        }
+
+        std::vector<ocpp::DisplayMessage> ocpp_display_messages;
+        for (const auto& message : response.messages.value()) {
+            ocpp_display_messages.push_back(ocpp_conversions::to_ocpp_display_message(message));
+        }
+
+        return ocpp_display_messages;
+    };
+
+    callbacks.clear_display_message_callback =
+        [this](const ocpp::v201::ClearDisplayMessageRequest& request) -> ocpp::v201::ClearDisplayMessageResponse {
+        if (this->r_display_message.empty()) {
+            ocpp::v201::ClearDisplayMessageResponse response;
+            response.status = ocpp::v201::ClearMessageStatusEnum::Unknown;
+            return response;
+        }
+
+        types::display_message::ClearDisplayMessageResponse response =
+            this->r_display_message.at(0)->call_clear_display_message(
+                conversions::to_everest_clear_display_message_request(request));
+        return conversions::to_ocpp_clear_display_message_response(response);
+    };
+
+    if (this->p_session_cost != nullptr) {
+        callbacks.set_running_cost_callback = [this](const ocpp::RunningCost& running_cost,
+                                                     const uint32_t number_of_decimals,
+                                                     const std::optional<std::string>& currency_code) {
+            std::optional<types::money::CurrencyCode> currency;
+            if (currency_code.has_value()) {
+                try {
+                    currency = types::money::string_to_currency_code(currency_code.value());
+                } catch (const std::out_of_range& e) {
+                    // If conversion fails, we just don't add the currency code. But we want to see it in the logging.
+                    EVLOG_error << e.what();
+                }
+            }
+            const types::session_cost::SessionCost cost =
+                ocpp_conversions::create_session_cost(running_cost, number_of_decimals, currency);
+            this->p_session_cost->publish_session_cost(cost);
+        };
+    }
+
     if (!this->r_data_transfer.empty()) {
         callbacks.data_transfer_callback = [this](const ocpp::v201::DataTransferRequest& request) {
             types::ocpp::DataTransferRequest data_transfer_request =
@@ -565,6 +663,10 @@ void OCPP201::ready() {
     };
 
     callbacks.set_charging_profiles_callback = charging_schedules_callback;
+
+    callbacks.time_sync_callback = [this](const ocpp::DateTime& current_time) {
+        this->r_system->call_set_system_time(current_time.to_rfc3339());
+    };
 
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
@@ -767,8 +869,21 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
-
-        // missing AuthRequired, PrepareCharging and many more
+    // explicitly ignore the following session events for now
+    // TODO(kai): implement
+    case types::evse_manager::SessionEventEnum::AuthRequired:
+    case types::evse_manager::SessionEventEnum::PrepareCharging:
+    case types::evse_manager::SessionEventEnum::WaitingForEnergy:
+    case types::evse_manager::SessionEventEnum::StoppingCharging:
+    case types::evse_manager::SessionEventEnum::ChargingFinished:
+    case types::evse_manager::SessionEventEnum::ReservationStart:
+    case types::evse_manager::SessionEventEnum::ReservationEnd:
+    case types::evse_manager::SessionEventEnum::ReplugStarted:
+    case types::evse_manager::SessionEventEnum::ReplugFinished:
+    case types::evse_manager::SessionEventEnum::PluginTimeout:
+    case types::evse_manager::SessionEventEnum::SwitchingPhases:
+    case types::evse_manager::SessionEventEnum::SessionResumed:
+        break;
     }
 
     // process authorized event which will inititate a TransactionEvent(Updated) message in case the token has not yet
