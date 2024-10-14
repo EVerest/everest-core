@@ -77,7 +77,7 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
-  evse_manager_energy_sink:
+  evse_energy_sink:
     interface: external_energy_limits
     min_connections: 0
     max_connections: 129

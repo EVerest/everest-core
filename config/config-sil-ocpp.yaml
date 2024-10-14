@@ -161,12 +161,12 @@ active_modules:
       display_message:
         - module_id: display_message
           implementation_id: display_message
-      evse_manager_energy_sink:
+      evse_energy_sink:
         - module_id: grid_connection_point
           implementation_id: external_limits
-        - module_id: evse_manager_1_sink
+        - module_id: evse_manager_1_ocpp_sink
           implementation_id: external_limits
-        - module_id: evse_manager_2_sink
+        - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
   display_message:
     module: TerminalCostAndPriceMessage
@@ -181,15 +181,14 @@ active_modules:
   token_provider_1:
     module: DummyTokenProviderManual
   energy_manager:
-    config_module:
-      debug: true
     module: EnergyManager
     connections:
       energy_trunk:
         - module_id: grid_connection_point
           implementation_id: energy_grid
-  evse_manager_1_sink:
+  evse_manager_1_ocpp_sink:
     module: EnergyNode
+    evse: 1
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -197,11 +196,9 @@ active_modules:
       energy_consumer:
         - module_id: evse_manager_1
           implementation_id: energy_grid
-      powermeter:
-        - module_id: yeti_driver_1
-          implementation_id: powermeter
-  evse_manager_2_sink:
+  evse_manager_2_ocpp_sink:
     module: EnergyNode
+    evse: 2
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -209,20 +206,44 @@ active_modules:
       energy_consumer:
         - module_id: evse_manager_2
           implementation_id: energy_grid
+  evse_manager_1_api_sink:
+    evse: 1
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  evse_manager_2_api_sink:
+    module: EnergyNode
+    evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver_2
           implementation_id: powermeter
   grid_connection_point:
     module: EnergyNode
+    evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1_sink
+        - module_id: evse_manager_1_api_sink
           implementation_id: energy_grid
-        - module_id: evse_manager_2_sink
+        - module_id: evse_manager_2_api_sink
           implementation_id: energy_grid
   api:
     module: API
@@ -230,12 +251,19 @@ active_modules:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
       ocpp:
         - module_id: ocpp
           implementation_id: ocpp_generic
       error_history:
         - module_id: error_history
           implementation_id: error_history
+      evse_energy_sink:
+        - module_id: evse_manager_1_api_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_api_sink
+          implementation_id: external_limits
   error_history:
     module: ErrorHistory
     config_implementation:

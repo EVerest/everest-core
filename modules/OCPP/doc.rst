@@ -305,7 +305,7 @@ OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control o
 This module integrates the composite schedule(s) within EVerests energy management. For further information about smart charging and the
 composite schedule calculation please refer to the OCPP1.6 specification.
 
-The integration of the composite schedules are implemented through the optional requirement(s) `evse_manager_energy_sink`(interface: `external_energy_limits`) 
+The integration of the composite schedules are implemented through the optional requirement(s) `evse_energy_sink`(interface: `external_energy_limits`) 
 of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
 for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
 has two EVSEs you need to connect three modules that implement the `external_energy_limits` interface: One representing evse id 0 and 

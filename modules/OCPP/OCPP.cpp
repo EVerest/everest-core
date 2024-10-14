@@ -77,6 +77,12 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     // iterate over all schedules reported by the libocpp to create ExternalLimits
     // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
+
+        if (not this->is_evse_sink_configured(connector_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: " << connector_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
         for (const auto period : schedule.chargingSchedulePeriod) {
@@ -99,23 +105,39 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             schedule_import.push_back(schedule_req_entry);
         }
         limits.schedule_import.emplace(schedule_import);
+        auto& evse_sink = this->get_evse_sink_by_evse_id(connector_id);
+        evse_sink.call_set_external_limits(limits);
+    }
+}
 
-        if (connector_id == 0) {
-            if (!this->r_evse_manager_energy_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_evse_manager_energy_sink.first()->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            if (this->r_evse_manager_energy_sink.size() <= connector_id) {
-                EVLOG_warning << "Missing connection to evse_manager_energy_sink for evse_id: " << connector_id;
-            }
-            EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
-            this->r_evse_manager_energy_sink.at(connector_id)->call_set_external_limits(limits);
+bool OCPP::is_evse_sink_configured(const int32_t evse_id) {
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
+        }
+        if (evse_sink->get_mapping().value().evse == evse_id) {
+            return true;
         }
     }
+    return false;
+}
+
+external_energy_limitsIntf& OCPP::get_evse_sink_by_evse_id(const int32_t evse_id) {
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
+        }
+        if (evse_sink->get_mapping().value().evse == evse_id) {
+            return *evse_sink;
+        }
+    }
+    throw std::runtime_error("No mapping configured for evse");
 }
 
 void OCPP::publish_charging_schedules(
@@ -349,6 +371,16 @@ void OCPP::init() {
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to and evse.");
+        }
+    }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
