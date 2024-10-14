@@ -10,15 +10,163 @@ ReservationEVSEs::ReservationEVSEs() {
 void ReservationEVSEs::add_connector(const uint32_t evse_id, const uint32_t connector_id,
                                      const types::evse_manager::ConnectorTypeEnum connector_type,
                                      const ConnectorState connector_state) {
+
     EvseConnectorType evse_connector_type;
     evse_connector_type.connector_type = connector_type;
     evse_connector_type.connector_id = connector_id;
     evse_connector_type.state = connector_state;
     evses[evse_id].push_back(evse_connector_type);
-    max_scenarios.clear();
-    max_scenarios = create_scenarios();
+}
+
+bool ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
+                                        const types::reservation::Reservation& reservation) {
+    if (evse_id.has_value()) {
+        // TODO mz
+        evse_reservations[evse_id.value()] = reservation;
+    } else {
+        std::vector<types::evse_manager::ConnectorTypeEnum> types;
+        for (const auto& global_reservation : this->global_reservations) {
+            types.push_back(
+                global_reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
+        }
+
+        types.push_back(reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
+
+        std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> orders = get_all_possible_orders(types);
+
+        for (const auto& o : orders) {
+            print_order(o);
+            if (!can_virtual_car_arrive({}, o)) {
+                return false;
+            }
+        }
+
+        global_reservations.push_back(reservation);
+    }
+
+    return true;
+}
+
+bool ReservationEVSEs::has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
+                                               const types::evse_manager::ConnectorTypeEnum connector_type) {
+    if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
+        return true;
+    }
+
+    for (const auto& type : evse_connectors) {
+        if (type.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+            type.connector_type == connector_type) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>>
+ReservationEVSEs::get_all_possible_orders(const std::vector<types::evse_manager::ConnectorTypeEnum>& connectors) {
+
+    std::vector<types::evse_manager::ConnectorTypeEnum> input_next = connectors;
+    std::vector<types::evse_manager::ConnectorTypeEnum> input_prev = connectors;
+    std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> output;
+
+    do {
+        output.push_back(input_next);
+    } while (std::next_permutation(input_next.begin(), input_next.end()));
+
+    while (std::prev_permutation(input_prev.begin(), input_prev.end())) {
+        output.push_back(input_prev);
+    }
+
+    return output;
+}
+
+bool ReservationEVSEs::can_virtual_car_arrive(
+    const std::vector<uint32_t>& used_evse_ids,
+    const std::vector<types::evse_manager::ConnectorTypeEnum>& next_car_arrival_order) {
+
+    bool is_possible = false;
+
+    for (const auto& [evse_id, evse_connector_types] : evses) {
+        // Check if there is a car already at this evse id.
+        if (std::find(used_evse_ids.begin(), used_evse_ids.end(), evse_id) != used_evse_ids.end()) {
+            continue;
+        }
+
+        if (has_evse_connector_type(evse_connector_types, next_car_arrival_order.at(0))) {
+            is_possible = true;
+
+            // std::cout << "OK: " << evse_id << "\n";
+
+            std::vector<uint32_t> next_used_evse_ids = used_evse_ids;
+            next_used_evse_ids.push_back(evse_id);
+
+            // Check if this is the last.
+            if (next_car_arrival_order.size() == 1) {
+                std::cout << "OK: evse_id: " << evse_id << "\n";
+                for (const uint32_t e : next_used_evse_ids) {
+                    std::cout << e << " ";
+                }
+
+                std::cout << "\n";
+
+                return true;
+            }
+
+            // Call next level recursively.
+            const std::vector<types::evse_manager::ConnectorTypeEnum> next_arrival_order(
+                next_car_arrival_order.begin() + 1, next_car_arrival_order.end());
+
+            if (!can_virtual_car_arrive(next_used_evse_ids, next_arrival_order)) {
+
+                std::cout << "NOK!!: " << evse_id << "\n";
+                for (const uint32_t e : next_used_evse_ids) {
+                    std::cout << e << " ";
+                }
+
+                std::cout << "\n";
+
+                return false;
+            }
+        }
+    }
+
+    if (!is_possible) {
+        std::cout << "Niet mogelijk: \n";
+        for (const uint32_t e : used_evse_ids) {
+            std::cout << e << " ";
+        }
+
+        std::cout << "\n";
+    }
+
+    return is_possible;
+}
+
+void ReservationEVSEs::print_order(const std::vector<types::evse_manager::ConnectorTypeEnum>& order) {
+    std::cout << "\n ----------\n";
+    for (const auto& connector_type : order) {
+        std::cout << connector_type_enum_to_string(connector_type) << " ";
+    }
+    std::cout << "\n";
+}
+
+#if 0
+
+void ReservationEVSEs::add_connector(const uint32_t evse_id, const uint32_t connector_id,
+                                     const types::evse_manager::ConnectorTypeEnum connector_type,
+                                     const ConnectorState connector_state) {
+    EvseConnectorType evse_connector_type;
+    evse_connector_type.connector_type = connector_type;
+    evse_connector_type.connector_id = connector_id;
+    evse_connector_type.state = connector_state;
+    evses[evse_id].push_back(evse_connector_type);
+    // max_scenarios.clear();
+    // max_scenarios = create_scenarios();
     // create({}, nullptr);
-    print_scenarios(max_scenarios);
+
+    evse_combinations = make_evse_combinations();
+    // print_scenarios(max_scenarios);
 
     // if (max_scenarios.size() == 0) {
     //     max_scenarios.push_back(Scenario());
@@ -59,11 +207,55 @@ bool ReservationEVSEs::make_reservation(std::optional<uint32_t> evse_id,
         types.push_back(connector_type);
         std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> orders = get_all_possible_orders(types);
 
-        for (const auto& possible_order : orders) {
-            if (!is_scenario_available(possible_order)) {
+        std::vector<std::vector<uint32_t>> evse_combi = this->evse_combinations;
+
+        for (const std::vector<types::evse_manager::ConnectorTypeEnum>& car_arrive_order : orders) {
+            if (car_arrive_order.size() > evses.size()) {
+                // More possible cars than evses, this is not possible.
                 return false;
             }
+
+            for (uint32_t i = 0; i < car_arrive_order.size(); ++i) {
+
+                if (i + 1 < car_arrive_order.size()) {
+                    // When the last possible car / connector combination is not yet reached, just filter the possible
+                    // evse order combinations.
+                    evse_combi.erase(
+                        std::remove_if(evse_combi.begin(), evse_combi.end(),
+                                       [this, i, &car_arrive_order](std::vector<uint32_t> evse_order) {
+                                           // TODO mz check if size of evse_order is correct
+                                           const uint32_t evse_id = evse_order.at(i);
+                                           // Remove all evse orders where a scenario is simply not possible because
+                                           // the evse does not have the given connector type.
+                                           // TODO mz extend with unavailable evse, faulted, etc
+                                           if (has_evse_connector_type(evses[evse_id], car_arrive_order.at(i))) {
+                                               return false;
+                                           }
+
+                                           return true;
+                                       }));
+
+                    if (evse_combi.empty()) {
+                        return false;
+                    }
+                } else {
+                    // For the last car, there should be an evse available as well. In this case, all combinations of
+                    // evse order / car arrive order (connector type) should be possible.
+                    for (const std::vector<uint32_t>& evse_order : evse_combi) {
+                        const uint32_t evse_id = evse_order.at(i);
+                        if (!has_evse_connector_type(evses[evse_id], car_arrive_order.at(i))) {
+                            return false;
+                        }
+                    }
+                }
+            }
         }
+
+        // for (const auto& possible_order : orders) {
+        //     if (!is_scenario_available(possible_order)) {
+        //         return false;
+        //     }
+        // }
     }
 
     // make_new_current_scenario(evse_id, connector_type);
@@ -228,7 +420,7 @@ bool ReservationEVSEs::has_evse_connector_type(std::vector<EvseConnectorType> ev
     }
 
     for (const auto& type : evse_connectors) {
-        if (type.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown &&
+        if (type.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
             type.connector_type == connector_type) {
             return true;
         }
@@ -245,7 +437,8 @@ void ReservationEVSEs::create(std::vector<uint32_t> evse_ids, Scenario* scenario
         std::vector<uint32_t> ids = evse_ids;
         // ids.push_back(evse_id);
 
-        for (const auto& connector_type : connector_types) {
+        for (uint32_t i = 0; i < connector_types.size(); ++i) {
+            // for (const auto& connector_type : connector_types) {
             bool add_scenario = false;
             Scenario s;
             if (scenario == nullptr) {
@@ -257,7 +450,7 @@ void ReservationEVSEs::create(std::vector<uint32_t> evse_ids, Scenario* scenario
 
             EVSE_Connector c;
             c.evse_id = evse_id;
-            c.connector_type = connector_type.connector_type;
+            c.connector_type = connector_types[i].connector_type;
             // std::vector<uint32_t> ids = evse_ids;
             ids.push_back(evse_id);
             scenario->evse_connector.push_back(c);
@@ -345,22 +538,8 @@ bool ReservationEVSEs::is_scenario_available(std::vector<types::evse_manager::Co
     return result;
 }
 
-std::vector<std::string> get_order_string(std::string input) {
-    std::string i = input;
-    std::vector<std::string> order;
-    do {
-        order.push_back(i);
-    } while (std::next_permutation(i.begin(), i.end()));
-
-    order.push_back(i);
-
-    return order;
-}
-
 std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>>
 ReservationEVSEs::get_all_possible_orders(std::vector<types::evse_manager::ConnectorTypeEnum> connectors) {
-    std::vector<std::string> o = get_order_string("aba");
-
     std::vector<types::evse_manager::ConnectorTypeEnum> c = connectors;
     std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> result;
     do {
@@ -373,4 +552,21 @@ ReservationEVSEs::get_all_possible_orders(std::vector<types::evse_manager::Conne
 
     return result;
 }
+
+std::vector<std::vector<uint32_t>> ReservationEVSEs::make_evse_combinations() {
+    std::vector<std::vector<uint32_t>> combinations;
+    std::vector<uint32_t> evses;
+    for (const auto& evse : this->evses) {
+        evses.push_back(evse.first);
+    }
+
+    do {
+        combinations.push_back(evses);
+    } while (std::next_permutation(evses.begin(), evses.end()));
+
+    return combinations;
+}
+
+#endif
+
 } // namespace module
