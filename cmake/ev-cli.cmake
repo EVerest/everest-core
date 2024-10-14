@@ -13,21 +13,6 @@ macro(setup_ev_cli)
             message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
         endif()
 
-        find_program(EV_GET_PACKAGE_LOCATION
-            NAMES get_package_location.py
-            PATHS "${EVEREST_SCRIPTS_DIR}"
-            NO_DEFAULT_PATH
-        )
-        execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${EV_GET_PACKAGE_LOCATION} --package-name ev-dev-tools
-            OUTPUT_VARIABLE EV_DEV_TOOLS_PACKAGE_LOCATION
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE
-            EV_GET_PACKAGE_LOCATION_RESULT
-        )
-
-        message(STATUS "Using ev-dev-tool package: ${EV_DEV_TOOLS_PACKAGE_LOCATION}")
-
         find_program(EV_CLI ev-cli PATHS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
         message(STATUS "Using ev-cli from: ${EV_CLI}")
     endif()
