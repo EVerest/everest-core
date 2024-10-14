@@ -122,6 +122,7 @@ private:
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
+    int32_t event_id_counter{0};
     std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
     std::condition_variable evse_ready_cv;
