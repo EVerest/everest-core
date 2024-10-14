@@ -1,4 +1,4 @@
-macro(setup_ev_cli)
+function(setup_ev_cli)
     if(NOT TARGET ev-cli)
         add_custom_target(ev-cli)
     endif()
@@ -25,7 +25,7 @@ macro(setup_ev_cli)
     require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
 
     set_ev_cli_template_properties()
-endmacro()
+endfunction()
 
 function(require_ev_cli_version EV_CLI_VERSION_REQUIRED)
     execute_process(
