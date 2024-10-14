@@ -65,7 +65,7 @@ function(set_ev_cli_template_properties)
     get_target_property(EVEREST_SCHEMA_DIR generate_cpp_files EVEREST_SCHEMA_DIR)
 
     execute_process(
-        COMMAND ${EV_CLI} interface get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
+        COMMAND ${EV_CLI} interface get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_INTERFACE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
@@ -77,7 +77,7 @@ function(set_ev_cli_template_properties)
     endif()
 
     execute_process(
-        COMMAND ${EV_CLI} module get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
+        COMMAND ${EV_CLI} module get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_MODULE_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
@@ -89,7 +89,7 @@ function(set_ev_cli_template_properties)
     endif()
 
     execute_process(
-        COMMAND ${EV_CLI} types get-templates --schemas-dir "${EVEREST_SCHEMA_DIR}"
+        COMMAND ${EV_CLI} types get-templates --separator=\; --schemas-dir "${EVEREST_SCHEMA_DIR}"
         OUTPUT_VARIABLE EV_CLI_TYPES_TEMPLATES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE
