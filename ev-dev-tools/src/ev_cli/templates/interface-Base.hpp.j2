@@ -107,7 +107,7 @@ private:
     std::shared_ptr<Everest::error::ErrorManagerImpl> error_manager;
 
     // helper function for getting all commands
-    void _gather_cmds(std::vector<Everest::cmd>& cmds) override {
+    void _gather_cmds([[maybe_unused]] std::vector<Everest::cmd>& cmds) override {
     {% if not cmds %}
         // this interface does not offer any commands
     {% else %}
