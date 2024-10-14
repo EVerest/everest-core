@@ -13,7 +13,7 @@ macro(setup_ev_cli)
             message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
         endif()
 
-        find_program(EV_CLI ev-cli PATHS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
+        find_program(EV_CLI ev-cli HINTS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
         message(STATUS "Using ev-cli from: ${EV_CLI}")
     endif()
 
