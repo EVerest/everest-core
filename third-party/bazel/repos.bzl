@@ -46,9 +46,9 @@ def everest_framework_repos(repo_mapping = {}):
     maybe(
         http_archive,
         name = "com_github_everest_liblog",
-        url = "https://github.com/EVerest/liblog/archive/5c132fb0bcdfb41d6285c4f834ae4657d7a6bff6.tar.gz",
-        sha256 = "19b017a8ef4948bd0692f1d683d0031e76daa21d43a4bddff818bb77e0827fac",
-        strip_prefix = "liblog-5c132fb0bcdfb41d6285c4f834ae4657d7a6bff6",
+        url = "https://github.com/EVerest/liblog/archive/763a56a4bf194e7cf1cab7446e993c376ce933fa.tar.gz",
+        sha256 = "6d1f4238f8984cbe0dea9d7bc2c3771ca803387b5215a2b42df0c850bd561770",
+        strip_prefix = "liblog-763a56a4bf194e7cf1cab7446e993c376ce933fa",
         build_file = "@everest-framework//third-party/bazel:BUILD.liblog.bazel",
         repo_mapping = repo_mapping,
     )

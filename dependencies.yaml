@@ -47,7 +47,7 @@ mqttc:
   options: ["MQTT_C_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 liblog:
   git: https://github.com/EVerest/liblog.git
-  git_tag: v0.2.1
+  git_tag: v0.2.3
   options: ["BUILD_EXAMPLES OFF", "CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libfmt:
   git: https://github.com/fmtlib/fmt.git

@@ -175,19 +175,6 @@ if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TEST
 
     add_subdirectory(tests)
 
-    setup_target_for_coverage_gcovr_html(
-        NAME ${PROJECT_NAME}_gcovr_coverage
-        EXECUTABLE ctest --output-on-failure
-        EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
-        DEPENDENCIES tests everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME ${PROJECT_NAME}_lcov_coverage
-        EXECUTABLE ctest --output-on-failure
-        EXCLUDE "${CMAKE_SOURCE_DIR}/tests" "${CMAKE_BINARY_DIR}"
-        DEPENDENCIES tests everest
-    )
 else()
     message(STATUS "Not running unit tests")
 endif()
