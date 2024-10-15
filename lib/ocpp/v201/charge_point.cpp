@@ -1451,6 +1451,10 @@ void ChargePoint::message_callback(const std::string& message) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
         auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
         this->send(call_error);
+    } catch (const TimePointParseException& e) {
+        EVLOG_error << "Exception during handling of message: " << e.what();
+        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
+        this->send(call_error);
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
         if (json_message.is_array() and json_message.size() > MESSAGE_ID) {
@@ -1958,9 +1962,9 @@ void ChargePoint::security_event_notification_req(const CiString<50>& event_type
 
     req.type = event_type;
     if (timestamp.has_value()) {
-        req.timestamp = timestamp.value().to_rfc3339();
+        req.timestamp = timestamp.value();
     } else {
-        req.timestamp = DateTime().to_rfc3339();
+        req.timestamp = DateTime();
     }
     req.techInfo = tech_info;
     this->logging->security(json(req).dump());
@@ -2132,7 +2136,7 @@ void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t c
     StatusNotificationRequest req;
     req.connectorId = connector_id;
     req.evseId = evse_id;
-    req.timestamp = DateTime().to_rfc3339();
+    req.timestamp = DateTime();
     req.connectorStatus = status;
 
     ocpp::Call<StatusNotificationRequest> call(req, this->message_queue->createMessageId());

@@ -16,16 +16,6 @@ DateTime::DateTime(std::chrono::time_point<date::utc_clock> timepoint) : DateTim
 DateTime::DateTime(const std::string& timepoint_str) : DateTimeImpl(timepoint_str) {
 }
 
-DateTime& DateTime::operator=(const std::string& s) {
-    this->from_rfc3339(s);
-    return *this;
-}
-
-DateTime& DateTime::operator=(const char* c) {
-    this->from_rfc3339(std::string(c));
-    return *this;
-}
-
 DateTimeImpl::DateTimeImpl() {
     this->timepoint = date::utc_clock::now();
 }
@@ -53,8 +43,7 @@ void DateTimeImpl::from_rfc3339(const std::string& timepoint_str) {
             in.seekg(0);
             in >> date::parse("%FT%T", this->timepoint);
             if (in.fail()) {
-                EVLOG_error << "Timepoint string parsing failed. Could not convert: \"" << timepoint_str
-                            << "\" into DateTime.";
+                throw TimePointParseException(timepoint_str);
             }
         }
     }

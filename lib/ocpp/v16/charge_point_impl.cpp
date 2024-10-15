@@ -1230,6 +1230,9 @@ void ChargePointImpl::message_callback(const std::string& message) {
     EnhancedMessage<v16::MessageType> enhanced_message;
     try {
         enhanced_message = this->message_queue->receive(message);
+    } catch (const TimePointParseException& e) {
+        EVLOG_error << "Exception during handling of message: " << e.what();
+        this->send(CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({})));
     } catch (const json::exception& e) {
         EVLOG_error << "JSON exception during reception of message: " << e.what();
         this->send(CallError(MessageId("-1"), "GenericError", e.what(), json({})));
