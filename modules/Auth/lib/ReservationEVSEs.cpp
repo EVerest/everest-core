@@ -45,7 +45,13 @@ void ReservationEVSEs::add_connector(const uint32_t evse_id, const uint32_t conn
 bool ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
                                         const types::reservation::Reservation& reservation) {
     if (evse_id.has_value()) {
-        if (evse_reservations.count(evse_id.value()) > 0) {
+        if (this->evse_reservations.count(evse_id.value()) > 0) {
+            // There already is a reservation for this evse.
+            return false;
+        }
+
+        if (this->evses.count(evse_id.value()) == 0) {
+            // There is no evse with this evse id.
             return false;
         }
 
@@ -56,6 +62,7 @@ bool ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
             is_evse_available(evse_id.value(), this->evse_reservations) &&
             is_connector_available(evse_id.value(), connector_type)) {
             if (global_reservations.empty()) {
+                this->evse_reservations[evse_id.value()] = reservation;
                 return true;
             }
 
@@ -69,22 +76,6 @@ bool ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
                 return false;
             }
 
-            // std::vector<types::evse_manager::ConnectorTypeEnum> types;
-            // for (const auto& global_reservation : this->global_reservations) {
-            //     types.push_back(
-            //         global_reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
-            // }
-
-            // std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> orders = get_all_possible_orders(types);
-
-            // // Check if reservation is possible.
-            // for (const auto& o : orders) {
-            //     print_order(o);
-            //     if (!this->can_virtual_car_arrive({}, o, evse_specific_reservations)) {
-            //         return false;
-            //     }
-            // }
-
             // Reservation is possible, add to evse specific reservations.
             this->evse_reservations[evse_id.value()] = reservation;
         } else {
@@ -96,22 +87,6 @@ bool ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
                 this->evse_reservations)) {
             return false;
         }
-        // std::vector<types::evse_manager::ConnectorTypeEnum> types;
-        // for (const auto& global_reservation : this->global_reservations) {
-        //     types.push_back(
-        //         global_reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
-        // }
-
-        // types.push_back(reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
-
-        // std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> orders = get_all_possible_orders(types);
-
-        // for (const auto& o : orders) {
-        //     print_order(o);
-        //     if (!this->can_virtual_car_arrive({}, o, evse_reservations)) {
-        //         return false;
-        //     }
-        // }
 
         global_reservations.push_back(reservation);
     }
@@ -130,6 +105,25 @@ void ReservationEVSEs::set_evse_available(const bool available, const uint32_t e
     if (!available) {
         // TODO mz if connector changed from available to unavailable: cancel a reservation???
     }
+}
+
+bool ReservationEVSEs::is_charging_possible(const uint32_t evse_id) {
+    if (this->evse_reservations.count(evse_id) > 0) {
+        return false;
+    }
+
+    if (this->evses.count(evse_id) == 0) {
+        // Not existing evse id
+        return false;
+    }
+
+    std::map<uint32_t, types::reservation::Reservation> reservations = this->evse_reservations;
+    // We want to test if charging is possible on this evse id with the current reservations. For that, we do like it
+    // is a new reservation and check if that reservation is possible. If it is, we can charge on that evse.
+    types::reservation::Reservation r;
+    // It is a dummy reservation so the details are not important.
+    reservations[evse_id] = r;
+    return is_reservation_possible(std::nullopt, reservations);
 }
 
 bool ReservationEVSEs::has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
@@ -201,6 +195,10 @@ ReservationEVSEs::get_all_possible_orders(const std::vector<types::evse_manager:
     std::vector<types::evse_manager::ConnectorTypeEnum> input_next = connectors;
     std::vector<types::evse_manager::ConnectorTypeEnum> input_prev = connectors;
     std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> output;
+
+    if (connectors.empty()) {
+        return output;
+    }
 
     do {
         output.push_back(input_next);

@@ -29,6 +29,7 @@ private: // Members
     std::map<uint32_t, Evse> evses;
     std::map<uint32_t, types::reservation::Reservation> evse_reservations;
     std::vector<types::reservation::Reservation> global_reservations;
+    // TODO mz add mutexes everywhere.
     std::mutex reservation_mutex;
 
 public:
@@ -39,6 +40,7 @@ public:
 
     bool make_reservation(const std::optional<uint32_t> evse_id, const types::reservation::Reservation& reservation);
     void set_evse_available(const bool available, const uint32_t evse_id);
+    bool is_charging_possible(const uint32_t evse_id);
 
 private: // Functions
     bool has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
