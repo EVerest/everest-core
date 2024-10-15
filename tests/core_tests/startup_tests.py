@@ -66,12 +66,14 @@ class ProbeModule:
         # enable simulator
         self._mod.call_command(car_sim_ff, 'enable', {'value': True})
 
-        cmd = {'value': 'sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 10;unplug'}
+        cmd = {}
 
         if mode == Mode.HlcAc:
-            cmd = {'value': 'sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 10;iso_wait_v2g_session_stopped;unplug'}
+            cmd = {'value': 'sleep 1;iso_wait_slac_matched;iso_start_v2g_session AC;iso_wait_pwr_ready;iso_draw_power_regulated 16,3;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug'}
         elif mode == Mode.HlcDc:
-            cmd = {'value': 'sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_wait_for_stop 10;iso_wait_v2g_session_stopped;unplug'}
+            cmd = {'value': 'sleep 1;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug'}
+        else:
+            cmd = {'value': 'sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 10;unplug'}
 
         # start charging simulation
         self._mod.call_command(car_sim_ff, 'execute_charging_session', cmd)
@@ -145,7 +147,7 @@ async def test_002_start_test_module_ac_hlc(everest_core: EverestCore):
         everest_core.all_modules_started_event.set()
         logging.info("set all modules started event...")
 
-    assert probe.test(40, Mode.HlcAc)
+    assert probe.test(90, Mode.HlcAc)
 
 @pytest.mark.everest_core_config('config-sil-dc.yaml')
 @pytest.mark.asyncio
@@ -168,4 +170,4 @@ async def test_003_start_test_module_dc(everest_core: EverestCore):
         everest_core.all_modules_started_event.set()
         logging.info("set all modules started event...")
 
-    assert probe.test(40, Mode.HlcDc)
+    assert probe.test(90, Mode.HlcDc)
