@@ -3337,7 +3337,8 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
     return id_tag_info;
 }
 
-std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_schedules(const int32_t duration_s) {
+std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_schedules(const int32_t duration_s,
+                                                                                          const ChargingRateUnit unit) {
 
     std::map<int32_t, ChargingSchedule> charging_schedules;
 
@@ -3349,7 +3350,7 @@ std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_
         const auto valid_profiles =
             this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
         const auto composite_schedule = this->smart_charging_handler->calculate_composite_schedule(
-            valid_profiles, start_time, end_time, connector_id, ChargingRateUnit::A);
+            valid_profiles, start_time, end_time, connector_id, unit);
         charging_schedules[connector_id] = composite_schedule;
     }
 
@@ -3357,7 +3358,7 @@ std::map<int32_t, ChargingSchedule> ChargePointImpl::get_all_composite_charging_
 }
 
 std::map<int32_t, EnhancedChargingSchedule>
-ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t duration_s) {
+ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t duration_s, const ChargingRateUnit unit) {
 
     std::map<int32_t, EnhancedChargingSchedule> charging_schedules;
 
@@ -3369,7 +3370,7 @@ ChargePointImpl::get_all_enhanced_composite_charging_schedules(const int32_t dur
         const auto valid_profiles =
             this->smart_charging_handler->get_valid_profiles(start_time, end_time, connector_id);
         const auto composite_schedule = this->smart_charging_handler->calculate_enhanced_composite_schedule(
-            valid_profiles, start_time, end_time, connector_id, ChargingRateUnit::A);
+            valid_profiles, start_time, end_time, connector_id, unit);
         charging_schedules[connector_id] = composite_schedule;
     }
 
