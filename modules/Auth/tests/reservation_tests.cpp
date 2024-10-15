@@ -188,7 +188,7 @@ protected:
     types::reservation::Reservation
     create_reservation_no_evseid(const types::evse_manager::ConnectorTypeEnum connector_type) {
         return types::reservation::Reservation{
-            static_cast<int32_t>(reservation_id), "TOKEN_" + std::to_string(reservation_id),
+            static_cast<int32_t>(reservation_id++), "TOKEN_" + std::to_string(reservation_id),
             Everest::Date::to_rfc3339((date::utc_clock::now()) + std::chrono::hours(1)), std::nullopt, connector_type};
     }
 };
@@ -202,7 +202,6 @@ TEST_F(ReservationEVSETest, scenario01) {
     r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(2, 1, types::evse_manager::ConnectorTypeEnum::cType2);
 
-    // TODO mz add time
     EXPECT_TRUE(
         r.make_reservation(std::nullopt, create_reservation_no_evseid(types::evse_manager::ConnectorTypeEnum::cCCS2)));
     EXPECT_TRUE(
