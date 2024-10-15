@@ -187,6 +187,7 @@ class TypeParser:
             'path': types_file,
             'content': TypeParser.templates['types.hpp'].render(tmpl_data),
             'last_mtime': last_mtime,
+            'template_path': Path(TypeParser.templates['types.hpp'].filename),
             'printable_name': types_file.relative_to(output_path.parent)
         }
 

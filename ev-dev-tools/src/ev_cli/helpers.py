@@ -97,7 +97,6 @@ cpp_type_map = {
     'object': 'Object',
 }
 
-
 def clang_format(config_file_path, file_info):
     # check if we handle cpp and hpp files
     if not file_info['path'].suffix in ('.hpp', '.cpp'):
@@ -669,8 +668,27 @@ def print_available_mod_files(mod_files):
         for file_info in category_files:
             print(f'  {file_info["abbr"]}')
 
+def get_mtime(filename: str | Path) -> float:
+    if isinstance(filename, str):
+        filename = Path(filename)
 
-def write_content_to_file(file_info, strategy, only_diff=False):
+    return filename.stat().st_mtime
+
+
+def is_template_newer(file_info) -> Tuple[bool, str]:
+    template_path = file_info['template_path']
+    generated_path = file_info['path']
+
+    if not generated_path.exists():
+        return (True, ' (Generated file did not exist)')
+
+    if get_mtime(template_path) > get_mtime(generated_path):
+        return (True, ' (Template file has changed since last generation)')
+
+    return (False, '')
+
+
+def write_content_to_file(file_info, strategy, only_diff=False, reason = ''):
     # strategy:
     #   update: update only if dest older or not existent
     #   force-update: update, even if dest newer
@@ -707,9 +725,18 @@ def write_content_to_file(file_info, strategy, only_diff=False):
     else:
         raise Exception(f'Invalid strategy "{strategy}"\nSupported strategies: {strategies}')
 
-    print(f'{method} file {printable_name}')
+    print(f'{method} file {printable_name}{reason}')
 
     if not file_dir.exists():
         file_dir.mkdir(parents=True, exist_ok=True)
 
     file_path.write_text(file_info['content'])
+
+
+def write_content_to_file_and_check_template(file_info, strategy, only_diff=False):
+    # check if template is newer and force-update file if it is
+    update_strategy = strategy
+    (newer, reason) = is_template_newer(file_info)
+    if newer:
+        update_strategy = 'force-update'
+    write_content_to_file(file_info, update_strategy, only_diff, reason)
