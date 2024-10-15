@@ -184,9 +184,17 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     if (display_message.state.has_value()) {
         m.state = to_ocpp_201_display_message_state(display_message.state.value());
     }
+    try {
+        if (display_message.timestamp_from.has_value()) {
+            m.timestamp_from = ocpp::DateTime(display_message.timestamp_from.value());
+        }
 
-    m.timestamp_from = display_message.timestamp_from;
-    m.timestamp_to = display_message.timestamp_to;
+        if (display_message.timestamp_to.has_value()) {
+            m.timestamp_to = ocpp::DateTime(display_message.timestamp_to.value());
+        }
+    } catch (const ocpp::TimePointParseException &e) {
+        EVLOG_warning << "Could not parse timestamp when converting DisplayMessage: " << e.what();
+    }
 
     return m;
 }
