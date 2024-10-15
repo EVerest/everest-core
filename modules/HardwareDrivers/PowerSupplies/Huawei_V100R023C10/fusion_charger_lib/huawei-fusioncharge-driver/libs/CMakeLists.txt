@@ -1,0 +1,3 @@
+add_subdirectory(fusion_charger_modbus_extensions)
+add_subdirectory(fusion_charger_modbus_driver)
+add_subdirectory(fusion_charger_goose_driver)
