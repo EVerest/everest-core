@@ -13,6 +13,12 @@ function(setup_ev_cli)
             message(FATAL_ERROR "Python venv is not active. Please activate the python venv before running this command.")
         endif()
 
+        get_target_property(PACKAGE_SOURCE_DIRECTORY ev-dev-tools_pip_install_local PACKAGE_SOURCE_DIRECTORY)
+        message(STATUS "Installing ev-cli from: ${PACKAGE_SOURCE_DIRECTORY}")
+        ev_pip_install_local(
+            PACKAGE_NAME "ev-dev-tools"
+            PACKAGE_SOURCE_DIRECTORY "${PACKAGE_SOURCE_DIRECTORY}"
+        )
         unset(EV_CLI CACHE)
         find_program(EV_CLI ev-cli HINTS ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}/bin REQUIRED)
         message(STATUS "Using ev-cli from: ${EV_CLI}")
