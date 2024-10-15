@@ -249,10 +249,6 @@ Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const flo
     }
 }
 
-const std::vector<Market>& Market::children() {
-    return _children;
-}
-
 ScheduleRes Market::get_sold_energy() {
     return sold_root;
 }
