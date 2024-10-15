@@ -33,7 +33,6 @@ The `manifest <manifest.yaml>`_ of this module defines requirements and implemen
 communication with other parts of EVerest. In order to describe how the responsibilities for functions and operations required by OCPP  
 are divided between libocpp and this module, the following sections pick up the requirements of this module and implementations one by one.
 
-Third-Level Headlines
 ---------------------
 
 Provides: main
