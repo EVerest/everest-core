@@ -303,7 +303,7 @@ function (_ev_add_interfaces)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            "$<TARGET_PROPERTY:ev-cli,EV_CLI_INTERFACE_TEMPLATES>"
+            "$<TARGET_PROPERTY:ev-cli,INTERFACE_TEMPLATES>"
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -342,7 +342,7 @@ function (_ev_add_types)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            "$<TARGET_PROPERTY:ev-cli,EV_CLI_TYPES_TEMPLATES>"
+            "$<TARGET_PROPERTY:ev-cli,TYPES_TEMPLATES>"
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -486,7 +486,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
-                    "$<TARGET_PROPERTY:ev-cli,EV_CLI_MODULE_TEMPLATES>"
+                    "$<TARGET_PROPERTY:ev-cli,MODULE_TEMPLATES>"
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
