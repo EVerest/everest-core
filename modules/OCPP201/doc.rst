@@ -1,7 +1,7 @@
 OCPP2.0.1 Module
 ================
 
-This module implements and integrates OCPP2.0.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
+This module implements and integrates OCPP 2.0.1 within EVerest. A connection to a Charging Station Management System (CSMS) can be
 established by loading this module as part of the EVerest configuration. This module leverages `libocpp <https://github.com/EVerest/libocpp>`_,
 EVerest's OCPP library.
 
