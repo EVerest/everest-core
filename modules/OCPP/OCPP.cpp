@@ -83,11 +83,11 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (period.numberPhases.has_value()) {
+                limits_req.ac_max_phase_count = period.numberPhases.value();
+            }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
-                if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
-                }
                 if (schedule.minChargingRate.has_value()) {
                     limits_req.ac_min_current_A = schedule.minChargingRate.value();
                 }
