@@ -511,8 +511,6 @@ void API::init() {
                     evse_energy_sink.call_set_external_limits(external_limits);
                 } catch (const std::invalid_argument& e) {
                     EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-                } catch (const std::out_of_range& e) {
-                    EVLOG_warning << "Invalid limit: Out of range.";
                 }
             });
 
@@ -526,8 +524,6 @@ void API::init() {
                     evse_energy_sink.call_set_external_limits(external_limits);
                 } catch (const std::invalid_argument& e) {
                     EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-                } catch (const std::out_of_range& e) {
-                    EVLOG_warning << "Invalid limit: Out of range.";
                 }
             });
         } else {
