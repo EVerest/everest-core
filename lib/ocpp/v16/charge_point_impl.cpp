@@ -3920,7 +3920,7 @@ std::optional<DataTransferResponse> ChargePointImpl::data_transfer(const CiStrin
     ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
-    if (!this->websocket->is_connected()) {
+    if (this->websocket == nullptr or !this->websocket->is_connected()) {
         EVLOG_warning << "Attempting to send DataTransfer.req but charging station is offline";
         return std::nullopt;
     }

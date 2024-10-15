@@ -4024,7 +4024,7 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
     ocpp::Call<DataTransferRequest> call(request, this->message_queue->createMessageId());
     auto data_transfer_future = this->send_async<DataTransferRequest>(call);
 
-    if (!this->connectivity_manager->is_websocket_connected()) {
+    if (this->connectivity_manager == nullptr or !this->connectivity_manager->is_websocket_connected()) {
         return std::nullopt;
     }
 
