@@ -192,7 +192,7 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
         if (display_message.timestamp_to.has_value()) {
             m.timestamp_to = ocpp::DateTime(display_message.timestamp_to.value());
         }
-    } catch (const ocpp::TimePointParseException &e) {
+    } catch (const ocpp::TimePointParseException& e) {
         EVLOG_warning << "Could not parse timestamp when converting DisplayMessage: " << e.what();
     }
 
