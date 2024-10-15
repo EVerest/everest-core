@@ -33,8 +33,6 @@ The `manifest <manifest.yaml>`_ of this module defines requirements and implemen
 communication with other parts of EVerest. In order to describe how the responsibilities for functions and operations required by OCPP  
 are divided between libocpp and this module, the following sections pick up the requirements of this module and implementations one by one.
 
----------------------
-
 Provides: main
 ^^^^^^^^^^^^^^
 
@@ -43,7 +41,7 @@ Provides: main
 This interface is implemented to provide an API to control the websocket connection and to control and retrieve OCPP-specific data like  
 security events and configuration keys.
 
-*Note: This interface will be deprecated soon. The functionality is already covered by the generic interface*  
+*Note: This interface is deprecated soon and will be removed soon. The functionality is already covered by the generic interface*  
 `ocpp <../interfaces/ocpp.yaml>`_ *which is used by this module and OCPP201.*
 
 Provides: auth_validator
