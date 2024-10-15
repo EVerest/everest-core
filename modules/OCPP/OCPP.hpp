@@ -63,6 +63,7 @@ struct Conf {
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
     int MessageQueueResumeDelay;
+    std::string RequestCompositeScheduleUnit;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -138,6 +139,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
+    ocpp::v16::ChargingRateUnit composite_schedule_charging_rate_unit;
     void set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
 
@@ -162,6 +164,7 @@ private:
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+// insert other definitions here
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
