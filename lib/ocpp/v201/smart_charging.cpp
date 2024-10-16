@@ -308,9 +308,11 @@ SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_
         return ProfileValidationResultEnum::TxProfileTransactionNotOnEvse;
     }
 
-    auto conflicts_stmt = this->database_handler->new_statement(
-        "SELECT PROFILE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = @transaction_id AND STACK_LEVEL = @stack_level");
+    auto conflicts_stmt =
+        this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = "
+                                              "@transaction_id AND STACK_LEVEL = @stack_level AND ID != @id");
     conflicts_stmt->bind_int("@stack_level", profile.stackLevel);
+    conflicts_stmt->bind_int("@id", profile.id);
     if (profile.transactionId.has_value()) {
         conflicts_stmt->bind_text("@transaction_id", profile.transactionId.value().get(),
                                   common::SQLiteString::Transient);
@@ -510,22 +512,21 @@ std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_p
 
 bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile& candidate_profile,
                                                           int candidate_evse_id) const {
-
     if (candidate_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
         // This only applies to non TxProfile types.
         return false;
     }
 
     auto overlap_stmt = this->database_handler->new_statement(
-        "SELECT PROFILE, json_extract(PROFILE, '$.chargingProfileKind') AS KIND FROM CHARGING_PROFILES WHERE EVSE_ID = "
-        "@evse_id AND ID != @profile_id AND CHARGING_PROFILES.STACK_LEVEL = @stack_level AND KIND = @kind");
+        "SELECT PROFILE FROM CHARGING_PROFILES WHERE CHARGING_PROFILE_PURPOSE = @purpose AND EVSE_ID = "
+        "@evse_id AND ID != @profile_id AND CHARGING_PROFILES.STACK_LEVEL = @stack_level");
 
     overlap_stmt->bind_int("@evse_id", candidate_evse_id);
     overlap_stmt->bind_int("@profile_id", candidate_profile.id);
     overlap_stmt->bind_int("@stack_level", candidate_profile.stackLevel);
-    overlap_stmt->bind_text("@kind",
-                            conversions::charging_profile_kind_enum_to_string(candidate_profile.chargingProfileKind),
-                            common::SQLiteString::Transient);
+    overlap_stmt->bind_text(
+        "@purpose", conversions::charging_profile_purpose_enum_to_string(candidate_profile.chargingProfilePurpose),
+        common::SQLiteString::Transient);
     while (overlap_stmt->step() != SQLITE_DONE) {
         ChargingProfile existing_profile = json::parse(overlap_stmt->column_text(0));
         if (candidate_profile.validFrom <= existing_profile.validTo &&
