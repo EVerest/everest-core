@@ -11,6 +11,9 @@
 {% endif %}
 #include <nlohmann/json_fwd.hpp>
 
+{% if needs_constants %}
+#include <ocpp/{{namespace}}/constants.hpp>
+{% endif %}
 {% if needs_enums %}
 #include <ocpp/{{namespace}}/ocpp_enums.hpp>
 {% endif %}

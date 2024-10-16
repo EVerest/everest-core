@@ -1154,6 +1154,13 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
         this->connectivity_manager->set_configure_network_connection_profile_callback(
             this->callbacks.configure_network_connection_profile_callback.value());
     }
+
+    Component ocpp_comm_ctrlr = {"OCPPCommCtrlr"};
+    Variable field_length = {"FieldLength"};
+    field_length.instance = "Get15118EVCertificateResponse.exiResponse";
+    this->device_model->set_value(ocpp_comm_ctrlr, field_length, AttributeEnum::Actual,
+                                  std::to_string(ISO15118_GET_EV_CERTIFICATE_EXI_RESPONSE_SIZE),
+                                  VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL, true);
 }
 
 void ChargePoint::init_certificate_expiration_check_timers() {

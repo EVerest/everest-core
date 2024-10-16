@@ -339,6 +339,7 @@
           "mutability": "ReadOnly"
         }
       ],
+      "instance": "Get15118EVCertificateResponse.exiResponse",
       "description": "This variable is used to report the length of <field> in <message> when it is larger than the length that is defined in the standard OCPP message schema.",
       "type": "integer"
     }

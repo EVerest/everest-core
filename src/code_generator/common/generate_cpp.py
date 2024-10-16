@@ -264,6 +264,8 @@ def parse_property(prop_name: str, prop: Dict, depends_on: List[str], ob_name=No
         else:
             if 'maxLength' in prop:
                 prop_type = 'CiString<{}>'.format(prop['maxLength'])
+                if ob_name == 'Get15118EVCertificateResponse' and prop_name == 'exiResponse':
+                    prop_type = 'CiString<ISO15118_GET_EV_CERTIFICATE_EXI_RESPONSE_SIZE>'
             else:
                 if 'format' in prop:
                     if prop['format'] in format_types:
@@ -404,6 +406,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
         message_uses_optional = False
         message_needs_enums = False
         message_needs_types = False
+        message_needs_constants = False
 
         for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
             parsed_types.clear()
@@ -443,6 +446,8 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                 message_needs_enums = needs_enums(sorted_types)
             if not message_needs_types:
                 message_needs_types = needs_types(sorted_types)
+            if action == 'Get15118EVCertificate':
+                message_needs_constants = True
 
         for (type_name, type_key) in (('Request', 'req'), ('Response', 'res')):
             parsed_types.clear()
@@ -482,6 +487,7 @@ def parse_schemas(version: str, schema_dir: Path = Path('schemas/json/'),
                     'uses_optional': message_uses_optional,
                     'needs_enums': message_needs_enums,
                     'needs_types': message_needs_types,
+                    'needs_constants': message_needs_constants,
                     'action': {
                         'name': action,
                         'class_name': action_class_name,
