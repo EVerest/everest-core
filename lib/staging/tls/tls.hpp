@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <netinet/in.h>
 #include <openssl/types.h>
 #include <optional>
 #include <pthread.h>
@@ -380,6 +381,9 @@ public:
         ConfigItem service{nullptr}; //!< TLS port number as a string
         int socket{INVALID_SOCKET};  //!< use this specific socket - bypasses socket setup in init_socket() when set
         bool ipv6_only{true};        //!< listen on IPv6 only, when false listen on IPv4 only
+
+        bool tls_key_logging{false};      //!< tls key logging is active when true
+        std::string tls_key_logging_path; //!< tls key logging file path
     };
 
     using ConnectionPtr = std::unique_ptr<ServerConnection>;
@@ -407,6 +411,8 @@ private:
     pthread_t m_server_thread{};                        //!< serve() POSIX threads ID
     static int s_sig_int;                               //!< signal to use to wakeup serve()
     ConfigurationCallback m_init_callback{nullptr};     //!< callback to retrieve SSL configuration
+
+    ConfigItem m_tls_key_interface{nullptr};
 
     /**
      * \brief initialise the server socket
@@ -629,6 +635,23 @@ public:
      * \brief the default SSL callbacks
      */
     static override_t default_overrides();
+};
+
+class TlsKeyLoggingServer {
+public:
+    TlsKeyLoggingServer(const std::string& interface_name, uint16_t port);
+    ~TlsKeyLoggingServer();
+
+    ssize_t send(const char* line);
+
+    auto get_fd() const {
+        return fd;
+    }
+
+private:
+    int fd{-1};
+    uint8_t buffer[2048];
+    sockaddr_in6 destination_address{};
 };
 
 } // namespace tls
