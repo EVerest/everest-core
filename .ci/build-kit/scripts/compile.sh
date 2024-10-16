@@ -4,7 +4,7 @@ set -e
 
 
 EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
-EVEREST_CMAKE_VERSION=4d81814
+EVEREST_CMAKE_VERSION=3aec8e3b058a9a1edb843da4fe46bb12d7aef071
 rm -rf ${EVEREST_CMAKE_PATH}
 git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
     && cd ${EVEREST_CMAKE_PATH} \
