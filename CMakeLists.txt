@@ -12,5 +12,9 @@ find_package(everest-cmake 0.3 REQUIRED
 
 ev_setup_cmake_variables_python_wheel()
 
-add_subdirectory(ev-dev-tools)
+ev_add_pip_package(
+    NAME ev-dev-tools
+    SOURCE_DIRECTORY ev-dev-tools
+)
+
 add_subdirectory(everest-testing)
