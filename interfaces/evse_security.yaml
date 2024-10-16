@@ -154,6 +154,26 @@ cmds:
       description: The response to the requested command
       type: object
       $ref: /evse_security#/GetCertificateInfoResult
+  get_all_valid_certificates_info:
+    description:  >-
+        Finds the latest valid leafs, for each root certificate that is present on the filesystem,
+        and returns all the newest valid leafs that are present for different roots
+    arguments:
+      certificate_type: 
+        description: Specifies the leaf certificate type
+        type: string
+        $ref: /evse_security#/LeafCertificateType
+      encoding:
+        description: Specifies the encoding of the key
+        type: string
+        $ref: /evse_security#/EncodingFormat
+      include_ocsp:
+        description: Specifies whether per-certificate OCSP data is also requested
+        type: boolean
+    result:
+      description: The response to the requested command
+      type: object
+      $ref: /evse_security#/GetCertificateFullInfoResult
   get_verify_file:
     description: Command to get the file path of a CA bundle that can be used for verification
     arguments:
