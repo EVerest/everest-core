@@ -7,27 +7,28 @@ function (ev_create_pip_install_dist_target)
         DEPENDS
     )
     cmake_parse_arguments(
-        "EV_CREATE_PIP_INSTALL_DIST_TARGET"
+        "arg"
         ""
         "${oneValueArgs}"
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}" STREQUAL "")
+    if ("${arg_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
-        set(EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    if ("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(arg_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        message(STATUS "ev_create_pip_install_dist_target: no PACKAGE_SOURCE_DIRECTORY provided, using: ${arg_PACKAGE_SOURCE_DIRECTORY}")
     endif()
 
-    set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist_installed")
+    set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${arg_PACKAGE_NAME}_pip_install_dist_installed")
     add_custom_command(
         OUTPUT
             "${CHECK_DONE_FILE}"
         COMMENT
-            "Installing ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME} from distribution"
+            "Installing ${arg_PACKAGE_NAME} from distribution"
         WORKING_DIRECTORY
-            ${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_SOURCE_DIRECTORY}
+            ${arg_PACKAGE_SOURCE_DIRECTORY}
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
@@ -37,11 +38,16 @@ function (ev_create_pip_install_dist_target)
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
     )
 
-    add_custom_target(${EV_CREATE_PIP_INSTALL_DIST_TARGET_PACKAGE_NAME}_pip_install_dist
+    set(TARGET_NAME "${arg_PACKAGE_NAME}_pip_install_dist")
+    add_custom_target(${TARGET_NAME}
         DEPENDS
             "${CHECK_DONE_FILE}"
         DEPENDS
-            ${EV_CREATE_PIP_INSTALL_DIST_TARGET_DEPENDS}
+            ${arg_DEPENDS}
+    )
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+            PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
     )
 endfunction()
 
@@ -54,31 +60,37 @@ function (ev_create_pip_install_local_target)
         DEPENDS
     )
     cmake_parse_arguments(
-        "EV_CREATE_PIP_INSTALL_LOCAL_TARGET"
+        "arg"
         ""
         "${oneValueArgs}"
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_NAME}" STREQUAL "")
+    if ("${arg_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
-        set(EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    if ("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+        set(arg_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        message(STATUS "ev_create_pip_install_local_target: no PACKAGE_SOURCE_DIRECTORY provided, using: ${arg_PACKAGE_SOURCE_DIRECTORY}")
     endif()
 
-    add_custom_target(${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_NAME}_pip_install_local
+    set(TARGET_NAME "${arg_PACKAGE_NAME}_pip_install_local")
+    add_custom_target(${TARGET_NAME}
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
             ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
         WORKING_DIRECTORY
-            ${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_SOURCE_DIRECTORY}
+            ${arg_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
-            ${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_DEPENDS}
+            ${arg_DEPENDS}
         COMMENT
-            "Installing ${EV_CREATE_PIP_INSTALL_LOCAL_TARGET_PACKAGE_NAME} via user-mode from build"
+            "Installing ${arg_PACKAGE_NAME} via user-mode from build"
+    )
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+            PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
     )
 endfunction()
 
@@ -92,21 +104,21 @@ function(ev_create_pip_install_targets)
         LOCAL_DEPENDS
     )
     cmake_parse_arguments(
-        "EV_CREATE_PIP_INSTALL_TARGETS"
+        "arg"
         ""
         "${oneValueArgs}"
         "${multiValueArgs}"
         ${ARGN}
     )
     ev_create_pip_install_dist_target(
-        PACKAGE_NAME ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_NAME}
-        PACKAGE_SOURCE_DIRECTORY ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
-        DEPENDS ${EV_CREATE_PIP_INSTALL_TARGETS_DIST_DEPENDS}
+        PACKAGE_NAME ${arg_PACKAGE_NAME}
+        PACKAGE_SOURCE_DIRECTORY ${arg_PACKAGE_SOURCE_DIRECTORY}
+        DEPENDS ${arg_DIST_DEPENDS}
     )
     ev_create_pip_install_local_target(
-        PACKAGE_NAME ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_NAME}
-        PACKAGE_SOURCE_DIRECTORY ${EV_CREATE_PIP_INSTALL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
-        DEPENDS ${EV_CREATE_PIP_INSTALL_TARGETS_LOCAL_DEPENDS}
+        PACKAGE_NAME ${arg_PACKAGE_NAME}
+        PACKAGE_SOURCE_DIRECTORY ${arg_PACKAGE_SOURCE_DIRECTORY}
+        DEPENDS ${arg_LOCAL_DEPENDS}
     )
 endfunction()
 
