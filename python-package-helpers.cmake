@@ -1,3 +1,80 @@
+function (ev_add_pip_package)
+    set(one_value_args
+        NAME
+        SOURCE_DIRECTORY
+    )
+
+    cmake_parse_arguments(
+        "args"
+        "" # no optional arguments
+        "${one_value_args}"
+        ""
+        ${ARGN}
+    )
+
+    if ("${args_NAME}" STREQUAL "")
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: NAME is required")
+    endif()
+
+    cmake_path(ABSOLUTE_PATH args_SOURCE_DIRECTORY NORMALIZE)
+
+    set(TARGET_NAME "ev_pip_package_${args_NAME}")
+    add_custom_target(${TARGET_NAME})
+
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+            SOURCE_DIRECTORY "${args_SOURCE_DIRECTORY}"
+    )
+endfunction()
+
+function (ev_install_pip_package)
+    set(options
+        LOCAL
+        FORCE
+    )
+
+    set(one_value_args
+        NAME
+    )
+
+    cmake_parse_arguments(
+        "args"
+        "${options}"
+        "${one_value_args}"
+        ""
+        ${ARGN}
+    )
+
+    set(TARGET_NAME "ev_pip_package_${args_NAME}")
+
+    if (NOT TARGET ${TARGET_NAME})
+        message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: target ${TARGET_NAME} for package ${args_NAME} does not exist")
+    endif()
+
+    get_target_property(SOURCE_DIRECTORY ${TARGET_NAME} SOURCE_DIRECTORY)
+
+    # NOTE (aw): probably we also want to directly forward arguments
+    set(PIP_INSTALL_ARGS "")
+    if (args_LOCAL)
+        list(APPEND PIP_INSTALL_ARGS --user)
+    endif()
+    if (args_FORCE)
+        list(APPEND PIP_INSTALL_ARGS --force-reinstall)
+    endif()
+
+    # FIXME (aw): check wether a check done file is necessary here
+    #             if so, it should be inside a separate function
+    #             discussion of update behavior is needed before
+
+    execute_process(
+        COMMAND
+            ${Python3_EXECUTABLE} -m pip install ${PIP_INSTALL_ARGS} .
+        WORKING_DIRECTORY
+            ${SOURCE_DIRECTORY}
+
+    )
+endfunction()
+
 function (ev_create_pip_install_dist_target)
     set(oneValueArgs
         PACKAGE_NAME
