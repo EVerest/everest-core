@@ -47,6 +47,7 @@ ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const b
     try {
         event_data.timestamp = ocpp::DateTime(error.timestamp);
     } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse datetime string: " << e.what() << ". Using current DateTime instead";
         event_data.timestamp = ocpp::DateTime();
     }
     event_data.trigger = ocpp::v201::EventTriggerEnum::Alerting;
