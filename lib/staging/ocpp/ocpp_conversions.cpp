@@ -1,5 +1,7 @@
 #include "ocpp_conversions.hpp"
 
+#include <everest/logging.hpp>
+
 #include "generated/types/display_message.hpp"
 
 namespace ocpp_conversions {
@@ -185,8 +187,16 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
         m.state = to_ocpp_201_display_message_state(display_message.state.value());
     }
 
-    m.timestamp_from = display_message.timestamp_from;
-    m.timestamp_to = display_message.timestamp_to;
+    try {
+        if (display_message.timestamp_from.has_value()) {
+            m.timestamp_from = ocpp::DateTime(display_message.timestamp_from.value());
+        }
+        if (display_message.timestamp_to.has_value()) {
+            m.timestamp_to = ocpp::DateTime(display_message.timestamp_to.value());
+        }
+    } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse timestamp when converting DisplayMessage: " << e.what();
+    }
 
     return m;
 }
@@ -346,5 +356,15 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
     }
 
     return cost;
+}
+
+ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string) {
+    std::optional<ocpp::DateTime> timestamp;
+    try {
+        return ocpp::DateTime(datetime_string);
+    } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse datetime string: " << e.what() << ". Using current DateTime instead";
+    }
+    return ocpp::DateTime();
 }
 } // namespace ocpp_conversions
