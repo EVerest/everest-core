@@ -4,6 +4,7 @@
 #define OCPP201_ERROR_HANDLING_HPP
 
 #include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp_conversions.hpp>
 #include <utils/error.hpp>
 
 #include <unordered_map>
@@ -43,7 +44,7 @@ ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const b
     ocpp::v201::EventData event_data;
     event_data.eventId = event_id; // This can theoretically conflict with eventIds generated in libocpp (e.g.
                                    // for monitoring events), but the spec does not strictly forbid that
-    event_data.timestamp = ocpp::DateTime(error.timestamp);
+    event_data.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(error.timestamp);
     event_data.trigger = ocpp::v201::EventTriggerEnum::Alerting;
     event_data.cause = std::nullopt; // TODO: use caused_by when available within error object
     event_data.actualValue = cleared ? "false" : "true";
