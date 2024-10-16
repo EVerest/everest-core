@@ -1199,7 +1199,6 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
             types::energy::ScheduleReqEntry schedule_req_entry;
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
-            // FIXME: ocpp::DateTime can throw an exception, what do we want to do here, use now() as fallback?
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (composite_schedule.chargingRateUnit == ocpp::v201::ChargingRateUnitEnum::A) {
                 limits_req.ac_max_current_A = period.limit;
