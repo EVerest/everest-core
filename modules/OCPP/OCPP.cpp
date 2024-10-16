@@ -82,7 +82,6 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::ScheduleReqEntry schedule_req_entry;
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
-            // FIXME:: ocpp::DateTime can throw an exception, what do we want to do here?
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
