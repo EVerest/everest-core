@@ -1,5 +1,7 @@
 #include "ocpp_conversions.hpp"
 
+#include <everest/logging.hpp>
+
 #include "generated/types/display_message.hpp"
 
 namespace ocpp_conversions {
