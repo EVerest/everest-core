@@ -61,15 +61,15 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    double settings_connector_export_voltage;
-    double settings_connector_import_voltage;
-    double settings_connector_max_export_current;
-    double settings_connector_max_import_current;
+    double settings_connector_export_voltage{0.0};
+    double settings_connector_import_voltage{0.0};
+    double settings_connector_max_export_current{0.0};
+    double settings_connector_max_import_current{0.0};
     types::power_supply_DC::Mode mode;
-    double connector_voltage;
-    double connector_current;
-    double energy_import_total;
-    double energy_export_total;
+    double connector_voltage{0.0};
+    double connector_current{0.0};
+    double energy_import_total{0.0};
+    double energy_export_total{0.0};
     std::mutex power_supply_values_mutex;
     Everest::Thread power_supply_thread_handle;
     types::powermeter::Powermeter power_meter_external();
