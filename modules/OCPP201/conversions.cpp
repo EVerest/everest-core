@@ -3,6 +3,7 @@
 
 #include <conversions.hpp>
 #include <everest/logging.hpp>
+#include <ocpp_conversions.hpp>
 
 namespace module {
 namespace conversions {
@@ -137,7 +138,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
                     const ocpp::v201::ReadingContextEnum& reading_context,
                     const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
-    meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
+    meter_value.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(power_meter.timestamp);
 
     // signed_meter_value is intended for OCMF style blobs of signed meter value reports during transaction start or end
     // This is interpreted as Energy.Active.Import.Register

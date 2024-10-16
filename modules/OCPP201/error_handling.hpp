@@ -4,6 +4,7 @@
 #define OCPP201_ERROR_HANDLING_HPP
 
 #include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp_conversions.hpp>
 #include <utils/error.hpp>
 
 #include <unordered_map>

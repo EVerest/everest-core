@@ -44,4 +44,9 @@ create_charging_price_component(const double& price, const uint32_t& number_of_d
 types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& running_cost,
                                                      const uint32_t number_of_decimals,
                                                      std::optional<types::money::CurrencyCode> currency_code);
+
+/// \brief Convert given \p datetime_string in RFC3339 format to a OCPP DateTime. If this is not possible return the
+/// current datetime
+ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string);
+
 }; // namespace ocpp_conversions
