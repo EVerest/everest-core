@@ -360,11 +360,11 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
 
 ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string) {
     std::optional<ocpp::DateTime> timestamp;
-        try {
-            return ocpp::DateTime(datetime_string);
-        } catch (const ocpp::TimePointParseException& e) {
-            EVLOG_warning << "Could not parse datetime string: " << e.what();
-        }
-        return ocpp::DateTime();
+    try {
+        return ocpp::DateTime(datetime_string);
+    } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse datetime string: " << e.what() << ". Using current DateTime instead";
+    }
+    return ocpp::DateTime();
 }
 } // namespace ocpp_conversions
