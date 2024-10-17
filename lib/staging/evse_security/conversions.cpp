@@ -451,10 +451,11 @@ types::evse_security::OCSPRequestDataList to_everest(evse_security::OCSPRequestD
 types::evse_security::CertificateInfo to_everest(evse_security::CertificateInfo other) {
     types::evse_security::CertificateInfo lhs;
     lhs.key = other.key;
+    lhs.certificate_root = other.certificate_root;
     lhs.certificate = other.certificate;
     lhs.certificate_single = other.certificate_single;
     lhs.password = other.password;
-    lhs.certificate_count = other.certificate_count;
+    lhs.certificate_count = other.certificate_count;    
     return lhs;
 }
 

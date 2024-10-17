@@ -268,6 +268,7 @@ types:
     type: object
     required:
       - status
+      - info
     properties:
       status:
         description: The status of the requested command
