@@ -72,7 +72,8 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
-            return Event::RETRY_MATCHING;
+            ctx.log_info("CM_SLAC_PARM_REQ timed out -> FAILED");
+            return Event::FAILED;
         }
 
         call_back_ms = remaining_milliseconds(timeout_slac_parm_req, now_tp);
@@ -139,7 +140,7 @@ FSMSimpleState::HandleEventReturnType MatchingState::handle_event(AllocatorType&
     } else if (ev == Event::MATCH_COMPLETE) {
         // Wait for link up to be confirmed before going to MATCHED state if enabled in config
         if (ctx.slac_config.link_status.do_detect) {
-            return sa.create_simple<WaitForLinkState>(ctx);
+            return sa.create_simple<WaitForLinkState>(ctx, std::move(match_cnf_message));
         } else {
             return sa.create_simple<MatchedState>(ctx);
         }

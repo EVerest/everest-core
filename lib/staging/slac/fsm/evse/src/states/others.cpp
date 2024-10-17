@@ -3,6 +3,7 @@
 #include <slac/fsm/evse/states/others.hpp>
 
 #include <cstring>
+#include <optional>
 #include <string_view>
 
 #include <slac/fsm/evse/states/matching.hpp>
@@ -76,7 +77,7 @@ bool ResetState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
     if (mmtype != (slac::defs::MMTYPE_CM_SET_KEY | slac::defs::MMTYPE_MODE_CNF)) {
         // unexpected message
-        // FIXME (aw): need to also deal with CM_VALIDATE.REQ
+        // FIXME (aw): need to also deal with CM_VALIDATE.REQ. It is optional in the standard.
         ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
         return false;
     } else {
@@ -163,6 +164,37 @@ FSMSimpleState::HandleEventReturnType IdleState::handle_event(AllocatorType& sa,
     }
 }
 
+static std::optional<bool> check_link_status_cnf(const slac::fsm::evse::ModemVendor modem_vendor,
+                                                 slac::messages::HomeplugMessage& message) {
+    const auto mmtype = message.get_mmtype();
+    if (modem_vendor == ModemVendor::Qualcomm &&
+        mmtype == (slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
+        const auto success = message.get_payload<slac::messages::qualcomm::link_status_cnf>().link_status == 0x01;
+        return {success};
+
+    } else if (modem_vendor == ModemVendor::Lumissil &&
+               mmtype == (slac::defs::lumissil::MMTYPE_NSCM_GET_D_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
+        const auto success =
+            message.get_payload<slac::messages::lumissil::nscm_get_d_link_status_cnf>().link_status == 0x01;
+        return {success};
+    }
+    return {};
+}
+
+static bool send_link_status_req(slac::fsm::evse::Context& ctx) {
+    if (ctx.modem_vendor == ModemVendor::Qualcomm) {
+        slac::messages::qualcomm::link_status_req link_status_req;
+        ctx.send_slac_message(ctx.slac_config.plc_peer_mac, link_status_req);
+        return true;
+    } else if (ctx.modem_vendor == ModemVendor::Lumissil) {
+        slac::messages::lumissil::nscm_get_d_link_status_req link_status_req;
+        ctx.send_slac_message(ctx.slac_config.plc_peer_mac, link_status_req);
+        return true;
+    }
+
+    return false;
+}
+
 void MatchedState::enter() {
     ctx.signal_state("MATCHED");
     ctx.signal_dlink_ready(true);
@@ -170,11 +202,38 @@ void MatchedState::enter() {
 }
 
 FSMSimpleState::HandleEventReturnType MatchedState::handle_event(AllocatorType& sa, Event ev) {
-    if (ev == Event::RESET) {
+    if (ev == Event::SLAC_MESSAGE) {
+        auto link_ok = check_link_status_cnf(ctx.modem_vendor, ctx.slac_message_payload);
+        if (link_ok.has_value()) {
+            if (link_ok.value()) {
+                return sa.PASS_ON;
+            } else {
+                ctx.log_info("Connection lost in matched state");
+                ctx.signal_error_routine_request();
+                return sa.PASS_ON;
+            }
+        }
+    } else if (ev == Event::RESET) {
         return sa.create_simple<ResetState>(ctx);
-    } else {
-        return sa.PASS_ON;
     }
+    return sa.PASS_ON;
+}
+
+FSMSimpleState::CallbackReturnType MatchedState::callback() {
+    const auto& link_status = ctx.slac_config.link_status;
+
+    if (not link_status.do_detect) {
+        return {};
+    }
+
+    if (not link_status_req_sent) {
+        link_status_req_sent = send_link_status_req(ctx);
+    } else {
+        // Link is confirmed not up yet, query again
+        link_status_req_sent = false;
+    }
+
+    return link_status.poll_in_matched_state_ms;
 }
 
 void MatchedState::leave() {
@@ -182,7 +241,9 @@ void MatchedState::leave() {
 }
 
 void FailedState::enter() {
-    ctx.signal_error_routine_request();
+    if (ctx.slac_config.ac_mode_five_percent) {
+        ctx.signal_error_routine_request();
+    }
     ctx.log_info("Entered Failed state");
 }
 
@@ -210,6 +271,8 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
         ctx.log_info("Link could not be established, resetting...");
         // Notify higher layers to on CP signal
         return sa.create_simple<FailedState>(ctx);
+    } else if (ev == Event::RESET) {
+        return sa.create_simple<ResetState>(ctx);
     } else {
         return sa.PASS_ON;
     }
@@ -218,19 +281,7 @@ FSMSimpleState::HandleEventReturnType WaitForLinkState::handle_event(AllocatorTy
 FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
     const auto& cfg = ctx.slac_config;
     if (not link_status_req_sent) {
-
-        if (ctx.modem_vendor == ModemVendor::Qualcomm) {
-            slac::messages::qualcomm::link_status_req link_status_req;
-            ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
-            link_status_req_sent = true;
-        } else if (ctx.modem_vendor == ModemVendor::Lumissil) {
-            slac::messages::lumissil::nscm_get_d_link_status_req link_status_req;
-            ctx.send_slac_message(cfg.plc_peer_mac, link_status_req);
-            link_status_req_sent = true;
-        } else {
-            ctx.log_info("Link detection not supported on this chip");
-        }
-
+        link_status_req_sent = send_link_status_req(ctx);
         return cfg.link_status.retry_ms;
     } else {
         // Did we timeout?
@@ -243,25 +294,27 @@ FSMSimpleState::CallbackReturnType WaitForLinkState::callback() {
     }
 }
 
+WaitForLinkState::WaitForLinkState(Context& ctx,
+                                   std::unique_ptr<slac::messages::cm_slac_match_cnf> sent_match_cnf_message) :
+    FSMSimpleState(ctx), match_cnf_message(std::move(sent_match_cnf_message)) {
+}
+
 bool WaitForLinkState::handle_slac_message(slac::messages::HomeplugMessage& message) {
     const auto mmtype = message.get_mmtype();
 
-    if (ctx.modem_vendor == ModemVendor::Qualcomm &&
-        mmtype == (slac::defs::qualcomm::MMTYPE_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
-        const auto success = message.get_payload<slac::messages::qualcomm::link_status_cnf>().link_status == 0x01;
-        return success;
+    auto link_ok = check_link_status_cnf(ctx.modem_vendor, message);
 
-    } else if (ctx.modem_vendor == ModemVendor::Lumissil &&
-               mmtype == (slac::defs::lumissil::MMTYPE_NSCM_GET_D_LINK_STATUS | slac::defs::MMTYPE_MODE_CNF)) {
-        const auto success =
-            message.get_payload<slac::messages::lumissil::nscm_get_d_link_status_cnf>().link_status == 0x01;
-        return success;
+    if (link_ok.has_value() and link_ok.value()) {
+        return true;
+    }
 
-    } else {
-        // unexpected message
-        ctx.log_info("Received non-expected SLAC message of type " + format_mmtype(mmtype));
+    if (mmtype == (slac::defs::MMTYPE_CM_SLAC_MATCH | slac::defs::MMTYPE_MODE_REQ)) {
+        // EV retries MATCH_REQ, so we send the CNF again
+        ctx.log_info("Received CM_SLAC_MATCH.REQ retry from EV, sending out CM_SLAC_MATCH.CNF again.");
+        ctx.send_slac_message(message.get_src_mac(), *match_cnf_message);
         return false;
     }
+    return false;
 }
 
 FSMSimpleState::HandleEventReturnType InitState::handle_event(AllocatorType& sa, Event ev) {
