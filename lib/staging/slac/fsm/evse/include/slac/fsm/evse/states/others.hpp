@@ -3,8 +3,10 @@
 #ifndef EVSE_SLAC_STATES_OTHERS_HPP
 #define EVSE_SLAC_STATES_OTHERS_HPP
 
-#include "../fsm.hpp"
 #include <chrono>
+#include <memory>
+
+#include "../fsm.hpp"
 
 namespace slac::fsm::evse {
 
@@ -58,6 +60,10 @@ struct MatchedState : public FSMSimpleState {
 
     void enter() final;
     void leave() final;
+
+    CallbackReturnType callback() final;
+
+    bool link_status_req_sent{false};
 };
 
 struct FailedState : public FSMSimpleState {
@@ -69,7 +75,7 @@ struct FailedState : public FSMSimpleState {
 };
 
 struct WaitForLinkState : public FSMSimpleState {
-    using FSMSimpleState::FSMSimpleState;
+    WaitForLinkState(Context& ctx, std::unique_ptr<slac::messages::cm_slac_match_cnf> sent_match_cnf_message);
 
     HandleEventReturnType handle_event(AllocatorType&, Event) final;
 
@@ -81,6 +87,7 @@ struct WaitForLinkState : public FSMSimpleState {
 
     bool link_status_req_sent{false};
     std::chrono::steady_clock::time_point start_time;
+    std::unique_ptr<slac::messages::cm_slac_match_cnf> match_cnf_message;
 };
 
 struct InitState : public FSMSimpleState {
