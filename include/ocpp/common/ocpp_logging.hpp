@@ -35,6 +35,12 @@ struct LogRotationConfig {
     }
 };
 
+enum class LogRotationStatus {
+    NotRotated,
+    Rotated,
+    RotatedWithDeletion
+};
+
 /// \brief contains a ocpp message logging abstraction
 class MessageLogging {
 private:
@@ -55,6 +61,7 @@ private:
     std::ofstream security_log_os;
     std::mutex output_file_mutex;
     std::function<void(const std::string& message, MessageDirection direction)> message_callback;
+    std::function<void(LogRotationStatus status)> status_callback;
     std::map<std::string, std::string> lookup_map;
     std::recursive_mutex session_id_logging_mutex;
     std::map<std::string, std::shared_ptr<MessageLogging>> session_id_logging;
@@ -90,16 +97,16 @@ private:
 
     /// \brief Rotates the log at the given file \p file_basename and remove oldest file if there are more log files
     /// than the maximum
-    void rotate_log(const std::string& file_basename);
+    LogRotationStatus rotate_log(const std::string& file_basename);
 
     /// \brief Rotates the log at the given \p path if needed based on the config, closing the stream \p os before
-    void rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os);
+    LogRotationStatus rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os);
 
     /// \brief Rotates the log at the given \p path if needed based on the config, calling \p before_close_of_os before
     /// closing the stream \p os and calling \p after_open_of_os afterwards
-    void rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os,
-                              std::function<void(std::ofstream& os)> before_close_of_os,
-                              std::function<void(std::ofstream& os)> after_open_of_os);
+    LogRotationStatus rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os,
+                                           std::function<void(std::ofstream& os)> before_close_of_os,
+                                           std::function<void(std::ofstream& os)> after_open_of_os);
 
 public:
     /// \brief Creates a new MessageLogging object with the provided configuration
@@ -115,7 +122,7 @@ public:
         bool log_to_console, bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security,
         bool session_logging,
         std::function<void(const std::string& message, MessageDirection direction)> message_callback,
-        LogRotationConfig log_rotation_config);
+        LogRotationConfig log_rotation_config, std::function<void(LogRotationStatus status)> status_callback);
     ~MessageLogging();
 
     /// \brief Log a message originating from the charge point

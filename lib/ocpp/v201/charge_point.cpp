@@ -564,7 +564,15 @@ void ChargePoint::configure_message_logging_format(const std::string& message_lo
             !log_formats.empty(), message_log_path, "libocpp_201", log_to_console, detailed_log_to_console, log_to_file,
             log_to_html, log_security, session_logging, logging_callback,
             ocpp::LogRotationConfig(log_rotation_date_suffix, log_rotation_maximum_file_size,
-                                    log_rotation_maximum_file_count));
+                                    log_rotation_maximum_file_count),
+            [this](ocpp::LogRotationStatus status) {
+                if (status == ocpp::LogRotationStatus::RotatedWithDeletion) {
+                    const auto& security_event = ocpp::security_events::SECURITYLOGWASCLEARED;
+                    std::string tech_info = "Security log was rotated and an old log was deleted in the process";
+                    this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                                          utils::is_critical(security_event));
+                }
+            });
     } else {
         this->logging = std::make_shared<ocpp::MessageLogging>(
             !log_formats.empty(), message_log_path, DateTime().to_rfc3339(), log_to_console, detailed_log_to_console,
@@ -1371,11 +1379,17 @@ void ChargePoint::message_callback(const std::string& message) {
         this->logging->central_system("Unknown", message);
         EVLOG_error << "JSON exception during reception of message: " << e.what();
         this->send(CallError(MessageId("-1"), "RpcFrameworkError", e.what(), json({})));
+        const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(message), true,
+                                              utils::is_critical(security_event));
         return;
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
         auto call_error = CallError(MessageId("-1"), "FormationViolation", e.what(), json({}));
         this->send(call_error);
+        const auto& security_event = ocpp::security_events::INVALIDMESSAGES;
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(message), true,
+                                              utils::is_critical(security_event));
         return;
     }
 
@@ -2329,6 +2343,11 @@ void ChargePoint::handle_certificate_signed_req(Call<CertificateSignedRequest> c
         cert_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate and
         this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
         this->connectivity_manager->disconnect_websocket(WebsocketCloseReason::ServiceRestart);
+
+        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+        std::string tech_info = "Changed charging station certificate";
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                              utils::is_critical(security_event));
     }
 }
 
@@ -2627,8 +2646,14 @@ void ChargePoint::handle_set_network_profile_req(Call<SetNetworkProfileRequest> 
         return;
     }
 
-    EVLOG_info << "Received and stored a new network connection profile at configurationSlot: "
-               << msg.configurationSlot;
+    std::string tech_info = "Received and stored a new network connection profile at configurationSlot: " +
+                            std::to_string(msg.configurationSlot);
+    EVLOG_info << tech_info;
+
+    const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+    this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                          utils::is_critical(security_event));
+
     response.status = SetNetworkProfileStatusEnum::Accepted;
     ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
     this->send<SetNetworkProfileResponse>(call_result);
@@ -3561,6 +3586,14 @@ void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest>
         msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
     response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
 
+    if (response.status == InstallCertificateStatusEnum::Accepted) {
+        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+        std::string tech_info =
+            "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                              utils::is_critical(security_event));
+    }
+
     ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
     this->send<InstallCertificateResponse>(call_result);
 }
@@ -3576,6 +3609,13 @@ void ChargePoint::handle_delete_certificate_req(Call<DeleteCertificateRequest> c
     const auto status = this->evse_security->delete_certificate(certificate_hash_data);
 
     response.status = ocpp::evse_security_conversions::to_ocpp_v201(status);
+
+    if (response.status == DeleteCertificateStatusEnum::Accepted) {
+        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+        std::string tech_info = "Deleted certificate wit serial number: " + msg.certificateHashData.serialNumber.get();
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                              utils::is_critical(security_event));
+    }
 
     ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
     this->send<DeleteCertificateResponse>(call_result);
@@ -4231,6 +4271,11 @@ void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
         } else {
             EVLOG_debug << "Skipping InvalidCsmsCertificate SecurityEvent since it has been sent already";
         }
+        break;
+    case ConnectionFailedReason::FailedToAuthenticateAtCsms:
+        const auto& security_event = ocpp::security_events::FAILEDTOAUTHENTICATEATCSMS;
+        this->security_event_notification_req(CiString<50>(security_event), std::nullopt, true,
+                                              utils::is_critical(security_event));
         break;
     }
 }

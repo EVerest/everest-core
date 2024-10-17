@@ -1285,9 +1285,20 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
         return 0;
     } break;
 
-    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
-        EVLOG_error << "CLIENT_CONNECTION_ERROR: " << (in ? reinterpret_cast<char*>(in) : "(null)");
+    case LWS_CALLBACK_CLIENT_CONNECTION_ERROR: {
+        std::string error_message = (in ? reinterpret_cast<char*>(in) : "(null)");
+        EVLOG_error << "CLIENT_CONNECTION_ERROR: " << error_message;
         ERR_print_errors_fp(stderr);
+
+        if (error_message.find("HS: ws upgrade unauthorized") != std::string::npos) {
+            this->push_deferred_callback([this]() {
+                if (this->connection_failed_callback) {
+                    this->connection_failed_callback(ConnectionFailedReason::FailedToAuthenticateAtCsms);
+                } else {
+                    EVLOG_error << "Connection failed callback not registered!";
+                }
+            });
+        }
 
         if (data->get_state() == EConnectionState::CONNECTING) {
             data->update_state(EConnectionState::ERROR);
@@ -1296,7 +1307,7 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
 
         on_conn_fail();
         return -1;
-
+    }
     case LWS_CALLBACK_CONNECTING:
         EVLOG_debug << "Client connecting...";
         data->update_state(EConnectionState::CONNECTING);

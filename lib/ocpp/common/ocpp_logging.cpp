@@ -39,7 +39,7 @@ MessageLogging::MessageLogging(
     bool log_messages, const std::string& message_log_path, const std::string& output_file_name, bool log_to_console,
     bool detailed_log_to_console, bool log_to_file, bool log_to_html, bool log_security, bool session_logging,
     std::function<void(const std::string& message, MessageDirection direction)> message_callback,
-    LogRotationConfig log_rotation_config) :
+    LogRotationConfig log_rotation_config, std::function<void(LogRotationStatus status)> status_callback) :
     log_messages(log_messages),
     message_log_path(message_log_path),
     output_file_name(output_file_name),
@@ -53,7 +53,8 @@ MessageLogging::MessageLogging(
     rotate_logs(true),
     date_suffix(log_rotation_config.date_suffix),
     maximum_file_size_bytes(log_rotation_config.maximum_file_size_bytes),
-    maximum_file_count(log_rotation_config.maximum_file_count) {
+    maximum_file_count(log_rotation_config.maximum_file_count),
+    status_callback(status_callback) {
     this->initialize();
 }
 
@@ -154,7 +155,8 @@ std::uintmax_t MessageLogging::file_size(const std::filesystem::path& path) {
     }
 }
 
-void MessageLogging::rotate_log(const std::string& file_basename) {
+LogRotationStatus MessageLogging::rotate_log(const std::string& file_basename) {
+    LogRotationStatus status = LogRotationStatus::NotRotated;
     auto path = std::filesystem::path(this->message_log_path);
     std::vector<std::filesystem::path> files;
     for (const auto& entry : std::filesystem::directory_iterator(path)) {
@@ -173,6 +175,7 @@ void MessageLogging::rotate_log(const std::string& file_basename) {
         EVLOG_info << "Removing oldest log file: " << files.front();
         std::filesystem::remove(files.front());
         files.erase(files.begin());
+        status = LogRotationStatus::RotatedWithDeletion;
     }
 
     // rename the oldest file first
@@ -189,6 +192,9 @@ void MessageLogging::rotate_log(const std::string& file_basename) {
 
             std::filesystem::rename(file, new_file_name);
             EVLOG_info << "Renaming: " << file.string() << " -> " << new_file_name.string();
+            if (status == LogRotationStatus::NotRotated) {
+                status == LogRotationStatus::Rotated;
+            }
         } else {
             // try parsing the .x extension and log an error if this was not possible
             try {
@@ -203,6 +209,9 @@ void MessageLogging::rotate_log(const std::string& file_basename) {
                     new_file_name.replace_extension(new_extension);
                     EVLOG_info << "Renaming: " << file.string() << " -> " << new_file_name.string();
                     std::filesystem::rename(file, new_file_name);
+                    if (status == LogRotationStatus::NotRotated) {
+                        status == LogRotationStatus::Rotated;
+                    }
                 }
 
             } catch (...) {
@@ -210,22 +219,24 @@ void MessageLogging::rotate_log(const std::string& file_basename) {
             }
         }
     }
+    return status;
 }
 
-void MessageLogging::rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os) {
-    rotate_log_if_needed(path, os, nullptr, nullptr);
+LogRotationStatus MessageLogging::rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os) {
+    return rotate_log_if_needed(path, os, nullptr, nullptr);
 }
 
-void MessageLogging::rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os,
-                                          std::function<void(std::ofstream& os)> before_close_of_os,
-                                          std::function<void(std::ofstream& os)> after_open_of_os) {
+LogRotationStatus MessageLogging::rotate_log_if_needed(const std::filesystem::path& path, std::ofstream& os,
+                                                       std::function<void(std::ofstream& os)> before_close_of_os,
+                                                       std::function<void(std::ofstream& os)> after_open_of_os) {
+    LogRotationStatus status = LogRotationStatus::NotRotated;
     if (not this->rotate_logs) {
         // do nothing if log rotation is turned off
-        return;
+        return LogRotationStatus::NotRotated;
     }
     if (maximum_file_size_bytes <= 0) {
         // do nothing if no maximum file size is set
-        return;
+        return LogRotationStatus::NotRotated;
     }
     auto log_file_size = this->file_size(path);
     if (log_file_size >= maximum_file_size_bytes) {
@@ -236,12 +247,13 @@ void MessageLogging::rotate_log_if_needed(const std::filesystem::path& path, std
         }
         os.close();
         os.clear();
-        rotate_log(path.filename().string());
+        status = rotate_log(path.filename().string());
         os.open(path.string(), std::ofstream::app);
         if (after_open_of_os != nullptr) {
             after_open_of_os(os);
         }
     }
+    return status;
 }
 
 MessageLogging::~MessageLogging() {
@@ -301,7 +313,10 @@ void MessageLogging::sys(const std::string& msg) {
 
 void MessageLogging::security(const std::string& msg) {
     std::lock_guard<std::mutex> lock(this->output_file_mutex);
-    this->rotate_log_if_needed(this->security_log_file, this->security_log_os);
+    auto status = this->rotate_log_if_needed(this->security_log_file, this->security_log_os);
+    if (status_callback != nullptr) {
+        status_callback(status);
+    }
     this->security_log_os << msg << "\n";
     this->security_log_os.flush();
 }
