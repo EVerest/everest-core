@@ -58,6 +58,10 @@ struct MatchedState : public FSMSimpleState {
 
     void enter() final;
     void leave() final;
+
+    CallbackReturnType callback() final;
+
+    bool link_status_req_sent{false};
 };
 
 struct FailedState : public FSMSimpleState {

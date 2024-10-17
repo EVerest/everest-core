@@ -19,7 +19,7 @@ provides:
       set_key_timeout_ms:
         description: Timeout for CM_SET_KEY.REQ. Default works for QCA7000/QCA7005/CG5317.
         type: integer
-        default: 500
+        default: 1000
       sounding_attenuation_adjustment:
         description: Offset in dB that should be added to the calculated sounding attenuation
         type: integer

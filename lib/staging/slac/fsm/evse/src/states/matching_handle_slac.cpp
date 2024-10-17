@@ -120,7 +120,27 @@ void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
     }
 }
 
+static bool validate_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& msg) {
+    constexpr uint8_t CM_SLAC_PARM_APPLICATION_TYPE = 0x00; // EV/EVSE matching
+    constexpr uint8_t CM_SLAC_PARM_SECURITY_TYPE = 0x00;    // no security
+
+    if (msg.application_type not_eq CM_SLAC_PARM_APPLICATION_TYPE) {
+        return false;
+    }
+    if (msg.security_type not_eq CM_SLAC_PARM_SECURITY_TYPE) {
+        return false;
+    }
+
+    return true;
+}
+
 void MatchingState::handle_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& msg) {
+
+    if (not validate_cm_slac_parm_req(msg)) {
+        ctx.log_info("Invalid CM_SLAC_PARM.REQ received, ignoring");
+        return;
+    }
+
     // set this flag to true, to disable the retry timeout
     seen_slac_parm_req = true;
 
@@ -275,12 +295,15 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 
     if (not ctx.slac_config.link_status.debug_simulate_failed_matching) {
         auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.slac_config.session_nmk);
+        // Store match confirmation in context, as the EV may retry the match.req later on
+        ctx.match_cnf_message = match_confirm;
         ctx.send_slac_message(tmp_ev_mac, match_confirm);
     } else {
         ctx.log_info("Sending wrong NMK to EV to simulate a failed link setup after match request");
         uint8_t wrong_session_nmk[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
                                          0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
         auto match_confirm = create_cm_slac_match_cnf(*session, msg, wrong_session_nmk);
+
         ctx.send_slac_message(tmp_ev_mac, match_confirm);
     }
 

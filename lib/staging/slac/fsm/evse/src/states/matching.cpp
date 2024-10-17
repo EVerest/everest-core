@@ -72,7 +72,8 @@ FSMSimpleState::CallbackReturnType MatchingState::callback() {
 
     if (!seen_slac_parm_req) {
         if (now_tp >= timeout_slac_parm_req) {
-            return Event::RETRY_MATCHING;
+            ctx.log_info("CM_SLAC_PARM_REQ timed out -> FAILED");
+            return Event::FAILED;
         }
 
         call_back_ms = remaining_milliseconds(timeout_slac_parm_req, now_tp);
