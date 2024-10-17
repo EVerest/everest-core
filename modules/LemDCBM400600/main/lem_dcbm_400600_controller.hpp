@@ -151,6 +151,9 @@ public:
     types::powermeter::TransactionStartResponse start_transaction(const types::powermeter::TransactionReq& value);
     types::powermeter::TransactionStopResponse stop_transaction(const std::string& transaction_id);
     types::powermeter::Powermeter get_powermeter();
+    inline bool is_initialized() {
+        return ("" != meter_id);
+    }
     inline std::string get_public_key_ocmf() {
         return public_key_ocmf;
     }
