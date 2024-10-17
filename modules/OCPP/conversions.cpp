@@ -204,7 +204,7 @@ ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReas
 
 ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter) {
     ocpp::Powermeter ocpp_powermeter;
-    ocpp_powermeter.timestamp = powermeter.timestamp;
+    ocpp_powermeter.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(powermeter.timestamp);
     ocpp_powermeter.energy_Wh_import = {powermeter.energy_Wh_import.total, powermeter.energy_Wh_import.L1,
                                         powermeter.energy_Wh_import.L2, powermeter.energy_Wh_import.L3};
 
