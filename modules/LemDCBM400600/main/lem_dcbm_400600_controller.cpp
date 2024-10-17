@@ -267,15 +267,15 @@ LemDCBM400600Controller::convert_livemeasure_to_powermeter(const std::string& li
     json data = json::parse(livemeasure);
     powermeter.timestamp = data.at("timestamp");
     powermeter.meter_id.emplace(this->meter_id);
-    powermeter.energy_Wh_import = {data.at("energyImportTotal")};
-    powermeter.energy_Wh_export.emplace(types::units::Energy{data.at("energyExportTotal")});
+    powermeter.energy_Wh_import = {data.at("energyImportTotal").get<float>() * 1000.0f};
+    powermeter.energy_Wh_export.emplace(types::units::Energy{data.at("energyExportTotal").get<float>() * 1000.0f});
     auto voltage = types::units::Voltage{};
     voltage.DC = data.at("voltage");
     powermeter.voltage_V.emplace(voltage);
     auto current = types::units::Current{};
     current.DC = data.at("current");
     powermeter.current_A.emplace(current);
-    powermeter.power_W.emplace(types::units::Power{data.at("power")});
+    powermeter.power_W.emplace(types::units::Power{data.at("power").get<float>() * 1000.0f});
     powermeter.temperatures.emplace({types::temperature::Temperature{data.at("temperatureH"), "temperatureH"},
                                      types::temperature::Temperature{data.at("temperatureL"), "temperatureL"}});
     return powermeter;

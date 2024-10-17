@@ -681,6 +681,10 @@ const Certificate* Connection::peer_certificate() const {
     return SSL_get0_peer_certificate(m_context->ctx.get());
 }
 
+SSL* Connection::ssl_context() const {
+    return m_context->ctx.get();
+}
+
 // ----------------------------------------------------------------------------
 // ServerConnection represents a TLS server connection
 

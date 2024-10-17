@@ -72,10 +72,13 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
                 Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_signal_loop);
                 for (auto& event : events) {
                     switch (event) {
-                    case ErrorHandlingEvents::prevent_charging:
+                    case ErrorHandlingEvents::PreventCharging:
                         shared_context.error_prevent_charging_flag = true;
                         break;
-                    case ErrorHandlingEvents::all_errors_cleared:
+                    case ErrorHandlingEvents::AllErrorsPreventingChargingCleared:
+                        shared_context.error_prevent_charging_flag = false;
+                        break;
+                    case ErrorHandlingEvents::AllErrorCleared:
                         shared_context.error_prevent_charging_flag = false;
                         break;
                     default:
@@ -93,13 +96,16 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
     error_handling->signal_error.connect([this](const bool prevent_charging) {
         if (prevent_charging) {
             // raise external error to signal we cannot charge anymore
-            error_handling_event_queue.push(ErrorHandlingEvents::prevent_charging);
+            error_handling_event_queue.push(ErrorHandlingEvents::PreventCharging);
+        } else {
+            EVLOG_info << "All errors cleared that prevented charging";
+            error_handling_event_queue.push(ErrorHandlingEvents::AllErrorsPreventingChargingCleared);
         }
     });
 
     error_handling->signal_all_errors_cleared.connect([this]() {
         EVLOG_info << "All errors cleared";
-        error_handling_event_queue.push(ErrorHandlingEvents::all_errors_cleared);
+        error_handling_event_queue.push(ErrorHandlingEvents::AllErrorCleared);
     });
 }
 
@@ -579,6 +585,19 @@ void Charger::run_state_machine() {
                 }
             }
 
+            if (config_context.state_F_after_fault_ms > 0 and not shared_context.hlc_charging_active) {
+                // First time we see that a fatal error became active, signal F for a short time.
+                // Only use in basic charging mode.
+                if (entered_fatal_error_state()) {
+                    pwm_F();
+                }
+
+                if (internal_context.pwm_F_active and
+                    time_in_fatal_error_state_ms() > config_context.state_F_after_fault_ms) {
+                    pwm_off();
+                }
+            }
+
             // Wait here until all errors are cleared
             if (stop_charging_on_fatal_error_internal()) {
                 break;
@@ -790,6 +809,7 @@ void Charger::process_event(CPEvent cp_event) {
     case CPEvent::CarRequestedStopPower:
     case CPEvent::CarUnplugged:
     case CPEvent::BCDtoEF:
+    case CPEvent::BCDtoE:
     case CPEvent::EFtoBCD:
         session_log.car(false, fmt::format("Event {}", cpevent_to_string(cp_event)));
         break;
@@ -837,7 +857,6 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
             session_log.car(false, "B->C transition before PWM is enabled at this stage violates IEC61851-1");
             shared_context.iec_allow_close_contactor = true;
         } else if (cp_event == CPEvent::CarRequestedStopPower) {
-            session_log.car(false, "C->B transition at this stage violates IEC61851-1");
             shared_context.iec_allow_close_contactor = false;
         }
         break;
@@ -861,10 +880,10 @@ void Charger::process_cp_events_state(CPEvent cp_event) {
                 signal_hlc_stop_charging();
                 session_log.evse(false, "CP state transition C->B at this stage violates ISO15118-2");
             }
-        } else if (cp_event == CPEvent::BCDtoEF) {
+        } else if (cp_event == CPEvent::BCDtoE) {
             shared_context.iec_allow_close_contactor = false;
             shared_context.current_state = EvseState::StoppingCharging;
-            // Tell HLC stack to stop the session in case of an E/F event while charging.
+            // Tell HLC stack to stop the session in case of an E event while charging.
             if (shared_context.hlc_charging_active) {
                 signal_hlc_stop_charging();
                 session_log.evse(false, "CP state transition C->E/F at this stage violates ISO15118-2");
@@ -953,7 +972,7 @@ void Charger::update_pwm_now(float dc) {
             "Set PWM On ({}%) took {} ms", dc * 100.,
             (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start)).count()));
     internal_context.last_pwm_update = std::chrono::steady_clock::now();
-
+    internal_context.pwm_F_active = false;
     bsp->set_pwm(dc);
 }
 
@@ -976,6 +995,7 @@ void Charger::pwm_off() {
     shared_context.pwm_running = false;
     internal_context.update_pwm_last_dc = 1.;
     internal_context.pwm_set_last_ampere = 0.;
+    internal_context.pwm_F_active = false;
     bsp->set_pwm_off();
 }
 
@@ -984,6 +1004,7 @@ void Charger::pwm_F() {
     shared_context.pwm_running = false;
     internal_context.update_pwm_last_dc = 0.;
     internal_context.pwm_set_last_ampere = 0.;
+    internal_context.pwm_F_active = true;
     bsp->set_pwm_F();
 }
 
@@ -1072,7 +1093,8 @@ bool Charger::pause_charging_wait_for_power() {
 
 // pause charging since no power is available at the moment
 bool Charger::pause_charging_wait_for_power_internal() {
-    if (shared_context.current_state == EvseState::Charging) {
+    if (shared_context.current_state == EvseState::Charging or
+        shared_context.current_state == EvseState::ChargingPausedEV) {
         shared_context.current_state = EvseState::WaitingForEnergy;
         return true;
     }
@@ -1301,7 +1323,8 @@ bool Charger::switch_three_phases_while_charging(bool n) {
 void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _ac_hlc_enabled,
                     bool _ac_hlc_use_5percent, bool _ac_enforce_hlc, bool _ac_with_soc_timeout,
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
-                    const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state) {
+                    const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
+                    const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1311,6 +1334,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     ac_hlc_enabled_current_session = config_context.ac_hlc_enabled = _ac_hlc_enabled;
     config_context.ac_hlc_use_5percent = _ac_hlc_use_5percent;
     config_context.ac_enforce_hlc = _ac_enforce_hlc;
+    config_context.soft_over_current_timeout_ms = _soft_over_current_timeout_ms;
     shared_context.ac_with_soc_timeout = _ac_with_soc_timeout;
     shared_context.ac_with_soc_timer = 3600000;
     soft_over_current_tolerance_percent = _soft_over_current_tolerance_percent;
@@ -1318,6 +1342,8 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
 
     config_context.switch_3ph1ph_delay_s = _switch_3ph1ph_delay_s;
     config_context.switch_3ph1ph_cp_state_F = _switch_3ph1ph_cp_state == "F";
+
+    config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
@@ -1649,7 +1675,8 @@ void Charger::check_soft_over_current() {
     auto now = std::chrono::steady_clock::now();
     auto time_since_over_current_started =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - internal_context.last_over_current_event).count();
-    if (internal_context.over_current and time_since_over_current_started >= SOFT_OVER_CURRENT_TIMEOUT) {
+    if (internal_context.over_current and
+        time_since_over_current_started >= config_context.soft_over_current_timeout_ms) {
         auto errstr =
             fmt::format("Soft overcurrent event (L1:{}, L2:{}, L3:{}, limit {}) triggered",
                         shared_context.current_drawn_by_vehicle[0], shared_context.current_drawn_by_vehicle[1],
@@ -1859,14 +1886,31 @@ bool Charger::stop_charging_on_fatal_error() {
     return stop_charging_on_fatal_error_internal();
 }
 
+bool Charger::entered_fatal_error_state() {
+    return shared_context.error_prevent_charging_flag and not shared_context.last_error_prevent_charging_flag;
+}
+
+int Charger::time_in_fatal_error_state_ms() {
+    if (not internal_context.fatal_error_timer_running) {
+        return 0;
+    } else {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                     internal_context.fatal_error_became_active)
+            .count();
+    }
+}
+
 bool Charger::stop_charging_on_fatal_error_internal() {
     bool err = false;
     if (shared_context.error_prevent_charging_flag) {
         if (not shared_context.last_error_prevent_charging_flag) {
+            internal_context.fatal_error_became_active = std::chrono::steady_clock::now();
+
             graceful_stop_charging();
         }
         err = true;
     }
+    internal_context.fatal_error_timer_running = err;
     shared_context.last_error_prevent_charging_flag = shared_context.error_prevent_charging_flag;
     return err;
 }

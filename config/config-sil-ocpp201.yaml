@@ -76,7 +76,7 @@ active_modules:
     config_module:
       connector_id: 2
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   ev_manager_1:
     module: EvManager
     config_module:

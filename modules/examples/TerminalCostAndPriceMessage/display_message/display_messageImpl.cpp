@@ -23,8 +23,8 @@ display_messageImpl::handle_set_display_message(std::vector<types::display_messa
 
     for (const types::display_message::DisplayMessage& message : request) {
         EVLOG_info << "New display message"
-                   << (message.session_id.has_value() ? " for session id " + message.session_id.value() : "") << ": "
-                   << message.message.content;
+                   << (message.identifier_id.has_value() ? " for identifier id " + message.identifier_id.value() : "")
+                   << ": " << message.message.content;
     }
 
     response.status = types::display_message::DisplayMessageStatusEnum::Accepted;

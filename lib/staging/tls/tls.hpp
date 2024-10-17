@@ -15,6 +15,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <openssl/types.h>
 #include <optional>
 #include <pthread.h>
 #include <string>
@@ -221,6 +222,23 @@ public:
      * \note the certificate must not be freed
      */
     [[nodiscard]] const Certificate* peer_certificate() const;
+
+    /**
+     * \brief obtain the underlying SSL context
+     * \returns the underlying SSL context pointer
+     */
+    [[nodiscard]] [[deprecated(
+        "Temporarily used with IsoMux module. Will be removed together with IsoMux module in the future.")]] SSL*
+    ssl_context() const;
+
+    /**
+     * \brief set the read timeout in ms
+     */
+    [[deprecated(
+        "Temporarily used with IsoMux module. Will be removed together with IsoMux module in the future.")]] void
+    set_read_timeout(int ms) {
+        m_timeout_ms = ms;
+    }
 };
 
 /**

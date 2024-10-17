@@ -60,11 +60,13 @@ void EvseV2G::ready() {
         goto err_out;
     }
 
-    rv = sdp_init(v2g_ctx);
+    if (config.enable_sdp_server) {
+        rv = sdp_init(v2g_ctx);
 
-    if (rv == -1) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
-        goto err_out;
+        if (rv == -1) {
+            dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
+            goto err_out;
+        }
     }
 
     dlog(DLOG_LEVEL_DEBUG, "starting socket server(s)");
