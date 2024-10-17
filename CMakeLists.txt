@@ -129,12 +129,6 @@ endif()
 # FIXME (aw): this should be optional
 add_subdirectory(config)
 
-# install docker related files
-install(
-    DIRECTORY "cmake/assets/docker"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-)
-
 ev_install_project()
 
 # configure clang-tidy if requested
