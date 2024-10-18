@@ -762,7 +762,65 @@ TEST_F(ReservationEVSETest, change_availability_scenario_02) {
     EXPECT_EQ(evse_id.value(), 3);
 }
 
-// TODO mz make test where a reservation with a specific evse id is cancelled although because of another evse id is
-// set to not available.
+TEST_F(ReservationEVSETest, reservation_in_the_past) {
+    ReservationEVSEs r;
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2);
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() - std::chrono::hours(2));
+    EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Rejected);
+}
+
+TEST_F(ReservationEVSETest, reservation_timer) {
+    ReservationEVSEs r;
+    std::optional<uint32_t> evse_id;
+    MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                      const types::reservation::ReservationEndReason reason)>
+        reservation_callback_mock;
+
+    r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
+
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, types::reservation::ReservationEndReason::Expired))
+        .WillOnce(SaveArg<0>(&evse_id));
+    types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2);
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
+    EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Accepted);
+    sleep(1);
+    EXPECT_FALSE(evse_id.has_value());
+
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, types::reservation::ReservationEndReason::Expired))
+        .WillOnce(SaveArg<0>(&evse_id));
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
+    EXPECT_EQ(r.make_reservation(0, reservation), types::reservation::ReservationResult::Accepted);
+    sleep(1);
+    ASSERT_TRUE(evse_id.has_value());
+    EXPECT_EQ(evse_id.value(), 0);
+}
+
+TEST_F(ReservationEVSETest, cancel_reservation) {
+    ReservationEVSEs r;
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Occupied);
+
+    EXPECT_EQ(r.cancel_reservation(5, false, types::reservation::ReservationEndReason::Cancelled), std::nullopt);
+
+    EXPECT_EQ(r.cancel_reservation(1, false, types::reservation::ReservationEndReason::Cancelled), std::nullopt);
+    EXPECT_EQ(r.make_reservation(1, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.cancel_reservation(3, false, types::reservation::ReservationEndReason::Cancelled), 1);
+}
+
+// TODO mz test with cars arriving, removing reservation and parent tokens
 
 } // namespace module

@@ -35,8 +35,13 @@ private: // Members
     std::map<int, std::unique_ptr<Everest::SteadyTimer>> reservation_id_to_reservation_timeout_timer_map;
     std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id, const types::reservation::ReservationEndReason reason)> reservation_cancelled_callback;
 
+    boost::shared_ptr<boost::asio::io_service::work> work;
+    boost::asio::io_service io_service;
+    std::thread io_service_thread;
+
 public:
     ReservationEVSEs();
+    ~ReservationEVSEs();
     void add_connector(const uint32_t evse_id, const uint32_t connector_id,
                        const types::evse_manager::ConnectorTypeEnum connector_type,
                        const ConnectorState connector_state = ConnectorState::AVAILABLE);

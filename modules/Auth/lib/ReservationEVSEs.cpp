@@ -12,6 +12,15 @@ static types::reservation::ReservationResult
 connector_state_to_reservation_result(const ConnectorState connector_state);
 
 ReservationEVSEs::ReservationEVSEs() {
+    // Create this worker thread and io service etc here for the timer.
+    this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
+    this->io_service_thread = std::thread([this]() { this->io_service.run(); });
+}
+
+ReservationEVSEs::~ReservationEVSEs() {
+    work->get_io_context().stop();
+    io_service.stop();
+    io_service_thread.join();
 }
 
 void ReservationEVSEs::add_connector(const uint32_t evse_id, const uint32_t connector_id,
@@ -244,9 +253,7 @@ std::optional<uint32_t> ReservationEVSEs::cancel_reservation(int reservation_id,
     {
         std::unique_lock<std::recursive_mutex> lk(this->timer_mutex);
         auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
-        if (reservation_id_timer_it == this->reservation_id_to_reservation_timeout_timer_map.end()) {
-            EVLOG_debug << "Reservation is cancelled, but there was no reservation timer set for this reservation id.";
-        } else {
+        if (reservation_id_timer_it != this->reservation_id_to_reservation_timeout_timer_map.end()) {
             reservation_id_timer_it->second->stop();
             this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
             reservation_cancelled = true;
@@ -478,8 +485,6 @@ bool ReservationEVSEs::can_virtual_car_arrive(
                 types::reservation::ReservationResult::Accepted) {
             is_possible = true;
 
-            // std::cout << "OK: " << evse_id << "\n";
-
             std::vector<uint32_t> next_used_evse_ids = used_evse_ids;
             next_used_evse_ids.push_back(evse_id);
 
@@ -560,7 +565,7 @@ void ReservationEVSEs::set_reservation_timer(const types::reservation::Reservati
                                              const std::optional<uint32_t> evse_id) {
     std::lock_guard<std::recursive_mutex> lk(this->timer_mutex);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
-        std::make_unique<Everest::SteadyTimer>();
+        std::make_unique<Everest::SteadyTimer>(&this->io_service);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id]->at(
         [this, reservation, evse_id]() {
             if (evse_id.has_value()) {
