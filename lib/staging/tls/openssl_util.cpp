@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
-#include <iterator>
 #include <memory>
 #include <string>
 
@@ -461,6 +460,27 @@ bool signature_to_bn(bn_t& r, bn_t& s, const std::uint8_t* sig_p, std::size_t le
     ECDSA_SIG_free(signature);
     return bRes;
 };
+
+certificate_list load_certificates_pem(const char* pem_string) {
+    certificate_list result{};
+    if (pem_string != nullptr) {
+        const auto len = std::strlen(pem_string);
+        auto* mem = BIO_new_mem_buf(pem_string, static_cast<int>(len));
+        X509* cert = nullptr;
+
+        while (!BIO_eof(mem)) {
+            if (PEM_read_bio_X509(mem, &cert, nullptr, nullptr) == nullptr) {
+                log_error("PEM_read_bio_X509");
+                break;
+            } else {
+                result.emplace_back(certificate_ptr{cert, &X509_free});
+                cert = nullptr;
+            }
+        }
+        BIO_free(mem);
+    }
+    return result;
+}
 
 certificate_list load_certificates(const char* filename) {
     certificate_list result{};
