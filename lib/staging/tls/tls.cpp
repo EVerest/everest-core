@@ -14,7 +14,6 @@
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
-#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <mutex>
@@ -699,36 +698,41 @@ std::condition_variable ServerConnection::m_cv;
 
 namespace {
 
-std::unique_ptr<std::filesystem::path> keylog_file;
-std::unique_ptr<TlsKeyLoggingServer> keylog_server;
+int ssl_keylog_file_index{-1};
+int ssl_keylog_server_index{-1};
 
 void keylog_callback(const SSL* ssl, const char* line) {
-    std::string key_log_msg = "TLS Handshake keys: " + std::string(line);
+
+    auto keylog_server = static_cast<TlsKeyLoggingServer*>(SSL_get_ex_data(ssl, ssl_keylog_server_index));
+
+    std::string key_log_msg = "TLS Handshake keys on port ";
+    key_log_msg += std::to_string(keylog_server->get_port()) + ": ";
+    key_log_msg += std::string(line);
+
     log_info(key_log_msg);
 
-    if (keylog_server and keylog_server->get_fd() != -1) {
+    if (keylog_server->get_fd() != -1) {
         const auto result = keylog_server->send(line);
         if (result not_eq strlen(line)) {
             log_error("key_logging_server send() failed!");
         }
-
-        keylog_server.reset();
     }
 
-    if (keylog_file) {
+    auto keylog_file_path =
+        static_cast<std::filesystem::path*>(SSL_CTX_get_ex_data(SSL_get_SSL_CTX(ssl), ssl_keylog_file_index));
+
+    if (not keylog_file_path->empty()) {
         std::ofstream ofs;
-        ofs.open(keylog_file->string(), std::ofstream::out | std::ofstream::app);
+        ofs.open(keylog_file_path->string(), std::ofstream::out | std::ofstream::app);
         ofs << line << std::endl;
         ofs.close();
-
-        keylog_file.reset();
     }
 }
 
 } // namespace
 
 ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in,
-                                   std::int32_t timeout_ms) :
+                                   std::int32_t timeout_ms, const ConfigItem& tls_key_interface) :
     Connection(ctx, soc, ip_in, service_in, timeout_ms), m_tck_data{m_trusted_ca_keys, m_flags} {
     {
         std::lock_guard lock(m_cv_mutex);
@@ -738,6 +742,12 @@ ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, 
         SSL_set_accept_state(m_context->ctx.get());
         ServerStatusRequestV2::set_data(m_context->ctx.get(), &m_flags);
         ServerTrustedCaKeys::set_data(m_context->ctx.get(), &m_tck_data);
+
+        if (tls_key_interface != nullptr) {
+            const auto port = std::stoul(service_in);
+            m_keylog_server = std::make_unique<TlsKeyLoggingServer>(std::string(tls_key_interface), port);
+            SSL_set_ex_data(m_context->ctx.get(), ssl_keylog_server_index, m_keylog_server.get());
+        }
     }
 }
 
@@ -922,10 +932,22 @@ bool Server::init_ssl(const config_t& cfg) {
         if (result) {
 
             if (cfg.tls_key_logging) {
-                const auto file_path = std::filesystem::path(cfg.tls_key_logging_path) /= "tls_session_keys.log";
-                keylog_file = std::make_unique<std::filesystem::path>(file_path);
-                SSL_CTX_set_keylog_callback(ctx, keylog_callback);
-                this->m_tls_key_interface = cfg.host;
+                tls_key_log_file_path = std::filesystem::path(cfg.tls_key_logging_path) /= "tls_session_keys.log";
+
+                ssl_keylog_file_index = SSL_CTX_get_ex_new_index(0, std::string("").data(), nullptr, nullptr, nullptr);
+                ssl_keylog_server_index = SSL_get_ex_new_index(0, std::string("").data(), nullptr, nullptr, nullptr);
+
+                if (ssl_keylog_file_index == -1 or ssl_keylog_server_index == -1) {
+                    auto error_msg = std::string("_get_ex_new_index failed: ssl_keylog_file_index: ");
+                    error_msg += std::to_string(ssl_keylog_file_index);
+                    error_msg += ", ssl_keylog_server_index: " + std::to_string(ssl_keylog_server_index);
+                    log_error(error_msg);
+                } else {
+                    SSL_CTX_set_ex_data(ctx, ssl_keylog_file_index, &tls_key_log_file_path);
+
+                    SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+                    m_tls_key_interface = cfg.host;
+                }
             }
 
             int mode = SSL_VERIFY_NONE;
@@ -1106,13 +1128,8 @@ void Server::wait_for_connection(const ConnectionHandler& handler) {
                 auto* ip = BIO_ADDR_hostname_string(peer.get(), 1);
                 auto* service = BIO_ADDR_service_string(peer.get(), 1);
 
-                if (m_tls_key_interface) {
-                    const auto port = std::stoul(service);
-                    keylog_server = std::make_unique<TlsKeyLoggingServer>(std::string(m_tls_key_interface), port);
-                }
-
-                auto connection =
-                    std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service, m_timeout_ms);
+                auto connection = std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service,
+                                                                     m_timeout_ms, m_tls_key_interface);
                 handler(std::move(connection));
                 OPENSSL_free(ip);
                 OPENSSL_free(service);
@@ -1394,7 +1411,7 @@ Client::override_t Client::default_overrides() {
     };
 }
 
-TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port) {
+TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_) : port(port_) {
     static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
 
     fd = socket(AF_INET6, SOCK_DGRAM, 0);

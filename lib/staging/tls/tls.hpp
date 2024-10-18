@@ -12,6 +12,7 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -56,6 +57,28 @@ public:
     inline operator const char*() const {
         return (value) ? value.value().c_str() : nullptr;
     }
+};
+
+class TlsKeyLoggingServer {
+public:
+    TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_);
+    ~TlsKeyLoggingServer();
+
+    ssize_t send(const char* line);
+
+    auto get_fd() const {
+        return fd;
+    }
+
+    auto get_port() const {
+        return port;
+    }
+
+private:
+    int fd{-1};
+    std::array<uint8_t, 2048> buffer{};
+    uint16_t port{0};
+    sockaddr_in6 destination_address{};
 };
 
 // ----------------------------------------------------------------------------
@@ -259,8 +282,11 @@ private:
     StatusFlags m_flags;                 //!< extension flags
     server_trusted_ca_keys_t m_tck_data; //!< extension per connection data
 
+    std::unique_ptr<TlsKeyLoggingServer> m_keylog_server{nullptr};
+
 public:
-    ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in, std::int32_t timeout_ms);
+    ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in, std::int32_t timeout_ms,
+                     const ConfigItem& tls_key_interface);
     ServerConnection() = delete;
     ServerConnection(const ServerConnection&) = delete;
     ServerConnection(ServerConnection&&) = delete;
@@ -414,6 +440,7 @@ private:
     ConfigurationCallback m_init_callback{nullptr};     //!< callback to retrieve SSL configuration
 
     ConfigItem m_tls_key_interface{nullptr};
+    std::filesystem::path tls_key_log_file_path{};
 
     /**
      * \brief initialise the server socket
@@ -636,23 +663,6 @@ public:
      * \brief the default SSL callbacks
      */
     static override_t default_overrides();
-};
-
-class TlsKeyLoggingServer {
-public:
-    TlsKeyLoggingServer(const std::string& interface_name, uint16_t port);
-    ~TlsKeyLoggingServer();
-
-    ssize_t send(const char* line);
-
-    auto get_fd() const {
-        return fd;
-    }
-
-private:
-    int fd{-1};
-    uint8_t buffer[2048];
-    sockaddr_in6 destination_address{};
 };
 
 } // namespace tls
