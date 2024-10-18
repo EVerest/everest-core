@@ -1411,60 +1411,69 @@ Client::override_t Client::default_overrides() {
     };
 }
 
+// ----------------------------------------------------------------------------
+// TlsKeyLoggingServer
+
 TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_) : port(port_) {
     static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+    bool result{true};
 
     fd = socket(AF_INET6, SOCK_DGRAM, 0);
-    if (fd < 0) {
+    if (fd == -1) {
         log_error("Could not create socket");
-        return;
+        result = false;
     }
 
-    // source setup
+    if (result) {
+        // source setup
+        // find port between 49152-65535
+        auto could_bind = false;
+        auto source_port = 49152;
+        for (; source_port < 65535; source_port++) {
+            sockaddr_in6 source_address = {AF_INET6, htons(source_port), 0, {}, 0};
+            if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+                could_bind = true;
+                break;
+            }
+        }
 
-    // find port between 49152-65535
-    auto could_bind = false;
-    auto source_port = 49152;
-    for (; source_port < 65535; source_port++) {
-        sockaddr_in6 source_address = {AF_INET6, htons(source_port), 0, {}, 0};
-        if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
-            could_bind = true;
-            break;
+        if (could_bind) {
+            log_info("UDP socket bound to source port: " + std::to_string(source_port));
+        } else {
+            log_error("Could not bind");
+            result = false;
         }
     }
 
-    if (!could_bind) {
-        log_error("Could not bind");
-        close(fd);
-        return;
+    if (result) {
+        auto mreq = ipv6_mreq{};
+        const auto index = if_nametoindex(interface_name.c_str());
+        mreq.ipv6mr_interface = index;
+        if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+            log_error("Failed to setup multicast address");
+            result = false;
+        }
+
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+            log_error("Could not add multicast group membership");
+            result = false;
+        }
+
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+            log_error("Could not set interface name:" + interface_name);
+            result = false;
+        }
+
+        destination_address = {AF_INET6, htons(port), 0, {}, 0};
+        if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
+            log_error("Failed to setup server address, reset key_log_fd");
+            result = false;
+        }
     }
 
-    log_info("UDP socket bound to source port: " + std::to_string(source_port));
-
-    const auto index = if_nametoindex(interface_name.c_str());
-    auto mreq = ipv6_mreq{};
-    mreq.ipv6mr_interface = index;
-    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+    if (!result && fd != -1) {
         close(fd);
-        log_error("Failed to setup multicast address");
-        return;
-    }
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        close(fd);
-        log_error("Could not add multicast group membership");
-        return;
-    }
-
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
-        close(fd);
-        log_error("Could not set interface name:" + interface_name);
-        return;
-    }
-
-    destination_address = {AF_INET6, htons(port), 0, {}, 0};
-    if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
-        close(fd);
-        log_error("Failed to setup server address, reset key_log_fd");
+        fd = -1;
     }
 }
 
