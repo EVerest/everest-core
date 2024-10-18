@@ -41,7 +41,7 @@ config:
       Amps for AC and Watts for DC charging stations.
       Allowed values:
         - 'A' for Amps
-        . 'W' for Watts 
+        - 'W' for Watts 
     type: string
     default: 'A'
 provides:
