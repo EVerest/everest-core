@@ -272,7 +272,6 @@ bool OCPP201::all_evse_ready() {
 }
 
 void OCPP201::init() {
-    invoke_init(*p_main);
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
 
@@ -311,7 +310,6 @@ void OCPP201::init() {
 }
 
 void OCPP201::ready() {
-    invoke_ready(*p_main);
     invoke_ready(*p_auth_provider);
     invoke_ready(*p_auth_validator);
 
