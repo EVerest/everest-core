@@ -159,18 +159,40 @@ active_modules:
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1
+        - module_id: evse_manager_1_sink
           implementation_id: energy_grid
-        - module_id: evse_manager_2
+        - module_id: evse_manager_2_sink
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver_1
           implementation_id: powermeter
+  evse_manager_1_sink:
+    module: EnergyNode
+    evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+  evse_manager_2_sink:
+    module: EnergyNode
+    evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
   api:
     module: API
     connections:
       evse_manager:
         - module_id: evse_manager_1
+          implementation_id: evse
+        - module_id: evse_manager_2
           implementation_id: evse
       random_delay:
         - module_id: evse_manager_1
@@ -178,6 +200,11 @@ active_modules:
       error_history:
         - module_id: error_history
           implementation_id: error_history
+      evse_energy_sink:
+        - module_id: evse_manager_1_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_sink
+          implementation_id: external_limits
   error_history:
     module: ErrorHistory
     config_implementation:
