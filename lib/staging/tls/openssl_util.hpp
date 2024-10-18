@@ -336,6 +336,14 @@ DER bn_to_signature(const std::uint8_t* r, const std::uint8_t* s);
 bool signature_to_bn(openssl::bn_t& r, openssl::bn_t& s, const std::uint8_t* sig_p, std::size_t len);
 
 /**
+ * \brief load any PEM encoded certificates from a string
+ * \param[in] pem_string
+ * \return a list of 0 or more certificates
+ * \note PEM string only supports certificates and not other PEM types
+ */
+certificate_list load_certificates_pem(const char* pem_string);
+
+/**
  * \brief load any PEM encoded certificates from a file
  * \param[in] filename
  * \return a list of 0 or more certificates

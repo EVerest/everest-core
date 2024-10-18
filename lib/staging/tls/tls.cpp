@@ -934,7 +934,11 @@ bool Server::init_certificates(const std::vector<certificate_config_t>& chain_fi
     for (const auto& i : chain_files) {
         auto certs = openssl::load_certificates(i.certificate_chain_file);
         auto tas = openssl::load_certificates(i.trust_anchor_file);
+        auto tas_pem = openssl::load_certificates_pem(i.trust_anchor_pem);
         auto pkey = openssl::load_private_key(i.private_key_file, i.private_key_password);
+
+        // combine all trust anchor certificates
+        std::move(tas_pem.begin(), tas_pem.end(), std::back_inserter(tas));
 
         if (certs.size() > 0) {
             openssl::chain_t chain;
