@@ -104,3 +104,9 @@ Defaults:
 - Minimum certificates kept: 10
 - Maximum storage space: 50 MB
 - Maximum certificate entries: 2000
+
+## Limitations
+
+Based on information from [ssl](https://www.ssl.com/article/what-are-root-certificates-and-why-do-they-matter/), self-signed roots are possible, but not supported in our library at the moment.
+
+Cross-signed certificate chains (see [ssl](https://www.ssl.com/blogs/ssl-com-legacy-cross-signed-root-certificate-expiring-on-september-11-2023/)), required for seamless root transitions are not supported at the moment.

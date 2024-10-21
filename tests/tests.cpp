@@ -50,10 +50,6 @@ bool equal_certificate_strings(const std::string& cert1, const std::string& cert
     return true;
 }
 
-void install_certs() {
-    std::system("./generate_test_certs.sh");
-}
-
 namespace evse_security {
 
 class EvseSecurityTests : public ::testing::Test {
@@ -85,6 +81,17 @@ protected:
     void TearDown() override {
         fs::remove_all("certs");
         fs::remove_all("csr");
+    }
+
+    virtual void install_certs() {
+        std::system("./generate_test_certs.sh");
+    }
+};
+
+class EvseSecurityTestsMulti : public EvseSecurityTests {
+protected:
+    void install_certs() override {
+        std::system("./generate_test_certs_multi.sh");
     }
 };
 
@@ -270,6 +277,27 @@ TEST_F(EvseSecurityTests, verify_certificate_counts) {
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MFRootCertificate}), 3);
     // None were defined
     ASSERT_EQ(this->evse_security->get_count_of_installed_certificates({CertificateType::MORootCertificate}), 0);
+}
+
+TEST_F(EvseSecurityTestsMulti, verify_multi_root_leaf_retrieval) {
+    auto result =
+        this->evse_security->get_all_valid_certificates_info(LeafCertificateType::CSMS, EncodingFormat::PEM, false);
+
+    ASSERT_EQ(result.status, GetCertificateInfoStatus::Accepted);
+
+    // We have 2 leafs
+    ASSERT_EQ(result.info.size(), 2);
+
+    ASSERT_EQ(fs::path("certs/client/csms/CSMS_LEAF.pem"), result.info[0].certificate_single.value());
+    ASSERT_EQ(fs::path("certs/client/csms/SECC_LEAF_GRIDSYNC.pem"), result.info[1].certificate_single.value());
+
+    ASSERT_TRUE(result.info[0].certificate_root.has_value());
+    ASSERT_TRUE(result.info[1].certificate_root.has_value());
+
+    ASSERT_TRUE(equal_certificate_strings(result.info[0].certificate_root.value(),
+                                          read_file_to_string("certs/ca/v2g/V2G_ROOT_CA.pem")));
+    ASSERT_TRUE(equal_certificate_strings(result.info[1].certificate_root.value(),
+                                          read_file_to_string("certs/ca/v2g/V2G_ROOT_GRIDSYNC_CA.pem")));
 }
 
 TEST_F(EvseSecurityTests, verify_normal_keygen) {

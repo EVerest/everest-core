@@ -1086,6 +1086,47 @@ GetCertificateSignRequestResult EvseSecurity::generate_certificate_signing_reque
     return generate_certificate_signing_request(certificate_type, country, organization, common, false);
 }
 
+GetCertificateFullInfoResult EvseSecurity::get_all_valid_certificates_info(LeafCertificateType certificate_type,
+                                                                           EncodingFormat encoding, bool include_ocsp) {
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    GetCertificateFullInfoResult result =
+        get_full_leaf_certificate_info_internal(certificate_type, encoding, include_ocsp, true, true);
+
+    // If we failed, simply return the result
+    if (result.status != GetCertificateInfoStatus::Accepted) {
+        return result;
+    }
+
+    GetCertificateFullInfoResult filtered_results;
+    filtered_results.status = result.status;
+
+    // Filter the certificates to return only the ones that have a unique
+    // root, and from those that have a unique root, return only the newest
+    std::set<std::string> unique_roots;
+
+    // The newest are the first, that's how 'get_leaf_certificate_info_internal'
+    // returns them
+    for (const auto& chain : result.info) {
+        // Ignore non-root items
+        if (!chain.certificate_root.has_value()) {
+            continue;
+        }
+
+        const std::string& root = chain.certificate_root.value();
+
+        // If we don't contain the unique root yet, it is the newest leaf for that root
+        if (unique_roots.find(root) == unique_roots.end()) {
+            filtered_results.info.push_back(chain);
+
+            // Add it to the roots list, adding only unique roots
+            unique_roots.insert(root);
+        }
+    }
+
+    return filtered_results;
+}
+
 GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info(LeafCertificateType certificate_type,
                                                                  EncodingFormat encoding, bool include_ocsp) {
     std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
@@ -1095,11 +1136,26 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info(LeafCertificate
 
 GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCertificateType certificate_type,
                                                                           EncodingFormat encoding, bool include_ocsp) {
+    GetCertificateFullInfoResult result =
+        get_full_leaf_certificate_info_internal(certificate_type, encoding, include_ocsp, false, false);
+    GetCertificateInfoResult internal_result;
+
+    internal_result.status = result.status;
+    if (!result.info.empty()) {
+        internal_result.info = std::move(result.info.at(0));
+    }
+
+    return internal_result;
+}
+
+GetCertificateFullInfoResult EvseSecurity::get_full_leaf_certificate_info_internal(LeafCertificateType certificate_type,
+                                                                                   EncodingFormat encoding,
+                                                                                   bool include_ocsp, bool include_root,
+                                                                                   bool include_all_valid) {
     EVLOG_info << "Requesting leaf certificate info: "
                << conversions::leaf_certificate_type_to_string(certificate_type);
 
-    GetCertificateInfoResult result;
-    result.info = std::nullopt;
+    GetCertificateFullInfoResult result;
 
     fs::path key_dir;
     fs::path cert_dir;
@@ -1131,26 +1187,43 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
             return result;
         }
 
-        std::optional<X509Wrapper> latest_valid;
-        std::optional<fs::path> found_private_key_path;
+        struct KeyPairInternal {
+            X509Wrapper certificate;
+            fs::path certificate_key;
+        };
+
+        std::vector<KeyPairInternal> valid_leafs;
+
+        bool any_valid_certificate = false;
+        bool any_valid_key = false;
 
         // Iterate all certificates from newest to the oldest
         leaf_certificates.for_each_chain_ordered(
             [&](const fs::path& file, const std::vector<X509Wrapper>& chain) {
                 // Search for the first valid where we can find a key
                 if (not chain.empty() && chain.at(0).is_valid()) {
+                    any_valid_certificate = true;
+
                     try {
                         // Search for the private key
                         auto priv_key_path =
                             get_private_key_path_of_certificate(chain.at(0), key_dir, this->private_key_password);
 
+                        // Found at least one valid key
+                        any_valid_key = true;
+
                         // Copy to latest valid
-                        latest_valid = chain.at(0);
-                        found_private_key_path = priv_key_path;
+                        KeyPairInternal key_pair{chain.at(0), priv_key_path};
+                        valid_leafs.emplace_back(std::move(key_pair));
 
                         // We found, break
                         EVLOG_info << "Found valid leaf: [" << chain.at(0).get_file().value() << "]";
-                        return false;
+
+                        // Collect all if we don't include valid only
+                        if (include_all_valid == false) {
+                            EVLOG_info << "Not requiring all valid leafs, returning";
+                            return false;
+                        }
                     } catch (const NoPrivateKeyException& e) {
                     }
                 }
@@ -1166,122 +1239,153 @@ GetCertificateInfoResult EvseSecurity::get_leaf_certificate_info_internal(LeafCe
                 }
             });
 
-        if (latest_valid.has_value() == false) {
+        if (!any_valid_certificate) {
             EVLOG_warning << "Could not find valid certificate";
             result.status = GetCertificateInfoStatus::NotFoundValid;
             return result;
         }
 
-        if (found_private_key_path.has_value() == false) {
+        if (!any_valid_key) {
             EVLOG_warning << "Could not find private key for the valid certificate";
             result.status = GetCertificateInfoStatus::PrivateKeyNotFound;
             return result;
         }
 
-        // Key path doesn't change
-        fs::path key_file = found_private_key_path.value();
-        auto& certificate = latest_valid.value();
+        for (const auto& valid_leaf : valid_leafs) {
+            // Key path doesn't change
+            fs::path key_file = valid_leaf.certificate_key;
+            auto& certificate = valid_leaf.certificate;
 
-        // Paths to search
-        std::optional<fs::path> certificate_file;
-        std::optional<fs::path> chain_file;
+            // Paths to search
+            std::optional<fs::path> certificate_file;
+            std::optional<fs::path> chain_file;
 
-        X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
+            X509CertificateBundle leaf_directory(cert_dir, EncodingFormat::PEM);
 
-        const std::vector<X509Wrapper>* leaf_fullchain = nullptr;
-        const std::vector<X509Wrapper>* leaf_single = nullptr;
-        int chain_len = 1; // Defaults to 1, single certificate
+            const std::vector<X509Wrapper>* leaf_fullchain = nullptr;
+            const std::vector<X509Wrapper>* leaf_single = nullptr;
+            int chain_len = 1; // Defaults to 1, single certificate
 
-        // We are searching for both the full leaf bundle, containing the leaf and the cso1/2 and the single leaf
-        // without the cso1/2
-        leaf_directory.for_each_chain([&](const std::filesystem::path& path, const std::vector<X509Wrapper>& chain) {
-            // If we contain the latest valid, we found our generated bundle
-            bool bFound = (std::find(chain.begin(), chain.end(), certificate) != chain.end());
+            // We are searching for both the full leaf bundle, containing the leaf and the cso1/2 and the single leaf
+            // without the cso1/2
+            leaf_directory.for_each_chain(
+                [&](const std::filesystem::path& path, const std::vector<X509Wrapper>& chain) {
+                    // If we contain the latest valid, we found our generated bundle
+                    bool leaf_found = (std::find(chain.begin(), chain.end(), certificate) != chain.end());
 
-            if (bFound) {
-                if (chain.size() > 1) {
-                    leaf_fullchain = &chain;
-                    chain_len = chain.size();
-                } else if (chain.size() == 1) {
-                    leaf_single = &chain;
-                }
+                    if (leaf_found) {
+                        if (chain.size() > 1) {
+                            leaf_fullchain = &chain;
+                            chain_len = chain.size();
+                        } else if (chain.size() == 1) {
+                            leaf_single = &chain;
+                        }
+                    }
+
+                    // Found both, break
+                    if (leaf_fullchain != nullptr && leaf_single != nullptr)
+                        return false;
+
+                    return true;
+                });
+
+            std::vector<CertificateOCSP> certificate_ocsp{};
+            std::optional<std::string> leafs_root = std::nullopt;
+
+            // None were found
+            if (leaf_single == nullptr && leaf_fullchain == nullptr) {
+                EVLOG_error << "Could not find any leaf certificate for:"
+                            << conversions::leaf_certificate_type_to_string(certificate_type);
+                // Move onto next valid leaf, and attempt a search there
+                continue;
             }
 
-            // Found both, break
-            if (leaf_fullchain != nullptr && leaf_single != nullptr)
-                return false;
-
-            return true;
-        });
-
-        std::vector<CertificateOCSP> certificate_ocsp{};
-
-        // None were found
-        if (leaf_single == nullptr && leaf_fullchain == nullptr) {
-            EVLOG_error << "Could not find any leaf certificate for:"
-                        << conversions::leaf_certificate_type_to_string(certificate_type);
-
-            result.status = GetCertificateInfoStatus::NotFound;
-            return result;
-        }
-
-        if (leaf_fullchain != nullptr) {
-            chain_file = leaf_fullchain->at(0).get_file();
-            EVLOG_debug << "Leaf fullchain: [" << chain_file.value_or("INVALID") << "]";
-        } else {
-            EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
-                          << " leaf requires full bundle, but full bundle not found at path: " << cert_dir;
-        }
-
-        if (leaf_single != nullptr) {
-            certificate_file = leaf_single->at(0).get_file();
-            EVLOG_debug << "Leaf single: [" << certificate_file.value_or("INVALID") << "]";
-        } else {
-            EVLOG_warning << conversions::leaf_certificate_type_to_string(certificate_type)
-                          << " single leaf not found at path: " << cert_dir;
-        }
-
-        // Include OCSP data if possible
-        if (include_ocsp && (leaf_fullchain != nullptr || leaf_single != nullptr)) {
-            X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
-
-            auto hierarchy =
-                std::move(X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_directory.split()));
-            EVLOG_debug << "Hierarchy for OCSP data: \n" << hierarchy.to_debug_string();
-
-            // Search for OCSP data for each certificate
             if (leaf_fullchain != nullptr) {
-                for (const auto& chain_certif : *leaf_fullchain) {
-                    try {
-                        CertificateHashData hash = hierarchy.get_certificate_hash(chain_certif);
-                        std::optional<fs::path> data = retrieve_ocsp_cache_internal(hash);
+                chain_file = leaf_fullchain->at(0).get_file();
+                EVLOG_debug << "Leaf fullchain: [" << chain_file.value_or("INVALID") << "]";
+            } else {
+                EVLOG_debug << conversions::leaf_certificate_type_to_string(certificate_type)
+                            << " leaf requires full bundle, but full bundle not found at path: " << cert_dir;
+            }
 
-                        certificate_ocsp.push_back({hash, data});
-                    } catch (const NoCertificateFound& e) {
-                        // Always add to preserve file order
-                        certificate_ocsp.push_back({{}, std::nullopt});
+            if (leaf_single != nullptr) {
+                certificate_file = leaf_single->at(0).get_file();
+                EVLOG_debug << "Leaf single: [" << certificate_file.value_or("INVALID") << "]";
+            } else {
+                EVLOG_debug << conversions::leaf_certificate_type_to_string(certificate_type)
+                            << " single leaf not found at path: " << cert_dir;
+            }
+
+            // Both require the hierarchy build
+            if (include_ocsp || include_root) {
+                X509CertificateBundle root_bundle(root_dir, EncodingFormat::PEM); // Required for hierarchy
+
+                // The hierarchy is required for both roots and the OCSP cache
+                auto hierarchy = X509CertificateHierarchy::build_hierarchy(root_bundle.split(), leaf_directory.split());
+                EVLOG_debug << "Hierarchy for root/OCSP data: \n" << hierarchy.to_debug_string();
+
+                // Include OCSP data if possible
+                if (include_ocsp) {
+                    // Search for OCSP data for each certificate
+                    if (leaf_fullchain != nullptr) {
+                        for (const auto& chain_certif : *leaf_fullchain) {
+                            try {
+                                CertificateHashData hash = hierarchy.get_certificate_hash(chain_certif);
+                                std::optional<fs::path> data = retrieve_ocsp_cache_internal(hash);
+
+                                certificate_ocsp.push_back({hash, data});
+                            } catch (const NoCertificateFound& e) {
+                                // Always add to preserve file order
+                                certificate_ocsp.push_back({{}, std::nullopt});
+                            }
+                        }
+                    } else {
+                        try {
+                            CertificateHashData hash = hierarchy.get_certificate_hash(leaf_single->at(0));
+                            certificate_ocsp.push_back({hash, retrieve_ocsp_cache_internal(hash)});
+                        } catch (const NoCertificateFound& e) {
+                        }
                     }
                 }
-            } else {
-                try {
-                    CertificateHashData hash = hierarchy.get_certificate_hash(leaf_single->at(0));
-                    certificate_ocsp.push_back({hash, retrieve_ocsp_cache_internal(hash)});
-                } catch (const NoCertificateFound& e) {
+
+                // Include root data if possible
+                if (include_root) {
+                    // Search for the root of any of the leafs
+                    // present either in the chain or single
+                    try {
+                        X509Wrapper leafs_root_cert = hierarchy.find_certificate_root(
+                            leaf_fullchain != nullptr ? leaf_fullchain->at(0) : leaf_single->at(0));
+
+                        // Append the root
+                        leafs_root = leafs_root_cert.get_export_string();
+                    } catch (const NoCertificateFound& e) {
+                        EVLOG_warning << "Root required for ["
+                                      << conversions::leaf_certificate_type_to_string(certificate_type)
+                                      << "] leaf certificate, but no root could be found";
+                    }
                 }
             }
-        }
 
-        CertificateInfo info;
+            CertificateInfo info;
 
-        info.key = key_file;
-        info.certificate = chain_file;
-        info.certificate_single = certificate_file;
-        info.certificate_count = chain_len;
-        info.password = this->private_key_password;
-        info.ocsp = certificate_ocsp;
+            info.key = key_file;
+            info.certificate = chain_file;
+            info.certificate_single = certificate_file;
+            info.certificate_count = chain_len;
+            info.password = this->private_key_password;
 
-        result.info = info;
-        result.status = GetCertificateInfoStatus::Accepted;
+            if (include_ocsp) {
+                info.ocsp = certificate_ocsp;
+            }
+
+            if (include_root && leafs_root.has_value()) {
+                info.certificate_root = leafs_root.value();
+            }
+
+            // Add it to the returned result list
+            result.info.push_back(info);
+            result.status = GetCertificateInfoStatus::Accepted;
+        } // End valid leaf iteration
 
         return result;
     } catch (const CertificateLoadException& e) {

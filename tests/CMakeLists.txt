@@ -34,6 +34,7 @@ add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
 install(
     PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
+    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_multi.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
 

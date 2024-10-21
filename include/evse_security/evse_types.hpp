@@ -143,10 +143,13 @@ struct CertificateOCSP {
 };
 
 struct CertificateInfo {
-    fs::path key;                               ///< The path of the PEM or DER encoded private key
-    std::optional<fs::path> certificate;        ///< The path of the PEM or DER encoded certificate chain if found
-    std::optional<fs::path> certificate_single; ///< The path of the PEM or DER encoded certificate if found
+    fs::path key;                                ///< The path of the PEM or DER encoded private key
+    std::optional<std::string> certificate_root; ///< The PEM of root certificate used by the leaf, has a value only
+                                                 /// when using 'get_all_valid_certificates_info'
+    std::optional<fs::path> certificate;         ///< The path of the PEM or DER encoded certificate chain if found
+    std::optional<fs::path> certificate_single;  ///< The path of the PEM or DER encoded single certificate if found
     int certificate_count;               ///< The count of certificates, if the chain is available, or 1 if single
+                                         /// (the root is not taken into account because of the OCSP cache)
     std::optional<std::string> password; ///< Specifies the password for the private key if encrypted
     std::vector<CertificateOCSP> ocsp;   ///< The ordered list of OCSP certificate data based on the chain file order
 };
@@ -154,6 +157,11 @@ struct CertificateInfo {
 struct GetCertificateInfoResult {
     GetCertificateInfoStatus status;
     std::optional<CertificateInfo> info;
+};
+
+struct GetCertificateFullInfoResult {
+    GetCertificateInfoStatus status;
+    std::vector<CertificateInfo> info;
 };
 
 struct GetCertificateSignRequestResult {

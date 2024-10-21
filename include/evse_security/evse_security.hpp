@@ -197,6 +197,25 @@ public:
     GetCertificateInfoResult get_leaf_certificate_info(LeafCertificateType certificate_type, EncodingFormat encoding,
                                                        bool include_ocsp = false);
 
+    /// @brief Finds the latest valid leafs, for each root certificate that is present on the filesystem, and
+    /// returns all the newest valid leafs that are present for different roots. This is required, because
+    /// a query parameter when requesting the leaf is not advisable during the TLS handshake
+    /// Existing filesystem:
+    /// ROOT_V2G_Hubject->SUB_CA1->SUB_CA2->Leaf_Invalid_A
+    /// ROOT_V2G_Hubject->SUB_CA1->SUB_CA2->Leaf_Valid_A
+    /// ROOT_V2G_Hubject->SUB_CA1->SUB_CA2->Leaf_Valid_B
+    /// ROOT_V2G_OtherProvider->SUB_CA_O1->SUB_CA_O2->Leav_Valid_A
+    /// will return:
+    /// ROOT_V2G_Hubject->SUB_CA1->SUB_CA2->Leaf_Valid_B +
+    /// ROOT_V2G_OtherProvider->SUB_CA_O1->SUB_CA_O2->Leav_Valid_A
+    /// Note: non self-signed roots and cross-signed certificates are not supported
+    /// @param certificate_type type of leaf certificate that we start the search from
+    /// @param encoding specifies PEM or DER format
+    /// @param include_ocsp if OCSP data should be included
+    /// @return contains response result, with info related to the full certificate chains info and response status
+    GetCertificateFullInfoResult get_all_valid_certificates_info(LeafCertificateType certificate_type,
+                                                                 EncodingFormat encoding, bool include_ocsp = false);
+
     /// @brief Checks and updates the symlinks for the V2G leaf certificates and keys to the most recent valid one
     /// @return true if one of the links was updated
     bool update_certificate_links(LeafCertificateType certificate_type);
@@ -254,8 +273,21 @@ private:
     // Internal versions of the functions do not lock the mutex
     CertificateValidationResult verify_certificate_internal(const std::string& certificate_chain,
                                                             LeafCertificateType certificate_type);
+
     GetCertificateInfoResult get_leaf_certificate_info_internal(LeafCertificateType certificate_type,
                                                                 EncodingFormat encoding, bool include_ocsp = false);
+
+    /// @brief Retrieves information related to leaf certificates
+    /// @param include_ocsp if OCSP information should be included
+    /// @param include_root if the root certificate of the leaf should be included in the returned list
+    /// @param include_all_valid if true, all valid leafs will be included, sorted in order, with the newest being
+    /// first. If false, only the newest one will be returned
+    GetCertificateFullInfoResult get_full_leaf_certificate_info_internal(LeafCertificateType certificate_type,
+                                                                         EncodingFormat encoding,
+                                                                         bool include_ocsp = false,
+                                                                         bool include_root = false,
+                                                                         bool include_all_valid = false);
+
     GetCertificateInfoResult get_ca_certificate_info_internal(CaCertificateType certificate_type);
     std::optional<fs::path> retrieve_ocsp_cache_internal(const CertificateHashData& certificate_hash_data);
     bool is_ca_certificate_installed_internal(CaCertificateType certificate_type);

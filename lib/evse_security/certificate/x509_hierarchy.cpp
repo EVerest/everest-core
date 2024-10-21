@@ -79,6 +79,28 @@ bool X509CertificateHierarchy::contains_certificate_hash(const CertificateHashDa
     return contains;
 }
 
+X509Wrapper X509CertificateHierarchy::find_certificate_root(const X509Wrapper& leaf) {
+    const X509Wrapper* root_ptr = nullptr;
+
+    for (const auto& root : hierarchy) {
+        if (root.state.is_selfsigned) {
+            for_each_descendant(
+                [&](const X509Node& node, int depth) {
+                    // If we found our matching certificate, we also found the root
+                    if (node.certificate == leaf) {
+                        root_ptr = &root.certificate;
+                    }
+                },
+                root, 1);
+        }
+    }
+
+    if (root_ptr)
+        return *root_ptr;
+
+    throw NoCertificateFound("Could not find a certificate root for leaf: " + leaf.get_common_name());
+}
+
 X509Wrapper X509CertificateHierarchy::find_certificate(const CertificateHashData& hash) {
     X509Wrapper* certificate = nullptr;
 
