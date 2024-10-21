@@ -1,0 +1,9 @@
+description: Possible LED states
+types:
+  LedState:
+    description: Current LED state
+    type: integer
+    enum:
+      - Red
+      - Green
+      - Blue
