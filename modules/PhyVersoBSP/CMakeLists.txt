@@ -44,6 +44,8 @@ target_sources(${MODULE_NAME}
         "phyverso_mcu_temperature/phyverso_mcu_temperatureImpl.cpp"
         "system_specific_data_1/generic_arrayImpl.cpp"
         "system_specific_data_2/generic_arrayImpl.cpp"
+        "led_driver_1/led_driverImpl.cpp"
+        "led_driver_2/led_driverImpl.cpp"
 )
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

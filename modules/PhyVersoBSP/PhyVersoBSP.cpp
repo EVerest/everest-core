@@ -31,6 +31,8 @@ void PhyVersoBSP::init() {
     invoke_init(*p_phyverso_mcu_temperature);
     invoke_init(*p_system_specific_data_1);
     invoke_init(*p_system_specific_data_2);
+    invoke_init(*p_led_driver_1);
+    invoke_init(*p_led_driver_2);
 
     serial.signal_config_request.connect([&]() {
         serial.send_config();
@@ -51,6 +53,8 @@ void PhyVersoBSP::ready() {
     invoke_ready(*p_phyverso_mcu_temperature);
     invoke_ready(*p_system_specific_data_1);
     invoke_ready(*p_system_specific_data_2);
+    invoke_ready(*p_led_driver_1);
+    invoke_ready(*p_led_driver_2);
 
     if (not serial.is_open()) {
         auto err = p_connector_1->error_factory->create_error("evse_board_support/CommunicationFault", "",

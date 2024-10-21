@@ -200,6 +200,12 @@ provides:
   system_specific_data_2:
     interface: generic_array
     description: Opaque data blobs coming from connector 2
+  led_driver_1:
+    interface: led_driver
+    description: LED interface for connector 1
+  led_driver_2:
+    interface: led_driver
+    description: LED interface for connector 2
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
