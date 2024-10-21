@@ -116,6 +116,10 @@ void evse_managerImpl::init() {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
         });
+        mod->r_powermeter_billing()[0]->subscribe_public_key_ocmf([this](const std::string public_key_ocmf) {
+            // Republish data on proxy powermeter public_key_ocmf
+            publish_powermeter_public_key_ocmf(public_key_ocmf);
+        });
     }
 }
 
