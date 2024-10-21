@@ -68,7 +68,6 @@ public:
     ScheduleRes get_sold_energy();
 
     Market* parent();
-    const std::vector<Market>& children();
 
     float nominal_ac_voltage();
 
@@ -77,7 +76,7 @@ public:
 
 private:
     Market* _parent;
-    std::vector<Market> _children;
+    std::list<Market> _children;
     float _nominal_ac_voltage;
 
     // main data structures
