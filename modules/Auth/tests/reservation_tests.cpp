@@ -193,7 +193,7 @@ private:
 protected:
     types::reservation::Reservation create_reservation(const types::evse_manager::ConnectorTypeEnum connector_type) {
         return types::reservation::Reservation{
-            static_cast<int32_t>(reservation_id++), "TOKEN_" + std::to_string(reservation_id),
+            static_cast<int32_t>(reservation_id), "TOKEN_" + std::to_string(reservation_id++),
             Everest::Date::to_rfc3339((date::utc_clock::now()) + std::chrono::hours(1)), std::nullopt, connector_type};
     }
 };
@@ -819,6 +819,107 @@ TEST_F(ReservationEVSETest, cancel_reservation) {
     EXPECT_EQ(r.make_reservation(1, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
               types::reservation::ReservationResult::Accepted);
     EXPECT_EQ(r.cancel_reservation(3, false, types::reservation::ReservationEndReason::Cancelled), 1);
+}
+
+TEST_F(ReservationEVSETest, matches_reserved_identifier) {
+    ReservationEVSEs r;
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
+    reservation.parent_id_token = "PARENT_TOKEN_0";
+    types::reservation::Reservation reservation2 = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
+    reservation2.parent_id_token = "PARENT_TOKEN_2";
+    EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(1, reservation2), types::reservation::ReservationResult::Accepted);
+
+    // Id token is correct and evse id as well.
+    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, std::nullopt), 0);
+    // Id token is correct and evse id as well, parent token is not but that is ignored since the normal token is ok.
+    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, "WRONG_PARENT_TOKEN"), 0);
+    // Token is wrong.
+    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", std::nullopt), std::nullopt);
+    // Evse id is wrong.
+    EXPECT_EQ(r.matches_reserved_identifier(1, reservation.id_token, std::nullopt), std::nullopt);
+    // Token is wrong but parent token is correct.
+    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", "PARENT_TOKEN_0"), 0);
+    // Token is wrong and parent token as well.
+    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", "WRONG_PARENT_TOKEN"), std::nullopt);
+    // Evse id is correct and token is correct.
+    EXPECT_EQ(r.matches_reserved_identifier(1, reservation2.id_token, std::nullopt), 1);
+    // Evse id is correct but token is wrong.
+    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", std::nullopt), std::nullopt);
+    // Evse id is wrong and token is correct.
+    EXPECT_EQ(r.matches_reserved_identifier(2, reservation2.id_token, std::nullopt), std::nullopt);
+    // Evse id is correct, token is wrong but parent token is correct.
+    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", "PARENT_TOKEN_2"), 1);
+    // Evse id is correct, token is wrong and parent token as well.
+    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", "PARENT_TOKEN_NOK"), std::nullopt);
+}
+
+TEST_F(ReservationEVSETest, has_reservation_parent_id) {
+    ReservationEVSEs r;
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
+    reservation.parent_id_token = "PARENT_TOKEN_0";
+    types::reservation::Reservation reservation2 = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
+    reservation2.parent_id_token = "PARENT_TOKEN_2";
+    EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(1, reservation2), types::reservation::ReservationResult::Accepted);
+
+    // Id token is correct and evse id as well.
+    EXPECT_TRUE(r.has_reservation_parent_id(std::nullopt));
+    EXPECT_TRUE(r.has_reservation_parent_id(1));
+    EXPECT_FALSE(r.has_reservation_parent_id(0));
+    EXPECT_FALSE(r.has_reservation_parent_id(2));
+}
+
+TEST_F(ReservationEVSETest, on_reservation_used) {
+    ReservationEVSEs r;
+
+    // Register a callback, which should not be called.
+    MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                      const types::reservation::ReservationEndReason reason)>
+        reservation_callback_mock;
+
+    r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
+
+    EXPECT_CALL(reservation_callback_mock, Call(_, _, _)).Times(0);
+
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Occupied);
+
+    r.on_reservation_used(1);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Occupied);
+    EXPECT_EQ(r.make_reservation(1, create_reservation(types::evse_manager::ConnectorTypeEnum::cType2)),
+              types::reservation::ReservationResult::Occupied);
+
+    r.on_reservation_used(0);
+    r.on_reservation_used(2);
+    r.on_reservation_used(3);
+
+    EXPECT_EQ(r.make_reservation(1, create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2)),
+              types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2)),
+              types::reservation::ReservationResult::Accepted);
 }
 
 // TODO mz test with cars arriving, removing reservation and parent tokens
