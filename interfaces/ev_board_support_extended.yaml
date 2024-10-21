@@ -1,0 +1,80 @@
+description: This defines the board support package for an extended feature EV side testing rig.
+cmds:
+  set_status_led:
+    description: Writes given binary state to status LED
+    arguments:
+      state:
+        description: State which the status LED should take on.
+        type: boolean
+    result:
+      description: Returns actual value of status LED.
+      type: boolean
+  reset:
+    description: Resets the MCU
+    arguments:
+      soft_reset:
+        description: Perform a soft reset? If false, use hard reset.
+        type: boolean
+  get_ac_data_instant:
+    description: Request instant AC data 
+  get_ac_statistics:
+    description: Request AC phase statistic data
+  get_dc_data_instant:
+    description: Request DC bus voltage
+  set_cp_voltage:
+    description: Set CP voltage to drop down to specified voltage
+    arguments:
+      voltage:
+        description: Voltage to which CP signal should drop down to, in range 1.0V to 11.8V with 0.1V granularity
+        type: number
+  set_cp_load_en:
+    description: Control whether variable CP load is active
+    arguments:
+      state:
+        description: Enable or disable path to JFET controlled CP load; true -> enabled, false -> disabled
+        type: boolean
+  set_cp_short_to_gnd_en:
+    description: Enable or disable shorting CP to GND
+    arguments:
+      state:
+        description: Short CP to GND; true -> enable, false -> disabled
+        type: boolean
+  set_cp_diode_fault_en:
+    description: Enable or disable CP diode fault
+    arguments:
+      state:
+        description: CP diode fault; true -> enabled/DF, false -> disabled/normal operation
+        type: boolean
+  trigger_edge_timing_measurement:
+    description: Starts a measurement to get statistics about duration of rising/falling edges in CP states A/B/C/D (state has to be changed separately beforehand!)
+    arguments:
+      num_periods:
+        description: Number of CP PWM periods for which rising/falling edge durations will be measured and statistics will be calculated (max 128 for now)
+        type: integer
+      force_start:
+        description: Measurement will normally only start when no measurement is already running. Running measurement will be stopped and new measurement started if this is set to true.
+        type: boolean
+
+vars:
+  keep_alive_event:
+    description: >-
+      Keep alive data
+    type: object
+    $ref: /ev_board_support_extended#/KeepAliveData
+  ac_voltage_event:
+    description: AC phase voltage data
+    type: object
+    $ref: /ev_board_support_extended#/ACVoltageData
+  ac_statistics_event:
+    description: AC phase voltage statistics
+    type: object
+    $ref: /ev_board_support_extended#/ACPhaseStatistics
+  dc_voltage_event:
+    description: DC bus voltage data
+    type: number
+  edge_timing_event:
+    description: Edge timing measurement data
+    type: object
+    $ref: /ev_board_support_extended#/EdgeTimingData
+errors:
+  - reference: /errors/generic

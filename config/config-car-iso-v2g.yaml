@@ -1,0 +1,39 @@
+active_modules:
+  iso15118_ev:
+    module: PyEvJosev
+    config_module:
+      device: eth1
+      supported_DIN70121: false
+      supported_ISO15118_2: true
+      supported_ISO15118_20_DC: true
+      tls_active: false
+  mMWcar:
+    module: mMWcarBSP
+    config_module:
+      serial_port: /dev/serial0
+  ev_slac:
+    module: EvSlac
+    config_implementation:
+      main:
+        device: eth1
+  ev_manager:
+    module: EvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: true
+      auto_exec_infinite: false
+      auto_exec_commands: wait_for_real_plugin;iso_wait_pwm_is_running;iso_wait_slac_matched;iso_start_v2g_session DC;iso_wait_pwr_ready;iso_dc_power_on;iso_wait_for_stop 20;iso_wait_v2g_session_stopped;unplug;sleep 5;
+      dc_target_current: 5
+      dc_target_voltage: 200
+    connections:
+      ev_board_support:
+        - module_id: mMWcar
+          implementation_id: simple_board_support
+      ev:
+        - module_id: iso15118_ev
+          implementation_id: ev
+      slac:
+        - module_id: ev_slac
+          implementation_id: main
+x-module-layout: {}

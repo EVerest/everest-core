@@ -1,0 +1,16 @@
+KeepAlive.sw_version_string max_length:50
+CalibrationValues.atm90_ua_gain int_size:IS_16
+CalibrationValues.atm90_ub_gain int_size:IS_16
+CalibrationValues.atm90_uc_gain int_size:IS_16
+CalibrationValues.atm90_ua_offset int_size:IS_16
+CalibrationValues.atm90_ub_offset int_size:IS_16
+CalibrationValues.atm90_uc_offset int_size:IS_16
+CalibrationValues.cp_load_9V_dac_val int_size:IS_16
+CalibrationValues.cp_load_6V_dac_val int_size:IS_16
+CalibrationValues.cp_load_3V_dac_val int_size:IS_16
+DacSweepResponse.dac_input int_size:IS_16
+CpLUT.dac_values int_size:IS_16
+CpLUT.dac_values max_count:108
+CpLUT.dac_values fixed_length:true
+EdgeTimingMeasArguments.num_periods int_size:IS_16
+EdgeTimingMeasResult.num_periods int_size:IS_16
