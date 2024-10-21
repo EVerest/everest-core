@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # Run coverage HTML
-ninja -C "$EXT_MOUNT/build" everest-core_gcovr_coverage
+ninja -C "$EXT_MOUNT/build" everest-core_gcovr_coverage_html
 retVal=$?
 
-cp -R "$EXT_MOUNT/build/everest-core_gcovr_coverage" "$EXT_MOUNT/gcovr-coverage"
+cp -R "$EXT_MOUNT/build/everest-core_gcovr_coverage_html" "$EXT_MOUNT/gcovr-coverage"
 
 if [ $retVal -ne 0 ]; then
     echo "Coverage HTML report failed with return code $retVal"

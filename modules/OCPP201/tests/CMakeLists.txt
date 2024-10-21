@@ -16,3 +16,4 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 target_sources(${TEST_TARGET_NAME} PRIVATE "../transaction_handler.cpp")
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+add_dependencies(${PROJECT_NAME}_unit_tests ${TEST_TARGET_NAME})
