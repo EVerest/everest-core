@@ -1,0 +1,16 @@
+description: >-
+  This interface provides a command for steering LEDs
+cmds:
+  set_led_state:
+    description: This command changes the color and brightness of LEDs
+    arguments:
+      led_state:
+        description: Sets the color of the LEDs
+        type: string
+        $ref: /led_state#/LedState
+      brightness:
+        description: Brightness in %
+        type: integer
+        minimum: 0
+        maximum: 100
+
