@@ -76,7 +76,7 @@ if(EVEREST_CORE_BUILD_TESTING)
     append_coverage_compiler_flags()
 
     add_custom_target(
-        NAME ${PROJECT_NAME}_unit_tests
+        ${PROJECT_NAME}_unit_tests
     )
 endif()
 
