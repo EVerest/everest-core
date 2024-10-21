@@ -53,5 +53,5 @@ public:
     }
 };
 
-} // namespace util
+} // namespace everest::staging::util
 #endif
