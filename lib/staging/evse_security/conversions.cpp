@@ -455,7 +455,7 @@ types::evse_security::CertificateInfo to_everest(evse_security::CertificateInfo 
     lhs.certificate = other.certificate;
     lhs.certificate_single = other.certificate_single;
     lhs.password = other.password;
-    lhs.certificate_count = other.certificate_count;    
+    lhs.certificate_count = other.certificate_count;
     return lhs;
 }
 
