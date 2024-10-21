@@ -192,6 +192,10 @@ int check_interface(struct v2g_context* v2g_ctx) {
         v2g_ctx->if_name = choose_first_ipv6_interface();
     }
 
+    if (v2g_ctx->if_name == nullptr) {
+        return -1;
+    }
+
     mreq.ipv6mr_interface = if_nametoindex(v2g_ctx->if_name);
     if (!mreq.ipv6mr_interface) {
         dlog(DLOG_LEVEL_ERROR, "No such interface: %s", v2g_ctx->if_name);
