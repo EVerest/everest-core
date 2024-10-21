@@ -59,7 +59,7 @@ add_executable(${V2G_MAIN_NAME})
 add_dependencies(${V2G_MAIN_NAME} generate_cpp_files)
 
 target_include_directories(${V2G_MAIN_NAME} PRIVATE
-    . .. ../connection ../../../tests/include ../../../lib/staging/util
+    . .. ../connection ../../../tests/include
     ${GENERATED_INCLUDE_DIR}
     ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
     ${CMAKE_BINARY_DIR}/generated/include

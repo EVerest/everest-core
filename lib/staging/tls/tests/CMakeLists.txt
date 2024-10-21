@@ -24,8 +24,7 @@ add_executable(${TLS_GTEST_NAME})
 add_dependencies(${TLS_GTEST_NAME} tls_test_files_target)
 
 target_include_directories(${TLS_GTEST_NAME} PRIVATE
-    . .. ../../util
-)
+    ..)
 
 target_compile_definitions(${TLS_GTEST_NAME} PRIVATE
     -DUNIT_TEST
@@ -46,11 +45,13 @@ target_sources(${TLS_GTEST_NAME} PRIVATE
     ../tls.cpp
 )
 
-target_link_libraries(${TLS_GTEST_NAME} PRIVATE
-    GTest::gtest
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    everest::evse_security
+target_link_libraries(${TLS_GTEST_NAME}
+    PRIVATE
+        GTest::gtest
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        everest::evse_security
+        everest::staging::util
 )
 
 set(TLS_MAIN_NAME tls_server)
@@ -58,7 +59,7 @@ add_executable(${TLS_MAIN_NAME})
 add_dependencies(${TLS_MAIN_NAME} tls_test_files_target)
 
 target_include_directories(${TLS_MAIN_NAME} PRIVATE
-    . .. ../../util
+    ..
 )
 
 target_compile_definitions(${TLS_MAIN_NAME} PRIVATE
@@ -74,9 +75,11 @@ target_sources(${TLS_MAIN_NAME} PRIVATE
     ../tls.cpp
 )
 
-target_link_libraries(${TLS_MAIN_NAME} PRIVATE
-    OpenSSL::SSL
-    OpenSSL::Crypto
+target_link_libraries(${TLS_MAIN_NAME}
+    PRIVATE
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        everest::staging::util
 )
 
 set(TLS_CLIENT_NAME tls_client)
@@ -84,7 +87,7 @@ add_executable(${TLS_CLIENT_NAME})
 add_dependencies(${TLS_CLIENT_NAME} tls_test_files_target)
 
 target_include_directories(${TLS_CLIENT_NAME} PRIVATE
-    . .. ../../util
+    ..
 )
 
 target_compile_definitions(${TLS_CLIENT_NAME} PRIVATE
@@ -100,9 +103,11 @@ target_sources(${TLS_CLIENT_NAME} PRIVATE
     ../tls.cpp
 )
 
-target_link_libraries(${TLS_CLIENT_NAME} PRIVATE
-    OpenSSL::SSL
-    OpenSSL::Crypto
+target_link_libraries(${TLS_CLIENT_NAME}
+    PRIVATE
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        everest::staging::util
 )
 
 set(TLS_PATCH_NAME patched_test)
@@ -110,7 +115,7 @@ add_executable(${TLS_PATCH_NAME})
 add_dependencies(${TLS_PATCH_NAME} tls_test_files_target)
 
 target_include_directories(${TLS_PATCH_NAME} PRIVATE
-    . .. ../../util
+    ..
 )
 
 target_compile_definitions(${TLS_PATCH_NAME} PRIVATE
@@ -126,10 +131,12 @@ target_sources(${TLS_PATCH_NAME} PRIVATE
     ../tls.cpp
 )
 
-target_link_libraries(${TLS_PATCH_NAME} PRIVATE
-    GTest::gtest_main
-    OpenSSL::SSL
-    OpenSSL::Crypto
+target_link_libraries(${TLS_PATCH_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        everest::staging::util
 )
 
 add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})

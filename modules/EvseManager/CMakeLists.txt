@@ -21,14 +21,11 @@ target_sources(${MODULE_NAME}
         PersistentStore.cpp
 )
 
-target_include_directories(${MODULE_NAME} PRIVATE
-    ../../lib/staging/util
-)
-
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         Pal::Sigslot
         pugixml::pugixml
+        everest::staging::util
 )
 
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)

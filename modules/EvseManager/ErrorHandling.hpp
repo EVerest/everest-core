@@ -32,7 +32,6 @@
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <sigslot/signal.hpp>
 
-#include "EnumFlags.hpp"
 #include "Timeout.hpp"
 #include "utils/thread.hpp"
 
