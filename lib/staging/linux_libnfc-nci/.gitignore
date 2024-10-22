@@ -1,0 +1,68 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+nfcDemoApp
+
+# Debug files
+*.dSYM/
+*.su
+
+# Autotools
+.deps/
+.libs/
+.dirstamp
+Makefile.in
+Makefile
+/aclocal.m4
+/autom4te.cache
+/autoscan.log
+/autoscan-*.log
+/aclocal.m4
+/compile
+/config.guess
+/config.h
+/config.h.in
+/config.h.in~
+/config.log
+/config.status
+/config.sub
+/configure
+/configure.scan
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/m4
+/missing
+/stamp-h1
+/libnfc-nci.pc
+
+# Editor
+*.orig
+*.rej
