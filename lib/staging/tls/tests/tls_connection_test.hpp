@@ -17,7 +17,7 @@
 #include <tls.hpp>
 #include <unistd.h>
 
-#include <everest/staging/EnumFlags.hpp>
+#include <everest/staging/util/EnumFlags.hpp>
 
 using namespace std::chrono_literals;
 

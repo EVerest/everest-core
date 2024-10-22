@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include <everest/staging/EnumFlags.hpp>
+#include <everest/staging/util/EnumFlags.hpp>
 
 struct ocsp_response_st;
 struct ssl_ctx_st;

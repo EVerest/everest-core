@@ -1,6 +1,6 @@
 cc_library(
     name = "util",
-    hdrs = ["include/everest/staging/EnumFlags.hpp"],
+    hdrs = ["include/*.hpp"],
     visibility = ["//visibility:public"],
     includes = ["include"],
 )

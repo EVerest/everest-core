@@ -2,9 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #include <gtest/gtest.h>
 
-#include <everest/staging/EnumFlags.hpp>
-
-#include <atomic>
+#include <everest/staging/util/EnumFlags.hpp>
 
 enum class ErrorHandlingFlags : std::uint8_t {
     prevent_charging,
