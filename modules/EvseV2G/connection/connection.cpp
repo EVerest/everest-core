@@ -184,6 +184,9 @@ static int connection_ssl_initialize() {
  * \return Returns \c 0 on success, otherwise \c -1
  */
 int check_interface(struct v2g_context* v2g_ctx) {
+    if (v2g_ctx == nullptr || v2g_ctx->if_name == nullptr) {
+        return -1;
+    }
 
     struct ipv6_mreq mreq = {};
     std::memset(&mreq, 0, sizeof(mreq));
