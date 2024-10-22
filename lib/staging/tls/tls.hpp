@@ -76,7 +76,6 @@ public:
 
 private:
     int fd{-1};
-    std::array<uint8_t, 2048> buffer{};
     uint16_t port{0};
     sockaddr_in6 destination_address{};
 };
