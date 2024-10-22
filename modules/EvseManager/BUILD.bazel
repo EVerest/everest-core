@@ -1,0 +1,24 @@
+load("//modules:module.bzl", "cc_everest_module")
+
+IMPLS = [
+    "energy_grid",
+    "evse",
+    "token_provider",
+    "random_delay",
+]
+
+cc_everest_module(
+    name = "EvseManager",
+    deps = [
+        "@pugixml//:libpugixml",
+        "@sigslot//:sigslot",
+        "@everest-core//lib/staging/util:util"
+    ],
+    impls = IMPLS,
+    srcs = glob(
+        [
+            "*.cpp",
+            "*.hpp",
+        ],
+    ),
+)
