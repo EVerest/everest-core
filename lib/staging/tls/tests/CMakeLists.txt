@@ -133,4 +133,3 @@ target_link_libraries(${TLS_PATCH_NAME} PRIVATE
 )
 
 add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
-add_dependencies(${PROJECT_NAME}_unit_tests ${TLS_GTEST_NAME})

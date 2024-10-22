@@ -31,7 +31,6 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
-add_dependencies(${PROJECT_NAME}_unit_tests ${TEST_TARGET_NAME})
 
 ## Time sync helper test
 set(TEST_TARGET_NAME ${PROJECT_NAME}_lem_time_sync_helper_tests)
@@ -66,7 +65,6 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
-add_dependencies(${PROJECT_NAME}_unit_tests ${TEST_TARGET_NAME})
 
 
 ## http client integration client
