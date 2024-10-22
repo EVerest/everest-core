@@ -52,7 +52,7 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 
-    std::unique_ptr<NfcHandler> nfc_handler {nullptr};
+    std::unique_ptr<NfcHandler> nfc_handler{nullptr};
 
     void new_rfid_token_callback(char*, size_t, NfcHandler::Protocol);
 
