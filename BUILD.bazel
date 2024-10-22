@@ -37,6 +37,14 @@ cc_library(
         "@com_github_nlohmann_json//:json",
         "@com_github_pboettch_json-schema-validator//:json-schema-validator",
     ],
+    # See https://github.com/HowardHinnant/date/issues/324
+    local_defines = [
+        "BUILD_TZ_LIB=ON",
+        "USE_SYSTEM_TZ_DB=ON",
+        "USE_OS_TZDB=1",
+        "USE_AUTOLOAD=0",
+        "HAS_REMOTE_API=0",
+    ],
 )
 
 cc_library(

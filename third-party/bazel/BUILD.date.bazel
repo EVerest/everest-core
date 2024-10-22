@@ -11,8 +11,10 @@ cmake(
     cache_entries = {
         "BUILD_TZ_LIB": "ON",
         "USE_SYSTEM_TZ_DB": "ON",
-        "MANUAL_TZ_DB": "ON",
+        "HAS_REMOTE_API": "0",
+        "USE_AUTOLOAD": "0",
     },
+    copts = ["-std=c++17"],
     lib_source = ":all_srcs",
     out_static_libs = ["libdate-tz.a"],
     visibility = [
