@@ -27,4 +27,3 @@ if(NOT DISABLE_EDM)
 endif()
 
 add_test(${TARGET_NAME} ${TARGET_NAME})
-add_dependencies(${PROJECT_NAME}_unit_tests ${TARGET_NAME})

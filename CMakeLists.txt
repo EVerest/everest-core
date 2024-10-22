@@ -74,10 +74,6 @@ if(EVEREST_CORE_BUILD_TESTING)
     evc_include(CodeCoverage)
 
     append_coverage_compiler_flags()
-
-    add_custom_target(
-        ${PROJECT_NAME}_unit_tests
-    )
 endif()
 
 include(ev-define-dependency)
