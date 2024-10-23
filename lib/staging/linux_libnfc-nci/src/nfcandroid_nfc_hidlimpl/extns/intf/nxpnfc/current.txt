@@ -1,0 +1,4 @@
+# HALs released in Android P
+
+d2024b1ac380c4beb387466cc7646c09dcfae5e2900c5bebbff111912a5352de vendor.nxp.nxpnfc@1.0::types
+ee94d45f490daf851d9a5ef6a5098bff4656694fa51cf9817fbddabc74702a46 vendor.nxp.nxpnfc@1.0::INxpNfc

@@ -1,4 +1,5 @@
 add_subdirectory(can_dpm1000)
+add_subdirectory(linux_libnfc-nci)
 if(EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY)
     add_subdirectory(evse_security)
     add_subdirectory(tls)

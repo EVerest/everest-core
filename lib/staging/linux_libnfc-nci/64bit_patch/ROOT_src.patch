@@ -1,0 +1,40 @@
+diff --git a/src/android/utility/base/strings.cpp b/src/android/utility/base/strings.cpp
+index 374f7d8..ca4256d 100644
+--- a/src/android/utility/base/strings.cpp
++++ b/src/android/utility/base/strings.cpp
+@@ -24,7 +24,7 @@ std::vector<std::string> android::base::Split(const std::string& s, const std::s
+ 	std::string str(s);
+ 	std::string  token(delimiters);
+ 	while (str.size()) {
+-		unsigned int index = str.find(token);
++		size_t index = str.find(token);
+ 		if (index != std::string::npos) {
+ 			result.push_back(str.substr(0, index));
+ 			str = str.substr(index + token.size());
+diff --git a/src/nxp_nci_hal_libnfc-nci/utils/config.cc b/src/nxp_nci_hal_libnfc-nci/utils/config.cc
+index d4b6f20..9029273 100644
+--- a/src/nxp_nci_hal_libnfc-nci/utils/config.cc
++++ b/src/nxp_nci_hal_libnfc-nci/utils/config.cc
+@@ -867,6 +867,9 @@ extern "C" int GetStrValue(const char* name, char* pValue, unsigned long l)
+ 
+     switch (len)
+     {
++    case sizeof(unsigned int):
++        *(static_cast<unsigned int*>(pValue)) = (unsigned int)v;
++        break;
+     case sizeof(unsigned long):
+         *(static_cast<unsigned long*>(pValue)) = (unsigned long)v;
+         break;
+diff --git a/src/service/linux_nfc_api.cpp b/src/service/linux_nfc_api.cpp
+index e9229de..63af088 100644
+--- a/src/service/linux_nfc_api.cpp
++++ b/src/service/linux_nfc_api.cpp
+@@ -379,7 +379,7 @@ int doWriteT4tData(unsigned char *command, unsigned char *ndef_buffer, int ndef_
+ int doReadT4tData(unsigned char *command, unsigned char *ndef_buffer, int *ndef_buffer_length)
+ {
+     int ret = 0;
+-    if (ndef_buffer == NULL || ndef_buffer_length <= 0) {
++    if (ndef_buffer == NULL || *ndef_buffer_length <= 0) {
+       NXPLOG_API_E ("%s: invalide buffer!", __FUNCTION__);
+       return NFA_STATUS_FAILED;
+     }
