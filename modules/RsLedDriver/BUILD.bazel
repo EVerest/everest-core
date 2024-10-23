@@ -1,0 +1,63 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@everest_core_crate_index//:defs.bzl", "all_crate_deps")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
+
+cargo_build_script(
+    name = "build_script",
+    srcs = ["build.rs"],
+    edition="2021",
+    build_script_env = {
+        "EVEREST_CORE_ROOT": "../..",
+    },
+    data = [
+        "manifest.yaml",
+        "@everest-core//interfaces",
+        "@everest-core//types",
+    ],
+    deps = all_crate_deps(build = True),
+)
+
+rust_binary(
+    name = "RsLedDriverBinary",
+    srcs = glob(["src/*.rs"]),
+    edition="2021",
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True) + [
+        ":build_script",
+        "@everest-framework//everestrs/everestrs:everestrs_sys",
+        "@everest-framework//everestrs/everestrs:everestrs_bridge",
+    ],
+)
+
+rust_test(
+    name = "RsLedDriverTest",
+    edition="2021",
+    srcs = [],
+    crate_features = ["mockall", "mockall_double"],
+    crate = ":RsLedDriverBinary",
+)
+
+binary = ":RsLedDriverBinary"
+manifest = ":manifest.yaml"
+name = "RsLedDriver"
+
+genrule(
+    name = "copy_to_subdir",
+    srcs = [binary, manifest],
+    outs = [
+        "{}/manifest.yaml".format(name),
+        "{}/{}".format(name, name),
+    ],
+    cmd = "mkdir -p $(RULEDIR)/{} && ".format(name) +
+          "cp $(location {}) $(RULEDIR)/{}/{} && ".format(binary, name, name) +
+          "cp $(location {}) $(RULEDIR)/{}/".format(manifest, name),
+)
+
+filegroup(
+    name = name,
+    srcs = [
+        ":copy_to_subdir",
+    ],
+    visibility = ["//visibility:public"],
+)
