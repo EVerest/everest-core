@@ -227,6 +227,9 @@ types:
       key:
         description: The path of the PEM or DER encoded private key
         type: string
+      certificate_root: 
+        description: The PEM of the root certificate that issued this leaf
+        type: string
       certificate:
         description: The path of the PEM or DER encoded certificate chain
         type: string
@@ -260,4 +263,22 @@ types:
         description: The requested info
         type: object
         $ref: /evse_security#/CertificateInfo
+  GetCertificateFullInfoResult:
+    description: Response to the command get_all_valid_certificates_info
+    type: object
+    required:
+      - status
+      - info
+    properties:
+      status:
+        description: The status of the requested command
+        type: string
+        $ref: /evse_security#/GetCertificateInfoStatus
+      info:
+        description: The requested info
+        type: array
+        items:
+          minimum: 0
+          type: object
+          $ref: /evse_security#/CertificateInfo
 
