@@ -24,17 +24,6 @@
 
 #include "bsl_gpio.h"
 
-namespace {
-    LedState led_state_from_string(const std::string& led_state) {
-        if (led_state == "Red")
-            return LedState_RED;
-        if (led_state == "Blue")
-            return LedState_BLUE;
-        if (led_state == "Green")
-            return LedState_GREEN;
-        return LedState_RED;
-    }
-}
 
 evSerial::evSerial(evConfig& _verso_config) :
     fd(0), baud(0), reset_done_flag(false), forced_reset(false), verso_config(_verso_config) {
@@ -411,11 +400,11 @@ void evSerial::set_coil_state_request(int target_connector, CoilType type, bool 
     link_write(&msg_out);
 }
 
-void evSerial::set_led_state(int target_connector, const std::string& color, uint8_t brightness) {
+void evSerial::set_led_state(int target_connector, const LedState& led_state, uint8_t brightness) {
     EverestToMcu msg_out = EverestToMcu_init_default;
     msg_out.which_payload = EverestToMcu_set_led_state_tag;
     msg_out.payload.set_led_state.brightness = brightness;
-    msg_out.payload.set_led_state.led_state = led_state_from_string(color);
+    msg_out.payload.set_led_state.led_state = led_state;
     msg_out.connector = target_connector;
     link_write(&msg_out);
 }
