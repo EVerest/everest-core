@@ -178,6 +178,79 @@
       ],
       "description": "A list of supported quantities for use in a ChargingSchedule. Allowed values: 'A' and 'W\ufffd",
       "type": "string"
+    },
+    "CompositeScheduleDefaultLimitAmps": {
+      "variable_name": "CompositeScheduleDefaultLimitAmps",
+      "characteristics": {
+        "unit": "A",
+        "minLimit": 0,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 48
+        }
+      ],
+      "type": "integer",
+      "description": "Default amps limit applied when composite schedule is calculated and no limit was provided by the CSMS"      
+    },
+    "CompositeScheduleDefaultLimitWatts": {
+      "variable_name": "CompositeScheduleDefaultLimitWatts",
+      "characteristics": {
+        "unit": "W",
+        "minLimit": 0,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 33120
+        }
+      ],
+      "type": "integer",
+      "description": "Default watts limit applied when composite schedule is calculated and no limit was provided by the CSMS"
+    },
+    "CompositeScheduleDefaultNumberPhases": {
+      "variable_name": "CompositeScheduleDefaultNumberPhases",
+      "characteristics": {
+        "unit": "W",
+        "minLimit": 1,
+        "maxLimit": 3,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 3
+        }
+      ],
+      "type": "integer",
+      "description": "Default number of phases applied when composite schedule is calculated and no limit was provided by the CSMS"   
+    },
+    "SupplyVoltage": {
+      "variable_name": "SupplyVoltage",
+      "characteristics": {
+        "unit": "V",
+        "minLimit": 0,
+        "supportsMonitoring": true,
+        "dataType": "integer"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": 230
+        }
+      ],
+      "type": "integer",
+      "description": "Supply voltage of the grid. This value is only used in case a conversion between smart charging amp and watt limits is required"   
     }
   },
   "required": [

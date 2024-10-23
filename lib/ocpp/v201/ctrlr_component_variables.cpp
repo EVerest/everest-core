@@ -1163,6 +1163,26 @@ const RequiredComponentVariable& PeriodsPerSchedule = {
         "PeriodsPerSchedule",
     }),
 };
+const RequiredComponentVariable& CompositeScheduleDefaultLimitAmps = {
+    ControllerComponents::SmartChargingCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"CompositeScheduleDefaultLimitAmps"}),
+};
+const RequiredComponentVariable& CompositeScheduleDefaultLimitWatts = {
+    ControllerComponents::SmartChargingCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"CompositeScheduleDefaultLimitWatts"}),
+};
+const RequiredComponentVariable& CompositeScheduleDefaultNumberPhases = {
+    ControllerComponents::SmartChargingCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"CompositeScheduleDefaultNumberPhases"}),
+};
+const RequiredComponentVariable& SupplyVoltage = {
+    ControllerComponents::SmartChargingCtrlr,
+    std::nullopt,
+    std::optional<Variable>({"SupplyVoltage"}),
+};
 const ComponentVariable& Phases3to1 = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,

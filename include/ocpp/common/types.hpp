@@ -827,6 +827,13 @@ enum class QueueType {
     None,
 };
 
+/// \brief Struct containing default limits for amps, watts and number of phases
+struct CompositeScheduleDefaultLimits {
+    int32_t amps;
+    int32_t watts;
+    int32_t number_phases;
+};
+
 } // namespace ocpp
 
 #endif

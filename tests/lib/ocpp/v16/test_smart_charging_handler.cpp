@@ -48,6 +48,10 @@ namespace v16 {
 class ChargepointTestFixture : public testing::Test {
 protected:
     void SetUp() override {
+        std::ifstream ifs(CONFIG_FILE_LOCATION_V16);
+        const std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        this->configuration =
+            std::make_unique<ChargePointConfiguration>(config_file, CONFIG_DIR_V16, USER_CONFIG_FILE_LOCATION_V16);
     }
 
     void addConnector(int id) {
@@ -205,7 +209,7 @@ protected:
         auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(std::move(database), init_script_path);
-        auto handler = new SmartChargingHandler(connectors, database_handler, true);
+        auto handler = new SmartChargingHandler(connectors, database_handler, *configuration);
         return handler;
     }
 
@@ -221,8 +225,7 @@ protected:
         auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(std::move(database), init_script_path);
-
-        auto handler = new SmartChargingHandler(connectors, database_handler, true);
+        auto handler = new SmartChargingHandler(connectors, database_handler, *configuration);
 
         return handler;
     }
@@ -242,6 +245,7 @@ protected:
     // Default values used within the tests
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<DatabaseHandler> database_handler;
+    std::unique_ptr<ChargePointConfiguration> configuration;
 
     const int connector_id = 1;
     bool ignore_no_transaction = true;
@@ -362,9 +366,8 @@ TEST_F(ChargepointTestFixture, ValidateProfile__ValidProfile_ChargingProfileKind
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
     // Create a SmartChargingHandler where allow_charging_profile_without_start_schedule is set to false
     addConnector(1);
-    auto allow_charging_profile_without_start_schedule = false;
-    auto handler =
-        new SmartChargingHandler(connectors, database_handler, allow_charging_profile_without_start_schedule);
+    this->configuration->setAllowChargingProfileWithoutStartSchedule(false);
+    auto handler = createSmartChargingHandler();
 
     profile.chargingProfileKind = ChargingProfileKindType::Absolute;
     profile.chargingSchedule.startSchedule = std::nullopt;
@@ -457,9 +460,8 @@ TEST_F(ChargepointTestFixture,
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
     // Create a SmartChargingHandler where allow_charging_profile_without_start_schedule is set to false
     addConnector(1);
-    auto allow_charging_profile_without_start_schedule = false;
-    auto handler =
-        new SmartChargingHandler(connectors, database_handler, allow_charging_profile_without_start_schedule);
+    this->configuration->setAllowChargingProfileWithoutStartSchedule(false);
+    auto handler = createSmartChargingHandler();
 
     profile.chargingProfileKind = ChargingProfileKindType::Recurring;
     profile.chargingSchedule.startSchedule = std::nullopt;
@@ -496,10 +498,8 @@ TEST_F(ChargepointTestFixture, ValidateProfile__RecurringNoStartScheduleNotAllow
     auto profile = createChargingProfile(createChargeSchedule(ChargingRateUnit::A));
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
 
-    addConnector(1);
-    auto allow_charging_profile_without_start_schedule = false;
-    auto handler =
-        new SmartChargingHandler(connectors, database_handler, allow_charging_profile_without_start_schedule);
+    this->configuration->setAllowChargingProfileWithoutStartSchedule(false);
+    auto handler = createSmartChargingHandler();
 
     profile.chargingProfileKind = ChargingProfileKindType::Recurring;
     profile.chargingSchedule.startSchedule = std::nullopt;

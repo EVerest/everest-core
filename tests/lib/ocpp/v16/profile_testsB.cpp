@@ -276,7 +276,7 @@ TEST(DateTime, init) {
 TEST_F(ProfileTestsB, init) {
     add_connectors(2);
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     ChargingProfile profile{
         101,                                                                 // chargingProfileId
         20,                                                                  // stackLevel
@@ -304,7 +304,7 @@ TEST_F(ProfileTestsB, validate_profileA) {
     connectors[connector_id]->transaction =
         std::make_shared<Transaction>(-1, connector_id, "1234", "4567", meter_start, std::nullopt, timestamp, nullptr);
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     auto tmp_profile = profileA;
     EXPECT_TRUE(
         handler.validate_profile(tmp_profile, 0, true, 100, 10, 10, {ChargingRateUnit::A, ChargingRateUnit::W}));
@@ -333,7 +333,7 @@ TEST_F(ProfileTestsB, validate_profileB) {
     connectors[connector_id]->transaction =
         std::make_shared<Transaction>(-1, connector_id, "1234", "4567", meter_start, std::nullopt, timestamp, nullptr);
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     auto tmp_profile = profileB;
     EXPECT_TRUE(
         handler.validate_profile(tmp_profile, 0, true, 100, 10, 10, {ChargingRateUnit::A, ChargingRateUnit::W}));
@@ -352,7 +352,7 @@ TEST_F(ProfileTestsB, validate_profileB) {
 TEST_F(ProfileTestsB, tx_default_0) {
     add_connectors(5);
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     ChargingProfile profile{
         201,                                                                 // chargingProfileId
         22,                                                                  // stackLevel
@@ -377,7 +377,7 @@ TEST_F(ProfileTestsB, single_profile) {
     connectors[1]->transaction =
         std::make_shared<Transaction>(-1, connector, "1234", "4567", meter_start, std::nullopt, timestamp, nullptr);
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileA, 1);
 
@@ -402,7 +402,7 @@ TEST_F(ProfileTestsB, startup_no_charge) {
 
     // no active transaction
     // map doesn't include connector 0, database does
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileNoCharge, 1);
 
@@ -457,7 +457,7 @@ TEST_F(ProfileTestsB, get_valid_profiles_absolute) {
     connectors[1]->transaction =
         std::make_shared<Transaction>(-1, connector, "1234", "4567", 100, std::nullopt, start_time, nullptr);
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileStackA, 1);
     handler.add_tx_default_profile(profileStackB, 1);
@@ -485,7 +485,7 @@ TEST_F(ProfileTestsB, get_valid_profiles_absolute_delay) {
     absoluteB.validFrom = ocpp::DateTime(now + minutes(5));
     absoluteB.chargingSchedule.startSchedule = ocpp::DateTime(now + minutes(5));
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileStackA, 1);
     handler.add_tx_default_profile(absoluteB, 1);
@@ -516,7 +516,7 @@ TEST_F(ProfileTestsB, get_valid_profiles_relative) {
     relativeB.chargingProfileKind = ChargingProfileKindType::Relative;
     relativeB.chargingSchedule.startSchedule = std::nullopt;
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(relativeA, 1);
     handler.add_tx_default_profile(relativeB, 1);
@@ -549,7 +549,7 @@ TEST_F(ProfileTestsB, get_valid_profiles_relative_delay) {
     relativeB.chargingSchedule.startSchedule = ocpp::DateTime(now + minutes(5));
     // relativeB.chargingSchedule.startSchedule = std::nullopt;
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(relativeA, 1);
     handler.add_tx_default_profile(relativeB, 1);
@@ -578,7 +578,7 @@ TEST_F(ProfileTestsB, single_absolute) {
 
     auto absoluteA = profileStackA;
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(absoluteA, 1);
     handler.add_tx_default_profile(profileStackC, 1);
@@ -610,7 +610,7 @@ TEST_F(ProfileTestsB, stack_absolute) {
     connectors[1]->transaction =
         std::make_shared<Transaction>(-1, connector, "1234", "4567", 100, std::nullopt, start_time, nullptr);
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileStackA, 1);
     handler.add_tx_default_profile(profileStackB, 1);
@@ -657,7 +657,7 @@ TEST_F(ProfileTestsB, stack_absolute_delay) {
     absoluteB.validFrom = absoluteA.validTo;
     absoluteB.chargingSchedule.startSchedule = absoluteA.validTo;
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(absoluteA, 1);
     handler.add_tx_default_profile(absoluteB, 1);
@@ -708,7 +708,7 @@ TEST_F(ProfileTestsB, stack_absolute_delay_overlap) {
     absoluteB.validFrom = ocpp::DateTime(now + minutes(5));
     absoluteB.chargingSchedule.startSchedule = ocpp::DateTime(now + minutes(5));
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(profileStackA, 1);
     handler.add_tx_default_profile(absoluteB, 1);
@@ -761,7 +761,7 @@ TEST_F(ProfileTestsB, stack_relative) {
     relativeB.chargingProfileKind = ChargingProfileKindType::Relative;
     relativeB.chargingSchedule.startSchedule = std::nullopt;
 
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
 
     handler.add_tx_default_profile(relativeA, 1);
     handler.add_tx_default_profile(relativeB, 1);

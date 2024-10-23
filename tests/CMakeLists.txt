@@ -1,5 +1,11 @@
+set(CONFIG_DIR_V16 "${CMAKE_CURRENT_BINARY_DIR}/resources/v16/")
 set(MIGRATION_FILES_LOCATION_V16 "${CMAKE_CURRENT_BINARY_DIR}/resources/v16/migration_files")
 set(MIGRATION_FILES_LOCATION_V201 "${CMAKE_CURRENT_BINARY_DIR}/resources/v201/migration_files")
+set(CONFIG_FILE_LOCATION_V16 ${CMAKE_CURRENT_SOURCE_DIR}/config/v16/resources/config.json)
+set(USER_CONFIG_FILE_LOCATION_V16 ${CMAKE_CURRENT_SOURCE_DIR}/config/v16/resources/user_config.json)
+set(CONFIG_FILE_RESOURCES_LOCATION_V16 "${CMAKE_CURRENT_BINARY_DIR}/resources/config/v16/config.json")
+set(USER_CONFIG_FILE_RESOURCES_LOCATION_V16 "${CMAKE_CURRENT_BINARY_DIR}/resources/config/v16/user_config.json")
+
 set(MIGRATION_FILES_DEVICE_MODEL_LOCATION_V201 "${CMAKE_CURRENT_BINARY_DIR}/resources/v201/device_model_migration_files")
 set(DEVICE_MODEL_DB_LOCATION_V201 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/modules/OCPP201/device_model_storage.db")
 set(DEVICE_MODEL_RESOURCES_LOCATION_V201 "${CMAKE_CURRENT_BINARY_DIR}/resources/config/v201")
@@ -19,6 +25,9 @@ add_executable(libocpp_unit_tests
 
 target_compile_definitions(libocpp_unit_tests
     PRIVATE
+    CONFIG_FILE_LOCATION_V16="${CONFIG_FILE_RESOURCES_LOCATION_V16}"
+    USER_CONFIG_FILE_LOCATION_V16="${USER_CONFIG_FILE_RESOURCES_LOCATION_V16}"
+    CONFIG_DIR_V16="${CONFIG_DIR_V16}"
     MIGRATION_FILES_LOCATION_V16="${MIGRATION_FILES_LOCATION_V16}"
     MIGRATION_FILES_LOCATION_V201="${MIGRATION_FILES_LOCATION_V201}"
     MIGRATION_FILE_VERSION_V16=${MIGRATION_FILE_VERSION_V16}
@@ -31,6 +40,10 @@ target_compile_definitions(libocpp_unit_tests
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model.db
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model_missing_required.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model_missing_required.db
+        COMMAND ${CMAKE_COMMAND} -E copy ${CONFIG_FILE_LOCATION_V16} ${CONFIG_FILE_RESOURCES_LOCATION_V16}
+        COMMAND ${CMAKE_COMMAND} -E copy ${USER_CONFIG_FILE_LOCATION_V16} ${USER_CONFIG_FILE_RESOURCES_LOCATION_V16}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CONFIG_DIR_V16}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${OCPP1_6_CONFIG_DIR} ${CONFIG_DIR_V16}
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_LOCATION_V16}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_SOURCE_DIR_V16} ${MIGRATION_FILES_LOCATION_V16}
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_LOCATION_V201}

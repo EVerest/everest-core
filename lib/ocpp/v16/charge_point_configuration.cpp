@@ -350,14 +350,116 @@ int32_t ChargePointConfiguration::getMaxCompositeScheduleDuration() {
     return this->config["Internal"]["MaxCompositeScheduleDuration"];
 }
 
-std::string ChargePointConfiguration::getSupportedCiphers12() {
+std::optional<int32_t> ChargePointConfiguration::getCompositeScheduleDefaultLimitAmps() {
+    if (this->config["Internal"].contains("CompositeScheduleDefaultLimitAmps")) {
+        return this->config["Internal"]["CompositeScheduleDefaultLimitAmps"];
+    }
+    return std::nullopt;
+}
 
+std::optional<KeyValue> ChargePointConfiguration::getCompositeScheduleDefaultLimitAmpsKeyValue() {
+    const auto opt_value = this->getCompositeScheduleDefaultLimitAmps();
+    if (opt_value.has_value()) {
+        KeyValue kv;
+        kv.key = "CompositeScheduleDefaultLimitAmps";
+        kv.readonly = false;
+        kv.value = std::to_string(opt_value.value());
+        return kv;
+    }
+    return std::nullopt;
+}
+
+void ChargePointConfiguration::setCompositeScheduleDefaultLimitAmps(int32_t limit_amps) {
+    if (this->getCompositeScheduleDefaultLimitAmps() != std::nullopt) {
+        this->config["Internal"]["CompositeScheduleDefaultLimitAmps"] = limit_amps;
+        this->setInUserConfig("Internal", "CompositeScheduleDefaultLimitAmps", limit_amps);
+    }
+}
+
+std::optional<int32_t> ChargePointConfiguration::getCompositeScheduleDefaultLimitWatts() {
+    if (this->config["Internal"].contains("CompositeScheduleDefaultLimitWatts")) {
+        return this->config["Internal"]["CompositeScheduleDefaultLimitWatts"];
+    }
+    return std::nullopt;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getCompositeScheduleDefaultLimitWattsKeyValue() {
+    const auto opt_value = this->getCompositeScheduleDefaultLimitWatts();
+    if (opt_value.has_value()) {
+        KeyValue kv;
+        kv.key = "CompositeScheduleDefaultLimitWatts";
+        kv.readonly = false;
+        kv.value = std::to_string(opt_value.value());
+        return kv;
+    }
+    return std::nullopt;
+}
+
+void ChargePointConfiguration::setCompositeScheduleDefaultLimitWatts(int32_t limit_watts) {
+    if (this->getCompositeScheduleDefaultLimitWatts() != std::nullopt) {
+        this->config["Internal"]["CompositeScheduleDefaultLimitWatts"] = limit_watts;
+        this->setInUserConfig("Internal", "CompositeScheduleDefaultLimitWatts", limit_watts);
+    }
+}
+
+std::optional<int32_t> ChargePointConfiguration::getCompositeScheduleDefaultNumberPhases() {
+    if (this->config["Internal"].contains("CompositeScheduleDefaultNumberPhases")) {
+        return this->config["Internal"]["CompositeScheduleDefaultNumberPhases"];
+    }
+    return std::nullopt;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getCompositeScheduleDefaultNumberPhasesKeyValue() {
+    const auto opt_value = this->getCompositeScheduleDefaultNumberPhases();
+    if (opt_value.has_value()) {
+        KeyValue kv;
+        kv.key = "CompositeScheduleDefaultNumberPhases";
+        kv.readonly = false;
+        kv.value = std::to_string(opt_value.value());
+        return kv;
+    }
+    return std::nullopt;
+}
+
+void ChargePointConfiguration::setCompositeScheduleDefaultNumberPhases(int32_t number_phases) {
+    if (this->getCompositeScheduleDefaultNumberPhases() != std::nullopt) {
+        this->config["Internal"]["CompositeScheduleDefaultNumberPhases"] = number_phases;
+        this->setInUserConfig("Internal", "CompositeScheduleDefaultNumberPhases", number_phases);
+    }
+}
+
+std::optional<int32_t> ChargePointConfiguration::getSupplyVoltage() {
+    if (this->config["Internal"].contains("SupplyVoltage")) {
+        return this->config["Internal"]["SupplyVoltage"];
+    }
+    return std::nullopt;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getSupplyVoltageKeyValue() {
+    const auto opt_value = this->getSupplyVoltage();
+    if (opt_value.has_value()) {
+        KeyValue kv;
+        kv.key = "SupplyVoltage";
+        kv.readonly = false;
+        kv.value = std::to_string(opt_value.value());
+        return kv;
+    }
+    return std::nullopt;
+}
+
+void ChargePointConfiguration::setSupplyVoltage(int32_t supply_voltage) {
+    if (this->getSupplyVoltage().has_value()) {
+        this->config["Internal"]["SupplyVoltage"] = supply_voltage;
+        this->setInUserConfig("Internal", "SupplyVoltage", supply_voltage);
+    }
+}
+
+std::string ChargePointConfiguration::getSupportedCiphers12() {
     std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers12"];
     return boost::algorithm::join(supported_ciphers, ":");
 }
 
 std::string ChargePointConfiguration::getSupportedCiphers13() {
-
     std::vector<std::string> supported_ciphers = this->config["Internal"]["SupportedCiphers13"];
     return boost::algorithm::join(supported_ciphers, ":");
 }
@@ -2843,6 +2945,18 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "MaxCompositeScheduleDuration") {
         return this->getMaxCompositeScheduleDurationKeyValue();
     }
+    if (key == "CompositeScheduleDefaultLimitAmps") {
+        return this->getCompositeScheduleDefaultLimitAmpsKeyValue();
+    }
+    if (key == "CompositeScheduleDefaultLimitWatts") {
+        return this->getCompositeScheduleDefaultLimitWattsKeyValue();
+    }
+    if (key == "CompositeScheduleDefaultNumberPhases") {
+        return this->getCompositeScheduleDefaultNumberPhasesKeyValue();
+    }
+    if (key == "SupplyVoltage") {
+        return this->getSupplyVoltageKeyValue();
+    }
     if (key == "WebsocketPingPayload") {
         return this->getWebsocketPingPayloadKeyValue();
     }
@@ -3505,6 +3619,71 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
             }
         } else {
             return ConfigurationStatus::NotSupported;
+        }
+    }
+
+    if (key == "CompositeScheduleDefaultLimitAmps") {
+        if (not this->getCompositeScheduleDefaultLimitAmps().has_value()) {
+            return ConfigurationStatus::NotSupported;
+        }
+        try {
+            auto [valid, _value] = is_positive_integer(value.get());
+            if (not valid) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setCompositeScheduleDefaultLimitAmps(_value);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
+    if (key == "CompositeScheduleDefaultLimitWatts") {
+        if (not this->getCompositeScheduleDefaultLimitWatts().has_value()) {
+            return ConfigurationStatus::NotSupported;
+        }
+        try {
+            auto [valid, _value] = is_positive_integer(value.get());
+            if (not valid) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setCompositeScheduleDefaultLimitWatts(_value);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
+    if (key == "CompositeScheduleDefaultNumberPhases") {
+        if (not this->getCompositeScheduleDefaultNumberPhases().has_value()) {
+            return ConfigurationStatus::NotSupported;
+        }
+        try {
+            const auto _value = std::stoi(value.get());
+            if (_value <= 0 or _value > 3) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setCompositeScheduleDefaultNumberPhases(_value);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
+    if (key == "SupplyVoltage") {
+        if (not this->getSupplyVoltage().has_value()) {
+            return ConfigurationStatus::NotSupported;
+        }
+        try {
+            const auto [valid, _value] = is_positive_integer(value.get());
+            if (not valid) {
+                return ConfigurationStatus::Rejected;
+            }
+            this->setSupplyVoltage(_value);
+        } catch (const std::invalid_argument& e) {
+            return ConfigurationStatus::Rejected;
+        } catch (const std::out_of_range& e) {
+            return ConfigurationStatus::Rejected;
         }
     }
 

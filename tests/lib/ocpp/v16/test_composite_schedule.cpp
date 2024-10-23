@@ -30,6 +30,10 @@ class CompositeScheduleTestFixture : public testing::Test {
 protected:
     void SetUp() override {
         this->evse_security = std::make_shared<EvseSecurityMock>();
+        std::ifstream ifs(CONFIG_FILE_LOCATION_V16);
+        const std::string config_file((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+        this->configuration =
+            std::make_unique<ChargePointConfiguration>(config_file, CONFIG_DIR_V16, USER_CONFIG_FILE_LOCATION_V16);
     }
 
     void add_connector(int id) {
@@ -55,7 +59,7 @@ protected:
         std::shared_ptr<testing::NiceMock<DatabaseHandlerMock>> database_handler =
             std::make_shared<testing::NiceMock<DatabaseHandlerMock>>(std::move(database), init_script_path);
 
-        auto handler = new SmartChargingHandler(connectors, database_handler, true);
+        auto handler = new SmartChargingHandler(connectors, database_handler, *configuration);
 
         return handler;
     }
@@ -169,6 +173,7 @@ protected:
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<DatabaseHandler> database_handler;
     std::shared_ptr<EvseSecurityMock> evse_security;
+    std::unique_ptr<ChargePointConfiguration> configuration;
 };
 
 TEST_F(CompositeScheduleTestFixture, CalculateEnhancedCompositeSchedule_ValidatedBaseline) {

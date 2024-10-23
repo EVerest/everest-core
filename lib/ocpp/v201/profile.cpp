@@ -61,17 +61,18 @@ void update_itt(const int schedule_duration, std::vector<ocpp::v201::ChargingSch
 }
 
 std::pair<float, std::int32_t> convert_limit(const ocpp::v201::period_entry_t* const entry,
-                                             const ocpp::v201::ChargingRateUnitEnum selected_unit) {
+                                             const ocpp::v201::ChargingRateUnitEnum selected_unit,
+                                             int32_t default_number_phases, int32_t supply_voltage) {
     assert(entry != nullptr);
     float limit = entry->limit;
-    std::int32_t number_phases = entry->number_phases.value_or(ocpp::DEFAULT_AND_MAX_NUMBER_PHASES);
+    std::int32_t number_phases = entry->number_phases.value_or(default_number_phases);
 
     // if the units are the same - don't change the values
     if (selected_unit != entry->charging_rate_unit) {
         if (selected_unit == ocpp::v201::ChargingRateUnitEnum::A) {
-            limit = entry->limit / (ocpp::LOW_VOLTAGE * number_phases);
+            limit = entry->limit / (supply_voltage * number_phases);
         } else {
-            limit = entry->limit * (ocpp::LOW_VOLTAGE * number_phases);
+            limit = entry->limit * (supply_voltage * number_phases);
         }
     }
 
@@ -348,7 +349,8 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
 
 CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_combined_schedules,
                                                const DateTime& in_now, const DateTime& in_end,
-                                               std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+                                               std::optional<ChargingRateUnitEnum> charging_rate_unit,
+                                               int32_t default_number_phases, int32_t supply_voltage) {
 
     // Defaults to ChargingRateUnitEnum::A if not set.
     const ChargingRateUnitEnum selected_unit =
@@ -403,7 +405,8 @@ CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_c
             current = earliest;
         } else {
             // there is a schedule to use
-            const auto [limit, number_phases] = convert_limit(chosen, selected_unit);
+            const auto [limit, number_phases] =
+                convert_limit(chosen, selected_unit, default_number_phases, supply_voltage);
 
             ChargingSchedulePeriod charging_schedule_period{elapsed_seconds(current, now), limit, std::nullopt,
                                                             number_phases};
@@ -433,10 +436,9 @@ CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& in_c
 /// \param[in] current_charging_rate_unit_enum details of the current composite schedule charging_rate_unit for
 /// conversion.
 ///
-ChargingSchedulePeriod
-minimize_charging_schedule_period_by_limit(const int current, const ChargingSchedulePeriod& prevailing_period,
-                                           const ChargingSchedulePeriod& candidate_period,
-                                           const ChargingRateUnitEnum current_charging_rate_unit_enum) {
+ChargingSchedulePeriod minimize_charging_schedule_period_by_limit(
+    const int current, const ChargingSchedulePeriod& prevailing_period, const ChargingSchedulePeriod& candidate_period,
+    const ChargingRateUnitEnum current_charging_rate_unit_enum, const int32_t default_number_phases) {
 
     auto adjusted_period = prevailing_period;
 
@@ -447,9 +449,9 @@ minimize_charging_schedule_period_by_limit(const int current, const ChargingSche
     if (prevailing_period.limit == NO_LIMIT_SPECIFIED && candidate_period.limit != NO_LIMIT_SPECIFIED) {
         adjusted_period = candidate_period;
     } else if (candidate_period.limit != NO_LIMIT_SPECIFIED) {
-        const auto charge_point_max_phases = candidate_period.numberPhases.value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+        const auto charge_point_max_phases = candidate_period.numberPhases.value_or(default_number_phases);
 
-        const auto period_max_phases = prevailing_period.numberPhases.value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+        const auto period_max_phases = prevailing_period.numberPhases.value_or(default_number_phases);
         adjusted_period.numberPhases = std::min(charge_point_max_phases, period_max_phases);
 
         if (current_charging_rate_unit_enum == ChargingRateUnitEnum::A) {
@@ -470,7 +472,9 @@ minimize_charging_schedule_period_by_limit(const int current, const ChargingSche
 
 CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging_station_external_constraints,
                                                const CompositeSchedule& charging_station_max,
-                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx) {
+                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx,
+                                               const CompositeScheduleDefaultLimits& default_limits,
+                                               int32_t supply_voltage) {
 
     CompositeSchedule combined{
         .chargingSchedulePeriod = {},
@@ -481,8 +485,9 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
 
     };
 
-    const float default_limit =
-        (tx_default.chargingRateUnit == ChargingRateUnitEnum::A) ? DEFAULT_LIMIT_AMPS : DEFAULT_LIMIT_WATTS;
+    const float default_limit = (tx_default.chargingRateUnit == ChargingRateUnitEnum::A)
+                                    ? static_cast<float>(default_limits.amps)
+                                    : static_cast<float>(default_limits.watts);
 
     int current_period = 0;
 
@@ -517,8 +522,7 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
 
     update_itt(0, tx_itt, tx.chargingSchedulePeriod.end(), period_tx, duration_tx);
 
-    ChargingSchedulePeriod last{
-        .startPeriod = 1, .limit = NO_LIMIT_SPECIFIED, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES};
+    ChargingSchedulePeriod last{1, NO_LIMIT_SPECIFIED, std::nullopt, default_limits.number_phases};
 
     while (current_period < end) {
 
@@ -527,8 +531,7 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
                                 std::min(std::min(duration_charging_station_max, duration_tx_default), duration_tx));
 
         // create an unset period to override as needed.
-        ChargingSchedulePeriod period{
-            .startPeriod = NO_START_PERIOD, .limit = NO_LIMIT_SPECIFIED, .numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES};
+        ChargingSchedulePeriod period{NO_START_PERIOD, NO_LIMIT_SPECIFIED, std::nullopt, default_limits.number_phases};
 
         if (period_tx.startPeriod != NO_START_PERIOD) {
             period = period_tx;
@@ -541,9 +544,10 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
         }
 
         period = minimize_charging_schedule_period_by_limit(current_period, period, period_charging_station_max,
-                                                            combined.chargingRateUnit);
-        period = minimize_charging_schedule_period_by_limit(
-            current_period, period, period_charging_station_external_constraints, combined.chargingRateUnit);
+                                                            combined.chargingRateUnit, default_limits.number_phases);
+        period = minimize_charging_schedule_period_by_limit(current_period, period,
+                                                            period_charging_station_external_constraints,
+                                                            combined.chargingRateUnit, default_limits.number_phases);
 
         update_itt(duration, charging_station_external_constraints_itt,
                    charging_station_external_constraints.chargingSchedulePeriod.end(),
@@ -554,17 +558,9 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
                    duration_tx_default);
         update_itt(duration, tx_itt, tx.chargingSchedulePeriod.end(), period_tx, duration_tx);
 
-        /*
-         * defaults for numberPhases and limit need to consider the capabilities of the charger and grid
-         * connection. These are currently hard-coded in default_number_phases and default_limit but
-         * should be set from configuration. (see top of this file)
-         *
-         * the defaults should allow charging at the maximum allowed rate
-         */
-
         if (period.startPeriod != NO_START_PERIOD) {
             if (!period.numberPhases.has_value()) {
-                period.numberPhases = DEFAULT_AND_MAX_NUMBER_PHASES;
+                period.numberPhases = default_limits.number_phases;
             }
 
             if (period.limit == NO_LIMIT_SPECIFIED) {
@@ -580,7 +576,7 @@ CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging
             last = period;
         } else {
             combined.chargingSchedulePeriod.push_back(
-                {current_period, default_limit, std::nullopt, DEFAULT_AND_MAX_NUMBER_PHASES});
+                {current_period, default_limit, std::nullopt, default_limits.number_phases});
             current_period = end;
         }
     }

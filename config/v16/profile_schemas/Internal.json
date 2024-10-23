@@ -203,6 +203,35 @@
             "readOnly": true,
             "default": 31536000
         },
+        "CompositeScheduleDefaultLimitAmps": {
+            "description": "Default amps limit applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 48,
+            "minimum": 0
+        },
+        "CompositeScheduleDefaultLimitWatts": {
+            "description": "Default watts limit applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 33120,
+            "minimum": 0
+        },
+        "CompositeScheduleDefaultNumberPhases": {
+            "description": "Default number of phases applied when composite schedule is calculated and no limit was provided by the CSMS",
+            "type": "number",
+            "readOnly": false,
+            "default": 3,
+            "minimum": 1,
+            "maximum": 3
+        },
+        "SupplyVoltage": {
+            "description": "Supply voltage of the grid. This value is only used in case a conversion between smart charging amp and watt limits is required",
+            "type": "number",
+            "readOnly": false,
+            "default": 230,
+            "minimum": 0
+        },
         "WebsocketPingPayload": {
             "$comment": "The payload sent in a websocket ping.",
             "type": "string",

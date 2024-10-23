@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
+#include "ocpp/common/constants.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/ocpp_enums.hpp"
 #include <ocpp/v16/profile.hpp>
@@ -45,10 +46,8 @@ bool validate_schedule(const ChargingSchedule& schedule, const int charging_sche
 
 SmartChargingHandler::SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,
                                            std::shared_ptr<DatabaseHandler> database_handler,
-                                           const bool allow_charging_profile_without_start_schedule) :
-    connectors(connectors),
-    database_handler(database_handler),
-    allow_charging_profile_without_start_schedule(allow_charging_profile_without_start_schedule) {
+                                           ChargePointConfiguration& configuration) :
+    connectors(connectors), database_handler(database_handler), configuration(configuration) {
     this->clear_profiles_timer = std::make_unique<Everest::SteadyTimer>();
     this->clear_profiles_timer->interval([this]() { this->clear_expired_profiles(); }, hours(HOURS_PER_DAY));
 }
@@ -143,12 +142,24 @@ EnhancedChargingSchedule SmartChargingHandler::calculate_enhanced_composite_sche
         }
     }
 
-    auto composite_charge_point_max =
-        ocpp::v16::calculate_composite_schedule(charge_point_max, start_time, end_time, charging_rate_unit);
-    auto composite_tx_default =
-        ocpp::v16::calculate_composite_schedule(tx_default, start_time, end_time, charging_rate_unit);
-    auto composite_tx = ocpp::v16::calculate_composite_schedule(tx, start_time, end_time, charging_rate_unit);
-    return ocpp::v16::calculate_composite_schedule(composite_charge_point_max, composite_tx_default, composite_tx);
+    const auto default_amps_limit =
+        this->configuration.getCompositeScheduleDefaultLimitAmps().value_or(DEFAULT_LIMIT_AMPS);
+    const auto default_watts_limit =
+        this->configuration.getCompositeScheduleDefaultLimitWatts().value_or(DEFAULT_LIMIT_WATTS);
+    const auto default_number_phases =
+        this->configuration.getCompositeScheduleDefaultNumberPhases().value_or(DEFAULT_AND_MAX_NUMBER_PHASES);
+    const auto supply_voltage = this->configuration.getSupplyVoltage().value_or(LOW_VOLTAGE);
+
+    CompositeScheduleDefaultLimits default_limits = {default_amps_limit, default_watts_limit, default_number_phases};
+
+    auto composite_charge_point_max = ocpp::v16::calculate_composite_schedule(
+        charge_point_max, start_time, end_time, charging_rate_unit, default_number_phases, supply_voltage);
+    auto composite_tx_default = ocpp::v16::calculate_composite_schedule(
+        tx_default, start_time, end_time, charging_rate_unit, default_number_phases, supply_voltage);
+    auto composite_tx = ocpp::v16::calculate_composite_schedule(tx, start_time, end_time, charging_rate_unit,
+                                                                default_number_phases, supply_voltage);
+    return ocpp::v16::calculate_composite_schedule(composite_charge_point_max, composite_tx_default, composite_tx,
+                                                   default_limits, supply_voltage);
 }
 
 bool SmartChargingHandler::validate_profile(
@@ -163,7 +174,7 @@ bool SmartChargingHandler::validate_profile(
 
     if (profile.chargingProfileKind == ChargingProfileKindType::Absolute && !profile.chargingSchedule.startSchedule) {
         EVLOG_warning << "INVALID PROFILE - Absolute Profile Kind with no given startSchedule";
-        if (this->allow_charging_profile_without_start_schedule) {
+        if (this->configuration.getAllowChargingProfileWithoutStartSchedule().value_or(false)) {
             EVLOG_warning << "Allowing profile because AllowChargingProfileWithoutStartSchedule is configured";
             profile.chargingSchedule.startSchedule = ocpp::DateTime();
         } else {
@@ -188,7 +199,7 @@ bool SmartChargingHandler::validate_profile(
         }
         if (!profile.chargingSchedule.startSchedule) {
             EVLOG_warning << "INVALID PROFILE - Recurring Profile Kind with no startSchedule";
-            if (this->allow_charging_profile_without_start_schedule) {
+            if (this->configuration.getAllowChargingProfileWithoutStartSchedule().value_or(false)) {
                 EVLOG_warning << "Allowing profile because AllowChargingProfileWithoutStartSchedule is configured";
                 profile.chargingSchedule.startSchedule = ocpp::DateTime();
             } else {

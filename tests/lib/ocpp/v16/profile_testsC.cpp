@@ -236,7 +236,7 @@ TEST_F(ProfileTestsC, DailyRecurringNotValidYet) {
     DateTime start_time("2024-01-01T07:55:00Z");
     DateTime end_time("2024-01-01T08:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -258,7 +258,7 @@ TEST_F(ProfileTestsC, DailyRecurringAlmostValid) {
     DateTime start_time("2024-01-01T11:55:00Z");
     DateTime end_time("2024-01-01T12:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
 #ifdef DEBUG_PROFILE
@@ -296,7 +296,7 @@ TEST_F(ProfileTestsC, DailyRecurringDuring) {
     DateTime start_time("2024-01-01T15:00:00Z");
     DateTime end_time("2024-01-01T15:10:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -320,7 +320,7 @@ TEST_F(ProfileTestsC, DailyRecurringApproachingEnd) {
     DateTime start_time("2024-01-01T17:55:00Z");
     DateTime end_time("2024-01-01T18:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -348,7 +348,7 @@ TEST_F(ProfileTestsC, DailyRecurringNextDay) {
     DateTime start_time("2024-01-01T07:30:00Z");
     DateTime end_time("2024-01-01T07:40:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -371,7 +371,7 @@ TEST_F(ProfileTestsC, DailyRecurringNextDayStart) {
     DateTime start_time("2024-01-02T07:55:00Z");
     DateTime end_time("2024-01-02T08:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -398,7 +398,7 @@ TEST_F(ProfileTestsC, DailyRecurringApproachingInvalid) {
     DateTime start_time("2024-01-05T11:55:00Z");
     DateTime end_time("2024-01-05T12:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurring, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -428,7 +428,7 @@ TEST_F(ProfileTestsC, MinimumSession) {
     DateTime start_time("2024-01-05T11:55:00Z");
     DateTime end_time("2024-01-05T12:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -450,7 +450,7 @@ TEST_F(ProfileTestsC, MinimumNoSession) {
     DateTime start_time("2024-01-05T11:55:00Z");
     DateTime end_time("2024-01-05T12:05:00Z");
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
     auto valid_profiles = handler.get_valid_profiles(start_time, end_time, connector_id);
@@ -476,7 +476,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltNotValidYet) {
     DateTime start_time("2024-01-01T07:55:00Z");
     DateTime end_time("2024-01-01T08:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -518,7 +518,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltAlmostValid) {
     DateTime start_time("2024-01-01T11:55:00Z");
     DateTime end_time("2024-01-01T12:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -568,7 +568,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltDuring) {
     DateTime start_time("2024-01-01T15:00:00Z");
     DateTime end_time("2024-01-01T15:10:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -610,7 +610,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingEnd) {
     DateTime start_time("2024-01-01T17:55:00Z");
     DateTime end_time("2024-01-01T18:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -660,7 +660,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDay) {
     DateTime start_time("2024-01-01T07:30:00Z");
     DateTime end_time("2024-01-01T07:40:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -702,7 +702,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltNextDayStart) {
     DateTime start_time("2024-01-02T07:55:00Z");
     DateTime end_time("2024-01-02T08:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -752,7 +752,7 @@ TEST_F(ProfileTestsC, DailyRecurringAltApproachingInvalid) {
     DateTime start_time("2024-01-05T11:55:00Z");
     DateTime end_time("2024-01-05T12:05:00Z");
     configure_transaction(session_start);
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringAlt, connector_id);
     handler.add_tx_default_profile(profileMinimum, connector_id);
 
@@ -872,7 +872,7 @@ TEST_F(ProfileTestsC, Issue609During) {
     DateTime start_time(profile609A_startSchedule.to_time_point() + minutes(1));
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profile609A, 0);
     handler.add_tx_default_profile(profile609B, 0);
 
@@ -901,7 +901,7 @@ TEST_F(ProfileTestsC, Issue609Before) {
     DateTime start_time(profile609A_startSchedule.to_time_point() - seconds(1));
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profile609A, 0);
     handler.add_tx_default_profile(profile609B, 0);
 
@@ -1027,7 +1027,7 @@ TEST_F(ProfileTestsC, ChargeRateW) {
     DateTime start_time = profileWatts_startSchedule;
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileWatts, 0);
     handler.add_tx_default_profile(profileAmps, 0);
 
@@ -1086,7 +1086,7 @@ TEST_F(ProfileTestsC, ChargeRateA) {
     DateTime start_time = profileWatts_startSchedule;
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileWatts, 0);
     handler.add_tx_default_profile(profileAmps, 0);
 
@@ -1239,7 +1239,7 @@ TEST_F(ProfileTestsC, Combined1) {
     DateTime start_time = profileCombined_startSchedule;
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_charge_point_max_profile(profileCombinedCPM);
     handler.add_tx_default_profile(profileCombinedTXD, 0);
 
@@ -1411,7 +1411,7 @@ TEST_F(ProfileTestsC, Recurring2a) {
     DateTime start_time = profileRecurringA_startSchedule;
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringA, 0);
     handler.add_tx_default_profile(profileRecurringB, 0);
 
@@ -1458,7 +1458,7 @@ TEST_F(ProfileTestsC, Recurring2b) {
     DateTime start_time = profileRecurringA_startSchedule;
     DateTime end_time(start_time.to_time_point() + seconds(duration));
     configure();
-    SmartChargingHandler handler(connectors, database_handler, true);
+    SmartChargingHandler handler(connectors, database_handler, *configuration);
     handler.add_tx_default_profile(profileRecurringA, 0);
     handler.add_tx_default_profile(profileRecurringB, 0);
 

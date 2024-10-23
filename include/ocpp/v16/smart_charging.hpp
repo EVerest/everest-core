@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <limits>
 
+#include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/connector.hpp>
 #include <ocpp/v16/database_handler.hpp>
 #include <ocpp/v16/ocpp_types.hpp>
@@ -39,11 +40,11 @@ class SmartChargingHandler {
 private:
     std::map<int32_t, std::shared_ptr<Connector>> connectors;
     std::shared_ptr<ocpp::v16::DatabaseHandler> database_handler;
+    ChargePointConfiguration& configuration;
     std::map<int, ChargingProfile> stack_level_charge_point_max_profiles_map;
     std::mutex charge_point_max_profiles_map_mutex;
     std::mutex tx_default_profiles_map_mutex;
     std::mutex tx_profiles_map_mutex;
-    bool allow_charging_profile_without_start_schedule;
 
     std::unique_ptr<Everest::SteadyTimer> clear_profiles_timer;
 
@@ -56,8 +57,7 @@ private:
 
 public:
     SmartChargingHandler(std::map<int32_t, std::shared_ptr<Connector>>& connectors,
-                         std::shared_ptr<DatabaseHandler> database_handler,
-                         const bool allow_charging_profile_without_start_schedule);
+                         std::shared_ptr<DatabaseHandler> database_handler, ChargePointConfiguration& configuration);
 
     ///
     /// \brief validates the given \p profile according to the specification

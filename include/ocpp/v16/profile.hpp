@@ -44,11 +44,14 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
 
 EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules,
                                                       const DateTime& now, const DateTime& end,
-                                                      std::optional<ChargingRateUnit> charging_rate_unit);
+                                                      std::optional<ChargingRateUnit> charging_rate_unit,
+                                                      int32_t default_number_phases, int32_t supply_voltage);
 
 EnhancedChargingSchedule calculate_composite_schedule(const EnhancedChargingSchedule& charge_point_max,
                                                       const EnhancedChargingSchedule& tx_default,
-                                                      const EnhancedChargingSchedule& tx);
+                                                      const EnhancedChargingSchedule& tx,
+                                                      const CompositeScheduleDefaultLimits& default_limits,
+                                                      int32_t supply_voltage);
 
 } // namespace ocpp::v16
 

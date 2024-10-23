@@ -171,9 +171,8 @@ ChargePointImpl::ChargePointImpl(const std::string& config, const fs::path& shar
         this->connectors.insert(std::make_pair(id, std::make_shared<Connector>(id)));
     }
 
-    this->smart_charging_handler = std::make_unique<SmartChargingHandler>(
-        this->connectors, this->database_handler,
-        this->configuration->getAllowChargingProfileWithoutStartSchedule().value_or(false));
+    this->smart_charging_handler =
+        std::make_unique<SmartChargingHandler>(this->connectors, this->database_handler, *this->configuration);
     this->load_charging_profiles();
 
     // ISO15118 PnC handlers

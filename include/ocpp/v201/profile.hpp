@@ -72,21 +72,28 @@ std::vector<period_entry_t> calculate_profile(const DateTime& now, const DateTim
 /// \param now the start of the composite schedule
 /// \param end the end (i.e. duration) of the composite schedule
 /// \param charging_rate_unit the units to use (defaults to Amps)
-/// \return the calculated composite schedule
+/// \param default_number_phases default number of phases if no existing period limit applies
+/// \param supply_voltage Supply voltage of the grid. This value is only used in case a conversion between smart
+/// charging amp and watt limits is required \return the calculated composite schedule
 CompositeSchedule calculate_composite_schedule(std::vector<period_entry_t>& combined_schedules, const DateTime& now,
                                                const DateTime& end,
-                                               std::optional<ChargingRateUnitEnum> charging_rate_unit);
+                                               std::optional<ChargingRateUnitEnum> charging_rate_unit,
+                                               int32_t default_number_phases, int32_t supply_voltage);
 
 /// \brief calculate the combined composite schedule from all of the different types of
 ///        CompositeSchedules
 /// \param charge_point_max the composite schedule for ChargePointMax profiles
 /// \param tx_default the composite schedule for TxDefault profiles
 /// \param tx the composite schedule for Tx profiles
-/// \return the calculated combined composite schedule
-/// \note all composite schedules must have the same units configured
+/// \param default_limits default limits if no existing period limit applies
+/// \param supply_voltage Supply voltage of the grid. This value is only used in case a conversion between smart
+/// charging amp and watt limits is required \return the calculated combined composite schedule \note all composite
+/// schedules must have the same units configured
 CompositeSchedule calculate_composite_schedule(const CompositeSchedule& charging_station_external_constraints,
                                                const CompositeSchedule& charging_station_max,
-                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx);
+                                               const CompositeSchedule& tx_default, const CompositeSchedule& tx,
+                                               const CompositeScheduleDefaultLimits& default_limits,
+                                               int32_t supply_voltage);
 
 } // namespace v201
 } // namespace ocpp
