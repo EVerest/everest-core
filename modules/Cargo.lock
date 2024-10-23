@@ -37,6 +37,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "RsLedDriver"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "everestrs",
+ "everestrs-build",
+ "log",
+ "mockall 0.12.1",
+ "mockall_double",
+ "rand",
+]
+
+[[package]]
 name = "RsPaymentTerminal"
 version = "0.1.0"
 dependencies = [

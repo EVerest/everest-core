@@ -1,0 +1,26 @@
+description: Led Driver
+config:
+  default_brightness:
+    type: integer
+    description: Brightness of LEDs in % 
+    default: 40
+    minimum: 0
+    maximum: 100
+provides:
+    qwello-internal:
+        interface: empty
+        description: This module provides nothing for everest
+requires:
+  evse_manager:
+    interface: evse_manager
+    min_connections: 1
+    max_connections: 128
+  led_driver:
+    interface: led_driver
+    min_connections: 1
+    max_connections: 128
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - embedded@qwello.eu
+enable_external_mqtt: false
