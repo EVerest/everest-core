@@ -6,7 +6,7 @@ add_dependencies(${TEST_TARGET_NAME} ${MODULE_NAME})
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
 target_include_directories(${TEST_TARGET_NAME} PRIVATE
-    . .. ../../../tests/include
+    .. ../../../tests/include
     ${GENERATED_INCLUDE_DIR}
     ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
 )

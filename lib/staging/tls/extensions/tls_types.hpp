@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include <EnumFlags.hpp>
+#include <everest/staging/util/EnumFlags.hpp>
 
 struct ocsp_response_st;
 struct ssl_ctx_st;
@@ -26,7 +26,7 @@ private:
         last = trusted_ca_keys,
     };
 
-    util::AtomicEnumFlags<flags_t, std::uint8_t> flags;
+    everest::staging::util::AtomicEnumFlags<flags_t, std::uint8_t> flags;
 
 public:
     void status_request_received() {

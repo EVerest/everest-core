@@ -1,0 +1,6 @@
+cc_library(
+    name = "util",
+    hdrs = ["include/*.hpp"],
+    visibility = ["//visibility:public"],
+    includes = ["include"],
+)

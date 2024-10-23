@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include <EnumFlags.hpp>
 #include <gtest/gtest.h>
 
-#include <atomic>
-
-namespace {
+#include <everest/staging/util/EnumFlags.hpp>
 
 enum class ErrorHandlingFlags : std::uint8_t {
     prevent_charging,
     prevent_charging_welded,
     all_errors_cleared,
-    last = AllErrorCleared
+    last = all_errors_cleared
 };
 
 enum class BspErrors : std::uint8_t {
@@ -39,52 +36,52 @@ enum class BspErrors : std::uint8_t {
     last = VendorError
 };
 
+using namespace everest::staging::util;
+
 TEST(AtomicEnumFlagsTest, init) {
-    module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, init_large) {
-    module::AtomicEnumFlags<BspErrors, std::uint32_t> flags;
+    AtomicEnumFlags<BspErrors, std::uint32_t> flags;
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_one) {
-    module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::AllErrorCleared);
+    flags.set(ErrorHandlingFlags::all_errors_cleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::AllErrorCleared);
+    flags.reset(ErrorHandlingFlags::all_errors_cleared);
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_two) {
-    module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::AllErrorCleared);
+    flags.set(ErrorHandlingFlags::all_errors_cleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.set(ErrorHandlingFlags::PreventCharging);
+    flags.set(ErrorHandlingFlags::prevent_charging);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::AllErrorCleared);
+    flags.reset(ErrorHandlingFlags::all_errors_cleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.reset(ErrorHandlingFlags::PreventCharging);
+    flags.reset(ErrorHandlingFlags::prevent_charging);
     EXPECT_TRUE(flags.all_reset());
 }
 
 TEST(AtomicEnumFlagsTest, set_reset_three) {
-    module::AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
+    AtomicEnumFlags<ErrorHandlingFlags, std::uint8_t> flags;
     EXPECT_TRUE(flags.all_reset());
 
-    flags.set(ErrorHandlingFlags::AllErrorCleared);
+    flags.set(ErrorHandlingFlags::all_errors_cleared);
     EXPECT_FALSE(flags.all_reset());
-    flags.set(ErrorHandlingFlags::PreventCharging);
+    flags.set(ErrorHandlingFlags::prevent_charging);
     EXPECT_FALSE(flags.all_reset());
     flags.set(ErrorHandlingFlags::prevent_charging_welded);
     EXPECT_FALSE(flags.all_reset());
     flags.reset();
     EXPECT_TRUE(flags.all_reset());
 }
-
-} // namespace
