@@ -902,7 +902,7 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
     if (transaction_data == nullptr) {
         throw std::runtime_error("Could not start transaction because no tranasaction data is present");
     }
-    transaction_data->timestamp = ocpp::DateTime(session_event.timestamp);
+    transaction_data->timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
 
     if (tx_event_effect == TxEventEffect::START_TRANSACTION) {
         transaction_data->started = true;
@@ -957,7 +957,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
             trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
         }
     }
-    const auto timestamp = ocpp::DateTime(session_event.timestamp);
+    const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
     const auto reservation_id = session_started.reservation_id;
 
     // this is always the first transaction related interaction, so we create TransactionData here

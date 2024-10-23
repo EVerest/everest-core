@@ -121,6 +121,26 @@ evse_securityImpl::handle_get_leaf_certificate_info(types::evse_security::LeafCe
     return response;
 }
 
+types::evse_security::GetCertificateFullInfoResult
+evse_securityImpl::handle_get_all_valid_certificates_info(types::evse_security::LeafCertificateType& certificate_type,
+                                                          types::evse_security::EncodingFormat& encoding,
+                                                          bool& include_ocsp) {
+    types::evse_security::GetCertificateFullInfoResult response;
+
+    const auto full_leaf_info = this->evse_security->get_all_valid_certificates_info(
+        conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
+
+    response.status = conversions::to_everest(full_leaf_info.status);
+
+    if (full_leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted) {
+        for (const auto& info : full_leaf_info.info) {
+            response.info.push_back(conversions::to_everest(info));
+        }
+    }
+
+    return response;
+}
+
 std::string evse_securityImpl::handle_get_verify_file(types::evse_security::CaCertificateType& certificate_type) {
     return this->evse_security->get_verify_file(conversions::from_everest(certificate_type));
 }

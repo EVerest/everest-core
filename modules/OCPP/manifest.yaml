@@ -44,6 +44,15 @@ config:
       some OCTT test cases require that the first message after a reconnect is sent by the CSMS.
     type: integer
     default: 0
+  RequestCompositeScheduleUnit:
+    description: >-
+      Unit in which composite schedules are requested and shared within EVerest. It is recommended to use
+      Amps for AC and Watts for DC charging stations.
+      Allowed values:
+        - 'A' for Amps
+        - 'W' for Watts 
+    type: string
+    default: 'A'
 provides:
   main:
     description: This is a OCPP 1.6 charge point
