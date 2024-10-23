@@ -33,7 +33,9 @@ private: // Members
     mutable std::recursive_mutex reservation_mutex;
     mutable std::recursive_mutex timer_mutex;
     std::map<int, std::unique_ptr<Everest::SteadyTimer>> reservation_id_to_reservation_timeout_timer_map;
-    std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id, const types::reservation::ReservationEndReason reason)> reservation_cancelled_callback;
+    std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                       const types::reservation::ReservationEndReason reason)>
+        reservation_cancelled_callback;
 
     boost::shared_ptr<boost::asio::io_service::work> work;
     boost::asio::io_service io_service;
@@ -52,9 +54,11 @@ public:
     void set_connector_available(const bool available, const bool faulted, const uint32_t evse_id,
                                  const uint32_t connector_id);
     bool is_charging_possible(const uint32_t evse_id);
-    std::optional<uint32_t> cancel_reservation(int reservation_id, bool execute_callback, const types::reservation::ReservationEndReason reason);
-    void
-    register_reservation_cancelled_callback(const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id, const types::reservation::ReservationEndReason reason)>& callback);
+    std::optional<uint32_t> cancel_reservation(int reservation_id, bool execute_callback,
+                                               const types::reservation::ReservationEndReason reason);
+    void register_reservation_cancelled_callback(
+        const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                                 const types::reservation::ReservationEndReason reason)>& callback);
     void on_reservation_used(const int32_t reservation_id);
 
     /**
@@ -66,7 +70,8 @@ public:
      * @param parent_id_token   Parent id token
      * @return The reservation id when there is a matching identifier, otherwise std::nullopt.
      */
-    std::optional<int32_t> matches_reserved_identifier(const std::optional<uint32_t> evse_id, const std::string& id_token,
+    std::optional<int32_t> matches_reserved_identifier(const std::optional<uint32_t> evse_id,
+                                                       const std::string& id_token,
                                                        std::optional<std::string> parent_id_token);
 
     /**
@@ -95,8 +100,11 @@ private: // Functions
                                  const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
     void set_reservation_timer(const types::reservation::Reservation& reservation,
                                const std::optional<uint32_t> evse_id);
+    std::vector<Evse>
+    get_all_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type) const;
     ConnectorState get_new_connector_state(ConnectorState currrent_state, const ConnectorState new_state) const;
-    types::reservation::ReservationResult get_reservation_evse_connector_state() const;
+    types::reservation::ReservationResult
+    get_reservation_evse_connector_state(const types::evse_manager::ConnectorTypeEnum connector_type) const;
     void check_reservations_and_cancel_if_not_possible();
 
     void print_order(const std::vector<types::evse_manager::ConnectorTypeEnum>& order) const;

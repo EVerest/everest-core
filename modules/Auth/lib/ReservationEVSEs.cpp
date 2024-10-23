@@ -6,6 +6,9 @@
 #include <everest/logging.hpp>
 #include <utils/date.hpp>
 
+// TODO mz add reservation to persistent storage??? In libocpp if possible?
+// TODO mz state for example authorized but not plugged in etc??
+
 namespace module {
 
 static types::reservation::ReservationResult
@@ -125,7 +128,7 @@ ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
 
             // Check if the reservations are possible with the added evse specific reservation.
             if (!is_reservation_possible(std::nullopt, this->global_reservations, evse_specific_reservations)) {
-                return get_reservation_evse_connector_state();
+                return get_reservation_evse_connector_state(connector_type);
             }
 
             // Reservation is possible, add to evse specific reservations.
@@ -137,11 +140,11 @@ ReservationEVSEs::make_reservation(const std::optional<uint32_t> evse_id,
             return types::reservation::ReservationResult::Rejected;
         }
 
-        if (!is_reservation_possible(
-                reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown),
-                this->global_reservations, this->evse_reservations)) {
+        const types::evse_manager::ConnectorTypeEnum connector_type =
+            reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown);
+        if (!is_reservation_possible(connector_type, this->global_reservations, this->evse_reservations)) {
             // TODO mz find real reason?
-            return get_reservation_evse_connector_state();
+            return get_reservation_evse_connector_state(connector_type);
         }
 
         global_reservations.push_back(reservation);
@@ -286,7 +289,7 @@ std::optional<uint32_t> ReservationEVSEs::cancel_reservation(int reservation_id,
         }
     }
 
-    if (execute_callback) {
+    if (execute_callback && this->reservation_cancelled_callback != nullptr) {
         this->reservation_cancelled_callback(evse_id, reservation_id, reason);
     }
 
@@ -581,8 +584,24 @@ void ReservationEVSEs::set_reservation_timer(const types::reservation::Reservati
         Everest::Date::from_rfc3339(reservation.expiry_time));
 }
 
+std::vector<ReservationEVSEs::Evse>
+ReservationEVSEs::get_all_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type) const {
+    std::vector<Evse> result;
+    for (const auto& evse : this->evses) {
+        if (this->has_evse_connector_type(evse.second.connectors, connector_type)) {
+            result.push_back(evse.second);
+        }
+    }
+
+    return result;
+}
+
 ConnectorState ReservationEVSEs::get_new_connector_state(ConnectorState current_state,
                                                          const ConnectorState new_state) const {
+    if (new_state == ConnectorState::OCCUPIED) {
+        return ConnectorState::OCCUPIED;
+    }
+
     if (new_state > current_state) {
         if (new_state > ConnectorState::OCCUPIED) {
             if (new_state == ConnectorState::FAULTED_OCCUPIED) {
@@ -600,21 +619,43 @@ ConnectorState ReservationEVSEs::get_new_connector_state(ConnectorState current_
     return current_state;
 }
 
-types::reservation::ReservationResult ReservationEVSEs::get_reservation_evse_connector_state() const {
+types::reservation::ReservationResult ReservationEVSEs::get_reservation_evse_connector_state(
+    const types::evse_manager::ConnectorTypeEnum connector_type) const {
     // TODO mz documentation of this strange function!!
     if (!global_reservations.empty() || !(evse_reservations.empty())) {
         return types::reservation::ReservationResult::Occupied;
     }
 
+    bool found_state = false;
+
     ConnectorState state = ConnectorState::UNAVAILABLE;
 
     for (const auto& [evse_id, evse] : evses) {
         if (evse.evse_state != ConnectorState::AVAILABLE) {
-            if (evse.evse_state == ConnectorState::OCCUPIED) {
-                return types::reservation::ReservationResult::Occupied;
-            }
-
             state = get_new_connector_state(state, evse.evse_state);
+            found_state = true;
+        }
+    }
+
+    if (!found_state) {
+        const std::vector<Evse> evses_with_connector_type = this->get_all_evses_with_connector_type(connector_type);
+        if (evses_with_connector_type.empty()) {
+            // This should not happen because then it should have been rejected before already somewhere in the code...
+            return types::reservation::ReservationResult::Rejected;
+        }
+
+        for (const auto& evse : evses_with_connector_type) {
+            for (const auto& connector : evse.connectors) {
+                if (connector.connector_type != connector_type ||
+                    connector.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+                    connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
+                    continue;
+                }
+
+                if (connector.state != ConnectorState::AVAILABLE) {
+                    state = get_new_connector_state(state, connector.state);
+                }
+            }
         }
     }
 
