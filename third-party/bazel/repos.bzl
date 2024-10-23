@@ -29,6 +29,7 @@ def everest_core_repos():
         manifests = [
             "@everest-core//modules:Cargo.toml",
             "@everest-core//modules/RsIskraMeter:Cargo.toml",
+            "@everest-core//modules/RsLedDriver:Cargo.toml",
             "@everest-core//modules/RsPaymentTerminal:Cargo.toml",
             "@everest-core//modules/rust_examples/RsExample:Cargo.toml",
             "@everest-core//modules/rust_examples/RsExampleUser:Cargo.toml",

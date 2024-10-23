@@ -1,0 +1,20 @@
+[package]
+name = "RsLedDriver"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.75"
+chrono = "0.4.31"
+everestrs = { workspace=true }
+log = "0.4.20"
+rand = "0.8.5"
+mockall = { version = "0.12.1", optional = true }
+mockall_double = { version = "0.3.1", optional = true}
+
+[build-dependencies]
+everestrs-build = { workspace=true }
+
+
+[features]
+default = ["mockall", "mockall_double"]
