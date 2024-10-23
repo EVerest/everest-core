@@ -33,7 +33,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_set_led_state(std::string& led_state, int& brightness) override;
+    virtual void handle_set_led_state(types::led_state::LedState& led_state, int& brightness) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here

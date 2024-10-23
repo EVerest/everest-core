@@ -106,7 +106,7 @@ public:
     void set_fan_state(uint8_t fan_id, bool enabled, uint32_t duty);
     void set_rcd_test(int target_connector, bool _test);
     void reset_rcd(int target_connector, bool _reset);
-    void set_led_state(int target_connector, const std::string& color, uint8_t brightness);
+    void set_led_state(int target_connector, const LedState& color, uint8_t brightness);
 
     void send_config();
 
