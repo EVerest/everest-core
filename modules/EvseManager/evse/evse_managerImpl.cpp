@@ -112,9 +112,13 @@ void evse_managerImpl::init() {
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
-        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
+        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter& p) {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
+        });
+        mod->r_powermeter_billing()[0]->subscribe_public_key_ocmf([this](const std::string& public_key_ocmf) {
+            // Republish data on proxy powermeter public_key_ocmf
+            publish_powermeter_public_key_ocmf(public_key_ocmf);
         });
     }
 }

@@ -32,11 +32,11 @@ void powermeterImpl::init() {
 void powermeterImpl::ready() {
     // Start the live_measure_publisher thread, which periodically publishes the live measurements of the device
     this->live_measure_publisher_thread = std::thread([this] {
-        this->publish_public_key_ocmf(this->controller->get_public_key_ocmf());
         while (true) {
             try {
                 if (!this->controller->is_initialized()) {
                     this->controller->init();
+                    this->publish_public_key_ocmf(this->controller->get_public_key_ocmf());
                     std::this_thread::sleep_for(
                         std::chrono::milliseconds(mod->config.resilience_initial_connection_retry_delay));
                 } else {
