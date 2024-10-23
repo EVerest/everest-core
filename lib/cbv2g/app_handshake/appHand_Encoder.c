@@ -24,6 +24,7 @@
 #include "cbv2g/common/exi_error_codes.h"
 #include "cbv2g/common/exi_header.h"
 #include "cbv2g/app_handshake/appHand_Datatypes.h"
+#include "cbv2g/app_handshake/appHand_Encoder.h"
 
 
 

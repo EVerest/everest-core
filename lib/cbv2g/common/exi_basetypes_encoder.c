@@ -71,7 +71,7 @@ int exi_basetypes_encoder_bytes(exi_bitstream_t* stream, size_t bytes_len, const
         return EXI_ERROR__BYTE_BUFFER_TOO_SMALL;
     }
 
-    uint8_t* current_byte = (uint8_t*)bytes;
+    const uint8_t* current_byte = bytes;
 
     for (size_t n = 0; n < bytes_len; n++)
     {
@@ -253,7 +253,7 @@ int exi_basetypes_encoder_characters(exi_bitstream_t* stream, size_t characters_
         return EXI_ERROR__CHARACTER_BUFFER_TOO_SMALL;
     }
 
-    uint8_t* current_char = (uint8_t*)characters;
+    const uint8_t* current_char = (const uint8_t*)characters;
 
     for (size_t n = 0; n < characters_len; n++)
     {

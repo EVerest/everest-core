@@ -26,6 +26,7 @@
 #include "cbv2g/common/exi_header.h"
 #include "cbv2g/common/exi_types_decoder.h"
 #include "cbv2g/app_handshake/appHand_Datatypes.h"
+#include "cbv2g/app_handshake/appHand_Decoder.h"
 
 
 

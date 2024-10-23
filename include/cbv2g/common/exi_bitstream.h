@@ -39,7 +39,7 @@ extern "C" {
 
 typedef void (*exi_status_callback)(int message_id, int status_code, int value_1, int value_2);
 
-typedef struct {
+typedef struct exi_bitstream {
     /* byte array size and data */
     uint8_t* data;
     size_t data_size;
