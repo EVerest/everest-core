@@ -1,0 +1,1623 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:basecamp:evse_manager_consumer_API'
+info:
+  title: "Basecamp API definition for the use of the EVSE manager"
+  version: 1.0.3-rc1
+  description: >-
+    API for basecamp to use the EVSE manager.
+
+  license:
+    name: BaseCamp - License Version 1.0
+    url: https://www.pionix.de/pionix-license-terms
+  tags:
+    - name: basecamp
+    - name: EVSE manager
+servers:
+  default:
+    pathname: 'basecamp/api/1.0/evse_manager_consumer/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined by `cfg_target_module_id` in basecamp config file.
+defaultContentType: application/json
+
+channels:
+  send_request_get_evse:
+    address: 'm2b/get_evse'
+    messages:
+      send_request_get_evse:
+        $ref: '#/components/messages/send_request_get_evse'
+  receive_reply_get_evse:
+    address: null
+    messages:
+      receive_reply_get_evse:
+        $ref: '#/components/messages/receive_reply_get_evse'
+  send_request_enable_disable:
+    address: 'm2b/enable_disable'
+    messages:
+      send_request_enable_disable:
+        $ref: '#/components/messages/send_request_enable_disable'
+  receive_reply_enable_disable:
+    address: null
+    messages:
+      receive_reply_enable_disable:
+        $ref: '#/components/messages/receive_reply_enable_disable'
+  send_request_reserve:
+    address: 'm2b/reserve'
+    messages:
+      send_request_reserve:
+        $ref: '#/components/messages/send_request_reserve'
+  receive_reply_reserve:
+    address: null
+    messages:
+      receive_reply_reserve:
+        $ref: '#/components/messages/receive_reply_reserve'
+  send_request_external_ready_to_start_charging:
+    address: 'm2b/external_ready_to_start_charging'
+    messages:
+      send_request_external_ready_to_start_charging:
+        $ref: '#/components/messages/send_request_external_ready_to_start_charging'
+  receive_reply_external_ready_to_start_charging:
+    address: null
+    messages:
+      receive_reply_external_ready_to_start_charging:
+        $ref: '#/components/messages/receive_reply_external_ready_to_start_charging'
+
+  send_request_stop_transaction:
+    address: 'm2b/stop_transaction'
+    messages:
+      send_request_stop_transaction:
+        $ref: '#/components/messages/send_request_stop_transaction'
+  receive_reply_stop_transaction:
+    address: null
+    messages:
+      receive_reply_stop_transaction:
+        $ref: '#/components/messages/receive_reply_stop_transaction'
+  send_request_pause_charging:
+    address: 'm2b/pause_charging'
+    messages:
+      send_request_pause_charging:
+        $ref: '#/components/messages/send_request_pause_charging'
+  receive_reply_pause_charging:
+    address: null
+    messages:
+      receive_reply_pause_charging:
+        $ref: '#/components/messages/receive_reply_pause_charging'
+  send_request_resume_charging:
+    address: 'm2b/resume_charging'
+    messages:
+      send_request_resume_charging:
+        $ref: '#/components/messages/send_request_resume_charging'
+  receive_reply_resume_charging:
+    address: null
+    messages:
+      receive_reply_resume_charging:
+        $ref: '#/components/messages/receive_reply_resume_charging'
+  send_request_force_unlock:
+    address: 'm2b/force_unlock'
+    messages:
+      send_request_force_unlock:
+        $ref: '#/components/messages/send_request_force_unlock'
+  receive_reply_force_unlock:
+    address: null
+    messages:
+      receive_reply_force_unlock:
+        $ref: '#/components/messages/receive_reply_force_unlock'
+  send_authorize_response:
+    address: 'm2b/authorize_response'
+    messages:
+      send_authorize_response:
+        $ref: '#/components/messages/send_authorize_response'
+  send_withdraw_authorization:
+    address: 'm2b/withdraw_authorization'
+    messages:
+      send_withdraw_authorization:
+        $ref: '#/components/messages/send_withdraw_authorization'
+  send_cancel_reservation:
+    address: 'm2b/cancel_reservation'
+    messages:
+      send_cancel_reservation:
+        $ref: '#/components/messages/send_cancel_reservation'
+  send_random_delay_enable:
+    address: 'm2b/random_delay_enable'
+    messages:
+      send_random_delay_enable:
+        $ref: '#/components/messages/send_random_delay_enable'
+  send_random_delay_disable:
+    address: 'm2b/random_delay_disable'
+    messages:
+      send_random_delay_disable:
+        $ref: '#/components/messages/send_random_delay_disable'
+  send_random_delay_cancel:
+    address: 'm2b/random_delay_cancel'
+    messages:
+      send_random_delay_enable:
+        $ref: '#/components/messages/send_random_delay_cancel'
+  send_random_delay_set_duration_s:
+    address: 'm2b/random_delay_set_duration_s'
+    messages:
+      send_random_delay_set_duration_s:
+        $ref: '#/components/messages/send_random_delay_set_duration_s'
+
+
+  receive_session_event:
+    address: 'b2m/session_event'
+    messages:
+      receive_session_event:
+        $ref: '#/components/messages/receive_session_event'
+  receive_limits:
+    address: 'b2m/limits'
+    messages:
+      receive_limits:
+        $ref: '#/components/messages/receive_limits'
+  receive_ev_info:
+    address: 'b2m/ev_info'
+    messages:
+      receive_limits:
+        $ref: '#/components/messages/receive_ev_info'
+  receive_car_manufacturer:
+    address: 'b2m/car_manufacturer'
+    messages:
+      receive_car_manufacturer:
+        $ref: '#/components/messages/receive_car_manufacturer'
+  receive_powermeter:
+    address: 'b2m/powermeter'
+    messages:
+      receive_powermeter:
+        $ref: '#/components/messages/receive_powermeter'
+  receive_powermeter_public_key_ocmf:
+    address: 'b2m/powermeter_public_key_ocmf'
+    messages:
+      receive_powermeter_public_key_ocmf:
+        $ref: '#/components/messages/receive_powermeter_public_key_ocmf'
+  receive_evse_id:
+    address: 'b2m/evse_id'
+    messages:
+      receive_evse_id:
+        $ref: '#/components/messages/receive_evse_id'
+  receive_hw_capabilities:
+    address: 'b2m/hw_capabilities'
+    messages:
+      receive_hw_capabilities:
+        $ref: '#/components/messages/receive_hw_capabilities'
+  receive_ac_nr_of_phases_available:
+    address: 'b2m/ac_nr_of_phases_available'
+    messages:
+      receive_ac_nr_of_phases_available:
+        $ref: '#/components/messages/receive_ac_nr_of_phases_available'
+  receive_ac_pp_ampacity:
+    address: 'b2m/ac_pp_ampacity'
+    messages:
+      receive_ac_pp_ampacity:
+        $ref: '#/components/messages/receive_ac_pp_ampacity'
+  receive_dlink_ready:
+    address: 'b2m/dlink_ready'
+    messages:
+      receive_dlink_ready:
+        $ref: '#/components/messages/receive_dlink_ready'
+  receive_isolation_measurement:
+    address: 'b2m/isolation_measurement'
+    messages:
+      receive_isolation_measurement:
+        $ref: '#/components/messages/receive_isolation_measurement'
+  receive_dc_voltage_current:
+    address: 'b2m/dc_voltage_current'
+    messages:
+      receive_dc_voltage_current:
+        $ref: '#/components/messages/receive_dc_voltage_current'
+  receive_dc_mode:
+    address: 'b2m/dc_mode'
+    messages:
+      receive_dc_mode:
+        $ref: '#/components/messages/receive_dc_mode'
+  receive_dc_capabilities:
+    address: 'b2m/dc_capabilities'
+    messages:
+      receive_dc_capabilities:
+        $ref: '#/components/messages/receive_dc_capabilities'
+
+  receive_waiting_for_external_ready:
+    address: 'b2m/waiting_for_external_ready'
+    messages:
+      receive_waiting_for_external_ready:
+        $ref: '#/components/messages/receive_waiting_for_external_ready'
+  receive_ready:
+    address: 'b2m/ready'
+    messages:
+      receive_ready:
+        $ref: '#/components/messages/receive_ready'
+  receive_selected_protocol:
+    address: 'b2m/selected_protocol'
+    messages:
+      receive_selected_protocol:
+        $ref: '#/components/messages/receive_selected_protocol'
+  receive_random_delay_countdown:
+    address: 'b2m/random_delay_countdown'
+    messages:
+      receive_random_delay_countdown:
+        $ref: '#/components/messages/receive_random_delay_countdown'
+
+
+  receive_heartbeat:
+    address: 'b2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+
+
+
+
+operations:
+  receive_reply_get_evse:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_get_evse'
+  send_request_get_evse:
+    title: Send request to get informationavout thee EVSE including its connectors
+    action: send
+    channel:
+      $ref: '#/channels/send_request_get_evse'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_get_evse'
+  receive_reply_enable_disable:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_enable_disable'
+  send_request_enable_disable:
+    title: Send request to Enables or disables the evse.
+    action: send
+    channel:
+      $ref: '#/channels/send_request_enable_disable'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_enable_disable'
+  receive_reply_reserve:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_reserve'
+  send_request_reserve:
+    title: Send request to reserve evse.
+    action: send
+    channel:
+      $ref: '#/channels/send_request_reserve'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_reserve'
+  receive_reply_external_ready_to_start_charging:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_external_ready_to_start_charging'
+  send_request_external_ready_to_start_charging:
+    title: Send external ready to start charging.
+    action: send
+    channel:
+      $ref: '#/channels/send_request_external_ready_to_start_charging'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_external_ready_to_start_charging'
+  receive_reply_stop_transaction:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_stop_transaction'
+  send_request_stop_transaction:
+    title: Send request to stop the current transaction
+    action: send
+    channel:
+      $ref: '#/channels/send_request_stop_transaction'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_stop_transaction'
+  receive_reply_pause_charging:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_pause_charging'
+  send_request_pause_charging:
+    title: Send request to pause charging
+    action: send
+    channel:
+      $ref: '#/channels/send_request_pause_charging'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_pause_charging'
+  receive_reply_resume_charging:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_resume_charging'
+  send_request_resume_charging:
+    title: Send request to resume charging
+    action: send
+    channel:
+      $ref: '#/channels/send_request_resume_charging'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_resume_charging'
+  receive_reply_force_unlock:
+    title: Reply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_reply_force_unlock'
+  send_request_force_unlock:
+    title: Send request to force unlock
+    action: send
+    channel:
+      $ref: '#/channels/send_request_force_unlock'
+    description: 'Direction: Module to BaseCamp'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/receive_reply_force_unlock'
+  send_authorize_response:
+    title: Reports the result of an authorization request to the EvseManager.
+    action: send
+    channel:
+      $ref: '#/channels/send_authorize_response'
+  send_withdraw_authorization:
+    title: Send withdraw authorization.
+    action: send
+    channel:
+      $ref: '#/channels/send_withdraw_authorization'
+  send_cancel_reservation:
+    title: Send cancel reservation.
+    action: send
+    channel:
+      $ref: '#/channels/send_cancel_reservation'
+
+  send_random_delay_enable:
+    title: Call to enable the random delay feature.
+    action: send
+    channel:
+      $ref: '#/channels/send_random_delay_enable'
+  send_random_delay_disable:
+    title: Call to disable the random delay feature.
+    action: send
+    channel:
+      $ref: '#/channels/send_random_delay_disable'
+  send_random_delay_cancel:
+    title: Cancels a running random delay. The effect is the same as if the time expired just now.
+    action: send
+    channel:
+      $ref: '#/channels/send_random_delay_cancel'
+  send_random_delay_set_duration_s:
+    title: Set the maximum duration of the random delay. Default is 600 seconds.
+    action: send
+    channel:
+      $ref: '#/channels/send_random_delay_set_duration_s'
+
+  receive_session_event:
+    title: Receive session event
+    action: receive
+    channel:
+      $ref: '#/channels/receive_session_event'
+  receive_limits:
+    title: Receive limits of event
+    action: receive
+    channel:
+      $ref: '#/channels/receive_limits'
+  receive_ev_info:
+    title: Receive details of EV
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ev_info'
+  receive_car_manufacturer:
+    title: Receive car manufacturer
+    action: receive
+    channel:
+      $ref: '#/channels/receive_car_manufacturer'
+  receive_powermeter:
+    title: Receive powermeter measured dataset
+    action: receive
+    channel:
+      $ref: '#/channels/receive_powermeter'
+  receive_powermeter_public_key_ocmf:
+    title: Receive powermeter public key OCMF
+    action: receive
+    channel:
+      $ref: '#/channels/receive_powermeter_public_key_ocmf'
+  receive_evse_id:
+    title: Receive EVSE ID
+    action: receive
+    channel:
+      $ref: '#/channels/receive_evse_id'
+  receive_hw_capabilities:
+    title: Receive hardware capabilites and limits
+    action: receive
+    channel:
+      $ref: '#/channels/receive_hw_capabilities'
+  receive_ac_nr_of_phases_available:
+    title: Receive instantaneous phase count available to car
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ac_nr_of_phases_available'
+  receive_ac_pp_ampacity:
+    title: Receive current carrying capacity of the connected cable in ampere for AC charging
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ac_pp_ampacity'
+  receive_dlink_ready:
+    title: Receive data link status
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dlink_ready'
+  receive_isolation_measurement:
+    title: Receive isolation monitoring measurement results
+    action: receive
+    channel:
+      $ref: '#/channels/receive_isolation_measurement'
+  receive_dc_voltage_current:
+    title: Receive Voltage/Current at the input/output
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dc_voltage_current'
+  receive_dc_mode:
+    title: Receive current mode.
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dc_mode'
+  receive_dc_capabilities:
+    title: Receive capabilities of the DC power supply
+    action: receive
+    channel:
+      $ref: '#/channels/receive_dc_capabilities'
+
+  receive_waiting_for_external_ready:
+    title: Receive waiting for external ready status
+    action: receive
+    channel:
+      $ref: '#/channels/receive_waiting_for_external_ready'
+  receive_ready:
+    title: Receive ready signal
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ready'
+  receive_selected_protocol:
+    title: Receive selected protocol for charging
+    action: receive
+    channel:
+      $ref: '#/channels/receive_selected_protocol'
+  receive_random_delay_countdown:
+    title: Receive countdown of the currently running random delay
+    action: receive
+    channel:
+      $ref: '#/channels/receive_random_delay_countdown'
+
+  receive_heartbeat:
+    title: Receive heatbeat
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+
+
+
+
+components:
+  messages:
+    send_request_get_evse:
+      title: Request to get EVSE
+      summary: 'Request to get EVSE.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+    receive_reply_get_evse:
+      title: Reply to request to get EVSE
+      summary: 'Reply to the request to get the EVSE.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/Evse'
+    send_request_enable_disable:
+      title: Request to enable or disable the EVSE
+      summary: 'Enables or disables the evse. Turns off PWM with error F. Charging is only possible if an EVSE is enabled.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/EnableDisableRequest'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+            payload:
+              connector_id: 0
+              source:
+                enable_source: "Unspecified"
+                enable_state: "Unassigned"
+                enable_priority: 10000
+    receive_reply_enable_disable:
+      title: Reply to request to enable or disable the EVSE
+      summary: 'Reply to the request to enable or disable the EVSE.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/EnableDisableReply'
+    send_request_reserve:
+      title: Call to signal that EVSE is reserved.
+      summary: >-
+        Call to signal that EVSE is reserved. This can be used to e.g. change
+        the color of the HMI LEDs to indicate reservation.
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/ReservationId'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+            payload:
+              0
+    receive_reply_reserve:
+      title: Reply request reserve
+      summary: 'Reply to the request to reserve the EVSE.'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ReservationReply'
+    send_request_external_ready_to_start_charging:
+      title: Call to signal external ready to start charging.
+      summary: >-
+        There are situations where another module needs to do some initialization after
+        evse manager is in principle ready to start charging.
+        This command can be used (optimally in combination with
+        a configuration option) to delay charging ready until the external
+        module is done with its initialization
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+    receive_reply_external_ready_to_start_charging:
+      title: Reply external ready to start charging
+      summary: 'Reply to the request to external ready to start charging'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ExternalReadyToStartChargingReply'
+
+    send_request_stop_transaction:
+      title: Request stop transaction
+      summary: 'Request to stop the current transaction.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/StopTransactionRequest'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+            payload:
+              reason: "Local"
+    receive_reply_stop_transaction:
+      title: Reply to stop transaction request
+      summary: 'Reply to the request to stop the current transaction.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/StopTransactionReply'
+    send_request_pause_charging:
+      title: Request pause charging
+      summary: 'Request to pause charging.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+    receive_reply_pause_charging:
+      title: Reply to pause charging request
+      summary: 'Reply to the request to pause charging.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/PauseChargingReply'
+    send_request_resume_charging:
+      title: Request resume charging
+      summary: 'Request to resume charging.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+    receive_reply_resume_charging:
+      title: Reply to resume charging request
+      summary: 'Reply to the request to resume charging.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/ResumeChargingReply'
+    send_request_force_unlock:
+      title: Request force unlock
+      summary: 'Request to force unlock.'
+      contentType: application/json
+      payload:
+          type: object
+          properties:
+            headers:
+              type: object
+              properties:
+                replyTo:  # Address for the request to reply to
+                  type: string
+                  description: Address to send the response to.
+            payload:
+              $ref: '#/components/schemas/ForceUnlockRequest'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+            payload:
+              0
+    receive_reply_force_unlock:
+      title: Reply to force unlock request
+      summary: >-
+        Forces connector to unlock connector now. During normal operation, connector
+        will be locked/unlocked in the correct sequence.Do not use this function except
+        if explicitly requested by e.g. management cloud.
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/ForceUnlockReply'
+
+    send_authorize_response:
+      title: Send authorize response
+      summary: >-
+        Reports the result of an authorization request to the EvseManager.
+        Contains the provided_token for which authorization was requested and
+        the validation_result
+      payload:
+         $ref: '#/components/schemas/AuthorizeResponseArgs'
+      examples:
+        - summary: ""
+          payload:
+            token:
+              request_id: 0
+              id_token:
+                value: string
+                type: Central
+              authorization_type: OCPP
+              connectors:
+              - 1
+            result:
+              authorization_status: Accepted
+              evse_ids:
+              - 1
+    send_withdraw_authorization:
+      title: Send withddraw authorization
+      summary: >-
+        Call to signals that EVSE is not further authorized to start a transaction
+        (e.g. on a connection_timeout)
+    send_cancel_reservation:
+      title: Send cancel reservation
+      summary: 'Call to signal that EVSE is not reserved anymore'
+    send_random_delay_enable:
+      title: Send random delay enable
+      summary: 'Call to enable the random delay feature'
+    send_random_delay_disable:
+      title: Send random delay disable
+      summary: 'Call to disable the random delay feature'
+    send_random_delay_cancel:
+      title: Send random delay cancel
+      summary: 'Cancels a running random delay. The effect is the same as if the time expired just now.'
+    send_random_delay_set_duration_s:
+      title: Send random delay set duration
+      summary: 'Set the maximum duration of the random delay. Default is 600 seconds.'
+      payload:
+        $ref: '#/components/schemas/RandomDelayDuration'
+      examples:
+        - summary: ""
+          payload:
+            42
+    receive_session_event:
+      title: Receive session event
+      summary: 'Emits all events related to sessions'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/SessionEvent'
+    receive_limits:
+      title: Receive limits of event
+      summary: 'Limits of this event.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/Limits'
+    receive_ev_info:
+      title: Receive details about EV
+      summary: 'More details about the EV if available.'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/EVInfo'
+    receive_car_manufacturer:
+      title: Receive car manufacturer
+      summary: 'The car manufacturer (if known)'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/CarManufacturer'
+    receive_powermeter:
+      title: Receive powermeter
+      summary: 'Powermeter measured dataset'
+      contentType: application/json
+      payload:
+        $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+    receive_powermeter_public_key_ocmf:
+      title: Receive powermeter public key OCMF
+      summary: 'Powermeter public key OCMF'
+      contentType: application/json
+      payload:
+        $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/SendPublicKeyOCMF'
+    receive_evse_id:
+      title: Receive EVSE ID
+      summary: 'EVSE ID '
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/EvseId'
+    receive_hw_capabilities:
+      title: Receive hardware capabilities and limits
+      summary: 'Hardware capabilities '
+      contentType: application/json
+      payload:
+        $ref: '../evse_board_support_API/asyncapi.yaml#/components/schemas/HardwareCapabilities'
+    receive_waiting_for_external_ready:
+      title: Receive waiting for external ready status
+      summary: 'Waiting for external ready status'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WaitingForExternalReady'
+    receive_ac_nr_of_phases_available:
+      title: Receive Instantaneous phase count available to car
+      summary: 'Number of phases for AC'
+      contentType: application/json
+      payload:
+        $ref: '../evse_board_support_API/asyncapi.yaml#/components/schemas/PhaseCount'
+    receive_ac_pp_ampacity:
+      title: Receive current carrying capacity of the connected cable in ampere for AC charging
+      summary: >-
+        Current carrying capacity of the connected cable in ampere for AC charging
+        with a socket. Publish whenever it changes.
+        This has no meaning for DC or AC charging with a fixed attached cable, it does not
+        need to be implemented and the returned value is not used in those cases.
+      contentType: application/json
+      payload:
+        $ref: '../evse_board_support_API/asyncapi.yaml#/components/schemas/ProximityPilot'
+    receive_dlink_ready:
+      title: Receive data link ready status
+      summary: Emits true if link was set up and false when the link is shut down
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SlacDlinkReady'
+    receive_isolation_measurement:
+      title: Receive isolation monitoring measurement results
+      summary: Receive isolation monitoring measurement results
+      contentType: application/json
+      payload:
+        $ref: '../isolation_monitor_API/asyncapi.yaml#/components/schemas/IsolationMeasurement'
+    receive_dc_voltage_current:
+      title: Receive Voltage/Current at the input/output
+      summary: Receive Voltage/Current at the input/output
+      contentType: application/json
+      payload:
+        $ref: '../power_supply_DC_API/asyncapi.yaml#/components/schemas/VoltageCurrent'
+    receive_dc_mode:
+      title: Receive the current mode
+      summary: Receive the current mode of the DC power supply
+      contentType: application/json
+      payload:
+        $ref: '../power_supply_DC_API/asyncapi.yaml#/components/schemas/Mode'
+    receive_dc_capabilities:
+      title: Receive the capabilities of the DC power cupply
+      summary: Receive the capabilities of the DC power supply
+      contentType: application/json
+      payload:
+        $ref: '../power_supply_DC_API/asyncapi.yaml#/components/schemas/Capabilities'
+
+    receive_ready:
+      title: Receive ready signal
+      summary: 'Signals that the EVSE Manager is ready to start charging'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/Ready'
+    receive_selected_protocol:
+      title: Receive selected protocol for charging for informative purposes
+      summary: 'EVSE ID'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/SelectedProtocol'
+    receive_random_delay_countdown:
+      title: Countdown of the currently running random delay
+      summary: 'Random delay countdown'
+      contentType: application/json
+      payload:
+         $ref: '#/components/schemas/CountDown'
+
+    receive_heartbeat:
+      title: Receive heartbeat
+      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      contentType: application/json
+
+
+
+
+
+  schemas:
+    StopTransactionRequest:
+      description: >-
+        Request for a stop transaction containing the reason and an optional
+        id tag
+      type: object
+      additionalProperties: true
+      required:
+        - reason
+      properties:
+        reason:
+          description: Reason for stopping the transaction
+          type: string
+          $ref: '#/components/schemas/StopTransactionReason'
+    StopTransactionReason:
+      description: |
+        Reason for stopping transaction
+        - EmergencyStop: Emergency stop button was used
+        - EVDisconnected: Disconnecting of cable, vehicle moved away from inductive charge unit
+        - HardReset: A hard reset command was received previously
+        - Local: Stopped locally on request of the user at the Charge Point. This is a regular termination of a transaction. Examples: presenting an RFID tag, pressing a button to stop
+        - Other: Any other reason
+        - PowerLoss: Complete loss of power
+        - Reboot: A locally initiated reset/reboot occurred
+        - Remote: Stopped remotely on request of the user. This is a regular termination of a transaction. Examples: termination using a smartphone app, exceeding a (non local) prepaid credit
+        - SoftReset: A soft reset command was received
+        - UnlockCommand: Central System sent an Unlock Connector command
+        - DeAuthorized: The transaction was stopped because of the authorization status in a StartTransaction.conf
+        - EnergyLimitReached: Maximum energy of charging reached. For example: in a pre-paid charging solution
+        - GroundFault: A GroundFault has occurred
+        - LocalOutOfCredit: A local credit limit enforced through the Charging Station has been exceeded.
+        - MasterPass: The transaction was stopped using a token with a MasterPassGroupId.
+        - OvercurrentFault: A larger than intended electric current has occurred
+        - PowerQuality: Quality of power too low, e.g. voltage too low/high, phase imbalance, etc.
+        - SOCLimitReached: Electric vehicle has reported reaching a locally enforced maximum battery State of Charge (SOC)
+        - StoppedByEV: The transaction was stopped by the EV
+        - TimeLimitReached: EV charging session reached a locally enforced time limit
+        - Timeout: EV not connected within timeout
+        - ReqEnergyTransferRejected: OCPP CSMS cannot accept the requested energy transfer type.
+
+      type: string
+      enum:
+        - EmergencyStop
+        - EVDisconnected
+        - HardReset
+        - Local
+        - Other
+        - PowerLoss
+        - Reboot
+        - Remote
+        - SoftReset
+        - UnlockCommand
+        - DeAuthorized
+        - EnergyLimitReached
+        - GroundFault
+        - LocalOutOfCredit
+        - MasterPass
+        - OvercurrentFault
+        - PowerQuality
+        - SOCLimitReached
+        - StoppedByEV
+        - TimeLimitReached
+        - Timeout
+        - ReqEnergyTransferRejected
+    StopTransactionReply:
+      description: "Reply to stop transaction request. 'true' on success"
+      type: boolean
+    PauseChargingReply:
+      description: "Reply to pause charging request. 'true' on success"
+      type: boolean
+    ResumeChargingReply:
+      description: "Reply to resume charging request. 'true' on success, false otherwise (e.g. resuming
+        a car pause won't work)"
+      type: boolean
+    ForceUnlockRequest:
+      description: "Specifies the ID of the connector that should be unlocked"
+      type: integer
+    ForceUnlockReply:
+      description: "Returns true if unlocking sequence was successfully executed"
+      type: boolean
+
+
+    SessionEventEnum:
+      description: |
+        Session Event enum
+        - Authorized: Signaled when the EVSE is authorized for charging
+        - Deauthorized: Signaled when the EVSE is not authorized for charging (anymore)
+        - Enabled: Signaled when the EVSE is enabled (e.g. after an enable command)
+        - Disabled: Signaled when the EVSE is disabled (e.g. after a disable command)
+        - SessionStarted: Signaled when a session has been started. A session has been started either when an EV is plugged in or the user has been authorized to start a transaction (e.g. after an authorize command)
+        - AuthRequired: Signaled when an EVSE needs authorization to start a transaction
+        - TransactionStarted: Signaled when a transaction has been started. Transaction starts at the point that all conditions for charging are met: EV is connected and user has been authorized
+        - PrepareCharging: EVSE started to prepare for charging. DC: CableCheck, PreCharge, PowerDelivery. AC: wait for the car to proceed to state C/D
+        - ChargingStarted: DC: CurrentDemand has started. AC: Auth is ok and car requested power (state C/D)
+        - ChargingPausedEV: Signaled when charging is paused by the EV
+        - WaitingForEnergy: Waiting for ernergy manager
+        - ChargingPausedEVSE: Signaled when charging is paused by the EVSE
+        - ChargingResumed: Charging has resumed from a pause
+        - StoppingCharging: EVSE has started to stop the charging process. DC: CurrentDemand has finished, now doing WeldingCheck etc, AC: Wait for car to return to state B or A
+        - ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
+        - TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
+        - SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
+        - ReservationStart: Signaled when a reservation starts
+        - ReservationEnd: Signaled when a reservation ends
+        - ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
+        - ReplugFinished: Signaled when the virtual replug process has finished
+        - PluginTimeout: Signaled when an EV has been Plugged in but no authorization is present within specified ConnectionTimeout
+        - SwitchingPhases: Signals that 1ph/3ph switching was started on AC charging
+        - SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
+      type: string
+      enum:
+        - Authorized
+        - Deauthorized
+        - Enabled
+        - Disabled
+        - SessionStarted
+        - AuthRequired
+        - TransactionStarted
+        - PrepareCharging
+        - ChargingStarted
+        - ChargingPausedEV
+        - ChargingPausedEVSE
+        - WaitingForEnergy
+        - ChargingResumed
+        - StoppingCharging
+        - ChargingFinished
+        - TransactionFinished
+        - SessionFinished
+        - ReservationStart
+        - ReservationEnd
+        - ReplugStarted
+        - ReplugFinished
+        - PluginTimeout
+        - SwitchingPhases
+        - SessionResumed
+
+    StartSessionReason:
+      description: |
+        Reason for session start
+        - EVConnected: Session was started because an EV was plugged in
+        - Authorized: Session was started because a valid authorization was presented and the EVSE is authorized to start a transaction immediately when an EV is plugged in
+      type: string
+      enum:
+        - EVConnected
+        - Authorized
+
+    SessionStarted:
+      description: Data for the SessionStarted event
+      type: object
+      additionalProperties: true
+      required:
+        - reason
+        - meter_value
+      properties:
+        reason:
+          description: Reason for session start
+          type: string
+          $ref: '#/components/schemas/StartSessionReason'
+        meter_value:
+          description: Exported meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+        signed_meter_value:
+          description: The signed meter value report of the started session
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/units_signed/types/SignedMeterValue'
+        reservation_id:
+          description: Id of the reservation
+          type: integer
+        logging_path:
+          description: >-
+            File system path where additional log files are stored, such as
+            event logs, raw ethernet dumps, ocpp session logs etc.
+            Filenames should start with "incomplete-" when they are not finished yet,
+            this allows other process to wait for the completion after the SessionFinished event.
+          type: string
+    SessionFinished:
+      description: Data for the SessionFinished event
+      type: object
+      additionalProperties: true
+      required:
+        - meter_value
+      properties:
+        meter_value:
+          description: Exported meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+    TransactionStarted:
+      description: Data for the TransactionStarted event
+      type: object
+      additionalProperties: true
+      required:
+        - id_tag
+        - meter_value
+      properties:
+        id_tag:
+          description: The id tag assigned to this transaction
+          type: object
+          $ref: '../auth_token_provider_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+        meter_value:
+          description: Exported meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+        signed_meter_value:
+          description: The signed meter value report of the started transaction
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/units_signed/types/SignedMeterValue'
+        reservation_id:
+          description: Id of the reservation
+          type: integer
+    TransactionFinished:
+      description: Data for TransactionFinished event
+      type: object
+      additionalProperties: true
+      required:
+        - meter_value
+      properties:
+        meter_value:
+          description: Transaction finished meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+        start_signed_meter_value:
+          description: The starting signed meter value report of the stopped transaction. If not included in the `signed_meter_value` object, it must be included here.
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/units_signed/types/SignedMeterValue'
+        signed_meter_value:
+          description: The signed meter value report of the stopped transaction
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/units_signed/types/SignedMeterValue'
+        reason:
+          description: Reason for stopping transaction
+          type: string
+          $ref: '#/components/schemas/StopTransactionReason'
+    ChargingStateChangedEvent:
+      description: Context for ChargingStateChanged event
+      type: object
+      additionalProperties: true
+      required:
+        - meter_value
+      properties:
+        meter_value:
+          description: Exported meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+    AuthorizationEvent:
+      description: Context for authorization event (Authorized or Deauthorized)
+      type: object
+      additionalProperties: true
+      required:
+        - meter_value
+      properties:
+        meter_value:
+          description: Exported meter value
+          type: object
+          $ref: '../powermeter_API/asyncapi.yaml#/components/schemas/Powermeter'
+
+    SessionEvent:
+      description: Emits all events related to sessions
+      type: object
+      additionalProperties: true
+      required:
+        - uuid
+        - event
+        - timestamp
+      properties:
+        uuid:
+          description: >-
+            An EVSE generated UUID for this session, can be used e.g. for
+            database storage.
+          type: string
+        timestamp:
+          description: Session start time in RFC3339 format
+          type: string
+          format: date-time
+        connector_id:
+          description: >-
+            Id of the connector of this EVSE.
+            If the connector_id is not specified, its assumed to be 1
+          type: integer
+        event:
+          description: >-
+            Event enum. For some events an additional object is set, see
+            below.
+          type: string
+          $ref: '#/components/schemas/SessionEventEnum'
+        session_started:
+          description: data for SessionStarted event
+          type: object
+          $ref: '#/components/schemas/SessionStarted'
+        session_finished:
+          description: data for the SessionFinished event
+          type: object
+          $ref: '#/components/schemas/SessionFinished'
+        transaction_started:
+          description: data for TransactionStarted event
+          type: object
+          $ref: '#/components/schemas/TransactionStarted'
+        transaction_finished:
+          description: >-
+            data for TransactionFinished event that happens when car is plugged
+            out
+          type: object
+          $ref: '#/components/schemas/TransactionFinished'
+        charging_state_changed_event:
+          description: >-
+            Data for ChargingStateChangedEvent. Shall be set for the following SessionEventEnums:
+              ChargingStarted, ChargingResumed, ChargingPausedEV, Charging
+          type: object
+          $ref: '#/components/schemas/ChargingStateChangedEvent'
+        authorization_event:
+          description: >-
+            Data for Authorization event. Shall be set for the following SessionEventEnums:
+              Authorized, Deauthorized
+          type: object
+          $ref: '#/components/schemas/AuthorizationEvent'
+
+    Limits:
+      description: Limits of this EVSE
+      type: object
+      additionalProperties: true
+      required:
+        - max_current
+        - nr_of_phases_available
+      properties:
+        uuid:
+          description: This module's UUID for global identification
+          type: string
+        max_current:
+          description: Instantaneous maximum current available to car
+          type: number
+        nr_of_phases_available:
+          description: Instantaneous phase count available to car
+          type: integer
+          minimum: 1
+          maximum: 3
+    EVInfo:
+      description: Information about the connected EV if available
+      type: object
+      additionalProperties: true
+      properties:
+        soc:
+          description: State of charge of the vehicle's battery in percent
+          type: number
+          minimum: 0
+          maximum: 100
+        present_voltage:
+          description: Current voltage of the vehicles battery [V]
+          type: number
+        present_current:
+          description: Current current of the vehicles battery [A]
+          type: number
+        target_voltage:
+          description: Target voltage that the vehicle requested [V]
+          type: number
+        target_current:
+          description: Target current that the vehicle requested [A]
+          type: number
+        maximum_current_limit:
+          description: Maximum current that the vehicle supports [A]
+          type: number
+        minimum_current_limit:
+          description: Charging below this limit is not energy efficient [A]
+          type: number
+        maximum_voltage_limit:
+          description: Maximum voltage that the vehicle supports [V]
+          type: number
+        maximum_power_limit:
+          description: Maximum power that the vehicle supports [W]
+          type: number
+        estimated_time_full:
+          description: Estimated time when the vehicle is fully charged
+          type: string
+          format: date-time
+        departure_time:
+          description: Time when the vehicle intends to depart (If set by the user)
+          type: string
+          format: date-time
+        estimated_time_bulk:
+          description: Estimated time when the vehicle finished bulk charging (e.g. 80%)
+          type: string
+          format: date-time
+        evcc_id:
+          description: EVCC ID (typically MAC address)
+          type: string
+          pattern: ^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){5}$
+        remaining_energy_needed:
+          description: Remaining energy needed to fulfill charging goal [Wh]
+          type: number
+        battery_capacity:
+          description: Vehicle's battery capacity [Wh]
+          type: number
+        battery_full_soc:
+          description: SoC which the vehicle considers fully charged [%]
+          type: number
+          minimum: 0
+          maximum: 100
+        battery_bulk_soc:
+          description: SoC which the vehicle considers bulk charging reached [%]
+          type: number
+          minimum: 0
+          maximum: 100
+    CarManufacturer:
+      description: >-
+        Enum type for car manufacturers derived from MAC address.
+        May be different from actual brand, so e.g. Skoda falls under Volkswagen_Group.
+      type: string
+      enum:
+        - VolkswagenGroup
+        - Tesla
+        - Unknown
+    EvseId:
+      description: 'EVSE ID including the connector number, e.g. DE*PNX*E123456*1'
+      type: string
+    Ready:
+      description: "'true' signals ready"
+      type: boolean
+    SelectedProtocol:
+      description: 'The selected protocol for charging'
+      type: string
+
+
+    ConnectorTypeEnum:
+      description: |
+        Type of a physical connector
+        - cCCS1: Combined Charging System 1 a.k.a. Combo 1
+        - cCCS2: Combined Charging System 2 a.k.a. Combo 2
+        - cG105: JARI G105-1993 a.k.a. CHAdeMO
+        - cTesla: Tesla Connector
+        - cType1: IEC62196-2 Type 1 connector a.k.a. J1772
+        - cType2: IEC62196-2 Type 2 connector a.k.a. Mennekes connector
+        - s309_1P_16A: 16A 1 phase IEC60309 socket
+        - s309_1P_32A: 32A 1 phase IEC60309 socket
+        - s309_3P_16A: 16A 3 phase IEC60309 socket
+        - s309_3P_32A: 32A 3 phase IEC60309 socket
+        - sBS1361: UK domestic socket a.k.a. 13Amp
+        - sCEE-7_7: CEE 7/7 16A socket a.k.a Schuko
+        - sType2: IEC62196-2 Type 2 socket a.k.a. Mennekes connector
+        - sType3: IEC62196-2 Type 2 socket a.k.a. Scame
+        - Other1PhMax16A: Other single phase (domestic) sockets not mentioned above, rated at no more than 16A. CEE7/17, AS3112, NEMA 5-15, NEMA 5-20, JISC8303, TIS166, SI 32, CPCS-CCC, SEV1011, etc
+        - Other1PhOver16A: Other single phase sockets not mentioned above (over 16A)
+        - Other3Ph: Other 3 phase sockets not mentioned above. NEMA14-30, NEMA14-50.
+        - Pan: Pantograph connector
+        - wInductive: Wireless inductively coupled connection (generic)
+        - wResonant: Wireless resonant coupled connection (generic)
+        - Undetermined: Yet to be determined (e.g. before plugged in)
+        - Unknown: Unknown
+      type: string
+      enum:
+        - cCCS1
+        - cCCS2
+        - cG105
+        - cTesla
+        - cType1
+        - cType2
+        - s309_1P_16A
+        - s309_1P_32A
+        - s309_3P_16A
+        - s309_3P_32A
+        - sBS1361
+        - sCEE_7_7
+        - sType2
+        - sType3
+        - Other1PhMax16A
+        - Other1PhOver16A
+        - Other3Ph
+        - Pan
+        - wInductive
+        - wResonant
+        - Undetermined
+        - Unknown
+
+    Connector:
+      description: >-
+        Type for a connector which is an independently operated and managed electrical outlet of an EVSE. It corresponds
+        to a single physical connector
+      type: object
+      additionalProperties: true
+      required:
+        - id
+      properties:
+        id:
+          description: Id of the connector. Connectors should be numbered starting with 1 counting upwards
+          type: integer
+          minimum: 1
+        type:
+          description: Type of the connector
+          type: string
+          $ref: '#/components/schemas/ConnectorTypeEnum'
+
+    Evse:
+      description: Type that defines properties of an EVSE including its connectors
+      type: object
+      required:
+        - id
+        - connectors
+      properties:
+        id:
+          description: ID of the EVSE
+          type: integer
+          minimum: 1
+          maximum: 128
+        connectors:
+          description: List of connectors of this EVSE
+          type: array
+          items:
+            description: A single connector
+            type: object
+            $ref: '#/components/schemas/Connector'
+          minItems: 1
+          maxItems: 128
+
+    EnableDisableSource:
+      description: >-
+        Source of a Enable or Disable command/event
+      type: object
+      additionalProperties: true
+      required:
+        - enable_source
+        - enable_state
+        - enable_priority
+      properties:
+        enable_source:
+          description: Specifies the source
+          type: string
+          enum:
+            - Unspecified
+            - LocalAPI
+            - LocalKeyLock
+            - ServiceTechnician
+            - RemoteKeyLock
+            - MobileApp
+            - FirmwareUpdate
+            - CSMS
+        enable_state:
+          description: Specifies the state for this entry
+          type: string
+          enum:
+            - Unassigned
+            - Disable
+            - Enable
+        enable_priority:
+          description: Priority of this entry. The highest priority is 0.
+          type: integer
+          minimum: 0
+          maximum: 10000
+
+    EnableDisableRequest:
+      description: Arguments for enable_disable
+      type: object
+      additionalProperties: true
+      required:
+        - connector_id
+        - source
+      properties:
+        connector_id:
+          description: Specifies the ID of the connector to enable. If 0, the whole EVSE should be enabled
+          type: integer
+        source:
+          description: Source of the enable command
+          type: object
+          $ref: '#/components/schemas/EnableDisableSource'
+
+    EnableDisableReply:
+      description: >-
+        Returns true if evse is enabled after the command, false if it is disabled.
+        This may not be the same value as the request, since there may be a higher priority request
+        from another source that is actually deciding whether it is enabled or disabled.
+      type: boolean
+
+    AuthorizeResponseArgs:
+      description: Arguments for authorize response
+      type: object
+      additionalProperties: true
+      required:
+        - token
+        - result
+      properties:
+        token:
+          type: object
+          $ref: '../auth_token_validator_API/asyncapi.yaml#/components/schemas/ProvidedIdToken'
+        result:
+          type: object
+          $ref: '../auth_token_validator_API/asyncapi.yaml#/components/schemas/ValidationResult'
+
+    ReservationId:
+      description: >-
+        The reservation id (should be added to the TransactionStarted
+        event)
+      type: integer
+
+    ReservationReply:
+      description: Returns true if the EVSE accepted the reservation, else false.
+      type: boolean
+
+    ExternalReadyToStartChargingReply:
+      description: Returns true if the signal was used by the evse manager implementation
+      type: boolean
+
+    WaitingForExternalReady:
+      description: >-
+        Signals that the EVSE Manager is in principle ready to start charging,
+        but delays sending its ready signal waiting for the external_ready_to_start_charging command.
+      type: boolean
+
+    CertificateActionEnum:
+      description: Specifies the type of a certificate request
+      type: string
+      enum:
+        - Install
+        - Update
+
+    ResponseExiStreamStatus:
+      description: The response raw exi stream and the status from the CSMS system
+      type: object
+      additionalProperties: true
+      required:
+        - status
+        - certificate_action
+      properties:
+        status:
+          description: >-
+            Indicates whether the message was processed properly
+            Accepted - The message was processed properly, exi_response included
+            Failed - Processing of the message was not successful, no exi_response included
+          type: string
+          enum:
+            - Accepted
+            - Failed
+        exi_response:
+          description: >-
+            Raw CertificateInstallationRes or CertificateUpdateRes message
+            as exi stream (Base64 encoded)
+          type: string
+          maxLength: 5600
+        certificate_action:
+          description: Type of the certificate request
+          type: string
+          $ref: '#/components/schemas/CertificateActionEnum'
+    RequestExiStreamSchema:
+      description: The request raw exi stream and the schema version for the CSMS system
+      type: object
+      additionalProperties: true
+      required:
+        - exi_request
+        - iso15118_schema_version
+        - certificate_action
+      properties:
+        exi_request:
+          description: >-
+            Raw CertificateInstallationReq or CertificateUpdateReq message as
+            exi stream (Base64 encoded)
+          type: string
+          maxLength: 5600
+        iso15118_schema_version:
+          description: Schema Version used for CertificateReq message between EV and Charger
+          type: string
+          maxLength: 50
+        certificate_action:
+          description: Type of the certificate request
+          type: string
+          $ref: '#/components/schemas/CertificateActionEnum'
+
+
+    SlacDlinkReady:
+      description: >-
+        Inform higher layers about a change in data link status. Emits true
+        if link was set up and false when the link is shut down.
+      type: boolean
+
+
+    CountDown:
+      description: Count down object
+      type: object
+      additionalProperties: true
+      required:
+        - countdown_s
+        - current_limit_after_delay_A
+        - current_limit_during_delay_A
+      properties:
+        countdown_s:
+          description: Remaining count down in seconds. It is set to zero if random delay is inactive
+          type: integer
+        current_limit_after_delay_A:
+          description: Current limit that will be used after the random delay is over
+          type: number
+        current_limit_during_delay_A:
+          description: Current limit that is used while the delay is active
+          type: number
+        start_time:
+          description: UTC timestamp when this random delay was started
+          type: string
+          format: date-time
+
+    RandomDelayDuration:
+      description: Maximum duration in seconds
+      type: integer

@@ -1,0 +1,858 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:basecamp:evse_board_support_API'
+info:
+  title: "Basecamp API definition for EVSE board support"
+  version: 1.0.3
+  description: >-
+    API for basecamp drivers supporting evse board support, AC RCD and connector lock.
+
+  license:
+    name: BaseCamp - License Version 1.0
+    url: https://www.pionix.de/pionix-license-terms
+  tags:
+    - name: basecamp
+    - name: evse_board_support
+    - name: ac_rcd
+    - name: connector_lock
+servers:
+  default:
+    pathname: 'basecamp/api/1.0/evse_board_support/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module as defined by the module id in the basecamp config file.
+defaultContentType: application/json
+
+channels:
+  send_event:
+    address: 'm2b/event'
+    messages:
+      send_event:
+        $ref: '#/components/messages/send_event'
+  send_ac_nr_of_phases:
+    address: 'm2b/ac_nr_of_phases'
+    messages:
+      send_ac_nr_of_phases:
+        $ref: '#/components/messages/send_ac_nr_of_phases'
+  send_capabilities:
+    address: 'm2b/capabilities'
+    messages:
+      send_capabilities:
+        $ref: '#/components/messages/send_capabilities'
+  send_ac_pp_ampacity:
+    address: 'm2b/ac_pp_ampacity'
+    messages:
+      send_ac_pp_ampacity:
+        $ref: '#/components/messages/send_ac_pp_ampacity'
+  send_request_stop_transaction:
+    address: 'm2b/request_stop_transaction'
+    messages:
+      send_ac_pp_ampacity:
+        $ref: '#/components/messages/send_request_stop_transaction'
+  send_rcd_current:
+    address: 'm2b/rcd_current'
+    messages:
+      send_rcd_current:
+        $ref: '#/components/messages/send_rcd_current'
+  send_raise_error:
+    address: 'm2b/raise_error'
+    messages:
+      send_raise_error:
+        $ref: '#/components/messages/send_raise_error'
+  send_clear_error:
+    address: 'm2b/clear_error'
+    messages:
+      send_clear_error:
+        $ref: '#/components/messages/send_clear_error'
+  send_communication_check:
+    address: 'm2b/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+  receive_enable:
+    address: 'b2m/enable'
+    messages:
+      receive_enable:
+        $ref: '#/components/messages/receive_enable'
+  receive_pwm_on:
+    address: 'b2m/pwm_on'
+    messages:
+      receive_pwm_on:
+        $ref: '#/components/messages/receive_pwm_on'
+  receive_pwm_off:
+    address: 'b2m/pwm_off'
+    messages:
+      receive_pwm_off:
+        $ref: '#/components/messages/receive_pwm_off'
+  receive_pwm_F:
+    address: 'b2m/pwm_F'
+    messages:
+      receive_pwm_F:
+        $ref: '#/components/messages/receive_pwm_F'
+  receive_allow_power_on:
+    address: 'b2m/allow_power_on'
+    messages:
+      receive_allow_power_on:
+        $ref: '#/components/messages/receive_allow_power_on'
+  receive_ac_switch_three_phases_while_charging:
+    address: 'b2m/ac_switch_three_phases_while_charging'
+    messages:
+       receive_ac_switch_three_phases_while_charging:
+         $ref: '#/components/messages/receive_ac_switch_three_phases_while_charging'
+  receive_evse_replug:
+    address: 'b2m/evse_replug'
+    messages:
+      receive_evse_replug:
+        $ref: '#/components/messages/receive_evse_replug'
+  receive_ac_overcurrent_limit:
+    address: 'b2m/ac_overcurrent_limit'
+    messages:
+      receive_ac_overcurrent_limit:
+        $ref: '#/components/messages/receive_ac_overcurrent_limit'
+  receive_lock:
+    address: 'b2m/lock'
+    messages:
+      receive_lock:
+        $ref: '#/components/messages/receive_lock'
+  receive_unlock:
+    address: 'b2m/unlock'
+    messages:
+      receive_unlock:
+        $ref: '#/components/messages/receive_unlock'
+  receive_self_test:
+    address: 'b2m/self_test'
+    messages:
+      receive_self_test:
+        $ref: '#/components/messages/receive_self_test'
+  receive_request_ac_pp_ampacity:
+    address: 'b2m/ac_pp_ampacity'
+    messages:
+      receive_request_ac_pp_ampacity:
+        $ref: '#/components/messages/receive_request_ac_pp_ampacity'
+  send_reply_ac_pp_ampacity:
+    address: null
+    messages:
+      send_reply_ac_pp_ampacity:
+        $ref: '#/components/messages/send_reply_ac_pp_ampacity'
+  receive_request_reset:
+    address: 'b2m/reset'
+    messages:
+      receive_request_reset:
+        $ref: '#/components/messages/receive_request_reset'
+  send_reply_reset:
+    address: null
+    messages:
+      send_reply_reset:
+        $ref: '#/components/messages/send_reply_reset'
+  receive_heartbeat:
+    address: 'b2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+
+
+
+operations:
+  send_event:
+    title: Send ControlPilot event
+    action: send
+    channel:
+      $ref: '#/channels/send_event'
+    description: 'Direction: Module to BaseCamp'
+  send_ac_nr_of_phases:
+    title: Send phase count available to car
+    action: send
+    channel:
+      $ref: '#/channels/send_ac_nr_of_phases'
+    description: 'Direction: Module to BaseCamp'
+  send_capabilities:
+    title: Send hardware capabilities
+    action: send
+    channel:
+      $ref: '#/channels/send_capabilities'
+    description: 'Direction: Module to BaseCamp'
+  send_ac_pp_ampacity:
+    title: Send AC pp ampacity
+    action: send
+    channel:
+      $ref: '#/channels/send_ac_pp_ampacity'
+  send_request_stop_transaction:
+    title: Send request to stop charging
+    action: send
+    channel:
+      $ref: '#/channels/send_request_stop_transaction'
+    description: 'Direction: Module to BaseCamp'
+  send_rcd_current:
+    title: Send RCD current
+    action: send
+    channel:
+      $ref: '#/channels/send_rcd_current'
+    description: 'Direction: Module to BaseCamp'
+  send_raise_error:
+    title: Send raise error
+    action: send
+    channel:
+      $ref: '#/channels/send_raise_error'
+    description: 'Direction: Module to BaseCamp'
+  send_clear_error:
+    title: Send clear error
+    action: send
+    channel:
+      $ref : '#/channels/send_clear_error'
+  send_communication_check:
+    title: Send communication check
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+  receive_enable:
+    title: Receive Enable
+    action: receive
+    channel:
+      $ref: '#/channels/receive_enable'
+    description: 'Direction: BaseCamp to Module'
+  receive_pwm_on:
+    title: Reeive PWM duty cycle
+    action: receive
+    channel:
+      $ref: '#/channels/receive_pwm_on'
+    description: 'Direction: BaseCamp to Module'
+  receive_pwm_off:
+    title: Receive PWM off
+    action: receive
+    channel:
+      $ref: '#/channels/receive_pwm_off'
+    description: 'Direction: BaseCamp to Module'
+  receive_pwm_F:
+    title: Receive PWM F
+    action: receive
+    channel:
+      $ref: '#/channels/receive_pwm_F'
+    description: 'Direction: BaseCamp to Module'
+  receive_allow_power_on:
+    title: Receive permission to switch relaise
+    action: receive
+    channel:
+      $ref: '#/channels/receive_allow_power_on'
+    description: 'Direction: BaseCamp to Module'
+  receive_ac_switch_three_phases_while_charging:
+    title: Receive command to switch 3 phase and 1 phase mode while charging
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ac_switch_three_phases_while_charging'
+    description: 'Direction: BaseCamp to Module'
+  receive_evse_replug:
+    title: Receive request for virtual replug sequence
+    action: receive
+    channel:
+      $ref: '#/channels/receive_evse_replug'
+    description: 'Direction: BaseCamp to Module'
+  receive_ac_overcurrent_limit:
+    title: Receive over current limit
+    action: receive
+    channel:
+      $ref: '#/channels/receive_ac_overcurrent_limit'
+    description: 'Direction: BaseCamp to Module'
+  receive_lock:
+    title: Receive request to lock
+    action: receive
+    channel:
+      $ref: '#/channels/receive_lock'
+  receive_unlock:
+    title: Receive request to unlock
+    action: receive
+    channel:
+      $ref: '#/channels/receive_unlock'
+  receive_self_test:
+    title: Receive request for self test
+    action: receive
+    channel:
+      $ref: '#/channels/receive_self_test'
+  send_reply_ac_pp_ampacity:
+    title: Request for AC ampacity
+    description: 'Reply to request'
+    action: send
+    channel:
+      $ref: '#/channels/send_reply_ac_pp_ampacity'
+  receive_request_ac_pp_ampacity:
+    title: Request for AC ampacity
+    action: receive
+    channel:
+      $ref: '#/channels/receive_request_ac_pp_ampacity'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_ac_pp_ampacity'
+  send_reply_reset:
+    title: Request to reset RCD
+    description: 'Reply to request'
+    action: send
+    channel:
+      $ref: '#/channels/send_reply_reset'
+  receive_request_reset:
+    title: Request to reset RCD
+    action: receive
+    channel:
+      $ref: '#/channels/receive_request_reset'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_reset'
+  receive_heartbeat:
+    title: Receive heatbeat
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+    description: 'Direction: BaseCamp to Module'
+
+
+
+components:
+  messages:
+    send_event:
+      title: Send ControlPilot event
+      summary: 'Event from ControlPilot signal/out relais'
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/BspEvent'
+      examples:
+        - summary: ""
+          payload:
+            "event": "A"
+    send_ac_nr_of_phases:
+      title: Send phase count
+      summary: Instantaneous phase count available to car
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PhaseCount'
+      examples:
+        - summary: ""
+          payload:
+            3
+    send_capabilities:
+      title: Send hardware capabilities
+      summary:  >-
+        Hardware capabilities/limits. Initially EvseManager will call get_hw_capabilities once to fetch the
+        limits and caches the limits internally. The BSP module does not have to publish this variable at all,
+        then the initially fetched capabilities will be used. The BSP may publish this variable to update
+        limits in case they change during runtime, e.g. if the maximum current changes because the hardware
+        gets too hot.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/HardwareCapabilities'
+      examples:
+        - summary: ""
+          payload:
+            "max_current_A_import": 5
+            "min_current_A_import": 1
+            "max_phase_count_import": 3
+            "min_phase_count_import": 1
+            "max_current_A_export": 10
+            "min_current_A_export": 1
+            "max_phase_count_export": 3
+            "min_phase_count_export": 1
+            "supports_changing_phases_during_charging": true
+            "max_plug_temperature_C": 80
+            "connector_type": "IEC62196Type2Cable"
+    send_ac_pp_ampacity:
+      title: Send AC pp ampacity
+      summary: >-
+        Current carrying capacity of the connected cable in ampere for AC charging
+        with a socket. Publish whenever it changes.
+        This has no meaning for DC or AC charging with a fixed attached cable, it does not
+        need to be implemented and the returned value is not used in those cases.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProximityPilot'
+      examples:
+        - summary: ""
+          payload:
+            "ampacity": "None"
+    send_request_stop_transaction:
+      title: Request stop charging
+      summary: 'Publish to stop the transaction gracefully (e.g. user pressed the stop button)'
+      contentType: application/json
+      payload:
+        $ref: '../evse_manager_consumer_API/asyncapi.yaml#/components/schemas/StopTransactionRequest'
+      examples:
+        - summary: ""
+          payload:
+            {
+            "reason": "Local"
+            }
+    send_rcd_current:
+      title: Send RCD current
+      summary: Residual current in mA. Note that this does not trigger anything, it is merely for reporting.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Current'
+      examples:
+        - summary: ""
+          payload:
+            1
+    send_raise_error:
+      title: Send raise error
+      summary: Signal to BaseCamp that an error happened.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: ""
+          payload:
+            "type": "DiodeFault"
+            "sub_type": "string"
+            "message": "string"
+    send_clear_error:
+      title: Send clear error
+      summary: Signal to BaseCamp that a preciously raised error is no longer active.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Error'
+      examples:
+        - summary: ""
+          payload:
+            "type": "DiodeFault"
+            "sub_type": "string"
+            "message": "string"
+    send_communication_check:
+      title: Send communication check
+      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+    receive_enable:
+      title: Receive enable or disable for charging port
+      summary:  >-
+        Enables or disables the charging port. Typically disabled results in control
+        pilot state F. It must not accept cars for new charging sessions if disabled.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Enabled'
+      examples:
+        - summary: ""
+          payload:
+            true
+    receive_pwm_on:
+      title: Receive PWM duty cycle
+      summary: Turns PWM on with duty cycle (in percent)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PWMDutyCycle'
+      examples:
+        - summary: ""
+          payload:
+            100
+    receive_pwm_off:
+      title: Receive PWM switch off
+      summary: Turn PWM off (constant high voltage)
+    receive_pwm_F:
+      title: Receive PWM switch off
+      summary: Turn PWM off with error F (constant negative voltage)
+    receive_allow_power_on:
+      title: Receive permission to switch relaise on
+      summary: Sets allow_power_on flag. If false, Relais must never be switched on.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PowerOnOff'
+      examples:
+        - summary: ""
+          payload:
+            "allow_power_on": true
+            "reason": "DCCableCheck"
+    receive_ac_switch_three_phases_while_charging:
+      title: Receive request switch between 3 phase und 1 phase mode
+      summary: >-
+         Optional, in case of doubt do not implement. Report in hardware_capabilites if this command is supported.
+         This command switches between one and three phase operation during an active charging session.
+         Some cars can be permanently destroyed by that, so the bsp needs to implement a special sequence for the switching.
+         The exact sequence can be defined by the BSP, but one example would be a C2->C1->B1->F->B1->B2->C2 or similar.
+         Use with caution.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ACPhaseMode'
+      examples:
+        - summary: ""
+          payload:
+            "ThreePhases"
+    receive_evse_replug:
+      title: Receive request for virtual replug sequence
+      summary: >-
+        Optional, in case of doubt do not implement.
+        Special command initiate a virtual replug sequence of adjustable duration without restarting
+        session. Emits a EvseReplugStarted event if supported and started. BSP will
+        take care to not emit other events such as CarPluggedIn/Out during that time.
+        Once finished it will emit a EvseReplugFinished. This is mainly for testing purposes,
+        don't implement for production use.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Duration'
+      examples:
+        - summary: ""
+          payload:
+            200
+    receive_ac_overcurrent_limit:
+      title: Receive over current limit
+      summary: >-
+        Many chargers implement a fast over current shutdown directly in the hardware that triggers if the EV draws more current than
+        the PWM allows.
+        If the hardware does not have this functionality, just ignore this command. Do not use it to set the PWM duty cycle.
+        Otherwise this command reports a value that should be used for the overcurrent detection.
+        A margin needs to be added to avoid false triggers. Do not use the PWM duty cycle to infer the current limit in the BSP,
+        as this will not work with HLC.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/OverCurrent'
+      examples:
+        - summary: ""
+          payload:
+            15
+    receive_lock:
+      title: Receive signal to lock
+      summary: >-
+        Lock connector lock
+    receive_unlock:
+      title: Receive signal to unlock
+      summary: >-
+        Unlock connector lock. (e.g. normal unlaock or enforced by OCPP)
+    receive_self_test:
+      title: Receive signal for selftest
+      summary: >-
+        Executes a self test of the RCD. If it fails, an error of type Selftest should be raised.
+    receive_request_ac_pp_ampacity:
+      title: Request for hardware capabilities
+      summary: 'Reply to provided topic.'
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: 'The topic to which to send the reply'
+    send_reply_ac_pp_ampacity:
+      title: Reply to request for AC ampacity
+      summary: >-
+        Read the current carrying capacity of the connected cable in ampere for AC charging
+        with a socket. This function will be used by EvseManager to get the PP value at
+        a distinct time. You should also publish the var pp_ampacity whenever the PP ampacity reading changes
+        to signal changes e.g. during the charging time.
+        This has no meaning for DC or AC charging with a fixed attached cable, it does not
+        need to be implemented and the returned value is not used in those cases.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ProximityPilot'
+    receive_request_reset:
+      title: Request to reset RCD
+      summary: 'Reply to provided topic.'
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          headers:
+            type: object
+            properties:
+              replyTo:
+                type: string
+                description: 'The topic to which to send the reply'
+      examples:
+        - summary: ""
+          payload:
+            headers:
+              replyTo: basecamp/api/1.0/{interface_type}/{module_id}/b2m/{operation_name}/{uuid}
+    send_reply_reset:
+      title: Reply to request for RCD reset
+      summary: >-
+        Resets the RCD after a trigger. May not be supported by actual hardware.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Success'
+    receive_heartbeat:
+      title: Receive heartbeat
+      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      contentType: application/json
+
+
+
+
+  schemas:
+    BspEvent:
+      description: "Event stream from ControlPilot signal/relais."
+      type: object
+      additionalProperties: true
+      required:
+        - event
+      properties:
+        event:
+          type: string
+          description: |
+            - A-F: CP states as defined in IEC61851-1
+            - PowerOn: Hardware confirms that contactors switched on correctly (typically mirror contacts indicated successful switch on)
+            - PowerOff: Hardware confirms that contactors switched off correctly and are not welded (typically mirror contacts indicated successful switch off)
+            - EvseReplugStarted: Special testing sequence: virtual replugging started
+            - EvseReplugFinished: Special testing sequence: virtual replugging stopped
+            - Disconnected: Only used on EV side: Not connected to a charging station. Do not use on EVSE side.
+          enum:
+            - 'A'
+            - 'B'
+            - 'C'
+            - 'D'
+            - 'E'
+            - 'F'
+            - 'PowerOn'
+            - 'PowerOff'
+            - 'EvseReplugStarted'
+            - 'EvseReplugFinished'
+            - 'Disconnected'
+
+    PhaseCount:
+      description: Number of phases
+      type: integer
+      minimum: 1
+      maximum: 3
+
+    HardwareCapabilities:
+      description: Hardware capabilities / limits
+      type: object
+      additionalProperties: true
+      required:
+        - max_current_A_import
+        - min_current_A_import
+        - max_phase_count_import
+        - min_phase_count_import
+        - max_current_A_export
+        - min_current_A_export
+        - max_phase_count_export
+        - min_phase_count_export
+        - supports_changing_phases_during_charging
+        - connector_type
+      properties:
+        max_current_A_import:
+          description: Maximum current (ampere) the hardware can handle (import from grid)
+          type: number
+        min_current_A_import:
+          description: >-
+            Minimum current (ampere) the hardware can use to charge. Values
+            below may be set but may result in pause instead.  (import from grid)
+          type: number
+        max_phase_count_import:
+          description: Max nr of phases the hardware can use  (import from grid)
+          type: integer
+          minimum: 1
+          maximum: 3
+        min_phase_count_import:
+          description: Minimum nr of phases the hardware can use  (import from grid)
+          type: integer
+          minimum: 1
+          maximum: 3
+        max_current_A_export:
+          description: Maximum current (ampere) the hardware can handle (export to grid)
+          type: number
+        min_current_A_export:
+          description: >-
+            Minimum current (ampere) the hardware can use to charge. Values
+            below may be set but may result in pause instead. (export to grid)
+          type: number
+        max_phase_count_export:
+          description: Max nr of phases the hardware can use (export to grid)
+          type: integer
+          minimum: 1
+          maximum: 3
+        min_phase_count_export:
+         description: Minimum nr of phases the hardware can use (export to grid)
+         type: integer
+         minimum: 1
+         maximum: 3
+        supports_changing_phases_during_charging:
+          description: >-
+            Indicates whether changing number of phases is supported during
+            charging (true) or not (false)
+          type: boolean
+        max_plug_temperature_C:
+          type: number
+        connector_type:
+          description: Type of charging connector available at this EVSE
+          type: string
+          enum:
+            - IEC62196Type2Cable
+            - IEC62196Type2Socket
+
+    ProximityPilot:
+      description: Current capability (ampacity) of the cable
+      type: object
+      additionalProperties: true
+      required:
+        - ampacity
+      properties:
+        ampacity:
+          description: Ampacity value of the cable assembly
+          type: string
+          enum:
+            - None
+            - A_13
+            - A_20
+            - A_32
+            - A_63_3ph_70_1ph
+
+    Current:
+      description: Electrical current in milliampere (mA)
+      type: number
+
+    Enabled:
+      description: 'True: enabled. False: disabled.'
+      type: boolean
+
+    PWMDutyCycle:
+      description: PWM duty cycle
+      type: number
+      minimum: 0
+      maximum: 100
+
+    PowerOnOff:
+      description: >-
+        Flag and context for switching power on/off. In some architectures e.g. DC power
+        train needs to know whether it should switch on with limited current or full current on the output contactors.
+      type: object
+      additionalProperties: true
+      required:
+        - allow_power_on
+        - reason
+      properties:
+        allow_power_on:
+          description: Allow switching on (true) or force switching off (false)
+          type: boolean
+        reason:
+          description: Reason for switching on/off
+          type: string
+          enum:
+            - DCCableCheck
+            - DCPreCharge
+            - FullPowerCharging
+            - PowerOff
+
+    ACPhaseMode:
+      description: Number of active phases for AC charging
+      type: string
+      enum:
+        - ThreePhases
+        - SinglePhase
+
+    Duration:
+      description: Duration in milliseconds (ms)
+      type: integer
+      minimum: 0
+
+    OverCurrent:
+      description: Electrical current in ampere (A)
+      type: number
+
+    Success:
+      description: 'Success: true, failure: false'
+      type: boolean
+
+    ErrorEnum:
+      description: |
+        Type of error
+        - DiodeFault: 'The CP diode in the EV is shorted.'
+        - VentilationNotAvailable: 'EV requested state D but no ventilation is available.'
+        - BrownOut: 'The hardware/MCU detected a brown out.'
+        - EnergyManagement: 'Energy could not be delivered because an (external) energy management failed.'
+        - PermanentFault: 'The EVSE is permanently broken and requires repair.'
+        - MREC2GroundFailure: 'Ground fault circuit interrupter has been activated.'
+        - MREC3HighTemperature: 'High temperature inside the EVSE is derating power delivery.'
+        - MREC4OverCurrentFailure: 'Over current protection device has tripped.'
+        - MREC5OverVoltage: 'Input voltage to the vehicle has risen above an acceptable level.'
+        - MREC6UnderVoltage: 'Input voltage to the vehicle has dropped below an acceptable level.'
+        - MREC8EmergencyStop: 'Emergency stop is pressed by the user (required if equipped).'
+        - MREC10InvalidVehicleMode: 'The vehicle is in an invalid mode for charging (Reported by IEC stack)'
+        - MREC14PilotFault: 'The control pilot voltage is out of range.'
+        - MREC15PowerLoss: 'The EVSE is unable to supply any power due to mains failure'
+        - MREC17EVSEContactorFault: "Contactors fail to open or close on EVSE's side. May also include welding related errors."
+        - MREC18CableOverTempDerate: 'Temperature of charging cable or connector assembly is too high, resulting in reduced power operation.'
+        - MREC19CableOverTempStop: 'Temperature of charging cable or connector assembly is too high, resulting in a stopped charging session.'
+        - MREC20PartialInsertion: 'Cable latch is raised due to incomplete insertion into the vehicle charging port.'
+        - MREC23ProximityFault: 'The proximity voltage is out of range.'
+        - MREC24ConnectorVoltageHigh: 'The output voltage of EVSE is high before charging starts or after charging ends.'
+        - MREC25BrokenLatch: 'The latch on the connector is broken.'
+        - MREC26CutCable: 'The output cable has been severed from the EVSE.'
+        - ConnectorLockCapNotCharged: 'The capacitor for connector lock motor failed to charge within expected time'
+        - ConnectorLockUnexpectedOpen: 'The connector lock feedback returns open while it should be closed'
+        - ConnectorLockUnexpectedClose: 'The connector lock feedback returns closed while it should be open'
+        - ConnectorLockFailedLock: 'The connector lock failed to lock (feedback still returns open)'
+        - ConnectorLockFailedUnlock: 'The connector lock failed to unlock (feedback still returns closed)'
+        - MREC1ConnectorLockFailure: ' Failure to lock or unlock connector on the vehicle side as per MREC definition. How should that be implemented? We can only find out about locking on the EVSE side, so we will use this error to report EVSE side lock failures. It is probably a mistake in the MREC definition.'
+        - Selftest: 'The Selftest failed, device permanently broken'
+        - DC: 'RCD was triggered by a DC fault'
+        - AC: 'RCD was triggered by an AC fault'
+        - VendorError: 'Vendor specific error code. Will stop charging session.'
+        - VendorWarning: 'Vendor specific error code. Charging may continue.'
+        - CommunicationFault: 'The communication to the hardware or underlying driver is lost or has errors.'
+
+      type: string
+      enum:
+        - DiodeFault
+        - VentilationNotAvailable
+        - BrownOut
+        - EnergyManagement
+        - PermanentFault
+        - MREC2GroundFailure
+        - MREC3HighTemperature
+        - MREC4OverCurrentFailure
+        - MREC5OverVoltage
+        - MREC6UnderVoltage
+        - MREC8EmergencyStop
+        - MREC10InvalidVehicleMode
+        - MREC14PilotFault
+        - MREC15PowerLoss
+        - MREC17EVSEContactorFault
+        - MREC18CableOverTempDerate
+        - MREC19CableOverTempStop
+        - MREC20PartialInsertion
+        - MREC23ProximityFault
+        - MREC24ConnectorVoltageHigh
+        - MREC25BrokenLatch
+        - MREC26CutCable
+        - ConnectorLockCapNotCharged
+        - ConnectorLockUnexpectedOpen
+        - ConnectorLockUnexpectedClose
+        - ConnectorLockFailedLock
+        - ConnectorLockFailedUnlock
+        - MREC1ConnectorLockFailure
+        - Selftest
+        - DC
+        - AC
+        - VendorError
+        - VendorWarning
+
+    Error:
+      description: >-
+        Errors for the evse_board_support interface.
+        All error codes that begin with MREC needs to be implemented to fulfill the Minimum
+        Required Error Codes defined by the ChargeX consortium:
+        https://inl.gov/content/uploads/2023/07/ChargeX_MREC_Rev5_09.12.23.pdf
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          $ref: '#/components/schemas/ErrorEnum'
+        sub_type:
+          description: The subtype of the error
+          type: string
+        message:
+          description: Addition information about the error
+          type: string
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
