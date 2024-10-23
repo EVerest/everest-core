@@ -288,16 +288,25 @@ TEST_F(EvseSecurityTestsMulti, verify_multi_root_leaf_retrieval) {
     // We have 2 leafs
     ASSERT_EQ(result.info.size(), 2);
 
-    ASSERT_EQ(fs::path("certs/client/csms/CSMS_LEAF.pem"), result.info[0].certificate_single.value());
-    ASSERT_EQ(fs::path("certs/client/csms/SECC_LEAF_GRIDSYNC.pem"), result.info[1].certificate_single.value());
+    fs::path leaf_csms = fs::path("certs/client/csms/CSMS_LEAF.pem");
+    fs::path leaf_grid = fs::path("certs/client/csms/SECC_LEAF_GRIDSYNC.pem");
+
+    // File order is not guaranteed
+    ASSERT_TRUE(leaf_csms == result.info[0].certificate_single.value() ||
+                leaf_grid == result.info[0].certificate_single.value());
+    ASSERT_TRUE(leaf_csms == result.info[1].certificate_single.value() ||
+                leaf_grid == result.info[1].certificate_single.value());
 
     ASSERT_TRUE(result.info[0].certificate_root.has_value());
     ASSERT_TRUE(result.info[1].certificate_root.has_value());
 
-    ASSERT_TRUE(equal_certificate_strings(result.info[0].certificate_root.value(),
-                                          read_file_to_string("certs/ca/v2g/V2G_ROOT_CA.pem")));
-    ASSERT_TRUE(equal_certificate_strings(result.info[1].certificate_root.value(),
-                                          read_file_to_string("certs/ca/v2g/V2G_ROOT_GRIDSYNC_CA.pem")));
+    std::string root_v2g = read_file_to_string("certs/ca/v2g/V2G_ROOT_CA.pem");
+    std::string root_grid = read_file_to_string("certs/ca/v2g/V2G_ROOT_GRIDSYNC_CA.pem");
+
+    ASSERT_TRUE(equal_certificate_strings(result.info[0].certificate_root.value(), root_v2g) ||
+                equal_certificate_strings(result.info[0].certificate_root.value(), root_grid));
+    ASSERT_TRUE(equal_certificate_strings(result.info[1].certificate_root.value(), root_v2g) ||
+                equal_certificate_strings(result.info[1].certificate_root.value(), root_grid));
 }
 
 TEST_F(EvseSecurityTests, verify_normal_keygen) {
