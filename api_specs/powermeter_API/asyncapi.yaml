@@ -1,0 +1,887 @@
+---
+asyncapi: 3.0.0
+id: 'pionix:de:basecamp:powermeter_API'
+info:
+  title: Basecamp API definition for powermeters
+  version: 1.0.1
+  description: >-
+    This document contains the description of the API for basecamp drivers supporting powermeters.
+    Powermeters with corresponding capabilites have to be installed in the charger. In order to add support for a specific powermeter this API has to be used. It is guaranteed to be stable for the current major release. Additional functionality not breaking existing code may be added with minor releases.
+  license:
+    name: BaseCamp - License Version 1.0
+    url: https://www.pionix.de/pionix-license-terms
+  tags:
+    - name: basecamp
+    - name: powermeter
+servers:
+  default:
+    pathname: 'basecamp/api/1.0/powermeter/{module_id}'
+    host: 'localhost:1883'
+    description: default local MQTT
+    protocol: mqtt
+    variables:
+      module_id:
+        description: The ID of the module has to be defined by `cfg_target_module_id` in basecamp config file.
+defaultContentType: application/json
+
+#Channels are addressable components (MQTT topics). They are used (to send or receive) by the customer application.
+#Senders send to channels and receivers receive messages from channels.
+channels:
+  receive_request_start_transaction:
+    address: 'b2m/start_transaction'
+    messages:
+      receive_request_start_transaction:
+        $ref: '#/components/messages/receive_request_start_transaction'
+  send_reply_start_transaction:
+    address: null
+    description: Dynamically defined channel. Used to reply to a start_transaction message.
+    messages:
+      send_reply_start_transaction:
+        $ref: '#/components/messages/send_reply_start_transaction'
+  receive_request_stop_transaction:
+    address: 'b2m/stop_transaction'
+    messages:
+      receive_request_stop_transaction:
+        $ref: '#/components/messages/receive_request_stop_transaction'
+  send_reply_stop_transaction:
+    title: Reply stop transaction
+    address: null
+    description: Dynamically defined channel. Used to reply to a stop_transaction message.
+    messages:
+      send_reply_stop_transaction:
+        $ref: '#/components/messages/send_reply_stop_transaction'
+  send_powermeter_values:
+    address: 'm2b/powermeter_values'
+    messages:
+      send_powermeter_values:
+        $ref: '#/components/messages/send_powermeter_values'
+  send_communication_check:
+    address: 'm2b/communication_check'
+    messages:
+      send_communication_check:
+        $ref: '#/components/messages/send_communication_check'
+  send_public_key_ocmf:
+    address: "m2b/public_key_ocmf"
+    messages:
+      send_public_key_ocmf:
+        $ref: "#/components/messages/send_public_key_ocmf"
+  receive_heartbeat:
+    address: 'b2m/heartbeat'
+    messages:
+      receive_heartbeat:
+        $ref: '#/components/messages/receive_heartbeat'
+
+
+#Operations must be implemented by customer application.
+operations:
+  receive_request_start_transaction:
+    title: Request start transaction
+    summary: Request to reply.
+    action: receive
+    description: This operation is used to handle the request to start a new transaction on the powermeter (for signed metering according to German Eichrecht).
+    channel:
+      $ref: '#/channels/receive_request_start_transaction'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_start_transaction'
+  send_reply_start_transaction:
+    title: Request start transaction
+    summary: Request to reply.
+    description: This operation is used to handle the request to start a new transaction on the powermeter (for signed metering according to German Eichrecht).
+    action: send
+    channel:
+      $ref: '#/channels/send_reply_start_transaction'
+  receive_request_stop_transaction:
+    title: Request stop transaction
+    summary: Request to reply.
+    description: This operation is used to handle the request to stop the transaction on the powermeter and ask for the signed metering information in a reply.
+    action: receive
+    channel:
+      $ref: '#/channels/receive_request_stop_transaction'
+    reply:
+      address:
+        location: "$message.header#/replyTo"
+      channel:
+        $ref: '#/channels/send_reply_stop_transaction'
+  send_reply_stop_transaction:
+    title: Request stop transaction
+    summary: Request to reply.
+    description: This operation is used to handle the request to stop the transaction on the powermeter and ask for the signed metering information in a reply.
+    action: send
+    channel:
+      $ref: '#/channels/send_reply_stop_transaction'
+  send_powermeter_values:
+    title: Send powermeter values
+    summary: 'Direction: Module to BaseCamp'
+    description: This operation is used to send a dataset of measured values. The timestamp and the imported energy (in Wh) are required. Other values are optional.
+    action: send
+    channel:
+      $ref: '#/channels/send_powermeter_values'
+  send_communication_check:
+    title: Send communication check
+    action: send
+    channel:
+      $ref : '#/channels/send_communication_check'
+  send_public_key_ocmf:
+    title: Send the public key
+    action: send
+    channel:
+      $ref : '#/channels/send_public_key_ocmf'
+  receive_heartbeat:
+    title: Receive heatbeat
+    action: receive
+    channel:
+      $ref: '#/channels/receive_heartbeat'
+
+
+components:
+  messages:
+    receive_request_start_transaction:
+      name: start_transaction_req
+      title: Start transaction request message
+      summary: The start transaction request message contains the required input parameter for starting an OCMF transaction. These values will be included in the signed OCMF packet of the stop transaction reply.
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: true
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            required:
+              - replyTo
+            properties:
+              replyTo:
+                type: string
+                description: 'The topic to which to send the reply'
+          payload:
+            $ref: '#/components/schemas/StartTransactionRequest'
+    send_reply_start_transaction:
+      name: start_transaction_reply
+      title: Start transaction reply message
+      summary: The start transaction reply message contains the request status. It indicates whether the transaction could be started successfully or not. Further values may be added to the message depending on the value of the status.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StartTransactionReply'
+      examples:
+        - summary: ""
+          payload:
+            status: "OK"
+            error: "string"
+            transaction_min_stop_time: "2019-08-24T14:15:22Z"
+            transaction_max_stop_time: "2019-08-24T14:15:22Z"
+    receive_request_stop_transaction:
+      name: stop_transaction_req
+      title: Stop transaction request message
+      summary: The stop transaction request message contains the transaction id to stop the corresponding transaction.
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: true
+        required:
+          - headers
+          - payload
+        properties:
+          headers:
+            type: object
+            required:
+              - replyTo
+            properties:
+              replyTo:
+                type: string
+                description: 'The topic to which to send the reply'
+          payload:
+            type: object
+            additionalProperties: true
+            required:
+              - transaction_id
+            properties:
+              transaction_id:
+                type: string
+                description: 'Transaction id received in start transaction request.'
+    send_reply_stop_transaction:
+      name: stop_transaction_reply
+      title: Stop transaction reply message
+      summary: The stop transaction reply message contains the request status. It indicates whether the transaction could be stoped successfully or not. If successful the signed meter value report must be provided in this message too.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/StopTransactionReply'
+      examples:
+        - summary: ""
+          payload:
+            status: OK
+            signed_meter_value:
+              signed_meter_data: string
+              signing_method: string
+              encoding_method: string
+              public_key: string
+              timestamp: '2019-08-24T14:15:22Z'
+            error: string
+    send_powermeter_values:
+      name: send_powermeter_values
+      title: Send powermeter values
+      summary: The send powermeter values message contains the measured dataset. It requires a timestamp and the imported energy in Wh at least. Other values are optional.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/Powermeter'
+      examples:
+        - summary: ""
+          payload:
+            current_A:
+              L1: 0
+              L2: 0
+              L3: 0
+              N: 0
+            energy_Wh_import:
+              L1: 0
+              L2: 0
+              L3: 0
+              total: 0
+            frequency_Hz:
+              L1: 50.099517822265625
+              L2: 50.099517822265625
+              L3: 50.099517822265625
+            meter_id: THE_POWERMETER
+            phase_seq_error: false
+            power_W:
+              L1: 0
+              L2: 0
+              L3: 0
+              total: 0
+            timestamp: '2024-09-27T07:21:14.127Z'
+            voltage_V:
+              L1: 228.47914123535156
+              L2: 228.47914123535156
+              L3: 228.47914123535156
+    send_communication_check:
+      title: Send communication check
+      summary: Signal to BaseCamp that communication is good or check shall be stopped
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommunicationCheck'
+      examples:
+        - summary: ""
+          payload:
+            true
+    send_public_key_ocmf:
+      title: Send the public key
+      summary: Provide the public key used to sign the OCMF data
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/SendPublicKeyOCMF'
+      examples:
+        - summary: ""
+          payload:
+            "THE_KEY"
+    receive_heartbeat:
+      title: Receive heartbeat
+      summary: Heartbeat produced by basecamp as configured via cfg_heartbeat_interval_ms in the basecamp configuration
+      contentType: application/json
+
+  schemas:
+    OCMFIdentificationLevel:
+      description: >-
+        NONE: There is no user assignment. The other data for user assignment have no significance.
+        HEARSAY: The assignment is unsecured; e.g. by reading an RFID UID.
+        TRUSTED: The mapping can be trusted to some extent, but there is no absolute reliability. Example: Authorization by backend.
+        VERIFIED: The assignment has been verified by the signature component and special measures.
+        CERTIFIED: The assignment was verified by the signature component using a cryptographic signature that certifies the assignment.
+        SECURE: The mapping was established by a secure feature (e.g. secure RFID card, ISO 15118 with plug and charge, etc.).
+        MISMATCH: Error; UIDs do not match.
+        INVALID: Error; certificate not correct (check negative).
+        OUTDATED: Error; referenced trust certificate expired.
+        UNKNOWN: Certificate could not be successfully verified (no matching trust certificate found).
+      type: string
+      enum:
+        - NONE
+        - HEARSAY
+        - TRUSTED
+        - VERIFIED
+        - CERTIFIED
+        - SECURE
+        - MISMATCH
+        - INVALID
+        - OUTDATED
+        - UNKNOWN
+    OCMFIdentificationFlags:
+      description: >-
+        RFID_NONE: No assignment via RFID
+        RFID_PLAIN: Assignment via external RFID card reader
+        RFID_RELATED: Assignment via protected RFID card reader
+        RFID_PSK: A previously known shared key (pre-shared key) was used, e.g. with a secured RFID card.
+        OCPP_NONE: No user assignment by OCPP
+        OCPP_RS: Assignment by OCPP RemoteStart method
+        OCPP_AUTH: Assignment by OCPP Authorize method
+        OCPP_RS_TLS: Assignment by OCPP RemoteStart method, obtained via a secured TLS connection.
+        OCPP_AUTH_TLS: Assignment by OCPP Authorize method, obtained via a secured TLS connection.
+        OCPP_CACHE: Assignment by authorization cache of OCPP
+        OCPP_WHITELIST: Assignment by whitelist from OCPP
+        OCPP_CERTIFIED: A certificate of the backend was used which certifies the user mapping.
+        ISO15118_NONE: no user assignment by ISO 15118
+        ISO15118_PNC: Plug & Charge was used
+        PLMN_NONE: no user assignment
+        PLMN_RING: call
+        PLMN_SMS: short message
+        type: string
+      enum:
+        - RFID_NONE
+        - RFID_PLAIN
+        - RFID_RELATED
+        - RFID_PSK
+        - OCPP_NONE
+        - OCPP_RS
+        - OCPP_AUTH
+        - OCPP_RS_TLS
+        - OCPP_AUTH_TLS
+        - OCPP_CACHE
+        - OCPP_WHITELIST
+        - OCPP_CERTIFIED
+        - ISO15118_NONE
+        - ISO15118_PNC
+        - PLMN_NONE
+        - PLMN_RING
+        - PLMN_SMS
+    OCMFIdentificationType:
+      description: >-
+        NONE: No assignment available
+        DENIED: Assignment currently not available (due to two-factor authorization)
+        UNDEFINED: Type not specified
+        ISO14443: UID of an RFID card according to ISO 14443. Represented as 4 or 7 bytes in hexadecimal notation.
+        ISO15693: UID of an RFID card according to ISO 15693. Represented as 8 bytes in hexadecimal notation.
+        EMAID: Electro-Mobility-Account-ID according to ISO/IEC 15118 (string with length 14 or 15)
+        EVCCID: ID of an electric vehicle according to ISO/IEC 15118 (maximum length 6 characters)
+        EVCOID: EV Contract ID according to DIN 91286.
+        ISO7812: Identification card format according to ISO/IEC 7812 (credit and bank cards, etc.)
+        CARD_TXN_NR: Card transaction number (CardTxNbr) for a payment with credit or bank card used in a terminal at the charging point.
+        CENTRAL: Centrally generated ID. No exact format defined, can be e.g. a UUID. (OCPP 2.0)
+        CENTRAL_1: Centrally generated ID, e.g. by start via SMS. No exact format defined. (until OCPP 1.6)
+        CENTRAL_2: Centrally generated ID, e.g. by operator start. No exact format defined. (until OCPP 1.6)
+        LOCAL: Locally generated ID. No exact format defined, might be e.g. a UUID. (OCPP 2.0)
+        LOCAL_1: Locally generated ID, e.g. ID generated internally by the charge point. No exact format defined. (until OCPP 1.6)
+        LOCAL_2: Locally generated ID, for other cases. No exact format defined. (until OCPP 1.6)
+        PHONE_NUMBER: International phone number with leading "+".
+        KEY_CODE: User-related private key code. No exact format defined.
+        type: string
+      enum:
+        - NONE
+        - DENIED
+        - UNDEFINED
+        - ISO14443
+        - ISO15693
+        - EMAID
+        - EVCCID
+        - EVCOID
+        - ISO7812
+        - CARD_TXN_NR
+        - CENTRAL
+        - CENTRAL_1
+        - CENTRAL_2
+        - LOCAL
+        - LOCAL_1
+        - LOCAL_2
+        - PHONE_NUMBER
+        - KEY_CODE
+    OCMFUserIdentificationStatus:
+      description: >-
+        General status for user assignment
+        ASSIGNED: user successfully assigned
+        NOT_ASSIGNED: user not assigned
+      type: string
+      enum:
+        - ASSIGNED
+        - NOT_ASSIGNED
+
+
+
+    TransactionStatus:
+      description: Status of a start or stop transaction - used in start or stop transaction reply.
+      type: string
+      enum:
+          - OK
+          - NOT_SUPPORTED
+          - UNEXPECTED_ERROR
+
+    StartTransactionRequest:
+      type: object
+      additionalProperties: true
+      required:
+        - evse_id
+        - transaction_id
+        - client_id
+        - tariff_id
+        - cable_id
+        - user_data
+      properties:
+        evse_id:
+          description: Id of this EVSE
+          type: string
+        transaction_id:
+          description: OCPP transaction UUID
+          type: string
+        identification_status:
+          description: >-
+            OCMF Identification Status (IS): General status for user assignment
+          type: string
+          $ref: '#/components/schemas/OCMFUserIdentificationStatus'
+        identification_level:
+          description: >-
+            OCMF Identification Level (IL): Encoded overall status of the user assignment
+          type: string
+          $ref: '#/components/schemas/OCMFIdentificationLevel'
+        identification_flags:
+          description: >-
+            OCMF Identification Flags (IF): Detailed statements about the user assignment, represented by one or more identifiers
+          type: array
+          items:
+            type: string
+            $ref: '#/components/schemas/OCMFIdentificationFlags'
+          minItems: 0
+          maxItems: 4
+        identification_type:
+          description: >-
+            OCMF Identification Type (IT): Type of identification data
+          type: string
+          $ref: '#/components/schemas/OCMFIdentificationType'
+        identification_data:
+          description: >-
+            OCMF Identification Data (ID): The actual identification data e.g. a hex-coded UID according to ISO 14443.
+          type: string
+        tariff_text:
+          description: >-
+            A textual description used to identify a unique tariff.
+            This field is intended for the tariff designation in "Direct Payment" use case.
+          type: string
+          minLength: 0
+          maxLength: 250
+
+    StartTransactionReply:
+      description: Return value when a transaction is started.
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          description: Response status that indicates whether the transaction start request could successfully be performed.
+          $ref: '#/components/schemas/TransactionStatus'
+        error:
+          description: If status is not OK, a verbose error message.
+          type: string
+        transaction_min_stop_time:
+          description: Earliest point in time the started transaction can be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+          type: string
+          format: date-time
+        transaction_max_stop_time:
+          description:  Deadline for the transaction to be stopped again (if a minimum duration is required by the meter); yields a RFC3339 timestamp.
+          type: string
+          format: date-time
+
+
+    StopTransactionReply:
+      description: Report returned when a signed transaction is requested to stop. If successful, includes the signed meter value object. In case of an error, an additional error message can be provided.
+      type: object
+      additionalProperties: true
+      required:
+        - status
+      properties:
+        status:
+          description: Response status that indicates whether the transaction stop request could successfully be performed.
+          $ref: '#/components/schemas/TransactionStatus'
+        signed_meter_value:
+          description: The signed meter value report of the stopped transaction. Must be provided if status is OK.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        error:
+          description: If status is not OK, a verbose error message.
+          type: string
+
+    Temperature:
+      description: Temperature sensor expressed in C and a description (vendor specific) allowing to identify its purpose or meaning
+      type: object
+      additionalProperties: true
+      required:
+        - temperature
+      properties:
+        temperature:
+          description: The temperature of the sensor measured in C
+          type: number
+        identification:
+          description: A (vendor specific) ID if required
+          type: string
+
+    Powermeter:
+      description: Measured dataset (AC or DC)
+      type: object
+      additionalProperties: true
+      required:
+        - timestamp
+        - energy_Wh_import
+      properties:
+        timestamp:
+          description: Timestamp of measurement
+          type: string
+          format: date-time
+        meter_id:
+          description: A (user defined) meter if (e.g. id printed on the case)
+          type: string
+        phase_seq_error:
+          description: "AC only: true for 3 phase rotation error (ccw)"
+          type: boolean
+        energy_Wh_import:
+          description: Imported energy in Wh (from grid)
+          type: object
+          $ref: '#/components/schemas/units/types/Energy'
+        energy_Wh_export:
+          description: Exported energy in Wh (to grid)
+          type: object
+          $ref: '#/components/schemas/units/types/Energy'
+        power_W:
+          description:
+            Instantaneous power in Watt. Negative values are exported, positive
+            values imported Energy.
+          type: object
+          $ref: '#/components/schemas/units/types/Power'
+        voltage_V:
+          description: Voltage in Volts
+          type: object
+          $ref: '#/components/schemas/units/types/Voltage'
+        VAR:
+          description: Reactive power VAR
+          type: object
+          $ref: '#/components/schemas/units/types/ReactivePower'
+        current_A:
+          description: Current in ampere
+          type: object
+          $ref: '#/components/schemas/units/types/Current'
+        frequency_Hz:
+          description: Grid frequency in Hertz
+          type: object
+          $ref: '#/components/schemas/units/types/Frequency'
+        # Extension for individual signed meter values
+        energy_Wh_import_signed:
+          description: Imported energy in Wh (from grid)
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Energy'
+        energy_Wh_export_signed:
+          description: Exported energy in Wh (to grid)
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Energy'
+        power_W_signed:
+          description:
+            Instantaneous power in Watt. Negative values are exported, positive
+            values imported Energy.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Power'
+        voltage_V_signed:
+          description: Voltage in Volts
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Voltage'
+        VAR_signed:
+          description: Reactive power VAR
+          type: object
+          $ref: '#/components/schemas/units_signed/types/ReactivePower'
+        current_A_signed:
+          description: Current in ampere
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Current'
+        frequency_Hz_signed:
+          description: Grid frequency in Hertz
+          type: object
+          $ref: '#/components/schemas/units_signed/types/Frequency'
+        signed_meter_value:
+          description: >-
+            Signed collection of instantaneous meter values if supported by the meter.
+            This is intended for meters that only support signing a collection of meter values.
+          type: object
+          $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        temperatures:
+          description: >-
+            An array of temperature sensors expressed in C, their definition and meaning is product specific
+          type: array
+          items:
+            type: object
+            $ref: '#/components/schemas/Temperature'
+
+
+    units:
+      description: Unit types
+      types:
+        Current:
+          description: Current in Ampere
+          type: object
+          additionalProperties: true
+          properties:
+            DC:
+              description: DC current
+              type: number
+            L1:
+              description: AC L1 value only
+              type: number
+            L2:
+              description: AC L2 value only
+              type: number
+            L3:
+              description: AC L3 value only
+              type: number
+            N:
+              description: AC Neutral value only
+              type: number
+        Voltage:
+          description: Voltage in Volt
+          type: object
+          additionalProperties: true
+          properties:
+            DC:
+              description: DC voltage
+              type: number
+            L1:
+              description: AC L1 value only
+              type: number
+            L2:
+              description: AC L2 value only
+              type: number
+            L3:
+              description: AC L3 value only
+              type: number
+        Frequency:
+          description: "AC only: Frequency in Hertz"
+          type: object
+          additionalProperties: true
+          required:
+            - L1
+          properties:
+            L1:
+              description: AC L1 value
+              type: number
+            L2:
+              description: AC L2 value
+              type: number
+            L3:
+              description: AC L3 value
+              type: number
+        Power:
+          description:
+            Instantaneous power in Watt. Negative values are exported, positive
+            values imported Energy.
+          type: object
+          additionalProperties: true
+          required:
+            - total
+          properties:
+            total:
+              description: DC / AC Sum value
+              type: number
+            L1:
+              description: AC L1 value only
+              type: number
+            L2:
+              description: AC L2 value only
+              type: number
+            L3:
+              description: AC L3 value only
+              type: number
+        Energy:
+          description: Energy in Wh.
+          type: object
+          additionalProperties: true
+          required:
+            - total
+          properties:
+            total:
+              description: DC / AC Sum value (which is relevant for billing)
+              type: number
+            L1:
+              description: AC L1 value only
+              type: number
+            L2:
+              description: AC L2 value only
+              type: number
+            L3:
+              description: AC L3 value only
+              type: number
+        ReactivePower:
+          description: Reactive power VAR
+          type: object
+          additionalProperties: true
+          required:
+            - total
+          properties:
+            total:
+              description: VAR total
+              type: number
+            L1:
+              description: VAR phase A
+              type: number
+            L2:
+              description: VAR phase B
+              type: number
+            L3:
+              description: VAR phase C
+              type: number
+    units_signed:
+      description: Unit types signed
+      types:
+        SignedMeterValue:
+          description: Representation of a signed meter value
+          type: object
+          additionalProperties: true
+          required:
+            - signed_meter_data
+            - signing_method
+            - encoding_method
+          properties:
+            signed_meter_data:
+              description: Signed meter data (encoded in a string representation with eg. Base64)
+              type: string
+            signing_method:
+              description: Method used to create the signature
+              type: string
+            encoding_method:
+              description: Method used to encode the meter values before signing them
+              type: string
+            public_key:
+              description: Public key (encoded in a string representation with eg. Base64)
+              type: string
+            timestamp:
+              description: Timestamp of measurement
+              type: string
+              format: date-time
+        Current:
+          description: Current in Ampere
+          type: object
+          additionalProperties: true
+          properties:
+            DC:
+              description: DC current
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L1:
+              description: AC L1 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: AC L2 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: AC L3 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            N:
+              description: AC Neutral value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        Voltage:
+          description: Voltage in Volt
+          type: object
+          additionalProperties: true
+          properties:
+            DC:
+              description: DC voltage
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L1:
+              description: AC L1 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: AC L2 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: AC L3 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        Frequency:
+          description: "AC only: Frequency in Hertz"
+          type: object
+          additionalProperties: true
+          properties:
+            L1:
+              description: AC L1 value
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: AC L2 value
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: AC L3 value
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        Power:
+          description:
+            Instantaneous power in Watt. Negative values are exported, positive
+            values imported Energy.
+          type: object
+          additionalProperties: true
+          properties:
+            total:
+              description: DC / AC Sum value
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L1:
+              description: AC L1 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: AC L2 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: AC L3 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        Energy:
+          description: Energy in Wh.
+          type: object
+          additionalProperties: true
+          properties:
+            total:
+              description: DC / AC Sum value (which is relevant for billing)
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L1:
+              description: AC L1 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: AC L2 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: AC L3 value only
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+        ReactivePower:
+          description: Reactive power VAR
+          type: object
+          additionalProperties: true
+          properties:
+            total:
+              description: VAR total
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L1:
+              description: VAR phase A
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L2:
+              description: VAR phase B
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+            L3:
+              description: VAR phase C
+              type: object
+              $ref: '#/components/schemas/units_signed/types/SignedMeterValue'
+
+    CommunicationCheck:
+      type: boolean
+      description: "Send 'true' at least every 'cfg_communication_check_to_s' seconds to signal module is alive. Send 'false' to stop communication check'"
+    SendPublicKeyOCMF:
+      type: string
+      description: "The public key as string used to sign the OCMF data"
