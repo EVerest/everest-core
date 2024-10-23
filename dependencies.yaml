@@ -56,11 +56,11 @@ libcurl:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
 # EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency of libocpp
-# and would otherwise be overwritten by the version used there
+# This has to appear before libocpp in this file since it is also a direct dependency 
+# of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.0
+  git_tag: v0.9.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
