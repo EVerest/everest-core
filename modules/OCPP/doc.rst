@@ -295,3 +295,27 @@ This module currently deviates from the MREC specification in the following poin
 * MREC requires always using the value **Faulted** for the **status** field when reporting an error. The OCPP1.6 specification defines the 
   **Faulted** value as follows: "When a Charge Point or connector has reported an error and is not available for energy delivery.  
   (Inoperative)." This module, therefore, only reports **Faulted** when the Charge Point is not available for energy delivery.
+
+Certificate Management
+----------------------
+
+Two leaf certificates are managed by the OCPP communication enabled by this module:
+
+* CSMS Leaf certificate (used for mTLS for SecurityProfile3)
+* SECC Leaf certificate (Server certificate for ISO15118)
+
+60 seconds after the first `BootNotification.req` message has been accepted by the CSMS, the charging station will check if the existing 
+certificates are not present or have been expired. If this is the case, the charging station initiates the process of requesting a new
+certificate by sending a certificate signing request to CSMS.
+
+For the CSMS Leaf certificate, this process is only triggered if SecurityProfile 3 is used.
+
+For the SECC Leaf certificate, this process is only triggered if Plug&Charge is enabled by setting the `ISO15118PnCEnabled` to `true`.
+
+If a certificate has expired is then periodically checked every 12 hours.
+
+In addition to that, the charging station periodically updates the OCSP responses of the sub-CA certificates of the V2G certificate chain.
+The OCSP response is cached and can be used as part of the ISO15118 TLS handshake with EVs. The OCSP update is by default performed 
+every seven days (or can be configured using the `OCSPRequestInterval` configuration key). 
+The timestamp of the last update is stored persistently, so that this process is not necessarily performed at every start up.
+
