@@ -134,18 +134,28 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                 bool number_of_switching_cycles_reached = false;
 
                 if (first_trade[i]) {
+                    if (time_slot_is_active)
+                        EVLOG_info
+                            << "-------------------------------------------------------------------------- 1ph3ph --";
                     if (config.switch_1ph_3ph_mode not_eq Switch1ph3phMode::Never and total_power_import.has_value() &&
                         min_power_3ph > 0.) {
 
                         if (total_power_import.value() < min_power_3ph) {
                             // We have to do single phase, it is impossible with 3ph
                             number_of_phases = min_phases_import;
+                            if (time_slot_is_active)
+                                EVLOG_info << "We have to do single phase, it is impossible with 3ph: "
+                                           << number_of_phases;
                         } else if (config.switch_1ph_3ph_mode == Switch1ph3phMode::Both and
                                    total_power_import.value() > min_power_3ph + config.power_hysteresis_W) {
                             number_of_phases = max_phases_import;
+                            if (time_slot_is_active)
+                                EVLOG_info << "We should do 3ph: " << number_of_phases;
                         } else {
                             // Keep number of phases as they are
                             number_of_phases = ac_number_of_active_phases_import;
+                            if (time_slot_is_active)
+                                EVLOG_info << "Keep number of phases as they are: " << number_of_phases;
                         }
 
                         // Now we made the decision what the optimal number of phases would be (in variable
@@ -155,6 +165,8 @@ bool BrokerFastCharging::trade(Offer& _offer) {
 
                         if (config.max_nr_of_switches_per_session > 0 and
                             context.number_1ph3ph_cycles > config.max_nr_of_switches_per_session) {
+                            if (time_slot_is_active)
+                                EVLOG_info << "Max number of switching cycles hit";
                             number_of_switching_cycles_reached = true;
                             if (config.stickyness == StickyNess::SinglePhase) {
                                 number_of_phases = min_phases_import;
@@ -166,6 +178,8 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                         }
 
                         if (number_of_phases == min_phases_import) {
+                            if (time_slot_is_active)
+                                EVLOG_info << "Start timer for 1ph";
                             context.ts_1ph_optimal = date::utc_clock::now();
                         }
 
@@ -181,10 +195,16 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                                                         .count();
 
                             if (stable_3ph < config.time_hysteresis_s and number_of_phases == max_phases_import) {
+                                if (time_slot_is_active)
+                                    EVLOG_info << "Countdown for stable 3ph not done:" << stable_3ph
+                                               << " hystersis: " << config.time_hysteresis_s << ", falling back to 1ph";
                                 number_of_phases = min_phases_import;
                             }
                         }
                     } else {
+                        if (time_slot_is_active)
+                            EVLOG_info << "total_power_import.has_value()" << total_power_import.has_value()
+                                       << " min_power_3ph: " << min_power_3ph << ". Result: using " << number_of_phases;
                         number_of_phases = max_phases_import;
                     }
                 }
@@ -210,10 +230,11 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                         buy_ampere_import(i, min_current_import.value(), false, number_of_phases);
                     }
 
-                    /*EVLOG_info << "I: " << i << " -- 1ph3ph: " << min_power_3ph << " active_nr_phases "
-                               << ac_number_of_active_phases_import << " cycles " << context.number_1ph3ph_cycles
-                               << " number_of_phases " << number_of_phases << " time_slot_active "
-                               << time_slot_is_active;*/
+                    if (time_slot_is_active)
+                        EVLOG_info << "I: " << i << " -- 1ph3ph: " << min_power_3ph << " active_nr_phases "
+                                   << ac_number_of_active_phases_import << " cycles " << context.number_1ph3ph_cycles
+                                   << " number_of_phases " << number_of_phases << " time_slot_active "
+                                   << time_slot_is_active;
                 } else {
                     // EVLOG_info << "I: Not first trade or nor min current needed.";
                     //  try to buy a slice but allow less to be bought
