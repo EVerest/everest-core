@@ -393,7 +393,7 @@ to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& per
     _period.start_period = period.startPeriod;
     _period.limit = period.limit;
     _period.number_phases = period.numberPhases;
-    _period.phase_to_use = period.phaseToUse;
+    _period.stack_level = period.stackLevel;
     return _period;
 }
 
