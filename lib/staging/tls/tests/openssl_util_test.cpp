@@ -540,6 +540,36 @@ TEST(certificate, toPem) {
     // std::cout << pem << std::endl;
 }
 
+TEST(certificate, loadPemSingle) {
+    auto certs = ::openssl::load_certificates("client_ca_cert.pem");
+    ASSERT_EQ(certs.size(), 1);
+    auto pem = ::openssl::certificate_to_pem(certs[0].get());
+    EXPECT_FALSE(pem.empty());
+
+    auto pem_certs = ::openssl::load_certificates_pem(pem.c_str());
+    ASSERT_EQ(pem_certs.size(), 1);
+    EXPECT_EQ(certs[0], pem_certs[0]);
+}
+
+TEST(certificate, loadPemMulti) {
+    auto certs = ::openssl::load_certificates("client_chain.pem");
+    ASSERT_GT(certs.size(), 1);
+    std::string pem;
+    for (const auto& cert : certs) {
+        pem += ::openssl::certificate_to_pem(cert.get());
+    }
+    EXPECT_FALSE(pem.empty());
+    // std::cout << pem << std::endl << "Output" << std::endl;
+
+    auto pem_certs = ::openssl::load_certificates_pem(pem.c_str());
+    ASSERT_EQ(pem_certs.size(), certs.size());
+    for (auto i = 0; i < certs.size(); i++) {
+        SCOPED_TRACE(std::to_string(i));
+        // std::cout << ::openssl::certificate_to_pem(pem_certs[i].get()) << std::endl;
+        EXPECT_EQ(certs[i], pem_certs[i]);
+    }
+}
+
 TEST(certificate, verify) {
     auto client = ::openssl::load_certificates("client_cert.pem");
     auto chain = ::openssl::load_certificates("client_chain.pem");
