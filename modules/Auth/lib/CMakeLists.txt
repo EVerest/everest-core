@@ -5,7 +5,6 @@ add_library(auth_handler STATIC)
 target_sources(auth_handler PRIVATE
     AuthHandler.cpp
     Connector.cpp
-    ReservationEVSEs.cpp
     ReservationHandler.cpp
     ConnectorStateMachine.cpp
 )

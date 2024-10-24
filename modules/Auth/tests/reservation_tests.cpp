@@ -6,11 +6,9 @@
 #include <utils/date.hpp>
 
 #define private public
-// Make 'ReservationEVSEs.h privates public to test a helper function 'get_all_possible_orders'.
-#include "ReservationEVSEs.h"
-#undef private
-
+// Make 'ReservationHandler.hpp privates public to test a helper function 'get_all_possible_orders'.
 #include "ReservationHandler.hpp"
+#undef private
 
 using testing::_;
 using testing::MockFunction;
@@ -20,175 +18,7 @@ using testing::SaveArg;
 // TODO mz tests for 'unknown'
 
 namespace module {
-const static std::string TOKEN_1 = "RFID_1";
-const static std::string TOKEN_2 = "RFID_2";
-const static std::string TOKEN_3 = "RFID_3";
-const static std::string TOKEN_4 = "RFID_4";
-const static std::string TOKEN_5 = "RFID_5";
-const static std::string TOKEN_6 = "RFID_6";
-const static std::string TOKEN_7 = "RFID_7";
-const static std::string PARENT_ID_TOKEN = "PARENT_RFID";
-
-TEST(ReservationHandler, single_reservation) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-    reservations.init_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-    reservations.init_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Accepted);
-}
-
-TEST(ReservationHandler, single_reservation_type_unknown) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::Unknown;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Accepted);
-}
-
-TEST(ReservationHandler, single_reservation_type_wrong) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cTesla;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Unavailable);
-}
-
-TEST(ReservationHandler, too_many_global_reservations) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Accepted);
-
-    types::reservation::Reservation reservation2;
-    reservation2.reservation_id = 2;
-    reservation2.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation2.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation2.id_token = TOKEN_2;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation2, 1),
-              types::reservation::ReservationResult::Occupied);
-
-    types::reservation::Reservation reservation3;
-    reservation3.reservation_id = 3;
-    reservation3.connector_type = types::evse_manager::ConnectorTypeEnum::cType2;
-    reservation3.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation3.id_token = TOKEN_3;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation3, 1),
-              types::reservation::ReservationResult::Occupied);
-}
-
-TEST(ReservationHandler, too_many_evse_specific_reservations) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(0, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Accepted);
-
-    types::reservation::Reservation reservation2;
-    reservation2.reservation_id = 2;
-    reservation2.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation2.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation2.id_token = TOKEN_2;
-
-    EXPECT_EQ(reservations.reserve(0, ConnectorState::AVAILABLE, true, reservation2, 1),
-              types::reservation::ReservationResult::Occupied);
-
-    types::reservation::Reservation reservation3;
-    reservation3.reservation_id = 3;
-    reservation3.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation3.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation3.id_token = TOKEN_3;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation3, 1),
-              types::reservation::ReservationResult::Occupied);
-}
-
-TEST(ReservationHandler, different_number_of_connector_types) {
-    ReservationHandler reservations;
-    reservations.init_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-    reservations.init_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-    reservations.init_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
-    reservations.init_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-
-    types::reservation::Reservation reservation;
-    reservation.reservation_id = 1;
-    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation.id_token = TOKEN_1;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation, 1),
-              types::reservation::ReservationResult::Accepted);
-
-    types::reservation::Reservation reservation2;
-    reservation2.reservation_id = 2;
-    reservation2.connector_type = types::evse_manager::ConnectorTypeEnum::cType2;
-    reservation2.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation2.id_token = TOKEN_2;
-
-    EXPECT_EQ(reservations.reserve(0, ConnectorState::AVAILABLE, true, reservation2, 1),
-              types::reservation::ReservationResult::Accepted);
-
-    types::reservation::Reservation reservation3;
-    reservation3.reservation_id = 3;
-    reservation3.connector_type = types::evse_manager::ConnectorTypeEnum::cType2;
-    reservation3.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation3.id_token = TOKEN_3;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation3, 1),
-              types::reservation::ReservationResult::Occupied);
-
-    types::reservation::Reservation reservation4;
-    reservation3.reservation_id = 4;
-    reservation3.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
-    reservation3.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
-    reservation3.id_token = TOKEN_3;
-
-    EXPECT_EQ(reservations.reserve(std::nullopt, ConnectorState::AVAILABLE, true, reservation4, 1),
-              types::reservation::ReservationResult::Accepted);
-}
-
-class ReservationEVSETest : public ::testing::Test {
+class ReservationHandlerTest : public ::testing::Test {
 private:
     uint32_t reservation_id = 0;
 
@@ -200,9 +30,9 @@ protected:
     }
 };
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_01) {
+TEST_F(ReservationHandlerTest, global_reservation_scenario_01) {
     using namespace types::reservation;
-    ReservationEVSEs r;
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -221,8 +51,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_01) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_02) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_02) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -239,8 +69,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_02) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_03) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_03) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -257,8 +87,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_03) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_04) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_04) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(4, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(4, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -273,8 +103,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_04) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_05) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_05) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -289,8 +119,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_05) {
               types::reservation::ReservationResult::Accepted);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_06) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_06) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -304,8 +134,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_06) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_07) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_07) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::sType3);
 
@@ -315,8 +145,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_07) {
               types::reservation::ReservationResult::Accepted);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_08) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_08) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -336,8 +166,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_08) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_09) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_09) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -355,8 +185,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_09) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_10) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_10) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::Unknown);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::Unknown);
     r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::Unknown);
@@ -374,8 +204,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_10) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_11) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_11) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -392,8 +222,8 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_11) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_scenario_12) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_scenario_12) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -415,9 +245,9 @@ TEST_F(ReservationEVSETest, global_reservation_scenario_12) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, get_all_possible_orders) {
+TEST_F(ReservationHandlerTest, get_all_possible_orders) {
     using namespace types::evse_manager;
-    ReservationEVSEs r;
+    ReservationHandler r;
     std::vector<ConnectorTypeEnum> connectors;
     connectors.push_back(ConnectorTypeEnum::cCCS2);
 
@@ -437,9 +267,9 @@ TEST_F(ReservationEVSETest, get_all_possible_orders) {
                            {ConnectorTypeEnum::cCCS1, ConnectorTypeEnum::cCCS2, ConnectorTypeEnum::cCCS2}}));
 }
 
-TEST_F(ReservationEVSETest, get_all_possible_orders2) {
+TEST_F(ReservationHandlerTest, get_all_possible_orders2) {
     using namespace types::evse_manager;
-    ReservationEVSEs r;
+    ReservationHandler r;
     std::vector<ConnectorTypeEnum> connectors;
     connectors.push_back(ConnectorTypeEnum::cType1);
 
@@ -463,8 +293,8 @@ TEST_F(ReservationEVSETest, get_all_possible_orders2) {
                            {ConnectorTypeEnum::cCCS1, ConnectorTypeEnum::cType1, ConnectorTypeEnum::Pan}}));
 }
 
-TEST_F(ReservationEVSETest, specific_evse_scenario_01) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, specific_evse_scenario_01) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -486,8 +316,8 @@ TEST_F(ReservationEVSETest, specific_evse_scenario_01) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, specific_evse_scenario_02) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, specific_evse_scenario_02) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
 
@@ -503,8 +333,8 @@ TEST_F(ReservationEVSETest, specific_evse_scenario_02) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenario_01) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_specific_evse_combination_scenario_01) {
+    ReservationHandler r;
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -530,8 +360,8 @@ TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenari
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenario_02) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_specific_evse_combination_scenario_02) {
+    ReservationHandler r;
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -561,8 +391,8 @@ TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenari
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenario_03) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, global_reservation_specific_evse_combination_scenario_03) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -586,8 +416,8 @@ TEST_F(ReservationEVSETest, global_reservation_specific_evse_combination_scenari
               types::reservation::ReservationResult::Accepted);
 }
 
-TEST_F(ReservationEVSETest, check_charging_possible_global_specific_reservations_scenario_01) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, check_charging_possible_global_specific_reservations_scenario_01) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -624,8 +454,8 @@ TEST_F(ReservationEVSETest, check_charging_possible_global_specific_reservations
     EXPECT_FALSE(r.is_charging_possible(3));
 }
 
-TEST_F(ReservationEVSETest, check_charging_possible_global_specific_reservations_scenario_02) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, check_charging_possible_global_specific_reservations_scenario_02) {
+    ReservationHandler r;
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
@@ -651,8 +481,29 @@ TEST_F(ReservationEVSETest, check_charging_possible_global_specific_reservations
     EXPECT_FALSE(r.is_charging_possible(2));
 }
 
-TEST_F(ReservationEVSETest, change_availability_scenario_01) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, is_evse_reserved) {
+    ReservationHandler r;
+    r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+
+    EXPECT_FALSE(r.is_evse_reserved(0));
+    EXPECT_FALSE(r.is_evse_reserved(1));
+
+    r.make_reservation(std::nullopt, create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2));
+
+    EXPECT_FALSE(r.is_evse_reserved(0));
+    EXPECT_FALSE(r.is_evse_reserved(1));
+
+    r.make_reservation(1, create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2));
+
+    EXPECT_FALSE(r.is_evse_reserved(0));
+    EXPECT_TRUE(r.is_evse_reserved(1));
+}
+
+TEST_F(ReservationHandlerTest, change_availability_scenario_01) {
+    ReservationHandler r;
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                       const types::reservation::ReservationEndReason reason)>
@@ -707,8 +558,8 @@ TEST_F(ReservationEVSETest, change_availability_scenario_01) {
     EXPECT_FALSE(evse_id.has_value());
 }
 
-TEST_F(ReservationEVSETest, change_availability_scenario_02) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
+    ReservationHandler r;
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                       const types::reservation::ReservationEndReason reason)>
@@ -764,8 +615,8 @@ TEST_F(ReservationEVSETest, change_availability_scenario_02) {
     EXPECT_EQ(evse_id.value(), 3);
 }
 
-TEST_F(ReservationEVSETest, reservation_evse_unavailable) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_evse_unavailable) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -791,8 +642,8 @@ TEST_F(ReservationEVSETest, reservation_evse_unavailable) {
               types::reservation::ReservationResult::Unavailable);
 }
 
-TEST_F(ReservationEVSETest, reservation_specific_evse_unavailable) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_specific_evse_unavailable) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -804,8 +655,8 @@ TEST_F(ReservationEVSETest, reservation_specific_evse_unavailable) {
               types::reservation::ReservationResult::Unavailable);
 }
 
-TEST_F(ReservationEVSETest, reservation_specific_evse_faulted) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_specific_evse_faulted) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -824,8 +675,8 @@ TEST_F(ReservationEVSETest, reservation_specific_evse_faulted) {
               types::reservation::ReservationResult::Faulted);
 }
 
-TEST_F(ReservationEVSETest, reservation_evse_faulted) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_evse_faulted) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -851,8 +702,8 @@ TEST_F(ReservationEVSETest, reservation_evse_faulted) {
               types::reservation::ReservationResult::Faulted);
 }
 
-TEST_F(ReservationEVSETest, reservation_evse_unavailable_and_faulted) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_evse_unavailable_and_faulted) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -881,8 +732,8 @@ TEST_F(ReservationEVSETest, reservation_evse_unavailable_and_faulted) {
               types::reservation::ReservationResult::Faulted);
 }
 
-TEST_F(ReservationEVSETest, reservation_connector_all_faulted) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_connector_all_faulted) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(3, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -897,8 +748,8 @@ TEST_F(ReservationEVSETest, reservation_connector_all_faulted) {
               types::reservation::ReservationResult::Faulted);
 }
 
-TEST_F(ReservationEVSETest, reservation_connector_unavailable) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_connector_unavailable) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS1);
@@ -921,16 +772,16 @@ TEST_F(ReservationEVSETest, reservation_connector_unavailable) {
               types::reservation::ReservationResult::Occupied);
 }
 
-TEST_F(ReservationEVSETest, reservation_in_the_past) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_in_the_past) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() - std::chrono::hours(2));
     EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Rejected);
 }
 
-TEST_F(ReservationEVSETest, reservation_timer) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, reservation_timer) {
+    ReservationHandler r;
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                       const types::reservation::ReservationEndReason reason)>
@@ -958,8 +809,8 @@ TEST_F(ReservationEVSETest, reservation_timer) {
     EXPECT_EQ(evse_id.value(), 0);
 }
 
-TEST_F(ReservationEVSETest, cancel_reservation) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, cancel_reservation) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -980,8 +831,8 @@ TEST_F(ReservationEVSETest, cancel_reservation) {
     EXPECT_EQ(r.cancel_reservation(3, false, types::reservation::ReservationEndReason::Cancelled), 1);
 }
 
-TEST_F(ReservationEVSETest, overwrite_reservation) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, overwrite_reservation) {
+    ReservationHandler r;
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                       const types::reservation::ReservationEndReason reason)>
@@ -1002,19 +853,24 @@ TEST_F(ReservationEVSETest, overwrite_reservation) {
     EXPECT_EQ(evse_id, 5);
 }
 
-TEST_F(ReservationEVSETest, matches_reserved_identifier) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, matches_reserved_identifier) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2);
+    r.add_connector(2, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
+    r.add_connector(2, 1, types::evse_manager::ConnectorTypeEnum::cType2);
 
     types::reservation::Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
     reservation.parent_id_token = "PARENT_TOKEN_0";
     types::reservation::Reservation reservation2 = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
     reservation2.parent_id_token = "PARENT_TOKEN_2";
+    types::reservation::Reservation reservation3 = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
+    reservation3.parent_id_token = "PARENT_TOKEN_3";
     EXPECT_EQ(r.make_reservation(std::nullopt, reservation), types::reservation::ReservationResult::Accepted);
     EXPECT_EQ(r.make_reservation(1, reservation2), types::reservation::ReservationResult::Accepted);
+    EXPECT_EQ(r.make_reservation(2, reservation3), types::reservation::ReservationResult::Accepted);
 
     // Id token is correct and evse id as well.
     EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, std::nullopt), 0);
@@ -1022,8 +878,10 @@ TEST_F(ReservationEVSETest, matches_reserved_identifier) {
     EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, "WRONG_PARENT_TOKEN"), 0);
     // Token is wrong.
     EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", std::nullopt), std::nullopt);
+    // Evse id is wrong, but id token is in a global reservation.
+    EXPECT_EQ(r.matches_reserved_identifier(1, reservation.id_token, std::nullopt), 0);
     // Evse id is wrong.
-    EXPECT_EQ(r.matches_reserved_identifier(1, reservation.id_token, std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier(2, reservation2.id_token, std::nullopt), std::nullopt);
     // Token is wrong but parent token is correct.
     EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", "PARENT_TOKEN_0"), 0);
     // Token is wrong and parent token as well.
@@ -1040,8 +898,8 @@ TEST_F(ReservationEVSETest, matches_reserved_identifier) {
     EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", "PARENT_TOKEN_NOK"), std::nullopt);
 }
 
-TEST_F(ReservationEVSETest, has_reservation_parent_id) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, has_reservation_parent_id) {
+    ReservationHandler r;
     r.add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
     r.add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2);
     r.add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
@@ -1061,8 +919,8 @@ TEST_F(ReservationEVSETest, has_reservation_parent_id) {
     EXPECT_FALSE(r.has_reservation_parent_id(2));
 }
 
-TEST_F(ReservationEVSETest, on_reservation_used) {
-    ReservationEVSEs r;
+TEST_F(ReservationHandlerTest, on_reservation_used) {
+    ReservationHandler r;
 
     // Register a callback, which should not be called.
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,

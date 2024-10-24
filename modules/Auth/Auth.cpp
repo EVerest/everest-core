@@ -33,6 +33,8 @@ void Auth::ready() {
         int32_t connector_id = evse_manager->call_get_evse().id;
         this->auth_handler->init_connector(connector_id, evse_index);
 
+        // TODO mz multiple connectors and connector types!!!
+
         evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(connector_id, session_event);
         });
@@ -76,12 +78,13 @@ void Auth::ready() {
             this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
         }
     });
-    this->auth_handler->register_reservation_cancelled_callback([this](const int32_t evse_index) {
-        // Only call the evse manager to cancel the reservation if it was for a specific evse
-        if (evse_index > 0) {
-            this->r_evse_manager.at(evse_index)->call_cancel_reservation();
-        }
-    });
+    this->auth_handler->register_reservation_cancelled_callback(
+        [this](const std::optional<int32_t> evse_index, const int32_t reservation_id) {
+            // Only call the evse manager to cancel the reservation if it was for a specific evse
+            if (evse_index.has_value() && evse_index.value() > 0) {
+                this->r_evse_manager.at(evse_index.value())->call_cancel_reservation();
+            }
+        });
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {

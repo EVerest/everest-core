@@ -1,120 +1,114 @@
-// SPDX-License-Identifier: Apache-2.0
-// Copyright Pionix GmbH and Contributors to EVerest
+#pragma once
 
-#ifndef RESERVATION_HANDLER_HPP
-#define RESERVATION_HANDLER_HPP
-
+#include <cstdint>
+#include <map>
+#include <mutex>
+#include <optional>
 #include <vector>
 
-#include <Connector.hpp>
-#include <ReservationEVSEs.h>
+#include <ConnectorStateMachine.hpp>
 #include <everest/timer.hpp>
+#include <generated/types/evse_manager.hpp>
 #include <generated/types/reservation.hpp>
-#include <utils/types.hpp>
 
 namespace module {
 
 class ReservationHandler {
-
 private: // Members
     struct EvseConnectorType {
-        int32_t connector_id;
+        uint32_t connector_id;
         types::evse_manager::ConnectorTypeEnum connector_type;
+        ConnectorState state;
     };
 
-    std::map<int, types::reservation::Reservation> reservations;
+    struct Evse {
+        uint32_t evse_id;
+        ConnectorState evse_state;
+        std::vector<EvseConnectorType> connectors;
+    };
+
+    std::map<uint32_t, Evse> evses;
+    std::map<uint32_t, types::reservation::Reservation> evse_reservations;
     std::vector<types::reservation::Reservation> global_reservations;
-    // std::map<int, types::evse_manager::ConnectorTypeEnum> connectors;
-    std::map<int, std::vector<EvseConnectorType>> evses;
-
-    std::mutex timer_mutex;
-    std::mutex reservation_mutex;
-    // std::map<int, std::unique_ptr<Everest::SteadyTimer>> connector_to_reservation_timeout_timer_map;
+    mutable std::recursive_mutex reservation_mutex;
+    mutable std::recursive_mutex timer_mutex;
     std::map<int, std::unique_ptr<Everest::SteadyTimer>> reservation_id_to_reservation_timeout_timer_map;
+    std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                       const types::reservation::ReservationEndReason reason)>
+        reservation_cancelled_callback;
 
-    std::function<void(const int& connector_id)> reservation_cancelled_callback;
-    ReservationEVSEs e;
+    boost::shared_ptr<boost::asio::io_service::work> work;
+    boost::asio::io_service io_service;
+    std::thread io_service_thread;
 
 public:
-    /**
-     * @brief Initializes a connector with the given \p connector_id . This creates an entry in the map of timers of
-     the
-     * handler.
-     *
-     * @param evse_id           The evse id this connector belongs to.
-     * @param connector_id      The connector id.
-     * @param connector_type    The connector type
-     */
-    void init_connector(const int evse_id, const int connector_id,
-                        const types::evse_manager::ConnectorTypeEnum connector_type);
+    ReservationHandler();
+    ~ReservationHandler();
+    void add_connector(const uint32_t evse_id, const uint32_t connector_id,
+                       const types::evse_manager::ConnectorTypeEnum connector_type,
+                       const ConnectorState connector_state = ConnectorState::AVAILABLE);
+
+    types::reservation::ReservationResult make_reservation(const std::optional<uint32_t> evse_id,
+                                                           const types::reservation::Reservation& reservation);
+    void set_evse_available(const bool available, const bool faulted, const uint32_t evse_id);
+    void set_connector_available(const bool available, const bool faulted, const uint32_t evse_id,
+                                 const uint32_t connector_id);
+    bool is_charging_possible(const uint32_t evse_id);
+    bool is_evse_reserved(const uint32_t evse_id);
+    std::optional<uint32_t> cancel_reservation(int reservation_id, bool execute_callback,
+                                               const types::reservation::ReservationEndReason reason);
+    void register_reservation_cancelled_callback(
+        const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                                 const types::reservation::ReservationEndReason reason)>& callback);
+    void on_reservation_used(const int32_t reservation_id);
 
     /**
      * @brief Function checks if the given \p id_token or \p parent_id_token matches the reserved token of the given \p
-     * evse
+     * evse_id
      *
-     * @param evse              Evse id
+     * @param evse_id              Evse id
      * @param id_token          Id token
      * @param parent_id_token   Parent id token
      * @return The reservation id when there is a matching identifier, otherwise std::nullopt.
      */
-    std::optional<int32_t> matches_reserved_identifier(const std::optional<int> evse, const std::string& id_token,
+    std::optional<int32_t> matches_reserved_identifier(const std::optional<uint32_t> evse_id,
+                                                       const std::string& id_token,
                                                        std::optional<std::string> parent_id_token);
 
     /**
-     * @brief Functions check if reservation at the given \p evse contains a parent_id
-     * @param evse  Evse id
-     * @return true if reservation for \p evse exists and reservation contains a parent_id
+     * @brief Functions check if reservation at the given \p evse_id contains a parent_id
+     * @param evse_id  Evse id
+     * @return true if reservation for \p evse_id exists and reservation contains a parent_id
      */
-    bool has_reservation_parent_id(int evse);
-
-    /**
-     * @brief Function tries to reserve the given \p evse using the given \p reservation
-     *
-     * @param evse                  The evse id of the reservation. If not given: reserve any evse
-     * @param state Current state of the evse
-     * @param is_reservable
-     * @param reservation
-     * @param available_evses  The number of evses available. Only needed when evse id is not given.
-     * @return types::reservation::ReservationResult
-     */
-    types::reservation::ReservationResult reserve(std::optional<int> evse, const ConnectorState& state,
-                                                  bool is_reservable,
-                                                  const types::reservation::Reservation& reservation,
-                                                  const std::optional<uint32_t> available_evses);
-
-    /**
-     * @brief Function tries to cancel reservation with the given \p reservation_id .
-     *
-     * @param reservation_id
-     * @param execute_callback if true, cancel_reservation_callback will be executed
-     * @return int -1 if reservation could not been cancelled, else the id of the connnector
-     */
-    int cancel_reservation(int reservation_id, bool execute_callback);
-
-    /**
-     * @brief Handler that is called when a reservation was started / used.
-     *
-     * @param connector         Connector on which the car is charging
-     * @param reservation_id    The reservation id
-     */
-    void on_reservation_used(int connector, const int32_t reservation_id);
-
-    /**
-     * @brief Registers the given \p callback that is called when a reservation should be cancelled.
-     *
-     * @param callback
-     */
-    void register_reservation_cancelled_callback(const std::function<void(const int& connector_id)>& callback);
-
-    // TODO mz documentation
-    bool is_connector_type_available(const types::evse_manager::ConnectorTypeEnum connector_type);
+    bool has_reservation_parent_id(const std::optional<uint32_t> evse_id);
 
 private: // Functions
-    void set_reservation_timer(const types::reservation::Reservation& reservation, const std::optional<int32_t> evse);
-    bool evse_has_connector_type(const int32_t evse_id, const types::evse_manager::ConnectorTypeEnum type);
-    uint32_t get_no_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type);
+    bool has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
+                                 const types::evse_manager::ConnectorTypeEnum connector_type) const;
+    bool does_evse_connector_type_exist(const types::evse_manager::ConnectorTypeEnum connector_type) const;
+    types::reservation::ReservationResult
+    get_evse_state(const uint32_t evse_id,
+                   const std::map<uint32_t, types::reservation::Reservation> evse_specific_reservations);
+    types::reservation::ReservationResult
+    is_connector_available(const uint32_t evse_id, const types::evse_manager::ConnectorTypeEnum connector_type);
+    std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>>
+    get_all_possible_orders(const std::vector<types::evse_manager::ConnectorTypeEnum>& connectors) const;
+    bool can_virtual_car_arrive(const std::vector<uint32_t>& used_evse_ids,
+                                const std::vector<types::evse_manager::ConnectorTypeEnum>& next_car_arrival_order,
+                                const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
+    bool is_reservation_possible(const std::optional<types::evse_manager::ConnectorTypeEnum> global_reservation_type,
+                                 const std::vector<types::reservation::Reservation>& reservations_no_evse,
+                                 const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
+    void set_reservation_timer(const types::reservation::Reservation& reservation,
+                               const std::optional<uint32_t> evse_id);
+    std::vector<Evse>
+    get_all_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type) const;
+    ConnectorState get_new_connector_state(ConnectorState currrent_state, const ConnectorState new_state) const;
+    types::reservation::ReservationResult
+    get_reservation_evse_connector_state(const types::evse_manager::ConnectorTypeEnum connector_type) const;
+    void check_reservations_and_cancel_if_not_possible();
+
+    void print_order(const std::vector<types::evse_manager::ConnectorTypeEnum>& order) const;
 };
 
 } // namespace module
-
-#endif // RESERVATION_HANDLER_HPP

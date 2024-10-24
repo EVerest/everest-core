@@ -38,4 +38,18 @@ std::string connector_state_to_string(const ConnectorState& state) {
 }
 
 } // namespace conversions
+
+void EVSEContext::submit_event(ConnectorEvent event) {
+    state_machine.handle_event(event);
+}
+
+bool EVSEContext::is_unavailable() {
+    return this->get_state() == ConnectorState::UNAVAILABLE || this->get_state() == ConnectorState::UNAVAILABLE_FAULTED;
+}
+
+ConnectorState EVSEContext::get_state() const {
+    return this->state_machine.get_state();
+}
+
+// namespace conversions
 } // namespace module

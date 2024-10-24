@@ -27,7 +27,7 @@ reservationImpl::handle_reserve_now(types::reservation::ReserveNowRequest& reque
 bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
     const auto connector = this->mod->auth_handler->handle_cancel_reservation(reservation_id);
     if (connector != -1) {
-        this->mod->auth_handler->call_reservation_cancelled(connector);
+        this->mod->auth_handler->call_reservation_cancelled(connector, reservation_id);
         return true;
     }
     return false;
