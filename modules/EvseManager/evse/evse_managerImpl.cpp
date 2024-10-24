@@ -421,10 +421,6 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
     return mod->charger->cancel_transaction(request);
 };
 
-void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->update_local_energy_limit(value);
-}
-
 void evse_managerImpl::handle_set_get_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
