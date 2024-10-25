@@ -213,8 +213,9 @@ This module makes use of the following commands of this interface:
 * **get_leaf_expiry_days_count** to determine when a leaf certificate expires. This information is used by libocpp in order to renew leaf certificates in case
   they expire soon
 
-*Note: A lot of conversion between the libocpp types and the generated EVerest types are required for the given commands. Since the conversion functionality
-is used by this OCPP201 module and the OCPP1.6 module, it is implemented as a `separate library <../../lib/staging/ocpp/>`_.*
+*Note: A lot of conversion between the libocpp types and the generated EVerest types are required for the given commands. Since the  
+conversion functionality is used by this OCPP201 module and the OCPP1.6 module, it is implemented as a
+`separate library <../../lib/staging/ocpp/>`_ .*
 
 Requires: data_transfer
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -247,7 +248,7 @@ This module makes use of the following commands of this interface:
 Error Handling
 --------------
 
-The `enable_global_errors` flag for this module is true. This module is
+The **enable_global_errors** flag for this module is true in its manifest. This module is
 therefore able to retrieve and process all reported errors from other
 modules that are loaded in the same EVerest configuration.
 
@@ -258,16 +259,16 @@ StatusNotification
 ^^^^^^^^^^^^^^^^^^
 
 In contrast to OCPP1.6, error information is not transmitted as part of the StatusNotification.req. 
-A `StatusNotification.req` with status `Faulted` will be set to faulted only in case the error received is of the special type `evse_manager/Inoperative`.
+A **StatusNotification.req** with status **Faulted** will be set to faulted only in case the error received is of the special type **evse_manager/Inoperative**.
 This indicates that the EVSE is inoperative (not ready for energy transfer).
 
-In OCPP2.0.1 errors can be reported using the `NotifyEventRequest.req` . This message is used to report all other errros received.  
+In OCPP2.0.1 errors can be reported using the **NotifyEventRequest.req**. This message is used to report all other errros received.  
 
 Current Limitation
 ^^^^^^^^^^^^^^^^^^
 
-In OCPP2.0.1 errors can be reported using the `NotifyEventRequest`
-message. The `eventData` property carries the relevant information.
+In OCPP2.0.1 errors can be reported using the **NotifyEventRequest**
+message. The **eventData** property carries the relevant information.
 
 This format of reporting errors deviates from the mechanism used within
 EVerest. This data structure forces to map an error to a
@@ -281,7 +282,7 @@ Currently this module maps the Error to one of these three Components:
 * EVSE (error.origin.mapping.evse is set and error.origin.mapping.connector is not set)
 * Connector (error.origin.mapping.evse is set and error.origin.mapping.connector is set)
 
-The Variable used as part of the NotifyEventRequest is constantly defined to `Problem` for now.
+The Variable used as part of the NotifyEventRequest is constantly defined to **Problem** for now.
 
 The goal is to have a more advanced mapping of reported errors to the respective component-variable combinations in the future.
 
@@ -293,13 +294,13 @@ Two leaf certificates are managed by the OCPP communication enabled by this modu
 * CSMS Leaf certificate (used for mTLS for SecurityProfile3)
 * SECC Leaf certificate (Server certificate for ISO15118)
 
-60 seconds after the first `BootNotification.req` message has been accepted by the CSMS, the charging station will check if the existing 
+60 seconds after the first **BootNotification.req** message has been accepted by the CSMS, the charging station will check if the existing 
 certificates are not present or have been expired. If this is the case, the charging station initiates the process of requesting a new
 certificate by sending a certificate signing request to CSMS.
 
 For the CSMS Leaf certificate, this process is only triggered if SecurityProfile 3 is used.
 
-For the SECC Leaf certificate, this process is only triggered if Plug&Charge is enabled by setting the `ISO15118PnCEnabled` to `true`.
+For the SECC Leaf certificate, this process is only triggered if Plug&Charge is enabled by setting the **ISO15118PnCEnabled** to **true**.
 
 If a certificate has expired is then periodically checked every 12 hours.
 
