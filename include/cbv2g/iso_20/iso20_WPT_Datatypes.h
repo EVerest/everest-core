@@ -339,7 +339,7 @@ struct iso20_wpt_X509IssuerSerialType {
         uint16_t charactersLen;
     } X509IssuerName;
     // X509SerialNumber, integer (base: decimal)
-    int32_t X509SerialNumber;
+    exi_signed_t X509SerialNumber;
 
 };
 
@@ -421,7 +421,7 @@ struct iso20_wpt_SignatureMethodType {
         uint16_t charactersLen;
     } Algorithm;
     // HMACOutputLength, HMACOutputLengthType (base: integer)
-    int32_t HMACOutputLength;
+    exi_signed_t HMACOutputLength;
     unsigned int HMACOutputLength_isUsed:1;
     // ANY, anyType (base: base64Binary)
     struct {

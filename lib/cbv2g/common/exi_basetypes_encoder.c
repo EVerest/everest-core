@@ -28,9 +28,9 @@
 /*****************************************************************************
  * local functions
  *****************************************************************************/
-static int exi_basetypes_encoder_write_unsigned(exi_bitstream_t* stream, exi_unsigned_t* exi_unsigned)
+static int exi_basetypes_encoder_write_unsigned(exi_bitstream_t* stream, const exi_unsigned_t* exi_unsigned)
 {
-    uint8_t* current_octet = exi_unsigned->octets;
+    const uint8_t* current_octet = exi_unsigned->octets;
 
     for (size_t n = 0; n < exi_unsigned->octets_count; n++)
     {
@@ -154,6 +154,20 @@ int exi_basetypes_encoder_uint_64(exi_bitstream_t* stream, uint64_t value)
     return exi_basetypes_encoder_write_unsigned(stream, &exi_unsigned);
 }
 
+int exi_basetypes_encoder_unsigned(exi_bitstream_t* stream, const exi_unsigned_t* value)
+{
+    int error;
+    exi_unsigned_t raw_exi_unsigned;
+
+    error = exi_basetypes_convert_bytes_from_unsigned(value, raw_exi_unsigned.octets, &raw_exi_unsigned.octets_count, sizeof(value->octets));
+    if (error != EXI_ERROR__NO_ERROR)
+    {
+        return error;
+    }
+
+    return exi_basetypes_encoder_write_unsigned(stream, &raw_exi_unsigned);
+}
+
 /*****************************************************************************
  * interface functions - integer
  *****************************************************************************/
@@ -239,6 +253,17 @@ int exi_basetypes_encoder_integer_64(exi_bitstream_t* stream, int64_t value)
     }
 
     return exi_basetypes_encoder_uint_64(stream, result);
+}
+
+int exi_basetypes_encoder_signed(exi_bitstream_t* stream, const exi_signed_t* value)
+{
+    int error = exi_basetypes_encoder_bool(stream, value->is_negative);
+    if (error != EXI_ERROR__NO_ERROR)
+    {
+        return error;
+    }
+
+    return exi_basetypes_encoder_unsigned(stream, &value->data);
 }
 
 /*****************************************************************************

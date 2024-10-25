@@ -58,10 +58,6 @@ void init_din_SalesTariffEntryType(struct din_SalesTariffEntryType* SalesTariffE
     SalesTariffEntryType->ConsumptionCost_isUsed = 0u;
 }
 
-void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
-    PhysicalValueType->Unit_isUsed = 0u;
-}
-
 void init_din_TransformsType(struct din_TransformsType* TransformsType) {
     (void) TransformsType;
 }
@@ -109,6 +105,15 @@ void init_din_CanonicalizationMethodType(struct din_CanonicalizationMethodType* 
     CanonicalizationMethodType->ANY_isUsed = 0u;
 }
 
+void init_din_ServiceTagType(struct din_ServiceTagType* ServiceTagType) {
+    ServiceTagType->ServiceName_isUsed = 0u;
+    ServiceTagType->ServiceScope_isUsed = 0u;
+}
+
+void init_din_ServiceType(struct din_ServiceType* ServiceType) {
+    (void) ServiceType;
+}
+
 void init_din_ParameterSetType(struct din_ParameterSetType* ParameterSetType) {
     (void) ParameterSetType;
 }
@@ -117,30 +122,8 @@ void init_din_SelectedServiceType(struct din_SelectedServiceType* SelectedServic
     SelectedServiceType->ParameterSetID_isUsed = 0u;
 }
 
-void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType) {
-    DC_EVStatusType->EVCabinConditioning_isUsed = 0u;
-    DC_EVStatusType->EVRESSConditioning_isUsed = 0u;
-}
-
 void init_din_SAScheduleTupleType(struct din_SAScheduleTupleType* SAScheduleTupleType) {
     SAScheduleTupleType->SalesTariff_isUsed = 0u;
-}
-
-void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType) {
-    (void) AC_EVSEStatusType;
-}
-
-void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
-    DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
-}
-
-void init_din_ServiceTagType(struct din_ServiceTagType* ServiceTagType) {
-    ServiceTagType->ServiceName_isUsed = 0u;
-    ServiceTagType->ServiceScope_isUsed = 0u;
-}
-
-void init_din_ServiceType(struct din_ServiceType* ServiceType) {
-    (void) ServiceType;
 }
 
 void init_din_SignatureMethodType(struct din_SignatureMethodType* SignatureMethodType) {
@@ -197,16 +180,37 @@ void init_din_SignedInfoType(struct din_SignedInfoType* SignedInfoType) {
     SignedInfoType->Id_isUsed = 0u;
 }
 
+void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType) {
+    CertificateChainType->SubCertificates_isUsed = 0u;
+}
+
+void init_din_DC_EVStatusType(struct din_DC_EVStatusType* DC_EVStatusType) {
+    DC_EVStatusType->EVCabinConditioning_isUsed = 0u;
+    DC_EVStatusType->EVRESSConditioning_isUsed = 0u;
+}
+
 void init_din_SignatureValueType(struct din_SignatureValueType* SignatureValueType) {
     SignatureValueType->Id_isUsed = 0u;
 }
 
-void init_din_SelectedServiceListType(struct din_SelectedServiceListType* SelectedServiceListType) {
-    SelectedServiceListType->SelectedService.arrayLen = 0u;
+void init_din_DC_EVSEStatusType(struct din_DC_EVSEStatusType* DC_EVSEStatusType) {
+    DC_EVSEStatusType->EVSEIsolationStatus_isUsed = 0u;
 }
 
-void init_din_CertificateChainType(struct din_CertificateChainType* CertificateChainType) {
-    CertificateChainType->SubCertificates_isUsed = 0u;
+void init_din_AC_EVSEStatusType(struct din_AC_EVSEStatusType* AC_EVSEStatusType) {
+    (void) AC_EVSEStatusType;
+}
+
+void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType) {
+    (void) EVSEStatusType;
+}
+
+void init_din_PaymentOptionsType(struct din_PaymentOptionsType* PaymentOptionsType) {
+    PaymentOptionsType->PaymentOption.arrayLen = 0u;
+}
+
+void init_din_SelectedServiceListType(struct din_SelectedServiceListType* SelectedServiceListType) {
+    SelectedServiceListType->SelectedService.arrayLen = 0u;
 }
 
 void init_din_AC_EVChargeParameterType(struct din_AC_EVChargeParameterType* AC_EVChargeParameterType) {
@@ -229,14 +233,6 @@ void init_din_ChargingProfileType(struct din_ChargingProfileType* ChargingProfil
     ChargingProfileType->ProfileEntry.arrayLen = 0u;
 }
 
-void init_din_EVSEStatusType(struct din_EVSEStatusType* EVSEStatusType) {
-    (void) EVSEStatusType;
-}
-
-void init_din_PaymentOptionsType(struct din_PaymentOptionsType* PaymentOptionsType) {
-    PaymentOptionsType->PaymentOption.arrayLen = 0u;
-}
-
 void init_din_KeyInfoType(struct din_KeyInfoType* KeyInfoType) {
     KeyInfoType->Id_isUsed = 0u;
     KeyInfoType->KeyName_isUsed = 0u;
@@ -247,6 +243,14 @@ void init_din_KeyInfoType(struct din_KeyInfoType* KeyInfoType) {
     KeyInfoType->SPKIData_isUsed = 0u;
     KeyInfoType->MgmtData_isUsed = 0u;
     KeyInfoType->ANY_isUsed = 0u;
+}
+
+void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
+    ListOfRootCertificateIDsType->RootCertificateID.arrayLen = 0u;
+}
+
+void init_din_ServiceChargeType(struct din_ServiceChargeType* ServiceChargeType) {
+    (void) ServiceChargeType;
 }
 
 void init_din_ServiceParameterListType(struct din_ServiceParameterListType* ServiceParameterListType) {
@@ -269,14 +273,6 @@ void init_din_EVPowerDeliveryParameterType(struct din_EVPowerDeliveryParameterTy
     (void) EVPowerDeliveryParameterType;
 }
 
-void init_din_ListOfRootCertificateIDsType(struct din_ListOfRootCertificateIDsType* ListOfRootCertificateIDsType) {
-    ListOfRootCertificateIDsType->RootCertificateID.arrayLen = 0u;
-}
-
-void init_din_ServiceChargeType(struct din_ServiceChargeType* ServiceChargeType) {
-    (void) ServiceChargeType;
-}
-
 void init_din_ObjectType(struct din_ObjectType* ObjectType) {
     ObjectType->Encoding_isUsed = 0u;
     ObjectType->Id_isUsed = 0u;
@@ -284,8 +280,12 @@ void init_din_ObjectType(struct din_ObjectType* ObjectType) {
     ObjectType->ANY_isUsed = 0u;
 }
 
-void init_din_AC_EVSEChargeParameterType(struct din_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType) {
-    (void) AC_EVSEChargeParameterType;
+void init_din_PhysicalValueType(struct din_PhysicalValueType* PhysicalValueType) {
+    PhysicalValueType->Unit_isUsed = 0u;
+}
+
+void init_din_ServiceTagListType(struct din_ServiceTagListType* ServiceTagListType) {
+    (void) ServiceTagListType;
 }
 
 void init_din_DC_EVSEChargeParameterType(struct din_DC_EVSEChargeParameterType* DC_EVSEChargeParameterType) {
@@ -294,12 +294,12 @@ void init_din_DC_EVSEChargeParameterType(struct din_DC_EVSEChargeParameterType* 
     DC_EVSEChargeParameterType->EVSEEnergyToBeDelivered_isUsed = 0u;
 }
 
-void init_din_EVSEChargeParameterType(struct din_EVSEChargeParameterType* EVSEChargeParameterType) {
-    (void) EVSEChargeParameterType;
+void init_din_AC_EVSEChargeParameterType(struct din_AC_EVSEChargeParameterType* AC_EVSEChargeParameterType) {
+    (void) AC_EVSEChargeParameterType;
 }
 
-void init_din_ServiceTagListType(struct din_ServiceTagListType* ServiceTagListType) {
-    (void) ServiceTagListType;
+void init_din_EVSEChargeParameterType(struct din_EVSEChargeParameterType* EVSEChargeParameterType) {
+    (void) EVSEChargeParameterType;
 }
 
 void init_din_MeterInfoType(struct din_MeterInfoType* MeterInfoType) {
@@ -307,59 +307,6 @@ void init_din_MeterInfoType(struct din_MeterInfoType* MeterInfoType) {
     MeterInfoType->SigMeterReading_isUsed = 0u;
     MeterInfoType->MeterStatus_isUsed = 0u;
     MeterInfoType->TMeter_isUsed = 0u;
-}
-
-void init_din_ServiceDetailReqType(struct din_ServiceDetailReqType* ServiceDetailReqType) {
-    (void) ServiceDetailReqType;
-}
-
-void init_din_ServiceDetailResType(struct din_ServiceDetailResType* ServiceDetailResType) {
-    ServiceDetailResType->ServiceParameterList_isUsed = 0u;
-}
-
-void init_din_ServicePaymentSelectionReqType(struct din_ServicePaymentSelectionReqType* ServicePaymentSelectionReqType) {
-    (void) ServicePaymentSelectionReqType;
-}
-
-void init_din_ServicePaymentSelectionResType(struct din_ServicePaymentSelectionResType* ServicePaymentSelectionResType) {
-    (void) ServicePaymentSelectionResType;
-}
-
-void init_din_PaymentDetailsReqType(struct din_PaymentDetailsReqType* PaymentDetailsReqType) {
-    (void) PaymentDetailsReqType;
-}
-
-void init_din_PaymentDetailsResType(struct din_PaymentDetailsResType* PaymentDetailsResType) {
-    (void) PaymentDetailsResType;
-}
-
-void init_din_ContractAuthenticationReqType(struct din_ContractAuthenticationReqType* ContractAuthenticationReqType) {
-    ContractAuthenticationReqType->Id_isUsed = 0u;
-    ContractAuthenticationReqType->GenChallenge_isUsed = 0u;
-}
-
-void init_din_ContractAuthenticationResType(struct din_ContractAuthenticationResType* ContractAuthenticationResType) {
-    (void) ContractAuthenticationResType;
-}
-
-void init_din_ChargeParameterDiscoveryReqType(struct din_ChargeParameterDiscoveryReqType* ChargeParameterDiscoveryReqType) {
-    ChargeParameterDiscoveryReqType->AC_EVChargeParameter_isUsed = 0u;
-    ChargeParameterDiscoveryReqType->DC_EVChargeParameter_isUsed = 0u;
-    ChargeParameterDiscoveryReqType->EVChargeParameter_isUsed = 0u;
-}
-
-void init_din_ChargeParameterDiscoveryResType(struct din_ChargeParameterDiscoveryResType* ChargeParameterDiscoveryResType) {
-    ChargeParameterDiscoveryResType->SAScheduleList_isUsed = 0u;
-    ChargeParameterDiscoveryResType->SASchedules_isUsed = 0u;
-    ChargeParameterDiscoveryResType->AC_EVSEChargeParameter_isUsed = 0u;
-    ChargeParameterDiscoveryResType->DC_EVSEChargeParameter_isUsed = 0u;
-    ChargeParameterDiscoveryResType->EVSEChargeParameter_isUsed = 0u;
-}
-
-void init_din_PowerDeliveryReqType(struct din_PowerDeliveryReqType* PowerDeliveryReqType) {
-    PowerDeliveryReqType->ChargingProfile_isUsed = 0u;
-    PowerDeliveryReqType->DC_EVPowerDeliveryParameter_isUsed = 0u;
-    PowerDeliveryReqType->EVPowerDeliveryParameter_isUsed = 0u;
 }
 
 void init_din_PowerDeliveryResType(struct din_PowerDeliveryResType* PowerDeliveryResType) {
@@ -464,6 +411,59 @@ void init_din_ServiceDiscoveryReqType(struct din_ServiceDiscoveryReqType* Servic
 
 void init_din_ServiceDiscoveryResType(struct din_ServiceDiscoveryResType* ServiceDiscoveryResType) {
     ServiceDiscoveryResType->ServiceList_isUsed = 0u;
+}
+
+void init_din_ServiceDetailReqType(struct din_ServiceDetailReqType* ServiceDetailReqType) {
+    (void) ServiceDetailReqType;
+}
+
+void init_din_ServiceDetailResType(struct din_ServiceDetailResType* ServiceDetailResType) {
+    ServiceDetailResType->ServiceParameterList_isUsed = 0u;
+}
+
+void init_din_ServicePaymentSelectionReqType(struct din_ServicePaymentSelectionReqType* ServicePaymentSelectionReqType) {
+    (void) ServicePaymentSelectionReqType;
+}
+
+void init_din_ServicePaymentSelectionResType(struct din_ServicePaymentSelectionResType* ServicePaymentSelectionResType) {
+    (void) ServicePaymentSelectionResType;
+}
+
+void init_din_PaymentDetailsReqType(struct din_PaymentDetailsReqType* PaymentDetailsReqType) {
+    (void) PaymentDetailsReqType;
+}
+
+void init_din_PaymentDetailsResType(struct din_PaymentDetailsResType* PaymentDetailsResType) {
+    (void) PaymentDetailsResType;
+}
+
+void init_din_ContractAuthenticationReqType(struct din_ContractAuthenticationReqType* ContractAuthenticationReqType) {
+    ContractAuthenticationReqType->Id_isUsed = 0u;
+    ContractAuthenticationReqType->GenChallenge_isUsed = 0u;
+}
+
+void init_din_ContractAuthenticationResType(struct din_ContractAuthenticationResType* ContractAuthenticationResType) {
+    (void) ContractAuthenticationResType;
+}
+
+void init_din_ChargeParameterDiscoveryReqType(struct din_ChargeParameterDiscoveryReqType* ChargeParameterDiscoveryReqType) {
+    ChargeParameterDiscoveryReqType->AC_EVChargeParameter_isUsed = 0u;
+    ChargeParameterDiscoveryReqType->DC_EVChargeParameter_isUsed = 0u;
+    ChargeParameterDiscoveryReqType->EVChargeParameter_isUsed = 0u;
+}
+
+void init_din_ChargeParameterDiscoveryResType(struct din_ChargeParameterDiscoveryResType* ChargeParameterDiscoveryResType) {
+    ChargeParameterDiscoveryResType->SAScheduleList_isUsed = 0u;
+    ChargeParameterDiscoveryResType->SASchedules_isUsed = 0u;
+    ChargeParameterDiscoveryResType->AC_EVSEChargeParameter_isUsed = 0u;
+    ChargeParameterDiscoveryResType->DC_EVSEChargeParameter_isUsed = 0u;
+    ChargeParameterDiscoveryResType->EVSEChargeParameter_isUsed = 0u;
+}
+
+void init_din_PowerDeliveryReqType(struct din_PowerDeliveryReqType* PowerDeliveryReqType) {
+    PowerDeliveryReqType->ChargingProfile_isUsed = 0u;
+    PowerDeliveryReqType->DC_EVPowerDeliveryParameter_isUsed = 0u;
+    PowerDeliveryReqType->EVPowerDeliveryParameter_isUsed = 0u;
 }
 
 void init_din_BodyBaseType(struct din_BodyBaseType* BodyBaseType) {

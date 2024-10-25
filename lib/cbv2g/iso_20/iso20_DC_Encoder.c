@@ -699,7 +699,7 @@ static int encode_iso20_dc_X509IssuerSerialType(exi_bitstream_t* stream, const s
                 error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                 if (error == EXI_ERROR__NO_ERROR)
                 {
-                    error = exi_basetypes_encoder_integer_32(stream, X509IssuerSerialType->X509SerialNumber);
+                    error = exi_basetypes_encoder_signed(stream, &X509IssuerSerialType->X509SerialNumber);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
                         // encode END Element
@@ -1060,7 +1060,7 @@ static int encode_iso20_dc_SignatureMethodType(exi_bitstream_t* stream, const st
                     error = exi_basetypes_encoder_nbit_uint(stream, 1, 0);
                     if (error == EXI_ERROR__NO_ERROR)
                     {
-                        error = exi_basetypes_encoder_integer_32(stream, SignatureMethodType->HMACOutputLength);
+                        error = exi_basetypes_encoder_signed(stream, &SignatureMethodType->HMACOutputLength);
                         if (error == EXI_ERROR__NO_ERROR)
                         {
                             // encode END Element

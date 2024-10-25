@@ -199,6 +199,11 @@ int exi_basetypes_decoder_uint_64(exi_bitstream_t* stream, uint64_t* value)
     return EXI_ERROR__NO_ERROR;
 }
 
+int exi_basetypes_decoder_unsigned(exi_bitstream_t* stream, exi_unsigned_t* value)
+{
+    return exi_basetypes_decoder_read_unsigned(stream, value);
+}
+
 /*****************************************************************************
  * interface functions - integer
  *****************************************************************************/
@@ -299,6 +304,27 @@ int exi_basetypes_decoder_integer_64(exi_bitstream_t* stream, int64_t* value)
         *value = -(*value + 1);
     }
 
+    return error;
+}
+
+int exi_basetypes_decoder_signed(exi_bitstream_t* stream, exi_signed_t* value)
+{
+    int sign = 0;
+
+    int error = exi_basetypes_decoder_bool(stream, &sign);
+    if (error != EXI_ERROR__NO_ERROR)
+    {
+        return error;
+    }
+    value->is_negative = (sign == 0) ? 0 : 1;
+
+    exi_unsigned_t raw_value;
+    error = exi_basetypes_decoder_unsigned(stream, &raw_value);
+    if (error != EXI_ERROR__NO_ERROR)
+    {
+        return error;
+    }
+    error = exi_basetypes_convert_bytes_from_unsigned(&raw_value, value->data.octets, &value->data.octets_count, sizeof(raw_value.octets));
     return error;
 }
 

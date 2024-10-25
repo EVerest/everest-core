@@ -88,6 +88,7 @@ int exi_basetypes_decoder_uint_8(exi_bitstream_t* stream, uint8_t* value);
 int exi_basetypes_decoder_uint_16(exi_bitstream_t* stream, uint16_t* value);
 int exi_basetypes_decoder_uint_32(exi_bitstream_t* stream, uint32_t* value);
 int exi_basetypes_decoder_uint_64(exi_bitstream_t* stream, uint64_t* value);
+int exi_basetypes_decoder_unsigned(exi_bitstream_t* stream, exi_unsigned_t* value);
 
 /**
  * \brief       decoder for type integer
@@ -105,6 +106,7 @@ int exi_basetypes_decoder_integer_8(exi_bitstream_t* stream, int8_t* value);
 int exi_basetypes_decoder_integer_16(exi_bitstream_t* stream, int16_t* value);
 int exi_basetypes_decoder_integer_32(exi_bitstream_t* stream, int32_t* value);
 int exi_basetypes_decoder_integer_64(exi_bitstream_t* stream, int64_t* value);
+int exi_basetypes_decoder_signed(exi_bitstream_t* stream, exi_signed_t* value);
 
 /**
  * \brief       decoder for type character array

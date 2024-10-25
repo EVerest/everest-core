@@ -747,11 +747,16 @@ static int decode_iso20_X509IssuerSerialType(exi_bitstream_t* stream, struct iso
                 {
                 case 0:
                     // Event: START (X509SerialNumber, integer (decimal)); next=2
-                    // decode: int
-                    error = decode_exi_type_integer32(stream, &X509IssuerSerialType->X509SerialNumber);
+                    // decode: signed
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        grammar_id = 2;
+                        error = exi_basetypes_decoder_signed(stream, &X509IssuerSerialType->X509SerialNumber);
+                        if (error == 0)
+                        {
+                            grammar_id = 2;
+                        }
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     }
                     break;
                 default:
@@ -1283,12 +1288,17 @@ static int decode_iso20_SignatureMethodType(exi_bitstream_t* stream, struct iso2
                 {
                 case 0:
                     // Event: START (HMACOutputLength, HMACOutputLengthType (integer)); next=25
-                    // decode: int
-                    error = decode_exi_type_integer32(stream, &SignatureMethodType->HMACOutputLength);
+                    // decode: signed
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
-                        SignatureMethodType->HMACOutputLength_isUsed = 1u;
-                        grammar_id = 25;
+                        error = exi_basetypes_decoder_signed(stream, &SignatureMethodType->HMACOutputLength);
+                        if (error == 0)
+                        {
+                            SignatureMethodType->HMACOutputLength_isUsed = 1u;
+                            grammar_id = 25;
+                        }
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     }
                     break;
                 case 1:
