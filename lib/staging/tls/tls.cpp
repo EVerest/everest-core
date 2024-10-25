@@ -6,6 +6,7 @@
 #include "extensions/trusted_ca_keys.hpp"
 #include "openssl_util.hpp"
 
+#include <arpa/inet.h>
 #include <array>
 #include <cassert>
 #include <csignal>
@@ -13,8 +14,10 @@
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>
+#include <fstream>
 #include <memory>
 #include <mutex>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
@@ -63,6 +66,7 @@ public:
 } // namespace std
 
 using ::openssl::log_error;
+using ::openssl::log_info;
 using ::openssl::log_warning;
 
 namespace {
@@ -692,8 +696,43 @@ std::uint32_t ServerConnection::m_count{0};
 std::mutex ServerConnection::m_cv_mutex;
 std::condition_variable ServerConnection::m_cv;
 
+namespace {
+
+int ssl_keylog_file_index{-1};
+int ssl_keylog_server_index{-1};
+
+void keylog_callback(const SSL* ssl, const char* line) {
+
+    auto keylog_server = static_cast<TlsKeyLoggingServer*>(SSL_get_ex_data(ssl, ssl_keylog_server_index));
+
+    std::string key_log_msg = "TLS Handshake keys on port ";
+    key_log_msg += std::to_string(keylog_server->get_port()) + ": ";
+    key_log_msg += std::string(line);
+
+    log_info(key_log_msg);
+
+    if (keylog_server->get_fd() != -1) {
+        const auto result = keylog_server->send(line);
+        if (result not_eq strlen(line)) {
+            log_error("key_logging_server send() failed!");
+        }
+    }
+
+    auto keylog_file_path =
+        static_cast<std::filesystem::path*>(SSL_CTX_get_ex_data(SSL_get_SSL_CTX(ssl), ssl_keylog_file_index));
+
+    if (not keylog_file_path->empty()) {
+        std::ofstream ofs;
+        ofs.open(keylog_file_path->string(), std::ofstream::out | std::ofstream::app);
+        ofs << line << std::endl;
+        ofs.close();
+    }
+}
+
+} // namespace
+
 ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in,
-                                   std::int32_t timeout_ms) :
+                                   std::int32_t timeout_ms, const ConfigItem& tls_key_interface) :
     Connection(ctx, soc, ip_in, service_in, timeout_ms), m_tck_data{m_trusted_ca_keys, m_flags} {
     {
         std::lock_guard lock(m_cv_mutex);
@@ -703,6 +742,12 @@ ServerConnection::ServerConnection(SslContext* ctx, int soc, const char* ip_in, 
         SSL_set_accept_state(m_context->ctx.get());
         ServerStatusRequestV2::set_data(m_context->ctx.get(), &m_flags);
         ServerTrustedCaKeys::set_data(m_context->ctx.get(), &m_tck_data);
+
+        if (tls_key_interface != nullptr) {
+            const auto port = std::stoul(service_in);
+            m_keylog_server = std::make_unique<TlsKeyLoggingServer>(std::string(tls_key_interface), port);
+            SSL_set_ex_data(m_context->ctx.get(), ssl_keylog_server_index, m_keylog_server.get());
+        }
     }
 }
 
@@ -885,6 +930,26 @@ bool Server::init_ssl(const config_t& cfg) {
         // use the first server chain
         result = configure_ssl_ctx(ctx, cfg.ciphersuites, cfg.cipher_list, cfg.chains[0], true);
         if (result) {
+
+            if (cfg.tls_key_logging) {
+                tls_key_log_file_path = std::filesystem::path(cfg.tls_key_logging_path) /= "tls_session_keys.log";
+
+                ssl_keylog_file_index = SSL_CTX_get_ex_new_index(0, std::string("").data(), nullptr, nullptr, nullptr);
+                ssl_keylog_server_index = SSL_get_ex_new_index(0, std::string("").data(), nullptr, nullptr, nullptr);
+
+                if (ssl_keylog_file_index == -1 or ssl_keylog_server_index == -1) {
+                    auto error_msg = std::string("_get_ex_new_index failed: ssl_keylog_file_index: ");
+                    error_msg += std::to_string(ssl_keylog_file_index);
+                    error_msg += ", ssl_keylog_server_index: " + std::to_string(ssl_keylog_server_index);
+                    log_error(error_msg);
+                } else {
+                    SSL_CTX_set_ex_data(ctx, ssl_keylog_file_index, &tls_key_log_file_path);
+
+                    SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+                    m_tls_key_interface = cfg.host;
+                }
+            }
+
             int mode = SSL_VERIFY_NONE;
 
             // TODO(james-ctc): verify may need to change based on TLS version
@@ -934,7 +999,11 @@ bool Server::init_certificates(const std::vector<certificate_config_t>& chain_fi
     for (const auto& i : chain_files) {
         auto certs = openssl::load_certificates(i.certificate_chain_file);
         auto tas = openssl::load_certificates(i.trust_anchor_file);
+        auto tas_pem = openssl::load_certificates_pem(i.trust_anchor_pem);
         auto pkey = openssl::load_private_key(i.private_key_file, i.private_key_password);
+
+        // combine all trust anchor certificates
+        std::move(tas_pem.begin(), tas_pem.end(), std::back_inserter(tas));
 
         if (certs.size() > 0) {
             openssl::chain_t chain;
@@ -1058,8 +1127,9 @@ void Server::wait_for_connection(const ConnectionHandler& handler) {
                 // new connection, pass to handler
                 auto* ip = BIO_ADDR_hostname_string(peer.get(), 1);
                 auto* service = BIO_ADDR_service_string(peer.get(), 1);
-                auto connection =
-                    std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service, m_timeout_ms);
+
+                auto connection = std::make_unique<ServerConnection>(m_context->ctx.get(), soc, ip, service,
+                                                                     m_timeout_ms, m_tls_key_interface);
                 handler(std::move(connection));
                 OPENSSL_free(ip);
                 OPENSSL_free(service);
@@ -1339,6 +1409,83 @@ Client::override_t Client::default_overrides() {
         &ClientStatusRequestV2::status_request_v2_cb,       &ClientTrustedCaKeys::trusted_ca_keys_add,
         &ClientTrustedCaKeys::trusted_ca_keys_free,
     };
+}
+
+// ----------------------------------------------------------------------------
+// TlsKeyLoggingServer
+
+TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_) : port(port_) {
+    static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
+    bool result{true};
+
+    fd = socket(AF_INET6, SOCK_DGRAM, 0);
+    if (fd == -1) {
+        log_error("Could not create socket");
+        result = false;
+    }
+
+    if (result) {
+        // source setup
+        // find port between 49152-65535
+        auto could_bind = false;
+        auto source_port = 49152;
+        for (; source_port < 65535; source_port++) {
+            sockaddr_in6 source_address = {AF_INET6, htons(source_port), 0, {}, 0};
+            if (bind(fd, reinterpret_cast<sockaddr*>(&source_address), sizeof(sockaddr_in6)) == 0) {
+                could_bind = true;
+                break;
+            }
+        }
+
+        if (could_bind) {
+            log_info("UDP socket bound to source port: " + std::to_string(source_port));
+        } else {
+            log_error("Could not bind");
+            result = false;
+        }
+    }
+
+    if (result) {
+        auto mreq = ipv6_mreq{};
+        const auto index = if_nametoindex(interface_name.c_str());
+        mreq.ipv6mr_interface = index;
+        if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &mreq.ipv6mr_multiaddr) <= 0) {
+            log_error("Failed to setup multicast address");
+            result = false;
+        }
+
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+            log_error("Could not add multicast group membership");
+            result = false;
+        }
+
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &index, sizeof(index)) < 0) {
+            log_error("Could not set interface name:" + interface_name);
+            result = false;
+        }
+
+        destination_address = {AF_INET6, htons(port), 0, {}, 0};
+        if (inet_pton(AF_INET6, LINK_LOCAL_MULTICAST, &destination_address.sin6_addr) <= 0) {
+            log_error("Failed to setup server address, reset key_log_fd");
+            result = false;
+        }
+    }
+
+    if (!result && fd != -1) {
+        close(fd);
+        fd = -1;
+    }
+}
+
+TlsKeyLoggingServer::~TlsKeyLoggingServer() {
+    if (fd != -1) {
+        close(fd);
+    }
+}
+
+ssize_t TlsKeyLoggingServer::send(const char* line) {
+    return sendto(fd, line, strlen(line), 0, reinterpret_cast<const sockaddr*>(&destination_address),
+                  sizeof(destination_address));
 }
 
 } // namespace tls

@@ -3,7 +3,6 @@
 
 #include "tls_connection.hpp"
 #include "connection.hpp"
-#include "everest/logging.hpp"
 #include "log.hpp"
 #include "v2g.hpp"
 #include "v2g_server.hpp"
@@ -140,32 +139,40 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     config.socket = ctx->tls_socket.fd;
     config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
 
+    config.tls_key_logging = ctx->tls_key_logging;
+    config.tls_key_logging_path = ctx->tls_key_logging_path;
+    config.host = ctx->if_name;
+
     // information from libevse-security
     const auto cert_info =
-        ctx->r_security->call_get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM, false);
+        ctx->r_security->call_get_all_valid_certificates_info(LeafCertificateType::V2G, EncodingFormat::PEM, true);
     if (cert_info.status != GetCertificateInfoStatus::Accepted) {
         dlog(DLOG_LEVEL_ERROR, "Failed to read cert_info! Not Accepted");
     } else {
-        if (cert_info.info) {
-            const auto& info = cert_info.info.value();
-            const auto cert_path = info.certificate.value_or("");
-            const auto key_path = info.key;
+        if (!cert_info.info.empty()) {
+            // process all known certificate chains
+            for (const auto& chain : cert_info.info) {
+                const auto cert_path = chain.certificate.value_or("");
+                const auto key_path = chain.key;
+                const auto root_pem = chain.certificate_root.value_or("");
 
-            // workaround (see above libevse-security comment)
-            const auto key_password = info.password.value_or("");
+                // workaround (see above libevse-security comment)
+                const auto key_password = chain.password.value_or("");
 
-            auto& ref = config.chains.emplace_back();
-            ref.certificate_chain_file = cert_path.c_str();
-            ref.private_key_file = key_path.c_str();
-            ref.private_key_password = key_password.c_str();
+                auto& ref = config.chains.emplace_back();
+                ref.certificate_chain_file = cert_path.c_str();
+                ref.private_key_file = key_path.c_str();
+                ref.private_key_password = key_password.c_str();
+                ref.trust_anchor_pem = root_pem.c_str();
 
-            if (info.ocsp) {
-                for (const auto& ocsp : info.ocsp.value()) {
-                    const char* file{nullptr};
-                    if (ocsp.ocsp_path) {
-                        file = ocsp.ocsp_path.value().c_str();
+                if (chain.ocsp) {
+                    for (const auto& ocsp : chain.ocsp.value()) {
+                        const char* file{nullptr};
+                        if (ocsp.ocsp_path) {
+                            file = ocsp.ocsp_path.value().c_str();
+                        }
+                        ref.ocsp_response_files.push_back(file);
                     }
-                    ref.ocsp_response_files.push_back(file);
                 }
             }
 
