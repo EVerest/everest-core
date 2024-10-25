@@ -571,12 +571,20 @@ void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id) {
     if (not ignore_faults) {
         this->evses.at(evse_id)->submit_event(ConnectorEvent::FAULTED);
+        if (evse_id >= 0) {
+            this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(),
+                                                     static_cast<uint32_t>(evse_id));
+        }
     }
 }
 
 void AuthHandler::handle_permanent_fault_cleared(const int evse_id) {
     if (not ignore_faults) {
         this->evses.at(evse_id)->submit_event(ConnectorEvent::ERROR_CLEARED);
+        if (evse_id >= 0) {
+            this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(),
+                                                     static_cast<uint32_t>(evse_id));
+        }
     }
 }
 
@@ -599,7 +607,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted:
-        this->reservation_handler.set_evse_available(false, false, evse_id_u);
+        this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.is_reservable = false;
         {
@@ -624,10 +632,11 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     case SessionEventEnum::TransactionStarted:
         this->evses.at(evse_id)->transaction_active = true;
-        this->reservation_handler.set_evse_available(false, false, evse_id_u);
+        // this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.reserved = false;
         this->evses.at(evse_id)->submit_event(ConnectorEvent::TRANSACTION_STARTED);
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         this->evses.at(evse_id)->timeout_timer.stop();
         break;
     case SessionEventEnum::TransactionFinished:
@@ -635,14 +644,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->identifier.reset();
         break;
     case SessionEventEnum::SessionFinished: {
-        // TODO mz check if it is not faulted???
-        const ConnectorState state = evses.at(evse_id)->get_state();
-        if (state == ConnectorState::FAULTED) {
-            this->reservation_handler.set_evse_available(true, true, evse_id_u);
-        } else {
-            this->reservation_handler.set_evse_available(true, false, evse_id_u);
-        }
-
         // TODO mz
         // this->connectors.at(connector_id)->connector.is_reservable = true;
         this->evses.at(evse_id)->identifier.reset();
@@ -652,15 +653,18 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
             this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         }
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         break;
     }
 
     case SessionEventEnum::Disabled:
         this->evses.at(evse_id)->submit_event(ConnectorEvent::DISABLE);
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         break;
 
     case SessionEventEnum::Enabled:
         this->evses.at(evse_id)->submit_event(ConnectorEvent::ENABLE);
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         break;
 
     case SessionEventEnum::ReservationStart:
@@ -668,10 +672,11 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         // this->reservation_handler.set_evse_available(false, false, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.reserved = true;
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         break;
     case SessionEventEnum::ReservationEnd:
         // TODO mz what if it is faulted?? need to check???
-        this->reservation_handler.set_evse_available(true, false, evse_id_u);
+        this->reservation_handler.set_evse_state(ConnectorState::AVAILABLE, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.is_reservable = true;
         // this->connectors.at(connector_id)->connector.reserved = false;

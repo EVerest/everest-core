@@ -8,6 +8,7 @@
 
 // TODO mz add reservation to persistent storage??? In libocpp if possible?
 // TODO mz state for example authorized but not plugged in etc??
+// TODO mz make sure 'occupied' state is also set
 
 namespace module {
 
@@ -37,6 +38,7 @@ void ReservationHandler::add_connector(const uint32_t evse_id, const uint32_t co
 
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
     if (evses.count(evse_id) > 0) {
+        // If evses already exist, add to existing evse.
         evse = evses[evse_id];
     }
     evse.connectors.push_back(evse_connector_type);
@@ -156,7 +158,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
     // TODO mz add debug logging to know which reservations are currently active.
 }
 
-void ReservationHandler::set_evse_available(const bool available, const bool faulted, const uint32_t evse_id) {
+void ReservationHandler::set_evse_state(ConnectorState state, const uint32_t evse_id) {
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
     if (evses.count(evse_id) == 0) {
         // TODO mz
@@ -165,13 +167,11 @@ void ReservationHandler::set_evse_available(const bool available, const bool fau
 
     ConnectorState old_evse_state = this->evses[evse_id].evse_state;
 
-    if (faulted) {
-        evses[evse_id].evse_state = ConnectorState::FAULTED;
-    } else {
-        evses[evse_id].evse_state = (available ? ConnectorState::AVAILABLE : ConnectorState::UNAVAILABLE);
-    }
+    evses[evse_id].evse_state = state;
 
-    if ((!available || faulted) && old_evse_state == ConnectorState::AVAILABLE) {
+    // TODO mz for occupied: we have to make sure first 'on_reservation_used' is called, otherwise reservations will
+    // be cancelled why they should not.
+    if (state != ConnectorState::AVAILABLE && old_evse_state == ConnectorState::AVAILABLE) {
         if (evse_reservations.count(evse_id)) {
             cancel_reservation(evse_reservations[evse_id].reservation_id, true,
                                types::reservation::ReservationEndReason::Cancelled);
@@ -184,8 +184,8 @@ void ReservationHandler::set_evse_available(const bool available, const bool fau
     }
 }
 
-void ReservationHandler::set_connector_available(const bool available, const bool faulted, const uint32_t evse_id,
-                                                 const uint32_t connector_id) {
+void ReservationHandler::set_connector_state(ConnectorState connector_state, const uint32_t evse_id,
+                                             const uint32_t connector_id) {
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
 
     if (evses.count(evse_id) == 0) {
@@ -205,13 +205,11 @@ void ReservationHandler::set_connector_available(const bool available, const boo
     }
 
     ConnectorState old_connector_state = connector_it->state;
-    if (faulted) {
-        connector_it->state = ConnectorState::FAULTED;
-    } else {
-        connector_it->state = (available ? ConnectorState::AVAILABLE : ConnectorState::UNAVAILABLE);
-    }
+    connector_it->state = connector_state;
 
-    if ((!available || faulted) && old_connector_state == ConnectorState::AVAILABLE) {
+    // TODO mz for occupied: we have to make sure first 'on_reservation_used' is called, otherwise reservations will
+    // be cancelled why they should not.
+    if ((connector_state != ConnectorState::AVAILABLE) && old_connector_state == ConnectorState::AVAILABLE) {
         if (evse_reservations.count(evse_id) != 0 && evse_reservations[evse_id].connector_type.has_value() &&
             (connector_it->connector_type == evse_reservations[evse_id].connector_type.value() ||
              connector_it->connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
@@ -468,6 +466,8 @@ std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> ReservationHand
         return output;
     }
 
+    // For next_permutation, the input must be ordered or it will stop halfway. So if it stops halafway,
+    // prev_permutation will find the others.
     do {
         output.push_back(input_next);
     } while (std::next_permutation(input_next.begin(), input_next.end()));
@@ -499,6 +499,7 @@ bool ReservationHandler::can_virtual_car_arrive(
             is_possible = true;
 
             std::vector<uint32_t> next_used_evse_ids = used_evse_ids;
+            // Add evse id to list when we call the function recursively.
             next_used_evse_ids.push_back(evse_id);
 
             // Check if this is the last.
@@ -510,10 +511,12 @@ bool ReservationHandler::can_virtual_car_arrive(
 
                 std::cout << "\n";
 
+                // If this is the last and a car can arrive, then this combination is possible.
                 return true;
             }
 
             // Call next level recursively.
+            // Remove connector type ('car') from list when we call the function recursively.
             const std::vector<types::evse_manager::ConnectorTypeEnum> next_arrival_order(
                 next_car_arrival_order.begin() + 1, next_car_arrival_order.end());
 
