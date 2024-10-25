@@ -214,7 +214,7 @@ This module makes use of the following commands of this interface:
   they expire soon
 
 *Note: A lot of conversion between the libocpp types and the generated EVerest types are required for the given commands. Since the conversion functionality
-is used by this OCPP201 module and the OCPP1.6 module, it is implemented as a `separate library <../../lib/staging/ocpp/>`_.
+is used by this OCPP201 module and the OCPP1.6 module, it is implemented as a `separate library <../../lib/staging/ocpp/>`_.*
 
 Requires: data_transfer
 ^^^^^^^^^^^^^^^^^^^^^^^
