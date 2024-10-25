@@ -3146,7 +3146,7 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
 
                 if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
 
-                    const auto add_profile_response = this->smart_charging_handler->validate_and_add_profile(
+                    const auto add_profile_response = this->smart_charging_handler->conform_validate_and_add_profile(
                         msg.chargingProfile.value(), evse_id, ChargingLimitSourceEnum::CSO,
                         AddChargingProfileSource::RequestStartTransactionRequest);
                     if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
@@ -3392,7 +3392,7 @@ void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest
         return;
     }
 
-    response = this->smart_charging_handler->validate_and_add_profile(msg.chargingProfile, msg.evseId);
+    response = this->smart_charging_handler->conform_validate_and_add_profile(msg.chargingProfile, msg.evseId);
     if (response.status == ChargingProfileStatusEnum::Accepted) {
         EVLOG_debug << "Accepting SetChargingProfileRequest";
         this->callbacks.set_charging_profiles_callback();
@@ -4461,7 +4461,7 @@ void ChargePoint::clear_invalid_charging_profiles() {
         for (const auto& [evse_id, profiles] : evses) {
             for (auto profile : profiles) {
                 try {
-                    if (this->smart_charging_handler->validate_profile(profile, evse_id) !=
+                    if (this->smart_charging_handler->conform_and_validate_profile(profile, evse_id) !=
                         ProfileValidationResultEnum::Valid) {
                         this->database_handler->delete_charging_profile(profile.id);
                     }

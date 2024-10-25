@@ -12,10 +12,10 @@
 namespace ocpp::v201 {
 class SmartChargingHandlerMock : public SmartChargingHandlerInterface {
 public:
-    MOCK_METHOD(SetChargingProfileResponse, validate_and_add_profile,
+    MOCK_METHOD(SetChargingProfileResponse, conform_validate_and_add_profile,
                 (ChargingProfile & profile, int32_t evse_id, ChargingLimitSourceEnum charging_limit_source,
                  AddChargingProfileSource source_of_request));
-    MOCK_METHOD(ProfileValidationResultEnum, validate_profile,
+    MOCK_METHOD(ProfileValidationResultEnum, conform_and_validate_profile,
                 (ChargingProfile & profile, int32_t evse_id, AddChargingProfileSource source_of_request));
     MOCK_METHOD(void, delete_transaction_tx_profiles, (const std::string& transaction_id));
     MOCK_METHOD(SetChargingProfileResponse, add_profile,

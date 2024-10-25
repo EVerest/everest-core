@@ -72,16 +72,16 @@ class SmartChargingHandlerInterface {
 public:
     virtual ~SmartChargingHandlerInterface() = default;
 
-    virtual SetChargingProfileResponse validate_and_add_profile(
+    virtual SetChargingProfileResponse conform_validate_and_add_profile(
         ChargingProfile& profile, int32_t evse_id,
         ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) = 0;
 
     virtual void delete_transaction_tx_profiles(const std::string& transaction_id) = 0;
 
-    virtual ProfileValidationResultEnum
-    validate_profile(ChargingProfile& profile, int32_t evse_id,
-                     AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) = 0;
+    virtual ProfileValidationResultEnum conform_and_validate_profile(
+        ChargingProfile& profile, int32_t evse_id,
+        AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) = 0;
 
     virtual SetChargingProfileResponse
     add_profile(ChargingProfile& profile, int32_t evse_id,
@@ -121,7 +121,7 @@ public:
     /// \brief validates the given \p profile according to the specification,
     /// adding it to our stored list of profiles if valid.
     ///
-    SetChargingProfileResponse validate_and_add_profile(
+    SetChargingProfileResponse conform_validate_and_add_profile(
         ChargingProfile& profile, int32_t evse_id,
         ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) override;
@@ -131,7 +131,7 @@ public:
     /// If a profile does not have validFrom or validTo set, we conform the values
     /// to a representation that fits the spec.
     ///
-    ProfileValidationResultEnum validate_profile(
+    ProfileValidationResultEnum conform_and_validate_profile(
         ChargingProfile& profile, int32_t evse_id,
         AddChargingProfileSource source_of_request = AddChargingProfileSource::SetChargingProfile) override;
 
@@ -181,7 +181,7 @@ protected:
     ///
     /// \brief validates the given \p profile and associated \p evse_id according to the specification
     ///
-    ProfileValidationResultEnum validate_tx_default_profile(ChargingProfile& profile, int32_t evse_id) const;
+    ProfileValidationResultEnum validate_tx_default_profile(const ChargingProfile& profile, int32_t evse_id) const;
 
     ///
     /// \brief validates the given \p profile according to the specification
@@ -216,6 +216,7 @@ private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
     std::vector<ChargingProfile> get_valid_profiles_for_evse(int32_t evse_id);
+    void conform_schedule_number_phases(int32_t profile_id, ChargingSchedulePeriod& charging_schedule_period) const;
     void conform_validity_periods(ChargingProfile& profile) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
 };

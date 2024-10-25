@@ -690,8 +690,10 @@ TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_DemoCase
     CompositeSchedule actual =
         handler.calculate_composite_schedule(profiles, start_time, end_time, DEFAULT_EVSE_ID, ChargingRateUnitEnum::W);
 
-    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(0), DEFAULT_EVSE_ID));
-    ASSERT_EQ(ProfileValidationResultEnum::Valid, handler.validate_profile(profiles.at(1), DEFAULT_EVSE_ID));
+    ASSERT_EQ(ProfileValidationResultEnum::Valid,
+              handler.conform_and_validate_profile(profiles.at(0), DEFAULT_EVSE_ID));
+    ASSERT_EQ(ProfileValidationResultEnum::Valid,
+              handler.conform_and_validate_profile(profiles.at(1), DEFAULT_EVSE_ID));
     ASSERT_EQ(actual, expected);
 }
 
