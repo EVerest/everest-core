@@ -204,7 +204,7 @@ ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReas
 
 ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter) {
     ocpp::Powermeter ocpp_powermeter;
-    ocpp_powermeter.timestamp = powermeter.timestamp;
+    ocpp_powermeter.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(powermeter.timestamp);
     ocpp_powermeter.energy_Wh_import = {powermeter.energy_Wh_import.total, powermeter.energy_Wh_import.L1,
                                         powermeter.energy_Wh_import.L2, powermeter.energy_Wh_import.L3};
 
@@ -389,12 +389,11 @@ to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status
 
 types::ocpp::ChargingSchedulePeriod
 to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& period) {
-    types::ocpp::ChargingSchedulePeriod csp = {
-        period.startPeriod,
-        period.limit,
-        period.stackLevel,
-        period.numberPhases,
-    };
+    types::ocpp::ChargingSchedulePeriod csp;
+    csp.start_period = period.startPeriod;
+    csp.limit = period.limit;
+    csp.number_phases = period.numberPhases;
+    csp.stack_level = period.stackLevel;
     return csp;
 }
 

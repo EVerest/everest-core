@@ -8,6 +8,7 @@
 #include <websocketpp_utils/uri.hpp>
 
 #include <conversions.hpp>
+#include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
 #include <ocpp_conversions.hpp>
 
@@ -287,6 +288,26 @@ void OCPP201::init() {
             }
         });
     }
+
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
 
 void OCPP201::ready() {
@@ -770,7 +791,7 @@ void OCPP201::ready() {
         };
 
         // A permanent fault from the evse requirement indicates that the evse should move to faulted state
-        evse->subscribe_error("evse_manager/Inoperative", fault_handler, fault_cleared_handler);
+        evse->subscribe_error(EVSE_MANAGER_INOPERATIVE_ERROR, fault_handler, fault_cleared_handler);
 
         evse_id++;
     }
@@ -883,7 +904,7 @@ void OCPP201::process_tx_event_effect(const int32_t evse_id, const TxEventEffect
     if (transaction_data == nullptr) {
         throw std::runtime_error("Could not start transaction because no tranasaction data is present");
     }
-    transaction_data->timestamp = ocpp::DateTime(session_event.timestamp);
+    transaction_data->timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
 
     if (tx_event_effect == TxEventEffect::START_TRANSACTION) {
         transaction_data->started = true;
@@ -938,7 +959,7 @@ void OCPP201::process_session_started(const int32_t evse_id, const int32_t conne
             trigger_reason = ocpp::v201::TriggerReasonEnum::RemoteStart;
         }
     }
-    const auto timestamp = ocpp::DateTime(session_event.timestamp);
+    const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
     const auto reservation_id = session_started.reservation_id;
 
     // this is always the first transaction related interaction, so we create TransactionData here

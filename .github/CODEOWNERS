@@ -29,7 +29,7 @@
 /modules/OCPP/ @hikinggrass @pietfried @maaikez
 /modules/OCPP201/ @hikinggrass @pietfried @maaikez
 /modules/PacketSniffer @corneliusclaussen @SebaLukas @hikinggrass
-/modules/PhyVersoBSP @pietfried @hikinggrass @corneliusclaussen @dorezyuk
+/modules/PhyVersoBSP @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
 /modules/PyEvJosev @SebaLukas @corneliusclaussen @pietfried
 /modules/Setup @hikinggrass @corneliusclaussen @pietfried
 /modules/YetiDriver @corneliusclaussen @hikinggrass
