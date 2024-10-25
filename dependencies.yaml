@@ -70,7 +70,7 @@ Josev:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.0
+  git_tag: v0.2.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
