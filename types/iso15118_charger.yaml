@@ -100,6 +100,26 @@ types:
       - CertificateInstallationRes
       - CertificateUpdateReq
       - CertificateUpdateRes
+      - AuthorizationSetupReq
+      - AuthorizationSetupRes
+      - ScheduleExchangeReq
+      - ScheduleExchangeRes
+      - ServiceSelectionReq
+      - ServiceSelectionRes
+      - AcChargeLoopReq
+      - AcChargeLoopRes
+      - AcChargeParameterDiscoveryReq
+      - AcChargeParameterDiscoveryRes
+      - DcCableCheckReq
+      - DcCableCheckRes
+      - DcChargeLoopReq
+      - DcChargeLoopRes
+      - DcChargeParameterDiscoveryReq
+      - DcChargeParameterDiscoveryRes
+      - DcPreChargeReq
+      - DcPreChargeRes
+      - DcWeldingDetectionReq
+      - DcWeldingDetectionRes
       - UnknownMessage
   SaeJ2847BidiMode:
     description: Bidi mode for sae j2847_2 
@@ -170,13 +190,24 @@ types:
         type: number
         minimum: 0
         maximum: 1500
+      evse_maximum_discharge_current_limit:
+        description: Maximum discharge current the EVSE can deliver in A
+        type: number
+        minimum: 0
+        maximum: 10000
+      evse_maximum_discharge_power_limit:
+        description: Maximum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
   DcEvseMinimumLimits:
-    description: Minimum Values (current and voltage) the EVSE can deliver
+    description: Minimum Values the EVSE can deliver
     type: object
     additionalProperties: false
     required:
       - evse_minimum_current_limit
       - evse_minimum_voltage_limit
+      - evse_minimum_power_limit
     properties:
       evse_minimum_current_limit:
         description: Minimum current the EVSE can deliver with the expected accuracy in A
@@ -188,6 +219,21 @@ types:
         type: number
         minimum: 0
         maximum: 1500
+      evse_minimum_power_limit:
+        description: Minimum power the EVSE can deliver with the expected accuracy in W
+        type: number
+        minimum: 0
+        maximum: 1000000
+      evse_minimum_discharge_current_limit:
+        description: Minimum discharge current the EVSE can deliver in A
+        type: number
+        minimum: 0
+        maximum: 10000
+      evse_minimum_discharge_power_limit:
+        description: Minimum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
   SetupPhysicalValues:
     description: >-
       Initial physical values for setup a AC or DC charging session
@@ -375,25 +421,25 @@ types:
     type: object
     additionalProperties: false
     required:
-      - v2g_message_id
+      - id
     properties:
-      v2g_message_id:
+      id:
         description: This element contains the id of the v2g message body
         type: string
         $ref: /iso15118_charger#/V2gMessageId
-      v2g_message_xml:
+      xml:
         description: Contains the decoded EXI stream as V2G message XML file
         type: string
         minLength: 0
-      v2g_message_json:
+      v2g_json:
         description: Contains the decoded EXI stream as V2G message JSON file
         type: string
         minLength: 0
-      v2g_message_exi_hex:
+      exi:
         description: Contains the EXI stream as hex string
         type: string
         minLength: 0
-      v2g_message_exi_base64:
+      exi_base64:
         description: Contains the EXI stream as base64 string
         type: string
         minLength: 0
@@ -481,3 +527,62 @@ types:
         description: This contains the responder URL
         type: string
         maxLength: 512
+  SupportedEnergyMode:
+    description: Supported energy mode and if the mode supports bidirectional
+    type: object
+    additionalProperties: false
+    required:
+      - energy_transfer_mode
+      - bidirectional
+    properties:
+      energy_transfer_mode:
+        description: The energy mode supported by the SECC 
+        type: string
+        $ref: /iso15118_charger#/EnergyTransferMode
+      bidirectional:
+        description: Set true if the powersupply (AC or DC) supports bidi mode
+        type: boolean
+  DisplayParameters:
+    description: Parameters that may be displayed on the EVSE
+    type: object
+    additionalProperties: false
+    properties:
+      present_soc:
+        description: Current SoC of the EV battery
+        type: number
+        minimum: 0
+        maximum: 100
+      minimum_soc:
+        description: Minimum SoC EV needs after charging
+        type: number
+        minimum: 0
+        maximum: 100
+      target_soc:
+        description: Target SoC EV needs after charging
+        type: number
+        minimum: 0
+        maximum: 100
+      maximum_soc:
+        description: The SoC at which the EV will prohibit
+        type: number
+        minimum: 0
+        maximum: 100
+      remaining_time_to_minimum_soc:
+        description: Remaining time it takes to reach minimum SoC
+        type: number
+        minimum: 0
+      remaining_time_to_target_soc:
+        description: Remaining time it takes to reach target SoC
+        type: number
+        minimum: 0
+      remaining_time_to_maximum_soc:
+        description: Remaining time it takes to reach maximum SoC
+        type: number
+        minimum: 0
+      battery_energy_capacity:
+        description: Energy capacity in Wh of the EV battery
+        type: number
+        minimum: 0
+      inlet_hot:
+        description: Inlet temperature is too high
+        type: boolean

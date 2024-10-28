@@ -27,6 +27,7 @@ class EverestPyLoggingHandler(logging.Handler):
         else:
             log.debug(msg)
 
+
 def setup_everest_logging():
     # remove all logging handler so that we'll have only our custom one
     # FIXME (aw): this is probably bad practice because if everyone does that, only the last one might survive
@@ -40,6 +41,7 @@ def setup_everest_logging():
 
     logging.getLogger().addHandler(handler)
 
+
 def choose_first_ipv6_local() -> str:
     for iface in netifaces.interfaces():
         if netifaces.AF_INET6 in netifaces.ifaddresses(iface):
@@ -50,13 +52,16 @@ def choose_first_ipv6_local() -> str:
     log.warning('No necessary IPv6 link-local address was found!')
     return 'eth0'
 
+
 def determine_network_interface(preferred_interface: str) -> str:
     if preferred_interface == "auto":
         return choose_first_ipv6_local()
     elif preferred_interface not in netifaces.interfaces():
-        log.warning(f"The network interface {preferred_interface} was not found!")
+        log.warning(
+            f"The network interface {preferred_interface} was not found!")
 
     return preferred_interface
+
 
 def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
 
@@ -93,5 +98,5 @@ def patch_josev_config(josev_config: EVCCConfig, everest_config: dict) -> None:
     josev_config.supported_protocols = load_requested_protocols(protocols)
 
     josev_config.supported_energy_services = load_requested_energy_services(
-        ['DC']
+        ['DC','DC_BPT']
     )

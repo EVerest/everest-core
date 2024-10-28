@@ -13,7 +13,6 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
-#include <generated/interfaces/empty/Implementation.hpp>
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 #include <generated/interfaces/session_cost/Implementation.hpp>
@@ -53,7 +52,7 @@ struct Conf {
 class OCPP201 : public Everest::ModuleBase {
 public:
     OCPP201() = delete;
-    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
+    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
@@ -65,7 +64,6 @@ public:
             std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
@@ -82,7 +80,6 @@ public:
     }
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
@@ -122,6 +119,7 @@ private:
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
+    int32_t event_id_counter{0};
     std::mutex evse_ready_mutex;
     std::mutex session_event_mutex;
     std::condition_variable evse_ready_cv;

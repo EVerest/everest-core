@@ -975,6 +975,9 @@ TEST_F(AuthTest, test_authorization_without_transaction) {
     ASSERT_TRUE(result == TokenHandlingResult::ALREADY_IN_PROCESS);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
 
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut));
+
     // wait for timeout
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
 

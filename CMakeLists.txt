@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2024.8.0
+    VERSION 2024.9.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -102,6 +102,7 @@ else()
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
+    find_package(iso15118 REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 

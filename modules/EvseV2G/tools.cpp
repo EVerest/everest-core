@@ -90,6 +90,12 @@ int get_interface_ipv6_address(const char* if_name, enum Addr6Type type, struct 
     struct ifaddrs *ifaddr, *ifa;
     int rv = -1;
 
+    // If using loopback device, accept any address
+    // (lo usually does not have a link local address)
+    if (strcmp(if_name, "lo") == 0) {
+        type = ADDR6_TYPE_UNPSEC;
+    }
+
     if (getifaddrs(&ifaddr) == -1)
         return -1;
 

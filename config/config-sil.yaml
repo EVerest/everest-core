@@ -154,14 +154,6 @@ active_modules:
           module_id: persistent_store
     module: Setup
   slac:
-    config_implementation:
-      ev:
-        ev_id: PIONIX_SAYS_HELLO
-      evse:
-        evse_id: PIONIX_SAYS_HELLO
-        nid: pionix!
-        number_of_sounds: 10
-    connections: {}
     module: SlacSimulator
   token_provider:
     config_implementation:

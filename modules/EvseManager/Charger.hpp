@@ -105,7 +105,8 @@ public:
     void setup(bool has_ventilation, const ChargeMode charge_mode, bool ac_hlc_enabled, bool ac_hlc_use_5percent,
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
-               const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms);
+               const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
+               const int _state_F_after_fault_ms);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -192,6 +193,8 @@ public:
     void set_hlc_allow_close_contactor(bool on);
 
     bool stop_charging_on_fatal_error();
+    bool entered_fatal_error_state();
+    int time_in_fatal_error_state_ms();
 
     /// @brief Returns the OCMF start data.
     ///
@@ -322,6 +325,8 @@ private:
         bool switch_3ph1ph_cp_state_F{false};
         // Tolerate soft over current for given time
         int soft_over_current_timeout_ms{7000};
+        // Switch to F for configured ms after a fatal error
+        int state_F_after_fault_ms{300};
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking
@@ -362,6 +367,10 @@ private:
         bool no_energy_warning_printed{false};
         float pwm_set_last_ampere{0};
         bool t_step_ef_x1_pause{false};
+        bool pwm_F_active{false};
+
+        std::chrono::time_point<std::chrono::steady_clock> fatal_error_became_active;
+        bool fatal_error_timer_running{false};
     } internal_context;
 
     // main Charger thread

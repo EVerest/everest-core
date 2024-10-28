@@ -14,9 +14,9 @@ cmds:
         description: Available energy transfer modes supported by the EVSE
         type: array
         items:
-          description: The different energy modes supported by the SECC
-          type: string
-          $ref: /iso15118_charger#/EnergyTransferMode
+          description: The different energy modes supported by the SECC 
+          type: object
+          $ref: /iso15118_charger#/SupportedEnergyMode
         minItems: 1
         maxItems: 6
       sae_j2847_mode:
@@ -346,3 +346,8 @@ vars:
     description: >-
       Debug - Contains the selected protocol
     type: string
+  display_parameters:
+    description: >-
+      Parameters that may be displayed on the EVSE (Soc, battery capacity)
+    type: object
+    $ref: /iso15118_charger#/DisplayParameters
