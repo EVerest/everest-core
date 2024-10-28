@@ -484,13 +484,18 @@ bool MQTTAbstractionImpl::connectBroker(std::string& socket_path) {
     uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
     /* Send connection request to the broker. */
     if (mqtt_connect(&this->mqtt_client, nullptr, nullptr, nullptr, 0, nullptr, nullptr, connect_flags,
-                     mqtt_keep_alive) == MQTT_OK) {
-        // TODO(kai): async?
-        on_mqtt_connect();
-        return true;
+                     mqtt_keep_alive) != MQTT_OK) {
+        return false;
+    }
+    // TODO(kai): async?
+    const auto error = mqtt_sync(&this->mqtt_client);
+    if (error != MQTT_OK) {
+        EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
+        return false;
     }
 
-    return false;
+    on_mqtt_connect();
+    return true;
 }
 
 bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
@@ -521,13 +526,18 @@ bool MQTTAbstractionImpl::connectBroker(const char* host, const char* port) {
     uint8_t connect_flags = MQTT_CONNECT_CLEAN_SESSION;
     /* Send connection request to the broker. */
     if (mqtt_connect(&this->mqtt_client, nullptr, nullptr, nullptr, 0, nullptr, nullptr, connect_flags,
-                     mqtt_keep_alive) == MQTT_OK) {
-        // TODO(kai): async?
-        on_mqtt_connect();
-        return true;
+                     mqtt_keep_alive) != MQTT_OK) {
+        return false;
+    }
+    // TODO(kai): async?
+    const auto error = mqtt_sync(&this->mqtt_client);
+    if (error != MQTT_OK) {
+        EVLOG_error << fmt::format("Error during MQTT sync: {}", mqtt_error_str(error));
+        return false;
     }
 
-    return false;
+    on_mqtt_connect();
+    return true;
 }
 
 int MQTTAbstractionImpl::open_nb_socket(const char* addr, const char* port) {
