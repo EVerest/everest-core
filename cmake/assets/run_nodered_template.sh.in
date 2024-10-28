@@ -5,7 +5,7 @@
 docker volume create everest-nodered-config-volume
 
 # Create temporarily container to copy nodered config into the created volume
-docker create -v everest-nodered-config-volume:/data --name everest-nodered-config-container debian:12-slim true
+docker run --name everest-nodered-config-container -v everest-nodered-config-volume:/data debian:12-slim chown -R 1000:1000 /data
 
 # Copy nodered config to the created volume with the temporarily created container
 docker cp @FLOW_FILE@ everest-nodered-config-container:/data/flows.json
