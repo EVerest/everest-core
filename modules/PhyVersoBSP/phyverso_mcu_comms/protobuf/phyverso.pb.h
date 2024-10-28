@@ -33,12 +33,6 @@ typedef enum _PpState {
     PpState_STATE_FAULT = 5
 } PpState;
 
-typedef enum _LedState {
-    LedState_GREEN = 0,
-    LedState_BLUE = 1,
-    LedState_RED = 2
-} LedState;
-
 typedef enum _LockState {
     LockState_UNDEFINED = 0,
     LockState_UNLOCKED = 1,
@@ -96,8 +90,10 @@ typedef struct _FanState {
 } FanState;
 
 typedef struct _LedStateMessage {
-    LedState led_state;
-    uint32_t brightness;
+    int32_t red;
+    int32_t green;
+    int32_t blue;
+    int32_t brightness;
 } LedStateMessage;
 
 typedef struct _CoilState {
@@ -203,10 +199,6 @@ extern "C" {
 #define _PpState_MAX PpState_STATE_FAULT
 #define _PpState_ARRAYSIZE ((PpState)(PpState_STATE_FAULT+1))
 
-#define _LedState_MIN LedState_GREEN
-#define _LedState_MAX LedState_RED
-#define _LedState_ARRAYSIZE ((LedState)(LedState_RED+1))
-
 #define _LockState_MIN LockState_UNDEFINED
 #define _LockState_MAX LockState_LOCKED
 #define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
@@ -233,7 +225,6 @@ extern "C" {
 
 
 
-#define LedStateMessage_led_state_ENUMTYPE LedState
 
 #define CoilState_coil_type_ENUMTYPE CoilType
 
@@ -253,7 +244,7 @@ extern "C" {
 #define KeepAlive_init_default                   {0, 0, 0, ""}
 #define Telemetry_init_default                   {0, 0}
 #define FanState_init_default                    {0, 0, 0, 0}
-#define LedStateMessage_init_default             {_LedState_MIN, 0}
+#define LedStateMessage_init_default             {0, 0, 0, 0}
 #define CoilState_init_default                   {_CoilType_MIN, 0}
 #define BootConfigRequest_init_default           {0}
 #define BootConfigResponse_init_default          {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_default, false, ConfigMotorLockType_init_default}
@@ -267,7 +258,7 @@ extern "C" {
 #define KeepAlive_init_zero                      {0, 0, 0, ""}
 #define Telemetry_init_zero                      {0, 0}
 #define FanState_init_zero                       {0, 0, 0, 0}
-#define LedStateMessage_init_zero                {_LedState_MIN, 0}
+#define LedStateMessage_init_zero                {0, 0, 0, 0}
 #define CoilState_init_zero                      {_CoilType_MIN, 0}
 #define BootConfigRequest_init_zero              {0}
 #define BootConfigResponse_init_zero             {_ConfigHardwareRevision_MIN, false, ConfigMotorLockType_init_zero, false, ConfigMotorLockType_init_zero}
@@ -293,8 +284,10 @@ extern "C" {
 #define FanState_enabled_tag                     2
 #define FanState_duty_tag                        3
 #define FanState_rpm_tag                         4
-#define LedStateMessage_led_state_tag            1
-#define LedStateMessage_brightness_tag           2
+#define LedStateMessage_red_tag                  1
+#define LedStateMessage_green_tag                2
+#define LedStateMessage_blue_tag                 3
+#define LedStateMessage_brightness_tag           4
 #define CoilState_coil_type_tag                  1
 #define CoilState_coil_state_tag                 2
 #define ConfigMotorLockType_type_tag             1
@@ -411,8 +404,10 @@ X(a, STATIC,   SINGULAR, UINT32,   rpm,               4)
 #define FanState_DEFAULT NULL
 
 #define LedStateMessage_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    led_state,         1) \
-X(a, STATIC,   SINGULAR, UINT32,   brightness,        2)
+X(a, STATIC,   SINGULAR, INT32,    red,               1) \
+X(a, STATIC,   SINGULAR, INT32,    green,             2) \
+X(a, STATIC,   SINGULAR, INT32,    blue,              3) \
+X(a, STATIC,   SINGULAR, INT32,    brightness,        4)
 #define LedStateMessage_CALLBACK NULL
 #define LedStateMessage_DEFAULT NULL
 
@@ -501,7 +496,7 @@ extern const pb_msgdesc_t RcdCommand_msg;
 #define EverestToMcu_size                        83
 #define FanState_size                            15
 #define KeepAlive_size                           70
-#define LedStateMessage_size                     8
+#define LedStateMessage_size                     44
 #define McuToEverest_size                        83
 #define OpaqueData_size                          285
 #define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
