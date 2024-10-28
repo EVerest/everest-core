@@ -24,7 +24,6 @@
 
 #include "bsl_gpio.h"
 
-
 evSerial::evSerial(evConfig& _verso_config) :
     fd(0), baud(0), reset_done_flag(false), forced_reset(false), verso_config(_verso_config) {
     cobs_decode_reset();
@@ -408,7 +407,6 @@ void evSerial::set_led_state(int target_connector, const LedState& led_state, ui
     msg_out.connector = target_connector;
     link_write(&msg_out);
 }
-
 
 void evSerial::lock(int target_connector, bool _lock) {
     EverestToMcu msg_out = EverestToMcu_init_default;
