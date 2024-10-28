@@ -4,16 +4,16 @@
 #include "led_driverImpl.hpp"
 
 namespace {
-    LedState led_state_to_proto(const types::led_state::LedState& led_state) {
-        if (led_state == types::led_state::LedState::Red)
-            return LedState_RED;
-        if (led_state == types::led_state::LedState::Blue)
-            return LedState_BLUE;
-        if (led_state == types::led_state::LedState::Green)
-            return LedState_GREEN;
+LedState led_state_to_proto(const types::led_state::LedState& led_state) {
+    if (led_state == types::led_state::LedState::Red)
         return LedState_RED;
-    }
+    if (led_state == types::led_state::LedState::Blue)
+        return LedState_BLUE;
+    if (led_state == types::led_state::LedState::Green)
+        return LedState_GREEN;
+    return LedState_RED;
 }
+} // namespace
 
 namespace module {
 namespace led_driver_2 {
@@ -30,5 +30,5 @@ void led_driverImpl::handle_set_led_state(types::led_state::LedState& led_state,
     mod->serial.set_led_state(2, led_state_to_proto(led_state), brightness);
 }
 
-} // namespace led_driver
-}
+} // namespace led_driver_2
+} // namespace module
