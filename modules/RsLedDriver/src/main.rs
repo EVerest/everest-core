@@ -85,7 +85,9 @@ impl EvseManagerClientSubscriber for LedDriver {
         let led_driver = self.led_drivers.lock().unwrap()[index].clone();
 
         let _ = match get_led_state(value.event) {
-            Some(led_state) => led_driver.set_led_state(self.brightness, led_state).unwrap(),
+            Some(led_state) => led_driver
+                .set_led_state(self.brightness, led_state)
+                .unwrap(),
             None => log::error!("Unknown event - not changing LEDs"),
         };
     }
@@ -93,6 +95,8 @@ impl EvseManagerClientSubscriber for LedDriver {
     fn on_telemetry(&self, _context: &Context, _value: Telemetry) {}
 
     fn on_waiting_for_external_ready(&self, _context: &Context, _value: bool) {}
+
+    fn on_powermeter_public_key_ocmf(&self, _context: &Context, _value: String) {}
 }
 
 impl OnReadySubscriber for LedDriver {
