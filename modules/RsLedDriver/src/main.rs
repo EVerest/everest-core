@@ -96,7 +96,7 @@ impl EvseManagerClientSubscriber for LedDriver {
 
     fn on_waiting_for_external_ready(&self, _context: &Context, _value: bool) {}
 
-    // fn on_powermeter_public_key_ocmf(&self, _context: &Context, _value: String) {}
+    fn on_powermeter_public_key_ocmf(&self, _context: &Context, _value: String) {}
 }
 
 impl OnReadySubscriber for LedDriver {
