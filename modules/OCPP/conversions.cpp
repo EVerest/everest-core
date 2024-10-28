@@ -389,12 +389,11 @@ to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status
 
 types::ocpp::ChargingSchedulePeriod
 to_charging_schedule_period(const ocpp::v16::EnhancedChargingSchedulePeriod& period) {
-    types::ocpp::ChargingSchedulePeriod csp = {
-        period.startPeriod,
-        period.limit,
-        period.stackLevel,
-        period.numberPhases,
-    };
+    types::ocpp::ChargingSchedulePeriod csp;
+    csp.start_period = period.startPeriod;
+    csp.limit = period.limit;
+    csp.number_phases = period.numberPhases;
+    csp.stack_level = period.stackLevel;
     return csp;
 }
 
