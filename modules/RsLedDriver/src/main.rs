@@ -21,7 +21,7 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
     match trigger {
         SessionEventEnum::Disabled
         | SessionEventEnum::AuthRequired
-        | SessionEventEnum::PluginTimeout => Some(LedState::Red),
+        | SessionEventEnum::PluginTimeout => Some(LedState{red: 255, green: 0, blue: 0}),
 
         // Blue triggers
         SessionEventEnum::TransactionStarted
@@ -34,7 +34,7 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
         | SessionEventEnum::StoppingCharging
         | SessionEventEnum::ChargingFinished
         | SessionEventEnum::TransactionFinished
-        | SessionEventEnum::SessionResumed => Some(LedState::Blue),
+        | SessionEventEnum::SessionResumed => Some(LedState{red: 0, green: 0, blue: 255}),
 
         // Green triggers
         SessionEventEnum::Authorized
@@ -42,7 +42,7 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
         | SessionEventEnum::Enabled
         | SessionEventEnum::SessionFinished
         | SessionEventEnum::ReservationStart
-        | SessionEventEnum::ReservationEnd => Some(LedState::Green),
+        | SessionEventEnum::ReservationEnd => Some(LedState{red: 0, green: 255, blue: 0}),
         _ => None,
     }
 }

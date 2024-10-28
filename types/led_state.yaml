@@ -2,8 +2,21 @@ description: Possible LED states
 types:
   LedState:
     description: Current LED state
-    type: string
-    enum:
-      - Red
-      - Green
-      - Blue
+    type: object
+    required:
+      - red
+      - green
+      - blue
+    properties:
+      red:
+        type: integer
+        minimum: 0
+        maximum: 255
+      green:
+        type: integer
+        minimum: 0
+        maximum: 255
+      blue:
+        type: integer
+        minimum: 0
+        maximum: 255

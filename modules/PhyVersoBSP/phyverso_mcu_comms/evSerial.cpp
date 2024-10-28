@@ -399,11 +399,10 @@ void evSerial::set_coil_state_request(int target_connector, CoilType type, bool 
     link_write(&msg_out);
 }
 
-void evSerial::set_led_state(int target_connector, const LedState& led_state, uint8_t brightness) {
+void evSerial::set_led_state(int target_connector, const LedStateMessage& message) {
     EverestToMcu msg_out = EverestToMcu_init_default;
     msg_out.which_payload = EverestToMcu_set_led_state_tag;
-    msg_out.payload.set_led_state.brightness = brightness;
-    msg_out.payload.set_led_state.led_state = led_state;
+    msg_out.payload.set_led_state = message;
     msg_out.connector = target_connector;
     link_write(&msg_out);
 }

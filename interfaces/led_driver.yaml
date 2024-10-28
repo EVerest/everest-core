@@ -6,7 +6,7 @@ cmds:
     arguments:
       led_state:
         description: Sets the color of the LEDs
-        type: string
+        type: object
         $ref: /led_state#/LedState
       brightness:
         description: Brightness in %

@@ -90,15 +90,11 @@ message FanState {
   uint32 rpm = 4;
 }
 
-enum LedState {
-  GREEN = 0;
-  BLUE = 1;
-  RED = 2;
-}
-
 message LedStateMessage {
-  LedState led_state = 1;
-  uint32 brightness = 2;
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
+  int32 brightness = 4;
 }
 
 enum LockState {
