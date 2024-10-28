@@ -55,6 +55,7 @@ void Auth::ready() {
         [this](const ProvidedIdToken& token, TokenValidationStatus status) {
             this->p_main->publish_token_validation_status({token, status});
         });
+
     this->auth_handler->register_notify_evse_callback(
         [this](const int evse_index, const ProvidedIdToken& provided_token, const ValidationResult& validation_result) {
             this->r_evse_manager.at(evse_index)->call_authorize_response(provided_token, validation_result);
@@ -78,13 +79,24 @@ void Auth::ready() {
             this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
         }
     });
-    this->auth_handler->register_reservation_cancelled_callback(
-        [this](const std::optional<int32_t> evse_index, const int32_t reservation_id) {
-            // Only call the evse manager to cancel the reservation if it was for a specific evse
-            if (evse_index.has_value() && evse_index.value() > 0) {
-                this->r_evse_manager.at(evse_index.value())->call_cancel_reservation();
-            }
-        });
+    this->auth_handler->register_reservation_cancelled_callback([this](const std::optional<int32_t> evse_index,
+                                                                       const int32_t reservation_id,
+                                                                       const ReservationEndReason reason) {
+        // Only call the evse manager to cancel the reservation if it was for a specific evse
+        if (evse_index.has_value() && evse_index.value() > 0) {
+            this->r_evse_manager.at(evse_index.value())->call_cancel_reservation();
+        }
+
+        // TODO mz this should not be here, we create a loop here.
+        ReservationUpdateStatus status;
+        status.reservation_id = reservation_id;
+        if (reason == ReservationEndReason::Expired) {
+            status.reservation_status = Reservation_status::Expired;
+        } else {
+            status.reservation_status = Reservation_status::Removed;
+        }
+        this->p_reservation->publish_reservation_update(status);
+    });
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {

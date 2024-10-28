@@ -842,6 +842,18 @@ ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reserva
     throw std::out_of_range("Could not convert ReservationResult");
 }
 
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status) {
+    switch (status) {
+    case types::reservation::Reservation_status::Expired:
+        return ocpp::v201::ReservationUpdateStatusEnum::Expired;
+    case types::reservation::Reservation_status::Removed:
+        return ocpp::v201::ReservationUpdateStatusEnum::Removed;
+    }
+
+    throw std::out_of_range("Could not convert ReservationUpdateStatus");
+}
+
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();

@@ -96,7 +96,7 @@ public:
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
         r_display_message(std::move(r_display_message)),
-        config(config){};
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
@@ -162,6 +162,7 @@ private:
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+// insert other definitions here
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

@@ -25,8 +25,8 @@
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
+#include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
-#include "generated/interfaces/reservation/Interface.hpp"
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -63,7 +63,7 @@ public:
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
             std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
-            std::vector<std::unique_ptr<display_messageIntf>> r_display_message, 
+            std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
             std::vector<std::unique_ptr<reservationIntf>> r_reservation, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
@@ -81,8 +81,7 @@ public:
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_display_message(std::move(r_display_message)),
         r_reservation(std::move(r_reservation)),
-        config(config) {
-    }
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<emptyImplBase> p_main;

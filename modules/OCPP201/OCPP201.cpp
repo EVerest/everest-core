@@ -666,6 +666,7 @@ void OCPP201::ready() {
     };
 
     callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
+        EVLOG_debug << "Received cancel reservation request for reservation id " << reservation_id;
         ocpp::v201::CancelReservationResponse response;
         if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return false;
@@ -810,6 +811,19 @@ void OCPP201::ready() {
         this->charge_point->on_log_status_notification(conversions::to_ocpp_upload_logs_status_enum(status.log_status),
                                                        status.request_id);
     });
+
+    if (!r_reservation.empty()) {
+        r_reservation.at(0)->subscribe_reservation_update(
+            [this](const types::reservation::ReservationUpdateStatus status) {
+                EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
+                            << (status.reservation_status == types::reservation::Reservation_status::Expired
+                                    ? "Expired"
+                                    : "Removed");
+                this->charge_point->on_reservation_status(
+                    status.reservation_id,
+                    conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+            });
+    }
 
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {

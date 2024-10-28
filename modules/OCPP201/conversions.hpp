@@ -126,6 +126,10 @@ to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiS
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v201::ReserveNowStatusEnum
 ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
 
+/// \brief Converts a given types::reservation::Reservation_status to ocpp::v201::ReservationUpdateStatusEnum
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status);
+
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason
 to_everest_stop_transaction_reason(const ocpp::v201::ReasonEnum& stop_reason);

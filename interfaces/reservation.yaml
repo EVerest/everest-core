@@ -37,4 +37,9 @@ cmds:
         Returns true if there is a reservation for the given connector id and token or group id token. If there is a
         connector id given, it will also return true if a reservation with this token was made for connector id 0.
       type: boolean
-vars: {}
+vars:
+  reservation_update:
+    description: >-
+      Update of the reservation.
+    type: object
+    $ref: /reservation#/ReservationUpdateStatus

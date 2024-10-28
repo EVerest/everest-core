@@ -171,7 +171,8 @@ void ReservationHandler::set_evse_state(ConnectorState state, const uint32_t evs
 
     // TODO mz for occupied: we have to make sure first 'on_reservation_used' is called, otherwise reservations will
     // be cancelled why they should not.
-    if (state != ConnectorState::AVAILABLE && old_evse_state == ConnectorState::AVAILABLE) {
+    if (state != ConnectorState::AVAILABLE && old_evse_state == ConnectorState::AVAILABLE &&
+        state != ConnectorState::OCCUPIED) {
         if (evse_reservations.count(evse_id)) {
             cancel_reservation(evse_reservations[evse_id].reservation_id, true,
                                types::reservation::ReservationEndReason::Cancelled);

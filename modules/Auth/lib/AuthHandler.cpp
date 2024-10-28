@@ -527,7 +527,7 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(std::optio
                                                                       const Reservation& reservation) {
     std::optional<uint32_t> evse;
     if (evse_id.has_value()) {
-        if (evse_id.value() > 0) {
+        if (evse_id.value() >= 0) {
             evse = static_cast<uint32_t>(evse_id.value());
         }
     }
@@ -558,12 +558,13 @@ void AuthHandler::call_reserved(const std::optional<int>& evse_id, const int res
     }
 }
 
-void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id) {
+void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
+                                             const types::reservation::ReservationEndReason reason) {
     int32_t evse_index = 0;
     if (evse_id.has_value() && evse_id.value() > 0) {
         evse_index = evse_id.value();
     }
-    this->reservation_cancelled_callback(evse_index, reservation_id);
+    this->reservation_cancelled_callback(evse_index, reservation_id, reason);
 
     // TODO mz notify ocpp (for example) that reservation has been cancelled???
 }
@@ -607,13 +608,15 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted:
-        this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
+        // this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.is_reservable = false;
         {
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
             this->plug_in_queue.push_back(evse_id);
         }
+
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         this->cv.notify_one();
 
         // only set plug in timeout when SessionStart is caused by plug in
@@ -676,7 +679,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     case SessionEventEnum::ReservationEnd:
         // TODO mz what if it is faulted?? need to check???
-        this->reservation_handler.set_evse_state(ConnectorState::AVAILABLE, evse_id_u);
+        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
+        // this->reservation_handler.set_evse_state(ConnectorState::AVAILABLE, evse_id_u);
         // TODO mz
         // this->connectors.at(connector_id)->connector.is_reservable = true;
         // this->connectors.at(connector_id)->connector.reserved = false;
@@ -754,7 +758,8 @@ void AuthHandler::register_reserved_callback(
 }
 
 void AuthHandler::register_reservation_cancelled_callback(
-    const std::function<void(const std::optional<int32_t>& evse_index, const int32_t reservation_id)>& callback) {
+    const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
+                             const ReservationEndReason reason)>& callback) {
     this->reservation_cancelled_callback = callback;
     this->reservation_handler.register_reservation_cancelled_callback(
         [this](const std::optional<int32_t>& evse_id, const int32_t reservation_id,
@@ -764,7 +769,7 @@ void AuthHandler::register_reservation_cancelled_callback(
                 // TODO mz
                 return;
             }
-            this->call_reservation_cancelled(evse_id, reservation_id);
+            this->call_reservation_cancelled(evse_id, reservation_id, reason);
         });
 }
 

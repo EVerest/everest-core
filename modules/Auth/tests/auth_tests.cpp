@@ -132,11 +132,12 @@ protected:
             return validation_results;
         });
 
-        this->auth_handler->register_reservation_cancelled_callback(
-            [](const std::optional<int32_t> evse_index, const int32_t reservation_id) {
-                EVLOG_info << "Signaling reservating cancelled to evse#"
-                           << (evse_index.has_value() ? evse_index.value() : 0);
-            });
+        this->auth_handler->register_reservation_cancelled_callback([](const std::optional<int32_t> evse_index,
+                                                                       const int32_t reservation_id,
+                                                                       const ReservationEndReason reason) {
+            EVLOG_info << "Signaling reservating cancelled to evse#"
+                       << (evse_index.has_value() ? evse_index.value() : 0);
+        });
 
         this->auth_handler->register_publish_token_validation_status_callback(
             mock_publish_token_validation_status_callback.AsStdFunction());
@@ -782,7 +783,7 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
 
-    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
+    ASSERT_EQ(result, TokenHandlingResult::REJECTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
@@ -790,7 +791,7 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     std::thread t4([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
     t4.join();
 
-    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_EQ(result, TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
@@ -867,7 +868,7 @@ TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
     reservation.parent_id_token.emplace(PARENT_ID_TOKEN);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(0, reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 
