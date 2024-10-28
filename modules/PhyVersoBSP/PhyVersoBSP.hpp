@@ -75,8 +75,7 @@ public:
                 std::unique_ptr<phyverso_mcu_temperatureImplBase> p_phyverso_mcu_temperature,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_1,
                 std::unique_ptr<generic_arrayImplBase> p_system_specific_data_2,
-                std::unique_ptr<led_driverImplBase> p_led_driver_1,
-                std::unique_ptr<led_driverImplBase> p_led_driver_2,
+                std::unique_ptr<led_driverImplBase> p_led_driver_1, std::unique_ptr<led_driverImplBase> p_led_driver_2,
                 Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
