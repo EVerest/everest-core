@@ -26,7 +26,6 @@ void led_driverImpl::ready() {
 
 
 void led_driverImpl::handle_set_led_state(types::led_state::LedState& led_state, int& brightness) {
-    //TODO: Implement me
     EVLOG_info << "Setting LED for connector 2 to " << led_state;
     mod->serial.set_led_state(2, led_state_to_proto(led_state), brightness);
 }
