@@ -5,7 +5,7 @@ FROM ghcr.io/everest/everest-ci/build-kit-base:${BASE_IMAGE_TAG}
 # Local update for everest-cmake
 ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
 # renovate: datasource=github-releases depName=EVerest/everest-cmake versioning=loose
-ENV EVEREST_CMAKE_VERSION=4d81814
+ENV EVEREST_CMAKE_VERSION=6ac5e03f226b5545d72ca16f3faa4984461e30f6
 RUN rm -rf ${EVEREST_CMAKE_PATH}
 RUN git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
     && cd ${EVEREST_CMAKE_PATH} \
