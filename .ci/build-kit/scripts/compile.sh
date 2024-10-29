@@ -2,14 +2,6 @@
 
 set -e
 
-
-EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
-EVEREST_CMAKE_VERSION=1e22574a1447079df7985f8ae7938f9b7cc7899d
-rm -rf ${EVEREST_CMAKE_PATH}
-git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
-    && cd ${EVEREST_CMAKE_PATH} \
-    && git checkout ${EVEREST_CMAKE_VERSION}
-
 cmake \
     -B "$EXT_MOUNT/build" \
     -S "$EXT_MOUNT/source" \
