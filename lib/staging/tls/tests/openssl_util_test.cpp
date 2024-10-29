@@ -91,6 +91,33 @@ const char iso_exi_sig_b64[] =
 const char iso_exi_sig_b64_nl[] =
     "TI8gwUALpnYGqkgRVyovGtPBUInZVCA2NDC7JrSdsQTwjfqL+AVeY6S3Wo0xaSBv\nqNVDCLpY8FZrlrr2ks5ZUA==\n";
 
+const char test_cert_pem[] = "-----BEGIN CERTIFICATE-----\n"
+                             "MIICBDCCAaqgAwIBAgIUQnMkyWtvc/a5OG8dZr9ziA5uQqYwCgYIKoZIzj0EAwIw\n"
+                             "TjELMAkGA1UEBhMCR0IxDzANBgNVBAcMBkxvbmRvbjEPMA0GA1UECgwGUGlvbml4\n"
+                             "MR0wGwYDVQQDDBRDUyBSb290IFRydXN0IEFuY2hvcjAeFw0yNDA5MTkxMzQwMDBa\n"
+                             "Fw0yNDEwMjExMzQwMDBaME4xCzAJBgNVBAYTAkdCMQ8wDQYDVQQHDAZMb25kb24x\n"
+                             "DzANBgNVBAoMBlBpb25peDEdMBsGA1UEAwwUQ1MgUm9vdCBUcnVzdCBBbmNob3Iw\n"
+                             "WTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARLkawitst5NtPoYGpDCp8/GBTDrNRJ\n"
+                             "pCzS3KHT2lZJDOwzegRn+Zhs0csqXIQgbkCqdSozg+d83QNKcpmJk4FYo2YwZDAO\n"
+                             "BgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFB6Ytfi9uSF7NSYGXmyZEcKsWHwJMB8G\n"
+                             "A1UdIwQYMBaAFB6Ytfi9uSF7NSYGXmyZEcKsWHwJMBIGA1UdEwEB/wQIMAYBAf8C\n"
+                             "AQIwCgYIKoZIzj0EAwIDSAAwRQIge4+uxc2EFYD7AkHR+9d/NbULUnKFIBRLqYE+\n"
+                             "Ib4h2CMCIQCtFWyvxwOUNidUTZGqyZXFmDyutJiNM0mi1iuFk8/8Mw==\n"
+                             "-----END CERTIFICATE-----\n";
+
+const char test_cert_hash[] = "082f891b26de97c8bdedb159f8d59113cfb55dc0";
+const char test_cert_key_hash[] = "3b094e5f2594a3ae4511a9ff4285acd91fcd11c0";
+
+inline const auto to_hex_string(const openssl::sha_1_digest_t& b) {
+    std::stringstream string_stream;
+    string_stream << std::hex;
+
+    for (int idx = 0; idx < sizeof(b); ++idx)
+        string_stream << std::setw(2) << std::setfill('0') << (int)b[idx];
+
+    return string_stream.str();
+}
+
 TEST(util, removeHyphen) {
     const std::string expected{"UKSWI123456791A"};
     std::string cert_emaid{"UKSWI123456791A"};
@@ -102,6 +129,24 @@ TEST(util, removeHyphen) {
     cert_emaid = std::string{"-UKSWI-123456791-A-"};
     cert_emaid.erase(std::remove(cert_emaid.begin(), cert_emaid.end(), '-'), cert_emaid.end());
     EXPECT_EQ(cert_emaid, expected);
+}
+
+TEST(certificate_sha_1, hash) {
+    auto cert = openssl::pem_to_certificate(test_cert_pem);
+    EXPECT_TRUE(cert);
+    openssl::sha_1_digest_t digest;
+    auto res = openssl::certificate_sha_1(digest, cert.get());
+    EXPECT_TRUE(res);
+    EXPECT_EQ(to_hex_string(digest), test_cert_hash);
+}
+
+TEST(certificate_subject_public_key_sha_1, hash) {
+    auto cert = openssl::pem_to_certificate(test_cert_pem);
+    EXPECT_TRUE(cert);
+    openssl::sha_1_digest_t digest;
+    auto res = openssl::certificate_subject_public_key_sha_1(digest, cert.get());
+    EXPECT_TRUE(res);
+    EXPECT_EQ(to_hex_string(digest), test_cert_key_hash);
 }
 
 TEST(DER, equal) {
@@ -493,6 +538,36 @@ TEST(certificate, toPem) {
     auto pem = ::openssl::certificate_to_pem(certs[0].get());
     EXPECT_FALSE(pem.empty());
     // std::cout << pem << std::endl;
+}
+
+TEST(certificate, loadPemSingle) {
+    auto certs = ::openssl::load_certificates("client_ca_cert.pem");
+    ASSERT_EQ(certs.size(), 1);
+    auto pem = ::openssl::certificate_to_pem(certs[0].get());
+    EXPECT_FALSE(pem.empty());
+
+    auto pem_certs = ::openssl::load_certificates_pem(pem.c_str());
+    ASSERT_EQ(pem_certs.size(), 1);
+    EXPECT_EQ(certs[0], pem_certs[0]);
+}
+
+TEST(certificate, loadPemMulti) {
+    auto certs = ::openssl::load_certificates("client_chain.pem");
+    ASSERT_GT(certs.size(), 1);
+    std::string pem;
+    for (const auto& cert : certs) {
+        pem += ::openssl::certificate_to_pem(cert.get());
+    }
+    EXPECT_FALSE(pem.empty());
+    // std::cout << pem << std::endl << "Output" << std::endl;
+
+    auto pem_certs = ::openssl::load_certificates_pem(pem.c_str());
+    ASSERT_EQ(pem_certs.size(), certs.size());
+    for (auto i = 0; i < certs.size(); i++) {
+        SCOPED_TRACE(std::to_string(i));
+        // std::cout << ::openssl::certificate_to_pem(pem_certs[i].get()) << std::endl;
+        EXPECT_EQ(certs[i], pem_certs[i]);
+    }
 }
 
 TEST(certificate, verify) {

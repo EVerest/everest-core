@@ -80,9 +80,9 @@ void ErrorHandling::clear_overcurrent_error() {
 // Find out if the current error set is fatal to charging or not
 void ErrorHandling::process_error() {
     const auto fatal = errors_prevent_charging();
-    if (std::get<bool>(fatal)) {
+    if (fatal) {
         // signal to charger a new error has been set that prevents charging
-        raise_inoperative_error(std::get<std::string>(fatal));
+        raise_inoperative_error(*fatal);
     } else {
         // signal an error that does not prevent charging
         clear_inoperative_error();
@@ -110,56 +110,56 @@ void ErrorHandling::process_error() {
 }
 
 // Check all errors from p_evse and all requirements to see if they block charging
-std::pair<bool, std::string> ErrorHandling::errors_prevent_charging() {
+std::optional<std::string> ErrorHandling::errors_prevent_charging() {
 
-    auto is_fatal = [](auto errors, auto ignore_list) -> std::pair<bool, std::string> {
+    auto is_fatal = [](auto errors, auto ignore_list) -> std::optional<std::string> {
         for (const auto e : errors) {
             if (std::none_of(ignore_list.begin(), ignore_list.end(), [e](const auto& ign) { return e->type == ign; })) {
-                return {true, e->type};
+                return e->type;
             }
         }
-        return {false, ""};
+        return std::nullopt;
     };
 
     auto fatal = is_fatal(p_evse->error_state_monitor->get_active_errors(), ignore_errors.evse);
-    if (std::get<bool>(fatal)) {
+    if (fatal) {
         return fatal;
     }
 
     fatal = is_fatal(r_bsp->error_state_monitor->get_active_errors(), ignore_errors.bsp);
-    if (std::get<bool>(fatal)) {
+    if (fatal) {
         return fatal;
     }
 
     if (r_connector_lock.size() > 0) {
         fatal = is_fatal(r_connector_lock[0]->error_state_monitor->get_active_errors(), ignore_errors.connector_lock);
-        if (std::get<bool>(fatal)) {
+        if (fatal) {
             return fatal;
         }
     }
 
     if (r_ac_rcd.size() > 0) {
         fatal = is_fatal(r_ac_rcd[0]->error_state_monitor->get_active_errors(), ignore_errors.ac_rcd);
-        if (std::get<bool>(fatal)) {
+        if (fatal) {
             return fatal;
         }
     }
 
     if (r_imd.size() > 0) {
         fatal = is_fatal(r_imd[0]->error_state_monitor->get_active_errors(), ignore_errors.imd);
-        if (std::get<bool>(fatal)) {
+        if (fatal) {
             return fatal;
         }
     }
 
     if (r_powersupply.size() > 0) {
         fatal = is_fatal(r_powersupply[0]->error_state_monitor->get_active_errors(), ignore_errors.powersupply);
-        if (std::get<bool>(fatal)) {
+        if (fatal) {
             return fatal;
         }
     }
 
-    return {false, ""};
+    return std::nullopt;
 }
 
 void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
@@ -169,7 +169,7 @@ void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
     }
 
     if (r_hlc.size() > 0) {
-        r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+        r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
     }
 
     // raise externally

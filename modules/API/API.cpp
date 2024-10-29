@@ -269,11 +269,19 @@ void API::init() {
     std::vector<std::string> connectors;
     std::string var_connectors = this->api_base + "connectors";
 
+    evse_manager_check.set_total(r_evse_manager.size());
+
     for (auto& evse : this->r_evse_manager) {
         auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
         auto& hw_caps = this->hw_capabilities_str.emplace_back("");
         std::string evse_base = this->api_base + evse->module_id;
         connectors.push_back(evse->module_id);
+
+        evse->subscribe_ready([this, &evse](bool ready) {
+            if (ready) {
+                this->evse_manager_check.notify_ready(evse->module_id);
+            }
+        });
 
         // API variables
         std::string var_base = evse_base + "/var/";
@@ -395,7 +403,7 @@ void API::init() {
         std::string cmd_base = evse_base + "/cmd/";
 
         std::string cmd_enable_disable = cmd_base + "enable_disable";
-        this->mqtt.subscribe(cmd_enable_disable, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_enable_disable, [this, &evse](const std::string& data) {
             auto connector_id = 0;
             types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
                                                                    types::evse_manager::Enable_state::Enable, 100};
@@ -422,11 +430,12 @@ void API::init() {
             } else {
                 EVLOG_error << "enable: No argument specified, ignoring command";
             }
+            this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
         });
 
         std::string cmd_disable = cmd_base + "disable";
-        this->mqtt.subscribe(cmd_disable, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_disable, [this, &evse](const std::string& data) {
             auto connector_id = 0;
             types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
                                                                    types::evse_manager::Enable_state::Disable, 100};
@@ -441,11 +450,12 @@ void API::init() {
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
             }
+            this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
         });
 
         std::string cmd_enable = cmd_base + "enable";
-        this->mqtt.subscribe(cmd_enable, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_enable, [this, &evse](const std::string& data) {
             auto connector_id = 0;
             types::evse_manager::EnableDisableSource enable_source{types::evse_manager::Enable_source::LocalAPI,
                                                                    types::evse_manager::Enable_state::Enable, 100};
@@ -460,23 +470,27 @@ void API::init() {
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
             }
+            this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
         });
 
         std::string cmd_pause_charging = cmd_base + "pause_charging";
-        this->mqtt.subscribe(cmd_pause_charging, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_pause_charging, [this, &evse](const std::string& data) {
+            this->evse_manager_check.wait_ready();
             evse->call_pause_charging(); //
         });
 
         std::string cmd_resume_charging = cmd_base + "resume_charging";
-        this->mqtt.subscribe(cmd_resume_charging, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_resume_charging, [this, &evse](const std::string& data) {
+            this->evse_manager_check.wait_ready();
             evse->call_resume_charging(); //
         });
 
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
-        this->mqtt.subscribe(cmd_set_limit, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_set_limit, [this, &evse](const std::string& data) {
             try {
                 const auto external_limits = get_external_limits(data, false);
+                this->evse_manager_check.wait_ready();
                 evse->call_set_external_limits(external_limits);
             } catch (const std::invalid_argument& e) {
                 EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
@@ -486,9 +500,10 @@ void API::init() {
         });
 
         std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
-        this->mqtt.subscribe(cmd_set_limit_watts, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_set_limit_watts, [this, &evse](const std::string& data) {
             try {
                 const auto external_limits = get_external_limits(data, true);
+                this->evse_manager_check.wait_ready();
                 evse->call_set_external_limits(external_limits);
             } catch (const std::invalid_argument& e) {
                 EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
@@ -497,7 +512,7 @@ void API::init() {
             }
         });
         std::string cmd_force_unlock = cmd_base + "force_unlock";
-        this->mqtt.subscribe(cmd_force_unlock, [&evse](const std::string& data) {
+        this->mqtt.subscribe(cmd_force_unlock, [this, &evse](const std::string& data) {
             int connector_id = 1;
             if (!data.empty()) {
                 try {
@@ -512,6 +527,7 @@ void API::init() {
             // perform the same action
             types::evse_manager::StopTransactionRequest req;
             req.reason = types::evse_manager::StopTransactionReason::UnlockCommand;
+            this->evse_manager_check.wait_ready();
             evse->call_stop_transaction(req);
             evse->call_force_unlock(connector_id);
         });

@@ -741,6 +741,51 @@ TEST_F(TlsTest, TCKeysKey) {
     EXPECT_EQ(subject["CN"], alt_server_root_CN);
 }
 
+TEST_F(TlsTest, TCKeysKeyPem) {
+    // same as TCKeysKey but using a PEM string trust anchor rather than file
+    std::map<std::string, std::string> subject;
+
+    client_config.trusted_ca_keys = true;
+    client_config.verify_locations_file = "alt_server_root_cert.pem";
+    add_ta_key_hash("alt_server_root_cert.pem");
+
+    auto client_handler_fn = [this, &subject](tls::Client::ConnectionPtr& connection) {
+        if (connection) {
+            if (connection->connect() == result_t::success) {
+                this->set(ClientTest::flags_t::connected);
+                subject = openssl::certificate_subject(connection->peer_certificate());
+                connection->shutdown();
+            }
+        }
+    };
+
+    // convert file to PEM in config
+    for (auto& cfg : server_config.chains) {
+        const auto certs = ::openssl::load_certificates(cfg.trust_anchor_file);
+        std::string pem;
+        for (const auto& cert : certs) {
+            pem += ::openssl::certificate_to_pem(cert.get());
+        }
+        // std::cout << cfg.trust_anchor_file << ": " << certs.size() << std::endl;
+        ASSERT_FALSE(pem.empty());
+        cfg.trust_anchor_file = nullptr;
+        cfg.trust_anchor_pem = pem.c_str();
+    }
+
+    start();
+    connect(client_handler_fn);
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_EQ(subject["CN"], alt_server_root_CN);
+
+    client_config.trusted_ca_keys_data.x509_name.clear();
+    add_ta_key_hash("client_root_cert.pem");
+    add_ta_key_hash("alt_server_root_cert.pem");
+
+    connect(client_handler_fn);
+    EXPECT_TRUE(is_set(flags_t::connected));
+    EXPECT_EQ(subject["CN"], alt_server_root_CN);
+}
+
 TEST_F(TlsTest, TCKeysName) {
     // trusted_ca_keys - subject name matches
     std::map<std::string, std::string> subject;

@@ -26,6 +26,13 @@ void evse_managerImpl::init() {
     limits.nr_of_phases_available = 1;
     limits.max_current = 0.;
 
+    mod->signalNrOfPhasesAvailable.connect([this](const int n) {
+        if (n >= 1 && n <= 3) {
+            limits.nr_of_phases_available = n;
+            publish_limits(limits);
+        }
+    });
+
     // Interface to Node-RED debug UI
 
     mod->mqtt.subscribe(
@@ -105,9 +112,13 @@ void evse_managerImpl::init() {
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
-        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
+        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter& p) {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
+        });
+        mod->r_powermeter_billing()[0]->subscribe_public_key_ocmf([this](const std::string& public_key_ocmf) {
+            // Republish data on proxy powermeter public_key_ocmf
+            publish_powermeter_public_key_ocmf(public_key_ocmf);
         });
     }
 }
@@ -116,13 +127,6 @@ void evse_managerImpl::ready() {
 
     // publish evse id at least once
     publish_evse_id(mod->config.evse_id);
-
-    mod->signalNrOfPhasesAvailable.connect([this](const int n) {
-        if (n >= 1 && n <= 3) {
-            limits.nr_of_phases_available = n;
-            publish_limits(limits);
-        }
-    });
 
     mod->r_bsp->subscribe_telemetry([this](types::evse_board_support::Telemetry telemetry) {
         // external Nodered interface

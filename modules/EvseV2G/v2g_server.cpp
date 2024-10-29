@@ -144,9 +144,9 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
     }
 #endif // EVEREST_MBED_TLS
 
-    v2g_message.v2g_message_exi_base64 = EXI_Base64;
-    v2g_message.v2g_message_id = get_v2g_message_id(conn->ctx->current_v2g_msg, conn->ctx->selected_protocol, is_req);
-    v2g_message.v2g_message_exi_hex = msg_as_hex_string;
+    v2g_message.exi_base64 = EXI_Base64;
+    v2g_message.id = get_v2g_message_id(conn->ctx->current_v2g_msg, conn->ctx->selected_protocol, is_req);
+    v2g_message.exi = msg_as_hex_string;
     conn->ctx->p_charger->publish_v2g_messages(v2g_message);
 }
 

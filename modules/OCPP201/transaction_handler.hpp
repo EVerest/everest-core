@@ -90,6 +90,8 @@ struct TxStartStopConditions {
         case TxEvent::IMMEDIATE_RESET:
             is_immediate_reset = true;
             break;
+        case TxEvent::NONE:
+            break;
         }
     };
 
@@ -127,9 +129,10 @@ struct TxStartStopConditions {
             return !is_authorized or !is_ev_connected;
         case TxStartStopPoint::EnergyTransfer:
             return !is_energy_transfered;
-        default:
+        case TxStartStopPoint::DataSigned:
             return false;
         }
+        return false;
     };
 };
 

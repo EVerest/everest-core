@@ -25,6 +25,42 @@ void power_supply_DCImpl::init() {
         p.voltage_V = v;
         mod->p_powermeter->publish_powermeter(p);
     });
+
+    std::thread([this]() {
+        float low_pass_voltage = 0.;
+
+        float last_low_pass_voltage = -1;
+
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // prevent overshoot
+            if (low_pass_voltage > req_voltage) {
+                // step down immediately
+                low_pass_voltage = req_voltage;
+            } else {
+                float delta = req_voltage - low_pass_voltage;
+                if (delta > 500) {
+                    low_pass_voltage += 100;
+                } else {
+                    if (delta > 50) {
+                        low_pass_voltage += 25;
+                    } else {
+                        low_pass_voltage = req_voltage;
+                    }
+                }
+            }
+
+            if (not is_on) {
+                low_pass_voltage = 0.;
+            }
+
+            if (last_low_pass_voltage not_eq low_pass_voltage) {
+                mod->serial.setOutputVoltageCurrent(low_pass_voltage, 0.);
+            }
+
+            last_low_pass_voltage = low_pass_voltage;
+        }
+    }).detach();
 }
 
 void power_supply_DCImpl::ready() {
@@ -57,10 +93,6 @@ void power_supply_DCImpl::handle_setMode(types::power_supply_DC::Mode& mode,
 void power_supply_DCImpl::handle_setExportVoltageCurrent(double& voltage, double& current) {
     req_voltage = voltage;
     req_current = current;
-
-    if (is_on) {
-        mod->serial.setOutputVoltageCurrent(req_voltage, req_current);
-    }
 };
 
 void power_supply_DCImpl::handle_setImportVoltageCurrent(double& voltage, double& current){

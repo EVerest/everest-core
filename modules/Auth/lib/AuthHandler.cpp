@@ -511,6 +511,7 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                 EVLOG_info << "Authorization timeout for evse#" << evse_index;
                 this->evses.at(evse_id)->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
+                    this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
             },
             std::chrono::seconds(this->connection_timeout));
         std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
