@@ -309,82 +309,62 @@ The OCSP response is cached and can be used as part of the ISO15118 TLS handshak
 every seven days. The timestamp of the last update is stored persistently, so that this process is not necessarily performed
 at every start up.
 
-Device model
-------------
+Device model implementation details
+-----------------------------------
 
-For managing configuration and telemtry data of a charging station, the OCPP2.0.1 specification introduces
+For managing configuration and telemetry data of a charging station, the OCPP2.0.1 specification introduces
 a device model that is very different to the design of OCPP1.6. 
 The specified device model comes with these high-level requirements:
-
-Requirements of the config service
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* Config refactor --> Modules get their config via MQTT as JSON
-* Responsible for read and write operations of configuration parameters of EVerest modules at runtime and startup
-* Config service to be accessed by priviliged modules (e.g. OCPP) using an option in the manifest.yaml like
-  enable_config_service
-* Config service needs to notify priviliged modules (e.g. OCPP) if a variable has changed (e.g. internally or by some
-  other module/UI etc.)
-* Config handler shall be part of modules with R/W config parameters (extend ev-cli module generation for this)
-* Module config parameter definition needs to be extended by mutability option (RW, RO, WO) in manifest.yaml
-
-This is how the config_service may be used within priviliged modules:
-
-.. highlight:: C++
-   this->config_service->set_config_param(module_id, optional<implementation_name>, config_name, value);
-
-This is how modules may use the config service to change their internal configuration themselves:
-
-.. highlight:: C++
-   this->config.set_param(config_name, value)
 
 * 3-tier model: Break charging station down into 3 main tiers: ChargingStation, EVSE and Connector
 * Components and Variables: Break down charging station into components and variables for configuration and telemetry
 * Complex data structure for reporting and configuration of variables
 * Device model contains variables of the whole charging station, beyond OCPP business logic
 
-The device model holds configuration and values that are managed by libocpp or externally, by other EVerest modules. 
-Externally managed variables can be retrieved using the EVerest configuration service.
-The config service is yet to be defined and implemented, so for now all variables are treated as internal variables.
-
-Internally and Externally Managed Variables of the Device Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 The device model of OCPP2.0.1 can contain various physical or logical components and
 variables. While in OCPP1.6 almost all of the standardized configuration keys are used to influence the control flow of
 libocpp, in OCPP2.0.1 the configuration and telemetry variables that can be part of the device model go beyond the
 control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2.0.1
-that do influence the control flow of libocpp. Therefore it is a requirement to make a distinction between externally and
-internally managed variables of the device model inside the device model implementation:
+that do influence the control flow of libocpp.
 
-* Internally managed variables: Internally managed variables influence the control flow or can be reported by libocpp
-  and are therefore owned by libocpp. If the mutability of such a variable is ReadWrite, the CSMS or the consumer of
-  libocpp can set its value and the OCPP201 module is responsible for updating this value in the device model.
+Internally and externally managed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+EVerest has multiple different data sources that control the values variables that OCPP requires to report to the CSMS.
+It is therefore required to make a distinction between **internally** and **externally** managed variables of the device model.
+
+We define **internally** and **externally** managed variables as follows:
+
+* Internally Managed: Owned, stored and accessed in libocpp in device model storage
   Examples: HeartbeatInterval, AuthorizeRemoteStart, SampledDataTxEndedMeasurands, AuthCacheStorage
-* Externally managed variables: These variables do not influence the control flow of libocpp. These are owned and 
-  managed by other EVerest modules. 
+* Externally Managed: Owned, stored and accessed via EVerest config service (not yet supported)
   Examples: ConnectionTimeout, MasterPassGroupId
+* For externally managed variables a mapping to the EVerest configuration parameter is defined (not yet supported)
+
+Note that the EVerest config service is not yet implemented. Currently all components and variables are controlled
+by the libocpp device model storage implementation.
+
+Device Model Implementation this module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This module provides an implementation of device model API provided as part of libocpp (it implements `device_model_interface.hpp`).
+The implementation is designed to fullfill the requirements of the device model API even if the components and variables are
+controlled by different sources (Internally, Externally).
+
+Device Model Sources
+^^^^^^^^^^^^^^^^^^^^
+
+Device Model variables are defined in JSON component configs. For each variable a property `source` can be used to define
+the source that controls it. This design allows for a single source of truth for each variable and it 
+allows the device model implementation of this module to address the correct source for the requested operation.
+Today `OCPP` is the only supported source for internally managed variables.
+
+Sources for externally managed configuration variables like the EVerest config service are under development.
 
 Sequence of variable access for internally and externally managed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. image:: doc/sequence_config_service_and_ocpp.png
-
-OCPP201 module
-^^^^^^^^^^^^^^
-* Provides an implementation of device model API defined as part of libocpp (implements device_model_interface.hpp)
-* Device model implementation must differentiate between internally and externally managed variables
-
-  * Internally Managed: Owned, stored and accessed in libocpp in device model storage
-  * Externally Managed: Owned, stored and accessed via EVerest config service
-  * For externally managed variables a mapping to the EVerest configuration parameter needs to be defined
-
-* Property for internally or externally managed for each variable in the component schemas: The component config has
-  a `source` member defined of `Variable`. If `source` is `OCPP`, it means this is an internally managed variable. If
-  nothing is defined, this also means it is an internally managed variable.
-* This design allows for singe source of truth --> OCPP is source for internally managed variables and config service
-  for externally managed configuration variables
-* To be done: A mapping mechanism from component schema variables to EVerest config paramaters and vice versa
 
 Class diagram for device model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
