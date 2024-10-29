@@ -1,19 +1,26 @@
 description: A OCPP charge point / charging station module, currently targeting OCPP-J 1.6
 config:
   ChargePointConfigPath:
-    description: Path to the configuration file
+    description: >- 
+      Path to the ocpp configuration file. Libocpp defines a JSON schema for this file. Please refer to the documentation
+      of libocpp for more information about the configuration options.  
     type: string
     default: ocpp-config.json
   UserConfigPath:
-    description: Path to the file of the OCPP user config
+    description: >-
+      Path to the file of the OCPP user config. The user config is used as an overlay for the original config defined
+      by the ChargePointConfigPath. Any changes to configuration keys turned out internally or by the CSMS will be 
+      written to the user config file.
     type: string
     default: user_config.json
   DatabasePath:
-    description: Path to the persistent SQLite database folder
+    description: >-
+      Path to the persistent SQLite database directory. Please refer to the libocpp documentation for more information
+      about the database and its structure.
     type: string
     default: /tmp/ocpp_1_6_charge_point
   EnableExternalWebsocketControl:
-    description: If true websocket can be disconnected and connected externally
+    description: If true websocket can be disconnected and connected externally. This parameter is for debug and testing purposes.
     type: boolean
     default: false
   PublishChargingScheduleIntervalS:
@@ -28,11 +35,13 @@ config:
     type: integer
     default: 600
   MessageLogPath:
-    description: Path to folder where logs of all OCPP messages get written to
+    description: Path to directory where logs of all OCPP messages are written to
     type: string
     default: /tmp/everest_ocpp_logs
   MessageQueueResumeDelay:
-    description: Time (seconds) to delay resuming the message queue after reconnecting
+    description: >-
+      Time (seconds) to delay resuming the message queue after reconnecting. This parameter was introduced because
+      some OCTT test cases require that the first message after a reconnect is sent by the CSMS.
     type: integer
     default: 0
   RequestCompositeScheduleUnit:
