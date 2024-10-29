@@ -1,3 +1,5 @@
+.. _everest_modules_handwritten_OCPP:
+
 OCPP1.6 Module
 ==============
 
