@@ -4283,12 +4283,12 @@ ChargePointImpl::get_filtered_transaction_data(const std::shared_ptr<Transaction
     return filtered_transaction_data_vec;
 }
 
-void ChargePointImpl::on_suspend_charging_ev(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::PauseChargingEV, ocpp::DateTime());
+void ChargePointImpl::on_suspend_charging_ev(int32_t connector, const std::optional<CiString<50>> info) {
+    this->status->submit_event(connector, FSMEvent::PauseChargingEV, ocpp::DateTime(), info);
 }
 
-void ChargePointImpl::on_suspend_charging_evse(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::PauseChargingEVSE, ocpp::DateTime());
+void ChargePointImpl::on_suspend_charging_evse(int32_t connector, const std::optional<CiString<50>> info) {
+    this->status->submit_event(connector, FSMEvent::PauseChargingEVSE, ocpp::DateTime(), info);
 }
 
 void ChargePointImpl::on_resume_charging(int32_t connector) {

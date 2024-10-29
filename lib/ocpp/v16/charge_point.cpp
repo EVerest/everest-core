@@ -120,12 +120,12 @@ void ChargePoint::on_transaction_stopped(const int32_t connector, const std::str
                                                signed_meter_value);
 }
 
-void ChargePoint::on_suspend_charging_ev(int32_t connector) {
-    this->charge_point->on_suspend_charging_ev(connector);
+void ChargePoint::on_suspend_charging_ev(int32_t connector, const std::optional<CiString<50>> info) {
+    this->charge_point->on_suspend_charging_ev(connector, info);
 }
 
-void ChargePoint::on_suspend_charging_evse(int32_t connector) {
-    this->charge_point->on_suspend_charging_evse(connector);
+void ChargePoint::on_suspend_charging_evse(int32_t connector, const std::optional<CiString<50>> info) {
+    this->charge_point->on_suspend_charging_evse(connector, info);
 }
 
 void ChargePoint::on_resume_charging(int32_t connector) {

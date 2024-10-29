@@ -244,11 +244,13 @@ public:
 
     /// \brief This function should be called when EV indicates that it suspends charging on the given \p connector
     /// \param connector
-    void on_suspend_charging_ev(int32_t connector);
+    /// \param reason
+    void on_suspend_charging_ev(int32_t connector, const std::optional<CiString<50>> info = std::nullopt);
 
     /// \brief This function should be called when EVSE indicates that it suspends charging on the given \p connector
     /// \param connector
-    void on_suspend_charging_evse(int32_t connector);
+    /// \param reason
+    void on_suspend_charging_evse(int32_t connector, const std::optional<CiString<50>> info = std::nullopt);
 
     /// \brief This function should be called when charging resumes on the given \p connector
     /// \param connector
