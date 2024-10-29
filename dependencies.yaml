@@ -66,7 +66,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: c6a6e01b27c994f170d2b21d2befa13ad5c9ca20
+  git_tag: v0.18.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -76,7 +76,7 @@ Josev:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.0
+  git_tag: v0.2.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
