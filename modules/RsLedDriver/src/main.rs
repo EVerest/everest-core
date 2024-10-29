@@ -24,25 +24,23 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
         | SessionEventEnum::PluginTimeout => Some(LedState{red: 255, green: 0, blue: 0}),
 
         // Blue triggers
-        SessionEventEnum::TransactionStarted
-        | SessionEventEnum::PrepareCharging
+        SessionEventEnum::Authorized
+        | SessionEventEnum::TransactionStarted
         | SessionEventEnum::ChargingStarted
         | SessionEventEnum::ChargingPausedEV
         | SessionEventEnum::ChargingPausedEVSE
-        | SessionEventEnum::WaitingForEnergy
         | SessionEventEnum::ChargingResumed
         | SessionEventEnum::StoppingCharging
         | SessionEventEnum::ChargingFinished
-        | SessionEventEnum::TransactionFinished
         | SessionEventEnum::SessionResumed => Some(LedState{red: 0, green: 0, blue: 255}),
 
         // Green triggers
-        SessionEventEnum::Authorized
-        | SessionEventEnum::Deauthorized
+        SessionEventEnum::Deauthorized
         | SessionEventEnum::Enabled
-        | SessionEventEnum::SessionFinished
         | SessionEventEnum::ReservationStart
-        | SessionEventEnum::ReservationEnd => Some(LedState{red: 0, green: 255, blue: 0}),
+        | SessionEventEnum::ReservationEnd
+        | SessionEventEnum::SessionFinished
+        | SessionEventEnum::TransactionFinished => Some(LedState{red: 0, green: 255, blue: 0}),
         _ => None,
     }
 }
@@ -84,11 +82,11 @@ impl EvseManagerClientSubscriber for LedDriver {
         let index = context.index;
         let led_driver = self.led_drivers.lock().unwrap()[index].clone();
 
-        let _ = match get_led_state(value.event) {
+        let _ = match get_led_state(value.event.clone()) {
             Some(led_state) => led_driver
                 .set_led_state(self.brightness, led_state)
                 .unwrap(),
-            None => log::error!("Unknown event - not changing LEDs"),
+            None => log::error!("Unknown event {:?} - not changing LEDs", value.event),
         };
     }
 
