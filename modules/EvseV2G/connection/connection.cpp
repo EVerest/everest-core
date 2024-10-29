@@ -184,12 +184,19 @@ static int connection_ssl_initialize() {
  * \return Returns \c 0 on success, otherwise \c -1
  */
 int check_interface(struct v2g_context* v2g_ctx) {
+    if (v2g_ctx == nullptr || v2g_ctx->if_name == nullptr) {
+        return -1;
+    }
 
     struct ipv6_mreq mreq = {};
     std::memset(&mreq, 0, sizeof(mreq));
 
     if (strcmp(v2g_ctx->if_name, "auto") == 0) {
         v2g_ctx->if_name = choose_first_ipv6_interface();
+    }
+
+    if (v2g_ctx->if_name == nullptr) {
+        return -1;
     }
 
     mreq.ipv6mr_interface = if_nametoindex(v2g_ctx->if_name);

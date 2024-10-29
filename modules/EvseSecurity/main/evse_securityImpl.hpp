@@ -60,6 +60,9 @@ protected:
     virtual types::evse_security::GetCertificateInfoResult
     handle_get_leaf_certificate_info(types::evse_security::LeafCertificateType& certificate_type,
                                      types::evse_security::EncodingFormat& encoding, bool& include_ocsp) override;
+    virtual types::evse_security::GetCertificateFullInfoResult
+    handle_get_all_valid_certificates_info(types::evse_security::LeafCertificateType& certificate_type,
+                                           types::evse_security::EncodingFormat& encoding, bool& include_ocsp) override;
     virtual std::string handle_get_verify_file(types::evse_security::CaCertificateType& certificate_type) override;
     virtual int handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) override;
     virtual bool handle_verify_file_signature(std::string& file_path, std::string& signing_certificate,

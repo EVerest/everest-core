@@ -83,11 +83,11 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (period.numberPhases.has_value()) {
+                limits_req.ac_max_phase_count = period.numberPhases.value();
+            }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
-                if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
-                }
                 if (schedule.minChargingRate.has_value()) {
                     limits_req.ac_min_current_A = schedule.minChargingRate.value();
                 }
@@ -323,6 +323,16 @@ bool OCPP::all_evse_ready() {
     }
     EVLOG_info << "All EVSE ready. Starting OCPP1.6 service";
     return true;
+}
+
+ocpp::v16::ChargingRateUnit get_unit_or_default(const std::string& unit_string) {
+    try {
+        return ocpp::v16::conversions::string_to_charging_rate_unit(unit_string);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << "RequestCompositeScheduleUnit configured incorrectly with: " << unit_string
+                      << ". Defaulting to using Amps.";
+        return ocpp::v16::ChargingRateUnit::A;
+    }
 }
 
 void OCPP::init() {
@@ -661,15 +671,17 @@ void OCPP::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
+    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
+
     // publish charging schedules at least once on startup
     const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-        this->config.PublishChargingScheduleDurationS);
+        this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
     this->set_external_limits(charging_schedules);
     this->publish_charging_schedules(charging_schedules);
 
-    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
+    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this, composite_schedule_unit]() {
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });
@@ -677,12 +689,12 @@ void OCPP::ready() {
         this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
     }
 
-    this->charge_point->register_signal_set_charging_profiles_callback([this]() {
+    this->charge_point->register_signal_set_charging_profiles_callback([this, composite_schedule_unit]() {
         // this is executed when CSMS sends new ChargingProfile that is accepted by
         // the ChargePoint
         EVLOG_info << "Received new Charging Schedules from CSMS";
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });

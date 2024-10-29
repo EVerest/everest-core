@@ -165,7 +165,7 @@ bool BrokerFastCharging::trade(Offer& _offer) {
                             }
                         }
 
-                        if (number_of_phases == min_phases_import) {
+                        if (number_of_phases == min_phases_import and time_slot_is_active) {
                             context.ts_1ph_optimal = date::utc_clock::now();
                         }
 
