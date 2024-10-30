@@ -64,6 +64,50 @@ enum class QOS {
     QOS2  ///< Exactly once delivery
 };
 
+/// \brief A Mapping that can be used to map a module or implementation to a specific EVSE or optionally to a Connector
+struct Mapping {
+    int evse;                     ///< The EVSE id
+    std::optional<int> connector; ///< An optional Connector id
+
+    Mapping(int evse) : evse(evse) {
+    }
+
+    Mapping(int evse, int connector) : evse(evse), connector(connector) {
+    }
+};
+
+/// \brief Writes the string representation of the given Mapping \p mapping to the given output stream \p os
+/// \returns an output stream with the Mapping written to
+inline std::ostream& operator<<(std::ostream& os, const Mapping& mapping) {
+    os << "Mapping(evse: " << mapping.evse;
+    if (mapping.connector.has_value()) {
+        os << ", connector: " << mapping.connector.value();
+    }
+    os << ")";
+
+    return os;
+}
+
+/// \brief Writes the string representation of the given Mapping \p mapping to the given output stream \p os
+/// \returns an output stream with the Mapping written to
+inline std::ostream& operator<<(std::ostream& os, const std::optional<Mapping>& mapping) {
+    if (mapping.has_value()) {
+        os << mapping.value();
+    } else {
+        os << "Mapping(charging station)";
+    }
+
+    return os;
+}
+
+/// \brief A 3 tier mapping for a module and its individual implementations
+struct ModuleTierMappings {
+    std::optional<Mapping> module; ///< Mapping of the whole module to an EVSE id and optional Connector id. If this is
+                                   ///< absent the module is assumed to be mapped to the whole charging station
+    std::unordered_map<std::string, std::optional<Mapping>>
+        implementations; ///< Mappings for the individual implementations of the module
+};
+
 struct ModuleInfo {
     struct Paths {
         std::filesystem::path etc;
@@ -78,38 +122,36 @@ struct ModuleInfo {
     Paths paths;
     bool telemetry_enabled;
     bool global_errors_enabled;
+    std::optional<Mapping> mapping;
 };
 
 struct TelemetryConfig {
     int id;
 };
 
-/// \brief A Mapping that can be used to map a module or implementation to a specific EVSE or optionally to a Connector
-struct Mapping {
-    int evse;                     ///< The EVSE id
-    std::optional<int> connector; ///< An optional Connector id
-
-    Mapping(int evse) : evse(evse) {
-    }
-
-    Mapping(int evse, int connector) : evse(evse), connector(connector) {
-    }
-};
-
-/// \brief A 3 tier mapping for a module and its individual implementations
-struct ModuleTierMappings {
-    std::optional<Mapping> module; ///< Mapping of the whole module to an EVSE id and optional Connector id. If this is
-                                   ///< absent the module is assumed to be mapped to the whole charging station
-    std::unordered_map<std::string, std::optional<Mapping>>
-        implementations; ///< Mappings for the individual implementations of the module
-};
-
 struct Requirement {
-    Requirement(const std::string& requirement_id_, size_t index_);
-    bool operator<(const Requirement& rhs) const;
     std::string id;
-    size_t index;
+    size_t index = 0;
 };
+
+bool operator<(const Requirement& lhs, const Requirement& rhs);
+
+/// \brief A Fulfillment relates a Requirement to its connected implementation, identified via its module and
+/// implementation id.
+struct Fulfillment {
+    std::string module_id;
+    std::string implementation_id;
+    Requirement requirement;
+};
+
+/// \brief Contains everything that's needed to initialize a requirement in user code
+struct RequirementInitializer {
+    Requirement requirement;
+    Fulfillment fulfillment;
+    std::optional<Mapping> mapping;
+};
+
+using RequirementInitialization = std::map<std::string, std::vector<RequirementInitializer>>;
 
 struct ImplementationIdentifier {
     ImplementationIdentifier(const std::string& module_id_, const std::string& implementation_id_,

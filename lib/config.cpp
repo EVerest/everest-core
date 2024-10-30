@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include <algorithm>
+#include <cstddef>
 #include <fstream>
 #include <list>
 #include <set>
@@ -705,23 +706,62 @@ json Config::resolve_requirement(const std::string& module_id, const std::string
     return module_config["connections"][requirement_id];
 }
 
+std::map<Requirement, Fulfillment> Config::resolve_requirements(const std::string& module_id) const {
+    std::map<Requirement, Fulfillment> requirements;
+
+    const auto& module_name = get_module_name(module_id);
+    for (const auto& req_id : Config::keys(this->manifests.at(module_name).at("requires"))) {
+        const auto& resolved_req = this->resolve_requirement(module_id, req_id);
+        if (!resolved_req.is_array()) {
+            const auto& resolved_module_id = resolved_req.at("module_id");
+            const auto& resolved_impl_id = resolved_req.at("implementation_id");
+            const auto req = Requirement{req_id, 0};
+            requirements[req] = {resolved_module_id, resolved_impl_id, req};
+        } else {
+            for (std::size_t i = 0; i < resolved_req.size(); i++) {
+                const auto& resolved_module_id = resolved_req.at(i).at("module_id");
+                const auto& resolved_impl_id = resolved_req.at(i).at("implementation_id");
+                const auto req = Requirement{req_id, i};
+                requirements[req] = {resolved_module_id, resolved_impl_id, req};
+            }
+        }
+    }
+
+    return requirements;
+}
+
 std::list<Requirement> Config::get_requirements(const std::string& module_id) const {
     BOOST_LOG_FUNCTION();
 
     std::list<Requirement> res;
 
-    std::string module_name = get_module_name(module_id);
-    for (const std::string& req_id : Config::keys(this->manifests.at(module_name).at("requires"))) {
-        json resolved_req = this->resolve_requirement(module_id, req_id);
-        if (!resolved_req.is_array()) {
-            Requirement req(req_id, 0);
-            res.push_back(req);
-        } else {
-            for (int i = 0; i < resolved_req.size(); i++) {
-                Requirement req(req_id, i);
-                res.push_back(req);
-            }
-        }
+    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
+        res.push_back(requirement);
+    }
+
+    return res;
+}
+
+std::map<std::string, std::vector<Fulfillment>> Config::get_fulfillments(const std::string& module_id) const {
+    BOOST_LOG_FUNCTION();
+
+    std::map<std::string, std::vector<Fulfillment>> res;
+
+    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
+        res[requirement.id].push_back(fulfillment);
+    }
+
+    return res;
+}
+
+RequirementInitialization Config::get_requirement_initialization(const std::string& module_id) const {
+    BOOST_LOG_FUNCTION();
+
+    RequirementInitialization res;
+
+    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
+        const auto& mapping = this->get_3_tier_model_mapping(fulfillment.module_id, fulfillment.implementation_id);
+        res[requirement.id].push_back({requirement, fulfillment, mapping});
     }
 
     return res;
@@ -809,21 +849,23 @@ std::unordered_map<std::string, ModuleTierMappings> Config::get_3_tier_model_map
     return this->tier_mappings;
 }
 
-std::optional<ModuleTierMappings> Config::get_3_tier_model_mappings(const std::string& module_id) {
+std::optional<ModuleTierMappings> Config::get_module_3_tier_model_mappings(const std::string& module_id) const {
     if (this->tier_mappings.find(module_id) == this->tier_mappings.end()) {
         return std::nullopt;
     }
     return this->tier_mappings.at(module_id);
 }
 
-std::optional<Mapping> Config::get_3_tier_model_mapping(const std::string& module_id, const std::string& impl_id) {
-    auto module_tier_mappings = this->get_3_tier_model_mappings(module_id);
+std::optional<Mapping> Config::get_3_tier_model_mapping(const std::string& module_id,
+                                                        const std::string& impl_id) const {
+    const auto module_tier_mappings = this->get_module_3_tier_model_mappings(module_id);
     if (not module_tier_mappings.has_value()) {
         return std::nullopt;
     }
-    auto& mapping = module_tier_mappings.value();
+    const auto& mapping = module_tier_mappings.value();
     if (mapping.implementations.find(impl_id) == mapping.implementations.end()) {
-        return std::nullopt;
+        // if no specific implementation mapping is given, use the module mapping
+        return mapping.module;
     }
     return mapping.implementations.at(impl_id);
 }
@@ -1172,36 +1214,44 @@ void Config::resolve_all_requirements() {
 void Config::parse_3_tier_model_mapping() {
     for (auto& element : this->main.items()) {
         const auto& module_id = element.key();
-        auto impl_info = this->extract_implementation_info(module_id);
-        auto provides = this->manifests.at(impl_info.at("module_name")).at("provides");
+        const auto& impl_info = this->extract_implementation_info(module_id);
+        const auto& provides = this->manifests.at(impl_info.at("module_name")).at("provides");
 
         ModuleTierMappings module_tier_mappings;
-        auto& module_config = element.value();
-        if (module_config.contains("evse")) {
-            auto mapping = Mapping(module_config.at("evse").get<int>());
-            if (module_config.contains("connector")) {
-                mapping.connector = module_config.at("connector").get<int>();
-            }
-            module_tier_mappings.module = mapping;
-        }
-        auto& mapping = module_config.at("mapping");
+        const auto& module_config = element.value();
+        const auto& config_mapping = module_config.at("mapping");
         // an empty mapping means it is mapped to the charging station and gets no specific mapping attached
-        if (not mapping.empty()) {
-            for (auto& tier_mapping : mapping.items()) {
-                auto impl_id = tier_mapping.key();
-                auto tier_mapping_value = tier_mapping.value();
-                if (provides.contains(impl_id)) {
-                    if (tier_mapping_value.contains("connector")) {
-                        module_tier_mappings.implementations[impl_id] = Mapping(
-                            tier_mapping_value.at("evse").get<int>(), tier_mapping_value.at("connector").get<int>());
-                    } else {
-                        module_tier_mappings.implementations[impl_id] =
-                            Mapping(tier_mapping_value.at("evse").get<int>());
+        if (not config_mapping.empty()) {
+            if (config_mapping.contains("module")) {
+                const auto& module_mapping = config_mapping.at("module");
+                if (module_mapping.contains("evse")) {
+                    auto mapping = Mapping(module_mapping.at("evse").get<int>());
+                    if (module_mapping.contains("connector")) {
+                        mapping.connector = module_mapping.at("connector").get<int>();
                     }
-                } else {
-                    EVLOG_warning << fmt::format(
-                        "Mapping {} of module {} in config refers to a provides that does not exist, please fix this",
-                        impl_id, printable_identifier(module_id));
+                    module_tier_mappings.module = mapping;
+                }
+            }
+
+            if (config_mapping.contains("implementations")) {
+                const auto& implementations_mapping = config_mapping.at("implementations");
+                for (auto& tier_mapping : implementations_mapping.items()) {
+                    const auto& impl_id = tier_mapping.key();
+                    const auto& tier_mapping_value = tier_mapping.value();
+                    if (provides.contains(impl_id)) {
+                        if (tier_mapping_value.contains("connector")) {
+                            module_tier_mappings.implementations[impl_id] =
+                                Mapping(tier_mapping_value.at("evse").get<int>(),
+                                        tier_mapping_value.at("connector").get<int>());
+                        } else {
+                            module_tier_mappings.implementations[impl_id] =
+                                Mapping(tier_mapping_value.at("evse").get<int>());
+                        }
+                    } else {
+                        EVLOG_warning << fmt::format("Mapping {} of module {} in config refers to a provides that does "
+                                                     "not exist, please fix this",
+                                                     impl_id, printable_identifier(module_id));
+                    }
                 }
             }
         }

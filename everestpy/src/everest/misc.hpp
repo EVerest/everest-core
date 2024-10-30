@@ -6,6 +6,7 @@
 #include <string>
 
 #include <framework/runtime.hpp>
+#include <utils/types.hpp>
 
 class RuntimeSession {
 public:
@@ -26,12 +27,6 @@ private:
     std::unique_ptr<Everest::Config> config;
 
     static std::unique_ptr<Everest::Config> create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs);
-};
-
-struct Fulfillment {
-    std::string module_id;
-    std::string implementation_id;
-    Requirement requirement;
 };
 
 struct Interface {

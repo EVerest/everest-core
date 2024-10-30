@@ -13,14 +13,11 @@ TypedHandler::TypedHandler(HandlerType type_, std::shared_ptr<Handler> handler_)
     TypedHandler("", "", type_, handler_) {
 }
 
-Requirement::Requirement(const std::string& requirement_id_, size_t index_) : id(requirement_id_), index(index_) {
-}
-
-bool Requirement::operator<(const Requirement& rhs) const {
-    if (id < rhs.id) {
+bool operator<(const Requirement& lhs, const Requirement& rhs) {
+    if (lhs.id < rhs.id) {
         return true;
-    } else if (id == rhs.id) {
-        return (index < rhs.index);
+    } else if (lhs.id == rhs.id) {
+        return (lhs.index < rhs.index);
     } else {
         return false;
     }

@@ -147,32 +147,40 @@ properties:
             default: {}
             # don't allow arbitrary additional properties
             additionalProperties: false
-          evse:
-            description: evse this module id maps to
-            type: integer
-          connector:
-            description: connector this module id maps to
-            type: integer
           mapping:
             description: >-
-              this configures a list of implementations this module provides and their mapping to the 3-tier-model of charging station, evse and connector
+              this configures a module mapping and a list of implementations this module provides and their mapping to the 3-tier-model of charging station, evse and connector
               if no mapping is provided by default this implementation is associated with the charging station
             type: object
-            patternProperties:
-              # implementation id
-              ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+            properties:
+              module:
                 type: object
-                required:
-                  - evse
                 properties:
                   evse:
-                    description: evse this implementation id maps to
+                    description: evse this module id maps to
                     type: integer
                   connector:
-                    description: connector this implementation id maps to
+                    description: connector this module id maps to
                     type: integer
-                  # don't allow arbitrary additional properties
-                  additionalProperties: false
+                # allow arbitrary additional properties for future extensions (not used at the moment)
+              additionalProperties: true
+              implementations:
+                type: object
+                patternProperties:
+                  # implementation id
+                  ^[a-zA-Z_][a-zA-Z0-9_.-]*$:
+                    type: object
+                    required:
+                      - evse
+                    properties:
+                      evse:
+                        description: evse this implementation id maps to
+                        type: integer
+                      connector:
+                        description: connector this implementation id maps to
+                        type: integer
+                      # allow arbitrary additional properties for future extensions (not used at the moment)
+                      additionalProperties: true
             # add empty config if not already present
             default: {}
             # don't allow arbitrary additional properties

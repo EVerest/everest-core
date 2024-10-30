@@ -81,7 +81,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
         this->global_error_state_monitor = nullptr;
     }
 
-    this->module_tier_mappings = config.get_3_tier_model_mappings(this->module_id);
+    this->module_tier_mappings = config.get_module_3_tier_model_mappings(this->module_id);
 
     // setup error_managers, error_state_monitors, error_factories and error_databases for all implementations
     for (const std::string& impl : Config::keys(this->module_manifest.at("provides"))) {
@@ -112,14 +112,14 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
 
         std::optional<Mapping> mapping;
         if (this->module_tier_mappings.has_value()) {
-            auto& module_tier_mapping = this->module_tier_mappings.value();
+            const auto& module_tier_mapping = this->module_tier_mappings.value();
             // start with the module mapping and overwrite it (partially) with the implementation mapping
             mapping = module_tier_mapping.module;
-            auto impl_mapping = config.get_3_tier_model_mapping(this->module_id, impl);
+            const auto impl_mapping = config.get_3_tier_model_mapping(this->module_id, impl);
             if (impl_mapping.has_value()) {
                 if (mapping.has_value()) {
                     auto& mapping_value = mapping.value();
-                    auto& impl_mapping_value = impl_mapping.value();
+                    const auto& impl_mapping_value = impl_mapping.value();
                     if (mapping_value.evse != impl_mapping_value.evse) {
                         EVLOG_warning << fmt::format("Mapping value mismatch. {} ({}) evse ({}) != {} mapping evse "
                                                      "({}). Setting evse={}, please fix this in the config.",
@@ -132,8 +132,8 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
                         mapping_value.connector = impl_mapping_value.connector;
                     }
                     if (mapping_value.connector.has_value() and impl_mapping_value.connector.has_value()) {
-                        auto& mapping_value_connector_value = mapping_value.connector.value();
-                        auto& impl_mapping_value_connector_value = impl_mapping_value.connector.value();
+                        const auto& mapping_value_connector_value = mapping_value.connector.value();
+                        const auto& impl_mapping_value_connector_value = impl_mapping_value.connector.value();
                         if (mapping_value_connector_value != impl_mapping_value_connector_value) {
                             EVLOG_warning
                                 << fmt::format("Mapping value mismatch. {} ({}) connector ({}) != {} mapping connector "
@@ -250,6 +250,10 @@ void Everest::register_on_ready_handler(const std::function<void()>& handler) {
     BOOST_LOG_FUNCTION();
 
     this->on_ready = std::make_unique<std::function<void()>>(handler);
+}
+
+std::optional<ModuleTierMappings> Everest::get_3_tier_model_mapping() {
+    return this->module_tier_mappings;
 }
 
 void Everest::check_code() {
@@ -1075,5 +1079,18 @@ bool Everest::check_arg(ArgumentType arg_types, json manifest_arg) {
         }
     }
     return true;
+}
+
+std::optional<Mapping> get_impl_mapping(std::optional<ModuleTierMappings> module_tier_mappings,
+                                        const std::string& impl_id) {
+    if (not module_tier_mappings.has_value()) {
+        return std::nullopt;
+    }
+    auto& mapping = module_tier_mappings.value();
+    if (mapping.implementations.find(impl_id) == mapping.implementations.end()) {
+        // if no specific implementation mapping is given, use the module mapping
+        return mapping.module;
+    }
+    return mapping.implementations.at(impl_id);
 }
 } // namespace Everest
