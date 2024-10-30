@@ -17,8 +17,7 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    # LTODO - set to tag
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@bugfix/build-kit-in-forks
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.0
     permissions:
       contents: read
     secrets:
