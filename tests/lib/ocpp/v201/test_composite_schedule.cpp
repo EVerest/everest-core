@@ -480,7 +480,8 @@ TEST_F(CompositeScheduleTestFixtureV201, K08_CalculateCompositeSchedule_LayeredR
     period4.limit = 20.0;
     period4.numberPhases = 1;
     CompositeSchedule expected;
-    expected.chargingSchedulePeriod = {period1, period2, period3, period4}, expected.evseId = DEFAULT_EVSE_ID;
+    expected.chargingSchedulePeriod = {period1, period2, period3, period4};
+    expected.evseId = DEFAULT_EVSE_ID;
     expected.duration = 3840;
     expected.scheduleStart = start_time;
     expected.chargingRateUnit = ChargingRateUnitEnum::W;
