@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 cd tests
 pytest \
   -rA \
@@ -11,3 +9,9 @@ pytest \
   core_tests/*.py \
   framework_tests/*.py \
   --everest-prefix "$EXT_MOUNT/dist"
+retVal=$?
+
+if [ $retVal -ne 0 ]; then
+    echo "Integration tests failed with return code $retVal"
+    exit $retVal
+fi
