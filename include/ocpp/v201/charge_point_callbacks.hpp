@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include <ocpp/v201/connectivity_manager.hpp>
 #include <ocpp/v201/device_model.hpp>
 
 #include <ocpp/v201/messages/BootNotification.hpp>
@@ -84,8 +85,7 @@ struct Callbacks {
     std::optional<std::function<SetNetworkProfileStatusEnum(
         const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>>
         validate_network_profile_callback;
-    std::optional<std::function<bool(const NetworkConnectionProfile& network_connection_profile)>>
-        configure_network_connection_profile_callback;
+    std::optional<ConfigureNetworkConnectionProfileCallback> configure_network_connection_profile_callback;
     std::optional<std::function<void(const ocpp::DateTime& currentTime)>> time_sync_callback;
 
     /// \brief callback to be called to congfigure ocpp message logging
@@ -135,7 +135,9 @@ struct Callbacks {
         transaction_event_response_callback;
 
     /// \brief Callback function is called when the websocket connection status changes
-    std::optional<std::function<void(const bool is_connected)>> connection_state_changed_callback;
+    std::optional<std::function<void(const bool is_connected, const int configuration_slot,
+                                     const NetworkConnectionProfile& network_connection_profile)>>
+        connection_state_changed_callback;
 
     /// \brief Callback functions called for get / set / clear display messages
     std::optional<std::function<std::vector<DisplayMessage>(const GetDisplayMessagesRequest& request)>>

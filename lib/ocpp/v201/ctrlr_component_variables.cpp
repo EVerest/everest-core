@@ -198,6 +198,13 @@ const ComponentVariable& RoundClockAlignedTimestamps = {
         "RoundClockAlignedTimestamps",
     }),
 };
+const ComponentVariable& NetworkConfigTimeout = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "NetworkConfigTimeout",
+    }),
+};
 const ComponentVariable& SupportedChargingProfilePurposeTypes = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

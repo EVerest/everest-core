@@ -889,6 +889,13 @@ void from_json(const json& j, SetMonitoringResult& k);
 /// \returns an output stream with the SetMonitoringResult written to
 std::ostream& operator<<(std::ostream& os, const SetMonitoringResult& k);
 
+/// @brief The result of a configuration of a network profile.
+struct ConfigNetworkResult {
+    uint8_t network_profile_slot;                 ///< @brief Network profile slot.
+    std::optional<std::string> interface_address; ///< ip address or interface string
+    bool success;                                 ///< true if the configuration was successful
+};
+
 struct SetVariableData {
     CiString<1000> attributeValue;
     Component component;

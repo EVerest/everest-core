@@ -752,6 +752,24 @@
           "description": "If enabled the transactions that were active before shutdown will be resumed, if possible",
           "default": false,
           "type": "boolean"
+      },
+      "NetworkConfigTimeout": {
+          "variable_name": "NetworkConfigTimeout",
+          "characteristics": {
+              "supportsMonitoring": true,
+              "dataType": "integer",
+              "minLimit": 1
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadWrite"
+              }
+          ],
+          "description": "Timeout value in seconds to wait for a response from a network configuration request",
+          "minimum": 1,
+          "default": "60",
+          "type": "integer"
       }
   },
   "required": [
