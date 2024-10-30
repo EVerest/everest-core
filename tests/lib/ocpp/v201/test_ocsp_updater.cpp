@@ -35,64 +35,71 @@ protected:
         this->evse_security = std::make_shared<EvseSecurityMock>();
         this->status_update = [this](auto request) { return this->charge_point->get_certificate_status(request); };
 
-        this->example_ocsp_data.push_back(OCSPRequestData{.hashAlgorithm = HashAlgorithmEnumType::SHA256,
-                                                          .issuerNameHash = "issuerHash1",
-                                                          .issuerKeyHash = "issuerKey1",
-                                                          .serialNumber = "serial1",
-                                                          .responderUrl = "responder1"});
-        this->example_ocsp_data.push_back(OCSPRequestData{.hashAlgorithm = HashAlgorithmEnumType::SHA384,
-                                                          .issuerNameHash = "issuerHash2",
-                                                          .issuerKeyHash = "issuerKey2",
-                                                          .serialNumber = "serial2",
-                                                          .responderUrl = "responder2"});
-        this->example_ocsp_data.push_back(OCSPRequestData{.hashAlgorithm = HashAlgorithmEnumType::SHA512,
-                                                          .issuerNameHash = "issuerHash3",
-                                                          .issuerKeyHash = "issuerKey3",
-                                                          .serialNumber = "serial3",
-                                                          .responderUrl = "responder3"});
+        OCSPRequestData ocsp1;
+        ocsp1.hashAlgorithm = HashAlgorithmEnumType::SHA256;
+        ocsp1.issuerNameHash = "issuerHash1";
+        ocsp1.issuerKeyHash = "issuerKey1";
+        ocsp1.serialNumber = "serial1";
+        ocsp1.responderUrl = "responder1";
+        this->example_ocsp_data.push_back(ocsp1);
 
-        this->example_hash_data.push_back(CertificateHashDataType{
-            .hashAlgorithm = HashAlgorithmEnumType::SHA256,
-            .issuerNameHash = "issuerHash1",
-            .issuerKeyHash = "issuerKey1",
-            .serialNumber = "serial1",
-        });
-        this->example_hash_data.push_back(CertificateHashDataType{
-            .hashAlgorithm = HashAlgorithmEnumType::SHA384,
-            .issuerNameHash = "issuerHash2",
-            .issuerKeyHash = "issuerKey2",
-            .serialNumber = "serial2",
-        });
-        this->example_hash_data.push_back(CertificateHashDataType{
-            .hashAlgorithm = HashAlgorithmEnumType::SHA512,
-            .issuerNameHash = "issuerHash3",
-            .issuerKeyHash = "issuerKey3",
-            .serialNumber = "serial3",
-        });
+        OCSPRequestData ocsp2;
+        ocsp2.hashAlgorithm = HashAlgorithmEnumType::SHA384;
+        ocsp2.issuerNameHash = "issuerHash2";
+        ocsp2.issuerKeyHash = "issuerKey2";
+        ocsp2.serialNumber = "serial2";
+        ocsp2.responderUrl = "responder2";
+        this->example_ocsp_data.push_back(ocsp2);
+
+        OCSPRequestData ocsp3;
+        ocsp3.hashAlgorithm = HashAlgorithmEnumType::SHA512;
+        ocsp3.issuerNameHash = "issuerHash3";
+        ocsp3.issuerKeyHash = "issuerKey3";
+        ocsp3.serialNumber = "serial3";
+        ocsp3.responderUrl = "responder3";
+        this->example_ocsp_data.push_back(ocsp3);
+
+        CertificateHashDataType certificate_hash_data1;
+        certificate_hash_data1.hashAlgorithm = HashAlgorithmEnumType::SHA256;
+        certificate_hash_data1.issuerNameHash = "issuerHash1";
+        certificate_hash_data1.issuerKeyHash = "issuerKey1";
+        certificate_hash_data1.serialNumber = "serial1";
+        this->example_hash_data.push_back(certificate_hash_data1);
+
+        CertificateHashDataType certificate_hash_data2;
+        certificate_hash_data2.hashAlgorithm = HashAlgorithmEnumType::SHA384;
+        certificate_hash_data2.issuerNameHash = "issuerHash2";
+        certificate_hash_data2.issuerKeyHash = "issuerKey2";
+        certificate_hash_data2.serialNumber = "serial2";
+        this->example_hash_data.push_back(certificate_hash_data2);
+
+        CertificateHashDataType certificate_hash_data3;
+        certificate_hash_data3.hashAlgorithm = HashAlgorithmEnumType::SHA512;
+        certificate_hash_data3.issuerNameHash = "issuerHash3";
+        certificate_hash_data3.issuerKeyHash = "issuerKey3";
+        certificate_hash_data3.serialNumber = "serial3";
+        this->example_hash_data.push_back(certificate_hash_data3);
 
         v201::GetCertificateStatusRequest example_get_cert_status_request_1;
-        example_get_cert_status_request_1.ocspRequestData =
-            v201::OCSPRequestData{.hashAlgorithm = v201::HashAlgorithmEnum::SHA256,
-                                  .issuerNameHash = "issuerHash1",
-                                  .issuerKeyHash = "issuerKey1",
-                                  .serialNumber = "serial1",
-                                  .responderURL = "responder1"};
+        example_get_cert_status_request_1.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA256;
+        example_get_cert_status_request_1.ocspRequestData.issuerNameHash = "issuerHash1";
+        example_get_cert_status_request_1.ocspRequestData.issuerKeyHash = "issuerKey1";
+        example_get_cert_status_request_1.ocspRequestData.serialNumber = "serial1";
+        example_get_cert_status_request_1.ocspRequestData.responderURL = "responder1";
         this->example_status_requests.push_back(example_get_cert_status_request_1);
         v201::GetCertificateStatusRequest example_get_cert_status_request_2;
-        example_get_cert_status_request_2.ocspRequestData =
-            v201::OCSPRequestData{.hashAlgorithm = v201::HashAlgorithmEnum::SHA384,
-                                  .issuerNameHash = "issuerHash2",
-                                  .issuerKeyHash = "issuerKey2",
-                                  .serialNumber = "serial2",
-                                  .responderURL = "responder2"};
+        example_get_cert_status_request_2.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA384;
+        example_get_cert_status_request_2.ocspRequestData.issuerNameHash = "issuerHash2";
+        example_get_cert_status_request_2.ocspRequestData.issuerKeyHash = "issuerKey2";
+        example_get_cert_status_request_2.ocspRequestData.serialNumber = "serial2";
+        example_get_cert_status_request_2.ocspRequestData.responderURL = "responder2";
         this->example_status_requests.push_back(example_get_cert_status_request_2);
         v201::GetCertificateStatusRequest example_get_cert_status_request_3;
-        example_get_cert_status_request_3.ocspRequestData =
-            v201::OCSPRequestData{.hashAlgorithm = v201::HashAlgorithmEnum::SHA512,
-                                  .issuerNameHash = "issuerHash3",
-                                  .issuerKeyHash = "issuerKey3",
-                                  .serialNumber = "serial3",
-                                  .responderURL = "responder3"};
+        example_get_cert_status_request_3.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA512;
+        example_get_cert_status_request_3.ocspRequestData.issuerNameHash = "issuerHash3";
+        example_get_cert_status_request_3.ocspRequestData.issuerKeyHash = "issuerKey3";
+        example_get_cert_status_request_3.ocspRequestData.serialNumber = "serial3";
+        example_get_cert_status_request_3.ocspRequestData.responderURL = "responder3";
         this->example_status_requests.push_back(example_get_cert_status_request_3);
     }
 

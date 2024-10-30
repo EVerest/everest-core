@@ -181,7 +181,7 @@ protected:
             this->call_marker_cond_var.notify_one();
             return value;
         });
-    };
+    }
 
     void wait_for_calls(int expected_calls = 1) {
         std::unique_lock<std::mutex> lock(call_marker_mutex);

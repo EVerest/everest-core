@@ -6,6 +6,7 @@ target_compile_options(ocpp
     PRIVATE
          #-Werror # turn warnings into errors
         -Wimplicit-fallthrough  # avoid unintended fallthroughs
+        -pedantic-errors
 )
 
 target_compile_definitions(ocpp

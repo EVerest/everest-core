@@ -76,9 +76,8 @@ public:
     std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(std::vector<int32_t> start_periods) {
         auto charging_schedule_periods = std::vector<ChargingSchedulePeriod>();
         for (auto start_period : start_periods) {
-            auto charging_schedule_period = ChargingSchedulePeriod{
-                .startPeriod = start_period,
-            };
+            ChargingSchedulePeriod charging_schedule_period;
+            charging_schedule_period.startPeriod = start_period;
             charging_schedule_periods.push_back(charging_schedule_period);
         }
 
@@ -114,16 +113,18 @@ public:
                             std::optional<ocpp::DateTime> validTo = {}) {
         auto recurrency_kind = RecurrencyKindEnum::Daily;
         std::vector<ChargingSchedule> charging_schedules = {charging_schedule};
-        return ChargingProfile{.id = charging_profile_id,
-                               .stackLevel = stack_level,
-                               .chargingProfilePurpose = charging_profile_purpose,
-                               .chargingProfileKind = charging_profile_kind,
-                               .chargingSchedule = charging_schedules,
-                               .customData = {},
-                               .recurrencyKind = recurrency_kind,
-                               .validFrom = validFrom,
-                               .validTo = validTo,
-                               .transactionId = transaction_id};
+        ChargingProfile charging_profile;
+        charging_profile.id = charging_profile_id;
+        charging_profile.stackLevel = stack_level;
+        charging_profile.chargingProfilePurpose = charging_profile_purpose;
+        charging_profile.chargingProfileKind = charging_profile_kind;
+        charging_profile.chargingSchedule = charging_schedules;
+        charging_profile.customData = {};
+        charging_profile.recurrencyKind = recurrency_kind;
+        charging_profile.validFrom = validFrom;
+        charging_profile.validTo = validTo;
+        charging_profile.transactionId = transaction_id;
+        return charging_profile;
     }
 
     std::shared_ptr<DatabaseHandler> create_database_handler() {
@@ -625,11 +626,10 @@ public:
     template <class T, MessageType M> EnhancedMessage<MessageType> request_to_enhanced_message(const T& req) {
         auto message_id = uuid();
         ocpp::Call<T> call(req, message_id);
-        EnhancedMessage<MessageType> enhanced_message{
-            .uniqueId = message_id,
-            .messageType = M,
-            .messageTypeId = MessageTypeId::CALL,
-        };
+        EnhancedMessage<MessageType> enhanced_message;
+        enhanced_message.uniqueId = message_id;
+        enhanced_message.messageType = M;
+        enhanced_message.messageTypeId = MessageTypeId::CALL;
 
         call_to_json(enhanced_message.message, call);
 
@@ -782,7 +782,8 @@ TEST_F(ChargePointFunctionalityTestFixtureV201,
 
     RequestStartTransactionRequest req;
     req.evseId = DEFAULT_EVSE_ID;
-    req.idToken = IdToken{.idToken = "Local", .type = IdTokenEnum::Local};
+    req.idToken.idToken = "Local";
+    req.idToken.type = IdTokenEnum::Local;
     req.chargingProfile = profile;
 
     auto start_transaction_req =
@@ -908,7 +909,8 @@ TEST_F(ChargePointFunctionalityTestFixtureV201,
 
     RequestStartTransactionRequest req;
     req.evseId = DEFAULT_EVSE_ID;
-    req.idToken = IdToken{.idToken = "Local", .type = IdTokenEnum::Local};
+    req.idToken.idToken = "Local";
+    req.idToken.type = IdTokenEnum::Local;
     req.chargingProfile = profile;
 
     auto start_transaction_req =

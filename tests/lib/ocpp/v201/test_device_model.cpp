@@ -48,29 +48,31 @@ TEST_F(DeviceModelTest, test_allow_zero) {
 TEST_F(DeviceModelTest, test_component_as_key_in_map) {
     std::map<Component, int32_t> components_to_ints;
 
-    const Component base_comp = {.name = "Foo"};
+    Component base_comp;
+    base_comp.name = "Foo";
     components_to_ints[base_comp] = 1;
 
-    const Component different_instance_comp = {
-        .name = "Foo",
-        .instance = "bar",
-    };
-    const Component different_evse_comp = {
-        .name = "Foo",
-        .evse = EVSE{.id = 0},
-    };
-    const Component different_evse_and_instance_comp = {
-        .name = "Foo",
-        .evse = EVSE{.id = 0},
-        .instance = "bar",
-    };
-    const Component comp_with_custom_data = {
-        .name = "Foo",
-        .customData = json::object({{"vendorId", "Baz"}}),
-    };
-    const Component different_name_comp = {
-        .name = "Bar",
-    };
+    Component different_instance_comp;
+    different_instance_comp.name = "Foo";
+    different_instance_comp.instance = "bar";
+
+    Component different_evse_comp;
+    different_evse_comp.name = "Foo";
+    EVSE evse0;
+    evse0.id = 0;
+    different_evse_comp.evse = evse0;
+
+    Component different_evse_and_instance_comp;
+    different_evse_and_instance_comp.name = "Foo";
+    different_evse_and_instance_comp.evse = evse0;
+    different_evse_and_instance_comp.instance = "bar";
+
+    Component comp_with_custom_data;
+    comp_with_custom_data.name = "Foo";
+    comp_with_custom_data.customData = json::object({{"vendorId", "Baz"}});
+
+    Component different_name_comp;
+    different_name_comp.name = "Bar";
 
     EXPECT_EQ(components_to_ints.find(base_comp)->second, 1);
     EXPECT_EQ(components_to_ints.find(different_instance_comp), components_to_ints.end());
@@ -83,16 +85,21 @@ TEST_F(DeviceModelTest, test_component_as_key_in_map) {
 TEST_F(DeviceModelTest, test_set_monitors) {
     std::vector<SetMonitoringData> requests;
 
-    const EVSE evse = {.id = 2, .connectorId = 3};
+    EVSE evse;
+    evse.id = 2;
+    evse.connectorId = 3;
 
-    const Component component1 = {
-        .name = "UnitTestCtrlr",
-        .evse = evse,
-    };
-    const Component component2 = {.name = "AlignedDataCtrlr"};
+    Component component1;
+    component1.name = "UnitTestCtrlr";
+    component1.evse = evse;
 
-    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
-    const Variable variable_comp2 = {.name = "Interval"};
+    Component component2;
+    component2.name = "AlignedDataCtrlr";
+
+    Variable variable_comp1;
+    variable_comp1.name = "UnitTestPropertyAName";
+    Variable variable_comp2;
+    variable_comp2.name = "Interval";
 
     std::vector<ComponentVariable> components = {
         {component1, std::nullopt, variable_comp1},
@@ -109,16 +116,18 @@ TEST_F(DeviceModelTest, test_set_monitors) {
         dm->clear_monitors(ids, true);
     }
 
-    const SetMonitoringData req_one{.value = 0.0,
-                                    .type = MonitorEnum::PeriodicClockAligned,
-                                    .severity = 7,
-                                    .component = component1,
-                                    .variable = variable_comp1};
-    const SetMonitoringData req_two{.value = 4.579,
-                                    .type = MonitorEnum::UpperThreshold,
-                                    .severity = 3,
-                                    .component = component2,
-                                    .variable = variable_comp2};
+    SetMonitoringData req_one;
+    req_one.value = 0.0;
+    req_one.type = MonitorEnum::PeriodicClockAligned;
+    req_one.severity = 7;
+    req_one.component = component1;
+    req_one.variable = variable_comp1;
+    SetMonitoringData req_two;
+    req_two.value = 4.579;
+    req_two.type = MonitorEnum::UpperThreshold;
+    req_two.severity = 3;
+    req_two.component = component2;
+    req_two.variable = variable_comp2;
 
     requests.push_back(req_one);
     requests.push_back(req_two);
@@ -138,16 +147,21 @@ TEST_F(DeviceModelTest, test_get_monitors) {
         MonitoringCriterionEnum::ThresholdMonitoring,
     };
 
-    const EVSE evse = {.id = 2, .connectorId = 3};
+    EVSE evse;
+    evse.id = 2;
+    evse.connectorId = 3;
 
-    const Component component1 = {
-        .name = "UnitTestCtrlr",
-        .evse = evse,
-    };
-    const Component component2 = {.name = "AlignedDataCtrlr"};
+    Component component1;
+    component1.name = "UnitTestCtrlr";
+    component1.evse = evse;
 
-    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
-    const Variable variable_comp2 = {.name = "Interval"};
+    Component component2;
+    component2.name = "AlignedDataCtrlr";
+
+    Variable variable_comp1;
+    variable_comp1.name = "UnitTestPropertyAName";
+    Variable variable_comp2;
+    variable_comp2.name = "Interval";
 
     std::vector<ComponentVariable> components = {
         {component1, std::nullopt, variable_comp1},
@@ -161,11 +175,12 @@ TEST_F(DeviceModelTest, test_get_monitors) {
     auto monitor1 = results[0].variableMonitoring[0];
 
     // Valued used above
-    const SetMonitoringData req_one{.value = 0.0,
-                                    .type = MonitorEnum::PeriodicClockAligned,
-                                    .severity = 7,
-                                    .component = component1,
-                                    .variable = variable_comp1};
+    SetMonitoringData req_one;
+    req_one.value = 0.0;
+    req_one.type = MonitorEnum::PeriodicClockAligned;
+    req_one.severity = 7;
+    req_one.component = component1;
+    req_one.variable = variable_comp1;
 
     ASSERT_EQ(monitor1.severity, 7);
     ASSERT_EQ(monitor1.type, MonitorEnum::PeriodicClockAligned);
@@ -178,16 +193,20 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
         MonitoringCriterionEnum::ThresholdMonitoring,
     };
 
-    const EVSE evse = {.id = 2, .connectorId = 3};
+    EVSE evse;
+    evse.id = 2;
+    evse.connectorId = 3;
 
-    const Component component1 = {
-        .name = "UnitTestCtrlr",
-        .evse = evse,
-    };
-    const Component component2 = {.name = "AlignedDataCtrlr"};
+    Component component1;
+    component1.name = "UnitTestCtrlr";
+    component1.evse = evse;
+    Component component2;
+    component2.name = "AlignedDataCtrlr";
 
-    const Variable variable_comp1 = {.name = "UnitTestPropertyAName"};
-    const Variable variable_comp2 = {.name = "Interval"};
+    Variable variable_comp1;
+    variable_comp1.name = "UnitTestPropertyAName";
+    Variable variable_comp2;
+    variable_comp2.name = "Interval";
 
     std::vector<ComponentVariable> components = {
         {component1, std::nullopt, variable_comp1},
@@ -195,16 +214,18 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
     };
 
     // Insert some monitors that are hard-wired
-    const SetMonitoringData hardwired_one{.value = 0.0,
-                                          .type = MonitorEnum::PeriodicClockAligned,
-                                          .severity = 5,
-                                          .component = component1,
-                                          .variable = variable_comp1};
-    const SetMonitoringData hardwired_two{.value = 8.579,
-                                          .type = MonitorEnum::UpperThreshold,
-                                          .severity = 2,
-                                          .component = component2,
-                                          .variable = variable_comp2};
+    SetMonitoringData hardwired_one;
+    hardwired_one.value = 0.0;
+    hardwired_one.type = MonitorEnum::PeriodicClockAligned;
+    hardwired_one.severity = 5;
+    hardwired_one.component = component1;
+    hardwired_one.variable = variable_comp1;
+    SetMonitoringData hardwired_two;
+    hardwired_two.value = 8.579;
+    hardwired_two.type = MonitorEnum::UpperThreshold;
+    hardwired_two.severity = 2;
+    hardwired_two.component = component2;
+    hardwired_two.variable = variable_comp2;
 
     std::vector<SetMonitoringData> requests;
     requests.push_back(hardwired_one);

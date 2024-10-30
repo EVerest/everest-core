@@ -114,11 +114,10 @@ protected:
     std::vector<ChargingSchedulePeriod>
     create_charging_schedule_periods(int32_t start_period, std::optional<int32_t> number_phases = std::nullopt,
                                      std::optional<int32_t> phase_to_use = std::nullopt) {
-        auto charging_schedule_period = ChargingSchedulePeriod{
-            .startPeriod = start_period,
-            .numberPhases = number_phases,
-            .phaseToUse = phase_to_use,
-        };
+        ChargingSchedulePeriod charging_schedule_period;
+        charging_schedule_period.startPeriod = start_period;
+        charging_schedule_period.numberPhases = number_phases;
+        charging_schedule_period.phaseToUse = phase_to_use;
 
         return {charging_schedule_period};
     }
@@ -126,9 +125,9 @@ protected:
     std::vector<ChargingSchedulePeriod> create_charging_schedule_periods(std::vector<int32_t> start_periods) {
         auto charging_schedule_periods = std::vector<ChargingSchedulePeriod>();
         for (auto start_period : start_periods) {
-            auto charging_schedule_period = ChargingSchedulePeriod{
-                .startPeriod = start_period,
-            };
+            ChargingSchedulePeriod charging_schedule_period;
+            charging_schedule_period.startPeriod = start_period;
+
             charging_schedule_periods.push_back(charging_schedule_period);
         }
 
@@ -137,8 +136,10 @@ protected:
 
     std::vector<ChargingSchedulePeriod>
     create_charging_schedule_periods_with_phases(int32_t start_period, int32_t numberPhases, int32_t phaseToUse) {
-        auto charging_schedule_period =
-            ChargingSchedulePeriod{.startPeriod = start_period, .numberPhases = numberPhases, .phaseToUse = phaseToUse};
+        ChargingSchedulePeriod charging_schedule_period;
+        charging_schedule_period.startPeriod = start_period;
+        charging_schedule_period.numberPhases = numberPhases;
+        charging_schedule_period.phaseToUse = phaseToUse;
 
         return {charging_schedule_period};
     }
@@ -151,16 +152,18 @@ protected:
                             std::optional<ocpp::DateTime> validTo = {}) {
         auto recurrency_kind = RecurrencyKindEnum::Daily;
         std::vector<ChargingSchedule> charging_schedules = {charging_schedule};
-        return ChargingProfile{.id = charging_profile_id,
-                               .stackLevel = stack_level,
-                               .chargingProfilePurpose = charging_profile_purpose,
-                               .chargingProfileKind = charging_profile_kind,
-                               .chargingSchedule = charging_schedules,
-                               .customData = {},
-                               .recurrencyKind = recurrency_kind,
-                               .validFrom = validFrom,
-                               .validTo = validTo,
-                               .transactionId = transaction_id};
+        ChargingProfile charging_profile;
+        charging_profile.id = charging_profile_id;
+        charging_profile.stackLevel = stack_level;
+        charging_profile.chargingProfilePurpose = charging_profile_purpose;
+        charging_profile.chargingProfileKind = charging_profile_kind;
+        charging_profile.chargingSchedule = charging_schedules;
+        charging_profile.customData = {};
+        charging_profile.recurrencyKind = recurrency_kind;
+        charging_profile.validFrom = validFrom;
+        charging_profile.validTo = validTo;
+        charging_profile.transactionId = transaction_id;
+        return charging_profile;
     }
 
     ChargingProfileCriterion create_charging_profile_criteria(
@@ -198,8 +201,12 @@ protected:
     ClearChargingProfile create_clear_charging_profile(std::optional<int32_t> evse_id = std::nullopt,
                                                        std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
                                                        std::optional<int32_t> stack_level = std::nullopt) {
-        return ClearChargingProfile{
-            .customData = {}, .evseId = evse_id, .chargingProfilePurpose = purpose, .stackLevel = stack_level};
+        ClearChargingProfile clear_charging_profile;
+        clear_charging_profile.customData = {};
+        clear_charging_profile.evseId = evse_id;
+        clear_charging_profile.chargingProfilePurpose = purpose;
+        clear_charging_profile.stackLevel = stack_level;
+        return clear_charging_profile;
     }
 
     void create_device_model_db(const std::string& path) {
@@ -1274,9 +1281,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201, AddProfile_StoresChargingLimitSource
     auto response = handler.add_profile(profile, DEFAULT_EVSE_ID, charging_limit_source);
     EXPECT_THAT(response.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfileId = {{profile.id}},
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = {{profile.id}};
+
     auto profiles = this->database_handler->get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, criteria);
     const auto [e, p, sut] = profiles[0];
     EXPECT_THAT(sut, ChargingLimitSourceEnum::SO);
@@ -1296,9 +1303,9 @@ TEST_F(SmartChargingHandlerTestFixtureV201, ValidateAndAddProfile_StoresCharging
     auto response = handler.conform_validate_and_add_profile(profile, DEFAULT_EVSE_ID, charging_limit_source);
     EXPECT_THAT(response.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfileId = {{profile.id}},
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = {{profile.id}};
+
     auto profiles = this->database_handler->get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, criteria);
     const auto [e, p, sut] = profiles[0];
     EXPECT_THAT(sut, ChargingLimitSourceEnum::SO);

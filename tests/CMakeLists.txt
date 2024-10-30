@@ -37,6 +37,13 @@ target_compile_definitions(libocpp_unit_tests
     TEST_PROFILES_LOCATION_V201="${TEST_PROFILES_LOCATION_V201}"
 )
 
+target_compile_options(libocpp_unit_tests
+    PRIVATE
+        -pedantic-errors
+)
+
+target_compile_features(libocpp_unit_tests PUBLIC cxx_std_17)
+
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model.db
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/resources/unittest_device_model_missing_required.db ${CMAKE_CURRENT_BINARY_DIR}/resources/unittest_device_model_missing_required.db

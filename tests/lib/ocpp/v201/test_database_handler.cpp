@@ -168,9 +168,12 @@ TEST_F(DatabaseHandlerTest, TransactionDeleteNotFound) {
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithNoData_InsertProfile) {
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    ChargingProfile profile;
+    profile.id = 1;
+    profile.stackLevel = 1;
+    profile.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile);
 
     auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
 
@@ -181,12 +184,18 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithNoData_InsertProfile) {
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_UpdateProfile) {
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    ChargingProfile profile1;
+    profile1.id = 2;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile1);
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 2;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile2);
 
     std::string sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
     auto select_stmt = this->database->new_statement(sql);
@@ -198,12 +207,18 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_UpdateProfile) {
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_InsertNewProfile) {
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile1);
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile2);
 
     std::string sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
     auto select_stmt = this->database->new_statement(sql);
@@ -215,12 +230,18 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_InsertNewProfile) {
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_DeleteRemovesSpecifiedProfiles) {
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile1);
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile2);
 
     auto sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
 
@@ -243,12 +264,18 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_DeleteRemovesSpecif
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithProfileData_DeleteAllRemovesAllProfiles) {
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
-    this->database_handler.insert_or_update_charging_profile(
-        1, ChargingProfile{
-               .id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile});
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile1);
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(1, profile2);
 
     auto sql = "SELECT COUNT(*) FROM CHARGING_PROFILES";
 
@@ -289,8 +316,11 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithNoProfileData_DeleteAllDoesNotF
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithSingleProfileData_LoadsChargingProfile) {
-    auto profile = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile profile;
+    profile.id = 1;
+    profile.stackLevel = 1;
+    profile.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(1, profile);
 
     auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
@@ -307,17 +337,26 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithSingleProfileData_LoadsCharging
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileSameEvse_LoadsChargingProfile) {
-    auto p1 = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
 
     this->database_handler.insert_or_update_charging_profile(1, p1);
 
-    auto p2 = ChargingProfile{
-        .id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p2;
+    p2.id = 2;
+    p2.stackLevel = 2;
+    p2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(1, p2);
 
-    auto p3 = ChargingProfile{
-        .id = 3, .stackLevel = 3, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p3;
+    p3.id = 3;
+    p3.stackLevel = 3;
+    p3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(1, p3);
 
     auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
@@ -336,27 +375,46 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileSameEvse_LoadsCh
 }
 
 TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileDiffEvse_LoadsChargingProfile) {
-    auto p1 = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(1, p1);
 
-    auto p2 =
-        ChargingProfile{.id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile p2;
+    p2.id = 2;
+    p2.stackLevel = 2;
+    p2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    p2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(1, p2);
 
-    auto p3 = ChargingProfile{
-        .id = 3, .stackLevel = 3, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p3;
+    p3.id = 3;
+    p3.stackLevel = 3;
+    p3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(2, p3);
-    auto p4 =
-        ChargingProfile{.id = 4, .stackLevel = 4, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+
+    ChargingProfile p4;
+    p4.id = 4;
+    p4.stackLevel = 4;
+    p4.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    p4.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(2, p4);
 
-    auto p5 = ChargingProfile{
-        .id = 5, .stackLevel = 5, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p5;
+    p5.id = 5;
+    p5.stackLevel = 5;
+    p5.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p5.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(3, p5);
 
-    auto p6 =
-        ChargingProfile{.id = 6, .stackLevel = 6, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile p6;
+    p6.id = 6;
+    p6.stackLevel = 6;
+    p6.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    p6.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(3, p6);
 
     auto sut = this->database_handler.get_all_charging_profiles_group_by_evse();
@@ -385,10 +443,17 @@ TEST_F(DatabaseHandlerTest, KO1_FR27_DatabaseWithMultipleProfileDiffEvse_LoadsCh
 }
 
 TEST_F(DatabaseHandlerTest, GetAllChargingProfiles_GetsAllProfiles) {
-    auto profile1 = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    auto profile2 =
-        ChargingProfile{.id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
 
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID + 1, profile2);
@@ -401,10 +466,17 @@ TEST_F(DatabaseHandlerTest, GetAllChargingProfiles_GetsAllProfiles) {
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesForEvse_GetsProfilesForEVSE) {
-    auto profile1 = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    auto profile2 =
-        ChargingProfile{.id = 2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 2;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
 
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
@@ -417,10 +489,17 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesForEvse_GetsProfilesForEVSE) {
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesForEvse_DoesNotGetProfilesOnOtherEVSE) {
-    auto profile1 = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    auto profile2 =
-        ChargingProfile{.id = 2, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile profile1;
+    profile1.id = 1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    ChargingProfile profile2;
+    profile2.id = 2;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
 
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID + 1, profile2);
@@ -435,12 +514,18 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesForEvse_DoesNotGetProfilesOnOther
 TEST_F(DatabaseHandlerTest, DeleteChargingProfileByTransactionId_DeletesByTransactionId) {
     const auto profile_id = 1;
     const auto transaction_id = uuid();
-    auto profile1 = ChargingProfile{
-        .id = profile_id, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    auto profile2 = ChargingProfile{.id = profile_id + 1,
-                                    .stackLevel = 1,
-                                    .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile,
-                                    .transactionId = transaction_id};
+    ChargingProfile profile1;
+    profile1.id = profile_id;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    ChargingProfile profile2;
+    profile2.id = profile_id + 1;
+    profile2.stackLevel = 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    profile2.transactionId = transaction_id;
 
     this->database_handler.insert_or_update_charging_profile(1, profile1);
     this->database_handler.insert_or_update_charging_profile(1, profile2);
@@ -462,8 +547,11 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_WhenGivenProfi
     const ClearChargingProfile clear_criteria;
 
     const auto profile_id = 1;
-    auto p1 = ChargingProfile{
-        .id = profile_id, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p1;
+    p1.id = profile_id;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -480,8 +568,11 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_WhenNotGivenPr
     const ClearChargingProfile clear_criteria;
 
     const auto profile_id = 1;
-    auto p1 = ChargingProfile{
-        .id = profile_id, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p1;
+    p1.id = profile_id;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -497,10 +588,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_WhenNotGivenPr
 
 TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_WhenNotGivenCriteria_DeletesAllProfiles) {
     const auto profile_id = 1;
-    auto p1 = ChargingProfile{
-        .id = profile_id, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    auto p2 = ChargingProfile{
-        .id = profile_id + 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
+    ChargingProfile p1;
+    p1.id = profile_id;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    ChargingProfile p2;
+    p2.id = profile_id + 1;
+    p2.stackLevel = 1;
+    p2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    p2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID + 1, p2);
 
@@ -518,13 +615,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_WhenAllCriteri
     const auto purpose = ChargingProfilePurposeEnum::TxDefaultProfile;
     const auto stack_level = 1;
 
-    const ClearChargingProfile clear_criteria = {
-        .evseId = DEFAULT_EVSE_ID,
-        .chargingProfilePurpose = purpose,
-        .stackLevel = stack_level,
-    };
+    ClearChargingProfile clear_criteria;
+    clear_criteria.evseId = DEFAULT_EVSE_ID;
+    clear_criteria.chargingProfilePurpose = purpose;
+    clear_criteria.stackLevel = stack_level;
 
-    auto p1 = ChargingProfile{.id = 1, .stackLevel = stack_level, .chargingProfilePurpose = purpose};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = stack_level;
+    p1.chargingProfilePurpose = purpose;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -541,14 +641,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_UnknownPurpose
     const auto different_purpose = ChargingProfilePurposeEnum::TxProfile;
     const auto stack_level = 1;
 
-    const ClearChargingProfile clear_criteria = {
-        .evseId = DEFAULT_EVSE_ID,
-        .chargingProfilePurpose = different_purpose,
-        .stackLevel = stack_level,
-    };
+    ClearChargingProfile clear_criteria;
+    clear_criteria.evseId = DEFAULT_EVSE_ID;
+    clear_criteria.chargingProfilePurpose = different_purpose;
+    clear_criteria.stackLevel = stack_level;
 
-    auto p1 = ChargingProfile{
-        .id = 1, .stackLevel = stack_level, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = stack_level;
+    p1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -567,13 +669,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_UnknownStackLe
     const auto purpose = ChargingProfilePurposeEnum::TxDefaultProfile;
     const auto different_stack_level = 2;
 
-    const ClearChargingProfile clear_criteria = {
-        .evseId = DEFAULT_EVSE_ID,
-        .chargingProfilePurpose = purpose,
-        .stackLevel = different_stack_level,
-    };
+    ClearChargingProfile clear_criteria;
+    clear_criteria.evseId = DEFAULT_EVSE_ID;
+    clear_criteria.chargingProfilePurpose = purpose;
+    clear_criteria.stackLevel = different_stack_level;
 
-    auto p1 = ChargingProfile{.id = 1, .stackLevel = 1, .chargingProfilePurpose = purpose};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = 1;
+    p1.chargingProfilePurpose = purpose;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -593,13 +698,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_UnknownEvseId_
     const auto stack_level = 1;
     const auto different_evse_id = DEFAULT_EVSE_ID + 1;
 
-    const ClearChargingProfile clear_criteria = {
-        .evseId = different_evse_id,
-        .chargingProfilePurpose = purpose,
-        .stackLevel = stack_level,
-    };
+    ClearChargingProfile clear_criteria;
+    clear_criteria.evseId = different_evse_id;
+    clear_criteria.chargingProfilePurpose = purpose;
+    clear_criteria.stackLevel = stack_level;
 
-    auto p1 = ChargingProfile{.id = 1, .stackLevel = stack_level, .chargingProfilePurpose = purpose};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = stack_level;
+    p1.chargingProfilePurpose = purpose;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -618,13 +726,16 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_DoesNotDeleteE
     const auto purpose = ChargingProfilePurposeEnum::ChargingStationExternalConstraints;
     const auto stack_level = 1;
 
-    const ClearChargingProfile clear_criteria = {
-        .evseId = STATION_WIDE_ID,
-        .chargingProfilePurpose = purpose,
-        .stackLevel = stack_level,
-    };
+    ClearChargingProfile clear_criteria;
+    clear_criteria.evseId = STATION_WIDE_ID;
+    clear_criteria.chargingProfilePurpose = purpose;
+    clear_criteria.stackLevel = stack_level;
 
-    auto p1 = ChargingProfile{.id = 1, .stackLevel = stack_level, .chargingProfilePurpose = purpose};
+    ChargingProfile p1;
+    p1.id = 1;
+    p1.stackLevel = stack_level;
+    p1.chargingProfilePurpose = purpose;
+    p1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, p1);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -639,8 +750,11 @@ TEST_F(DatabaseHandlerTest, ClearChargingProfilesMatchingCriteria_DoesNotDeleteE
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_NoCriteriaReturnsAll) {
-    auto profile = ChargingProfile{
-        .id = 1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile profile;
+    profile.id = 1;
+    profile.stackLevel = 1;
+    profile.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
@@ -653,14 +767,18 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_NoCriteriaReturn
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_NoMatchingIdsReturnsEmpty) {
     auto profile_id = 1;
-    auto profile = ChargingProfile{
-        .id = profile_id, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfile profile;
+    profile.id = profile_id;
+    profile.stackLevel = 1;
+    profile.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile.chargingProfileKind = ChargingProfileKindEnum::Absolute;
     this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 1);
 
-    ChargingProfileCriterion criteria = {.chargingProfileId = std::vector<int32_t>{2}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = std::vector<int32_t>{2};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -670,19 +788,28 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_NoMatchingIdsRet
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingIdReturnsSingleProfile) {
     auto profile_id_1 = 1;
-    auto profile_1 = ChargingProfile{
-        .id = profile_id_1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{
-        .id = profile_id_2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = 2;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
 
-    ChargingProfileCriterion criteria = {.chargingProfileId = std::vector<int32_t>{profile_id_1}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = std::vector<int32_t>{profile_id_1};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -692,19 +819,26 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingIdReturn
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingIdsReturnsMultipleProfiles) {
     auto profile_id_1 = 1;
-    auto profile_1 = ChargingProfile{
-        .id = profile_id_1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{
-        .id = profile_id_2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = 2;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
 
-    ChargingProfileCriterion criteria = {.chargingProfileId = std::vector<int32_t>{profile_id_1, profile_id_2}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = std::vector<int32_t>{profile_id_1, profile_id_2};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -714,24 +848,34 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingIdsRetur
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingChargingProfilePurposeReturnsProfiles) {
     auto profile_id_1 = 1;
-    auto profile_1 = ChargingProfile{
-        .id = profile_id_1, .stackLevel = 1, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = 1;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{
-        .id = profile_id_2, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = 2;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{
-        .id = profile_id_3, .stackLevel = 2, .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = 2;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -742,27 +886,34 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingCharging
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingStackLevelReturnsProfiles) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.stackLevel = 2};
+    ChargingProfileCriterion criteria;
+    criteria.stackLevel = 2;
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -773,27 +924,34 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingStackLev
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingProfileSourceReturnsProfiles) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::EMS);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::EMS);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.chargingLimitSource = {{ChargingLimitSourceEnum::CSO}}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::CSO}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -804,28 +962,34 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingProfileS
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingProfileSourcesReturnsProfiles) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::EMS);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::EMS);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {
-        .chargingLimitSource = {{ChargingLimitSourceEnum::CSO, ChargingLimitSourceEnum::EMS}}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::CSO, ChargingLimitSourceEnum::EMS}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -836,29 +1000,36 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingProfileS
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetReturnsOne) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::CSO);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::CSO);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile,
-                                         .stackLevel = 2,
-                                         .chargingLimitSource = {{ChargingLimitSourceEnum::CSO}}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    criteria.stackLevel = 2;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::CSO}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -869,29 +1040,36 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetRe
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetReturnsNone) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::CSO);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::CSO);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile,
-                                         .stackLevel = 2,
-                                         .chargingLimitSource = {{ChargingLimitSourceEnum::EMS}}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    criteria.stackLevel = 2;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::EMS}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -902,29 +1080,36 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetRe
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetReturnsNothing) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::CSO);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::CSO);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile,
-                                         .stackLevel = 2,
-                                         .chargingLimitSource = {{ChargingLimitSourceEnum::EMS}}};
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    criteria.stackLevel = 2;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::EMS}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(std::nullopt, criteria);
@@ -935,31 +1120,36 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_AllCriteriaSetRe
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteriaAndEvseId0_AllCriteriaSetReturnsNone) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile2);
 
     auto profile_id_3 = 3;
-    auto profile_3 = ChargingProfile{.id = profile_id_3,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_3, ChargingLimitSourceEnum::CSO);
+    ChargingProfile profile3;
+    profile3.id = profile_id_3;
+    profile3.stackLevel = stack_level + 1;
+    profile3.chargingProfilePurpose = ChargingProfilePurposeEnum::TxProfile;
+    profile3.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile3, ChargingLimitSourceEnum::CSO);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 3);
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile,
-        .stackLevel = 2,
-        .chargingLimitSource = {{ChargingLimitSourceEnum::CSO}},
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    criteria.stackLevel = 2;
+    criteria.chargingLimitSource = {{ChargingLimitSourceEnum::CSO}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(0, criteria);
@@ -970,102 +1160,115 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteriaAndEvseId0_AllCri
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_IfProfileIdAndEvseIdGiven_ReturnsMatchingProfile) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile_2);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile2);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfileId = {{profile_id_1, profile_id_2}},
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = {{profile_id_1, profile_id_2}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria(STATION_WIDE_ID, criteria);
     EXPECT_EQ(sut.size(), 1);
 
-    EXPECT_THAT(sut[0].profile, testing::Eq(profile_2));
+    EXPECT_THAT(sut[0].profile, testing::Eq(profile2));
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingProfileIds_ReturnsEVSEAndSource) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile_2, ChargingLimitSourceEnum::EMS);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile2, ChargingLimitSourceEnum::EMS);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfileId = {{profile_id_1, profile_id_2}},
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfileId = {{profile_id_1, profile_id_2}};
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria({}, criteria);
     EXPECT_EQ(sut.size(), 2);
 
-    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile_1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
-    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile_2, STATION_WIDE_ID, ChargingLimitSourceEnum::EMS)));
+    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
+    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile2, STATION_WIDE_ID, ChargingLimitSourceEnum::EMS)));
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_MatchingCriteria_ReturnsEVSEAndSource) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile_2, ChargingLimitSourceEnum::EMS);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile2, ChargingLimitSourceEnum::EMS);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
 
-    ChargingProfileCriterion criteria = {
-        .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile,
-    };
+    ChargingProfileCriterion criteria;
+    criteria.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
 
     std::vector<ReportedChargingProfile> sut =
         this->database_handler.get_charging_profiles_matching_criteria({}, criteria);
     EXPECT_EQ(sut.size(), 2);
 
-    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile_1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
-    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile_2, STATION_WIDE_ID, ChargingLimitSourceEnum::EMS)));
+    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
+    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile2, STATION_WIDE_ID, ChargingLimitSourceEnum::EMS)));
 }
 
 TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_OnlyEVSEIDSet_ReturnsProfileOnEVSE) {
     auto profile_id_1 = 1;
     auto stack_level = 1;
-    auto profile_1 = ChargingProfile{.id = profile_id_1,
-                                     .stackLevel = stack_level,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile_1);
+    ChargingProfile profile1;
+    profile1.id = profile_id_1;
+    profile1.stackLevel = stack_level;
+    profile1.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile1.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(DEFAULT_EVSE_ID, profile1);
 
     auto profile_id_2 = 2;
-    auto profile_2 = ChargingProfile{.id = profile_id_2,
-                                     .stackLevel = stack_level + 1,
-                                     .chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile};
-    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile_2, ChargingLimitSourceEnum::EMS);
+    ChargingProfile profile2;
+    profile2.id = profile_id_2;
+    profile2.stackLevel = stack_level + 1;
+    profile2.chargingProfilePurpose = ChargingProfilePurposeEnum::TxDefaultProfile;
+    profile2.chargingProfileKind = ChargingProfileKindEnum::Absolute;
+    this->database_handler.insert_or_update_charging_profile(STATION_WIDE_ID, profile2, ChargingLimitSourceEnum::EMS);
 
     auto profiles = this->database_handler.get_all_charging_profiles();
     EXPECT_EQ(profiles.size(), 2);
@@ -1074,5 +1277,5 @@ TEST_F(DatabaseHandlerTest, GetChargingProfilesMatchingCriteria_OnlyEVSEIDSet_Re
         this->database_handler.get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, {});
     EXPECT_EQ(sut.size(), 1);
 
-    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile_1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
+    EXPECT_THAT(sut, testing::Contains(testing::FieldsAre(profile1, DEFAULT_EVSE_ID, ChargingLimitSourceEnum::CSO)));
 }
