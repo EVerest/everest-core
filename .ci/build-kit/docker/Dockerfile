@@ -2,12 +2,11 @@
 ARG BASE_IMAGE_TAG=latest
 FROM ghcr.io/everest/everest-ci/build-kit-base:${BASE_IMAGE_TAG}
 
-# Local update for everest-cmake
-ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
-# renovate: datasource=github-releases depName=EVerest/everest-cmake versioning=loose
-ENV EVEREST_CMAKE_VERSION=6ac5e03f226b5545d72ca16f3faa4984461e30f6
-RUN rm -rf ${EVEREST_CMAKE_PATH}
-RUN git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
-    && cd ${EVEREST_CMAKE_PATH} \
-    && git checkout ${EVEREST_CMAKE_VERSION} \
-    && rm -r .git
+# Can be used to use an other version of everest-cmake
+# ENV EVEREST_CMAKE_PATH=/usr/lib/cmake/everest-cmake
+# ENV EVEREST_CMAKE_VERSION=<everest-cmake-verion>
+# RUN rm -rf ${EVEREST_CMAKE_PATH} \
+#     && git clone https://github.com/EVerest/everest-cmake.git ${EVEREST_CMAKE_PATH} \
+#     && cd ${EVEREST_CMAKE_PATH} \
+#     && git checkout ${EVEREST_CMAKE_VERSION} \
+#     && rm -r .git
