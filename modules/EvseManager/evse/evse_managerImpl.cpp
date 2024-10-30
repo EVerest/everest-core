@@ -361,13 +361,13 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
     types::evse_manager::Connector connector;
     // EvseManager currently only supports a single connector with id: 1;
     connector.id = 1;
-    if (!this->mod->config.connector_type.empty()) {
-        try {
-            connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
-        } catch (const std::out_of_range& e) {
-            EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
-        }
-    }
+    // if (!this->mod->config.connector_type.empty()) {
+    //     try {
+    //         connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
+    //     } catch (const std::out_of_range& e) {
+    //         EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
+    //     }
+    // }
 
     connectors.push_back(connector);
     evse.connectors = connectors;
@@ -393,6 +393,10 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 
         this->mod->charger->authorize(true, provided_token);
         mod->charger_was_authorized();
+        if (validation_result.reservation_id.has_value()) {
+            EVLOG_info << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();
+            mod->reserve(validation_result.reservation_id.value(), false);
+        }
     }
 
     if (pnc) {

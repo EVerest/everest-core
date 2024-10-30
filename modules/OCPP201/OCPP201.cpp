@@ -459,7 +459,7 @@ void OCPP201::ready() {
 
     callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
                                                          const std::optional<ocpp::CiString<36>> groupIdToken) {
-        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+        if (this->r_reservation == nullptr) {
             return false;
         }
 
@@ -470,7 +470,7 @@ void OCPP201::ready() {
             reservation_check_request.group_id_token = groupIdToken.value().get();
         }
 
-        return this->r_reservation.at(0)->call_is_reservation_for_token(reservation_check_request);
+        return this->r_reservation->call_is_reservation_for_token(reservation_check_request);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
@@ -679,12 +679,13 @@ void OCPP201::ready() {
         [this](const int32_t id, const ocpp::DateTime& expiry_date_time, const ocpp::v201::IdToken& id_token,
                const std::optional<ocpp::v201::ConnectorEnum> connector_type, const std::optional<uint32_t> evse_id,
                const std::optional<ocpp::v201::IdToken>& group_id_token) -> ocpp::v201::ReserveNowStatusEnum {
+        EVLOG_info << "Call reserve now callback";
         ocpp::v201::ReserveNowResponse response;
-        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+        if (this->r_reservation == nullptr) {
+            EVLOG_info << "r_reservation is a nullptr";
             return ocpp::v201::ReserveNowStatusEnum::Rejected;
         }
 
-        const int32_t evse = (evse_id.has_value() ? static_cast<int32_t>(evse_id.value()) : 0);
         types::reservation::Reservation reservation;
         reservation.reservation_id = id;
         reservation.expiry_time = expiry_date_time.to_rfc3339();
@@ -697,20 +698,21 @@ void OCPP201::ready() {
         }
 
         types::reservation::ReserveNowRequest request;
-        request.evse_id = evse;
+        request.evse_id = evse_id;
         request.reservation = reservation;
-        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(request);
+        EVLOG_info << "Call reserve now...";
+        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(request);
         return conversions::to_ocpp_reservation_status(result);
     };
 
     callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
         EVLOG_debug << "Received cancel reservation request for reservation id " << reservation_id;
         ocpp::v201::CancelReservationResponse response;
-        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+        if (this->r_reservation == nullptr) {
             return false;
         }
 
-        return this->r_reservation.at(0)->call_cancel_reservation(reservation_id);
+        return this->r_reservation->call_cancel_reservation(reservation_id);
     };
 
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
@@ -850,17 +852,14 @@ void OCPP201::ready() {
                                                        status.request_id);
     });
 
-    if (!r_reservation.empty()) {
-        r_reservation.at(0)->subscribe_reservation_update(
-            [this](const types::reservation::ReservationUpdateStatus status) {
-                EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
-                            << (status.reservation_status == types::reservation::Reservation_status::Expired
-                                    ? "Expired"
-                                    : "Removed");
-                this->charge_point->on_reservation_status(
-                    status.reservation_id,
-                    conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
-            });
+    if (this->r_reservation != nullptr) {
+        r_reservation->subscribe_reservation_update([this](const types::reservation::ReservationUpdateStatus status) {
+            EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
+                        << (status.reservation_status == types::reservation::Reservation_status::Expired ? "Expired"
+                                                                                                         : "Removed");
+            this->charge_point->on_reservation_status(
+                status.reservation_id, conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+        });
     }
 
     std::unique_lock lk(this->evse_ready_mutex);
@@ -927,6 +926,14 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
+    case types::evse_manager::SessionEventEnum::ReservationStart: {
+        this->process_reserved(evse_id, connector_id);
+        break;
+    }
+    case types::evse_manager::SessionEventEnum::ReservationEnd: {
+        this->process_reservation_end(evse_id, connector_id);
+        break;
+    }
     // explicitly ignore the following session events for now
     // TODO(kai): implement
     case types::evse_manager::SessionEventEnum::AuthRequired:
@@ -934,8 +941,6 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     case types::evse_manager::SessionEventEnum::WaitingForEnergy:
     case types::evse_manager::SessionEventEnum::StoppingCharging:
     case types::evse_manager::SessionEventEnum::ChargingFinished:
-    case types::evse_manager::SessionEventEnum::ReservationStart:
-    case types::evse_manager::SessionEventEnum::ReservationEnd:
     case types::evse_manager::SessionEventEnum::ReplugStarted:
     case types::evse_manager::SessionEventEnum::ReplugFinished:
     case types::evse_manager::SessionEventEnum::PluginTimeout:
@@ -1236,6 +1241,14 @@ void OCPP201::process_deauthorized(const int32_t evse_id, const int32_t connecto
     }
     const auto tx_event_effect = this->transaction_handler->submit_event(evse_id, TxEvent::DEAUTHORIZED);
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
+}
+
+void OCPP201::process_reserved(const int32_t evse_id, const int32_t connector_id) {
+    this->charge_point->on_reserved(evse_id, connector_id);
+}
+
+void OCPP201::process_reservation_end(const int32_t evse_id, const int32_t connector_id) {
+    this->charge_point->on_reservation_cleared(evse_id, connector_id);
 }
 
 void OCPP201::publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {

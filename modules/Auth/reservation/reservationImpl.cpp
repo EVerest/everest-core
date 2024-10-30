@@ -17,6 +17,8 @@ types::reservation::ReservationResult
 reservationImpl::handle_reserve_now(types::reservation::ReserveNowRequest& request) {
     // your code for cmd reserve_now goes here
 
+    EVLOG_info << "Handle reservation for evse id " << (request.evse_id.has_value() ? request.evse_id.value() : -1);
+
     const auto reservation_result = this->mod->auth_handler->handle_reservation(request.evse_id, request.reservation);
     if (reservation_result == ReservationResult::Accepted) {
         this->mod->auth_handler->call_reserved(request.evse_id, request.reservation.reservation_id);
@@ -25,11 +27,13 @@ reservationImpl::handle_reserve_now(types::reservation::ReserveNowRequest& reque
 };
 
 bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
-    const auto connector = this->mod->auth_handler->handle_cancel_reservation(reservation_id);
-    if (connector != -1) {
-        this->mod->auth_handler->call_reservation_cancelled(connector, reservation_id, ReservationEndReason::Cancelled);
+    const auto reservation_cancelled = this->mod->auth_handler->handle_cancel_reservation(reservation_id);
+    if (reservation_cancelled.first) {
+        this->mod->auth_handler->call_reservation_cancelled(reservation_cancelled.second, reservation_id,
+                                                            ReservationEndReason::Cancelled);
         return true;
     }
+
     return false;
 }
 

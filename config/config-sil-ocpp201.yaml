@@ -130,6 +130,9 @@ active_modules:
       connector_zero_sink:
         - module_id: grid_connection_point
           implementation_id: external_limits
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
   persistent_store:
     module: PersistentStore
   evse_security:
@@ -157,6 +160,9 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
+      kvs:
+        - module_id: persistent_store
+          implementation_id: main
   energy_manager:
     module: EnergyManager
     connections:

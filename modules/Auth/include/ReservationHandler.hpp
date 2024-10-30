@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -10,6 +11,8 @@
 #include <everest/timer.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/reservation.hpp>
+
+class kvsIntf;
 
 namespace module {
 
@@ -29,6 +32,8 @@ private: // Members
         std::vector<EvseConnectorType> connectors; ///< @brief The connectors of this EVSE
     };
 
+    const std::string kvs_store_key_id;
+    kvsIntf* store;
     /// \brief Map of EVSE's, with EVSE id as key and the EVSE struct as value.
     std::map<uint32_t, Evse> evses;
     /// \brief Map of EVSE specific reservations, with EVSE id as key and the Reservation type as value.
@@ -62,7 +67,7 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler();
+    ReservationHandler(const std::string &id, kvsIntf* store);
 
     ///
     /// \brief Destructor.
@@ -79,6 +84,11 @@ public:
     void add_connector(const uint32_t evse_id, const uint32_t connector_id,
                        const types::evse_manager::ConnectorTypeEnum connector_type,
                        const ConnectorState connector_state = ConnectorState::AVAILABLE);
+
+    ///
+    /// \brief Initialize. Read reservations from persistent store.
+    ///
+    void init();
 
     ///
     /// \brief Try to make a reservation.
@@ -140,10 +150,11 @@ public:
     /// \param reservation_id       The id of the reservation to cancel.
     /// \param execute_callback     True if the `reservation_cancelled_callback` must be called.
     /// \param reason               The cancel reason.
-    /// \return The evse id if the reservation to cancel is found and the reservation was made for a specific EVSE.
+    /// \return First: true if reservation could be cancelled.
+    ///         Second: The evse id if the reservation to cancel was made for a specific EVSE.
     ///
-    std::optional<uint32_t> cancel_reservation(int reservation_id, bool execute_callback,
-                                               const types::reservation::ReservationEndReason reason);
+    std::pair<bool, std::optional<uint32_t>> cancel_reservation(const int reservation_id, const bool execute_callback,
+                                                                const types::reservation::ReservationEndReason reason);
 
     ///
     /// \brief Register reservation cancelled callback.

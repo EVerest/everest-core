@@ -52,7 +52,6 @@ namespace module {
 
 struct Conf {
     int connector_id;
-    std::string connector_type;
     std::string evse_id;
     std::string evse_id_din;
     bool payment_enable_eim;
@@ -135,7 +134,7 @@ public:
         r_imd(std::move(r_imd)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config){};
+        config(config) {};
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -173,7 +172,7 @@ public:
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
-    bool reserve(int32_t id);
+    bool reserve(int32_t id, bool signal_others = true);
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();

@@ -48,7 +48,7 @@ class AuthHandler {
 
 public:
     AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults);
+                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults, const std::string& id, kvsIntf* store);
     virtual ~AuthHandler();
 
     /**
@@ -62,6 +62,11 @@ public:
     void init_connector(
         const int connector_id, const int evse_index,
         const types::evse_manager::ConnectorTypeEnum& connector_type = types::evse_manager::ConnectorTypeEnum::Unknown);
+
+    /**
+     * @brief Call when everything is initialized. This will call 'init' of the reservation handler.
+     */
+    void initialized();
 
     /**
      * @brief Handler for a new incoming \p provided_token
@@ -84,10 +89,10 @@ public:
      * @brief Handler for incoming cancel reservation request for the given \p reservation_id .
      *
      * @param reservation_id
-     * @return Returns -1 if the reservation could not been cancelled or the reservation was a global
-     * reservation, not an evse specific reservation. Else the id of the evse.
+     * @return return value first returns false if the reservation could not been cancelled. Return value second is the
+     *         evse id or nullopt if the reservation was a 'global' reservation without evse id.
      */
-    int handle_cancel_reservation(int reservation_id);
+    std::pair<bool, std::optional<int32_t>> handle_cancel_reservation(const int32_t reservation_id);
 
     bool handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
                                          std::optional<std::string>& group_id_token);
@@ -107,7 +112,8 @@ public:
      * @param evse_id
      * @param reservation_id    The id of the cancelled reservation.
      */
-    void call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id, const ReservationEndReason reason);
+    void call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
+                                    const ReservationEndReason reason);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the
@@ -181,15 +187,16 @@ public:
      *
      * @param callback
      */
-    void
-    register_reserved_callback(const std::function<void(const int& evse_index, const int& reservation_id)>& callback);
+    void register_reserved_callback(const std::function<void(const std::optional<int>&, const int&)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation has been cancelled to the EvseManager.
      *
      * @param callback
      */
-    void register_reservation_cancelled_callback(const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id, const ReservationEndReason reason)>& callback);
+    void register_reservation_cancelled_callback(
+        const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
+                                 const ReservationEndReason reason)>& callback);
 
     /**
      * @brief Registers the given \p callback to publish the intermediate token validation status.
@@ -225,8 +232,10 @@ private:
     std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)> validate_token_callback;
     std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
-    std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
-    std::function<void(const int& evse_index, const int32_t reservation_id, const types::reservation::ReservationEndReason reason)> reservation_cancelled_callback;
+    std::function<void(const std::optional<int>& evse_index, const int& reservation_id)> reserved_callback;
+    std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
+                       const types::reservation::ReservationEndReason reason)>
+        reservation_cancelled_callback;
     std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
         publish_token_validation_status_callback;
 
@@ -251,8 +260,7 @@ private:
     void lock_plug_in_mutex(const std::vector<int>& evse_ids);
     void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
     int get_latest_plugin(const std::vector<int>& evse_ids);
-    void notify_evse(int evse_id, const ProvidedIdToken& provided_token,
-                     const ValidationResult& validation_result);
+    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const AuthorizationType& type);
 };

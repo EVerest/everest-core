@@ -511,7 +511,12 @@ void OCPP::ready() {
             reservation.parent_id_token.emplace(parent_id.value().get());
         }
         types::reservation::ReserveNowRequest request;
-        request.evse_id = connector; // TODO mz should it be -1 here???
+        if (connector == 0) {
+            request.evse_id == std::nullopt;
+        } else {
+            request.evse_id = connector;
+        }
+
         request.reservation = reservation;
         auto response = this->r_reservation->call_reserve_now(request);
         return conversions::to_ocpp_reservation_status(response);

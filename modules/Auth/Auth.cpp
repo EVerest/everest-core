@@ -14,7 +14,8 @@ void Auth::init() {
 
     this->auth_handler = std::make_unique<AuthHandler>(
         string_to_selection_algorithm(this->config.selection_algorithm), this->config.connection_timeout,
-        this->config.prioritize_authorization_over_stopping_transaction, this->config.ignore_connector_faults);
+        this->config.prioritize_authorization_over_stopping_transaction, this->config.ignore_connector_faults,
+        (!this->r_kvs.empty() ? this->r_kvs.at(0).get() : nullptr));
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
@@ -30,22 +31,26 @@ void Auth::ready() {
 
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
-        int32_t connector_id = evse_manager->call_get_evse().id;
-        this->auth_handler->init_connector(connector_id, evse_index);
+        int32_t evse_id = evse_manager->call_get_evse().id;
+        // this->auth_handler->init_connector(connector_id, evse_index);
+
+        for (const auto& connector : evse_manager->call_get_evse().connectors) {
+            this->auth_handler->init_connector(connector.id, evse_index);
+        }
 
         // TODO mz multiple connectors and connector types!!!
 
-        evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
-            this->auth_handler->handle_session_event(connector_id, session_event);
+        evse_manager->subscribe_session_event([this, evse_id](SessionEvent session_event) {
+            this->auth_handler->handle_session_event(evse_id, session_event);
         });
 
         evse_manager->subscribe_error(
             "evse_manager/Inoperative",
-            [this, connector_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_raised(connector_id);
+            [this, evse_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_raised(evse_id);
             },
-            [this, connector_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_cleared(connector_id);
+            [this, evse_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_cleared(evse_id);
             });
 
         evse_index++;
@@ -58,6 +63,7 @@ void Auth::ready() {
 
     this->auth_handler->register_notify_evse_callback(
         [this](const int evse_index, const ProvidedIdToken& provided_token, const ValidationResult& validation_result) {
+            EVLOG_info << "Notify evse callback with evse index " << evse_index;
             this->r_evse_manager.at(evse_index)->call_authorize_response(provided_token, validation_result);
         });
     this->auth_handler->register_withdraw_authorization_callback(
@@ -73,27 +79,36 @@ void Auth::ready() {
         [this](const int32_t evse_index, const StopTransactionRequest& request) {
             this->r_evse_manager.at(evse_index)->call_stop_transaction(request);
         });
-    this->auth_handler->register_reserved_callback([this](const int32_t evse_index, const int32_t& reservation_id) {
-        // Only call the evse manager to store the reservation if it is done for a specific evse.
-        if (evse_index > 0) {
-            this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
-        }
-    });
+    this->auth_handler->register_reserved_callback(
+        [this](const std::optional<int32_t> evse_index, const int32_t& reservation_id) {
+            // Only call the evse manager to store the reservation if it is done for a specific evse.
+            if (evse_index.has_value()) {
+                EVLOG_info << "Register reserved callback for evse index " << evse_index.value();
+
+                this->r_evse_manager.at(evse_index.value() - 1)->call_reserve(reservation_id);
+            }
+        });
     this->auth_handler->register_reservation_cancelled_callback([this](const std::optional<int32_t> evse_index,
                                                                        const int32_t reservation_id,
                                                                        const ReservationEndReason reason) {
         // Only call the evse manager to cancel the reservation if it was for a specific evse
-        if (evse_index.has_value() && evse_index.value() > 0) {
-            this->r_evse_manager.at(evse_index.value())->call_cancel_reservation();
+        // TODO mz rename evse_index to evse_id or don't do the -1!!
+        if (evse_index.has_value()) {
+            EVLOG_info << "Call evse manager to cancel the reservation with evse index " << evse_index.value();
+            this->r_evse_manager.at(evse_index.value() - 1)->call_cancel_reservation();
         }
 
-        // TODO mz this should not be here, we create a loop here.
+        // TODO mz this should not be here, we create a loop here ???
+        EVLOG_info << "Before publish reservation update.";
         ReservationUpdateStatus status;
         status.reservation_id = reservation_id;
         if (reason == ReservationEndReason::Expired) {
             status.reservation_status = Reservation_status::Expired;
-        } else {
+        } else if (reason == ReservationEndReason::Cancelled) {
             status.reservation_status = Reservation_status::Removed;
+        } else {
+            // On reservation used: do not publish a reservation update!!
+            return;
         }
         this->p_reservation->publish_reservation_update(status);
     });

@@ -989,7 +989,8 @@ void EvseManager::ready_to_start_charging() {
     }
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1196,7 +1197,7 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     return true;
 }
 
-bool EvseManager::reserve(int32_t id) {
+bool EvseManager::reserve(int32_t id, bool signal_others) {
 
     // is the evse Unavailable?
     if (charger->get_current_state() == Charger::EvseState::Disabled) {
@@ -1216,14 +1217,18 @@ bool EvseManager::reserve(int32_t id) {
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
     if (not reserved) {
+        EVLOG_info << "Make the reservation for id " << id;
         reserved = true;
         reservation_id = id;
 
-        // publish event to other modules
-        types::evse_manager::SessionEvent se;
-        se.event = types::evse_manager::SessionEventEnum::ReservationStart;
+        if (signal_others) {
+            // publish event to other modules
+            types::evse_manager::SessionEvent se;
+            se.event = types::evse_manager::SessionEventEnum::ReservationStart;
 
-        signalReservationEvent(se);
+            signalReservationEvent(se);
+        }
+
         return true;
     }
 
