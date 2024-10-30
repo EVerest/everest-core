@@ -336,6 +336,14 @@ DER bn_to_signature(const std::uint8_t* r, const std::uint8_t* s);
 bool signature_to_bn(openssl::bn_t& r, openssl::bn_t& s, const std::uint8_t* sig_p, std::size_t len);
 
 /**
+ * \brief load any PEM encoded certificates from a string
+ * \param[in] pem_string
+ * \return a list of 0 or more certificates
+ * \note PEM string only supports certificates and not other PEM types
+ */
+certificate_list load_certificates_pem(const char* pem_string);
+
+/**
  * \brief load any PEM encoded certificates from a file
  * \param[in] filename
  * \return a list of 0 or more certificates
@@ -416,12 +424,26 @@ bool use_certificate_and_key(ssl_st* ssl, const chain_t& chain);
 std::string certificate_to_pem(const x509_st* cert);
 
 /**
+ * \brief convert a PEM string to a certificate
+ * \param[in] pem the PEM string
+ * \return the certificate or empty unique_ptr on error
+ */
+certificate_ptr pem_to_certificate(const std::string& pem);
+
+/**
  * \brief parse a DER (ASN.1) encoded certificate
  * \param[in] der a pointer to the DER encoded certificate
  * \param[in] len the length of the DER encoded certificate
  * \return the certificate or empty unique_ptr on error
  */
 certificate_ptr der_to_certificate(const std::uint8_t* der, std::size_t len);
+
+/**
+ * \brief encode a certificate to DER (ASN.1)
+ * \param[in] cert the certificate
+ * \return the DER encoded certificate or nullptr on error
+ */
+DER certificate_to_der(const x509_st* cert);
 
 /**
  * \brief verify a certificate against a certificate chain and trust anchors
@@ -463,6 +485,7 @@ pkey_ptr certificate_public_key(x509_st* cert);
  * \param[out] digest the SHA1 digest of the certificate
  * \param[in] cert the certificate
  * \return true on success
+ * \note this is the hash of the whole certificate including signature
  */
 bool certificate_sha_1(openssl::sha_1_digest_t& digest, const x509_st* cert);
 
@@ -476,6 +499,7 @@ bool certificate_subject_public_key_sha_1(openssl::sha_1_digest_t& digest, const
 
 enum class log_level_t : std::uint8_t {
     debug,
+    info,
     warning,
     error,
 };
@@ -498,6 +522,10 @@ static inline void log_warning(const std::string& str) {
 
 static inline void log_debug(const std::string& str) {
     log(log_level_t::debug, str);
+}
+
+static inline void log_info(const std::string& str) {
+    log(log_level_t::info, str);
 }
 
 using log_handler_t = void (*)(log_level_t level, const std::string& err);

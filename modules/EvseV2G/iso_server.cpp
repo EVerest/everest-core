@@ -956,7 +956,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 break;
             case crypto::verify_result_t::NoCertificateAvailable:
                 res->ResponseCode = iso2_responseCodeType_FAILED_NoCertificateAvailable;
-                err = -2;
                 break;
             case crypto::verify_result_t::CertChainError:
             default:
@@ -970,10 +969,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
                 res->EVSETimeStamp = time(NULL);
                 memset(res->GenChallenge.bytes, 0, GEN_CHALLENGE_SIZE);
                 res->GenChallenge.bytesLen = GEN_CHALLENGE_SIZE;
-            }
-
-            if (err != 0) {
-                memset(res, 0, sizeof(*res));
                 goto error_out;
             }
 
