@@ -6,11 +6,3 @@ target_sources(ocpp
         websocket.cpp
         websocket_libwebsockets.cpp    
 )
-
-if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
-    target_sources(ocpp
-        PRIVATE    
-            websocket_plain.cpp
-            websocket_tls.cpp
-    )
-endif()

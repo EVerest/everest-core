@@ -159,18 +159,6 @@ target_link_libraries(ocpp
         date::date-tz
 )
 
-if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
-    target_link_libraries(ocpp
-    PUBLIC
-        websocketpp::websocketpp
-    )
-
-    target_compile_definitions(ocpp
-        PRIVATE
-            LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP
-    )
-endif()
-
 if(LIBOCPP_USE_BOOST_FILESYSTEM)
     find_package(Boost REQUIRED COMPONENTS filesystem)
     target_link_libraries(ocpp

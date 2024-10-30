@@ -121,11 +121,11 @@ struct ConnectionData {
         return wsi;
     }
 
-    WebsocketTlsTPM* get_owner() {
+    WebsocketLibwebsockets* get_owner() {
         return owner.load();
     }
 
-    void set_owner(WebsocketTlsTPM* o) {
+    void set_owner(WebsocketLibwebsockets* o) {
         owner = o;
     }
 
@@ -139,7 +139,7 @@ public:
     lws* wsi;
 
 private:
-    std::atomic<WebsocketTlsTPM*> owner;
+    std::atomic<WebsocketLibwebsockets*> owner;
 
     std::thread::id lws_thread_id;
 
@@ -231,16 +231,16 @@ static bool verify_csms_cn(const std::string& hostname, bool preverified, const 
     return preverified;
 }
 
-WebsocketTlsTPM::WebsocketTlsTPM(const WebsocketConnectionOptions& connection_options,
-                                 std::shared_ptr<EvseSecurity> evse_security) :
+WebsocketLibwebsockets::WebsocketLibwebsockets(const WebsocketConnectionOptions& connection_options,
+                                               std::shared_ptr<EvseSecurity> evse_security) :
     WebsocketBase(), evse_security(evse_security), stop_deferred_handler(false) {
 
     set_connection_options(connection_options);
 
-    EVLOG_debug << "Initialised WebsocketTlsTPM with URI: " << this->connection_options.csms_uri.string();
+    EVLOG_debug << "Initialised WebsocketLibwebsockets with URI: " << this->connection_options.csms_uri.string();
 }
 
-WebsocketTlsTPM::~WebsocketTlsTPM() {
+WebsocketLibwebsockets::~WebsocketLibwebsockets() {
     std::shared_ptr<ConnectionData> local_data = conn_data;
     if (local_data != nullptr) {
         local_data->do_interrupt();
@@ -264,7 +264,7 @@ WebsocketTlsTPM::~WebsocketTlsTPM() {
     }
 }
 
-void WebsocketTlsTPM::set_connection_options(const WebsocketConnectionOptions& connection_options) {
+void WebsocketLibwebsockets::set_connection_options(const WebsocketConnectionOptions& connection_options) {
     switch (connection_options.security_profile) { // `switch` used to lint on missing enum-values
     case security::SecurityProfile::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION:
     case security::SecurityProfile::UNSECURED_TRANSPORT_WITH_BASIC_AUTHENTICATION:
@@ -317,8 +317,8 @@ constexpr auto local_protocol_name = "lws-everest-client";
 static const struct lws_protocols protocols[] = {{local_protocol_name, callback_minimal, 0, 0, 0, NULL, 0},
                                                  LWS_PROTOCOL_LIST_TERM};
 
-bool WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, const std::string& path_key,
-                               bool custom_key, std::optional<std::string>& password) {
+bool WebsocketLibwebsockets::tls_init(SSL_CTX* ctx, const std::string& path_chain, const std::string& path_key,
+                                      bool custom_key, std::optional<std::string>& password) {
     auto rc = SSL_CTX_set_cipher_list(ctx, this->connection_options.supported_ciphers_12.c_str());
     if (rc != 1) {
         EVLOG_debug << "SSL_CTX_set_cipher_list return value: " << rc;
@@ -428,7 +428,7 @@ bool WebsocketTlsTPM::tls_init(SSL_CTX* ctx, const std::string& path_chain, cons
     return true;
 }
 
-void WebsocketTlsTPM::recv_loop() {
+void WebsocketLibwebsockets::recv_loop() {
     std::shared_ptr<ConnectionData> local_data = conn_data;
 
     if (local_data == nullptr) {
@@ -468,7 +468,7 @@ void WebsocketTlsTPM::recv_loop() {
     EVLOG_debug << "Exit recv loop with ID: " << std::hex << std::this_thread::get_id();
 }
 
-void WebsocketTlsTPM::client_loop() {
+void WebsocketLibwebsockets::client_loop() {
     std::shared_ptr<ConnectionData> local_data = conn_data;
 
     if (local_data == nullptr) {
@@ -691,7 +691,7 @@ void WebsocketTlsTPM::client_loop() {
 }
 
 // Will be called from external threads as well
-bool WebsocketTlsTPM::connect() {
+bool WebsocketLibwebsockets::connect() {
     if (!this->initialized()) {
         return false;
     }
@@ -728,7 +728,7 @@ bool WebsocketTlsTPM::connect() {
 
     if (this->deferred_callback_thread == nullptr) {
         this->deferred_callback_thread =
-            std::make_unique<std::thread>(&WebsocketTlsTPM::handle_deferred_callback_queue, this);
+            std::make_unique<std::thread>(&WebsocketLibwebsockets::handle_deferred_callback_queue, this);
     }
 
     // Stop any pending reconnect timer
@@ -767,7 +767,7 @@ bool WebsocketTlsTPM::connect() {
         std::unique_lock<std::mutex> lock(connection_mutex);
 
         // Release other threads
-        this->websocket_thread.reset(new std::thread(&WebsocketTlsTPM::client_loop, this));
+        this->websocket_thread.reset(new std::thread(&WebsocketLibwebsockets::client_loop, this));
 
         // TODO(ioan): remove this thread when the fix will be moved into 'MessageQueue'
         // The reason for having a received message processing thread is that because
@@ -775,7 +775,7 @@ bool WebsocketTlsTPM::connect() {
         // will send back another message, and since we're waiting for that message to be
         // sent over the wire on the client_loop, not giving the opportunity to the loop to
         // advance we will have a dead-lock
-        this->recv_message_thread.reset(new std::thread(&WebsocketTlsTPM::recv_loop, this));
+        this->recv_message_thread.reset(new std::thread(&WebsocketLibwebsockets::recv_loop, this));
 
         // Wait until connect or timeout
         timeouted = !conn_cv.wait_for(lock, std::chrono::seconds(60), [&]() {
@@ -810,7 +810,7 @@ bool WebsocketTlsTPM::connect() {
     return (connected);
 }
 
-void WebsocketTlsTPM::reconnect(long delay) {
+void WebsocketLibwebsockets::reconnect(long delay) {
     if (this->shutting_down) {
         EVLOG_info << "Not reconnecting because the websocket is being shutdown.";
         return;
@@ -837,7 +837,7 @@ void WebsocketTlsTPM::reconnect(long delay) {
     }
 }
 
-void WebsocketTlsTPM::close(const WebsocketCloseReason code, const std::string& reason) {
+void WebsocketLibwebsockets::close(const WebsocketCloseReason code, const std::string& reason) {
     EVLOG_info << "Closing websocket: " << reason;
 
     {
@@ -877,7 +877,7 @@ void WebsocketTlsTPM::close(const WebsocketCloseReason code, const std::string& 
     });
 }
 
-void WebsocketTlsTPM::on_conn_connected() {
+void WebsocketLibwebsockets::on_conn_connected() {
     EVLOG_info << "OCPP client successfully connected to server";
 
     this->connection_attempts = 1; // reset connection attempts
@@ -896,7 +896,7 @@ void WebsocketTlsTPM::on_conn_connected() {
     });
 }
 
-void WebsocketTlsTPM::on_conn_close() {
+void WebsocketLibwebsockets::on_conn_close() {
     EVLOG_info << "OCPP client closed connection to server";
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
@@ -924,7 +924,7 @@ void WebsocketTlsTPM::on_conn_close() {
     });
 }
 
-void WebsocketTlsTPM::on_conn_fail() {
+void WebsocketLibwebsockets::on_conn_fail() {
     EVLOG_error << "OCPP client connection to server failed";
 
     std::lock_guard<std::mutex> lk(this->connection_mutex);
@@ -953,7 +953,7 @@ void WebsocketTlsTPM::on_conn_fail() {
     }
 }
 
-void WebsocketTlsTPM::on_message(std::string&& message) {
+void WebsocketLibwebsockets::on_message(std::string&& message) {
     if (!this->initialized()) {
         EVLOG_error << "Message received but TLS websocket has not been correctly initialized. Discarding message.";
         return;
@@ -1017,7 +1017,7 @@ static bool send_internal(lws* wsi, WebsocketMessage* msg) {
     return true;
 }
 
-void WebsocketTlsTPM::on_writable() {
+void WebsocketLibwebsockets::on_writable() {
     if (!this->initialized() || !this->m_is_connected) {
         EVLOG_error << "Message sending but TLS websocket has not been correctly initialized/connected.";
         return;
@@ -1113,7 +1113,7 @@ void WebsocketTlsTPM::on_writable() {
     }
 }
 
-void WebsocketTlsTPM::request_write() {
+void WebsocketLibwebsockets::request_write() {
     std::shared_ptr<ConnectionData> local_data = conn_data;
     if (this->m_is_connected) {
         if (local_data != nullptr) {
@@ -1128,7 +1128,7 @@ void WebsocketTlsTPM::request_write() {
     }
 }
 
-void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg) {
+void WebsocketLibwebsockets::poll_message(const std::shared_ptr<WebsocketMessage>& msg) {
     if (this->m_is_connected == false) {
         EVLOG_debug << "Trying to poll message without being connected!";
         return;
@@ -1171,7 +1171,7 @@ void WebsocketTlsTPM::poll_message(const std::shared_ptr<WebsocketMessage>& msg)
 }
 
 // Will be called from external threads
-bool WebsocketTlsTPM::send(const std::string& message) {
+bool WebsocketLibwebsockets::send(const std::string& message) {
     if (!this->initialized()) {
         EVLOG_error << "Could not send message because websocket is not properly initialized.";
         return false;
@@ -1186,7 +1186,7 @@ bool WebsocketTlsTPM::send(const std::string& message) {
     return msg->message_sent;
 }
 
-void WebsocketTlsTPM::ping() {
+void WebsocketLibwebsockets::ping() {
     if (!this->initialized()) {
         EVLOG_error << "Could not send ping because websocket is not properly initialized.";
     }
@@ -1198,12 +1198,12 @@ void WebsocketTlsTPM::ping() {
     poll_message(msg);
 }
 
-int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* user, void* in, size_t len) {
+int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason, void* user, void* in, size_t len) {
     enum lws_callback_reasons reason = static_cast<lws_callback_reasons>(callback_reason);
 
     lws* wsi = reinterpret_cast<lws*>(wsi_ptr);
 
-    // The ConnectionData is thread bound, so that if we clear it in the 'WebsocketTlsTPM'
+    // The ConnectionData is thread bound, so that if we clear it in the 'WebsocketLibwebsockets'
     // we still have a chance to close the connection here
     ConnectionData* data = reinterpret_cast<ConnectionData*>(lws_wsi_user(wsi));
 
@@ -1439,7 +1439,7 @@ int WebsocketTlsTPM::process_callback(void* wsi_ptr, int callback_reason, void* 
     return 0;
 }
 
-void WebsocketTlsTPM::push_deferred_callback(const std::function<void()>& callback) {
+void WebsocketLibwebsockets::push_deferred_callback(const std::function<void()>& callback) {
     if (!callback) {
         EVLOG_error << "Attempting to push stale callback in deferred queue!";
         return;
@@ -1450,7 +1450,7 @@ void WebsocketTlsTPM::push_deferred_callback(const std::function<void()>& callba
     this->deferred_callback_cv.notify_one();
 }
 
-void WebsocketTlsTPM::handle_deferred_callback_queue() {
+void WebsocketLibwebsockets::handle_deferred_callback_queue() {
     while (true) {
         std::function<void()> callback;
         {

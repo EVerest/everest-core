@@ -6,20 +6,11 @@
 #include <string>
 #include <string_view>
 
-#if LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP
-#include <websocketpp/uri.hpp>
-#else
 #include <websocketpp_utils/uri.hpp>
-#endif
 
 namespace ocpp {
 
-#if LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP
-typedef websocketpp::uri ev_uri;
-#else
 typedef ocpp::uri ev_uri;
-#endif
-
 class Uri {
 public:
     Uri(){};
