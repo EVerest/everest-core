@@ -71,8 +71,7 @@ void ReservationHandler::init() {
         return;
     }
 
-    const auto stored_reservations = store->call_load(this->kvs_store_key_id);
-    // TODO mz get values from persistent store
+    load_reservations();
 }
 
 types::reservation::ReservationResult
@@ -192,6 +191,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
                    << types::evse_manager::connector_type_enum_to_string(
                           reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
         global_reservations.push_back(reservation);
+        store_reservations();
 
         EVLOG_info << "16";
     }
@@ -356,6 +356,8 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
             this->global_reservations.erase(it);
         }
     }
+
+    this->store_reservations();
 
     EVLOG_info << "Before cancelled callback";
     if (execute_callback && this->reservation_cancelled_callback != nullptr) {
@@ -807,6 +809,65 @@ void ReservationHandler::check_reservations_and_cancel_if_not_possible() {
 
     for (const int32_t reservation_id : reservations_to_cancel) {
         this->cancel_reservation(reservation_id, true, types::reservation::ReservationEndReason::Cancelled);
+    }
+}
+
+void ReservationHandler::store_reservations() {
+    if (this->store == nullptr) {
+        return;
+    }
+
+    Array reservations = json::array();
+    for (const auto& reservation : this->evse_reservations) {
+
+        json r = json::object({{"evse_id", reservation.first}, {"reservation", reservation.second}});
+        reservations.push_back(r);
+    }
+
+    for (const auto& reservation : this->global_reservations) {
+        json r = json::object({{"reservation", reservation}});
+        reservations.push_back(r);
+    }
+
+    if (!reservations.empty()) {
+        this->store->call_store(this->kvs_store_key_id, reservations);
+    }
+}
+
+void ReservationHandler::load_reservations() {
+    if (this->store == nullptr) {
+        EVLOG_info << "Can not load reservations because the store is a nullptr.";
+        return;
+    }
+
+    const auto stored_reservations = store->call_load(this->kvs_store_key_id);
+    const Array* reservations_json = std::get_if<Array>(&stored_reservations);
+    if (reservations_json == nullptr) {
+        EVLOG_warning << "Can not load reservations: reservations is not a string.";
+        return;
+    }
+
+    for (const auto& reservation : *reservations_json) {
+        types::reservation::Reservation r;
+        try {
+            r = reservation.at("reservation");
+        } catch (const json::exception& e) {
+            EVLOG_error << "Could not get reservation from store: " << e.what();
+            continue;
+        }
+
+        std::optional<uint32_t> evse_id;
+        if (reservation.contains("evse_id")) {
+            evse_id = reservation.at("evse_id");
+        }
+
+        types::reservation::ReservationResult reservation_result = this->make_reservation(evse_id, r);
+        if (reservation_result != types::reservation::ReservationResult::Accepted) {
+            EVLOG_warning << "Load reservations: Could not make reservation with id " << r.reservation_id
+                          << ": reservation cancelled.";
+            this->reservation_cancelled_callback(evse_id, r.reservation_id,
+                                                 types::reservation::ReservationEndReason::Cancelled);
+        }
     }
 }
 

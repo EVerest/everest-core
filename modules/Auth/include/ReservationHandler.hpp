@@ -334,6 +334,16 @@ private: // Functions
     void check_reservations_and_cancel_if_not_possible();
 
     ///
+    /// \brief Store reservations to key value store.
+    ///
+    void store_reservations();
+
+    ///
+    /// \brief Load reservations from key value store.
+    ///
+    void load_reservations();
+
+    ///
     /// \brief Helper function to print the connector types order.
     /// \param order    The order to print.
     ///

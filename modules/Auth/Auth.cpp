@@ -15,7 +15,7 @@ void Auth::init() {
     this->auth_handler = std::make_unique<AuthHandler>(
         string_to_selection_algorithm(this->config.selection_algorithm), this->config.connection_timeout,
         this->config.prioritize_authorization_over_stopping_transaction, this->config.ignore_connector_faults,
-        (!this->r_kvs.empty() ? this->r_kvs.at(0).get() : nullptr));
+        this->info.id, (!this->r_kvs.empty() ? this->r_kvs.at(0).get() : nullptr));
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
@@ -98,7 +98,6 @@ void Auth::ready() {
             this->r_evse_manager.at(evse_index.value() - 1)->call_cancel_reservation();
         }
 
-        // TODO mz this should not be here, we create a loop here ???
         EVLOG_info << "Before publish reservation update.";
         ReservationUpdateStatus status;
         status.reservation_id = reservation_id;

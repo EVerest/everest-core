@@ -16,6 +16,8 @@ using ::testing::Field;
 using ::testing::MockFunction;
 using ::testing::StrictMock;
 
+class kvsIntf;
+
 namespace types {
 namespace authorization {
 
@@ -84,8 +86,9 @@ protected:
         std::vector<int32_t> evse_indices{0, 1};
         this->auth_receiver = std::make_unique<FakeAuthReceiver>(evse_indices);
 
-        this->auth_handler =
-            std::make_unique<AuthHandler>(SelectionAlgorithm::PlugEvents, CONNECTION_TIMEOUT, false, false);
+        const std::string id = "auth_handler_test_id";
+        this->auth_handler = std::make_unique<AuthHandler>(SelectionAlgorithm::PlugEvents, CONNECTION_TIMEOUT, false,
+                                                           false, id, nullptr);
 
         this->auth_handler->register_notify_evse_callback([this](const int evse_index,
                                                                  const ProvidedIdToken& provided_token,
