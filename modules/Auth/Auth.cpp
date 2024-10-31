@@ -31,7 +31,7 @@ void Auth::ready() {
 
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
-        int32_t evse_id = evse_manager->call_get_evse().id;
+        const int32_t evse_id = evse_manager->call_get_evse().id;
 
         for (const auto& connector : evse_manager->call_get_evse().connectors) {
             this->auth_handler->init_connector(

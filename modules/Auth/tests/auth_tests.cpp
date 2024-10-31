@@ -463,7 +463,7 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
-// /// \brief Test if state permanent fault leads to not provide authorization
+/// \brief Test if state permanent fault leads to not provide authorization
 TEST_F(AuthTest, test_faulted_state) {
 
     TokenHandlingResult result1;

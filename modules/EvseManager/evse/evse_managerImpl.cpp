@@ -361,13 +361,13 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
     types::evse_manager::Connector connector;
     // EvseManager currently only supports a single connector with id: 1;
     connector.id = 1;
-    // if (!this->mod->config.connector_type.empty()) {
-    //     try {
-    //         connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
-    //     } catch (const std::out_of_range& e) {
-    //         EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
-    //     }
-    // }
+    if (!this->mod->config.connector_type.empty()) {
+        try {
+            connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
+        }
+    }
 
     connectors.push_back(connector);
     evse.connectors = connectors;

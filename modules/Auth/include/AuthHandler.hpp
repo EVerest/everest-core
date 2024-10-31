@@ -48,7 +48,8 @@ class AuthHandler {
 
 public:
     AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults, const std::string& id, kvsIntf* store);
+                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults,
+                const std::string& id, kvsIntf* store);
     virtual ~AuthHandler();
 
     /**
@@ -94,6 +95,13 @@ public:
      */
     std::pair<bool, std::optional<int32_t>> handle_cancel_reservation(const int32_t reservation_id);
 
+    /**
+     * @brief Callback to check if there is a reservation for the given token (on the given evse id).
+     * @param evse_id           The evse to check the reservation for.
+     * @param id_token          The token to check.
+     * @param group_id_token    The group id token to check.
+     * @return True if there is a reservation for the given token.
+     */
     bool handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
                                          std::optional<std::string>& group_id_token);
 
@@ -111,6 +119,7 @@ public:
      *
      * @param evse_id
      * @param reservation_id    The id of the cancelled reservation.
+     * @param reason            The reason the reservation was cancelled.
      */
     void call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
                                     const ReservationEndReason reason);
