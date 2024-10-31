@@ -216,8 +216,8 @@ It will actually call the following command on everest_api/evse_manager/cmd/enab
     {
         "connector_id": 1,
         "source": "LocalAPI",
-        "state": "enable",
-        "priority": 0
+        "state": "Enable",
+        "priority": 100
     }
 ```
 
@@ -230,8 +230,8 @@ It will actually call the following command on everest_api/evse_manager/cmd/enab
     {
         "connector_id": 1,
         "source": "LocalAPI",
-        "state": "disable",
-        "priority": 0
+        "state": "Disable",
+        "priority": 100
     }
 ```
 
