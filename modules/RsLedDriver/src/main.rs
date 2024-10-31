@@ -89,7 +89,7 @@ impl EvseManagerClientSubscriber for LedDriver {
 
     fn on_session_event(&self, context: &Context, value: SessionEvent) {
         let index = context.index;
-        let led_driver = context.publisher.led_driver_slots[index].clone();
+        let led_driver = &context.publisher.led_driver_slots[index];
 
         let _ = match get_led_state(value.event.clone()) {
             Some(led_state) => led_driver
