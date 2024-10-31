@@ -3,8 +3,8 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 
 use generated::{get_config, Context, Module, ModulePublisher};
 use generated::{
-    EmptyServiceSubscriber, EvseManagerClientSubscriber, LedDriverClientPublisher,
-    LedDriverClientSubscriber, OnReadySubscriber,
+    EmptyServiceSubscriber, EvseManagerClientSubscriber, LedDriverClientSubscriber,
+    OnReadySubscriber,
 };
 
 use generated::types::energy::EnforcedLimits;
@@ -14,14 +14,18 @@ use generated::types::iso15118_charger::RequestExiStreamSchema;
 use generated::types::led_state::LedState;
 use generated::types::powermeter::Powermeter;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::{thread::sleep, time::Duration};
 
 fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
     match trigger {
         SessionEventEnum::Disabled
         | SessionEventEnum::AuthRequired
-        | SessionEventEnum::PluginTimeout => Some(LedState{red: 255, green: 0, blue: 0}),
+        | SessionEventEnum::PluginTimeout => Some(LedState {
+            red: 255,
+            green: 0,
+            blue: 0,
+        }),
 
         // Blue triggers
         SessionEventEnum::Authorized
@@ -32,7 +36,11 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
         | SessionEventEnum::ChargingResumed
         | SessionEventEnum::StoppingCharging
         | SessionEventEnum::ChargingFinished
-        | SessionEventEnum::SessionResumed => Some(LedState{red: 0, green: 0, blue: 255}),
+        | SessionEventEnum::SessionResumed => Some(LedState {
+            red: 0,
+            green: 0,
+            blue: 255,
+        }),
 
         // Green triggers
         SessionEventEnum::Deauthorized
@@ -40,15 +48,16 @@ fn get_led_state(trigger: SessionEventEnum) -> Option<LedState> {
         | SessionEventEnum::ReservationStart
         | SessionEventEnum::ReservationEnd
         | SessionEventEnum::SessionFinished
-        | SessionEventEnum::TransactionFinished => Some(LedState{red: 0, green: 255, blue: 0}),
+        | SessionEventEnum::TransactionFinished => Some(LedState {
+            red: 0,
+            green: 255,
+            blue: 0,
+        }),
         _ => None,
     }
 }
 
 pub struct LedDriver {
-    // This vector contains all the led_drivers.
-    // Every entry here matches the index of evse_manager in config
-    led_drivers: Mutex<Vec<LedDriverClientPublisher>>,
     brightness: i64,
 }
 
@@ -80,7 +89,7 @@ impl EvseManagerClientSubscriber for LedDriver {
 
     fn on_session_event(&self, context: &Context, value: SessionEvent) {
         let index = context.index;
-        let led_driver = self.led_drivers.lock().unwrap()[index].clone();
+        let led_driver = context.publisher.led_driver_slots[index].clone();
 
         let _ = match get_led_state(value.event.clone()) {
             Some(led_state) => led_driver
@@ -99,16 +108,9 @@ impl EvseManagerClientSubscriber for LedDriver {
 
 impl OnReadySubscriber for LedDriver {
     fn on_ready(&self, publishers: &ModulePublisher) {
-        let led_drivers = &publishers.led_driver_slots;
-
-        if publishers.evse_manager_slots.len() != led_drivers.len() {
+        if publishers.evse_manager_slots.len() != publishers.led_driver_slots.len() {
             panic!("EVSE slots and LED driver slots are not the same size!");
         }
-
-        let mut led_drivers_mut = self.led_drivers.lock().unwrap();
-
-        led_drivers_mut.clear();
-        led_drivers_mut.extend(led_drivers.iter().cloned());
     }
 }
 
@@ -116,7 +118,6 @@ fn main() {
     let config = get_config();
 
     let led_driver = Arc::new(LedDriver {
-        led_drivers: Mutex::new(Vec::default()),
         brightness: config.default_brightness,
     });
 
