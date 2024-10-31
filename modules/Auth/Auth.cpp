@@ -32,13 +32,11 @@ void Auth::ready() {
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
         int32_t evse_id = evse_manager->call_get_evse().id;
-        // this->auth_handler->init_connector(connector_id, evse_index);
 
         for (const auto& connector : evse_manager->call_get_evse().connectors) {
-            this->auth_handler->init_connector(connector.id, evse_index);
+            this->auth_handler->init_connector(
+                connector.id, evse_index, connector.type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
         }
-
-        // TODO mz multiple connectors and connector types!!!
 
         evse_manager->subscribe_session_event([this, evse_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(evse_id, session_event);
@@ -80,37 +78,35 @@ void Auth::ready() {
             this->r_evse_manager.at(evse_index)->call_stop_transaction(request);
         });
     this->auth_handler->register_reserved_callback(
-        [this](const std::optional<int32_t> evse_index, const int32_t& reservation_id) {
+        [this](const std::optional<int32_t> evse_id, const int32_t& reservation_id) {
             // Only call the evse manager to store the reservation if it is done for a specific evse.
-            if (evse_index.has_value()) {
-                EVLOG_info << "Register reserved callback for evse index " << evse_index.value();
+            if (evse_id.has_value()) {
+                EVLOG_info << "Register reserved callback for evse index " << evse_id.value();
 
-                this->r_evse_manager.at(evse_index.value() - 1)->call_reserve(reservation_id);
+                this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id);
             }
         });
-    this->auth_handler->register_reservation_cancelled_callback([this](const std::optional<int32_t> evse_index,
-                                                                       const int32_t reservation_id,
-                                                                       const ReservationEndReason reason) {
-        // Only call the evse manager to cancel the reservation if it was for a specific evse
-        // TODO mz rename evse_index to evse_id or don't do the -1!!
-        if (evse_index.has_value()) {
-            EVLOG_info << "Call evse manager to cancel the reservation with evse index " << evse_index.value();
-            this->r_evse_manager.at(evse_index.value() - 1)->call_cancel_reservation();
-        }
+    this->auth_handler->register_reservation_cancelled_callback(
+        [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason) {
+            // Only call the evse manager to cancel the reservation if it was for a specific evse
+            if (evse_id.has_value()) {
+                EVLOG_info << "Call evse manager to cancel the reservation with evse index " << evse_id.value();
+                this->r_evse_manager.at(evse_id.value() - 1)->call_cancel_reservation();
+            }
 
-        EVLOG_info << "Before publish reservation update.";
-        ReservationUpdateStatus status;
-        status.reservation_id = reservation_id;
-        if (reason == ReservationEndReason::Expired) {
-            status.reservation_status = Reservation_status::Expired;
-        } else if (reason == ReservationEndReason::Cancelled) {
-            status.reservation_status = Reservation_status::Removed;
-        } else {
-            // On reservation used: do not publish a reservation update!!
-            return;
-        }
-        this->p_reservation->publish_reservation_update(status);
-    });
+            EVLOG_info << "Before publish reservation update.";
+            ReservationUpdateStatus status;
+            status.reservation_id = reservation_id;
+            if (reason == ReservationEndReason::Expired) {
+                status.reservation_status = Reservation_status::Expired;
+            } else if (reason == ReservationEndReason::Cancelled) {
+                status.reservation_status = Reservation_status::Removed;
+            } else {
+                // On reservation used: do not publish a reservation update!!
+                return;
+            }
+            this->p_reservation->publish_reservation_update(status);
+        });
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {

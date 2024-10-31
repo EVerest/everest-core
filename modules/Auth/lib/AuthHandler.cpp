@@ -53,11 +53,10 @@ AuthHandler::~AuthHandler() {
 
 void AuthHandler::init_connector(const int connector_id, const int evse_index,
                                  const types::evse_manager::ConnectorTypeEnum& connector_type) {
-    EVLOG_info << "Add connector with connector id " << connector_id << " and evse index " << evse_index;
+    EVLOG_debug << "Add connector with connector id " << connector_id << " and evse index " << evse_index;
 
     const int evse_id = evse_index + 1;
 
-    // TODO mz in reservation: support multiple connectors per evse
     if (evse_id < 0 || connector_id < 0) {
         EVLOG_error << "Can not add connector to reservation handler: evse id or connector index are negative.";
     } else {
@@ -162,7 +161,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     bool all_evses_reserved_and_tag_does_not_match = true;
     for (const auto evse_id : referenced_evses) {
         if (evse_id < 0) {
-            // TODO mz this should not be possible!
+            EVLOG_warning << "Handle token: Evse id is negative: that should not be possible.";
+            continue;
         }
 
         const uint32_t evse_id_u = static_cast<uint32_t>(evse_id);
@@ -537,12 +537,8 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
     this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
-// TODO mz when someone made a reservation (on evse id 0) and starts charging on another evse id, the reservation must
-// be cancelled as well.
-
 types::reservation::ReservationResult AuthHandler::handle_reservation(std::optional<int> evse_id,
                                                                       const Reservation& reservation) {
-    EVLOG_info << "In handle reservation in auth handler, evse id is " << (evse_id.has_value() ? evse_id.value() : -1);
     std::optional<uint32_t> evse;
     if (evse_id.has_value()) {
         if (evse_id.value() >= 0) {
@@ -594,8 +590,6 @@ void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, 
 
     EVLOG_info << "Call reservation cancelled callback from call_reservation_cancelled";
     this->reservation_cancelled_callback(evse_index, reservation_id, reason);
-
-    // TODO mz notify ocpp (for example) that reservation has been cancelled???
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id) {
@@ -621,13 +615,14 @@ void AuthHandler::handle_permanent_fault_cleared(const int evse_id) {
 void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& event) {
     uint32_t evse_id_u = 0;
     if (evse_id < 0) {
-        // TODO mz
+        EVLOG_error << "Handle session event: Evse id is negative: that should not be possible.";
+        return;
     } else {
         evse_id_u = static_cast<uint32_t>(evse_id);
     }
 
     if (this->evses.count(evse_id) == 0) {
-        // TODO mz
+        EVLOG_warning << "Handle session event: no evse found with evse id " << evse_id;
         return;
     }
 
@@ -636,14 +631,10 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     const auto event_type = event.event;
 
     switch (event_type) {
-    case SessionEventEnum::SessionStarted:
-        // this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
-        // TODO mz
-        // this->connectors.at(connector_id)->connector.is_reservable = false;
-        {
-            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-            this->plug_in_queue.push_back(evse_id);
-        }
+    case SessionEventEnum::SessionStarted: {
+        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+        this->plug_in_queue.push_back(evse_id);
+    }
 
         this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         this->cv.notify_one();
@@ -664,9 +655,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     case SessionEventEnum::TransactionStarted:
         this->evses.at(evse_id)->transaction_active = true;
-        // this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
-        // TODO mz
-        // this->connectors.at(connector_id)->connector.reserved = false;
         this->evses.at(evse_id)->submit_event(ConnectorEvent::TRANSACTION_STARTED);
         this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         this->evses.at(evse_id)->timeout_timer.stop();
@@ -676,8 +664,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->identifier.reset();
         break;
     case SessionEventEnum::SessionFinished: {
-        // TODO mz
-        // this->connectors.at(connector_id)->connector.is_reservable = true;
         this->evses.at(evse_id)->identifier.reset();
         this->evses.at(evse_id)->submit_event(ConnectorEvent::SESSION_FINISHED);
         this->evses.at(evse_id)->timeout_timer.stop();
@@ -700,19 +686,10 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
 
     case SessionEventEnum::ReservationStart:
-        // TODO mz on_reservation_used???
-        // this->reservation_handler.set_evse_available(false, false, evse_id_u);
-        // TODO mz
-        // this->connectors.at(connector_id)->connector.reserved = true;
         this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
         break;
     case SessionEventEnum::ReservationEnd:
-        // TODO mz what if it is faulted?? need to check???
         this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
-        // this->reservation_handler.set_evse_state(ConnectorState::AVAILABLE, evse_id_u);
-        // TODO mz
-        // this->connectors.at(connector_id)->connector.is_reservable = true;
-        // this->connectors.at(connector_id)->connector.reserved = false;
         break;
     /// explicitly fall through all the SessionEventEnum values we are not handling
     case SessionEventEnum::Authorized:
@@ -782,7 +759,7 @@ void AuthHandler::register_stop_transaction_callback(
 }
 
 void AuthHandler::register_reserved_callback(
-    const std::function<void(const std::optional<int>& evse_index, const int& reservation_id)>& callback) {
+    const std::function<void(const std::optional<int>& evse_id, const int& reservation_id)>& callback) {
     this->reserved_callback = callback;
 }
 
@@ -795,9 +772,9 @@ void AuthHandler::register_reservation_cancelled_callback(
                const types::reservation::ReservationEndReason reason) {
             EVLOG_info << "In register reservation cancelled callback.";
 
-            // TODO mz something with reason? Is reservation_id really needed?
             if (evse_id.has_value() && evse_id.value() < 0) {
-                // TODO mz
+                EVLOG_warning << "Reservation cancelled: evse id is negative (" << evse_id.value()
+                              << "), that should not be possible.";
                 return;
             }
 

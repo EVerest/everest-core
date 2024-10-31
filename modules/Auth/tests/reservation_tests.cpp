@@ -17,8 +17,6 @@ using testing::MockFunction;
 using testing::Return;
 using testing::SaveArg;
 
-// TODO mz tests for 'unknown'
-
 namespace module {
 class ReservationHandlerTest : public ::testing::Test {
 private:
@@ -1217,7 +1215,5 @@ TEST_F(ReservationHandlerTest, store_load_reservations_connector_unavailable) {
     EXPECT_EQ(r.global_reservations.size(), 1);
     EXPECT_EQ(r.reservation_id_to_reservation_timeout_timer_map.size(), 1);
 }
-
-// TODO mz test with cars arriving, removing reservation and parent tokens
 
 } // namespace module

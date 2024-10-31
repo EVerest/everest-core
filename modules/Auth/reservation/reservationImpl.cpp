@@ -12,7 +12,6 @@ void reservationImpl::init() {
 void reservationImpl::ready() {
 }
 
-// TODO mz change to evse id??
 types::reservation::ReservationResult
 reservationImpl::handle_reserve_now(types::reservation::ReserveNowRequest& request) {
     // your code for cmd reserve_now goes here

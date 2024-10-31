@@ -344,10 +344,13 @@ private: // Functions
     void load_reservations();
 
     ///
-    /// \brief Helper function to print the connector types order.
-    /// \param order    The order to print.
+    /// \brief Helper function to print information about reservations and evses, to find out why a reservation has
+    ///        failed.
+    /// \param reservation  The reservation.
+    /// \param evse_id      The evse id.
     ///
-    void print_order(const std::vector<types::evse_manager::ConnectorTypeEnum>& order) const;
+    void print_reservations_debug_info(const types::reservation::Reservation& reservation,
+                                       const std::optional<uint32_t> evse_id, const bool reservation_failed);
 };
 
 } // namespace module
