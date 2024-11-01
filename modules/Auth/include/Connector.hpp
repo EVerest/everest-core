@@ -28,10 +28,7 @@ struct Identifier {
 struct Connector {
     explicit Connector(
         int id, const types::evse_manager::ConnectorTypeEnum type = types::evse_manager::ConnectorTypeEnum::Unknown) :
-        id(id),
-        transaction_active(false),
-        state_machine(ConnectorState::AVAILABLE),
-        type(type) {
+        id(id), transaction_active(false), state_machine(ConnectorState::AVAILABLE), type(type) {
     }
 
     int id;

@@ -46,7 +46,8 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
     connection_timeout(connection_timeout),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
     ignore_faults(ignore_faults),
-    reservation_handler(id, store) {};
+    reservation_handler(id, store) {
+}
 
 AuthHandler::~AuthHandler() {
 }

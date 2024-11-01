@@ -79,7 +79,8 @@ public:
         r_connector_zero_sink(std::move(r_connector_zero_sink)),
         r_display_message(std::move(r_display_message)),
         r_reservation(std::move(r_reservation)),
-        config(config) {};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;

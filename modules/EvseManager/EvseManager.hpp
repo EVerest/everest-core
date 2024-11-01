@@ -135,7 +135,8 @@ public:
         r_imd(std::move(r_imd)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config) {};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;

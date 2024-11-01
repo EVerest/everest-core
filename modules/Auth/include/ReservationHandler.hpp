@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -67,7 +66,7 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler(const std::string &id, kvsIntf* store);
+    ReservationHandler(const std::string& id, kvsIntf* store);
 
     ///
     /// \brief Destructor.
