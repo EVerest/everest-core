@@ -635,9 +635,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     case SessionEventEnum::SessionStarted: {
         std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
         this->plug_in_queue.push_back(evse_id);
-    }
 
-        this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(), evse_id_u);
+        this->reservation_handler.set_evse_state(ConnectorState::OCCUPIED, evse_id_u);
         this->cv.notify_one();
 
         // only set plug in timeout when SessionStart is caused by plug in
@@ -650,10 +649,13 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
                         std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
                         this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
                     }
+
+                    this->reservation_handler.set_evse_state(this->evses.at(evse_id)->get_state(),
+                                                             static_cast<uint32_t>(evse_id >= 0 ? evse_id : 0));
                 },
                 std::chrono::seconds(this->connection_timeout));
         }
-        break;
+    } break;
     case SessionEventEnum::TransactionStarted:
         this->evses.at(evse_id)->transaction_active = true;
         this->evses.at(evse_id)->submit_event(ConnectorEvent::TRANSACTION_STARTED);

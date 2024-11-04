@@ -81,7 +81,7 @@ void Auth::ready() {
         [this](const std::optional<int32_t> evse_id, const int32_t& reservation_id) {
             // Only call the evse manager to store the reservation if it is done for a specific evse.
             if (evse_id.has_value()) {
-                EVLOG_info << "Register reserved callback for evse index " << evse_id.value();
+                EVLOG_info << "Call reserved callback for evse id " << evse_id.value();
 
                 this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id);
             }

@@ -411,7 +411,7 @@ void evse_managerImpl::handle_withdraw_authorization() {
 };
 
 bool evse_managerImpl::handle_reserve(int& reservation_id) {
-    return mod->reserve(reservation_id);
+    return mod->reserve(reservation_id, true);
 };
 
 void evse_managerImpl::handle_cancel_reservation() {

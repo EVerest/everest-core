@@ -1198,6 +1198,8 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
 
 bool EvseManager::reserve(int32_t id, bool signal_others) {
 
+    EVLOG_debug << "Reserve called for evse id " << id << ", signal others: " << signal_others;
+
     // is the evse Unavailable?
     if (charger->get_current_state() == Charger::EvseState::Disabled) {
         return false;
@@ -1216,7 +1218,7 @@ bool EvseManager::reserve(int32_t id, bool signal_others) {
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
     if (not reserved) {
-        EVLOG_info << "Make the reservation for id " << id;
+        EVLOG_debug << "Make the reservation for id " << id;
         reserved = true;
         reservation_id = id;
 

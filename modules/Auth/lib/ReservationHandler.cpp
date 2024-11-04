@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <Connector.hpp>
+
 #include <everest/logging.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <utils/date.hpp>
@@ -190,6 +192,10 @@ void ReservationHandler::set_evse_state(ConnectorState state, const uint32_t evs
                       << ") does not exist. This should not happen.";
         return;
     }
+
+    EVLOG_debug << "ReservationHandler: Set evse state of evse_id "
+                << ": evse state:  " << conversions::connector_state_to_string(this->evses[evse_id].evse_state)
+                << " -> " << conversions::connector_state_to_string(state);
 
     ConnectorState old_evse_state = this->evses[evse_id].evse_state;
 
@@ -642,17 +648,12 @@ bool ReservationHandler::is_reservation_possible(
 
 void ReservationHandler::set_reservation_timer(const types::reservation::Reservation& reservation,
                                                const std::optional<uint32_t> evse_id) {
-    EVLOG_info << "18";
-
     std::lock_guard<std::recursive_mutex> lk(this->timer_mutex);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
         std::make_unique<Everest::SteadyTimer>(&this->io_service);
-    EVLOG_info << "19";
 
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id]->at(
         [this, reservation, evse_id]() {
-            EVLOG_info << "20";
-
             if (evse_id.has_value()) {
                 EVLOG_info << "Reservation expired for evse #" << evse_id.value()
                            << " (reservation id: " << reservation.reservation_id << ")";
