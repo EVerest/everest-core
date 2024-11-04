@@ -3594,11 +3594,19 @@ void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest>
     const auto msg = call.msg;
     InstallCertificateResponse response;
 
-    const auto result = this->evse_security->install_ca_certificate(
+    if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) <= 1)
+    {
+        response.status = InstallCertificateStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "Invalid security profile";
+        response.statusInfo->additionalInfo = "SecurityProfileTooLowForCertificateHandling";
+    }
+    else
+    {
+        const auto result = this->evse_security->install_ca_certificate(
         msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
-    response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
-
-    if (response.status == InstallCertificateStatusEnum::Accepted) {
+        response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+        if (response.status == InstallCertificateStatusEnum::Accepted) {
         const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
         std::string tech_info =
             "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
@@ -3615,6 +3623,8 @@ void ChargePoint::handle_delete_certificate_req(Call<DeleteCertificateRequest> c
 
     const auto msg = call.msg;
     DeleteCertificateResponse response;
+
+    // shall we allow deletion when low security level?
 
     const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateHashData);
 
