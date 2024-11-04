@@ -30,7 +30,7 @@ ReservationHandler::~ReservationHandler() {
 void ReservationHandler::add_connector(const uint32_t evse_id, const uint32_t connector_id,
                                        const types::evse_manager::ConnectorTypeEnum connector_type,
                                        const ConnectorState connector_state) {
-    EVLOG_info << "Add connector with evse id " << evse_id << " and connector id " << connector_id;
+    EVLOG_debug << "Add connector with evse id " << evse_id << " and connector id " << connector_id;
 
     EvseConnectorType evse_connector_type;
     evse_connector_type.connector_type = connector_type;
@@ -88,8 +88,8 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
     std::pair<bool, std::optional<uint32_t>> reservation_cancelled = this->cancel_reservation(
         reservation.reservation_id, false, types::reservation::ReservationEndReason::Cancelled);
     if (reservation_cancelled.first && reservation_cancelled.second.has_value()) {
-        EVLOG_info << "Cancelled reservation with id " << reservation.reservation_id << " for evse id "
-                   << reservation_cancelled.second.value() << " because a reservation with the same id was made";
+        EVLOG_debug << "Cancelled reservation with id " << reservation.reservation_id << " for evse id "
+                    << reservation_cancelled.second.value() << " because a reservation with the same id was made";
     }
 
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
@@ -173,7 +173,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
             return get_reservation_evse_connector_state(connector_type);
         }
 
-        EVLOG_info << "Created reservation connector type "
+        EVLOG_info << "Created reservation for connector type "
                    << types::evse_manager::connector_type_enum_to_string(
                           reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
         global_reservations.push_back(reservation);
@@ -310,8 +310,7 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
         return result;
     }
 
-    EVLOG_info << "Cancel reservation with reservation id " << reservation_id
-               << ", execute callback: " << (execute_callback ? "true" : "false");
+    EVLOG_info << "Cancel reservation with reservation id " << reservation_id;
 
     std::optional<uint32_t> evse_id;
     for (const auto& reservation : this->evse_reservations) {
@@ -343,7 +342,6 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
 
     this->store_reservations();
 
-    EVLOG_info << "Before cancelled callback";
     if (execute_callback && this->reservation_cancelled_callback != nullptr) {
         this->reservation_cancelled_callback(evse_id, reservation_id, reason);
     }
@@ -376,28 +374,24 @@ void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
 std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::optional<uint32_t> evse_id,
                                                                        const std::string& id_token,
                                                                        std::optional<std::string> parent_id_token) {
-    EVLOG_info << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
-               << " and id token " << id_token << " and parent id token "
-               << (parent_id_token.has_value() ? parent_id_token.value() : "-");
+    EVLOG_debug << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
+                << " and id token " << id_token << " and parent id token "
+                << (parent_id_token.has_value() ? parent_id_token.value() : "-");
 
     std::lock_guard<std::recursive_mutex> lock(this->reservation_mutex);
 
     // Return true if id tokens match or parent id tokens exists and match.
     if (evse_id.has_value()) {
-        EVLOG_info << "Evse id has value, check evse reservation";
         if (this->evse_reservations.count(evse_id.value())) {
             const types::reservation::Reservation& reservation = this->evse_reservations[evse_id.value()];
-            EVLOG_info << "Reservation to check: id: " << reservation.reservation_id
-                       << ", id token : " << reservation.id_token << ", parent id token: "
-                       << (reservation.parent_id_token.has_value() ? reservation.parent_id_token.value() : " no token");
             if (reservation.id_token == id_token ||
                 (parent_id_token.has_value() && reservation.parent_id_token.has_value() &&
                  parent_id_token.value() == reservation.parent_id_token.value())) {
-                EVLOG_info << "There is a reservation (" << reservation.reservation_id << ") for evse "
-                           << evse_id.value() << " and the token matches";
+                EVLOG_debug << "There is a reservation (" << reservation.reservation_id << ") for evse "
+                            << evse_id.value() << " and the token matches";
                 return reservation.reservation_id;
             } else {
-                EVLOG_info << "There is a reservation for evse id " << evse_id.value() << ", but token does not match";
+                EVLOG_debug << "There is a reservation for evse id " << evse_id.value() << ", but token does not match";
                 return std::nullopt;
             }
         }
@@ -405,17 +399,16 @@ std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std
 
     // If evse_id == 0 or there is no reservation found with the given evse id, search globally for reservation with
     // this token.
-    EVLOG_info << "Matches reserved identifier: check global reservations";
     for (const auto& reservation : global_reservations) {
         if (reservation.id_token == id_token ||
             (parent_id_token.has_value() && reservation.parent_id_token.has_value() &&
              parent_id_token.value() == reservation.parent_id_token.value())) {
-            EVLOG_info << "There is a reservation for the token, reservation id: " << reservation.reservation_id;
+            EVLOG_debug << "There is a reservation for the token, reservation id: " << reservation.reservation_id;
             return reservation.reservation_id;
         }
     }
 
-    EVLOG_info << "No reservation found which matches the reserved identifier";
+    EVLOG_debug << "No reservation found which matches the reserved identifier";
     return std::nullopt;
 }
 
@@ -574,13 +567,6 @@ bool ReservationHandler::can_virtual_car_arrive(
 
             // Check if this is the last.
             if (next_car_arrival_order.size() == 1) {
-                std::cout << "OK: evse_id: " << evse_id << "\n";
-                for (const uint32_t e : next_used_evse_ids) {
-                    std::cout << e << " ";
-                }
-
-                std::cout << "\n";
-
                 // If this is the last and a car can arrive, then this combination is possible.
                 return true;
             }
@@ -591,26 +577,9 @@ bool ReservationHandler::can_virtual_car_arrive(
                 next_car_arrival_order.begin() + 1, next_car_arrival_order.end());
 
             if (!this->can_virtual_car_arrive(next_used_evse_ids, next_arrival_order, evse_specific_reservations)) {
-
-                std::cout << "NOK!!: " << evse_id << "\n";
-                for (const uint32_t e : next_used_evse_ids) {
-                    std::cout << e << " ";
-                }
-
-                std::cout << "\n";
-
                 return false;
             }
         }
-    }
-
-    if (!is_possible) {
-        std::cout << "Niet mogelijk: \n";
-        for (const uint32_t e : used_evse_ids) {
-            std::cout << e << " ";
-        }
-
-        std::cout << "\n";
     }
 
     return is_possible;
@@ -665,8 +634,6 @@ void ReservationHandler::set_reservation_timer(const types::reservation::Reserva
                                      types::reservation::ReservationEndReason::Expired);
         },
         Everest::Date::from_rfc3339(reservation.expiry_time));
-
-    EVLOG_info << "21";
 }
 
 std::vector<ReservationHandler::Evse> ReservationHandler::get_all_evses_with_connector_type(
@@ -809,7 +776,7 @@ void ReservationHandler::load_reservations() {
     const auto stored_reservations = store->call_load(this->kvs_store_key_id);
     const Array* reservations_json = std::get_if<Array>(&stored_reservations);
     if (reservations_json == nullptr) {
-        EVLOG_warning << "Can not load reservations: reservations is not a string.";
+        EVLOG_warning << "Can not load reservations: reservations is not a json array.";
         return;
     }
 

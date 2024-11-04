@@ -268,8 +268,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
-                                  "to authorize "
-                                  "this token for starting transactions!";
+                                  "to authorize this token for starting transactions!";
                     return TokenHandlingResult::REJECTED;
                 }
 
@@ -513,8 +512,6 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                               const ValidationResult& validation_result) {
     const auto evse_index = this->evses.at(evse_id)->evse_index;
 
-    EVLOG_info << "Notify evse. evse_index: " << evse_index << ", evse_id: " << evse_id;
-
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
         Identifier identifier{provided_token.id_token, provided_token.authorization_type,
                               validation_result.authorization_status, validation_result.expiry_time,
@@ -525,7 +522,7 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
             [this, evse_index, evse_id, provided_token]() {
-                EVLOG_info << "Authorization timeout for evse#" << evse_index;
+                EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 this->evses.at(evse_id)->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
                 this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
@@ -572,24 +569,17 @@ bool AuthHandler::handle_is_reservation_for_token(const std::optional<int>& evse
 }
 
 void AuthHandler::call_reserved(const std::optional<int>& evse_id, const int reservation_id) {
-    EVLOG_info << "Call reserved";
     this->reserved_callback(evse_id, reservation_id);
-    // if (evse_id.has_value() && evse_id.value() > 0) {
-    //     EVLOG_info << "Reserved callback with evse id " << evse_id.value();
-    //     this->reserved_callback(evse_id.value(), reservation_id);
-    // }
 }
 
 void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
                                              const types::reservation::ReservationEndReason reason) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
-        EVLOG_warning << "Cancel reservation for evse index " << evse_id.value() << ", shouldn't that be "
-                      << (evse_id.value() - 1) << "????";
+        EVLOG_info << "Cancel reservation for evse index " << evse_id.value();
         evse_index = evse_id.value();
     }
 
-    EVLOG_info << "Call reservation cancelled callback from call_reservation_cancelled";
     this->reservation_cancelled_callback(evse_index, reservation_id, reason);
 }
 
@@ -773,15 +763,12 @@ void AuthHandler::register_reservation_cancelled_callback(
     this->reservation_handler.register_reservation_cancelled_callback(
         [this](const std::optional<int32_t>& evse_id, const int32_t reservation_id,
                const types::reservation::ReservationEndReason reason) {
-            EVLOG_info << "In register reservation cancelled callback.";
-
             if (evse_id.has_value() && evse_id.value() < 0) {
                 EVLOG_warning << "Reservation cancelled: evse id is negative (" << evse_id.value()
                               << "), that should not be possible.";
                 return;
             }
 
-            EVLOG_info << "Call reservation cancelled";
             this->call_reservation_cancelled(evse_id, reservation_id, reason);
         });
 }

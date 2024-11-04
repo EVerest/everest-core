@@ -16,7 +16,7 @@ types::reservation::ReservationResult
 reservationImpl::handle_reserve_now(types::reservation::ReserveNowRequest& request) {
     // your code for cmd reserve_now goes here
 
-    EVLOG_info << "Handle reservation for evse id " << (request.evse_id.has_value() ? request.evse_id.value() : -1);
+    EVLOG_debug << "Handle reservation for evse id " << (request.evse_id.has_value() ? request.evse_id.value() : -1);
 
     const auto reservation_result = this->mod->auth_handler->handle_reservation(request.evse_id, request.reservation);
     if (reservation_result == ReservationResult::Accepted) {

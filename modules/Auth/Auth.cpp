@@ -61,7 +61,6 @@ void Auth::ready() {
 
     this->auth_handler->register_notify_evse_callback(
         [this](const int evse_index, const ProvidedIdToken& provided_token, const ValidationResult& validation_result) {
-            EVLOG_info << "Notify evse callback with evse index " << evse_index;
             this->r_evse_manager.at(evse_index)->call_authorize_response(provided_token, validation_result);
         });
     this->auth_handler->register_withdraw_authorization_callback(
@@ -90,11 +89,10 @@ void Auth::ready() {
         [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason) {
             // Only call the evse manager to cancel the reservation if it was for a specific evse
             if (evse_id.has_value()) {
-                EVLOG_info << "Call evse manager to cancel the reservation with evse index " << evse_id.value();
+                EVLOG_debug << "Call evse manager to cancel the reservation with evse id " << evse_id.value();
                 this->r_evse_manager.at(evse_id.value() - 1)->call_cancel_reservation();
             }
 
-            EVLOG_info << "Before publish reservation update.";
             ReservationUpdateStatus status;
             status.reservation_id = reservation_id;
             if (reason == ReservationEndReason::Expired) {
