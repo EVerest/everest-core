@@ -18,7 +18,9 @@ active_modules:
       is_cert_install_needed: true
   evse_manager_1:
     module: EvseManager
-    evse: 1
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
       evse_id: "DE*PNX*00001"
@@ -43,7 +45,9 @@ active_modules:
           implementation_id: charger
   evse_manager_2:
     module: EvseManager
-    evse: 2
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
       evse_id: "2"
@@ -68,12 +72,16 @@ active_modules:
           implementation_id: charger
   yeti_driver_1:
     module: JsYetiSimulator
-    evse: 1
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
-    evse: 2
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
   slac:
@@ -172,7 +180,9 @@ active_modules:
           implementation_id: energy_grid
   evse_manager_1_ocpp_sink:
     module: EnergyNode
-    evse: 1
+    mapping:
+      module:
+        evse: 1
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -182,7 +192,9 @@ active_modules:
           implementation_id: energy_grid
   evse_manager_2_ocpp_sink:
     module: EnergyNode
-    evse: 2
+    mapping:
+      module:
+        evse: 2
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -191,8 +203,10 @@ active_modules:
         - module_id: evse_manager_2
           implementation_id: energy_grid
   evse_manager_1_api_sink:
-    evse: 1
     module: EnergyNode
+    mapping:
+      module:
+        evse: 1
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -205,7 +219,9 @@ active_modules:
           implementation_id: powermeter
   evse_manager_2_api_sink:
     module: EnergyNode
-    evse: 2
+    mapping:
+      module:
+        evse: 2
     config_module:
       fuse_limit_A: 32.0
       phase_count: 3
@@ -218,7 +234,9 @@ active_modules:
           implementation_id: powermeter
   grid_connection_point:
     module: EnergyNode
-    evse: 0
+    mapping:
+      module:
+        evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
