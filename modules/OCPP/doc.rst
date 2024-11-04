@@ -302,7 +302,7 @@ Energy Management and Smart Charging Integration
 ------------------------------------------------
 
 OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
-This module integrates the composite schedule(s) within EVerests energy management. For further information about smart charging and the
+This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
 composite schedule calculation please refer to the OCPP1.6 specification.
 
 The integration of the composite schedules are implemented through the optional requirement(s) `evse_energy_sink`(interface: `external_energy_limits`) 
