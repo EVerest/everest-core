@@ -199,9 +199,12 @@ void ConnectivityManager::init_websocket() {
     }
 
     // cache the network profiles on initialization
-    cache_network_connection_profiles();
+    if (!cache_network_connection_profiles()) {
+        EVLOG_warning << "No network connection profiles configured, aborting websocket connection.";
+        return;
+    }
 
-    const int config_slot_int = this->network_connection_priorities.at(this->network_configuration_priority);
+    const int config_slot_int = this->get_active_network_configuration_slot();
 
     const auto network_connection_profile = this->get_network_connection_profile(config_slot_int);
     // Not const as the iface member can be set by the configure network connection profile callback
@@ -424,11 +427,11 @@ void ConnectivityManager::next_network_configuration_priority() {
         (this->network_configuration_priority + 1) % (this->network_connection_priorities.size());
 }
 
-void ConnectivityManager::cache_network_connection_profiles() {
+bool ConnectivityManager::cache_network_connection_profiles() {
 
     if (!this->network_connection_profiles.empty()) {
         EVLOG_debug << " Network connection profiles already cached";
-        return;
+        return true;
     }
 
     // get all the network connection profiles from the device model and cache them
@@ -442,9 +445,7 @@ void ConnectivityManager::cache_network_connection_profiles() {
         this->network_connection_priorities.push_back(num);
     }
 
-    if (this->network_connection_priorities.empty()) {
-        EVLOG_AND_THROW(std::runtime_error("NetworkConfigurationPriority must not be empty"));
-    }
+    return !this->network_connection_priorities.empty();
 }
 } // namespace v201
 } // namespace ocpp

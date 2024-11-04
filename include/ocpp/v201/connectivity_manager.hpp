@@ -202,7 +202,8 @@ private:
     void next_network_configuration_priority();
 
     /// @brief Cache all the network connection profiles. Must be called once during initialization
-    void cache_network_connection_profiles();
+    /// \return True if the network connection profiles could be cached, else False.
+    bool cache_network_connection_profiles();
 };
 
 } // namespace v201
