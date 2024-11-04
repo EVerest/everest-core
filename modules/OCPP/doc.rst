@@ -312,7 +312,7 @@ has two EVSEs you need to connect three modules that implement the `external_ene
 two representing your actual EVSEs.
 
 📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
-which requirement to use when communication the limits for the EVSEs. For more information about the module mapping please see 
+which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
 `3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
 
 This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
