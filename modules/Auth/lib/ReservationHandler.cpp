@@ -127,6 +127,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
             return types::reservation::ReservationResult::Rejected;
         } else if (evse_state != types::reservation::ReservationResult::Accepted) {
             print_reservations_debug_info(reservation, evse_id, true);
+            EVLOG_debug << "Rejecting reservation because connector is not available";
             return evse_state;
         } else if (connector_state != types::reservation::ReservationResult::Accepted) {
             print_reservations_debug_info(reservation, evse_id, true);
