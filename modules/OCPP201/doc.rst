@@ -331,6 +331,6 @@ which requirement to use when communication the limits for the EVSEs. For more i
 This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
 the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements
 the `external_energy_limits` interface. In addition, the config parameter `CompositeScheduleIntervalS` defines a periodic interval to retrieve
-the composite schedule also in case no charging profiles have been changed. The configuration paramater `RequestCompositeScheduleDurationS` defines 
+the composite schedule also in case no charging profiles have been changed. The configuration parameter `RequestCompositeScheduleDurationS` defines 
 the duration in seconds of the requested composite schedules starting now. The value configured for `RequestCompositeScheduleDurationS` shall be greater
 than the value configured for `CompositeScheduleIntervalS` because otherwise time periods could be missed by the application.
