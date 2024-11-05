@@ -148,7 +148,7 @@ class EverestTestEnvironmentSetup:
     def _create_temporary_directory_structure(self, tmp_path: Path) -> _EverestEnvironmentTemporaryPaths:
         ocpp_config_dir = tmp_path / "ocpp_config"
         ocpp_config_dir.mkdir(exist_ok=True)
-        if self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
+        if self._ocpp_config and self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
             component_config_path_standardized = ocpp_config_dir / "component_config" / "standardized"
             component_config_path_custom = ocpp_config_dir / "component_config" / "custom"
             component_config_path_standardized.mkdir(parents=True, exist_ok=True)
