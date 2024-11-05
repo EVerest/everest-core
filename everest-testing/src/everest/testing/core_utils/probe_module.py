@@ -51,9 +51,15 @@ class ProbeModule:
 
         interface = self._setup.connections[connection_id][0]
         try:
-            return await asyncio.to_thread(lambda: self._mod.call_command(interface, command_name, args))
+            async with asyncio.timeout(30):
+                return await asyncio.to_thread(lambda: self._mod.call_command(interface, command_name, args))
+        except TimeoutError as e:
+            error_message = f"Timeout in calling {connection_id}.{command_name}: {type(e)}: {e}. This might be caused by the other module/EVerest exiting abnormally."
+            logging.error(error_message)
+            raise RuntimeError(error_message)
         except Exception as e:
-            logging.info(f"Exception in calling {connection_id}.{command_name}: {type(e)}: {e}")
+            logging.info(
+                f"Exception in calling {connection_id}.{command_name}: {type(e)}: {e}")
 
     def implement_command(self, implementation_id: str, command_name: str, handler: Callable[[dict], Any]):
         """
@@ -117,7 +123,6 @@ class ProbeModule:
         self._ready_event.wait(timeout)
         if not self._ready_event.is_set():
             raise TimeoutError("Waiting for ready: timeout")
-
 
     async def wait_to_be_ready(self, timeout=3.0):
         """

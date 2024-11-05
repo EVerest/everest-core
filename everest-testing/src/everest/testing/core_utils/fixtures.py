@@ -75,7 +75,7 @@ def everest_config_strategies(request) -> list[EverestConfigAdjustmentStrategy]:
     return additional_configuration_strategies
 
 @pytest.fixture
-def everest_core(request,
+def everest_environment(request,
                  tmp_path,
                  core_config: EverestEnvironmentCoreConfiguration,
                  ocpp_config: Optional[EverestEnvironmentOCPPConfiguration],
@@ -83,11 +83,8 @@ def everest_core(request,
                  evse_security_config: Optional[EverestEnvironmentEvseSecurityConfiguration],
                  persistent_store_config: Optional[EverestEnvironmentPersistentStoreConfiguration],
                  everest_config_strategies
-                 ) -> EverestCore:
-    """Fixture that can be used to start and stop everest-core"""
-
+                 ):
     standalone_module_marker = request.node.get_closest_marker('standalone_module')
-
 
     environment_setup = EverestTestEnvironmentSetup(
         core_config=core_config,
@@ -100,11 +97,23 @@ def everest_core(request,
     )
 
     environment_setup.setup_environment(tmp_path=tmp_path)
-    yield environment_setup.everest_core
+
+    yield environment_setup
+
+@pytest.fixture
+def everest_core(request,
+                 everest_environment
+                 )-> EverestCore:
+    """Fixture that can be used to start and stop everest-core"""
+
+    yield everest_environment.everest_core
 
     # FIXME (aw): proper life time management, shouldn't the fixure start and stop?
-    environment_setup.everest_core.stop()
+    everest_environment.everest_core.stop()
 
+@pytest.fixture
+def ocpp_configuration(everest_environment):
+    yield everest_environment.ocpp_config
 
 @pytest.fixture
 def test_controller(request, tmp_path, everest_core) -> EverestTestController:

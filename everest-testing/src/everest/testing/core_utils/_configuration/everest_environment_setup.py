@@ -36,8 +36,8 @@ class EverestEnvironmentOCPPConfiguration:
     ocpp_module_id: str = "ocpp"
     template_ocpp_config: Optional[
         Path] = None  # Path for OCPP config to be used; if not provided, will be determined from everest config
-    device_model_schemas_path: Optional[
-        Path] = None  # Path of the OCPP device model json schemas. If not set, {libocpp_path} / 'config/v201/component_schemas' will  be used
+    device_model_component_config_path: Optional[
+        Path] = None  # Path of the OCPP device model json schemas. If not set, {libocpp_path} / 'config/v201/component_config' will  be used
     configuration_strategies: list[OCPPModuleConfigurationStrategy] | None = None
 
 
@@ -88,6 +88,7 @@ class EverestTestEnvironmentSetup:
     class _EverestEnvironmentTemporaryPaths:
         """ Paths of the temporary configuration files / data """
         certs_dir: Path  # used by both OCPP and evse security
+        ocpp_config_path: Path
         ocpp_config_file: Path
         ocpp_user_config_file: Path
         ocpp_database_dir: Path
@@ -113,6 +114,7 @@ class EverestTestEnvironmentSetup:
             self._standalone_module = self._probe_config.module_id
         self._additional_everest_config_strategies = everest_config_strategies if everest_config_strategies else []
         self._everest_core = None
+        self._ocpp_configuration = None
 
     def setup_environment(self, tmp_path: Path):
 
@@ -127,7 +129,7 @@ class EverestTestEnvironmentSetup:
                                          tmp_path=tmp_path)
 
         if self._ocpp_config:
-            self._setup_libocpp_configuration(
+            self._ocpp_configuration = self._setup_libocpp_configuration(
                 temporary_paths=temporary_paths
             )
 
@@ -139,9 +141,18 @@ class EverestTestEnvironmentSetup:
         assert self._everest_core, "Everest Core not initialized; run 'setup_environment' first"
         return self._everest_core
 
+    @property
+    def ocpp_config(self):
+        return self._ocpp_configuration
+
     def _create_temporary_directory_structure(self, tmp_path: Path) -> _EverestEnvironmentTemporaryPaths:
         ocpp_config_dir = tmp_path / "ocpp_config"
         ocpp_config_dir.mkdir(exist_ok=True)
+        if self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
+            component_config_path_standardized = ocpp_config_dir / "component_config" / "standardized"
+            component_config_path_custom = ocpp_config_dir / "component_config" / "custom"
+            component_config_path_standardized.mkdir(parents=True, exist_ok=True)
+            component_config_path_custom.mkdir(parents=True, exist_ok=True)
         certs_dir = tmp_path / "certs"
         certs_dir.mkdir(exist_ok=True)
         ocpp_logs_dir = ocpp_config_dir / "logs"
@@ -153,6 +164,7 @@ class EverestTestEnvironmentSetup:
         logging.info(f"temp ocpp config files directory: {ocpp_config_dir}")
 
         return self._EverestEnvironmentTemporaryPaths(
+            ocpp_config_path=ocpp_config_dir / "component_config",
             ocpp_config_file=ocpp_config_dir / "config.json",
             ocpp_user_config_file=ocpp_config_dir / "user_config.json",
             ocpp_database_dir=ocpp_config_dir,
@@ -173,6 +185,7 @@ class EverestTestEnvironmentSetup:
             )
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
             ocpp_paths = OCPPModulePaths201(
+                DeviceModelConfigPath=str(temporary_paths.ocpp_config_path),
                 MessageLogPath=str(temporary_paths.ocpp_message_log_directory),
                 CoreDatabasePath=str(temporary_paths.ocpp_database_dir),
                 DeviceModelDatabasePath=str(temporary_paths.ocpp_database_dir / "device_model_storage.db"),
@@ -195,28 +208,20 @@ class EverestTestEnvironmentSetup:
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
             source_ocpp_config = self._determine_configured_charge_point_config_path_from_everest_config()
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
-            ocpp_dir = self._everest_core.prefix_path / "share/everest/modules/OCPP201"
-            source_ocpp_config = ocpp_dir / "config.json"
+            source_ocpp_config = self._ocpp_config.device_model_component_config_path \
+                if self._ocpp_config.device_model_component_config_path \
+                else self._ocpp_config.libocpp_path / 'config/v201/component_config'
 
-
-        liboccp_configuration_helper.generate_ocpp_config(
+        return liboccp_configuration_helper.generate_ocpp_config(
             central_system_port=self._ocpp_config.central_system_port,
             central_system_host=self._ocpp_config.central_system_host,
-            source_ocpp_config_file=source_ocpp_config,
-            target_ocpp_config_file=temporary_paths.ocpp_config_file,
+            source_ocpp_config_path=source_ocpp_config,
+            target_ocpp_config_path=temporary_paths.ocpp_config_file \
+                if self._ocpp_config.ocpp_version == OCPPVersion.ocpp16 \
+                else temporary_paths.ocpp_config_path,
             target_ocpp_user_config_file=temporary_paths.ocpp_user_config_file,
             configuration_strategies=self._ocpp_config.configuration_strategies
         )
-
-        if self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
-            liboccp_configuration_helper.create_temporary_ocpp_configuration_db(
-                libocpp_path=self._ocpp_config.libocpp_path,
-                device_model_schemas_path=self._ocpp_config.device_model_schemas_path \
-                    if self._ocpp_config.device_model_schemas_path \
-                    else self._ocpp_config.libocpp_path / 'config/v201/component_schemas',
-                ocpp_configuration_file=temporary_paths.ocpp_config_file,
-                target_directory=temporary_paths.ocpp_database_dir
-            )
 
     def _create_everest_configuration_strategies(self, temporary_paths: _EverestEnvironmentTemporaryPaths):
         configuration_strategies = []

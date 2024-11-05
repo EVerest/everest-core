@@ -19,6 +19,7 @@ class OCPPModulePaths16(OCPPModuleConfigurationBase):
 
 @dataclass
 class OCPPModulePaths201(OCPPModuleConfigurationBase):
+    DeviceModelConfigPath: str
     CoreDatabasePath: str
     DeviceModelDatabasePath: str
 
