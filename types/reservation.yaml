@@ -4,10 +4,12 @@ types:
     description: >-
       Data of a ReservationResult
         Accepted: Reservation has been made
-        Faulted: Reservation has not been made, because connectors or specified connector are in a faulted state
-        Occupied: Reservation has not been made. All connectors or the specified connector are occupied
+        Faulted: Reservation has not been made, because evses / connectors or specified evse / connector are in a
+                 faulted state
+        Occupied: Reservation has not been made. All evses or the specified evse / connector is occupied
         Rejected: Reservation has not been made. Charge Point is not configured to accept reservations
-        Unavailable: Reservation has not been made, because connectors or specified connector are in an unavailable state
+        Unavailable: Reservation has not been made, because evses or specified evse / connector are in an unavailable
+                     state
     type: string
     enum:
       - Accepted
@@ -24,6 +26,11 @@ types:
       - id_token
       - expiry_time
     properties:
+      evse_id:
+        description: >-
+          The id of the evse to be reserved. When dismissed means that the reservation is not for a
+          specific evse
+        type: integer
       reservation_id:
         description: Id of the reservation
         type: integer
@@ -69,18 +76,12 @@ types:
         type: integer
   ReserveNowRequest:
     description: >-
-      Request to reserve an evse. If no evse id is given, make sure at least one evse is kept reserved for this
-      reservation.
+      Request to reserve an evse.
     type: object
     additionalProperties: false
     required:
       - reservation
     properties:
-      evse_id:
-        description: >-
-          The id of the connector to be reserved. When dismissed or a value of 0 means that
-          the reservation is not for a specific evse
-        type: integer
       reservation:
         description: The information about the Reservation to be placed
         type: object
@@ -92,15 +93,16 @@ types:
     required:
       - id_token
     properties:
-      connector_id:
+      evse_id:
         description: >-
-          The id of the connector to check. A value of 0 means that the reservation is not for a specific connector.
+          The id of the evse to check. When it is dismissed, it means that the reservation is not for a
+          specific evse.
         type: integer
       id_token:
-        description: Check if there is a reservation for the given id token.
+        description: The id token to check the reservation for.
         type: string
       group_id_token:
-        description: Check if there is a reservation for the given group / parent id token.
+        description: The group / parent id token to check the reservation for.
         type: string
   ReservationUpdateStatus:
     description: Status of a reservation
@@ -119,3 +121,6 @@ types:
         enum:
           - Expired
           - Removed
+          - Placed
+          - Cancelled
+          - Used

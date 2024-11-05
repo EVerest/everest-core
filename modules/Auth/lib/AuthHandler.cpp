@@ -174,7 +174,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         }
 
         const std::optional<int32_t> reservation_id = this->reservation_handler.matches_reserved_identifier(
-            evse_id_u, provided_token.id_token.value, std::nullopt);
+            provided_token.id_token.value, evse_id_u, std::nullopt);
 
         if (reservation_id.has_value()) {
             all_evses_reserved_and_tag_does_not_match = false;
@@ -287,7 +287,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         parent_id_token = validation_result.parent_id_token.value().value;
                     }
                     const std::optional<int32_t> reservation_id = this->reservation_handler.matches_reserved_identifier(
-                        static_cast<uint32_t>(evse_id), provided_token.id_token.value, parent_id_token);
+                        provided_token.id_token.value, static_cast<uint32_t>(evse_id), parent_id_token);
 
                     if (validation_result.evse_ids.has_value() and
                         intersect(referenced_evses, validation_result.evse_ids.value()).empty()) {
@@ -535,12 +535,11 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
     this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
-types::reservation::ReservationResult AuthHandler::handle_reservation(std::optional<int> evse_id,
-                                                                      const Reservation& reservation) {
+types::reservation::ReservationResult AuthHandler::handle_reservation(const Reservation& reservation) {
     std::optional<uint32_t> evse;
-    if (evse_id.has_value()) {
-        if (evse_id.value() >= 0) {
-            evse = static_cast<uint32_t>(evse_id.value());
+    if (reservation.evse_id.has_value()) {
+        if (reservation.evse_id.value() >= 0) {
+            evse = static_cast<uint32_t>(reservation.evse_id.value());
         }
     }
 
@@ -561,19 +560,20 @@ std::pair<bool, std::optional<int32_t>> AuthHandler::handle_cancel_reservation(c
     return {false, std::nullopt};
 }
 
-bool AuthHandler::handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
-                                                  std::optional<std::string>& group_id_token) {
+bool AuthHandler::handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                            std::optional<std::string>& group_id_token) {
     std::optional<int32_t> reservation_id =
-        this->reservation_handler.matches_reserved_identifier(evse_id, id_token, group_id_token);
+        this->reservation_handler.matches_reserved_identifier(id_token, evse_id, group_id_token);
     return reservation_id.has_value();
 }
 
-void AuthHandler::call_reserved(const std::optional<int>& evse_id, const int reservation_id) {
+void AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
     this->reserved_callback(evse_id, reservation_id);
 }
 
-void AuthHandler::call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
-                                             const types::reservation::ReservationEndReason reason) {
+void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
+                                             const types::reservation::ReservationEndReason reason,
+                                             const std::optional<int>& evse_id) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
         EVLOG_info << "Cancel reservation for evse index " << evse_id.value();
@@ -769,7 +769,7 @@ void AuthHandler::register_reservation_cancelled_callback(
                 return;
             }
 
-            this->call_reservation_cancelled(evse_id, reservation_id, reason);
+            this->call_reservation_cancelled(reservation_id, reason, evse_id);
         });
 }
 

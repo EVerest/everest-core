@@ -715,12 +715,13 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
 /// \brief Test if a reservation can be placed
 TEST_F(AuthTest, test_reservation) {
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
     reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 }
@@ -728,12 +729,13 @@ TEST_F(AuthTest, test_reservation) {
 /// \brief Test if a reservation cannot be placed if expiry_time is in the past
 TEST_F(AuthTest, test_reservation_in_past) {
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
     reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() - std::chrono::hours(1)));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Rejected);
 }
@@ -744,12 +746,13 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     TokenHandlingResult result;
 
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_2;
     reservation.reservation_id = 1;
     reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 
@@ -866,12 +869,13 @@ TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
     TokenHandlingResult result;
 
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
     reservation.parent_id_token.emplace(PARENT_ID_TOKEN);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 

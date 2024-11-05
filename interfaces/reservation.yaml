@@ -23,7 +23,7 @@ cmds:
         Returns true if reservation was cancelled. Returns false if there
         was no reservation to cancel.
       type: boolean
-  is_reservation_for_token:
+  exists_reservation:
     description: >-
       Checks if there is a reservation made for the given connector and token. Will also return true if there
       is a reservation with this token for evse id 0.
@@ -31,11 +31,12 @@ cmds:
       request:
         type: object
         $ref: /reservation#/ReservationCheck
-        description: Check if there is a reservation on the given connector for the given token.
+        description: >-
+          The information to send for the check if there is a reservation on the given connector for the given token.
     result:
       description: >-
-        Returns true if there is a reservation for the given connector id and token or group id token. If there is a
-        connector id given, it will also return true if a reservation with this token was made for connector id 0.
+        Returns true if there is a reservation for the given evse id and token or group id token. If there is an
+        evse id given, it will also return true if a reservation with this token was made for evse id 0.
       type: boolean
 vars:
   reservation_update:

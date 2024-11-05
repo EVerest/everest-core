@@ -79,12 +79,10 @@ public:
     /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
      *
-     * @param evse_id
      * @param reservation
      * @return types::reservation::ReservationResult
      */
-    types::reservation::ReservationResult handle_reservation(std::optional<int> evse_id,
-                                                             const Reservation& reservation);
+    types::reservation::ReservationResult handle_reservation(const Reservation& reservation);
 
     /**
      * @brief Handler for incoming cancel reservation request for the given \p reservation_id .
@@ -97,13 +95,13 @@ public:
 
     /**
      * @brief Callback to check if there is a reservation for the given token (on the given evse id).
-     * @param evse_id           The evse to check the reservation for.
      * @param id_token          The token to check.
+     * @param evse_id           The evse to check the reservation for.
      * @param group_id_token    The group id token to check.
      * @return True if there is a reservation for the given token.
      */
-    bool handle_is_reservation_for_token(const std::optional<int>& evse_id, std::string& id_token,
-                                         std::optional<std::string>& group_id_token);
+    bool handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                   std::optional<std::string>& group_id_token);
 
     /**
      * @brief Callback to signal EvseManager that the given \p connector_id has been reserved with the given \p
@@ -112,17 +110,17 @@ public:
      * @param evse_id
      * @param reservation_id
      */
-    void call_reserved(const std::optional<int>& evse_id, const int reservation_id);
+    void call_reserved(const int reservation_id, const std::optional<int>& evse_id);
 
     /**
      * @brief Callback to signal EvseManager that the reservation for the given \p evse_id has been cancelled.
      *
-     * @param evse_id
      * @param reservation_id    The id of the cancelled reservation.
      * @param reason            The reason the reservation was cancelled.
+     * @param evse_id           Evse id if reservation was for a specific evse.
      */
-    void call_reservation_cancelled(const std::optional<int>& evse_id, const int32_t reservation_id,
-                                    const ReservationEndReason reason);
+    void call_reservation_cancelled(const int32_t reservation_id,
+                                    const ReservationEndReason reason, const std::optional<int>& evse_id);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the

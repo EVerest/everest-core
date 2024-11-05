@@ -394,7 +394,13 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
         this->mod->charger->authorize(true, provided_token);
         mod->charger_was_authorized();
         if (validation_result.reservation_id.has_value()) {
-            EVLOG_info << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();
+            EVLOG_debug << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();
+            // The validation result returns a reservation id. If this was a reservation for a specific evse, the
+            // evse manager probably already stored the reservation id (and this call is not really necessary). But if
+            // the reservation was not for a specific evse, the evse manager still has to send the reservation id in the
+            // transaction event request. So that is why we call 'reserve' here, so the evse manager knows the
+            // reservation id that belongs to this specific session and can send it accordingly.
+            // As this is not a new reservation but an existing one, we don't signal a reservation event for this.
             mod->reserve(validation_result.reservation_id.value(), false);
         }
     }

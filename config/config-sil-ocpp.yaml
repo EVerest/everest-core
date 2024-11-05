@@ -21,7 +21,7 @@ active_modules:
     config_module:
       connector_id: 1
       evse_id: "1"
-      connector_type: "cCCS1"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp/everest-logs
@@ -52,7 +52,7 @@ active_modules:
     config_module:
       connector_id: 2
       evse_id: "2"
-      connector_type: "cCCS1"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp

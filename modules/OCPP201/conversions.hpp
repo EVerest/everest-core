@@ -127,6 +127,8 @@ to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiS
 ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
 
 /// \brief Converts a given types::reservation::Reservation_status to ocpp::v201::ReservationUpdateStatusEnum
+/// \warning This function can throw when there is no existing ocpp::v201::ReservationUpdateStatusEnum that is equal to
+///          types::reservation::Reservation_status.
 ocpp::v201::ReservationUpdateStatusEnum
 to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status);
 

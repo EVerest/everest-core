@@ -464,13 +464,13 @@ void OCPP201::ready() {
         }
 
         types::reservation::ReservationCheck reservation_check_request;
-        reservation_check_request.connector_id = evse_id;
+        reservation_check_request.evse_id = evse_id;
         reservation_check_request.id_token = idToken.get();
         if (groupIdToken.has_value()) {
             reservation_check_request.group_id_token = groupIdToken.value().get();
         }
 
-        return this->r_reservation->call_is_reservation_for_token(reservation_check_request);
+        return this->r_reservation->call_exists_reservation(reservation_check_request);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
@@ -709,8 +709,8 @@ void OCPP201::ready() {
         }
 
         types::reservation::ReserveNowRequest request;
-        request.evse_id = evse_id;
         request.reservation = reservation;
+        request.reservation.evse_id = evse_id;
         EVLOG_info << "Call reserve now...";
         types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(request);
         return conversions::to_ocpp_reservation_status(result);
@@ -865,11 +865,19 @@ void OCPP201::ready() {
 
     if (this->r_reservation != nullptr) {
         r_reservation->subscribe_reservation_update([this](const types::reservation::ReservationUpdateStatus status) {
-            EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
-                        << (status.reservation_status == types::reservation::Reservation_status::Expired ? "Expired"
-                                                                                                         : "Removed");
-            this->charge_point->on_reservation_status(
-                status.reservation_id, conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+            if (status.reservation_status == types::reservation::Reservation_status::Expired ||
+                status.reservation_status == types::reservation::Reservation_status::Removed) {
+                EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
+                            << (status.reservation_status == types::reservation::Reservation_status::Expired
+                                    ? "Expired"
+                                    : "Removed");
+                try {
+                    this->charge_point->on_reservation_status(
+                        status.reservation_id,
+                        conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+                } catch (const std::out_of_range& e) {
+                }
+            }
         });
     }
 

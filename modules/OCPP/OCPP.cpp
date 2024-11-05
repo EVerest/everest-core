@@ -517,9 +517,9 @@ void OCPP::ready() {
         }
         types::reservation::ReserveNowRequest request;
         if (connector == 0) {
-            request.evse_id == std::nullopt;
+            request.reservation.evse_id == std::nullopt;
         } else {
-            request.evse_id = connector;
+            request.reservation.evse_id = connector;
         }
 
         request.reservation = reservation;

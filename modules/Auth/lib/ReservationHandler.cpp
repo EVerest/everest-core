@@ -372,8 +372,7 @@ void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
     }
 }
 
-std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::optional<uint32_t> evse_id,
-                                                                       const std::string& id_token,
+std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::string& id_token, const std::optional<uint32_t> evse_id,
                                                                        std::optional<std::string> parent_id_token) {
     EVLOG_debug << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
                 << " and id token " << id_token << " and parent id token "

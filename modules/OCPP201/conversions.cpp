@@ -851,6 +851,13 @@ to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_sta
         return ocpp::v201::ReservationUpdateStatusEnum::Expired;
     case types::reservation::Reservation_status::Removed:
         return ocpp::v201::ReservationUpdateStatusEnum::Removed;
+
+    case types::reservation::Reservation_status::Cancelled:
+    case types::reservation::Reservation_status::Placed:
+    case types::reservation::Reservation_status::Used:
+        // OCPP should not convert a status enum that is not an OCPP type.
+        // TODO mz throw here?? Or what else to do???
+        throw std::out_of_range("Could not convert ReservationUpdateStatus: OCPP does not know this type");
     }
 
     throw std::out_of_range("Could not convert ReservationUpdateStatus");

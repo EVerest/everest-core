@@ -976,29 +976,29 @@ TEST_F(ReservationHandlerTest, matches_reserved_identifier) {
     EXPECT_EQ(r.make_reservation(2, reservation3), types::reservation::ReservationResult::Accepted);
 
     // Id token is correct and evse id as well.
-    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, std::nullopt), 0);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation.id_token, std::nullopt, std::nullopt), 0);
     // Id token is correct and evse id as well, parent token is not but that is ignored since the normal token is ok.
-    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, reservation.id_token, "WRONG_PARENT_TOKEN"), 0);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation.id_token, std::nullopt, "WRONG_PARENT_TOKEN"), 0);
     // Token is wrong.
-    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier("WRONG_TOKEN", std::nullopt, std::nullopt), std::nullopt);
     // Evse id reservation does not have parent token, do not search in global reservation.
-    EXPECT_EQ(r.matches_reserved_identifier(1, reservation.id_token, std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation.id_token, 1, std::nullopt), std::nullopt);
     // Evse id is wrong.
-    EXPECT_EQ(r.matches_reserved_identifier(2, reservation2.id_token, std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation2.id_token, 2, std::nullopt), std::nullopt);
     // Token is wrong but parent token is correct.
-    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", "PARENT_TOKEN_0"), 0);
+    EXPECT_EQ(r.matches_reserved_identifier("WRONG_TOKEN", std::nullopt, "PARENT_TOKEN_0"), 0);
     // Token is wrong and parent token as well.
-    EXPECT_EQ(r.matches_reserved_identifier(std::nullopt, "WRONG_TOKEN", "WRONG_PARENT_TOKEN"), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier("WRONG_TOKEN", std::nullopt, "WRONG_PARENT_TOKEN"), std::nullopt);
     // Evse id is correct and token is correct.
-    EXPECT_EQ(r.matches_reserved_identifier(1, reservation2.id_token, std::nullopt), 1);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation2.id_token, 1, std::nullopt), 1);
     // Evse id is correct but token is wrong.
-    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier("TOKEN_NOK", 1, std::nullopt), std::nullopt);
     // Evse id is wrong and token is correct.
-    EXPECT_EQ(r.matches_reserved_identifier(2, reservation2.id_token, std::nullopt), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier(reservation2.id_token, 2, std::nullopt), std::nullopt);
     // Evse id is correct, token is wrong but parent token is correct.
-    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", "PARENT_TOKEN_2"), 1);
+    EXPECT_EQ(r.matches_reserved_identifier("TOKEN_NOK", 1, "PARENT_TOKEN_2"), 1);
     // Evse id is correct, token is wrong and parent token as well.
-    EXPECT_EQ(r.matches_reserved_identifier(1, "TOKEN_NOK", "PARENT_TOKEN_NOK"), std::nullopt);
+    EXPECT_EQ(r.matches_reserved_identifier("TOKEN_NOK", 1, "PARENT_TOKEN_NOK"), std::nullopt);
 }
 
 TEST_F(ReservationHandlerTest, has_reservation_parent_id) {

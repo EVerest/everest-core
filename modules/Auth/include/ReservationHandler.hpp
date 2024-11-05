@@ -75,7 +75,7 @@ public:
 
     ///
     /// \brief Add a connector.
-    /// \param evse_id          The evse id of the connector.
+    /// \param evse_id          The id of the evse.
     /// \param connector_id     The connector id.
     /// \param connector_type   The connector type.
     /// \param connector_state  The current connector state (default `AVAILABLE`).
@@ -176,13 +176,13 @@ public:
     /// @brief Function checks if the given \p id_token or \p parent_id_token matches the reserved token of the given \p
     /// evse_id
     ///
-    /// @param evse_id           Evse id
     /// @param id_token          Id token
+    /// @param evse_id           Evse id
     /// @param parent_id_token   Parent id token
     /// @return The reservation id when there is a matching identifier, otherwise std::nullopt.
     ///
-    std::optional<int32_t> matches_reserved_identifier(const std::optional<uint32_t> evse_id,
-                                                       const std::string& id_token,
+    std::optional<int32_t> matches_reserved_identifier(const std::string& id_token,
+                                                       const std::optional<uint32_t> evse_id,
                                                        std::optional<std::string> parent_id_token);
 
     ///

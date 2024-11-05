@@ -82,6 +82,7 @@ void Auth::ready() {
             if (evse_id.has_value()) {
                 EVLOG_info << "Call reserved callback for evse id " << evse_id.value();
 
+                // TODO mz do something with the result.
                 this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id);
             }
         });
@@ -101,6 +102,8 @@ void Auth::ready() {
                 status.reservation_status = Reservation_status::Removed;
             } else {
                 // On reservation used: do not publish a reservation update!!
+                // TODO mz implement this to publish on placed etc. !! And let somewhere else the software not send
+                // messages.
                 return;
             }
             this->p_reservation->publish_reservation_update(status);

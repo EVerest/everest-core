@@ -136,7 +136,6 @@ public:
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
         config(config) {
-    }
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -174,7 +173,15 @@ public:
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
-    bool reserve(int32_t id, bool signal_others = true);
+
+    ///
+    /// \brief Reserve this evse.
+    /// \param id                       The reservation id.
+    /// \param signal_reservation_event True when other modules must be signalled about a new reservation (session
+    ///                                 event).
+    /// \return True on success.
+    ///
+    bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();

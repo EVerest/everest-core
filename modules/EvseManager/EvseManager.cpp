@@ -1196,9 +1196,9 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     return true;
 }
 
-bool EvseManager::reserve(int32_t id, bool signal_others) {
+bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
 
-    EVLOG_debug << "Reserve called for evse id " << id << ", signal others: " << signal_others;
+    EVLOG_debug << "Reserve called for evse id " << id << ", signal reservation event: " << signal_reservation_event;
 
     // is the evse Unavailable?
     if (charger->get_current_state() == Charger::EvseState::Disabled) {
@@ -1222,7 +1222,7 @@ bool EvseManager::reserve(int32_t id, bool signal_others) {
         reserved = true;
         reservation_id = id;
 
-        if (signal_others) {
+        if (signal_reservation_event) {
             // publish event to other modules
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::ReservationStart;
