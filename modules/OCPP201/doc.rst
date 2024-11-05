@@ -315,7 +315,7 @@ Energy Management and Smart Charging Integration
 ------------------------------------------------
 
 OCPP2.0.1 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
-This module integrates the composite schedule(s) within EVerests energy management. For further information about smart charging and the
+This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
 composite schedule calculation please refer to the OCPP2.0.1 specification.
 
 The integration of the composite schedules is implemented through the optional requirement(s) `evse_energy_sink` (interface: `external_energy_limits`) 
@@ -325,7 +325,7 @@ has two EVSEs you need to connect three modules that implement the `external_ene
 two representing your actual EVSEs.
 
 📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
-which requirement to use when communication the limits for the EVSEs. For more information about the module mapping please see 
+which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
 `3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
 
 This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves

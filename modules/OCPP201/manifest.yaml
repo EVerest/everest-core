@@ -93,7 +93,7 @@ requires:
   evse_energy_sink:
     interface: external_energy_limits
     min_connections: 0
-    max_connections: 128
+    max_connections: 129
   display_message:
     interface: display_message
     min_connections: 0
