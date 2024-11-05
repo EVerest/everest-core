@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('3') }}
+{{ print_template_info('4') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
@@ -15,10 +15,11 @@
 
 class {{ info.class_name }} {
 public:
-    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id)
+    {{ info.class_name }}(Everest::ModuleAdapter* adapter, Requirement req, const std::string& module_id, std::optional<Mapping> mapping)
         : module_id(module_id),
         _adapter(adapter),
-        _req(req) {
+        _req(req),
+        _mapping(mapping) {
         if (adapter == nullptr) {
             EVLOG_error << "adapter is nullptr, please check the initialization of the module";
             error_manager = nullptr;
@@ -145,10 +146,15 @@ public:
 
     std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
 
+    std::optional<Mapping> get_mapping() {
+        return _mapping;
+    }
+
 private:
     std::shared_ptr<Everest::error::ErrorManagerReq> error_manager;
     Everest::ModuleAdapter* const _adapter;
     Requirement _req;
+    std::optional<Mapping> _mapping;
 };
 
 #endif // {{ info.hpp_guard }}

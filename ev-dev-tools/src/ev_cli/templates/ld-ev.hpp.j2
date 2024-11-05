@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('2') }}
+{{ print_template_info('3') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <framework/everest.hpp>
@@ -20,7 +20,7 @@ struct LdEverest {
 
 void register_module_adapter(Everest::ModuleAdapter module_adapter);
 
-std::vector<Everest::cmd> everest_register(const json& connections);
+std::vector<Everest::cmd> everest_register(const RequirementInitialization& requirement_init);
 
 {% if info.enable_global_errors %}
 void subscribe_global_all_errors(

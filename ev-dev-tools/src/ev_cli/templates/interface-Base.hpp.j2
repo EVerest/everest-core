@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('3') }}
+{{ print_template_info('4') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
@@ -39,6 +39,7 @@ public:
             if (error_factory == nullptr) {
                 EVLOG_error << "error_factory is nullptr";
             }
+            impl_mapping = Everest::get_impl_mapping(ev->get_mapping(), name);
         }
     }
 
@@ -91,6 +92,10 @@ public:
     std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
     std::shared_ptr<Everest::error::ErrorFactory> error_factory;
 
+    std::optional<Mapping> get_mapping() {
+        return impl_mapping;
+    }
+
 protected:
     {% if not cmds %}
     // no commands defined for this interface
@@ -105,6 +110,7 @@ private:
     Everest::ModuleAdapter* const _ev;
     const std::string _name;
     std::shared_ptr<Everest::error::ErrorManagerImpl> error_manager;
+    std::optional<Mapping> impl_mapping;
 
     // helper function for getting all commands
     void _gather_cmds([[maybe_unused]] std::vector<Everest::cmd>& cmds) override {
