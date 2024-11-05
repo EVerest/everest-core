@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "API.hpp"
+#include <external_energy_limits.hpp>
 #include <utils/date.hpp>
 #include <utils/yaml_loader.hpp>
 
@@ -500,8 +501,9 @@ void API::init() {
 
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
 
-        if (this->is_evse_sink_configured(evse_id)) {
-            auto& evse_energy_sink = this->get_evse_sink_by_evse_id(evse_id);
+        if (external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
+            auto& evse_energy_sink =
+                external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
 
             this->mqtt.subscribe(cmd_set_limit, [&evse_manager_check = this->evse_manager_check,
                                                  &evse_energy_sink = evse_energy_sink](const std::string& data) {
@@ -644,36 +646,6 @@ void API::init() {
                 std::this_thread::sleep_until(next_tick);
             }
         }));
-}
-
-bool API::is_evse_sink_configured(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return true;
-        }
-    }
-    return false;
-}
-
-external_energy_limitsIntf& API::get_evse_sink_by_evse_id(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return *evse_sink;
-        }
-    }
-    throw std::runtime_error("No mapping configured for evse");
 }
 
 void API::ready() {

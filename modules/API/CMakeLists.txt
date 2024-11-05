@@ -12,6 +12,7 @@ ev_setup_cpp_module()
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         ryml::ryml
+        everest::external_energy_limits
 )
 target_sources(${MODULE_NAME}
     PRIVATE

@@ -141,8 +141,6 @@ private:
     std::filesystem::path ocpp_share_path;
     ocpp::v16::ChargingRateUnit composite_schedule_charging_rate_unit;
     void set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
-    bool is_evse_sink_configured(const int32_t evse_id);
-    external_energy_limitsIntf& get_evse_sink_by_evse_id(const int32_t evse_id);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
 
     void init_evse_subscriptions(); // initialize subscriptions to all EVSEs provided by r_evse_manager

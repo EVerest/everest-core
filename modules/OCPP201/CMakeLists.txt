@@ -18,6 +18,7 @@ target_link_libraries(${MODULE_NAME}
         everest::ocpp
         everest::ocpp_evse_security
         everest::ocpp_conversions
+        everest::external_energy_limits
 )
 
 target_compile_options(${MODULE_NAME}

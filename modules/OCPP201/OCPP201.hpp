@@ -160,9 +160,6 @@ private:
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
 
-    bool is_evse_sink_configured(const int32_t evse_id);
-    external_energy_limitsIntf& get_evse_sink_by_evse_id(const int32_t evse_id);
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

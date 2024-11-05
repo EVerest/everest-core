@@ -212,9 +212,6 @@ private:
     std::string ocpp_connection_status = "unknown";
 
     const std::string api_base = "everest_api/";
-
-    bool is_evse_sink_configured(const int32_t evse_id);
-    external_energy_limitsIntf& get_evse_sink_by_evse_id(const int32_t evse_id);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

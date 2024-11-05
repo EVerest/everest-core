@@ -11,6 +11,7 @@
 #include <conversions.hpp>
 #include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <optional>
 
 namespace module {
@@ -78,7 +79,7 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
 
-        if (not this->is_evse_sink_configured(connector_id)) {
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, connector_id)) {
             EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: "
                           << connector_id;
             continue;
@@ -106,39 +107,9 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             schedule_import.push_back(schedule_req_entry);
         }
         limits.schedule_import.emplace(schedule_import);
-        auto& evse_sink = this->get_evse_sink_by_evse_id(connector_id);
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
         evse_sink.call_set_external_limits(limits);
     }
-}
-
-bool OCPP::is_evse_sink_configured(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return true;
-        }
-    }
-    return false;
-}
-
-external_energy_limitsIntf& OCPP::get_evse_sink_by_evse_id(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return *evse_sink;
-        }
-    }
-    throw std::runtime_error("No mapping configured for evse");
 }
 
 void OCPP::publish_charging_schedules(

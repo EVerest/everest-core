@@ -10,6 +10,7 @@
 #include <conversions.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <ocpp_conversions.hpp>
 
 namespace module {
@@ -1212,7 +1213,7 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
 
     for (const auto& composite_schedule : composite_schedules) {
         auto evse_id = composite_schedule.evseId;
-        if (not this->is_evse_sink_configured(evse_id)) {
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
             EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: " << evse_id;
             continue;
         }
@@ -1238,39 +1239,9 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
         }
         limits.schedule_import = schedule_import;
 
-        auto& evse_sink = this->get_evse_sink_by_evse_id(evse_id);
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
         evse_sink.call_set_external_limits(limits);
     }
-}
-
-bool OCPP201::is_evse_sink_configured(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return true;
-        }
-    }
-    return false;
-}
-
-external_energy_limitsIntf& OCPP201::get_evse_sink_by_evse_id(const int32_t evse_id) {
-    for (const auto& evse_sink : this->r_evse_energy_sink) {
-        if (not evse_sink->get_mapping().has_value()) {
-            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
-                              "r_evse_energy_sink with module_id: "
-                           << evse_sink->module_id;
-            throw std::runtime_error("No mapping configured for evse_id: " + evse_id);
-        }
-        if (evse_sink->get_mapping().value().evse == evse_id) {
-            return *evse_sink;
-        }
-    }
-    throw std::runtime_error("No mapping configured for evse");
 }
 
 } // namespace module
