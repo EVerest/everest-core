@@ -580,6 +580,7 @@ def module_update(args):
 def module_genld(args):
     output_dir = Path(args.output_dir).resolve() if args.output_dir else work_dir / \
         'build/generated/generated/modules'
+    primary_update_strategy = 'force-update' if args.force else 'update'
 
     loader_files = generate_module_loader_files(args.module, output_dir)
 
@@ -588,7 +589,7 @@ def module_genld(args):
             helpers.clang_format(args.clang_format_file, file_info)
 
     for file_info in loader_files:
-        helpers.write_content_to_file_and_check_template(file_info, 'update-if-non-existent')
+        helpers.write_content_to_file_and_check_template(file_info, primary_update_strategy)
 
 
 def module_get_templates(args):
@@ -770,6 +771,7 @@ def main():
         'generate-loader', aliases=['gl'], parents=[common_parser], help='generate everest loader')
     mod_genld_parser.add_argument(
         'module', type=str, help='name of the module, for which the loader should be generated')
+    mod_genld_parser.add_argument('-f', '--force', action='store_true', help='force overwriting')
     mod_genld_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated loader '
                                   'files (default: {everest-dir}/build/generated/generated/modules)')
     mod_genld_parser.set_defaults(action_handler=module_genld)
