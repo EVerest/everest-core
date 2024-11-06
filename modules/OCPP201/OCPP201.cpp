@@ -282,7 +282,7 @@ void OCPP201::init() {
             EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
                               "r_evse_energy_sink with module_id: "
                            << evse_sink->module_id;
-            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to and evse.");
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
         }
     }
 
