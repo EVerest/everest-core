@@ -25,8 +25,12 @@ private:
 protected:
     types::reservation::Reservation create_reservation(const types::evse_manager::ConnectorTypeEnum connector_type) {
         return types::reservation::Reservation{
-            static_cast<int32_t>(reservation_id), "TOKEN_" + std::to_string(reservation_id++),
-            Everest::Date::to_rfc3339((date::utc_clock::now()) + std::chrono::hours(1)), std::nullopt, connector_type};
+            static_cast<int32_t>(reservation_id),
+            "TOKEN_" + std::to_string(reservation_id++),
+            Everest::Date::to_rfc3339((date::utc_clock::now()) + std::chrono::hours(1)),
+            std::nullopt,
+            std::nullopt,
+            connector_type};
     }
 
     kvsIntf kvs;

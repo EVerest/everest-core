@@ -136,6 +136,7 @@ public:
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
         config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -241,8 +242,8 @@ public:
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
-        // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
-        // so it is enough to set the powersupply_capabilities here.
+        // energy management first. Those limits will be applied in energy_grid implementation when requesting
+        // energy, so it is enough to set the powersupply_capabilities here.
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
 
