@@ -10,6 +10,7 @@ rust_library(
         "@crate_index//:log",
         "@crate_index//:serde",
         "@crate_index//:serde_json",
+        "@crate_index//:serde_yaml",
         "@crate_index//:thiserror",
         "@cxx.rs//:cxx",
         "@everest-framework//everestrs/everestrs:everestrs_sys",

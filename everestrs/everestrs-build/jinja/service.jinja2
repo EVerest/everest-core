@@ -66,6 +66,16 @@ impl {{trait.name | title }}ServicePublisher {
       Ok(())
    }
 {% endfor %}
+
+{%- if trait.errors %}
+    pub(crate) fn raise_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error) {
+        self.runtime.raise_error(self.implementation_id, error);
+    }
+
+    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error) {
+        self.runtime.clear_error(self.implementation_id, error, true);
+    }
+{%- endif %}
 }
 
 #[cfg(feature="mockall")]
@@ -74,6 +84,12 @@ mockall::mock!{
 {% for var in trait.vars %}
    pub(crate) fn {{ var.name | identifier }}(&self, value: {{ var.data_type.name }}) -> ::everestrs::Result<()>;
 {% endfor %}
+
+{%- if trait.errors %}
+    pub(crate) fn raise_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+
+    pub(crate) fn clear_error(&self, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+{%- endif %}
    }
 
    impl Clone for {{trait.name | title }}ServicePublisher {

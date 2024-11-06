@@ -1,0 +1,31 @@
+description: Simple Example
+config:
+  some_string_config:
+    description: A module level string config.
+    type: string
+    default: Hello world
+  some_number_config:
+    description: A module level number config.
+    type: number
+    default: 42
+provides:
+  foobar:
+    interface: example
+    description: An example interface.
+    config:
+      some_bool_config:
+        description: An interface level bool config
+        type: boolean
+        default: true
+      some_integer_config:
+        description: An interface level integer config.
+        type: integer
+        default: 1234
+requires:
+  a_friend:
+    interface: example
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Everest authors
+enable_external_mqtt: false

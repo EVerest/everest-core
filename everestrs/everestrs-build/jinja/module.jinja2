@@ -14,9 +14,14 @@ mod generated {
 )]
 
 use everestrs::serde_json as __serde_json;
+use everestrs::serde_yaml as __serde_yaml;
 
 pub mod types {
 {% include "types" %}
+}
+
+pub mod errors {
+{% include "errors" %}
 }
 
 {% include "config" %}
@@ -115,7 +120,7 @@ impl Module {
     {% if require.min_connections == 1 and require.max_connections == 1 %}
             {{ require.implementation_id | identifier }},
     {% elif require.min_connections == require.max_connections %}
-            {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn({{ require.implementation_id | identifier }}_cb),  
+            {{ require.implementation_id | identifier }}_slots: ::core::array::from_fn({{ require.implementation_id | identifier }}_cb),
     {% else %}
             {{ require.implementation_id | identifier }}_slots: (0..connections.get("{{require.implementation_id}}").cloned().unwrap_or(0)).map({{ require.implementation_id | identifier }}_cb).collect(),
     {% endif %}
@@ -208,6 +213,32 @@ impl ::everestrs::Subscriber for Module {
       _ => Err(::everestrs::Error::InvalidArgument(
                   "Unknown variable received.",
               ))
+        }
+    }
+
+    fn handle_on_error(
+        &self,
+        implementation_id: &str,
+        index: usize,
+        error: ::everestrs::ErrorType,
+        raised: bool
+    ) {
+        let context = Context {
+            publisher: &self.publisher,
+            name: implementation_id,
+            index,
+        };
+        match implementation_id {
+{% for req in requires %}
+            "{{ req.implementation_id }}" => {
+    {% if req.min_connections == 1 and req.max_connections == 1 %}
+                dispatch_error_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}.as_ref(), error, raised)
+    {% else %}
+                dispatch_error_to_{{ req.interface | snake }}(&context, self.{{ req.implementation_id  | identifier }}_slots[index].as_ref(), error, raised)
+    {% endif %}
+            },
+{% endfor %}
+            _ => eprintln!("Received an unknown error from {implementation_id}"),
         }
     }
 

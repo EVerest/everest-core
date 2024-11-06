@@ -1,0 +1,27 @@
+{%- for name, errors in involved_errors | items  %}
+    pub mod {{ name | snake }} {
+        use everestrs::serde as __serde;
+    {%- for error_group in errors %}
+        /// The error definition of the {{ name }} interface.
+        /// {{ error_group.error_list.description | replace("\n", " ") }}
+        #[derive(Debug, Clone, PartialEq, __serde::Serialize, __serde::Deserialize)]
+        #[serde(crate = "__serde")]
+        pub enum {{ error_group.name | title }}Error {
+            {%- for error_entry in error_group.error_list.errors %}
+            /// {{ error_entry.description | replace("\n", " ")}}
+            #[serde(rename = "{{ error_group.name | snake }}/{{ error_entry.name }}")]
+            {{ error_entry.name | title}},
+            {%- endfor %}
+        }
+    {%- endfor %}
+        /// All possible errors of the {{ name }} interface.
+        #[derive(Debug, Clone, PartialEq, __serde::Serialize, __serde::Deserialize)]
+        #[serde(crate = "__serde")]
+        #[serde(untagged)]
+        pub enum Error {
+    {%- for error_group in errors %}
+            {{ error_group.name | title }}({{ error_group.name | title }}Error),
+    {%- endfor %}
+        }
+    }
+{%- endfor %}

@@ -1,8 +1,15 @@
 /// {{trait.description | replace("\n", " ")}}
 pub(crate) trait {{trait.name | title}}ClientSubscriber: Sync + Send {
 {% for var in trait.vars %}
-   fn on_{{ var.name | snake }}(&self, context: &Context, value: {{ var.data_type.name }});
+    fn on_{{ var.name | snake }}(&self, context: &Context, value: {{ var.data_type.name }});
 {% endfor %}
+
+{%- if trait.errors %}
+    fn on_error_raised(&self, context: &Context, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+
+    fn on_error_cleared(&self, context: &Context, error: crate::generated::errors::{{ trait.name | snake }}::Error);
+{%- endif %}
+
 }
 
 fn dispatch_variable_to_{{ trait.name | snake }}(
@@ -22,6 +29,26 @@ fn dispatch_variable_to_{{ trait.name | snake }}(
 {%- endfor %}
      _ => Err(::everestrs::Error::InvalidArgument("Unknown variable received.")),
    }
+}
+
+fn dispatch_error_to_{{ trait.name | snake }} (
+    context: &Context,
+    client_subscriber: &dyn {{ trait.name | title }}ClientSubscriber,
+    error: ::everestrs::ErrorType,
+    raised: bool
+) {
+{%- if trait.errors %}
+    // The type is crate::generated::errors::{{ trait.name | snake }}::Error
+    let Ok(v) = __serde_yaml::from_str(&error.error_type) else {
+        eprintln!("Failed to deserialize {}", error.error_type);
+        return;
+    };
+    if raised {
+        client_subscriber.on_error_raised(context, v);
+    } else {
+        client_subscriber.on_error_cleared(context, v);
+    }
+{%- endif %}
 }
 
 pub(crate) mod __mockall_{{trait.name | snake }}_client {
