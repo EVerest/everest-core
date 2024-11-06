@@ -16,6 +16,7 @@ cc_everest_module(
     impls = IMPLS,
     srcs = glob(
         [
+            "lib/*.hpp",
             "*.cpp",
             "*.hpp",
         ],
