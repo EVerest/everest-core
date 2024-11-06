@@ -2858,20 +2858,28 @@ ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiS
     }
     std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
     try {
-        const auto type = this->custom_schema["properties"][key]["type"];
+        const auto type = custom_schema["properties"][key]["type"];
+        json new_value;
         if (type == "integer") {
-            this->config["Custom"][key] = std::stoi(value.get());
+            new_value = std::stoi(value.get());
         } else if (type == "number") {
-            this->config["Custom"][key] = std::stof(value.get());
+            new_value = std::stof(value.get());
         } else if (type == "string" or type == "array") {
-            this->config["Custom"][key] = value.get();
+            new_value = value.get();
         } else if (type == "boolean") {
-            this->config["Custom"][key] = ocpp::conversions::string_to_bool(value.get());
+            new_value = ocpp::conversions::string_to_bool(value.get());
         } else {
             return ConfigurationStatus::Rejected;
         }
+
+        // validate the updated key against the schema
+        Schemas schema(custom_schema);
+        json model;
+        model[key] = new_value;
+        schema.get_validator()->validate(model); // throws exception on error
+        config["Custom"][key] = new_value;
     } catch (const std::exception& e) {
-        EVLOG_warning << "Could not set custom configuration key";
+        EVLOG_warning << "Could not set custom configuration key: " << e.what();
         return ConfigurationStatus::Rejected;
     }
 

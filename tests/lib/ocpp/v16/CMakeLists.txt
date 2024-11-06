@@ -1,4 +1,4 @@
-target_include_directories(libocpp_unit_tests PUBLIC 
+target_include_directories(libocpp_unit_tests PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -13,6 +13,7 @@ target_sources(libocpp_unit_tests PRIVATE
         test_message_queue.cpp
         test_charge_point_state_machine.cpp
         test_composite_schedule.cpp
+        test_config_validation.cpp
 )
 
 # Copy the json files used for testing to the destination directory

@@ -21,6 +21,18 @@ Schemas::Schemas(fs::path schemas_path) : schemas_path(schemas_path) {
     }
 }
 
+Schemas::Schemas(const json& schema_in) : schema(schema_in) {
+    validator = std::make_shared<json_validator>(
+        [this](const json_uri& uri, json& schema) { this->loader(uri, schema); }, Schemas::format_checker);
+    validator->set_root_schema(this->schema);
+}
+
+Schemas::Schemas(json&& schema_in) : schema(std::move(schema_in)) {
+    validator = std::make_shared<json_validator>(
+        [this](const json_uri& uri, json& schema) { this->loader(uri, schema); }, Schemas::format_checker);
+    validator->set_root_schema(this->schema);
+}
+
 void Schemas::load_root_schema() {
     fs::path config_schema_path = this->schemas_path / "Config.json";
 

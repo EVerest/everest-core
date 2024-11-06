@@ -38,6 +38,10 @@ private:
 public:
     /// \brief Creates a new Schemas object looking for the root schema file in relation to the provided \p main_dir
     explicit Schemas(fs::path schemas_path);
+    /// \brief Creates a new Schemas object using the supplied JSON schema
+    explicit Schemas(const json& schema_in);
+    /// \brief Creates a new Schemas object using the supplied JSON schema
+    explicit Schemas(json&& schema_in);
 
     /// \brief Provides the config schema
     /// \returns the config schema as as json object
