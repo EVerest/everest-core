@@ -135,16 +135,6 @@ macro(ev_add_project)
     )
 
     setup_ev_cli()
-    if(NOT ${${PROJECT_NAME}_USE_PYTHON_VENV})
-        message(STATUS "Using system ev-cli instead of installing it in the build venv.")
-        get_property(EVEREST_REQUIRED_EV_CLI_VERSION
-            GLOBAL
-            PROPERTY EVEREST_REQUIRED_EV_CLI_VERSION
-        )
-        require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
-    else()
-        message(STATUS "Installing ev-cli in the build venv.")
-    endif()
 
     # FIXME (aw): resort to proper argument handling!
     if (${ARGC} EQUAL 2)
@@ -313,7 +303,7 @@ function (_ev_add_interfaces)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            "$<TARGET_PROPERTY:ev-cli,INTERFACE_TEMPLATES>"
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -352,7 +342,7 @@ function (_ev_add_types)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            "$<TARGET_PROPERTY:ev-cli,TYPES_TEMPLATES>"
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -496,7 +486,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
-                    ev-cli
+                    "$<TARGET_PROPERTY:ev-cli,MODULE_TEMPLATES>"
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT

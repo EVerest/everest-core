@@ -516,7 +516,16 @@ void OCPP201::ready() {
         };
 
     callbacks.configure_network_connection_profile_callback =
-        [this](const ocpp::v201::NetworkConnectionProfile& network_connection_profile) { return true; };
+        [this](const int32_t configuration_slot,
+               const ocpp::v201::NetworkConnectionProfile& network_connection_profile) {
+            std::promise<ocpp::v201::ConfigNetworkResult> promise;
+            std::future<ocpp::v201::ConfigNetworkResult> future = promise.get_future();
+            ocpp::v201::ConfigNetworkResult result;
+            result.network_profile_slot = configuration_slot;
+            result.success = true;
+            promise.set_value(result);
+            return future;
+        };
 
     callbacks.all_connectors_unavailable_callback = [this]() {
         EVLOG_info << "All connectors unavailable, proceed with firmware installation";
@@ -634,9 +643,11 @@ void OCPP201::ready() {
         };
     }
 
-    callbacks.connection_state_changed_callback = [this](const bool is_connected) {
-        this->p_ocpp_generic->publish_is_connected(is_connected);
-    };
+    callbacks.connection_state_changed_callback =
+        [this](const bool is_connected, const int /*configuration_slot*/,
+               const ocpp::v201::NetworkConnectionProfile& /*network_connection_profile*/) {
+            this->p_ocpp_generic->publish_is_connected(is_connected);
+        };
 
     callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
                                                const std::optional<ocpp::CiString<255>>& tech_info) {

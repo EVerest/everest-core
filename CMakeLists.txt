@@ -6,7 +6,7 @@ project(everest-core
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.4
+find_package(everest-cmake 0.5
     COMPONENTS bundling
     PATHS ../everest-cmake
 )
@@ -128,12 +128,6 @@ endif()
 # config
 # FIXME (aw): this should be optional
 add_subdirectory(config)
-
-# install docker related files
-install(
-    DIRECTORY "cmake/assets/docker"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-)
 
 ev_install_project()
 

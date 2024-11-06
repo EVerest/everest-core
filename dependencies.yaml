@@ -66,7 +66,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.18.0
+  git_tag: 6a0010225535599b053e401307d76b58e9e3c7c5
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -90,7 +90,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.3.1
+  git_tag: 3eb4c1b90c14f35a0cc19a96b850c095166c3177
 
 # unit testing
 gtest:

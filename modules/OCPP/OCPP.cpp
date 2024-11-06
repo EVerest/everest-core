@@ -18,6 +18,7 @@ namespace module {
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
+const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
 
 namespace fs = std::filesystem;
 
@@ -167,6 +168,10 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEVSE";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id);
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::SwitchingPhases) {
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
+                    << "Received SwitchingPhases";
+        this->charge_point->on_suspend_charging_evse(ocpp_connector_id, SWITCHING_PHASES_REASON);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted ||
                session_event.event == types::evse_manager::SessionEventEnum::ChargingResumed) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
