@@ -90,7 +90,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.4.1
+  git_tag: 2b07fbc53059b85bfc34cc3d4750584d5a206564 # FIXME: update to v0.4.2 once it is tagged
 
 # unit testing
 gtest:
