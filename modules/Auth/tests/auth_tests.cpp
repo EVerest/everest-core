@@ -802,6 +802,106 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
+/// \brief Test if a token that is not reserved gets rejected when it is not possible to charge because of global
+///        reservations.
+TEST_F(AuthTest, test_reservation_with_authorization_global_reservations) {
+    TokenHandlingResult result;
+
+    Reservation reservation;
+    reservation.id_token = VALID_TOKEN_2;
+    reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::sType2;
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
+
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
+
+    ASSERT_EQ(reservation_result, ReservationResult::Accepted);
+
+    SessionEvent session_event_1;
+    session_event_1.event = SessionEventEnum::ReservationStart;
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+
+    t1.join();
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+
+    // In general the token gets accepted but the connector that was picked up by the user is the only one that has
+    // the correct connector for the reservation so it can not be used as it has to be available for the one who
+    // reserved it.
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Rejected));
+
+    // this token is not valid for the reservation
+    std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+
+    t2.join();
+    t3.join();
+
+    ASSERT_EQ(result, TokenHandlingResult::REJECTED);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a token that is not reserved gets rejected when it is not possible to charge because of global
+///        reservations.
+TEST_F(AuthTest, test_reservation_with_authorization_global_reservations_2) {
+    TokenHandlingResult result;
+
+    // Make two global reservations.
+
+    Reservation reservation;
+    reservation.id_token = VALID_TOKEN_2;
+    reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
+
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
+
+    ASSERT_EQ(reservation_result, ReservationResult::Accepted);
+
+    reservation.reservation_id = 2;
+    reservation.id_token = VALID_TOKEN_1;
+    const auto reservation_result2 = this->auth_handler->handle_reservation(reservation);
+    ASSERT_EQ(reservation_result2, ReservationResult::Accepted);
+
+    SessionEvent session_event_1;
+    session_event_1.event = SessionEventEnum::ReservationStart;
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+
+    t1.join();
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_3 = get_provided_token(VALID_TOKEN_3, connectors);
+
+    // There are two global reservations and two evse's, so  no evse is available.
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_3.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_3.id_token), TokenValidationStatus::Rejected));
+
+    // this token is not valid for the reservation
+    std::thread t2([this, provided_token_3, &result]() { result = this->auth_handler->on_token(provided_token_3); });
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+
+    t2.join();
+    t3.join();
+
+    ASSERT_EQ(result, TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
 /// \brief Test complete happy event flow of a session
 TEST_F(AuthTest, test_complete_event_flow) {
 

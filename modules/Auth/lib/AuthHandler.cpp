@@ -168,7 +168,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 
         const uint32_t evse_id_u = static_cast<uint32_t>(evse_id);
 
-        if (!this->reservation_handler.is_evse_reserved(evse_id_u)) {
+        if (!this->reservation_handler.is_evse_reserved(evse_id_u) &&
+            this->reservation_handler.is_charging_possible(evse_id_u)) {
             all_evses_reserved_and_tag_does_not_match = false;
             break;
         }
@@ -293,6 +294,9 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                         intersect(referenced_evses, validation_result.evse_ids.value()).empty()) {
                         EVLOG_debug << "Empty intersection between referenced evses and evses that are authorized";
                         validation_result.authorization_status = AuthorizationStatus::NotAtThisLocation;
+                    } else if (reservation_id == std::nullopt &&
+                               !this->reservation_handler.is_charging_possible(static_cast<uint32_t>(evse_id))) {
+                        validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                     } else if (!this->reservation_handler.is_evse_reserved(static_cast<uint32_t>(evse_id)) &&
                                (reservation_id == std::nullopt)) {
                         EVLOG_info << "Providing authorization to evse#" << evse_id;
