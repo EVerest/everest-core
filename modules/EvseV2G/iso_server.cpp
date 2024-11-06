@@ -1490,12 +1490,12 @@ static enum v2g_event handle_iso_charging_status(struct v2g_connection* conn) {
     /* build up response */
     res->ResponseCode = iso2_responseCodeType_OK;
 
-    res->ReceiptRequired = false;  // [V2G2-691] ReceiptRequired shall be false in case of EIM 
+    res->ReceiptRequired = false; // [V2G2-691] ReceiptRequired shall be false in case of EIM
     if (conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
         res->ReceiptRequired = conn->ctx->evse_v2g_data.receipt_required;
     }
     res->ReceiptRequired_isUsed = true; // [V2G2-691] ChargingStatusRes shall always include ReceiptRequired
-    
+
     if (conn->ctx->meter_info.meter_info_is_used == true) {
         res->MeterInfo.MeterID.charactersLen = conn->ctx->meter_info.meter_id.bytesLen;
         memcpy(res->MeterInfo.MeterID.characters, conn->ctx->meter_info.meter_id.bytes, iso2_MeterID_CHARACTER_SIZE);
