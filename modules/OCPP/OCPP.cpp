@@ -745,25 +745,32 @@ void OCPP::ready() {
 
     this->charge_point->register_transaction_started_callback(
         [this](const int32_t connector, const std::string& session_id) {
-            types::ocpp::OcppTransactionEvent tevent = {
-                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
-            };
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Started;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_updated_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id,
                const ocpp::v16::IdTagInfo& id_tag_info) {
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
-                                                        session_id, std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Updated;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_stopped_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
             EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
-                                                        std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Ended;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
