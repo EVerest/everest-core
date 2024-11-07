@@ -112,9 +112,13 @@ void evse_managerImpl::init() {
     // /Interface to Node-RED debug UI
 
     if (mod->r_powermeter_billing().size() > 0) {
-        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter p) {
+        mod->r_powermeter_billing()[0]->subscribe_powermeter([this](const types::powermeter::Powermeter& p) {
             // Republish data on proxy powermeter struct
             publish_powermeter(p);
+        });
+        mod->r_powermeter_billing()[0]->subscribe_public_key_ocmf([this](const std::string& public_key_ocmf) {
+            // Republish data on proxy powermeter public_key_ocmf
+            publish_powermeter_public_key_ocmf(public_key_ocmf);
         });
     }
 }
@@ -416,10 +420,6 @@ bool evse_managerImpl::handle_resume_charging() {
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
     return mod->charger->cancel_transaction(request);
 };
-
-void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->update_local_energy_limit(value);
-}
 
 void evse_managerImpl::handle_set_get_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {

@@ -29,6 +29,8 @@ void power_supply_DCImpl::init() {
     std::thread([this]() {
         float low_pass_voltage = 0.;
 
+        float last_low_pass_voltage = -1;
+
         while (true) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             // prevent overshoot
@@ -48,13 +50,15 @@ void power_supply_DCImpl::init() {
                 }
             }
 
-            if (is_on) {
-                mod->serial.setOutputVoltageCurrent(low_pass_voltage, req_current);
-
-            } else {
-                mod->serial.setOutputVoltageCurrent(0, 0);
+            if (not is_on) {
                 low_pass_voltage = 0.;
             }
+
+            if (last_low_pass_voltage not_eq low_pass_voltage) {
+                mod->serial.setOutputVoltageCurrent(low_pass_voltage, 0.);
+            }
+
+            last_low_pass_voltage = low_pass_voltage;
         }
     }).detach();
 }

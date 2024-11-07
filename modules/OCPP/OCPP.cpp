@@ -11,6 +11,7 @@
 #include <conversions.hpp>
 #include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <optional>
 
 namespace module {
@@ -18,6 +19,7 @@ namespace module {
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
+const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
 
 namespace fs = std::filesystem;
 
@@ -76,6 +78,13 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     // iterate over all schedules reported by the libocpp to create ExternalLimits
     // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
+
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, connector_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: "
+                          << connector_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
         for (const auto period : schedule.chargingSchedulePeriod) {
@@ -83,11 +92,11 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (period.numberPhases.has_value()) {
+                limits_req.ac_max_phase_count = period.numberPhases.value();
+            }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
-                if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
-                }
                 if (schedule.minChargingRate.has_value()) {
                     limits_req.ac_min_current_A = schedule.minChargingRate.value();
                 }
@@ -98,19 +107,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             schedule_import.push_back(schedule_req_entry);
         }
         limits.schedule_import.emplace(schedule_import);
-
-        if (connector_id == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
-            this->r_evse_manager.at(connector_id - 1)->call_set_external_limits(limits);
-        }
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
+        evse_sink.call_set_external_limits(limits);
     }
 }
 
@@ -167,6 +165,10 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEVSE";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id);
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::SwitchingPhases) {
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
+                    << "Received SwitchingPhases";
+        this->charge_point->on_suspend_charging_evse(ocpp_connector_id, SWITCHING_PHASES_REASON);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted ||
                session_event.event == types::evse_manager::SessionEventEnum::ChargingResumed) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
@@ -325,12 +327,32 @@ bool OCPP::all_evse_ready() {
     return true;
 }
 
+ocpp::v16::ChargingRateUnit get_unit_or_default(const std::string& unit_string) {
+    try {
+        return ocpp::v16::conversions::string_to_charging_rate_unit(unit_string);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << "RequestCompositeScheduleUnit configured incorrectly with: " << unit_string
+                      << ". Defaulting to using Amps.";
+        return ocpp::v16::ChargingRateUnit::A;
+    }
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_ocpp_generic);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
@@ -661,15 +683,17 @@ void OCPP::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
+    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
+
     // publish charging schedules at least once on startup
     const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-        this->config.PublishChargingScheduleDurationS);
+        this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
     this->set_external_limits(charging_schedules);
     this->publish_charging_schedules(charging_schedules);
 
-    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
+    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this, composite_schedule_unit]() {
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });
@@ -677,12 +701,12 @@ void OCPP::ready() {
         this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
     }
 
-    this->charge_point->register_signal_set_charging_profiles_callback([this]() {
+    this->charge_point->register_signal_set_charging_profiles_callback([this, composite_schedule_unit]() {
         // this is executed when CSMS sends new ChargingProfile that is accepted by
         // the ChargePoint
         EVLOG_info << "Received new Charging Schedules from CSMS";
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });

@@ -122,6 +122,8 @@ bool build_config(tls::Server::config_t& config, struct v2g_context* ctx) {
     config.socket = ctx->tls_socket.fd;
     config.io_timeout_ms = static_cast<std::int32_t>(ctx->network_read_timeout_tls);
 
+    config.tls_key_logging = ctx->tls_key_logging;
+
     // information from libevse-security
     const auto cert_info =
         ctx->r_security->call_get_leaf_certificate_info(LeafCertificateType::V2G, EncodingFormat::PEM, false);

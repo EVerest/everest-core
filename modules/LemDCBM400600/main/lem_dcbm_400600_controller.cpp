@@ -6,22 +6,10 @@
 namespace module::main {
 
 void LemDCBM400600Controller::init() {
-    try {
-        this->time_sync_helper->set_time_config_params(config.meter_timezone, config.meter_dst);
-        call_with_retry([this]() { this->fetch_meter_id_from_device(); }, this->config.init_number_of_http_retries,
-                        this->config.init_retry_wait_in_milliseconds);
-    } catch (HttpClientError& http_client_error) {
-        EVLOG_error << "Initialization of LemDCBM400600Controller failed with http "
-                       "client error: "
-                    << http_client_error.what();
-        throw;
-    } catch (DCBMUnexpectedResponseException& dcbm_error) {
-        EVLOG_error << "Initialization of LemDCBM400600Controller failed due an "
-                       "unexpected device response: "
-                    << dcbm_error.what();
-        throw;
-    }
-
+    EVLOG_info << "LEM DCBM 400/600: Try to communicate with the device";
+    this->time_sync_helper->set_time_config_params(config.meter_timezone, config.meter_dst);
+    call_with_retry([this]() { this->fetch_meter_id_from_device(); }, this->config.init_number_of_http_retries,
+                    this->config.init_retry_wait_in_milliseconds);
     this->time_sync_helper->restart_unsafe_period();
 }
 
@@ -188,6 +176,7 @@ LemDCBM400600Controller::stop_transaction(const std::string& transaction_id) {
                     this->request_device_to_stop_transaction(tid);
                 }
                 auto signed_meter_value = types::units_signed::SignedMeterValue{fetch_ocmf_result(tid), "", "OCMF"};
+                signed_meter_value.public_key.emplace(public_key_ocmf);
                 return types::powermeter::TransactionStopResponse{types::powermeter::TransactionRequestStatus::OK,
                                                                   {}, // Empty start_signed_meter_value
                                                                   signed_meter_value};

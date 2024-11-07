@@ -16,6 +16,9 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
     case openssl::log_level_t::debug:
         // ignore debug logs
         break;
+    case openssl::log_level_t::info:
+        EVLOG_info << str;
+        break;
     case openssl::log_level_t::warning:
         EVLOG_warning << str;
         break;
