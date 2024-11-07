@@ -9,6 +9,8 @@ errors:
     description: Internal error of the state machine
   - name: MREC4OverCurrentFailure
     description: Over current event
+  - name: MREC9AuthorizationTimeout
+    description: No authorization was provided within timeout after plugin
   - name: PowermeterTransactionStartFailed
     description: Transaction could not be started at the powermeter
   - name: Inoperative
