@@ -1,0 +1,12 @@
+pytest
+ocpp
+python-dateutil
+pytest-asyncio
+paho-mqtt
+pyftpdlib
+websockets
+pyOpenSSL
+pytest-html
+pytest-xdist
+cryptography
+pytest-timeout
