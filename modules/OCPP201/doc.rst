@@ -310,3 +310,27 @@ In addition to that, the charging station periodically updates the OCSP response
 The OCSP response is cached and can be used as part of the ISO15118 TLS handshake with EVs. The OCSP update is by default performed 
 every seven days. The timestamp of the last update is stored persistently, so that this process is not necessarily performed
 at every start up.
+
+Energy Management and Smart Charging Integration
+------------------------------------------------
+
+OCPP2.0.1 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
+This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
+composite schedule calculation please refer to the OCPP2.0.1 specification.
+
+The integration of the composite schedules is implemented through the optional requirement(s) `evse_energy_sink` (interface: `external_energy_limits`) 
+of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
+for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
+has two EVSEs you need to connect three modules that implement the `external_energy_limits` interface: One representing evse id 0 and 
+two representing your actual EVSEs.
+
+📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
+which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
+`3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
+
+This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
+the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements
+the `external_energy_limits` interface. In addition, the config parameter `CompositeScheduleIntervalS` defines a periodic interval to retrieve
+the composite schedule also in case no charging profiles have been changed. The configuration parameter `RequestCompositeScheduleDurationS` defines 
+the duration in seconds of the requested composite schedules starting now. The value configured for `RequestCompositeScheduleDurationS` shall be greater
+than the value configured for `CompositeScheduleIntervalS` because otherwise time periods could be missed by the application.
