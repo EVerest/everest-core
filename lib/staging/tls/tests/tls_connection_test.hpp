@@ -7,7 +7,6 @@
 #include <extensions/helpers.hpp>
 #include <openssl_util.hpp>
 
-#include <EnumFlags.hpp>
 #include <array>
 #include <chrono>
 #include <csignal>
@@ -17,6 +16,8 @@
 #include <thread>
 #include <tls.hpp>
 #include <unistd.h>
+
+#include <everest/staging/util/EnumFlags.hpp>
 
 using namespace std::chrono_literals;
 
@@ -35,10 +36,11 @@ struct ClientStatusRequestV2Test : public ClientStatusRequestV2 {
         last = connected,
     };
 
-    util::AtomicEnumFlags<flags_t, std::uint8_t>& flags;
+    everest::staging::util::AtomicEnumFlags<flags_t, std::uint8_t>& flags;
 
     ClientStatusRequestV2Test() = delete;
-    explicit ClientStatusRequestV2Test(util::AtomicEnumFlags<flags_t, std::uint8_t>& flag_ref) : flags(flag_ref) {
+    explicit ClientStatusRequestV2Test(everest::staging::util::AtomicEnumFlags<flags_t, std::uint8_t>& flag_ref) :
+        flags(flag_ref) {
     }
 
     int status_request_cb(tls::Ssl* ctx) override {
@@ -96,7 +98,7 @@ struct ClientStatusRequestV2Test : public ClientStatusRequestV2 {
 
 struct ClientTest : public tls::Client {
     using flags_t = ClientStatusRequestV2Test::flags_t;
-    util::AtomicEnumFlags<flags_t, std::uint8_t> flags;
+    everest::staging::util::AtomicEnumFlags<flags_t, std::uint8_t> flags;
 
     ClientTest() : tls::Client(std::unique_ptr<ClientStatusRequestV2>(new ClientStatusRequestV2Test(flags))) {
     }
