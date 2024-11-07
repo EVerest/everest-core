@@ -10,6 +10,7 @@
 #include <conversions.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <ocpp_conversions.hpp>
 
 namespace module {
@@ -274,6 +275,16 @@ bool OCPP201::all_evse_ready() {
 void OCPP201::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
 
     this->init_evse_maps();
 
@@ -662,8 +673,8 @@ void OCPP201::ready() {
 
     const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
 
-    // this callback publishes the schedules within EVerest and applies the schedules for the individual evse_manager(s)
-    // and the connector_zero_sink
+    // this callback publishes the schedules within EVerest and applies the schedules for the individual
+    // r_evse_energy_sink
     const auto charging_schedules_callback = [this, composite_schedule_unit]() {
         const auto composite_schedules = this->charge_point->get_all_composite_schedules(
             this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
@@ -1201,6 +1212,12 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
     // for each connector
 
     for (const auto& composite_schedule : composite_schedules) {
+        auto evse_id = composite_schedule.evseId;
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: " << evse_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
 
@@ -1222,19 +1239,8 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
         }
         limits.schedule_import = schedule_import;
 
-        if (composite_schedule.evseId == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for evse 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for evse 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            EVLOG_debug << "OCPP sets the following external limits for evse " << composite_schedule.evseId << ": \n"
-                        << limits;
-            this->r_evse_manager.at(composite_schedule.evseId - 1)->call_set_external_limits(limits);
-        }
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
+        evse_sink.call_set_external_limits(limits);
     }
 }
 
