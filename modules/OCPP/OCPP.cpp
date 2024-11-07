@@ -48,8 +48,22 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
                                     "EVerest", "caused_by:" + error.message};
     }
 
-    // check if is VendorError
-    if (error_type.find("VendorError") != std::string::npos) {
+    const auto is_vendor_specific = [](const std::string& error_type) {
+        // NOTE (aw): probably `find` is used here in order to also
+        // match vendor related errors from differen modules
+        if (error_type.find("VendorError") != std::string::npos) {
+            return true;
+        }
+
+        if (error_type.find("VendorWarning") != std::string::npos) {
+            return true;
+        }
+
+        return false;
+    };
+
+    // handle vendor specific errors
+    if (is_vendor_specific(error.type)) {
         return ocpp::v16::ErrorInfo{
             uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
             error.sub_type};
