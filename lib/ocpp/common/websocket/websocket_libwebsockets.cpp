@@ -293,7 +293,7 @@ static int callback_minimal(struct lws* wsi, enum lws_callback_reasons reason, v
             if (owner not_eq nullptr) {
                 return data->get_owner()->process_callback(wsi, static_cast<int>(reason), user, in, len);
             } else {
-                EVLOG_warning << "callback_minimal called, but data->owner is nullptr. Reason: " << reason;
+                EVLOG_debug << "callback_minimal called, but data->owner is nullptr. Reason: " << reason;
             }
         }
     }
@@ -838,7 +838,9 @@ void WebsocketLibwebsockets::reconnect(long delay) {
 }
 
 void WebsocketLibwebsockets::close(const WebsocketCloseReason code, const std::string& reason) {
-    EVLOG_info << "Closing websocket: " << reason;
+    if (!reason.empty()) {
+        EVLOG_info << "Closing websocket: " << reason;
+    }
 
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);
