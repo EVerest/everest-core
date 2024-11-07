@@ -471,7 +471,9 @@ private:
 
     void trigger_authorization_cache_cleanup();
     void cache_cleanup_handler();
-    GetCompositeScheduleResponse get_composite_schedule_internal(const GetCompositeScheduleRequest& request);
+    GetCompositeScheduleResponse
+    get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
+                                    const std::set<ChargingProfilePurposeEnum>& profiles_to_ignore = {});
 
     /// \brief Removes all network connection profiles below the actual security profile and stores the new list in the
     /// device model

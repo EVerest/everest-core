@@ -91,7 +91,8 @@ public:
 
     virtual std::vector<ReportedChargingProfile>
     get_reported_profiles(const GetChargingProfilesRequest& request) const = 0;
-    virtual std::vector<ChargingProfile> get_valid_profiles(int32_t evse_id) = 0;
+    virtual std::vector<ChargingProfile>
+    get_valid_profiles(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {}) = 0;
 
     virtual CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
                                                            const ocpp::DateTime& start_time,
@@ -153,9 +154,12 @@ public:
     std::vector<ReportedChargingProfile>
     get_reported_profiles(const GetChargingProfilesRequest& request) const override;
 
-    /// \brief Retrieves all profiles that should be considered for calculating the composite schedule.
+    /// \brief Retrieves all profiles that should be considered for calculating the composite schedule. Only profiles
+    /// that belong to the given \p evse_id and that are not contained in \p purposes_to_ignore are included in the
+    /// response.
     ///
-    std::vector<ChargingProfile> get_valid_profiles(int32_t evse_id) override;
+    std::vector<ChargingProfile>
+    get_valid_profiles(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {}) override;
 
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
@@ -215,7 +219,8 @@ protected:
 private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
-    std::vector<ChargingProfile> get_valid_profiles_for_evse(int32_t evse_id);
+    std::vector<ChargingProfile>
+    get_valid_profiles_for_evse(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {});
     void conform_schedule_number_phases(int32_t profile_id, ChargingSchedulePeriod& charging_schedule_period) const;
     void conform_validity_periods(ChargingProfile& profile) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;

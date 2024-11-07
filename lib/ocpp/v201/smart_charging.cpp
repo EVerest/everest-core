@@ -459,12 +459,16 @@ SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& re
     return this->database_handler->get_charging_profiles_matching_criteria(request.evseId, request.chargingProfile);
 }
 
-std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id) {
+std::vector<ChargingProfile>
+SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id,
+                                                  const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore) {
     std::vector<ChargingProfile> valid_profiles;
 
     auto evse_profiles = this->database_handler->get_charging_profiles_for_evse(evse_id);
     for (auto profile : evse_profiles) {
-        if (this->conform_and_validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid) {
+        if (this->conform_and_validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid and
+            std::find(std::begin(purposes_to_ignore), std::end(purposes_to_ignore), profile.chargingProfilePurpose) ==
+                std::end(purposes_to_ignore)) {
             valid_profiles.push_back(profile);
         }
     }
@@ -472,11 +476,13 @@ std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles_for_evse(i
     return valid_profiles;
 }
 
-std::vector<ChargingProfile> SmartChargingHandler::get_valid_profiles(int32_t evse_id) {
-    std::vector<ChargingProfile> valid_profiles = get_valid_profiles_for_evse(evse_id);
+std::vector<ChargingProfile>
+SmartChargingHandler::get_valid_profiles(int32_t evse_id,
+                                         const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore) {
+    std::vector<ChargingProfile> valid_profiles = get_valid_profiles_for_evse(evse_id, purposes_to_ignore);
 
     if (evse_id != STATION_WIDE_ID) {
-        auto station_wide_profiles = get_valid_profiles_for_evse(STATION_WIDE_ID);
+        auto station_wide_profiles = get_valid_profiles_for_evse(STATION_WIDE_ID, purposes_to_ignore);
         valid_profiles.insert(valid_profiles.end(), station_wide_profiles.begin(), station_wide_profiles.end());
     }
 

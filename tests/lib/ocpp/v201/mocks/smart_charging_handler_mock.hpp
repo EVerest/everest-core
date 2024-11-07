@@ -23,7 +23,8 @@ public:
     MOCK_METHOD(ClearChargingProfileResponse, clear_profiles, (const ClearChargingProfileRequest& request), (override));
     MOCK_METHOD(std::vector<ReportedChargingProfile>, get_reported_profiles,
                 (const GetChargingProfilesRequest& request), (const, override));
-    MOCK_METHOD(std::vector<ChargingProfile>, get_valid_profiles, (int32_t evse_id));
+    MOCK_METHOD(std::vector<ChargingProfile>, get_valid_profiles,
+                (int32_t evse_id, const std::set<ChargingProfilePurposeEnum>&));
     MOCK_METHOD(CompositeSchedule, calculate_composite_schedule,
                 (std::vector<ChargingProfile> & valid_profiles, const ocpp::DateTime& start_time,
                  const ocpp::DateTime& end_time, const int32_t evse_id,

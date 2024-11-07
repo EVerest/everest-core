@@ -253,6 +253,23 @@
       "description": "Supply voltage of the grid. This value is only used in case a conversion between smart charging amp and watt limits is required"   
     }
   },
+  "IgnoredProfilePurposesOffline": {
+    "variable_name": "IgnoredProfilePurposesOffline",
+      "characteristics": {
+        "valuesList": "ChargingStationMaxProfile,TxDefaultProfile,TxProfile",
+        "supportsMonitoring": true,
+        "dataType": "MemberList"
+      },
+      "attributes": [
+        {
+          "type": "Actual",
+          "mutability": "ReadWrite",
+          "value": ""
+        }
+      ],
+      "description": "Allows configuration of comma seperated list of ChargingProfilePurposes that are ignored in the composite schedule caluclation when offline.",
+      "type": "string"
+  },
   "required": [
     "ChargingProfileMaxStackLevel",
     "ChargingScheduleChargingRateUnit",

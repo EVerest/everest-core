@@ -197,6 +197,11 @@
                 "TxProfile"
             ]
         },
+        "IgnoredProfilePurposesOffline": {
+            "$comment": "Allows configuration of comma seperated list of ChargingProfilePurposes that are ignored in the composite schedule caluclation when offline.",
+            "type": "string",
+            "readOnly": false
+        },
         "MaxCompositeScheduleDuration": {
             "$comment": "Maximum duration in seconds of GetCompositeSchedule.req. For GetCompositeSchedule.req with a greater duration the schedule for only the MaxCompositeScheduleDuration will be calculated",
             "type": "integer",

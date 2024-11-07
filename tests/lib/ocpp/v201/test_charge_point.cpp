@@ -851,7 +851,8 @@ TEST_F(ChargePointFunctionalityTestFixtureV201,
                                 DEFAULT_TX_ID),
     };
 
-    ON_CALL(*smart_charging_handler, get_valid_profiles(DEFAULT_EVSE_ID)).WillByDefault(testing::Return(profiles));
+    ON_CALL(*smart_charging_handler, get_valid_profiles(DEFAULT_EVSE_ID, testing::_))
+        .WillByDefault(testing::Return(profiles));
     EXPECT_CALL(*smart_charging_handler,
                 calculate_composite_schedule(profiles, testing::_, testing::_, DEFAULT_EVSE_ID, req.chargingRateUnit));
 
@@ -867,7 +868,7 @@ TEST_F(ChargePointFunctionalityTestFixtureV201,
     auto get_composite_schedule_req =
         request_to_enhanced_message<GetCompositeScheduleRequest, MessageType::GetCompositeSchedule>(req);
 
-    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_, testing::_)).Times(0);
     EXPECT_CALL(*smart_charging_handler,
                 calculate_composite_schedule(testing::_, testing::_, testing::_, testing::_, testing::_))
         .Times(0);
@@ -888,7 +889,7 @@ TEST_F(ChargePointFunctionalityTestFixtureV201,
     device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
                             AttributeEnum::Actual, "A", "test", true);
 
-    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_)).Times(0);
+    EXPECT_CALL(*smart_charging_handler, get_valid_profiles(testing::_, testing::_)).Times(0);
     EXPECT_CALL(*smart_charging_handler,
                 calculate_composite_schedule(testing::_, testing::_, testing::_, testing::_, testing::_))
         .Times(0);

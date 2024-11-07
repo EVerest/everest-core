@@ -341,9 +341,50 @@ std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getSupportedCh
     std::vector<ChargingProfilePurposeType> supported_purpose_types;
     const auto str_list = this->config["Internal"]["SupportedChargingProfilePurposeTypes"];
     for (const auto& str : str_list) {
-        supported_purpose_types.push_back(conversions::string_to_charging_profile_purpose_type(str));
+        try {
+            supported_purpose_types.push_back(conversions::string_to_charging_profile_purpose_type(str));
+        } catch (const StringToEnumException& e) {
+            EVLOG_warning << "Could not convert element of SupportedChargingProfilePurposeTypes: " << str;
+        }
     }
     return supported_purpose_types;
+}
+
+std::vector<ChargingProfilePurposeType> ChargePointConfiguration::getIgnoredProfilePurposesOffline() {
+    if (not this->config["Internal"].contains("IgnoredProfilePurposesOffline")) {
+        return {};
+    }
+
+    std::vector<ChargingProfilePurposeType> purpose_types;
+    const auto str_list = split_string(this->config["Internal"]["IgnoredProfilePurposesOffline"], ',');
+    for (const auto& str : str_list) {
+        try {
+            purpose_types.push_back(conversions::string_to_charging_profile_purpose_type(str));
+        } catch (const StringToEnumException& e) {
+            EVLOG_warning << "Could not convert element of IgnoredProfilePurposesOffline: " << str;
+        }
+    }
+    return purpose_types;
+}
+
+bool ChargePointConfiguration::setIgnoredProfilePurposesOffline(const std::string& ignored_profile_purposes_offline) {
+    if (this->getIgnoredProfilePurposesOfflineKeyValue() == std::nullopt) {
+        return false;
+    }
+
+    const auto profile_purposes = split_string(ignored_profile_purposes_offline, ',');
+    for (const auto purpose : profile_purposes) {
+        try {
+            conversions::string_to_charging_profile_purpose_type(purpose);
+        } catch (const StringToEnumException& e) {
+            EVLOG_warning << "Could not convert element of IgnoredProfilePurposesOffline: " << purpose;
+            return false;
+        }
+    }
+
+    this->config["Internal"]["IgnoredProfilePurposesOffline"] = ignored_profile_purposes_offline;
+    this->setInUserConfig("Internal", "IgnoredProfilePurposesOffline", ignored_profile_purposes_offline);
+    return true;
 }
 
 int32_t ChargePointConfiguration::getMaxCompositeScheduleDuration() {
@@ -664,7 +705,31 @@ KeyValue ChargePointConfiguration::getSupportedChargingProfilePurposeTypesKeyVal
     kv.readonly = true;
     std::vector<std::string> purpose_types;
     for (const auto& entry : this->getSupportedChargingProfilePurposeTypes()) {
-        purpose_types.push_back(conversions::charging_profile_purpose_type_to_string(entry));
+        try {
+            purpose_types.push_back(conversions::charging_profile_purpose_type_to_string(entry));
+        } catch (const EnumToStringException& e) {
+            EVLOG_warning << "Could not convert element of SupportedChargingProfilePurposeTypes to string";
+        }
+    }
+    kv.value.emplace(to_csl(purpose_types));
+    return kv;
+}
+
+std::optional<KeyValue> ChargePointConfiguration::getIgnoredProfilePurposesOfflineKeyValue() {
+    if (not this->config["Internal"].contains("IgnoredProfilePurposesOffline")) {
+        return std::nullopt;
+    }
+
+    KeyValue kv;
+    kv.key = "IgnoredProfilePurposesOffline";
+    kv.readonly = false;
+    std::vector<std::string> purpose_types;
+    for (const auto& entry : this->getIgnoredProfilePurposesOffline()) {
+        try {
+            purpose_types.push_back(conversions::charging_profile_purpose_type_to_string(entry));
+        } catch (const EnumToStringException& e) {
+            EVLOG_warning << "Could not convert element of IgnoredProfilePurposesOffline to string";
+        }
     }
     kv.value.emplace(to_csl(purpose_types));
     return kv;
@@ -2950,6 +3015,9 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
     if (key == "SupportedChargingProfilePurposeTypes") {
         return this->getSupportedChargingProfilePurposeTypesKeyValue();
     }
+    if (key == "IgnoredProfilePurposesOffline") {
+        return this->getIgnoredProfilePurposesOfflineKeyValue();
+    }
     if (key == "MaxCompositeScheduleDuration") {
         return this->getMaxCompositeScheduleDurationKeyValue();
     }
@@ -3271,6 +3339,11 @@ std::vector<KeyValue> ChargePointConfiguration::get_all_key_value() {
 
 ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500> value) {
     std::lock_guard<std::recursive_mutex> lock(this->configuration_mutex);
+    if (key == "IgnoredProfilePurposesOffline") {
+        if (this->setIgnoredProfilePurposesOffline(value) == false) {
+            return ConfigurationStatus::Rejected;
+        }
+    }
     if (key == "AllowOfflineTxForUnknownId") {
         if (this->getAllowOfflineTxForUnknownId() == std::nullopt) {
             return ConfigurationStatus::NotSupported;

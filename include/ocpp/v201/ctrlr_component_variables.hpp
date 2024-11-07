@@ -216,6 +216,7 @@ extern const RequiredComponentVariable& SupplyVoltage;
 extern const ComponentVariable& Phases3to1;
 extern const RequiredComponentVariable& ChargingProfileMaxStackLevel;
 extern const RequiredComponentVariable& ChargingScheduleChargingRateUnit;
+extern const ComponentVariable& IgnoredProfilePurposesOffline;
 extern const ComponentVariable& TariffCostCtrlrAvailableTariff;
 extern const ComponentVariable& TariffCostCtrlrAvailableCost;
 extern const RequiredComponentVariable& TariffCostCtrlrCurrency;

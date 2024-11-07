@@ -98,11 +98,12 @@ public:
     void clear_all_profiles();
 
     ///
-    /// \brief Gets all valid profiles within the given absoulte \p start_time and absolute \p end_time for the given \p
-    /// connector_id
+    /// \brief Gets all valid profiles within the given absoulte \p start_time and absolute \p end_time for the given
+    /// \p connector_id . Only profiles that are not contained in \p purposes_to_ignore are included in the response.
     ///
-    std::vector<ChargingProfile> get_valid_profiles(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-                                                    const int connector_id);
+    std::vector<ChargingProfile>
+    get_valid_profiles(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, const int connector_id,
+                       const std::set<ChargingProfilePurposeType>& purposes_to_ignore = {});
     ///
     /// \brief Calculates the enhanced composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
