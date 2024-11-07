@@ -1430,6 +1430,7 @@ bool Charger::deauthorize_internal() {
             // We can safely remove auth as it is not in use right now
             if (not shared_context.authorized) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::PluginTimeout);
+                error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
                 return false;
             }
             shared_context.authorized = false;
@@ -1936,6 +1937,7 @@ void Charger::clear_errors_on_unplug() {
     error_handling->clear_overcurrent_error();
     error_handling->clear_internal_error();
     error_handling->clear_powermeter_transaction_start_failed_error();
+    error_handling->clear_authorization_timeout_error();
 }
 
 types::evse_manager::EnableDisableSource Charger::get_last_enable_disable_source() {
