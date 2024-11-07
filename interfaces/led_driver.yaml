@@ -4,6 +4,9 @@ cmds:
   set_led_state:
     description: This command changes the color and brightness of LEDs
     arguments:
+      connector_id:
+        description: Connector id of the evse manager to which the LED is connected to
+        type: integer
       led_state:
         description: Sets the color of the LEDs
         type: object

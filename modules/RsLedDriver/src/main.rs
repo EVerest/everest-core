@@ -88,12 +88,11 @@ impl EvseManagerClientSubscriber for LedDriver {
     fn on_selected_protocol(&self, _context: &Context, _value: String) {}
 
     fn on_session_event(&self, context: &Context, value: SessionEvent) {
-        let index = context.index;
-        let led_driver = &context.publisher.led_driver_slots[index];
+        let led_driver = &context.publisher.led_driver;
 
         let _ = match get_led_state(value.event.clone()) {
             Some(led_state) => led_driver
-                .set_led_state(self.brightness, led_state)
+                .set_led_state(context.index as i64, self.brightness, led_state)
                 .unwrap(),
             None => log::error!("Unknown event {:?} - not changing LEDs", value.event),
         };
@@ -107,11 +106,7 @@ impl EvseManagerClientSubscriber for LedDriver {
 }
 
 impl OnReadySubscriber for LedDriver {
-    fn on_ready(&self, publishers: &ModulePublisher) {
-        if publishers.evse_manager_slots.len() != publishers.led_driver_slots.len() {
-            panic!("EVSE slots and LED driver slots are not the same size!");
-        }
-    }
+    fn on_ready(&self, _publishers: &ModulePublisher) {}
 }
 
 fn main() {
@@ -125,7 +120,7 @@ fn main() {
         led_driver.clone(),
         led_driver.clone(),
         |_| led_driver.clone(),
-        |_| led_driver.clone(),
+        led_driver.clone(),
     );
 
     loop {

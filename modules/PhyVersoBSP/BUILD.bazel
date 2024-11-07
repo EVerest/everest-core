@@ -10,8 +10,7 @@ IMPLS = [
   "phyverso_mcu_temperature",
   "system_specific_data_1",
   "system_specific_data_2",
-  "led_driver_1",
-  "led_driver_2",
+  "led_driver",
 ]
 
 cc_everest_module(

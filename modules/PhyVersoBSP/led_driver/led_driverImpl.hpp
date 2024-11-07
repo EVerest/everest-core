@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef LED_DRIVER_2_IMPL_HPP
-#define LED_DRIVER_2_IMPL_HPP
+#ifndef LED_DRIVER_IMPL_HPP
+#define LED_DRIVER_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -17,7 +17,7 @@
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
-namespace led_driver_2 {
+namespace led_driver {
 
 struct Conf {};
 
@@ -25,7 +25,7 @@ class led_driverImpl : public led_driverImplBase {
 public:
     led_driverImpl() = delete;
     led_driverImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<PhyVersoBSP>& mod, Conf& config) :
-        led_driverImplBase(ev, "led_driver_2"), mod(mod), config(config){};
+        led_driverImplBase(ev, "led_driver"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -33,7 +33,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_set_led_state(types::led_state::LedState& led_state, int& brightness) override;
+    virtual void handle_set_led_state(int& connector_id, types::led_state::LedState& led_state,
+                                      int& brightness) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
@@ -55,7 +56,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace led_driver_2
+} // namespace led_driver
 } // namespace module
 
-#endif // LED_DRIVER_2_IMPL_HPP
+#endif // LED_DRIVER_IMPL_HPP
