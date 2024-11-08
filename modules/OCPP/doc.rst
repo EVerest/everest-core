@@ -296,6 +296,22 @@ ocpp status notification will be used:
   characters), whereas the other fields (``info`` and
   ``vendorErrorCode``) only allow up to 50 characters.
 
+If for example the module with id `yeti_driver` within its
+implementation with id `board_support` creates the following error:
+.. code-block:: cpp
+
+  error_factory->create_error("evse_board_support/EnergyManagement", "OutOfEnergy", "someone cut the wires")
+
+the corresponding fields in the **StatusNotification.req** message will
+look like this:
+.. code-block:: JSON
+
+  {
+    "info": "yeti_driver->board_support",
+    "vendorErrorCode": "EnergyManagement/OutOfEnergy",
+    "vendorId": "someone cut the wires"
+  }
+
 The **StatusNotification.req** message has some limitations with respect
 to reporting errors:
 
