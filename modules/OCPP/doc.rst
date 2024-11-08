@@ -291,10 +291,10 @@ ocpp status notification will be used:
   the interface name, is stripped)
 * status notification ``vendorId`` -> everest error message
 
-  The main choice for using the status notification ``vendorId`` for the
-  error message is that it can carry the largest string (255
-  characters), whereas the other fields (``info`` and
-  ``vendorErrorCode``) only allow up to 50 characters.
+The reason for using the status notification ``vendorId`` for the error
+message is that it can carry the largest string (255 characters),
+whereas the other fields (``info`` and ``vendorErrorCode``) only allow
+up to 50 characters.
 
 If for example the module with id `yeti_driver` within its
 implementation with id `board_support` creates the following error:
