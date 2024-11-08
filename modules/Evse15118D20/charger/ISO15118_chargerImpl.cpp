@@ -44,40 +44,81 @@ iso15118::config::TlsNegotiationStrategy convert_tls_negotiation_strategy(const 
 }
 
 types::iso15118_charger::DisplayParameters
-convert_display_parameters(const iso15118::session::feedback::DisplayParameters& in) {
+convert_display_parameters(const iso15118::message_20::DisplayParameters& in) {
+
+    std::optional<float> energy_capacity{std::nullopt};
+    if (in.battery_energy_capacity) {
+        energy_capacity = iso15118::message_20::from_RationalNumber(in.battery_energy_capacity.value());
+    }
+
     return {in.present_soc,
-            in.minimum_soc,
+            in.min_soc,
             in.target_soc,
-            in.maximum_soc,
-            in.remaining_time_to_minimum_soc,
+            in.max_soc,
+            in.remaining_time_to_min_soc,
             in.remaining_time_to_target_soc,
-            in.remaining_time_to_maximum_soc,
-            in.battery_energy_capacity,
+            in.remaining_time_to_max_soc,
+            in.charging_complete,
+            energy_capacity,
             in.inlet_hot};
 }
 
 types::iso15118_charger::DcChargeDynamicModeValues
-convert_dynamic_values(const iso15118::session::feedback::DcChargeDynamicMode& in) {
+convert_dynamic_values(const iso15118::message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode& in) {
+
+    using namespace iso15118::message_20;
 
     std::optional<float> departure_time{std::nullopt};
-    if (in.departure_time.has_value()) {
+    if (in.departure_time) {
         departure_time = static_cast<float>(*in.departure_time);
     }
 
-    return {in.target_energy_request,
-            in.max_energy_request,
-            in.min_energy_request,
-            in.max_charge_power,
-            in.min_charge_power,
-            in.max_charge_current,
-            in.max_voltage,
-            in.min_voltage,
+    return {from_RationalNumber(in.target_energy_request),
+            from_RationalNumber(in.max_energy_request),
+            from_RationalNumber(in.min_energy_request),
+            from_RationalNumber(in.max_charge_power),
+            from_RationalNumber(in.min_charge_power),
+            from_RationalNumber(in.max_charge_current),
+            from_RationalNumber(in.max_voltage),
+            from_RationalNumber(in.min_voltage),
             departure_time,
-            in.max_discharge_power,
-            in.min_discharge_power,
-            in.max_discharge_current,
-            in.max_v2x_energy_request,
-            in.min_v2x_energy_request};
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt};
+}
+
+types::iso15118_charger::DcChargeDynamicModeValues
+convert_dynamic_values(const iso15118::message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode& in) {
+
+    using namespace iso15118::message_20;
+
+    std::optional<float> departure_time, max_v2x_req, min_v2x_req{std::nullopt};
+    if (in.departure_time) {
+        departure_time = static_cast<float>(*in.departure_time);
+    }
+    if (in.max_v2x_energy_request) {
+        max_v2x_req = from_RationalNumber(in.max_v2x_energy_request.value());
+    }
+    if (in.min_v2x_energy_request) {
+        min_v2x_req = from_RationalNumber(in.min_v2x_energy_request.value());
+    }
+
+    return {from_RationalNumber(in.target_energy_request),
+            from_RationalNumber(in.max_energy_request),
+            from_RationalNumber(in.min_energy_request),
+            from_RationalNumber(in.max_charge_power),
+            from_RationalNumber(in.min_charge_power),
+            from_RationalNumber(in.max_charge_current),
+            from_RationalNumber(in.max_voltage),
+            from_RationalNumber(in.min_voltage),
+            departure_time,
+            from_RationalNumber(in.max_discharge_power),
+            from_RationalNumber(in.min_discharge_power),
+            from_RationalNumber(in.max_discharge_current),
+            max_v2x_req,
+            min_v2x_req};
 }
 
 } // namespace
@@ -166,21 +207,50 @@ void ISO15118_chargerImpl::ready() {
 }
 
 iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() {
+
+    using ScheduleControlMode = iso15118::message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode;
+    using BPT_ScheduleReqControlMode = iso15118::message_20::DC_ChargeLoopRequest::BPT_Scheduled_DC_CLReqControlMode;
+    using DynamicReqControlMode = iso15118::message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode;
+    using BPT_DynamicReqControlMode = iso15118::message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode;
+
     iso15118::session::feedback::Callbacks callbacks;
 
     callbacks.dc_pre_charge_target_voltage = [this](float target_voltage) {
         publish_dc_ev_target_voltage_current({target_voltage, 0});
     };
 
-    callbacks.dc_charge_scheduled_mode = [this](const iso15118::session::feedback::DcChargeScheduledMode&
-                                                    dc_charge_schedule) {
-        publish_dc_ev_target_voltage_current({dc_charge_schedule.target_voltage, dc_charge_schedule.target_current});
+    callbacks.dc_charge_loop_req = [this](const iso15118::session::feedback::DcChargeLoopReq& dc_charge_loop_req) {
+        if (const auto* dc_control_mode =
+                std::get_if<iso15118::session::feedback::DcReqControlMode>(&dc_charge_loop_req)) {
+            if (const auto* scheduled_mode = std::get_if<ScheduleControlMode>(dc_control_mode)) {
+                const auto target_voltage = iso15118::message_20::from_RationalNumber(scheduled_mode->target_voltage);
+                const auto target_current = iso15118::message_20::from_RationalNumber(scheduled_mode->target_current);
+                publish_dc_ev_target_voltage_current({target_voltage, target_current});
+            } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlMode>(dc_control_mode)) {
+                const auto target_voltage =
+                    iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->target_voltage);
+                const auto target_current =
+                    iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->target_current);
+                publish_dc_ev_target_voltage_current({target_voltage, target_current});
+            } else if (const auto* dynamic_mode = std::get_if<DynamicReqControlMode>(dc_control_mode)) {
+                publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(*dynamic_mode));
+            } else if (const auto* bpt_dynamic_mode = std::get_if<BPT_DynamicReqControlMode>(dc_control_mode)) {
+                publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(*bpt_dynamic_mode));
+            }
+        } else if (const auto* display_parameters =
+                       std::get_if<iso15118::message_20::DisplayParameters>(&dc_charge_loop_req)) {
+            publish_display_parameters(convert_display_parameters(*display_parameters));
+        } else if (const auto* present_voltage =
+                       std::get_if<iso15118::session::feedback::PresentVoltage>(&dc_charge_loop_req)) {
+            publish_dc_ev_present_voltage(iso15118::message_20::from_RationalNumber(*present_voltage));
+        } else if (const auto* meter_info_requested =
+                       std::get_if<iso15118::session::feedback::MeterInfoRequested>(&dc_charge_loop_req)) {
+            if (*meter_info_requested) {
+                EVLOG_info << "Meter info is requested from EV";
+                publish_meter_info_requested(nullptr);
+            }
+        }
     };
-
-    callbacks.dc_charge_dynamic_mode =
-        [this](const iso15118::session::feedback::DcChargeDynamicMode& dc_charge_dynamic) {
-            publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(dc_charge_dynamic));
-        };
 
     callbacks.dc_max_limits = [this](const iso15118::session::feedback::DcMaximumLimits& max_limits) {
         publish_dc_ev_maximum_limits({max_limits.current, max_limits.power, max_limits.voltage});
@@ -227,19 +297,6 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
     callbacks.evccid = [this](const std::string& evccid) { publish_evcc_id(evccid); };
 
     callbacks.selected_protocol = [this](const std::string& protocol) { publish_selected_protocol(protocol); };
-
-    callbacks.display_parameters = [this](const iso15118::session::feedback::DisplayParameters parameters) {
-        publish_display_parameters(convert_display_parameters(parameters));
-    };
-
-    callbacks.dc_present_voltage = [this](float present_voltage) { publish_dc_ev_present_voltage(present_voltage); };
-
-    callbacks.meter_info_requested = [this](bool meter_info_requested) {
-        if (meter_info_requested) {
-            EVLOG_info << "Meter info is requested from EV";
-            publish_meter_info_requested(nullptr);
-        }
-    };
 
     return callbacks;
 }
