@@ -159,6 +159,7 @@ TimePoint const& Session::poll() {
     // send all of our queued control events
     while ((active_control_event = control_event_queue.pop()) != std::nullopt) {
 
+        // TODO(sl): Save UpdateDynamicParameters as well for ScheduleExchange
         if (const auto control_data = ctx.get_control_event<d20::DcTransferLimits>()) {
             ctx.session_config.dc_limits = *control_data;
         }

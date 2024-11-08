@@ -20,6 +20,8 @@ message_20::PowerDeliveryResponse handle_request(const message_20::PowerDelivery
         return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
     }
 
+    // TODO(sl): Check Req PowerProfile & ChannelSelection
+
     // Todo(sl): Add standby feature and define as everest module config
     if (req.charge_progress == message_20::PowerDeliveryRequest::Progress::Standby) {
         return response_with_code(res, message_20::ResponseCode::WARNING_StandbyNotAllowed);
@@ -53,10 +55,9 @@ FsmSimpleState::HandleEventReturnType PowerDelivery::handle_event(AllocatorType&
     const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_PreChargeRequest>()) {
-        const auto [res, charge_target] = handle_request(*req, ctx.session, present_voltage);
+        const auto res = handle_request(*req, ctx.session, present_voltage);
 
-        // FIXME (aw): should we always send this charge_target, even if the res errored?
-        ctx.feedback.dc_charge_target(charge_target);
+        ctx.feedback.dc_pre_charge_target_voltage(message_20::from_RationalNumber(req->target_voltage));
 
         ctx.respond(res);
 

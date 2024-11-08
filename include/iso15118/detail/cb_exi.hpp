@@ -48,6 +48,13 @@
                                                                                                                        \
     out##_isUsed = static_cast<bool>(in);
 
+#define CPP2CB_STRING_IF_USED(in, out)                                                                                 \
+    if (in) {                                                                                                          \
+        CPP2CB_STRING(in.value(), out);                                                                                \
+    }                                                                                                                  \
+                                                                                                                       \
+    out##_isUsed = static_cast<bool>(in);
+
 template <typename T1, typename T2> void cb_convert_enum(const T1& in, T2& out) {
     out = static_cast<T2>(in);
 }

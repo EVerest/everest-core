@@ -2,10 +2,13 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <cmath>
 #include <functional>
 #include <optional>
 #include <string>
+#include <variant>
 
+#include <iso15118/message/dc_charge_loop.hpp>
 #include <iso15118/message/type.hpp>
 
 namespace iso15118::session {
@@ -24,37 +27,30 @@ enum class Signal {
     DLINK_PAUSE,
 };
 
-struct DcChargeTarget {
-    float voltage{-1};
-    float current{-1};
-};
-
 struct DcMaximumLimits {
-    float voltage{-1};
-    float current{-1};
-    float power{-1};
+    float voltage{NAN};
+    float current{NAN};
+    float power{NAN};
 };
 
-struct DisplayParameters {
-    std::optional<float> present_soc;
-    std::optional<float> minimum_soc;
-    std::optional<float> target_soc;
-    std::optional<float> maximum_soc;
-    std::optional<float> remaining_time_to_minimum_soc;
-    std::optional<float> remaining_time_to_target_soc;
-    std::optional<float> remaining_time_to_maximum_soc;
-    std::optional<float> battery_energy_capacity;
-    std::optional<bool> inlet_hot;
-};
+using PresentVoltage = message_20::RationalNumber;
+using MeterInfoRequested = bool;
+using DcReqControlMode = std::variant<message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode,
+                                      message_20::DC_ChargeLoopRequest::BPT_Scheduled_DC_CLReqControlMode,
+                                      message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode,
+                                      message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode>;
+
+using DcChargeLoopReq =
+    std::variant<DcReqControlMode, message_20::DisplayParameters, PresentVoltage, MeterInfoRequested>;
 
 struct Callbacks {
     std::function<void(Signal)> signal;
-    std::function<void(const DcChargeTarget&)> dc_charge_target;
+    std::function<void(float)> dc_pre_charge_target_voltage;
+    std::function<void(const DcChargeLoopReq&)> dc_charge_loop_req;
     std::function<void(const DcMaximumLimits&)> dc_max_limits;
     std::function<void(const message_20::Type&)> v2g_message;
     std::function<void(const std::string&)> evccid;
     std::function<void(const std::string&)> selected_protocol;
-    std::function<void(const DisplayParameters&)> display_parameters;
 };
 
 } // namespace feedback
@@ -64,12 +60,12 @@ public:
     Feedback(feedback::Callbacks);
 
     void signal(feedback::Signal) const;
-    void dc_charge_target(const feedback::DcChargeTarget&) const;
+    void dc_pre_charge_target_voltage(float) const;
+    void dc_charge_loop_req(const feedback::DcChargeLoopReq&) const;
     void dc_max_limits(const feedback::DcMaximumLimits&) const;
     void v2g_message(const message_20::Type&) const;
     void evcc_id(const std::string&) const;
     void selected_protocol(const std::string&) const;
-    void display_parameters(const feedback::DisplayParameters&) const;
 
 private:
     feedback::Callbacks callbacks;

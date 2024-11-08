@@ -115,10 +115,10 @@ template <> void convert(const ScheduleExchangeResponse::PowerSchedule& in, stru
 
     if ((sizeof(out.PowerScheduleEntries.PowerScheduleEntry.array) /
          sizeof(out.PowerScheduleEntries.PowerScheduleEntry.array[0])) < in.entries.size()) {
-        throw std::runtime_error("array is too large");
+        throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
     }
 
-    for (auto i = 0; in.entries.size(); i++) {
+    for (std::size_t i = 0; i < in.entries.size(); i++) {
         auto& out_entry = out.PowerScheduleEntries.PowerScheduleEntry.array[i];
         const auto& in_entry = in.entries[i];
 
@@ -130,12 +130,171 @@ template <> void convert(const ScheduleExchangeResponse::PowerSchedule& in, stru
     out.PowerScheduleEntries.PowerScheduleEntry.arrayLen = in.entries.size();
 }
 
+template <> void convert(const ScheduleExchangeResponse::TaxRule& in, struct iso20_TaxRuleType& out) {
+    out.TaxRuleID = in.tax_rule_id;
+    CPP2CB_STRING_IF_USED(in.tax_rule_name, out.TaxRuleName);
+    convert(in.tax_rate, out.TaxRate);
+    CPP2CB_ASSIGN_IF_USED(in.tax_included_in_price, out.TaxIncludedInPrice);
+    out.AppliesToEnergyFee = in.applies_to_energy_fee;
+    out.AppliesToParkingFee = in.applies_to_parking_fee;
+    out.AppliesToOverstayFee = in.applies_to_overstay_fee;
+    out.AppliesMinimumMaximumCost = in.applies_to_minimum_maximum_cost;
+}
+
+template <> void convert(const ScheduleExchangeResponse::PriceRule& in, struct iso20_PriceRuleType& out) {
+    convert(in.energy_fee, out.EnergyFee);
+    CPP2CB_CONVERT_IF_USED(in.parking_fee, out.ParkingFee);
+    CPP2CB_ASSIGN_IF_USED(in.parking_fee_period, out.ParkingFeePeriod);
+    CPP2CB_ASSIGN_IF_USED(in.carbon_dioxide_emission, out.CarbonDioxideEmission);
+    CPP2CB_ASSIGN_IF_USED(in.renewable_generation_percentage, out.RenewableGenerationPercentage);
+    convert(in.power_range_start, out.PowerRangeStart);
+}
+
+template <> void convert(const ScheduleExchangeResponse::PriceRuleStack& in, struct iso20_PriceRuleStackType& out) {
+    out.Duration = in.duration;
+
+    if ((sizeof(out.PriceRule.array) / sizeof(out.PriceRule.array[0])) < in.price_rule.size()) {
+        throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+    }
+    for (std::size_t i = 0; i < in.price_rule.size(); i++) {
+        convert(in.price_rule.at(i), out.PriceRule.array[i]);
+    }
+    out.PriceRule.arrayLen = in.price_rule.size();
+}
+
+template <> void convert(const ScheduleExchangeResponse::OverstayRule& in, struct iso20_OverstayRuleType& out) {
+    CPP2CB_STRING_IF_USED(in.overstay_rule_description, out.OverstayRuleDescription);
+    out.StartTime = in.start_time;
+    convert(in.overstay_fee, out.OverstayFee);
+    out.OverstayFeePeriod = in.overstay_fee_period;
+}
+
+template <>
+void convert(const ScheduleExchangeResponse::AbsolutePriceSchedule& in, struct iso20_AbsolutePriceScheduleType& out) {
+
+    CPP2CB_STRING_IF_USED(in.id, out.Id);
+    out.TimeAnchor = in.time_anchor;
+    out.PriceScheduleID = in.price_schedule_id;
+    CPP2CB_STRING_IF_USED(in.price_schedule_description, out.PriceScheduleDescription);
+    CPP2CB_STRING(in.currency, out.Currency);
+    CPP2CB_STRING(in.language, out.Language);
+    CPP2CB_STRING(in.price_algorithm, out.PriceAlgorithm);
+    CPP2CB_CONVERT_IF_USED(in.minimum_cost, out.MaximumCost);
+    CPP2CB_CONVERT_IF_USED(in.maximum_cost, out.MaximumCost);
+
+    if (in.tax_rules.has_value()) {
+        out.TaxRules_isUsed = true;
+        const auto& in_tax_rules = in.tax_rules.value();
+
+        if ((sizeof(out.TaxRules.TaxRule.array) / sizeof(out.TaxRules.TaxRule.array[0])) < in_tax_rules.size()) {
+            throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+        }
+
+        for (std::size_t i = 0; i < in_tax_rules.size(); i++) {
+            convert(in_tax_rules.at(i), out.TaxRules.TaxRule.array[i]);
+        }
+        out.TaxRules.TaxRule.arrayLen = in_tax_rules.size();
+    }
+
+    if ((sizeof(out.PriceRuleStacks.PriceRuleStack.array) / sizeof(out.PriceRuleStacks.PriceRuleStack.array[0])) <
+        in.price_rule_stacks.size()) {
+        throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+    }
+    for (std::size_t i = 0; i < in.price_rule_stacks.size(); i++) {
+        convert(in.price_rule_stacks.at(i), out.PriceRuleStacks.PriceRuleStack.array[i]);
+    }
+    out.PriceRuleStacks.PriceRuleStack.arrayLen = in.price_rule_stacks.size();
+
+    if (in.overstay_rules.has_value()) {
+        out.OverstayRules_isUsed = true;
+        const auto& in_overstay_rules = in.overstay_rules.value();
+
+        CPP2CB_ASSIGN_IF_USED(in_overstay_rules.overstay_time_threshold, out.OverstayRules.OverstayTimeThreshold);
+        CPP2CB_CONVERT_IF_USED(in_overstay_rules.overstay_power_threshold, out.OverstayRules.OverstayPowerThreshold);
+
+        if ((sizeof(out.OverstayRules.OverstayRule.array) / sizeof(out.OverstayRules.OverstayRule.array[0])) <
+            in_overstay_rules.overstay_rule.size()) {
+            throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+        }
+
+        for (std::size_t i = 0; i < in_overstay_rules.overstay_rule.size(); i++) {
+            convert(in_overstay_rules.overstay_rule.at(i), out.OverstayRules.OverstayRule.array[i]);
+        }
+        out.OverstayRules.OverstayRule.arrayLen = in_overstay_rules.overstay_rule.size();
+    }
+
+    if (in.additional_selected_services.has_value()) {
+        out.AdditionalSelectedServices_isUsed = true;
+        const auto& in_add_services = in.additional_selected_services.value();
+
+        if ((sizeof(out.AdditionalSelectedServices.AdditionalService.array) /
+             sizeof(out.AdditionalSelectedServices.AdditionalService.array[0])) < in_add_services.size()) {
+            throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+        }
+
+        for (std::size_t i = 0; i < in_add_services.size(); i++) {
+            CPP2CB_STRING(in_add_services.at(i).service_name,
+                          out.AdditionalSelectedServices.AdditionalService.array[i].ServiceName);
+            convert(in_add_services.at(i).service_fee,
+                    out.AdditionalSelectedServices.AdditionalService.array[i].ServiceFee);
+        }
+        out.AdditionalSelectedServices.AdditionalService.arrayLen = in_add_services.size();
+    }
+}
+
+template <>
+void convert(const ScheduleExchangeResponse::PriceLevelSchedule& in, struct iso20_PriceLevelScheduleType& out) {
+
+    CPP2CB_STRING_IF_USED(in.id, out.Id);
+    out.TimeAnchor = in.time_anchor;
+    out.PriceScheduleID = in.price_schedule_id;
+    CPP2CB_STRING_IF_USED(in.price_schedule_description, out.PriceScheduleDescription);
+    out.NumberOfPriceLevels = in.number_of_price_levels;
+
+    if ((sizeof(out.PriceLevelScheduleEntries.PriceLevelScheduleEntry.array) /
+         sizeof(out.PriceLevelScheduleEntries.PriceLevelScheduleEntry.array[0])) <
+        in.price_level_schedule_entries.size()) {
+        throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
+    }
+
+    for (std::size_t i = 0; i < in.price_level_schedule_entries.size(); i++) {
+        out.PriceLevelScheduleEntries.PriceLevelScheduleEntry.array[i].Duration =
+            in.price_level_schedule_entries.at(i).duration;
+        out.PriceLevelScheduleEntries.PriceLevelScheduleEntry.array[i].PriceLevel =
+            in.price_level_schedule_entries.at(i).price_level;
+    }
+
+    out.PriceLevelScheduleEntries.PriceLevelScheduleEntry.arrayLen = in.price_level_schedule_entries.size();
+}
+
+using PriceSchedule = std::variant<std::monostate, ScheduleExchangeResponse::AbsolutePriceSchedule,
+                                   ScheduleExchangeResponse::PriceLevelSchedule>;
+template <typename CbMessageType> void convert_price_schedule(const PriceSchedule& in, CbMessageType& out) {
+
+    if (const auto* absolute_price = std::get_if<ScheduleExchangeResponse::AbsolutePriceSchedule>(&in)) {
+        convert(*absolute_price, out.AbsolutePriceSchedule);
+        out.AbsolutePriceSchedule_isUsed = true;
+    } else if (const auto* price_level_schedule = std::get_if<ScheduleExchangeResponse::PriceLevelSchedule>(&in)) {
+        convert(*price_level_schedule, out.PriceLevelSchedule);
+        out.PriceLevelSchedule_isUsed = true;
+    } else {
+        out.AbsolutePriceSchedule_isUsed = false;
+        out.PriceLevelSchedule_isUsed = false;
+    }
+}
+
+template <> void convert(const PriceSchedule& in, struct iso20_ChargingScheduleType& out) {
+    convert_price_schedule(in, out);
+}
+template <> void convert(const PriceSchedule& in, struct iso20_Dynamic_SEResControlModeType& out) {
+    convert_price_schedule(in, out);
+}
+
 template <> void convert(const ScheduleExchangeResponse::ChargingSchedule& in, struct iso20_ChargingScheduleType& out) {
     init_iso20_ChargingScheduleType(&out);
 
     convert(in.power_schedule, out.PowerSchedule);
-
-    // todo(sl): price_schedule
+    convert(in.price_schedule, out);
 }
 
 template <> void convert(const ScheduleExchangeResponse::ScheduleTuple& in, struct iso20_ScheduleTupleType& out) {
@@ -158,17 +317,17 @@ struct ModeResponseVisitor {
         CPP2CB_ASSIGN_IF_USED(in.minimum_soc, out.MinimumSOC);
         CPP2CB_ASSIGN_IF_USED(in.target_soc, out.TargetSOC);
 
-        // Todo(sl): price_schedule
+        convert(in.price_schedule, out);
     }
 
     void operator()(const ScheduleExchangeResponse::Scheduled_SEResControlMode& in) {
         init_iso20_Scheduled_SEResControlModeType(&res.Scheduled_SEResControlMode);
-        CB_SET_USED(res.Dynamic_SEResControlMode);
+        CB_SET_USED(res.Scheduled_SEResControlMode);
 
         auto& out = res.Scheduled_SEResControlMode;
 
         if ((sizeof(out.ScheduleTuple.array) / sizeof(out.ScheduleTuple.array[0])) < in.schedule_tuple.size()) {
-            throw std::runtime_error("array is too large");
+            throw std::runtime_error("array is too large"); // FIXME(SL): Change error message
         }
 
         for (std::size_t i = 0; i < in.schedule_tuple.size(); i++) {
@@ -189,41 +348,9 @@ template <> void convert(const ScheduleExchangeResponse& in, struct iso20_Schedu
 
     cb_convert_enum(in.processing, out.EVSEProcessing);
 
-    // CPP2CB_ASSIGN_IF_USED(in.go_to_pause, out.GoToPause);
-    // std::visit(ModeResponseVisitor(out), in.control_mode);
+    CPP2CB_ASSIGN_IF_USED(in.go_to_pause, out.GoToPause);
 
-    // -----------------------------------------------------------------------------------
-
-    out.GoToPause_isUsed = false;
-
-    out.Dynamic_SEResControlMode_isUsed = false;
-    out.Scheduled_SEResControlMode_isUsed = true;
-    out.Scheduled_SEResControlMode.ScheduleTuple.arrayLen = 1;
-    auto& tuple = out.Scheduled_SEResControlMode.ScheduleTuple.array[0];
-    tuple.DischargingSchedule_isUsed = false;
-    tuple.ChargingSchedule.AbsolutePriceSchedule_isUsed = false;
-    tuple.ChargingSchedule.PriceLevelSchedule_isUsed = true;
-    auto& price_schedule = tuple.ChargingSchedule.PriceLevelSchedule;
-    price_schedule.TimeAnchor = 234;
-    price_schedule.PriceScheduleID = 1;
-    price_schedule.PriceScheduleDescription_isUsed = false;
-    price_schedule.NumberOfPriceLevels = 0;
-    price_schedule.PriceLevelScheduleEntries.PriceLevelScheduleEntry.arrayLen = 1;
-    auto& price_entry = price_schedule.PriceLevelScheduleEntries.PriceLevelScheduleEntry.array[0];
-    price_entry.Duration = 23;
-    price_entry.PriceLevel = 8;
-    tuple.ScheduleTupleID = 1;
-    auto& power_sched = tuple.ChargingSchedule.PowerSchedule;
-    power_sched.AvailableEnergy_isUsed = false;
-    power_sched.PowerTolerance_isUsed = false;
-    power_sched.TimeAnchor = 23423;
-    power_sched.PowerScheduleEntries.PowerScheduleEntry.arrayLen = 1;
-    auto& entry = power_sched.PowerScheduleEntries.PowerScheduleEntry.array[0];
-    entry.Duration = 23;
-    entry.Power.Exponent = 2;
-    entry.Power.Value = 10;
-    entry.Power_L2_isUsed = 0;
-    entry.Power_L3_isUsed = 0;
+    std::visit(ModeResponseVisitor(out), in.control_mode);
 }
 
 template <> void insert_type(VariantAccess& va, const struct iso20_ScheduleExchangeReqType& in) {

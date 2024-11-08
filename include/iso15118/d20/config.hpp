@@ -11,12 +11,18 @@
 
 namespace iso15118::d20 {
 
+struct ControlMobilityNeedsModes {
+    message_20::ControlMode control_mode;
+    message_20::MobilityNeedsMode mobility_mode;
+};
+
 struct EvseSetupConfig {
     std::string evse_id;
     std::vector<message_20::ServiceCategory> supported_energy_services;
     std::vector<message_20::Authorization> authorization_services;
     bool enable_certificate_install_service;
     d20::DcTransferLimits dc_limits;
+    std::vector<ControlMobilityNeedsModes> control_mobility_modes;
 };
 
 struct SessionConfig {
@@ -37,6 +43,8 @@ struct SessionConfig {
     std::vector<message_20::ParkingParameterList> parking_parameter_list;
 
     DcTransferLimits dc_limits;
+
+    std::vector<ControlMobilityNeedsModes> supported_control_mobility_modes;
 };
 
 } // namespace iso15118::d20

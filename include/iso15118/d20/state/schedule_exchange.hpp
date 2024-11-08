@@ -4,6 +4,11 @@
 
 #include "../fsm.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include <iso15118/d20/dynamic_mode_parameters.hpp>
+
 namespace iso15118::d20::state {
 
 struct ScheduleExchange : public FsmSimpleState {
@@ -12,6 +17,9 @@ struct ScheduleExchange : public FsmSimpleState {
     void enter() final;
 
     HandleEventReturnType handle_event(AllocatorType&, FsmEvent) final;
+
+private:
+    UpdateDynamicModeParameters dynamic_parameters;
 };
 
 } // namespace iso15118::d20::state

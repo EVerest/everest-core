@@ -286,4 +286,7 @@ RationalNumber from_float(float in);
 
 std::string from_Protocol(const Protocol& in);
 
+std::string from_control_mode(const ControlMode& in);
+std::string from_mobility_needs_mode(const MobilityNeedsMode& in);
+
 } // namespace iso15118::message_20

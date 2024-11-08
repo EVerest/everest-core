@@ -139,4 +139,24 @@ std::string from_Protocol(const Protocol& in) {
     return "";
 }
 
+std::string from_control_mode(const ControlMode& in) {
+    switch (in) {
+    case ControlMode::Scheduled:
+        return "Scheduled";
+    case ControlMode::Dynamic:
+        return "Dynamic";
+    }
+    return "";
+}
+
+std::string from_mobility_needs_mode(const MobilityNeedsMode& in) {
+    switch (in) {
+    case MobilityNeedsMode::ProvidedByEvcc:
+        return "ProvidedByEvcc";
+    case MobilityNeedsMode::ProvidedBySecc:
+        return "ProvidedBySecc";
+    }
+    return "";
+}
+
 } // namespace iso15118::message_20

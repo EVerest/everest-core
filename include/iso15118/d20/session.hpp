@@ -91,15 +91,9 @@ public:
 
     void selected_service_parameters(const message_20::ServiceCategory service, const uint16_t id);
 
-    message_20::ServiceCategory get_selected_energy_service() const {
-        return selected_services.selected_energy_service;
+    auto get_selected_services() const& {
+        return selected_services;
     }
-
-    message_20::ControlMode get_selected_control_mode() const {
-        return selected_services.selected_control_mode;
-    }
-
-    // TODO(sl): Define get_selected_*() if necessary
 
     ~Session();
 

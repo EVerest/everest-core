@@ -13,8 +13,11 @@ SCENARIO("Service detail state handling") {
     const auto cert_install{false};
     const std::vector<message_20::Authorization> auth_services = {message_20::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
+    const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
+        {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc}};
 
-    const d20::EvseSetupConfig evse_setup{evse_id, supported_energy_services, auth_services, cert_install, dc_limits};
+    const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
+                                          dc_limits, control_mobility_modes};
 
     GIVEN("Bad Case - Unknown session") {
 
@@ -79,13 +82,7 @@ SCENARIO("Service detail state handling") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {message_20::ServiceCategory::DC};
 
-        auto session_config = d20::SessionConfig(evse_setup);
-        session_config.dc_parameter_list = {{
-            message_20::DcConnector::Extended,
-            message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc,
-            message_20::Pricing::NoPricing,
-        }};
+        const auto session_config = d20::SessionConfig(evse_setup);
 
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
@@ -125,17 +122,7 @@ SCENARIO("Service detail state handling") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {message_20::ServiceCategory::DC_BPT};
 
-        auto session_config = d20::SessionConfig(evse_setup);
-        session_config.dc_bpt_parameter_list = {{
-            {
-                message_20::DcConnector::Extended,
-                message_20::ControlMode::Scheduled,
-                message_20::MobilityNeedsMode::ProvidedByEvcc,
-                message_20::Pricing::NoPricing,
-            },
-            message_20::BptChannel::Unified,
-            message_20::GeneratorMode::GridFollowing,
-        }};
+        const auto session_config = d20::SessionConfig(evse_setup);
 
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
@@ -184,6 +171,7 @@ SCENARIO("Service detail state handling") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {message_20::ServiceCategory::DC};
 
+        // FIXME(SL): Change evse_setup instead of session_config
         auto session_config = d20::SessionConfig(evse_setup);
         session_config.dc_parameter_list = {{
                                                 message_20::DcConnector::Extended,
@@ -258,13 +246,7 @@ SCENARIO("Service detail state handling") {
         d20::Session session = d20::Session();
         session.offered_services.energy_services = {message_20::ServiceCategory::DC};
 
-        auto session_config = d20::SessionConfig(evse_setup);
-        session_config.dc_parameter_list = {{
-            message_20::DcConnector::Extended,
-            message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedBySecc,
-            message_20::Pricing::NoPricing,
-        }};
+        const auto session_config = d20::SessionConfig(evse_setup);
 
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
@@ -307,12 +289,6 @@ SCENARIO("Service detail state handling") {
 
         auto session_config = d20::SessionConfig(evse_setup);
         session_config.internet_parameter_list = {{message_20::Protocol::Http, message_20::Port::Port80}};
-        session_config.dc_parameter_list = {{
-            message_20::DcConnector::Extended,
-            message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc,
-            message_20::Pricing::NoPricing,
-        }};
 
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();
@@ -348,12 +324,6 @@ SCENARIO("Service detail state handling") {
         auto session_config = d20::SessionConfig(evse_setup);
         session_config.parking_parameter_list = {
             {message_20::IntendedService::VehicleCheckIn, message_20::ParkingStatus::ManualExternal}};
-        session_config.dc_parameter_list = {{
-            message_20::DcConnector::Extended,
-            message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc,
-            message_20::Pricing::NoPricing,
-        }};
 
         message_20::ServiceDetailRequest req;
         req.header.session_id = session.get_id();

@@ -73,12 +73,6 @@ struct ScheduleExchangeRequest {
 
 struct ScheduleExchangeResponse {
 
-    static constexpr auto TAX_RULE_LENGTH = 10;
-    static constexpr auto PRICE_RULE_STACK_LENGTH = 1024;
-    static constexpr auto PRICE_RULE_LENGTH = 8;
-    static constexpr auto OVERSTAY_RULE_LENGTH = 5;
-    static constexpr auto ADDITIONAL_SERVICE_LENGTH = 5;
-    static constexpr auto PRICE_LEVEL_SCHEDULE_LENGTH = 1024;
     static constexpr auto SCHEDULED_POWER_DURATION_S = 86400;
 
     Header header;
@@ -112,7 +106,7 @@ struct ScheduleExchangeResponse {
 
     struct PriceRuleStack {
         uint32_t duration;
-        std::array<PriceRule, PRICE_RULE_LENGTH> price_rule;
+        std::vector<PriceRule> price_rule;
     };
 
     struct OverstayRule {
@@ -125,7 +119,7 @@ struct ScheduleExchangeResponse {
     struct OverstayRulesList {
         std::optional<uint32_t> overstay_time_threshold;
         std::optional<RationalNumber> overstay_power_threshold;
-        std::array<OverstayRule, OVERSTAY_RULE_LENGTH> overstay_rule;
+        std::vector<OverstayRule> overstay_rule;
     };
 
     struct AdditionalService {
@@ -143,10 +137,10 @@ struct ScheduleExchangeResponse {
         std::string price_algorithm;
         std::optional<RationalNumber> minimum_cost;
         std::optional<RationalNumber> maximum_cost;
-        std::optional<std::array<TaxRule, TAX_RULE_LENGTH>> tax_rules;
-        std::array<PriceRuleStack, PRICE_RULE_STACK_LENGTH> price_rule_stacks;
+        std::optional<std::vector<TaxRule>> tax_rules;
+        std::vector<PriceRuleStack> price_rule_stacks;
         std::optional<OverstayRulesList> overstay_rules;
-        std::optional<std::array<AdditionalService, ADDITIONAL_SERVICE_LENGTH>> additional_selected_services;
+        std::optional<std::vector<AdditionalService>> additional_selected_services;
     };
 
     struct PriceLevelScheduleEntry {
@@ -160,7 +154,7 @@ struct ScheduleExchangeResponse {
         uint32_t price_schedule_id;
         std::optional<std::string> price_schedule_description;
         uint8_t number_of_price_levels;
-        std::array<PriceLevelScheduleEntry, PRICE_LEVEL_SCHEDULE_LENGTH> price_level_schedule_entries;
+        std::vector<PriceLevelScheduleEntry> price_level_schedule_entries;
     };
 
     struct Dynamic_SEResControlMode {

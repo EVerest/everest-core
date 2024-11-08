@@ -92,15 +92,17 @@ struct DC_ChargeLoopResponse {
     std::optional<MeterInfo> meter_info;
     std::optional<Receipt> receipt;
 
-    RationalNumber present_current;
-    RationalNumber present_voltage;
+    RationalNumber present_current{0, 0};
+    RationalNumber present_voltage{0, 0};
     bool power_limit_achieved{false};
     bool current_limit_achieved{false};
     bool voltage_limit_achieved{false};
 
     std::variant<Scheduled_DC_CLResControlMode, BPT_Scheduled_DC_CLResControlMode, Dynamic_DC_CLResControlMode,
                  BPT_Dynamic_DC_CLResControlMode>
-        control_mode = Scheduled_DC_CLResControlMode();
+        control_mode;
+
+    DC_ChargeLoopResponse() : control_mode(std::in_place_type<DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode>){};
 };
 
 } // namespace iso15118::message_20

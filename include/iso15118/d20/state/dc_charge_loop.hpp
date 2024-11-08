@@ -4,6 +4,11 @@
 
 #include "../fsm.hpp"
 
+#include <cstdint>
+#include <optional>
+
+#include <iso15118/d20/dynamic_mode_parameters.hpp>
+
 namespace iso15118::d20::state {
 
 struct DC_ChargeLoop : public FsmSimpleState {
@@ -17,6 +22,8 @@ private:
     float present_voltage{0};
     float present_current{0};
     bool stop{false};
+
+    UpdateDynamicModeParameters dynamic_parameters;
 
     bool first_entry_in_charge_loop{true};
 };

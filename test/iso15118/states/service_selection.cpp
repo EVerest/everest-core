@@ -121,8 +121,10 @@ SCENARIO("Service selection state handling") {
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(session.get_selected_energy_service() == message_20::ServiceCategory::DC);
-            REQUIRE(session.get_selected_control_mode() == message_20::ControlMode::Scheduled);
+
+            const auto selected_services = session.get_selected_services();
+            REQUIRE(selected_services.selected_energy_service == message_20::ServiceCategory::DC);
+            REQUIRE(selected_services.selected_control_mode == message_20::ControlMode::Scheduled);
         }
     }
 
@@ -149,8 +151,10 @@ SCENARIO("Service selection state handling") {
 
         THEN("ResponseCode: OK") {
             REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(session.get_selected_energy_service() == message_20::ServiceCategory::DC_BPT);
-            REQUIRE(session.get_selected_control_mode() == message_20::ControlMode::Scheduled);
+
+            const auto selected_services = session.get_selected_services();
+            REQUIRE(selected_services.selected_energy_service == message_20::ServiceCategory::DC_BPT);
+            REQUIRE(selected_services.selected_control_mode == message_20::ControlMode::Scheduled);
         }
     }
 

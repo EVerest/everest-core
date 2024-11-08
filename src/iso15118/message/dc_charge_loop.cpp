@@ -73,7 +73,7 @@ template <typename InType> void convert(const InType& in, DC_ChargeLoopRequest::
 
     convert(in.EVMaximumChargePower, out.max_charge_power);
     convert(in.EVMinimumChargePower, out.min_charge_power);
-    convert(in.EVMaximumChargeCurrent, out.max_charge_power);
+    convert(in.EVMaximumChargeCurrent, out.max_charge_current);
     convert(in.EVMaximumVoltage, out.max_voltage);
     convert(in.EVMinimumVoltage, out.min_voltage);
 }

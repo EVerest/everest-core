@@ -13,8 +13,12 @@ void Feedback::signal(feedback::Signal signal) const {
     call_if_available(callbacks.signal, signal);
 }
 
-void Feedback::dc_charge_target(const feedback::DcChargeTarget& charge_target) const {
-    call_if_available(callbacks.dc_charge_target, charge_target);
+void Feedback::dc_pre_charge_target_voltage(float voltage) const {
+    call_if_available(callbacks.dc_pre_charge_target_voltage, voltage);
+}
+
+void Feedback::dc_charge_loop_req(const feedback::DcChargeLoopReq& req_values) const {
+    call_if_available(callbacks.dc_charge_loop_req, req_values);
 }
 
 void Feedback::dc_max_limits(const feedback::DcMaximumLimits& max_limits) const {
@@ -29,12 +33,8 @@ void Feedback::evcc_id(const std::string& evccid) const {
     call_if_available(callbacks.evccid, evccid);
 }
 
-void Feedback::selected_protocol(const std::string& selected_protocol_) const {
-    call_if_available(callbacks.selected_protocol, selected_protocol_);
-}
-
-void Feedback::display_parameters(const feedback::DisplayParameters& display_parameters_) const {
-    call_if_available(callbacks.display_parameters, display_parameters_);
+void Feedback::selected_protocol(const std::string& selected_protocol) const {
+    call_if_available(callbacks.selected_protocol, selected_protocol);
 }
 
 } // namespace iso15118::session

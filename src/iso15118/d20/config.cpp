@@ -8,33 +8,69 @@
 
 namespace iso15118::d20 {
 
-static std::vector<message_20::DcParameterList> get_default_dc_parameter_list() {
-    return {{
-        message_20::DcConnector::Extended,
-        message_20::ControlMode::Scheduled,
-        message_20::MobilityNeedsMode::ProvidedByEvcc,
-        message_20::Pricing::NoPricing,
-    }};
+namespace {
+
+auto get_mobility_needs_mode(const ControlMobilityNeedsModes& mode) {
+    using namespace message_20;
+
+    if (mode.control_mode == ControlMode::Scheduled and mode.mobility_mode == MobilityNeedsMode::ProvidedBySecc) {
+        logf_info("Setting the mobility needs mode to ProvidedByEvcc. In scheduled mode only ProvidedByEvcc is "
+                  "supported.");
+        return MobilityNeedsMode::ProvidedByEvcc;
+    }
+
+    return mode.mobility_mode;
 }
 
-static std::vector<message_20::DcBptParameterList> get_default_dc_bpt_parameter_list() {
+auto get_default_dc_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
+    using namespace message_20;
 
-    return {{{
-                 message_20::DcConnector::Extended,
-                 message_20::ControlMode::Scheduled,
-                 message_20::MobilityNeedsMode::ProvidedByEvcc,
-                 message_20::Pricing::NoPricing,
-             },
-             message_20::BptChannel::Unified,
-             message_20::GeneratorMode::GridFollowing}};
+    // TODO(sl): Add check if a control mode is more than one in that vector
+
+    std::vector<DcParameterList> param_list;
+
+    for (const auto& mode : control_mobility_modes) {
+        param_list.push_back({
+            DcConnector::Extended,
+            mode.control_mode,
+            get_mobility_needs_mode(mode),
+            Pricing::NoPricing,
+        });
+    }
+
+    return param_list;
 }
+
+auto get_default_dc_bpt_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
+    using namespace message_20;
+
+    // TODO(sl): Add check if a control mode is more than one in that vector
+
+    std::vector<DcBptParameterList> param_list;
+
+    for (const auto& mode : control_mobility_modes) {
+        param_list.push_back({{
+                                  DcConnector::Extended,
+                                  mode.control_mode,
+                                  get_mobility_needs_mode(mode),
+                                  Pricing::NoPricing,
+                              },
+                              BptChannel::Unified,
+                              GeneratorMode::GridFollowing});
+    }
+
+    return param_list;
+}
+
+} // namespace
 
 SessionConfig::SessionConfig(EvseSetupConfig config) :
     evse_id(std::move(config.evse_id)),
     cert_install_service(config.enable_certificate_install_service),
     authorization_services(std::move(config.authorization_services)),
     supported_energy_transfer_services(std::move(config.supported_energy_services)),
-    dc_limits(std::move(config.dc_limits)) {
+    dc_limits(std::move(config.dc_limits)),
+    supported_control_mobility_modes(std::move(config.control_mobility_modes)) {
 
     const auto is_bpt_service = [](message_20::ServiceCategory service) {
         return service == message_20::ServiceCategory::DC_BPT;
@@ -47,8 +83,14 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
                      "limits. This can lead to session shutdowns.");
     }
 
-    dc_parameter_list = get_default_dc_parameter_list();
-    dc_bpt_parameter_list = get_default_dc_bpt_parameter_list();
+    if (supported_control_mobility_modes.empty()) {
+        logf_warning("No control modes were provided, set to scheduled mode");
+        supported_control_mobility_modes = {
+            {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc}};
+    }
+
+    dc_parameter_list = get_default_dc_parameter_list(supported_control_mobility_modes);
+    dc_bpt_parameter_list = get_default_dc_bpt_parameter_list(supported_control_mobility_modes);
 }
 
 } // namespace iso15118::d20

@@ -4,6 +4,8 @@
 
 #include <random>
 
+#include <iso15118/detail/helper.hpp>
+
 namespace iso15118::d20 {
 
 Session::Session() {
@@ -85,6 +87,10 @@ void Session::selected_service_parameters(const message_20::ServiceCategory serv
             this->selected_services =
                 SelectedServiceParameters(message_20::ServiceCategory::DC, parameters.connector,
                                           parameters.control_mode, parameters.mobility_needs_mode, parameters.pricing);
+
+            logf_info("Selected DC service parameters: control mode: %s, mobility needs mode: %s",
+                      message_20::from_control_mode(parameters.control_mode).c_str(),
+                      message_20::from_mobility_needs_mode(parameters.mobility_needs_mode).c_str());
         } else {
             // Todo(sl): Should be not the case -> Raise Error?
         }
@@ -97,6 +103,10 @@ void Session::selected_service_parameters(const message_20::ServiceCategory serv
             this->selected_services = SelectedServiceParameters(
                 message_20::ServiceCategory::DC_BPT, parameters.connector, parameters.control_mode,
                 parameters.mobility_needs_mode, parameters.pricing, parameters.bpt_channel, parameters.generator_mode);
+
+            logf_info("Selected DC_BPT service parameters: control mode: %s, mobility needs mode: %s",
+                      message_20::from_control_mode(parameters.control_mode).c_str(),
+                      message_20::from_mobility_needs_mode(parameters.mobility_needs_mode).c_str());
         } else {
             // Todo(sl): Should be not the case -> Raise Error?
         }
