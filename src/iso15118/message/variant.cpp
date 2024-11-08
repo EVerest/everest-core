@@ -126,7 +126,7 @@ Variant::Variant(io::v2gtp::PayloadType payload_type, const io::StreamInputView&
     } else if (payload_type == PayloadType::Part20AC) {
         handle_ac(va);
     } else {
-        logf_warning("Unknown type\n");
+        logf_warning("Unknown type");
     }
 
     if (data) {

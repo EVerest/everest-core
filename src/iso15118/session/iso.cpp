@@ -230,7 +230,7 @@ void Session::handle_connection_event(io::ConnectionEvent event) {
 
     case Event::CLOSED:
         state.connected = false;
-        logf_info("Connection is closed\n");
+        logf_info("Connection is closed");
         return;
     }
 }

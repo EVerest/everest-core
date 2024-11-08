@@ -45,7 +45,7 @@ bool get_first_sockaddr_in6_for_interface(const std::string& interface_name, soc
         }
 
         if (interface_name == "auto") {
-            logf_info("Found an ipv6 link local address for interface: %s\n", current_if->ifa_name);
+            logf_info("Found an ipv6 link local address for interface: %s", current_if->ifa_name);
         }
 
         memcpy(&address, current_addr, sizeof(address));

@@ -11,10 +11,10 @@ namespace iso15118::d20::state {
 message_20::SessionStopResponse handle_request(const message_20::SessionStopRequest& req, const d20::Session& session) {
 
     if (req.ev_termination_code.has_value()) {
-        logf_info("EV termination code: %s\n", req.ev_termination_code.value().c_str());
+        logf_info("EV termination code: %s", req.ev_termination_code.value().c_str());
     }
     if (req.ev_termination_explanation.has_value()) {
-        logf_info("EV Termination explanation: %s\n", req.ev_termination_explanation.value().c_str());
+        logf_info("EV Termination explanation: %s", req.ev_termination_explanation.value().c_str());
     }
 
     message_20::SessionStopResponse res;

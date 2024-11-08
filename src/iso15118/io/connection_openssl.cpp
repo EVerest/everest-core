@@ -98,7 +98,7 @@ static SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
     if (ssl_config.enable_tls_key_logging) {
 
         SSL_CTX_set_keylog_callback(ctx, [](const SSL* ssl, const char* line) {
-            logf_info("TLS handshake keys: %s\n", line);
+            logf_info("TLS handshake keys: %s", line);
 
             auto& key_logging_server = *static_cast<io::TlsKeyLoggingServer*>(SSL_get_ex_data(ssl, ex_data_idx));
 
@@ -291,7 +291,7 @@ void ConnectionSSL::handle_data() {
             }
             log_and_raise_openssl_error("Failed to SSL_accept(): " + std::to_string(ssl_error));
         } else {
-            logf_info("Handshake complete!\n");
+            logf_info("Handshake complete!");
 
             handshake_complete = true;
             if (ssl->enable_key_logging) {
@@ -309,7 +309,7 @@ void ConnectionSSL::handle_data() {
 
 void ConnectionSSL::close() {
     /* tear down TLS connection gracefully */
-    logf_info("Closing TLS connection\n");
+    logf_info("Closing TLS connection");
 
     const auto ssl_ptr = ssl->ssl.get();
 

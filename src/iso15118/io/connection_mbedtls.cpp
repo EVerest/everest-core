@@ -291,7 +291,7 @@ void ConnectionSSL::handle_data() {
             log_and_raise_mbed_error("Failed to mbedtls_ssl_handshake()", ssl_handshake_result);
         } else {
             // handshake complete!
-            logf_info("Handshake complete!\n");
+            logf_info("Handshake complete!");
 
             handshake_complete = true;
 
@@ -307,7 +307,7 @@ void ConnectionSSL::handle_data() {
 void ConnectionSSL::close() {
 
     /* tear down TLS connection gracefully */
-    logf_info("Closing TLS connection\n");
+    logf_info("Closing TLS connection");
 
     poll_manager.unregister_fd(ssl->connection_net_ctx.fd);
 
@@ -318,7 +318,7 @@ void ConnectionSSL::close() {
             log_and_raise_mbed_error("Failed to mbedtls_ssl_close_notify()", ssl_close_result);
         }
     } else {
-        logf_info("TLS connection closed gracefully\n");
+        logf_info("TLS connection closed gracefully");
     }
 
     call_if_available(event_callback, ConnectionEvent::CLOSED);

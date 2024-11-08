@@ -25,9 +25,9 @@ static void log_peer_hostname(const struct sockaddr_in6& address) {
                                                 hostname, hostname_len, nullptr, 0, NI_NUMERICHOST);
 
     if (0 == get_if_name_result) {
-        logf_info("Got SDP request from %s\n", hostname);
+        logf_info("Got SDP request from %s", hostname);
     } else {
-        logf_warning("Got SDP request, but failed to get the address\n");
+        logf_warning("Got SDP request, but failed to get the address");
     }
 }
 
@@ -199,31 +199,31 @@ void parse_sdp_request(uint8_t* packet) {
         log_and_throw("Failed to parse sdp header");
     }
 
-    logf_info("Got sdp payload of %d bytes\n", sdp_payload_len);
+    logf_info("Got sdp payload of %d bytes", sdp_payload_len);
     const uint8_t sdp_request_byte1 = packet[8];
 
     switch (static_cast<v2gtp::Security>(sdp_request_byte1)) {
     case v2gtp::Security::TLS:
-        logf_info(" -> TLS requested\n");
+        logf_info(" -> TLS requested");
         break;
     case v2gtp::Security::NO_TRANSPORT_SECURITY:
-        logf_info(" -> no security\n");
+        logf_info(" -> no security");
         break;
     default:
-        logf_info(" -> EXCEPTION: reserved value\n");
+        logf_info(" -> EXCEPTION: reserved value");
         break;
     }
 
     const uint8_t sdp_request_byte2 = packet[9];
     switch (static_cast<v2gtp::TransportProtocol>(sdp_request_byte2)) {
     case v2gtp::TransportProtocol::TCP:
-        logf_info(" -> TCP requested\n");
+        logf_info(" -> TCP requested");
         break;
     case v2gtp::TransportProtocol::RESERVED_FOR_UDP:
-        logf_info(" -> reserved for UDP\n");
+        logf_info(" -> reserved for UDP");
         break;
     default:
-        logf_info(" -> EXCEPTION: reserved value\n");
+        logf_info(" -> EXCEPTION: reserved value");
         break;
     }
 }

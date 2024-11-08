@@ -139,7 +139,7 @@ void ConnectionPlain::handle_data() {
 void ConnectionPlain::close() {
 
     /* tear down TCP connection gracefully */
-    logf_info("Closing TCP connection\n");
+    logf_info("Closing TCP connection");
 
     const auto shutdown_result = shutdown(fd, SHUT_RDWR);
 

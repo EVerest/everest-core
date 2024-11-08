@@ -26,7 +26,7 @@ handle_request(const message_20::AuthorizationSetupRequest& req, d20::Session& s
     res.certificate_installation_service = cert_install_service;
 
     if (authorization_services.empty()) {
-        logf_warning("authorization_services was not set. Setting EIM as auth_mode\n");
+        logf_warning("authorization_services was not set. Setting EIM as auth_mode");
         res.authorization_services = {message_20::Authorization::EIM};
     } else {
         res.authorization_services = authorization_services;
@@ -68,7 +68,7 @@ FsmSimpleState::HandleEventReturnType AuthorizationSetup::handle_event(Allocator
         const auto res = handle_request(*req, ctx.session, ctx.session_config.cert_install_service,
                                         ctx.session_config.authorization_services);
 
-        logf_info("Timestamp: %d\n", req->header.timestamp);
+        logf_info("Timestamp: %d", req->header.timestamp);
 
         ctx.respond(res);
 

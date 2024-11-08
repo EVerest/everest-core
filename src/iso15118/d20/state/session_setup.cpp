@@ -46,7 +46,7 @@ FsmSimpleState::HandleEventReturnType SessionSetup::handle_event(AllocatorType& 
 
     if (const auto req = variant->get_if<message_20::SessionSetupRequest>()) {
 
-        logf_info("Received session setup with evccid: %s\n", req->evccid.c_str());
+        logf_info("Received session setup with evccid: %s", req->evccid.c_str());
         ctx.feedback.evcc_id(req->evccid);
 
         bool new_session{true};
