@@ -276,15 +276,32 @@ it initiates a **StatusNotification.req** that contains information about the er
 The field **status** of the **StatusNotification.req** will be set to faulted only in case the error is of the special type  
 **evse_manager/Inoperative**. The field **connectorId** is set based on the mapping (for EVSE id and connector id) of the origin of the error.  
 If no mapping is provided, the error will be reported on connectorId 0. Note that the mapping can be configured per module inside the  
-EVerest config file. The field **errorCode** is set based on the **type** property of the error.
+EVerest config file.
 
-The fields **info**, **vendorId**, and **vendorErrorCode** are set based on the error type and the provided error properties. Please see the  
-definition of `get_error_info` to see how the **StatusNotification.req** is constructed based on the given error.
+For all other errors, raised in everest, the following mapping to an
+ocpp status notification will be used:
 
-The **StatusNotification.req** message has some limitations with respect to reporting errors:
+* status notification charge point `errorCode` will always be
+  `OtherError`
+* status notification `status` will reflect the present status of the
+  charge point
+* status notification `info` -> origin of everest error
+* status notification `vendorErrorCode` -> everest error type and
+  subtype (the error type is simplified, meaning, that its leading part,
+  the interface name, is stripped)
+* status notification `vendorId` -> everest error message
 
-* Single errors cannot simply be cleared. If multiple errors are raised, it is not possible to clear individual errors.
-* Some fields of the message have relatively small character limits (e.g., **info** with 50 characters, **vendorErrorCode** with 50 characters).
+  The main choice for using the status notification `vendorId` for the
+  error message is that it can carry the largest string (255
+  characters), whereas the other fields (`info` and `vendorErrorCode`)
+  only allow up to 50 characters.
+
+The **StatusNotification.req** message has some limitations with respect
+to reporting errors:
+
+* Single errors cannot simply be cleared. If multiple errors are raised,
+  it is not possible to clear individual errors.
+* `vendorId`, `info` and `vendorErrorCode`` are limited in length (see above).
 
 This module attempts to follow the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/. This proposes a unified  
 methodology to define and classify a minimum required set of error codes and how to report them via OCPP1.6.
