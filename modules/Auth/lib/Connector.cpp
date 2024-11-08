@@ -13,7 +13,7 @@ ConnectorState Connector::get_state() const {
     return this->state_machine.get_state();
 }
 
-bool Connector::is_unavailable() {
+bool Connector::is_unavailable() const {
     return this->get_state() == ConnectorState::UNAVAILABLE || this->get_state() == ConnectorState::UNAVAILABLE_FAULTED;
 }
 
@@ -39,17 +39,39 @@ std::string connector_state_to_string(const ConnectorState& state) {
 
 } // namespace conversions
 
-void EVSEContext::submit_event(ConnectorEvent event) {
-    state_machine.handle_event(event);
+bool EVSEContext::is_available() {
+    bool occupied = false;
+    bool available = false;
+    for (const auto& connector : this->connectors) {
+        if (connector.get_state() == ConnectorState::OCCUPIED ||
+            connector.get_state() == ConnectorState::FAULTED_OCCUPIED) {
+            occupied = true;
+        }
+        if (connector.get_state() != ConnectorState::UNAVAILABLE && connector.get_state() != ConnectorState::FAULTED) {
+
+            available = true;
+        }
+    }
+
+    if (occupied) {
+        // When at least one connector is occupied, they are both not available.
+        return false;
+    }
+
+    return available;
 }
 
 bool EVSEContext::is_unavailable() {
-    return this->get_state() == ConnectorState::UNAVAILABLE || this->get_state() == ConnectorState::UNAVAILABLE_FAULTED;
+    for (const auto& connector : this->connectors) {
+        if (!connector.is_unavailable()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-ConnectorState EVSEContext::get_state() const {
-    return this->state_machine.get_state();
-}
+// namespace conversions
 
 // namespace conversions
 } // namespace module

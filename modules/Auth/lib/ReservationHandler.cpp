@@ -9,13 +9,17 @@
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <utils/date.hpp>
 
+// TODO mz make a ticket to set all evse's to reserved if there are as many reservations as evse's and back to
+// plugged_in if one of the evses comes plugged_in again.
+
 namespace module {
 
 static types::reservation::ReservationResult
 connector_state_to_reservation_result(const ConnectorState connector_state);
 
-ReservationHandler::ReservationHandler(const std::string& id, kvsIntf* store) :
-    kvs_store_key_id("reservation_" + id), store(store) {
+ReservationHandler::ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses,
+                                       const std::string& id, kvsIntf* store) :
+    evses(evses), kvs_store_key_id("reservation_" + id), store(store) {
     // Create this worker thread and io service etc here for the timer.
     this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
     this->io_service_thread = std::thread([this]() { this->io_service.run(); });
@@ -25,44 +29,6 @@ ReservationHandler::~ReservationHandler() {
     work->get_io_context().stop();
     io_service.stop();
     io_service_thread.join();
-}
-
-void ReservationHandler::add_connector(const uint32_t evse_id, const uint32_t connector_id,
-                                       const types::evse_manager::ConnectorTypeEnum connector_type,
-                                       const ConnectorState connector_state) {
-    EVLOG_debug << "Add connector with evse id " << evse_id << " and connector id " << connector_id;
-
-    EvseConnectorType evse_connector_type;
-    evse_connector_type.connector_type = connector_type;
-    evse_connector_type.connector_id = connector_id;
-    evse_connector_type.state = connector_state;
-    Evse evse;
-
-    std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
-    if (evses.count(evse_id) > 0) {
-        // If evses already exist, add to existing evse.
-        evse = evses[evse_id];
-    }
-    evse.connectors.push_back(evse_connector_type);
-    evse.evse_id = evse_id;
-
-    switch (connector_state) {
-    case ConnectorState::AVAILABLE:
-    case ConnectorState::UNAVAILABLE:         // Connector is unavailable but evse might be just available?
-    case ConnectorState::FAULTED:             // Connector is faulted but evse might be just available?
-    case ConnectorState::UNAVAILABLE_FAULTED: // Connector is unavailable and faulted but evse might be just available?
-    {
-        evse.evse_state = ConnectorState::AVAILABLE;
-        break;
-    }
-    case ConnectorState::OCCUPIED:
-    case ConnectorState::FAULTED_OCCUPIED: {
-        evse.evse_state = connector_state;
-        break;
-    }
-    }
-
-    evses[evse_id] = evse;
 }
 
 void ReservationHandler::init() {
@@ -120,7 +86,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
         const types::reservation::ReservationResult connector_state =
             this->is_connector_available(evse_id.value(), connector_type);
 
-        if (!has_evse_connector_type(this->evses[evse_id.value()].connectors, connector_type)) {
+        if (!has_evse_connector_type(this->evses[evse_id.value()]->connectors, connector_type)) {
             EVLOG_debug << "Rejected reservation because this evse (id: " << evse_id.value()
                         << ") does not have the requested connector type ("
                         << types::evse_manager::connector_type_enum_to_string(connector_type) << ")";
@@ -186,7 +152,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
     return types::reservation::ReservationResult::Accepted;
 }
 
-void ReservationHandler::set_evse_state(ConnectorState state, const uint32_t evse_id) {
+void ReservationHandler::on_evse_available_changed(const bool available, const uint32_t evse_id) {
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
     if (evses.count(evse_id) == 0) {
         EVLOG_warning << "Set evse state: Could not set evse state as the evse id (" << evse_id
@@ -194,42 +160,29 @@ void ReservationHandler::set_evse_state(ConnectorState state, const uint32_t evs
         return;
     }
 
-    EVLOG_debug << "ReservationHandler: Set evse state of evse_id "
-                << ": evse state:  " << conversions::connector_state_to_string(this->evses[evse_id].evse_state)
-                << " -> " << conversions::connector_state_to_string(state);
-
-    ConnectorState old_evse_state = this->evses[evse_id].evse_state;
-
-    evses[evse_id].evse_state = state;
-
-    if (state != ConnectorState::AVAILABLE && old_evse_state == ConnectorState::AVAILABLE &&
-        state != ConnectorState::OCCUPIED) {
-        if (evse_reservations.count(evse_id)) {
-            cancel_reservation(evse_reservations[evse_id].reservation_id, true,
-                               types::reservation::ReservationEndReason::Cancelled);
-            return;
-        }
-
-        // One connector is not available anymore but there was no specific reservation for this connector. Let's check
-        // if all reservations are still possible and if not: cancel them.
+    // State is now not available. We don't know the old state, but let's check if all reservations are still possible
+    // and if not: cancel them.
+    if (!available) {
         check_reservations_and_cancel_if_not_possible();
     }
 }
 
-void ReservationHandler::set_connector_state(ConnectorState connector_state, const uint32_t evse_id,
-                                             const uint32_t connector_id) {
-    std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
-
-    if (evses.count(evse_id) == 0) {
-        EVLOG_warning << "Could not change connector state for evse id " << evse_id
-                      << ": evse with this id does not exist. This should not happen.";
+void ReservationHandler::on_connector_state_changed(const ConnectorState connector_state, const uint32_t evse_id,
+                                                    const uint32_t connector_id) {
+    if (connector_state == ConnectorState::AVAILABLE) {
+        // Nothing to cancel.
         return;
     }
 
-    auto& connectors = evses[evse_id].connectors;
-    auto connector_it =
-        std::find_if(connectors.begin(), connectors.end(),
-                     [connector_id](EvseConnectorType& connector) { return connector_id == connector.connector_id; });
+    std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
+    if (this->evses.count(static_cast<int32_t>(evse_id)) == 0) {
+        EVLOG_warning << "on_connector_state_changed: evse " << evse_id << " does not exist. This should not happen.";
+        return;
+    }
+
+    auto& connectors = this->evses[evse_id]->connectors;
+    auto connector_it = std::find_if(connectors.begin(), connectors.end(),
+                                     [connector_id](const auto& connector) { return connector_id == connector.id; });
 
     if (connector_it == connectors.end()) {
         // Connector with specific connector id not found
@@ -238,23 +191,18 @@ void ReservationHandler::set_connector_state(ConnectorState connector_state, con
         return;
     }
 
-    ConnectorState old_connector_state = connector_it->state;
-    connector_it->state = connector_state;
-
-    if ((connector_state != ConnectorState::AVAILABLE) && old_connector_state == ConnectorState::AVAILABLE) {
-        if (evse_reservations.count(evse_id) != 0 && evse_reservations[evse_id].connector_type.has_value() &&
-            (connector_it->connector_type == evse_reservations[evse_id].connector_type.value() ||
-             connector_it->connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-             evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown)) {
-            cancel_reservation(evse_reservations[evse_id].reservation_id, true,
-                               types::reservation::ReservationEndReason::Cancelled);
-            return;
-        }
-
-        // Now we have one connector less, let's check if all reservations are still possible now and if not, cancel
-        // the one(s) that can not be done anymore.
-        check_reservations_and_cancel_if_not_possible();
+    if (evse_reservations.count(evse_id) != 0 && evse_reservations[evse_id].connector_type.has_value() &&
+        (connector_it->type == evse_reservations[evse_id].connector_type.value() ||
+         connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+         evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown)) {
+        cancel_reservation(evse_reservations[evse_id].reservation_id, true,
+                           types::reservation::ReservationEndReason::Cancelled);
+        return;
     }
+
+    // Now we might have one connector less, let's check if all reservations are still possible now and if not, cancel
+    // the one(s) that can not be done anymore.
+    check_reservations_and_cancel_if_not_possible();
 }
 
 bool ReservationHandler::is_charging_possible(const uint32_t evse_id) {
@@ -372,7 +320,8 @@ void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
     }
 }
 
-std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::string& id_token, const std::optional<uint32_t> evse_id,
+std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::string& id_token,
+                                                                       const std::optional<uint32_t> evse_id,
                                                                        std::optional<std::string> parent_id_token) {
     EVLOG_debug << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
                 << " and id token " << id_token << " and parent id token "
@@ -436,15 +385,14 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
     return false;
 }
 
-bool ReservationHandler::has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
+bool ReservationHandler::has_evse_connector_type(const std::vector<Connector> evse_connectors,
                                                  const types::evse_manager::ConnectorTypeEnum connector_type) const {
     if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
         return true;
     }
 
-    for (const auto& type : evse_connectors) {
-        if (type.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-            type.connector_type == connector_type) {
+    for (const auto& connector : evse_connectors) {
+        if (connector.type == types::evse_manager::ConnectorTypeEnum::Unknown || connector.type == connector_type) {
             return true;
         }
     }
@@ -455,7 +403,7 @@ bool ReservationHandler::has_evse_connector_type(const std::vector<EvseConnector
 bool ReservationHandler::does_evse_connector_type_exist(
     const types::evse_manager::ConnectorTypeEnum connector_type) const {
     for (const auto& [evse_id, evse] : evses) {
-        if (has_evse_connector_type(evse.connectors, connector_type)) {
+        if (has_evse_connector_type(evse->connectors, connector_type)) {
             return true;
         }
     }
@@ -472,17 +420,21 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
     }
 
     // Check if evse is available.
-    if (evses[evse_id].evse_state != ConnectorState::AVAILABLE) {
-        return connector_state_to_reservation_result(evses[evse_id].evse_state);
+    if (evses[evse_id]->plugged_in) {
+        return connector_state_to_reservation_result(ConnectorState::OCCUPIED);
     }
 
     // If one connector is occupied, then the other connector can also not be used (one connector of an evse can be
     // used at the same time).
-    for (const auto& connector : evses[evse_id].connectors) {
-        if (connector.state == ConnectorState::OCCUPIED || connector.state == ConnectorState::FAULTED_OCCUPIED) {
-            return connector_state_to_reservation_result(connector.state);
+    std::unique_lock<std::mutex> lock(evses[evse_id]->event_mutex);
+    for (const auto& connector : evses[evse_id]->connectors) {
+        if (connector.get_state() == ConnectorState::OCCUPIED ||
+            connector.get_state() == ConnectorState::FAULTED_OCCUPIED) {
+            return connector_state_to_reservation_result(connector.get_state());
         }
     }
+
+    lock.unlock();
 
     // If evse is reserved, it is not available.
     if (evse_specific_reservations.count(evse_id) > 0) {
@@ -495,6 +447,7 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
 types::reservation::ReservationResult
 ReservationHandler::is_connector_available(const uint32_t evse_id,
                                            const types::evse_manager::ConnectorTypeEnum connector_type) {
+    std::unique_lock<std::mutex> lock(evses[evse_id]->event_mutex);
     if (evses.count(evse_id) == 0) {
         EVLOG_warning << "Request if connector is available for evse id " << evse_id
                       << ", but evse id does not exist. This should not happen.";
@@ -503,14 +456,13 @@ ReservationHandler::is_connector_available(const uint32_t evse_id,
 
     ConnectorState connector_state = ConnectorState::UNAVAILABLE;
 
-    for (const auto& connector : evses[evse_id].connectors) {
-        if ((connector.connector_type == connector_type ||
-             connector.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+    for (const auto& connector : evses[evse_id]->connectors) {
+        if ((connector.type == connector_type || connector.type == types::evse_manager::ConnectorTypeEnum::Unknown ||
              connector_type == types::evse_manager::ConnectorTypeEnum::Unknown)) {
-            if (connector.state == ConnectorState::AVAILABLE) {
+            if (connector.get_state() == ConnectorState::AVAILABLE) {
                 return types::reservation::ReservationResult::Accepted;
             } else {
-                connector_state = get_new_connector_state(connector_state, connector.state);
+                connector_state = get_new_connector_state(connector_state, connector.get_state());
             }
         }
     }
@@ -556,7 +508,7 @@ bool ReservationHandler::can_virtual_car_arrive(
         }
 
         if (get_evse_state(evse_id, evse_specific_reservations) == types::reservation::ReservationResult::Accepted &&
-            has_evse_connector_type(evse.connectors, next_car_arrival_order.at(0)) &&
+            has_evse_connector_type(evse->connectors, next_car_arrival_order.at(0)) &&
             is_connector_available(evse_id, next_car_arrival_order.at(0)) ==
                 types::reservation::ReservationResult::Accepted) {
             is_possible = true;
@@ -636,12 +588,12 @@ void ReservationHandler::set_reservation_timer(const types::reservation::Reserva
         Everest::Date::from_rfc3339(reservation.expiry_time));
 }
 
-std::vector<ReservationHandler::Evse> ReservationHandler::get_all_evses_with_connector_type(
+std::vector<EVSEContext*> ReservationHandler::get_all_evses_with_connector_type(
     const types::evse_manager::ConnectorTypeEnum connector_type) const {
-    std::vector<Evse> result;
+    std::vector<EVSEContext*> result;
     for (const auto& evse : this->evses) {
-        if (this->has_evse_connector_type(evse.second.connectors, connector_type)) {
-            result.push_back(evse.second);
+        if (this->has_evse_connector_type(evse.second->connectors, connector_type)) {
+            result.push_back(evse.second.get());
         }
     }
 
@@ -683,15 +635,16 @@ types::reservation::ReservationResult ReservationHandler::get_reservation_evse_c
     ConnectorState state = ConnectorState::UNAVAILABLE;
 
     for (const auto& [evse_id, evse] : evses) {
-        if (evse.evse_state != ConnectorState::AVAILABLE) {
+        if (evse->plugged_in) {
             // Overwrite state if we found a connector that was not available (if needed).
-            state = get_new_connector_state(state, evse.evse_state);
+            state = get_new_connector_state(state, ConnectorState::OCCUPIED);
             found_state = true;
         }
     }
 
     if (!found_state) {
-        const std::vector<Evse> evses_with_connector_type = this->get_all_evses_with_connector_type(connector_type);
+        const std::vector<EVSEContext*> evses_with_connector_type =
+            this->get_all_evses_with_connector_type(connector_type);
         if (evses_with_connector_type.empty()) {
             // This should not happen because then it should have been rejected before already somewhere in the
             // code...
@@ -700,15 +653,16 @@ types::reservation::ReservationResult ReservationHandler::get_reservation_evse_c
 
         // Get all evse's with this specific connector type and check the connectors availability states.
         for (const auto& evse : evses_with_connector_type) {
-            for (const auto& connector : evse.connectors) {
-                if (connector.connector_type != connector_type ||
-                    connector.connector_type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+            std::unique_lock<std::mutex> lock(evse->event_mutex);
+            for (const auto& connector : evse->connectors) {
+                if (connector.type != connector_type ||
+                    connector.type == types::evse_manager::ConnectorTypeEnum::Unknown ||
                     connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
                     continue;
                 }
 
-                if (connector.state != ConnectorState::AVAILABLE) {
-                    state = get_new_connector_state(state, connector.state);
+                if (connector.get_state() != ConnectorState::AVAILABLE) {
+                    state = get_new_connector_state(state, connector.get_state());
                 }
             }
         }
@@ -820,12 +774,11 @@ void ReservationHandler::print_reservations_debug_info(const types::reservation:
                         : "no connector type given");
     std::string evse_info;
     for (const auto& evse : this->evses) {
-        evse_info += "- " + std::to_string(evse.first) +
-                     ": available: " + (evse.second.evse_state == ConnectorState::AVAILABLE ? "yes" : "no") + ":\n";
-        for (const auto& connector : evse.second.connectors) {
-            evse_info += "--- " + std::to_string(connector.connector_id) + " " +
-                         types::evse_manager::connector_type_enum_to_string(connector.connector_type) +
-                         ", available: " + (connector.state == ConnectorState::AVAILABLE ? "yes" : "no") + "\n";
+        evse_info += "- " + std::to_string(evse.first) + ":\n";
+        for (const auto& connector : evse.second->connectors) {
+            evse_info += "--- " + std::to_string(connector.id) + " " +
+                         types::evse_manager::connector_type_enum_to_string(connector.type) +
+                         ", available: " + (connector.get_state() == ConnectorState::AVAILABLE ? "yes" : "no") + "\n";
         }
     }
     std::string reservation_info;

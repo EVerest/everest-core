@@ -44,11 +44,13 @@ void Auth::ready() {
 
         evse_manager->subscribe_error(
             "evse_manager/Inoperative",
+            // If no connector id is given, it defaults to connector id 1.
             [this, evse_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_raised(evse_id);
+                this->auth_handler->handle_permanent_fault_raised(evse_id, 1);
             },
+            // If no connector id is given, it defaults to connector id 1.
             [this, evse_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_cleared(evse_id);
+                this->auth_handler->handle_permanent_fault_cleared(evse_id, 1);
             });
 
         evse_index++;

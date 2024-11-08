@@ -50,7 +50,7 @@ struct Connector {
      * @return true
      * @return false
      */
-    bool is_unavailable();
+    bool is_unavailable() const;
 
     ConnectorState get_state() const;
 };
@@ -58,16 +58,16 @@ struct Connector {
 struct EVSEContext {
 
     EVSEContext(
-        int connector_id, int evse_index,
+        int evse_id, int connector_id,
         const types::evse_manager::ConnectorTypeEnum connector_type = types::evse_manager::ConnectorTypeEnum::Unknown) :
-        evse_index(evse_index), transaction_active(false), state_machine(ConnectorState::AVAILABLE) {
+        evse_id(evse_id), evse_index(evse_id - 1), transaction_active(false), plugged_in(false) {
         Connector c(connector_id, connector_type);
         connectors.push_back(c);
     }
 
-    int evse_index;
+    int32_t evse_id;
+    int32_t evse_index;
     bool transaction_active;
-    ConnectorStateMachine state_machine;
 
     // identifier is set when transaction is running and none if not
     std::optional<Identifier> identifier = std::nullopt;
@@ -75,22 +75,10 @@ struct EVSEContext {
     Everest::SteadyTimer timeout_timer;
     std::mutex plug_in_mutex;
     std::mutex event_mutex;
+    bool plugged_in;
 
-    /**
-     * @brief Submits the given \p event to the state machine
-     *
-     * @param event
-     */
-    void submit_event(ConnectorEvent event);
-
-    /**
-     * @brief Returns true if connector is in state UNAVAILABLE or UNAVAILABLE_FAULTED
-     *
-     * @return true
-     * @return false
-     */
+    bool is_available();
     bool is_unavailable();
-    ConnectorState get_state() const;
 };
 
 namespace conversions {

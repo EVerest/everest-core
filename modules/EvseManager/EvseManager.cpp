@@ -1227,6 +1227,8 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::ReservationStart;
 
+            // Normally we should signal for each connector when an evse is reserved, but since in this implementation
+            // each evse only has one connector, this is sufficient for now.
             signalReservationEvent(se);
         }
 

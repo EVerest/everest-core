@@ -465,15 +465,16 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
 
 /// \brief Test if state permanent fault leads to not provide authorization
 TEST_F(AuthTest, test_faulted_state) {
-
     TokenHandlingResult result1;
     TokenHandlingResult result2;
 
-    std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1); });
-    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
+    std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1, 1); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2, 1); });
+    std::thread t3([this]() { this->auth_handler->handle_permanent_fault_raised(2, 2); });
 
     t1.join();
     t2.join();
+    t3.join();
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
@@ -489,11 +490,11 @@ TEST_F(AuthTest, test_faulted_state) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Rejected));
 
-    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+    std::thread t4([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t5([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
-    t3.join();
     t4.join();
+    t5.join();
 
     ASSERT_TRUE(result1 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_TRUE(result2 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
@@ -669,7 +670,10 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     SessionEvent session_event_1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(1, session_event_1); });
-    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
+    std::thread t2([this]() {
+        this->auth_handler->handle_permanent_fault_raised(2, 1);
+        this->auth_handler->handle_permanent_fault_raised(2, 2);
+    });
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
@@ -701,6 +705,60 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
 
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    // swipe VALID_TOKEN_3. This does finish transaction because no connector is available
+    std::thread t5([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
+
+    t5.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if transaction doesnt finish with parent_id when prioritize_authorization_over_stopping_transaction is
+/// true. Instead: Authorization should be given to connector#2
+TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector_2) {
+    // Same test as above, but now the other evse is set to faulted.
+    TokenHandlingResult result;
+
+    this->auth_handler->set_prioritize_authorization_over_stopping_transaction(true);
+
+    SessionEvent session_event_1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(1, 1); });
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+
+    // swipe VALID_TOKEN_1
+    std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
+
+    t1.join();
+    t2.join();
+    t3.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+
+    SessionEvent session_event_3 = get_transaction_started_event(provided_token_1);
+    std::thread t4([this, session_event_3]() { this->auth_handler->handle_session_event(2, session_event_3); });
+
+    t4.join();
+
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
 
     // swipe VALID_TOKEN_3. This does finish transaction because no connector is available
     std::thread t5([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });

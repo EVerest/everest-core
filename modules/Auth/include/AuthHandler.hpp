@@ -119,8 +119,8 @@ public:
      * @param reason            The reason the reservation was cancelled.
      * @param evse_id           Evse id if reservation was for a specific evse.
      */
-    void call_reservation_cancelled(const int32_t reservation_id,
-                                    const ReservationEndReason reason, const std::optional<int>& evse_id);
+    void call_reservation_cancelled(const int32_t reservation_id, const ReservationEndReason reason,
+                                    const std::optional<int>& evse_id);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the
@@ -134,8 +134,8 @@ public:
     /**
      * @brief Handler for permanent faults from evsemanager that prevents charging
      */
-    void handle_permanent_fault_cleared(const int evse_id);
-    void handle_permanent_fault_raised(const int evse_id);
+    void handle_permanent_fault_cleared(const int evse_id, const int32_t connector_id);
+    void handle_permanent_fault_raised(const int evse_id, const int32_t connector_id);
 
     /**
      * @brief Set the connection timeout of the handler.
@@ -270,6 +270,8 @@ private:
     void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const AuthorizationType& type);
+    void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
+                                    const ConnectorEvent connector_event);
 };
 
 } // namespace module

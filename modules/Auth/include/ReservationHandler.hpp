@@ -6,7 +6,7 @@
 #include <optional>
 #include <vector>
 
-#include <ConnectorStateMachine.hpp>
+#include <Connector.hpp>
 #include <everest/timer.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/reservation.hpp>
@@ -17,24 +17,12 @@ namespace module {
 
 class ReservationHandler {
 private: // Members
-         /// \brief EvseConnectorType struct, with information about the connector belonging to the EVSE.
-    struct EvseConnectorType {
-        uint32_t connector_id;                                 ///< @brief The connector id.
-        types::evse_manager::ConnectorTypeEnum connector_type; ///< @brief The connector type.
-        ConnectorState state;                                  ///< The connector state.
-    };
-
-    /// \brief Evse class, containing the evse id, state and connectors.
-    struct Evse {
-        uint32_t evse_id;                          ///< @brief The evse id.
-        ConnectorState evse_state;                 ///< @brief The current state of the EVSE
-        std::vector<EvseConnectorType> connectors; ///< @brief The connectors of this EVSE
-    };
-
+    // TODO mz mutex around this whole thing (shared between authhandler and reservation handler)?
+    /// \brief Map of EVSE's, with EVSE id as key and the EVSE struct as value.
+    std::map<int, std::unique_ptr<module::EVSEContext>>& evses;
+    // std::map<uint32_t, Evse> evses;
     const std::string kvs_store_key_id;
     kvsIntf* store;
-    /// \brief Map of EVSE's, with EVSE id as key and the EVSE struct as value.
-    std::map<uint32_t, Evse> evses;
     /// \brief Map of EVSE specific reservations, with EVSE id as key and the Reservation type as value.
     std::map<uint32_t, types::reservation::Reservation> evse_reservations;
     /// \brief All reservations not bound to a specific EVSE.
@@ -66,23 +54,13 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler(const std::string& id, kvsIntf* store);
+    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses, const std::string& id,
+                       kvsIntf* store);
 
     ///
     /// \brief Destructor.
     ///
     ~ReservationHandler();
-
-    ///
-    /// \brief Add a connector.
-    /// \param evse_id          The id of the evse.
-    /// \param connector_id     The connector id.
-    /// \param connector_type   The connector type.
-    /// \param connector_state  The current connector state (default `AVAILABLE`).
-    ///
-    void add_connector(const uint32_t evse_id, const uint32_t connector_id,
-                       const types::evse_manager::ConnectorTypeEnum connector_type,
-                       const ConnectorState connector_state = ConnectorState::AVAILABLE);
 
     ///
     /// \brief Initialize. Read reservations from persistent store.
@@ -104,10 +82,10 @@ public:
     /// This is important for the reservation handler, to know which EVSE is in which state, to know if a reservation
     /// can be made or not.
     ///
-    /// \param state        The EVSE state.
+    /// \param available    True if evse is now available.
     /// \param evse_id      The EVSE id.
     ///
-    void set_evse_state(ConnectorState state, const uint32_t evse_id);
+    void on_evse_available_changed(const bool available, const uint32_t evse_id);
 
     ///
     /// \brief Change a specific connector state.
@@ -119,7 +97,8 @@ public:
     /// \param evse_id          The EVSE id the connector belongs to.
     /// \param connector_id     The connector id.
     ///
-    void set_connector_state(ConnectorState connector_state, const uint32_t evse_id, const uint32_t connector_id);
+    void on_connector_state_changed(const ConnectorState connector_state, const uint32_t evse_id,
+                                    const uint32_t connector_id);
 
     ///
     /// \brief Check if charging is possible on a given EVSE.
@@ -199,7 +178,7 @@ private: // Functions
     /// \param connector_type   The connector type to find.
     /// \return True if the connector type is in the vector.
     ///
-    bool has_evse_connector_type(const std::vector<EvseConnectorType> evse_connectors,
+    bool has_evse_connector_type(const std::vector<Connector> evse_connectors,
                                  const types::evse_manager::ConnectorTypeEnum connector_type) const;
 
     ///
@@ -297,7 +276,7 @@ private: // Functions
     /// \param connector_type   The connector type.
     /// \return Vector with evse's.
     ///
-    std::vector<Evse>
+    std::vector<EVSEContext*>
     get_all_evses_with_connector_type(const types::evse_manager::ConnectorTypeEnum connector_type) const;
 
     ///
