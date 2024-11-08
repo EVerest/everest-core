@@ -72,6 +72,7 @@ void AuthHandler::init_connector(const int connector_id, const int evse_index,
 }
 
 void AuthHandler::initialized() {
+    this->reservation_handler.init();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -416,7 +417,7 @@ bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
     return false;
 }
 
-bool AuthHandler::any_parent_id_present(const std::vector<int> evse_ids) {
+bool AuthHandler::any_parent_id_present(const std::vector<int>& evse_ids) {
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->identifier.has_value() and
             this->evses.at(evse_id)->identifier.value().parent_id_token.has_value()) {
@@ -596,14 +597,11 @@ void AuthHandler::handle_permanent_fault_cleared(const int evse_id, const int32_
 }
 
 void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& event) {
-    uint32_t evse_id_u = 0;
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
     if (evse_id < 0) {
         EVLOG_error << "Handle session event: Evse id is negative: that should not be possible.";
         return;
-    } else {
-        evse_id_u = static_cast<uint32_t>(evse_id);
     }
 
     if (connector_id < 0) {

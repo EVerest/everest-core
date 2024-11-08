@@ -385,7 +385,7 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
     return false;
 }
 
-bool ReservationHandler::has_evse_connector_type(const std::vector<Connector> evse_connectors,
+bool ReservationHandler::has_evse_connector_type(const std::vector<Connector>& evse_connectors,
                                                  const types::evse_manager::ConnectorTypeEnum connector_type) const {
     if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
         return true;
@@ -412,7 +412,7 @@ bool ReservationHandler::does_evse_connector_type_exist(
 }
 
 types::reservation::ReservationResult ReservationHandler::get_evse_state(
-    const uint32_t evse_id, const std::map<uint32_t, types::reservation::Reservation> evse_specific_reservations) {
+    const uint32_t evse_id, const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations) {
     if (evses.count(evse_id) == 0) {
         EVLOG_warning << "Get evse state for evse " << evse_id
                       << " not possible: evse id does not exists. This should not happen.";
@@ -763,12 +763,13 @@ void ReservationHandler::print_reservations_debug_info(const types::reservation:
                                                        const bool reservation_failed) {
     std::string reservation_information;
     if (reservation_failed) {
-        reservation_information = "Reservation not possible. ";
+        reservation_information = "Reservation not possible";
     } else {
-        reservation_information = "New reservation. ";
+        reservation_information = "New reservation";
     }
-    EVLOG_debug << "Reservation not possible. Evse id: "
-                << (evse_id.has_value() ? std::to_string(evse_id.value()) : "no evse id") << ", connector type: "
+    EVLOG_debug << reservation_information
+                << ". Evse id: " << (evse_id.has_value() ? std::to_string(evse_id.value()) : "no evse id")
+                << ", connector type: "
                 << (reservation.connector_type.has_value()
                         ? types::evse_manager::connector_type_enum_to_string(reservation.connector_type.value())
                         : "no connector type given");

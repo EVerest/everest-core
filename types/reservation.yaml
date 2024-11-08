@@ -102,7 +102,10 @@ types:
         description: The id token to check the reservation for.
         type: string
       group_id_token:
-        description: The group / parent id token to check the reservation for.
+        description: >-
+          The group / parent id token to check the reservation for. If id_token is set and group_id_token as well, and
+          id_token is incorrect, the group_id_token will be checked. If that one is correct, there is a reservation
+          made for this group id token.
         type: string
   ReservationUpdateStatus:
     description: Status of a reservation

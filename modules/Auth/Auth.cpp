@@ -87,6 +87,11 @@ void Auth::ready() {
                 // TODO mz do something with the result.
                 this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id);
             }
+
+            ReservationUpdateStatus status;
+            status.reservation_id = reservation_id;
+            status.reservation_status = Reservation_status::Placed;
+            this->p_reservation->publish_reservation_update(status);
         });
     this->auth_handler->register_reservation_cancelled_callback(
         [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason) {
@@ -110,6 +115,8 @@ void Auth::ready() {
             }
             this->p_reservation->publish_reservation_update(status);
         });
+
+    this->auth_handler->initialized();
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {

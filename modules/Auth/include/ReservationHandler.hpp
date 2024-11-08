@@ -178,7 +178,7 @@ private: // Functions
     /// \param connector_type   The connector type to find.
     /// \return True if the connector type is in the vector.
     ///
-    bool has_evse_connector_type(const std::vector<Connector> evse_connectors,
+    bool has_evse_connector_type(const std::vector<Connector>& evse_connectors,
                                  const types::evse_manager::ConnectorTypeEnum connector_type) const;
 
     ///
@@ -197,7 +197,7 @@ private: // Functions
     ///
     types::reservation::ReservationResult
     get_evse_state(const uint32_t evse_id,
-                   const std::map<uint32_t, types::reservation::Reservation> evse_specific_reservations);
+                   const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
 
     ///
     /// \brief Helper function to check if the connector of a specific EVSE is available.

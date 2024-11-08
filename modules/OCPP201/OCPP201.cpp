@@ -687,32 +687,28 @@ void OCPP201::ready() {
     };
 
     callbacks.reserve_now_callback =
-        [this](const int32_t id, const ocpp::DateTime& expiry_date_time, const ocpp::v201::IdToken& id_token,
-               const std::optional<ocpp::v201::ConnectorEnum> connector_type, const std::optional<uint32_t> evse_id,
-               const std::optional<ocpp::v201::IdToken>& group_id_token) -> ocpp::v201::ReserveNowStatusEnum {
-        EVLOG_info << "Call reserve now callback";
+        [this](const ocpp::v201::ReserveNowRequest& request) -> ocpp::v201::ReserveNowStatusEnum {
         ocpp::v201::ReserveNowResponse response;
         if (this->r_reservation == nullptr) {
-            EVLOG_info << "r_reservation is a nullptr";
+            EVLOG_info << "Reservation rejected because the interface r_reservation is a nullptr";
             return ocpp::v201::ReserveNowStatusEnum::Rejected;
         }
 
         types::reservation::Reservation reservation;
-        reservation.reservation_id = id;
-        reservation.expiry_time = expiry_date_time.to_rfc3339();
-        reservation.id_token = id_token.idToken;
-        if (group_id_token.has_value()) {
-            reservation.parent_id_token = group_id_token.value().idToken;
+        reservation.reservation_id = request.id;
+        reservation.expiry_time = request.expiryDateTime.to_rfc3339();
+        reservation.id_token = request.idToken.idToken;
+        if (request.groupIdToken.has_value()) {
+            reservation.parent_id_token = request.groupIdToken.value().idToken;
         }
-        if (connector_type.has_value()) {
-            reservation.connector_type = conversions::to_everest_connector_type_enum(connector_type.value());
+        if (request.connectorType.has_value()) {
+            reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
         }
 
-        types::reservation::ReserveNowRequest request;
-        request.reservation = reservation;
-        request.reservation.evse_id = evse_id;
-        EVLOG_info << "Call reserve now...";
-        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(request);
+        types::reservation::ReserveNowRequest request_out;
+        request_out.reservation = reservation;
+        request_out.reservation.evse_id = request.evseId;
+        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(request_out);
         return conversions::to_ocpp_reservation_status(result);
     };
 

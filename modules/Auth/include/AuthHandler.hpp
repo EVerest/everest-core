@@ -194,7 +194,8 @@ public:
      *
      * @param callback
      */
-    void register_reserved_callback(const std::function<void(const std::optional<int>&, const int&)>& callback);
+    void register_reserved_callback(
+        const std::function<void(const std::optional<int>& evse_id, const int& reservation_id)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation has been cancelled to the EvseManager.
@@ -250,7 +251,7 @@ private:
     int used_for_transaction(const std::vector<int>& evse_ids, const std::string& id_token);
     bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_evses);
     bool any_evse_available(const std::vector<int>& evse_ids);
-    bool any_parent_id_present(const std::vector<int> evse_ids);
+    bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
     TokenHandlingResult handle_token(const ProvidedIdToken& provided_token);
