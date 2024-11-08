@@ -281,27 +281,28 @@ EVerest config file.
 For all other errors, raised in everest, the following mapping to an
 ocpp status notification will be used:
 
-* status notification charge point `errorCode` will always be
-  `OtherError`
-* status notification `status` will reflect the present status of the
+* status notification charge point ``errorCode`` will always be
+  ``OtherError``
+* status notification ``status`` will reflect the present status of the
   charge point
-* status notification `info` -> origin of everest error
-* status notification `vendorErrorCode` -> everest error type and
+* status notification ``info`` -> origin of everest error
+* status notification ``vendorErrorCode`` -> everest error type and
   subtype (the error type is simplified, meaning, that its leading part,
   the interface name, is stripped)
-* status notification `vendorId` -> everest error message
+* status notification ``vendorId`` -> everest error message
 
-  The main choice for using the status notification `vendorId` for the
+  The main choice for using the status notification ``vendorId`` for the
   error message is that it can carry the largest string (255
-  characters), whereas the other fields (`info` and `vendorErrorCode`)
-  only allow up to 50 characters.
+  characters), whereas the other fields (``info`` and
+  ``vendorErrorCode``) only allow up to 50 characters.
 
 The **StatusNotification.req** message has some limitations with respect
 to reporting errors:
 
 * Single errors cannot simply be cleared. If multiple errors are raised,
   it is not possible to clear individual errors.
-* `vendorId`, `info` and `vendorErrorCode`` are limited in length (see above).
+* ``vendorId``, ``info`` and ``vendorErrorCode`` are limited in length
+  (see above).
 
 This module attempts to follow the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/. This proposes a unified  
 methodology to define and classify a minimum required set of error codes and how to report them via OCPP1.6.
