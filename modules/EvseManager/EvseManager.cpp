@@ -245,6 +245,10 @@ void EvseManager::ready() {
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
 
+        // Charger needs to inform ISO stack about emergency stop
+        charger->signal_hlc_error.connect(
+            [this](types::iso15118_charger::EvseError error) { r_hlc[0]->call_send_error(error); });
+
         auto sae_mode = types::iso15118_charger::SaeJ2847BidiMode::None;
 
         // Set up energy transfer modes for HLC. For now we only support either DC or AC, not both at the same time.
