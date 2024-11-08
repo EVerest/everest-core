@@ -11,6 +11,7 @@
 #include <conversions.hpp>
 #include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <optional>
 
 namespace module {
@@ -77,6 +78,13 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     // iterate over all schedules reported by the libocpp to create ExternalLimits
     // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
+
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, connector_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: "
+                          << connector_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
         for (const auto period : schedule.chargingSchedulePeriod) {
@@ -99,19 +107,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             schedule_import.push_back(schedule_req_entry);
         }
         limits.schedule_import.emplace(schedule_import);
-
-        if (connector_id == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
-            this->r_evse_manager.at(connector_id - 1)->call_set_external_limits(limits);
-        }
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
+        evse_sink.call_set_external_limits(limits);
     }
 }
 
@@ -346,6 +343,16 @@ void OCPP::init() {
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
@@ -738,25 +745,32 @@ void OCPP::ready() {
 
     this->charge_point->register_transaction_started_callback(
         [this](const int32_t connector, const std::string& session_id) {
-            types::ocpp::OcppTransactionEvent tevent = {
-                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
-            };
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Started;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_updated_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id,
                const ocpp::v16::IdTagInfo& id_tag_info) {
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
-                                                        session_id, std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Updated;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_stopped_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
             EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
-                                                        std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Ended;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
