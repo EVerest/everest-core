@@ -76,13 +76,13 @@ static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list
                list.end());
 }
 
-void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event) {
+void SessionInfo::update_state(const types::evse_manager::SessionEvent event) {
     std::lock_guard<std::mutex> lock(this->session_info_mutex);
     using Event = types::evse_manager::SessionEventEnum;
 
     // using switch since some code analysis tools can detect missing cases
     // (when new events are added)
-    switch (event) {
+    switch (event.event) {
     case Event::Enabled:
         this->state = State::Unplugged;
         break;
@@ -111,10 +111,19 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
-    case Event::StoppingCharging:
-    case Event::TransactionFinished:
         this->state = State::Finished;
         break;
+    case Event::StoppingCharging:
+        this->state = State::FinishedEV;
+        break;
+    case Event::TransactionFinished: {
+        if (event.transaction_finished->reason == types::evse_manager::StopTransactionReason::Local) {
+            this->state = State::FinishedEVSE;
+        } else {
+            this->state = State::Finished;
+        }
+        break;
+    }
     case Event::PluginTimeout:
         this->state = State::AuthTimeout;
         break;
@@ -156,6 +165,10 @@ std::string SessionInfo::state_to_string(SessionInfo::State s) {
         return "Charging";
     case SessionInfo::State::Finished:
         return "Finished";
+    case SessionInfo::State::FinishedEVSE:
+        return "FinishedEVSE";
+    case SessionInfo::State::FinishedEV:
+        return "FinishedEV";
     case SessionInfo::State::AuthTimeout:
         return "AuthTimeout";
     }
@@ -368,7 +381,7 @@ void API::init() {
 
         evse->subscribe_session_event(
             [this, var_session_info, var_logging_path, &session_info](types::evse_manager::SessionEvent session_event) {
-                session_info->update_state(session_event.event);
+                session_info->update_state(session_event);
 
                 if (session_event.source.has_value()) {
                     const auto source = session_event.source.value();
