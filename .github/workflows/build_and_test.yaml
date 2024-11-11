@@ -81,7 +81,7 @@ jobs:
       - name: Load build-kit image
         run: |
           docker load -i build-kit.tar
-          docker image tag ${{ steps.buildkit_tag.outputs.out }} build-kit
+          docker image tag ${{ steps.buildkit_tag.outputs }} build-kit
       - name: Create integration-image
         run: |
           docker run \
