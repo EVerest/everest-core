@@ -70,7 +70,7 @@ jobs:
           if len(tags) == 0:
             print("No tags found!❌")
             exit(1)
-          tag = tags[0]
+          tag = f"local/build-kit-everest-core:{tags[0]}"
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
             f.write(f"tag={tag}\n")
             print(f"Set tag={tag}")
