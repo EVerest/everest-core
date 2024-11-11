@@ -39,6 +39,11 @@ libfsm:
   git_tag: v0.2.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
+# libcbv2g
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: v0.2.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
   git: git@github.com:PionixPro/libiso15118.git
@@ -69,11 +74,6 @@ Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
   git_tag: 434f5f2a98cce4b716b5bb4d31eff6b19d8d85ca
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
