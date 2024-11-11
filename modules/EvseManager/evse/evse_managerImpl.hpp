@@ -47,7 +47,6 @@ protected:
     virtual bool handle_resume_charging() override;
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
     virtual bool handle_force_unlock(int& connector_id) override;
-    virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
     virtual void handle_set_get_certificate_response(
         types::iso15118_charger::ResponseExiStreamStatus& certificate_response) override;
     virtual bool handle_external_ready_to_start_charging() override;
