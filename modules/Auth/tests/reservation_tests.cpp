@@ -46,7 +46,8 @@ protected:
 
     kvsIntf kvs;
     std::map<int32_t, std::unique_ptr<EVSEContext>> evses;
-    ReservationHandler r{evses, "reservation_kvs", &kvs};
+    std::recursive_mutex mutex;
+    ReservationHandler r{evses, mutex, "reservation_kvs", &kvs};
 };
 
 TEST_F(ReservationHandlerTest, global_reservation_scenario_01) {
@@ -986,7 +987,6 @@ TEST_F(ReservationHandlerTest, cancel_reservation) {
 TEST_F(ReservationHandlerTest, overwrite_reservation) {
     // If a reservation is made and another one is made with the same reservation id, it should be overwritten.
     // The old reservation will then be cancelled and the new one is made.
-    std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                       const ReservationEndReason reason)>
         reservation_callback_mock;

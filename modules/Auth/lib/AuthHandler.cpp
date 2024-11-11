@@ -46,7 +46,7 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
     connection_timeout(connection_timeout),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
     ignore_faults(ignore_faults),
-    reservation_handler(evses, id, store) {
+    reservation_handler(evses, evse_mutex, id, store) {
 }
 
 AuthHandler::~AuthHandler() {
@@ -60,6 +60,7 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
         return;
     }
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_index, connectors);
 }
 
@@ -213,6 +214,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "Provided parent_id_token is equal to master_pass_group_id. Stopping all active "
                                   "transactions!";
+
+                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
                     for (const auto evse_id : referenced_evses) {
                         if (this->evses[evse_id]->transaction_active) {
                             StopTransactionRequest req;
@@ -229,6 +232,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                 const auto evse_used_for_transaction =
                     this->used_for_transaction(referenced_evses, validation_result.parent_id_token.value().value);
                 if (evse_used_for_transaction != -1) {
+                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
                     if (!this->evses[evse_used_for_transaction]->transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
@@ -340,6 +344,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 std::vector<int> AuthHandler::get_referenced_evses(const ProvidedIdToken& provided_token) {
     std::vector<int> evse_ids;
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     // either insert the given connector references of the provided token
     if (provided_token.connectors) {
         std::copy_if(provided_token.connectors.value().begin(), provided_token.connectors.value().end(),
@@ -364,6 +369,7 @@ std::vector<int> AuthHandler::get_referenced_evses(const ProvidedIdToken& provid
 }
 
 int AuthHandler::used_for_transaction(const std::vector<int>& evse_ids, const std::string& token) {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->identifier.has_value()) {
             const auto& identifier = this->evses.at(evse_id)->identifier.value();
@@ -386,6 +392,7 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token, const
     if (this->tokens_in_process.find(id_token) != this->tokens_in_process.end()) {
         return true;
     } else {
+        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         // check if id_token was already used to authorize evse but no transaction has been started yet
         for (const auto evse_id : referenced_evses) {
             const auto& evse = this->evses.at(evse_id);
@@ -400,6 +407,7 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token, const
 
 bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
     EVLOG_debug << "Checking availability of evses...";
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->is_available()) {
             EVLOG_debug << "There is at least one evse available";
@@ -411,6 +419,7 @@ bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
 }
 
 bool AuthHandler::any_parent_id_present(const std::vector<int>& evse_ids) {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->identifier.has_value() and
             this->evses.at(evse_id)->identifier.value().parent_id_token.has_value()) {
@@ -482,6 +491,7 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
         EVLOG_debug << "SelectionAlgorithm FindFirst: Selecting first available evse without an active transaction";
         this->lock_plug_in_mutex(selected_evses);
         const auto selected_evse_id = this->get_latest_plugin(selected_evses);
+        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         if (selected_evse_id != -1 and !this->evses.at(selected_evse_id)->transaction_active) {
             // an EV has been plugged in yet at the referenced evses
             return this->get_latest_plugin(selected_evses);
@@ -504,6 +514,7 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
 
 void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token,
                               const ValidationResult& validation_result) {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     const auto evse_index = this->evses.at(evse_id)->evse_index;
 
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
@@ -602,6 +613,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         return;
     }
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     if (this->evses.count(evse_id) == 0) {
         EVLOG_warning << "Handle session event: no evse found with evse id " << evse_id;
         return;

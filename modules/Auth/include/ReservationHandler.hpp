@@ -17,9 +17,10 @@ namespace module {
 
 class ReservationHandler {
 private: // Members
-    // TODO mz mutex around this whole thing (shared between authhandler and reservation handler)?
     /// \brief Map of EVSE's, with EVSE id as key and the EVSE struct as value.
     std::map<int, std::unique_ptr<module::EVSEContext>>& evses;
+    /// \brief Recursive mutex for the evse map (shared with AuthHandler).
+    std::recursive_mutex& evse_mutex;
     // std::map<uint32_t, Evse> evses;
     const std::string kvs_store_key_id;
     kvsIntf* store;
@@ -54,7 +55,7 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses, const std::string& id,
+    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses, std::recursive_mutex& evse_mutex, const std::string& id,
                        kvsIntf* store);
 
     ///

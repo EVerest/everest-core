@@ -18,8 +18,8 @@ static types::reservation::ReservationResult
 connector_state_to_reservation_result(const ConnectorState connector_state);
 
 ReservationHandler::ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses,
-                                       const std::string& id, kvsIntf* store) :
-    evses(evses), kvs_store_key_id("reservation_" + id), store(store) {
+                                       std::recursive_mutex& evse_mutex, const std::string& id, kvsIntf* store) :
+    evses(evses), evse_mutex(evse_mutex), kvs_store_key_id("reservation_" + id), store(store) {
     // Create this worker thread and io service etc here for the timer.
     this->work = boost::make_shared<boost::asio::io_service::work>(this->io_service);
     this->io_service_thread = std::thread([this]() { this->io_service.run(); });
@@ -175,6 +175,7 @@ void ReservationHandler::on_connector_state_changed(const ConnectorState connect
     }
 
     std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
+    std::unique_lock<std::recursive_mutex> lock2(evse_mutex);
     if (this->evses.count(static_cast<int32_t>(evse_id)) == 0) {
         EVLOG_warning << "on_connector_state_changed: evse " << evse_id << " does not exist. This should not happen.";
         return;
@@ -402,6 +403,7 @@ bool ReservationHandler::has_evse_connector_type(const std::vector<Connector>& e
 
 bool ReservationHandler::does_evse_connector_type_exist(
     const types::evse_manager::ConnectorTypeEnum connector_type) const {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto& [evse_id, evse] : evses) {
         if (has_evse_connector_type(evse->connectors, connector_type)) {
             return true;
@@ -420,13 +422,14 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
     }
 
     // Check if evse is available.
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     if (evses[evse_id]->plugged_in) {
         return connector_state_to_reservation_result(ConnectorState::OCCUPIED);
     }
 
     // If one connector is occupied, then the other connector can also not be used (one connector of an evse can be
     // used at the same time).
-    std::unique_lock<std::mutex> lock(evses[evse_id]->event_mutex);
+    std::unique_lock<std::mutex> lock_evse(evses[evse_id]->event_mutex);
     for (const auto& connector : evses[evse_id]->connectors) {
         if (connector.get_state() == ConnectorState::OCCUPIED ||
             connector.get_state() == ConnectorState::FAULTED_OCCUPIED) {
@@ -435,6 +438,7 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
     }
 
     lock.unlock();
+    lock_evse.unlock();
 
     // If evse is reserved, it is not available.
     if (evse_specific_reservations.count(evse_id) > 0) {
@@ -447,7 +451,8 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
 types::reservation::ReservationResult
 ReservationHandler::is_connector_available(const uint32_t evse_id,
                                            const types::evse_manager::ConnectorTypeEnum connector_type) {
-    std::unique_lock<std::mutex> lock(evses[evse_id]->event_mutex);
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    std::unique_lock<std::mutex> lock_evse(evses[evse_id]->event_mutex);
     if (evses.count(evse_id) == 0) {
         EVLOG_warning << "Request if connector is available for evse id " << evse_id
                       << ", but evse id does not exist. This should not happen.";
@@ -501,6 +506,7 @@ bool ReservationHandler::can_virtual_car_arrive(
 
     bool is_possible = false;
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto& [evse_id, evse] : evses) {
         // Check if there is a car already at this evse id.
         if (std::find(used_evse_ids.begin(), used_evse_ids.end(), evse_id) != used_evse_ids.end()) {
@@ -558,6 +564,7 @@ bool ReservationHandler::is_reservation_possible(
 
     const std::vector<std::vector<types::evse_manager::ConnectorTypeEnum>> orders = get_all_possible_orders(types);
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto& o : orders) {
         if (!this->can_virtual_car_arrive({}, o, evse_specific_reservations)) {
             return false;
@@ -590,6 +597,7 @@ void ReservationHandler::set_reservation_timer(const types::reservation::Reserva
 
 std::vector<EVSEContext*> ReservationHandler::get_all_evses_with_connector_type(
     const types::evse_manager::ConnectorTypeEnum connector_type) const {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     std::vector<EVSEContext*> result;
     for (const auto& evse : this->evses) {
         if (this->has_evse_connector_type(evse.second->connectors, connector_type)) {
@@ -632,6 +640,7 @@ types::reservation::ReservationResult ReservationHandler::get_reservation_evse_c
 
     bool found_state = false;
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     ConnectorState state = ConnectorState::UNAVAILABLE;
 
     for (const auto& [evse_id, evse] : evses) {
