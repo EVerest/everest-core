@@ -46,6 +46,24 @@ jobs:
       #   run: |
       #     mkdir scripts
       #     rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+      - name: Set output tag
+        id: buildkit_tag
+        shell: python3 {0}
+        run: |
+          import os
+          tags = "${{ steps.meta.outputs.tags }}".split(",")
+          if len(tags) == 0:
+            print("No tags found!❌")
+            exit(1)
+          tag = tags[0]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"tag={tag}\n")
+            print(f"Set tag={tag}")
       - name: Download build-kit image
         uses: actions/download-artifact@v4
         with:
@@ -53,7 +71,7 @@ jobs:
       - name: Load build-kit image
         run: |
           docker load -i build-kit.tar
-          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
+          docker image tag ${{ steps.buildkit_tag.outputs.out }} build-kit
       - name: Create integration-image
         run: |
           docker run \
