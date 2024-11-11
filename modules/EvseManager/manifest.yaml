@@ -7,9 +7,8 @@ config:
     description: Connector id of this evse manager
     type: integer
   connector_type:
-    description: The connector type of this evse manager
+    description: The connector type of this evse manager (/evse_manager#/ConnectorTypeEnum)
     type: string
-    $ref: /evse_manager#/ConnectorTypeEnum
   evse_id:
     description: EVSE ID
     type: string
