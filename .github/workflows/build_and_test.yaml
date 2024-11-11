@@ -32,9 +32,7 @@ jobs:
   ocpp-tests:
     name: OCPP Tests
     needs:
-      - setup-env
-      - build
-      - build-the-build-kit
+      - ci
     env:
       BUILD_KIT_IMAGE: ${{ needs.build-the-build-kit.outputs.build_kit_image_tag }}
     runs-on: ${{ inputs.runner }}
