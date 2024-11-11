@@ -25,7 +25,8 @@ class reservationImpl : public reservationImplBase {
 public:
     reservationImpl() = delete;
     reservationImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Auth>& mod, Conf& config) :
-        reservationImplBase(ev, "reservation"), mod(mod), config(config) {};
+        reservationImplBase(ev, "reservation"), mod(mod), config(config) {
+    }
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
