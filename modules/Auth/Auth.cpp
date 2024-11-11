@@ -32,11 +32,13 @@ void Auth::ready() {
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
         const int32_t evse_id = evse_manager->call_get_evse().id;
-
+        std::vector<Connector> connectors;
         for (const auto& connector : evse_manager->call_get_evse().connectors) {
-            this->auth_handler->init_connector(
-                connector.id, evse_index, connector.type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown));
+            connectors.push_back(
+                Connector(connector.id, connector.type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown)));
         }
+
+        this->auth_handler->init_evse(evse_id, evse_index, connectors);
 
         evse_manager->subscribe_session_event([this, evse_id](SessionEvent session_event) {
             this->auth_handler->handle_session_event(evse_id, session_event);
@@ -45,10 +47,12 @@ void Auth::ready() {
         evse_manager->subscribe_error(
             "evse_manager/Inoperative",
             // If no connector id is given, it defaults to connector id 1.
+            // TODO mz change this?? (make a ticket??)
             [this, evse_id](const Everest::error::Error& error) {
                 this->auth_handler->handle_permanent_fault_raised(evse_id, 1);
             },
             // If no connector id is given, it defaults to connector id 1.
+            // TODO mz change this??
             [this, evse_id](const Everest::error::Error& error) {
                 this->auth_handler->handle_permanent_fault_cleared(evse_id, 1);
             });

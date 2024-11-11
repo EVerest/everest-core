@@ -40,7 +40,7 @@ protected:
         if (evses.count(evse_id) > 0) {
             evses[evse_id]->connectors.push_back(Connector{static_cast<int>(connector_id), type});
         } else {
-            evses[evse_id] = std::make_unique<EVSEContext>(evse_id, connector_id, type);
+            evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_id - 1, connector_id, type);
         }
     }
 

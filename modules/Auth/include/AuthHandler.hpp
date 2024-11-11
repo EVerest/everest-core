@@ -53,16 +53,14 @@ public:
     virtual ~AuthHandler();
 
     /**
-     * @brief Initializes the connector with the given \p connector_id and the given \p evse_id . It instantiates new
+     * @brief Initializes the evse with the given \p connectors and the given \p evse_id . It instantiates new
      * connector objects and fills data sturctures of the class.
      *
-     * @param connector_id
+     * @param evse_id
      * @param evse_index
-     * @param connector_type    The connector type. Defaults to Unknown
+     * @param connectors    The connectors.
      */
-    void init_connector(
-        const int connector_id, const int evse_index,
-        const types::evse_manager::ConnectorTypeEnum& connector_type = types::evse_manager::ConnectorTypeEnum::Unknown);
+    void init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors);
 
     /**
      * @brief Call when everything is initialized. This will call 'init' of the reservation handler.

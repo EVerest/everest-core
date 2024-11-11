@@ -145,9 +145,10 @@ protected:
         this->auth_handler->register_publish_token_validation_status_callback(
             mock_publish_token_validation_status_callback.AsStdFunction());
 
-        this->auth_handler->init_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2);
-        this->auth_handler->init_connector(1, 1, types::evse_manager::ConnectorTypeEnum::sType2);
-        this->auth_handler->init_connector(2, 1, types::evse_manager::ConnectorTypeEnum::cCCS2);
+        this->auth_handler->init_evse(1, 0, {Connector(1, types::evse_manager::ConnectorTypeEnum::cCCS2)});
+        this->auth_handler->init_evse(2, 1,
+                                      {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2),
+                                       Connector(2, types::evse_manager::ConnectorTypeEnum::cCCS2)});
     }
 
     void TearDown() override {

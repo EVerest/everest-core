@@ -58,11 +58,15 @@ struct Connector {
 struct EVSEContext {
 
     EVSEContext(
-        int evse_id, int connector_id,
+        int evse_id, int evse_index, int connector_id,
         const types::evse_manager::ConnectorTypeEnum connector_type = types::evse_manager::ConnectorTypeEnum::Unknown) :
-        evse_id(evse_id), evse_index(evse_id - 1), transaction_active(false), plugged_in(false) {
+        evse_id(evse_id), evse_index(evse_index), transaction_active(false), plugged_in(false) {
         Connector c(connector_id, connector_type);
         connectors.push_back(c);
+    }
+
+    EVSEContext(int evse_id, int evse_index, const std::vector<Connector>& connectors) :
+        evse_id(evse_id), evse_index(evse_index), transaction_active(false), connectors(connectors), plugged_in(false) {
     }
 
     int32_t evse_id;

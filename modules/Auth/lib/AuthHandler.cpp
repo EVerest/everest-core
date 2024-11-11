@@ -52,23 +52,15 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
 AuthHandler::~AuthHandler() {
 }
 
-void AuthHandler::init_connector(const int connector_id, const int evse_index,
-                                 const types::evse_manager::ConnectorTypeEnum& connector_type) {
-    EVLOG_debug << "Add connector with connector id " << connector_id << " and evse index " << evse_index;
+void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors) {
+    EVLOG_debug << "Add evse with evse id " << evse_id;
 
-    const int evse_id = evse_index + 1;
-
-    if (evse_id < 0 || connector_id < 0) {
-        EVLOG_error << "Can not add connector to reservation handler: evse id or connector id are negative.";
+    if (evse_id < 0) {
+        EVLOG_error << "Can not add connector to reservation handler: evse id is negative.";
         return;
     }
-    if (this->evses.count(evse_id)) {
-        // evse already exists.
-        Connector c(connector_id, connector_type);
-        evses[evse_id]->connectors.push_back(c);
-    } else {
-        this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, connector_id, connector_type);
-    }
+
+    this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_index, connectors);
 }
 
 void AuthHandler::initialized() {
@@ -308,6 +300,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                             this->reservation_handler.on_reservation_used(reservation_id.value());
                             authorized = true;
                             validation_result.reservation_id = reservation_id.value();
+                            // TODO mz call publish reservation update with status 'used'.
                         } else {
                             EVLOG_info << "Evse is reserved but token is not valid for this reservation";
                             validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
