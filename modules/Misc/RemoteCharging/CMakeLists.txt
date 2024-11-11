@@ -1,0 +1,2 @@
+ev_add_module(RemoteChargingEV)
+ev_add_module(RemoteChargingEVSE)

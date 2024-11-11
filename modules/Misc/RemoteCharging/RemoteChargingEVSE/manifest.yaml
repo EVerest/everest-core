@@ -1,0 +1,36 @@
+description: Remote charging bridge for EVSE side (umwcharger) - plugged in into a real car 
+config:
+  tap_device:
+    description: Name of tap device
+    type: string
+    default: tap0
+  plc_device:
+    description: Name of PLC device
+    type: string
+    default: eth1
+  bridge_device:
+    description: Name of the bridge device
+    type: string
+    default: br0
+  base_topic_sub:
+    description: Base MQTT topic for subscriptions
+    type: string
+    default: everest/cloud/wormhole/sub
+  base_topic_pub:
+    description: Base MQTT topic for publishes
+    type: string
+    default: everest/cloud/wormhole/pub
+provides:
+  main:
+    interface: empty
+    description: Does not provide anything
+requires:
+  bsp:
+    interface: evse_board_support
+  power_supply:
+    interface: power_supply_DC
+enable_external_mqtt: true
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen, PIONIX GmbH

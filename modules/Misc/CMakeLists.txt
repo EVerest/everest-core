@@ -7,3 +7,5 @@ ev_add_module(Setup)
 ev_add_module(Store)
 ev_add_module(System)
 ev_add_module(YamlStore)
+
+add_subdirectory(RemoteCharging)
