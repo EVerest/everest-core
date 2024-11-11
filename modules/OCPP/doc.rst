@@ -298,6 +298,31 @@ This module currently deviates from the MREC specification in the following poin
   **Faulted** value as follows: "When a Charge Point or connector has reported an error and is not available for energy delivery.  
   (Inoperative)." This module, therefore, only reports **Faulted** when the Charge Point is not available for energy delivery.
 
+Energy Management and Smart Charging Integration
+------------------------------------------------
+
+OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
+This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
+composite schedule calculation please refer to the OCPP1.6 specification.
+
+The integration of the composite schedules is implemented through the optional requirement(s) `evse_energy_sink` (interface: `external_energy_limits`) 
+of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
+for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
+has two EVSEs you need to connect three modules that implement the `external_energy_limits` interface: One representing evse id 0 and 
+two representing your actual EVSEs.
+
+📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
+which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
+`3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
+
+This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
+the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements
+the `external_energy_limits` interface. In addition, the config parameter `PublishChargingScheduleIntervalS` defines a periodic interval to retrieve
+the composite schedule also in case no charging profiles have been changed. The configuration parameter `PublishChargingScheduleDurationS` defines 
+the duration in seconds of the requested composite schedules starting now. The value configured for `PublishChargingScheduleDurationS` shall be greater
+than the value configured for `PublishChargingScheduleIntervalS` because otherwise time periods could be missed by the application.
+
+
 Certificate Management
 ----------------------
 

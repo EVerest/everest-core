@@ -73,14 +73,28 @@ types:
           description: schedule for a connector
           type: object
           $ref: /ocpp#/ChargingSchedule
+  EVSE:
+    description: >-
+      Type of an EVSE. If only the id is present, this type identifies an EVSE.
+      If also a connector_id is given, this type identifies a Connector of the EVSE
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        description: Id of the EVSE
+        type: integer
+        minimum: 1
+      connector_id:
+        description: An id to designate a specific connector (on an EVSE) by connector index number
+        type: integer
+        minimum: 1
   OcppTransactionEvent:
     description: >-
       Element providing information on OCPP transactions.
     type: object
     required:
       - transaction_event
-      - evse_id
-      - connector
       - session_id
     properties:
       transaction_event:
@@ -88,14 +102,11 @@ types:
           The transaction related event.
         type: string
         $ref: /ocpp#/TransactionEvent
-      evse_id:
+      evse:
         description: >-
-          The OCPP 2.0.1 EVSE ID associated with the transaction.
-        type: integer
-      connector:
-        description: >-
-          The connector associated with the transaction.
-        type: integer
+          The OCPP 2.0.1 EVSE associated with the transaction.
+        type: object
+        $ref: /ocpp#/EVSE
       session_id:
         description: >-
           The EVSE manager assigned session ID.
@@ -271,22 +282,6 @@ types:
         description: Timestamp of the moment the security event was generated, if absent the current datetime is assumed
         type: string
         format: date-time
-  EVSE:
-    description: >-
-      Type of an EVSE. If only the id is present, this type identifies an EVSE.
-      If also a connector_id is given, this type identifies a Connector of the EVSE
-    type: object
-    required:
-      - id
-    properties:
-      id:
-        description: Id of the EVSE
-        type: integer
-        minimum: 1
-      connector_id:
-        description: An id to designate a specific connector (on an EVSE) by connector index number
-        type: integer
-        minimum: 1
   Variable:
     description: >-
       Type for a variable with a name and an optional instance

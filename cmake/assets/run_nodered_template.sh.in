@@ -14,4 +14,4 @@ docker cp @FLOW_FILE@ everest-nodered-config-container:/data/flows.json
 docker rm everest-nodered-config-container
 
 # Start nodered container with the volume mounted to /data
-docker run --rm --network host --name everest_nodered --mount type=volume,source=everest-nodered-config-volume,target=/data ghcr.io/everest/everest-dev-environment/nodered:docker-images-v0.1.0
+docker run -it --rm --network host --name everest_nodered --mount type=volume,source=everest-nodered-config-volume,target=/data ghcr.io/everest/everest-dev-environment/nodered:docker-images-v0.1.0
