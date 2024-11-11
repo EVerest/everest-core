@@ -373,7 +373,7 @@ by the libocpp device model storage implementation.
 Device Model Implementation this module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This module provides an implementation of device model API provided as part of libocpp (it implements `device_model_interface.hpp`).
+This module provides an implementation of device model API provided as part of libocpp (it implements `device_model_storage_interface.hpp`).
 The implementation is designed to fullfill the requirements of the device model API even if the components and variables are
 controlled by different sources (Internally, Externally).
 

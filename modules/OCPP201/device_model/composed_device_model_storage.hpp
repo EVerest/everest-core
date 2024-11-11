@@ -4,11 +4,11 @@
 #pragma once
 
 #include <device_model/everest_device_model_storage.hpp>
-#include <ocpp/v201/device_model_interface.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 
 namespace module::device_model {
-class ComposedDeviceModelStorage : public ocpp::v201::DeviceModelInterface {
+class ComposedDeviceModelStorage : public ocpp::v201::DeviceModelStorageInterface {
 private: // Members
     std::unique_ptr<EverestDeviceModelStorage> everest_device_model_storage;
     std::unique_ptr<ocpp::v201::DeviceModelStorageSqlite> libocpp_device_model_storage;

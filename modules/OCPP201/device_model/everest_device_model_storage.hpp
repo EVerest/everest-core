@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <ocpp/v201/device_model_interface.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 
 namespace module::device_model {
-class EverestDeviceModelStorage : public ocpp::v201::DeviceModelInterface {
+class EverestDeviceModelStorage : public ocpp::v201::DeviceModelStorageInterface {
 public:
     virtual ~EverestDeviceModelStorage() override = default;
     virtual ocpp::v201::DeviceModelMap get_device_model() override;
