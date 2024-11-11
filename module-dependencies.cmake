@@ -7,10 +7,6 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST EnergyNode EvseManager MicroMegaWattBSP YetiDriver)
 
 ev_define_dependency(
-    DEPENDENCY_NAME libmodbus
-    DEPENDENT_MODULES_LIST PowermeterBSM)
-
-ev_define_dependency(
     DEPENDENCY_NAME pugixml
     DEPENDENT_MODULES_LIST EvseManager)
 
