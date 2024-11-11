@@ -304,7 +304,6 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                             this->reservation_handler.on_reservation_used(reservation_id.value());
                             authorized = true;
                             validation_result.reservation_id = reservation_id.value();
-                            // TODO mz call publish reservation update with status 'used'.
                         } else {
                             EVLOG_info << "Evse is reserved but token is not valid for this reservation";
                             validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;

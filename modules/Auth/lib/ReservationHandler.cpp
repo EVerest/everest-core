@@ -9,9 +9,6 @@
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <utils/date.hpp>
 
-// TODO mz make a ticket to set all evse's to reserved if there are as many reservations as evse's and back to
-// plugged_in if one of the evses comes plugged_in again.
-
 namespace module {
 
 static types::reservation::ReservationResult

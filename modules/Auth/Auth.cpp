@@ -47,12 +47,10 @@ void Auth::ready() {
         evse_manager->subscribe_error(
             "evse_manager/Inoperative",
             // If no connector id is given, it defaults to connector id 1.
-            // TODO mz change this?? (make a ticket??)
             [this, evse_id](const Everest::error::Error& error) {
                 this->auth_handler->handle_permanent_fault_raised(evse_id, 1);
             },
             // If no connector id is given, it defaults to connector id 1.
-            // TODO mz change this??
             [this, evse_id](const Everest::error::Error& error) {
                 this->auth_handler->handle_permanent_fault_cleared(evse_id, 1);
             });
@@ -113,8 +111,6 @@ void Auth::ready() {
                 status.reservation_status = Reservation_status::Removed;
             } else {
                 // On reservation used: do not publish a reservation update!!
-                // TODO mz implement this to publish on placed etc. !! And let somewhere else the software not send
-                // messages.
                 return;
             }
             this->p_reservation->publish_reservation_update(status);
