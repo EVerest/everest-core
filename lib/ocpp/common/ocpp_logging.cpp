@@ -193,7 +193,7 @@ LogRotationStatus MessageLogging::rotate_log(const std::string& file_basename) {
             std::filesystem::rename(file, new_file_name);
             EVLOG_info << "Renaming: " << file.string() << " -> " << new_file_name.string();
             if (status == LogRotationStatus::NotRotated) {
-                status == LogRotationStatus::Rotated;
+                status = LogRotationStatus::Rotated;
             }
         } else {
             // try parsing the .x extension and log an error if this was not possible
@@ -210,7 +210,7 @@ LogRotationStatus MessageLogging::rotate_log(const std::string& file_basename) {
                     EVLOG_info << "Renaming: " << file.string() << " -> " << new_file_name.string();
                     std::filesystem::rename(file, new_file_name);
                     if (status == LogRotationStatus::NotRotated) {
-                        status == LogRotationStatus::Rotated;
+                        status = LogRotationStatus::Rotated;
                     }
                 }
 
