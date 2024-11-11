@@ -1,0 +1,89 @@
+name: OCPP Tests
+on:
+  pull_request: {}
+  workflow_run:
+    workflows: ["Build, Lint and Test"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Which runner to use
+        type: choice
+        default: 'ubuntu-22.04'
+        required: true
+        options:
+          - 'ubuntu-22.04'
+          - 'large-ubuntu-22.04-xxl'
+  schedule:
+    - cron: '37 13,1 * * *'
+
+jobs:
+  ocpp-tests:
+    name: OCPP Tests
+    env:
+      BUILD_KIT_IMAGE: ${{ needs.build-the-build-kit.outputs.build_kit_image_tag }}
+    runs-on: ${{ inputs.runner }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download dist dir
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: dist
+      - name: Extract dist.tar.gz
+        run: |
+          tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
+      - name: Download wheels
+        if: ${{ inputs.run_install_wheels == 'true' }}
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: wheels
+          path: wheels
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          path: source
+      # - name: Setup run scripts
+      #   run: |
+      #     mkdir scripts
+      #     rsync -a source/${{ inputs.build_kit_scripts_directory }}/ scripts
+      - name: Download build-kit image
+        uses: actions/download-artifact@v4
+        with:
+          name: build-kit
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
+      - name: Create integration-image
+        run: |
+          docker run \
+          --volume "${{ github.workspace }}:/ext" \
+          --name integration-container \
+          build-kit run-script create_integration_image
+          docker commit integration-container integration-image
+      - name: Run OCPP tests
+        id: run_ocpp_tests
+        run: |
+          docker compose \
+          -f source/.ci/e2e/docker-compose.yaml \
+          run \
+          e2e-test-server \
+          run-script run_ocpp_tests
+      # - name: Upload result and report as artifact
+      #   if: ${{ steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' }}
+      #   uses: actions/upload-artifact@v4.4.3
+      #   with:
+      #     if-no-files-found: error
+      #     name: integration-test-report
+      #     path: |
+      #       ${{ inputs.result_xml_path }}
+      #       ${{ inputs.report_html_path }}
+      # - name: Render result
+      #   if: ${{ steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' }}
+      #   uses: pmeier/pytest-results-action@v0.7.1
+      #   with:
+      #     path: ${{ inputs.result_xml_path }}
+      #     summary: True
+      #     display-options: fEX
+      #     fail-on-empty: True
+      #     title: Test results
