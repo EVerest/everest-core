@@ -709,6 +709,7 @@ void OCPP201::ready() {
         reservation.reservation_id = request.id;
         reservation.expiry_time = request.expiryDateTime.to_rfc3339();
         reservation.id_token = request.idToken.idToken;
+        reservation.evse_id = request.evseId;
         if (request.groupIdToken.has_value()) {
             reservation.parent_id_token = request.groupIdToken.value().idToken;
         }
@@ -716,10 +717,7 @@ void OCPP201::ready() {
             reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
         }
 
-        types::reservation::ReserveNowRequest request_out;
-        request_out.reservation = reservation;
-        request_out.reservation.evse_id = request.evseId;
-        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(request_out);
+        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(reservation);
         return conversions::to_ocpp_reservation_status(result);
     };
 

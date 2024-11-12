@@ -28,13 +28,41 @@ ReservationHandler::~ReservationHandler() {
     io_service_thread.join();
 }
 
-void ReservationHandler::init() {
-
-    if (store == nullptr) {
+void ReservationHandler::load_reservations() {
+    if (this->store == nullptr) {
+        EVLOG_info << "Can not load reservations because the store is a nullptr.";
         return;
     }
 
-    load_reservations();
+    const auto stored_reservations = store->call_load(this->kvs_store_key_id);
+    const Array* reservations_json = std::get_if<Array>(&stored_reservations);
+    if (reservations_json == nullptr) {
+        EVLOG_warning << "Can not load reservations: reservations is not a json array.";
+        return;
+    }
+
+    for (const auto& reservation : *reservations_json) {
+        types::reservation::Reservation r;
+        try {
+            r = reservation.at("reservation");
+        } catch (const json::exception& e) {
+            EVLOG_error << "Could not get reservation from store: " << e.what();
+            continue;
+        }
+
+        std::optional<uint32_t> evse_id;
+        if (reservation.contains("evse_id")) {
+            evse_id = reservation.at("evse_id");
+        }
+
+        types::reservation::ReservationResult reservation_result = this->make_reservation(evse_id, r);
+        if (reservation_result != types::reservation::ReservationResult::Accepted) {
+            EVLOG_warning << "Load reservations: Could not make reservation with id " << r.reservation_id
+                          << ": reservation cancelled.";
+            this->reservation_cancelled_callback(evse_id, r.reservation_id,
+                                                 types::reservation::ReservationEndReason::Cancelled);
+        }
+    }
 }
 
 types::reservation::ReservationResult
@@ -147,21 +175,6 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
     set_reservation_timer(reservation, evse_id);
 
     return types::reservation::ReservationResult::Accepted;
-}
-
-void ReservationHandler::on_evse_available_changed(const bool available, const uint32_t evse_id) {
-    std::unique_lock<std::recursive_mutex> lock(reservation_mutex);
-    if (evses.count(evse_id) == 0) {
-        EVLOG_warning << "Set evse state: Could not set evse state as the evse id (" << evse_id
-                      << ") does not exist. This should not happen.";
-        return;
-    }
-
-    // State is now not available. We don't know the old state, but let's check if all reservations are still possible
-    // and if not: cancel them.
-    if (!available) {
-        check_reservations_and_cancel_if_not_possible();
-    }
 }
 
 void ReservationHandler::on_connector_state_changed(const ConnectorState connector_state, const uint32_t evse_id,
@@ -724,43 +737,6 @@ void ReservationHandler::store_reservations() {
 
     if (!reservations.empty()) {
         this->store->call_store(this->kvs_store_key_id, reservations);
-    }
-}
-
-void ReservationHandler::load_reservations() {
-    if (this->store == nullptr) {
-        EVLOG_info << "Can not load reservations because the store is a nullptr.";
-        return;
-    }
-
-    const auto stored_reservations = store->call_load(this->kvs_store_key_id);
-    const Array* reservations_json = std::get_if<Array>(&stored_reservations);
-    if (reservations_json == nullptr) {
-        EVLOG_warning << "Can not load reservations: reservations is not a json array.";
-        return;
-    }
-
-    for (const auto& reservation : *reservations_json) {
-        types::reservation::Reservation r;
-        try {
-            r = reservation.at("reservation");
-        } catch (const json::exception& e) {
-            EVLOG_error << "Could not get reservation from store: " << e.what();
-            continue;
-        }
-
-        std::optional<uint32_t> evse_id;
-        if (reservation.contains("evse_id")) {
-            evse_id = reservation.at("evse_id");
-        }
-
-        types::reservation::ReservationResult reservation_result = this->make_reservation(evse_id, r);
-        if (reservation_result != types::reservation::ReservationResult::Accepted) {
-            EVLOG_warning << "Load reservations: Could not make reservation with id " << r.reservation_id
-                          << ": reservation cancelled.";
-            this->reservation_cancelled_callback(evse_id, r.reservation_id,
-                                                 types::reservation::ReservationEndReason::Cancelled);
-        }
     }
 }
 

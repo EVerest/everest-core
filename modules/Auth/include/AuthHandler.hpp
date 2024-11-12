@@ -65,7 +65,7 @@ public:
     /**
      * @brief Call when everything is initialized. This will call 'init' of the reservation handler.
      */
-    void initialized();
+    void initialize();
 
     /**
      * @brief Handler for a new incoming \p provided_token

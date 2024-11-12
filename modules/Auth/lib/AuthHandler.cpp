@@ -64,8 +64,8 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
     this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_index, connectors);
 }
 
-void AuthHandler::initialized() {
-    this->reservation_handler.init();
+void AuthHandler::initialize() {
+    this->reservation_handler.load_reservations();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {

@@ -64,9 +64,9 @@ public:
     ~ReservationHandler();
 
     ///
-    /// \brief Initialize. Read reservations from persistent store.
+    /// \brief Load reservations from key value store.
     ///
-    void init();
+    void load_reservations();
 
     ///
     /// \brief Try to make a reservation.
@@ -76,17 +76,6 @@ public:
     ///
     types::reservation::ReservationResult make_reservation(const std::optional<uint32_t> evse_id,
                                                            const types::reservation::Reservation& reservation);
-
-    ///
-    /// \brief Change the EVSE state.
-    ///
-    /// This is important for the reservation handler, to know which EVSE is in which state, to know if a reservation
-    /// can be made or not.
-    ///
-    /// \param available    True if evse is now available.
-    /// \param evse_id      The EVSE id.
-    ///
-    void on_evse_available_changed(const bool available, const uint32_t evse_id);
 
     ///
     /// \brief Change a specific connector state.
@@ -316,11 +305,6 @@ private: // Functions
     /// \brief Store reservations to key value store.
     ///
     void store_reservations();
-
-    ///
-    /// \brief Load reservations from key value store.
-    ///
-    void load_reservations();
 
     ///
     /// \brief Helper function to print information about reservations and evses, to find out why a reservation has

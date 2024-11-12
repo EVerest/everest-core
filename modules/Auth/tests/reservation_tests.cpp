@@ -1185,7 +1185,7 @@ TEST_F(ReservationHandlerTest, store_load_reservations) {
     EXPECT_TRUE(r.evse_reservations.empty());
     EXPECT_TRUE(r.global_reservations.empty());
 
-    r.init();
+    r.load_reservations();
 
     EXPECT_TRUE(r.evse_reservations.empty());
     EXPECT_TRUE(r.global_reservations.empty());
@@ -1207,7 +1207,7 @@ TEST_F(ReservationHandlerTest, store_load_reservations) {
     EXPECT_TRUE(r.global_reservations.empty());
     EXPECT_TRUE(r.reservation_id_to_reservation_timeout_timer_map.empty());
 
-    r.init();
+    r.load_reservations();
 
     EXPECT_EQ(r.evse_reservations.size(), 1);
     EXPECT_EQ(r.global_reservations.size(), 1);
@@ -1232,7 +1232,7 @@ TEST_F(ReservationHandlerTest, store_load_reservations_connector_unavailable) {
     EXPECT_TRUE(r.evse_reservations.empty());
     EXPECT_TRUE(r.global_reservations.empty());
 
-    r.init();
+    r.load_reservations();
 
     EXPECT_TRUE(r.evse_reservations.empty());
     EXPECT_TRUE(r.global_reservations.empty());
@@ -1259,7 +1259,7 @@ TEST_F(ReservationHandlerTest, store_load_reservations_connector_unavailable) {
     this->evses[1]->connectors.at(1).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[1]->connectors.at(1).get_state(), 1, 1);
 
-    r.init();
+    r.load_reservations();
 
     EXPECT_EQ(r.evse_reservations.size(), 0);
     EXPECT_EQ(r.global_reservations.size(), 1);

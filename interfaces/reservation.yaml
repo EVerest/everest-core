@@ -5,7 +5,7 @@ cmds:
     arguments:
       request:
         type: object
-        $ref: /reservation#/ReserveNowRequest
+        $ref: /reservation#/Reservation
         description: Requests to make a reservation
     result:
       description: >-

@@ -551,18 +551,18 @@ void OCPP::ready() {
         reservation.id_token = idTag.get();
         reservation.reservation_id = reservation_id;
         reservation.expiry_time = expiryDate.to_rfc3339();
+
         if (parent_id) {
             reservation.parent_id_token.emplace(parent_id.value().get());
         }
-        types::reservation::ReserveNowRequest request;
+
         if (connector == 0) {
-            request.reservation.evse_id == std::nullopt;
+            reservation.evse_id = std::nullopt;
         } else {
-            request.reservation.evse_id = connector;
+            reservation.evse_id = connector;
         }
 
-        request.reservation = reservation;
-        auto response = this->r_reservation->call_reserve_now(request);
+        auto response = this->r_reservation->call_reserve_now(reservation);
         return conversions::to_ocpp_reservation_status(response);
     });
 

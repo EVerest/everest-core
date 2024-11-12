@@ -34,8 +34,7 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual types::reservation::ReservationResult
-    handle_reserve_now(types::reservation::ReserveNowRequest& request) override;
+    virtual types::reservation::ReservationResult handle_reserve_now(types::reservation::Reservation& request) override;
     virtual bool handle_cancel_reservation(int& reservation_id) override;
     virtual bool handle_exists_reservation(types::reservation::ReservationCheck& request) override;
 

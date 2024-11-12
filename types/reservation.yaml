@@ -74,18 +74,6 @@ types:
       reservation_id:
         description: reservation_id
         type: integer
-  ReserveNowRequest:
-    description: >-
-      Request to reserve an evse.
-    type: object
-    additionalProperties: false
-    required:
-      - reservation
-    properties:
-      reservation:
-        description: The information about the Reservation to be placed
-        type: object
-        $ref: /reservation#/Reservation
   ReservationCheck:
     description: Check for a reserved token
     type: object

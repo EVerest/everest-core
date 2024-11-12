@@ -86,8 +86,12 @@ void Auth::ready() {
             if (evse_id.has_value()) {
                 EVLOG_info << "Call reserved callback for evse id " << evse_id.value();
 
-                // TODO mz do something with the result.
-                this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id);
+                if (!this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id)) {
+                    EVLOG_warning << "EVSE manager does not allow placing a reservation for evse id " << evse_id.value()
+                                  << ": cancelling reservation.";
+                    this->auth_handler->handle_cancel_reservation(reservation_id);
+                    return;
+                }
             }
 
             ReservationUpdateStatus status;
@@ -116,7 +120,7 @@ void Auth::ready() {
             this->p_reservation->publish_reservation_update(status);
         });
 
-    this->auth_handler->initialized();
+    this->auth_handler->initialize();
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {
