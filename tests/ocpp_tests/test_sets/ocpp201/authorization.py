@@ -386,7 +386,7 @@ async def test_c15(charge_point_v201: ChargePoint201, central_system_v201: Centr
     r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("TxCtrlr","MaxEnergyOnInvalidId")
     get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
     if get_variables_result.attribute_status == GetVariableStatusType.not_supported_attribute_type:
-        max_energy_on_invalid_id = None
+        pass
     else:
         # Enable LocalPreAuthorize
         r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("TxCtrlr", "MaxEnergyOnInvalidId", "0")

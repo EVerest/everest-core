@@ -43,8 +43,6 @@ async def test_authorize_parent_id_1(test_config: OcppTestConfiguration, charge_
 
     await charge_point_v16.change_configuration_req(key="AuthorizeRemoteTxRequests", value="true")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
-
     test_controller.plug_in()
 
     test_controller.swipe(test_config.authorization_info.valid_id_tag_2)

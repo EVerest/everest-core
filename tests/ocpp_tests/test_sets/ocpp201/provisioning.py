@@ -82,7 +82,7 @@ async def test_B08_FR_08(central_system_v201: CentralSystem, test_controller: Te
     test_controller.start()
     charge_point_v201 = await central_system_v201.wait_for_chargepoint(wait_for_bootnotification=True)
 
-    r = await charge_point_v201.get_report_req(request_id=777, component_criteria=[ComponentCriterionType.available])
+    await charge_point_v201.get_report_req(request_id=777, component_criteria=[ComponentCriterionType.available])
 
     exp_single_report_data_avail = ReportDataType(
         component=ComponentType(
@@ -845,7 +845,7 @@ async def test_get_base_report_01(charge_point_v201: ChargePoint201, test_utilit
 @ pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 async def test_get_custom_report_01(charge_point_v201: ChargePoint201):
-    r = await charge_point_v201.get_report_req(
+    await charge_point_v201.get_report_req(
         request_id=1,
         component_variable=[
             ComponentVariableType(

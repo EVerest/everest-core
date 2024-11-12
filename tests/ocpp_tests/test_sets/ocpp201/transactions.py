@@ -36,7 +36,6 @@ async def test_E04(central_system_v201: CentralSystem, test_controller: TestCont
     connector_id = 1
 
     evse_id2 = 2
-    connector_id2 = 1
 
     # make an unknown IdToken
     id_token=IdTokenType(

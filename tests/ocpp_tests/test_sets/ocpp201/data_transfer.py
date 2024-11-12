@@ -15,8 +15,6 @@ import pytest
 from everest.testing.core_utils.common import Requirement
 from everest.testing.ocpp_utils.central_system import CentralSystem
 
-from ocpp.v201 import call as call201
-
 from test_sets.everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.core_utils.probe_module import ProbeModule

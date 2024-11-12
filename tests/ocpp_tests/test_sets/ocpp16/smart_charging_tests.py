@@ -50,7 +50,7 @@ async def test_absolute_1(test_config, charge_point_v16: ChargePoint16, test_con
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
     assert await charge_point_v16.set_charging_profile_req(req3) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(call.GetCompositeSchedulePayload(
+    await charge_point_v16.get_composite_schedule(call.GetCompositeSchedulePayload(
         connector_id=1,
         duration=400
     ))
@@ -243,7 +243,7 @@ async def test_absolute_6(test_config, charge_point_v16: ChargePoint16, test_con
                                            1, test_config.authorization_info.valid_id_tag_1, 0, ""),
                                        validate_standard_start_transaction)
 
-    res_con1 = await charge_point_v16.get_composite_schedule(call.GetCompositeSchedulePayload(
+    await charge_point_v16.get_composite_schedule(call.GetCompositeSchedulePayload(
         connector_id=1,
         duration=900
     ))

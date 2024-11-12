@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-import pytest_asyncio
 # noinspection PyUnresolvedReferences
 from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.probe_module import ProbeModule
-from everest.testing.ocpp_utils.fixtures import CentralSystem
 # noinspection PyUnresolvedReferences
 from everest.testing.ocpp_utils.fixtures import ocpp_config, ocpp_version, charge_point, charge_point_v201, \
     central_system, central_system_v16, central_system_v201, \

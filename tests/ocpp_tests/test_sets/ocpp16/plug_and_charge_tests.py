@@ -10,8 +10,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
 from everest.testing.ocpp_utils.fixtures import *
-from ocpp.v201.enums import (IdTokenType,
-                             CertificateSigningUseType)
+from ocpp.v201.enums import (CertificateSigningUseType)
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201 import call as call201
 from ocpp.v16.enums import ChargePointErrorCode, ChargePointStatus

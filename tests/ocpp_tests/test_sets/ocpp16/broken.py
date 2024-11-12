@@ -16,15 +16,11 @@ from ocpp.charge_point import snake_to_camel_case
 from ocpp.routing import on, create_route_map
 
 # fmt: off
-import sys
-import os
 from validations import wait_for_callerror_and_validate, validate_boot_notification
 from everest.testing.ocpp_utils.fixtures import *
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate
 from everest_test_utils import *
-
-from everest.framework import Module, RuntimeSession, log
 # fmt: on
 
 
