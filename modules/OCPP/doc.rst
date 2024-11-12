@@ -278,23 +278,23 @@ The field **status** of the **StatusNotification.req** will be set to faulted on
 If no mapping is provided, the error will be reported on connectorId 0. Note that the mapping can be configured per module inside the  
 EVerest config file.
 
-For all other errors, raised in everest, the following mapping to an
-ocpp status notification will be used:
+For all other errors, raised in EVerest, the following mapping to an
+OCPP **StatusNotification.req** will be used:
 
-* status notification charge point ``errorCode`` will always be
+* **StatusNotification.req** property ``errorCode`` will always be
   ``OtherError``
-* status notification ``status`` will reflect the present status of the
+* **StatusNotification.req** property ``status`` will reflect the present status of the
   charge point
-* status notification ``info`` -> origin of everest error
-* status notification ``vendorErrorCode`` -> everest error type and
+* **StatusNotification.req** property ``info`` -> origin of EVerest error
+* **StatusNotification.req** property ``vendorErrorCode`` -> EVerest error type and
   subtype (the error type is simplified, meaning, that its leading part,
   the interface name, is stripped)
-* status notification ``vendorId`` -> everest error message
+* **StatusNotification.req** property ``vendorId`` -> EVerest error message
 
-The reason for using the status notification ``vendorId`` for the error
-message is that it can carry the largest string (255 characters),
-whereas the other fields (``info`` and ``vendorErrorCode``) only allow
-up to 50 characters.
+The reason for using the **StatusNotification.req** property property
+``vendorId`` for the error message is that it can carry the largest
+string (255 characters), whereas the other fields (``info`` and
+``vendorErrorCode``) only allow up to 50 characters.
 
 If for example the module with id `yeti_driver` within its
 implementation with id `board_support` creates the following error:
