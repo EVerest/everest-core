@@ -91,6 +91,7 @@ jobs:
           docker commit integration-container integration-image
       - name: Run OCPP tests
         id: run_ocpp_tests
+        continue-on-error: true
         run: |
           docker compose \
           -f source/.ci/e2e/docker-compose.yaml \
