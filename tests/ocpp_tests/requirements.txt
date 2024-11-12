@@ -4,7 +4,7 @@ python-dateutil
 pytest-asyncio
 paho-mqtt
 pyftpdlib
-websockets
+websockets==13.1
 pyOpenSSL
 pytest-html
 pytest-xdist
