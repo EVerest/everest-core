@@ -7,6 +7,8 @@ PARALLEL_TESTS=$(nproc)
 pytest \
   -rA \
   -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
+  --max-worker-restart=0 \
+  --timeout=300 \
   --junitxml="$EXT_MOUNT/result.xml" \
   --html="$EXT_MOUNT/report.html" \
   --self-contained-html \
