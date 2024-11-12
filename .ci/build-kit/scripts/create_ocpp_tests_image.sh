@@ -22,4 +22,4 @@ fi
 
 pip install --break-system-packages -r tests/ocpp_tests/requirements.txt
 
-./tests/ocpp_tests/test_sets/everest-aux/install_configs.sh "$EXT_MOUNT/dist"
+$(cd ./tests/ocpp_tests/test_sets/everest-aux/ && ./install_certs.sh "$EXT_MOUNT/dist" && ./install_configs.sh "$EXT_MOUNT/dist")
