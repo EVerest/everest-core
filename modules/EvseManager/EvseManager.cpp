@@ -1583,7 +1583,7 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
 
     if (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and current_demand_active) and
         is_actually_exporting_to_grid) {
-        if (not last_is_actually_exporting_to_grid) {
+        if (not last_is_actually_exporting_to_grid and powersupply_dc_is_on) {
             // switching from import from grid to export to grid
             session_log.evse(false, "DC power supply: switch ON in import mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Import, power_supply_DC_charging_phase);
@@ -1616,9 +1616,10 @@ bool EvseManager::powersupply_DC_set(double _voltage, double _current) {
         return false;
 
     } else {
-        if (charging_phase_changed or (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
-                                        last_is_actually_exporting_to_grid) and
-                                       current_demand_active)) {
+        if (powersupply_dc_is_on and
+            (charging_phase_changed or (((config.hack_allow_bpt_with_iso2 or config.sae_j2847_2_bpt_enabled) and
+                                         last_is_actually_exporting_to_grid) and
+                                        current_demand_active))) {
             // switching from export to grid to import from grid
             session_log.evse(false, "DC power supply: switch ON in export mode");
             r_powersupply_DC[0]->call_setMode(types::power_supply_DC::Mode::Export, power_supply_DC_charging_phase);
