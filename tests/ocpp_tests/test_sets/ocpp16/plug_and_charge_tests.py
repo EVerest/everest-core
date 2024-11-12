@@ -590,7 +590,7 @@ class TestPlugAndCharge:
         try:
             os.remove(v2g_root_ca_path)
         except Exception:
-            pass
+            print(f"Could not remove dir: {v2g_root_ca_path}")
 
         with open(
             Path(os.path.dirname(__file__)).parent

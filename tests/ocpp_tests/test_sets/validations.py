@@ -339,7 +339,7 @@ async def wait_for_callerror_and_validate(
             msg = unpack(raw_message)
             if msg.message_type_id == 4:
                 return validate_call_error(msg, exp_payload)
-        except asyncio.TimeoutError as ex:
+        except asyncio.TimeoutError:
             logging.debug("Timeout while waiting for new message")
 
     logging.info(f"Timeout while waiting for CallError message")

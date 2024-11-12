@@ -83,7 +83,6 @@ async def test_F01_F02_F03(
         **r.get_variable_result[0]
     )
     assert get_variables_result.attribute_status == GetVariableStatusType.accepted
-    expected_updated_measurands = get_variables_result.attribute_value.split(",")
 
     # get configured measurands in order to compare them to the measurands used in TransactionEvent(eventType=Started) for testing F01.FR.14
     r: call_result201.GetVariablesPayload = (

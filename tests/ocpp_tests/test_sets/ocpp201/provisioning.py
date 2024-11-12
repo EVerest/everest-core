@@ -1231,10 +1231,6 @@ async def test_B04(
     connector_id = 1
 
     evse_id2 = 2
-    connector_id2 = 1
-
-    # make an unknown IdToken
-    id_tokenB04 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
 
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):

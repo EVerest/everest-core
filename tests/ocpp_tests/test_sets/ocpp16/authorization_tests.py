@@ -17,8 +17,6 @@ from ocpp.v16 import call, call_result
 from ocpp.v16.enums import *
 
 # fmt: off
-import sys
-import os
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest.testing.ocpp_utils.fixtures import *
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
