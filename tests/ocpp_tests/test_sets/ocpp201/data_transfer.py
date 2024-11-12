@@ -315,4 +315,3 @@ class TestOcpp201DataTransferIntegration:
         assert data_transfer_result == call_result201.DataTransferPayload(
             status="Rejected"
         )
-

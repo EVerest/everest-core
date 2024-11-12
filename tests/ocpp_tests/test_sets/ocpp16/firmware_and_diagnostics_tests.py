@@ -19,8 +19,10 @@ from everest_test_utils import *
 # fmt: on
 
 
-@ pytest.mark.asyncio
-async def test_get_diagnostics_retries(charge_point_v16: ChargePoint16, test_utility: TestUtility):
+@pytest.mark.asyncio
+async def test_get_diagnostics_retries(
+    charge_point_v16: ChargePoint16, test_utility: TestUtility
+):
     logging.info("######### test_get_diagnostics_retries #########")
 
     await asyncio.sleep(1)
@@ -28,40 +30,70 @@ async def test_get_diagnostics_retries(charge_point_v16: ChargePoint16, test_uti
     # FIXME: make sure this port does not exist? or username and password are wrong?
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121"
     start_time = datetime.utcnow()
-    stop_time = (start_time + timedelta(days=3))
+    stop_time = start_time + timedelta(days=3)
     retries = 2
     retry_interval = 2
 
     test_utility.messages.clear()
-    await charge_point_v16.get_diagnostics_req(location=location,
-                                               start_time=start_time.isoformat(),
-                                               stop_time=stop_time.isoformat(), retries=retries, retry_interval=retry_interval)
+    await charge_point_v16.get_diagnostics_req(
+        location=location,
+        start_time=start_time.isoformat(),
+        stop_time=stop_time.isoformat(),
+        retries=retries,
+        retry_interval=retry_interval,
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.uploading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "DiagnosticsStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "DiagnosticsStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(DiagnosticsStatus.upload_failed),
+    )
 
 
-@ pytest.mark.asyncio
-async def test_upload_security_log_retries(charge_point_v16: ChargePoint16, test_utility: TestUtility):
+@pytest.mark.asyncio
+async def test_upload_security_log_retries(
+    charge_point_v16: ChargePoint16, test_utility: TestUtility
+):
     logging.info("######### test_upload_security_log_retries #########")
 
     oldest_timestamp = datetime.utcnow()
@@ -72,41 +104,77 @@ async def test_upload_security_log_retries(charge_point_v16: ChargePoint16, test
     log = {
         "remoteLocation": f"ftp://{getpass.getuser()}:12345@localhost:2121",
         "oldestTimestamp": oldest_timestamp.isoformat(),
-        "latestTimestamp": latest_timestamp.isoformat()
+        "latestTimestamp": latest_timestamp.isoformat(),
     }
 
     test_utility.messages.clear()
-    await charge_point_v16.get_log_req(log=log, log_type=Log.security_log,
-                                       retries=retries, retry_interval=retry_interval, request_id=1)
+    await charge_point_v16.get_log_req(
+        log=log,
+        log_type=Log.security_log,
+        retries=retries,
+        retry_interval=retry_interval,
+        request_id=1,
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "GetLog",
-                                       call_result.GetLogPayload(LogStatus.accepted), validate_get_log)
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetLog",
+        call_result.GetLogPayload(LogStatus.accepted),
+        validate_get_log,
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.uploading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "LogStatusNotification",
-                                       call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "LogStatusNotification",
+        call.LogStatusNotificationPayload(UploadLogStatus.upload_failure, 1),
+    )
 
 
-@ pytest.mark.asyncio
-async def test_firwmare_update_retries(charge_point_v16: ChargePoint16, test_utility: TestUtility):
+@pytest.mark.asyncio
+async def test_firwmare_update_retries(
+    charge_point_v16: ChargePoint16, test_utility: TestUtility
+):
     # not supported when implemented security extensions
     logging.info("######### test_firwmare_update_retries #########")
 
@@ -117,35 +185,66 @@ async def test_firwmare_update_retries(charge_point_v16: ChargePoint16, test_uti
     retries = 2
     retry_interval = 2
 
-    await charge_point_v16.update_firmware_req(location=location,
-                                               retrieve_date=retrieve_date.isoformat(),
-                                               retries=retries, retry_interval=retry_interval)
+    await charge_point_v16.update_firmware_req(
+        location=location,
+        retrieve_date=retrieve_date.isoformat(),
+        retries=retries,
+        retry_interval=retry_interval,
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.downloading),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "FirmwareStatusNotification",
-                                       call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "FirmwareStatusNotification",
+        call.DiagnosticsStatusNotificationPayload(FirmwareStatus.download_failed),
+    )
 
 
-@ pytest.mark.asyncio
-async def test_signed_update_firmware_retries(test_config: OcppTestConfiguration, charge_point_v16: ChargePoint16, test_utility: TestUtility):
+@pytest.mark.asyncio
+async def test_signed_update_firmware_retries(
+    test_config: OcppTestConfiguration,
+    charge_point_v16: ChargePoint16,
+    test_utility: TestUtility,
+):
     logging.info("######### test_signed_update_firmware_retries #########")
 
     await asyncio.sleep(1)
@@ -154,11 +253,17 @@ async def test_signed_update_firmware_retries(test_config: OcppTestConfiguration
 
     certificate = open(test_config.certificate_info.mf_root_ca).read()
 
-    await charge_point_v16.install_certificate_req(certificate_type=CertificateUse.manufacturer_root_certificate,
-                                                   certificate=certificate)
+    await charge_point_v16.install_certificate_req(
+        certificate_type=CertificateUse.manufacturer_root_certificate,
+        certificate=certificate,
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "InstallCertificate",
-                                       call_result.InstallCertificatePayload(CertificateStatus.accepted))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "InstallCertificate",
+        call_result.InstallCertificatePayload(CertificateStatus.accepted),
+    )
 
     location = f"ftp://{getpass.getuser()}:12345@localhost:2121/firmware_update.pnx"
     retries = 2
@@ -171,38 +276,69 @@ async def test_signed_update_firmware_retries(test_config: OcppTestConfiguration
         "location": location,
         "retrieveDateTime": retrieve_date_time.isoformat(),
         "signingCertificate": mf_root_ca,
-        "signature": fw_signature
+        "signature": fw_signature,
     }
 
-    await charge_point_v16.signed_update_firmware_req(request_id=1, retries=retries,
-                                                      retry_interval=retry_interval, firmware=firmware)
+    await charge_point_v16.signed_update_firmware_req(
+        request_id=1, retries=retries, retry_interval=retry_interval, firmware=firmware
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedUpdateFirmware",
-                                       call_result.SignedUpdateFirmwarePayload(UpdateFirmwareStatus.accepted))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedUpdateFirmware",
+        call_result.SignedUpdateFirmwarePayload(UpdateFirmwareStatus.accepted),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
+    )
 
     test_utility.messages.clear()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.downloading, 1),
+    )
 
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "SignedFirmwareStatusNotification",
-                                       call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1))
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "SignedFirmwareStatusNotification",
+        call.SignedFirmwareStatusNotificationPayload(FirmwareStatus.download_failed, 1),
+    )
 
     # no SignedFirmwareStatusNotification.req should be sent anymore
     test_utility.forbidden_actions.append("SignedFirmwareStatusNotification")
     test_utility.messages.clear()
-    assert await wait_for_and_validate(test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload())
+    assert await wait_for_and_validate(
+        test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
+    )

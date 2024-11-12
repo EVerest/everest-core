@@ -20,7 +20,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.x509 import load_pem_x509_certificate
 
-from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment, OCPP201ConfigVariableIdentifier
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
+    GenericOCPP201ConfigAdjustment,
+    OCPP201ConfigVariableIdentifier,
+)
 
 from iso15118.shared.security import (
     CertPath,
@@ -41,7 +44,7 @@ from iso15118.shared.messages.iso15118_2.datatypes import (
     DHPublicKey,
     EncryptedPrivateKey,
     ResponseCode,
-    SubCertificates
+    SubCertificates,
 )
 from iso15118.shared.messages.iso15118_2.body import Body, CertificateInstallationRes
 from iso15118.shared.messages.enums import Namespace
@@ -53,22 +56,28 @@ import json
 import base64
 import os
 
-from everest.testing.ocpp_utils.charge_point_utils import OcppTestConfiguration, ChargePointInfo, CertificateInfo, \
-    FirmwareInfo, AuthorizationInfo
+from everest.testing.ocpp_utils.charge_point_utils import (
+    OcppTestConfiguration,
+    ChargePointInfo,
+    CertificateInfo,
+    FirmwareInfo,
+    AuthorizationInfo,
+)
 
 from ocpp.charge_point import snake_to_camel_case, asdict, remove_nones
 from ocpp.v16 import call, call_result
-from ocpp.v16.enums import (
-    Action,
-    DataTransferStatus
-)
+from ocpp.v16.enums import Action, DataTransferStatus
 from ocpp.routing import on
 
 # for OCPP1.6 PnC whitepaper:
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.datatypes import IdTokenInfoType
-from ocpp.v201.enums import (AuthorizationStatusType, GenericStatusType,
-                             Iso15118EVCertificateStatusType, GetCertificateStatusType)
+from ocpp.v201.enums import (
+    AuthorizationStatusType,
+    GenericStatusType,
+    Iso15118EVCertificateStatusType,
+    GetCertificateStatusType,
+)
 
 
 class EXIGenerator:
@@ -78,18 +87,22 @@ class EXIGenerator:
         EXI().set_exi_codec(ExificientEXICodec())
 
     def generate_certificate_installation_res(
-            self, base64_encoded_cert_installation_req: str, namespace: str
+        self, base64_encoded_cert_installation_req: str, namespace: str
     ) -> str:
 
         cert_install_req_exi = base64.b64decode(base64_encoded_cert_installation_req)
         cert_install_req = EXI().from_exi(cert_install_req_exi, namespace)
         try:
             dh_pub_key, encrypted_priv_key_bytes = encrypt_priv_key(
-                oem_prov_cert=load_cert(os.path.join(self.certs_path, CertPath.OEM_LEAF_DER)),
+                oem_prov_cert=load_cert(
+                    os.path.join(self.certs_path, CertPath.OEM_LEAF_DER)
+                ),
                 priv_key_to_encrypt=load_priv_key(
                     os.path.join(self.certs_path, KeyPath.CONTRACT_LEAF_PEM),
                     KeyEncoding.PEM,
-                    os.path.join(self.certs_path, KeyPasswordPath.CONTRACT_LEAF_KEY_PASSWORD),
+                    os.path.join(
+                        self.certs_path, KeyPasswordPath.CONTRACT_LEAF_KEY_PASSWORD
+                    ),
                 ),
             )
         except EncryptionError:
@@ -106,7 +119,9 @@ class EXIGenerator:
         # The elements that need to be part of the signature
         contract_cert_chain = CertificateChain(
             id="id1",
-            certificate=load_cert(os.path.join(self.certs_path, CertPath.CONTRACT_LEAF_DER)),
+            certificate=load_cert(
+                os.path.join(self.certs_path, CertPath.CONTRACT_LEAF_DER)
+            ),
             sub_certificates=SubCertificates(
                 certificates=[
                     load_cert(os.path.join(self.certs_path, CertPath.MO_SUB_CA2_DER)),
@@ -119,7 +134,10 @@ class EXIGenerator:
         )
         dh_public_key = DHPublicKey(id="id3", value=dh_pub_key)
         emaid = EMAID(
-            id="id4", value=get_cert_cn(load_cert(os.path.join(self.certs_path, CertPath.CONTRACT_LEAF_DER)))
+            id="id4",
+            value=get_cert_cn(
+                load_cert(os.path.join(self.certs_path, CertPath.CONTRACT_LEAF_DER))
+            ),
         )
         cps_certificate_chain = CertificateChain(
             certificate=load_cert(os.path.join(self.certs_path, CertPath.CPS_LEAF_DER)),
@@ -204,17 +222,18 @@ class EXIGenerator:
 
 
 def certificate_signed_response(csr: crypto.X509Req):
-    certs_path: str = Path(
-        __file__).parent.resolve() / 'everest-aux/certs/'
+    certs_path: str = Path(__file__).parent.resolve() / "everest-aux/certs/"
     ca_cert_file = certs_path / "ca/v2g/V2G_ROOT_CA.pem"
     ca_key_file = certs_path / "client/v2g/V2G_ROOT_CA.key"
 
-    with open(ca_cert_file, 'rb') as ca_cert_file, open(ca_key_file, 'rb') as ca_key_file:
+    with open(ca_cert_file, "rb") as ca_cert_file, open(
+        ca_key_file, "rb"
+    ) as ca_key_file:
         ca_cert_data = ca_cert_file.read()
         ca_key_data = ca_key_file.read()
 
     ca_cert = crypto.load_certificate(crypto.FILETYPE_PEM, ca_cert_data)
-    ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, ca_key_data, b'123456')
+    ca_key = crypto.load_privatekey(crypto.FILETYPE_PEM, ca_key_data, b"123456")
 
     signed_cert = crypto.X509()
     signed_cert.set_version(3)
@@ -228,102 +247,105 @@ def certificate_signed_response(csr: crypto.X509Req):
     not_before = datetime.utcnow()
     not_after = not_before + timedelta(days=validity_days)
 
-    signed_cert.set_notBefore(not_before.strftime("%Y%m%d%H%M%SZ").encode('utf-8'))
-    signed_cert.set_notAfter(not_after.strftime("%Y%m%d%H%M%SZ").encode('utf-8'))
+    signed_cert.set_notBefore(not_before.strftime("%Y%m%d%H%M%SZ").encode("utf-8"))
+    signed_cert.set_notAfter(not_after.strftime("%Y%m%d%H%M%SZ").encode("utf-8"))
 
-    signed_cert.sign(ca_key, 'sha256')
+    signed_cert.sign(ca_key, "sha256")
 
     return crypto.dump_certificate(crypto.FILETYPE_PEM, signed_cert).decode("utf-8")
 
 
 def on_data_transfer(accept_pnc_authorize, **kwargs):
     req = call.DataTransferPayload(**kwargs)
-    if req.vendor_id == 'org.openchargealliance.iso15118pnc':
-        if (req.message_id == "Authorize"):
+    if req.vendor_id == "org.openchargealliance.iso15118pnc":
+        if req.message_id == "Authorize":
             if accept_pnc_authorize:
                 status = AuthorizationStatusType.accepted
             else:
                 status = AuthorizationStatusType.invalid
             response = call_result201.AuthorizePayload(
-                id_token_info=IdTokenInfoType(
-                    status=status
-                )
+                id_token_info=IdTokenInfoType(status=status)
             )
             return call_result.DataTransferPayload(
                 status=DataTransferStatus.accepted,
-                data=json.dumps(remove_nones(
-                    snake_to_camel_case(asdict(response))))
+                data=json.dumps(remove_nones(snake_to_camel_case(asdict(response)))),
             )
         # Should not be part of DataTransfer.req from CP->CSMS
-        elif (req.message_id == "CertificateSigned"):
+        elif req.message_id == "CertificateSigned":
             return call_result.DataTransferPayload(
-                status=DataTransferStatus.unknown_message_id,
-                data="Please implement me"
+                status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "DeleteCertificate":
             return call_result.DataTransferPayload(
-                status=DataTransferStatus.unknown_message_id,
-                data="Please implement me"
+                status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         elif req.message_id == "Get15118EVCertificate":
-            certs_path: str = Path(
-                __file__).parent.resolve() / 'everest-aux/certs/'
+            certs_path: str = Path(__file__).parent.resolve() / "everest-aux/certs/"
             generator: EXIGenerator = EXIGenerator(certs_path)
-            exi_request = json.loads(kwargs['data'])['exiRequest']
-            namespace = json.loads(kwargs['data'])['iso15118SchemaVersion']
+            exi_request = json.loads(kwargs["data"])["exiRequest"]
+            namespace = json.loads(kwargs["data"])["iso15118SchemaVersion"]
             return call_result.DataTransferPayload(
                 status=DataTransferStatus.accepted,
-                data=json.dumps(remove_nones(snake_to_camel_case(asdict(
-                    call_result201.Get15118EVCertificatePayload(
-                        status=Iso15118EVCertificateStatusType.accepted,
-                        exi_response=generator.generate_certificate_installation_res(
-                            exi_request,
-                            namespace
+                data=json.dumps(
+                    remove_nones(
+                        snake_to_camel_case(
+                            asdict(
+                                call_result201.Get15118EVCertificatePayload(
+                                    status=Iso15118EVCertificateStatusType.accepted,
+                                    exi_response=generator.generate_certificate_installation_res(
+                                        exi_request, namespace
+                                    ),
+                                )
+                            )
                         )
-                    ))
-                )))
+                    )
+                ),
             )
         elif req.message_id == "GetCertificateStatus":
             return call_result.DataTransferPayload(
                 status=DataTransferStatus.accepted,
-                data=json.dumps(remove_nones(snake_to_camel_case(asdict(
-                    call_result201.GetCertificateStatusPayload(
-                        status=GetCertificateStatusType.accepted,
-                        ocsp_result="anwfdiefnwenfinfinef"
+                data=json.dumps(
+                    remove_nones(
+                        snake_to_camel_case(
+                            asdict(
+                                call_result201.GetCertificateStatusPayload(
+                                    status=GetCertificateStatusType.accepted,
+                                    ocsp_result="anwfdiefnwenfinfinef",
+                                )
+                            )
+                        )
                     )
-                ))))
+                ),
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "InstallCertificate":
             return call_result.DataTransferPayload(
-                status=DataTransferStatus.unknown_message_id,
-                data="Please implement me"
+                status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         elif req.message_id == "SignCertificate":
             return call_result.DataTransferPayload(
                 status=DataTransferStatus.accepted,
-                data=json.dumps(asdict(
-                    call_result201.SignCertificatePayload(
-                        status=GenericStatusType.accepted
+                data=json.dumps(
+                    asdict(
+                        call_result201.SignCertificatePayload(
+                            status=GenericStatusType.accepted
+                        )
                     )
-                ))
+                ),
             )
         # Should not be part of DataTransfer.req from CP->CSMS
         elif req.message_id == "TriggerMessage":
             return call_result.DataTransferPayload(
-                status=DataTransferStatus.unknown_message_id,
-                data="Please implement me"
+                status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
         else:
             return call_result.DataTransferPayload(
-                status=DataTransferStatus.unknown_message_id,
-                data="Please implement me"
+                status=DataTransferStatus.unknown_message_id, data="Please implement me"
             )
     else:
         return call_result.DataTransferPayload(
-            status=DataTransferStatus.unknown_vendor_id,
-            data="Please implement me"
+            status=DataTransferStatus.unknown_vendor_id, data="Please implement me"
         )
 
 
@@ -338,42 +360,67 @@ def on_data_transfer_reject_authorize(**kwargs):
 
 
 def get_everest_config_path_str(config_name):
-    return (Path(__file__).parent / 'everest-aux' / 'config' / config_name).as_posix()
+    return (Path(__file__).parent / "everest-aux" / "config" / config_name).as_posix()
 
 
 def get_everest_config(function_name, module_name):
-    if module_name == 'plug_and_charge_tests':
-        return Path(__file__).parent / Path('everest-aux/config/everest-config-sil-iso.yaml')
-    elif module_name in ['provisioning', 'authorization', 'remote_control', 'security', 'local_authorization_list',
-                         'transactions', 'meterValues']:
-        return Path(__file__).parent / Path('everest-aux/config/everest-config-ocpp201.yaml')
+    if module_name == "plug_and_charge_tests":
+        return Path(__file__).parent / Path(
+            "everest-aux/config/everest-config-sil-iso.yaml"
+        )
+    elif module_name in [
+        "provisioning",
+        "authorization",
+        "remote_control",
+        "security",
+        "local_authorization_list",
+        "transactions",
+        "meterValues",
+    ]:
+        return Path(__file__).parent / Path(
+            "everest-aux/config/everest-config-ocpp201.yaml"
+        )
     else:
-        return Path(__file__).parent / Path('everest-aux/config/everest-config-sil-ocpp.yaml')
+        return Path(__file__).parent / Path(
+            "everest-aux/config/everest-config-sil-ocpp.yaml"
+        )
 
 
 def test_config(request):
     data = json.loads((Path(__file__).parent / "test_config.json").read_text())
 
     ocpp_test_config = OcppTestConfiguration(
-        charge_point_info=ChargePointInfo(**data['charge_point_info']),
-        authorization_info=AuthorizationInfo(**data['authorization_info']),
-        certificate_info=CertificateInfo(**data['certificate_info']),
-        firmware_info=FirmwareInfo(**data['firmware_info'])
+        charge_point_info=ChargePointInfo(**data["charge_point_info"]),
+        authorization_info=AuthorizationInfo(**data["authorization_info"]),
+        certificate_info=CertificateInfo(**data["certificate_info"]),
+        firmware_info=FirmwareInfo(**data["firmware_info"]),
     )
 
-    ocpp_test_config.certificate_info.csms_cert = Path(__file__).parent / ocpp_test_config.certificate_info.csms_cert
-    ocpp_test_config.certificate_info.csms_key = Path(__file__).parent / ocpp_test_config.certificate_info.csms_key
-    ocpp_test_config.certificate_info.csms_root_ca = Path(
-        __file__).parent / ocpp_test_config.certificate_info.csms_root_ca
-    ocpp_test_config.certificate_info.csms_root_ca_invalid = Path(
-        __file__).parent / ocpp_test_config.certificate_info.csms_root_ca_invalid
-    ocpp_test_config.certificate_info.csms_root_ca_key = Path(
-        __file__).parent / ocpp_test_config.certificate_info.csms_root_ca_key
-    ocpp_test_config.certificate_info.mf_root_ca = Path(__file__).parent / ocpp_test_config.certificate_info.mf_root_ca
+    ocpp_test_config.certificate_info.csms_cert = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.csms_cert
+    )
+    ocpp_test_config.certificate_info.csms_key = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.csms_key
+    )
+    ocpp_test_config.certificate_info.csms_root_ca = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.csms_root_ca
+    )
+    ocpp_test_config.certificate_info.csms_root_ca_invalid = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.csms_root_ca_invalid
+    )
+    ocpp_test_config.certificate_info.csms_root_ca_key = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.csms_root_ca_key
+    )
+    ocpp_test_config.certificate_info.mf_root_ca = (
+        Path(__file__).parent / ocpp_test_config.certificate_info.mf_root_ca
+    )
 
-    ocpp_test_config.firmware_info.update_file = Path(__file__).parent / ocpp_test_config.firmware_info.update_file
-    ocpp_test_config.firmware_info.update_file_signature = Path(
-        __file__).parent / ocpp_test_config.firmware_info.update_file_signature
+    ocpp_test_config.firmware_info.update_file = (
+        Path(__file__).parent / ocpp_test_config.firmware_info.update_file
+    )
+    ocpp_test_config.firmware_info.update_file_signature = (
+        Path(__file__).parent / ocpp_test_config.firmware_info.update_file_signature
+    )
 
     return ocpp_test_config
 
@@ -385,7 +432,7 @@ async def call_test_function_and_wait(test_function: FunctionType, timeout=20) -
         res = test_function(timeout)
         q.put(res)
 
-    test_thread = threading.Thread(target=tst, kwargs={'q': q})
+    test_thread = threading.Thread(target=tst, kwargs={"q": q})
     test_thread.start()
 
     result = False
@@ -399,23 +446,23 @@ async def call_test_function_and_wait(test_function: FunctionType, timeout=20) -
 
 class CertificateHashDataGenerator:
     """
-     Compute the hash values for certificates.
+    Compute the hash values for certificates.
 
-     Note: EVSE Security uses the X509_pubkey_digest OpenSSL function for this.
+    Note: EVSE Security uses the X509_pubkey_digest OpenSSL function for this.
 
-     The hashes are not generated from the whole DER-encoded "Subject Public Key Information"
-     field, but rather only from the bit-string representing the actual key bits (without the ASN.1
-     tag and length).
+    The hashes are not generated from the whole DER-encoded "Subject Public Key Information"
+    field, but rather only from the bit-string representing the actual key bits (without the ASN.1
+    tag and length).
 
-     Unfortunately, there doesn't seem to be a generic method for
-     doing this, so RSA and ECDSA keys are handled differently.
-     If we need to add support for Ed25519 or others, we'd need to
-     extend the logic here as well.
+    Unfortunately, there doesn't seem to be a generic method for
+    doing this, so RSA and ECDSA keys are handled differently.
+    If we need to add support for Ed25519 or others, we'd need to
+    extend the logic here as well.
 
-     Cf:
-     - https://groups.google.com/g/mailing.openssl.users/c/1hhY2uECxsc
-     - https://github.com/openssl/openssl/issues/8777
-     - https://datatracker.ietf.org/doc/html/rfc5480
+    Cf:
+    - https://groups.google.com/g/mailing.openssl.users/c/1hhY2uECxsc
+    - https://github.com/openssl/openssl/issues/8777
+    - https://datatracker.ietf.org/doc/html/rfc5480
 
     """
 
@@ -424,12 +471,19 @@ class CertificateHashDataGenerator:
         return hashlib.sha256(b).hexdigest()
 
     @classmethod
-    def get_hash_data(cls, certificate_path: Path,
-                      issuer_certificate_path: Optional[Path] = None):
-        issuer_certificate_path = issuer_certificate_path if issuer_certificate_path else certificate_path
+    def get_hash_data(
+        cls, certificate_path: Path, issuer_certificate_path: Optional[Path] = None
+    ):
+        issuer_certificate_path = (
+            issuer_certificate_path if issuer_certificate_path else certificate_path
+        )
 
-        certificate = load_pem_x509_certificate(certificate_path.read_bytes(), default_backend())
-        issuer_certificate = load_pem_x509_certificate(issuer_certificate_path.read_bytes(), default_backend())
+        certificate = load_pem_x509_certificate(
+            certificate_path.read_bytes(), default_backend()
+        )
+        issuer_certificate = load_pem_x509_certificate(
+            issuer_certificate_path.read_bytes(), default_backend()
+        )
 
         issuer_name_hash = cls._get_name_hash(issuer_certificate)
         issuer_key_hash = cls._get_public_key_hash(issuer_certificate_path)
@@ -440,7 +494,7 @@ class CertificateHashDataGenerator:
             "hash_algorithm": "SHA256",
             "issuer_key_hash": issuer_key_hash,
             "issuer_name_hash": issuer_name_hash,
-            "serial_number": hex(certificate.serial_number)[2:].lower()
+            "serial_number": hex(certificate.serial_number)[2:].lower(),
             # strip 0x according to OCPP spec (CertificateHashDataType)
         }
 
@@ -450,13 +504,20 @@ class CertificateHashDataGenerator:
         # Get the raw key bytes - the method to do this differs by key type
         # try RSA
         try:
-            return cls._sha256(certificate.public_key().public_bytes(
-                encoding=serialization.Encoding.DER,
-                format=serialization.PublicFormat.PKCS1))
+            return cls._sha256(
+                certificate.public_key().public_bytes(
+                    encoding=serialization.Encoding.DER,
+                    format=serialization.PublicFormat.PKCS1,
+                )
+            )
         # try ECDSA (Note: We assume we're working with the uncompressed-point format here)
         except:
-            return cls._sha256(certificate.public_key().public_bytes(encoding=serialization.Encoding.X962,
-                                                                     format=serialization.PublicFormat.UncompressedPoint))
+            return cls._sha256(
+                certificate.public_key().public_bytes(
+                    encoding=serialization.Encoding.X962,
+                    format=serialization.PublicFormat.UncompressedPoint,
+                )
+            )
         # if ECDSA also fails, then we need to adjust this method to add more options (e.g. Ed25519)
 
     @classmethod
@@ -472,19 +533,33 @@ class CertificateHelper:
 
     @staticmethod
     def _verify_private_key_matches_cert(private_key: crypto.PKey, cert: crypto.X509):
-        cert_public_key = cert.get_pubkey().to_cryptography_key().public_bytes(encoding=serialization.Encoding.DER,
-                                                                               format=serialization.PublicFormat.SubjectPublicKeyInfo)
-        pkey_public_key = private_key.to_cryptography_key().public_key().public_bytes(
-            encoding=serialization.Encoding.DER,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo)
+        cert_public_key = (
+            cert.get_pubkey()
+            .to_cryptography_key()
+            .public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
+        pkey_public_key = (
+            private_key.to_cryptography_key()
+            .public_key()
+            .public_bytes(
+                encoding=serialization.Encoding.DER,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+        )
 
-        assert cert_public_key == pkey_public_key, \
-            f"Private key is for {pkey_public_key}; certificat has public key {pkey_public_key}"
+        assert (
+            cert_public_key == pkey_public_key
+        ), f"Private key is for {pkey_public_key}; certificat has public key {pkey_public_key}"
 
     @classmethod
-    def generate_certificate_request(cls, common_name: str, passphrase: str | bytes | None = None) -> tuple[str, str]:
+    def generate_certificate_request(
+        cls, common_name: str, passphrase: str | bytes | None = None
+    ) -> tuple[str, str]:
         """
-         Returns: tuple of certificate request and private key
+        Returns: tuple of certificate request and private key
         """
 
         key = crypto.PKey()
@@ -495,32 +570,45 @@ class CertificateHelper:
         req.get_subject().C = "DE"
         req.sign(key, "sha256")
         csr_data = crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
-        private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM,
-                                             pkey=key,
-                                             cipher="aes256" if passphrase else None,
-                                             passphrase=passphrase.encode("utf-8") if isinstance(passphrase,
-                                                                                                 str) else passphrase)
+        private_key = crypto.dump_privatekey(
+            crypto.FILETYPE_PEM,
+            pkey=key,
+            cipher="aes256" if passphrase else None,
+            passphrase=(
+                passphrase.encode("utf-8")
+                if isinstance(passphrase, str)
+                else passphrase
+            ),
+        )
         return csr_data.decode("utf-8"), private_key.decode("utf-8")
 
     @classmethod
-    def sign_certificate_request(cls,
-                                 csr_data: str | bytes,
-                                 issuer_certificate_path: Path,
-                                 issuer_private_key_path: Path,
-                                 issuer_private_key_passphrase: str | bytes | None = None,
-                                 relative_valid_time: int = 0,
-                                 relative_expiration_time: int = 9999999,
-                                 serial: int = 42
-                                 ) -> str:
+    def sign_certificate_request(
+        cls,
+        csr_data: str | bytes,
+        issuer_certificate_path: Path,
+        issuer_private_key_path: Path,
+        issuer_private_key_passphrase: str | bytes | None = None,
+        relative_valid_time: int = 0,
+        relative_expiration_time: int = 9999999,
+        serial: int = 42,
+    ) -> str:
 
         if isinstance(issuer_private_key_passphrase, str):
-            issuer_private_key_passphrase = issuer_private_key_passphrase.encode("utf-8")
+            issuer_private_key_passphrase = issuer_private_key_passphrase.encode(
+                "utf-8"
+            )
         if isinstance(csr_data, str):
             csr_data = csr_data.encode("utf-8")
 
-        issuer_private_key = crypto.load_privatekey(crypto.FILETYPE_PEM, issuer_private_key_path.read_bytes(),
-                                                    passphrase=issuer_private_key_passphrase)
-        issuer_cert = crypto.load_certificate(crypto.FILETYPE_PEM, issuer_certificate_path.read_bytes())
+        issuer_private_key = crypto.load_privatekey(
+            crypto.FILETYPE_PEM,
+            issuer_private_key_path.read_bytes(),
+            passphrase=issuer_private_key_passphrase,
+        )
+        issuer_cert = crypto.load_certificate(
+            crypto.FILETYPE_PEM, issuer_certificate_path.read_bytes()
+        )
 
         cls._verify_private_key_matches_cert(issuer_private_key, issuer_cert)
 
@@ -530,11 +618,13 @@ class CertificateHelper:
         cert = crypto.X509()
         cert.set_subject(csr.get_subject())
         cert.set_pubkey(csr.get_pubkey())
-        cert.gmtime_adj_notBefore(min(relative_valid_time, relative_expiration_time - 1))
+        cert.gmtime_adj_notBefore(
+            min(relative_valid_time, relative_expiration_time - 1)
+        )
         cert.gmtime_adj_notAfter(relative_expiration_time)
         cert.set_issuer(issuer_cert.get_subject())
         cert.set_serial_number(serial)
-        cert.sign(issuer_private_key, 'SHA256')
+        cert.sign(issuer_private_key, "SHA256")
         signed_certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
 
         return signed_certificate.decode(encoding="utf-8")
@@ -548,4 +638,6 @@ class OCPPConfigReader:
     def get_variable(self, section: str, variable: str):
         identifier = OCPP201ConfigVariableIdentifier(section, variable)
 
-        return GenericOCPP201ConfigAdjustment._get_value_from_v201_config(self._config_json, identifier)
+        return GenericOCPP201ConfigAdjustment._get_value_from_v201_config(
+            self._config_json, identifier
+        )

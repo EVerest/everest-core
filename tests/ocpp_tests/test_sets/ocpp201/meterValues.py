@@ -22,9 +22,14 @@ from ocpp.v201 import call_result as call_result201
 
 log = logging.getLogger("meterValues")
 
+
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
-async def test_J01_19(central_system_v201: CentralSystem, test_controller: TestController, test_utility: TestUtility):
+async def test_J01_19(
+    central_system_v201: CentralSystem,
+    test_controller: TestController,
+    test_utility: TestUtility,
+):
     """
     J01.FR.19
     ...
@@ -37,55 +42,110 @@ async def test_J01_19(central_system_v201: CentralSystem, test_controller: TestC
     connector_id2 = 1
 
     # make an unknown IdToken
-    id_tokenJ01=IdTokenType(
-            id_token="8BADF00D",
-            type=IdTokenTypeEnum.iso14443
-        )
+    id_tokenJ01 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
 
-    log.info("##################### J01.FR.19: Sending Meter Values not related to a transaction #################")
+    log.info(
+        "##################### J01.FR.19: Sending Meter Values not related to a transaction #################"
+    )
     test_utility.messages.clear()
-    
+
     test_controller.start()
-    charge_point_v201 = await central_system_v201.wait_for_chargepoint(wait_for_bootnotification = True)
+    charge_point_v201 = await central_system_v201.wait_for_chargepoint(
+        wait_for_bootnotification=True
+    )
 
     # expect StatusNotification with status available
-    assert await wait_for_and_validate(test_utility, charge_point_v201, "StatusNotification",call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                            ConnectorStatusType.available,evse_id=evse_id1,connector_id=connector_id),validate_status_notification_201)
-    assert await wait_for_and_validate(test_utility, charge_point_v201, "StatusNotification",call201.StatusNotificationPayload(datetime.now().isoformat(),
-                                            ConnectorStatusType.available,evse_id=evse_id2,connector_id=connector_id),validate_status_notification_201)
-    
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call201.StatusNotificationPayload(
+            datetime.now().isoformat(),
+            ConnectorStatusType.available,
+            evse_id=evse_id1,
+            connector_id=connector_id,
+        ),
+        validate_status_notification_201,
+    )
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call201.StatusNotificationPayload(
+            datetime.now().isoformat(),
+            ConnectorStatusType.available,
+            evse_id=evse_id2,
+            connector_id=connector_id,
+        ),
+        validate_status_notification_201,
+    )
+
     # Configure AlignedDataInterval
-    r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("AlignedDataCtrlr", "Interval", "3")
-    set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
+    r: call_result201.SetVariablesPayload = (
+        await charge_point_v201.set_config_variables_req(
+            "AlignedDataCtrlr", "Interval", "3"
+        )
+    )
+    set_variable_result: SetVariableResultType = SetVariableResultType(
+        **r.set_variable_result[0]
+    )
     assert set_variable_result.attribute_status == SetVariableStatusType.accepted
 
     # Configure SampledDataInterval
-    r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("SampledDataCtrlr", "TxUpdatedInterval", "3")
-    set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
+    r: call_result201.SetVariablesPayload = (
+        await charge_point_v201.set_config_variables_req(
+            "SampledDataCtrlr", "TxUpdatedInterval", "3"
+        )
+    )
+    set_variable_result: SetVariableResultType = SetVariableResultType(
+        **r.set_variable_result[0]
+    )
     assert set_variable_result.attribute_status == SetVariableStatusType.accepted
 
     # Configure AlignedDataInterval
-    r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("AlignedDataCtrlr", "SendDuringIdle", "true")
-    set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
+    r: call_result201.SetVariablesPayload = (
+        await charge_point_v201.set_config_variables_req(
+            "AlignedDataCtrlr", "SendDuringIdle", "true"
+        )
+    )
+    set_variable_result: SetVariableResultType = SetVariableResultType(
+        **r.set_variable_result[0]
+    )
     assert set_variable_result.attribute_status == SetVariableStatusType.accepted
 
     # Configure PhaseRotation
-    r: call_result201.SetVariablesPayload = await charge_point_v201.set_config_variables_req("ChargingStation","PhaseRotation", "TRS")
-    set_variable_result: SetVariableResultType = SetVariableResultType(**r.set_variable_result[0])
+    r: call_result201.SetVariablesPayload = (
+        await charge_point_v201.set_config_variables_req(
+            "ChargingStation", "PhaseRotation", "TRS"
+        )
+    )
+    set_variable_result: SetVariableResultType = SetVariableResultType(
+        **r.set_variable_result[0]
+    )
     assert set_variable_result.attribute_status == SetVariableStatusType.accepted
 
     # Get the value of PhaseRotation
-    r: call_result201.GetVariablesPayload = await charge_point_v201.get_config_variables_req("ChargingStation","PhaseRotation")
-    get_variables_result: GetVariableResultType = GetVariableResultType(**r.get_variable_result[0])
+    r: call_result201.GetVariablesPayload = (
+        await charge_point_v201.get_config_variables_req(
+            "ChargingStation", "PhaseRotation"
+        )
+    )
+    get_variables_result: GetVariableResultType = GetVariableResultType(
+        **r.get_variable_result[0]
+    )
     if get_variables_result.attribute_status == GetVariableStatusType.accepted:
-        log.info("Phase Rotation %s " %get_variables_result.attribute_value)
+        log.info("Phase Rotation %s " % get_variables_result.attribute_value)
 
     # send meter values periodically when not charging
     logging.debug("Collecting meter values...")
     for index in range(3):
-        #send MeterValues
-        assert await wait_for_and_validate(test_utility, charge_point_v201, "MeterValues",{"evseId": 1})
-        assert await wait_for_and_validate(test_utility, charge_point_v201, "MeterValues",{"evseId": 2})
+        # send MeterValues
+        assert await wait_for_and_validate(
+            test_utility, charge_point_v201, "MeterValues", {"evseId": 1}
+        )
+        assert await wait_for_and_validate(
+            test_utility, charge_point_v201, "MeterValues", {"evseId": 2}
+        )
 
     # swipe id tag to authorize
     test_controller.swipe(id_tokenJ01.id_token)
@@ -98,15 +158,24 @@ async def test_J01_19(central_system_v201: CentralSystem, test_controller: TestC
     # when in a middle of a transaction do not send meter values
     test_utility.forbidden_actions.append("MeterValues")
 
-    assert await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"})
+    assert await wait_for_and_validate(
+        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
+    )
 
     for index in range(3):
-        assert await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Updated"})
-    
+        assert await wait_for_and_validate(
+            test_utility,
+            charge_point_v201,
+            "TransactionEvent",
+            {"eventType": "Updated"},
+        )
+
     # swipe id tag to de-authorize
     test_controller.swipe(id_tokenJ01.id_token)
 
     # stop charging session
     test_controller.plug_out()
 
-    assert await wait_for_and_validate(test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"})
+    assert await wait_for_and_validate(
+        test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Ended"}
+    )
