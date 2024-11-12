@@ -4,6 +4,8 @@ cd tests
 
 PARALLEL_TESTS=$(nproc)
 
+echo "Running $PARALLEL_TESTS ocpp tests in parallel"
+
 pytest \
   -rA \
   -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
