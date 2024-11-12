@@ -3,7 +3,7 @@
 
 #include <device_model/composed_device_model_storage.hpp>
 
-#define VARIABLE_SOURCE_OCPP "OCPP"
+static constexpr auto VARIABLE_SOURCE_OCPP = "OCPP";
 
 namespace module::device_model {
 ComposedDeviceModelStorage::ComposedDeviceModelStorage(const std::string& libocpp_device_model_storage_address,
