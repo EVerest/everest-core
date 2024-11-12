@@ -4,8 +4,8 @@
 participant CSMS order 10
 participant libocpp order 20
 participant ComposedDeviceModel order 30
-database InternalStorage order 40
-database ExternalStorage order 50
+database DeviceModelStorageSqlite order 40
+database EverestDeviceModelStorage order 50
 
 autonumber "<b><font color=red>"
 skinparam sequenceArrowThickness 2

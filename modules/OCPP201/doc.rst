@@ -370,10 +370,11 @@ We define **internally** and **externally** managed variables as follows:
 Note that the EVerest config service is not yet implemented. Currently all components and variables are controlled
 by the libocpp device model storage implementation.
 
-Device Model Implementation this module
+Device Model Implementation of this module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This module provides an implementation of device model API provided as part of libocpp (it implements `device_model_storage_interface.hpp`).
+This module provides an implementation of device model API provided as part of libocpp (it implements
+`device_model_storage_interface.hpp`).
 The implementation is designed to fullfill the requirements of the device model API even if the components and variables are
 controlled by different sources (Internally, Externally).
 
@@ -405,23 +406,23 @@ Clarification of the device model classes of this diagram:
   * Contains device model representation and business logic to prevalidate requests to the device model variables
   * Contains reference to device model interface implementation
 
-* DeviceModelInterface:
+* DeviceModelStorageInterface:
 
   * Pure virtual class of libocpp
   * Defines contract for device model implementations
 
 * DeviceModelStorageSqlite
 
-  * Implements DeviceModelInterface as part of libocpp
+  * Implements DeviceModelStorageInterface as part of libocpp
   * This storage holds internally managed variables
 
 * EverestDeviceModelStorage
 
-  * Implements DeviceModelInterface as part of everest-core (OCPP201 module)
+  * Implements DeviceModelStorageInterface as part of everest-core (OCPP201 module)
   * Uses EVerest config service to retrieve configuration variables of EVerest modules
 
 * ComposedDeviceModelStorage
 
-  * (Final) implementation of DeviceModelInterface as part of everest-core (OCPP201 module)
+  * (Final) implementation of DeviceModelStorageInterface as part of everest-core (OCPP201 module)
   * A reference of this class will be passed to libocpp's ChargePoint constructor
   * Differentiates between externally and internally managed variables

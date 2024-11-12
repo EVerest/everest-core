@@ -7,26 +7,26 @@ class ChargePoint {
 }
 
 class DeviceModel {
-  - device_model: DeviceModelInterface
+  - device_model: DeviceModelStorageInterface
   + get_device_model(): DeviceModelRepresentation
   + get_value(...): T
   + set_value(...): SetVariableStatusEnum
 }
 
-interface DeviceModelInterface {
+interface DeviceModelStorageInterface {
   + get_device_model(): DeviceModelRepresentation
   + get_variable_attribute(...): std::optional<VariableAttribute>
   + set_variable_attribute_value(...): bool
 }
 
-class DeviceModelStorageSqlite implements DeviceModelInterface
+class DeviceModelStorageSqlite implements DeviceModelStorageInterface
 
 }
 
 package everest-core {
 
-class EverestDeviceModelStorage implements libocpp.DeviceModelInterface
-class ComposedDeviceModelStorage implements libocpp.DeviceModelInterface {
+class EverestDeviceModelStorage implements libocpp.DeviceModelStorageInterface
+class ComposedDeviceModelStorage implements libocpp.DeviceModelStorageInterface {
     - everest_storage: EverestDeviceModelStorage
     - libocpp_storage: DeviceModelStorageSqlite
 }
@@ -42,7 +42,7 @@ note right of ComposedDeviceModelStorage
 end note
 
 ChargePoint *-- DeviceModel
-DeviceModel *-- DeviceModelInterface
+DeviceModel *-- DeviceModelStorageInterface
 ComposedDeviceModelStorage *-- EverestDeviceModelStorage
 ComposedDeviceModelStorage *-- DeviceModelStorageSqlite
 

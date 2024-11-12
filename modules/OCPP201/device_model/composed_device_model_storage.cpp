@@ -3,6 +3,8 @@
 
 #include <device_model/composed_device_model_storage.hpp>
 
+#define VARIABLE_SOURCE_OCPP "OCPP"
+
 namespace module::device_model {
 ComposedDeviceModelStorage::ComposedDeviceModelStorage(const std::string& libocpp_device_model_storage_address,
                                                        const bool libocpp_initialize_device_model,
@@ -26,7 +28,7 @@ std::optional<ocpp::v201::VariableAttribute>
 ComposedDeviceModelStorage::get_variable_attribute(const ocpp::v201::Component& component_id,
                                                    const ocpp::v201::Variable& variable_id,
                                                    const ocpp::v201::AttributeEnum& attribute_enum) {
-    if (get_variable_source(component_id, variable_id) == "OCPP") {
+    if (get_variable_source(component_id, variable_id) == VARIABLE_SOURCE_OCPP) {
         return libocpp_device_model_storage->get_variable_attribute(component_id, variable_id, attribute_enum);
     }
 
@@ -37,7 +39,7 @@ std::vector<ocpp::v201::VariableAttribute>
 ComposedDeviceModelStorage::get_variable_attributes(const ocpp::v201::Component& component_id,
                                                     const ocpp::v201::Variable& variable_id,
                                                     const std::optional<ocpp::v201::AttributeEnum>& attribute_enum) {
-    if (get_variable_source(component_id, variable_id) == "OCPP") {
+    if (get_variable_source(component_id, variable_id) == VARIABLE_SOURCE_OCPP) {
         return libocpp_device_model_storage->get_variable_attributes(component_id, variable_id, attribute_enum);
     }
 
@@ -48,7 +50,7 @@ bool ComposedDeviceModelStorage::set_variable_attribute_value(const ocpp::v201::
                                                               const ocpp::v201::Variable& variable_id,
                                                               const ocpp::v201::AttributeEnum& attribute_enum,
                                                               const std::string& value, const std::string& source) {
-    if (get_variable_source(component_id, variable_id) == "OCPP") {
+    if (get_variable_source(component_id, variable_id) == VARIABLE_SOURCE_OCPP) {
         return libocpp_device_model_storage->set_variable_attribute_value(component_id, variable_id, attribute_enum,
                                                                           value, source);
     }
@@ -71,7 +73,7 @@ std::vector<ocpp::v201::VariableMonitoringMeta>
 ComposedDeviceModelStorage::get_monitoring_data(const std::vector<ocpp::v201::MonitoringCriterionEnum>& criteria,
                                                 const ocpp::v201::Component& component_id,
                                                 const ocpp::v201::Variable& variable_id) {
-    if (get_variable_source(component_id, variable_id) == "OCPP") {
+    if (get_variable_source(component_id, variable_id) == VARIABLE_SOURCE_OCPP) {
         return libocpp_device_model_storage->get_monitoring_data(criteria, component_id, variable_id);
     }
 
@@ -96,13 +98,13 @@ std::string
 module::device_model::ComposedDeviceModelStorage::get_variable_source(const ocpp::v201::Component& component,
                                                                       const ocpp::v201::Variable& variable) {
     std::optional<std::string> variable_source = device_model_map[component][variable].source;
-    if (variable_source.has_value() && variable_source.value() != "OCPP") {
+    if (variable_source.has_value() && variable_source.value() != VARIABLE_SOURCE_OCPP) {
         // For now, this just throws because we only have the libocpp source. When the config service is
         // implemented, this should not throw.
         throw ocpp::v201::DeviceModelError("Source is not 'OCPP', not sure what to do");
     }
 
-    return "OCPP";
+    return VARIABLE_SOURCE_OCPP;
 }
 
 } // namespace module::device_model
