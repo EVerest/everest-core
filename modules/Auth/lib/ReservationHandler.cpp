@@ -458,9 +458,8 @@ types::reservation::ReservationResult ReservationHandler::get_evse_connector_sta
     return types::reservation::ReservationResult::Accepted;
 }
 
-types::reservation::ReservationResult
-ReservationHandler::get_connector_availability_reservation_result(const uint32_t evse_id,
-                                           const types::evse_manager::ConnectorTypeEnum connector_type) {
+types::reservation::ReservationResult ReservationHandler::get_connector_availability_reservation_result(
+    const uint32_t evse_id, const types::evse_manager::ConnectorTypeEnum connector_type) {
     std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     std::unique_lock<std::mutex> lock_evse(evses[evse_id]->event_mutex);
     if (evses.count(evse_id) == 0) {
@@ -523,7 +522,8 @@ bool ReservationHandler::can_virtual_car_arrive(
             continue;
         }
 
-        if (get_evse_connector_state_reservation_result(evse_id, evse_specific_reservations) == types::reservation::ReservationResult::Accepted &&
+        if (get_evse_connector_state_reservation_result(evse_id, evse_specific_reservations) ==
+                types::reservation::ReservationResult::Accepted &&
             has_evse_connector_type(evse->connectors, next_car_arrival_order.at(0)) &&
             get_connector_availability_reservation_result(evse_id, next_car_arrival_order.at(0)) ==
                 types::reservation::ReservationResult::Accepted) {
