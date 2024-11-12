@@ -16,6 +16,7 @@
 // headers for required interface implementations
 #include <generated/interfaces/error_history/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/ocpp/Interface.hpp>
 #include <generated/interfaces/uk_random_delay/Interface.hpp>
 
@@ -157,7 +158,8 @@ public:
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
         std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay,
-        std::vector<std::unique_ptr<error_historyIntf>> r_error_history, Conf& config) :
+        std::vector<std::unique_ptr<error_historyIntf>> r_error_history,
+        std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
@@ -165,6 +167,7 @@ public:
         r_ocpp(std::move(r_ocpp)),
         r_random_delay(std::move(r_random_delay)),
         r_error_history(std::move(r_error_history)),
+        r_evse_energy_sink(std::move(r_evse_energy_sink)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -173,6 +176,7 @@ public:
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
     const std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay;
     const std::vector<std::unique_ptr<error_historyIntf>> r_error_history;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

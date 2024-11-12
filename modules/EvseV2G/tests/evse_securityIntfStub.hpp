@@ -23,7 +23,7 @@ private:
         functions;
 
 public:
-    evse_securityIntfStub() : evse_securityIntf(this, Requirement("", 0), "EvseSecurity") {
+    evse_securityIntfStub() : evse_securityIntf(this, Requirement{"", 0}, "EvseSecurity", std::nullopt) {
         functions["get_verify_file"] = &evse_securityIntfStub::get_verify_file;
         functions["get_leaf_certificate_info"] = &evse_securityIntfStub::get_leaf_certificate_info;
     }
