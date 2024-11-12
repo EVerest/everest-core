@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+
+#include <fstream>
+#include <optional>
+#include <sstream>
+#include <string>
+
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
-#include <fstream>
 #include <ocpp_conversions.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
 #include <external_energy_limits.hpp>
-#include <optional>
 
 namespace module {
 
@@ -48,16 +52,44 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
                                     "EVerest", "caused_by:" + error.message};
     }
 
-    // check if is VendorError
-    if (error_type.find("VendorError") != std::string::npos) {
-        return ocpp::v16::ErrorInfo{
-            uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
-            error.sub_type};
-    }
+    const auto get_simplified_error_type = [](const std::string& error_type) {
+        // this function should return everything after the first '/'
+        // delimiter - if there is no delimiter or the delimiter is at
+        // the end, it should return the input itself
+        static constexpr auto TYPE_INTERFACE_DELIMITER = '/';
 
-    // Default case
-    return ocpp::v16::ErrorInfo{
-        uuid, ocpp::v16::ChargePointErrorCode::InternalError, false, error.description, std::nullopt, error_type};
+        auto input = std::istringstream(error_type);
+        std::string tmp;
+
+        // move right after the first delimiter
+        std::getline(input, tmp, TYPE_INTERFACE_DELIMITER);
+
+        if (!input) {
+            // no delimiter found or delimiter at the end
+            return error_type;
+        }
+
+        // get the rest of the input
+        std::getline(input, tmp);
+
+        return tmp;
+    };
+
+    const auto is_fault = [](const Everest::error::Error&) {
+        // NOTE (aw): this could be customized, depending on the error
+        return false;
+    };
+
+    static constexpr auto TYPE_DELIMITER = '/';
+
+    return {
+        uuid,
+        ocpp::v16::ChargePointErrorCode::OtherError,
+        is_fault(error),
+        error.origin.to_string(),                                                // info
+        error.message,                                                           // vendor id
+        get_simplified_error_type(error.type) + TYPE_DELIMITER + error.sub_type, // vendor error code
+    };
 }
 
 void create_empty_user_config(const fs::path& user_config_path) {
