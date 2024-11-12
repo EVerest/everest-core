@@ -225,13 +225,39 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             if (const auto* scheduled_mode = std::get_if<ScheduleControlMode>(dc_control_mode)) {
                 const auto target_voltage = iso15118::message_20::from_RationalNumber(scheduled_mode->target_voltage);
                 const auto target_current = iso15118::message_20::from_RationalNumber(scheduled_mode->target_current);
+
                 publish_dc_ev_target_voltage_current({target_voltage, target_current});
+
+                if (scheduled_mode->max_charge_current and scheduled_mode->max_voltage and
+                    scheduled_mode->max_charge_power) {
+                    const auto max_current =
+                        iso15118::message_20::from_RationalNumber(scheduled_mode->max_charge_current.value());
+                    const auto max_voltage =
+                        iso15118::message_20::from_RationalNumber(scheduled_mode->max_voltage.value());
+                    const auto max_power =
+                        iso15118::message_20::from_RationalNumber(scheduled_mode->max_charge_power.value());
+                    publish_dc_ev_maximum_limits({max_current, max_power, max_voltage});
+                }
+
             } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlMode>(dc_control_mode)) {
                 const auto target_voltage =
                     iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->target_voltage);
                 const auto target_current =
                     iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->target_current);
                 publish_dc_ev_target_voltage_current({target_voltage, target_current});
+
+                if (bpt_scheduled_mode->max_charge_current and bpt_scheduled_mode->max_voltage and
+                    bpt_scheduled_mode->max_charge_power) {
+                    const auto max_current =
+                        iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->max_charge_current.value());
+                    const auto max_voltage =
+                        iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->max_voltage.value());
+                    const auto max_power =
+                        iso15118::message_20::from_RationalNumber(bpt_scheduled_mode->max_charge_power.value());
+                    publish_dc_ev_maximum_limits({max_current, max_power, max_voltage});
+                }
+
+                // publish_dc_ev_maximum_limits({max_limits.current, max_limits.power, max_limits.voltage});
             } else if (const auto* dynamic_mode = std::get_if<DynamicReqControlMode>(dc_control_mode)) {
                 publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(*dynamic_mode));
             } else if (const auto* bpt_dynamic_mode = std::get_if<BPT_DynamicReqControlMode>(dc_control_mode)) {
