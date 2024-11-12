@@ -1,6 +1,10 @@
 #!/bin/sh
 
 cd tests
+
+pip install --break-system-packages -r ocpp_tests/requirements.txt
+cmake --build "$EXT_MOUNT/build" --target iso15118_pip_install_dist
+
 pytest \
   -rA \
   --junitxml="$EXT_MOUNT/result.xml" \
