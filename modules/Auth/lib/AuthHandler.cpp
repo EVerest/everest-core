@@ -580,7 +580,7 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
                                              const std::optional<int>& evse_id) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
-        EVLOG_info << "Cancel reservation for evse index " << evse_id.value();
+        EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
         evse_index = evse_id.value();
     }
 
@@ -647,6 +647,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         }
     } break;
     case SessionEventEnum::TransactionStarted: {
+        this->evses.at(evse_id)->plugged_in = true;
         this->evses.at(evse_id)->transaction_active = true;
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::TRANSACTION_STARTED);
         this->evses.at(evse_id)->timeout_timer.stop();

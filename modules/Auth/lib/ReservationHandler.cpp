@@ -674,9 +674,9 @@ types::reservation::ReservationResult ReservationHandler::get_reservation_evse_c
         for (const auto& evse : evses_with_connector_type) {
             std::unique_lock<std::mutex> lock(evse->event_mutex);
             for (const auto& connector : evse->connectors) {
-                if (connector.type != connector_type ||
-                    connector.type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-                    connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {
+                if (connector.type != connector_type &&
+                    connector.type != types::evse_manager::ConnectorTypeEnum::Unknown &&
+                    connector_type != types::evse_manager::ConnectorTypeEnum::Unknown) {
                     continue;
                 }
 
