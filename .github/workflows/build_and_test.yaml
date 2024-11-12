@@ -99,19 +99,20 @@ jobs:
           e2e-test-server \
           run-script run_ocpp_tests
       - name: Upload result and report as artifact
+        continue-on-error: true
         if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
         uses: actions/upload-artifact@v4.4.3
         with:
           if-no-files-found: error
           name: integration-test-report
           path: |
-            result.xml
-            report.html
+            ocpp-tests-result.xml
+            ocpp-tests-report.html
       - name: Render OCPP tests result
         if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
         uses: pmeier/pytest-results-action@v0.7.1
         with:
-          path: result.xml
+          path: ocpp-tests-result.xml
           summary: True
           display-options: fEX
           fail-on-empty: True

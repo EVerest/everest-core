@@ -11,8 +11,8 @@ pytest \
   -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
   --max-worker-restart=0 \
   --timeout=300 \
-  --junitxml="$EXT_MOUNT/result.xml" \
-  --html="$EXT_MOUNT/report.html" \
+  --junitxml="$EXT_MOUNT/ocpp-tests-result.xml" \
+  --html="$EXT_MOUNT/ocpp-tests-report.html" \
   --self-contained-html \
   ocpp_tests/test_sets/ocpp16/*.py \
   ocpp_tests/test_sets/ocpp201/*.py \
