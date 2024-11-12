@@ -282,7 +282,7 @@ class TestOcpp201DataTransferIntegration:
             "ocpp_data_transfer": [Requirement(module_id="ocpp", implementation_id="data_transfer")]
         }
     )
-    
+
     @pytest.mark.probe_module
     @pytest.mark.everest_config_adaptions(ProbeModuleDataTransferConfigurationAdjustment())
     @pytest.mark.asyncio

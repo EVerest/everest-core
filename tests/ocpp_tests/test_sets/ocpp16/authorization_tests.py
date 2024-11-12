@@ -143,8 +143,6 @@ async def test_authorize_invalid(
     )
     await charge_point_v16.change_configuration_req(key="HeartbeatInterval", value="5")
 
-    t = datetime.utcnow() + timedelta(minutes=10)
-
     test_controller.plug_in()
 
     # expect StatusNotification with status preparing

@@ -11,7 +11,6 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(__file__), "../..")))
 from everest.testing.ocpp_utils.fixtures import *
 from ocpp.v201.enums import (CertificateSigningUseType)
-from ocpp.v201 import call_result as call_result201
 from ocpp.v201 import call as call201
 from ocpp.v16.enums import ChargePointErrorCode, ChargePointStatus
 from ocpp.v16 import call
@@ -462,18 +461,6 @@ class TestPlugAndCharge:
 
     @pytest.mark.asyncio
     async def test_eim_and_autocharge(self, charge_point_v16: ChargePoint16):
-        pass
-
-    @pytest.mark.asyncio
-    async def test_eim_only(self, charge_point_v16: ChargePoint16):
-        pass
-
-    @pytest.mark.asyncio
-    async def test_eim_only(self, charge_point_v16: ChargePoint16):
-        pass
-
-    @pytest.mark.asyncio
-    async def test_eim_only(self, charge_point_v16: ChargePoint16):
         pass
 
     @pytest.mark.asyncio

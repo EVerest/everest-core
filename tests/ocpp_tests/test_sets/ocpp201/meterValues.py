@@ -161,7 +161,7 @@ async def test_J01_19(
         test_utility, charge_point_v201, "TransactionEvent", {"eventType": "Started"}
     )
 
-    for index in range(3):
+    for _ in range(3):
         assert await wait_for_and_validate(
             test_utility,
             charge_point_v201,
