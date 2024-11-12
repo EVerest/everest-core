@@ -107,9 +107,9 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
         // It is not clear what to return if one is faulted, one occupied and one available so in that case the first
         // in row is returned, which is occupied.
         const types::reservation::ReservationResult evse_state =
-            this->get_evse_state(evse_id.value(), this->evse_reservations);
+            this->get_evse_connector_state_reservation_result(evse_id.value(), this->evse_reservations);
         const types::reservation::ReservationResult connector_state =
-            this->is_connector_available(evse_id.value(), connector_type);
+            this->get_connector_availability_reservation_result(evse_id.value(), connector_type);
 
         if (!has_evse_connector_type(this->evses[evse_id.value()]->connectors, connector_type)) {
             EVLOG_debug << "Rejected reservation because this evse (id: " << evse_id.value()
@@ -423,7 +423,7 @@ bool ReservationHandler::does_evse_connector_type_exist(
     return false;
 }
 
-types::reservation::ReservationResult ReservationHandler::get_evse_state(
+types::reservation::ReservationResult ReservationHandler::get_evse_connector_state_reservation_result(
     const uint32_t evse_id, const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations) {
     if (evses.count(evse_id) == 0) {
         EVLOG_warning << "Get evse state for evse " << evse_id
@@ -459,7 +459,7 @@ types::reservation::ReservationResult ReservationHandler::get_evse_state(
 }
 
 types::reservation::ReservationResult
-ReservationHandler::is_connector_available(const uint32_t evse_id,
+ReservationHandler::get_connector_availability_reservation_result(const uint32_t evse_id,
                                            const types::evse_manager::ConnectorTypeEnum connector_type) {
     std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     std::unique_lock<std::mutex> lock_evse(evses[evse_id]->event_mutex);
@@ -523,9 +523,9 @@ bool ReservationHandler::can_virtual_car_arrive(
             continue;
         }
 
-        if (get_evse_state(evse_id, evse_specific_reservations) == types::reservation::ReservationResult::Accepted &&
+        if (get_evse_connector_state_reservation_result(evse_id, evse_specific_reservations) == types::reservation::ReservationResult::Accepted &&
             has_evse_connector_type(evse->connectors, next_car_arrival_order.at(0)) &&
-            is_connector_available(evse_id, next_car_arrival_order.at(0)) ==
+            get_connector_availability_reservation_result(evse_id, next_car_arrival_order.at(0)) ==
                 types::reservation::ReservationResult::Accepted) {
             is_possible = true;
 

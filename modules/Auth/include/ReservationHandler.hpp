@@ -179,24 +179,24 @@ private: // Functions
     bool does_evse_connector_type_exist(const types::evse_manager::ConnectorTypeEnum connector_type) const;
 
     ///
-    /// \brief Helper function to get the EVSE state, looking at the EVSE state, the state of the connectors of that
-    ///        EVSE and if there is a specific reservation for this EVSE.
+    /// \brief Helper function to get a reservation result from the current EVSE state and connector state, and if
+    ///        there is a specific reservation for this EVSE.
     /// \param evse_id                      The evse id to get the state from.
     /// \param evse_specific_reservations   The evse specific reservations list to look in.
     /// \return The `ReservationResult` to return for this specific EVSE.
     ///
-    types::reservation::ReservationResult
-    get_evse_state(const uint32_t evse_id,
-                   const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
+    types::reservation::ReservationResult get_evse_connector_state_reservation_result(
+        const uint32_t evse_id, const std::map<uint32_t, types::reservation::Reservation>& evse_specific_reservations);
 
     ///
     /// \brief Helper function to check if the connector of a specific EVSE is available.
     /// \param evse_id          The evse id the connector belongs to.
     /// \param connector_type   The connector type to check.
-    /// \return The `ReservationResult` to return fot his specific connector.
+    /// \return The `ReservationResult` to return for his specific connector.
     ///
     types::reservation::ReservationResult
-    is_connector_available(const uint32_t evse_id, const types::evse_manager::ConnectorTypeEnum connector_type);
+    get_connector_availability_reservation_result(const uint32_t evse_id,
+                                                  const types::evse_manager::ConnectorTypeEnum connector_type);
 
     ///
     /// \brief Get all possible orders of connector types given a vector of connector types.
