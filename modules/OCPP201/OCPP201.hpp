@@ -13,7 +13,6 @@
 // headers for provided interface implementations
 #include <generated/interfaces/auth_token_provider/Implementation.hpp>
 #include <generated/interfaces/auth_token_validator/Implementation.hpp>
-#include <generated/interfaces/empty/Implementation.hpp>
 #include <generated/interfaces/ocpp/Implementation.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Implementation.hpp>
 #include <generated/interfaces/session_cost/Implementation.hpp>
@@ -53,7 +52,7 @@ struct Conf {
 class OCPP201 : public Everest::ModuleBase {
 public:
     OCPP201() = delete;
-    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
+    OCPP201(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
             std::unique_ptr<auth_token_validatorImplBase> p_auth_validator,
             std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
             std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
@@ -61,11 +60,10 @@ public:
             std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::unique_ptr<systemIntf> r_system,
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
-            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
+            std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
             std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
-        p_main(std::move(p_main)),
         p_auth_validator(std::move(p_auth_validator)),
         p_auth_provider(std::move(p_auth_provider)),
         p_data_transfer(std::move(p_data_transfer)),
@@ -76,13 +74,12 @@ public:
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
         r_auth(std::move(r_auth)),
-        r_connector_zero_sink(std::move(r_connector_zero_sink)),
+        r_evse_energy_sink(std::move(r_evse_energy_sink)),
         r_display_message(std::move(r_display_message)),
         config(config) {
     }
 
     Everest::MqttProvider& mqtt;
-    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
     const std::unique_ptr<auth_token_providerImplBase> p_auth_provider;
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
@@ -93,7 +90,7 @@ public:
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer;
     const std::unique_ptr<authIntf> r_auth;
-    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
     const Conf& config;
 
@@ -160,8 +157,9 @@ private:
     /// \brief This function publishes the given \p composite_schedules via the ocpp interface
     void publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
 
-    /// \brief This function applies given \p composite_schedules for each evse_manager and the connector_zero_sink
+    /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
+
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

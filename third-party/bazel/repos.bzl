@@ -53,7 +53,6 @@ def everest_core_repos():
         name = "edm_deps",
         dependencies_yaml = "@everest-core//:dependencies.yaml",
         build_files = [
-            "@everest-core//third-party/bazel:BUILD.libmodbus.bazel",
             "@everest-core//third-party/bazel:BUILD.libtimer.bazel",
             "@everest-core//third-party/bazel:BUILD.pugixml.bazel",
             "@everest-core//third-party/bazel:BUILD.sigslot.bazel",
