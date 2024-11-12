@@ -97,22 +97,21 @@ jobs:
           run \
           e2e-test-server \
           run-script run_ocpp_tests
-      # - name: Upload result and report as artifact
-      #   if: ${{ steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' }}
-      #   uses: actions/upload-artifact@v4.4.3
-      #   with:
-      #     if-no-files-found: error
-      #     name: integration-test-report
-      #     path: |
-      #       ${{ inputs.result_xml_path }}
-      #       ${{ inputs.report_html_path }}
-      # - name: Render result
-      #   if: ${{ steps.run_integration_tests.outcome == 'success' || steps.run_integration_tests.outcome == 'failure' }}
-      #   uses: pmeier/pytest-results-action@v0.7.1
-      #   with:
-      #     path: ${{ inputs.result_xml_path }}
-      #     summary: True
-      #     display-options: fEX
-      #     fail-on-empty: True
-      #     title: Test results
-
+      - name: Upload result and report as artifact
+        if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          if-no-files-found: error
+          name: integration-test-report
+          path: |
+            result.xml
+            report.html
+      - name: Render OCPP tests result
+        if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
+        uses: pmeier/pytest-results-action@v0.7.1
+        with:
+          path: result.xml
+          summary: True
+          display-options: fEX
+          fail-on-empty: True
+          title: Test results
