@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4.4.3
         with:
           if-no-files-found: error
-          name: integration-test-report
+          name: ocpp-tests-report
           path: |
             ocpp-tests-result.xml
             ocpp-tests-report.html
