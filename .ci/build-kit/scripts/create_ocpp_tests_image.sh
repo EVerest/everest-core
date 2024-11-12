@@ -21,3 +21,5 @@ if [ $retVal -ne 0 ]; then
 fi
 
 pip install --break-system-packages -r tests/ocpp_tests/requirements.txt
+
+./tests/ocpp_tests/test_sets/everest-aux/install_configs.sh "$EXT_MOUNT/dist"
