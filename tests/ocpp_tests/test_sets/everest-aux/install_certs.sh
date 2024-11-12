@@ -1,14 +1,14 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 <everest-core-directory>"
+    echo "Usage: $0 <everest-core-installation-directory>"
     exit 1
 }
 
 if [ $# -ne 1 ] ; then
     usage
 else
-    EVEREST_CERTS_PATH="$1"/build/dist/etc/everest/certs
+    EVEREST_CERTS_PATH="$1"/etc/everest/certs
     rm -rf $EVEREST_CERTS_PATH
     mkdir $EVEREST_CERTS_PATH
 

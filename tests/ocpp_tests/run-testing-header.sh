@@ -17,4 +17,4 @@ if [ $# -eq 1 ] ; then
 fi
 
 cd "$OCPP_TESTING_DIR"
-$(cd test_sets/everest-aux/ && ./install_certs.sh "$EVEREST_CORE_DIR" && ./install_configs.sh "$EVEREST_CORE_DIR")
+$(cd test_sets/everest-aux/ && ./install_certs.sh "$EVEREST_CORE_DIR/build/dist" && ./install_configs.sh "$EVEREST_CORE_DIR/build/dist")
