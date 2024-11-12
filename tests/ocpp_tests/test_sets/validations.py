@@ -305,7 +305,7 @@ def validate_data_transfer_sign_certificate(meta_data, msg, exp_payload):
             and data["certificateType"] == "V2GCertificate"
             and crypto.load_certificate_request(crypto.FILETYPE_PEM, data["csr"])
         )
-    except:
+    except Exception:
         return False
 
 

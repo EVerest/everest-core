@@ -54,7 +54,6 @@ from iso15118.shared.exceptions import EncryptionError, PrivateKeyReadError
 import os
 import json
 import base64
-import os
 
 from everest.testing.ocpp_utils.charge_point_utils import (
     OcppTestConfiguration,

@@ -688,11 +688,10 @@ class TestSecurityOCPPE2E(_BaseTest):
         csms_mock = central_system.mock
         self._setup_csms_mock(csms_mock, _CertificateSigningTestData())
 
-        trigger_result: call_result.TriggerMessagePayload = (
-            await charge_point.trigger_message_req(
-                requested_message=f"SignChargingStationCertificate"
-            )
+        await charge_point.trigger_message_req(
+            requested_message=f"SignChargingStationCertificate"
         )
+
         await self._wait_for_mock_called(csms_mock.on_sign_certificate)
 
         received_csr_data = self._parse_certificate_request(

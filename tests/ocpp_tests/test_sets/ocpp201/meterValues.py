@@ -39,7 +39,6 @@ async def test_J01_19(
     connector_id = 1
 
     evse_id2 = 2
-    connector_id2 = 1
 
     # make an unknown IdToken
     id_tokenJ01 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
@@ -138,7 +137,7 @@ async def test_J01_19(
 
     # send meter values periodically when not charging
     logging.debug("Collecting meter values...")
-    for index in range(3):
+    for _ in range(3):
         # send MeterValues
         assert await wait_for_and_validate(
             test_utility, charge_point_v201, "MeterValues", {"evseId": 1}

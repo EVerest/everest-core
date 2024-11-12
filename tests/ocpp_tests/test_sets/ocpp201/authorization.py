@@ -495,7 +495,6 @@ async def test_c15(
 
     # make an unknown IdToken
     id_tokenC15 = IdTokenType(id_token="8BADF00D", type=IdTokenTypeEnum.iso14443)
-    evse = EVSEType(id=evse_id, connector_id=connector_id)
 
     # Generate a transaction response
     # TODO: This needs to be adapted for C15.FR.03-07 use cases
