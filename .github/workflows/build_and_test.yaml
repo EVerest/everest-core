@@ -87,7 +87,7 @@ jobs:
           docker run \
           --volume "${{ github.workspace }}:/ext" \
           --name integration-container \
-          build-kit run-script create_integration_image
+          build-kit run-script create_ocpp_tests_image
           docker commit integration-container integration-image
       - name: Run OCPP tests
         id: run_ocpp_tests
