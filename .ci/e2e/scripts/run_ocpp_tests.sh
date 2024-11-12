@@ -2,8 +2,11 @@
 
 cd tests
 
+PARALLEL_TESTS=$(nproc)
+
 pytest \
   -rA \
+  -d --tx "$PARALLEL_TESTS"*popen//python=python3 \
   --junitxml="$EXT_MOUNT/result.xml" \
   --html="$EXT_MOUNT/report.html" \
   --self-contained-html \
