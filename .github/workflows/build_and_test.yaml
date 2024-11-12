@@ -33,7 +33,7 @@ jobs:
     name: OCPP Tests
     needs:
       - ci
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Download dist dir
         uses: actions/download-artifact@v4.1.8
