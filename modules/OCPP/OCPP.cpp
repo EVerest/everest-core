@@ -761,8 +761,12 @@ void OCPP::ready() {
                const ocpp::v201::CertificateActionEnum& certificate_action) {
             types::iso15118_charger::ResponseExiStreamStatus response;
             response.status = conversions::to_everest_iso15118_charger_status(certificate_response.status);
-            response.exi_response.emplace(certificate_response.exiResponse.get());
             response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
+            if (not certificate_response.exiResponse.get().empty()) {
+                // since exi_response is an optional in the EVerest type we only set it when not empty
+                response.exi_response.emplace(certificate_response.exiResponse.get());
+            }
+
             this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
                 ->call_set_get_certificate_response(response);
         });
