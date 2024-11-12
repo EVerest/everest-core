@@ -11,6 +11,7 @@ fi
 pip install --break-system-packages \
     $EXT_MOUNT/wheels/everestpy-*.whl \
     $EXT_MOUNT/wheels/everest_testing-*.whl \
+    $EXT_MOUNT/wheels/iso15118-*.whl \
     pytest-html
 retVal=$?
 
@@ -20,4 +21,3 @@ if [ $retVal -ne 0 ]; then
 fi
 
 pip install --break-system-packages -r tests/ocpp_tests/requirements.txt
-cmake --build "$EXT_MOUNT/build" --target iso15118_pip_install_dist
