@@ -506,7 +506,7 @@ void IECStateMachine::connector_force_unlock() {
     }
 
     if (not relais_on) {
-        // Unconditionally try to unlock, as the is_locked might not always reflect the physical state of the lock.
+        // Unconditionally try to unlock, as `is_locked` might not always reflect the physical state of the lock.
         // This can occur for example in case of a failed unlock due to a hardware issue.
         signal_unlock();
         is_locked = false;
