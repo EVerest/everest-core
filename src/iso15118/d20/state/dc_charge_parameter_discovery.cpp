@@ -101,26 +101,29 @@ FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(
     const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_ChargeParameterDiscoveryRequest>()) {
-        dt::RationalNumber max_current;
 
-        if (std::holds_alternative<DC_ModeReq>(req->transfer_mode)) {
+        auto dc_max_limits = session::feedback::DcMaximumLimits{};
 
-            max_current = std::get<0>(req->transfer_mode).max_charge_current;
+        if (const auto* mode = std::get_if<DC_ModeReq>(&req->transfer_mode)) {
+            dc_max_limits.current = dt::from_RationalNumber(mode->max_charge_current);
+            dc_max_limits.voltage = dt::from_RationalNumber(mode->max_voltage);
+            dc_max_limits.power = dt::from_RationalNumber(mode->max_charge_power);
 
-        } else if (std::holds_alternative<BPT_DC_ModeReq>(req->transfer_mode)) {
+            logf_info("Max charge current %fA", dt::from_RationalNumber(mode->max_charge_current));
+        } else if (const auto* mode = std::get_if<BPT_DC_ModeReq>(&req->transfer_mode)) {
+            dc_max_limits.current = dt::from_RationalNumber(mode->max_charge_current);
+            dc_max_limits.voltage = dt::from_RationalNumber(mode->max_voltage);
+            dc_max_limits.power = dt::from_RationalNumber(mode->max_charge_power);
 
-            max_current = std::get<1>(req->transfer_mode).max_charge_current;
-
-            const auto& max_discharge_current = std::get<1>(req->transfer_mode).max_discharge_current;
-
-            logf_info("Max discharge current %de%d", max_discharge_current.value, max_discharge_current.exponent);
+            logf_info("Max charge current %fA", dt::from_RationalNumber(mode->max_charge_current));
+            logf_info("Max discharge current %fA", dt::from_RationalNumber(mode->max_discharge_current));
         }
-
-        logf_info("Max charge current %de%d", max_current.value, max_current.exponent);
 
         const auto res = handle_request(*req, ctx.session, ctx.session_config.dc_limits);
 
         ctx.respond(res);
+
+        ctx.feedback.dc_max_limits(dc_max_limits);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
