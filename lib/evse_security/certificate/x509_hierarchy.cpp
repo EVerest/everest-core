@@ -6,7 +6,7 @@
 
 namespace evse_security {
 
-bool X509CertificateHierarchy::is_root(const X509Wrapper& certificate) const {
+bool X509CertificateHierarchy::is_internal_root(const X509Wrapper& certificate) const {
     if (certificate.is_selfsigned()) {
         return (std::find_if(hierarchy.begin(), hierarchy.end(), [&certificate](const X509Node& node) {
                     return node.certificate == certificate;
@@ -101,11 +101,20 @@ X509Wrapper X509CertificateHierarchy::find_certificate_root(const X509Wrapper& l
     throw NoCertificateFound("Could not find a certificate root for leaf: " + leaf.get_common_name());
 }
 
-X509Wrapper X509CertificateHierarchy::find_certificate(const CertificateHashData& hash) {
+X509Wrapper X509CertificateHierarchy::find_certificate(const CertificateHashData& hash,
+                                                       bool case_insensitive_comparison) {
     X509Wrapper* certificate = nullptr;
 
     for_each([&](X509Node& node) {
-        if (node.hash == hash) {
+        bool matches = false;
+
+        if (case_insensitive_comparison) {
+            matches = (node.hash.case_insensitive_comparison(hash));
+        } else {
+            matches = (node.hash == hash);
+        }
+
+        if (matches) {
             certificate = &node.certificate;
             return false;
         }

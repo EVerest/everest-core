@@ -120,7 +120,7 @@ public:
     bool contains_certificate(const CertificateHashData& certificate_hash);
 
     /// @brief Finds a certificate based on its hash
-    X509Wrapper find_certificate(const CertificateHashData& certificate_hash);
+    X509Wrapper find_certificate(const CertificateHashData& certificate_hash, bool case_insensitive_comparison = false);
 
     /// @brief Adds a single certificate in the bundle. Only in memory, use @ref export_certificates to filesystem
     void add_certificate(X509Wrapper&& certificate);
@@ -169,7 +169,7 @@ public:
 
     /// @brief Utility that returns current the certificate hierarchy of this bundle
     /// Invalidated on any add/delete operation
-    X509CertificateHierarchy& get_certficate_hierarchy();
+    X509CertificateHierarchy& get_certificate_hierarchy();
 
 public:
     X509CertificateBundle& operator=(X509CertificateBundle&& other) = default;

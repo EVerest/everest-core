@@ -207,7 +207,7 @@ TEST_F(EvseSecurityTests, verify_basics) {
     X509CertificateBundle bundle(fs::path(bundle_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.is_using_bundle_file());
 
-    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
+    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certificate_hierarchy().to_debug_string();
 
     auto certificates = bundle.split();
     ASSERT_TRUE(certificates.size() == 3);
@@ -246,18 +246,18 @@ TEST_F(EvseSecurityTests, verify_bundle_management) {
     X509CertificateBundle bundle(fs::path(directory_path), EncodingFormat::PEM);
     ASSERT_TRUE(bundle.split().size() == 2);
 
-    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
+    std::cout << "Bundle hierarchy: " << std::endl << bundle.get_certificate_hierarchy().to_debug_string();
 
     // Lowest in hierarchy
-    X509Wrapper intermediate_cert = bundle.get_certficate_hierarchy().get_hierarchy().at(0).children.at(0).certificate;
+    X509Wrapper intermediate_cert = bundle.get_certificate_hierarchy().get_hierarchy().at(0).children.at(0).certificate;
 
-    CertificateHashData hash = bundle.get_certficate_hierarchy().get_certificate_hash(intermediate_cert);
+    CertificateHashData hash = bundle.get_certificate_hierarchy().get_certificate_hash(intermediate_cert);
     bundle.delete_certificate(hash, true);
 
     // Sync deleted
     bundle.sync_to_certificate_store();
 
-    std::cout << "Deleted intermediate: " << std::endl << bundle.get_certficate_hierarchy().to_debug_string();
+    std::cout << "Deleted intermediate: " << std::endl << bundle.get_certificate_hierarchy().to_debug_string();
 
     int items = 0;
     for (const auto& entry : fs::recursive_directory_iterator(directory_path)) {

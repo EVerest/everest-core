@@ -2,6 +2,8 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
+#include <algorithm>
+#include <cctype>
 #include <optional>
 #include <string>
 #include <vector>
@@ -97,6 +99,16 @@ enum class GetCertificateSignRequestStatus {
     GenerationError,      ///< Any other error when creating the CSR
 };
 
+inline bool str_cast_insensitive_cmp(const std::string& a, const std::string& b) {
+    if (a.size() != b.size()) {
+        return false;
+    }
+
+    return std::equal(a.begin(), a.end(), b.begin(), b.end(), [](std::string::value_type a, std::string::value_type b) {
+        return (std::tolower(a) == std::tolower(b));
+    });
+}
+
 // types of evse_security
 
 struct CertificateHashData {
@@ -111,6 +123,26 @@ struct CertificateHashData {
     bool operator==(const CertificateHashData& Other) const {
         return hash_algorithm == Other.hash_algorithm && issuer_name_hash == Other.issuer_name_hash &&
                issuer_key_hash == Other.issuer_key_hash && serial_number == Other.serial_number;
+    }
+
+    bool case_insensitive_comparison(const CertificateHashData& Other) const {
+        if (hash_algorithm != Other.hash_algorithm) {
+            return false;
+        }
+
+        if (false == str_cast_insensitive_cmp(issuer_name_hash, Other.issuer_name_hash)) {
+            return false;
+        }
+
+        if (false == str_cast_insensitive_cmp(issuer_key_hash, Other.issuer_key_hash)) {
+            return false;
+        }
+
+        if (false == str_cast_insensitive_cmp(serial_number, Other.serial_number)) {
+            return false;
+        }
+
+        return true;
     }
 
     bool is_valid() {
