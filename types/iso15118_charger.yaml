@@ -644,7 +644,7 @@ types:
         type: number
         minimum: 0
       min_discharge_power:
-        description: Minimum discharge current allowed by the EVodo
+        description: Minimum discharge current allowed by the EV
         type: number
         minimum: 0
       max_discharge_current:
