@@ -6,6 +6,8 @@
 
 using namespace iso15118;
 
+namespace dt = message_20::datatypes;
+
 SCENARIO("Session Stop state handling") {
 
     GIVEN("Bad case - Unknown session") {
@@ -15,12 +17,12 @@ SCENARIO("Session Stop state handling") {
         message_20::SessionStopRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.charging_session = message_20::ChargingSession::Terminate;
+        req.charging_session = dt::ChargingSession::Terminate;
 
         const auto res = d20::state::handle_request(req, d20::Session());
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
         }
     }
 
@@ -31,12 +33,12 @@ SCENARIO("Session Stop state handling") {
         message_20::SessionStopRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.charging_session = message_20::ChargingSession::Terminate;
+        req.charging_session = dt::ChargingSession::Terminate;
 
         const auto res = d20::state::handle_request(req, session);
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
         }
     }
 
@@ -48,12 +50,12 @@ SCENARIO("Session Stop state handling") {
         message_20::SessionStopRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.charging_session = message_20::ChargingSession::ServiceRenegotiation;
+        req.charging_session = dt::ChargingSession::ServiceRenegotiation;
 
         const auto res = d20::state::handle_request(req, session);
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_NoServiceRenegotiationSupported);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_NoServiceRenegotiationSupported);
         }
     }
 

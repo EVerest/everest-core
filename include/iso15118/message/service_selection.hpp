@@ -5,24 +5,30 @@
 #include <optional>
 #include <vector>
 
-#include "common.hpp"
+#include "common_types.hpp"
 
 namespace iso15118::message_20 {
 
-struct ServiceSelectionRequest {
-    struct SelectedService {
-        ServiceCategory service_id;
-        int16_t parameter_set_id;
-    };
+namespace datatypes {
 
+struct SelectedService {
+    ServiceCategory service_id;
+    uint16_t parameter_set_id;
+};
+
+using SelectedServiceList = std::vector<SelectedService>; // Max: 16
+
+} // namespace datatypes
+
+struct ServiceSelectionRequest {
     Header header;
-    SelectedService selected_energy_transfer_service;
-    std::optional<std::vector<SelectedService>> selected_vas_list;
+    datatypes::SelectedService selected_energy_transfer_service;
+    std::optional<datatypes::SelectedServiceList> selected_vas_list;
 };
 
 struct ServiceSelectionResponse {
     Header header;
-    ResponseCode response_code;
+    datatypes::ResponseCode response_code;
 };
 
 } // namespace iso15118::message_20

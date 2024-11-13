@@ -7,6 +7,8 @@
 
 using namespace iso15118;
 
+namespace dt = iso15118::message_20::datatypes;
+
 SCENARIO("Se/Deserialize dc charge loop messages") {
 
     GIVEN("Deserialize dc_charge_loop_req") {
@@ -27,14 +29,14 @@ SCENARIO("Se/Deserialize dc charge loop messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B});
             REQUIRE(header.timestamp == 1725456333);
             REQUIRE(msg.meter_info_requested == false);
-            REQUIRE(message_20::from_RationalNumber(msg.present_voltage) == 400);
+            REQUIRE(dt::from_RationalNumber(msg.present_voltage) == 400);
 
-            using ScheduledMode = message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode;
+            using ScheduledMode = message_20::datatypes::Scheduled_DC_CLReqControlMode;
 
             REQUIRE(std::holds_alternative<ScheduledMode>(msg.control_mode));
             const auto& control_mode = std::get<ScheduledMode>(msg.control_mode);
-            REQUIRE(message_20::from_RationalNumber(control_mode.target_current) == 20);
-            REQUIRE(message_20::from_RationalNumber(control_mode.target_voltage) == 400);
+            REQUIRE(dt::from_RationalNumber(control_mode.target_current) == 20);
+            REQUIRE(dt::from_RationalNumber(control_mode.target_voltage) == 400);
         }
     }
 
@@ -58,7 +60,7 @@ SCENARIO("Se/Deserialize dc charge loop messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x64, 0xEA, 0xED, 0x3D, 0x8E, 0x20, 0xC9, 0x59});
             REQUIRE(header.timestamp == 1727440880);
             REQUIRE(msg.meter_info_requested == false);
-            REQUIRE(message_20::from_RationalNumber(msg.present_voltage) == 400.0f);
+            REQUIRE(dt::from_RationalNumber(msg.present_voltage) == 400.0f);
 
             REQUIRE(msg.display_parameters.has_value() == true);
             const auto& display_parameters = msg.display_parameters.value();
@@ -66,19 +68,19 @@ SCENARIO("Se/Deserialize dc charge loop messages") {
             REQUIRE(display_parameters.present_soc.value_or(0) == 10);
             REQUIRE(display_parameters.charging_complete.value_or(true) == false);
 
-            using DynamicMode = message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode;
+            using DynamicMode = message_20::datatypes::Dynamic_DC_CLReqControlMode;
 
             REQUIRE(std::holds_alternative<DynamicMode>(msg.control_mode));
             const auto& control_mode = std::get<DynamicMode>(msg.control_mode);
 
-            REQUIRE(message_20::from_RationalNumber(control_mode.target_energy_request) == 60000.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.max_energy_request) == 60000.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.min_energy_request) == 1.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.max_charge_power) == 150000.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.min_charge_power) == 0.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.max_charge_current) == 300.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.max_voltage) == 900.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.min_voltage) == 150.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.target_energy_request) == 60000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.max_energy_request) == 60000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.min_energy_request) == 1.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.max_charge_power) == 150000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.min_charge_power) == 0.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.max_charge_current) == 300.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.max_voltage) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.min_voltage) == 150.0f);
         }
     }
 
@@ -87,8 +89,8 @@ SCENARIO("Se/Deserialize dc charge loop messages") {
         message_20::DC_ChargeLoopResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456334};
-        res.response_code = message_20::ResponseCode::OK;
-        res.control_mode.emplace<message_20::DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode>();
+        res.response_code = message_20::datatypes::ResponseCode::OK;
+        res.control_mode.emplace<message_20::datatypes::Scheduled_DC_CLResControlMode>();
         res.current_limit_achieved = true;
         res.power_limit_achieved = true;
         res.voltage_limit_achieved = true;

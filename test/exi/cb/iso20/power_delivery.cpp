@@ -26,21 +26,19 @@ SCENARIO("Se/Deserialize power delivery messages") {
 
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B});
             REQUIRE(header.timestamp == 1725456333);
-            REQUIRE(msg.processing == message_20::Processing::Finished);
-            REQUIRE(msg.charge_progress == message_20::PowerDeliveryRequest::Progress::Start);
+            REQUIRE(msg.processing == message_20::datatypes::Processing::Finished);
+            REQUIRE(msg.charge_progress == message_20::datatypes::Progress::Start);
 
             REQUIRE(msg.power_profile.has_value() == true);
             auto& power_profile = msg.power_profile.value();
             REQUIRE(power_profile.time_anchor == 0);
             REQUIRE(power_profile.entries[0].duration == 23);
-            REQUIRE(message_20::from_RationalNumber(power_profile.entries[0].power) == 1000);
+            REQUIRE(message_20::datatypes::from_RationalNumber(power_profile.entries[0].power) == 1000);
 
-            REQUIRE(std::holds_alternative<message_20::PowerDeliveryRequest::Scheduled_EVPPTControlMode>(
-                power_profile.control_mode));
-            const auto& mode =
-                std::get<message_20::PowerDeliveryRequest::Scheduled_EVPPTControlMode>(power_profile.control_mode);
-            REQUIRE(mode.power_tolerance_acceptance ==
-                    message_20::PowerDeliveryRequest::PowerToleranceAcceptance::Confirmed);
+            REQUIRE(
+                std::holds_alternative<message_20::datatypes::Scheduled_EVPPTControlMode>(power_profile.control_mode));
+            const auto& mode = std::get<message_20::datatypes::Scheduled_EVPPTControlMode>(power_profile.control_mode);
+            REQUIRE(mode.power_tolerance_acceptance == message_20::datatypes::PowerToleranceAcceptance::Confirmed);
             REQUIRE(mode.selected_schedule == 1);
         }
     }
@@ -50,7 +48,7 @@ SCENARIO("Se/Deserialize power delivery messages") {
         message_20::PowerDeliveryResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456333};
-        res.response_code = message_20::ResponseCode::OK;
+        res.response_code = message_20::datatypes::ResponseCode::OK;
 
         std::vector<uint8_t> expected = {0x80, 0x58, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c,
                                          0x4d, 0x8c, 0xdb, 0xfe, 0x1b, 0x60, 0x62, 0x00, 0x40};

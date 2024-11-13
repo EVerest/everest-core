@@ -10,18 +10,20 @@
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::DC_PreChargeResponse handle_request(const message_20::DC_PreChargeRequest& req, const d20::Session& session,
                                                 const float present_voltage) {
 
     message_20::DC_PreChargeResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
-    res.present_voltage = message_20::from_float(present_voltage);
+    res.present_voltage = dt::from_float(present_voltage);
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void DC_PreCharge::enter() {
@@ -51,11 +53,11 @@ FsmSimpleState::HandleEventReturnType DC_PreCharge::handle_event(AllocatorType& 
     if (const auto req = variant->get_if<message_20::DC_PreChargeRequest>()) {
         const auto res = handle_request(*req, ctx.session, present_voltage);
 
-        ctx.feedback.dc_pre_charge_target_voltage(message_20::from_RationalNumber(req->target_voltage));
+        ctx.feedback.dc_pre_charge_target_voltage(message_20::datatypes::from_RationalNumber(req->target_voltage));
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }

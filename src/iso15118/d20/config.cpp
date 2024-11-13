@@ -8,10 +8,12 @@
 
 namespace iso15118::d20 {
 
+namespace dt = message_20::datatypes;
+
 namespace {
 
 auto get_mobility_needs_mode(const ControlMobilityNeedsModes& mode) {
-    using namespace message_20;
+    using namespace dt;
 
     if (mode.control_mode == ControlMode::Scheduled and mode.mobility_mode == MobilityNeedsMode::ProvidedBySecc) {
         logf_info("Setting the mobility needs mode to ProvidedByEvcc. In scheduled mode only ProvidedByEvcc is "
@@ -23,7 +25,7 @@ auto get_mobility_needs_mode(const ControlMobilityNeedsModes& mode) {
 }
 
 auto get_default_dc_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
-    using namespace message_20;
+    using namespace dt;
 
     // TODO(sl): Add check if a control mode is more than one in that vector
 
@@ -42,7 +44,7 @@ auto get_default_dc_parameter_list(const std::vector<ControlMobilityNeedsModes>&
 }
 
 auto get_default_dc_bpt_parameter_list(const std::vector<ControlMobilityNeedsModes>& control_mobility_modes) {
-    using namespace message_20;
+    using namespace dt;
 
     // TODO(sl): Add check if a control mode is more than one in that vector
 
@@ -72,9 +74,7 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
     dc_limits(std::move(config.dc_limits)),
     supported_control_mobility_modes(std::move(config.control_mobility_modes)) {
 
-    const auto is_bpt_service = [](message_20::ServiceCategory service) {
-        return service == message_20::ServiceCategory::DC_BPT;
-    };
+    const auto is_bpt_service = [](dt::ServiceCategory service) { return service == dt::ServiceCategory::DC_BPT; };
     const auto dc_bpt_found = std::any_of(supported_energy_transfer_services.begin(),
                                           supported_energy_transfer_services.end(), is_bpt_service);
 
@@ -85,8 +85,7 @@ SessionConfig::SessionConfig(EvseSetupConfig config) :
 
     if (supported_control_mobility_modes.empty()) {
         logf_warning("No control modes were provided, set to scheduled mode");
-        supported_control_mobility_modes = {
-            {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc}};
+        supported_control_mobility_modes = {{dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
     }
 
     dc_parameter_list = get_default_dc_parameter_list(supported_control_mobility_modes);

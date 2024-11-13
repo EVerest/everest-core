@@ -6,21 +6,23 @@
 
 using namespace iso15118;
 
-using DC_ModeReq = message_20::DC_ChargeParameterDiscoveryRequest::DC_CPDReqEnergyTransferMode;
-using BPT_DC_ModeReq = message_20::DC_ChargeParameterDiscoveryRequest::BPT_DC_CPDReqEnergyTransferMode;
+namespace dt = message_20::datatypes;
 
-using DC_ModeRes = message_20::DC_ChargeParameterDiscoveryResponse::DC_CPDResEnergyTransferMode;
-using BPT_DC_ModeRes = message_20::DC_ChargeParameterDiscoveryResponse::BPT_DC_CPDResEnergyTransferMode;
+using DC_ModeReq = message_20::datatypes::DC_CPDReqEnergyTransferMode;
+using BPT_DC_ModeReq = message_20::datatypes::BPT_DC_CPDReqEnergyTransferMode;
+
+using DC_ModeRes = message_20::datatypes::DC_CPDResEnergyTransferMode;
+using BPT_DC_ModeRes = message_20::datatypes::BPT_DC_CPDResEnergyTransferMode;
 
 SCENARIO("DC charge parameter discovery state handling") {
 
     const auto evse_id = std::string("everest se");
-    const std::vector<message_20::ServiceCategory> supported_energy_services = {message_20::ServiceCategory::DC};
+    const std::vector<dt::ServiceCategory> supported_energy_services = {dt::ServiceCategory::DC};
     const auto cert_install{false};
-    const std::vector<message_20::Authorization> auth_services = {message_20::Authorization::EIM};
+    const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
-        {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc}};
+        {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc}};
 
     const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
                                           dc_limits, control_mobility_modes};
@@ -44,7 +46,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, d20::Session(), evse_setup.dc_limits);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
 
             REQUIRE(std::holds_alternative<DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<DC_ModeRes>(res.transfer_mode);
@@ -67,9 +69,9 @@ SCENARIO("DC charge parameter discovery state handling") {
     GIVEN("Bad Case: e.g. dc transfer mod instead of dc_bpt transfer mod - FAILED_WrongChargeParameter") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing,
-            message_20::BptChannel::Unified, message_20::GeneratorMode::GridFollowing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing, dt::BptChannel::Unified,
+            dt::GeneratorMode::GridFollowing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -88,7 +90,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, session, evse_setup.dc_limits);
 
         THEN("ResponseCode: FAILED_WrongChargeParameter, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_WrongChargeParameter);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_WrongChargeParameter);
 
             REQUIRE(std::holds_alternative<DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<DC_ModeRes>(res.transfer_mode);
@@ -111,8 +113,8 @@ SCENARIO("DC charge parameter discovery state handling") {
     GIVEN("Bad Case: e.g. DC_BPT transfer mod instead of dc transfer mod - FAILED_WrongChargeParameter") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -135,7 +137,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, session, evse_setup.dc_limits);
 
         THEN("ResponseCode: FAILED_WrongChargeParameter, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_WrongChargeParameter);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_WrongChargeParameter);
 
             REQUIRE(std::holds_alternative<DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<DC_ModeRes>(res.transfer_mode);
@@ -158,8 +160,8 @@ SCENARIO("DC charge parameter discovery state handling") {
     GIVEN("Good Case: DC") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -167,7 +169,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         dc_limits.charge_limits.power.max = {22, 3};
         dc_limits.charge_limits.current.max = {25, 0};
         dc_limits.voltage.max = {900, 0};
-        message_20::RationalNumber power_ramp_limit = {20, 0};
+        dt::RationalNumber power_ramp_limit = {20, 0};
         dc_limits.power_ramp_limit.emplace<>(power_ramp_limit);
 
         message_20::DC_ChargeParameterDiscoveryRequest req;
@@ -185,7 +187,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, session, dc_limits);
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
 
             REQUIRE(std::holds_alternative<DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<DC_ModeRes>(res.transfer_mode);
@@ -210,9 +212,9 @@ SCENARIO("DC charge parameter discovery state handling") {
     GIVEN("Good Case: DC_BPT") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing,
-            message_20::BptChannel::Unified, message_20::GeneratorMode::GridFollowing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing, dt::BptChannel::Unified,
+            dt::GeneratorMode::GridFollowing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -244,7 +246,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, session, dc_limits);
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
 
             REQUIRE(std::holds_alternative<BPT_DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<BPT_DC_ModeRes>(res.transfer_mode);
@@ -274,9 +276,9 @@ SCENARIO("DC charge parameter discovery state handling") {
 
     GIVEN("Bad Case: Provided DC charge limits but the ev wants bpt charge parameter - FAILED") {
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing,
-            message_20::BptChannel::Unified, message_20::GeneratorMode::GridFollowing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing, dt::BptChannel::Unified,
+            dt::GeneratorMode::GridFollowing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -304,7 +306,7 @@ SCENARIO("DC charge parameter discovery state handling") {
         const auto res = d20::state::handle_request(req, session, dc_limits);
 
         THEN("ResponseCode: FAILED, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED);
 
             REQUIRE(std::holds_alternative<DC_ModeRes>(res.transfer_mode));
             const auto& transfer_mode = std::get<DC_ModeRes>(res.transfer_mode);

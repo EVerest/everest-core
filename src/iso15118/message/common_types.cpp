@@ -2,7 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #include <cmath>
 
-#include <iso15118/message/common.hpp>
+#include <iso15118/message/common_types.hpp>
 
 #include <iso15118/detail/cb_exi.hpp>
 #include <iso15118/message/variant.hpp>
@@ -48,35 +48,37 @@ template <> void convert(const Header& in, iso20_ac_MessageHeaderType& out) {
     convert_header(in, out);
 }
 
-template <typename cb_RationalNumberType> void convert(const cb_RationalNumberType& in, RationalNumber& out) {
+template <typename cb_RationalNumberType>
+void convert(const cb_RationalNumberType& in, datatypes::RationalNumber& out) {
     out.exponent = in.Exponent;
     out.value = in.Value;
 }
 
-template void convert(const struct iso20_ac_RationalNumberType& in, RationalNumber& out);
-template void convert(const struct iso20_dc_RationalNumberType& in, RationalNumber& out);
-template void convert(const struct iso20_RationalNumberType& in, RationalNumber& out);
+template void convert(const struct iso20_ac_RationalNumberType& in, datatypes::RationalNumber& out);
+template void convert(const struct iso20_dc_RationalNumberType& in, datatypes::RationalNumber& out);
+template void convert(const struct iso20_RationalNumberType& in, datatypes::RationalNumber& out);
 
-template <typename cb_RationalNumberType> void convert(const RationalNumber& in, cb_RationalNumberType& out) {
+template <typename cb_RationalNumberType>
+void convert(const datatypes::RationalNumber& in, cb_RationalNumberType& out) {
     out.Exponent = in.exponent;
     out.Value = in.value;
 }
 
-template void convert(const RationalNumber& in, struct iso20_ac_RationalNumberType& out);
-template void convert(const RationalNumber& in, struct iso20_dc_RationalNumberType& out);
-template void convert(const RationalNumber& in, struct iso20_RationalNumberType& out);
+template void convert(const datatypes::RationalNumber& in, struct iso20_ac_RationalNumberType& out);
+template void convert(const datatypes::RationalNumber& in, struct iso20_dc_RationalNumberType& out);
+template void convert(const datatypes::RationalNumber& in, struct iso20_RationalNumberType& out);
 
-template <> void convert(const EvseStatus& in, struct iso20_dc_EVSEStatusType& out) {
+template <> void convert(const datatypes::EvseStatus& in, struct iso20_dc_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
     cb_convert_enum(in.notification, out.EVSENotification);
 }
 
-template <> void convert(const EvseStatus& in, struct iso20_ac_EVSEStatusType& out) {
+template <> void convert(const datatypes::EvseStatus& in, struct iso20_ac_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
     cb_convert_enum(in.notification, out.EVSENotification);
 }
 
-template <typename cb_MeterInfoType> void convert_meterinfo(const MeterInfo& in, cb_MeterInfoType& out) {
+template <typename cb_MeterInfoType> void convert_meterinfo(const datatypes::MeterInfo& in, cb_MeterInfoType& out) {
 
     CPP2CB_STRING(in.meter_id, out.MeterID);
     out.ChargedEnergyReadingWh = in.charged_energy_reading_wh;
@@ -94,20 +96,22 @@ template <typename cb_MeterInfoType> void convert_meterinfo(const MeterInfo& in,
     CPP2CB_ASSIGN_IF_USED(in.meter_timestamp, out.MeterTimestamp);
 }
 
-template <> void convert(const MeterInfo& in, iso20_dc_MeterInfoType& out) {
+template <> void convert(const datatypes::MeterInfo& in, iso20_dc_MeterInfoType& out) {
     init_iso20_dc_MeterInfoType(&out);
     convert_meterinfo(in, out);
 }
 
-template <> void convert(const MeterInfo& in, iso20_ac_MeterInfoType& out) {
+template <> void convert(const datatypes::MeterInfo& in, iso20_ac_MeterInfoType& out) {
     init_iso20_ac_MeterInfoType(&out);
     convert_meterinfo(in, out);
 }
 
-template <> void convert(const EvseStatus& in, iso20_EVSEStatusType& out) {
+template <> void convert(const datatypes::EvseStatus& in, iso20_EVSEStatusType& out) {
     out.NotificationMaxDelay = in.notification_max_delay;
     cb_convert_enum(in.notification, out.EVSENotification);
 }
+
+namespace datatypes {
 
 float from_RationalNumber(const RationalNumber& in) {
     return in.value * pow(10, in.exponent);
@@ -158,5 +162,7 @@ std::string from_mobility_needs_mode(const MobilityNeedsMode& in) {
     }
     return "";
 }
+
+} // namespace datatypes
 
 } // namespace iso15118::message_20

@@ -6,6 +6,8 @@
 
 using namespace iso15118;
 
+namespace dt = message_20::datatypes;
+
 SCENARIO("DC cable check state handling") {
     GIVEN("Bad case - Unknown session") {
 
@@ -19,8 +21,8 @@ SCENARIO("DC cable check state handling") {
         const auto res = d20::state::handle_request(req, d20::Session(), false);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
-            REQUIRE(res.processing == message_20::Processing::Ongoing);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.processing == dt::Processing::Ongoing);
         }
     }
 
@@ -34,8 +36,8 @@ SCENARIO("DC cable check state handling") {
         const auto res = d20::state::handle_request(req, session, false);
 
         THEN("ResponseCode: OK, processing: Ongoing") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(res.processing == message_20::Processing::Ongoing);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.processing == dt::Processing::Ongoing);
         }
     }
 
@@ -49,8 +51,8 @@ SCENARIO("DC cable check state handling") {
         const auto res = d20::state::handle_request(req, session, true);
 
         THEN("ResponseCode: OK, processing: Finished") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(res.processing == message_20::Processing::Finished);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.processing == dt::Processing::Finished);
         }
     }
 

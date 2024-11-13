@@ -23,6 +23,12 @@
     std::copy(in.begin(), in.end(), out.bytes);                                                                        \
     out.bytesLen = in.size()
 
+#define CB2CPP_BYTES(in, out)                                                                                          \
+    if (in.bytesLen > out.size()) {                                                                                    \
+        throw std::runtime_error("Byte array too long");                                                               \
+    }                                                                                                                  \
+    std::copy(std::begin(in.bytes), std::end(in.bytes), out.begin());
+
 #define CB_SET_USED(property) (property##_isUsed = 1)
 #define CB2CPP_ASSIGN_IF_USED(in, out)                                                                                 \
     if (in##_isUsed) {                                                                                                 \

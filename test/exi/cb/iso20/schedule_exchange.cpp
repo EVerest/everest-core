@@ -7,6 +7,8 @@
 
 using namespace iso15118;
 
+namespace dt = iso15118::message_20::datatypes;
+
 SCENARIO("Se/Deserialize schedule_exchange messages") {
 
     GIVEN("Serialize schedule_exchange_req - scheduled mode") {
@@ -34,26 +36,24 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
 
             REQUIRE(msg.max_supporting_points == 1024);
 
-            REQUIRE(std::holds_alternative<message_20::ScheduleExchangeRequest::Scheduled_SEReqControlMode>(
-                msg.control_mode));
-            auto& control_mode =
-                std::get<message_20::ScheduleExchangeRequest::Scheduled_SEReqControlMode>(msg.control_mode);
+            REQUIRE(std::holds_alternative<dt::Scheduled_SEReqControlMode>(msg.control_mode));
+            auto& control_mode = std::get<dt::Scheduled_SEReqControlMode>(msg.control_mode);
 
             REQUIRE(control_mode.departure_time.has_value() == true);
             REQUIRE(control_mode.departure_time == 7200);
             REQUIRE(control_mode.target_energy.has_value() == true);
-            REQUIRE(message_20::from_RationalNumber(*control_mode.target_energy) == 10000.0f);
+            REQUIRE(dt::from_RationalNumber(*control_mode.target_energy) == 10000.0f);
             REQUIRE(control_mode.max_energy.has_value() == true);
-            REQUIRE(message_20::from_RationalNumber(*control_mode.max_energy) == 20000.0f);
+            REQUIRE(dt::from_RationalNumber(*control_mode.max_energy) == 20000.0f);
             REQUIRE(control_mode.min_energy.has_value() == true);
-            REQUIRE(message_20::from_RationalNumber(*control_mode.min_energy) == 0.05f);
+            REQUIRE(dt::from_RationalNumber(*control_mode.min_energy) == 0.05f);
 
             REQUIRE(control_mode.energy_offer.has_value() == true);
             auto& ev_energy_offer = control_mode.energy_offer.value();
             REQUIRE(ev_energy_offer.power_schedule.time_anchor == 0);
             REQUIRE(ev_energy_offer.power_schedule.entries.size() == 1);
             REQUIRE(ev_energy_offer.power_schedule.entries.at(0).duration == 3600);
-            REQUIRE(message_20::from_RationalNumber(ev_energy_offer.power_schedule.entries.at(0).power) == 10000.0f);
+            REQUIRE(dt::from_RationalNumber(ev_energy_offer.power_schedule.entries.at(0).power) == 10000.0f);
 
             REQUIRE(ev_energy_offer.absolute_price_schedule.time_anchor == 0);
             REQUIRE(ev_energy_offer.absolute_price_schedule.currency == "EUR");
@@ -62,12 +62,12 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
             REQUIRE(ev_energy_offer.absolute_price_schedule.price_rule_stacks.size() == 1);
             REQUIRE(ev_energy_offer.absolute_price_schedule.price_rule_stacks.at(0).duration == 0);
             REQUIRE(ev_energy_offer.absolute_price_schedule.price_rule_stacks.at(0).price_rules.size() == 1);
-            REQUIRE(message_20::from_RationalNumber(
+            REQUIRE(dt::from_RationalNumber(
                         ev_energy_offer.absolute_price_schedule.price_rule_stacks.at(0).price_rules.at(0).energy_fee) ==
                     0);
-            REQUIRE(message_20::from_RationalNumber(ev_energy_offer.absolute_price_schedule.price_rule_stacks.at(0)
-                                                        .price_rules.at(0)
-                                                        .power_range_start) == 0);
+            REQUIRE(dt::from_RationalNumber(ev_energy_offer.absolute_price_schedule.price_rule_stacks.at(0)
+                                                .price_rules.at(0)
+                                                .power_range_start) == 0);
         }
     }
 
@@ -92,21 +92,19 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
 
             REQUIRE(msg.max_supporting_points == 1024);
 
-            REQUIRE(std::holds_alternative<message_20::ScheduleExchangeRequest::Dynamic_SEReqControlMode>(
-                msg.control_mode));
-            auto& control_mode =
-                std::get<message_20::ScheduleExchangeRequest::Dynamic_SEReqControlMode>(msg.control_mode);
+            REQUIRE(std::holds_alternative<dt::Dynamic_SEReqControlMode>(msg.control_mode));
+            auto& control_mode = std::get<dt::Dynamic_SEReqControlMode>(msg.control_mode);
 
             REQUIRE(control_mode.departure_time == 7200);
             REQUIRE(control_mode.minimum_soc == 30);
             REQUIRE(control_mode.target_soc == 80);
-            REQUIRE(message_20::from_RationalNumber(control_mode.target_energy) == 40000.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.max_energy) == 60000.0f);
-            REQUIRE(message_20::from_RationalNumber(control_mode.min_energy) == -20000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.target_energy) == 40000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.max_energy) == 60000.0f);
+            REQUIRE(dt::from_RationalNumber(control_mode.min_energy) == -20000.0f);
             REQUIRE(control_mode.max_v2x_energy.has_value() == true);
-            REQUIRE(message_20::from_RationalNumber(*control_mode.max_v2x_energy) == 5000.0f);
+            REQUIRE(dt::from_RationalNumber(*control_mode.max_v2x_energy) == 5000.0f);
             REQUIRE(control_mode.min_v2x_energy.has_value() == true);
-            REQUIRE(message_20::from_RationalNumber(*control_mode.min_v2x_energy) == 0.0f);
+            REQUIRE(dt::from_RationalNumber(*control_mode.min_v2x_energy) == 0.0f);
         }
     }
 
@@ -115,11 +113,10 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
         message_20::ScheduleExchangeResponse res;
 
         res.header = message_20::Header{{0x47, 0xFD, 0x3B, 0x4F, 0x13, 0x25, 0x57, 0xCA}, 1727082831};
-        res.response_code = message_20::ResponseCode::OK;
-        res.processing = message_20::Processing::Finished;
-        auto& control_mode =
-            res.control_mode.emplace<message_20::ScheduleExchangeResponse::Scheduled_SEResControlMode>();
-        message_20::ScheduleExchangeResponse::ScheduleTuple tuple;
+        res.response_code = dt::ResponseCode::OK;
+        res.processing = dt::Processing::Finished;
+        auto& control_mode = res.control_mode.emplace<dt::Scheduled_SEResControlMode>();
+        dt::ScheduleTuple tuple;
 
         tuple.schedule_tuple_id = 1;
         tuple.charging_schedule.power_schedule.time_anchor = 1727082831;
@@ -140,18 +137,16 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
         message_20::ScheduleExchangeResponse res;
 
         res.header = message_20::Header{{0x47, 0xFD, 0x3B, 0x4F, 0x13, 0x25, 0x57, 0xCA}, 1727082831};
-        res.response_code = message_20::ResponseCode::OK;
-        res.processing = message_20::Processing::Finished;
-        auto& control_mode =
-            res.control_mode.emplace<message_20::ScheduleExchangeResponse::Scheduled_SEResControlMode>();
-        message_20::ScheduleExchangeResponse::ScheduleTuple tuple;
+        res.response_code = dt::ResponseCode::OK;
+        res.processing = dt::Processing::Finished;
+        auto& control_mode = res.control_mode.emplace<dt::Scheduled_SEResControlMode>();
+        dt::ScheduleTuple tuple;
 
         tuple.schedule_tuple_id = 1;
         tuple.charging_schedule.power_schedule.time_anchor = 1727082831;
         tuple.charging_schedule.power_schedule.entries.push_back({86400, {2208, 1}, std::nullopt, std::nullopt});
 
-        auto& price_level =
-            tuple.charging_schedule.price_schedule.emplace<message_20::ScheduleExchangeResponse::PriceLevelSchedule>();
+        auto& price_level = tuple.charging_schedule.price_schedule.emplace<dt::PriceLevelSchedule>();
         price_level.time_anchor = 1727082831;
         price_level.price_schedule_id = 1;
         price_level.number_of_price_levels = 0;
@@ -177,9 +172,9 @@ SCENARIO("Se/Deserialize schedule_exchange messages") {
         message_20::ScheduleExchangeResponse res;
 
         res.header = message_20::Header{{0x39, 0x20, 0xB0, 0x04, 0x6E, 0x4A, 0xF9, 0x09}, 1727076439};
-        res.response_code = message_20::ResponseCode::OK;
-        res.processing = message_20::Processing::Finished;
-        auto& control_mode = res.control_mode.emplace<message_20::ScheduleExchangeResponse::Dynamic_SEResControlMode>();
+        res.response_code = dt::ResponseCode::OK;
+        res.processing = dt::Processing::Finished;
+        auto& control_mode = res.control_mode.emplace<dt::Dynamic_SEResControlMode>();
         control_mode.departure_time = 2000;
 
         std::vector<uint8_t> expected = {0x80, 0x70, 0x04, 0x1c, 0x90, 0x58, 0x02, 0x37, 0x25, 0x7c, 0x84,

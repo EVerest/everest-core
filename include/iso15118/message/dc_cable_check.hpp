@@ -2,7 +2,7 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include "common.hpp"
+#include "common_types.hpp"
 
 namespace iso15118::message_20 {
 
@@ -12,12 +12,12 @@ struct DC_CableCheckRequest {
 
 struct DC_CableCheckResponse {
 
-    DC_CableCheckResponse() : processing(Processing::Ongoing){};
+    DC_CableCheckResponse() : processing(datatypes::Processing::Ongoing){};
 
     Header header;
-    ResponseCode response_code;
+    datatypes::ResponseCode response_code;
 
-    Processing processing;
+    datatypes::Processing processing;
 };
 
 } // namespace iso15118::message_20

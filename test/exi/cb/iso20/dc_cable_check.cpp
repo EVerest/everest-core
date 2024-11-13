@@ -34,8 +34,8 @@ SCENARIO("Se/Deserialize dc cable check messages") {
         message_20::DC_CableCheckResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456328};
-        res.response_code = message_20::ResponseCode::OK;
-        res.processing = message_20::Processing::Ongoing;
+        res.response_code = message_20::datatypes::ResponseCode::OK;
+        res.processing = message_20::datatypes::Processing::Ongoing;
 
         std::vector<uint8_t> expected = {0x80, 0x30, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c,
                                          0x4d, 0x8c, 0x8b, 0xfe, 0x1b, 0x60, 0x62, 0x00, 0x10};
@@ -50,8 +50,8 @@ SCENARIO("Se/Deserialize dc cable check messages") {
         message_20::DC_CableCheckResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456331};
-        res.response_code = message_20::ResponseCode::OK;
-        res.processing = message_20::Processing::Finished;
+        res.response_code = message_20::datatypes::ResponseCode::OK;
+        res.processing = message_20::datatypes::Processing::Finished;
 
         std::vector<uint8_t> expected = {0x80, 0x30, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c,
                                          0x4d, 0x8c, 0xbb, 0xfe, 0x1b, 0x60, 0x62, 0x00, 0x00};

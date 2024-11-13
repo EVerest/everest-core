@@ -11,30 +11,28 @@
 namespace iso15118::message_20 {
 
 template <>
-void convert(const struct iso20_Scheduled_EVPPTControlModeType& in,
-             PowerDeliveryRequest::Scheduled_EVPPTControlMode& out) {
+void convert(const struct iso20_Scheduled_EVPPTControlModeType& in, datatypes::Scheduled_EVPPTControlMode& out) {
     if (in.PowerToleranceAcceptance_isUsed) {
-        out.power_tolerance_acceptance =
-            static_cast<message_20::PowerDeliveryRequest::PowerToleranceAcceptance>(in.PowerToleranceAcceptance);
+        out.power_tolerance_acceptance = static_cast<datatypes::PowerToleranceAcceptance>(in.PowerToleranceAcceptance);
     }
     out.selected_schedule = in.SelectedScheduleTupleID;
 }
 
-template <> void convert(const struct iso20_PowerScheduleEntryType& in, PowerDeliveryRequest::PowerScheduleEntry& out) {
+template <> void convert(const struct iso20_PowerScheduleEntryType& in, datatypes::PowerScheduleEntry& out) {
     out.duration = in.Duration;
     convert(in.Power, out.power);
     CB2CPP_CONVERT_IF_USED(in.Power_L2, out.power_l2);
     CB2CPP_CONVERT_IF_USED(in.Power_L3, out.power_l3);
 }
 
-template <> void convert(const struct iso20_EVPowerProfileType& in, PowerDeliveryRequest::PowerProfile& out) {
+template <> void convert(const struct iso20_EVPowerProfileType& in, datatypes::PowerProfile& out) {
     out.time_anchor = in.TimeAnchor;
 
     if (in.Dynamic_EVPPTControlMode_isUsed) {
-        out.control_mode.emplace<PowerDeliveryRequest::Dynamic_EVPPTControlMode>();
+        out.control_mode.emplace<datatypes::Dynamic_EVPPTControlMode>();
         // NOTE (aw): nothing more to do here because Dynamic_EVPPTControlMode is empty
     } else if (in.Scheduled_EVPPTControlMode_isUsed) {
-        auto& cm = out.control_mode.emplace<PowerDeliveryRequest::Scheduled_EVPPTControlMode>();
+        auto& cm = out.control_mode.emplace<datatypes::Scheduled_EVPPTControlMode>();
         convert(in.Scheduled_EVPPTControlMode, cm);
     } else {
         throw std::runtime_error("PowerProfile control mode not defined");
@@ -49,7 +47,7 @@ template <> void convert(const struct iso20_EVPowerProfileType& in, PowerDeliver
     }
 }
 
-void convert(const iso20_channelSelectionType in, PowerDeliveryRequest::ChannelSelection& out) {
+void convert(const iso20_channelSelectionType in, datatypes::ChannelSelection& out) {
     cb_convert_enum(in, out);
 }
 

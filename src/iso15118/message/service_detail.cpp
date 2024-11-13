@@ -10,9 +10,9 @@
 
 namespace iso15118::message_20 {
 
-// todo(sl): refactor in header file
+namespace datatypes {
 // default
-ServiceDetailResponse::ParameterSet::ParameterSet() {
+ParameterSet::ParameterSet() {
     id = 0;
     parameter.push_back({
         "Connector",                            // name
@@ -32,7 +32,7 @@ ServiceDetailResponse::ParameterSet::ParameterSet() {
     });
 }
 
-ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcParameterList& list) {
+ParameterSet::ParameterSet(uint16_t _id, const DcParameterList& list) {
     id = _id;
     // Connector
     auto& connector = parameter.emplace_back();
@@ -45,8 +45,8 @@ ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcParamete
     // MobilityNeedsMode
     auto& mobility = parameter.emplace_back();
     mobility.name = "MobilityNeedsMode";
-    if (list.control_mode == message_20::ControlMode::Scheduled) {
-        mobility.value = static_cast<int32_t>(message_20::MobilityNeedsMode::ProvidedByEvcc);
+    if (list.control_mode == ControlMode::Scheduled) {
+        mobility.value = static_cast<int32_t>(MobilityNeedsMode::ProvidedByEvcc);
     } else {
         mobility.value = static_cast<int32_t>(list.mobility_needs_mode);
     }
@@ -56,7 +56,7 @@ ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcParamete
     pricing.value = static_cast<int32_t>(list.pricing);
 }
 
-ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcBptParameterList& list) {
+ParameterSet::ParameterSet(uint16_t _id, const DcBptParameterList& list) {
     id = _id;
     // Todo(sl): Refactor because of duplicate code
     // Connector
@@ -70,8 +70,8 @@ ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcBptParam
     // MobilityNeedsMode
     auto& mobility = parameter.emplace_back();
     mobility.name = "MobilityNeedsMode";
-    if (list.control_mode == message_20::ControlMode::Scheduled) {
-        mobility.value = static_cast<int32_t>(message_20::MobilityNeedsMode::ProvidedByEvcc);
+    if (list.control_mode == ControlMode::Scheduled) {
+        mobility.value = static_cast<int32_t>(MobilityNeedsMode::ProvidedByEvcc);
     } else {
         mobility.value = static_cast<int32_t>(list.mobility_needs_mode);
     }
@@ -89,19 +89,19 @@ ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const DcBptParam
     generator_mode.value = static_cast<int32_t>(list.generator_mode);
 }
 
-ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const InternetParameterList& list) {
+ParameterSet::ParameterSet(uint16_t _id, const InternetParameterList& list) {
     id = _id;
 
     auto& protocol = parameter.emplace_back();
     protocol.name = "Protocol";
-    protocol.value = message_20::from_Protocol(list.protocol);
+    protocol.value = from_Protocol(list.protocol);
 
     auto& port = parameter.emplace_back();
     port.name = "Port";
     port.value = static_cast<int32_t>(list.port);
 }
 
-ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const ParkingParameterList& list) {
+ParameterSet::ParameterSet(uint16_t _id, const ParkingParameterList& list) {
     id = _id;
     auto& intended_service = parameter.emplace_back();
     intended_service.name = "IntendedService";
@@ -111,9 +111,11 @@ ServiceDetailResponse::ParameterSet::ParameterSet(uint16_t _id, const ParkingPar
     parking_status.value = static_cast<int32_t>(list.parking_status);
 }
 
+} // namespace datatypes
+
 template <> void convert(const struct iso20_ServiceDetailReqType& in, ServiceDetailRequest& out) {
     convert(in.Header, out.header);
-    out.service = static_cast<ServiceCategory>(in.ServiceID);
+    out.service = static_cast<datatypes::ServiceCategory>(in.ServiceID);
 }
 
 struct ParamterValueVisitor {
@@ -138,7 +140,7 @@ struct ParamterValueVisitor {
         CB_SET_USED(parameter.finiteString);
         CPP2CB_STRING(in, parameter.finiteString);
     }
-    void operator()(const message_20::RationalNumber& in) {
+    void operator()(const message_20::datatypes::RationalNumber& in) {
         CB_SET_USED(parameter.rationalNumber);
         parameter.rationalNumber.Exponent = in.exponent;
         parameter.rationalNumber.Value = in.value;

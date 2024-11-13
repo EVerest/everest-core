@@ -6,12 +6,14 @@
 
 using namespace iso15118;
 
+namespace dt = message_20::datatypes;
+
 SCENARIO("Schedule Exchange state handling") {
 
-    using Scheduled_ModeReq = message_20::ScheduleExchangeRequest::Scheduled_SEReqControlMode;
-    using Scheduled_ModeRes = message_20::ScheduleExchangeResponse::Scheduled_SEResControlMode;
-    using Dynamic_ModeReq = message_20::ScheduleExchangeRequest::Dynamic_SEReqControlMode;
-    using Dynamic_ModeRes = message_20::ScheduleExchangeResponse::Dynamic_SEResControlMode;
+    using Scheduled_ModeReq = message_20::datatypes::Scheduled_SEReqControlMode;
+    using Scheduled_ModeRes = message_20::datatypes::Scheduled_SEResControlMode;
+    using Dynamic_ModeReq = message_20::datatypes::Dynamic_SEReqControlMode;
+    using Dynamic_ModeRes = message_20::datatypes::Dynamic_SEResControlMode;
 
     GIVEN("Bad case - Unknown session") {
 
@@ -23,14 +25,14 @@ SCENARIO("Schedule Exchange state handling") {
 
         req.control_mode.emplace<Scheduled_ModeReq>();
 
-        message_20::RationalNumber max_power = {0, 0};
+        dt::RationalNumber max_power = {0, 0};
 
         const auto res = d20::state::handle_request(req, d20::Session(), max_power, d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
 
-            REQUIRE(res.processing == message_20::Processing::Finished);
+            REQUIRE(res.processing == dt::Processing::Finished);
 
             REQUIRE(std::holds_alternative<Dynamic_ModeRes>(res.control_mode) == true);
             const auto& res_control_mode = std::get<Dynamic_ModeRes>(res.control_mode);
@@ -40,8 +42,8 @@ SCENARIO("Schedule Exchange state handling") {
 
     GIVEN("Bad case - False control mode") {
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         auto session = d20::Session(service_parameters);
 
@@ -51,14 +53,14 @@ SCENARIO("Schedule Exchange state handling") {
 
         req.control_mode.emplace<Dynamic_ModeReq>();
 
-        message_20::RationalNumber max_power = {0, 0};
+        dt::RationalNumber max_power = {0, 0};
 
         const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: FAILED, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED);
 
-            REQUIRE(res.processing == message_20::Processing::Finished);
+            REQUIRE(res.processing == dt::Processing::Finished);
 
             REQUIRE(std::holds_alternative<Dynamic_ModeRes>(res.control_mode) == true);
             const auto& res_control_mode = std::get<Dynamic_ModeRes>(res.control_mode);
@@ -68,8 +70,8 @@ SCENARIO("Schedule Exchange state handling") {
 
     GIVEN("Good case - Scheduled Mode") {
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         auto session = d20::Session(service_parameters);
 
@@ -79,14 +81,14 @@ SCENARIO("Schedule Exchange state handling") {
 
         req.control_mode.emplace<Scheduled_ModeReq>();
 
-        message_20::RationalNumber max_power = {22, 3};
+        dt::RationalNumber max_power = {22, 3};
 
         const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
 
-            REQUIRE(res.processing == message_20::Processing::Finished);
+            REQUIRE(res.processing == dt::Processing::Finished);
 
             REQUIRE(std::holds_alternative<Scheduled_ModeRes>(res.control_mode) == true);
             const auto& res_control_mode = std::get<Scheduled_ModeRes>(res.control_mode);
@@ -94,15 +96,15 @@ SCENARIO("Schedule Exchange state handling") {
             REQUIRE(res_control_mode.schedule_tuple.size() == 1);
             const auto& schedule_tuple = res_control_mode.schedule_tuple[0];
 
-            REQUIRE(message_20::from_RationalNumber(
-                        schedule_tuple.charging_schedule.power_schedule.entries.at(0).power) == 22000);
+            REQUIRE(dt::from_RationalNumber(schedule_tuple.charging_schedule.power_schedule.entries.at(0).power) ==
+                    22000);
         }
     }
 
     GIVEN("Good case - Dynamic Mode") {
-        d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+        d20::SelectedServiceParameters service_parameters =
+            d20::SelectedServiceParameters(dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+                                           dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         auto session = d20::Session(service_parameters);
 
@@ -112,13 +114,13 @@ SCENARIO("Schedule Exchange state handling") {
 
         req.control_mode.emplace<Dynamic_ModeReq>();
 
-        message_20::RationalNumber max_power = {22, 3};
+        dt::RationalNumber max_power = {22, 3};
 
         const auto res = d20::state::handle_request(req, session, max_power, d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(res.processing == message_20::Processing::Finished);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(res.processing == dt::Processing::Finished);
 
             REQUIRE(std::holds_alternative<Dynamic_ModeRes>(res.control_mode) == true);
         }

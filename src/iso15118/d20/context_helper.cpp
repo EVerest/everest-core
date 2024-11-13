@@ -42,7 +42,7 @@ void setup_header(message_20::Header& header, const Session& cur_session) {
 template <typename Response> Response handle_sequence_error(const d20::Session& session) {
     Response res;
     setup_header(res.header, session);
-    return response_with_code(res, message_20::ResponseCode::FAILED_SequenceError);
+    return response_with_code(res, message_20::datatypes::ResponseCode::FAILED_SequenceError);
 }
 
 // Todo(sl): Not happy at all. Need refactoring. Only ctx.respond and Session is needed. Not the whole Context.

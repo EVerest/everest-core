@@ -6,6 +6,8 @@
 
 using namespace iso15118;
 
+namespace dt = message_20::datatypes;
+
 SCENARIO("DC Welding Detection state handling") {
 
     GIVEN("Bad case - Unknown session") {
@@ -15,14 +17,14 @@ SCENARIO("DC Welding Detection state handling") {
         message_20::DC_WeldingDetectionRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.processing = message_20::Processing::Ongoing;
+        req.processing = dt::Processing::Ongoing;
 
         const float present_voltage = 0.1;
 
         const auto res = d20::state::handle_request(req, d20::Session(), present_voltage);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
             REQUIRE(res.present_voltage.value == 0);
             REQUIRE(res.present_voltage.exponent == 0);
         }
@@ -35,14 +37,14 @@ SCENARIO("DC Welding Detection state handling") {
         message_20::DC_WeldingDetectionRequest req;
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.processing = message_20::Processing::Ongoing;
+        req.processing = dt::Processing::Ongoing;
 
         const float present_voltage = 200;
 
         const auto res = d20::state::handle_request(req, session, present_voltage);
 
         THEN("ResponseCode: OK, present_voltage should be 200V") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
             REQUIRE(res.present_voltage.value == 2000);
             REQUIRE(res.present_voltage.exponent == -1);
         }

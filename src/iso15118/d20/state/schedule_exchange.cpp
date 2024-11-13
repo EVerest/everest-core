@@ -12,22 +12,24 @@
 
 namespace iso15118::d20::state {
 
-using ScheduledReqControlMode = message_20::ScheduleExchangeRequest::Scheduled_SEReqControlMode;
-using ScheduledResControlMode = message_20::ScheduleExchangeResponse::Scheduled_SEResControlMode;
+namespace dt = message_20::datatypes;
 
-using DynamicReqControlMode = message_20::ScheduleExchangeRequest::Dynamic_SEReqControlMode;
-using DynamicResControlMode = message_20::ScheduleExchangeResponse::Dynamic_SEResControlMode;
+using ScheduledReqControlMode = message_20::datatypes::Scheduled_SEReqControlMode;
+using ScheduledResControlMode = message_20::datatypes::Scheduled_SEResControlMode;
+
+using DynamicReqControlMode = message_20::datatypes::Dynamic_SEReqControlMode;
+using DynamicResControlMode = message_20::datatypes::Dynamic_SEResControlMode;
 
 namespace {
-auto create_default_scheduled_control_mode(const message_20::RationalNumber& max_power) {
-    message_20::ScheduleExchangeResponse::ScheduleTuple schedule;
+auto create_default_scheduled_control_mode(const dt::RationalNumber& max_power) {
+    dt::ScheduleTuple schedule;
     schedule.schedule_tuple_id = 1;
     schedule.charging_schedule.power_schedule.time_anchor =
         static_cast<uint64_t>(std::time(nullptr)); // PowerSchedule is now active
 
-    message_20::ScheduleExchangeResponse::PowerScheduleEntry power_schedule;
+    dt::PowerScheduleEntry power_schedule;
     power_schedule.power = max_power;
-    power_schedule.duration = message_20::ScheduleExchangeResponse::SCHEDULED_POWER_DURATION_S;
+    power_schedule.duration = dt::SCHEDULED_POWER_DURATION_S;
     schedule.charging_schedule.power_schedule.entries.push_back(power_schedule);
 
     ScheduledResControlMode scheduled_mode{};
@@ -53,15 +55,16 @@ void set_dynamic_parameters_in_res(DynamicResControlMode& res_mode, const Update
 } // namespace
 } // namespace
 
+namespace dt = message_20::datatypes;
+
 message_20::ScheduleExchangeResponse handle_request(const message_20::ScheduleExchangeRequest& req,
-                                                    const d20::Session& session,
-                                                    const message_20::RationalNumber& max_power,
+                                                    const d20::Session& session, const dt::RationalNumber& max_power,
                                                     const UpdateDynamicModeParameters& dynamic_parameters) {
 
     message_20::ScheduleExchangeResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     const auto selected_services = session.get_selected_services();
@@ -70,32 +73,32 @@ message_20::ScheduleExchangeResponse handle_request(const message_20::ScheduleEx
 
     // Todo(SL): Publish data from request?
 
-    if (selected_control_mode == message_20::ControlMode::Scheduled &&
-        std::holds_alternative<ScheduledReqControlMode>(req.control_mode)) {
+    if (selected_control_mode == dt::ControlMode::Scheduled &&
+        std::holds_alternative<dt::Scheduled_SEReqControlMode>(req.control_mode)) {
 
         res.control_mode.emplace<ScheduledResControlMode>(create_default_scheduled_control_mode(max_power));
 
         // TODO(sl): Adding price schedule
         // TODO(sl): Adding discharging schedule
 
-    } else if (selected_control_mode == message_20::ControlMode::Dynamic &&
+    } else if (selected_control_mode == dt::ControlMode::Dynamic &&
                std::holds_alternative<DynamicReqControlMode>(req.control_mode)) {
 
         // TODO(sl): Publish req dynamic mode parameters
         auto& mode = res.control_mode.emplace<DynamicResControlMode>();
 
-        if (selected_mobility_needs_mode == message_20::MobilityNeedsMode::ProvidedBySecc) {
+        if (selected_mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
             set_dynamic_parameters_in_res(mode, dynamic_parameters, res.header.timestamp);
         }
 
     } else {
         logf_error("The control mode of the req message does not match the previously agreed contol mode.");
-        return response_with_code(res, message_20::ResponseCode::FAILED);
+        return response_with_code(res, dt::ResponseCode::FAILED);
     }
 
-    res.processing = message_20::Processing::Finished;
+    res.processing = dt::Processing::Finished;
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void ScheduleExchange::enter() {
@@ -123,12 +126,12 @@ FsmSimpleState::HandleEventReturnType ScheduleExchange::handle_event(AllocatorTy
 
     if (const auto req = variant->get_if<message_20::ScheduleExchangeRequest>()) {
 
-        message_20::RationalNumber max_charge_power = {0, 0};
+        dt::RationalNumber max_charge_power = {0, 0};
 
         const auto selected_energy_service = ctx.session.get_selected_services().selected_energy_service;
 
-        if (selected_energy_service == message_20::ServiceCategory::DC or
-            selected_energy_service == message_20::ServiceCategory::DC_BPT) {
+        if (selected_energy_service == dt::ServiceCategory::DC or
+            selected_energy_service == dt::ServiceCategory::DC_BPT) {
             max_charge_power = ctx.session_config.dc_limits.charge_limits.power.max;
         }
 
@@ -136,12 +139,12 @@ FsmSimpleState::HandleEventReturnType ScheduleExchange::handle_event(AllocatorTy
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }
 
-        if (res.processing == message_20::Processing::Ongoing) {
+        if (res.processing == dt::Processing::Ongoing) {
             return sa.HANDLED_INTERNALLY;
         }
 

@@ -8,6 +8,8 @@
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::SessionStopResponse handle_request(const message_20::SessionStopRequest& req, const d20::Session& session) {
 
     if (req.ev_termination_code.has_value()) {
@@ -20,17 +22,17 @@ message_20::SessionStopResponse handle_request(const message_20::SessionStopRequ
     message_20::SessionStopResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
-    if (req.charging_session == message_20::ChargingSession::ServiceRenegotiation &&
+    if (req.charging_session == dt::ChargingSession::ServiceRenegotiation &&
         session.service_renegotiation_supported == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_NoServiceRenegotiationSupported);
+        return response_with_code(res, dt::ResponseCode::FAILED_NoServiceRenegotiationSupported);
     }
 
     // Todo(sl): Check req.charging_session
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void SessionStop::enter() {

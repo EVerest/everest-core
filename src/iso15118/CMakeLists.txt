@@ -49,7 +49,7 @@ target_sources(iso15118
         message/variant.cpp
         message/supported_app_protocol.cpp
         message/session_setup.cpp
-        message/common.cpp
+        message/common_types.cpp
         message/authorization_setup.cpp
         message/authorization.cpp
         message/service_discovery.cpp

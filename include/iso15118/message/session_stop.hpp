@@ -5,20 +5,20 @@
 #include <optional>
 #include <string>
 
-#include "common.hpp"
+#include "common_types.hpp"
 
 namespace iso15118::message_20 {
 
 struct SessionStopRequest {
     Header header;
-    ChargingSession charging_session;
-    std::optional<std::string> ev_termination_code;
-    std::optional<std::string> ev_termination_explanation;
+    datatypes::ChargingSession charging_session;
+    std::optional<datatypes::Name> ev_termination_code;
+    std::optional<datatypes::Description> ev_termination_explanation;
 };
 
 struct SessionStopResponse {
     Header header;
-    ResponseCode response_code;
+    datatypes::ResponseCode response_code;
 };
 
 } // namespace iso15118::message_20

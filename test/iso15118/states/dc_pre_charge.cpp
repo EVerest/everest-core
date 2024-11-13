@@ -6,6 +6,8 @@
 
 using namespace iso15118;
 
+namespace dt = message_20::datatypes;
+
 SCENARIO("DC Pre charge state handling") {
 
     GIVEN("Bad case - Unknown session") {
@@ -16,7 +18,7 @@ SCENARIO("DC Pre charge state handling") {
 
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.processing = message_20::Processing::Ongoing;
+        req.processing = dt::Processing::Ongoing;
         req.present_voltage = {0, 0};
         req.target_voltage = {400, 0};
 
@@ -25,7 +27,7 @@ SCENARIO("DC Pre charge state handling") {
         const auto res = d20::state::handle_request(req, d20::Session(), present_voltage);
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
             REQUIRE(res.present_voltage.value == 0);
             REQUIRE(res.present_voltage.exponent == 0);
         }
@@ -38,7 +40,7 @@ SCENARIO("DC Pre charge state handling") {
 
         req.header.session_id = session.get_id();
         req.header.timestamp = 1691411798;
-        req.processing = message_20::Processing::Ongoing;
+        req.processing = dt::Processing::Ongoing;
         req.present_voltage = {0, 0};
         req.target_voltage = {400, 0};
 
@@ -47,7 +49,7 @@ SCENARIO("DC Pre charge state handling") {
         const auto res = d20::state::handle_request(req, session, present_voltage);
 
         THEN("ResponseCode: OK, present_voltage should be 400.1V") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
             REQUIRE(res.present_voltage.value == 4001);
             REQUIRE(res.present_voltage.exponent == -1);
         }

@@ -4,7 +4,7 @@
 
 #include <iso15118/d20/context.hpp>
 #include <iso15118/d20/session.hpp>
-#include <iso15118/message/common.hpp>
+#include <iso15118/message/common_types.hpp>
 
 namespace iso15118::d20 {
 

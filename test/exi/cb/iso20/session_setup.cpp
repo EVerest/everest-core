@@ -37,8 +37,8 @@ SCENARIO("Se/Deserialize session setup messages") {
 
         const auto header = message_20::Header{{0xF2, 0x19, 0x15, 0xB9, 0xDD, 0xDC, 0x12, 0xD1}, 1691411798};
 
-        const auto res =
-            message_20::SessionSetupResponse{header, message_20::ResponseCode::OK_NewSessionEstablished, "UK123E1234"};
+        const auto res = message_20::SessionSetupResponse{
+            header, message_20::datatypes::ResponseCode::OK_NewSessionEstablished, "UK123E1234"};
 
         std::vector<uint8_t> expected = {0x80, 0x90, 0x04, 0x79, 0x0c, 0x8a, 0xdc, 0xee, 0xee, 0x09,
                                          0x68, 0x8d, 0x6c, 0xac, 0x3a, 0x60, 0x62, 0x04, 0x03, 0x15,

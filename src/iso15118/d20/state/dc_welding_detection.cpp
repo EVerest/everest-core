@@ -9,17 +9,19 @@
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::DC_WeldingDetectionResponse handle_request(const message_20::DC_WeldingDetectionRequest& req,
                                                        const d20::Session& session, const float present_voltage) {
     message_20::DC_WeldingDetectionResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
-    res.present_voltage = message_20::from_float(present_voltage);
+    res.present_voltage = dt::from_float(present_voltage);
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void DC_WeldingDetection::enter() {
@@ -51,12 +53,12 @@ FsmSimpleState::HandleEventReturnType DC_WeldingDetection::handle_event(Allocato
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }
 
-        if (req->processing == message_20::Processing::Ongoing) {
+        if (req->processing == dt::Processing::Ongoing) {
             return sa.HANDLED_INTERNALLY;
         }
 

@@ -15,6 +15,8 @@ static bool session_is_zero(const iso15118::message_20::Header& header) {
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::SessionSetupResponse handle_request([[maybe_unused]] const message_20::SessionSetupRequest& req,
                                                 const d20::Session& session, const std::string& evse_id,
                                                 bool new_session) {
@@ -26,9 +28,9 @@ message_20::SessionSetupResponse handle_request([[maybe_unused]] const message_2
     res.evseid = evse_id;
 
     if (new_session) {
-        return response_with_code(res, message_20::ResponseCode::OK_NewSessionEstablished);
+        return response_with_code(res, dt::ResponseCode::OK_NewSessionEstablished);
     } else {
-        return response_with_code(res, message_20::ResponseCode::OK_OldSessionJoined);
+        return response_with_code(res, dt::ResponseCode::OK_OldSessionJoined);
     }
 }
 

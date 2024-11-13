@@ -33,15 +33,14 @@ struct DcMaximumLimits {
     float power{NAN};
 };
 
-using PresentVoltage = message_20::RationalNumber;
+using PresentVoltage = message_20::datatypes::RationalNumber;
 using MeterInfoRequested = bool;
-using DcReqControlMode = std::variant<message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode,
-                                      message_20::DC_ChargeLoopRequest::BPT_Scheduled_DC_CLReqControlMode,
-                                      message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode,
-                                      message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode>;
+using DcReqControlMode = std::variant<
+    message_20::datatypes::Scheduled_DC_CLReqControlMode, message_20::datatypes::BPT_Scheduled_DC_CLReqControlMode,
+    message_20::datatypes::Dynamic_DC_CLReqControlMode, message_20::datatypes::BPT_Dynamic_DC_CLReqControlMode>;
 
 using DcChargeLoopReq =
-    std::variant<DcReqControlMode, message_20::DisplayParameters, PresentVoltage, MeterInfoRequested>;
+    std::variant<DcReqControlMode, message_20::datatypes::DisplayParameters, PresentVoltage, MeterInfoRequested>;
 
 struct Callbacks {
     std::function<void(Signal)> signal;

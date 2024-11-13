@@ -11,9 +11,11 @@
 
 namespace iso15118::d20::state {
 
-using AuthStatus = message_20::AuthStatus;
+namespace dt = message_20::datatypes;
 
-static bool find_auth_service_in_offered_services(const message_20::Authorization& req_selected_auth_service,
+using AuthStatus = dt::AuthStatus;
+
+static bool find_auth_service_in_offered_services(const dt::Authorization& req_selected_auth_service,
                                                   const d20::Session& session) {
     auto& offered_auth_services = session.offered_services.auth_services;
     return std::find(offered_auth_services.begin(), offered_auth_services.end(), req_selected_auth_service) !=
@@ -22,42 +24,42 @@ static bool find_auth_service_in_offered_services(const message_20::Authorizatio
 
 message_20::AuthorizationResponse handle_request(const message_20::AuthorizationRequest& req,
                                                  const d20::Session& session,
-                                                 const message_20::AuthStatus& authorization_status) {
+                                                 const dt::AuthStatus& authorization_status) {
 
     message_20::AuthorizationResponse res = message_20::AuthorizationResponse();
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     // [V2G20-2209] Check if authorization service was offered in authorization_setup res
     if (not find_auth_service_in_offered_services(req.selected_authorization_service, session)) {
         return response_with_code(
-            res, message_20::ResponseCode::WARNING_AuthorizationSelectionInvalid); // [V2G20-2226] Handling if warning
+            res, dt::ResponseCode::WARNING_AuthorizationSelectionInvalid); // [V2G20-2226] Handling if warning
     }
 
-    auto response_code = message_20::ResponseCode::OK;
+    auto response_code = dt::ResponseCode::OK;
 
     switch (req.selected_authorization_service) {
-    case message_20::Authorization::EIM:
+    case dt::Authorization::EIM:
         switch (authorization_status) {
         case AuthStatus::Accepted:
-            res.evse_processing = message_20::Processing::Finished;
-            response_code = message_20::ResponseCode::OK;
+            res.evse_processing = dt::Processing::Finished;
+            response_code = dt::ResponseCode::OK;
             break;
         case AuthStatus::Rejected: // Failure [V2G20-2230]
-            res.evse_processing = message_20::Processing::Finished;
-            response_code = message_20::ResponseCode::WARNING_EIMAuthorizationFailure;
+            res.evse_processing = dt::Processing::Finished;
+            response_code = dt::ResponseCode::WARNING_EIMAuthorizationFailure;
             break;
         case AuthStatus::Pending:
         default:
-            res.evse_processing = message_20::Processing::Ongoing;
-            response_code = message_20::ResponseCode::OK;
+            res.evse_processing = dt::Processing::Ongoing;
+            response_code = dt::ResponseCode::OK;
             break;
         }
         break;
 
-    case message_20::Authorization::PnC:
+    case dt::Authorization::PnC:
         // todo(SL): Handle PnC
         break;
 
@@ -102,7 +104,7 @@ FsmSimpleState::HandleEventReturnType Authorization::handle_event(AllocatorType&
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }

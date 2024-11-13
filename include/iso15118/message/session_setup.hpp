@@ -4,19 +4,19 @@
 
 #include <string>
 
-#include "common.hpp"
+#include "common_types.hpp"
 
 namespace iso15118::message_20 {
 
 struct SessionSetupRequest {
     Header header;
-    std::string evccid;
+    datatypes::Identifier evccid;
 };
 
 struct SessionSetupResponse {
     Header header;
-    ResponseCode response_code;
-    std::string evseid;
+    datatypes::ResponseCode response_code;
+    datatypes::Identifier evseid;
 };
 
 } // namespace iso15118::message_20

@@ -11,7 +11,7 @@
 
 namespace iso15118::message_20 {
 
-template <> void convert(const struct iso20_ac_DisplayParametersType& in, DisplayParameters& out) {
+template <> void convert(const struct iso20_ac_DisplayParametersType& in, datatypes::DisplayParameters& out) {
 
     CB2CPP_ASSIGN_IF_USED(in.PresentSOC, out.present_soc);
     CB2CPP_ASSIGN_IF_USED(in.MinimumSOC, out.min_soc);
@@ -28,16 +28,16 @@ template <> void convert(const struct iso20_ac_DisplayParametersType& in, Displa
 }
 
 // Todo(sl): this should go to common.cpp
-template <typename InType> void convert(const InType& in, Scheduled_CLReqControlMode& out) {
+template <typename InType> void convert(const InType& in, datatypes::Scheduled_CLReqControlMode& out) {
     CB2CPP_CONVERT_IF_USED(in.EVTargetEnergyRequest, out.target_energy_request);
     CB2CPP_CONVERT_IF_USED(in.EVMaximumEnergyRequest, out.max_energy_request);
     CB2CPP_CONVERT_IF_USED(in.EVMinimumEnergyRequest, out.min_energy_request);
 }
 
-template <typename InType> void convert(const InType& in, AC_ChargeLoopRequest::Scheduled_AC_CLReqControlMode& out) {
+template <typename InType> void convert(const InType& in, datatypes::Scheduled_AC_CLReqControlMode& out) {
     static_assert(std::is_same_v<InType, iso20_ac_Scheduled_AC_CLReqControlModeType> or
                   std::is_same_v<InType, iso20_ac_BPT_Scheduled_AC_CLReqControlModeType>);
-    convert(in, static_cast<Scheduled_CLReqControlMode&>(out));
+    convert(in, static_cast<datatypes::Scheduled_CLReqControlMode&>(out));
 
     CB2CPP_CONVERT_IF_USED(in.EVMaximumChargePower, out.max_charge_power);
     CB2CPP_CONVERT_IF_USED(in.EVMaximumChargePower_L2, out.max_charge_power_L2);
@@ -58,8 +58,8 @@ template <typename InType> void convert(const InType& in, AC_ChargeLoopRequest::
 
 template <>
 void convert(const struct iso20_ac_BPT_Scheduled_AC_CLReqControlModeType& in,
-             AC_ChargeLoopRequest::BPT_Scheduled_AC_CLReqControlMode& out) {
-    convert(in, static_cast<AC_ChargeLoopRequest::Scheduled_AC_CLReqControlMode&>(out));
+             datatypes::BPT_Scheduled_AC_CLReqControlMode& out) {
+    convert(in, static_cast<datatypes::Scheduled_AC_CLReqControlMode&>(out));
 
     CB2CPP_CONVERT_IF_USED(in.EVMaximumDischargePower, out.max_discharge_power);
     CB2CPP_CONVERT_IF_USED(in.EVMaximumDischargePower_L2, out.max_discharge_power_L2);
@@ -71,17 +71,17 @@ void convert(const struct iso20_ac_BPT_Scheduled_AC_CLReqControlModeType& in,
 }
 
 // Todo(sl): this should go to common.cpp
-template <typename InType> void convert(const InType& in, Dynamic_CLReqControlMode& out) {
+template <typename InType> void convert(const InType& in, datatypes::Dynamic_CLReqControlMode& out) {
     CB2CPP_ASSIGN_IF_USED(in.DepartureTime, out.departure_time);
     convert(in.EVTargetEnergyRequest, out.target_energy_request);
     convert(in.EVMaximumEnergyRequest, out.max_energy_request);
     convert(in.EVMinimumEnergyRequest, out.min_energy_request);
 }
 
-template <typename InType> void convert(const InType& in, AC_ChargeLoopRequest::Dynamic_AC_CLReqControlMode& out) {
+template <typename InType> void convert(const InType& in, datatypes::Dynamic_AC_CLReqControlMode& out) {
     static_assert(std::is_same_v<InType, iso20_ac_Dynamic_AC_CLReqControlModeType> or
                   std::is_same_v<InType, iso20_ac_BPT_Dynamic_AC_CLReqControlModeType>);
-    convert(in, static_cast<Dynamic_CLReqControlMode&>(out));
+    convert(in, static_cast<datatypes::Dynamic_CLReqControlMode&>(out));
 
     convert(in.EVMaximumChargePower, out.max_charge_power);
     CB2CPP_CONVERT_IF_USED(in.EVMaximumChargePower_L2, out.max_charge_power_L2);
@@ -102,8 +102,8 @@ template <typename InType> void convert(const InType& in, AC_ChargeLoopRequest::
 
 template <>
 void convert(const struct iso20_ac_BPT_Dynamic_AC_CLReqControlModeType& in,
-             AC_ChargeLoopRequest::BPT_Dynamic_AC_CLReqControlMode& out) {
-    convert(in, static_cast<AC_ChargeLoopRequest::Dynamic_AC_CLReqControlMode&>(out));
+             datatypes::BPT_Dynamic_AC_CLReqControlMode& out) {
+    convert(in, static_cast<datatypes::Dynamic_AC_CLReqControlMode&>(out));
 
     convert(in.EVMaximumDischargePower, out.max_discharge_power);
     CB2CPP_CONVERT_IF_USED(in.EVMaximumDischargePower_L2, out.max_discharge_power_L2);
@@ -125,17 +125,15 @@ template <> void convert(const struct iso20_ac_AC_ChargeLoopReqType& in, AC_Char
     out.meter_info_requested = in.MeterInfoRequested;
 
     if (in.Scheduled_AC_CLReqControlMode_isUsed) {
-        convert(in.Scheduled_AC_CLReqControlMode,
-                out.control_mode.emplace<AC_ChargeLoopRequest::Scheduled_AC_CLReqControlMode>());
+        convert(in.Scheduled_AC_CLReqControlMode, out.control_mode.emplace<datatypes::Scheduled_AC_CLReqControlMode>());
     } else if (in.BPT_Scheduled_AC_CLReqControlMode_isUsed) {
         convert(in.BPT_Scheduled_AC_CLReqControlMode,
-                out.control_mode.emplace<AC_ChargeLoopRequest::BPT_Scheduled_AC_CLReqControlMode>());
+                out.control_mode.emplace<datatypes::BPT_Scheduled_AC_CLReqControlMode>());
     } else if (in.Dynamic_AC_CLReqControlMode_isUsed) {
-        convert(in.Dynamic_AC_CLReqControlMode,
-                out.control_mode.emplace<AC_ChargeLoopRequest::Dynamic_AC_CLReqControlMode>());
+        convert(in.Dynamic_AC_CLReqControlMode, out.control_mode.emplace<datatypes::Dynamic_AC_CLReqControlMode>());
     } else if (in.BPT_Dynamic_AC_CLReqControlMode_isUsed) {
         convert(in.BPT_Dynamic_AC_CLReqControlMode,
-                out.control_mode.emplace<AC_ChargeLoopRequest::BPT_Dynamic_AC_CLReqControlMode>());
+                out.control_mode.emplace<datatypes::BPT_Dynamic_AC_CLReqControlMode>());
     } else {
         // should not happen
         assert(false);
@@ -146,19 +144,19 @@ template <> void insert_type(VariantAccess& va, const struct iso20_ac_AC_ChargeL
     va.insert_type<AC_ChargeLoopRequest>(in);
 }
 
-template <> void convert(const DetailedCost& in, struct iso20_ac_DetailedCostType& out) {
+template <> void convert(const datatypes::DetailedCost& in, struct iso20_ac_DetailedCostType& out) {
     init_iso20_ac_DetailedCostType(&out);
     convert(in.amount, out.Amount);
     convert(in.cost_per_unit, out.CostPerUnit);
 }
 
-template <> void convert(const DetailedTax& in, struct iso20_ac_DetailedTaxType& out) {
+template <> void convert(const datatypes::DetailedTax& in, struct iso20_ac_DetailedTaxType& out) {
     init_iso20_ac_DetailedTaxType(&out);
     out.TaxRuleID = in.tax_rule_id;
     convert(in.amount, out.Amount);
 }
 
-template <> void convert(const Receipt& in, struct iso20_ac_ReceiptType& out) {
+template <> void convert(const datatypes::Receipt& in, struct iso20_ac_ReceiptType& out) {
     init_iso20_ac_ReceiptType(&out);
 
     out.TimeAnchor = in.time_anchor;
@@ -176,7 +174,7 @@ template <> void convert(const Receipt& in, struct iso20_ac_ReceiptType& out) {
     out.TaxCosts.arrayLen = in.tax_costs.size();
 }
 
-template <typename cb_Type> void convert(const AC_ChargeLoopResponse::Scheduled_AC_CLResControlMode& in, cb_Type& out) {
+template <typename cb_Type> void convert(const datatypes::Scheduled_AC_CLResControlMode& in, cb_Type& out) {
     CPP2CB_CONVERT_IF_USED(in.target_active_power, out.EVSETargetActivePower);
     CPP2CB_CONVERT_IF_USED(in.target_active_power_L2, out.EVSETargetActivePower_L2);
     CPP2CB_CONVERT_IF_USED(in.target_active_power_L2, out.EVSETargetActivePower_L3);
@@ -191,20 +189,20 @@ template <typename cb_Type> void convert(const AC_ChargeLoopResponse::Scheduled_
 }
 
 template <>
-void convert(const AC_ChargeLoopResponse::BPT_Scheduled_AC_CLResControlMode& in,
+void convert(const datatypes::BPT_Scheduled_AC_CLResControlMode& in,
              struct iso20_ac_BPT_Scheduled_AC_CLResControlModeType& out) {
-    convert(static_cast<const AC_ChargeLoopResponse::Scheduled_AC_CLResControlMode&>(in), out);
+    convert(static_cast<const datatypes::Scheduled_AC_CLResControlMode&>(in), out);
 }
 
-template <typename cb_Type> void convert(const Dynamic_CLResControlMode& in, cb_Type& out) {
+template <typename cb_Type> void convert(const datatypes::Dynamic_CLResControlMode& in, cb_Type& out) {
     CPP2CB_ASSIGN_IF_USED(in.departure_time, out.DepartureTime);
     CPP2CB_ASSIGN_IF_USED(in.minimum_soc, out.MinimumSOC);
     CPP2CB_ASSIGN_IF_USED(in.target_soc, out.TargetSOC);
     CPP2CB_ASSIGN_IF_USED(in.ack_max_delay, out.AckMaxDelay);
 }
 
-template <typename cb_Type> void convert(const AC_ChargeLoopResponse::Dynamic_AC_CLResControlMode& in, cb_Type& out) {
-    convert(static_cast<const Dynamic_CLResControlMode&>(in), out);
+template <typename cb_Type> void convert(const datatypes::Dynamic_AC_CLResControlMode& in, cb_Type& out) {
+    convert(static_cast<const datatypes::Dynamic_CLResControlMode&>(in), out);
 
     convert(in.target_active_power, out.EVSETargetActivePower);
     CPP2CB_CONVERT_IF_USED(in.target_active_power_L2, out.EVSETargetActivePower_L2);
@@ -220,16 +218,16 @@ template <typename cb_Type> void convert(const AC_ChargeLoopResponse::Dynamic_AC
 }
 
 template <>
-void convert(const AC_ChargeLoopResponse::BPT_Dynamic_AC_CLResControlMode& in,
+void convert(const datatypes::BPT_Dynamic_AC_CLResControlMode& in,
              struct iso20_ac_BPT_Dynamic_AC_CLResControlModeType& out) {
-    convert(static_cast<const AC_ChargeLoopResponse::Dynamic_AC_CLResControlMode&>(in), out);
+    convert(static_cast<const datatypes::Dynamic_AC_CLResControlMode&>(in), out);
 }
 
 struct ControlModeVisitor {
-    using ScheduledCM = AC_ChargeLoopResponse::Scheduled_AC_CLResControlMode;
-    using BPT_ScheduledCM = AC_ChargeLoopResponse::BPT_Scheduled_AC_CLResControlMode;
-    using DynamicCM = AC_ChargeLoopResponse::Dynamic_AC_CLResControlMode;
-    using BPT_DynamicCM = AC_ChargeLoopResponse::BPT_Dynamic_AC_CLResControlMode;
+    using ScheduledCM = datatypes::Scheduled_AC_CLResControlMode;
+    using BPT_ScheduledCM = datatypes::BPT_Scheduled_AC_CLResControlMode;
+    using DynamicCM = datatypes::Dynamic_AC_CLResControlMode;
+    using BPT_DynamicCM = datatypes::BPT_Dynamic_AC_CLResControlMode;
 
     ControlModeVisitor(iso20_ac_AC_ChargeLoopResType& res_) : res(res_){};
 

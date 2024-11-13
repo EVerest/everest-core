@@ -2,13 +2,15 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
-#include "common.hpp"
+#include "common_types.hpp"
 
 namespace iso15118::message_20 {
+
+namespace datatypes {
 
 enum class AuthStatus {
     Accepted = 0,
@@ -16,37 +18,28 @@ enum class AuthStatus {
     Rejected = 2,
 };
 
+struct EIM_ASReqAuthorizationMode {};
+
+struct PnC_ASReqAuthorizationMode {
+    std::string id;
+    GenChallenge gen_challenge;
+    ContractCertificateChain contract_certificate_chain;
+};
+
+} // namespace datatypes
+
 struct AuthorizationRequest {
-
-    // Todo(sl): Refactor in common
-    struct ContractCertificateChain {
-        struct Certificate {
-            std::vector<uint8_t> certificate;
-        };
-        Certificate certificate;
-        std::vector<Certificate> sub_certificates;
-    };
-
-    struct EIM_ASReqAuthorizationMode {};
-    struct PnC_ASReqAuthorizationMode {
-        std::string id;
-        std::vector<uint8_t> gen_challenge;
-        ContractCertificateChain contract_certificate_chain;
-    };
-
     Header header;
-    Authorization selected_authorization_service;
-    std::optional<EIM_ASReqAuthorizationMode> eim_as_req_authorization_mode;
-    std::optional<PnC_ASReqAuthorizationMode> pnc_as_req_authorization_mode;
+    datatypes::Authorization selected_authorization_service;
+    std::variant<datatypes::EIM_ASReqAuthorizationMode, datatypes::PnC_ASReqAuthorizationMode> authorization_mode;
 };
 
 struct AuthorizationResponse {
-
-    AuthorizationResponse() : evse_processing(Processing::Finished){};
+    AuthorizationResponse() : evse_processing(datatypes::Processing::Finished){};
 
     Header header;
-    ResponseCode response_code;
-    Processing evse_processing;
+    datatypes::ResponseCode response_code;
+    datatypes::Processing evse_processing;
 };
 
 } // namespace iso15118::message_20

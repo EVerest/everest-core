@@ -10,18 +10,27 @@
 
 namespace iso15118::message_20 {
 
-const uint8_t SESSION_ID_LENGTH = 8;
+template <typename InType, typename OutType> void convert(const InType&, OutType&);
 
-using PercentValue = uint8_t;
-using NumericID = uint32_t; // [1 - 4294967295]
+namespace datatypes {
 
-struct Header {
-    std::array<uint8_t, SESSION_ID_LENGTH> session_id{};
-    uint64_t timestamp;
-    // missing signature
-};
+using PercentValue = uint8_t;    // [0 - 100]
+using NumericId = uint32_t;      // [1 - 4294967295]
+using Identifier = std::string;  // MaxLength: 255
+using Name = std::string;        // MaxLength: 80
+using Description = std::string; // MaxLength: 160
 
-template <typename cb_HeaderType> void convert(const cb_HeaderType& in, Header& out);
+static constexpr auto SESSION_ID_LENGTH = 8;
+using SessionId = std::array<uint8_t, SESSION_ID_LENGTH>;
+
+using MeterId = std::string;        // MaxLength: 32
+using MeterSignature = std::string; // Base64 encoded, MaxLength: 64
+
+static constexpr auto GEN_CHALLENGE_LENGTH = 16;
+using GenChallenge = std::array<uint8_t, GEN_CHALLENGE_LENGTH>; // Base64 encoded, MaxLength: 16
+
+using Certificate = std::string;                 // Base64 encoded, MaxLength: 1600
+using SubCertificate = std::vector<Certificate>; // Max: 3
 
 enum class ResponseCode {
     OK = 0,
@@ -235,13 +244,20 @@ struct Dynamic_CLResControlMode {
     std::optional<uint16_t> ack_max_delay;
 };
 
+struct PowerScheduleEntry {
+    uint32_t duration;
+    RationalNumber power;
+    std::optional<RationalNumber> power_l2;
+    std::optional<RationalNumber> power_l3;
+};
+
 struct MeterInfo {
-    std::string meter_id;
+    MeterId meter_id;
     uint64_t charged_energy_reading_wh;
     std::optional<uint64_t> bpt_discharged_energy_reading_wh;
     std::optional<uint64_t> capacitive_energy_reading_varh;
     std::optional<uint64_t> bpt_inductive_energery_reading_varh;
-    std::optional<std::string> meter_signature;
+    std::optional<MeterSignature> meter_signature;
     std::optional<int16_t> meter_status;
     std::optional<uint64_t> meter_timestamp;
 };
@@ -251,9 +267,9 @@ struct DisplayParameters {
     std::optional<PercentValue> min_soc;
     std::optional<PercentValue> target_soc;
     std::optional<PercentValue> max_soc;
-    std::optional<uint16_t> remaining_time_to_min_soc;
-    std::optional<uint16_t> remaining_time_to_target_soc;
-    std::optional<uint16_t> remaining_time_to_max_soc;
+    std::optional<uint32_t> remaining_time_to_min_soc;
+    std::optional<uint32_t> remaining_time_to_target_soc;
+    std::optional<uint32_t> remaining_time_to_max_soc;
     std::optional<bool> charging_complete;
     std::optional<RationalNumber> battery_energy_capacity;
     std::optional<bool> inlet_hot;
@@ -265,7 +281,7 @@ struct DetailedCost {
 };
 
 struct DetailedTax {
-    uint32_t tax_rule_id; // NOTE (aw): only 1 - 4294967295
+    NumericId tax_rule_id;
     RationalNumber amount;
 };
 
@@ -275,11 +291,36 @@ struct Receipt {
     std::optional<DetailedCost> occupany_costs;
     std::optional<DetailedCost> additional_service_costs;
     std::optional<DetailedCost> overstay_costs;
-    std::vector<DetailedTax> tax_costs; // 0 to 10 elements!
+    std::vector<DetailedTax> tax_costs; // 0 to 10 elements! // FIXME(sl): optional?
 };
 
-template <typename cb_RationalNumberType> void convert(const cb_RationalNumberType& in, RationalNumber& out);
-template <typename cb_RationalNumberType> void convert(const RationalNumber& in, cb_RationalNumberType& out);
+struct X509IssuerSerial {
+    std::string issuer_name;
+    int64_t serial_number;
+};
+
+struct ListOfRootCertificateIDs {
+    std::vector<X509IssuerSerial> root_certificate_id;
+};
+
+// TODO(sl): Adding content to following structs
+struct SignedInfo {};
+struct SignatureValue {};
+struct KeyInfo {};
+struct Object {};
+
+struct Signature {
+    SignedInfo signed_info;
+    SignatureValue signature;
+    std::optional<KeyInfo> key_info;
+    std::optional<Object> object;
+    std::optional<std::string> id;
+};
+
+struct ContractCertificateChain {
+    Certificate certificate;
+    SubCertificate sub_certificates;
+};
 
 float from_RationalNumber(const RationalNumber& in);
 RationalNumber from_float(float in);
@@ -288,5 +329,18 @@ std::string from_Protocol(const Protocol& in);
 
 std::string from_control_mode(const ControlMode& in);
 std::string from_mobility_needs_mode(const MobilityNeedsMode& in);
+
+} // namespace datatypes
+
+struct Header {
+    datatypes::SessionId session_id{};
+    uint64_t timestamp;
+    // std::optional<datatypes::Signature> signature;
+};
+
+template <typename cb_HeaderType> void convert(const cb_HeaderType& in, Header& out);
+
+template <typename cb_RationalNumberType> void convert(const cb_RationalNumberType& in, datatypes::RationalNumber& out);
+template <typename cb_RationalNumberType> void convert(const datatypes::RationalNumber& in, cb_RationalNumberType& out);
 
 } // namespace iso15118::message_20

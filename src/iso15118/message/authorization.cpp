@@ -13,18 +13,15 @@ namespace iso15118::message_20 {
 template <> void convert(const struct iso20_AuthorizationReqType& in, AuthorizationRequest& out) {
     convert(in.Header, out.header);
 
-    out.selected_authorization_service = static_cast<Authorization>(in.SelectedAuthorizationService);
+    out.selected_authorization_service = static_cast<datatypes::Authorization>(in.SelectedAuthorizationService);
     if (in.EIM_AReqAuthorizationMode_isUsed) {
-        out.eim_as_req_authorization_mode.emplace();
+        out.authorization_mode.emplace<datatypes::EIM_ASReqAuthorizationMode>();
     } else if (in.PnC_AReqAuthorizationMode_isUsed) {
 
-        auto& pnc_out = out.pnc_as_req_authorization_mode.emplace();
+        auto& pnc_out = out.authorization_mode.emplace<datatypes::PnC_ASReqAuthorizationMode>();
 
         pnc_out.id = CB2CPP_STRING(in.PnC_AReqAuthorizationMode.Id);
-        pnc_out.gen_challenge.reserve(in.PnC_AReqAuthorizationMode.GenChallenge.bytesLen);
-        pnc_out.gen_challenge.insert(
-            pnc_out.gen_challenge.end(), &in.PnC_AReqAuthorizationMode.GenChallenge.bytes[0],
-            &in.PnC_AReqAuthorizationMode.GenChallenge.bytes[in.PnC_AReqAuthorizationMode.GenChallenge.bytesLen]);
+        CB2CPP_BYTES(in.PnC_AReqAuthorizationMode.GenChallenge, pnc_out.gen_challenge);
         // Todo(sl): Adding certificate
     }
 }

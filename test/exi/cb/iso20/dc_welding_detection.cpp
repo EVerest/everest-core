@@ -27,7 +27,7 @@ SCENARIO("Se/Deserialize dc welding detection messages") {
             REQUIRE(header.session_id == std::array<uint8_t, 8>{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B});
             REQUIRE(header.timestamp == 1725456341);
 
-            REQUIRE(msg.processing == message_20::Processing::Ongoing);
+            REQUIRE(msg.processing == message_20::datatypes::Processing::Ongoing);
         }
     }
 
@@ -36,7 +36,7 @@ SCENARIO("Se/Deserialize dc welding detection messages") {
         message_20::DC_WeldingDetectionResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456341};
-        res.response_code = message_20::ResponseCode::OK;
+        res.response_code = message_20::datatypes::ResponseCode::OK;
         res.present_voltage = {0, 0};
 
         std::vector<uint8_t> expected = {0x80, 0x50, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c, 0x4d,

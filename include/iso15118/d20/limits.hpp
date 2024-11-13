@@ -4,7 +4,7 @@
 
 #include <optional>
 
-#include <iso15118/message/common.hpp>
+#include <iso15118/message/common_types.hpp>
 
 namespace iso15118::d20 {
 
@@ -14,15 +14,15 @@ template <typename T> struct Limit {
 };
 
 struct Limits {
-    Limit<message_20::RationalNumber> power;
-    Limit<message_20::RationalNumber> current;
+    Limit<message_20::datatypes::RationalNumber> power;
+    Limit<message_20::datatypes::RationalNumber> current;
 };
 
 struct DcTransferLimits {
     Limits charge_limits;
     std::optional<Limits> discharge_limits;
-    Limit<message_20::RationalNumber> voltage;
-    std::optional<message_20::RationalNumber> power_ramp_limit;
+    Limit<message_20::datatypes::RationalNumber> voltage;
+    std::optional<message_20::datatypes::RationalNumber> power_ramp_limit;
 };
 
 } // namespace iso15118::d20

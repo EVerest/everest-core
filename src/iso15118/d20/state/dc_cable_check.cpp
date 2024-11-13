@@ -10,22 +10,24 @@
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::DC_CableCheckResponse handle_request(const message_20::DC_CableCheckRequest& req,
                                                  const d20::Session& session, bool cable_check_done) {
 
     message_20::DC_CableCheckResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     if (not cable_check_done) {
-        res.processing = message_20::Processing::Ongoing;
+        res.processing = dt::Processing::Ongoing;
     } else {
-        res.processing = message_20::Processing::Finished;
+        res.processing = dt::Processing::Finished;
     }
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void DC_CableCheck::enter() {
@@ -62,7 +64,7 @@ FsmSimpleState::HandleEventReturnType DC_CableCheck::handle_event(AllocatorType&
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }

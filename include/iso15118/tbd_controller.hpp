@@ -13,7 +13,7 @@
 #include <iso15118/d20/limits.hpp>
 #include <iso15118/io/poll_manager.hpp>
 #include <iso15118/io/sdp_server.hpp>
-#include <iso15118/message/common.hpp>
+#include <iso15118/message/common_types.hpp>
 #include <iso15118/session/feedback.hpp>
 #include <iso15118/session/iso.hpp>
 
@@ -34,7 +34,7 @@ public:
 
     void send_control_event(const d20::ControlEvent&);
 
-    void update_authorization_services(const std::vector<message_20::Authorization>& services,
+    void update_authorization_services(const std::vector<message_20::datatypes::Authorization>& services,
                                        bool cert_install_service);
     void update_dc_limits(const d20::DcTransferLimits&);
 

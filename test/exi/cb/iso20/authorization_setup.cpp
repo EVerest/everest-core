@@ -36,10 +36,10 @@ SCENARIO("Se/Deserialize authorization setup messages") {
         message_20::AuthorizationSetupResponse res;
 
         res.header = message_20::Header{{0xF2, 0x19, 0x15, 0xB9, 0xDD, 0xDC, 0x12, 0xD1}, 1691411798};
-        res.response_code = message_20::ResponseCode::OK;
-        res.authorization_services = {{message_20::Authorization::EIM}};
+        res.response_code = message_20::datatypes::ResponseCode::OK;
+        res.authorization_services = {{message_20::datatypes::Authorization::EIM}};
         res.certificate_installation_service = true;
-        res.authorization_mode = message_20::AuthorizationSetupResponse::EIM_ASResAuthorizationMode();
+        res.authorization_mode = message_20::datatypes::EIM_ASResAuthorizationMode();
 
         std::vector<uint8_t> expected = {0x80, 0x0c, 0x04, 0x79, 0x0c, 0x8a, 0xdc, 0xee, 0xee, 0x09,
                                          0x68, 0x8d, 0x6c, 0xac, 0x3a, 0x60, 0x62, 0x00, 0x05, 0x00};
@@ -54,12 +54,12 @@ SCENARIO("Se/Deserialize authorization setup messages") {
         message_20::AuthorizationSetupResponse res;
 
         res.header = message_20::Header{{0xF2, 0x19, 0x15, 0xB9, 0xDD, 0xDC, 0x12, 0xD1}, 1691411798};
-        res.response_code = message_20::ResponseCode::OK;
-        res.authorization_services = {{message_20::Authorization::EIM}, {message_20::Authorization::PnC}};
+        res.response_code = message_20::datatypes::ResponseCode::OK;
+        res.authorization_services = {{message_20::datatypes::Authorization::EIM},
+                                      {message_20::datatypes::Authorization::PnC}};
         res.certificate_installation_service = true;
 
-        auto& mode =
-            res.authorization_mode.emplace<message_20::AuthorizationSetupResponse::PnC_ASResAuthorizationMode>();
+        auto& mode = res.authorization_mode.emplace<message_20::datatypes::PnC_ASResAuthorizationMode>();
 
         mode.gen_challenge = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 

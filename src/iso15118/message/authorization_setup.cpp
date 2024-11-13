@@ -16,11 +16,11 @@ template <> void convert(const struct iso20_AuthorizationSetupReqType& in, Autho
 
 struct AuthorizationModeVisitor {
     AuthorizationModeVisitor(iso20_AuthorizationSetupResType& out_) : out(out_){};
-    void operator()([[maybe_unused]] const AuthorizationSetupResponse::EIM_ASResAuthorizationMode& in) {
+    void operator()([[maybe_unused]] const datatypes::EIM_ASResAuthorizationMode& in) {
         CB_SET_USED(out.EIM_ASResAuthorizationMode);
         init_iso20_EIM_ASResAuthorizationModeType(&out.EIM_ASResAuthorizationMode);
     }
-    void operator()(const AuthorizationSetupResponse::PnC_ASResAuthorizationMode& in) {
+    void operator()(const datatypes::PnC_ASResAuthorizationMode& in) {
         CB_SET_USED(out.PnC_ASResAuthorizationMode);
         init_iso20_PnC_ASResAuthorizationModeType(&out.PnC_ASResAuthorizationMode);
         CPP2CB_BYTES(in.gen_challenge, out.PnC_ASResAuthorizationMode.GenChallenge);

@@ -10,23 +10,25 @@
 
 using namespace iso15118;
 
-using Scheduled_DC_Req = message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode;
-using Scheduled_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Scheduled_DC_CLReqControlMode;
-using Dynamic_DC_Req = message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode;
-using Dynamic_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode;
+namespace dt = message_20::datatypes;
 
-using Scheduled_DC_Res = message_20::DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode;
-using Scheduled_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Scheduled_DC_CLResControlMode;
-using Dynamic_DC_Res = message_20::DC_ChargeLoopResponse::Dynamic_DC_CLResControlMode;
-using Dynamic_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Dynamic_DC_CLResControlMode;
+using Scheduled_DC_Req = message_20::datatypes::Scheduled_DC_CLReqControlMode;
+using Scheduled_BPT_DC_Req = message_20::datatypes::BPT_Scheduled_DC_CLReqControlMode;
+using Dynamic_DC_Req = message_20::datatypes::Dynamic_DC_CLReqControlMode;
+using Dynamic_BPT_DC_Req = message_20::datatypes::BPT_Dynamic_DC_CLReqControlMode;
+
+using Scheduled_DC_Res = message_20::datatypes::Scheduled_DC_CLResControlMode;
+using Scheduled_BPT_DC_Res = message_20::datatypes::BPT_Scheduled_DC_CLResControlMode;
+using Dynamic_DC_Res = message_20::datatypes::Dynamic_DC_CLResControlMode;
+using Dynamic_BPT_DC_Res = message_20::datatypes::BPT_Dynamic_DC_CLResControlMode;
 
 SCENARIO("DC charge loop state handling") {
 
     const auto evse_id = std::string("everest se");
-    const std::vector<message_20::ServiceCategory> supported_energy_services = {message_20::ServiceCategory::DC,
-                                                                                message_20::ServiceCategory::DC_BPT};
+    const std::vector<dt::ServiceCategory> supported_energy_services = {dt::ServiceCategory::DC,
+                                                                        dt::ServiceCategory::DC_BPT};
     const auto cert_install{false};
-    const std::vector<message_20::Authorization> auth_services = {message_20::Authorization::EIM};
+    const std::vector<dt::Authorization> auth_services = {dt::Authorization::EIM};
 
     d20::DcTransferLimits dc_limits;
     dc_limits.charge_limits.power.max = {22, 3};
@@ -39,9 +41,9 @@ SCENARIO("DC charge loop state handling") {
     discharge_limits.current.max = {30, 0};
 
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
-        {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc},
-        {message_20::ControlMode::Dynamic, message_20::MobilityNeedsMode::ProvidedByEvcc},
-        {message_20::ControlMode::Dynamic, message_20::MobilityNeedsMode::ProvidedBySecc}};
+        {dt::ControlMode::Scheduled, dt::MobilityNeedsMode::ProvidedByEvcc},
+        {dt::ControlMode::Dynamic, dt::MobilityNeedsMode::ProvidedByEvcc},
+        {dt::ControlMode::Dynamic, dt::MobilityNeedsMode::ProvidedBySecc}};
 
     const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
                                           dc_limits, control_mobility_modes};
@@ -65,9 +67,9 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: FAILED_UnknownSession, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED_UnknownSession);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 0.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 0.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED_UnknownSession);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 0.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 0.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
@@ -78,9 +80,9 @@ SCENARIO("DC charge loop state handling") {
     GIVEN("Bad case - false energy mode") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing,
-            message_20::BptChannel::Unified, message_20::GeneratorMode::GridFollowing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing, dt::BptChannel::Unified,
+            dt::GeneratorMode::GridFollowing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -99,9 +101,9 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: FAILED, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 0.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 0.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 0.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 0.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
@@ -111,9 +113,9 @@ SCENARIO("DC charge loop state handling") {
 
     GIVEN("Bad case - false control mode") {
 
-        d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+        d20::SelectedServiceParameters service_parameters =
+            d20::SelectedServiceParameters(dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+                                           dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -132,9 +134,9 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: FAILED, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::FAILED);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 0.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 0.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::FAILED);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 0.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 0.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
@@ -145,8 +147,8 @@ SCENARIO("DC charge loop state handling") {
     GIVEN("Good case - DC scheduled mode") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -165,31 +167,30 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Scheduled_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Scheduled_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_charge_power.value_or(message_20::RationalNumber{0, 0})) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.min_charge_power.value_or(message_20::RationalNumber{0, 0})) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_charge_current.value_or(message_20::RationalNumber{0, 0})) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_voltage.value_or(message_20::RationalNumber{0, 0})) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current.value_or(dt::RationalNumber{0, 0})) ==
+                    250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage.value_or(dt::RationalNumber{0, 0})) == 900.0f);
         }
     }
 
     GIVEN("Good case - DC_BPT scheduled mode") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Scheduled,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Scheduled,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -200,7 +201,7 @@ SCENARIO("DC charge loop state handling") {
         auto& req_control_mode = req.control_mode.emplace<Scheduled_BPT_DC_Req>();
         req_control_mode.target_current = {40, 0};
         req_control_mode.target_voltage = {400, 0};
-        req_control_mode.max_discharge_power.emplace<message_20::RationalNumber>({11, 3});
+        req_control_mode.max_discharge_power.emplace<dt::RationalNumber>({11, 3});
 
         req.meter_info_requested = false;
         req.present_voltage = {330, 0};
@@ -209,36 +210,35 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Scheduled_BPT_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Scheduled_BPT_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_charge_power.value_or(message_20::RationalNumber{0, 0})) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.min_charge_power.value_or(message_20::RationalNumber{0, 0})) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_charge_current.value_or(message_20::RationalNumber{0, 0})) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_voltage.value_or(message_20::RationalNumber{0, 0})) == 900.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_discharge_power.value_or(message_20::RationalNumber{0, 0})) == 11000.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.min_discharge_power.value_or(message_20::RationalNumber{0, 0})) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(
-                        res_control_mode.max_discharge_current.value_or(message_20::RationalNumber{0, 0})) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current.value_or(dt::RationalNumber{0, 0})) ==
+                    250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage.value_or(dt::RationalNumber{0, 0})) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_discharge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    11000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_discharge_power.value_or(dt::RationalNumber{0, 0})) ==
+                    10.0f);
+            REQUIRE(dt::from_RationalNumber(
+                        res_control_mode.max_discharge_current.value_or(dt::RationalNumber{0, 0})) == 30.0f);
         }
     }
 
     GIVEN("Good case - DC dynamic mode") {
-        d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+        d20::SelectedServiceParameters service_parameters =
+            d20::SelectedServiceParameters(dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+                                           dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -263,27 +263,27 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Dynamic_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Dynamic_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
         }
     }
 
     GIVEN("Good case - DC_BPT dynamic mode") {
 
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedByEvcc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+            dt::MobilityNeedsMode::ProvidedByEvcc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -311,29 +311,29 @@ SCENARIO("DC charge loop state handling") {
                                                     d20::UpdateDynamicModeParameters());
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Dynamic_BPT_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Dynamic_BPT_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_discharge_power) == 11000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_discharge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_discharge_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_discharge_power) == 11000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_discharge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_discharge_current) == 30.0f);
         }
     }
 
     GIVEN("Good case - DC dynamic mode, mobility_needs_mode = 2") {
-        d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedBySecc, message_20::Pricing::NoPricing);
+        d20::SelectedServiceParameters service_parameters =
+            d20::SelectedServiceParameters(dt::ServiceCategory::DC, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+                                           dt::MobilityNeedsMode::ProvidedBySecc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -360,19 +360,19 @@ SCENARIO("DC charge loop state handling") {
             d20::state::handle_request(req, session, 330, 30, false, evse_setup.dc_limits, dynamic_parameters);
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Dynamic_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Dynamic_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
 
             REQUIRE(res_control_mode.departure_time.value_or(0) >= 59);
             REQUIRE(res_control_mode.target_soc.value_or(0) == 95);
@@ -382,8 +382,8 @@ SCENARIO("DC charge loop state handling") {
 
     GIVEN("Good case - DC_BPT dynamic mode, mobility_needs_mode = 2") {
         d20::SelectedServiceParameters service_parameters = d20::SelectedServiceParameters(
-            message_20::ServiceCategory::DC_BPT, message_20::DcConnector::Extended, message_20::ControlMode::Dynamic,
-            message_20::MobilityNeedsMode::ProvidedBySecc, message_20::Pricing::NoPricing);
+            dt::ServiceCategory::DC_BPT, dt::DcConnector::Extended, dt::ControlMode::Dynamic,
+            dt::MobilityNeedsMode::ProvidedBySecc, dt::Pricing::NoPricing);
 
         d20::Session session = d20::Session(service_parameters);
 
@@ -413,22 +413,22 @@ SCENARIO("DC charge loop state handling") {
             d20::state::handle_request(req, session, 330, 30, false, evse_setup.dc_limits, dynamic_parameters);
 
         THEN("ResponseCode: OK, mandatory fields should be set") {
-            REQUIRE(res.response_code == message_20::ResponseCode::OK);
-            REQUIRE(message_20::from_RationalNumber(res.present_current) == 30.0f);
-            REQUIRE(message_20::from_RationalNumber(res.present_voltage) == 330.0f);
+            REQUIRE(res.response_code == dt::ResponseCode::OK);
+            REQUIRE(dt::from_RationalNumber(res.present_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res.present_voltage) == 330.0f);
             REQUIRE(res.current_limit_achieved == false);
             REQUIRE(res.power_limit_achieved == false);
             REQUIRE(res.voltage_limit_achieved == false);
 
             REQUIRE(std::holds_alternative<Dynamic_BPT_DC_Res>(res.control_mode));
             const auto& res_control_mode = std::get<Dynamic_BPT_DC_Res>(res.control_mode);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_discharge_power) == 11000.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.min_discharge_power) == 10.0f);
-            REQUIRE(message_20::from_RationalNumber(res_control_mode.max_discharge_current) == 30.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_power) == 22000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_charge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_charge_current) == 250.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_voltage) == 900.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_discharge_power) == 11000.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.min_discharge_power) == 10.0f);
+            REQUIRE(dt::from_RationalNumber(res_control_mode.max_discharge_current) == 30.0f);
 
             REQUIRE(res_control_mode.departure_time.value_or(0) >= 39);
             REQUIRE(res_control_mode.minimum_soc.value_or(0) == 95);

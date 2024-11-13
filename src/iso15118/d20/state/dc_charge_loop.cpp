@@ -10,15 +10,17 @@
 
 namespace iso15118::d20::state {
 
-using Scheduled_DC_Req = message_20::DC_ChargeLoopRequest::Scheduled_DC_CLReqControlMode;
-using Scheduled_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Scheduled_DC_CLReqControlMode;
-using Dynamic_DC_Req = message_20::DC_ChargeLoopRequest::Dynamic_DC_CLReqControlMode;
-using Dynamic_BPT_DC_Req = message_20::DC_ChargeLoopRequest::BPT_Dynamic_DC_CLReqControlMode;
+namespace dt = message_20::datatypes;
 
-using Scheduled_DC_Res = message_20::DC_ChargeLoopResponse::Scheduled_DC_CLResControlMode;
-using Scheduled_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Scheduled_DC_CLResControlMode;
-using Dynamic_DC_Res = message_20::DC_ChargeLoopResponse::Dynamic_DC_CLResControlMode;
-using Dynamic_BPT_DC_Res = message_20::DC_ChargeLoopResponse::BPT_Dynamic_DC_CLResControlMode;
+using Scheduled_DC_Req = dt::Scheduled_DC_CLReqControlMode;
+using Scheduled_BPT_DC_Req = dt::BPT_Scheduled_DC_CLReqControlMode;
+using Dynamic_DC_Req = dt::Dynamic_DC_CLReqControlMode;
+using Dynamic_BPT_DC_Req = dt::BPT_Dynamic_DC_CLReqControlMode;
+
+using Scheduled_DC_Res = dt::Scheduled_DC_CLResControlMode;
+using Scheduled_BPT_DC_Res = dt::BPT_Scheduled_DC_CLResControlMode;
+using Dynamic_DC_Res = dt::Dynamic_DC_CLResControlMode;
+using Dynamic_BPT_DC_Res = dt::BPT_Dynamic_DC_CLResControlMode;
 
 template <typename In, typename Out> void convert(Out& out, const In& in);
 
@@ -91,7 +93,7 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
     message_20::DC_ChargeLoopResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     const auto selected_services = session.get_selected_services();
@@ -103,9 +105,8 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != message_20::ControlMode::Scheduled or
-            selected_energy_service != message_20::ServiceCategory::DC) {
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+        if (selected_control_mode != dt::ControlMode::Scheduled or selected_energy_service != dt::ServiceCategory::DC) {
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         auto& res_mode = res.control_mode.emplace<Scheduled_DC_Res>();
@@ -115,14 +116,14 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != message_20::ControlMode::Scheduled or
-            selected_energy_service != message_20::ServiceCategory::DC_BPT) {
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+        if (selected_control_mode != dt::ControlMode::Scheduled or
+            selected_energy_service != dt::ServiceCategory::DC_BPT) {
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         if (not dc_limits.discharge_limits.has_value()) {
             logf_error("Transfer mode is BPT, but only dc limits without discharge limits are provided!");
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         auto& res_mode = res.control_mode.emplace<Scheduled_BPT_DC_Res>();
@@ -132,15 +133,14 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != message_20::ControlMode::Dynamic or
-            selected_energy_service != message_20::ServiceCategory::DC) {
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+        if (selected_control_mode != dt::ControlMode::Dynamic or selected_energy_service != dt::ServiceCategory::DC) {
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         auto& res_mode = res.control_mode.emplace<Dynamic_DC_Res>();
         convert(res_mode, dc_limits);
 
-        if (selected_mobility_needs_mode == message_20::MobilityNeedsMode::ProvidedBySecc) {
+        if (selected_mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
             set_dynamic_parameters_in_res(res_mode, dynamic_parameters, res.header.timestamp);
         }
 
@@ -148,34 +148,34 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 
         // If the ev sends a false control mode or a false energy service other than the previous selected ones, then
         // the charger should terminate the session
-        if (selected_control_mode != message_20::ControlMode::Dynamic or
-            selected_energy_service != message_20::ServiceCategory::DC_BPT) {
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+        if (selected_control_mode != dt::ControlMode::Dynamic or
+            selected_energy_service != dt::ServiceCategory::DC_BPT) {
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         if (not dc_limits.discharge_limits.has_value()) {
             logf_error("Transfer mode is BPT, but only dc limits without discharge limits are provided!");
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         auto& res_mode = res.control_mode.emplace<Dynamic_BPT_DC_Res>();
         convert(res_mode, dc_limits);
 
-        if (selected_mobility_needs_mode == message_20::MobilityNeedsMode::ProvidedBySecc) {
+        if (selected_mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
             set_dynamic_parameters_in_res(res_mode, dynamic_parameters, res.header.timestamp);
         }
     }
 
-    res.present_voltage = iso15118::message_20::from_float(present_voltage);
-    res.present_current = iso15118::message_20::from_float(present_current);
+    res.present_voltage = dt::from_float(present_voltage);
+    res.present_current = dt::from_float(present_current);
 
     // TODO(sl): Setting EvseStatus, MeterInfo, Receipt, *_limit_achieved
 
     if (stop) {
-        res.status = {0, iso15118::message_20::EvseNotification::Terminate};
+        res.status = {0, dt::EvseNotification::Terminate};
     }
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void DC_ChargeLoop::enter() {
@@ -210,7 +210,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }
@@ -219,7 +219,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
         first_entry_in_charge_loop = true;
 
         // Todo(sl): React properly to Start, Stop, Standby and ScheduleRenegotiation
-        if (req->charge_progress == message_20::PowerDeliveryRequest::Progress::Stop) {
+        if (req->charge_progress == dt::Progress::Stop) {
             ctx.feedback.signal(session::feedback::Signal::CHARGE_LOOP_FINISHED);
             ctx.feedback.signal(session::feedback::Signal::DC_OPEN_CONTACTOR);
             return sa.create_simple<DC_WeldingDetection>(ctx);
@@ -237,7 +237,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }

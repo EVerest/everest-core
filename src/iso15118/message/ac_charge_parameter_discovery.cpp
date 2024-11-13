@@ -11,11 +11,11 @@
 
 namespace iso15118::message_20 {
 
-using AC_ModeReq = AC_ChargeParameterDiscoveryRequest::AC_CPDReqEnergyTransferMode;
-using BPT_AC_ModeReq = AC_ChargeParameterDiscoveryRequest::BPT_AC_CPDReqEnergyTransferMode;
+using AC_ModeReq = datatypes::AC_CPDReqEnergyTransferMode;
+using BPT_AC_ModeReq = datatypes::BPT_AC_CPDReqEnergyTransferMode;
 
-using AC_ModeRes = AC_ChargeParameterDiscoveryResponse::AC_CPDResEnergyTransferMode;
-using BPT_AC_ModeRes = AC_ChargeParameterDiscoveryResponse::BPT_AC_CPDResEnergyTransferMode;
+using AC_ModeRes = datatypes::AC_CPDResEnergyTransferMode;
+using BPT_AC_ModeRes = datatypes::BPT_AC_CPDResEnergyTransferMode;
 
 template <> void convert(const struct iso20_ac_AC_CPDReqEnergyTransferModeType& in, AC_ModeReq& out) {
     convert(in.EVMaximumChargePower, out.max_charge_power);

@@ -14,12 +14,13 @@ using namespace iso15118;
 SCENARIO("ISO15118-20 state transitions") {
 
     const auto evse_id = std::string("everest se");
-    const std::vector<message_20::ServiceCategory> supported_energy_services = {message_20::ServiceCategory::DC};
+    const std::vector<message_20::datatypes::ServiceCategory> supported_energy_services = {
+        message_20::datatypes::ServiceCategory::DC};
     const auto cert_install{false};
-    const std::vector<message_20::Authorization> auth_services = {message_20::Authorization::EIM};
+    const std::vector<message_20::datatypes::Authorization> auth_services = {message_20::datatypes::Authorization::EIM};
     const d20::DcTransferLimits dc_limits;
     const std::vector<d20::ControlMobilityNeedsModes> control_mobility_modes = {
-        {message_20::ControlMode::Scheduled, message_20::MobilityNeedsMode::ProvidedByEvcc}};
+        {message_20::datatypes::ControlMode::Scheduled, message_20::datatypes::MobilityNeedsMode::ProvidedByEvcc}};
 
     const d20::EvseSetupConfig evse_setup{evse_id,   supported_energy_services, auth_services, cert_install,
                                           dc_limits, control_mobility_modes};

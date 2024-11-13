@@ -37,10 +37,10 @@ SCENARIO("Se/Deserialize service_discovery messages") {
         message_20::ServiceDiscoveryResponse res;
 
         res.header = message_20::Header{{0x3D, 0x4C, 0xBF, 0x93, 0x37, 0x4E, 0xD8, 0x9B}, 1725456322};
-        res.response_code = message_20::ResponseCode::OK;
+        res.response_code = message_20::datatypes::ResponseCode::OK;
         res.service_renegotiation_supported = false;
-        res.energy_transfer_service_list = {{message_20::ServiceCategory::DC, false},
-                                            {message_20::ServiceCategory::DC_BPT, false}};
+        res.energy_transfer_service_list = {{message_20::datatypes::ServiceCategory::DC, false},
+                                            {message_20::datatypes::ServiceCategory::DC_BPT, false}};
 
         std::vector<uint8_t> expected = {0x80, 0x80, 0x04, 0x1e, 0xa6, 0x5f, 0xc9, 0x9b, 0xa7, 0x6c, 0x4d, 0x8c,
                                          0x2b, 0xfe, 0x1b, 0x60, 0x62, 0x00, 0x00, 0x02, 0x00, 0x01, 0x80, 0x50};

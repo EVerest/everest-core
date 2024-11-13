@@ -11,23 +11,25 @@
 
 namespace iso15118::d20::state {
 
+namespace dt = message_20::datatypes;
+
 message_20::PowerDeliveryResponse handle_request(const message_20::PowerDeliveryRequest& req,
                                                  const d20::Session& session) {
 
     message_20::PowerDeliveryResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     // TODO(sl): Check Req PowerProfile & ChannelSelection
 
     // Todo(sl): Add standby feature and define as everest module config
-    if (req.charge_progress == message_20::PowerDeliveryRequest::Progress::Standby) {
-        return response_with_code(res, message_20::ResponseCode::WARNING_StandbyNotAllowed);
+    if (req.charge_progress == dt::Progress::Standby) {
+        return response_with_code(res, dt::ResponseCode::WARNING_StandbyNotAllowed);
     }
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void PowerDelivery::enter() {
@@ -57,18 +59,18 @@ FsmSimpleState::HandleEventReturnType PowerDelivery::handle_event(AllocatorType&
     if (const auto req = variant->get_if<message_20::DC_PreChargeRequest>()) {
         const auto res = handle_request(*req, ctx.session, present_voltage);
 
-        ctx.feedback.dc_pre_charge_target_voltage(message_20::from_RationalNumber(req->target_voltage));
+        ctx.feedback.dc_pre_charge_target_voltage(dt::from_RationalNumber(req->target_voltage));
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }
 
         return sa.HANDLED_INTERNALLY;
     } else if (const auto req = variant->get_if<message_20::PowerDeliveryRequest>()) {
-        if (req->charge_progress == message_20::PowerDeliveryRequest::Progress::Start) {
+        if (req->charge_progress == dt::Progress::Start) {
             ctx.feedback.signal(session::feedback::Signal::SETUP_FINISHED);
         }
 
@@ -76,7 +78,7 @@ FsmSimpleState::HandleEventReturnType PowerDelivery::handle_event(AllocatorType&
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }

@@ -10,11 +10,13 @@
 
 namespace iso15118::d20::state {
 
-using DC_ModeReq = message_20::DC_ChargeParameterDiscoveryRequest::DC_CPDReqEnergyTransferMode;
-using BPT_DC_ModeReq = message_20::DC_ChargeParameterDiscoveryRequest::BPT_DC_CPDReqEnergyTransferMode;
+namespace dt = message_20::datatypes;
 
-using DC_ModeRes = message_20::DC_ChargeParameterDiscoveryResponse::DC_CPDResEnergyTransferMode;
-using BPT_DC_ModeRes = message_20::DC_ChargeParameterDiscoveryResponse::BPT_DC_CPDResEnergyTransferMode;
+using DC_ModeReq = dt::DC_CPDReqEnergyTransferMode;
+using BPT_DC_ModeReq = dt::BPT_DC_CPDReqEnergyTransferMode;
+
+using DC_ModeRes = dt::DC_CPDResEnergyTransferMode;
+using BPT_DC_ModeRes = dt::BPT_DC_CPDResEnergyTransferMode;
 
 template <typename In, typename Out> void convert(Out& out, const In& in);
 
@@ -53,27 +55,27 @@ handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const 
     message_20::DC_ChargeParameterDiscoveryResponse res;
 
     if (validate_and_setup_header(res.header, session, req.header.session_id) == false) {
-        return response_with_code(res, message_20::ResponseCode::FAILED_UnknownSession);
+        return response_with_code(res, dt::ResponseCode::FAILED_UnknownSession);
     }
 
     const auto selected_energy_service = session.get_selected_services().selected_energy_service;
 
     if (std::holds_alternative<DC_ModeReq>(req.transfer_mode)) {
-        if (selected_energy_service != message_20::ServiceCategory::DC) {
-            return response_with_code(res, message_20::ResponseCode::FAILED_WrongChargeParameter);
+        if (selected_energy_service != dt::ServiceCategory::DC) {
+            return response_with_code(res, dt::ResponseCode::FAILED_WrongChargeParameter);
         }
 
         auto& mode = res.transfer_mode.emplace<DC_ModeRes>();
         convert(mode, dc_limits);
 
     } else if (std::holds_alternative<BPT_DC_ModeReq>(req.transfer_mode)) {
-        if (selected_energy_service != message_20::ServiceCategory::DC_BPT) {
-            return response_with_code(res, message_20::ResponseCode::FAILED_WrongChargeParameter);
+        if (selected_energy_service != dt::ServiceCategory::DC_BPT) {
+            return response_with_code(res, dt::ResponseCode::FAILED_WrongChargeParameter);
         }
 
         if (not dc_limits.discharge_limits.has_value()) {
             logf_error("Transfer mode is BPT, but only dc limits without discharge limits are provided!");
-            return response_with_code(res, message_20::ResponseCode::FAILED);
+            return response_with_code(res, dt::ResponseCode::FAILED);
         }
 
         auto& mode = res.transfer_mode.emplace<BPT_DC_ModeRes>();
@@ -81,10 +83,10 @@ handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const 
 
     } else {
         // Not supported transfer_mode
-        return response_with_code(res, message_20::ResponseCode::FAILED_WrongChargeParameter);
+        return response_with_code(res, dt::ResponseCode::FAILED_WrongChargeParameter);
     }
 
-    return response_with_code(res, message_20::ResponseCode::OK);
+    return response_with_code(res, dt::ResponseCode::OK);
 }
 
 void DC_ChargeParameterDiscovery::enter() {
@@ -99,7 +101,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(
     const auto variant = ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_ChargeParameterDiscoveryRequest>()) {
-        message_20::RationalNumber max_current;
+        dt::RationalNumber max_current;
 
         if (std::holds_alternative<DC_ModeReq>(req->transfer_mode)) {
 
@@ -120,7 +122,7 @@ FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(
 
         ctx.respond(res);
 
-        if (res.response_code >= message_20::ResponseCode::FAILED) {
+        if (res.response_code >= dt::ResponseCode::FAILED) {
             ctx.session_stopped = true;
             return sa.PASS_ON;
         }
