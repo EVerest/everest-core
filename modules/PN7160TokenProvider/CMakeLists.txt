@@ -32,9 +32,10 @@ target_sources(${MODULE_NAME}
 
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1
 
+get_target_property(LIBNFCNCI_CONFIG_INSTALL_PATH libnfc_nci::libnfc_nci LIBNFCNCI_CONFIG_INSTALL_PATH)
 install(FILES
-            libnfc-nci_config/libnfc-nxp.conf
-            libnfc-nci_config/libnfc-nci.conf
+            "libnfc-nci_config/libnfc-nxp.conf"
+            "libnfc-nci_config/libnfc-nci.conf"
         DESTINATION
 	    "${LIBNFCNCI_CONFIG_INSTALL_PATH}")
 

@@ -45,6 +45,11 @@ bool NfcHandler::start(Callback callback_) {
     this->callback = std::move(callback_);
 
     registerTagCallback(&nfc_callbacks);
+    // enable discovery in reader-only mody, no host-routing/host-card-emulation and force a restart
+    // doEnableDiscovery (int technologies_mask,
+    //                    int reader_only_mode,
+    //                    int enable_host_routing,
+    //                    int restart)
     doEnableDiscovery(DEFAULT_NFA_TECH_MASK, 0x01, 0x0, 0x1);
 
     return true;
