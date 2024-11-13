@@ -505,6 +505,13 @@ void IECStateMachine::connector_force_unlock() {
         cp = cp_state;
     }
 
+    if (not relais_on) {
+        // Unconditionally try to unlock, as the is_locked might not always reflect the physical state of the lock.
+        // This can occur for example in case of a failed unlock due to a hardware issue.
+        signal_unlock();
+        is_locked = false;
+    }
+
     if (cp == RawCPState::B or cp == RawCPState::C) {
         force_unlocked = true;
         check_connector_lock();
@@ -512,10 +519,12 @@ void IECStateMachine::connector_force_unlock() {
 }
 
 void IECStateMachine::check_connector_lock() {
-    if (should_be_locked and not force_unlocked and not is_locked) {
+    bool should_be_locked_considering_relais_and_force = relais_on or (should_be_locked and not force_unlocked);
+
+    if (not is_locked and should_be_locked_considering_relais_and_force) {
         signal_lock();
         is_locked = true;
-    } else if ((not should_be_locked or force_unlocked) and is_locked and not relais_on) {
+    } else if (is_locked and not should_be_locked_considering_relais_and_force) {
         signal_unlock();
         is_locked = false;
     }
