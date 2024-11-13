@@ -1116,6 +1116,20 @@ const RequiredComponentVariable& SecurityProfile = {
         "SecurityProfile",
     }),
 };
+const ComponentVariable& AllowCSMSRootCertificateInstallWhenLowSecurityProfile = {
+    ControllerComponents::SecurityCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "AllowCSMSRootCertificateInstallWhenLowSecurityProfile",
+    }),
+};
+const ComponentVariable& AllowManufacturerRootCertificateInstallWhenLowSecurityProfile = {
+    ControllerComponents::SecurityCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "AllowCSMSRootCertificateInstallWhenLowSecurityProfile",
+    }),
+};
 const ComponentVariable& ACPhaseSwitchingSupported = {
     ControllerComponents::SmartChargingCtrlr,
     std::nullopt,

@@ -3588,19 +3588,40 @@ void ChargePoint::handle_get_installed_certificate_ids_req(Call<GetInstalledCert
     this->send<GetInstalledCertificateIdsResponse>(call_result);
 }
 
+bool ChargePoint::should_reject_certificate_install(InstallCertificateUseEnum cert_type) const {
+    const int security_profile = this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
+
+    if (security_profile > 1) {
+        return false;
+    }
+    switch (cert_type) {
+    case InstallCertificateUseEnum::CSMSRootCertificate:
+        return !this->device_model
+                    ->get_optional_value<bool>(
+                        ControllerComponentVariables::AllowCSMSRootCertificateInstallWhenLowSecurityProfile)
+                    .value_or(true);
+
+    case InstallCertificateUseEnum::ManufacturerRootCertificate:
+        return !this->device_model
+                    ->get_optional_value<bool>(
+                        ControllerComponentVariables::AllowManufacturerRootCertificateInstallWhenLowSecurityProfile)
+                    .value_or(true);
+    default:
+        return false;
+    }
+}
+
 void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
     EVLOG_debug << "Received InstallCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
     const auto msg = call.msg;
     InstallCertificateResponse response;
 
-    if ((msg.certificateType == InstallCertificateUseEnum::CSMSRootCertificate ||
-         msg.certificateType == InstallCertificateUseEnum::ManufacturerRootCertificate) &&
-        this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) <= 1) {
+    if (should_reject_certificate_install(msg.certificateType)) {
         response.status = InstallCertificateStatusEnum::Rejected;
         response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = "Invalid security profile";
-        response.statusInfo->additionalInfo = "SecurityProfileTooLowForCertificateHandling";
+        response.statusInfo->reasonCode = "LowSecurityProfile";
+        response.statusInfo->additionalInfo = "SecurityProfileTooLowForCertificateInstall";
     } else {
         const auto result = this->evse_security->install_ca_certificate(
             msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
