@@ -1436,6 +1436,7 @@ bool Charger::deauthorize_internal() {
             if (not shared_context.authorized) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::PluginTimeout);
                 error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
+                stop_session();
                 return false;
             }
             shared_context.authorized = false;
