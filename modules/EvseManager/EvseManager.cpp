@@ -1197,8 +1197,8 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
 }
 
 bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
-
-    EVLOG_debug << "Reserve called for evse id " << id << ", signal reservation event: " << signal_reservation_event;
+    EVLOG_debug << "Reserve called for reservation id " << id
+                << ", signal reservation event: " << signal_reservation_event;
 
     // is the evse Unavailable?
     if (charger->get_current_state() == Charger::EvseState::Disabled) {
@@ -1217,12 +1217,16 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
 
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
-    if (not reserved) {
+    const bool overwrite_reservation = (reservation_id == id);
+
+    // Check if this evse is not already reserved, or overwrite reservation if it is for the same reservation id.
+    if (not reserved || overwrite_reservation) {
         EVLOG_debug << "Make the reservation for id " << id;
         reserved = true;
         reservation_id = id;
 
-        if (signal_reservation_event) {
+        // When overwriting the reservation, don't signal.
+        if (not overwrite_reservation && signal_reservation_event) {
             // publish event to other modules
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::ReservationStart;

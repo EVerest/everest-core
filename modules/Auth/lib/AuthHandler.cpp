@@ -571,8 +571,8 @@ bool AuthHandler::handle_reservation_exists(std::string& id_token, const std::op
     return reservation_id.has_value();
 }
 
-void AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
-    this->reserved_callback(evse_id, reservation_id);
+bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
+    return this->reserved_callback(evse_id, reservation_id);
 }
 
 void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
@@ -581,10 +581,9 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
         EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
-        evse_index = evse_id.value();
     }
 
-    this->reservation_cancelled_callback(evse_index, reservation_id, reason);
+    this->reservation_cancelled_callback(evse_id, reservation_id, reason);
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id, const int32_t connector_id) {
@@ -746,7 +745,7 @@ void AuthHandler::register_stop_transaction_callback(
 }
 
 void AuthHandler::register_reserved_callback(
-    const std::function<void(const std::optional<int>& evse_id, const int& reservation_id)>& callback) {
+    const std::function<bool(const std::optional<int>& evse_id, const int& reservation_id)>& callback) {
     this->reserved_callback = callback;
 }
 

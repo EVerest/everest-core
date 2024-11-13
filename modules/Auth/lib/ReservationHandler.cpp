@@ -452,7 +452,7 @@ types::reservation::ReservationResult ReservationHandler::get_evse_connector_sta
 
     // If evse is reserved, it is not available.
     if (evse_specific_reservations.count(evse_id) > 0) {
-        return types::reservation::ReservationResult::Unavailable;
+        return types::reservation::ReservationResult::Occupied;
     }
 
     return types::reservation::ReservationResult::Accepted;

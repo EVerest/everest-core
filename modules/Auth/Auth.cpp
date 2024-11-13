@@ -90,7 +90,7 @@ void Auth::ready() {
                     EVLOG_warning << "EVSE manager does not allow placing a reservation for evse id " << evse_id.value()
                                   << ": cancelling reservation.";
                     this->auth_handler->handle_cancel_reservation(reservation_id);
-                    return;
+                    return false;
                 }
             }
 
@@ -98,6 +98,7 @@ void Auth::ready() {
             status.reservation_id = reservation_id;
             status.reservation_status = Reservation_status::Placed;
             this->p_reservation->publish_reservation_update(status);
+            return true;
         });
     this->auth_handler->register_reservation_cancelled_callback(
         [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason) {

@@ -107,8 +107,10 @@ public:
      *
      * @param evse_id
      * @param reservation_id
+     *
+     * @return true of EvseManager accepted the reservation.
      */
-    void call_reserved(const int reservation_id, const std::optional<int>& evse_id);
+    bool call_reserved(const int reservation_id, const std::optional<int>& evse_id);
 
     /**
      * @brief Callback to signal EvseManager that the reservation for the given \p evse_id has been cancelled.
@@ -193,7 +195,7 @@ public:
      * @param callback
      */
     void register_reserved_callback(
-        const std::function<void(const std::optional<int>& evse_id, const int& reservation_id)>& callback);
+        const std::function<bool(const std::optional<int>& evse_id, const int& reservation_id)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation has been cancelled to the EvseManager.
@@ -239,7 +241,7 @@ private:
     std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)> validate_token_callback;
     std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
-    std::function<void(const std::optional<int>& evse_index, const int& reservation_id)> reserved_callback;
+    std::function<bool(const std::optional<int>& evse_index, const int& reservation_id)> reserved_callback;
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason)>
         reservation_cancelled_callback;
