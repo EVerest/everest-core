@@ -5,7 +5,7 @@
 from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.probe_module import ProbeModule
 
-# noinspection PyUnresolvedReferences
+# pylint: disable-next=unused-import
 from everest.testing.ocpp_utils.fixtures import (
     ocpp_config,
     ocpp_version,
