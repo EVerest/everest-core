@@ -63,7 +63,7 @@ public:
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
             std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
             std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
-            std::unique_ptr<reservationIntf> r_reservation, Conf& config) :
+            std::vector<std::unique_ptr<reservationIntf>> r_reservation, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_auth_validator(std::move(p_auth_validator)),
@@ -95,7 +95,7 @@ public:
     const std::unique_ptr<authIntf> r_auth;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
-    const std::unique_ptr<reservationIntf> r_reservation;
+    const std::vector<std::unique_ptr<reservationIntf>> r_reservation;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -165,7 +165,6 @@ private:
 
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

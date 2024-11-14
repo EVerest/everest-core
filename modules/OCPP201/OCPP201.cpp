@@ -470,7 +470,7 @@ void OCPP201::ready() {
 
     callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
                                                          const std::optional<ocpp::CiString<36>> groupIdToken) {
-        if (this->r_reservation == nullptr) {
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return false;
         }
 
@@ -481,7 +481,7 @@ void OCPP201::ready() {
             reservation_check_request.group_id_token = groupIdToken.value().get();
         }
 
-        return this->r_reservation->call_exists_reservation(reservation_check_request);
+        return this->r_reservation.at(0)->call_exists_reservation(reservation_check_request);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
@@ -700,7 +700,7 @@ void OCPP201::ready() {
     callbacks.reserve_now_callback =
         [this](const ocpp::v201::ReserveNowRequest& request) -> ocpp::v201::ReserveNowStatusEnum {
         ocpp::v201::ReserveNowResponse response;
-        if (this->r_reservation == nullptr) {
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             EVLOG_info << "Reservation rejected because the interface r_reservation is a nullptr";
             return ocpp::v201::ReserveNowStatusEnum::Rejected;
         }
@@ -717,18 +717,18 @@ void OCPP201::ready() {
             reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
         }
 
-        types::reservation::ReservationResult result = this->r_reservation->call_reserve_now(reservation);
+        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(reservation);
         return conversions::to_ocpp_reservation_status(result);
     };
 
     callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
         EVLOG_debug << "Received cancel reservation request for reservation id " << reservation_id;
         ocpp::v201::CancelReservationResponse response;
-        if (this->r_reservation == nullptr) {
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return false;
         }
 
-        return this->r_reservation->call_cancel_reservation(reservation_id);
+        return this->r_reservation.at(0)->call_cancel_reservation(reservation_id);
     };
 
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
@@ -871,22 +871,24 @@ void OCPP201::ready() {
                                                        status.request_id);
     });
 
-    if (this->r_reservation != nullptr) {
-        r_reservation->subscribe_reservation_update([this](const types::reservation::ReservationUpdateStatus status) {
-            if (status.reservation_status == types::reservation::Reservation_status::Expired ||
-                status.reservation_status == types::reservation::Reservation_status::Removed) {
-                EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id << ": "
-                            << (status.reservation_status == types::reservation::Reservation_status::Expired
-                                    ? "Expired"
-                                    : "Removed");
-                try {
-                    this->charge_point->on_reservation_status(
-                        status.reservation_id,
-                        conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
-                } catch (const std::out_of_range& e) {
+    if (!this->r_reservation.empty() && this->r_reservation.at(0) != nullptr) {
+        r_reservation.at(0)->subscribe_reservation_update(
+            [this](const types::reservation::ReservationUpdateStatus status) {
+                if (status.reservation_status == types::reservation::Reservation_status::Expired ||
+                    status.reservation_status == types::reservation::Reservation_status::Removed) {
+                    EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id
+                                << ": "
+                                << (status.reservation_status == types::reservation::Reservation_status::Expired
+                                        ? "Expired"
+                                        : "Removed");
+                    try {
+                        this->charge_point->on_reservation_status(
+                            status.reservation_id,
+                            conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+                    } catch (const std::out_of_range& e) {
+                    }
                 }
-            }
-        });
+            });
     }
 
     std::unique_lock lk(this->evse_ready_mutex);

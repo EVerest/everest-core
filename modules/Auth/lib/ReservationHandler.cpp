@@ -202,10 +202,14 @@ void ReservationHandler::on_connector_state_changed(const ConnectorState connect
         return;
     }
 
-    if (evse_reservations.count(evse_id) != 0 && evse_reservations[evse_id].connector_type.has_value() &&
-        (connector_it->type == evse_reservations[evse_id].connector_type.value() ||
-         connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-         evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown)) {
+    const bool reservation_exists = evse_reservations.count(evse_id) != 0;
+    const bool reserved_connector_specified = evse_reservations[evse_id].connector_type.has_value();
+    const bool connector_type_matches = connector_it->type == evse_reservations[evse_id].connector_type.value();
+    const bool connector_type_unknown =
+        connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+        evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown;
+
+    if (reservation_exists && reserved_connector_specified && (connector_type_matches || connector_type_unknown)) {
         cancel_reservation(evse_reservations[evse_id].reservation_id, true,
                            types::reservation::ReservationEndReason::Cancelled);
         return;
