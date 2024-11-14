@@ -87,7 +87,8 @@ public:
     ///
     bool variable_exists(const std::string& component_name, const std::optional<std::string>& component_instance,
                          const std::optional<int>& component_evse_id, const std::optional<int>& component_connector_id,
-                         const std::string& variable_name, const std::optional<std::string>& variable_instance);
+                         const std::string& variable_name, const std::optional<std::string>& variable_instance,
+                         const std::optional<std::string> source = std::nullopt);
 
     ///
     /// \brief Check if variable characteristics exists in the database.
@@ -243,7 +244,7 @@ TEST_F(InitDeviceModelDbTest, init_db) {
     EXPECT_TRUE(characteristics_exists("UnitTestCtrlr", std::nullopt, 2, 3, "UnitTestPropertyAName", std::nullopt,
                                        DataEnum::boolean, std::nullopt, std::nullopt, true, std::nullopt,
                                        std::nullopt));
-    EXPECT_TRUE(variable_exists("UnitTestCtrlr", std::nullopt, 2, 3, "UnitTestPropertyAName", std::nullopt));
+    EXPECT_TRUE(variable_exists("UnitTestCtrlr", std::nullopt, 2, 3, "UnitTestPropertyAName", std::nullopt, "OCPP"));
     EXPECT_TRUE(variable_exists("UnitTestCtrlr", std::nullopt, 2, 3, "UnitTestPropertyBName", std::nullopt));
     EXPECT_TRUE(variable_exists("UnitTestCtrlr", std::nullopt, 2, 3, "UnitTestPropertyCName", std::nullopt));
 
@@ -589,7 +590,8 @@ bool InitDeviceModelDbTest::variable_exists(const std::string& component_name,
                                             const std::optional<int>& component_evse_id,
                                             const std::optional<int>& component_connector_id,
                                             const std::string& variable_name,
-                                            const std::optional<std::string>& variable_instance) {
+                                            const std::optional<std::string>& variable_instance,
+                                            const std::optional<std::string> source) {
     static const std::string select_variable_statement = "SELECT ID "
                                                          "FROM VARIABLE v "
                                                          "WHERE v.COMPONENT_ID=("
@@ -600,7 +602,8 @@ bool InitDeviceModelDbTest::variable_exists(const std::string& component_name,
                                                          "AND c.EVSE_ID IS @evse_id "
                                                          "AND c.CONNECTOR_ID IS @connector_id) "
                                                          "AND v.NAME=@variable_name "
-                                                         "AND v.INSTANCE IS @variable_instance";
+                                                         "AND v.INSTANCE IS @variable_instance "
+                                                         "AND v.source IS @variable_source";
 
     std::unique_ptr<common::SQLiteStatementInterface> statement =
         this->database->new_statement(select_variable_statement);
@@ -630,6 +633,12 @@ bool InitDeviceModelDbTest::variable_exists(const std::string& component_name,
         statement->bind_text("@variable_instance", variable_instance.value(), ocpp::common::SQLiteString::Transient);
     } else {
         statement->bind_null("@variable_instance");
+    }
+
+    if (source.has_value()) {
+        statement->bind_text("@variable_source", source.value(), ocpp::common::SQLiteString::Transient);
+    } else {
+        statement->bind_null("@variable_source");
     }
 
     if (statement->step() == SQLITE_ERROR) {

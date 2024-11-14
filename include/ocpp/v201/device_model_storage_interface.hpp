@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#ifndef OCPP_V201_DEVICE_MODEL_STORAGE_HPP
-#define OCPP_V201_DEVICE_MODEL_STORAGE_HPP
+#pragma once
 
 #include <map>
 #include <memory>
@@ -34,20 +33,21 @@ struct VariableMonitoringPeriodic {
 struct VariableMetaData {
     VariableCharacteristics characteristics;
     std::unordered_map<int64_t, VariableMonitoringMeta> monitors;
+    std::optional<std::string> source;
 };
 
 using VariableMap = std::map<Variable, VariableMetaData>;
 using DeviceModelMap = std::map<Component, VariableMap>;
 
-class DeviceModelStorageError : public std::exception {
+class DeviceModelError : public std::exception {
 public:
     [[nodiscard]] const char* what() const noexcept override {
         return this->reason.c_str();
     }
-    explicit DeviceModelStorageError(std::string msg) {
+    explicit DeviceModelError(std::string msg) {
         this->reason = std::move(msg);
     }
-    explicit DeviceModelStorageError(const char* msg) {
+    explicit DeviceModelError(const char* msg) {
         this->reason = std::string(msg);
     }
 
@@ -55,15 +55,15 @@ private:
     std::string reason;
 };
 
-/// \brief Abstract base class for device model storage. This class provides an interface for accessing and modifying
+/// \brief Abstract base class for device model interface. This class provides an interface for accessing and modifying
 /// device model data. Implementations of this class should provide concrete implementations for the virtual methods
 /// declared here.
-class DeviceModelStorage {
+class DeviceModelStorageInterface {
 
 public:
-    virtual ~DeviceModelStorage() = default;
+    virtual ~DeviceModelStorageInterface() = default;
 
-    /// \brief Gets the device model from the device model storage
+    /// \brief Gets the device model from the device model interface
     /// \return std::map<Component, std::map<Variable, VariableMetaData>> that will contain a full representation of the
     /// device model except for the VariableAttribute(s) of each Variable.
     virtual DeviceModelMap get_device_model() = 0;
@@ -140,5 +140,3 @@ public:
 
 } // namespace v201
 } // namespace ocpp
-
-#endif // OCPP_V201_DEVICE_MODEL_STORAGE_HPP

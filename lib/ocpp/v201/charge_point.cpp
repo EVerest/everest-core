@@ -78,12 +78,12 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
 }
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
-                         std::unique_ptr<DeviceModelStorage> device_model_storage, const std::string& ocpp_main_path,
-                         const std::string& core_database_path, const std::string& sql_init_path,
-                         const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
-                         const Callbacks& callbacks) :
+                         std::unique_ptr<DeviceModelStorageInterface> device_model_storage_interface,
+                         const std::string& ocpp_main_path, const std::string& core_database_path,
+                         const std::string& sql_init_path, const std::string& message_log_path,
+                         const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks) :
     ChargePoint(
-        evse_connector_structure, std::make_shared<DeviceModel>(std::move(device_model_storage)),
+        evse_connector_structure, std::make_shared<DeviceModel>(std::move(device_model_storage_interface)),
         std::make_shared<DatabaseHandler>(
             std::make_unique<common::DatabaseConnection>(fs::path(core_database_path) / "cp.db"), sql_init_path),
         nullptr /* message_queue initialized in this constructor */, message_log_path, evse_security, callbacks) {
@@ -2661,8 +2661,7 @@ void ChargePoint::handle_set_network_profile_req(Call<SetNetworkProfileRequest> 
                                       ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
                                       AttributeEnum::Actual, network_connection_profiles.dump(),
                                       VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL) != SetVariableStatusEnum::Accepted) {
-        EVLOG_warning
-            << "CSMS attempted to set a network profile that could not be written to the device model storage";
+        EVLOG_warning << "CSMS attempted to set a network profile that could not be written to the device model";
         response.status = SetNetworkProfileStatusEnum::Rejected;
         ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
         this->send<SetNetworkProfileResponse>(call_result);
@@ -3712,7 +3711,7 @@ void ChargePoint::handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> 
             msg.monitoringBase == MonitoringBaseEnum::FactoryDefault) {
             try {
                 this->device_model->clear_custom_monitors();
-            } catch (const DeviceModelStorageError& e) {
+            } catch (const DeviceModelError& e) {
                 EVLOG_warning << "Could not clear custom monitors from DB: " << e.what();
                 response.status = GenericDeviceModelStatusEnum::Rejected;
             }
@@ -3772,7 +3771,7 @@ void ChargePoint::handle_set_variable_monitoring_req(const EnhancedMessage<v201:
 
     try {
         response.setMonitoringResult = this->device_model->set_monitors(msg.setMonitoringData);
-    } catch (const DeviceModelStorageError& e) {
+    } catch (const DeviceModelError& e) {
         EVLOG_error << "Set monitors failed:" << e.what();
     }
 
@@ -3852,7 +3851,7 @@ void ChargePoint::handle_get_monitoring_report_req(Call<GetMonitoringReportReque
         } else {
             response.status = GenericDeviceModelStatusEnum::EmptyResultSet;
         }
-    } catch (const DeviceModelStorageError& e) {
+    } catch (const DeviceModelError& e) {
         EVLOG_error << "Get variable monitoring failed:" << e.what();
         response.status = GenericDeviceModelStatusEnum::Rejected;
     }
@@ -3872,7 +3871,7 @@ void ChargePoint::handle_clear_variable_monitoring_req(Call<ClearVariableMonitor
 
     try {
         response.clearMonitoringResult = this->device_model->clear_monitors(msg.id);
-    } catch (const DeviceModelStorageError& e) {
+    } catch (const DeviceModelError& e) {
         EVLOG_error << "Clear variable monitoring failed:" << e.what();
     }
 
@@ -4143,7 +4142,7 @@ void ChargePoint::handle_send_local_authorization_list_req(Call<SendLocalListReq
                     this->device_model->set_read_only_value(local_entries.component, local_entries.variable.value(),
                                                             AttributeEnum::Actual, std::to_string(entries),
                                                             VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-                } catch (const DeviceModelStorageError& e) {
+                } catch (const DeviceModelError& e) {
                     EVLOG_warning << "Could not get local list count from database:" << e.what();
                 } catch (const DatabaseException& e) {
                     EVLOG_warning << "Could not get local list count from database: " << e.what();

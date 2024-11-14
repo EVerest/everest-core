@@ -9,12 +9,12 @@
 
 #include <everest/logging.hpp>
 #include <ocpp/common/database/database_connection.hpp>
-#include <ocpp/v201/device_model_storage.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 
 namespace ocpp {
 namespace v201 {
 
-class DeviceModelStorageSqlite : public DeviceModelStorage {
+class DeviceModelStorageSqlite : public DeviceModelStorageInterface {
 
 private:
     std::unique_ptr<ocpp::common::DatabaseConnectionInterface> db;

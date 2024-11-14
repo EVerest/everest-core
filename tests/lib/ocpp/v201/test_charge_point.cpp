@@ -538,13 +538,13 @@ TEST_F(ChargePointConstructorTestFixtureV201, CreateChargePoint_InitializeInCorr
 }
 
 TEST_F(ChargePointConstructorTestFixtureV201,
-       CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelStorageError) {
+       CreateChargePoint_EVSEConnectorStructureDefinedBadly_ThrowsDeviceModelError) {
     configure_callbacks_with_mocks();
     auto evse_connector_structure = std::map<int32_t, int32_t>();
 
     EXPECT_THROW(ocpp::v201::ChargePoint(evse_connector_structure, device_model, database_handler,
                                          create_message_queue(database_handler), "/tmp", evse_security, callbacks),
-                 DeviceModelStorageError);
+                 DeviceModelError);
 }
 
 TEST_F(ChargePointConstructorTestFixtureV201, CreateChargePoint_MissingDeviceModel_ThrowsInvalidArgument) {

@@ -22,8 +22,7 @@ DeviceModelStorageSqlite::DeviceModelStorageSqlite(const fs::path& db_path, cons
                                                    const fs::path& config_path, const bool init_db) {
     if (init_db) {
         if (db_path.empty() || migration_files_path.empty() || config_path.empty()) {
-            EVLOG_AND_THROW(
-                DeviceModelStorageError("Can not initialize device model storage: one of the paths is empty."));
+            EVLOG_AND_THROW(DeviceModelError("Can not initialize device model storage: one of the paths is empty."));
         }
         InitDeviceModelDb init_device_model_db(db_path, migration_files_path);
         init_device_model_db.initialize_database(config_path, false);
@@ -97,7 +96,7 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
 
     std::string select_query =
         "SELECT c.NAME, c.EVSE_ID, c.CONNECTOR_ID, c.INSTANCE, v.NAME, v.INSTANCE, vc.DATATYPE_ID, "
-        "vc.SUPPORTS_MONITORING, vc.UNIT, vc.MIN_LIMIT, vc.MAX_LIMIT, vc.VALUES_LIST "
+        "vc.SUPPORTS_MONITORING, vc.UNIT, vc.MIN_LIMIT, vc.MAX_LIMIT, vc.VALUES_LIST, v.SOURCE "
         "FROM COMPONENT c "
         "JOIN VARIABLE v ON c.ID = v.COMPONENT_ID "
         "JOIN VARIABLE_CHARACTERISTICS vc ON vc.VARIABLE_ID = v.ID";
@@ -130,6 +129,7 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
         }
 
         VariableCharacteristics characteristics;
+        VariableMetaData meta_data;
         characteristics.dataType = static_cast<DataEnum>(select_stmt->column_int(6));
         characteristics.supportsMonitoring = select_stmt->column_int(7) != 0;
 
@@ -149,7 +149,10 @@ DeviceModelMap DeviceModelStorageSqlite::get_device_model() {
             characteristics.valuesList = select_stmt->column_text(11);
         }
 
-        VariableMetaData meta_data;
+        if (select_stmt->column_type(12) != SQLITE_NULL) {
+            meta_data.source = select_stmt->column_text(12);
+        }
+
         meta_data.characteristics = characteristics;
 
         // Query all monitors for this variable
@@ -481,7 +484,7 @@ void DeviceModelStorageSqlite::check_integrity() {
                   << "/" << select_stmt->column_text_nullable(4).value_or("<null>") << ")" << std::endl;
         } while (select_stmt->step() == SQLITE_ROW);
 
-        throw DeviceModelStorageError(error.str());
+        throw DeviceModelError(error.str());
     }
 }
 

@@ -36,7 +36,7 @@
 #include <filesystem>
 
 #include <ocpp/common/database/database_handler_common.hpp>
-#include <ocpp/v201/device_model_storage.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 
 namespace ocpp::v201 {
 ///
@@ -93,6 +93,8 @@ struct DeviceModelVariable {
     std::optional<std::string> default_actual_value;
     /// \brief Config monitors, if any
     std::vector<VariableMonitoringMeta> monitors;
+    /// \brief Source of the variable.
+    std::optional<std::string> source;
 };
 
 /// \brief Convert from json to a ComponentKey struct.

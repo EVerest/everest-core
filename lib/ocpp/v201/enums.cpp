@@ -23,6 +23,7 @@ VariableMonitorType string_to_variable_monitor_type(const std::string& s) {
 
     throw std::out_of_range("Provided string " + s + " could not be converted to enum of type VariableMonitorType");
 }
+
 } // namespace conversions
 
 } // namespace ocpp::v201

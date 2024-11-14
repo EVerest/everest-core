@@ -19,7 +19,7 @@
 #include <sqlite3.h>
 
 #include <component_state_manager_mock.hpp>
-#include <device_model_storage_mock.hpp>
+#include <device_model_storage_interface_mock.hpp>
 #include <evse_manager_fake.hpp>
 #include <evse_mock.hpp>
 #include <evse_security_mock.hpp>

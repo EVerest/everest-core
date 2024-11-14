@@ -25,7 +25,7 @@ TEST_F(DeviceModelStorageSQLiteTest, test_check_integrity_valid) {
 TEST_F(DeviceModelStorageSQLiteTest, test_check_integrity_invalid) {
 
     auto dm_storage = DeviceModelStorageSqlite(INVALID_DEVICE_MODEL_DATABASE);
-    EXPECT_THROW(dm_storage.check_integrity(), DeviceModelStorageError);
+    EXPECT_THROW(dm_storage.check_integrity(), DeviceModelError);
 }
 
 } // namespace v201

@@ -8,7 +8,7 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/v201/device_model_storage.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 
 namespace ocpp {
 namespace v201 {
@@ -91,13 +91,13 @@ typedef std::function<void(const VariableMonitoringMeta& updated_monitor, const 
                            const VariableAttribute& attribute, const std::string& current_value)>
     on_monitor_updated;
 
-/// \brief This class manages access to the device model representation and to the device model storage and provides
+/// \brief This class manages access to the device model representation and to the device model interface and provides
 /// functionality to support the use cases defined in the functional block Provisioning
 class DeviceModel {
 
 private:
-    DeviceModelMap device_model;
-    std::unique_ptr<DeviceModelStorage> storage;
+    DeviceModelMap device_model_map;
+    std::unique_ptr<DeviceModelStorageInterface> device_model;
 
     /// \brief Listener for the internal change of a variable
     on_variable_changed variable_listener;
@@ -106,7 +106,7 @@ private:
 
     /// \brief Private helper method that does some checks with the device model representation in memory to evaluate if
     /// a value for the given parameters can be requested. If it can be requested it will be retrieved from the device
-    /// model storage and the given \p value will be set to the value that was retrieved
+    /// model interface and the given \p value will be set to the value that was retrieved
     /// \param component_id
     /// \param variable_id
     /// \param attribute_enum
@@ -138,15 +138,15 @@ private:
 
 public:
     /// \brief Constructor for the device model
-    /// \param device_model_storage pointer to a device model storage class
-    explicit DeviceModel(std::unique_ptr<DeviceModelStorage> device_model_storage);
+    /// \param device_model_storage_interface pointer to a device model interface class
+    explicit DeviceModel(std::unique_ptr<DeviceModelStorageInterface> device_model_storage_interface);
 
     /// \brief Direct access to value of a VariableAttribute for the given component, variable and attribute_enum. This
     /// should only be called for variables that have a role standardized in the OCPP2.0.1 specification.
     /// \tparam T datatype of the value that is requested
     /// \param component_variable Combination of Component and Variable that identifies the Variable
     /// \param attribute_enum defaults to AttributeEnum::Actual
-    /// \return the requested value from the device model storage
+    /// \return the requested value from the device model interface
     template <typename T>
     T get_value(const RequiredComponentVariable& component_variable,
                 const AttributeEnum& attribute_enum = AttributeEnum::Actual) const {
@@ -159,11 +159,10 @@ public:
         if (response == GetVariableStatusEnum::Accepted) {
             return to_specific_type<T>(value);
         } else {
-            EVLOG_critical
-                << "Directly requested value for ComponentVariable that doesn't exist in the device model storage: "
-                << component_variable;
+            EVLOG_critical << "Directly requested value for ComponentVariable that doesn't exist in the device model: "
+                           << component_variable;
             EVLOG_AND_THROW(std::runtime_error(
-                "Directly requested value for ComponentVariable that doesn't exist in the device model storage."));
+                "Directly requested value for ComponentVariable that doesn't exist in the device model."));
         }
     }
 
@@ -190,7 +189,7 @@ public:
     }
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
-    /// from the device model storage
+    /// from the device model
     /// \tparam T datatype of the value that is requested
     /// \param component_id
     /// \param variable_id

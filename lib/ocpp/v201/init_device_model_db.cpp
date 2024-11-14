@@ -362,14 +362,14 @@ void InitDeviceModelDb::update_variable_characteristics(const VariableCharacteri
 
 void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, const uint64_t& component_id) {
     static const std::string statement =
-        "INSERT OR REPLACE INTO VARIABLE (NAME, INSTANCE, COMPONENT_ID, REQUIRED) VALUES "
-        "(@name, @instance, @component_id, @required)";
+        "INSERT OR REPLACE INTO VARIABLE (NAME, INSTANCE, COMPONENT_ID, REQUIRED, SOURCE) VALUES "
+        "(@name, @instance, @component_id, @required, @source)";
 
     std::unique_ptr<common::SQLiteStatementInterface> insert_variable_statement;
     try {
         insert_variable_statement = this->database->new_statement(statement);
-    } catch (const common::QueryExecutionException&) {
-        throw InitDeviceModelDbError("Could not create statement " + statement);
+    } catch (const common::QueryExecutionException& e) {
+        throw InitDeviceModelDbError("Could not create statement " + statement + ": " + e.what());
     }
 
     insert_variable_statement->bind_text("@name", variable.name, ocpp::common::SQLiteString::Transient);
@@ -384,6 +384,12 @@ void InitDeviceModelDb::insert_variable(const DeviceModelVariable& variable, con
 
     const uint8_t required_int = (variable.required ? 1 : 0);
     insert_variable_statement->bind_int("@required", required_int);
+
+    if (variable.source.has_value()) {
+        insert_variable_statement->bind_text("@source", variable.source.value());
+    } else {
+        insert_variable_statement->bind_null("@source");
+    }
 
     if (insert_variable_statement->step() != SQLITE_DONE) {
         throw InitDeviceModelDbError("Variable " + variable.name +
@@ -405,8 +411,8 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
     }
 
     static const std::string update_variable_statement =
-        "UPDATE VARIABLE SET NAME=@name, INSTANCE=@instance, COMPONENT_ID=@component_id, REQUIRED=@required WHERE "
-        "ID=@variable_id";
+        "UPDATE VARIABLE SET NAME=@name, INSTANCE=@instance, COMPONENT_ID=@component_id, REQUIRED=@required, "
+        "SOURCE=@source WHERE ID=@variable_id";
 
     std::unique_ptr<common::SQLiteStatementInterface> update_statement;
     try {
@@ -427,6 +433,12 @@ void InitDeviceModelDb::update_variable(const DeviceModelVariable& variable, con
 
     const uint8_t required_int = (variable.required ? 1 : 0);
     update_statement->bind_int("@required", required_int);
+
+    if (variable.source.has_value()) {
+        update_statement->bind_text("@source", variable.source.value(), ocpp::common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@source");
+    }
 
     if (update_statement->step() != SQLITE_DONE) {
         throw InitDeviceModelDbError("Could not update variable " + variable.name + ": " +
@@ -804,7 +816,8 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
             "c.ID, c.NAME, c.INSTANCE, c.EVSE_ID, c.CONNECTOR_ID, "
             "v.ID, v.NAME, v.INSTANCE, v.REQUIRED, "
             "vc.ID, vc.DATATYPE_ID, vc.MAX_LIMIT, vc.MIN_LIMIT, vc.SUPPORTS_MONITORING, vc.UNIT, vc.VALUES_LIST, "
-            "va.ID, va.MUTABILITY_ID, va.PERSISTENT, va.CONSTANT, va.TYPE_ID, va.VALUE, va.VALUE_SOURCE "
+            "va.ID, va.MUTABILITY_ID, va.PERSISTENT, va.CONSTANT, va.TYPE_ID, va.VALUE, va.VALUE_SOURCE,"
+            "v.SOURCE "
         "FROM "
             "COMPONENT c "
             "JOIN VARIABLE v ON v.COMPONENT_ID = c.ID "
@@ -894,6 +907,14 @@ std::map<ComponentKey, std::vector<DeviceModelVariable>> InitDeviceModelDb::get_
         }
         attribute.variable_attribute.value = select_statement->column_text_nullable(21);
         attribute.value_source = select_statement->column_text_nullable(22);
+
+        if (select_statement->column_type(23) != SQLITE_NULL) {
+            try {
+                variable->source = select_statement->column_text(23);
+            } catch (const std::out_of_range& e) {
+                EVLOG_error << e.what() << ": Variable Source will not be set (so default will be used)";
+            }
+        }
 
         variable->attributes.push_back(attribute);
 
@@ -1209,6 +1230,10 @@ void from_json(const json& j, DeviceModelVariable& c) {
         c.default_actual_value = get_string_value_from_json(default_value);
     }
 
+    if (j.contains("source")) {
+        c.source = j.at("source");
+    }
+
     if (j.contains("monitors")) {
         if (!c.characteristics.supportsMonitoring) {
             const std::string error =
@@ -1284,6 +1309,11 @@ static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModel
 /// \return std::nullopt if the required variable has a value or default value. Error message if it is not.
 ///
 static std::optional<std::string> check_integrity_required_value(const DeviceModelVariable& variable) {
+    // Required value has a different source so it is correct that the value is not set here.
+    if (variable.source.has_value() && variable.source != "OCPP") {
+        return std::nullopt;
+    }
+
     // For now, we assume that if a variable is required, it should have an 'Actual' value. But the spec is not clear
     // about this. There are some implicit signs in favor of having always at least an 'Actual' value, but it is not
     // explicitly stated. Robert asked OCA about this.

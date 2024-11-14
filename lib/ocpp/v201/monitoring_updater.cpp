@@ -265,7 +265,7 @@ void MonitoringUpdater::evaluate_monitor(const VariableMonitoringMeta& monitor_m
                 if (!this->device_model->update_monitor_reference(monitor_id, value_current)) {
                     EVLOG_warning << "Could not update delta monitor: " << monitor_id << " reference!";
                 }
-            } catch (const DeviceModelStorageError& e) {
+            } catch (const DeviceModelError& e) {
                 EVLOG_error << "Could not update delta monitor reference with exception: " << e.what();
             }
         }
