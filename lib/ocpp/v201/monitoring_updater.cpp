@@ -209,9 +209,8 @@ void MonitoringUpdater::evaluate_monitor(const VariableMonitoringMeta& monitor_m
                                          const VariableAttribute& attribute, const std::string& value_previous,
                                          const std::string& value_current) {
     // Don't care about periodic
-    switch (monitor_meta.monitor.type) {
-    case MonitorEnum::Periodic:
-    case MonitorEnum::PeriodicClockAligned:
+    if (monitor_meta.monitor.type == MonitorEnum::Periodic or
+        monitor_meta.monitor.type == MonitorEnum::PeriodicClockAligned) {
         return;
     }
 

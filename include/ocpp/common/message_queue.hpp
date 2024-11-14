@@ -561,6 +561,9 @@ public:
                     case QueueType::Transaction:
                         this->transaction_message_queue.erase(selected_transaction_message_it);
                         break;
+                    case QueueType::None:
+                        // do nothing
+                        break;
 
                     default:
                         break;
