@@ -509,7 +509,7 @@ class CertificateHashDataGenerator:
                 )
             )
         # try ECDSA (Note: We assume we're working with the uncompressed-point format here)
-        except:
+        except Exception:
             return cls._sha256(
                 certificate.public_key().public_bytes(
                     encoding=serialization.Encoding.X962,

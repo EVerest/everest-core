@@ -18,7 +18,7 @@ from ocpp.v201.datatypes import *
 from ocpp.routing import on, create_route_map
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils import * # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from ocpp.v201.enums import (Action, IdTokenType as IdTokenTypeEnum, SetVariableStatusType, ConnectorStatusType,GetVariableStatusType)
+from ocpp.v201.enums import (Action, SetVariableStatusType, ConnectorStatusType,GetVariableStatusType)
 from validations import validate_status_notification_201, validate_notify_report_data_201, wait_for_callerror_and_validate
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP201ConfigAdjustment
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility, OcppTestConfiguration, ValidationMode
@@ -626,7 +626,7 @@ async def test_TC_B_56_CS(
         wait_for_bootnotification=True
     )
 
-    r = await charge_point_v201.get_report_req(
+    await charge_point_v201.get_report_req(
         request_id=2544,
         component_variable=[
             ComponentVariableType(

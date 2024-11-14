@@ -223,7 +223,7 @@ async def test_absolute_4(
 
     assert await charge_point_v16.set_charging_profile_req(req) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=300)
     )
 

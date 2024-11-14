@@ -3,7 +3,7 @@
 
 import asyncio
 from dataclasses import dataclass
-from unittest.mock import Mock, call as mock_call, ANY, call
+from unittest.mock import Mock, call as mock_call, ANY
 import logging
 
 import pytest
@@ -614,7 +614,7 @@ class TestOCPP16GenericInterfaceIntegration:
 
         await wait_for_mock_called(
             _env.probe_module_command_mocks["evse_manager"]["enable_disable"],
-            call=call(
+            call=mock_call(
                 {
                     "cmd_source": {
                         "enable_priority": 5000,
@@ -646,7 +646,7 @@ class TestOCPP16GenericInterfaceIntegration:
 
         await wait_for_mock_called(
             _env.probe_module_command_mocks["evse_manager_b"]["enable_disable"],
-            call=call(
+            call=mock_call(
                 {
                     "cmd_source": {
                         "enable_priority": 5000,
@@ -669,7 +669,7 @@ class TestOCPP16GenericInterfaceIntegration:
         assert res == {"status": "Accepted"}
         await wait_for_mock_called(
             _env.probe_module_command_mocks["evse_manager"]["enable_disable"],
-            call=call(
+            call=mock_call(
                 {
                     "cmd_source": {
                         "enable_priority": 5000,
