@@ -4084,11 +4084,8 @@ void ChargePointImpl::on_session_started(int32_t connector, const std::string& s
 }
 
 void ChargePointImpl::on_session_stopped(const int32_t connector, const std::string& session_id) {
-    // TODO(piet) fix this when evse manager signals clearance of an error
-    if (this->status->get_state(connector) == ChargePointStatus::Faulted) {
-        this->status->submit_event(connector, FSMEvent::I1_ReturnToAvailable, ocpp::DateTime());
-    } else if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
-               this->status->get_state(connector) != ChargePointStatus::Unavailable) {
+    if (this->status->get_state(connector) != ChargePointStatus::Reserved &&
+        this->status->get_state(connector) != ChargePointStatus::Unavailable) {
         this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
     }
 
