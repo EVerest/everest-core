@@ -1,0 +1,180 @@
+{
+    "Internal": {
+        "ChargePointId": "cp001",
+        "CentralSystemURI": "127.0.0.1:8180/steve/websocket/CentralSystemService/",
+        "ChargeBoxSerialNumber": "cp001",
+        "ChargePointModel": "Yeti",
+        "ChargePointSerialNumber": "cp001",
+        "ChargePointVendor": "Pionix",
+        "FirmwareVersion": "0.1",
+        "ICCID": "891004234814455936F",
+        "IMSI": "262 01 9876543210",
+        "MeterSerialNumber": "123-456-789",
+        "MeterType": "AC",
+        "SupportedCiphers12": [
+            "ECDHE-ECDSA-AES128-GCM-SHA256",
+            "ECDHE-ECDSA-AES256-GCM-SHA384",
+            "AES128-GCM-SHA256",
+            "AES256-GCM-SHA384"
+        ],
+        "SupportedCiphers13": [
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_AES_128_GCM_SHA256"
+        ],
+        "UseTPM": false,
+        "RetryBackoffRandomRange": 10,
+        "RetryBackoffRepeatTimes": 3,
+        "RetryBackoffWaitMinimum": 3,
+        "AuthorizeConnectorZeroOnConnectorOne": true,
+        "LogMessages": true,
+        "LogMessagesFormat": [
+            "log",
+            "html",
+            "session_logging",
+            "security"
+        ],
+        "LogRotation": false,
+        "LogRotationDateSuffix": false,
+        "LogRotationMaximumFileSize": 0,
+        "LogRotationMaximumFileCount": 0,
+        "SupportedChargingProfilePurposeTypes": [
+            "ChargePointMaxProfile",
+            "TxDefaultProfile",
+            "TxProfile"
+        ],
+        "MaxCompositeScheduleDuration": 31536000,
+        "WebsocketPingPayload": "Hello from EVerest!",
+        "WebsocketPongTimeout": 5,
+        "UseSslDefaultVerifyPaths": true,
+        "VerifyCsmsCommonName": true,
+        "VerifyCsmsAllowWildcards": true,
+        "OcspRequestInterval": 604800,
+        "SeccLeafSubjectCommonName": "cp001",
+        "SeccLeafSubjectCountry": "DE",
+        "SeccLeafSubjectOrganization": "Pionix",
+        "ConnectorEvseIds": "DE*PNX*100001,DE*PNX*100002",
+        "AllowChargingProfileWithoutStartSchedule": false,
+        "WaitForStopTransactionsOnResetTimeout": 60,
+        "QueueAllMessages": true,
+        "MessageTypesDiscardForQueueing": "Heartbeat",
+        "MessageQueueSizeThreshold": 5000,
+        "SupportedMeasurands": "Energy.Active.Import.Register,Energy.Active.Export.Register,Power.Active.Import,Voltage,Current.Import,Frequency,Current.Offered,Power.Offered,SoC",
+        "MaxMessageSize": 65000,
+        "TLSKeylogFile": "/tmp/ocpp_tls_keylog.txt",
+        "EnableTLSKeylog": false
+    },
+    "Core": {
+        "AllowOfflineTxForUnknownId": true,
+        "AuthorizationCacheEnabled": true,
+        "AuthorizeRemoteTxRequests": true,
+        "BlinkRepeat": 0,
+        "ClockAlignedDataInterval": 900,
+        "ConnectionTimeOut": 120,
+        "ConnectorPhaseRotation": "RST0.RST,1.RST,2.RTS",
+        "ConnectorPhaseRotationMaxLength": 100,
+        "GetConfigurationMaxKeys": 1024,
+        "HeartbeatInterval": 900,
+        "LightIntensity": 0,
+        "LocalAuthorizeOffline": true,
+        "LocalPreAuthorize": true,
+        "MaxEnergyOnInvalidId": 500,
+        "MeterValuesAlignedData": "Energy.Active.Import.Register",
+        "MeterValuesAlignedDataMaxLength": 1024,
+        "MeterValuesSampledData": "Energy.Active.Import.Register",
+        "MeterValuesSampledDataMaxLength": 1024,
+        "MeterValueSampleInterval": 300,
+        "MinimumStatusDuration": 2,
+        "NumberOfConnectors": 2,
+        "ResetRetries": 1,
+        "StopTransactionOnEVSideDisconnect": true,
+        "StopTransactionOnInvalidId": true,
+        "StopTxnAlignedData": "Energy.Active.Import.Register",
+        "StopTxnAlignedDataMaxLength": 1024,
+        "StopTxnSampledData": "Energy.Active.Import.Register",
+        "StopTxnSampledDataMaxLength": 1024,
+        "SupportedFeatureProfiles": "Core,FirmwareManagement,RemoteTrigger,Reservation,LocalAuthListManagement,SmartCharging",
+        "SupportedFeatureProfilesMaxLength": 1024,
+        "TransactionMessageAttempts": 1,
+        "TransactionMessageRetryInterval": 10,
+        "UnlockConnectorOnEVSideDisconnect": true,
+        "WebsocketPingInterval": 10
+    },
+    "LocalAuthListManagement": {
+        "LocalAuthListEnabled": true,
+        "LocalAuthListMaxLength": 1024,
+        "SendLocalListMaxLength": 1024
+    },
+    "SmartCharging": {
+        "ChargeProfileMaxStackLevel": 1000,
+        "ChargingScheduleAllowedChargingRateUnit": "W,A",
+        "ChargingScheduleMaxPeriods": 1000,
+        "ConnectorSwitch3to1PhaseSupported": true,
+        "MaxChargingProfilesInstalled": 1000
+    },
+    "FirmwareManagement": {
+        "SupportedFileTransferProtocols": "FTP"
+    },
+    "Reservation": {
+        "ReserveConnectorZeroSupported": false
+    },
+    "Security": {
+        "AdditionalRootCertificateCheck": false,
+        "AuthorizationKey": "DEADBEEFDEADBEEF",
+        "CertificateSignedMaxChainSize": 10000,
+        "CertificateStoreMaxLength": 1000,
+        "CpoName": "Pionix",
+        "SecurityProfile": 1,
+        "DisableSecurityEventNotifications": true
+    },
+    "PnC": {
+        "ISO15118PnCEnabled": true,
+        "CentralContractValidationAllowed": true,
+        "CertificateSignedMaxChainSize": 10000,
+        "CertSigningWaitMinimum": 30,
+        "CertSigningRepeatTimes": 2,
+        "CertificateStoreMaxLength": 1000,
+        "ContractValidationOffline": true
+    },
+    "CostAndPrice": {
+        "CustomDisplayCostAndPrice": true,
+        "NumberOfDecimalsForCostValues": 4,
+        "DefaultPrice":
+        {
+            "priceText": "This is the price",
+            "priceTextOffline": "Show this price text when offline!",
+            "chargingPrice":
+            {
+                "kWhPrice": 3.14,
+                "hourPrice": 0.42
+            }
+        },
+        "DefaultPriceText":
+        {
+            "priceTexts":
+            [
+                {
+                    "priceText": "This is the price",
+                    "priceTextOffline": "Show this price text when offline!",
+                    "language": "en"
+                },
+                {
+                    "priceText": "Dit is de prijs",
+                    "priceTextOffline": "Laat dit zien wanneer de charging station offline is!",
+                    "language": "nl"
+                },
+                {
+                    "priceText": "Dette er prisen",
+                    "priceTextOffline": "Vis denne pristeksten når du er frakoblet",
+                    "language": "nb_NO"
+                }
+            ]
+        },
+        "TimeOffset": "02:00",
+        "NextTimeOffsetTransitionDateTime": "2024-01-01T00:00:00",
+        "TimeOffsetNextTransition": "01:00",
+        "CustomIdleFeeAfterStop": false,
+        "MultiLanguageSupportedLanguages": "en, nl, de, nb_NO",
+        "CustomMultiLanguageMessages": true,
+        "Language": "en"
+    }
+}
