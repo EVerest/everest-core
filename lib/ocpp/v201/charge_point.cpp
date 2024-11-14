@@ -1855,16 +1855,23 @@ bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data
         const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =
             this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
-        for (const auto configuration_slot : network_configuration_priorities) {
-            try {
-                auto network_profile_opt =
-                    this->connectivity_manager->get_network_connection_profile(std::stoi(configuration_slot));
-                if (!network_profile_opt.has_value()) {
+
+        try {
+            const auto network_connection_profiles = json::parse(
+                this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+            for (const auto configuration_slot : network_configuration_priorities) {
+                auto network_profile_it =
+                    std::find_if(network_connection_profiles.begin(), network_connection_profiles.end(),
+                                 [configuration_slot](const SetNetworkProfileRequest& network_profile) {
+                                     return network_profile.configurationSlot == std::stoi(configuration_slot);
+                                 });
+
+                if (network_profile_it == network_connection_profiles.end()) {
                     EVLOG_warning << "Could not find network profile for configurationSlot: " << configuration_slot;
                     return false;
                 }
 
-                auto network_profile = network_profile_opt.value();
+                auto network_profile = SetNetworkProfileRequest(*network_profile_it).connectionData;
 
                 if (network_profile.securityProfile <= active_security_profile) {
                     continue;
@@ -1884,10 +1891,14 @@ bool ChargePoint::validate_set_variable(const SetVariableData& set_variable_data
                                   << " is >= 2 but no CSMS Root Certifciate is installed";
                     return false;
                 }
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "NetworkConfigurationPriority is not an integer: " << configuration_slot;
-                return false;
             }
+        } catch (const std::invalid_argument& e) {
+            EVLOG_warning << "NetworkConfigurationPriority contains at least one value which is not an integer: "
+                          << set_variable_data.attributeValue.get();
+            return false;
+        } catch (const json::exception& e) {
+            EVLOG_warning << "Could not parse NetworkConnectionProfiles or SetNetworkProfileRequest: " << e.what();
+            return false;
         }
     }
     return true;
