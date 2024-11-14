@@ -118,9 +118,11 @@ public:
      * @param reservation_id    The id of the cancelled reservation.
      * @param reason            The reason the reservation was cancelled.
      * @param evse_id           Evse id if reservation was for a specific evse.
+     * @param send_reservation_update   True to send a reservation update. This should not be sent if OCPP cancels
+     *                                  the reservation.
      */
     void call_reservation_cancelled(const int32_t reservation_id, const ReservationEndReason reason,
-                                    const std::optional<int>& evse_id);
+                                    const std::optional<int>& evse_id, const bool send_reservation_update);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the
@@ -204,7 +206,7 @@ public:
      */
     void register_reservation_cancelled_callback(
         const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
-                                 const ReservationEndReason reason)>& callback);
+                                 const ReservationEndReason reason, const bool send_reservation_update)>& callback);
 
     /**
      * @brief Registers the given \p callback to publish the intermediate token validation status.
@@ -243,7 +245,7 @@ private:
     std::function<void(const Array& reservations)> reservation_update_callback;
     std::function<bool(const std::optional<int>& evse_index, const int& reservation_id)> reserved_callback;
     std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
-                       const types::reservation::ReservationEndReason reason)>
+                       const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
     std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
         publish_token_validation_status_callback;

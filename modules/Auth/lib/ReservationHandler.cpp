@@ -60,7 +60,7 @@ void ReservationHandler::load_reservations() {
             EVLOG_warning << "Load reservations: Could not make reservation with id " << r.reservation_id
                           << ": reservation cancelled.";
             this->reservation_cancelled_callback(evse_id, r.reservation_id,
-                                                 types::reservation::ReservationEndReason::Cancelled);
+                                                 types::reservation::ReservationEndReason::Cancelled, true);
         }
     }
 }
@@ -203,13 +203,11 @@ void ReservationHandler::on_connector_state_changed(const ConnectorState connect
     }
 
     const bool reservation_exists = evse_reservations.count(evse_id) != 0;
-    const bool reserved_connector_specified = evse_reservations[evse_id].connector_type.has_value();
-    const bool connector_type_matches = connector_it->type == evse_reservations[evse_id].connector_type.value();
-    const bool connector_type_unknown =
-        connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-        evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown;
 
-    if (reservation_exists && reserved_connector_specified && (connector_type_matches || connector_type_unknown)) {
+    if (reservation_exists && evse_reservations[evse_id].connector_type.has_value() &&
+        (connector_it->type == evse_reservations[evse_id].connector_type.value() ||
+         connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+         evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown)) {
         cancel_reservation(evse_reservations[evse_id].reservation_id, true,
                            types::reservation::ReservationEndReason::Cancelled);
         return;
@@ -307,7 +305,7 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
     this->store_reservations();
 
     if (execute_callback && this->reservation_cancelled_callback != nullptr) {
-        this->reservation_cancelled_callback(evse_id, reservation_id, reason);
+        this->reservation_cancelled_callback(evse_id, reservation_id, reason, execute_callback);
     }
 
     result.second = evse_id;
@@ -316,7 +314,8 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
 
 void ReservationHandler::register_reservation_cancelled_callback(
     const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                             const types::reservation::ReservationEndReason reason)>& callback) {
+                             const types::reservation::ReservationEndReason reason,
+                             const bool send_reservation_update)>& callback) {
     this->reservation_cancelled_callback = callback;
 }
 

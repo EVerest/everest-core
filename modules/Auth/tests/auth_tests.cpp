@@ -135,12 +135,12 @@ protected:
             return validation_results;
         });
 
-        this->auth_handler->register_reservation_cancelled_callback([](const std::optional<int32_t> evse_index,
-                                                                       const int32_t reservation_id,
-                                                                       const ReservationEndReason reason) {
-            EVLOG_info << "Signaling reservating cancelled to evse#"
-                       << (evse_index.has_value() ? evse_index.value() : 0);
-        });
+        this->auth_handler->register_reservation_cancelled_callback(
+            [](const std::optional<int32_t> evse_index, const int32_t reservation_id, const ReservationEndReason reason,
+               const bool send_reservation_update) {
+                EVLOG_info << "Signaling reservating cancelled to evse#"
+                           << (evse_index.has_value() ? evse_index.value() : 0);
+            });
 
         this->auth_handler->register_publish_token_validation_status_callback(
             mock_publish_token_validation_status_callback.AsStdFunction());

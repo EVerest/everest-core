@@ -577,13 +577,13 @@ bool AuthHandler::call_reserved(const int reservation_id, const std::optional<in
 
 void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
                                              const types::reservation::ReservationEndReason reason,
-                                             const std::optional<int>& evse_id) {
+                                             const std::optional<int>& evse_id, const bool send_reservation_update) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
         EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
     }
 
-    this->reservation_cancelled_callback(evse_id, reservation_id, reason);
+    this->reservation_cancelled_callback(evse_id, reservation_id, reason, send_reservation_update);
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id, const int32_t connector_id) {
@@ -751,18 +751,18 @@ void AuthHandler::register_reserved_callback(
 
 void AuthHandler::register_reservation_cancelled_callback(
     const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
-                             const ReservationEndReason reason)>& callback) {
+                             const ReservationEndReason reason, const bool send_reservation_update)>& callback) {
     this->reservation_cancelled_callback = callback;
     this->reservation_handler.register_reservation_cancelled_callback(
         [this](const std::optional<int32_t>& evse_id, const int32_t reservation_id,
-               const types::reservation::ReservationEndReason reason) {
+               const types::reservation::ReservationEndReason reason, const bool send_reservation_update) {
             if (evse_id.has_value() && evse_id.value() < 0) {
                 EVLOG_warning << "Reservation cancelled: evse id is negative (" << evse_id.value()
                               << "), that should not be possible.";
                 return;
             }
 
-            this->call_reservation_cancelled(reservation_id, reason, evse_id);
+            this->call_reservation_cancelled(reservation_id, reason, evse_id, send_reservation_update);
         });
 }
 

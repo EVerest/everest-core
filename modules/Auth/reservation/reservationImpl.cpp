@@ -30,7 +30,7 @@ bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
     const auto reservation_cancelled = this->mod->auth_handler->handle_cancel_reservation(reservation_id);
     if (reservation_cancelled.first) {
         this->mod->auth_handler->call_reservation_cancelled(reservation_id, ReservationEndReason::Cancelled,
-                                                            reservation_cancelled.second);
+                                                            reservation_cancelled.second, false);
         return true;
     }
 

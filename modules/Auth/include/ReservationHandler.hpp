@@ -41,7 +41,7 @@ private: // Members
 
     /// \brief The callback that is called when a reservation is cancelled.
     std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                       const types::reservation::ReservationEndReason reason)>
+                       const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
 
     /// \brief worker for the timers.
@@ -130,7 +130,8 @@ public:
     ///
     void register_reservation_cancelled_callback(
         const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                                 const types::reservation::ReservationEndReason reason)>& callback);
+                                 const types::reservation::ReservationEndReason reason,
+                                 const bool send_reservation_update)>& callback);
 
     ///
     /// \brief Called when a reservation is used, will remove it from the reservation list.

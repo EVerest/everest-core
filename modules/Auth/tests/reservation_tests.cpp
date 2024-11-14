@@ -603,7 +603,7 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_01) {
     // Change availability of an EVSE and check if reservations are cancelled.
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
@@ -627,14 +627,16 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_01) {
 
     // Set an evse to not available, this will call the cancel reservation callback for the last reserved reservation
     // id
-    EXPECT_CALL(reservation_callback_mock, Call(_, 3, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 3, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
 
     this->evses[1]->connectors.at(1).submit_event(ConnectorEvent::DISABLE);
     r.on_connector_state_changed(this->evses[1]->connectors.at(1).get_state(), 1, 1);
     EXPECT_FALSE(evse_id.has_value());
 
     // Setting an evse to faulted will cancel the next reservation.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
 
     this->evses[3]->connectors.at(0).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[3]->connectors.at(0).get_state(), 3, 1);
@@ -642,7 +644,7 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_01) {
 
     // Set evse to available again. This will not call a cancelled callback. And setting one to unavailable will also
     // not cause the cancelled callback to be called because there is still one evse available.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled)).Times(0);
+    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled, true)).Times(0);
 
     this->evses[3]->connectors.at(0).submit_event(ConnectorEvent::ERROR_CLEARED);
     r.on_connector_state_changed(this->evses[3]->connectors.at(0).get_state(), 3, 1);
@@ -652,7 +654,8 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_01) {
 
     // If we set even one more evse to unavailable (or actually, to faulted), this will cancel the next (or actually
     // previous) reservation.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 1, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 1, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
 
     this->evses[0]->connectors.at(1).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[0]->connectors.at(1).get_state(), 0, 1);
@@ -664,7 +667,7 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
     // reservations mixed.
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
@@ -686,7 +689,8 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
               ReservationResult::Accepted);
 
     // Set an evse to not available, this will call the cancel reservation callback for the reservation of that evse id.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
     this->evses[1]->connectors.at(1).submit_event(ConnectorEvent::DISABLE);
     r.on_connector_state_changed(this->evses[1]->connectors.at(1).get_state(), 1, 1);
     ASSERT_TRUE(evse_id.has_value());
@@ -694,13 +698,15 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
 
     // Setting an evse to faulted will cancel the next reservation (last made), this will be a 'global' reservation as
     // there is no evse specific reservation made.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 3, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 3, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
     this->evses[2]->connectors.at(1).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[2]->connectors.at(1).get_state(), 2, 1);
     EXPECT_FALSE(evse_id.has_value());
 
     // Set one more evse to unavailable, this will cancel the next reservation.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 2, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
     this->evses[0]->connectors.at(1).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[0]->connectors.at(1).get_state(), 0, 1);
 
@@ -708,7 +714,8 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
     EXPECT_FALSE(evse_id.has_value());
 
     // Set the last evse to unavailable will cancel the reservation of that specific evse.
-    EXPECT_CALL(reservation_callback_mock, Call(_, 1, ReservationEndReason::Cancelled)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 1, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
 
     this->evses[3]->connectors.at(0).submit_event(ConnectorEvent::FAULTED);
     r.on_connector_state_changed(this->evses[3]->connectors.at(0).get_state(), 3, 1);
@@ -929,7 +936,7 @@ TEST_F(ReservationHandlerTest, reservation_timer) {
     // Test the reservation timer: after the time has expired, the reservation should be cancelled.
     std::optional<uint32_t> evse_id;
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
@@ -937,14 +944,16 @@ TEST_F(ReservationHandlerTest, reservation_timer) {
     add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
     add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Expired)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Expired, true))
+        .WillOnce(SaveArg<0>(&evse_id));
     Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
     EXPECT_EQ(r.make_reservation(std::nullopt, reservation), ReservationResult::Accepted);
     sleep(1);
     EXPECT_FALSE(evse_id.has_value());
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Expired)).WillOnce(SaveArg<0>(&evse_id));
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Expired, true))
+        .WillOnce(SaveArg<0>(&evse_id));
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
     EXPECT_EQ(r.make_reservation(0, reservation), ReservationResult::Accepted);
     sleep(1);
@@ -988,7 +997,7 @@ TEST_F(ReservationHandlerTest, overwrite_reservation) {
     // If a reservation is made and another one is made with the same reservation id, it should be overwritten.
     // The old reservation will then be cancelled and the new one is made.
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
@@ -996,7 +1005,7 @@ TEST_F(ReservationHandlerTest, overwrite_reservation) {
     add_connector(5, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
     add_connector(5, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Cancelled)).Times(0);
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Cancelled, false)).Times(0);
 
     Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cType2);
     EXPECT_EQ(r.make_reservation(5, reservation), ReservationResult::Accepted);
@@ -1139,12 +1148,12 @@ TEST_F(ReservationHandlerTest, on_reservation_used) {
 
     // Register a callback, which should not be called.
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, _, _)).Times(3);
+    EXPECT_CALL(reservation_callback_mock, Call(_, _, _, true)).Times(3);
 
     add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
     add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
@@ -1222,12 +1231,12 @@ TEST_F(ReservationHandlerTest, store_load_reservations_connector_unavailable) {
 
     // Register a callback, which should not be called.
     MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
-                      const ReservationEndReason reason)>
+                      const ReservationEndReason reason, const bool send_reservation_update)>
         reservation_callback_mock;
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, _, _)).Times(1);
+    EXPECT_CALL(reservation_callback_mock, Call(_, _, _, true)).Times(1);
 
     EXPECT_TRUE(r.evse_reservations.empty());
     EXPECT_TRUE(r.global_reservations.empty());
