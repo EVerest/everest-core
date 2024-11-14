@@ -8,6 +8,7 @@
 #include <websocketpp_utils/uri.hpp>
 
 #include <conversions.hpp>
+#include <device_model/composed_device_model_storage.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
 #include <external_energy_limits.hpp>
@@ -671,10 +672,13 @@ void OCPP201::ready() {
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
+    std::unique_ptr<module::device_model::ComposedDeviceModelStorage> device_model_storage =
+        std::make_unique<module::device_model::ComposedDeviceModelStorage>(
+            device_model_database_path, true, device_model_database_migration_path, device_model_config_path);
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, device_model_database_path, true, device_model_database_migration_path,
-        device_model_config_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath, sql_init_path.string(),
-        this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+        evse_connector_structure, std::move(device_model_storage), this->ocpp_share_path.string(),
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
+        std::make_shared<EvseSecurity>(*this->r_security), callbacks);
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
