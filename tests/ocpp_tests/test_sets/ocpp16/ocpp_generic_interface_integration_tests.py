@@ -3,7 +3,7 @@
 
 import asyncio
 from dataclasses import dataclass
-from unittest.mock import Mock, call as mock_call, ANY
+from unittest.mock import Mock, call as mock_call, ANY, call
 import logging
 
 import pytest

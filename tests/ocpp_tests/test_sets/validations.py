@@ -197,22 +197,20 @@ def validate_duration(duration, exp_duration):
 def validate_charging_schedule_periods(periods, exp_periods):
     success = len(periods) >= len(exp_periods)
     if success:
-        i = 0
-        for i in range(len(exp_periods)):
-            if periods[i]["limit"] != exp_periods[i].limit:
+        for i, exp_period in enumerate(exp_periods):
+            if periods[i]["limit"] != exp_period.limit:
                 return False
             elif (
-                periods[i]["startPeriod"] != exp_periods[i].start_period
-                and periods[i]["startPeriod"] != exp_periods[i].start_period + 1
-                and periods[i]["startPeriod"] != exp_periods[i].start_period - 1
+                periods[i]["startPeriod"] != exp_period.start_period
+                and periods[i]["startPeriod"] != exp_period.start_period + 1
+                and periods[i]["startPeriod"] != exp_period.start_period - 1
             ):
                 return False
             elif (
-                exp_periods[i].number_phases != None
-                and periods[i]["numberPhases"] != exp_periods[i].number_phases
+                exp_period.number_phases is not None
+                and periods[i]["numberPhases"] != exp_period.number_phases
             ):
                 return False
-            i += 1
         return True
     else:
         return False

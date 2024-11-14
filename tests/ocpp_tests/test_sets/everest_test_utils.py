@@ -51,7 +51,6 @@ from iso15118.shared.messages.enums import Namespace
 from iso15118.shared.exi_codec import EXI
 from iso15118.shared.exificient_exi_codec import ExificientEXICodec
 from iso15118.shared.exceptions import EncryptionError, PrivateKeyReadError
-import os
 import json
 import base64
 

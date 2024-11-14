@@ -574,7 +574,7 @@ async def test_TC_B_55_CS(
         wait_for_bootnotification=True
     )
 
-    r = await charge_point_v201.get_report_req(
+    await charge_point_v201.get_report_req(
         request_id=2539,
         component_variable=[
             ComponentVariableType(
@@ -1411,7 +1411,7 @@ async def test_B04(
 
     test_utility.messages.clear()
 
-    for index in range(3):
+    for _ in range(3):
         # send HeartBeat request when idle
         assert await wait_for_and_validate(
             test_utility, charge_point_v201, "Heartbeat", call.HeartbeatPayload()

@@ -10,7 +10,7 @@ import logging
 
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
-from ocpp.v201 import call as call201 
+from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.enums import *
 from ocpp.v201.datatypes import *
