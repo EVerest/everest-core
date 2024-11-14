@@ -5,23 +5,23 @@ These lists serves as a quick overview of which features are supported.
 
 ## DIN70121
 
-| Feature         | Supported           |
-|-----------------|---------------------|
-| DC              | :heavy _check_mark: |
-| ExternalPayment | :heavy _check_mark: |
+| Feature         | Supported               |
+|-----------------|-------------------------|
+| DC              | :heavy _check_mark: yes |
+| ExternalPayment | :heavy _check_mark: yes |
 
 ## ISO15118-2
 
-| Feature                 | Supported           |
-|-------------------------|---------------------|
-| AC                      | :heavy _check_mark: |
-| DC                      | :heavy _check_mark: |
-| TCP & TLS 1.2           | :heavy _check_mark: |
-| ExternalPayment         | :heavy _check_mark: |
-| Plug&Charge             | :heavy _check_mark: |
-| CertificateInstallation | :heavy _check_mark: |
-| CertificateUpdate       |                     |
-| Pause/Resume            | :heavy _check_mark: |
-| Schedule Renegotation   |                     |
-| Smart Charging          |                     |
-| Internet Service        |                     |
+| Feature                 | Supported              |
+|-------------------------|------------------------|
+| AC                      | :heavy_check_mark: yes |
+| DC                      | :heavy_check_mark: yes |
+| TCP & TLS 1.2           | :heavy_check_mark: yes |
+| ExternalPayment         | :heavy_check_mark: yes |
+| Plug&Charge             | :heavy_check_mark: yes |
+| CertificateInstallation | :heavy_check_mark: yes |
+| CertificateUpdate       |                        |
+| Pause/Resume            | :heavy_check_mark: yes |
+| Schedule Renegotation   |                        |
+| Smart Charging          |                        |
+| Internet Service        |                        |
