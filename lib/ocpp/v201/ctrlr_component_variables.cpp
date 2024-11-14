@@ -359,6 +359,20 @@ const ComponentVariable& ResumeTransactionsOnBoot = {
         "ResumeTransactionsOnBoot",
     }),
 };
+const ComponentVariable& AllowCSMSRootCertInstallWhenSecurityProfile1 = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "AllowCSMSRootCertInstallWhenSecurityProfile1",
+    }),
+};
+const ComponentVariable& AllowMFRootCertInstallWhenSecurityProfile1 = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "AllowMFRootCertInstallWhenSecurityProfile1",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,
@@ -1114,20 +1128,6 @@ const RequiredComponentVariable& SecurityProfile = {
     std::nullopt,
     std::optional<Variable>({
         "SecurityProfile",
-    }),
-};
-const ComponentVariable& AllowCSMSRootCertificateInstallWhenLowSecurityProfile = {
-    ControllerComponents::SecurityCtrlr,
-    std::nullopt,
-    std::optional<Variable>({
-        "AllowCSMSRootCertificateInstallWhenLowSecurityProfile",
-    }),
-};
-const ComponentVariable& AllowManufacturerRootCertificateInstallWhenLowSecurityProfile = {
-    ControllerComponents::SecurityCtrlr,
-    std::nullopt,
-    std::optional<Variable>({
-        "AllowCSMSRootCertificateInstallWhenLowSecurityProfile",
     }),
 };
 const ComponentVariable& ACPhaseSwitchingSupported = {

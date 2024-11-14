@@ -782,10 +782,10 @@ private:
     /// If \param persist is set to true, the change will be persisted across a reboot
     void execute_change_availability_request(ChangeAvailabilityRequest request, bool persist);
 
-    /// \brief Helper function to determine if a certificate installation should be rejected
+    /// \brief Helper function to determine if a certificate installation should be allowed
     /// \param cert_type is the certificate type to be checked
-    /// \return true if it should be rejected
-    bool should_reject_certificate_install(InstallCertificateUseEnum cert_type) const;
+    /// \return true if it should be allowed
+    bool should_allow_certificate_install(InstallCertificateUseEnum cert_type) const;
 
 protected:
     std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;
