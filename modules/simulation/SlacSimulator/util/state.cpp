@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 #include "state.hpp"
+#include <stdexcept>
 #include <string>
 
 namespace module::util {
@@ -13,9 +14,8 @@ std::string state_to_string(State state) {
         return "MATCHING";
     case State::MATCHED:
         return "MATCHED";
-    default:
-        return "";
     }
+    throw std::out_of_range("Could not convert State to string");
 }
 
 } // namespace module::util
