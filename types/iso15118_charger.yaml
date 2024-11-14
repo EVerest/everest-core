@@ -579,6 +579,9 @@ types:
         description: Remaining time it takes to reach maximum SoC
         type: number
         minimum: 0
+      charging_complete:
+        description: Indication if the charging is complete
+        type: boolean
       battery_energy_capacity:
         description: Energy capacity in Wh of the EV battery
         type: number
@@ -586,3 +589,77 @@ types:
       inlet_hot:
         description: Inlet temperature is too high
         type: boolean
+  DcChargeDynamicModeValues:
+    description: Parameters for dynamic control mode
+    type: object
+    additionalProperties: false
+    required:
+      - target_energy_request
+      - max_energy_request
+      - min_energy_request
+      - max_charge_power
+      - min_charge_power
+      - max_charge_current
+      - max_voltage
+      - min_voltage
+    properties:
+      departure_time:
+        description: The time when the EV wants to finish charging
+        type: number
+        minimum: 0
+      target_energy_request:
+        description: Energy request to fulfil the target SoC
+        type: number
+        minimum: 0
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV
+        type: number
+        minimum: 0
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC
+        type: number
+        minimum: 0
+      max_charge_power:
+        description: Maximum charge power allowed by the EV
+        type: number
+        minimum: 0
+      min_charge_power:
+        description: Minimum charge power allowed by the EV
+        type: number
+        minimum: 0
+      max_charge_current:
+        description: Maximum charge current allowed by the EV
+        type: number
+        minimum: 0
+      max_voltage:
+        description: Maximum voltage allowed by the EV
+        type: number
+        minimum: 0
+      min_voltage:
+        description: Minimum voltage allowd by the EV
+        type: number
+        minimum: 0
+      max_discharge_power:
+        description: Maximum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      min_discharge_power:
+        description: Minimum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      max_discharge_current:
+        description: Maximum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      max_v2x_energy_request:
+        description: >-
+          Energy which may be charged until the PresentSOC has left the range
+          dedicated for cycling activity.
+        type: number
+        minimum: 0
+      min_v2x_energy_request:
+        description: >-
+          Energy which needs to be charged until the PresentSOC has left the
+          range dedicated for cycling activity.
+        type: number
+        minimum: 0
