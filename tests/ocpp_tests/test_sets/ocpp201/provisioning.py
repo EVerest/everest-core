@@ -35,6 +35,12 @@ async def test_B08_FR_07(
     test_controller: TestController,
     test_utility: TestUtility,
 ):
+    """
+    B08.FR.07
+    ComponentCriteria contains: Active The Charging Station SHALL report every component that has
+    the variable Active set to true, or does not have the Active variable in a NotifyReportRequest
+    """
+
     log.info(
         " ############################# Test case B08: Get custom report ###############################"
     )
@@ -43,11 +49,6 @@ async def test_B08_FR_07(
     charge_point_v201 = await central_system_v201.wait_for_chargepoint(
         wait_for_bootnotification=True
     )
-
-    """
-    B08.FR.07
-    ComponentCriteria contains: Active The Charging Station SHALL report every component that has
-    the variable Active set to true, or does not have the Active variable in a NotifyReportRequest"""
 
     # set a component variable to true
     r: call_result201.SetVariablesPayload = (
