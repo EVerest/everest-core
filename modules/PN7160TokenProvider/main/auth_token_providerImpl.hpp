@@ -23,6 +23,7 @@ namespace main {
 struct Conf {
     int token_debounce_interval_ms;
     bool disable_nfc_rfid;
+    bool debug;
 };
 
 class auth_token_providerImpl : public auth_token_providerImplBase {

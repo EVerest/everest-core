@@ -14,6 +14,10 @@ provides:
         description: Disable NFC RFID reader
         type: boolean
         default: false
+      debug:
+        description: Show debug output on command line.
+        type: boolean
+        default: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
   authors:

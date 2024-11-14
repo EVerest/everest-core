@@ -63,7 +63,9 @@ void auth_token_providerImpl::new_rfid_token_callback(char* uid, size_t length, 
     token.id_token.value = rfid_to_string(uid, length);
     token.authorization_type = types::authorization::AuthorizationType::RFID;
 
-    EVLOG_info << "Publishing new rfid/nfc token: " << token;
+    if (config.debug) {
+        EVLOG_info << "Publishing new rfid/nfc token: " << token;
+    }
     this->publish_provided_token(token);
 
     this->last_rfid_submit = now;
