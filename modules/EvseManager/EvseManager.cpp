@@ -397,6 +397,48 @@ void EvseManager::ready() {
                 }
             });
 
+            r_hlc[0]->subscribe_d20_dc_dynamic_charge_mode(
+                [this](types::iso15118_charger::DcChargeDynamicModeValues values) {
+                    constexpr auto PRE_CHARGE_MAX_POWER = 800.0f;
+
+                    bool target_changed{false};
+
+                    if (values.min_voltage > latest_target_voltage) {
+                        latest_target_voltage = values.min_voltage + 10; // TODO(sl): Check if okay
+                        target_changed = true;
+                    }
+                    if (values.max_voltage < latest_target_voltage) {
+                        latest_target_voltage = values.max_voltage - 10; // TODO(sl): Check if okay
+                        target_changed = true;
+                    }
+
+                    const double latest_target_power = latest_target_voltage * latest_target_current;
+
+                    if (latest_target_power <= PRE_CHARGE_MAX_POWER or values.min_charge_power > latest_target_power or
+                        values.max_charge_power < latest_target_power) {
+                        latest_target_current = static_cast<double>(values.max_charge_power) / latest_target_voltage;
+                        if (values.max_charge_current < latest_target_current) {
+                            latest_target_current = values.max_charge_current;
+                        }
+                        target_changed = true;
+                    }
+
+                    if (target_changed) {
+                        apply_new_target_voltage_current();
+                        if (not contactor_open) {
+                            powersupply_DC_on();
+                        }
+
+                        {
+                            Everest::scoped_lock_timeout lock(ev_info_mutex,
+                                                              Everest::MutexDescription::EVSE_publish_ev_info);
+                            ev_info.target_voltage = latest_target_voltage;
+                            ev_info.target_current = latest_target_current;
+                            p_evse->publish_ev_info(ev_info);
+                        }
+                    }
+                });
+
             // Car requests DC contactor open. We don't actually open but switch off DC supply.
             // opening will be done by Charger on C->B CP event.
             r_hlc[0]->subscribe_dc_open_contactor([this] {
