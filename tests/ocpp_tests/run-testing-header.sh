@@ -16,5 +16,7 @@ if [ $# -eq 1 ] ; then
     PARALLEL_TESTS="$1"
 fi
 
+echo "Running $PARALLEL_TESTS tests in parallel"
+
 cd "$OCPP_TESTING_DIR"
 $(cd test_sets/everest-aux/ && ./install_certs.sh "$EVEREST_CORE_DIR/build/dist" && ./install_configs.sh "$EVEREST_CORE_DIR/build/dist")

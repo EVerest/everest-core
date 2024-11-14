@@ -1118,11 +1118,9 @@ async def test_B06_09_16(
         " ############################# Test case B06: Get variables Request ###############################"
     )
 
-    """
-    When the Charging Station receives a GetVariablesRequest for a Variable in the GetVariableData that is WriteOnly, 
-    The Charging Station SHALL set the attributeStatus field in the
-    corresponding GetVariableResult to: Rejected.
-    """
+    # When the Charging Station receives a GetVariablesRequest for a Variable in the GetVariableData that is WriteOnly,
+    # The Charging Station SHALL set the attributeStatus field in the
+    # corresponding GetVariableResult to: Rejected.
 
     test_controller.start()
     charge_point_v201 = await central_system_v201.wait_for_chargepoint(
@@ -1155,10 +1153,8 @@ async def test_B06_09_16(
     )
     assert get_variables_result.attribute_status == GetVariableStatusType.rejected
 
-    """
-    Charging Station receives a GetVariablesRequest with more GetVariableData elements than allowed by ItemsPerMessageGetVariables
-    The Charging Station MAY respond with a CALLERROR(OccurenceConstraintViolation)
-    """
+    # Charging Station receives a GetVariablesRequest with more GetVariableData elements than allowed by ItemsPerMessageGetVariables
+    # The Charging Station MAY respond with a CALLERROR(OccurenceConstraintViolation)
 
     # get the value of ItemsPerMessage
     r: call_result201.GetVariablesPayload = await charge_point_v201.get_variables_req(

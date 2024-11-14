@@ -276,7 +276,7 @@ async def test_absolute_5(
         validate_standard_start_transaction,
     )
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=350)
     )
 
@@ -298,7 +298,7 @@ async def test_absolute_5(
 
     test_utility.messages.clear()
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=550)
     )
 
@@ -524,7 +524,7 @@ async def test_combined_2(charge_point_v16: ChargePoint16, test_utility: TestUti
 
     assert await charge_point_v16.set_charging_profile_req(req) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=0, duration=400)
     )
 
@@ -604,7 +604,7 @@ async def test_recurring_2(
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=172800)
     )
 
@@ -651,7 +651,7 @@ async def test_recurring_3(
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=172800)
     )
 
@@ -695,7 +695,7 @@ async def test_relative_1(
 
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=400)
     )
 
@@ -743,7 +743,7 @@ async def test_relative_2(
     assert await charge_point_v16.set_charging_profile_req(req1) == exp_scp_result
     assert await charge_point_v16.set_charging_profile_req(req2) == exp_scp_result
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=300)
     )
 
@@ -802,7 +802,7 @@ async def test_relative_3(
         validate_standard_start_transaction,
     )
 
-    res = await charge_point_v16.get_composite_schedule(
+    await charge_point_v16.get_composite_schedule(
         call.GetCompositeSchedulePayload(connector_id=1, duration=90)
     )
 
