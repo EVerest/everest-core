@@ -29,6 +29,8 @@ types::reservation::ReservationResult reservationImpl::handle_reserve_now(types:
 bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
     const auto reservation_cancelled = this->mod->auth_handler->handle_cancel_reservation(reservation_id);
     if (reservation_cancelled.first) {
+        // Call reservation cancelled. This comes from outside, so we don't send the status update (otherwise this is
+        // sent to OCPP and that is not according to specification).
         this->mod->auth_handler->call_reservation_cancelled(reservation_id, ReservationEndReason::Cancelled,
                                                             reservation_cancelled.second, false);
         return true;
