@@ -11,13 +11,10 @@ struct DC_CableCheckRequest {
 };
 
 struct DC_CableCheckResponse {
-
-    DC_CableCheckResponse() : processing(datatypes::Processing::Ongoing){};
-
     Header header;
     datatypes::ResponseCode response_code;
 
-    datatypes::Processing processing;
+    datatypes::Processing processing{datatypes::Processing::Ongoing};
 };
 
 } // namespace iso15118::message_20

@@ -64,9 +64,8 @@ struct AC_ChargeParameterDiscoveryResponse {
     Header header;
     datatypes::ResponseCode response_code;
 
-    AC_ChargeParameterDiscoveryResponse() : transfer_mode(std::in_place_type<datatypes::AC_CPDResEnergyTransferMode>){};
-
-    std::variant<datatypes::AC_CPDResEnergyTransferMode, datatypes::BPT_AC_CPDResEnergyTransferMode> transfer_mode;
+    std::variant<datatypes::AC_CPDResEnergyTransferMode, datatypes::BPT_AC_CPDResEnergyTransferMode> transfer_mode =
+        datatypes::AC_CPDResEnergyTransferMode();
 };
 
 } // namespace iso15118::message_20

@@ -35,11 +35,9 @@ struct AuthorizationRequest {
 };
 
 struct AuthorizationResponse {
-    AuthorizationResponse() : evse_processing(datatypes::Processing::Finished){};
-
     Header header;
     datatypes::ResponseCode response_code;
-    datatypes::Processing evse_processing;
+    datatypes::Processing evse_processing{datatypes::Processing::Finished};
 };
 
 } // namespace iso15118::message_20

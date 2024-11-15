@@ -193,16 +193,13 @@ struct ScheduleExchangeRequest {
 };
 
 struct ScheduleExchangeResponse {
-    ScheduleExchangeResponse() :
-        processing(datatypes::Processing::Finished),
-        control_mode(std::in_place_type<datatypes::Dynamic_SEResControlMode>){};
-
     Header header;
     datatypes::ResponseCode response_code;
-    datatypes::Processing processing;
+    datatypes::Processing processing{datatypes::Processing::Finished};
     std::optional<bool> go_to_pause;
 
-    std::variant<datatypes::Dynamic_SEResControlMode, datatypes::Scheduled_SEResControlMode> control_mode;
+    std::variant<datatypes::Dynamic_SEResControlMode, datatypes::Scheduled_SEResControlMode> control_mode =
+        datatypes::Dynamic_SEResControlMode();
 };
 
 } // namespace iso15118::message_20

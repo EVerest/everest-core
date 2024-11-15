@@ -30,7 +30,6 @@ struct ServiceDiscoveryResponse {
     Header header;
     datatypes::ResponseCode response_code;
     bool service_renegotiation_supported = false;
-    // FIXME(sl): Adding constructor
     datatypes::ServiceList energy_transfer_service_list = {{
         datatypes::ServiceCategory::AC, // service_id
         false                           // free_service

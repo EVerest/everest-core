@@ -28,17 +28,13 @@ struct AuthorizationSetupRequest {
 };
 
 struct AuthorizationSetupResponse {
-    AuthorizationSetupResponse() :
-        authorization_services({datatypes::Authorization::EIM}),
-        certificate_installation_service(false),
-        authorization_mode(std::in_place_type<datatypes::EIM_ASResAuthorizationMode>){};
-
     Header header;
     datatypes::ResponseCode response_code;
 
-    std::vector<datatypes::Authorization> authorization_services;
-    bool certificate_installation_service;
-    std::variant<datatypes::EIM_ASResAuthorizationMode, datatypes::PnC_ASResAuthorizationMode> authorization_mode;
+    std::vector<datatypes::Authorization> authorization_services{{datatypes::Authorization::EIM}};
+    bool certificate_installation_service{false};
+    std::variant<datatypes::EIM_ASResAuthorizationMode, datatypes::PnC_ASResAuthorizationMode> authorization_mode =
+        datatypes::EIM_ASResAuthorizationMode();
 };
 
 } // namespace iso15118::message_20
