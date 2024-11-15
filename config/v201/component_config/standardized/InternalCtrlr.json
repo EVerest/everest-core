@@ -771,8 +771,8 @@
           "default": "60",
           "type": "integer"
       },
-      "AllowCSMSRootCertInstallWhenSecurityProfile1": {
-        "variable_name": "AllowCSMSRootCertInstallWhenSecurityProfile1",
+      "AllowCSMSRootCertInstallWithUnsecureConnection": {
+        "variable_name": "AllowCSMSRootCertInstallWithUnsecureConnection",
         "characteristics": {
           "supportsMonitoring": true,
           "dataType": "boolean"
@@ -787,8 +787,8 @@
         "default": true,
         "type": "boolean"
       },
-      "AllowMFRootCertInstallWhenSecurityProfile1": {
-        "variable_name": "AllowMFRootCertInstallWhenSecurityProfile1",
+      "AllowMFRootCertInstallWithUnsecureConnection": {
+        "variable_name": "AllowMFRootCertInstallWithUnsecureConnection",
         "characteristics": {
           "supportsMonitoring": true,
           "dataType": "boolean"

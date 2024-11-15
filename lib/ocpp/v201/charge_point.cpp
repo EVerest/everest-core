@@ -3597,12 +3597,12 @@ bool ChargePoint::should_allow_certificate_install(InstallCertificateUseEnum cer
     switch (cert_type) {
     case InstallCertificateUseEnum::CSMSRootCertificate:
         return this->device_model
-            ->get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWhenSecurityProfile1)
+            ->get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWithUnsecureConnection)
             .value_or(true);
 
     case InstallCertificateUseEnum::ManufacturerRootCertificate:
         return this->device_model
-            ->get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWhenSecurityProfile1)
+            ->get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWithUnsecureConnection)
             .value_or(true);
     default:
         return true;
@@ -3618,8 +3618,8 @@ void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest>
     if (!should_allow_certificate_install(msg.certificateType)) {
         response.status = InstallCertificateStatusEnum::Rejected;
         response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = "LowSecurityProfile";
-        response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWhenSecurityProfile1";
+        response.statusInfo->reasonCode = "UnsecureConnection";
+        response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
     } else {
         const auto result = this->evse_security->install_ca_certificate(
             msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
