@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include <Connector.hpp>
@@ -14,6 +15,11 @@
 class kvsIntf;
 
 namespace module {
+
+struct ReservationEvseStatus {
+    std::set<int32_t> reserved;
+    std::set<int32_t> available;
+};
 
 class ReservationHandler {
 private: // Members
@@ -44,6 +50,8 @@ private: // Members
     std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
+
+    ReservationEvseStatus last_status;
 
     /// \brief worker for the timers.
     boost::shared_ptr<boost::asio::io_service::work> work;
@@ -162,6 +170,8 @@ public:
     /// @return true if reservation for \p evse_id exists and reservation contains a parent_id
     ///
     bool has_reservation_parent_id(const std::optional<uint32_t> evse_id);
+
+    ReservationEvseStatus check_number_reservations_match_number_evses();
 
 private: // Functions
     ///

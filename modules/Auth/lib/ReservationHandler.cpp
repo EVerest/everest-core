@@ -400,6 +400,104 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
     return false;
 }
 
+ReservationEvseStatus ReservationHandler::check_number_reservations_match_number_evses() {
+    ReservationEvseStatus evse_status;
+    std::set<int32_t> available_evses;
+    // TODO mz mutex
+    // Get all evse's that are not reserved or used.
+    for (const auto& evse : this->evses) {
+        if (get_evse_connector_state_reservation_result(static_cast<uint32_t>(evse.first), this->evse_reservations) ==
+                types::reservation::ReservationResult::Accepted &&
+            get_connector_availability_reservation_result(static_cast<uint32_t>(evse.first),
+                                                          types::evse_manager::ConnectorTypeEnum::Unknown) ==
+                types::reservation::ReservationResult::Accepted) {
+            available_evses.insert(evse.first);
+        }
+    }
+
+    // There are as many evses available as 'global' reservations, so all evse's are reserved. Set all available evse's
+    // to reserved.
+
+    // TODO mz what if we do not have the correct latest status, is this going well here?
+    if (available_evses.size() == this->global_reservations.size()) {
+        for (const auto& evse_id : this->last_status.reserved) {
+            // Check if the status for this evse was already sent previously.
+            if (available_evses.find(evse_id) != available_evses.end()) {
+                available_evses.erase(evse_id);
+            }
+        }
+
+        // Set all evse's that were not reserved now to reserved.
+        for (const auto& evse_id : available_evses) {
+            this->last_status.reserved.insert(evse_id);
+        }
+
+        // No available evse's anymore.
+        this->last_status.available.clear();
+
+        evse_status.reserved = available_evses;
+        evse_status.available = {};
+        return evse_status;
+
+        // TODO mz remove things from these lists when reservation was used and cancelled etc.
+    }
+
+    // There are not as many global reservations as available evse's, but we have to check for specific connector types
+    // as well.
+    std::set<int32_t> reserved_evses_with_specific_connector_type;
+    for (const auto& global_reservation : this->global_reservations) {
+        if (!is_reservation_possible(global_reservation.connector_type, this->global_reservations,
+                                     this->evse_reservations)) {
+            // A new reservation with this type is not possible (so also arrival of an extra car is not), so all evse's
+            // with this connector type should be set to reserved.
+            for (const auto& evse : this->evses) {
+                if (available_evses.find(evse.first) != available_evses.end() &&
+                    this->has_evse_connector_type(
+                        evse.second->connectors,
+                        global_reservation.connector_type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown))) {
+                    // This evse is available and has a specific connector type. So it should be set to unavailable.
+                    reserved_evses_with_specific_connector_type.insert(evse.first);
+                }
+            }
+        }
+    }
+
+    if (!reserved_evses_with_specific_connector_type.empty()) {
+        // EVSE's should be set to reserved (if they aren't already).
+
+        for (const auto& evse_id : this->last_status.reserved) {
+            // Check if the status for this evse was already sent previously.
+            if (reserved_evses_with_specific_connector_type.find(evse_id) !=
+                reserved_evses_with_specific_connector_type.end()) {
+                reserved_evses_with_specific_connector_type.erase(evse_id);
+            }
+        }
+
+        // Set all evse's that were not reserved now to reserved.
+        for (const auto& evse_id : reserved_evses_with_specific_connector_type) {
+            this->last_status.reserved.insert(evse_id);
+        }
+
+        for (const auto& evse_id : this->last_status.reserved) {
+            if (this->last_status.available.find(evse_id) != this->last_status.available.end()) {
+                // TODO mz
+            }
+        }
+
+        // TODO mz remove evse id's from reserved_evse_with_specific_connector_type from available_evse's
+        // TODO mz Check if evse's were available that are now not available anymore and update evse_status.
+        // TODO mz Check if evse's were not available and are now available and update evse_status.
+        // TODO mz update this->last_status
+
+        evse_status.reserved = reserved_evses_with_specific_connector_type;
+
+        return evse_status;
+    }
+
+    // TODO mz if nothing should be set to reserved, that should be sent as well.
+    return {};
+}
+
 bool ReservationHandler::has_evse_connector_type(const std::vector<Connector>& evse_connectors,
                                                  const types::evse_manager::ConnectorTypeEnum connector_type) const {
     if (connector_type == types::evse_manager::ConnectorTypeEnum::Unknown) {

@@ -1278,7 +1278,9 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
     if (not reserved || overwrite_reservation) {
         EVLOG_debug << "Make the reservation with id " << id;
         reserved = true;
-        reservation_id = id;
+        if (id >= 0) {
+            reservation_id = id;
+        }
 
         // When overwriting the reservation, don't signal.
         if (not overwrite_reservation && signal_reservation_event) {
