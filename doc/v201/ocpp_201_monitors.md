@@ -2,12 +2,12 @@
 
 Monitors are a mechanism for reporting based on certain criteria the internal state of the variables present on the charger. The monitors can be configured in different ways, with custom monitors being sent from the CSMS and HardWired and Preconfigured monitors set up in the config of the database.
 
-
 ## Basic Configuration
 
 The monitors are evaluated from time to time in the case of periodic monitors and after a variable has been modified in the case of monitors that are triggered. Periodic monitors will be handled from time to time, the default being 1 second.
 
-### Variables:
+### Variables
+
 - Enabling monitors: set the `MonitoringCtrlrEnabled` variable to true
 - Periodic monitor process time: set the `MonitorsProcessingInterval` to the desired interval (default 1 second)
 - To activate monitor processing: set the `ActiveMonitoringBase` variable to `All`
@@ -20,7 +20,7 @@ Note: There is a small overhead for the monitoring process interval. The periodi
 
 In order to set up pre-existing monitors that are not set up by the CSMS, for the variables that allow monitoring the configuration json file can be extended in the following way:
 
-```
+```json
 "EVSEPower": {
   "variable_name": "Power",
   "characteristics": {

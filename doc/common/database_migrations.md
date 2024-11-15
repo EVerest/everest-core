@@ -14,14 +14,15 @@ Using the database migrations is fairly straightforward. Most of the details are
 - Old databases need to be removed so a new database can be created using the migrations. This is to make sure that there is exact control over the schema of the database and no remains are present.
 
 **Requirements:**
-- Minimal SQLite version 3.35.0 for `ALTER TABLE DROP COLUMN` support
 
+- Minimal SQLite version 3.35.0 for `ALTER TABLE DROP COLUMN` support
 
 ## How to contribute changes to the database schema
 
 If changes need to be made to the database schema this can be done by adding new migration files in the relevant `config/vxx/core_migrations` folder.
 
 ### File format
+
 The filenames must have the following format:  
 `x_up[-description].sql` and `x_down[-description].sql`
 
@@ -32,16 +33,16 @@ The files always exist in pairs except for the initial "up" file used to start t
 CMake will validate the completeness of the migration pairs and the filenames. If this is not correct CMake will fail to initialize.
 
 ### Schema changes
+
 The schema changes should be done in such a way that the data present in the databases will persist unless it is really necessary to remove stuff.
 
 ### Unit testing
+
 There are already unit tests present that will automatically perform a full up and down migration with all the intermediate steps in the `core_migrations` folder. The files will be auto detected for this.
 
 Additionally it is recommended to write specific unit tests for your migration that validate that the changes you have made have the expected outcome.
 
-
 ## Design consideration
-
 
 - We start out with an SQL init file that is used to start the database with. This file should not be changed anymore once this functionality is implemented.
 - Every change we want to make to the database is done through migration files. These files are simply more SQL files that can be applied to the database in the right order.

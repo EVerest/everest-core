@@ -1,3 +1,5 @@
+# OCPP2.0.1 Functional Requirements Status
+
 This document contains the status of which OCPP 2.0.1 numbered functional requirements (FRs) have been implemented in `libocpp`. This does not cover if the functionality is also implemented in `everest-core`.
 
 ## Legend
@@ -812,16 +814,11 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | E09.FR.06 | ✅     |                                                                |
 | E09.FR.07 | ✅     |                                                                |
 
-## Transactions -  When cable disconnected on EV-side: Suspend Transaction
+## Transactions - When cable disconnected on EV-side: Suspend Transaction
 
 | ID        | Status | Remark |
 |-----------|--------|--------|
 | E10.FR.01 |        |        |
-
-## Transactions - When cable disconnected on EV-side: Stop Transaction
-
-| ID        | Status | Remark |
-|-----------|--------|--------|
 | E10.FR.02 | ✅     |        |
 | E10.FR.03 | ✅     |        |
 | E10.FR.04 | ✅     |        |

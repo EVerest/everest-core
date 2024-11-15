@@ -327,14 +327,6 @@ void ChargePoint::register_security_event_callback(
     this->charge_point->register_security_event_callback(callback);
 }
 
-GetConfigurationResponse ChargePoint::get_configuration_key(const GetConfigurationRequest& request) {
-    return this->charge_point->get_configuration_key(request);
-}
-
-ConfigurationStatus ChargePoint::set_custom_configuration_key(CiString<50> key, CiString<500> value) {
-    return this->charge_point->set_custom_configuration_key(key, value);
-}
-
 void ChargePoint::register_is_token_reserved_for_connector_callback(
     const std::function<bool(const int32_t connector, const std::string& id_token)>& callback) {
     this->charge_point->register_is_token_reserved_for_connector_callback(callback);
@@ -349,6 +341,14 @@ void ChargePoint::register_session_cost_callback(
 void ChargePoint::register_set_display_message_callback(
     const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback) {
     this->charge_point->register_set_display_message_callback(set_display_message_callback);
+}
+
+GetConfigurationResponse ChargePoint::get_configuration_key(const GetConfigurationRequest& request) {
+    return this->charge_point->get_configuration_key(request);
+}
+
+ConfigurationStatus ChargePoint::set_custom_configuration_key(CiString<50> key, CiString<500> value) {
+    return this->charge_point->set_custom_configuration_key(key, value);
 }
 
 void ChargePoint::set_message_queue_resume_delay(std::chrono::seconds delay) {

@@ -41,6 +41,13 @@ class ChargePoint {
 private:
     std::unique_ptr<ChargePointImpl> charge_point;
 
+    /// \addtogroup chargepoint_constructors Chargepoint constructors
+    /// Constructors for chargepoint, 1.6 and 2.0.1
+    /// @{
+
+    /// @name Constructors for 1.6
+    /// @{
+
 public:
     /// \brief The main entrypoint for libOCPP for OCPP 1.6
     /// \param config a nlohmann json config object that contains the libocpp 1.6 config. There are example configs that
@@ -70,6 +77,9 @@ public:
                          const std::optional<SecurityConfiguration> security_configuration = std::nullopt);
 
     ~ChargePoint();
+
+    /// @}  // End constructors 1.6 group
+    /// @}  // End chargepoint constructors topic
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint and initializes a
     /// BootNotification.req
@@ -175,6 +185,14 @@ public:
     std::map<int32_t, EnhancedChargingSchedule>
     get_all_enhanced_composite_charging_schedules(const int32_t duration_s,
                                                   const ChargingRateUnit unit = ChargingRateUnit::A);
+
+    /// \addtogroup ocpp16_handlers OCPP 1.6 handlers
+    /// Handlers that can be called from the implementing class.
+    /// @{
+
+    /// @name Handlers
+    /// The handlers
+    /// @{
 
     /// \brief Stores the given \p powermeter values for the given \p connector . This function can be called when a new
     /// meter value is present.
@@ -333,6 +351,18 @@ public:
     /// \brief Handles an internal ChangeAvailabilityRequest (in the same way as if it was emitted by the CSMS).
     /// \param request
     ChangeAvailabilityResponse on_change_availability(const ChangeAvailabilityRequest& request);
+
+    /// @}  // End handlers group
+
+    /// @}
+
+    /// @addtogroup ocpp16_callbacks OCPP 1.6 callbacks
+    /// Callbacks will call be called when necessary and must be implemented by the calling class.
+    /// @{
+
+    /// @name Callbacks
+    /// Callbacks
+    /// @{
 
     /// registers a \p callback function that can be used to receive a arbitrary data transfer for the given \p
     /// vendorId and \p messageId
@@ -527,6 +557,31 @@ public:
     void register_security_event_callback(
         const std::function<void(const std::string& type, const std::string& tech_info)>& callback);
 
+    /// \brief registers a \p callback function that can be used to check, if the \p connector is reserved for the given
+    /// \p id_token. The is_token_reserved_for_connector_callback is called when a RemoteStartTransaction.req is
+    /// received.
+    /// \param callback
+    /// \ingroup ocpp16_callbacks
+    void register_is_token_reserved_for_connector_callback(
+        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
+
+    /// \brief Registers a callback function for the session cost datatransfer message (California Pricing Requirements)
+    /// \param session_cost_callback    The callback.
+    /// \ingroup ocpp16_callbacks
+    void register_session_cost_callback(
+        const std::function<DataTransferResponse(const RunningCost& session_cost, const uint32_t number_of_decimals)>&
+            session_cost_callback);
+
+    /// \brief Register a callback function for display messages (used in California Pricing Requirements)
+    /// \param set_display_message_callback The callback.
+    /// \ingroup ocpp16_callbacks
+    void register_set_display_message_callback(
+        const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback);
+
+    /// @} // End ocpp 16 callbacks group / topic
+
+    /// @} // End group
+
     /// \brief Gets the configured configuration key requested in the given \p request
     /// \param request specifies the keys that should be returned. If empty or not set, all keys will be reported
     /// \return a response containing the requested key(s) including the values and unkown keys if present
@@ -537,24 +592,6 @@ public:
     /// \param value
     /// \return Indicates the result of the operation
     ConfigurationStatus set_custom_configuration_key(CiString<50> key, CiString<500> value);
-
-    /// \brief registers a \p callback function that can be used to check, if the \p connector is reserved for the given
-    /// \p id_token. The is_token_reserved_for_connector_callback is called when a RemoteStartTransaction.req is
-    /// received.
-    /// \param callback
-    void register_is_token_reserved_for_connector_callback(
-        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
-
-    /// \brief Registers a callback function for the session cost datatransfer message (California Pricing Requirements)
-    /// \param session_cost_callback    The callback.
-    void register_session_cost_callback(
-        const std::function<DataTransferResponse(const RunningCost& session_cost, const uint32_t number_of_decimals)>&
-            session_cost_callback);
-
-    /// \brief Register a callback function for display messages (used in California Pricing Requirements)
-    /// \param set_display_message_callback The callback.
-    void register_set_display_message_callback(
-        const std::function<DataTransferResponse(const std::vector<DisplayMessage>&)> set_display_message_callback);
 
     /// \brief Delay draining the message queue after reconnecting, so the CSMS can perform post-reconnect checks first
     /// \param delay The delay period (seconds)

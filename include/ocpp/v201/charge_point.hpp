@@ -108,6 +108,14 @@ public:
     /// \brief Disconnects the the websocket connection to the CSMS if it is connected
     virtual void disconnect_websocket() = 0;
 
+    /// \addtogroup ocpp201_handlers OCPP 2.0.1 handlers
+    /// Handlers that can be called from the implementing class
+    /// @{
+
+    /// @name Handlers
+    /// The handlers
+    /// @{
+
     ///
     /// \brief Can be called when a network is disconnected, for example when an ethernet cable is removed.
     ///
@@ -231,19 +239,6 @@ public:
     on_charging_state_changed(const uint32_t evse_id, const ChargingStateEnum charging_state,
                               const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) = 0;
 
-    /// \brief Gets the transaction id for a certain \p evse_id if there is an active transaction
-    /// \param evse_id The evse to tet the transaction for
-    /// \return The transaction id if a transaction is active, otherwise nullopt
-    virtual std::optional<std::string> get_evse_transaction_id(int32_t evse_id) = 0;
-
-    /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
-    /// \param id_token
-    /// \param certificate
-    /// \param ocsp_request_data
-    /// \return AuthorizeResponse containing the result of the validation
-    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
-                                             const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
-
     /// \brief Event handler that can be called to trigger a NotifyEvent.req with the given \p events
     /// \param events
     virtual void on_event(const std::vector<EventData>& events) = 0;
@@ -275,6 +270,23 @@ public:
     /// \param set_variable_data contains data of the variable to set
     ///
     virtual void on_variable_changed(const SetVariableData& set_variable_data) = 0;
+
+    /// @}  // End handlers group
+
+    /// @}
+
+    /// \brief Gets the transaction id for a certain \p evse_id if there is an active transaction
+    /// \param evse_id The evse to tet the transaction for
+    /// \return The transaction id if a transaction is active, otherwise nullopt
+    virtual std::optional<std::string> get_evse_transaction_id(int32_t evse_id) = 0;
+
+    /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
+    /// \param id_token
+    /// \param certificate
+    /// \param ocsp_request_data
+    /// \return AuthorizeResponse containing the result of the validation
+    virtual AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
+                                             const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) = 0;
 
     /// \brief Data transfer mechanism initiated by charger
     /// \param vendorId
@@ -789,6 +801,12 @@ protected:
     void clear_invalid_charging_profiles();
 
 public:
+    /// \addtogroup chargepoint_constructors
+    /// @{
+
+    /// @name Constructors for 2.0.1
+    /// @{
+
     /// \brief Construct a new ChargePoint object
     /// \param evse_connector_structure Map that defines the structure of EVSE and connectors of the chargepoint. The
     /// key represents the id of the EVSE and the value represents the number of connectors for this EVSE. The ids of
@@ -840,6 +858,10 @@ public:
                 const std::string& ocpp_main_path, const std::string& core_database_path,
                 const std::string& sql_init_path, const std::string& message_log_path,
                 const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
+
+    /// @}  // End chargepoint 2.0.1 member group
+
+    /// @}  // End chargepoint 2.0.1 topic
 
     ~ChargePoint();
 

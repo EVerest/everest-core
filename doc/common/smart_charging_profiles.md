@@ -1,9 +1,10 @@
 # Notes on Smart Charging Profiles and approach
+
 There are some complexities calculating composite schedules and this note explains the approach.
 
 The new approach is in `profile.cpp` and `profile.hpp` and then integrated into `smart_charging.cpp` maintaining the same API.
 
-```
+```cpp
     std::vector<ChargingProfile> get_valid_profiles(
       const DateTime& start_time, const DateTime& end_time,
       int connector_id);
@@ -17,7 +18,9 @@ The new approach is in `profile.cpp` and `profile.hpp` and then integrated into 
 ```
 
 ## get_valid_profiles()
+
 Retrieves all profiles that should be considered for calculating the composite schedule.
+
 - checks that profiles are associated with the correct connector
 - checks that profiles match the transaction ID (when there is an active transaction)
 - start_time and end_time are not used in the new implementation
@@ -28,9 +31,11 @@ within that period. However only the `validFrom` and `validTo` settings should b
 `calculate_enhanced_composite_schedule` checks the `start_time` and `end_time` so it is not essential to remove profiles at this point.
 
 ## calculate_enhanced_composite_schedule()
+
 Assumes that profiles for other connectors and transactions have been removed.
 
 Processes profiles:
+
 1. obtain session/transaction start time
 2. split the profiles into ChargePointMax/TxDefault/Tx sets
 3. for each set calculate the composite schedule using the preferred units (Amps/Watts)
@@ -40,6 +45,7 @@ Processes profiles:
 When combining; TxDefault is the starting limit, overridden by Tx and potentially lowered by ChargePointMax. The result will never be higher than a ChargePointMax limit (where there is one).
 
 ## Time handling
+
 The approach removes all calls for obtaining the current date and time.
 
 - where there is a transaction then the start time of the transaction is obtained
@@ -50,6 +56,7 @@ For generating a composite schedule relative schedules are included based on the
 The removal of any relationship to the current time simplifies writing test cases and debugging test failures.
 
 ## Default limit
+
 The OCPP 1.6 specification doesn't support gaps in charging schedules. This presents a problem while creating a composite schedule when there is a period of time when no profile is active.
 
 - profile 1: stack level 10, Monday 10:00 for 2 hours
@@ -65,7 +72,7 @@ Where the limit is not known then a default limit of `48.0 Amps` is used when ca
 
 A different default can be specified by installing a lower stack level TxDefault profile e.g.
 
-```
+```json
 {
   "chargingProfileId": 1,
   "chargingProfileKind": "Relative",
@@ -84,11 +91,12 @@ A different default can be specified by installing a lower stack level TxDefault
 ```
 
 ## No valid profiles
+
 Since a default limit is applied a composite schedule will always start at the `start_time` and have a fixed duration even when there are no valid profiles for that time period.
 
 e.g. for 2024-01-01 starting at 08:00 for 10 minutes
 
-```
+```json
 {
   "status": "Accepted",
   "scheduleStart": "2024-01-01T08:00:00Z",
@@ -108,7 +116,7 @@ When building the OCPP response "startSchedule" could be excluded however the co
 
 According to the OCPP specification section `7.13 ChargingSchedule` chargingSchedulePeriod is a required field and must have at least one entry. Hence the following is not a valid response:
 
-```
+```json
 {
   "status": "Accepted",
   "scheduleStart": "2024-01-01T08:00:00Z",
@@ -124,6 +132,7 @@ According to the OCPP specification section `7.13 ChargingSchedule` chargingSche
 ## Profile validity
 
 The following items need to be considered when looking at a schedule:
+
 - validFrom
 - validTo
 - transaction start time
@@ -133,11 +142,11 @@ The following items need to be considered when looking at a schedule:
 
 The following sections explore some interesting edge cases.
 
-
 ### validFrom & validTo and transaction start time
 
 For the following schedule
-```
+
+```json
 {
   "chargingProfileId": 1,
   "chargingProfileKind": "Relative",
@@ -156,7 +165,7 @@ For the following schedule
       }
     ],
   },
-  "validFrom": "2024-01-01T12:00:00Z"
+  "validFrom": "2024-01-01T12:00:00Z",
   "validTo": "2024-01-01T20:00:00Z"
 }
 ```
@@ -168,7 +177,8 @@ The PEV plugs in at "2024-01-01T19:50:00Z" the result is charging for 10 minutes
 ### startSchedule and daily recurring
 
 For the following schedule
-```
+
+```json
 {
   "chargingProfileId": 1,
   "chargingProfileKind": "Recurring",
@@ -199,7 +209,8 @@ The PEV plugs in at "2024-01-10T11:50:00Z" the result is charging at 6.0A for 10
 ### startSchedule and daily recurring with duration
 
 For the following schedule
-```
+
+```json
 {
   "chargingProfileId": 1,
   "chargingProfileKind": "Recurring",
@@ -221,7 +232,7 @@ For the following schedule
       }
     ],
   },
-  "validFrom": "2024-02-01T12:00:00Z"
+  "validFrom": "2024-02-01T12:00:00Z",
   "validTo": "2024-03-01T09:00:00Z"
 }
 ```
