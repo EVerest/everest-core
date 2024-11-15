@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 
 namespace ocpp {
@@ -21,5 +22,7 @@ constexpr float LOW_VOLTAGE = 230;
 constexpr float NO_LIMIT_SPECIFIED = -1.0;
 constexpr std::int32_t NO_START_PERIOD = -1;
 constexpr std::int32_t EVSEID_NOT_SET = -1;
+
+constexpr std::chrono::seconds DEFAULT_WAIT_FOR_FUTURE_TIMEOUT = std::chrono::seconds(60);
 
 } // namespace ocpp

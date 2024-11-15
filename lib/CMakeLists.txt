@@ -38,6 +38,7 @@ if(LIBOCPP_ENABLE_V16)
             ocpp/v16/charge_point.cpp
             ocpp/v16/database_handler.cpp
             ocpp/v16/charge_point_impl.cpp
+            ocpp/v16/message_dispatcher.cpp
             ocpp/v16/smart_charging.cpp
             ocpp/v16/charge_point_configuration.cpp
             ocpp/v16/charge_point_state_machine.cpp
@@ -80,6 +81,7 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/utils.cpp
             ocpp/v201/component_state_manager.cpp
             ocpp/v201/connectivity_manager.cpp
+            ocpp/v201/message_dispatcher.cpp
     )
     add_subdirectory(ocpp/v201/messages)
 endif()

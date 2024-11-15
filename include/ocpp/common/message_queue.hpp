@@ -630,16 +630,7 @@ public:
         }
     }
 
-    /// \brief pushes a new \p call message onto the message queue
-    template <class T> void push(Call<T> call, const bool stall_until_accepted = false) {
-        if (!running) {
-            return;
-        }
-        json call_json = call;
-        push(call_json, stall_until_accepted);
-    }
-
-    void push(const json& message, const bool stall_until_accepted = false) {
+    void push_call(const json& message, const bool stall_until_accepted = false) {
         if (!running) {
             return;
         }
@@ -664,16 +655,15 @@ public:
     }
 
     /// \brief Sends a new \p call_result message over the websocket
-    template <class T> void push(CallResult<T> call_result) {
+    void push_call_result(const json& call_result) {
         if (!running) {
             return;
         }
-
         this->send_callback(call_result);
         {
             std::lock_guard<std::recursive_mutex> lk(this->next_message_mutex);
             if (next_message_to_send.has_value()) {
-                if (next_message_to_send.value() == call_result.uniqueId) {
+                if (next_message_to_send.value() == call_result.at(MESSAGE_ID)) {
                     next_message_to_send.reset();
                 }
             }
@@ -683,7 +673,7 @@ public:
     }
 
     /// \brief Sends a new \p call_error message over the websocket
-    void push(CallError call_error) {
+    void push_call_error(CallError call_error) {
         if (!running) {
             return;
         }
@@ -703,7 +693,7 @@ public:
 
     /// \brief pushes a new \p call message onto the message queue
     /// \returns a future from which the CallResult can be extracted
-    template <class T> std::future<EnhancedMessage<M>> push_async(Call<T> call) {
+    std::future<EnhancedMessage<M>> push_call_async(const json& call) {
         auto message = std::make_shared<ControlMessage<M>>(call);
 
         if (!running) {

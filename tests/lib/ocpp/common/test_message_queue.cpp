@@ -202,7 +202,7 @@ protected:
         call.msg.type = message_type;
         call.msg.data = identifier;
         call.uniqueId = identifier;
-        message_queue->push(call);
+        message_queue->push_call(call);
         return identifier;
     }
 
@@ -246,7 +246,7 @@ TEST_F(MessageQueueTest, test_transactional_message_is_sent) {
     call.msg.type = TestMessageType::TRANSACTIONAL;
     call.msg.data = "test_data";
     call.uniqueId = "0";
-    message_queue->push(call);
+    message_queue->push_call(call);
 
     wait_for_calls();
 }
@@ -261,7 +261,7 @@ TEST_F(MessageQueueTest, test_non_transactional_message_is_sent) {
     call.msg.type = TestMessageType::NON_TRANSACTIONAL;
     call.msg.data = "test_data";
     call.uniqueId = "0";
-    message_queue->push(call);
+    message_queue->push_call(call);
 
     wait_for_calls();
 }
