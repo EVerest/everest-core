@@ -760,7 +760,7 @@ class TestSecurityOCPPE2E(_BaseTest):
             Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem"
         )
         ca_key = Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
-        ca_passphrase = "123456"
+        ca_passphrase = "123456" # nosec bandit B105
 
         # Install 3 certificates; the second is newest w.r.t. validity (shortest relative shift from now to the past)
         certificates = {}

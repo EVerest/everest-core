@@ -1,4 +1,3 @@
-
 # OCPP Integration Tests
 
 This directory contains some test tooling and integration tests
