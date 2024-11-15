@@ -863,7 +863,7 @@ class TestSecurityOCPPE2E(_BaseTest):
             ca_key = (
                 Path(__file__).parent / "../everest-aux/certs/ca/csms/CSMS_ROOT_CA.key"
             )
-            ca_passphrase = "123456"
+            ca_passphrase = "123456" # nosec bandit B10
         else:
             cert_directory = Path(
                 everest_core.everest_config["active_modules"]["evse_security"][
@@ -883,7 +883,7 @@ class TestSecurityOCPPE2E(_BaseTest):
                 Path(__file__).parent
                 / "../everest-aux/certs/client/csms/CPO_SUB_CA2.key"
             )
-            ca_passphrase = "123456"
+            ca_passphrase = "123456" # nosec bandit B105
 
         # Remove old certificates
 
