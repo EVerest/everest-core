@@ -96,7 +96,7 @@ void EvseManager::init() {
     }
 
     reserved = false;
-    reservation_id = 0;
+    reservation_id = -1;
 
     hlc_waiting_for_auth_eim = false;
     hlc_waiting_for_auth_pnc = false;
@@ -1262,7 +1262,7 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
 
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
-    const bool overwrite_reservation = (reservation_id == id);
+    const bool overwrite_reservation = (this->reservation_id == id);
 
     if (reserved) {
         EVLOG_info << "Rejecting reservation because evse is already reserved";
@@ -1297,7 +1297,7 @@ void EvseManager::cancel_reservation(bool signal_event) {
     if (reserved) {
         EVLOG_debug << "Reservation cancelled";
         reserved = false;
-        reservation_id = 0;
+        reservation_id = -1;
 
         // publish event to other modules
         if (signal_event) {
