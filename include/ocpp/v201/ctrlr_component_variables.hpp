@@ -201,6 +201,8 @@ extern const ComponentVariable& MaxCertificateChainSize;
 extern const ComponentVariable& UpdateCertificateSymlinks;
 extern const RequiredComponentVariable& OrganizationName;
 extern const RequiredComponentVariable& SecurityProfile;
+extern const ComponentVariable& AllowCSMSRootCertInstallWithUnsecureConnection;
+extern const ComponentVariable& AllowMFRootCertInstallWithUnsecureConnection;
 extern const ComponentVariable& ACPhaseSwitchingSupported;
 extern const ComponentVariable& SmartChargingCtrlrAvailable;
 extern const ComponentVariable& SmartChargingCtrlrEnabled;

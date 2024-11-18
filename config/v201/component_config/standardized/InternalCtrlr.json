@@ -770,6 +770,38 @@
           "minimum": 1,
           "default": "60",
           "type": "integer"
+      },
+      "AllowCSMSRootCertInstallWithUnsecureConnection": {
+        "variable_name": "AllowCSMSRootCertInstallWithUnsecureConnection",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadOnly"
+          }
+        ],
+        "description": "The flag that indicates if installation of CSMSRootCertificate is allowed when security profile is 1.",
+        "default": true,
+        "type": "boolean"
+      },
+      "AllowMFRootCertInstallWithUnsecureConnection": {
+        "variable_name": "AllowMFRootCertInstallWithUnsecureConnection",
+        "characteristics": {
+          "supportsMonitoring": true,
+          "dataType": "boolean"
+        },
+        "attributes": [
+          {
+            "type": "Actual",
+            "mutability": "ReadOnly"
+          }
+        ],
+        "description": "The flag that indicates if installation of ManufacturerRootCertificate is allowed when security profile is 1.",
+        "default": true,
+        "type": "boolean"
       }
   },
   "required": [

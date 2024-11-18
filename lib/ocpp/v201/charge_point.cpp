@@ -3601,24 +3601,50 @@ void ChargePoint::handle_get_installed_certificate_ids_req(Call<GetInstalledCert
     this->message_dispatcher->dispatch_call_result(call_result);
 }
 
+bool ChargePoint::should_allow_certificate_install(InstallCertificateUseEnum cert_type) const {
+    const int security_profile = this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
+
+    if (security_profile > 1) {
+        return true;
+    }
+    switch (cert_type) {
+    case InstallCertificateUseEnum::CSMSRootCertificate:
+        return this->device_model
+            ->get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWithUnsecureConnection)
+            .value_or(true);
+
+    case InstallCertificateUseEnum::ManufacturerRootCertificate:
+        return this->device_model
+            ->get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWithUnsecureConnection)
+            .value_or(true);
+    default:
+        return true;
+    }
+}
+
 void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
     EVLOG_debug << "Received InstallCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
     const auto msg = call.msg;
     InstallCertificateResponse response;
 
-    const auto result = this->evse_security->install_ca_certificate(
-        msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
-    response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
-
-    if (response.status == InstallCertificateStatusEnum::Accepted) {
-        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
-        std::string tech_info =
-            "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
-        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
-                                              utils::is_critical(security_event));
+    if (!should_allow_certificate_install(msg.certificateType)) {
+        response.status = InstallCertificateStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "UnsecureConnection";
+        response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
+    } else {
+        const auto result = this->evse_security->install_ca_certificate(
+            msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
+        response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+        if (response.status == InstallCertificateStatusEnum::Accepted) {
+            const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+            std::string tech_info =
+                "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
+            this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                                  utils::is_critical(security_event));
+        }
     }
-
     ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
     this->message_dispatcher->dispatch_call_result(call_result);
 }
