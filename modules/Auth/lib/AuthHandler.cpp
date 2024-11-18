@@ -659,12 +659,14 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     std::lock_guard<std::mutex> lk(this->timer_mutex);
     this->evses.at(evse_id)->event_mutex.lock();
     const auto event_type = event.event;
+    bool check_reservations = false;
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted: {
         std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
         this->plug_in_queue.push_back(evse_id);
         this->cv.notify_one();
+        check_reservations = true;
 
         // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
@@ -680,6 +682,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
                     }
 
                     this->evses.at(evse_id)->plugged_in = false;
+                    // TODO mz check reservations here as well
                 },
                 std::chrono::seconds(this->connection_timeout));
         }
@@ -689,6 +692,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->transaction_active = true;
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::TRANSACTION_STARTED);
         this->evses.at(evse_id)->timeout_timer.stop();
+        check_reservations = true;
         break;
     }
     case SessionEventEnum::TransactionFinished:
@@ -704,18 +708,23 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
             this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         }
+
+        check_reservations = true;
         break;
     }
     case SessionEventEnum::Disabled:
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::DISABLE);
+        check_reservations = true;
         break;
     case SessionEventEnum::Enabled:
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ENABLE);
+        check_reservations = true;
         break;
     case SessionEventEnum::ReservationStart:
+    case SessionEventEnum::ReservationEnd: {
+        check_reservations = true;
         break;
-    case SessionEventEnum::ReservationEnd:
-        break;
+    }
     /// explicitly fall through all the SessionEventEnum values we are not handling
     case SessionEventEnum::Authorized:
         [[fallthrough]];
@@ -747,6 +756,25 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     }
     this->evses.at(evse_id)->event_mutex.unlock();
+
+    // TODO mz make sure this does not create a loop.
+    // When reservation is started or ended, check if the number of reservations match the number of evses and
+    // send 'reserved' notifications to the evse manager accordingly if needed.
+    // TODO mz will 'ReservationEnd' also be sent when a reservation is used???
+    if (check_reservations) {
+        ReservationEvseStatus reservation_status =
+            this->reservation_handler.check_number_reservations_match_number_evses();
+        for (const auto& available_evse : reservation_status.available) {
+            this->reservation_cancelled_callback(available_evse, -1,
+                                                 // TODO mz add correct reason
+                                                 types::reservation::ReservationEndReason::Cancelled, false);
+        }
+
+        for (const auto& reserved_evse : reservation_status.reserved) {
+            // TODO mz something with 'reserved' (what if it is not possible??? Cancel reservation???)
+            const bool reserved = this->reserved_callback(reserved_evse, -1);
+        }
+    }
 }
 
 void AuthHandler::set_connection_timeout(const int connection_timeout) {
