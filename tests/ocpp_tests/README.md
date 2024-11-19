@@ -6,12 +6,20 @@ for OCPP1.6 and OCPP2.0.1.
 ## Requirements
 
 In order to run the integration tests, you need to have everest-core compiled
-and installed on your system.
-
-Make sure to also install the python requirements
-for running the test cases using
+and installed on your system. Please also make sure to install the python
+requirements.
 
 ```bash
+cd everest-core/
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --target install --parallel -j$(nproc)
+. build/venv/bin/activate
+cmake --build build --target everestpy_pip_install_dist
+cmake --build build --target everest-testing_pip_install_dist
+cmake --build build --target iso15118_pip_install_dist
+python3 -m pip install aiofile>=3.7.4
+python3 -m pip install netifaces>=0.11.0
+cd tests/ocpp_tests
 python3 -m pip install -r requirements.txt
 ```
 
@@ -54,7 +62,7 @@ specified in `test_sets/ocpp201/remote_control.py`.
 If you run the test cases individually,
 make sure to have all required certificates and configs
 for the test cases installed using the
-convenience scripts inside [test_sets/everest/aux](test_sets/everest-aux/)
+convenience scripts inside [test_sets/everest-aux](test_sets/everest-aux/)
 
 ```bash
 ./install_certs <path-to-everest-core-installation-directory>
