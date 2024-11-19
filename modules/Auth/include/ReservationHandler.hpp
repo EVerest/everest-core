@@ -51,7 +51,7 @@ private: // Members
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
 
-    ReservationEvseStatus last_status;
+    std::set<int32_t> last_reserved_status;
 
     /// \brief worker for the timers.
     boost::shared_ptr<boost::asio::io_service::work> work;
@@ -171,7 +171,7 @@ public:
     ///
     bool has_reservation_parent_id(const std::optional<uint32_t> evse_id);
 
-    ReservationEvseStatus check_number_reservations_match_number_evses();
+    ReservationEvseStatus check_number_global_reservations_match_number_available_evses();
 
 private: // Functions
     ///
@@ -317,6 +317,10 @@ private: // Functions
     /// \brief Store reservations to key value store.
     ///
     void store_reservations();
+
+    ReservationEvseStatus
+    get_evse_global_reserved_status_and_set_new_status(const std::set<int32_t> currently_available_evses,
+                                                       const std::set<int32_t> reserved_evses);
 
     ///
     /// \brief Helper function to print information about reservations and evses, to find out why a reservation has

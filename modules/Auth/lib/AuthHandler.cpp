@@ -67,6 +67,7 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
 
 void AuthHandler::initialize() {
     this->reservation_handler.load_reservations();
+    check_evse_reserved_and_send_updates();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -611,7 +612,12 @@ ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_to
 }
 
 bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
-    return this->reserved_callback(evse_id, reservation_id);
+    const bool reserved = this->reserved_callback(evse_id, reservation_id);
+    if (reserved) {
+        this->check_evse_reserved_and_send_updates();
+    }
+
+    return reserved;
 }
 
 void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
@@ -666,7 +672,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
         this->plug_in_queue.push_back(evse_id);
         this->cv.notify_one();
-        check_reservations = true;
 
         // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
@@ -682,7 +687,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
                     }
 
                     this->evses.at(evse_id)->plugged_in = false;
-                    // TODO mz check reservations here as well
+                    // TODO mz check reservations here as well??
                 },
                 std::chrono::seconds(this->connection_timeout));
         }
@@ -722,7 +727,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     case SessionEventEnum::ReservationStart:
     case SessionEventEnum::ReservationEnd: {
-        check_reservations = true;
         break;
     }
     /// explicitly fall through all the SessionEventEnum values we are not handling
@@ -762,18 +766,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     // send 'reserved' notifications to the evse manager accordingly if needed.
     // TODO mz will 'ReservationEnd' also be sent when a reservation is used???
     if (check_reservations) {
-        ReservationEvseStatus reservation_status =
-            this->reservation_handler.check_number_reservations_match_number_evses();
-        for (const auto& available_evse : reservation_status.available) {
-            this->reservation_cancelled_callback(available_evse, -1,
-                                                 // TODO mz add correct reason
-                                                 types::reservation::ReservationEndReason::Cancelled, false);
-        }
-
-        for (const auto& reserved_evse : reservation_status.reserved) {
-            // TODO mz something with 'reserved' (what if it is not possible??? Cancel reservation???)
-            const bool reserved = this->reserved_callback(reserved_evse, -1);
-        }
+        check_evse_reserved_and_send_updates();
     }
 }
 
@@ -845,6 +838,27 @@ void AuthHandler::submit_event_for_connector(const int32_t evse_id, const int32_
             connector.submit_event(connector_event);
             this->reservation_handler.on_connector_state_changed(connector.get_state(), evse_id, connector_id);
             break;
+        }
+    }
+}
+
+void AuthHandler::check_evse_reserved_and_send_updates() {
+    EVLOG_warning << "Check evse reserved and send updates";
+    ReservationEvseStatus reservation_status =
+        this->reservation_handler.check_number_global_reservations_match_number_available_evses();
+    for (const auto& available_evse : reservation_status.available) {
+        EVLOG_warning << "Evse " << available_evse << " is now available";
+        this->reservation_cancelled_callback(available_evse, -1,
+                                             // TODO mz add correct reason
+                                             types::reservation::ReservationEndReason::Cancelled, false);
+    }
+
+    for (const auto& reserved_evse : reservation_status.reserved) {
+        EVLOG_warning << "Evse " << reserved_evse << " is now reserved";
+        // TODO mz something with 'reserved' (what if it is not possible??? Cancel reservation???)
+        const bool reserved = this->reserved_callback(reserved_evse, -1);
+        if (!reserved) {
+            EVLOG_warning << "Could not reserve " << reserved_evse;
         }
     }
 }

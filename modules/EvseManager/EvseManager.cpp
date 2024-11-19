@@ -1270,20 +1270,22 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
 
     const bool overwrite_reservation = (this->reservation_id == id);
 
-    if (reserved) {
-        EVLOG_info << "Rejecting reservation because evse is already reserved";
+    if (reserved && this->reservation_id != -1) {
+        EVLOG_info << "Rejecting reservation because evse is already reserved for reservation id "
+                   << this->reservation_id;
     }
 
     // Check if this evse is not already reserved, or overwrite reservation if it is for the same reservation id.
-    if (not reserved || overwrite_reservation) {
+    if (not reserved || this->reservation_id == -1 || overwrite_reservation) {
         EVLOG_debug << "Make the reservation with id " << id;
         reserved = true;
         if (id >= 0) {
-            reservation_id = id;
+            this->reservation_id = id;
         }
 
         // When overwriting the reservation, don't signal.
-        if (not overwrite_reservation && signal_reservation_event) {
+        if ((not overwrite_reservation || (overwrite_reservation && this->reservation_id == -1)) &&
+            signal_reservation_event) {
             // publish event to other modules
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::ReservationStart;
@@ -1305,7 +1307,7 @@ void EvseManager::cancel_reservation(bool signal_event) {
     if (reserved) {
         EVLOG_debug << "Reservation cancelled";
         reserved = false;
-        reservation_id = -1;
+        this->reservation_id = -1;
 
         // publish event to other modules
         if (signal_event) {

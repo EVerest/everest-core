@@ -276,6 +276,7 @@ private:
                               const AuthorizationType& type);
     void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
                                     const ConnectorEvent connector_event);
+    void check_evse_reserved_and_send_updates();
 };
 
 } // namespace module

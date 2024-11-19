@@ -400,7 +400,7 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
     return false;
 }
 
-ReservationEvseStatus ReservationHandler::check_number_reservations_match_number_evses() {
+ReservationEvseStatus ReservationHandler::check_number_global_reservations_match_number_available_evses() {
     ReservationEvseStatus evse_status;
     std::set<int32_t> available_evses;
     // TODO mz mutex
@@ -415,31 +415,11 @@ ReservationEvseStatus ReservationHandler::check_number_reservations_match_number
         }
     }
 
-    // There are as many evses available as 'global' reservations, so all evse's are reserved. Set all available evse's
-    // to reserved.
-
     // TODO mz what if we do not have the correct latest status, is this going well here?
     if (available_evses.size() == this->global_reservations.size()) {
-        for (const auto& evse_id : this->last_status.reserved) {
-            // Check if the status for this evse was already sent previously.
-            if (available_evses.find(evse_id) != available_evses.end()) {
-                available_evses.erase(evse_id);
-            }
-        }
-
-        // Set all evse's that were not reserved now to reserved.
-        for (const auto& evse_id : available_evses) {
-            this->last_status.reserved.insert(evse_id);
-        }
-
-        // No available evse's anymore.
-        this->last_status.available.clear();
-
-        evse_status.reserved = available_evses;
-        evse_status.available = {};
-        return evse_status;
-
-        // TODO mz remove things from these lists when reservation was used and cancelled etc.
+        // There are as many evses available as 'global' reservations, so all evse's are reserved. Set all available
+        // evse's to reserved.
+        return get_evse_global_reserved_status_and_set_new_status(available_evses, available_evses);
     }
 
     // There are not as many global reservations as available evse's, but we have to check for specific connector types
@@ -462,40 +442,8 @@ ReservationEvseStatus ReservationHandler::check_number_reservations_match_number
         }
     }
 
-    if (!reserved_evses_with_specific_connector_type.empty()) {
-        // EVSE's should be set to reserved (if they aren't already).
-
-        for (const auto& evse_id : this->last_status.reserved) {
-            // Check if the status for this evse was already sent previously.
-            if (reserved_evses_with_specific_connector_type.find(evse_id) !=
-                reserved_evses_with_specific_connector_type.end()) {
-                reserved_evses_with_specific_connector_type.erase(evse_id);
-            }
-        }
-
-        // Set all evse's that were not reserved now to reserved.
-        for (const auto& evse_id : reserved_evses_with_specific_connector_type) {
-            this->last_status.reserved.insert(evse_id);
-        }
-
-        for (const auto& evse_id : this->last_status.reserved) {
-            if (this->last_status.available.find(evse_id) != this->last_status.available.end()) {
-                // TODO mz
-            }
-        }
-
-        // TODO mz remove evse id's from reserved_evse_with_specific_connector_type from available_evse's
-        // TODO mz Check if evse's were available that are now not available anymore and update evse_status.
-        // TODO mz Check if evse's were not available and are now available and update evse_status.
-        // TODO mz update this->last_status
-
-        evse_status.reserved = reserved_evses_with_specific_connector_type;
-
-        return evse_status;
-    }
-
-    // TODO mz if nothing should be set to reserved, that should be sent as well.
-    return {};
+    return get_evse_global_reserved_status_and_set_new_status(available_evses,
+                                                              reserved_evses_with_specific_connector_type);
 }
 
 bool ReservationHandler::has_evse_connector_type(const std::vector<Connector>& evse_connectors,
@@ -840,6 +788,35 @@ void ReservationHandler::store_reservations() {
     if (!reservations.empty()) {
         this->store->call_store(this->kvs_store_key_id, reservations);
     }
+}
+
+ReservationEvseStatus ReservationHandler::get_evse_global_reserved_status_and_set_new_status(
+    const std::set<int32_t> currently_available_evses, const std::set<int32_t> reserved_evses) {
+    ReservationEvseStatus evse_status_to_send;
+    std::set<int32_t> new_reserved_evses;
+
+    for (const auto evse_id : reserved_evses) {
+        if (this->last_reserved_status.find(evse_id) != this->last_reserved_status.end()) {
+            // Evse was already reserved, don't add it to the new status.
+        } else {
+            evse_status_to_send.reserved.insert(evse_id);
+        }
+    }
+
+    for (const auto evse_id : currently_available_evses) {
+        const bool is_reserved = reserved_evses.find(evse_id) != reserved_evses.end();
+        const bool was_reserved = this->last_reserved_status.find(evse_id) != this->last_reserved_status.end();
+        if (not is_reserved) {
+            if (was_reserved) {
+                evse_status_to_send.available.insert(evse_id);
+            }
+        }
+    }
+
+    new_reserved_evses = reserved_evses;
+    this->last_reserved_status = new_reserved_evses;
+
+    return evse_status_to_send;
 }
 
 void ReservationHandler::print_reservations_debug_info(const types::reservation::Reservation& reservation,
