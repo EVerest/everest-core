@@ -26,7 +26,7 @@ public:
     DummyBankSessionTokenProvider() = delete;
     DummyBankSessionTokenProvider(const ModuleInfo& info, std::unique_ptr<bank_session_token_providerImplBase> p_main,
                                   Conf& config) :
-        ModuleBase(info), p_main(std::move(p_main)), config(config) {};
+        ModuleBase(info), p_main(std::move(p_main)), config(config){};
 
     const std::unique_ptr<bank_session_token_providerImplBase> p_main;
     const Conf& config;

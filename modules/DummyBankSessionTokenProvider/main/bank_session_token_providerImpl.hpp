@@ -28,7 +28,7 @@ public:
     bank_session_token_providerImpl() = delete;
     bank_session_token_providerImpl(Everest::ModuleAdapter* ev,
                                     const Everest::PtrContainer<DummyBankSessionTokenProvider>& mod, Conf& config) :
-        bank_session_token_providerImplBase(ev, "main"), mod(mod), config(config) {};
+        bank_session_token_providerImplBase(ev, "main"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
