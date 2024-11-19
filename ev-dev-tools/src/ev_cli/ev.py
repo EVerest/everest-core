@@ -789,7 +789,7 @@ def main():
     if_genhdr_parser.set_defaults(action_handler=interface_genhdr)
 
     hlp_actions = parser_hlp.add_subparsers(metavar='<action>', help='available actions', required=True)
-    hlp_genuuid_parser = hlp_actions.add_parser('generate-uuids', help='generete uuids')
+    hlp_genuuid_parser = hlp_actions.add_parser('generate-uuids', help='generate uuids')
     hlp_genuuid_parser.add_argument('count', type=int, default=3)
     hlp_genuuid_parser.set_defaults(action_handler=helpers_genuuids)
 
@@ -805,7 +805,7 @@ def main():
 
     types_actions = parser_types.add_subparsers(metavar='<action>', help='available actions', required=True)
     types_genhdr_parser = types_actions.add_parser(
-        'generate-headers', aliases=['gh'], parents=[common_parser], help='generete type headers')
+        'generate-headers', aliases=['gh'], parents=[common_parser], help='generate type headers')
     types_genhdr_parser.add_argument('-f', '--force', action='store_true', help='force overwriting')
     types_genhdr_parser.add_argument('-o', '--output-dir', type=str, help='Output directory for generated type '
                                      'headers (default: {everest-dir}/build/generated/generated/types)')
