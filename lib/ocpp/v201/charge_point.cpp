@@ -203,7 +203,7 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
         this->firmware_status_id = request_id;
     }
 
-    ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<FirmwareStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call_async(call);
 
     if (req.status == FirmwareStatusEnum::Installed) {
@@ -232,7 +232,7 @@ void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
         if (transaction_active) {
             this->firmware_status = FirmwareStatusEnum::InstallScheduled;
             req.status = firmware_status;
-            ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+            ocpp::Call<FirmwareStatusNotificationRequest> call(req);
             this->message_dispatcher->dispatch_call_async(call);
         }
         this->change_all_connectors_to_unavailable_for_firmware_update();
@@ -258,8 +258,7 @@ ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequ
     }
 
     EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
-    auto future_res = this->message_dispatcher->dispatch_call_async(
-        ocpp::Call<Get15118EVCertificateRequest>(request, this->message_queue->createMessageId()));
+    auto future_res = this->message_dispatcher->dispatch_call_async(ocpp::Call<Get15118EVCertificateRequest>(request));
 
     if (future_res.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for Get15118EVCertificateRequest.conf future timed out!";
@@ -1039,7 +1038,7 @@ void ChargePoint::on_log_status_notification(UploadLogStatusEnum status, int32_t
     this->upload_log_status = status;
     this->upload_log_status_id = requestId;
 
-    ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+    ocpp::Call<LogStatusNotificationRequest> call(request);
     this->message_dispatcher->dispatch_call(call);
 }
 
@@ -2016,7 +2015,7 @@ void ChargePoint::security_event_notification_req(const CiString<50>& event_type
     req.techInfo = tech_info;
     this->logging->security(json(req).dump());
     if (critical) {
-        ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
+        ocpp::Call<SecurityEventNotificationRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     }
     if (triggered_internally and this->callbacks.security_event_callback != nullptr) {
@@ -2091,7 +2090,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
 
     this->awaited_certificate_signing_use_enum = certificate_signing_use;
 
-    ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<SignCertificateRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2111,7 +2110,7 @@ void ChargePoint::boot_notification_req(const BootReasonEnum& reason, const bool
     req.reason = reason;
     req.chargingStation = charging_station;
 
-    ocpp::Call<BootNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<BootNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2125,14 +2124,14 @@ void ChargePoint::notify_report_req(const int request_id, const std::vector<Repo
     req.tbc = false;
 
     if (report_data.size() <= 1) {
-        ocpp::Call<NotifyReportRequest> call(req, this->message_queue->createMessageId());
+        ocpp::Call<NotifyReportRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     } else {
         NotifyReportRequestsSplitter splitter{
             req,
             this->device_model->get_optional_value<size_t>(ControllerComponentVariables::MaxMessageSize)
                 .value_or(DEFAULT_MAX_MESSAGE_SIZE),
-            [this]() { return this->message_queue->createMessageId(); }};
+            [this]() { return ocpp::create_message_id(); }};
         for (const auto& msg : splitter.create_call_payloads()) {
             this->message_queue->push_call(msg);
         }
@@ -2153,7 +2152,7 @@ AuthorizeResponse ChargePoint::authorize_req(const IdToken id_token, const std::
         return response;
     }
 
-    ocpp::Call<AuthorizeRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<AuthorizeRequest> call(req);
     auto future = this->message_dispatcher->dispatch_call_async(call);
 
     if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
@@ -2186,7 +2185,7 @@ void ChargePoint::status_notification_req(const int32_t evse_id, const int32_t c
     req.timestamp = DateTime();
     req.connectorStatus = status;
 
-    ocpp::Call<StatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<StatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2194,7 +2193,7 @@ void ChargePoint::heartbeat_req(const bool initiated_by_trigger_message) {
     HeartbeatRequest req;
 
     heartbeat_request_time = std::chrono::steady_clock::now();
-    ocpp::Call<HeartbeatRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<HeartbeatRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2222,7 +2221,7 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
     req.offline = offline;
     req.reservationId = reservation_id;
 
-    ocpp::Call<TransactionEventRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<TransactionEventRequest> call(req);
 
     // Check if id token is in the remote start map, because when a remote
     // start request is done, the first transaction event request should
@@ -2264,7 +2263,7 @@ void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<Mete
     req.evseId = evse_id;
     req.meterValue = meter_values;
 
-    ocpp::Call<MeterValuesRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<MeterValuesRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2278,12 +2277,12 @@ void ChargePoint::report_charging_profile_req(const int32_t request_id, const in
     req.chargingProfile = profiles;
     req.tbc = tbc;
 
-    ocpp::Call<ReportChargingProfilesRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<ReportChargingProfilesRequest> call(req);
     this->message_dispatcher->dispatch_call(call);
 }
 
 void ChargePoint::report_charging_profile_req(const ReportChargingProfilesRequest& req) {
-    ocpp::Call<ReportChargingProfilesRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<ReportChargingProfilesRequest> call(req);
     this->message_dispatcher->dispatch_call(call);
 }
 
@@ -2293,7 +2292,7 @@ void ChargePoint::notify_event_req(const std::vector<EventData>& events) {
     req.generatedAt = DateTime();
     req.seqNo = 0;
 
-    ocpp::Call<NotifyEventRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<NotifyEventRequest> call(req);
     this->message_dispatcher->dispatch_call(call);
 }
 
@@ -2311,7 +2310,7 @@ void ChargePoint::notify_customer_information_req(const std::string& data, const
             return req;
         }();
 
-        ocpp::Call<NotifyCustomerInformationRequest> call(req, this->message_queue->createMessageId());
+        ocpp::Call<NotifyCustomerInformationRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
 
         pos += 512;
@@ -3086,7 +3085,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
             request.status = UploadLogStatusEnum::Idle;
         }
 
-        ocpp::Call<LogStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        ocpp::Call<LogStatusNotificationRequest> call(request);
         this->message_dispatcher->dispatch_call(call, true);
     } break;
 
@@ -3105,7 +3104,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
             break;
         }
 
-        ocpp::Call<FirmwareStatusNotificationRequest> call(request, this->message_queue->createMessageId());
+        ocpp::Call<FirmwareStatusNotificationRequest> call(request);
         this->message_dispatcher->dispatch_call(call, true);
     } break;
 
@@ -3820,7 +3819,7 @@ void ChargePoint::notify_monitoring_report_req(const int request_id,
         req.monitor.emplace(montoring_data);
         req.tbc = false;
 
-        ocpp::Call<NotifyMonitoringReportRequest> call(req, this->message_queue->createMessageId());
+        ocpp::Call<NotifyMonitoringReportRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     } else {
         // Split for larger message sizes
@@ -3846,7 +3845,7 @@ void ChargePoint::notify_monitoring_report_req(const int request_id,
 
             req.monitor = sub_data;
 
-            ocpp::Call<NotifyMonitoringReportRequest> call(req, this->message_queue->createMessageId());
+            ocpp::Call<NotifyMonitoringReportRequest> call(req);
             this->message_dispatcher->dispatch_call(call);
 
             sequence_num++;
@@ -3948,7 +3947,7 @@ void ChargePoint::handle_get_display_message(const Call<GetDisplayMessagesReques
 
     // Send display messages. The response is empty, so we don't have to get that back.
     // Sending multiple messages is not supported for now, because there is no need to split them up (yet).
-    ocpp::Call<NotifyDisplayMessagesRequest> request(messages_request, this->message_queue->createMessageId());
+    ocpp::Call<NotifyDisplayMessagesRequest> request(messages_request);
     this->message_dispatcher->dispatch_call(request);
 }
 
@@ -4075,7 +4074,7 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
     DataTransferResponse response;
     response.status = DataTransferStatusEnum::Rejected;
 
-    ocpp::Call<DataTransferRequest> call(request, this->message_queue->createMessageId());
+    ocpp::Call<DataTransferRequest> call(request);
     auto data_transfer_future = this->message_dispatcher->dispatch_call_async(call);
 
     if (this->connectivity_manager == nullptr or !this->connectivity_manager->is_websocket_connected()) {

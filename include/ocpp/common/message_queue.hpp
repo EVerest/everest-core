@@ -12,10 +12,6 @@
 #include <set>
 #include <thread>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 #include <everest/timer.hpp>
 
 #include <ocpp/common/call_types.hpp>
@@ -186,7 +182,6 @@ private:
     bool running;
     bool new_message;
     bool is_registration_status_accepted;
-    boost::uuids::random_generator uuid_generator;
     std::recursive_mutex next_message_mutex;
     std::optional<MessageId> next_message_to_send;
 
@@ -405,7 +400,6 @@ public:
         running(true),
         new_message(false),
         is_registration_status_accepted(false),
-        uuid_generator(boost::uuids::random_generator()),
         start_transaction_message_retry_callback(start_transaction_message_retry_callback) {
 
         this->send_callback = send_callback;
@@ -641,7 +635,7 @@ public:
             // MeterValues have to be delivered in chronological order
 
             // intentionally break this message for testing...
-            // message->message[CALL_PAYLOAD]["broken"] = this->createMessageId();
+            // message->message[CALL_PAYLOAD]["broken"] = ocpp::create_message_id();
             this->add_to_transaction_message_queue(control_message);
         } else {
             // all other messages are allowed to "jump the queue" to improve user experience
@@ -833,7 +827,7 @@ public:
                 EVLOG_warning << "Message shall be persisted and will therefore be sent again";
                 // Generate a new message ID for the retry
                 const auto old_message_id = this->in_flight->message[MESSAGE_ID];
-                this->in_flight->message[MESSAGE_ID] = this->createMessageId();
+                this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
                 if (this->config.transaction_message_retry_interval > 0) {
                     // exponential backoff
                     this->in_flight->timestamp =
@@ -890,7 +884,7 @@ public:
         } else if (is_boot_notification_message(this->in_flight->messageType)) {
             EVLOG_warning << "Message is BootNotification.req and will therefore be sent again";
             // Generate a new message ID for the retry
-            this->in_flight->message[MESSAGE_ID] = this->createMessageId();
+            this->in_flight->message[MESSAGE_ID] = ocpp::create_message_id();
             // Spec does not define how to handle retries for BootNotification.req: We use the
             // the boot_notification_retry_interval_seconds
             this->in_flight->timestamp =
@@ -1011,14 +1005,6 @@ public:
     /// \brief Set message_timeout to given \p timeout (in seconds)
     void update_message_timeout(const int timeout) {
         this->config.message_timeout_seconds = timeout;
-    }
-
-    /// \brief Creates a unique message ID
-    /// \returns the unique message ID
-    MessageId createMessageId() {
-        std::stringstream s;
-        s << this->uuid_generator();
-        return MessageId(s.str());
     }
 
     /// \brief Adds the given \p transaction_id to the message_id_transaction_id_map using the key \p

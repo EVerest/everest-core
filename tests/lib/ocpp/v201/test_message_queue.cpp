@@ -18,11 +18,11 @@ protected:
 TEST_F(ControlMessageV201Test, test_is_transactional) {
 
     EXPECT_TRUE(is_transaction_message(
-        (ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{v201::TransactionEventRequest{}, "0"}}
+        (ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{v201::TransactionEventRequest{}}}
              .messageType)));
 
     EXPECT_TRUE(!is_transaction_message(
-        ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}, "0"}}.messageType));
+        ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}}}.messageType));
 }
 
 TEST_F(ControlMessageV201Test, test_is_transactional_update) {
@@ -30,18 +30,18 @@ TEST_F(ControlMessageV201Test, test_is_transactional_update) {
     v201::TransactionEventRequest transaction_event_request{};
     transaction_event_request.eventType = v201::TransactionEventEnum::Updated;
 
-    EXPECT_TRUE((ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}}
+    EXPECT_TRUE((ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
                      .is_transaction_update_message()));
 
     transaction_event_request.eventType = v201::TransactionEventEnum::Started;
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}}
+    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
                       .is_transaction_update_message()));
 
     transaction_event_request.eventType = v201::TransactionEventEnum::Ended;
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request, "0"}}
+    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
                       .is_transaction_update_message()));
 
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}, "0"}}
+    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}}}
                       .is_transaction_update_message()));
 }
 

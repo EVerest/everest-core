@@ -418,7 +418,7 @@ void ChargePointImpl::heartbeat(bool initiated_by_trigger_message) {
     EVLOG_debug << "Sending heartbeat";
     HeartbeatRequest req;
 
-    ocpp::Call<HeartbeatRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<HeartbeatRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -435,7 +435,7 @@ void ChargePointImpl::boot_notification(bool initiated_by_trigger_message) {
     req.meterSerialNumber = this->configuration->getMeterSerialNumber();
     req.meterType = this->configuration->getMeterType();
 
-    ocpp::Call<BootNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<BootNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -953,7 +953,7 @@ void ChargePointImpl::send_meter_value(int32_t connector, MeterValue meter_value
     }
 
     MeterValuesRequest req;
-    const auto message_id = this->message_queue->createMessageId();
+    const auto message_id = ocpp::create_message_id();
     // connector = 0 designates the main measurement
     // connector > 0 designates a connector of the charge point
     req.connectorId = connector;
@@ -2618,7 +2618,7 @@ void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& ce
 
     req.csr = response.csr.value();
 
-    ocpp::Call<SignCertificateRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<SignCertificateRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2817,7 +2817,7 @@ void ChargePointImpl::securityEventNotification(const CiString<50>& event_type,
     }
 
     if (critical_security_event and !this->configuration->getDisableSecurityEventNotifications()) {
-        ocpp::Call<SecurityEventNotificationRequest> call(req, this->message_queue->createMessageId());
+        ocpp::Call<SecurityEventNotificationRequest> call(req);
         this->message_dispatcher->dispatch_call(call);
     }
 
@@ -2838,7 +2838,7 @@ void ChargePointImpl::log_status_notification(UploadLogStatusEnumType status, in
     this->log_status = status;
     this->log_status_request_id = requestId;
 
-    ocpp::Call<LogStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<LogStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -2865,7 +2865,7 @@ void ChargePointImpl::signed_firmware_update_status_notification(FirmwareStatusE
     this->signed_firmware_status = status;
     this->signed_firmware_status_request_id = requestId;
 
-    ocpp::Call<SignedFirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<SignedFirmwareStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 
     if (status == FirmwareStatusEnumType::InvalidSignature) {
@@ -3234,7 +3234,7 @@ void ChargePointImpl::status_notification(const int32_t connector, const ChargeP
     request.info = info;
     request.vendorId = vendor_id;
     request.vendorErrorCode = vendor_error_code;
-    ocpp::Call<StatusNotificationRequest> call(request, this->message_queue->createMessageId());
+    ocpp::Call<StatusNotificationRequest> call(request);
     this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
 }
 
@@ -3280,7 +3280,7 @@ IdTagInfo ChargePointImpl::authorize_id_token(CiString<20> idTag, const bool aut
     AuthorizeRequest req;
     req.idTag = idTag;
 
-    ocpp::Call<AuthorizeRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<AuthorizeRequest> call(req);
 
     auto authorize_future = this->message_dispatcher->dispatch_call_async(call);
 
@@ -3494,7 +3494,7 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
         req.data.emplace(json(authorize_req).dump());
 
         // Send the DataTransfer(Authorize) to the CSMS
-        Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+        Call<DataTransferRequest> call(req);
         auto authorize_future = this->message_dispatcher->dispatch_call_async(call);
 
         if (authorize_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
@@ -3576,7 +3576,7 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
     csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
     req.data.emplace(json(csr_req).dump());
 
-    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    Call<DataTransferRequest> call(req);
     this->message_dispatcher->dispatch_call(call);
 }
 
@@ -3602,7 +3602,7 @@ void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
 
     req.data.emplace(json(cert_req).dump());
 
-    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    Call<DataTransferRequest> call(req);
     auto future = this->message_dispatcher->dispatch_call_async(call);
 
     if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
@@ -3652,7 +3652,7 @@ void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v201:
 
     req.data.emplace(json(cert_status_req).dump());
 
-    Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    Call<DataTransferRequest> call(req);
     auto future = this->message_dispatcher->dispatch_call_async(call);
 
     if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
@@ -3907,7 +3907,7 @@ std::optional<DataTransferResponse> ChargePointImpl::data_transfer(const CiStrin
 
     DataTransferResponse response;
     response.status = DataTransferStatus::Rejected;
-    ocpp::Call<DataTransferRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<DataTransferRequest> call(req);
     auto data_transfer_future = this->message_dispatcher->dispatch_call_async(call);
 
     if (this->websocket == nullptr or !this->websocket->is_connected()) {
@@ -3987,7 +3987,7 @@ void ChargePointImpl::start_transaction(std::shared_ptr<Transaction> transaction
     req.idTag = transaction->get_id_tag();
     req.meterStart = std::round(transaction->get_start_energy_wh()->energy_Wh);
     req.timestamp = transaction->get_start_energy_wh()->timestamp;
-    const auto message_id = this->message_queue->createMessageId();
+    const auto message_id = ocpp::create_message_id();
 
     try {
         this->database_handler->insert_transaction(
@@ -4164,7 +4164,7 @@ void ChargePointImpl::stop_transaction(int32_t connector, Reason reason, std::op
         req.transactionData.emplace(transaction_data);
     }
 
-    auto message_id = this->message_queue->createMessageId();
+    auto message_id = ocpp::create_message_id();
     ocpp::Call<StopTransactionRequest> call(req, message_id);
 
     const auto max_message_size = this->configuration->getMaxMessageSize();
@@ -4322,7 +4322,7 @@ void ChargePointImpl::diagnostic_status_notification(DiagnosticsStatus status, b
     req.status = status;
     this->diagnostics_status = status;
 
-    ocpp::Call<DiagnosticsStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<DiagnosticsStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call_async(call, true);
 }
 
@@ -4344,7 +4344,7 @@ void ChargePointImpl::firmware_status_notification(FirmwareStatus status, bool i
 
     this->firmware_status = status;
 
-    ocpp::Call<FirmwareStatusNotificationRequest> call(req, this->message_queue->createMessageId());
+    ocpp::Call<FirmwareStatusNotificationRequest> call(req);
     this->message_dispatcher->dispatch_call_async(call, initiated_by_trigger_message);
 
     if (this->firmware_update_is_pending) {

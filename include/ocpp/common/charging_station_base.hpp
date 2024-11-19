@@ -23,12 +23,6 @@ protected:
     boost::asio::io_service io_service;
     std::thread io_service_thread;
 
-    boost::uuids::random_generator uuid_generator;
-
-    /// \brief Generates a uuid
-    /// \return uuid
-    std::string uuid();
-
 public:
     /// \brief Constructor for ChargingStationBase
     /// \param evse_security Pointer to evse_security that manages security related operations; if nullptr

@@ -625,7 +625,7 @@ public:
 
     template <class T, MessageType M> EnhancedMessage<MessageType> request_to_enhanced_message(const T& req) {
         auto message_id = uuid();
-        ocpp::Call<T> call(req, message_id);
+        ocpp::Call<T> call(req);
         EnhancedMessage<MessageType> enhanced_message;
         enhanced_message.uniqueId = message_id;
         enhanced_message.messageType = M;

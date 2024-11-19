@@ -6,8 +6,7 @@
 
 namespace ocpp {
 ChargingStationBase::ChargingStationBase(const std::shared_ptr<EvseSecurity> evse_security,
-                                         const std::optional<SecurityConfiguration> security_configuration) :
-    uuid_generator(boost::uuids::random_generator()) {
+                                         const std::optional<SecurityConfiguration> security_configuration) {
 
     if (evse_security != nullptr) {
         this->evse_security = evse_security;
@@ -26,12 +25,6 @@ ChargingStationBase::~ChargingStationBase() {
     work->get_io_context().stop();
     io_service.stop();
     io_service_thread.join();
-}
-
-std::string ChargingStationBase::uuid() {
-    std::stringstream s;
-    s << this->uuid_generator();
-    return s.str();
 }
 
 } // namespace ocpp

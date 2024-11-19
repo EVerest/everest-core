@@ -52,6 +52,10 @@ enum class MessageTypeId {
     UNKNOWN,
 };
 
+/// \brief Creates a unique message ID
+/// \returns the unique message ID
+MessageId create_message_id();
+
 /// \brief Contains a OCPP Call message
 template <class T> struct Call {
     T msg;
@@ -61,7 +65,13 @@ template <class T> struct Call {
     Call() {
     }
 
-    /// \brief Creates a new Call message object with the given OCPP message \p msg and \p uniqueID
+    /// \brief Creates a new Call message object with the given OCPP message \p msg
+    explicit Call(T msg) {
+        this->msg = msg;
+        this->uniqueId = create_message_id();
+    }
+
+    /// \brief Creates a new Call message object with the given OCPP message \p msg and \p uniqueId
     Call(T msg, MessageId uniqueId) {
         this->msg = msg;
         this->uniqueId = uniqueId;
