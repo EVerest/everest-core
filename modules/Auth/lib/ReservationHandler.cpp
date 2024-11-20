@@ -403,7 +403,7 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
 ReservationEvseStatus ReservationHandler::check_number_global_reservations_match_number_available_evses() {
     ReservationEvseStatus evse_status;
     std::set<int32_t> available_evses;
-    // TODO mz mutex
+    std::unique_lock<std::recursive_mutex> lock(this->evse_mutex);
     // Get all evse's that are not reserved or used.
     for (const auto& evse : this->evses) {
         if (get_evse_connector_state_reservation_result(static_cast<uint32_t>(evse.first), this->evse_reservations) ==
@@ -415,7 +415,7 @@ ReservationEvseStatus ReservationHandler::check_number_global_reservations_match
         }
     }
 
-    // TODO mz what if we do not have the correct latest status, is this going well here?
+    std::unique_lock<std::recursive_mutex> reservation_lock(this->reservation_mutex);
     if (available_evses.size() == this->global_reservations.size()) {
         // There are as many evses available as 'global' reservations, so all evse's are reserved. Set all available
         // evse's to reserved.

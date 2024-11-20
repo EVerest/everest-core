@@ -687,7 +687,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
                     }
 
                     this->evses.at(evse_id)->plugged_in = false;
-                    // TODO mz check reservations here as well??
                 },
                 std::chrono::seconds(this->connection_timeout));
         }
@@ -761,10 +760,8 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     }
     this->evses.at(evse_id)->event_mutex.unlock();
 
-    // TODO mz make sure this does not create a loop.
     // When reservation is started or ended, check if the number of reservations match the number of evses and
     // send 'reserved' notifications to the evse manager accordingly if needed.
-    // TODO mz will 'ReservationEnd' also be sent when a reservation is used???
     if (check_reservations) {
         check_evse_reserved_and_send_updates();
     }
