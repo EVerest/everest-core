@@ -1170,6 +1170,8 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
 
     this->message_dispatcher =
         std::make_unique<MessageDispatcher>(*this->message_queue, *this->device_model, registration_status);
+    this->data_transfer = std::make_unique<DataTransfer>(
+        *this->message_dispatcher, this->callbacks.data_transfer_callback, DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     if (this->callbacks.configure_network_connection_profile_callback.has_value()) {
         this->connectivity_manager->set_configure_network_connection_profile_callback(
@@ -1254,133 +1256,141 @@ void ChargePoint::remove_network_connection_profiles_below_actual_security_profi
 
 void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::BootNotificationResponse:
-        this->handle_boot_notification_response(json_message);
-        break;
-    case MessageType::SetVariables:
-        this->handle_set_variables_req(json_message);
-        break;
-    case MessageType::GetVariables:
-        this->handle_get_variables_req(message);
-        break;
-    case MessageType::GetBaseReport:
-        this->handle_get_base_report_req(json_message);
-        break;
-    case MessageType::GetReport:
-        this->handle_get_report_req(message);
-        break;
-    case MessageType::Reset:
-        this->handle_reset_req(json_message);
-        break;
-    case MessageType::SetNetworkProfile:
-        this->handle_set_network_profile_req(json_message);
-        break;
-    case MessageType::ChangeAvailability:
-        this->handle_change_availability_req(json_message);
-        break;
-    case MessageType::TransactionEventResponse:
-        this->handle_transaction_event_response(message);
-        break;
-    case MessageType::RequestStartTransaction:
-        this->handle_remote_start_transaction_request(json_message);
-        break;
-    case MessageType::RequestStopTransaction:
-        this->handle_remote_stop_transaction_request(json_message);
-        break;
-    case MessageType::DataTransfer:
-        this->handle_data_transfer_req(json_message);
-        break;
-    case MessageType::GetLog:
-        this->handle_get_log_req(json_message);
-        break;
-    case MessageType::ClearCache:
-        this->handle_clear_cache_req(json_message);
-        break;
-    case MessageType::UpdateFirmware:
-        this->handle_firmware_update_req(json_message);
-        break;
-    case MessageType::UnlockConnector:
-        this->handle_unlock_connector(json_message);
-        break;
-    case MessageType::TriggerMessage:
-        this->handle_trigger_message(json_message);
-        break;
-    case MessageType::SignCertificateResponse:
-        this->handle_sign_certificate_response(json_message);
-        break;
-    case MessageType::HeartbeatResponse:
-        this->handle_heartbeat_response(json_message);
-        break;
-    case MessageType::SendLocalList:
-        this->handle_send_local_authorization_list_req(json_message);
-        break;
-    case MessageType::GetLocalListVersion:
-        this->handle_get_local_authorization_list_version_req(json_message);
-        break;
-    case MessageType::CertificateSigned:
-        this->handle_certificate_signed_req(json_message);
-        break;
-    case MessageType::GetTransactionStatus:
-        this->handle_get_transaction_status(json_message);
-        break;
-    case MessageType::GetInstalledCertificateIds:
-        this->handle_get_installed_certificate_ids_req(json_message);
-        break;
-    case MessageType::InstallCertificate:
-        this->handle_install_certificate_req(json_message);
-        break;
-    case MessageType::DeleteCertificate:
-        this->handle_delete_certificate_req(json_message);
-        break;
-    case MessageType::CustomerInformation:
-        this->handle_customer_information_req(json_message);
-        break;
-    case MessageType::SetChargingProfile:
-        this->handle_set_charging_profile_req(json_message);
-        break;
-    case MessageType::ClearChargingProfile:
-        this->handle_clear_charging_profile_req(json_message);
-        break;
-    case MessageType::GetChargingProfiles:
-        this->handle_get_charging_profiles_req(json_message);
-        break;
-    case MessageType::GetCompositeSchedule:
-        this->handle_get_composite_schedule_req(json_message);
-        break;
-    case MessageType::SetMonitoringBase:
-        this->handle_set_monitoring_base_req(json_message);
-        break;
-    case MessageType::SetMonitoringLevel:
-        this->handle_set_monitoring_level_req(json_message);
-        break;
-    case MessageType::SetVariableMonitoring:
-        this->handle_set_variable_monitoring_req(message);
-        break;
-    case MessageType::GetMonitoringReport:
-        this->handle_get_monitoring_report_req(json_message);
-        break;
-    case MessageType::ClearVariableMonitoring:
-        this->handle_clear_variable_monitoring_req(json_message);
-        break;
-    case MessageType::GetDisplayMessages:
-        this->handle_get_display_message(json_message);
-        break;
-    case MessageType::SetDisplayMessage:
-        this->handle_set_display_message(json_message);
-        break;
-    case MessageType::ClearDisplayMessage:
-        this->handle_clear_display_message(json_message);
-        break;
-    case MessageType::CostUpdated:
-        this->handle_costupdated_req(json_message);
-        break;
-    default:
+    try {
+        switch (message.messageType) {
+        case MessageType::BootNotificationResponse:
+            this->handle_boot_notification_response(json_message);
+            break;
+        case MessageType::SetVariables:
+            this->handle_set_variables_req(json_message);
+            break;
+        case MessageType::GetVariables:
+            this->handle_get_variables_req(message);
+            break;
+        case MessageType::GetBaseReport:
+            this->handle_get_base_report_req(json_message);
+            break;
+        case MessageType::GetReport:
+            this->handle_get_report_req(message);
+            break;
+        case MessageType::Reset:
+            this->handle_reset_req(json_message);
+            break;
+        case MessageType::SetNetworkProfile:
+            this->handle_set_network_profile_req(json_message);
+            break;
+        case MessageType::ChangeAvailability:
+            this->handle_change_availability_req(json_message);
+            break;
+        case MessageType::TransactionEventResponse:
+            this->handle_transaction_event_response(message);
+            break;
+        case MessageType::RequestStartTransaction:
+            this->handle_remote_start_transaction_request(json_message);
+            break;
+        case MessageType::RequestStopTransaction:
+            this->handle_remote_stop_transaction_request(json_message);
+            break;
+        case MessageType::DataTransfer:
+            this->data_transfer->handle_message(message);
+            break;
+        case MessageType::GetLog:
+            this->handle_get_log_req(json_message);
+            break;
+        case MessageType::ClearCache:
+            this->handle_clear_cache_req(json_message);
+            break;
+        case MessageType::UpdateFirmware:
+            this->handle_firmware_update_req(json_message);
+            break;
+        case MessageType::UnlockConnector:
+            this->handle_unlock_connector(json_message);
+            break;
+        case MessageType::TriggerMessage:
+            this->handle_trigger_message(json_message);
+            break;
+        case MessageType::SignCertificateResponse:
+            this->handle_sign_certificate_response(json_message);
+            break;
+        case MessageType::HeartbeatResponse:
+            this->handle_heartbeat_response(json_message);
+            break;
+        case MessageType::SendLocalList:
+            this->handle_send_local_authorization_list_req(json_message);
+            break;
+        case MessageType::GetLocalListVersion:
+            this->handle_get_local_authorization_list_version_req(json_message);
+            break;
+        case MessageType::CertificateSigned:
+            this->handle_certificate_signed_req(json_message);
+            break;
+        case MessageType::GetTransactionStatus:
+            this->handle_get_transaction_status(json_message);
+            break;
+        case MessageType::GetInstalledCertificateIds:
+            this->handle_get_installed_certificate_ids_req(json_message);
+            break;
+        case MessageType::InstallCertificate:
+            this->handle_install_certificate_req(json_message);
+            break;
+        case MessageType::DeleteCertificate:
+            this->handle_delete_certificate_req(json_message);
+            break;
+        case MessageType::CustomerInformation:
+            this->handle_customer_information_req(json_message);
+            break;
+        case MessageType::SetChargingProfile:
+            this->handle_set_charging_profile_req(json_message);
+            break;
+        case MessageType::ClearChargingProfile:
+            this->handle_clear_charging_profile_req(json_message);
+            break;
+        case MessageType::GetChargingProfiles:
+            this->handle_get_charging_profiles_req(json_message);
+            break;
+        case MessageType::GetCompositeSchedule:
+            this->handle_get_composite_schedule_req(json_message);
+            break;
+        case MessageType::SetMonitoringBase:
+            this->handle_set_monitoring_base_req(json_message);
+            break;
+        case MessageType::SetMonitoringLevel:
+            this->handle_set_monitoring_level_req(json_message);
+            break;
+        case MessageType::SetVariableMonitoring:
+            this->handle_set_variable_monitoring_req(message);
+            break;
+        case MessageType::GetMonitoringReport:
+            this->handle_get_monitoring_report_req(json_message);
+            break;
+        case MessageType::ClearVariableMonitoring:
+            this->handle_clear_variable_monitoring_req(json_message);
+            break;
+        case MessageType::GetDisplayMessages:
+            this->handle_get_display_message(json_message);
+            break;
+        case MessageType::SetDisplayMessage:
+            this->handle_set_display_message(json_message);
+            break;
+        case MessageType::ClearDisplayMessage:
+            this->handle_clear_display_message(json_message);
+            break;
+        case MessageType::CostUpdated:
+            this->handle_costupdated_req(json_message);
+            break;
+        default:
+            if (message.messageTypeId == MessageTypeId::CALL) {
+                const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
+                this->message_dispatcher->dispatch_call_error(call_error);
+            }
+            break;
+        }
+    } catch (const MessageTypeNotImplementedException& e) {
+        EVLOG_warning << e.what();
         if (message.messageTypeId == MessageTypeId::CALL) {
             const auto call_error = CallError(message.uniqueId, "NotImplemented", "", json({}));
             this->message_dispatcher->dispatch_call_error(call_error);
         }
-        break;
     }
 }
 
@@ -4044,65 +4054,14 @@ void ChargePoint::handle_clear_display_message(const Call<ClearDisplayMessageReq
     this->message_dispatcher->dispatch_call_result(call_result);
 }
 
-void ChargePoint::handle_data_transfer_req(Call<DataTransferRequest> call) {
-    const auto msg = call.msg;
-    DataTransferResponse response;
-
-    if (this->callbacks.data_transfer_callback.has_value()) {
-        response = this->callbacks.data_transfer_callback.value()(call.msg);
-    } else {
-        response.status = DataTransferStatusEnum::UnknownVendorId;
-        EVLOG_warning << "Received a DataTransferRequest but no data transfer callback was registered";
-    }
-
-    ocpp::CallResult<DataTransferResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
 std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const CiString<255>& vendorId,
                                                                    const std::optional<CiString<50>>& messageId,
                                                                    const std::optional<json>& data) {
-    DataTransferRequest req;
-    req.vendorId = vendorId;
-    req.messageId = messageId;
-    req.data = data;
-
-    return this->data_transfer_req(req);
+    return this->data_transfer->data_transfer_req(vendorId, messageId, data);
 }
 
 std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTransferRequest& request) {
-    DataTransferResponse response;
-    response.status = DataTransferStatusEnum::Rejected;
-
-    ocpp::Call<DataTransferRequest> call(request);
-    auto data_transfer_future = this->message_dispatcher->dispatch_call_async(call);
-
-    if (this->connectivity_manager == nullptr or !this->connectivity_manager->is_websocket_connected()) {
-        return std::nullopt;
-    }
-
-    if (data_transfer_future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
-        EVLOG_warning << "Waiting for DataTransfer.conf future timed out";
-        return std::nullopt;
-    }
-
-    auto enhanced_message = data_transfer_future.get();
-    if (enhanced_message.messageType == MessageType::DataTransferResponse) {
-        try {
-            ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
-            response = call_result.msg;
-        } catch (const EnumConversionException& e) {
-            EVLOG_error << "EnumConversionException during handling of message: " << e.what();
-            auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
-            this->message_dispatcher->dispatch_call_error(call_error);
-            return std::nullopt;
-        }
-    }
-    if (enhanced_message.offline) {
-        return std::nullopt;
-    }
-
-    return response;
+    return this->data_transfer->data_transfer_req(request);
 }
 
 void ChargePoint::handle_send_local_authorization_list_req(Call<SendLocalListRequest> call) {

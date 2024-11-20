@@ -8,6 +8,7 @@
 #include <set>
 
 #include <ocpp/common/message_dispatcher.hpp>
+#include <ocpp/v201/functional_blocks/data_transfer.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
 
@@ -388,6 +389,7 @@ private:
     std::unique_ptr<ConnectivityManager> connectivity_manager;
 
     std::unique_ptr<MessageDispatcherInterface<MessageType>> message_dispatcher;
+    std::unique_ptr<DataTransferInterface> data_transfer;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -758,9 +760,6 @@ private:
     void handle_get_display_message(Call<GetDisplayMessagesRequest> call);
     void handle_set_display_message(Call<SetDisplayMessageRequest> call);
     void handle_clear_display_message(Call<ClearDisplayMessageRequest> call);
-
-    // Functional Block P: DataTransfer
-    void handle_data_transfer_req(Call<DataTransferRequest> call);
 
     // Generates async sending callbacks
     template <class RequestType, class ResponseType>

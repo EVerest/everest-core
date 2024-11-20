@@ -82,6 +82,7 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/component_state_manager.cpp
             ocpp/v201/connectivity_manager.cpp
             ocpp/v201/message_dispatcher.cpp
+            ocpp/v201/functional_blocks/data_transfer.cpp
     )
     add_subdirectory(ocpp/v201/messages)
 endif()

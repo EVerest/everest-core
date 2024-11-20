@@ -22,6 +22,14 @@ class v201_MessageDispatcher {
     - RegistrationStatusEnum& registration_status
 }
 
+class v201_MessageHandlerInterface {
+    +handle_message(EnhancedMessage~v201_MessageType~ message)
+}
+
+class v16_MessageHandlerInterface {
+    +handle_message(EnhancedMessage~v16_MessageType~ message)
+}
+
 class v201_DataTransferInterface {
     +data_transfer_req(request: DataTransferRequest): std::optional~DataTransferResponse~
     +handle_data_transfer_req(call: Call~DataTransferRequest~)
@@ -44,6 +52,7 @@ class v16_ChargePoint {
 MessageDispatcherInterface <|-- v16_MessageDispatcher  
 MessageDispatcherInterface <|-- v201_MessageDispatcher
 v201_DataTransferInterface <|-- v201_DataTransfer
+v201_MessageHandlerInterface <|-- v201_DataTransferInterface
 MessageDispatcherInterface *-- v201_DataTransfer
 MessageDispatcherInterface *-- v201_ChargePoint
 v201_DataTransferInterface *-- v201_ChargePoint
