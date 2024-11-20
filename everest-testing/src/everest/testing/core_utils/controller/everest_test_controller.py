@@ -55,6 +55,11 @@ class EverestTestController(TestController):
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
             "unplug")
 
+    def plug_out_iso(self, connector_id=1):
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/modify_charging_session",
+            "iso_stop_charging;iso_wait_v2g_session_stopped;unplug")
+
     def swipe(self, token, connectors=None):
         connectors = connectors if connectors is not None else [1]
         provided_token = {

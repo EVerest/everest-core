@@ -29,7 +29,6 @@ from .libocpp_configuration_helper import \
 
 @dataclass
 class EverestEnvironmentOCPPConfiguration:
-    libocpp_path: Path
     ocpp_version: OCPPVersion
     central_system_port: int
     central_system_host: str = "127.0.0.1"
@@ -37,7 +36,7 @@ class EverestEnvironmentOCPPConfiguration:
     template_ocpp_config: Optional[
         Path] = None  # Path for OCPP config to be used; if not provided, will be determined from everest config
     device_model_component_config_path: Optional[
-        Path] = None  # Path of the OCPP device model json schemas. If not set, {libocpp_path} / 'config/v201/component_config' will  be used
+        Path] = None  # Path of the OCPP device model json schemas.
     configuration_strategies: list[OCPPModuleConfigurationStrategy] | None = None
 
 
@@ -208,9 +207,7 @@ class EverestTestEnvironmentSetup:
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp16:
             source_ocpp_config = self._determine_configured_charge_point_config_path_from_everest_config()
         elif self._ocpp_config.ocpp_version == OCPPVersion.ocpp201:
-            source_ocpp_config = self._ocpp_config.device_model_component_config_path \
-                if self._ocpp_config.device_model_component_config_path \
-                else self._ocpp_config.libocpp_path / 'config/v201/component_config'
+            source_ocpp_config = self._ocpp_config.device_model_component_config_path
 
         return liboccp_configuration_helper.generate_ocpp_config(
             central_system_port=self._ocpp_config.central_system_port,

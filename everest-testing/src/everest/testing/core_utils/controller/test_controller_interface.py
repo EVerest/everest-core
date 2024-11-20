@@ -35,6 +35,12 @@ class TestController():
         """
         raise NotImplementedError()
 
+    def plug_out_iso(self, connector_id):
+        """
+        Plug out of an electric vehicle properly ending the ISO15118 session.
+        """
+        raise NotImplementedError()
+
     def plug_out(self):
         """
         Plug out of an electric vehicle from the chargepoint.

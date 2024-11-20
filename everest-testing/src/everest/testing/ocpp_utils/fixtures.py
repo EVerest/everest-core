@@ -52,8 +52,8 @@ def ocpp_config(request, central_system: CentralSystem, test_config: OcppTestCon
         central_system_port=central_system.port,
         central_system_host="127.0.0.1",
         ocpp_version=ocpp_version,
-        libocpp_path=Path(request.config.getoption("--libocpp")),
         template_ocpp_config=Path(ocpp_config_marker.args[0]) if ocpp_config_marker else None,
+        device_model_component_config_path=Path(f"{request.config.getoption('--everest-prefix')}/share/everest/modules/OCPP201/component_config"),
         configuration_strategies=ocpp_configuration_strategies
     )
 
@@ -103,8 +103,44 @@ def test_config():
 
 
 class FtpThread(Thread):
+    def __init__(self, directory, port, test_config: OcppTestConfiguration, ftp_socket,
+                 group = None, target = None, name = None, args = ..., kwargs = None, *, daemon = None):
+        super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        self.directory = directory
+        self.port = port
+        self.test_config = test_config
+        self.ftp_socket = ftp_socket
+
+    def set_directory(self, directory):
+        self.directory = directory
+
     def set_port(self, port):
         self.port = port
+
+    def set_test_config(self, test_config: OcppTestConfiguration):
+        self.test_config = test_config
+
+    def set_socket(self, ftp_socket):
+        self.ftp_socket = ftp_socket
+
+    def stop(self):
+        self.server.close_all()
+
+    def run(self):
+        shutil.copyfile(self.test_config.firmware_info.update_file, os.path.join(
+            self.directory, "firmware_update.pnx"))
+        shutil.copyfile(self.test_config.firmware_info.update_file_signature,
+                        os.path.join(self.directory, "firmware_update.pnx.base64"))
+
+        authorizer = DummyAuthorizer()
+        authorizer.add_user(getpass.getuser(), "12345", self.directory, perm="elradfmwMT")
+
+        handler = FTPHandler
+        handler.authorizer = authorizer
+
+        self.server = servers.FTPServer(self.ftp_socket, handler)
+
+        self.server.serve_forever()
 
 
 @pytest.fixture
@@ -120,28 +156,13 @@ def ftp_server(test_config: OcppTestConfiguration):
     ftp_socket.bind(address)
     port = ftp_socket.getsockname()[1]
 
-    def _ftp_server(test_config: OcppTestConfiguration, ftp_socket):
-        shutil.copyfile(test_config.firmware_info.update_file, os.path.join(
-            d, "firmware_update.pnx"))
-        shutil.copyfile(test_config.firmware_info.update_file_signature,
-                        os.path.join(d, "firmware_update.pnx.base64"))
-
-        authorizer = DummyAuthorizer()
-        authorizer.add_user(getpass.getuser(), "12345", d, perm="elradfmwMT")
-
-        handler = FTPHandler
-        handler.authorizer = authorizer
-
-        server = servers.FTPServer(ftp_socket, handler)
-
-        server.serve_forever()
-
-    ftp_thread = FtpThread(target=_ftp_server, args=[test_config, ftp_socket])
+    ftp_thread = FtpThread(directory=d, port=port, test_config=test_config, ftp_socket=ftp_socket)
     ftp_thread.daemon = True
-    ftp_thread.set_port(port)
     ftp_thread.start()
 
     yield ftp_thread
+
+    ftp_thread.stop()
 
     shutil.rmtree(d)
 
