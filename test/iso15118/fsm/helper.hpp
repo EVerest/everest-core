@@ -55,7 +55,6 @@ private:
 
     session::feedback::Callbacks callbacks;
     session::SessionLogger log;
-    bool session_stopped{false};
 
     d20::Context ctx;
 

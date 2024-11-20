@@ -28,8 +28,7 @@ void TbdController::loop() {
 
     if (not config.enable_sdp_server) {
         auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
-        session =
-            std::make_unique<Session>(std::move(connection), std::move(d20::SessionConfig(evse_setup)), callbacks);
+        session = std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks);
     }
 
     auto next_event = get_current_time_point();
@@ -48,8 +47,8 @@ void TbdController::loop() {
 
                 if (not config.enable_sdp_server) {
                     auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
-                    session = std::make_unique<Session>(std::move(connection),
-                                                        std::move(d20::SessionConfig(evse_setup)), callbacks);
+                    session =
+                        std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks);
                 }
             }
         }
@@ -112,7 +111,7 @@ void TbdController::handle_sdp_server_input() {
 
     const auto ipv6_endpoint = connection->get_public_endpoint();
 
-    session = std::make_unique<Session>(std::move(connection), std::move(d20::SessionConfig(evse_setup)), callbacks);
+    session = std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks);
 
     sdp_server->send_response(request, ipv6_endpoint);
 }

@@ -55,7 +55,6 @@ public:
 
 private:
     int fd{-1};
-    uint8_t buffer[2048];
     sockaddr_in6 destination_address{};
 };
 

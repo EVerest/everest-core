@@ -37,7 +37,7 @@ SCENARIO("Se/Deserialize authorization setup messages") {
 
         res.header = message_20::Header{{0xF2, 0x19, 0x15, 0xB9, 0xDD, 0xDC, 0x12, 0xD1}, 1691411798};
         res.response_code = message_20::datatypes::ResponseCode::OK;
-        res.authorization_services = {{message_20::datatypes::Authorization::EIM}};
+        res.authorization_services = {message_20::datatypes::Authorization::EIM};
         res.certificate_installation_service = true;
         res.authorization_mode = message_20::datatypes::EIM_ASResAuthorizationMode();
 
@@ -55,8 +55,8 @@ SCENARIO("Se/Deserialize authorization setup messages") {
 
         res.header = message_20::Header{{0xF2, 0x19, 0x15, 0xB9, 0xDD, 0xDC, 0x12, 0xD1}, 1691411798};
         res.response_code = message_20::datatypes::ResponseCode::OK;
-        res.authorization_services = {{message_20::datatypes::Authorization::EIM},
-                                      {message_20::datatypes::Authorization::PnC}};
+        res.authorization_services = {message_20::datatypes::Authorization::EIM,
+                                      message_20::datatypes::Authorization::PnC};
         res.certificate_installation_service = true;
 
         auto& mode = res.authorization_mode.emplace<message_20::datatypes::PnC_ASResAuthorizationMode>();

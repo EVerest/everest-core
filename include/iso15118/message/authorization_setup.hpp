@@ -31,7 +31,7 @@ struct AuthorizationSetupResponse {
     Header header;
     datatypes::ResponseCode response_code;
 
-    std::vector<datatypes::Authorization> authorization_services{{datatypes::Authorization::EIM}};
+    std::vector<datatypes::Authorization> authorization_services{datatypes::Authorization::EIM};
     bool certificate_installation_service{false};
     std::variant<datatypes::EIM_ASResAuthorizationMode, datatypes::PnC_ASResAuthorizationMode> authorization_mode =
         datatypes::EIM_ASResAuthorizationMode();
