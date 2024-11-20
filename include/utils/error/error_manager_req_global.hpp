@@ -32,15 +32,15 @@ private:
         ErrorCallback clear_callback;
     };
 
-    std::list<Subscription> subscriptions;
-
     void on_error_raised(const Error& error);
     void on_error_cleared(const Error& error);
 
-    SubscribeGlobalAllErrorsFunc subscribe_global_all_errors_func;
-
     std::shared_ptr<ErrorTypeMap> error_type_map;
     std::shared_ptr<ErrorDatabase> database;
+
+    SubscribeGlobalAllErrorsFunc subscribe_global_all_errors_func;
+
+    std::list<Subscription> subscriptions;
 };
 
 } // namespace error

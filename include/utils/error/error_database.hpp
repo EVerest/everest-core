@@ -17,6 +17,7 @@ public:
     using EditErrorFunc = std::function<void(ErrorPtr)>;
 
     ErrorDatabase() = default;
+    virtual ~ErrorDatabase() = default;
 
     virtual void add_error(ErrorPtr error) = 0;
     virtual std::list<ErrorPtr> get_errors(const std::list<ErrorFilter>& filters) const = 0;

@@ -44,6 +44,8 @@ public:
     void set_default_vendor_id(std::string vendor_id);
 
 private:
+    const std::shared_ptr<ErrorTypeMap> error_type_map;
+
     std::optional<ImplementationIdentifier> default_origin;
     std::optional<Severity> default_severity;
     std::optional<State> default_state;
@@ -51,8 +53,6 @@ private:
     std::optional<ErrorSubType> default_sub_type;
     std::optional<std::string> default_message;
     std::optional<std::string> default_vendor_id;
-
-    const std::shared_ptr<ErrorTypeMap> error_type_map;
 
     void set_description(Error& error) const;
 };

@@ -48,8 +48,6 @@ const static std::regex type_uri_regex{R"(^((?:\/[a-zA-Z0-9\-\_]+)+#\/[a-zA-Z0-9
 class Config {
 private:
     std::shared_ptr<RuntimeSettings> rs;
-    bool manager;
-
     json main;
 
     json manifests;

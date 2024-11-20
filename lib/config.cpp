@@ -398,7 +398,7 @@ std::tuple<json, int> Config::load_and_validate_with_schema(const fs::path& file
 Config::Config(std::shared_ptr<RuntimeSettings> rs) : Config(rs, false) {
 }
 
-Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), manager(manager) {
+Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs) {
     BOOST_LOG_FUNCTION();
 
     this->manifests = json({});
@@ -531,8 +531,6 @@ Config::Config(std::shared_ptr<RuntimeSettings> rs, bool manager) : rs(rs), mana
     }
 
     if (probe_module_id) {
-        auto& manifest = this->manifests["ProbeModule"];
-
         setup_probe_module_manifest(*probe_module_id, this->main, this->manifests);
 
         load_and_validate_manifest(*probe_module_id, this->main.at(*probe_module_id));

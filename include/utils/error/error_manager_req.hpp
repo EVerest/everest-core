@@ -40,11 +40,11 @@ private:
     void on_error_cleared(const Error& error);
     void on_error(const Error& error, const bool raised) const;
 
-    SubscribeErrorFunc subscribe_error_func;
-
     std::shared_ptr<ErrorTypeMap> error_type_map;
     std::shared_ptr<ErrorDatabase> database;
     std::list<ErrorType> allowed_error_types;
+
+    SubscribeErrorFunc subscribe_error_func;
 };
 
 } // namespace error

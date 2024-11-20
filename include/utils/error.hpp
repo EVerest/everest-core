@@ -71,14 +71,14 @@ struct Error {
     Error();
     ErrorType type;
     ErrorSubType sub_type;
-    std::string description;
     std::string message;
-    Severity severity;
+    std::string description;
     ImplementationIdentifier origin;
+    std::string vendor_id;
+    Severity severity;
     time_point timestamp;
     UUID uuid;
     State state;
-    std::string vendor_id;
 };
 
 using ErrorHandle = UUID;

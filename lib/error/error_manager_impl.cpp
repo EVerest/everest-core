@@ -68,7 +68,7 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const b
     std::list<ErrorPtr> res = database->remove_errors(filters);
     std::stringstream ss;
     ss << "Cleared " << res.size() << " errors of type " << type << " with sub_types:" << std::endl;
-    for (const ErrorPtr error : res) {
+    for (const ErrorPtr& error : res) {
         this->publish_cleared_error(*error);
         ss << "  - " << error->sub_type << std::endl;
     }
@@ -100,7 +100,7 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors() {
     std::list<ErrorPtr> res = database->remove_errors(filters);
     std::stringstream ss;
     ss << "Cleared " << res.size() << " errors:" << std::endl;
-    for (const ErrorPtr error : res) {
+    for (const ErrorPtr& error : res) {
         error->state = State::ClearedByModule;
         this->publish_cleared_error(*error);
         ss << "  - type: " << error->type << ", sub_type: " << error->sub_type << std::endl;

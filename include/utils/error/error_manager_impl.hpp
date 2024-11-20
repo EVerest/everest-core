@@ -57,12 +57,12 @@ private:
     bool can_be_cleared(const ErrorType& type, const ErrorSubType& sub_type) const;
     bool can_be_cleared(const ErrorType& type) const;
 
+    std::shared_ptr<ErrorTypeMap> error_type_map;
+    std::shared_ptr<ErrorDatabase> database;
+    std::list<ErrorType> allowed_error_types;
+
     PublishErrorFunc publish_raised_error;
     PublishErrorFunc publish_cleared_error;
-
-    std::shared_ptr<ErrorDatabase> database;
-    std::shared_ptr<ErrorTypeMap> error_type_map;
-    std::list<ErrorType> allowed_error_types;
 
     const bool validate_error_types;
 };
