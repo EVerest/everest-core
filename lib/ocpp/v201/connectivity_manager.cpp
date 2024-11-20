@@ -275,14 +275,20 @@ void ConnectivityManager::init_websocket() {
                                                VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
     }
 
-    this->websocket = std::make_unique<Websocket>(connection_options, this->evse_security, this->logging);
+    if (this->websocket == nullptr) {
+        this->websocket = std::make_unique<Websocket>(connection_options, this->evse_security, this->logging);
 
-    this->websocket->register_connected_callback(
-        std::bind(&ConnectivityManager::on_websocket_connected, this, std::placeholders::_1));
-    this->websocket->register_disconnected_callback(std::bind(&ConnectivityManager::on_websocket_disconnected, this));
-    this->websocket->register_closed_callback(
-        std::bind(&ConnectivityManager::on_websocket_closed, this, std::placeholders::_1));
+        this->websocket->register_connected_callback(
+            std::bind(&ConnectivityManager::on_websocket_connected, this, std::placeholders::_1));
+        this->websocket->register_disconnected_callback(
+            std::bind(&ConnectivityManager::on_websocket_disconnected, this));
+        this->websocket->register_closed_callback(
+            std::bind(&ConnectivityManager::on_websocket_closed, this, std::placeholders::_1));
+    } else {
+        this->websocket->set_connection_options(connection_options);
+    }
 
+    // Attach external callbacks everytime since they might have changed
     if (websocket_connection_failed_callback.has_value()) {
         this->websocket->register_connection_failed_callback(websocket_connection_failed_callback.value());
     }

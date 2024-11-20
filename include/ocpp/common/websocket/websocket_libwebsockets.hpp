@@ -87,8 +87,6 @@ private:
 private:
     std::shared_ptr<EvseSecurity> evse_security;
 
-    std::function<void()> reconnect_callback;
-
     // Connection related data
     Everest::SteadyTimer reconnect_timer_tpm;
     std::unique_ptr<std::thread> websocket_thread;
