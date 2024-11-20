@@ -253,27 +253,27 @@ function(ev_create_python_wheel_targets)
 
     if(USE_WHEELS)
         set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .)
+        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf build)
     else()
         set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} setup.py sdist --dist-dir ${WHEEL_OUTDIR})
+        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf src/*.egg-info)
     endif()
 
     add_custom_command(
         OUTPUT
         "${CHECK_DONE_FILE}"
 
-        # Remove build dir from pip
-        COMMAND
-        ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
         ${PACKAGE_BUILD_COMMAND}
+        COMMAND
+        ${PACKAGE_REMOVE_DIR_COMMAND}
         COMMAND
         ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY
         ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
         ${EV_CREATE_PYTHON_WHEEL_TARGETS_DEPENDS}
-        COMMENT
-        "Building wheel for ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
+        COMMENT "Building Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
     )
 
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_install_wheel
@@ -286,12 +286,12 @@ function(ev_create_python_wheel_targets)
         DEPENDS
         ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
         COMMENT
-        "Copy wheel for ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
+        "Copy Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
     )
 endfunction()
 
 macro(ev_setup_cmake_variables_python_wheel)
-    set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "" CACHE PATH "Path to install python wheels to")
+    set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "" CACHE PATH "Path to install python package to")
 
     if(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX STREQUAL "")
         if(NOT ${WHEEL_INSTALL_PREFIX} STREQUAL "")
@@ -302,7 +302,7 @@ macro(ev_setup_cmake_variables_python_wheel)
             message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX and WHEEL_INSTALL_PREFIX not set, using default: \${CMAKE_INSTALL_PREFIX}/../dist-wheels=${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}")
         endif()
 
-        set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}" CACHE PATH "Path to install python wheels to" FORCE)
+        set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}" CACHE PATH "Path to install python package to" FORCE)
     endif()
 
     message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX=${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}")
