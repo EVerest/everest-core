@@ -734,6 +734,9 @@ def main():
     common_parser.add_argument('--schemas-dir', '-sd', type=str,
                                help='everest framework directory containing the schema definitions (default: ../everest-framework/schemas)',
                                default=str(Path.cwd() / '../everest-framework/schemas'))
+    common_parser.add_argument('--build-dir', '-bd', type=str,
+                               help='everest build directory from which ev-cli will attempt to parse the everest framework schema definitions (default ./build)',
+                               default=str(Path.cwd() / 'build'))
     common_parser.add_argument('--clang-format-file', type=str, default=str(Path.cwd()),
                                help='Path to the directory, containing the .clang-format file (default: .)')
     common_parser.add_argument('--disable-clang-format', action='store_true', default=False,
@@ -844,10 +847,29 @@ def main():
 
         schemas_dir = Path(args.schemas_dir).resolve()
         if not schemas_dir.exists():
-            print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory\n'
-                  'doesn\'t exist.\n'
+            print('The default ("../everest-framework/schemas") xor supplied (via --schemas-dir) schemas directory'
+                  ' doesn\'t exist.\n'
                   f'dir: {schemas_dir}')
-            exit(1)
+            cmake_cache_path = Path(args.build_dir) / 'CMakeCache.txt'
+            print(f'Searching for everest-framework in: {cmake_cache_path}')
+            print('You can either provide the schemas directory with --schemas-dir or influence the'
+                  ' automatic search path by setting --build-dir (default: ./build)')
+            if not cmake_cache_path.exists():
+                print(f'CMakeCache.txt does not exist: {cmake_cache_path}')
+                exit(1)
+            with open(cmake_cache_path, 'r') as cmake_cache_file:
+                search = 'everest-framework_SOURCE_DIR:STATIC='
+                for line in cmake_cache_file:
+                    if line.startswith(search):
+                        found_schemas_dir = Path(line.replace(search, '', 1).strip(' \t\n\r')) / 'schemas'
+                        if found_schemas_dir.exists():
+                            print(f'Found everest-framework schemas directory: {found_schemas_dir}')
+                            user_choice = input('Do you want to use this? [Y/n] ').lower()
+                            if user_choice == 'y' or not user_choice:
+                                schemas_dir = found_schemas_dir
+                        break
+            if not schemas_dir.exists():
+                exit(1)
 
         validators = helpers.load_validators(schemas_dir)
 
