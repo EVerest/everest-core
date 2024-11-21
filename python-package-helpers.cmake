@@ -23,7 +23,7 @@ function(ev_add_pip_package)
 
     set_target_properties(${TARGET_NAME}
         PROPERTIES
-        SOURCE_DIRECTORY "${args_SOURCE_DIRECTORY}"
+            SOURCE_DIRECTORY "${args_SOURCE_DIRECTORY}"
     )
 endfunction()
 
@@ -69,9 +69,9 @@ function(ev_install_pip_package)
     # discussion of update behavior is needed before
     execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -m pip install ${PIP_INSTALL_ARGS} .
+            ${Python3_EXECUTABLE} -m pip install ${PIP_INSTALL_ARGS} .
         WORKING_DIRECTORY
-        ${SOURCE_DIRECTORY}
+            ${SOURCE_DIRECTORY}
     )
 endfunction()
 
@@ -103,19 +103,19 @@ function(ev_create_pip_install_dist_target)
     set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${arg_PACKAGE_NAME}_pip_install_dist_installed")
     add_custom_command(
         OUTPUT
-        "${CHECK_DONE_FILE}"
+            "${CHECK_DONE_FILE}"
         COMMENT
-        "Installing ${arg_PACKAGE_NAME} from distribution"
+            "Installing ${arg_PACKAGE_NAME} from distribution"
         WORKING_DIRECTORY
-        ${arg_PACKAGE_SOURCE_DIRECTORY}
+            ${arg_PACKAGE_SOURCE_DIRECTORY}
 
         # Remove build dir from pip
         COMMAND
-        ${CMAKE_COMMAND} -E remove_directory build
+            ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
-        ${Python3_EXECUTABLE} -m pip install --force-reinstall .
+            ${Python3_EXECUTABLE} -m pip install --force-reinstall .
         COMMAND
-        ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
+            ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
     )
 
     set(TARGET_NAME "${arg_PACKAGE_NAME}_pip_install_dist")
@@ -161,15 +161,15 @@ function(ev_create_pip_install_local_target)
 
         # Remove build dir from pip
         COMMAND
-        ${CMAKE_COMMAND} -E remove_directory build
+            ${CMAKE_COMMAND} -E remove_directory build
         COMMAND
-        ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
+            ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
         WORKING_DIRECTORY
-        ${arg_PACKAGE_SOURCE_DIRECTORY}
+            ${arg_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
-        ${arg_DEPENDS}
+            ${arg_DEPENDS}
         COMMENT
-        "Installing ${arg_PACKAGE_NAME} via user-mode from build"
+            "Installing ${arg_PACKAGE_NAME} via user-mode from build"
     )
     set_target_properties(${TARGET_NAME}
         PROPERTIES
@@ -245,7 +245,7 @@ function(ev_create_python_wheel_targets)
 
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
         DEPENDS
-        "${CHECK_DONE_FILE}"
+            "${CHECK_DONE_FILE}"
     )
 
     set(USE_WHEELS "ON" CACHE STRING "Enable or disable the use of python wheels - if off switch to tar.gz format")
@@ -264,29 +264,30 @@ function(ev_create_python_wheel_targets)
         "${CHECK_DONE_FILE}"
 
         COMMAND
-        ${PACKAGE_BUILD_COMMAND}
+            ${PACKAGE_BUILD_COMMAND}
         COMMAND
-        ${PACKAGE_REMOVE_DIR_COMMAND}
+            ${PACKAGE_REMOVE_DIR_COMMAND}
         COMMAND
-        ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
+            ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY
-        ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
+            ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}
         DEPENDS
-        ${EV_CREATE_PYTHON_WHEEL_TARGETS_DEPENDS}
-        COMMENT "Building Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
+            ${EV_CREATE_PYTHON_WHEEL_TARGETS_DEPENDS}
+        COMMENT
+            "Building Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
     )
 
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_install_wheel
         COMMAND
-        ${CMAKE_COMMAND} -E make_directory ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}
+            ${CMAKE_COMMAND} -E make_directory ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}
         COMMAND
-        ${CMAKE_COMMAND} -E copy_directory ${WHEEL_OUTDIR} ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}/
+            ${CMAKE_COMMAND} -E copy_directory ${WHEEL_OUTDIR} ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}/
         WORKING_DIRECTORY
-        ${CMAKE_CURRENT_SOURCE_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS
-        ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
+            ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
         COMMENT
-        "Copy Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
+            "Copy Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
     )
 endfunction()
 
@@ -334,11 +335,11 @@ function(ev_pip_install_local)
 
     execute_process(
         COMMAND
-        ${Python3_EXECUTABLE} -c "from setuptools import setup; setup()" --version
+            ${Python3_EXECUTABLE} -c "from setuptools import setup; setup()" --version
         WORKING_DIRECTORY
-        ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
+            ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
         OUTPUT_VARIABLE
-        EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION
+            EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
@@ -348,14 +349,14 @@ function(ev_pip_install_local)
         message(STATUS "${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME} not found, installing.")
         execute_process(
             COMMAND
-            ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
+                ${Python3_EXECUTABLE} -m pip install --force-reinstall -e .
             WORKING_DIRECTORY
-            ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
+                ${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}
             RESULTS_VARIABLE EV_RESULTS
         )
         execute_process(
             COMMAND
-            ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
+                ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
             RESULTS_VARIABLE EV_RESULTS
         )
     endif()
