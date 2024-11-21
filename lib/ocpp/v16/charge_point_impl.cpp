@@ -2359,8 +2359,6 @@ void ChargePointImpl::handleGetCompositeScheduleRequest(ocpp::Call<GetCompositeS
 void ChargePointImpl::handleClearChargingProfileRequest(ocpp::Call<ClearChargingProfileRequest> call) {
     EVLOG_debug << "Received ClearChargingProfileRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
 
-    // FIXME(kai): after a profile has been deleted we must notify interested parties (energy manager?)
-
     ClearChargingProfileResponse response;
     response.status = ClearChargingProfileStatus::Unknown;
 
@@ -2372,9 +2370,9 @@ void ChargePointImpl::handleClearChargingProfileRequest(ocpp::Call<ClearCharging
                this->smart_charging_handler->clear_all_profiles_with_filter(
                    call.msg.id, call.msg.connectorId, call.msg.stackLevel, call.msg.chargingProfilePurpose, true)) {
         response.status = ClearChargingProfileStatus::Accepted;
-
-    } else if (this->smart_charging_handler->clear_all_profiles_with_filter(
-                   call.msg.id, call.msg.connectorId, call.msg.stackLevel, call.msg.chargingProfilePurpose, false)) {
+    } else if (!call.msg.id and
+               this->smart_charging_handler->clear_all_profiles_with_filter(
+                   std::nullopt, call.msg.connectorId, call.msg.stackLevel, call.msg.chargingProfilePurpose, false)) {
         response.status = ClearChargingProfileStatus::Accepted;
     }
 
