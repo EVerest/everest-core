@@ -367,4 +367,24 @@ ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string) {
     }
     return ocpp::DateTime();
 }
+
+ocpp::ReservationCheckStatus
+to_ocpp_reservation_check_status(const types::reservation::ReservationCheckStatus& status) {
+    switch (status) {
+    case types::reservation::ReservationCheckStatus::NotReserved:
+        return ocpp::ReservationCheckStatus::NotReserved;
+    case types::reservation::ReservationCheckStatus::ReservedForToken:
+        return ocpp::ReservationCheckStatus::ReservedForToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndParentToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
+    }
+
+    EVLOG_warning << "Could not convert reservation check status. Returning default 'NotReserved.";
+    return ocpp::ReservationCheckStatus::NotReserved;
+}
+
 } // namespace ocpp_conversions

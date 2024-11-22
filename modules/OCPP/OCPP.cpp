@@ -723,6 +723,18 @@ void OCPP::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
+    this->charge_point->register_is_token_reserved_for_connector_callback(
+        [this](const int32_t connector, const std::string& id_token) -> ocpp::ReservationCheckStatus {
+            types::reservation::ReservationCheck reservation_check_request;
+            reservation_check_request.evse_id = connector;
+            reservation_check_request.id_token = id_token;
+
+            types::reservation::ReservationCheckStatus status =
+                this->r_reservation->call_exists_reservation(reservation_check_request);
+
+            return ocpp_conversions::to_ocpp_reservation_check_status(status);
+        });
+
     const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
 
     // publish charging schedules at least once on startup

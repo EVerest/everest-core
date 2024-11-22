@@ -484,20 +484,8 @@ void OCPP201::ready() {
 
         const types::reservation::ReservationCheckStatus reservation_status =
             this->r_reservation.at(0)->call_exists_reservation(reservation_check_request);
-        switch (reservation_status) {
-        case types::reservation::ReservationCheckStatus::NotReserved:
-            return ocpp::ReservationCheckStatus::NotReserved;
-        case types::reservation::ReservationCheckStatus::ReservedForToken:
-            return ocpp::ReservationCheckStatus::ReservedForToken;
-        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndParentToken:
-            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
-        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken:
-            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
-        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken:
-            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
-        }
 
-        return ocpp::ReservationCheckStatus::NotReserved;
+        return ocpp_conversions::to_ocpp_reservation_check_status(reservation_status);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
