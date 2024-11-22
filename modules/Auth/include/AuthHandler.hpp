@@ -96,10 +96,10 @@ public:
      * @param id_token          The token to check.
      * @param evse_id           The evse to check the reservation for.
      * @param group_id_token    The group id token to check.
-     * @return True if there is a reservation for the given token.
+     * @return The reservation check status
      */
-    bool handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
-                                   std::optional<std::string>& group_id_token);
+    ReservationCheckStatus handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                                     std::optional<std::string>& group_id_token);
 
     /**
      * @brief Callback to signal EvseManager that the given \p connector_id has been reserved with the given \p

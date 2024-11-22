@@ -564,11 +564,46 @@ std::pair<bool, std::optional<int32_t>> AuthHandler::handle_cancel_reservation(c
     return {false, std::nullopt};
 }
 
-bool AuthHandler::handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
-                                            std::optional<std::string>& group_id_token) {
+ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                                              std::optional<std::string>& group_id_token) {
+    // Evse id has no value.
     std::optional<int32_t> reservation_id =
         this->reservation_handler.matches_reserved_identifier(id_token, evse_id, group_id_token);
-    return reservation_id.has_value();
+
+    if (!evse_id.has_value()) {
+        if (reservation_id.has_value()) {
+            return ReservationCheckStatus::ReservedForToken;
+        }
+
+        return ReservationCheckStatus::NotReserved;
+    }
+
+    // Evse id has a value.
+    if (!this->reservation_handler.is_evse_reserved(evse_id.has_value())) {
+        // There is an evse id, but the evse is not reserved.
+        return ReservationCheckStatus::NotReserved;
+    }
+
+    if (reservation_id.has_value()) {
+        // There is an evse id and the reservation is for the given token.
+        return ReservationCheckStatus::ReservedForToken;
+    }
+
+    // Evse is reserved. No reservation for the given id_token. But there is also the group id token, let's do some
+    // checks here.
+    if (!group_id_token.has_value()) {
+        if (reservation_handler.has_reservation_parent_id(evse_id)) {
+            // Group id token has no value, but the reservation for this evse has a parent token. It might be that
+            // this token will be checked later.
+            return ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
+        }
+
+        // Group id token has no value and the reservation for this evse has no parent token.
+        return ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
+    }
+
+    // Group id token has a value but it is not valid for this reservation
+    return ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
 }
 
 bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {

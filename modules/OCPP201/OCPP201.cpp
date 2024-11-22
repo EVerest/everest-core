@@ -472,7 +472,7 @@ void OCPP201::ready() {
     callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
                                                          const std::optional<ocpp::CiString<36>> groupIdToken) {
         if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
-            return false;
+            return ocpp::ReservationCheckStatus::NotReserved;
         }
 
         types::reservation::ReservationCheck reservation_check_request;
@@ -482,7 +482,22 @@ void OCPP201::ready() {
             reservation_check_request.group_id_token = groupIdToken.value().get();
         }
 
-        return this->r_reservation.at(0)->call_exists_reservation(reservation_check_request);
+        const types::reservation::ReservationCheckStatus reservation_status =
+            this->r_reservation.at(0)->call_exists_reservation(reservation_check_request);
+        switch (reservation_status) {
+        case types::reservation::ReservationCheckStatus::NotReserved:
+            return ocpp::ReservationCheckStatus::NotReserved;
+        case types::reservation::ReservationCheckStatus::ReservedForToken:
+            return ocpp::ReservationCheckStatus::ReservedForToken;
+        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndParentToken:
+            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
+        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken:
+            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
+        case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken:
+            return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
+        }
+
+        return ocpp::ReservationCheckStatus::NotReserved;
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {

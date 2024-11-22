@@ -74,6 +74,15 @@ types:
       reservation_id:
         description: reservation_id
         type: integer
+  ReservationCheckStatus:
+    description: The reservation status of an evse id.
+    type: string
+    enum:
+      - NotReserved
+      - ReservedForToken
+      - ReservedForOtherTokenAndParentToken
+      - ReservedForOtherTokenAndHasNoParentToken
+      - ReservedForOtherTokenAndHasParentToken
   ReservationCheck:
     description: Check for a reserved token
     type: object

@@ -37,7 +37,8 @@ cmds:
       description: >-
         Returns true if there is a reservation for the given evse id and token or group id token. If there is an
         evse id given, it will also return true if a reservation with this token was made for evse id 0.
-      type: boolean
+      type: string
+      $ref: /reservation#/ReservationCheckStatus
 vars:
   reservation_update:
     description: >-

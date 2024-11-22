@@ -39,7 +39,8 @@ bool reservationImpl::handle_cancel_reservation(int& reservation_id) {
     return false;
 }
 
-bool reservationImpl::handle_exists_reservation(types::reservation::ReservationCheck& request) {
+types::reservation::ReservationCheckStatus
+reservationImpl::handle_exists_reservation(types::reservation::ReservationCheck& request) {
     return this->mod->auth_handler->handle_reservation_exists(request.id_token, request.evse_id,
                                                               request.group_id_token);
 };
