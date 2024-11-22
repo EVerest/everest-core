@@ -253,7 +253,7 @@ function(ev_create_python_wheel_targets)
 
     if(USE_WHEELS)
         set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .)
-        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf build)
+        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf build src/*.egg-info)
     else()
         set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} setup.py sdist --dist-dir ${WHEEL_OUTDIR})
         set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf src/*.egg-info)
