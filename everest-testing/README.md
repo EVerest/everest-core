@@ -71,6 +71,7 @@ An important function that you will frequently use when writing test cases is th
 - **inject_csms_mock**: (currently only OCPP 2.0.1) If set, the `central_system_v201` will wrap any csms handler method into an unittest mock. In particular, this allows changing the CSMS behavior even after the chargepoint is started by setting side effects of the mock. See `everest.testing.ocpp_utils.charge_point_v201.inject_csms_v201_mock` docstring for an example.
 - **csms_tls**: Enable/disable TLS for the CSMS websocket server. If given without arguments, enables TLS. First argument can be `False` to explicitly disable TLS. Further optional keyword arguments  `certificate`, `private_key`,`passphrase`, `root_ca` , and `verify_client_certificate` allow to overwrite SSL context options.
 - **ocpp_config_adaptions**: Can be given instances of `OCPPConfigAdjustmentStrategy` as positional arguments which will be applied to the resulting OCPP configuration.
+- **custom_central_system**: Can be given a instance of `CentralSystem` as the first positional argument which will use that instance as a central system for all fixtures that require a `central_system`.
 
 
 ## Add a conftest.py

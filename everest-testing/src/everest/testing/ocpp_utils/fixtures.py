@@ -20,7 +20,7 @@ from pyftpdlib.handlers import FTPHandler
 from everest.testing.core_utils.common import OCPPVersion
 from everest.testing.core_utils._configuration.everest_environment_setup import EverestEnvironmentOCPPConfiguration
 from everest.testing.core_utils.controller.everest_test_controller import EverestTestController
-from everest.testing.ocpp_utils.central_system import CentralSystem, inject_csms_v201_mock, inject_csms_v16_mock, \
+from everest.testing.ocpp_utils.central_system import CentralSystem, LocalCentralSystem, inject_csms_v201_mock, inject_csms_v16_mock, \
     determine_ssl_context
 from everest.testing.ocpp_utils.charge_point_utils import TestUtility, OcppTestConfiguration
 
@@ -66,8 +66,14 @@ async def central_system(request, ocpp_version: OCPPVersion, test_config):
 
     ssl_context = determine_ssl_context(request, test_config)
 
-    cs = CentralSystem(test_config.charge_point_info.charge_point_id,
-                       ocpp_version=ocpp_version)
+    central_system_marker = request.node.get_closest_marker('custom_central_system')
+
+    if central_system_marker:
+        assert isinstance(central_system_marker.args[0], CentralSystem)
+        cs = central_system_marker.args[0]
+    else:
+        cs = LocalCentralSystem(test_config.charge_point_info.charge_point_id,
+                                ocpp_version=ocpp_version)
 
     if request.node.get_closest_marker('inject_csms_mock'):
         if ocpp_version == OCPPVersion.ocpp201:

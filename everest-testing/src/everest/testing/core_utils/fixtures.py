@@ -74,6 +74,7 @@ def everest_config_strategies(request) -> list[EverestConfigAdjustmentStrategy]:
             additional_configuration_strategies.append(v)
     return additional_configuration_strategies
 
+
 @pytest.fixture
 def everest_environment(request,
                  tmp_path,
