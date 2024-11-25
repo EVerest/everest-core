@@ -79,18 +79,14 @@ types:
       The reservation status of an evse id.
       NotReserved: There is no reservation for the given evse id.
       NotReservedForToken: There is a reservation for the given evse id, but not for this token.
-      ReservedForOtherTokenAndParentToken: There is a reservation for the given evse id, but not for this token and
-                                           the given parent / group id token.
-      ReservedForOtherTokenAndHasNoParentToken: There is a reservation for another id token, and the reservation has no
-                                                parent / group id token.
+      ReservedForOtherToken: Reserved for other token and reservation has no parent token or parent token does not match.
       ReservedForOtherTokenAndHasParentToken: There is a reservation for another id token, but the reservation also has
                                               a group id token (which was not given when calling this function).
     type: string
     enum:
       - NotReserved
       - ReservedForToken
-      - ReservedForOtherTokenAndParentToken
-      - ReservedForOtherTokenAndHasNoParentToken
+      - ReservedForOtherToken
       - ReservedForOtherTokenAndHasParentToken
   ReservationCheck:
     description: Check for a reserved token

@@ -375,10 +375,8 @@ to_ocpp_reservation_check_status(const types::reservation::ReservationCheckStatu
         return ocpp::ReservationCheckStatus::NotReserved;
     case types::reservation::ReservationCheckStatus::ReservedForToken:
         return ocpp::ReservationCheckStatus::ReservedForToken;
-    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndParentToken:
-        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
-    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken:
-        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherToken;
     case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken:
         return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
     }

@@ -599,11 +599,11 @@ ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_to
         }
 
         // Group id token has no value and the reservation for this evse has no parent token.
-        return ReservationCheckStatus::ReservedForOtherTokenAndHasNoParentToken;
+        return ReservationCheckStatus::ReservedForOtherToken;
     }
 
     // Group id token has a value but it is not valid for this reservation
-    return ReservationCheckStatus::ReservedForOtherTokenAndParentToken;
+    return ReservationCheckStatus::ReservedForOtherToken;
 }
 
 bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
