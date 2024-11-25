@@ -48,7 +48,6 @@ bool EVSEContext::is_available() {
             occupied = true;
         }
         if (connector.get_state() != ConnectorState::UNAVAILABLE && connector.get_state() != ConnectorState::FAULTED) {
-
             available = true;
         }
     }

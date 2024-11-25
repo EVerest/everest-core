@@ -21,8 +21,9 @@ private: // Members
     std::map<int, std::unique_ptr<module::EVSEContext>>& evses;
     /// \brief Recursive mutex for the evse map (shared with AuthHandler).
     std::recursive_mutex& evse_mutex;
-    // std::map<uint32_t, Evse> evses;
+    /// \brief Key value store id.
     const std::string kvs_store_key_id;
+    /// \brief Key value store for storing reservations.
     kvsIntf* store;
     /// \brief Map of EVSE specific reservations, with EVSE id as key and the Reservation type as value.
     std::map<uint32_t, types::reservation::Reservation> evse_reservations;

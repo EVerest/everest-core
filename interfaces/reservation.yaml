@@ -35,8 +35,7 @@ cmds:
           The information to send for the check if there is a reservation on the given connector for the given token.
     result:
       description: >-
-        Returns true if there is a reservation for the given evse id and token or group id token. If there is an
-        evse id given, it will also return true if a reservation with this token was made for evse id 0.
+        Returns an enum which indicates the reservation status of the given id / id token / group id token combination.
       type: string
       $ref: /reservation#/ReservationCheckStatus
 vars:
