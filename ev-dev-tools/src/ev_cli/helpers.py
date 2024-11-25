@@ -688,7 +688,7 @@ def is_template_newer(file_info) -> Tuple[bool, str]:
     return (False, '')
 
 
-def write_content_to_file(file_info, strategy, only_diff=False, reason = ''):
+def write_content_to_file(file_info, strategy, only_diff=False, reason = '', check_license_header=False):
     # strategy:
     #   update: update only if dest older or not existent
     #   force-update: update, even if dest newer
@@ -730,6 +730,23 @@ def write_content_to_file(file_info, strategy, only_diff=False, reason = ''):
     if not file_dir.exists():
         file_dir.mkdir(parents=True, exist_ok=True)
 
+    # check if file header is different from license header
+    if check_license_header:
+        if 'license_header' in file_info:
+            original_content = file_path.read_text()
+            if not original_content.startswith(file_info['license_header']):
+                # determine likely end of license header
+                search_terms = ['#ifndef', '#pragma once', '#include']
+                original_license_header = ''
+                for search in search_terms:
+                    index = original_content.find(search)
+                    if index >= 0:
+                        original_license_header = original_content[0:index]
+                        break
+                print(f'Keeping the existing licence header:\n{original_license_header}')
+                file_info['content'] = file_info['content'].replace(
+                    file_info['license_header'], original_license_header.strip())
+
     file_path.write_text(file_info['content'])
 
 
@@ -740,3 +757,21 @@ def write_content_to_file_and_check_template(file_info, strategy, only_diff=Fals
     if newer:
         update_strategy = 'force-update'
     write_content_to_file(file_info, update_strategy, only_diff, reason)
+
+
+def get_license_header(license_dirs, license_url):
+    url_schemas = ['http://', 'https://']
+    for url_schema in url_schemas:
+        if license_url.startswith(url_schema):
+            license_url = license_url.replace(url_schema, '', 1)
+    license_path = None
+    for license_dir in license_dirs:
+        check_license_path = license_dir / license_url
+        print(f'Checking if license "{check_license_path}" exists...')
+        if check_license_path.exists():
+            license_path = check_license_path
+
+    if not license_path:
+        return None
+    with open(license_path, 'r') as custom_license_file:
+        return custom_license_file.read().strip()

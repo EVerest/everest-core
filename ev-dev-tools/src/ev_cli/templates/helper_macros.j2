@@ -89,6 +89,9 @@ void publish_{{ var.name }}({% if var.json_type != 'null' %}{{ cpp_type(var) }} 
 // Copyright{% if year_tag %} {{ year_tag }}{% endif %} Pionix GmbH and Contributors to EVerest
 {%- endmacro %}
 
+{% macro print_license_header(license) %}
+{{ license }}
+{%- endmacro %}
 
 {% macro print_template_info(version, title='DO NOT EDIT!', comment_sep='//') %}
 {{ comment_sep }}

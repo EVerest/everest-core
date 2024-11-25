@@ -1,5 +1,5 @@
-{% from "helper_macros.j2" import handle_cmd_signature, print_spdx_line %}
-{{ print_spdx_line('Apache-2.0') }}
+{% from "helper_macros.j2" import handle_cmd_signature, print_license_header %}
+{{ print_license_header(info.license_header) }}
 
 #include "{{ info.class_name}}.hpp"
 

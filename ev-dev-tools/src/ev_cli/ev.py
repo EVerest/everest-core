@@ -256,12 +256,24 @@ def generate_module_loader_files(rel_mod_dir, output_dir):
     return loader_files
 
 
-def generate_module_files(rel_mod_dir, update_flag):
+def generate_module_files(rel_mod_dir, update_flag, licenses):
     (_, _, mod) = rel_mod_dir.rpartition('/')
 
     mod_files = {'core': [], 'interfaces': [], 'docs': []}
     mod_path = work_dir / f'modules/{rel_mod_dir}/manifest.yaml'
     mod_def = helpers.load_validated_module_def(mod_path, validators['module'])
+
+    default_license_dir = Path(__file__).parent / 'licenses'
+    current_license_dir = work_dir / 'licenses'
+    additional_license_dir = Path(licenses)
+    license_dirs = [default_license_dir, current_license_dir, additional_license_dir]
+    license_url = mod_def['metadata']['license']
+    license_header = helpers.get_license_header(license_dirs, license_url)
+
+    if not license_header:
+        print(f'Could not find license "{license_url}" in {license_dirs}.')
+        print('Consider providing a additonal custom license directory with --licenses')
+        exit(1)
 
     tmpl_data = generate_tmpl_data_for_module(mod, mod_def)
     output_path = mod_path.parent
@@ -362,6 +374,7 @@ def generate_module_files(rel_mod_dir, update_flag):
 
         if_tmpl_data['info']['blocks'] = helpers.load_tmpl_blocks(
             impl_hpp_blocks, output_path / impl_hpp_file, update_flag)
+        if_tmpl_data['info']['license_header'] = license_header
 
         # FIXME (aw): time stamp should include parent interfaces modification dates
         mod_files['interfaces'].append({
@@ -370,7 +383,8 @@ def generate_module_files(rel_mod_dir, update_flag):
             'printable_name': impl_hpp_file,
             'content': templates['interface_impl.hpp'].render(if_tmpl_data),
             'template_path': Path(templates['interface_impl.hpp'].filename),
-            'last_mtime': last_mtime
+            'last_mtime': last_mtime,
+            'license_header': license_header
         })
 
         mod_files['interfaces'].append({
@@ -379,11 +393,13 @@ def generate_module_files(rel_mod_dir, update_flag):
             'printable_name': impl_cpp_file,
             'content': templates['interface_impl.cpp'].render(if_tmpl_data),
             'template_path': Path(templates['interface_impl.cpp'].filename),
-            'last_mtime': last_mtime
+            'last_mtime': last_mtime,
+            'license_header': license_header
         })
 
     cmakelists_file = output_path / 'CMakeLists.txt'
     tmpl_data['info']['blocks'] = helpers.load_tmpl_blocks(cmakelists_blocks, cmakelists_file, update_flag)
+    tmpl_data['info']['license_header'] = license_header
     mod_files['core'].append({
         'abbr': 'cmakelists',
         'path': cmakelists_file,
@@ -401,7 +417,8 @@ def generate_module_files(rel_mod_dir, update_flag):
         'path': mod_hpp_file,
         'content': templates['module.hpp'].render(tmpl_data),
         'template_path': Path(templates['module.hpp'].filename),
-        'last_mtime': mod_path.stat().st_mtime
+        'last_mtime': mod_path.stat().st_mtime,
+        'license_header': license_header
     })
 
     # module.cpp
@@ -411,7 +428,8 @@ def generate_module_files(rel_mod_dir, update_flag):
         'path': mod_cpp_file,
         'content': templates['module.cpp'].render(tmpl_data),
         'template_path': Path(templates['module.cpp'].filename),
-        'last_mtime': mod_path.stat().st_mtime
+        'last_mtime': mod_path.stat().st_mtime,
+        'license_header': license_header
     })
 
     # doc.rst
@@ -521,7 +539,7 @@ def generate_interface_headers(interface, all_interfaces_flag, output_dir):
 def module_create(args):
     create_strategy = 'force-create' if args.force else 'create'
 
-    mod_files = generate_module_files(args.module, False)
+    mod_files = generate_module_files(args.module, False, args.licenses)
 
     if args.only == 'which':
         helpers.print_available_mod_files(mod_files)
@@ -551,7 +569,7 @@ def module_update(args):
         update_strategy[file_name] = primary_update_strategy
 
     # FIXME (aw): refactor out this only handling and rename it properly
-    mod_files = generate_module_files(args.module, True)
+    mod_files = generate_module_files(args.module, True, args.licenses)
 
     if args.only == 'which':
         helpers.print_available_mod_files(mod_files)
@@ -568,13 +586,13 @@ def module_update(args):
             helpers.clang_format(args.clang_format_file, file_info)
 
     for file_info in mod_files['core']:
-        helpers.write_content_to_file(file_info, update_strategy[file_info['abbr']], args.diff)
+        helpers.write_content_to_file(file_info, update_strategy[file_info['abbr']], args.diff, '', True)
 
     for file_info in mod_files['interfaces']:
         if file_info['abbr'].endswith('.hpp'):
-            helpers.write_content_to_file(file_info, primary_update_strategy, args.diff)
+            helpers.write_content_to_file(file_info, primary_update_strategy, args.diff, '', True)
         else:
-            helpers.write_content_to_file(file_info, 'update-if-non-existent', args.diff)
+            helpers.write_content_to_file(file_info, 'update-if-non-existent', args.diff, '', True)
 
 
 def module_genld(args):
@@ -734,6 +752,9 @@ def main():
     common_parser.add_argument('--schemas-dir', '-sd', type=str,
                                help='everest framework directory containing the schema definitions (default: ../everest-framework/schemas)',
                                default=str(Path.cwd() / '../everest-framework/schemas'))
+    common_parser.add_argument('--licenses', '-lc', type=str,
+                               help='license directory from which ev-cli will attempt to parse custom license texts (default ../licenses)',
+                               default=str(Path.cwd() / '../licenses'))
     common_parser.add_argument('--build-dir', '-bd', type=str,
                                help='everest build directory from which ev-cli will attempt to parse the everest framework schema definitions (default ./build)',
                                default=str(Path.cwd() / 'build'))

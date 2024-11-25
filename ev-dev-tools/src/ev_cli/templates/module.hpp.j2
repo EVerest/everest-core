@@ -1,5 +1,5 @@
-{% from "helper_macros.j2" import print_template_info, insert_block, cpp_type, print_spdx_line %}
-{{ print_spdx_line('Apache-2.0') }}
+{% from "helper_macros.j2" import print_template_info, insert_block, cpp_type, print_license_header %}
+{{ print_license_header(info.license_header) }}
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
