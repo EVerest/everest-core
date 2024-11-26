@@ -101,14 +101,20 @@ public:
     virtual ~ChargePointInterface() = default;
 
     /// \brief Starts the ChargePoint, initializes and connects to the Websocket endpoint
-    /// \param bootreason   Optional bootreason (default: PowerUp).
-    virtual void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) = 0;
+    /// \param bootreason  Optional bootreason (default: PowerUp).
+    /// \param start_connecting Optional, set to false to initialize but not start connecting. Otherwise will connect to
+    /// the first network profile. (default: true)
+    virtual void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp, bool start_connecting = true) = 0;
 
     /// \brief Stops the ChargePoint. Disconnects the websocket connection and stops MessageQueue and all timers
     virtual void stop() = 0;
 
-    /// \brief Initializes the websocket and connects to CSMS if it is not yet connected
-    virtual void connect_websocket() = 0;
+    /// \brief Initializes the websocket and connects to a CSMS. Provide a network_profile_slot to connect to that
+    /// specific slot.
+    ///
+    /// \param network_profile_slot Optional slot to use when connecting. std::nullopt means the slot will be determined
+    /// automatically.
+    virtual void connect_websocket(std::optional<int32_t> network_profile_slot = std::nullopt) = 0;
 
     /// \brief Disconnects the the websocket connection to the CSMS if it is connected
     virtual void disconnect_websocket() = 0;
@@ -127,27 +133,9 @@ public:
     /// This is introduced because the websocket can take several minutes to timeout when a network interface becomes
     /// unavailable, whereas the system can detect this sooner.
     ///
-    /// \param configuration_slot   The slot of the network connection profile that is disconnected.
-    ///
-    virtual void on_network_disconnected(int32_t configuration_slot) = 0;
-
-    ///
-    /// \brief Can be called when a network is disconnected, for example when an ethernet cable is removed.
-    ///
-    /// This is introduced because the websocket can take several minutes to timeout when a network interface becomes
-    /// unavailable, whereas the system can detect this sooner.
-    ///
     /// \param ocpp_interface       The interface that is disconnected.
     ///
     virtual void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) = 0;
-
-    /// \brief Switch to a specific network connection profile given the configuration slot.
-    ///
-    /// Switch will only be done when the configuration slot has a higher priority.
-    ///
-    /// \param configuration_slot Slot in which the configuration is stored
-    /// \return true if the switch is possible.
-    virtual bool on_try_switch_network_connection_profile(const int32_t configuration_slot) = 0;
 
     /// \brief Chargepoint notifies about new firmware update status firmware_update_status. This function should be
     ///        called during a Firmware Update to indicate the current firmware_update_status.
@@ -376,20 +364,20 @@ public:
     /// present. This returns the value from the cached network connection profiles. \param
     /// network_configuration_priority \return
     virtual std::optional<NetworkConnectionProfile>
-    get_network_connection_profile(const int32_t configuration_slot) = 0;
+    get_network_connection_profile(const int32_t configuration_slot) const = 0;
 
     /// \brief Get the priority of the given configuration slot.
     /// \param configuration_slot   The configuration slot to get the priority from.
     /// \return The priority if the configuration slot exists.
     ///
-    virtual std::optional<int> get_configuration_slot_priority(const int configuration_slot) = 0;
+    virtual std::optional<int> get_priority_from_configuration_slot(const int configuration_slot) const = 0;
 
-    /// @brief Get the network connection priorities.
+    /// @brief Get the network connection slots sorted by priority.
     /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
     /// priority.
-    /// @return The network connection priorities
+    /// @return The network connection slots
     ///
-    virtual const std::vector<int>& get_network_connection_priorities() const = 0;
+    virtual const std::vector<int>& get_network_connection_slots() const = 0;
 };
 
 /// \brief Class implements OCPP2.0.1 Charging Station
@@ -502,10 +490,6 @@ private:
     GetCompositeScheduleResponse
     get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
                                     const std::set<ChargingProfilePurposeEnum>& profiles_to_ignore = {});
-
-    /// \brief Removes all network connection profiles below the actual security profile and stores the new list in the
-    /// device model
-    void remove_network_connection_profiles_below_actual_security_profile();
 
     void message_callback(const std::string& message);
     void update_aligned_data_interval();
@@ -890,18 +874,14 @@ public:
 
     ~ChargePoint();
 
-    void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp) override;
+    void start(BootReasonEnum bootreason = BootReasonEnum::PowerUp, bool start_connecting = true) override;
 
     void stop() override;
 
-    virtual void connect_websocket() override;
+    void connect_websocket(std::optional<int32_t> network_profile_slot = std::nullopt) override;
     virtual void disconnect_websocket() override;
 
-    void on_network_disconnected(int32_t configuration_slot) override;
-
     void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) override;
-
-    bool on_try_switch_network_connection_profile(const int32_t configuration_slot) override;
 
     void on_firmware_update_status_notification(int32_t request_id,
                                                 const FirmwareStatusEnum& firmware_update_status) override;
@@ -991,11 +971,12 @@ public:
     std::vector<CompositeSchedule> get_all_composite_schedules(const int32_t duration,
                                                                const ChargingRateUnitEnum& unit) override;
 
-    std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot) override;
+    std::optional<NetworkConnectionProfile>
+    get_network_connection_profile(const int32_t configuration_slot) const override;
 
-    std::optional<int> get_configuration_slot_priority(const int configuration_slot) override;
+    std::optional<int> get_priority_from_configuration_slot(const int configuration_slot) const override;
 
-    const std::vector<int>& get_network_connection_priorities() const override;
+    const std::vector<int>& get_network_connection_slots() const override;
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model

@@ -112,7 +112,7 @@ ChargePoint::~ChargePoint() {
     this->auth_cache_cleanup_thread.join();
 }
 
-void ChargePoint::start(BootReasonEnum bootreason) {
+void ChargePoint::start(BootReasonEnum bootreason, bool start_connecting) {
     this->message_queue->start();
 
     this->bootreason = bootreason;
@@ -124,7 +124,9 @@ void ChargePoint::start(BootReasonEnum bootreason) {
     this->boot_notification_req(bootreason);
     // call clear_invalid_charging_profiles when system boots
     this->clear_invalid_charging_profiles();
-    this->connectivity_manager->start();
+    if (start_connecting) {
+        this->connectivity_manager->connect();
+    }
 
     const std::string firmware_version =
         this->device_model->get_value<std::string>(ControllerComponentVariables::FirmwareVersion);
@@ -158,31 +160,23 @@ void ChargePoint::stop() {
     this->heartbeat_timer.stop();
     this->boot_notification_timer.stop();
     this->certificate_signed_timer.stop();
-    this->connectivity_manager->stop();
+    this->connectivity_manager->disconnect();
     this->client_certificate_expiration_check_timer.stop();
     this->v2g_certificate_expiration_check_timer.stop();
     this->monitoring_updater.stop_monitoring();
     this->message_queue->stop();
 }
 
-void ChargePoint::connect_websocket() {
-    this->connectivity_manager->connect();
-}
-
 void ChargePoint::disconnect_websocket() {
-    this->connectivity_manager->disconnect_websocket();
-}
-
-void ChargePoint::on_network_disconnected(int32_t configuration_slot) {
-    this->connectivity_manager->on_network_disconnected(configuration_slot);
+    this->connectivity_manager->disconnect();
 }
 
 void ChargePoint::on_network_disconnected(OCPPInterfaceEnum ocpp_interface) {
     this->connectivity_manager->on_network_disconnected(ocpp_interface);
 }
 
-bool ChargePoint::on_try_switch_network_connection_profile(const int32_t configuration_slot) {
-    return this->connectivity_manager->on_try_switch_network_connection_profile(configuration_slot);
+void ChargePoint::connect_websocket(std::optional<int32_t> network_profile_slot) {
+    this->connectivity_manager->connect(network_profile_slot);
 }
 
 void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
@@ -1221,53 +1215,6 @@ void ChargePoint::init_certificate_expiration_check_timers() {
             .value_or(60)));
 }
 
-void ChargePoint::remove_network_connection_profiles_below_actual_security_profile() {
-    // Remove all the profiles that are a lower security level than security_level
-    const auto security_level = this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
-
-    auto network_connection_profiles = json::parse(
-        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
-
-    auto is_lower_security_level = [security_level](const SetNetworkProfileRequest& item) {
-        return item.connectionData.securityProfile < security_level;
-    };
-
-    network_connection_profiles.erase(
-        std::remove_if(network_connection_profiles.begin(), network_connection_profiles.end(), is_lower_security_level),
-        network_connection_profiles.end());
-
-    this->device_model->set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
-                                  ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
-                                  AttributeEnum::Actual, network_connection_profiles.dump(),
-                                  VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-
-    // Update the NetworkConfigurationPriority so only remaining profiles are in there
-    const auto network_priority = ocpp::split_string(
-        this->device_model->get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority), ',');
-
-    auto in_network_profiles = [&network_connection_profiles](const std::string& item) {
-        auto is_same_slot = [&item](const SetNetworkProfileRequest& profile) {
-            return std::to_string(profile.configurationSlot) == item;
-        };
-        return std::any_of(network_connection_profiles.begin(), network_connection_profiles.end(), is_same_slot);
-    };
-
-    std::string new_network_priority;
-    for (const auto& item : network_priority) {
-        if (in_network_profiles(item)) {
-            if (!new_network_priority.empty()) {
-                new_network_priority += ',';
-            }
-            new_network_priority += item;
-        }
-    }
-
-    this->device_model->set_value(ControllerComponentVariables::NetworkConfigurationPriority.component,
-                                  ControllerComponentVariables::NetworkConfigurationPriority.variable.value(),
-                                  AttributeEnum::Actual, new_network_priority,
-                                  VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-}
-
 void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
     const auto& json_message = message.message;
     try {
@@ -1815,7 +1762,6 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
         if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
             this->connectivity_manager->set_websocket_authorization_key(set_variable_data.attributeValue.get());
-            this->connectivity_manager->disconnect_websocket(WebsocketCloseReason::ServiceRestart);
         }
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
@@ -2418,7 +2364,7 @@ void ChargePoint::handle_certificate_signed_req(Call<CertificateSignedRequest> c
     if (response.status == CertificateSignedStatusEnum::Accepted and
         cert_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate and
         this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
-        this->connectivity_manager->disconnect_websocket(WebsocketCloseReason::ServiceRestart);
+        this->connectivity_manager->on_charging_station_certificate_changed();
 
         const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
         std::string tech_info = "Changed charging station certificate";
@@ -2500,7 +2446,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
             this->callbacks.time_sync_callback.value()(msg.currentTime);
         }
 
-        this->remove_network_connection_profiles_below_actual_security_profile();
+        this->connectivity_manager->confirm_successful_connection();
 
         // set timers
         if (msg.interval > 0) {
@@ -4354,33 +4300,29 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
                                                const NetworkConnectionProfile& network_connection_profile) {
     this->message_queue->resume(this->message_queue_resume_delay);
 
-    const auto& security_profile_cv = ControllerComponentVariables::SecurityProfile;
-    if (security_profile_cv.variable.has_value()) {
-        this->device_model->set_read_only_value(
-            security_profile_cv.component, security_profile_cv.variable.value(), AttributeEnum::Actual,
-            std::to_string(network_connection_profile.securityProfile), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
-    }
+    if (this->registration_status == RegistrationStatusEnum::Accepted) {
+        this->connectivity_manager->confirm_successful_connection();
 
-    if (this->registration_status == RegistrationStatusEnum::Accepted and
-        this->time_disconnected.time_since_epoch() != 0s) {
-        // handle offline threshold
-        //  Get the current time point using steady_clock
-        auto offline_duration = std::chrono::steady_clock::now() - this->time_disconnected;
+        if (this->time_disconnected.time_since_epoch() != 0s) {
+            // handle offline threshold
+            //  Get the current time point using steady_clock
+            auto offline_duration = std::chrono::steady_clock::now() - this->time_disconnected;
 
-        // B04.FR.01
-        // If offline period exceeds offline threshold then send the status notification for all connectors
-        if (offline_duration >
-            std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::OfflineThreshold))) {
-            EVLOG_debug << "offline for more than offline threshold ";
-            this->component_state_manager->send_status_notification_all_connectors();
-        } else {
-            // B04.FR.02
-            // If offline period doesn't exceed offline threshold then send the status notification for all
-            // connectors that changed state
-            EVLOG_debug << "offline for less than offline threshold ";
-            this->component_state_manager->send_status_notification_changed_connectors();
+            // B04.FR.01
+            // If offline period exceeds offline threshold then send the status notification for all connectors
+            if (offline_duration > std::chrono::seconds(this->device_model->get_value<int>(
+                                       ControllerComponentVariables::OfflineThreshold))) {
+                EVLOG_debug << "offline for more than offline threshold ";
+                this->component_state_manager->send_status_notification_all_connectors();
+            } else {
+                // B04.FR.02
+                // If offline period doesn't exceed offline threshold then send the status notification for all
+                // connectors that changed state
+                EVLOG_debug << "offline for less than offline threshold ";
+                this->component_state_manager->send_status_notification_changed_connectors();
+            }
+            this->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
-        this->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
     }
     this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
 
@@ -4693,16 +4635,17 @@ std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const in
     return composite_schedules;
 }
 
-std::optional<NetworkConnectionProfile> ChargePoint::get_network_connection_profile(const int32_t configuration_slot) {
+std::optional<NetworkConnectionProfile>
+ChargePoint::get_network_connection_profile(const int32_t configuration_slot) const {
     return this->connectivity_manager->get_network_connection_profile(configuration_slot);
 }
 
-std::optional<int> ChargePoint::get_configuration_slot_priority(const int configuration_slot) {
-    return this->connectivity_manager->get_configuration_slot_priority(configuration_slot);
+std::optional<int> ChargePoint::get_priority_from_configuration_slot(const int configuration_slot) const {
+    return this->connectivity_manager->get_priority_from_configuration_slot(configuration_slot);
 }
 
-const std::vector<int>& ChargePoint::get_network_connection_priorities() const {
-    return this->connectivity_manager->get_network_connection_priorities();
+const std::vector<int>& ChargePoint::get_network_connection_slots() const {
+    return this->connectivity_manager->get_network_connection_slots();
 }
 
 // Static functions
