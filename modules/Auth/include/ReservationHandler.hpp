@@ -134,6 +134,14 @@ public:
                                                                 const types::reservation::ReservationEndReason reason);
 
     ///
+    /// \brief Cancel a reservation.
+    /// \param evse_id              The evse id to cancel the reservation for.
+    /// \param execute_callback     True if the `reservation_cancelled_callback` must be called.
+    /// \return True if the reservation could be cancelled.
+    ///
+    bool cancel_reservation(const uint32_t evse_id, const bool execute_callback);
+
+    ///
     /// \brief Register reservation cancelled callback.
     /// \param callback The callback that should be called when a reservation is cancelled.
     ///

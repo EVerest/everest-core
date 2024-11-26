@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 469629c615e369f4bb77b3b2f861e0d56b550d15
+  git_tag: feature/958-reservation-all-connectors-reserved
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.4.3
+  git_tag: feature/raise_error
 
 # unit testing
 gtest:
