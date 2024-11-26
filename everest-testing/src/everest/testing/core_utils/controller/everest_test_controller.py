@@ -86,6 +86,26 @@ class EverestTestController(TestController):
             f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/cmd/execute_charging_session",
             "sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 32,3;sleep 5;diode_fail;sleep 36000;unplug")
 
+    def raise_error(self, connector_id=1):
+        raise_error_payload = {
+            "error_type": "MREC6UnderVoltage",
+            "raise": "true"
+        }
+
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/error",
+            json.dumps(raise_error_payload))
+
+    def clear_error(self, connector_id=1):
+        clear_error_payload = {
+            "error_type": "MREC6UnderVoltage",
+            "raise": "false"
+        }
+
+        self._mqtt_client.publish(
+            f"{self._mqtt_external_prefix}everest_external/nodered/{connector_id}/carsim/error",
+            json.dumps(clear_error_payload))
+
     def publish(self, topic, payload):
         self._mqtt_client.publish(topic, payload)
 

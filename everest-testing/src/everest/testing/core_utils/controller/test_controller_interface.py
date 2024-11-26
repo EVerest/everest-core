@@ -71,3 +71,15 @@ class TestController():
         Produces an RCD Error.
         """
         raise NotImplementedError()
+
+    def raise_error(self, connector_id):
+        """
+        Produces an error (MREC6UnderVoltage).
+        """
+        raise NotImplementedError()
+
+    def clear_error(self, connector_id):
+        """
+        Clears an error (MREC6UnderVoltage).
+        """
+        raise NotImplementedError()
