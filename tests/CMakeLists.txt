@@ -32,42 +32,56 @@ add_compile_definitions(BUILD_TESTING_EVSE_SECURITY)
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
 
-install(
-    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
-    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_multi.sh"
+setup_target_for_coverage_gcovr_html(
+    NAME ${PROJECT_NAME}_gcovr_coverage
+    EXECUTABLE ctest
+    DEPENDENCIES ${TEST_TARGET_NAME}
+    EXCLUDE "tests/*"
+)
+
+setup_target_for_coverage_gcovr_xml(
+    NAME ${PROJECT_NAME}_gcovr_coverage_xml
+    EXECUTABLE ctest
+    DEPENDENCIES ${TEST_TARGET_NAME}
+    EXCLUDE "tests/*"
+)
+
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/generate_test_certs_multi.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
 
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/configs"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/configs"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
     FILES_MATCHING PATTERN "*.cnf"
 )
 
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/future_leaf"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/future_leaf"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
     FILES_MATCHING PATTERN "*"
 )
 
-install(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/expired_leaf"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/expired_leaf"
         DESTINATION "${CMAKE_BINARY_DIR}/tests"
         FILES_MATCHING PATTERN "*"
 )
 
-install(
-    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/expired_runtime"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/expired_runtime"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
     FILES_MATCHING PATTERN "*"
 )
 
-install(
-    PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/create-pki.sh"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/create-pki.sh"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
 
-install(
-    FILES "${CMAKE_CURRENT_SOURCE_DIR}/openssl-pki.conf"
+file(COPY
+    "${CMAKE_CURRENT_SOURCE_DIR}/openssl-pki.conf"
     DESTINATION "${CMAKE_BINARY_DIR}/tests"
 )
