@@ -299,26 +299,6 @@ void OCPP201::init() {
             }
         });
     }
-
-    const auto error_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, false, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, true, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
 
 void OCPP201::ready() {
@@ -699,6 +679,26 @@ void OCPP201::ready() {
         evse_connector_structure, std::move(device_model_storage), this->ocpp_share_path.string(),
         this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
         std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
 
     // publish charging schedules at least once on startup
     charging_schedules_callback();
