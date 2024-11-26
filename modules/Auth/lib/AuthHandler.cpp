@@ -725,7 +725,11 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         check_reservations = true;
         break;
     case SessionEventEnum::ReservationStart:
+        break;
     case SessionEventEnum::ReservationEnd: {
+        if (reservation_handler.is_evse_reserved(evse_id)) {
+            reservation_handler.cancel_reservation(evse_id, true);
+        }
         break;
     }
     /// explicitly fall through all the SessionEventEnum values we are not handling

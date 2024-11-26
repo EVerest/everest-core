@@ -313,6 +313,19 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
     return result;
 }
 
+bool ReservationHandler::cancel_reservation(const uint32_t evse_id, const bool execute_callback) {
+    auto it = this->evse_reservations.find(evse_id);
+    if (it != this->evse_reservations.end()) {
+        int reservation_id = it->second.reservation_id;
+        return this
+            ->cancel_reservation(reservation_id, execute_callback, types::reservation::ReservationEndReason::Cancelled)
+            .first;
+    } else {
+        EVLOG_warning << "Could not cancel reservation with evse id " << evse_id;
+        return false;
+    }
+}
+
 void ReservationHandler::register_reservation_cancelled_callback(
     const std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                              const types::reservation::ReservationEndReason reason,
