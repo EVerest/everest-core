@@ -12,6 +12,8 @@
 #include <set>
 #include <stdio.h>
 
+#include <cert_rehash/c_rehash.hpp>
+
 #include <evse_security/certificate/x509_bundle.hpp>
 #include <evse_security/certificate/x509_hierarchy.hpp>
 #include <evse_security/certificate/x509_wrapper.hpp>
@@ -1551,6 +1553,36 @@ std::string EvseSecurity::get_verify_file(CaCertificateType certificate_type) {
             return result.info.value().certificate.value().string();
         }
     }
+
+    return {};
+}
+
+std::string EvseSecurity::get_verify_location(CaCertificateType certificate_type) {
+
+    std::lock_guard<std::mutex> guard(EvseSecurity::security_mutex);
+
+    try {
+        // Support bundle files, in case the certificates contain
+        // multiple entries (should be 3) as per the specification
+        X509CertificateBundle verify_location(this->ca_bundle_path_map.at(certificate_type), EncodingFormat::PEM);
+
+        const auto location_path = verify_location.get_path();
+
+        EVLOG_info << "Requesting certificate location: ["
+                   << conversions::ca_certificate_type_to_string(certificate_type) << "] location:" << location_path;
+
+        if (!verify_location.empty() &&
+            (!verify_location.is_using_directory() || hash_dir(location_path.c_str()) == 0)) {
+            return location_path;
+        }
+
+    } catch (const CertificateLoadException& e) {
+        EVLOG_error << "Could not obtain verify location, wrong format for certificate: "
+                    << this->ca_bundle_path_map.at(certificate_type) << " with error: " << e.what();
+    }
+
+    EVLOG_error << "Could not find any CA certificate for: "
+                << conversions::ca_certificate_type_to_string(certificate_type);
 
     return {};
 }

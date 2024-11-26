@@ -412,6 +412,13 @@ TEST_F(EvseSecurityTests, retrieve_root_ca) {
     ASSERT_EQ(path, retrieved_path);
 }
 
+TEST_F(EvseSecurityTests, retrieve_root_location) {
+    std::string file_path = "certs/ca/v2g/V2G_CA_BUNDLE.pem";
+    std::string retrieved_file_location = this->evse_security->get_verify_location(CaCertificateType::V2G);
+
+    ASSERT_EQ(file_path, retrieved_file_location);
+}
+
 TEST_F(EvseSecurityTests, install_root_ca_01) {
     const auto v2g_root_ca = read_file_to_string(fs::path("certs/ca/v2g/V2G_ROOT_CA_NEW.pem"));
     const auto result = this->evse_security->install_ca_certificate(v2g_root_ca, CaCertificateType::V2G);

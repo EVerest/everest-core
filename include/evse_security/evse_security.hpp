@@ -227,6 +227,13 @@ public:
     /// @return CA certificate file
     std::string get_verify_file(CaCertificateType certificate_type);
 
+    /// @brief Retrieves the PEM formatted CA bundle location for the given \p certificate_type It is not recommended to
+    /// add the SUBCAs to any root certificate bundle, but to leave them in the leaf file. Returns either file
+    /// or directory where the certificates are located. In the case of directory, does also rehashing the directory.
+    /// @param certificate_type
+    /// @return CA certificate location
+    std::string get_verify_location(CaCertificateType certificate_type);
+
     /// @brief An extension of 'get_verify_file' with error handling included
     GetCertificateInfoResult get_ca_certificate_info(CaCertificateType certificate_type);
 

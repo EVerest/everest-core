@@ -77,6 +77,11 @@ if (EVSE_SECURITY_INSTALL)
         PATTERN "detail" EXCLUDE
     )
 
+    install(
+        DIRECTORY 3rd_party/
+        TYPE INCLUDE
+    )
+
     evc_setup_package(
         NAME everest-evse_security
         NAMESPACE everest
