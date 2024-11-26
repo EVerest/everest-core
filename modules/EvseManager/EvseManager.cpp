@@ -96,7 +96,7 @@ void EvseManager::init() {
     }
 
     reserved = false;
-    reservation_id = 0;
+    reservation_id = -1;
 
     hlc_waiting_for_auth_eim = false;
     hlc_waiting_for_auth_pnc = false;
@@ -1266,34 +1266,53 @@ bool EvseManager::update_max_current_limit(types::energy::ExternalLimits& limits
     return true;
 }
 
-bool EvseManager::reserve(int32_t id) {
+bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
+    EVLOG_debug << "Reserve called for reservation id " << id
+                << ", signal reservation event: " << signal_reservation_event;
 
     // is the evse Unavailable?
     if (charger->get_current_state() == Charger::EvseState::Disabled) {
+        EVLOG_info << "Rejecting reservation because charger is disabled.";
         return false;
     }
 
     // is the evse faulted?
     if (charger->stop_charging_on_fatal_error()) {
+        EVLOG_info << "Rejecting reservation because of a fatal error.";
         return false;
     }
 
     // is the connector currently ready to accept a new car?
     if (charger->get_current_state() not_eq Charger::EvseState::Idle) {
+        EVLOG_info << "Rejecting reservation because evse is not idle";
         return false;
     }
 
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_reserve);
 
-    if (not reserved) {
+    const bool overwrite_reservation = (this->reservation_id == id);
+
+    if (reserved) {
+        EVLOG_info << "Rejecting reservation because evse is already reserved";
+    }
+
+    // Check if this evse is not already reserved, or overwrite reservation if it is for the same reservation id.
+    if (not reserved || overwrite_reservation) {
+        EVLOG_debug << "Make the reservation with id " << id;
         reserved = true;
         reservation_id = id;
 
-        // publish event to other modules
-        types::evse_manager::SessionEvent se;
-        se.event = types::evse_manager::SessionEventEnum::ReservationStart;
+        // When overwriting the reservation, don't signal.
+        if (not overwrite_reservation && signal_reservation_event) {
+            // publish event to other modules
+            types::evse_manager::SessionEvent se;
+            se.event = types::evse_manager::SessionEventEnum::ReservationStart;
 
-        signalReservationEvent(se);
+            // Normally we should signal for each connector when an evse is reserved, but since in this implementation
+            // each evse only has one connector, this is sufficient for now.
+            signalReservationEvent(se);
+        }
+
         return true;
     }
 
@@ -1304,8 +1323,9 @@ void EvseManager::cancel_reservation(bool signal_event) {
 
     Everest::scoped_lock_timeout lock(reservation_mutex, Everest::MutexDescription::EVSE_cancel_reservation);
     if (reserved) {
+        EVLOG_debug << "Reservation cancelled";
         reserved = false;
-        reservation_id = 0;
+        reservation_id = -1;
 
         // publish event to other modules
         if (signal_event) {

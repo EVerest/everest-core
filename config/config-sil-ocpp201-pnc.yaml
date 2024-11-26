@@ -143,6 +143,9 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
   evse_security:
     module: EvseSecurity
     config_module:

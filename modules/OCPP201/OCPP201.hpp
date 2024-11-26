@@ -24,6 +24,7 @@
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
+#include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -61,7 +62,8 @@ public:
             std::unique_ptr<evse_securityIntf> r_security,
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
             std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
-            std::vector<std::unique_ptr<display_messageIntf>> r_display_message, Conf& config) :
+            std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
+            std::vector<std::unique_ptr<reservationIntf>> r_reservation, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_auth_validator(std::move(p_auth_validator)),
@@ -76,6 +78,7 @@ public:
         r_auth(std::move(r_auth)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
         r_display_message(std::move(r_display_message)),
+        r_reservation(std::move(r_reservation)),
         config(config) {
     }
 
@@ -92,6 +95,7 @@ public:
     const std::unique_ptr<authIntf> r_auth;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
+    const std::vector<std::unique_ptr<reservationIntf>> r_reservation;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -155,13 +159,14 @@ private:
                             const types::evse_manager::SessionEvent& session_event);
     void process_deauthorized(const int32_t evse_id, const int32_t connector_id,
                               const types::evse_manager::SessionEvent& session_event);
+    void process_reserved(const int32_t evse_id, const int32_t connector_id);
+    void process_reservation_end(const int32_t evse_id, const int32_t connector_id);
 
     /// \brief This function publishes the given \p composite_schedules via the ocpp interface
     void publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
 
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
     void set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
-
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

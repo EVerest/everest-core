@@ -97,7 +97,8 @@ public:
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
         r_display_message(std::move(r_display_message)),
-        config(config){};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
