@@ -37,6 +37,8 @@ message(STATUS "Building libiso15118 with the following compile options: ${ISO15
 
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(ISO15118_BUILD_TESTING ON)
+    evc_include(CodeCoverage)
+    append_coverage_compiler_flags()
 endif()
 
 # dependencies
@@ -54,9 +56,25 @@ add_subdirectory(input)
 add_subdirectory(src)
 
 if (ISO15118_BUILD_TESTING)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE) # TODO(sl): Check if necessary
+
     include(CTest)
     list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
     add_subdirectory(test)
+
+    # FIXME(sl): Set gcovr correctly so that it finds the catch2 files. 
+    set(GCOVR_ADDITIONAL_ARGS "--gcov-ignore-errors=no_working_dir_found")
+    setup_target_for_coverage_gcovr_html(
+        NAME ${PROJECT_NAME}_gcovr_coverage
+        EXECUTABLE ctest
+        EXCLUDE "test/*" "build/*"
+    )
+
+    setup_target_for_coverage_gcovr_xml(
+        NAME ${PROJECT_NAME}_gcovr_coverage_xml
+        EXECUTABLE ctest
+        EXCLUDE "test/*" "build/*"
+    )
 endif()
 
 if (ISO15118_INSTALL)

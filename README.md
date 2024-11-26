@@ -43,4 +43,14 @@ ninja -C build
 
 # Running tests
 ninja -C build test
+
+# Generating a code coverage (BUILD_TESTING should be enabled)
+ninja -C build iso15118_gcovr_coverage
+```
+
+The coverage report will be available in the index.html file in the `build/iso15118_gcovr_coverage` directory.
+
+Version 8.2 or higher of gcovr is required for the coverage report. Install gcovr release from PyPI:
+```
+pip install gcovr
 ```

@@ -1,4 +1,4 @@
-name: Build and test libiso15118
+name: Build, lint and test libiso15118
 on: 
   pull_request: {}
   workflow_dispatch:
@@ -11,46 +11,24 @@ on:
         options:
           - 'ubuntu-22.04'
           - 'large-ubuntu-22.04-xxl'
+  schedule:
+    - cron: '37 13,1 * * *'
 jobs:
-  lint:
-    name: Lint
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
-    steps:
-      - name: Checkout libiso15118
-        uses: actions/checkout@v3
-        with:
-          path: source
-      - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.1.0
-        with:
-          source-dir: source
-          extensions: hpp,cpp
-          exclude: cache
-  build_and_test:
-    name: Build and test
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
-    steps:
-      - name: Checkout libiso15118
-        uses: actions/checkout@v3
-        with:
-          path: source
-      - name: Setup run scripts
-        run: |
-          mkdir scripts
-          rsync -a source/.ci/build-kit/ scripts
-      - name: Pull docker container
-        run: |
-          docker pull --platform=linux/x86_64 --quiet ghcr.io/everest/build-kit-alpine:latest
-          docker image tag ghcr.io/everest/build-kit-alpine:latest build-kit
-      - name: Build and test
-        run: |
-          docker run \
-          --volume "$(pwd):/ext" \
-          --name test-container \
-          build-kit run-script build_and_test
-      - name: Archive test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: ctest-report
-          path: ${{ github.workspace }}/ctest-report
+  ci:
+    name: Build, Lint and Test
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.3
+    permissions:
+      contents: read
+    secrets:
+      coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
+    with:
+      runner: ${{ inputs.runner || 'ubuntu-22.04' }}
+      artifact_deploy_target_repo: EVerest/everest.github.io
+      run_coverage: true
+      do_not_run_coverage_badge_creation: false
+      run_install: false
+      run_install_wheels: false
+      run_integration_tests: false
+      ctest_report_path: ctest-report
+      coverage_report_path: gcovr-coverage
+      coverage_xml_path: gcovr-coverage-xml.xml
