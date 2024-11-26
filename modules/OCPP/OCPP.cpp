@@ -551,10 +551,18 @@ void OCPP::ready() {
         reservation.id_token = idTag.get();
         reservation.reservation_id = reservation_id;
         reservation.expiry_time = expiryDate.to_rfc3339();
+
         if (parent_id) {
             reservation.parent_id_token.emplace(parent_id.value().get());
         }
-        auto response = this->r_reservation->call_reserve_now(connector, reservation);
+
+        if (connector == 0) {
+            reservation.evse_id = std::nullopt;
+        } else {
+            reservation.evse_id = connector;
+        }
+
+        auto response = this->r_reservation->call_reserve_now(reservation);
         return conversions::to_ocpp_reservation_status(response);
     });
 
@@ -714,6 +722,18 @@ void OCPP::ready() {
         this->mqtt.subscribe(disconnect_topic,
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
+
+    this->charge_point->register_is_token_reserved_for_connector_callback(
+        [this](const int32_t connector, const std::string& id_token) -> ocpp::ReservationCheckStatus {
+            types::reservation::ReservationCheck reservation_check_request;
+            reservation_check_request.evse_id = connector;
+            reservation_check_request.id_token = id_token;
+
+            types::reservation::ReservationCheckStatus status =
+                this->r_reservation->call_exists_reservation(reservation_check_request);
+
+            return ocpp_conversions::to_ocpp_reservation_check_status(status);
+        });
 
     const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
 
