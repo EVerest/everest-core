@@ -187,7 +187,8 @@ private:
         transaction_updated_callback;
     std::function<void(const int32_t connector, const std::string& session_id, const int32_t transaction_id)>
         transaction_stopped_callback;
-    std::function<bool(const int32_t connector, const std::string& id_token)> is_token_reserved_for_connector_callback;
+    std::function<ocpp::ReservationCheckStatus(const int32_t connector, const std::string& id_token)>
+        is_token_reserved_for_connector_callback;
 
     // iso15118 callback
     std::function<void(const int32_t connector, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
@@ -865,7 +866,7 @@ public:
     /// received.
     /// \param callback
     void register_is_token_reserved_for_connector_callback(
-        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
+        const std::function<ReservationCheckStatus(const int32_t connector, const std::string& id_token)>& callback);
 
     void register_session_cost_callback(
         const std::function<DataTransferResponse(const RunningCost& running_cost, const uint32_t number_of_decimals)>&

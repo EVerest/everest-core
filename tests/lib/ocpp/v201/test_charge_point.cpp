@@ -183,8 +183,8 @@ public:
     testing::MockFunction<RequestStartStopStatusEnum(const RequestStartTransactionRequest& request,
                                                      const bool authorize_remote_start)>
         remote_start_transaction_callback_mock;
-    testing::MockFunction<bool(const int32_t evse_id, const CiString<36> idToken,
-                               const std::optional<CiString<36>> groupIdToken)>
+    testing::MockFunction<ocpp::ReservationCheckStatus(const int32_t evse_id, const CiString<36> idToken,
+                                                       const std::optional<CiString<36>> groupIdToken)>
         is_reservation_for_token_callback_mock;
     testing::MockFunction<UpdateFirmwareResponse(const UpdateFirmwareRequest& request)>
         update_firmware_request_callback_mock;

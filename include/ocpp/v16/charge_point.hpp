@@ -563,7 +563,7 @@ public:
     /// \param callback
     /// \ingroup ocpp16_callbacks
     void register_is_token_reserved_for_connector_callback(
-        const std::function<bool(const int32_t connector, const std::string& id_token)>& callback);
+        const std::function<ReservationCheckStatus(const int32_t connector, const std::string& id_token)>& callback);
 
     /// \brief Registers a callback function for the session cost datatransfer message (California Pricing Requirements)
     /// \param session_cost_callback    The callback.

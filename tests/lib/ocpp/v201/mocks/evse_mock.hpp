@@ -12,6 +12,9 @@ class EvseMock : public EvseInterface {
 public:
     MOCK_METHOD(int32_t, get_id, (), (const));
     MOCK_METHOD(uint32_t, get_number_of_connectors, (), (const));
+    MOCK_METHOD(bool, does_connector_exist, (ConnectorEnum connector_type));
+    MOCK_METHOD(std::optional<ConnectorStatusEnum>, get_connector_status,
+                (std::optional<ConnectorEnum> connector_type));
     MOCK_METHOD(void, open_transaction,
                 (const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                  const MeterValue& meter_start, const std::optional<IdToken>& id_token,

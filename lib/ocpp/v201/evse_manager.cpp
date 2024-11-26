@@ -30,21 +30,21 @@ EvseManager::EvseIterator EvseManager::end() {
 }
 
 EvseInterface& EvseManager::get_evse(int32_t id) {
-    if (id == 0 or id > this->evses.size()) {
+    if (id <= 0 or id > this->evses.size()) {
         throw EvseOutOfRangeException(id);
     }
     return *this->evses.at(id - 1);
 }
 
-const EvseInterface& EvseManager::get_evse(int32_t id) const {
-    if (id == 0 or id > this->evses.size()) {
+const EvseInterface& EvseManager::get_evse(const int32_t id) const {
+    if (id <= 0 or id > this->evses.size()) {
         throw EvseOutOfRangeException(id);
     }
     return *this->evses.at(id - 1);
 }
 
-bool EvseManager::does_evse_exist(int32_t id) const {
-    return id <= this->evses.size();
+bool EvseManager::does_evse_exist(const int32_t id) const {
+    return id >= 0 && static_cast<uint64_t>(id) <= this->evses.size();
 }
 
 size_t EvseManager::get_number_of_evses() const {

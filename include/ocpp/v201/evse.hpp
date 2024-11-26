@@ -36,6 +36,26 @@ public:
     /// \return
     virtual uint32_t get_number_of_connectors() const = 0;
 
+    ///
+    /// \brief Check if the given connector type exists on this evse.
+    /// \param connector_type   The connector type to check.
+    /// \return True if connector type is unknown or this evse has the given connector type.
+    ///
+    virtual bool does_connector_exist(ConnectorEnum connector_type) = 0;
+
+    ///
+    /// \brief Get connector status.
+    ///
+    /// This will search if there is a connector on this evse with status 'Available'. It will search through all
+    /// connectors, optionally filtering by connector type, and return on the first connector that is 'Available'. If
+    /// there is no 'Available' connector, it will return the status of the last found connector with the given
+    /// connector type.
+    ///
+    /// \param connector_type   The connector type to filter on (optional).
+    /// \return Connector status. If connector type is given and does not exist, std::nullopt.
+    ///
+    virtual std::optional<ConnectorStatusEnum> get_connector_status(std::optional<ConnectorEnum> connector_type) = 0;
+
     /// \brief Opens a new transaction
     /// \param transaction_id id of the transaction
     /// \param connector_id id of the connector
@@ -198,6 +218,13 @@ private:
     /// \brief Component responsible for maintaining and persisting the operational status of CS, EVSEs, and connectors.
     std::shared_ptr<ComponentStateManagerInterface> component_state_manager;
 
+    ///
+    /// \brief Get connector type of Connector
+    /// \param connector_id     Connector id
+    /// \return The connector type. If evse or connector id is not correct: std::nullopt.
+    ///
+    std::optional<ConnectorEnum> get_evse_connector_type(const uint32_t connector_id);
+
 public:
     /// \brief Construct a new Evse object
     /// \param evse_id id of the evse
@@ -220,6 +247,8 @@ public:
     int32_t get_id() const;
 
     uint32_t get_number_of_connectors() const;
+    bool does_connector_exist(const ConnectorEnum connector_type) override;
+    std::optional<ConnectorStatusEnum> get_connector_status(std::optional<ConnectorEnum> connector_type) override;
 
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
                           const MeterValue& meter_start, const std::optional<IdToken>& id_token,

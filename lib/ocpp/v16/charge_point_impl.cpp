@@ -1957,11 +1957,16 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
             continue;
         }
 
-        if (this->is_token_reserved_for_connector_callback != nullptr &&
-            this->status->get_state(connector) == ChargePointStatus::Reserved &&
-            !this->is_token_reserved_for_connector_callback(connector, call.msg.idTag.get())) {
-            obtainable = false;
-            continue;
+        if (this->is_token_reserved_for_connector_callback != nullptr) {
+            const ocpp::ReservationCheckStatus reservation_status =
+                is_token_reserved_for_connector_callback(connector, call.msg.idTag.get());
+
+            const bool is_reserved = (reservation_status == ocpp::ReservationCheckStatus::ReservedForOtherToken);
+
+            if (this->status->get_state(connector) == ChargePointStatus::Reserved && is_reserved) {
+                obtainable = false;
+                continue;
+            }
         }
 
         if (obtainable) {
@@ -2018,7 +2023,7 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
         } else {
             this->provide_token_callback(call.msg.idTag.get(), referenced_connectors, true); // prevalidated
         }
-    };
+    }
 }
 
 bool ChargePointImpl::validate_against_cache_entries(CiString<20> id_tag) {
@@ -4488,7 +4493,7 @@ void ChargePointImpl::register_security_event_callback(
 }
 
 void ChargePointImpl::register_is_token_reserved_for_connector_callback(
-    const std::function<bool(const int32_t connector, const std::string& id_token)>& callback) {
+    const std::function<ocpp::ReservationCheckStatus(const int32_t connector, const std::string& id_token)>& callback) {
     this->is_token_reserved_for_connector_callback = callback;
 }
 

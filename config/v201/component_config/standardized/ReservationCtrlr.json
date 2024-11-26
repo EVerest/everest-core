@@ -45,7 +45,8 @@
       "attributes": [
         {
           "type": "Actual",
-          "mutability": "ReadOnly"
+          "mutability": "ReadOnly",
+          "value": true
         }
       ],
       "description": "If this configuration variable is present and set to true: Charging Station supports Reservation where EVSE id is not specified.",

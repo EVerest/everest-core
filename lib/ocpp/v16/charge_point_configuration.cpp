@@ -1512,7 +1512,7 @@ std::optional<KeyValue> ChargePointConfiguration::getReserveConnectorZeroSupport
         KeyValue kv;
         kv.key = "ReserveConnectorZeroSupported";
         kv.readonly = true;
-        kv.value.emplace(std::to_string(reserve_connector_zero_supported.value()));
+        kv.value.emplace(ocpp::conversions::bool_to_string(reserve_connector_zero_supported.value()));
         reserve_connector_zero_supported_kv.emplace(kv);
     }
     return reserve_connector_zero_supported_kv;

@@ -30,6 +30,7 @@
 #include "ocpp/v201/messages/Get15118EVCertificate.hpp"
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
+#include <ocpp/v201/messages/CancelReservation.hpp>
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/ClearCache.hpp>
@@ -61,6 +62,7 @@
 #include <ocpp/v201/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
+#include <ocpp/v201/messages/ReserveNow.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
@@ -233,6 +235,11 @@ public:
     /// \param connector_id     Reserved connector id
     virtual void on_reserved(const int32_t evse_id, const int32_t connector_id) = 0;
 
+    /// \brief Event handler that should be called when the reservation of the connector is cleared.
+    /// \param evse_id          Cleared EVSE id
+    /// \param connector_id     Cleared connector id.
+    virtual void on_reservation_cleared(const int32_t evse_id, const int32_t connector_id) = 0;
+
     /// \brief Event handler that will update the charging state internally when it has been changed.
     /// \param evse_id          The evse id of which the charging state has changed.
     /// \param charging_state   The new charging state.
@@ -273,6 +280,11 @@ public:
     /// \param set_variable_data contains data of the variable to set
     ///
     virtual void on_variable_changed(const SetVariableData& set_variable_data) = 0;
+
+    /// \brief Event handler that will send a ReservationStatusUpdate request.
+    /// \param reservation_id   The reservation id.
+    /// \param status           The status.
+    virtual void on_reservation_status(const int32_t reservation_id, const ReservationUpdateStatusEnum status) = 0;
 
     /// @}  // End handlers group
 
@@ -558,16 +570,10 @@ private:
     /// \param evse             The evse id that must be checked. Reservation will be checked for all connectors.
     /// \param id_token         The id token to check if it is reserved for that token.
     /// \param group_id_token   The group id token to check if it is reserved for that group id.
-    /// \return True when one of the EVSE connectors is reserved for another id token or group id token than the given
-    ///         tokens.
-    ///         If id_token is different than reserved id_token, but group_id_token is equal to reserved group_id_token,
-    ///         returns true.
-    ///         If both are different, returns true.
-    ///         If id_token is equal to reserved id_token or group_id_token is equal, return false.
-    ///         If there is no reservation, return false.
+    /// \return The status of the reservation for this evse, id token and group id token.
     ///
-    bool is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
-                                    const std::optional<IdToken>& group_id_token) const;
+    ReservationCheckStatus is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
+                                                      const std::optional<IdToken>& group_id_token) const;
 
     ///
     /// \brief Check if one of the connectors of the evse is available (both connectors faulted or unavailable or on of
@@ -584,6 +590,22 @@ private:
     ///                 connector if it was already set to true and if that is the case, it will be persisted anyway.
     ///
     void set_evse_connectors_unavailable(EvseInterface& evse, bool persist);
+
+    ///
+    /// \brief Check if there is a connector available with the given connector type.
+    /// \param evse_id          The evse to check for.
+    /// \param connector_type   The connector type.
+    /// \return True when a connector is available and the evse id exists.
+    ///
+    bool is_connector_available(const uint32_t evse_id, std::optional<ConnectorEnum> connector_type);
+
+    ///
+    /// \brief Check if the connector exists on the given evse id.
+    /// \param evse_id          The evse id to check for.
+    /// \param connector_type   The connector type.
+    /// \return False if evse id does not exist or evse does not have the given connector type.
+    ///
+    bool does_connector_exist(const uint32_t evse_id, std::optional<ConnectorEnum> connector_type);
 
     /// \brief Get the value optional offline flag
     /// \return true if the charge point is offline. std::nullopt if it is online;
@@ -728,6 +750,11 @@ private:
     // Functional Block G: Availability
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
     void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
+
+    // Function Block H: Reservations
+    void handle_reserve_now_request(Call<ReserveNowRequest> call);
+    void handle_cancel_reservation_callback(Call<CancelReservationRequest> call);
+    void send_reserve_now_rejected_response(const MessageId& unique_id, const std::string& status_info);
 
     // Functional Block I: TariffAndCost
     void handle_costupdated_req(const Call<CostUpdatedRequest> call);
@@ -914,6 +941,8 @@ public:
 
     void on_reserved(const int32_t evse_id, const int32_t connector_id) override;
 
+    void on_reservation_cleared(const int32_t evse_id, const int32_t connector_id) override;
+
     bool on_charging_state_changed(
         const uint32_t evse_id, const ChargingStateEnum charging_state,
         const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) override;
@@ -932,6 +961,8 @@ public:
                            const std::optional<DateTime>& timestamp = std::nullopt) override;
 
     void on_variable_changed(const SetVariableData& set_variable_data) override;
+
+    void on_reservation_status(const int32_t reservation_id, const ReservationUpdateStatusEnum status) override;
 
     std::optional<DataTransferResponse> data_transfer_req(const CiString<255>& vendorId,
                                                           const std::optional<CiString<50>>& messageId,

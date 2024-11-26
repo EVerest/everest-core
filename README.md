@@ -93,7 +93,7 @@ The following table shows the known CSMS with which this library was tested.
 | E. Transactions                      | ✅ yes  |
 | F. RemoteControl                     | ✅ yes  |
 | G. Availability                      | ✅ yes  |
-| H. Reservation                       | WIP                       |
+| H. Reservation                       | ✅ yes                      |
 | I. TariffAndCost                     | ✅ yes  |
 | J. MeterValues                       | ✅ yes  |
 | K. SmartCharging                     | WIP                       |

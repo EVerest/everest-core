@@ -50,9 +50,9 @@ public:
                 const std::function<void(int32_t evse_id)>& pause_charging_callback);
 
     EvseInterface& get_evse(int32_t id) override;
-    const EvseInterface& get_evse(int32_t id) const override;
+    const EvseInterface& get_evse(const int32_t id) const override;
 
-    bool does_evse_exist(int32_t id) const override;
+    bool does_evse_exist(const int32_t id) const override;
 
     size_t get_number_of_evses() const override;
 
