@@ -54,11 +54,15 @@ types:
         Expired: When the reservation expired before the reserved token was used for a session
         Cancelled: When the reservation was cancelled manually
         UsedToStartCharging: When the reservation ended because the reserved token was used for a session
+        GlobalReservationConnectorFree: When the reservation ended because there is a connector free and there are less
+                                        reservations than available evse's (reservation is still there but it is not
+                                        occupying the EVSE anymore).
     type: string
     enum:
       - Expired
       - Cancelled
       - UsedToStartCharging
+      - GlobalReservationConnectorFree
   ReservationEnd:
     description: Details on Reservation End
     type: object
