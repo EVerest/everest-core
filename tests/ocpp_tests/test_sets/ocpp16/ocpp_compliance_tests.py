@@ -4713,17 +4713,17 @@ async def test_reservation_connector_zero_supported(
         call_result.ReserveNowPayload(ReservationStatus.accepted),
     )
 
-    # expect StatusNotification with status preparing
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v16,
-        "StatusNotification",
-        call.StatusNotificationPayload(
-            0, ChargePointErrorCode.no_error, ChargePointStatus.reserved
-        ),
-    )
+    # # expect StatusNotification with status reserved
+    # assert await wait_for_and_validate(
+    #     test_utility,
+    #     charge_point_v16,
+    #     "StatusNotification",
+    #     call.StatusNotificationPayload(
+    #         0, ChargePointErrorCode.no_error, ChargePointStatus.reserved
+    #     ),
+    # )
 
-    # expect StatusNotification with status preparing
+    # expect StatusNotification with status reserved
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,

@@ -850,8 +850,7 @@ void AuthHandler::check_evse_reserved_and_send_updates() {
     for (const auto& available_evse : reservation_status.available) {
         EVLOG_warning << "Evse " << available_evse << " is now available";
         this->reservation_cancelled_callback(available_evse, -1,
-                                             // TODO mz add correct reason
-                                             types::reservation::ReservationEndReason::Cancelled, false);
+                                             types::reservation::ReservationEndReason::GlobalReservationConnectorFree, false);
     }
 
     for (const auto& reserved_evse : reservation_status.reserved) {
@@ -859,7 +858,7 @@ void AuthHandler::check_evse_reserved_and_send_updates() {
         // TODO mz something with 'reserved' (what if it is not possible??? Cancel reservation???)
         const bool reserved = this->reserved_callback(reserved_evse, -1);
         if (!reserved) {
-            EVLOG_warning << "Could not reserve " << reserved_evse;
+            EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
         }
     }
 }

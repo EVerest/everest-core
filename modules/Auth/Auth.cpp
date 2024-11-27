@@ -105,7 +105,7 @@ void Auth::ready() {
         [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason,
                const bool send_reservation_update) {
             // Only call the evse manager to cancel the reservation if it was for a specific evse
-            if (evse_id.has_value()) {
+            if (evse_id.has_value() && evse_id.value() > 0) {
                 EVLOG_debug << "Call evse manager to cancel the reservation with evse id " << evse_id.value();
                 this->r_evse_manager.at(evse_id.value() - 1)->call_cancel_reservation();
             }
