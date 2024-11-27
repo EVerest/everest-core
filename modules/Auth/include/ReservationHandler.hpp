@@ -179,6 +179,13 @@ public:
     ///
     bool has_reservation_parent_id(const std::optional<uint32_t> evse_id);
 
+    ///
+    /// \brief Check if the number of global reservations match the number of available evse's.
+    /// \return The new reservation status of the evse's.
+    ///
+    /// \note The return value has the new reserved and new available statusses (so the ones that were already reserved
+    ///       are not added to those lists).
+    ///
     ReservationEvseStatus check_number_global_reservations_match_number_available_evses();
 
 private: // Functions
