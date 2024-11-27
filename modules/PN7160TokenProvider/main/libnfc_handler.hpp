@@ -4,6 +4,7 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
 #include <memory>
 #include <vector>
 
@@ -19,7 +20,7 @@ public:
 
     using Callback = std::function<void(char* uid, size_t length, Protocol)>;
 
-    NfcHandler();
+    NfcHandler(const std::filesystem::path& config_path);
     ~NfcHandler();
 
     bool start(Callback);

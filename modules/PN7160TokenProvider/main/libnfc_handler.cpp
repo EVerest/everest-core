@@ -18,11 +18,13 @@ extern "C" {
 static NfcHandler* nfc_handler_instance{nullptr};
 static nfcTagCallback_t nfc_callbacks;
 
-NfcHandler::NfcHandler() {
+NfcHandler::NfcHandler(const std::filesystem::path& config_path) {
     // we could have also used a singleton instance,
     if (nfc_handler_instance) {
         throw std::runtime_error("Only one nfc handler instance allowed");
     }
+
+    setConfigPath(config_path.c_str());
 
     InitializeLogLevel();
 

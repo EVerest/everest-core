@@ -2,6 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_providerImpl.hpp"
+#include <filesystem>
 
 std::string rfid_to_string(char const rfid[], size_t length) {
     std::stringstream ss;
@@ -21,8 +22,10 @@ void auth_token_providerImpl::init() {
         return;
     }
 
+    std::filesystem::path config_path = mod->info.paths.etc / "libnfc_config";
+    EVLOG_info << "Using configuration path " << config_path << " to look for 'libnfc-nci.conf' and 'libnfc-nxp.conf'";
     try {
-        this->nfc_handler = std::make_unique<NfcHandler>();
+        this->nfc_handler = std::make_unique<NfcHandler>(config_path);
     } catch (const std::exception& e) {
         EVLOG_error << "Failed to initialize libnfc handler: " << e.what();
     }
