@@ -625,7 +625,7 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
                                              const std::optional<int>& evse_id, const bool send_reservation_update) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
-        EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
+        EVLOG_info << "Cancel reservation for evse id " << evse_id.value();
     }
 
     this->reservation_cancelled_callback(evse_id, reservation_id, reason, send_reservation_update);
@@ -855,7 +855,6 @@ void AuthHandler::check_evse_reserved_and_send_updates() {
 
     for (const auto& reserved_evse : reservation_status.reserved) {
         EVLOG_warning << "Evse " << reserved_evse << " is now reserved";
-        // TODO mz something with 'reserved' (what if it is not possible??? Cancel reservation???)
         const bool reserved = this->reserved_callback(reserved_evse, -1);
         if (!reserved) {
             EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
