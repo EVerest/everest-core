@@ -117,3 +117,6 @@ jobs:
           display-options: fEX
           fail-on-empty: True
           title: Test results
+      - name: Check if OCPP tests failed
+        if: ${{ steps.run_ocpp_tests.outcome == 'failure' }}
+        run: exit 1
