@@ -342,7 +342,7 @@ async def test_reservation_connector_faulted(
     # Set evse in state 'faulted'
     test_controller.raise_error()
 
-    await asyncio.sleep(10)
+    await asyncio.sleep(1)
 
     t = datetime.utcnow() + timedelta(minutes=10)
 
@@ -364,6 +364,17 @@ async def test_reservation_connector_faulted(
     )
 
     test_controller.clear_error()
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Available', 1, 1
+        ),
+    )
 
 
 @pytest.mark.asyncio
@@ -402,6 +413,17 @@ async def test_reservation_connector_faulted_after_reservation(
     )
 
     test_controller.clear_error()
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Available', 1, 1
+        ),
+    )
 
 
 @pytest.mark.asyncio
@@ -781,6 +803,40 @@ async def test_reservation_non_evse_specific_accepted_multiple(
         ),
     )
 
+    # swipe id tag to de-authorize
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
+
+    # stop charging session
+    test_controller.plug_out()
+
+    # expect TransactionEvent 'Ended' with the correct reservation id.
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Ended"}
+    )
+
+    # expect StatusNotification with status 'available' for both evse's as there are now less reservations than
+    # available evse's.
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Available', 1, 1
+        ),
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Available', 2, 1
+        ),
+    )
+
 
 @pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
@@ -806,6 +862,8 @@ async def test_reservation_faulted_state(
         ),
     )
 
+    await asyncio.sleep(1)
+
     t = datetime.utcnow() + timedelta(seconds=30)
 
     # Try to make the reservation.
@@ -826,6 +884,17 @@ async def test_reservation_faulted_state(
     )
 
     test_controller.clear_error(1)
+
+    test_utility.messages.clear()
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Available', 1, 1
+        ),
+    )
 
 
 @pytest.mark.asyncio
