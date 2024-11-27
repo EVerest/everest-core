@@ -515,7 +515,6 @@ void OCPP201::ready() {
             std::promise<ocpp::v201::ConfigNetworkResult> promise;
             std::future<ocpp::v201::ConfigNetworkResult> future = promise.get_future();
             ocpp::v201::ConfigNetworkResult result;
-            result.network_profile_slot = configuration_slot;
             result.success = true;
             promise.set_value(result);
             return future;
