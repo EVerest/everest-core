@@ -844,17 +844,16 @@ void AuthHandler::submit_event_for_connector(const int32_t evse_id, const int32_
 }
 
 void AuthHandler::check_evse_reserved_and_send_updates() {
-    EVLOG_warning << "Check evse reserved and send updates";
     ReservationEvseStatus reservation_status =
         this->reservation_handler.check_number_global_reservations_match_number_available_evses();
     for (const auto& available_evse : reservation_status.available) {
-        EVLOG_warning << "Evse " << available_evse << " is now available";
+        EVLOG_debug << "Evse " << available_evse << " is now available";
         this->reservation_cancelled_callback(available_evse, -1,
                                              types::reservation::ReservationEndReason::GlobalReservationConnectorFree, false);
     }
 
     for (const auto& reserved_evse : reservation_status.reserved) {
-        EVLOG_warning << "Evse " << reserved_evse << " is now reserved";
+        EVLOG_debug << "Evse " << reserved_evse << " is now reserved";
         const bool reserved = this->reserved_callback(reserved_evse, -1);
         if (!reserved) {
             EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
