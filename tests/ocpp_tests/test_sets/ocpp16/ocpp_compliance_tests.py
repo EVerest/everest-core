@@ -4713,16 +4713,6 @@ async def test_reservation_connector_zero_supported(
         call_result.ReserveNowPayload(ReservationStatus.accepted),
     )
 
-    # # expect StatusNotification with status reserved
-    # assert await wait_for_and_validate(
-    #     test_utility,
-    #     charge_point_v16,
-    #     "StatusNotification",
-    #     call.StatusNotificationPayload(
-    #         0, ChargePointErrorCode.no_error, ChargePointStatus.reserved
-    #     ),
-    # )
-
     # expect StatusNotification with status reserved
     assert await wait_for_and_validate(
         test_utility,
@@ -4782,6 +4772,8 @@ async def test_reservation_faulted_state(
 
     test_controller.raise_error(1)
 
+    await asyncio.sleep(1)
+
     # expect StatusNotification with status faulted
     assert await wait_for_and_validate(
         test_utility,
@@ -4807,6 +4799,8 @@ async def test_reservation_faulted_state(
     )
 
     test_controller.clear_error(1)
+
+    await asyncio.sleep(1)
 
 
 @pytest.mark.asyncio
