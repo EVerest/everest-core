@@ -373,6 +373,13 @@ const ComponentVariable& AllowMFRootCertInstallWithUnsecureConnection = {
         "AllowMFRootCertInstallWithUnsecureConnection",
     }),
 };
+const ComponentVariable& AllowSecurityLevelZeroConnections = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "AllowSecurityLevelZeroConnections",
+    }),
+};
 const ComponentVariable& AlignedDataCtrlrEnabled = {
     ControllerComponents::AlignedDataCtrlr,
     std::nullopt,

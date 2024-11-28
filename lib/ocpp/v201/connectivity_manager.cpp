@@ -75,11 +75,13 @@ ConnectivityManager::get_network_connection_profile(const int32_t configuration_
 
     for (const auto& network_profile : this->cached_network_connection_profiles) {
         if (network_profile.configurationSlot == configuration_slot) {
-            if (network_profile.connectionData.securityProfile ==
-                security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION) {
-                throw std::invalid_argument(
-                    "security_profile = " + std::to_string(network_profile.connectionData.securityProfile) +
-                    " not officially allowed in OCPP 2.0.1");
+            if (!this->device_model
+                     .get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
+                     .value_or(false) &&
+                network_profile.connectionData.securityProfile ==
+                    security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION) {
+                EVLOG_error << "security_profile 0 not officially allowed in OCPP 2.0.1, skipping profile";
+                return std::nullopt;
             }
 
             return network_profile.connectionData;
@@ -210,6 +212,11 @@ void ConnectivityManager::try_connect_websocket() {
     this->pending_configuration_slot.reset();
     this->active_network_configuration_priority =
         get_priority_from_configuration_slot(configuration_slot_to_set).value();
+
+    if (connection_options->security_profile ==
+        security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION) {
+        EVLOG_warning << "Using insecure security profile 0 without authentication";
+    }
 
     EVLOG_info << "Open websocket with NetworkConfigurationPriority: "
                << this->active_network_configuration_priority + 1 << " which is configurationSlot "
@@ -409,6 +416,17 @@ void ConnectivityManager::cache_network_connection_profiles() {
     // get all the network connection profiles from the device model and cache them
     this->cached_network_connection_profiles =
         json::parse(this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+
+    if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::AllowSecurityLevelZeroConnections)
+             .value_or(false) &&
+        std::none_of(this->cached_network_connection_profiles.begin(), this->cached_network_connection_profiles.end(),
+                     [](const SetNetworkProfileRequest& profile) {
+                         return profile.connectionData.securityProfile !=
+                                security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION;
+                     })) {
+        throw std::invalid_argument(
+            "All profiles configured have security_profile 0 which is not officially allowed in OCPP 2.0.1");
+    }
 
     for (const std::string& str : ocpp::split_string(
              this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConfigurationPriority),

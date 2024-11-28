@@ -802,6 +802,22 @@
         "description": "The flag that indicates if installation of ManufacturerRootCertificate is allowed when security profile is 1.",
         "default": true,
         "type": "boolean"
+      },
+      "AllowSecurityLevelZeroConnections": {
+          "variable_name": "AllowSecurityLevelZeroConnections",
+          "characteristics": {
+            "supportsMonitoring": false,
+            "dataType": "boolean"
+          },
+          "attributes": [
+              {
+                  "type": "Actual",
+                  "mutability": "ReadOnly"
+              }
+          ],
+          "description": "If enabled we allow connections using security level 0. This does pose a security risk and is not allowed according to the OCPP spec",
+          "default": false,
+          "type": "boolean"
       }
   },
   "required": [
