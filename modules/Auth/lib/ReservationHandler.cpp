@@ -804,7 +804,7 @@ void ReservationHandler::store_reservations() {
 }
 
 ReservationEvseStatus ReservationHandler::get_evse_global_reserved_status_and_set_new_status(
-    const std::set<int32_t> currently_available_evses, const std::set<int32_t> reserved_evses) {
+    const std::set<int32_t>& currently_available_evses, const std::set<int32_t>& reserved_evses) {
     ReservationEvseStatus evse_status_to_send;
     std::set<int32_t> new_reserved_evses;
 

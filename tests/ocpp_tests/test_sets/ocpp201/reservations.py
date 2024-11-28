@@ -1,4 +1,3 @@
-import pytest_asyncio
 import pytest
 import logging
 from unittest.mock import ANY
@@ -12,14 +11,11 @@ from everest_test_utils import *
 
 from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ReserveNowStatusType, ConnectorStatusType,
                              OperationalStatusType, CancelReservationStatusType, SetVariableStatusType,
-                             RequestStartStopStatusType, AttributeType)
+                             RequestStartStopStatusType)
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call_201
 from ocpp.v201 import call_result as call_result201
-from validations import (validate_standard_start_transaction,
-                         validate_standard_stop_transaction,
-                         validate_remote_start_stop_transaction,
-                         validate_status_notification_201)
+from validations import validate_remote_start_stop_transaction
 from ocpp.routing import on, create_route_map
 
 
