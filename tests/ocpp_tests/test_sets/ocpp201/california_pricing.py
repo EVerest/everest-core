@@ -596,7 +596,6 @@ class TestOcpp201CostAndPrice:
                                            )
 
         # W value is below trigger, but hysteresis prevents sending the metervalue.
-        power_meter_value["energy_Wh_import"]["total"] = 8000.0
         power_meter_value["power_W"]["total"] = 7990.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
@@ -607,7 +606,7 @@ class TestOcpp201CostAndPrice:
                                                {"evseId": 1, "meterValue": [{"sampledValue": [
                                                    {"context": "Other", "location": "Outlet",
                                                     "measurand": "Energy.Active.Import.Register",
-                                                    "unitOfMeasure": {"unit": "Wh"}, "value": 8000.0},
+                                                    "unitOfMeasure": {"unit": "Wh"}, "value": 1.0},
                                                    {'context': 'Other', 'location': 'Outlet',
                                                     'measurand': 'Power.Active.Import', "unitOfMeasure": {"unit": "W"},
                                                     'value': 7990.0}
@@ -616,7 +615,6 @@ class TestOcpp201CostAndPrice:
                                                )
 
         # Only when trigger is high ( / low) enough, metervalue will be sent.
-        power_meter_value["energy_Wh_import"]["total"] = 9500.0
         power_meter_value["power_W"]["total"] = 7200.0
         timestamp = datetime.now(timezone.utc).isoformat()
         power_meter_value["timestamp"] = timestamp
@@ -626,7 +624,7 @@ class TestOcpp201CostAndPrice:
                                            {"evseId": 1, "meterValue": [{"sampledValue": [
                                                {"context": "Other", "location": "Outlet",
                                                 "measurand": "Energy.Active.Import.Register",
-                                                "unitOfMeasure": {"unit": "Wh"}, "value": 9500.0},
+                                                "unitOfMeasure": {"unit": "Wh"}, "value": 1.0},
                                                {'context': 'Other', 'location': 'Outlet',
                                                 'measurand': 'Power.Active.Import', "unitOfMeasure": {"unit": "W"},
                                                 'value': 7200.00}
