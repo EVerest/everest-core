@@ -854,9 +854,11 @@ void AuthHandler::check_evse_reserved_and_send_updates() {
 
     for (const auto& reserved_evse : reservation_status.reserved) {
         EVLOG_debug << "Evse " << reserved_evse << " is now reserved";
-        const bool reserved = this->reserved_callback(reserved_evse, -1);
-        if (!reserved) {
-            EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
+        if (this->reserved_callback != nullptr) {
+            const bool reserved = this->reserved_callback(reserved_evse, -1);
+            if (!reserved) {
+                EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
+            }
         }
     }
 }
