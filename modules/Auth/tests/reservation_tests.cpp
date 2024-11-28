@@ -1405,14 +1405,14 @@ TEST_F(ReservationHandlerTest, check_evses_to_reserve_scenario_5) {
 
     EXPECT_TRUE(s.available.empty());
     ASSERT_EQ(s.reserved.size(), 1);
-    EXPECT_EQ(s.reserved.count(1), 1);
+    EXPECT_EQ(s.reserved.count(0), 1);
 
-    this->evses.at(0)->connectors.at(0).submit_event(ConnectorEvent::SESSION_FINISHED);
+    this->evses.at(1)->connectors.at(0).submit_event(ConnectorEvent::SESSION_FINISHED);
 
     s = r.check_number_global_reservations_match_number_available_evses();
 
     ASSERT_EQ(s.available.size(), 1);
-    EXPECT_EQ(s.available.count(1), 1);
+    EXPECT_EQ(s.available.count(0), 1);
     EXPECT_TRUE(s.reserved.empty());
 }
 
