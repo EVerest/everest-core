@@ -1278,8 +1278,7 @@ bool EvseManager::reserve(int32_t id, const bool signal_reservation_event) {
         }
 
         // When overwriting the reservation, don't signal.
-        if ((not overwrite_reservation || (overwrite_reservation && this->reservation_id == -1)) &&
-            signal_reservation_event) {
+        if ((not overwrite_reservation || this->reservation_id == -1) && signal_reservation_event) {
             // publish event to other modules
             types::evse_manager::SessionEvent se;
             se.event = types::evse_manager::SessionEventEnum::ReservationStart;

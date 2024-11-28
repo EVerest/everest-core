@@ -333,9 +333,18 @@ private: // Functions
     ///
     void store_reservations();
 
+    ///
+    /// \brief Get new reserved / available status for evse's and store it.
+    /// \param currently_available_evses    Current available evse's.
+    /// \param reserved_evses               Current reserved evse's.
+    /// \return A struct with changed reservation statuses compared with the last time this function was called.
+    ///
+    /// When an evse is reserved and it was available before, it will be added to the set in the struct (return value).
+    /// But when an evse is reserved and last time it was already reserved, it is not added.
+    ///
     ReservationEvseStatus
-    get_evse_global_reserved_status_and_set_new_status(const std::set<int32_t> currently_available_evses,
-                                                       const std::set<int32_t> reserved_evses);
+    get_evse_global_reserved_status_and_set_new_status(const std::set<int32_t>& currently_available_evses,
+                                                       const std::set<int32_t>& reserved_evses);
 
     ///
     /// \brief Helper function to print information about reservations and evses, to find out why a reservation has
