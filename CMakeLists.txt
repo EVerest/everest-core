@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(everest-evse_security VERSION 0.9.1
+project(everest-evse_security VERSION 0.9.2
         DESCRIPTION "Implementation of EVSE related security operations"
 		LANGUAGES CXX C
 )
