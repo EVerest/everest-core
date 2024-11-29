@@ -775,3 +775,43 @@ def get_license_header(license_dirs, license_url):
         return None
     with open(license_path, 'r') as custom_license_file:
         return custom_license_file.read().strip()
+
+
+def get_path_from_cmake_cache(variable_prefix, cmake_cache_path, option_name):
+    print(f'Searching for {variable_prefix} in: {cmake_cache_path}')
+    print(f'You can either provide the {variable_prefix} directory with {option_name} or influence the'
+            ' automatic search path by setting --build-dir (default: ./build)')
+    if not cmake_cache_path.exists():
+        print(f'CMakeCache.txt does not exist: {cmake_cache_path}')
+        return None
+    with open(cmake_cache_path, 'r') as cmake_cache_file:
+        search = f'{variable_prefix}_SOURCE_DIR:STATIC='
+        for line in cmake_cache_file:
+            if line.startswith(search):
+                found_dir = Path(line.replace(search, '', 1).strip(' \t\n\r'))
+                if found_dir.exists():
+                    print(f'Found {variable_prefix} directory: {found_dir}')
+                    user_choice = input('Do you want to use this? [Y/n] ').lower()
+                    if user_choice == 'y' or not user_choice:
+                        return found_dir
+                break
+    return None
+
+
+def detect_everest_projects(everest_projects, build_dir):
+    detected_everest_project = False
+    for everest_dir in everest_dirs:
+        if everest_dir.exists() and everest_dir.name in everest_projects:
+            detected_everest_project = True
+
+    found_dirs = []
+
+    if not detected_everest_project:
+        print('Could not detect ' + ", ".join(everest_projects) + ' path in --everest-dir')
+        cmake_cache_path = Path(build_dir) / 'CMakeCache.txt'
+        for everest_project in everest_projects:
+            found_dir = get_path_from_cmake_cache(everest_project, cmake_cache_path, '--everest-dir')
+            if found_dir:
+                found_dirs.append(found_dir)
+
+    return found_dirs
