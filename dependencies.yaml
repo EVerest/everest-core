@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: feature/raise_error
+  git_tag: v0.4.4
 
 # unit testing
 gtest:
