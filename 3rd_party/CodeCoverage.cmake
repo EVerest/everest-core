@@ -384,7 +384,7 @@ function(setup_target_for_coverage_lcov)
     # Show info where to find the report
     add_custom_command(TARGET ${Coverage_NAME} POST_BUILD
         COMMAND ;
-        COMMENT "Open ./${Coverage_NAME}/index.html in your browser to view the coverage report."
+        COMMENT "Open ${PROJECT_BINARY_DIR}/${Coverage_NAME}/index.html in your browser to view the coverage report."
     )
 
 endfunction() # setup_target_for_coverage_lcov
@@ -477,7 +477,7 @@ function(setup_target_for_coverage_gcovr_xml)
     # Show info where to find the report
     add_custom_command(TARGET ${Coverage_NAME} POST_BUILD
         COMMAND ;
-        COMMENT "Cobertura code coverage report saved in ${Coverage_NAME}.xml."
+        COMMENT "Cobertura code coverage report saved in ${PROJECT_BINARY_DIR}/${Coverage_NAME}.xml."
     )
 endfunction() # setup_target_for_coverage_gcovr_xml
 
@@ -578,7 +578,7 @@ function(setup_target_for_coverage_gcovr_html)
     # Show info where to find the report
     add_custom_command(TARGET ${Coverage_NAME} POST_BUILD
         COMMAND ;
-        COMMENT "Open ./${Coverage_NAME}/index.html in your browser to view the coverage report."
+        COMMENT "Open ${PROJECT_BINARY_DIR}/${Coverage_NAME}/index.html in your browser to view the coverage report."
     )
 
 endfunction() # setup_target_for_coverage_gcovr_html
