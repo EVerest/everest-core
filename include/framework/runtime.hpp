@@ -36,9 +36,10 @@ namespace defaults {
 // defaults:
 //   PREFIX: set by cmake
 //   EVEREST_NAMESPACE: everest
+//   EVEREST_INSTALL_LIBDIR: set by cmake
 //   BIN_DIR: ${PREFIX}/bin
 //   LIBEXEC_DIR: ${PREFIX}/libexec
-//   LIB_DIR: ${PREFIX}/lib
+//   LIB_DIR: ${PREFIX}/${EVEREST_INSTALL_LIBDIR}
 //   SYSCONF_DIR: /etc, if ${PREFIX}==/usr, otherwise ${PREFIX}/etc
 //   LOCALSTATE_DIR: /var, if ${PREFIX}==/usr, otherwise ${PREFIX}/var
 //   DATAROOT_DIR: ${PREFIX}/share
@@ -56,7 +57,7 @@ inline constexpr auto PREFIX = EVEREST_INSTALL_PREFIX;
 inline constexpr auto NAMESPACE = EVEREST_NAMESPACE;
 
 inline constexpr auto BIN_DIR = "bin";
-inline constexpr auto LIB_DIR = "lib";
+inline constexpr auto LIB_DIR = EVEREST_INSTALL_LIBDIR;
 inline constexpr auto LIBEXEC_DIR = "libexec";
 inline constexpr auto SYSCONF_DIR = "etc";
 inline constexpr auto LOCALSTATE_DIR = "var";

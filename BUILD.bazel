@@ -3,6 +3,7 @@ genrule(
     outs = ["include/everest/compile_time_settings.hpp"],
     cmd = """
     echo "#define EVEREST_INSTALL_PREFIX \\"/usr\\"" > $@
+    echo "#define EVEREST_INSTALL_LIBDIR \\"/lib\\"" >> $@
     echo "#define EVEREST_NAMESPACE (\\"everest\\")" >> $@
   """,
 )

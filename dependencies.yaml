@@ -5,7 +5,7 @@ ryml:
   options: ["CMAKE_POSITION_INDEPENDENT_CODE ON"]
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
-  git_tag: v4.3.2
+  git_tag: v4.3.3
   cmake_condition: "EVEREST_ENABLE_ADMIN_PANEL_BACKEND"
   options:
     - CMAKE_POLICY_DEFAULT_CMP0077 NEW
@@ -27,6 +27,7 @@ libwebsockets:
     - LWS_WITHOUT_TEST_SERVER_EXTPOLL ON
     - LWS_WITHOUT_TEST_PING ON
     - LWS_WITHOUT_TEST_CLIENT ON
+    - LWS_INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR}
 nlohmann_json:
   git: https://github.com/nlohmann/json
   git_tag: v3.11.2
