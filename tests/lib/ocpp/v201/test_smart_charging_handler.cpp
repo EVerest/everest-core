@@ -1307,6 +1307,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, ValidateAndAddProfile_StoresCharging
     criteria.chargingProfileId = {{profile.id}};
 
     auto profiles = this->database_handler->get_charging_profiles_matching_criteria(DEFAULT_EVSE_ID, criteria);
+    ASSERT_THAT(profiles.size(), testing::Ge(1));
     const auto [e, p, sut] = profiles[0];
     EXPECT_THAT(sut, ChargingLimitSourceEnum::SO);
 }
