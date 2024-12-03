@@ -1,9 +1,19 @@
 set(TEST_TARGET_NAME ${PROJECT_NAME}_auth_tests)
-add_executable(${TEST_TARGET_NAME} auth_tests.cpp)
+
+set(TEST_SOURCES ${PROJECT_SOURCE_DIR}/modules/Auth/lib/ReservationHandler.cpp
+                 ${PROJECT_SOURCE_DIR}/modules/Auth/lib/AuthHandler.cpp
+                 ${PROJECT_SOURCE_DIR}/modules/Auth/lib/Connector.cpp
+                 ${PROJECT_SOURCE_DIR}/modules/Auth/lib/ConnectorStateMachine.cpp)
+
+add_executable(${TEST_TARGET_NAME} auth_tests.cpp reservation_tests.cpp ${TEST_SOURCES})
+
+message("Current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(INCLUDE_DIR 
+    "${CMAKE_CURRENT_SOURCE_DIR}/stubs"
     "${PROJECT_SOURCE_DIR}/modules/Auth/include"
-    "${PROJECT_SOURCE_DIR}/modules/Auth/tests")
+    "${PROJECT_SOURCE_DIR}/modules/Auth/tests"
+)
 
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 
@@ -20,7 +30,6 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     everest::log
     everest::framework
     pthread
-    auth_handler
     nlohmann_json::nlohmann_json
     date::date
     date::date-tz

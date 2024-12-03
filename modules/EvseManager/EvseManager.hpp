@@ -52,6 +52,7 @@ namespace module {
 
 struct Conf {
     int connector_id;
+    std::string connector_type;
     std::string evse_id;
     std::string evse_id_din;
     bool payment_enable_eim;
@@ -134,7 +135,8 @@ public:
         r_imd(std::move(r_imd)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config){};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -172,7 +174,15 @@ public:
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
-    bool reserve(int32_t id);
+
+    ///
+    /// \brief Reserve this evse.
+    /// \param id                       The reservation id.
+    /// \param signal_reservation_event True when other modules must be signalled about a new reservation (session
+    ///                                 event).
+    /// \return True on success.
+    ///
+    bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
@@ -232,8 +242,8 @@ public:
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
-        // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
-        // so it is enough to set the powersupply_capabilities here.
+        // energy management first. Those limits will be applied in energy_grid implementation when requesting
+        // energy, so it is enough to set the powersupply_capabilities here.
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
 

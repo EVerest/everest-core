@@ -37,6 +37,9 @@ The following diagram shows how it integrates with other EVerest modules.
 .. image:: everest_integration.drawio.svg
    :alt: Integration
 
+The module connections of the evse_manager requirement must be connected in the correct order in the EVerest config
+file, i.e. the module representing the EVSE with evse id 1 must listed first, EVSE with evse id 2 second and so on.
+
 Selection Algorithm
 ===================
 

@@ -18,6 +18,7 @@
 #include <generated/interfaces/auth_token_provider/Interface.hpp>
 #include <generated/interfaces/auth_token_validator/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/kvs/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -45,20 +46,24 @@ public:
          std::unique_ptr<reservationImplBase> p_reservation,
          std::vector<std::unique_ptr<auth_token_providerIntf>> r_token_provider,
          std::vector<std::unique_ptr<auth_token_validatorIntf>> r_token_validator,
-         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, Conf& config) :
+         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<kvsIntf>> r_kvs,
+         Conf& config) :
         ModuleBase(info),
         p_main(std::move(p_main)),
         p_reservation(std::move(p_reservation)),
         r_token_provider(std::move(r_token_provider)),
         r_token_validator(std::move(r_token_validator)),
         r_evse_manager(std::move(r_evse_manager)),
-        config(config){};
+        r_kvs(std::move(r_kvs)),
+        config(config) {
+    }
 
     const std::unique_ptr<authImplBase> p_main;
     const std::unique_ptr<reservationImplBase> p_reservation;
     const std::vector<std::unique_ptr<auth_token_providerIntf>> r_token_provider;
     const std::vector<std::unique_ptr<auth_token_validatorIntf>> r_token_validator;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
+    const std::vector<std::unique_ptr<kvsIntf>> r_kvs;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
