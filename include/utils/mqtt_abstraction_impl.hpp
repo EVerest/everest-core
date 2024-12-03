@@ -129,7 +129,7 @@ private:
     static int open_nb_socket(const char* addr, const char* port);
     bool connectBroker(std::string& socket_path);
     bool connectBroker(const char* host, const char* port);
-    void on_mqtt_message(std::shared_ptr<Message> message);
+    void on_mqtt_message(const Message& message);
     void on_mqtt_connect();
     static void on_mqtt_disconnect();
 

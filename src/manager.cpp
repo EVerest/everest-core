@@ -284,7 +284,7 @@ static std::map<pid_t, std::string> start_modules(Config& config, MQTTAbstractio
 
         Handler module_ready_handler = [module_name, &mqtt_abstraction, standalone_modules,
                                         mqtt_everest_prefix = rs->mqtt_everest_prefix,
-                                        &status_fifo](nlohmann::json json) {
+                                        &status_fifo](const std::string&, nlohmann::json json) {
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!

@@ -4,6 +4,7 @@
 #define FRAMEWORK_EVEREST_HPP
 
 #include <chrono>
+#include <functional>
 #include <future>
 #include <map>
 #include <set>
@@ -128,6 +129,11 @@ public:
     UnsubscribeToken provide_external_mqtt_handler(const std::string& topic, const StringHandler& handler);
 
     ///
+    /// \brief Allows a module to indicate that it provides a external mqtt \p handler at the given \p topic
+    ///
+    UnsubscribeToken provide_external_mqtt_handler(const std::string& topic, const StringPairHandler& handler);
+
+    ///
     /// \brief publishes the given telemetry \p data on the given \p topic
     ///
     void telemetry_publish(const std::string& topic, const std::string& data);
@@ -243,6 +249,24 @@ private:
     /// raised. The given \p clear_callback is called when an error is cleared
     ///
     void subscribe_global_all_errors(const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
+
+    ///
+    /// \brief Check that external MQTT is configured - raises exception on error
+    ///
+    void check_external_mqtt();
+
+    ///
+    /// \brief Check that external MQTT is configured - raises exception on error
+    /// \returns the full external MQTT topic
+    ///
+    std::string check_external_mqtt(const std::string& topic);
+
+    ///
+    /// \brief Create external MQTT with an unsubscribe token
+    /// \returns the unsubscribe token
+    ///
+    UnsubscribeToken create_external_handler(const std::string& topic, const std::string& external_topic,
+                                             const StringPairHandler& handler);
 };
 
 ///

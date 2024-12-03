@@ -487,9 +487,14 @@ int ModuleLoader::initialize() {
         module_adapter.ext_mqtt_publish =
             std::bind(&Everest::Everest::external_mqtt_publish, &everest, std::placeholders::_1, std::placeholders::_2);
 
-        // NOLINTNEXTLINE(modernize-avoid-bind): prefer bind here for readability
-        module_adapter.ext_mqtt_subscribe = std::bind(&Everest::Everest::provide_external_mqtt_handler, &everest,
-                                                      std::placeholders::_1, std::placeholders::_2);
+        module_adapter.ext_mqtt_subscribe = [&everest](const std::string& topic, const StringHandler& handler) {
+            return everest.provide_external_mqtt_handler(topic, handler);
+        };
+
+        module_adapter.ext_mqtt_subscribe_pair = [&everest](const std::string& topic,
+                                                            const StringPairHandler& handler) {
+            return everest.provide_external_mqtt_handler(topic, handler);
+        };
 
         module_adapter.telemetry_publish = [&everest](const std::string& category, const std::string& subcategory,
                                                       const std::string& type, const TelemetryMap& telemetry) {

@@ -30,8 +30,9 @@ using ModuleConfigs = std::map<std::string, ConfigMap>;
 using Array = json::array_t;
 using Object = json::object_t;
 // TODO (aw): can we pass the handler arguments by const ref?
-using Handler = std::function<void(json)>;
+using Handler = std::function<void(const std::string&, json)>;
 using StringHandler = std::function<void(std::string)>;
+using StringPairHandler = std::function<void(const std::string& topic, const std::string& data)>;
 
 enum class HandlerType {
     Call,
