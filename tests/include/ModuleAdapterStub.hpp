@@ -41,6 +41,7 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
         };
         telemetry_publish = [this](const std::string& s1, const std::string& s2, const std::string& s3,
                                    const Everest::TelemetryMap& tm) { this->telemetry_publish_fn(s1, s2, s3, tm); };
+        get_mapping = [this]() { return this->get_mapping_fn(); };
     }
 
     virtual Result call_fn(const Requirement&, const std::string&, Parameters) {
@@ -93,6 +94,11 @@ struct ModuleAdapterStub : public Everest::ModuleAdapter {
     virtual void telemetry_publish_fn(const std::string&, const std::string&, const std::string&,
                                       const Everest::TelemetryMap&) {
         std::printf("telemetry_publish_fn\n");
+    }
+
+    virtual std::optional<ModuleTierMappings> get_mapping_fn() {
+        std::printf("get_mapping\n");
+        return std::nullopt;
     }
 };
 
