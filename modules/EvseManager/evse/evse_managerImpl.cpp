@@ -289,6 +289,11 @@ void evse_managerImpl::ready() {
             session_finished.meter_value = mod->get_latest_powermeter_data_billing();
             se.session_finished = session_finished;
             session_log.evse(false, fmt::format("Session Finished"));
+            // Cancel reservation, reservation might be stored when swiping rfid, but timed out, so we should not
+            // set the reservation id here.
+            if (mod->is_reserved()) {
+                mod->cancel_reservation(false);
+            }
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
@@ -357,11 +362,20 @@ types::evse_manager::Evse evse_managerImpl::handle_get_evse() {
     types::evse_manager::Evse evse;
     evse.id = this->mod->config.connector_id;
 
-    // EvseManager currently only supports a single connector with id: 1;
     std::vector<types::evse_manager::Connector> connectors;
     types::evse_manager::Connector connector;
+    // EvseManager currently only supports a single connector with id: 1;
     connector.id = 1;
+    if (!this->mod->config.connector_type.empty()) {
+        try {
+            connector.type = types::evse_manager::string_to_connector_type_enum(this->mod->config.connector_type);
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << "Evse with id " << evse.id << ": connector type invalid: " << e.what();
+        }
+    }
+
     connectors.push_back(connector);
+    evse.connectors = connectors;
     return evse;
 }
 
@@ -384,6 +398,16 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 
         this->mod->charger->authorize(true, provided_token);
         mod->charger_was_authorized();
+        if (validation_result.reservation_id.has_value()) {
+            EVLOG_debug << "Reserve evse manager reservation id for id " << validation_result.reservation_id.value();
+            // The validation result returns a reservation id. If this was a reservation for a specific evse, the
+            // evse manager probably already stored the reservation id (and this call is not really necessary). But if
+            // the reservation was not for a specific evse, the evse manager still has to send the reservation id in the
+            // transaction event request. So that is why we call 'reserve' here, so the evse manager knows the
+            // reservation id that belongs to this specific session and can send it accordingly.
+            // As this is not a new reservation but an existing one, we don't signal a reservation event for this.
+            mod->reserve(validation_result.reservation_id.value(), false);
+        }
     }
 
     if (pnc) {
@@ -398,7 +422,7 @@ void evse_managerImpl::handle_withdraw_authorization() {
 };
 
 bool evse_managerImpl::handle_reserve(int& reservation_id) {
-    return mod->reserve(reservation_id);
+    return mod->reserve(reservation_id, true);
 };
 
 void evse_managerImpl::handle_cancel_reservation() {
@@ -420,10 +444,6 @@ bool evse_managerImpl::handle_resume_charging() {
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
     return mod->charger->cancel_transaction(request);
 };
-
-void evse_managerImpl::handle_set_external_limits(types::energy::ExternalLimits& value) {
-    mod->update_local_energy_limit(value);
-}
 
 void evse_managerImpl::handle_set_get_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {

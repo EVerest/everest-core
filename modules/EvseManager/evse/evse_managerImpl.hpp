@@ -25,7 +25,8 @@ class evse_managerImpl : public evse_managerImplBase {
 public:
     evse_managerImpl() = delete;
     evse_managerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseManager>& mod, Conf& config) :
-        evse_managerImplBase(ev, "evse"), mod(mod), config(config){};
+        evse_managerImplBase(ev, "evse"), mod(mod), config(config) {
+    }
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -47,7 +48,6 @@ protected:
     virtual bool handle_resume_charging() override;
     virtual bool handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) override;
     virtual bool handle_force_unlock(int& connector_id) override;
-    virtual void handle_set_external_limits(types::energy::ExternalLimits& value) override;
     virtual void handle_set_get_certificate_response(
         types::iso15118_charger::ResponseExiStreamStatus& certificate_response) override;
     virtual bool handle_external_ready_to_start_charging() override;

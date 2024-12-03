@@ -276,15 +276,52 @@ it initiates a **StatusNotification.req** that contains information about the er
 The field **status** of the **StatusNotification.req** will be set to faulted only in case the error is of the special type  
 **evse_manager/Inoperative**. The field **connectorId** is set based on the mapping (for EVSE id and connector id) of the origin of the error.  
 If no mapping is provided, the error will be reported on connectorId 0. Note that the mapping can be configured per module inside the  
-EVerest config file. The field **errorCode** is set based on the **type** property of the error.
+EVerest config file.
 
-The fields **info**, **vendorId**, and **vendorErrorCode** are set based on the error type and the provided error properties. Please see the  
-definition of `get_error_info` to see how the **StatusNotification.req** is constructed based on the given error.
+For all other errors, raised in EVerest, the following mapping to an
+OCPP **StatusNotification.req** will be used:
 
-The **StatusNotification.req** message has some limitations with respect to reporting errors:
+* **StatusNotification.req** property ``errorCode`` will always be
+  ``OtherError``
+* **StatusNotification.req** property ``status`` will reflect the present status of the
+  charge point
+* **StatusNotification.req** property ``info`` -> origin of EVerest error
+* **StatusNotification.req** property ``vendorErrorCode`` -> EVerest error type and
+  subtype (the error type is simplified, meaning, that its leading part,
+  the interface name, is stripped)
+* **StatusNotification.req** property ``vendorId`` -> EVerest error message
 
-* Single errors cannot simply be cleared. If multiple errors are raised, it is not possible to clear individual errors.
-* Some fields of the message have relatively small character limits (e.g., **info** with 50 characters, **vendorErrorCode** with 50 characters).
+The reason for using the **StatusNotification.req** property property
+``vendorId`` for the error message is that it can carry the largest
+string (255 characters), whereas the other fields (``info`` and
+``vendorErrorCode``) only allow up to 50 characters.
+
+If for example the module with id `yeti_driver` within its
+implementation with id `board_support` creates the following error:
+
+.. code-block:: cpp
+
+  error_factory->create_error("evse_board_support/EnergyManagement",
+                              "OutOfEnergy", "someone cut the wires")
+
+the corresponding fields in the **StatusNotification.req** message will
+look like this:
+
+.. code-block:: JSON
+
+  {
+    "info": "yeti_driver->board_support",
+    "vendorErrorCode": "EnergyManagement/OutOfEnergy",
+    "vendorId": "someone cut the wires"
+  }
+
+The **StatusNotification.req** message has some limitations with respect
+to reporting errors:
+
+* Single errors cannot simply be cleared. If multiple errors are raised,
+  it is not possible to clear individual errors.
+* ``vendorId``, ``info`` and ``vendorErrorCode`` are limited in length
+  (see above).
 
 This module attempts to follow the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/. This proposes a unified  
 methodology to define and classify a minimum required set of error codes and how to report them via OCPP1.6.
@@ -297,6 +334,31 @@ This module currently deviates from the MREC specification in the following poin
 * MREC requires always using the value **Faulted** for the **status** field when reporting an error. The OCPP1.6 specification defines the 
   **Faulted** value as follows: "When a Charge Point or connector has reported an error and is not available for energy delivery.  
   (Inoperative)." This module, therefore, only reports **Faulted** when the Charge Point is not available for energy delivery.
+
+Energy Management and Smart Charging Integration
+------------------------------------------------
+
+OCPP1.6 defines the SmartCharging feature profile to allow the CSMS to control or influence the power consumption of the charging station. 
+This module integrates the composite schedule(s) within EVerest's energy management. For further information about smart charging and the
+composite schedule calculation please refer to the OCPP1.6 specification.
+
+The integration of the composite schedules is implemented through the optional requirement(s) `evse_energy_sink` (interface: `external_energy_limits`) 
+of this module. Depending on the number of EVSEs configured, each composite limit is communicated via a seperate sink, including the composite schedule
+for EVSE with id 0 (representing the whole charging station). The easiest way to explain this is with an example. If your charging station
+has two EVSEs you need to connect three modules that implement the `external_energy_limits` interface: One representing evse id 0 and 
+two representing your actual EVSEs.
+
+📌 **Note:** You have to configure an evse mapping for each module connected via the evse_energy_sink connection. This allows the module to identify
+which requirement to use when communicating the limits for the EVSEs. For more information about the module mapping please see 
+`3-tier module mappings <https://everest.github.io/nightly/general/05_existing_modules.html#tier-module-mappings>`_.
+
+This module defines a callback that gets executed every time charging profiles are changed, added or removed by the CSMS. The callback retrieves
+the composite schedules for all EVSEs (including evse id 0) and calls the `set_external_limits` command of the respective requirement that implements
+the `external_energy_limits` interface. In addition, the config parameter `PublishChargingScheduleIntervalS` defines a periodic interval to retrieve
+the composite schedule also in case no charging profiles have been changed. The configuration parameter `PublishChargingScheduleDurationS` defines 
+the duration in seconds of the requested composite schedules starting now. The value configured for `PublishChargingScheduleDurationS` shall be greater
+than the value configured for `PublishChargingScheduleIntervalS` because otherwise time periods could be missed by the application.
+
 
 Certificate Management
 ----------------------

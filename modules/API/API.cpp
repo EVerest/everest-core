@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "API.hpp"
+#include <external_energy_limits.hpp>
 #include <utils/date.hpp>
 #include <utils/yaml_loader.hpp>
 
@@ -265,12 +266,24 @@ SessionInfo::operator std::string() {
 
 void API::init() {
     invoke_init(*p_main);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
+
     this->limit_decimal_places = std::make_unique<LimitDecimalPlaces>(this->config);
     std::vector<std::string> connectors;
     std::string var_connectors = this->api_base + "connectors";
 
     evse_manager_check.set_total(r_evse_manager.size());
 
+    int evse_id = 1;
     for (auto& evse : this->r_evse_manager) {
         auto& session_info = this->info.emplace_back(std::make_unique<SessionInfo>());
         auto& hw_caps = this->hw_capabilities_str.emplace_back("");
@@ -487,30 +500,39 @@ void API::init() {
         });
 
         std::string cmd_set_limit = cmd_base + "set_limit_amps";
-        this->mqtt.subscribe(cmd_set_limit, [this, &evse](const std::string& data) {
-            try {
-                const auto external_limits = get_external_limits(data, false);
-                this->evse_manager_check.wait_ready();
-                evse->call_set_external_limits(external_limits);
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-            } catch (const std::out_of_range& e) {
-                EVLOG_warning << "Invalid limit: Out of range.";
-            }
-        });
 
-        std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
-        this->mqtt.subscribe(cmd_set_limit_watts, [this, &evse](const std::string& data) {
-            try {
-                const auto external_limits = get_external_limits(data, true);
-                this->evse_manager_check.wait_ready();
-                evse->call_set_external_limits(external_limits);
-            } catch (const std::invalid_argument& e) {
-                EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
-            } catch (const std::out_of_range& e) {
-                EVLOG_warning << "Invalid limit: Out of range.";
-            }
-        });
+        if (external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
+            auto& evse_energy_sink =
+                external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
+
+            this->mqtt.subscribe(cmd_set_limit, [&evse_manager_check = this->evse_manager_check,
+                                                 &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, false);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+
+            std::string cmd_set_limit_watts = cmd_base + "set_limit_watts";
+
+            this->mqtt.subscribe(cmd_set_limit_watts, [&evse_manager_check = this->evse_manager_check,
+                                                       &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                try {
+                    const auto external_limits = get_external_limits(data, true);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+        } else {
+            EVLOG_warning << "No evse energy sink configured for evse_id: " << evse_id
+                          << ". API module does therefore not allow control of amps or power limits for this EVSE";
+        }
+
         std::string cmd_force_unlock = cmd_base + "force_unlock";
         this->mqtt.subscribe(cmd_force_unlock, [this, &evse](const std::string& data) {
             int connector_id = 1;
@@ -565,6 +587,7 @@ void API::init() {
                 });
             }
         }
+        evse_id++;
     }
 
     std::string var_ocpp_connection_status = this->api_base + "ocpp/var/connection_status";

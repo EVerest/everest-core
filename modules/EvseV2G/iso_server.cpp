@@ -1490,9 +1490,11 @@ static enum v2g_event handle_iso_charging_status(struct v2g_connection* conn) {
     /* build up response */
     res->ResponseCode = iso2_responseCodeType_OK;
 
-    res->ReceiptRequired = conn->ctx->evse_v2g_data.receipt_required;
-    res->ReceiptRequired_isUsed =
-        (conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) ? 1U : 0U;
+    res->ReceiptRequired = false; // [V2G2-691] ReceiptRequired shall be false in case of EIM
+    if (conn->ctx->session.iso_selected_payment_option == iso2_paymentOptionType_Contract) {
+        res->ReceiptRequired = conn->ctx->evse_v2g_data.receipt_required;
+    }
+    res->ReceiptRequired_isUsed = true; // [V2G2-691] ChargingStatusRes shall always include ReceiptRequired
 
     if (conn->ctx->meter_info.meter_info_is_used == true) {
         res->MeterInfo.MeterID.charactersLen = conn->ctx->meter_info.meter_id.bytesLen;
@@ -2029,7 +2031,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_SERVICE_DISCOVERY_MSG;
         exi_out->V2G_Message.Body.ServiceDiscoveryRes_isUsed = 1u;
         init_iso2_ServiceDiscoveryResType(&exi_out->V2G_Message.Body.ServiceDiscoveryRes);
-        next_v2g_event = handle_iso_service_discovery(conn); // [V2G2-542]
+        next_v2g_event = handle_iso_service_discovery(conn); // [V2G2-544]
     } else if (exi_in->V2G_Message.Body.ServiceDetailReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling ServiceDetailReq");
         conn->ctx->current_v2g_msg = V2G_SERVICE_DETAIL_MSG;

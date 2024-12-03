@@ -827,6 +827,41 @@ to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiS
     return _request;
 }
 
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
+    switch (result) {
+    case types::reservation::ReservationResult::Accepted:
+        return ocpp::v201::ReserveNowStatusEnum::Accepted;
+    case types::reservation::ReservationResult::Faulted:
+        return ocpp::v201::ReserveNowStatusEnum::Faulted;
+    case types::reservation::ReservationResult::Occupied:
+        return ocpp::v201::ReserveNowStatusEnum::Occupied;
+    case types::reservation::ReservationResult::Rejected:
+        return ocpp::v201::ReserveNowStatusEnum::Rejected;
+    case types::reservation::ReservationResult::Unavailable:
+        return ocpp::v201::ReserveNowStatusEnum::Unavailable;
+    }
+
+    throw std::out_of_range("Could not convert ReservationResult");
+}
+
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status) {
+    switch (status) {
+    case types::reservation::Reservation_status::Expired:
+        return ocpp::v201::ReservationUpdateStatusEnum::Expired;
+    case types::reservation::Reservation_status::Removed:
+        return ocpp::v201::ReservationUpdateStatusEnum::Removed;
+
+    case types::reservation::Reservation_status::Cancelled:
+    case types::reservation::Reservation_status::Placed:
+    case types::reservation::Reservation_status::Used:
+        // OCPP should not convert a status enum that is not an OCPP type.
+        throw std::out_of_range("Could not convert ReservationUpdateStatus: OCPP does not know this type");
+    }
+
+    throw std::out_of_range("Could not convert ReservationUpdateStatus");
+}
+
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();
@@ -1058,21 +1093,9 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
         break;
     }
 
-    auto evse_id = 1;
-    auto connector_id = 1;
-
     if (transaction_event.evse.has_value()) {
-        evse_id = transaction_event.evse.value().id;
-        if (transaction_event.evse.value().connectorId.has_value()) {
-            connector_id = transaction_event.evse.value().connectorId.value();
-        }
-    } else {
-        EVLOG_warning << "Attempting to convert TransactionEventRequest that does not contain information about the "
-                         "EVSE. evse_id and connector default to 1.";
+        ocpp_transaction_event.evse = to_everest_evse(transaction_event.evse.value());
     }
-
-    ocpp_transaction_event.evse_id = evse_id;
-    ocpp_transaction_event.connector = connector_id;
     ocpp_transaction_event.session_id =
         transaction_event.transactionInfo.transactionId; // session_id == transaction_id for OCPP2.0.1
     ocpp_transaction_event.transaction_id = transaction_event.transactionInfo.transactionId;
@@ -1406,6 +1429,57 @@ to_ocpp_clear_display_message_response(const types::display_message::ClearDispla
     }
 
     return result_response;
+}
+
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type) {
+    switch (connector_type) {
+    case ocpp::v201::ConnectorEnum::cCCS1:
+        return types::evse_manager::ConnectorTypeEnum::cCCS1;
+    case ocpp::v201::ConnectorEnum::cCCS2:
+        return types::evse_manager::ConnectorTypeEnum::cCCS2;
+    case ocpp::v201::ConnectorEnum::cG105:
+        return types::evse_manager::ConnectorTypeEnum::cG105;
+    case ocpp::v201::ConnectorEnum::cTesla:
+        return types::evse_manager::ConnectorTypeEnum::cTesla;
+    case ocpp::v201::ConnectorEnum::cType1:
+        return types::evse_manager::ConnectorTypeEnum::cType1;
+    case ocpp::v201::ConnectorEnum::cType2:
+        return types::evse_manager::ConnectorTypeEnum::cType2;
+    case ocpp::v201::ConnectorEnum::s309_1P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_16A;
+    case ocpp::v201::ConnectorEnum::s309_1P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_32A;
+    case ocpp::v201::ConnectorEnum::s309_3P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_16A;
+    case ocpp::v201::ConnectorEnum::s309_3P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_32A;
+    case ocpp::v201::ConnectorEnum::sBS1361:
+        return types::evse_manager::ConnectorTypeEnum::sBS1361;
+    case ocpp::v201::ConnectorEnum::sCEE_7_7:
+        return types::evse_manager::ConnectorTypeEnum::sCEE_7_7;
+    case ocpp::v201::ConnectorEnum::sType2:
+        return types::evse_manager::ConnectorTypeEnum::sType2;
+    case ocpp::v201::ConnectorEnum::sType3:
+        return types::evse_manager::ConnectorTypeEnum::sType3;
+    case ocpp::v201::ConnectorEnum::Other1PhMax16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhMax16A;
+    case ocpp::v201::ConnectorEnum::Other1PhOver16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhOver16A;
+    case ocpp::v201::ConnectorEnum::Other3Ph:
+        return types::evse_manager::ConnectorTypeEnum::Other3Ph;
+    case ocpp::v201::ConnectorEnum::Pan:
+        return types::evse_manager::ConnectorTypeEnum::Pan;
+    case ocpp::v201::ConnectorEnum::wInductive:
+        return types::evse_manager::ConnectorTypeEnum::wInductive;
+    case ocpp::v201::ConnectorEnum::wResonant:
+        return types::evse_manager::ConnectorTypeEnum::wResonant;
+    case ocpp::v201::ConnectorEnum::Undetermined:
+        return types::evse_manager::ConnectorTypeEnum::Undetermined;
+    case ocpp::v201::ConnectorEnum::Unknown:
+        return types::evse_manager::ConnectorTypeEnum::Unknown;
+    }
+
+    throw std::out_of_range("Could not convert ConnectorEnum");
 }
 
 } // namespace conversions

@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.17.2
+  git_tag: v0.18.0
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -17,10 +17,6 @@ sigslot:
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
     - "SIGSLOT_COMPILE_TESTS OFF"
-libmodbus:
-  git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
@@ -43,10 +39,15 @@ libfsm:
   git_tag: v0.2.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
+# libcbv2g
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: v0.2.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.2.0
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600 module
@@ -66,18 +67,13 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 6a0010225535599b053e401307d76b58e9e3c7c5
+  git_tag: 9836ac4766e99a79555adb15c3001c8704f8b7a7
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2024.9.0
+  git_tag: 2024.10.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
@@ -90,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 3eb4c1b90c14f35a0cc19a96b850c095166c3177
+  git_tag: v0.4.3
 
 # unit testing
 gtest:

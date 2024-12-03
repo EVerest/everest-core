@@ -8,8 +8,10 @@
 #include <websocketpp_utils/uri.hpp>
 
 #include <conversions.hpp>
+#include <device_model/composed_device_model_storage.hpp>
 #include <error_handling.hpp>
 #include <evse_security_ocpp.hpp>
+#include <external_energy_limits.hpp>
 #include <ocpp_conversions.hpp>
 
 namespace module {
@@ -275,6 +277,16 @@ void OCPP201::init() {
     invoke_init(*p_auth_provider);
     invoke_init(*p_auth_validator);
 
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
+
     this->init_evse_maps();
 
     for (size_t evse_id = 1; evse_id <= this->r_evse_manager.size(); evse_id++) {
@@ -287,26 +299,6 @@ void OCPP201::init() {
             }
         });
     }
-
-    const auto error_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, false, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
-        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
-            // handled by specific evse_manager error handler
-            return;
-        }
-        const auto event_data = get_event_data(error, true, this->event_id_counter++);
-        this->charge_point->on_event({event_data});
-    };
-
-    subscribe_global_all_errors(error_handler, error_cleared_handler);
 }
 
 void OCPP201::ready() {
@@ -457,11 +449,23 @@ void OCPP201::ready() {
         return conversions::to_ocpp_get_log_response(response);
     };
 
-    callbacks.is_reservation_for_token_callback = [](const int32_t evse_id, const ocpp::CiString<36> idToken,
-                                                     const std::optional<ocpp::CiString<36>> groupIdToken) {
-        // FIXME: This is just a stub, replace with functionality
-        EVLOG_warning << "is_reservation_for_token_callback is still a stub";
-        return false;
+    callbacks.is_reservation_for_token_callback = [this](const int32_t evse_id, const ocpp::CiString<36> idToken,
+                                                         const std::optional<ocpp::CiString<36>> groupIdToken) {
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            return ocpp::ReservationCheckStatus::NotReserved;
+        }
+
+        types::reservation::ReservationCheck reservation_check_request;
+        reservation_check_request.evse_id = evse_id;
+        reservation_check_request.id_token = idToken.get();
+        if (groupIdToken.has_value()) {
+            reservation_check_request.group_id_token = groupIdToken.value().get();
+        }
+
+        const types::reservation::ReservationCheckStatus reservation_status =
+            this->r_reservation.at(0)->call_exists_reservation(reservation_check_request);
+
+        return ocpp_conversions::to_ocpp_reservation_check_status(reservation_status);
     };
 
     callbacks.update_firmware_request_callback = [this](const ocpp::v201::UpdateFirmwareRequest& request) {
@@ -521,7 +525,6 @@ void OCPP201::ready() {
             std::promise<ocpp::v201::ConfigNetworkResult> promise;
             std::future<ocpp::v201::ConfigNetworkResult> future = promise.get_future();
             ocpp::v201::ConfigNetworkResult result;
-            result.network_profile_slot = configuration_slot;
             result.success = true;
             promise.set_value(result);
             return future;
@@ -662,8 +665,8 @@ void OCPP201::ready() {
 
     const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
 
-    // this callback publishes the schedules within EVerest and applies the schedules for the individual evse_manager(s)
-    // and the connector_zero_sink
+    // this callback publishes the schedules within EVerest and applies the schedules for the individual
+    // r_evse_energy_sink
     const auto charging_schedules_callback = [this, composite_schedule_unit]() {
         const auto composite_schedules = this->charge_point->get_all_composite_schedules(
             this->config.RequestCompositeScheduleDurationS, composite_schedule_unit);
@@ -677,13 +680,70 @@ void OCPP201::ready() {
         this->r_system->call_set_system_time(current_time.to_rfc3339());
     };
 
+    callbacks.reserve_now_callback =
+        [this](const ocpp::v201::ReserveNowRequest& request) -> ocpp::v201::ReserveNowStatusEnum {
+        ocpp::v201::ReserveNowResponse response;
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            EVLOG_info << "Reservation rejected because the interface r_reservation is a nullptr";
+            return ocpp::v201::ReserveNowStatusEnum::Rejected;
+        }
+
+        types::reservation::Reservation reservation;
+        reservation.reservation_id = request.id;
+        reservation.expiry_time = request.expiryDateTime.to_rfc3339();
+        reservation.id_token = request.idToken.idToken;
+        reservation.evse_id = request.evseId;
+        if (request.groupIdToken.has_value()) {
+            reservation.parent_id_token = request.groupIdToken.value().idToken;
+        }
+        if (request.connectorType.has_value()) {
+            reservation.connector_type = conversions::to_everest_connector_type_enum(request.connectorType.value());
+        }
+
+        types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(reservation);
+        return conversions::to_ocpp_reservation_status(result);
+    };
+
+    callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
+        EVLOG_debug << "Received cancel reservation request for reservation id " << reservation_id;
+        ocpp::v201::CancelReservationResponse response;
+        if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
+            return false;
+        }
+
+        return this->r_reservation.at(0)->call_cancel_reservation(reservation_id);
+    };
+
     const auto sql_init_path = this->ocpp_share_path / SQL_CORE_MIGRATIONS;
 
     std::map<int32_t, int32_t> evse_connector_structure = this->get_connector_structure();
+    std::unique_ptr<module::device_model::ComposedDeviceModelStorage> device_model_storage =
+        std::make_unique<module::device_model::ComposedDeviceModelStorage>(
+            device_model_database_path, true, device_model_database_migration_path, device_model_config_path);
     this->charge_point = std::make_unique<ocpp::v201::ChargePoint>(
-        evse_connector_structure, device_model_database_path, true, device_model_database_migration_path,
-        device_model_config_path, this->ocpp_share_path.string(), this->config.CoreDatabasePath, sql_init_path.string(),
-        this->config.MessageLogPath, std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+        evse_connector_structure, std::move(device_model_storage), this->ocpp_share_path.string(),
+        this->config.CoreDatabasePath, sql_init_path.string(), this->config.MessageLogPath,
+        std::make_shared<EvseSecurity>(*this->r_security), callbacks);
+
+    const auto error_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, false, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    const auto error_cleared_handler = [this](const Everest::error::Error& error) {
+        if (error.type == EVSE_MANAGER_INOPERATIVE_ERROR) {
+            // handled by specific evse_manager error handler
+            return;
+        }
+        const auto event_data = get_event_data(error, true, this->event_id_counter++);
+        this->charge_point->on_event({event_data});
+    };
+
+    subscribe_global_all_errors(error_handler, error_cleared_handler);
 
     // publish charging schedules at least once on startup
     charging_schedules_callback();
@@ -784,10 +844,13 @@ void OCPP201::ready() {
                     conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
-                const auto everest_response_status =
-                    conversions::to_everest_iso15118_charger_status(ocpp_response.status);
-                const types::iso15118_charger::ResponseExiStreamStatus everest_response{
-                    everest_response_status, certificate_request.certificate_action, ocpp_response.exiResponse};
+                types::iso15118_charger::ResponseExiStreamStatus everest_response;
+                everest_response.status = conversions::to_everest_iso15118_charger_status(ocpp_response.status);
+                everest_response.certificate_action = certificate_request.certificate_action;
+                if (not ocpp_response.exiResponse.get().empty()) {
+                    // since exi_response is an optional in the EVerest type we only set it when not empty
+                    everest_response.exi_response = ocpp_response.exiResponse.get();
+                }
                 this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
             });
 
@@ -813,6 +876,26 @@ void OCPP201::ready() {
         this->charge_point->on_log_status_notification(conversions::to_ocpp_upload_logs_status_enum(status.log_status),
                                                        status.request_id);
     });
+
+    if (!this->r_reservation.empty() && this->r_reservation.at(0) != nullptr) {
+        r_reservation.at(0)->subscribe_reservation_update(
+            [this](const types::reservation::ReservationUpdateStatus status) {
+                if (status.reservation_status == types::reservation::Reservation_status::Expired ||
+                    status.reservation_status == types::reservation::Reservation_status::Removed) {
+                    EVLOG_debug << "Received reservation status update for reservation " << status.reservation_id
+                                << ": "
+                                << (status.reservation_status == types::reservation::Reservation_status::Expired
+                                        ? "Expired"
+                                        : "Removed");
+                    try {
+                        this->charge_point->on_reservation_status(
+                            status.reservation_id,
+                            conversions::to_ocpp_reservation_update_status_enum(status.reservation_status));
+                    } catch (const std::out_of_range& e) {
+                    }
+                }
+            });
+    }
 
     std::unique_lock lk(this->evse_ready_mutex);
     while (!this->all_evse_ready()) {
@@ -878,6 +961,14 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
         this->process_deauthorized(evse_id, connector_id, session_event);
         break;
     }
+    case types::evse_manager::SessionEventEnum::ReservationStart: {
+        this->process_reserved(evse_id, connector_id);
+        break;
+    }
+    case types::evse_manager::SessionEventEnum::ReservationEnd: {
+        this->process_reservation_end(evse_id, connector_id);
+        break;
+    }
     // explicitly ignore the following session events for now
     // TODO(kai): implement
     case types::evse_manager::SessionEventEnum::AuthRequired:
@@ -885,8 +976,6 @@ void OCPP201::process_session_event(const int32_t evse_id, const types::evse_man
     case types::evse_manager::SessionEventEnum::WaitingForEnergy:
     case types::evse_manager::SessionEventEnum::StoppingCharging:
     case types::evse_manager::SessionEventEnum::ChargingFinished:
-    case types::evse_manager::SessionEventEnum::ReservationStart:
-    case types::evse_manager::SessionEventEnum::ReservationEnd:
     case types::evse_manager::SessionEventEnum::ReplugStarted:
     case types::evse_manager::SessionEventEnum::ReplugFinished:
     case types::evse_manager::SessionEventEnum::PluginTimeout:
@@ -1189,6 +1278,14 @@ void OCPP201::process_deauthorized(const int32_t evse_id, const int32_t connecto
     this->process_tx_event_effect(evse_id, tx_event_effect, session_event);
 }
 
+void OCPP201::process_reserved(const int32_t evse_id, const int32_t connector_id) {
+    this->charge_point->on_reserved(evse_id, connector_id);
+}
+
+void OCPP201::process_reservation_end(const int32_t evse_id, const int32_t connector_id) {
+    this->charge_point->on_reservation_cleared(evse_id, connector_id);
+}
+
 void OCPP201::publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
     const auto everest_schedules = conversions::to_everest_charging_schedules(composite_schedules);
     this->p_ocpp_generic->publish_charging_schedules(everest_schedules);
@@ -1201,6 +1298,12 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
     // for each connector
 
     for (const auto& composite_schedule : composite_schedules) {
+        auto evse_id = composite_schedule.evseId;
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, evse_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: " << evse_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
 
@@ -1222,19 +1325,8 @@ void OCPP201::set_external_limits(const std::vector<ocpp::v201::CompositeSchedul
         }
         limits.schedule_import = schedule_import;
 
-        if (composite_schedule.evseId == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for evse 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for evse 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            EVLOG_debug << "OCPP sets the following external limits for evse " << composite_schedule.evseId << ": \n"
-                        << limits;
-            this->r_evse_manager.at(composite_schedule.evseId - 1)->call_set_external_limits(limits);
-        }
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, evse_id);
+        evse_sink.call_set_external_limits(limits);
     }
 }
 

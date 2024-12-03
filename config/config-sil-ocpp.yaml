@@ -16,11 +16,14 @@ active_modules:
   persistent_store:
     module: PersistentStore
   evse_manager_1:
-    evse: 1
+    mapping:
+      module:
+        evse: 1
     module: EvseManager
     config_module:
       connector_id: 1
       evse_id: "1"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp/everest-logs
@@ -47,10 +50,13 @@ active_modules:
           implementation_id: main
   evse_manager_2:
     module: EvseManager
-    evse: 2
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
       evse_id: "2"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp
@@ -73,13 +79,17 @@ active_modules:
         - module_id: iso15118_charger
           implementation_id: charger
   yeti_driver_1:
-    evse: 1
     module: JsYetiSimulator
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
-    evse: 2
     module: JsYetiSimulator
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
   slac:
@@ -161,8 +171,12 @@ active_modules:
       display_message:
         - module_id: display_message
           implementation_id: display_message
-      connector_zero_sink:
+      evse_energy_sink:
         - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
   display_message:
     module: TerminalCostAndPriceMessage
@@ -182,26 +196,82 @@ active_modules:
       energy_trunk:
         - module_id: grid_connection_point
           implementation_id: energy_grid
+  evse_manager_1_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+  evse_manager_2_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
+  evse_manager_1_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  evse_manager_2_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
   grid_connection_point:
     module: EnergyNode
+    mapping:
+      module:
+        evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1
+        - module_id: evse_manager_1_api_sink
           implementation_id: energy_grid
-        - module_id: evse_manager_2
+        - module_id: evse_manager_2_api_sink
           implementation_id: energy_grid
-      powermeter:
-        - module_id: yeti_driver_1
-          implementation_id: powermeter
   api:
     module: API
     connections:
       evse_manager:
         - module_id: evse_manager_1
+          implementation_id: evse
+        - module_id: evse_manager_2
           implementation_id: evse
       ocpp:
         - module_id: ocpp
@@ -209,6 +279,11 @@ active_modules:
       error_history:
         - module_id: error_history
           implementation_id: error_history
+      evse_energy_sink:
+        - module_id: evse_manager_1_api_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_api_sink
+          implementation_id: external_limits
   error_history:
     module: ErrorHistory
     config_implementation:

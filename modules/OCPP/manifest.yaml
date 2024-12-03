@@ -77,10 +77,10 @@ requires:
     interface: evse_manager
     min_connections: 1
     max_connections: 128
-  connector_zero_sink:
+  evse_energy_sink:
     interface: external_energy_limits
     min_connections: 0
-    max_connections: 1
+    max_connections: 129
   reservation:
     interface: reservation
     min_connections: 1
