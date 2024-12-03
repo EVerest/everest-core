@@ -735,7 +735,7 @@ void Charger::run_state_machine() {
         case EvseState::StoppingCharging:
             if (initialize_state) {
                 bcb_toggle_reset();
-                if (shared_context.transaction_active or shared_context.session_active) {
+                if (shared_context.transaction_active) {
                     signal_simple_event(types::evse_manager::SessionEventEnum::StoppingCharging);
                 }
 
