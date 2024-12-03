@@ -234,6 +234,7 @@ class TestOCPP16GenericInterfaceIntegration:
         assert not csms_connection.is_connected
         res = await _env.probe_module.call_command("ocpp", "restart", None)
         assert res is True
+        await asyncio.sleep(5)
         assert csms_connection.is_connected
 
     async def test_command_restart_denied(self, _env):
@@ -573,8 +574,8 @@ class TestOCPP16GenericInterfaceIntegration:
         assert await _env.probe_module.call_command("ocpp", "stop", None)
         assert await _env.probe_module.call_command("ocpp", "restart", None)
 
-        await wait_for_mock_called(subscription_mock, mock_call(False))
-        await wait_for_mock_called(subscription_mock, mock_call(True))
+        await wait_for_mock_called(subscription_mock, mock_call(False), timeout=5)
+        await wait_for_mock_called(subscription_mock, mock_call(True), timeout=5)
 
     @pytest.mark.parametrize(
         "overwrite_implementation",
