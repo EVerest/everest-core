@@ -166,6 +166,7 @@ public:
     sigslot::signal<> signal_slac_start;
 
     sigslot::signal<> signal_hlc_stop_charging;
+    sigslot::signal<types::iso15118_charger::EvseError> signal_hlc_error;
 
     void process_event(CPEvent event);
 

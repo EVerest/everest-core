@@ -25,6 +25,10 @@ config:
     minimum: 50
     maximum: 1000
     default: 1000
+  connector_id:
+    description: Connector id
+    type: integer
+    default: 1
 provides:
   dc_supply:
     interface: power_supply_DC
