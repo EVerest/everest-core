@@ -110,6 +110,11 @@ public:
     /// \return CA certificate file
     virtual std::string get_verify_file(const CaCertificateType& certificate_type) = 0;
 
+    /// \brief Retrieves the PEM formatted CA bundle location for the given \p certificate_type
+    /// \param certificate_type
+    /// \return CA certificate file
+    virtual std::string get_verify_location(const CaCertificateType& certificate_type) = 0;
+
     /// \brief Gets the expiry day count for the leaf certificate of the given \p certificate_type
     /// \param certificate_type
     /// \return day count until the leaf certificate expires

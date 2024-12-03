@@ -374,11 +374,15 @@ bool WebsocketLibwebsockets::tls_init(SSL_CTX* ctx, const std::string& path_chai
     }
 
     if (this->evse_security->is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
-        std::string ca_csms = this->evse_security->get_verify_file(ocpp::CaCertificateType::CSMS);
+        std::string ca_csms = this->evse_security->get_verify_location(ocpp::CaCertificateType::CSMS);
 
         EVLOG_info << "Loading CA csms bundle to verify server certificate: " << ca_csms;
 
-        rc = SSL_CTX_load_verify_locations(ctx, ca_csms.c_str(), NULL);
+        if (std::filesystem::is_directory(ca_csms)) {
+            rc = SSL_CTX_load_verify_locations(ctx, NULL, ca_csms.c_str());
+        } else {
+            rc = SSL_CTX_load_verify_locations(ctx, ca_csms.c_str(), NULL);
+        }
 
         if (rc != 1) {
             EVLOG_error << "Could not load CA verify locations, error: " << ERR_error_string(ERR_get_error(), NULL);

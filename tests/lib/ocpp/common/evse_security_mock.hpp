@@ -33,6 +33,7 @@ public:
                 (override));
     MOCK_METHOD(bool, update_certificate_links, (const CertificateSigningUseEnum&), (override));
     MOCK_METHOD(std::string, get_verify_file, (const CaCertificateType&), (override));
+    MOCK_METHOD(std::string, get_verify_location, (const CaCertificateType&), (override));
     MOCK_METHOD(int, get_leaf_expiry_days_count, (const CertificateSigningUseEnum&), (override));
 };
 

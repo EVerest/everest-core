@@ -56,6 +56,7 @@ public:
                                                        bool include_ocsp = false) override;
     bool update_certificate_links(const CertificateSigningUseEnum& certificate_type) override;
     std::string get_verify_file(const CaCertificateType& certificate_type) override;
+    std::string get_verify_location(const CaCertificateType& certificate_type) override;
     int get_leaf_expiry_days_count(const CertificateSigningUseEnum& certificate_type) override;
 };
 
