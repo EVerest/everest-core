@@ -69,10 +69,9 @@ static auto create_cm_atten_char_ind(const MatchingSession& session, int atten_o
     return atten_char_ind;
 }
 
-static auto create_cm_slac_match_cnf(const MatchingSession& session, const slac::messages::cm_slac_match_req& match_req,
-                                     const uint8_t* session_nmk) {
-    slac::messages::cm_slac_match_cnf match_cnf;
-
+// Note (aw): this function doesn't return by value in order to optimize for fewer copies
+static void create_cm_slac_match_cnf(slac::messages::cm_slac_match_cnf& match_cnf, const MatchingSession& session,
+                                     const slac::messages::cm_slac_match_req& match_req, const uint8_t* session_nmk) {
     match_cnf.application_type = slac::defs::COMMON_APPLICATION_TYPE;
     match_cnf.security_type = slac::defs::COMMON_SECURITY_TYPE;
     match_cnf.mvf_length = htole16(slac::defs::CM_SLAC_MATCH_CNF_MVF_LENGTH);
@@ -85,8 +84,6 @@ static auto create_cm_slac_match_cnf(const MatchingSession& session, const slac:
     match_cnf._reserved2 = 0;
     slac::utils::generate_nid_from_nmk(match_cnf.nid, session_nmk);
     memcpy(match_cnf.nmk, session_nmk, sizeof(match_cnf.nmk));
-
-    return match_cnf;
 }
 
 void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
@@ -120,7 +117,27 @@ void MatchingState::handle_slac_message(slac::messages::HomeplugMessage& msg) {
     }
 }
 
+static bool validate_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& msg) {
+    constexpr uint8_t CM_SLAC_PARM_APPLICATION_TYPE = 0x00; // EV/EVSE matching
+    constexpr uint8_t CM_SLAC_PARM_SECURITY_TYPE = 0x00;    // no security
+
+    if (msg.application_type not_eq CM_SLAC_PARM_APPLICATION_TYPE) {
+        return false;
+    }
+    if (msg.security_type not_eq CM_SLAC_PARM_SECURITY_TYPE) {
+        return false;
+    }
+
+    return true;
+}
+
 void MatchingState::handle_cm_slac_parm_req(const slac::messages::cm_slac_parm_req& msg) {
+
+    if (not validate_cm_slac_parm_req(msg)) {
+        ctx.log_info("Invalid CM_SLAC_PARM.REQ received, ignoring");
+        return;
+    }
+
     // set this flag to true, to disable the retry timeout
     seen_slac_parm_req = true;
 
@@ -273,16 +290,20 @@ void MatchingState::handle_cm_slac_match_req(const slac::messages::cm_slac_match
 
     session_log(ctx, *session, "Received CM_SLAC_MATCH_REQ, sending CM_SLAC_MATCH_CNF -> session complete");
 
-    if (not ctx.slac_config.link_status.debug_simulate_failed_matching) {
-        auto match_confirm = create_cm_slac_match_cnf(*session, msg, ctx.slac_config.session_nmk);
-        ctx.send_slac_message(tmp_ev_mac, match_confirm);
-    } else {
+    static constexpr uint8_t wrong_session_nmk[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                                                      0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
+
+    auto const* session_nmk = ctx.slac_config.session_nmk;
+
+    if (ctx.slac_config.link_status.debug_simulate_failed_matching) {
         ctx.log_info("Sending wrong NMK to EV to simulate a failed link setup after match request");
-        uint8_t wrong_session_nmk[16] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-                                         0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10};
-        auto match_confirm = create_cm_slac_match_cnf(*session, msg, wrong_session_nmk);
-        ctx.send_slac_message(tmp_ev_mac, match_confirm);
+        session_nmk = wrong_session_nmk;
     }
+
+    match_cnf_message = std::make_unique<slac::messages::cm_slac_match_cnf>();
+    create_cm_slac_match_cnf(*match_cnf_message, *session, msg, session_nmk);
+
+    ctx.send_slac_message(tmp_ev_mac, *match_cnf_message);
 
     session->state = MatchingSubState::MATCH_COMPLETE;
 
