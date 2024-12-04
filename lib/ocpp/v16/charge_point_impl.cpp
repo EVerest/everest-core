@@ -1931,8 +1931,10 @@ void ChargePointImpl::handleRemoteStartTransactionRequest(ocpp::Call<RemoteStart
     std::vector<int32_t> referenced_connectors;
 
     if (call.msg.connectorId) {
-        if (call.msg.connectorId.value() <= 0) {
-            EVLOG_warning << "Received RemoteStartTransactionRequest with connector id <= 0";
+        if (call.msg.connectorId.value() <= 0 or
+            call.msg.connectorId.value() > this->configuration->getNumberOfConnectors()) {
+            EVLOG_warning << "Received RemoteStartTransactionRequest with connector id <= 0 or > "
+                          << this->configuration->getNumberOfConnectors();
             response.status = RemoteStartStopStatus::Rejected;
             ocpp::CallResult<RemoteStartTransactionResponse> call_result(response, call.uniqueId);
             this->message_dispatcher->dispatch_call_result(call_result);
@@ -2243,7 +2245,7 @@ void ChargePointImpl::handleUnlockConnectorRequest(ocpp::Call<UnlockConnectorReq
 
     UnlockConnectorResponse response;
     auto connector = call.msg.connectorId;
-    if (connector == 0 || connector > this->configuration->getNumberOfConnectors()) {
+    if (connector <= 0 or connector > this->configuration->getNumberOfConnectors()) {
         response.status = UnlockStatus::NotSupported;
     } else {
         // this message is not intended to remotely stop a transaction, but if a transaction is still ongoing it is
@@ -2335,7 +2337,7 @@ void ChargePointImpl::handleGetCompositeScheduleRequest(ocpp::Call<GetCompositeS
     const auto connector_id = call.msg.connectorId;
     const auto allowed_charging_rate_units = this->configuration->getChargingScheduleAllowedChargingRateUnitVector();
 
-    if ((size_t)connector_id >= this->connectors.size() or connector_id < 0) {
+    if (connector_id > this->configuration->getNumberOfConnectors() or connector_id < 0) {
         response.status = GetCompositeScheduleStatus::Rejected;
     } else if (call.msg.chargingRateUnit and
                std::find(allowed_charging_rate_units.begin(), allowed_charging_rate_units.end(),
