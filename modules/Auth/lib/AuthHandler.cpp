@@ -2,7 +2,9 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <AuthHandler.hpp>
+
 #include <everest/logging.hpp>
+#include <generated/interfaces/kvs/Interface.hpp>
 
 namespace module {
 
@@ -38,19 +40,32 @@ std::string token_handling_result_to_string(const TokenHandlingResult& result) {
 } // namespace conversions
 
 AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                         bool prioritize_authorization_over_stopping_transaction, bool ignore_faults) :
+                         bool prioritize_authorization_over_stopping_transaction, bool ignore_faults,
+                         const std::string& id, kvsIntf* store) :
     selection_algorithm(selection_algorithm),
     connection_timeout(connection_timeout),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
-    ignore_faults(ignore_faults){};
+    ignore_faults(ignore_faults),
+    reservation_handler(evses, evse_mutex, id, store) {
+}
 
 AuthHandler::~AuthHandler() {
 }
 
-void AuthHandler::init_connector(const int connector_id, const int evse_index) {
-    std::unique_ptr<ConnectorContext> ctx = std::make_unique<ConnectorContext>(connector_id, evse_index);
-    this->connectors.emplace(connector_id, std::move(ctx));
-    this->reservation_handler.init_connector(connector_id);
+void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors) {
+    EVLOG_debug << "Add evse with evse id " << evse_id;
+
+    if (evse_id < 0) {
+        EVLOG_error << "Can not add connector to reservation handler: evse id is negative.";
+        return;
+    }
+
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_index, connectors);
+}
+
+void AuthHandler::initialize() {
+    this->reservation_handler.load_reservations();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -60,15 +75,15 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << provided_token;
     this->token_in_process_mutex.lock();
-    const auto referenced_connectors = this->get_referenced_connectors(provided_token);
+    const auto referenced_evses = this->get_referenced_evses(provided_token);
 
-    if (!this->is_token_already_in_process(provided_token.id_token.value, referenced_connectors)) {
+    if (!this->is_token_already_in_process(provided_token.id_token.value, referenced_evses)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token.value);
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
         this->token_in_process_mutex.unlock();
         result = this->handle_token(provided_token);
-        this->unlock_plug_in_mutex(referenced_connectors);
+        this->unlock_plug_in_mutex(referenced_evses);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << provided_token.id_token.value << " repeatedly while still processing it";
@@ -104,57 +119,67 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 }
 
 TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
-    std::vector<int> referenced_connectors = this->get_referenced_connectors(provided_token);
+    std::vector<int> referenced_evses = this->get_referenced_evses(provided_token);
 
     // Only provided token with type RFID can be used to stop a transaction
     if (provided_token.authorization_type == AuthorizationType::RFID) {
         // check if id_token is used for an active transaction
-        const auto connector_used_for_transaction =
-            this->used_for_transaction(referenced_connectors, provided_token.id_token.value);
-        if (connector_used_for_transaction != -1) {
+        const auto evse_used_for_transaction =
+            this->used_for_transaction(referenced_evses, provided_token.id_token.value);
+        if (evse_used_for_transaction != -1) {
             StopTransactionRequest req;
             req.reason = StopTransactionReason::Local;
             req.id_tag.emplace(provided_token);
-            this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index, req);
+            this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
             EVLOG_info << "Transaction was stopped because id_token was used for transaction";
             return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
         }
     }
 
     /** Check if validation of token shall be requested. In some situations its not useful to validate
-     * the token because either no connector is available anyways or the provided token does not match a present
+     * the token because either no evse is available anyways or the provided token does not match a present
      * reservation. Yet it has to be checked if the incoming token can be used to stop an active transaction or if the
      * parent id of the token (that is only known after validation) can be used to stop or start transactions
      */
 
-    /* If no connector is available AND no parent_id is deposited at any connector and no master pass group id is
+    /* If no evse is available AND no parent_id is deposited at any evse and no master pass group id is
     configured, we can immediately respond with NO_CONNECTOR_AVAILABLE */
-    if (!this->any_connector_available(referenced_connectors) and
-        !this->any_parent_id_present(referenced_connectors) and !this->master_pass_group_id.has_value()) {
+    if (!this->any_evse_available(referenced_evses) and !this->any_parent_id_present(referenced_evses) and
+        !this->master_pass_group_id.has_value()) {
         return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
-    /* If all connectors are reserved and the given identifier doesnt match any reserved identifier and no parent id is
+    /* If all evses are reserved and the given identifier doesnt match any reserved identifier and no parent id is
      * deposited for a reservation, we can immediately respond with NO_CONNECTOR_AVAILABLE */
-    bool all_connectors_reserved_and_tag_does_not_match = true;
-    for (const auto connector_id : referenced_connectors) {
-        const auto connector = this->connectors.at(connector_id)->connector;
-        if (!connector.reserved) {
-            all_connectors_reserved_and_tag_does_not_match = false;
+    bool all_evses_reserved_and_tag_does_not_match = true;
+    for (const auto evse_id : referenced_evses) {
+        if (evse_id < 0) {
+            EVLOG_warning << "Handle token: Evse id is negative: that should not be possible.";
+            continue;
+        }
+
+        const uint32_t evse_id_u = static_cast<uint32_t>(evse_id);
+
+        if (!this->reservation_handler.is_evse_reserved(evse_id_u) &&
+            this->reservation_handler.is_charging_possible(evse_id_u)) {
+            all_evses_reserved_and_tag_does_not_match = false;
             break;
         }
-        if (this->reservation_handler.matches_reserved_identifier(connector_id, provided_token.id_token.value,
-                                                                  std::nullopt)) {
-            all_connectors_reserved_and_tag_does_not_match = false;
+
+        const std::optional<int32_t> reservation_id = this->reservation_handler.matches_reserved_identifier(
+            provided_token.id_token.value, evse_id_u, std::nullopt);
+
+        if (reservation_id.has_value()) {
+            all_evses_reserved_and_tag_does_not_match = false;
             break;
         }
-        if (this->reservation_handler.has_reservation_parent_id(connector_id)) {
-            all_connectors_reserved_and_tag_does_not_match = false;
+        if (this->reservation_handler.has_reservation_parent_id(evse_id_u)) {
+            all_evses_reserved_and_tag_does_not_match = false;
             break;
         }
     }
 
-    if (all_connectors_reserved_and_tag_does_not_match) {
+    if (all_evses_reserved_and_tag_does_not_match) {
         return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
@@ -172,8 +197,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 
     bool attempt_stop_with_parent_id_token = false;
     if (this->prioritize_authorization_over_stopping_transaction) {
-        // check if any connector is available
-        if (!this->any_connector_available(referenced_connectors)) {
+        // check if any evse is available
+        if (!this->any_evse_available(referenced_evses)) {
             // check if parent_id_token can be used to finish transaction
             attempt_stop_with_parent_id_token = true;
         }
@@ -189,13 +214,14 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "Provided parent_id_token is equal to master_pass_group_id. Stopping all active "
                                   "transactions!";
-                    for (const auto connector_id : referenced_connectors) {
-                        const auto connector = this->connectors.at(connector_id)->connector;
-                        if (connector.transaction_active) {
+
+                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+                    for (const auto evse_id : referenced_evses) {
+                        if (this->evses[evse_id]->transaction_active) {
                             StopTransactionRequest req;
                             req.reason = StopTransactionReason::MasterPass;
                             req.id_tag.emplace(provided_token);
-                            this->stop_transaction_callback(this->connectors.at(connector_id)->evse_index, req);
+                            this->stop_transaction_callback(this->evses.at(evse_id)->evse_index, req);
                         }
                     }
                     // TOOD: Add handling in case there is a display which can be used which transaction should stop
@@ -203,19 +229,17 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                 }
 
-                const auto connector_used_for_transaction =
-                    this->used_for_transaction(referenced_connectors, validation_result.parent_id_token.value().value);
-                if (connector_used_for_transaction != -1) {
-                    const auto connector = this->connectors.at(connector_used_for_transaction)->connector;
-                    // only stop transaction if a transaction is active
-                    if (!connector.transaction_active) {
+                const auto evse_used_for_transaction =
+                    this->used_for_transaction(referenced_evses, validation_result.parent_id_token.value().value);
+                if (evse_used_for_transaction != -1) {
+                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+                    if (!this->evses[evse_used_for_transaction]->transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
                         StopTransactionRequest req;
                         req.reason = StopTransactionReason::Local;
                         req.id_tag.emplace(provided_token);
-                        this->stop_transaction_callback(this->connectors.at(connector_used_for_transaction)->evse_index,
-                                                        req);
+                        this->stop_transaction_callback(this->evses.at(evse_used_for_transaction)->evse_index, req);
                         EVLOG_info << "Transaction was stopped because parent_id_token was used for transaction";
                         return TokenHandlingResult::USED_TO_STOP_TRANSACTION;
                     }
@@ -224,8 +248,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         }
     }
 
-    // check if any connector is available
-    if (!this->any_connector_available(referenced_connectors)) {
+    // check if any evse is available
+    if (!this->any_evse_available(referenced_evses)) {
         return TokenHandlingResult::NO_CONNECTOR_AVAILABLE;
     }
 
@@ -234,55 +258,61 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
         bool authorized = false;
         std::vector<ValidationResult>::size_type i = 0;
         // iterate over validation results
-        while (i < validation_results.size() && !authorized && !referenced_connectors.empty()) {
+        while (i < validation_results.size() && !authorized && !referenced_evses.empty()) {
             validation_result = validation_results.at(i);
             if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
 
                 if (this->equals_master_pass_group_id(validation_result.parent_id_token)) {
                     EVLOG_info << "parent_id_token of validation result is equal to master_pass_group_id. Not allowed "
-                                  "to authorize "
-                                  "this token for starting transactions!";
+                                  "to authorize this token for starting transactions!";
                     return TokenHandlingResult::REJECTED;
                 }
 
                 this->publish_token_validation_status_callback(provided_token,
                                                                types::authorization::TokenValidationStatus::Accepted);
                 /* although validator accepts the authorization request, the Auth module still needs to
-                    - select the connector for the authorization request
+                    - select the evse for the authorization request
                     - process it against placed reservations
-                    - compare referenced_connectors against the connectors listed in the validation_result
+                    - compare referenced_evses against the evses listed in the validation_result
                 */
-                int connector_id = this->select_connector(referenced_connectors); // might block
-                EVLOG_debug << "Selected connector#" << connector_id << " for token: " << provided_token.id_token.value;
-                if (connector_id != -1) { // indicates timeout of connector selection
+                int evse_id = this->select_evse(referenced_evses); // might block
+                EVLOG_debug << "Selected evse#" << evse_id << " for token: " << provided_token.id_token.value;
+                if (evse_id != -1) { // indicates timeout of evse selection
+                    std::optional<std::string> parent_id_token;
+                    if (validation_result.parent_id_token.has_value()) {
+                        parent_id_token = validation_result.parent_id_token.value().value;
+                    }
+                    const std::optional<int32_t> reservation_id = this->reservation_handler.matches_reserved_identifier(
+                        provided_token.id_token.value, static_cast<uint32_t>(evse_id), parent_id_token);
+
                     if (validation_result.evse_ids.has_value() and
-                        intersect(referenced_connectors, validation_result.evse_ids.value()).empty()) {
-                        EVLOG_debug
-                            << "Empty intersection between referenced connectors and connectors that are authorized";
+                        intersect(referenced_evses, validation_result.evse_ids.value()).empty()) {
+                        EVLOG_debug << "Empty intersection between referenced evses and evses that are authorized";
                         validation_result.authorization_status = AuthorizationStatus::NotAtThisLocation;
-                    } else if (!this->connectors.at(connector_id)->connector.reserved) {
-                        EVLOG_info << "Providing authorization to connector#" << connector_id;
+                    } else if (reservation_id == std::nullopt &&
+                               !this->reservation_handler.is_charging_possible(static_cast<uint32_t>(evse_id))) {
+                        validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
+                    } else if (!this->reservation_handler.is_evse_reserved(static_cast<uint32_t>(evse_id)) &&
+                               (reservation_id == std::nullopt)) {
+                        EVLOG_info << "Providing authorization to evse#" << evse_id;
                         authorized = true;
                     } else {
-                        EVLOG_debug << "Connector is reserved. Checking if token matches...";
-                        std::optional<std::string> parent_id_token;
-                        if (validation_result.parent_id_token.has_value()) {
-                            parent_id_token = validation_result.parent_id_token.value().value;
-                        }
-                        if (this->reservation_handler.matches_reserved_identifier(
-                                connector_id, provided_token.id_token.value, parent_id_token)) {
-                            EVLOG_info << "Connector is reserved and token is valid for this reservation";
-                            this->reservation_handler.on_reservation_used(connector_id);
+                        EVLOG_debug << "Evse is reserved. Checking if token matches...";
+
+                        if (reservation_id.has_value()) {
+                            EVLOG_info << "Evse is reserved and token is valid for this reservation";
+                            this->reservation_handler.on_reservation_used(reservation_id.value());
                             authorized = true;
+                            validation_result.reservation_id = reservation_id.value();
                         } else {
-                            EVLOG_info << "Connector is reserved but token is not valid for this reservation";
+                            EVLOG_info << "Evse is reserved but token is not valid for this reservation";
                             validation_result.authorization_status = AuthorizationStatus::NotAtThisTime;
                         }
                     }
-                    this->notify_evse(connector_id, provided_token, validation_result);
+                    this->notify_evse(evse_id, provided_token, validation_result);
                 } else {
-                    // in this case we dont need / cannot notify an evse, because no connector was selected
-                    EVLOG_info << "Timeout while selecting connector for provided token: " << provided_token;
+                    // in this case we dont need / cannot notify an evse, because no evse was selected
+                    EVLOG_info << "Timeout while selecting evse for provided token: " << provided_token;
                     return TokenHandlingResult::TIMEOUT;
                 }
             }
@@ -294,7 +324,7 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
             EVLOG_debug << "id_token could not be validated by any validator";
             // in case the validation was not successful, we need to notify the evse and transmit the validation result.
             // This is especially required for Plug&Charge with ISO15118 in order to allow the ISO15118 state machine to
-            // escape the Authorize loop. We do this for all connectors that were referenced
+            // escape the Authorize loop. We do this for all evses that were referenced
             if (provided_token.connectors.has_value()) {
                 const auto connectors = provided_token.connectors.value();
                 std::for_each(connectors.begin(), connectors.end(),
@@ -310,61 +340,63 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
     }
 }
 
-std::vector<int> AuthHandler::get_referenced_connectors(const ProvidedIdToken& provided_token) {
-    std::vector<int> connectors;
+std::vector<int> AuthHandler::get_referenced_evses(const ProvidedIdToken& provided_token) {
+    std::vector<int> evse_ids;
 
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     // either insert the given connector references of the provided token
     if (provided_token.connectors) {
         std::copy_if(provided_token.connectors.value().begin(), provided_token.connectors.value().end(),
-                     std::back_inserter(connectors), [this](int connector_id) {
-                         if (this->connectors.find(connector_id) != this->connectors.end()) {
-                             return !this->connectors.at(connector_id)->connector.is_unavailable();
+                     std::back_inserter(evse_ids), [this](int evse_id) {
+                         if (this->evses.find(evse_id) != this->evses.end()) {
+                             return !this->evses.at(evse_id)->is_unavailable();
                          } else {
-                             EVLOG_warning << "Provided token included references to connector_id that does not exist";
+                             EVLOG_warning << "Provided token included references to evse_id that does not exist";
                              return false;
                          }
                      });
     }
     // or if there is no reference to connectors take all connectors
     else {
-        for (const auto& entry : this->connectors) {
-            if (!entry.second->connector.is_unavailable()) {
-                connectors.push_back(entry.first);
+        for (const auto& entry : this->evses) {
+            if (!entry.second->is_unavailable()) {
+                evse_ids.push_back(entry.first);
             }
         }
     }
-    return connectors;
+    return evse_ids;
 }
 
-int AuthHandler::used_for_transaction(const std::vector<int>& connector_ids, const std::string& token) {
-    for (const auto connector_id : connector_ids) {
-        if (this->connectors.at(connector_id)->connector.identifier.has_value()) {
-            const auto& identifier = this->connectors.at(connector_id)->connector.identifier.value();
+int AuthHandler::used_for_transaction(const std::vector<int>& evse_ids, const std::string& token) {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    for (const auto evse_id : evse_ids) {
+        if (this->evses.at(evse_id)->identifier.has_value()) {
+            const auto& identifier = this->evses.at(evse_id)->identifier.value();
             // check against id_token
             if (identifier.id_token.value == token) {
-                return connector_id;
+                return evse_id;
             }
             // check against parent_id_token
             else if (identifier.parent_id_token.has_value() && identifier.parent_id_token.value().value == token) {
-                return connector_id;
+                return evse_id;
             }
         }
     }
     return -1;
 }
 
-bool AuthHandler::is_token_already_in_process(const std::string& id_token,
-                                              const std::vector<int>& referenced_connectors) {
+bool AuthHandler::is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_evses) {
 
     // checks if the token is currently already processed by the module (because already swiped)
     if (this->tokens_in_process.find(id_token) != this->tokens_in_process.end()) {
         return true;
     } else {
+        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         // check if id_token was already used to authorize evse but no transaction has been started yet
-        for (const auto connector_id : referenced_connectors) {
-            const auto connector = this->connectors.at(connector_id)->connector;
-            if (connector.identifier.has_value() && connector.identifier.value().id_token.value == id_token &&
-                !connector.transaction_active) {
+        for (const auto evse_id : referenced_evses) {
+            const auto& evse = this->evses.at(evse_id);
+            if (evse->identifier.has_value() && evse->identifier.value().id_token.value == id_token &&
+                !evse->transaction_active) {
                 return true;
             }
         }
@@ -372,24 +404,24 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token,
     return false;
 }
 
-bool AuthHandler::any_connector_available(const std::vector<int>& connector_ids) {
-    EVLOG_debug << "Checking availability of connectors...";
-    for (const auto connector_id : connector_ids) {
-        const auto state = this->connectors.at(connector_id)->connector.get_state();
-        if (state != ConnectorState::UNAVAILABLE && state != ConnectorState::OCCUPIED &&
-            state != ConnectorState::FAULTED) {
-            EVLOG_debug << "There is at least one connector available";
+bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
+    EVLOG_debug << "Checking availability of evses...";
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    for (const auto evse_id : evse_ids) {
+        if (this->evses.at(evse_id)->is_available()) {
+            EVLOG_debug << "There is at least one evse available";
             return true;
         }
     }
-    EVLOG_debug << "No connector is available for this id_token";
+    EVLOG_debug << "No evse is available for this id_token";
     return false;
 }
 
-bool AuthHandler::any_parent_id_present(const std::vector<int> connector_ids) {
-    for (const auto connector_id : connector_ids) {
-        if (this->connectors.at(connector_id)->connector.identifier.has_value() and
-            this->connectors.at(connector_id)->connector.identifier.value().parent_id_token.has_value()) {
+bool AuthHandler::any_parent_id_present(const std::vector<int>& evse_ids) {
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    for (const auto evse_id : evse_ids) {
+        if (this->evses.at(evse_id)->identifier.has_value() and
+            this->evses.at(evse_id)->identifier.value().parent_id_token.has_value()) {
             EVLOG_debug << "Parent id is currently present";
             return true;
         }
@@ -410,65 +442,65 @@ bool AuthHandler::equals_master_pass_group_id(const std::optional<types::authori
     return parent_id_token.value().value == this->master_pass_group_id.value();
 }
 
-int AuthHandler::get_latest_plugin(const std::vector<int>& connectors) {
+int AuthHandler::get_latest_plugin(const std::vector<int>& evse_ids) {
     std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-    for (const auto connector : this->plug_in_queue) {
-        if (std::find(connectors.begin(), connectors.end(), connector) != connectors.end()) {
-            return connector;
+    for (const auto evse_id : this->plug_in_queue) {
+        if (std::find(evse_ids.begin(), evse_ids.end(), evse_id) != evse_ids.end()) {
+            return evse_id;
         }
     }
     return -1;
 }
 
-void AuthHandler::lock_plug_in_mutex(const std::vector<int>& connectors) {
-    for (const auto connector_id : connectors) {
-        this->connectors.at(connector_id)->plug_in_mutex.lock();
+void AuthHandler::lock_plug_in_mutex(const std::vector<int>& evse_ids) {
+    for (const auto evse_id : evse_ids) {
+        this->evses.at(evse_id)->plug_in_mutex.lock();
     }
 }
 
-void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& connectors) {
-    for (const auto connector_id : connectors) {
-        this->connectors.at(connector_id)->plug_in_mutex.unlock();
+void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& evse_ids) {
+    for (const auto evse_id : evse_ids) {
+        this->evses.at(evse_id)->plug_in_mutex.unlock();
     }
 }
 
-int AuthHandler::select_connector(const std::vector<int>& connectors) {
+int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
 
-    if (connectors.size() == 1) {
-        return connectors.at(0);
+    if (selected_evses.size() == 1) {
+        return selected_evses.at(0);
     }
 
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
-        // locks all referenced connectors for this request. Subsequent requests referencing one or more of the locked
-        // connectors are blocked until handle_token returns
-        this->lock_plug_in_mutex(connectors);
-        if (this->get_latest_plugin(connectors) == -1) {
-            // no EV has been plugged in yet at the referenced connectors
-            EVLOG_debug << "No connector in authorization queue. Waiting for a plug in...";
+        // locks all referenced evses for this request. Subsequent requests referencing one or more of the locked
+        // evses are blocked until handle_token returns
+        this->lock_plug_in_mutex(selected_evses);
+        if (this->get_latest_plugin(selected_evses) == -1) {
+            // no EV has been plugged in yet at the referenced evses
+            EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
             std::unique_lock<std::mutex> lk(this->plug_in_mutex);
-            // blocks until respective plugin for connector occured or until timeout
+            // blocks until respective plugin for evse occured or until timeout
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
-                                   [this, connectors] { return this->get_latest_plugin(connectors) != -1; })) {
+                                   [this, selected_evses] { return this->get_latest_plugin(selected_evses) != -1; })) {
                 return -1;
             }
-            EVLOG_debug << "Plug in at connector occured";
+            EVLOG_debug << "Plug in at evse occured";
         }
-        return this->get_latest_plugin(connectors);
+        return this->get_latest_plugin(selected_evses);
     } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {
-        EVLOG_debug
-            << "SelectionAlgorithm FindFirst: Selecting first available connector without an active transaction";
-        this->lock_plug_in_mutex(connectors);
-        const auto selected_connector_id = this->get_latest_plugin(connectors);
-        if (selected_connector_id != -1 and !this->connectors.at(selected_connector_id)->connector.transaction_active) {
-            // an EV has been plugged in yet at the referenced connectors
-            return this->get_latest_plugin(connectors);
+        EVLOG_debug << "SelectionAlgorithm FindFirst: Selecting first available evse without an active transaction";
+        this->lock_plug_in_mutex(selected_evses);
+        const auto selected_evse_id = this->get_latest_plugin(selected_evses);
+        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+        if (selected_evse_id != -1 and !this->evses.at(selected_evse_id)->transaction_active) {
+            // an EV has been plugged in yet at the referenced evses
+            return this->get_latest_plugin(selected_evses);
         } else {
-            // no EV has been plugged in yet at the referenced connectors; choosing the first one where no
+            // no EV has been plugged in yet at the referenced evses; choosing the first one where no
             // transaction is active
-            for (const auto connector_id : connectors) {
-                const auto connector = this->connectors.at(connector_id)->connector;
-                if (!connector.transaction_active) {
-                    return connector_id;
+            for (const auto& evse_id : selected_evses) {
+                const auto& evse = this->evses.at(evse_id);
+                if (!evse->transaction_active) {
+                    return evse_id;
                 }
             }
         }
@@ -479,128 +511,206 @@ int AuthHandler::select_connector(const std::vector<int>& connectors) {
     }
 }
 
-void AuthHandler::notify_evse(int connector_id, const ProvidedIdToken& provided_token,
+void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token,
                               const ValidationResult& validation_result) {
-    const auto evse_index = this->connectors.at(connector_id)->evse_index;
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    const auto evse_index = this->evses.at(evse_id)->evse_index;
 
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
         Identifier identifier{provided_token.id_token, provided_token.authorization_type,
                               validation_result.authorization_status, validation_result.expiry_time,
                               validation_result.parent_id_token};
-        this->connectors.at(connector_id)->connector.identifier.emplace(identifier);
+        this->evses.at(evse_id)->identifier.emplace(identifier);
 
         std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
-        this->connectors.at(connector_id)->timeout_timer.stop();
-        this->connectors.at(connector_id)
-            ->timeout_timer.timeout(
-                [this, evse_index, connector_id, provided_token]() {
-                    EVLOG_info << "Authorization timeout for evse#" << evse_index;
-                    this->connectors.at(connector_id)->connector.identifier.reset();
-                    this->withdraw_authorization_callback(evse_index);
-                    this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
-                },
-                std::chrono::seconds(this->connection_timeout));
+        this->evses.at(evse_id)->timeout_timer.stop();
+        this->evses.at(evse_id)->timeout_timer.timeout(
+            [this, evse_index, evse_id, provided_token]() {
+                EVLOG_debug << "Authorization timeout for evse#" << evse_index;
+                this->evses.at(evse_id)->identifier.reset();
+                this->withdraw_authorization_callback(evse_index);
+                this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
+            },
+            std::chrono::seconds(this->connection_timeout));
         std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
-        this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+        this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
     }
 
     this->notify_evse_callback(evse_index, provided_token, validation_result);
 }
 
-types::reservation::ReservationResult AuthHandler::handle_reservation(int connector_id,
-                                                                      const Reservation& reservation) {
-    return this->reservation_handler.reserve(connector_id, this->connectors.at(connector_id)->connector.get_state(),
-                                             this->connectors.at(connector_id)->connector.is_reservable, reservation);
+types::reservation::ReservationResult AuthHandler::handle_reservation(const Reservation& reservation) {
+    std::optional<uint32_t> evse;
+    if (reservation.evse_id.has_value()) {
+        if (reservation.evse_id.value() >= 0) {
+            evse = static_cast<uint32_t>(reservation.evse_id.value());
+        }
+    }
+
+    return reservation_handler.make_reservation(evse, reservation);
 }
 
-int AuthHandler::handle_cancel_reservation(int reservation_id) {
-    return this->reservation_handler.cancel_reservation(reservation_id, true);
+std::pair<bool, std::optional<int32_t>> AuthHandler::handle_cancel_reservation(const int32_t reservation_id) {
+    std::pair<bool, std::optional<uint32_t>> reservation_cancelled = this->reservation_handler.cancel_reservation(
+        reservation_id, false, types::reservation::ReservationEndReason::Cancelled);
+
+    if (reservation_cancelled.first) {
+        if (reservation_cancelled.second.has_value()) {
+            return {true, static_cast<int32_t>(reservation_cancelled.second.value())};
+        }
+        return {true, std::nullopt};
+    }
+
+    return {false, std::nullopt};
 }
 
-void AuthHandler::call_reserved(const int& connector_id, const int reservation_id) {
-    this->reserved_callback(this->connectors.at(connector_id)->evse_index, reservation_id);
-}
-void AuthHandler::call_reservation_cancelled(const int& connector_id) {
-    this->reservation_cancelled_callback(this->connectors.at(connector_id)->evse_index);
+ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                                              std::optional<std::string>& group_id_token) {
+    // Evse id has no value.
+    std::optional<int32_t> reservation_id =
+        this->reservation_handler.matches_reserved_identifier(id_token, evse_id, group_id_token);
+
+    if (!evse_id.has_value()) {
+        if (reservation_id.has_value()) {
+            return ReservationCheckStatus::ReservedForToken;
+        }
+
+        return ReservationCheckStatus::NotReserved;
+    }
+
+    // Evse id has a value.
+    if (!this->reservation_handler.is_evse_reserved(evse_id.has_value())) {
+        // There is an evse id, but the evse is not reserved.
+        return ReservationCheckStatus::NotReserved;
+    }
+
+    if (reservation_id.has_value()) {
+        // There is an evse id and the reservation is for the given token.
+        return ReservationCheckStatus::ReservedForToken;
+    }
+
+    // Evse is reserved. No reservation for the given id_token. But there is also the group id token, let's do some
+    // checks here.
+    if (!group_id_token.has_value()) {
+        if (reservation_handler.has_reservation_parent_id(evse_id)) {
+            // Group id token has no value, but the reservation for this evse has a parent token. It might be that
+            // this token will be checked later.
+            return ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
+        }
+
+        // Group id token has no value and the reservation for this evse has no parent token.
+        return ReservationCheckStatus::ReservedForOtherToken;
+    }
+
+    // Group id token has a value but it is not valid for this reservation
+    return ReservationCheckStatus::ReservedForOtherToken;
 }
 
-void AuthHandler::handle_permanent_fault_raised(const int connector_id) {
+bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
+    return this->reserved_callback(evse_id, reservation_id);
+}
+
+void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
+                                             const types::reservation::ReservationEndReason reason,
+                                             const std::optional<int>& evse_id, const bool send_reservation_update) {
+    std::optional<int32_t> evse_index;
+    if (evse_id.has_value() && evse_id.value() > 0) {
+        EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
+    }
+
+    this->reservation_cancelled_callback(evse_id, reservation_id, reason, send_reservation_update);
+}
+
+void AuthHandler::handle_permanent_fault_raised(const int evse_id, const int32_t connector_id) {
     if (not ignore_faults) {
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::FAULTED);
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::FAULTED);
     }
 }
 
-void AuthHandler::handle_permanent_fault_cleared(const int connector_id) {
+void AuthHandler::handle_permanent_fault_cleared(const int evse_id, const int32_t connector_id) {
     if (not ignore_faults) {
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ERROR_CLEARED);
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ERROR_CLEARED);
     }
 }
 
-void AuthHandler::handle_session_event(const int connector_id, const SessionEvent& event) {
+void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& event) {
+    // When connector id is not specified, it is assumed to be '1'.
+    const int32_t connector_id = event.connector_id.value_or(1);
+    if (evse_id < 0) {
+        EVLOG_error << "Handle session event: Evse id is negative: that should not be possible.";
+        return;
+    }
+
+    if (connector_id < 0) {
+        EVLOG_error << "Handle session event: connector id is negative: that should not be possible.";
+        return;
+    }
+
+    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
+    if (this->evses.count(evse_id) == 0) {
+        EVLOG_warning << "Handle session event: no evse found with evse id " << evse_id;
+        return;
+    }
 
     std::lock_guard<std::mutex> lk(this->timer_mutex);
-    this->connectors.at(connector_id)->event_mutex.lock();
+    this->evses.at(evse_id)->event_mutex.lock();
     const auto event_type = event.event;
 
     switch (event_type) {
-    case SessionEventEnum::SessionStarted:
-        this->connectors.at(connector_id)->connector.is_reservable = false;
-        {
-            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-            this->plug_in_queue.push_back(connector_id);
-        }
+    case SessionEventEnum::SessionStarted: {
+        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+        this->plug_in_queue.push_back(evse_id);
         this->cv.notify_one();
 
         // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
-            this->connectors.at(connector_id)
-                ->timeout_timer.timeout(
-                    [this, connector_id]() {
-                        EVLOG_info << "Plug In timeout for connector#" << connector_id;
-                        this->withdraw_authorization_callback(this->connectors.at(connector_id)->evse_index);
-                        {
-                            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-                            this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
-                        }
-                    },
-                    std::chrono::seconds(this->connection_timeout));
+            this->evses.at(evse_id)->plugged_in = true;
+
+            this->evses.at(evse_id)->timeout_timer.timeout(
+                [this, evse_id]() {
+                    EVLOG_info << "Plug In timeout for evse#" << evse_id;
+                    this->withdraw_authorization_callback(this->evses.at(evse_id)->evse_index);
+                    {
+                        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+                        this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
+                    }
+
+                    this->evses.at(evse_id)->plugged_in = false;
+                },
+                std::chrono::seconds(this->connection_timeout));
         }
+    } break;
+    case SessionEventEnum::TransactionStarted: {
+        this->evses.at(evse_id)->plugged_in = true;
+        this->evses.at(evse_id)->transaction_active = true;
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::TRANSACTION_STARTED);
+        this->evses.at(evse_id)->timeout_timer.stop();
         break;
-    case SessionEventEnum::TransactionStarted:
-        this->connectors.at(connector_id)->connector.transaction_active = true;
-        this->connectors.at(connector_id)->connector.reserved = false;
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::TRANSACTION_STARTED);
-        this->connectors.at(connector_id)->timeout_timer.stop();
-        break;
+    }
     case SessionEventEnum::TransactionFinished:
-        this->connectors.at(connector_id)->connector.transaction_active = false;
-        this->connectors.at(connector_id)->connector.identifier.reset();
+        this->evses.at(evse_id)->transaction_active = false;
+        this->evses.at(evse_id)->identifier.reset();
         break;
-    case SessionEventEnum::SessionFinished:
-        this->connectors.at(connector_id)->connector.is_reservable = true;
-        this->connectors.at(connector_id)->connector.identifier.reset();
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::SESSION_FINISHED);
-        this->connectors.at(connector_id)->timeout_timer.stop();
+    case SessionEventEnum::SessionFinished: {
+        this->evses.at(evse_id)->plugged_in = false;
+        this->evses.at(evse_id)->identifier.reset();
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::SESSION_FINISHED);
+        this->evses.at(evse_id)->timeout_timer.stop();
         {
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-            this->plug_in_queue.remove_if([connector_id](int value) { return value == connector_id; });
+            this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         }
         break;
-
+    }
     case SessionEventEnum::Disabled:
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::DISABLE);
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::DISABLE);
         break;
-
     case SessionEventEnum::Enabled:
-        this->connectors.at(connector_id)->connector.submit_event(ConnectorEvent::ENABLE);
+        this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ENABLE);
         break;
-
     case SessionEventEnum::ReservationStart:
-        this->connectors.at(connector_id)->connector.reserved = true;
         break;
     case SessionEventEnum::ReservationEnd:
-        this->connectors.at(connector_id)->connector.is_reservable = true;
-        this->connectors.at(connector_id)->connector.reserved = false;
         break;
     /// explicitly fall through all the SessionEventEnum values we are not handling
     case SessionEventEnum::Authorized:
@@ -632,7 +742,7 @@ void AuthHandler::handle_session_event(const int connector_id, const SessionEven
     case SessionEventEnum::PluginTimeout:
         break;
     }
-    this->connectors.at(connector_id)->event_mutex.unlock();
+    this->evses.at(evse_id)->event_mutex.unlock();
 }
 
 void AuthHandler::set_connection_timeout(const int connection_timeout) {
@@ -670,19 +780,41 @@ void AuthHandler::register_stop_transaction_callback(
 }
 
 void AuthHandler::register_reserved_callback(
-    const std::function<void(const int& evse_index, const int& reservation_id)>& callback) {
+    const std::function<bool(const std::optional<int>& evse_id, const int& reservation_id)>& callback) {
     this->reserved_callback = callback;
 }
 
-void AuthHandler::register_reservation_cancelled_callback(const std::function<void(const int& evse_index)>& callback) {
+void AuthHandler::register_reservation_cancelled_callback(
+    const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
+                             const ReservationEndReason reason, const bool send_reservation_update)>& callback) {
     this->reservation_cancelled_callback = callback;
     this->reservation_handler.register_reservation_cancelled_callback(
-        [this](int connector_id) { this->call_reservation_cancelled(connector_id); });
+        [this](const std::optional<int32_t>& evse_id, const int32_t reservation_id,
+               const types::reservation::ReservationEndReason reason, const bool send_reservation_update) {
+            if (evse_id.has_value() && evse_id.value() < 0) {
+                EVLOG_warning << "Reservation cancelled: evse id is negative (" << evse_id.value()
+                              << "), that should not be possible.";
+                return;
+            }
+
+            this->call_reservation_cancelled(reservation_id, reason, evse_id, send_reservation_update);
+        });
 }
 
 void AuthHandler::register_publish_token_validation_status_callback(
     const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback) {
     this->publish_token_validation_status_callback = callback;
+}
+
+void AuthHandler::submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
+                                             const ConnectorEvent connector_event) {
+    for (auto& connector : this->evses.at(evse_id)->connectors) {
+        if (connector.id == connector_id) {
+            connector.submit_event(connector_event);
+            this->reservation_handler.on_connector_state_changed(connector.get_state(), evse_id, connector_id);
+            break;
+        }
+    }
 }
 
 } // namespace module

@@ -25,7 +25,8 @@ class auth_token_providerImpl : public auth_token_providerImplBase {
 public:
     auth_token_providerImpl() = delete;
     auth_token_providerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<OCPP201>& mod, Conf& config) :
-        auth_token_providerImplBase(ev, "auth_provider"), mod(mod), config(config){};
+        auth_token_providerImplBase(ev, "auth_provider"), mod(mod), config(config) {
+    }
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

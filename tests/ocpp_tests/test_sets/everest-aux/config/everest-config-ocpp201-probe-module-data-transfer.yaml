@@ -1,0 +1,25 @@
+active_modules:
+  ocpp:
+    module: OCPP201
+    config_module:
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+        - module_id: probe
+          implementation_id: ProbeModuleConnectorA
+        - module_id: probe
+          implementation_id: ProbeModuleConnectorB
+      auth:
+        - module_id: auth
+          implementation_id: main
+      system:
+        - module_id: probe
+          implementation_id: ProbeModuleSystem
+      security:
+        - module_id: probe
+          implementation_id: ProbeModuleSecurity
+      data_transfer:
+        - module_id: probe
+          implementation_id: ProbeModuleDataTransfer
+x-module-layout: {}
+
