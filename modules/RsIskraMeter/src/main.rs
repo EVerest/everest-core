@@ -44,13 +44,14 @@ use anyhow::Result;
 use chrono::{Local, Offset, Utc};
 use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
+use generated::errors::powermeter::{Error, PowermeterError};
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
 };
 use generated::types::serial_comm_hub_requests::{StatusCodeEnum, VectorUint16};
 use generated::types::units::{Current, Energy, Frequency, Power, ReactivePower, Voltage};
 use generated::types::units_signed::SignedMeterValue;
-use generated::{get_config, Module, ModuleConfig, SerialCommunicationHubClientPublisher};
+use generated::{get_config, Module, ModuleConfig, SerialCommunicationHubClientPublisher, PowermeterServicePublisher};
 use std::fmt::Debug;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -821,6 +822,27 @@ enum StateMachine {
 /// Main class implementing all EVerest traits.
 struct IskraMeter {
     state_machine: Mutex<StateMachine>,
+    communication_errors_threshold: usize,
+}
+
+fn create_error_reporter(
+    meter_publisher: PowermeterServicePublisher,
+    threshold: usize,
+) -> utils::ErrorReporter<impl Fn(), impl Fn()> {
+    let report_error_publisher = meter_publisher.clone();
+    let report_error = move || {
+        log::error!(
+            "Meter communication error occurred! Threshold of {} errors reached.",
+            threshold
+        );
+        report_error_publisher.raise_error(Error::Powermeter(PowermeterError::CommunicationFault));
+    };
+
+    let clear_error = move || {
+        meter_publisher.clear_error(Error::Powermeter(PowermeterError::CommunicationFault));
+    };
+
+    utils::ErrorReporter::new(report_error, clear_error, threshold)
 }
 
 impl generated::OnReadySubscriber for IskraMeter {
@@ -850,7 +872,10 @@ impl generated::OnReadySubscriber for IskraMeter {
 
         let ready_state_clone = ready_state.clone();
         let power_meter_clone = publishers.meter.clone();
+        let communication_errors_threshold_clone = self.communication_errors_threshold.clone();
         std::thread::spawn(move || loop {
+            let error_reporter = create_error_reporter(power_meter_clone.clone(), communication_errors_threshold_clone);
+
             std::thread::sleep(std::time::Duration::from_secs(5));
             let res = ready_state_clone.read_meter_value();
             match res {
@@ -860,8 +885,12 @@ impl generated::OnReadySubscriber for IskraMeter {
                         Ok(_) => log::debug!("Successfully published meter value"),
                         Err(e) => log::error!("Failed to post meter values {:?}", e),
                     }
+                    error_reporter.clear_errors();
                 }
-                Err(e) => log::error!("Failed to read meter value {:?}", e),
+                Err(e) => {
+                    log::error!("Failed to read meter value {:?}", e);
+                    error_reporter.record_error();
+                }
             }
         });
 
@@ -931,6 +960,7 @@ fn main() {
             config.powermeter_device_id,
             (&config).into(),
         ))),
+        communication_errors_threshold: config.communication_errors_threshold as usize,
     });
 
     let _module = Module::new(class.clone(), class.clone(), class.clone());
