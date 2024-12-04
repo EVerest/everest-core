@@ -150,14 +150,8 @@ if(EVEREST_CORE_BUILD_TESTING)
 
     setup_target_for_coverage_gcovr_html(
         NAME ${PROJECT_NAME}_gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME ${PROJECT_NAME}_lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
+        EXECUTABLE ctest
+        EXCLUDE "${CMAKE_BINARY_DIR}/*" "${CPM_SOURCE_CACHE}"
     )
 else()
     message("Not running unit tests")
