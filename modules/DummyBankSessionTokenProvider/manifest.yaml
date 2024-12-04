@@ -1,0 +1,16 @@
+description: Dummy bank session token provider
+provides:
+  main:
+    description: Main implementation of bank session dummy token provider always returning one configured token
+    interface: bank_session_token_provider
+    config:
+      token:
+        description: Dummy token string to return
+        type: string
+        default: DummyBankSessionToken
+requires: {}
+enable_external_mqtt: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Kai-Uwe Hermann
