@@ -629,7 +629,6 @@ async def test_reservation_connector_occupied(
     # start charging session
     test_controller.plug_in()
 
-    # TODO mz fix comments everywhere in this file!!!
     # expect StatusNotification with status occupied
     assert await wait_for_and_validate(
         test_utility,
