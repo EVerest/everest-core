@@ -22,6 +22,9 @@ namespace main {
 struct Conf {
     std::string device;
     int set_key_timeout_ms;
+    bool do_chip_reset;
+    int chip_reset_delay_ms;
+    int chip_reset_timeout_ms;
 };
 
 class ev_slacImpl : public ev_slacImplBase {
