@@ -645,7 +645,8 @@ void Evse::send_meter_value_on_pricing_trigger(const MeterValue& meter_value) {
         // Send metervalue anyway since we have no previous metervalue stored and don't know if we should send any
         if (!meter_value_sent) {
             // Only send metervalue if it is not sent yet, otherwise only the last triggered metervalue is set.
-            this->send_metervalue_function({meter_value});
+            const MeterValue mv = utils::set_meter_value_reading_context(meter_value, ReadingContextEnum::Other);
+            this->send_metervalue_function({mv});
         }
         this->last_triggered_metervalue_power_kw = active_power_meter_value.value() / 1000;
     }
