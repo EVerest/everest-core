@@ -184,6 +184,16 @@ cmds:
     result:
       description: The path of the CA bundle file
       type: string
+  get_verify_location:
+    description: Command to get the path of a CA bundle that can be used for verification
+    arguments:
+      certificate_type:
+        description: Specifies that CA certificate type
+        type: string
+        $ref: /evse_security#/CaCertificateType
+    result:
+      description: The path where the CA bundle is located
+      type: string
   get_leaf_expiry_days_count:
     description: >-
       Command to get the days count until the given leaf certificate expires. 
