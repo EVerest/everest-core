@@ -1263,8 +1263,13 @@ void ChargePointImpl::message_callback(const std::string& message) {
         EVLOG_error << "Exception during handling of message: " << e.what();
         this->message_dispatcher->dispatch_call_error(
             CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({})));
+        return;
     } catch (const json::exception& e) {
         EVLOG_error << "JSON exception during reception of message: " << e.what();
+        this->message_dispatcher->dispatch_call_error(CallError(MessageId("-1"), "GenericError", e.what(), json({})));
+        return;
+    } catch (const std::runtime_error& e) {
+        EVLOG_error << "runtime_error during reception of message: " << e.what();
         this->message_dispatcher->dispatch_call_error(CallError(MessageId("-1"), "GenericError", e.what(), json({})));
         return;
     }
