@@ -45,12 +45,12 @@ bool Websocket::is_connected() {
     return this->websocket->is_connected();
 }
 
-void Websocket::register_connected_callback(const std::function<void(const int security_profile)>& callback) {
+void Websocket::register_connected_callback(const std::function<void(OcppProtocolVersion protocol)>& callback) {
     this->connected_callback = callback;
 
-    this->websocket->register_connected_callback([this](const int security_profile) {
+    this->websocket->register_connected_callback([this](OcppProtocolVersion protocol) {
         this->logging->sys("Connected");
-        this->connected_callback(security_profile);
+        this->connected_callback(protocol);
     });
 }
 

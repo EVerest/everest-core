@@ -16,7 +16,7 @@ class Websocket {
 private:
     // unique_ptr holds address of base - requires WebSocketBase to have a virtual destructor
     std::unique_ptr<WebsocketBase> websocket;
-    std::function<void(const int security_profile)> connected_callback;
+    std::function<void(OcppProtocolVersion protocol)> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const WebsocketCloseReason reason)> closed_callback;
     std::function<void(const std::string& message)> message_callback;
@@ -43,7 +43,7 @@ public:
     bool is_connected();
 
     /// \brief register a \p callback that is called when the websocket is connected successfully
-    void register_connected_callback(const std::function<void(const int security_profile)>& callback);
+    void register_connected_callback(const std::function<void(OcppProtocolVersion protocol)>& callback);
 
     /// \brief register a \p callback that is called when the websocket connection is disconnected
     void register_disconnected_callback(const std::function<void()>& callback);

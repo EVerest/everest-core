@@ -15,8 +15,8 @@ namespace v201 {
 
 class DeviceModel;
 
-using WebsocketConnectionCallback =
-    std::function<void(const int configuration_slot, const NetworkConnectionProfile& network_connection_profile)>;
+using WebsocketConnectionCallback = std::function<void(
+    int configuration_slot, const NetworkConnectionProfile& network_connection_profile, OcppProtocolVersion version)>;
 using WebsocketConnectionFailedCallback = std::function<void(ConnectionFailedReason reason)>;
 using ConfigureNetworkConnectionProfileCallback = std::function<std::future<ConfigNetworkResult>(
     const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>;
@@ -51,6 +51,7 @@ private:
     std::vector<SetNetworkProfileRequest> cached_network_connection_profiles;
     /// @brief local cached network connection priorities
     std::vector<int32_t> network_connection_slots;
+    OcppProtocolVersion connected_ocpp_version;
 
 public:
     ConnectivityManager(DeviceModel& device_model, std::shared_ptr<EvseSecurity> evse_security,
@@ -161,7 +162,7 @@ private:
 
     /// \brief Function invoked when the web socket connected with the \p security_profile
     ///
-    void on_websocket_connected(const int security_profile);
+    void on_websocket_connected(OcppProtocolVersion protocol);
 
     /// \brief Function invoked when the web socket disconnected
     ///

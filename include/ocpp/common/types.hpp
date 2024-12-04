@@ -610,7 +610,9 @@ std::ostream& operator<<(std::ostream& os, const CertificateHashDataChain& k);
 
 enum class OcppProtocolVersion {
     v16,
-    v201
+    v201,
+    v21,
+    Unknown,
 };
 
 namespace conversions {

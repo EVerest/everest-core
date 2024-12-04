@@ -1068,6 +1068,10 @@ std::string ocpp_protocol_version_to_string(OcppProtocolVersion e) {
         return "ocpp1.6";
     case OcppProtocolVersion::v201:
         return "ocpp2.0.1";
+    case OcppProtocolVersion::v21:
+        return "ocpp2.1";
+    case OcppProtocolVersion::Unknown:
+        return "unknown";
     }
 
     throw EnumToStringException{e, "OcppProtocolVersion"};
@@ -1079,6 +1083,12 @@ OcppProtocolVersion string_to_ocpp_protocol_version(const std::string& s) {
     }
     if (s == "ocpp2.0.1") {
         return OcppProtocolVersion::v201;
+    }
+    if (s == "ocpp2.1") {
+        return OcppProtocolVersion::v21;
+    }
+    if (s == "unknown") {
+        return OcppProtocolVersion::Unknown;
     }
     throw StringToEnumException{s, "OcppProtocolVersion"};
 }

@@ -16,9 +16,9 @@
 namespace ocpp {
 
 struct WebsocketConnectionOptions {
-    OcppProtocolVersion ocpp_version;
-    Uri csms_uri;         // the URI of the CSMS
-    int security_profile; // FIXME: change type to `SecurityProfile`
+    std::vector<OcppProtocolVersion> ocpp_versions; // List of allowed protocols ordered by preference
+    Uri csms_uri;                                   // the URI of the CSMS
+    int security_profile;                           // FIXME: change type to `SecurityProfile`
     std::optional<std::string> authorization_key;
     int retry_backoff_random_range_s;
     int retry_backoff_repeat_times;
@@ -47,7 +47,7 @@ class WebsocketBase {
 protected:
     std::atomic_bool m_is_connected;
     WebsocketConnectionOptions connection_options;
-    std::function<void(const int security_profile)> connected_callback;
+    std::function<void(OcppProtocolVersion protocol)> connected_callback;
     std::function<void()> disconnected_callback;
     std::function<void(const WebsocketCloseReason reason)> closed_callback;
     std::function<void(const std::string& message)> message_callback;
@@ -111,7 +111,7 @@ public:
     virtual void close(const WebsocketCloseReason code, const std::string& reason) = 0;
 
     /// \brief register a \p callback that is called when the websocket is connected successfully
-    void register_connected_callback(const std::function<void(const int security_profile)>& callback);
+    void register_connected_callback(const std::function<void(OcppProtocolVersion protocol)>& callback);
 
     /// \brief register a \p callback that is called when the websocket connection is disconnected
     void register_disconnected_callback(const std::function<void()>& callback);

@@ -1137,9 +1137,13 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
                                               std::bind(&ChargePoint::message_callback, this, std::placeholders::_1));
 
     this->connectivity_manager->set_websocket_connected_callback(
-        std::bind(&ChargePoint::websocket_connected_callback, this, std::placeholders::_1, std::placeholders::_2));
+        [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile, auto) {
+            this->websocket_connected_callback(configuration_slot, network_connection_profile);
+        });
     this->connectivity_manager->set_websocket_disconnected_callback(
-        std::bind(&ChargePoint::websocket_disconnected_callback, this, std::placeholders::_1, std::placeholders::_2));
+        [this](int configuration_slot, const NetworkConnectionProfile& network_connection_profile, auto) {
+            this->websocket_disconnected_callback(configuration_slot, network_connection_profile);
+        });
     this->connectivity_manager->set_websocket_connection_failed_callback(
         std::bind(&ChargePoint::websocket_connection_failed, this, std::placeholders::_1));
 

@@ -288,7 +288,7 @@ void ChargePointImpl::init_websocket() {
     auto connection_options = this->get_ws_connection_options();
 
     this->websocket = std::make_unique<Websocket>(connection_options, this->evse_security, this->logging);
-    this->websocket->register_connected_callback([this](const int security_profile) {
+    this->websocket->register_connected_callback([this](OcppProtocolVersion protocol) {
         if (this->connection_state_changed_callback != nullptr) {
             this->connection_state_changed_callback(true);
         }
@@ -370,7 +370,7 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
     auto uri = Uri::parse_and_validate(this->configuration->getCentralSystemURI(),
                                        this->configuration->getChargePointId(), security_profile);
 
-    WebsocketConnectionOptions connection_options{OcppProtocolVersion::v16,
+    WebsocketConnectionOptions connection_options{{OcppProtocolVersion::v16},
                                                   uri,
                                                   security_profile,
                                                   this->configuration->getAuthorizationKey(),

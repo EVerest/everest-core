@@ -36,7 +36,7 @@ void WebsocketBase::set_connection_options_base(const WebsocketConnectionOptions
     this->connection_options = connection_options;
 }
 
-void WebsocketBase::register_connected_callback(const std::function<void(const int security_profile)>& callback) {
+void WebsocketBase::register_connected_callback(const std::function<void(OcppProtocolVersion protocol)>& callback) {
     this->connected_callback = callback;
 }
 

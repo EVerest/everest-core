@@ -233,7 +233,10 @@ static bool verify_csms_cn(const std::string& hostname, bool preverified, const 
 
 WebsocketLibwebsockets::WebsocketLibwebsockets(const WebsocketConnectionOptions& connection_options,
                                                std::shared_ptr<EvseSecurity> evse_security) :
-    WebsocketBase(), evse_security(evse_security), stop_deferred_handler(false) {
+    WebsocketBase(),
+    evse_security(evse_security),
+    stop_deferred_handler(false),
+    connected_ocpp_version{OcppProtocolVersion::Unknown} {
 
     set_connection_options(connection_options);
 
@@ -276,6 +279,15 @@ void WebsocketLibwebsockets::set_connection_options(const WebsocketConnectionOpt
     default:
         throw std::invalid_argument("unknown `security_profile`, value = " +
                                     std::to_string(connection_options.security_profile));
+    }
+
+    if (connection_options.ocpp_versions.empty()) {
+        throw std::invalid_argument("Connection options must contain at least 1 option");
+    }
+
+    if (std::any_of(connection_options.ocpp_versions.begin(), connection_options.ocpp_versions.end(),
+                    [](OcppProtocolVersion version) { return version == OcppProtocolVersion::Unknown; })) {
+        throw std::invalid_argument("Ocpp_versions may not contain 'Unknown'");
     }
 
     set_connection_options_base(connection_options);
@@ -642,6 +654,16 @@ void WebsocketLibwebsockets::client_loop() {
 
     auto& uri = this->connection_options.csms_uri;
 
+    std::string ocpp_versions;
+    bool first = true;
+    for (auto version : this->connection_options.ocpp_versions) {
+        if (!first) {
+            ocpp_versions += ", ";
+        }
+        first = false;
+        ocpp_versions += conversions::ocpp_protocol_version_to_string(version);
+    }
+
     // TODO: No idea who releases the strdup?
     i.context = lws_ctx;
     i.port = uri.get_port();
@@ -650,7 +672,7 @@ void WebsocketLibwebsockets::client_loop() {
     i.host = i.address;
     i.origin = i.address;
     i.ssl_connection = ssl_connection;
-    i.protocol = strdup(conversions::ocpp_protocol_version_to_string(this->connection_options.ocpp_version).c_str());
+    i.protocol = strdup(ocpp_versions.c_str());
     i.local_protocol_name = local_protocol_name;
     i.pwsi = &local_data->wsi;
     i.userdata = local_data.get(); // See lws_context 'user'
@@ -710,6 +732,8 @@ bool WebsocketLibwebsockets::connect() {
     EVLOG_info << "Connecting to uri: " << this->connection_options.csms_uri.string() << " with security-profile "
                << this->connection_options.security_profile
                << (this->connection_options.use_tpm_tls ? " with TPM keys" : "");
+
+    this->connected_ocpp_version = OcppProtocolVersion::Unknown;
 
     // new connection context
     std::shared_ptr<ConnectionData> local_data = std::make_shared<ConnectionData>();
@@ -888,7 +912,7 @@ void WebsocketLibwebsockets::close(const WebsocketCloseReason code, const std::s
 }
 
 void WebsocketLibwebsockets::on_conn_connected() {
-    EVLOG_info << "OCPP client successfully connected to server";
+    EVLOG_info << "OCPP client successfully connected to server with version: " << this->connected_ocpp_version;
 
     this->connection_attempts = 1; // reset connection attempts
     this->m_is_connected = true;
@@ -899,7 +923,7 @@ void WebsocketLibwebsockets::on_conn_connected() {
 
     this->push_deferred_callback([this]() {
         if (connected_callback) {
-            this->connected_callback(this->connection_options.security_profile);
+            this->connected_callback(this->connected_ocpp_version);
         } else {
             EVLOG_error << "Connected callback not registered!";
         }
@@ -1321,6 +1345,17 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
     case LWS_CALLBACK_CONNECTING:
         EVLOG_debug << "Client connecting...";
         data->update_state(EConnectionState::CONNECTING);
+        break;
+
+    case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
+        try {
+            char buffer[16] = {0};
+            lws_hdr_copy(wsi, buffer, 16, WSI_TOKEN_PROTOCOL);
+            this->connected_ocpp_version = ocpp::conversions::string_to_ocpp_protocol_version(buffer);
+        } catch (StringToEnumException& e) {
+            EVLOG_warning << "CSMS did not select protocol: " << e.what();
+            this->connected_ocpp_version = OcppProtocolVersion::Unknown;
+        }
         break;
 
     case LWS_CALLBACK_CLIENT_ESTABLISHED:
