@@ -1187,7 +1187,9 @@ std::string bool_to_string(bool b) {
 }
 
 bool string_to_bool(const std::string& s) {
-    if (s == "true") {
+    std::string out = s;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    if (out == "true") {
         return true;
     }
     return false;

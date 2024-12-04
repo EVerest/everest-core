@@ -2020,7 +2020,9 @@ bool ChargePointConfiguration::checkTimeOffset(const std::string& offset) {
 }
 
 bool isBool(const std::string& str) {
-    return str == "true" or str == "false";
+    std::string out = str;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out == "true" || out == "false";
 }
 
 std::optional<KeyValue> ChargePointConfiguration::getAuthorizationKeyKeyValue() {
