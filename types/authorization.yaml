@@ -34,6 +34,7 @@ types:
       - Rejected
       # Occurs when the token has been authorized but no connector is selected within connection_timeout seconds
       - TimedOut
+      - Withdrawn
   CustomIdToken:
     description: Type for a custom id token with a free-form type
     type: object
@@ -222,3 +223,34 @@ types:
       - KeyCode
       - Local
       - NoAuthorization
+  WithdrawAuthorizationRequest:
+    description: >-
+      Request to withdraw granted authorization.
+      If only the evse_id is given, the granted authorization for this EVSE will be withdrawn.
+      If only the id_token is given, the granted authorization for every EVSE where this id_token is placed will be
+        withdrawn
+      If both parameters are given, the granted authorization for the given EVSE will be withdrawn, if the placed
+        id_token matches the given id_token
+      If no parameter is given, all granted authorizations for all EVSEs will be removed
+    type: object
+    properties:
+      evse_id:
+        description: The evse id to withdraw authorization for.
+        type: integer
+      id_token:
+        description: The id token to withdraw authorization for.
+        type: object
+        $ref: /authorization#/IdToken
+  WithdrawAuthorizationResult:
+    description: >-
+      The result of a WithdrawAuthorizationRequest:
+      Accepted in case requested authorization was removed
+      AuthorizationNotFound in case no match for request was found
+      EvseNotFound in case no match for evse_id was found
+      Rejected in case module could not process the request for other reasons
+    type: string
+    enum:
+      - Accepted
+      - AuthorizationNotFound
+      - EvseNotFound
+      - Rejected
