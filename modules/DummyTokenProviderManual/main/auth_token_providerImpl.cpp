@@ -3,13 +3,15 @@
 
 #include "auth_token_providerImpl.hpp"
 
+#include <everest/staging/helpers/helpers.hpp>
+
 namespace module {
 namespace main {
 
 void auth_token_providerImpl::init() {
     mod->mqtt.subscribe("everest_api/dummy_token_provider/cmd/provide", [this](const std::string& msg) {
-        json token = json::parse(msg);
-        EVLOG_info << "Publishing new dummy token: " << msg;
+        types::authorization::ProvidedIdToken token = json::parse(msg);
+        EVLOG_info << "Publishing new dummy token: " << everest::staging::helpers::redact(token);
         publish_provided_token(token);
     });
 }
