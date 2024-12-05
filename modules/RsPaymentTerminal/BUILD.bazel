@@ -11,6 +11,7 @@ cargo_build_script(
     },
     data = [
         "manifest.yaml",
+        "@everest-core//errors",
         "@everest-core//interfaces",
         "@everest-core//types",
     ],
