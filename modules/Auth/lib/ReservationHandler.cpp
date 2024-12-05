@@ -5,6 +5,7 @@
 #include <Connector.hpp>
 
 #include <everest/logging.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 #include <utils/date.hpp>
 
@@ -348,8 +349,8 @@ std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std
                                                                        std::optional<std::string> parent_id_token) {
     std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     EVLOG_debug << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
-                << " and id token " << id_token << " and parent id token "
-                << (parent_id_token.has_value() ? parent_id_token.value() : "-");
+                << " and id token " << everest::staging::helpers::redact(id_token) << " and parent id token "
+                << (parent_id_token.has_value() ? everest::staging::helpers::redact(parent_id_token.value()) : "-");
 
     // Return true if id tokens match or parent id tokens exists and match.
     if (evse_id.has_value()) {
