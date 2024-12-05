@@ -124,6 +124,10 @@ std::string EvseSecurity::get_verify_file(const ocpp::CaCertificateType& certifi
     return this->r_security.call_get_verify_file(conversions::from_ocpp(certificate_type));
 }
 
+std::string EvseSecurity::get_verify_location(const ocpp::CaCertificateType& certificate_type) {
+    return this->r_security.call_get_verify_location(conversions::from_ocpp(certificate_type));
+}
+
 int EvseSecurity::get_leaf_expiry_days_count(const ocpp::CertificateSigningUseEnum& certificate_type) {
     return this->r_security.call_get_leaf_expiry_days_count(conversions::from_ocpp(certificate_type));
 }

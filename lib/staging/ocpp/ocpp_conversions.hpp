@@ -2,6 +2,7 @@
 
 #include <generated/types/display_message.hpp>
 #include <generated/types/money.hpp>
+#include <generated/types/reservation.hpp>
 #include <generated/types/session_cost.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v201/ocpp_enums.hpp>
@@ -48,5 +49,7 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
 /// \brief Convert given \p datetime_string in RFC3339 format to a OCPP DateTime. If this is not possible return the
 /// current datetime
 ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string);
+
+ocpp::ReservationCheckStatus to_ocpp_reservation_check_status(const types::reservation::ReservationCheckStatus& status);
 
 }; // namespace ocpp_conversions
