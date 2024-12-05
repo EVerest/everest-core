@@ -239,6 +239,7 @@ class TestOCPP16GenericInterfaceIntegration:
         await asyncio.sleep(5)
         assert not csms_connection.is_connected
         res = await _env.probe_module.call_command("ocpp", "restart", None)
+        await asyncio.sleep(5)
         assert res is True
         assert csms_connection.is_connected
 
