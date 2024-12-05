@@ -32,7 +32,8 @@ enum class TokenHandlingResult {
     REJECTED,
     USED_TO_STOP_TRANSACTION,
     TIMEOUT,
-    NO_CONNECTOR_AVAILABLE
+    NO_CONNECTOR_AVAILABLE,
+    WITHDRAWN
 };
 
 namespace conversions {
@@ -219,6 +220,17 @@ public:
     WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
 
 private:
+    enum class SelectEvseReturnStatus {
+        EvseSelected,
+        Interrupted,
+        TimeOut
+    };
+
+    struct SelectEvseStatus {
+        std::optional<int> evse_id;
+        SelectEvseReturnStatus status;
+    };
+
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
     std::optional<std::string> master_pass_group_id;
@@ -236,6 +248,8 @@ private:
     std::mutex token_in_process_mutex;
     std::condition_variable cv;
     std::recursive_mutex evse_mutex;
+    // TODO mz think about where to clear this
+    std::vector<WithdrawAuthorizationRequest> withdraw_requests;
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -266,9 +280,11 @@ private:
      * occurs that can be used to determine an evse.
      *
      * @param selected_evses
-     * @return int
+     * @param id_token          The id token of the request.
+     * @return The status and optional evse id if an evse was selected.
      */
-    int select_evse(const std::vector<int>& selected_evses);
+    SelectEvseStatus select_evse(const std::vector<int>& selected_evses, const IdToken& id_token);
+    bool is_authorization_withdrawn(const std::vector<int> &selected_evses, const IdToken& id_token);
 
     void lock_plug_in_mutex(const std::vector<int>& evse_ids);
     void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
