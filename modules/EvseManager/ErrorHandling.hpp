@@ -61,6 +61,9 @@ public:
     void raise_internal_error(const std::string& description);
     void clear_internal_error();
 
+    void raise_authorization_timeout_error(const std::string& description);
+    void clear_authorization_timeout_error();
+
     void raise_powermeter_transaction_start_failed_error(const std::string& description);
     void clear_powermeter_transaction_start_failed_error();
 
