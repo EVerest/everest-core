@@ -216,6 +216,8 @@ public:
     void register_publish_token_validation_status_callback(
         const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
 
+    WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
+
 private:
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;

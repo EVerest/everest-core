@@ -136,4 +136,8 @@ void Auth::set_master_pass_group_id(const std::string& master_pass_group_id) {
     this->auth_handler->set_master_pass_group_id(master_pass_group_id);
 }
 
+WithdrawAuthorizationResult Auth::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
+    return this->auth_handler->handle_withdraw_authorization(request);
+}
+
 } // namespace module

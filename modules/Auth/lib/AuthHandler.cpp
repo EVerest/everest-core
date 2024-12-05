@@ -810,6 +810,48 @@ void AuthHandler::register_publish_token_validation_status_callback(
     this->publish_token_validation_status_callback = callback;
 }
 
+WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
+    // TODO mz make it less complicated?
+    if (request.evse_id.has_value()) {
+        const int evse_id = request.evse_id.value();
+        if (this->evses.count(evse_id) > 0) {
+            if (request.id_token.has_value()) {
+                if (this->evses.at(evse_id)->identifier.has_value() &&
+                    request.id_token.value().value == this->evses.at(evse_id)->identifier.value().id_token.value &&
+                    request.id_token.value().type == this->evses.at(evse_id)->identifier.value().id_token.type) {
+                    this->evses.at(evse_id)->identifier.reset();
+                    withdraw_authorization_callback(evse_id);
+                    return WithdrawAuthorizationResult::Accepted;
+                }
+
+                return WithdrawAuthorizationResult::AuthorizationNotFound;
+            }
+
+            this->evses.at(evse_id)->identifier.reset();
+            withdraw_authorization_callback(evse_id);
+            return WithdrawAuthorizationResult::Accepted;
+        }
+
+        EVLOG_warning << "Withdraw authorization: evse id " << evse_id << " not found.";
+        return WithdrawAuthorizationResult::Rejected;
+    }
+
+    WithdrawAuthorizationResult result = WithdrawAuthorizationResult::AuthorizationNotFound;
+    for (const auto& evse : this->evses) {
+        if (evse.second->identifier.has_value()) {
+            if (!request.id_token.has_value() ||
+                (request.id_token.value().value == evse.second->identifier.value().id_token.value &&
+                 request.id_token.value().type == evse.second->identifier.value().id_token.type)) {
+                evse.second->identifier.reset();
+                withdraw_authorization_callback(evse.first);
+                result = WithdrawAuthorizationResult::Accepted;
+            }
+        }
+    }
+
+    return result;
+}
+
 void AuthHandler::submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
                                              const ConnectorEvent connector_event) {
     for (auto& connector : this->evses.at(evse_id)->connectors) {

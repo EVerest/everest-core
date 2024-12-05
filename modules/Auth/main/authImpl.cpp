@@ -24,7 +24,7 @@ void authImpl::handle_set_master_pass_group_id(std::string& master_pass_group_id
 }
 
 std::string authImpl::handle_withdraw_authorization(WithdrawAuthorizationRequest& request) {
-    // TODO mz
+    return withdraw_authorization_result_to_string(this->mod->handle_withdraw_authorization(request));
 }
 
 } // namespace main
