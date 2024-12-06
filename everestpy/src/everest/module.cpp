@@ -9,41 +9,44 @@
 #include <utils/error/error_manager_req.hpp>
 #include <utils/error/error_state_monitor.hpp>
 
-std::unique_ptr<Everest::Everest> Module::create_everest_instance(const std::string& module_id,
-                                                                  const RuntimeSession& session) {
-    const auto& rs = session.get_runtime_settings();
-    return std::make_unique<Everest::Everest>(module_id, session.get_config(), rs->validate_schema,
-                                              rs->mqtt_broker_socket_path, rs->mqtt_broker_host, rs->mqtt_broker_port,
-                                              rs->mqtt_everest_prefix, rs->mqtt_external_prefix, rs->telemetry_prefix,
-                                              rs->telemetry_enabled);
+std::unique_ptr<Everest::Everest>
+Module::create_everest_instance(const std::string& module_id, const Everest::Config& config,
+                                const Everest::RuntimeSettings& rs,
+                                std::shared_ptr<Everest::MQTTAbstraction> mqtt_abstraction) {
+    return std::make_unique<Everest::Everest>(module_id, config, rs.validate_schema, mqtt_abstraction,
+                                              rs.telemetry_prefix, rs.telemetry_enabled);
 }
 
-static std::string get_ev_module_from_env() {
-    const auto module_id = std::getenv("EV_MODULE");
-    if (module_id == nullptr) {
-        throw std::runtime_error("EV_MODULE needed for everestpy");
-    }
-
-    return module_id;
-}
-
-Module::Module(const RuntimeSession& session) : Module(get_ev_module_from_env(), session) {
+Module::Module(const RuntimeSession& session) : Module(get_variable_from_env("EV_MODULE"), session) {
 }
 
 Module::Module(const std::string& module_id_, const RuntimeSession& session_) :
-    module_id(module_id_), session(session_), handle(create_everest_instance(module_id, session)) {
+    module_id(module_id_), session(session_) {
+
+    this->mqtt_abstraction = std::make_shared<Everest::MQTTAbstraction>(session.get_mqtt_settings());
+    this->mqtt_abstraction->connect();
+    this->mqtt_abstraction->spawn_main_loop_thread();
+
+    const auto result = Everest::get_module_config(this->mqtt_abstraction, module_id);
+
+    this->rs = std::make_unique<Everest::RuntimeSettings>(result.at("settings"));
+
+    this->config_ = std::make_unique<Everest::Config>(session.get_mqtt_settings(), result);
+
+    const auto& config = get_config();
+
+    this->handle = create_everest_instance(module_id, config, *this->rs, this->mqtt_abstraction);
 
     // determine the fulfillments for our requirements
-    auto& config = session.get_config();
     const std::string& module_name = config.get_main_config().at(module_id).at("module");
-    auto module_manifest = config.get_manifests().at(module_name);
+    const auto module_manifest = config.get_manifests().at(module_name);
 
     // setup module info
     module_info = config.get_module_info(module_id);
-    populate_module_info_path_from_runtime_settings(module_info, session.get_runtime_settings());
+    populate_module_info_path_from_runtime_settings(module_info, *this->rs);
 
     // setup implementations
-    for (auto& implementation : module_manifest.at("provides").items()) {
+    for (const auto& implementation : module_manifest.at("provides").items()) {
         const auto& implementation_id = implementation.key();
         const std::string interface_name = implementation.value().at("interface");
         const auto& interface_def = config.get_interface_definition(interface_name);
@@ -51,7 +54,7 @@ Module::Module(const std::string& module_id_, const RuntimeSession& session_) :
     }
 
     // setup requirements
-    for (auto& requirement : module_manifest.at("requires").items()) {
+    for (const auto& requirement : module_manifest.at("requires").items()) {
         const auto& requirement_id = requirement.key();
         const std::string interface_name = requirement.value().at("interface");
         const auto& interface_def = config.get_interface_definition(interface_name);
@@ -62,8 +65,7 @@ Module::Module(const std::string& module_id_, const RuntimeSession& session_) :
 ModuleSetup Module::say_hello() {
     handle->connect();
     handle->spawn_main_loop_thread();
-
-    return create_setup_from_config(module_id, session.get_config());
+    return create_setup_from_config(module_id, get_config());
 }
 
 json Module::call_command(const Fulfillment& fulfillment, const std::string& cmd_name, json args) {

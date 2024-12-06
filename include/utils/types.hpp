@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_TYPES_HPP
 #define UTILS_TYPES_HPP
 
+#include <cstddef>
 #include <filesystem>
 #include <fmt/core.h>
 #include <map>
@@ -40,6 +41,7 @@ enum class HandlerType {
     SubscribeVar,
     SubscribeError,
     ClearErrorRequest,
+    GetConfig,
     ExternalMQTT,
     Unknown
 };
@@ -128,6 +130,8 @@ struct ModuleInfo {
 
 struct TelemetryConfig {
     int id;
+    explicit TelemetryConfig(int id) : id(id) {
+    }
 };
 
 struct Requirement {
@@ -167,22 +171,25 @@ bool operator!=(const ImplementationIdentifier& lhs, const ImplementationIdentif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 template <> struct adl_serializer<Mapping> {
-    static void to_json(json& j, const Mapping& m) {
-        j = {{"evse", m.evse}};
-        if (m.connector.has_value()) {
-            j["connector"] = m.connector.value();
-        }
-    }
-    static Mapping from_json(const json& j) {
-        auto m = Mapping(j.at("evse").get<int>());
-        if (j.contains("connector")) {
-            m.connector = j.at("connector").get<int>();
-        }
-        return m;
-    }
+    static void to_json(json& j, const Mapping& m);
+    static Mapping from_json(const json& j);
+};
+template <> struct adl_serializer<TelemetryConfig> {
+    static void to_json(json& j, const TelemetryConfig& t);
+    static TelemetryConfig from_json(const json& j);
+};
+template <> struct adl_serializer<ModuleTierMappings> {
+    static void to_json(json& j, const ModuleTierMappings& m);
+    static ModuleTierMappings from_json(const json& j);
 };
 NLOHMANN_JSON_NAMESPACE_END
 
 #define EVCALLBACK(function) [](auto&& PH1) { function(std::forward<decltype(PH1)>(PH1)); }
+
+namespace Everest {
+struct BootException : public std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+} // namespace Everest
 
 #endif // UTILS_TYPES_HPP

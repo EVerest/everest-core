@@ -28,7 +28,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
     if (cmd == "get_modules") {
         auto modules_list = json::object();
 
-        for (auto item : fs::directory_iterator(this->config.module_dir)) {
+        for (const auto item : fs::directory_iterator(this->config.module_dir)) {
             if (!fs::is_directory(item)) {
                 continue;
             }
@@ -48,7 +48,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
     } else if (cmd == "get_configs") {
         auto config_list = json::object();
 
-        for (auto item : fs::directory_iterator(this->config.configs_dir)) {
+        for (const auto item : fs::directory_iterator(this->config.configs_dir)) {
             if (!fs::is_regular_file(item)) {
                 continue;
             }
@@ -65,7 +65,7 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
     } else if (cmd == "get_interfaces") {
         auto interface_list = json::object();
 
-        for (auto item : fs::directory_iterator(this->config.interface_dir)) {
+        for (const auto item : fs::directory_iterator(this->config.interface_dir)) {
 
             if (!fs::is_regular_file(item)) {
                 continue;
@@ -88,15 +88,15 @@ nlohmann::json CommandApi::handle(const std::string& cmd, const json& params) {
 
         const auto name = params.at("name").get<std::string>();
 
-        json config_json = params.value("config", json::object());
+        const json config_json = params.value("config", json::object());
         auto ryml_deserialized = transpile_config(config_json);
 
         const auto configs_path = fs::path(this->config.configs_dir);
-        auto check_config_file_path = configs_path / fmt::format("_{}.yaml", name);
+        const auto check_config_file_path = configs_path / fmt::format("_{}.yaml", name);
 
         std::ofstream(check_config_file_path.string()) << ryml_deserialized;
 
-        auto result = this->rpc.ipc_request("check_config", check_config_file_path.string(), false);
+        const auto result = this->rpc.ipc_request("check_config", check_config_file_path.string(), false);
 
         if (result.is_string()) {
             fs::remove(check_config_file_path);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MQTT_ABSTRACTION_HPP
 #define UTILS_MQTT_ABSTRACTION_HPP
 
@@ -7,11 +7,10 @@
 
 #include <nlohmann/json.hpp>
 
+#include <utils/mqtt_settings.hpp>
 #include <utils/types.hpp>
 
 namespace Everest {
-using json = nlohmann::json;
-
 // forward declaration
 class MQTTAbstractionImpl;
 
@@ -20,9 +19,8 @@ class MQTTAbstractionImpl;
 ///
 class MQTTAbstraction {
 public:
-    MQTTAbstraction(const std::string& mqtt_server_socket_path, const std::string& mqtt_server_address,
-                    const std::string& mqtt_server_port, const std::string& mqtt_everest_prefix,
-                    const std::string& mqtt_external_prefix);
+    /// \brief Create a MQTTAbstraction with the provideded \p mqtt_settings
+    explicit MQTTAbstraction(const MQTTSettings& mqtt_settings);
 
     // forbid copy assignment and copy construction
     MQTTAbstraction(MQTTAbstraction const&) = delete;
@@ -39,12 +37,12 @@ public:
     void disconnect();
 
     ///
-    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const json&)
-    void publish(const std::string& topic, const json& json);
+    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const nlohmann::json&)
+    void publish(const std::string& topic, const nlohmann::json& json);
 
     ///
-    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const json&, QOS)
-    void publish(const std::string& topic, const json& json, QOS qos);
+    /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const nlohmann::json&, QOS)
+    void publish(const std::string& topic, const nlohmann::json& json, QOS qos, bool retain = false);
 
     ///
     /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const std::string&)
@@ -52,7 +50,7 @@ public:
 
     ///
     /// \copydoc MQTTAbstractionImpl::publish(const std::string&, const std::string&, QOS)
-    void publish(const std::string& topic, const std::string& data, QOS qos);
+    void publish(const std::string& topic, const std::string& data, QOS qos, bool retain = false);
 
     ///
     /// \copydoc MQTTAbstractionImpl::subscribe(const std::string&)
@@ -67,8 +65,24 @@ public:
     void unsubscribe(const std::string& topic);
 
     ///
+    /// \copydoc MQTTAbstractionImpl::get(const std::string&, QOS)
+    nlohmann::json get(const std::string& topic, QOS qos);
+
+    ///
+    /// \brief Get MQTT topic prefix for the "everest" topic
+    const std::string& get_everest_prefix() const;
+
+    ///
+    /// \brief Get MQTT topic prefix for external topics
+    const std::string& get_external_prefix() const;
+
+    ///
     /// \copydoc MQTTAbstractionImpl::spawn_main_loop_thread()
-    std::future<void> spawn_main_loop_thread();
+    std::shared_future<void> spawn_main_loop_thread();
+
+    ///
+    /// \copydoc MQTTAbstractionImpl::get_main_loop_future()
+    std::shared_future<void> get_main_loop_future();
 
     ///
     /// \copydoc MQTTAbstractionImpl::register_handler(const std::string&, std::shared_ptr<TypedHandler>, QOS)
@@ -80,6 +94,8 @@ public:
 
 private:
     std::unique_ptr<MQTTAbstractionImpl> mqtt_abstraction;
+    std::string everest_prefix;
+    std::string external_prefix;
 };
 } // namespace Everest
 

@@ -1,11 +1,20 @@
 Checks: >
-    *,
+    bugprone*,
+    misc-const-correctness,
     -llvmlibc*,
-    -fuchsia-default-arguments-calls,
     -fuchsia-overloaded-operator,
     -fuchsia-statically-constructed-objects,
     -readability-function-cognitive-complexity,
     -modernize-use-trailing-return-type,
     -abseil-string-find-startswith,
-    -abseil-string-find-str-contains
+    -abseil-string-find-str-contains,
+    -readability-identifier-length,
+    -fuchsia-default-arguments-calls,
+    -fuchsia-default-arguments-declarations,
+    -altera-struct-pack-align,
+    -performance-enum-size,
+    -altera*,
+    -misc-non-private-member-variables-in-classes,
+    -cppcoreguidelines-non-private-member-variables-in-classes,
+    -bugprone-easily-swappable-parameters
 HeaderFilterRegex:  ".*"

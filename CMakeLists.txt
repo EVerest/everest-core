@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(everest-framework
-    VERSION 0.18.1
+    VERSION 0.19.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
     LANGUAGES CXX C
 )
@@ -27,6 +27,14 @@ ev_setup_python_executable(
     USE_PYTHON_VENV ${${PROJECT_NAME}_USE_PYTHON_VENV}
     PYTHON_VENV_PATH ${${PROJECT_NAME}_PYTHON_VENV_PATH}
 )
+
+if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+    set(EVEREST_FRAMEWORK_BUILD_TESTING ON)
+    # this policy allows us to link gcov to targets defined in other directories
+    if(POLICY CMP0079)
+        set(CMAKE_POLICY_DEFAULT_CMP0079 NEW)
+    endif()
+endif()
 
 # make own cmake modules available
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -165,16 +173,9 @@ if (FRAMEWORK_INSTALL)
 endif ()
 
 # testing
-# FIXME (aw): move testing logic into tests/CMakeLists.txt
-if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
-    if(NOT DISABLE_EDM)
-        list(APPEND CMAKE_MODULE_PATH ${CPM_PACKAGE_catch2_SOURCE_DIR}/extras)
-    endif()
+if(EVEREST_FRAMEWORK_BUILD_TESTING)
     include(CTest)
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
     add_subdirectory(tests)
-
 else()
     message(STATUS "Not running unit tests")
 endif()

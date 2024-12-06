@@ -36,7 +36,7 @@ public:
     }
 
     Everest::Config& get_config() {
-        return session.get_config();
+        return *config_;
     }
 
     json call_command(const Fulfillment& fulfillment, const std::string& cmd_name, json args);
@@ -78,6 +78,9 @@ public:
 private:
     const std::string module_id;
     const RuntimeSession& session;
+    std::unique_ptr<Everest::RuntimeSettings> rs;
+    std::shared_ptr<Everest::MQTTAbstraction> mqtt_abstraction;
+    std::unique_ptr<Everest::Config> config_;
 
     std::unique_ptr<Everest::Everest> handle;
 
@@ -88,8 +91,10 @@ private:
     std::deque<std::function<void(json)>> err_susbcription_callbacks{};
     std::deque<std::function<void(json)>> err_cleared_susbcription_callbacks{};
 
-    static std::unique_ptr<Everest::Everest> create_everest_instance(const std::string& module_id,
-                                                                     const RuntimeSession& session);
+    static std::unique_ptr<Everest::Everest>
+    create_everest_instance(const std::string& module_id, const Everest::Config& config,
+                            const Everest::RuntimeSettings& rs,
+                            std::shared_ptr<Everest::MQTTAbstraction> mqtt_abstraction);
 
     ModuleInfo module_info{};
     std::map<std::string, Interface> requirements;

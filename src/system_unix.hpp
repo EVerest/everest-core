@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -22,7 +23,7 @@ public:
     pid_t check_child_executed();
 
 private:
-    const size_t MAX_PIPE_MESSAGE_SIZE = 1024;
+    const std::size_t MAX_PIPE_MESSAGE_SIZE = 1024;
     SubProcess(int fd, pid_t pid) : fd(fd), pid(pid){};
     int fd{};
     pid_t pid{0};

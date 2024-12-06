@@ -15,6 +15,7 @@ set_target_properties(framework PROPERTIES SOVERSION ${PROJECT_VERSION})
 target_sources(framework
     PRIVATE
         config.cpp
+        config_cache.cpp
         error/error.cpp
         error/error_database_map.cpp
         error/error_filter.cpp
@@ -26,9 +27,12 @@ target_sources(framework
         error/error_factory.cpp
         everest.cpp
         formatter.cpp
+        filesystem.cpp
         message_queue.cpp
+        module_config.cpp
         mqtt_abstraction.cpp
         mqtt_abstraction_impl.cpp
+        mqtt_settings.cpp
         thread.cpp
         types.cpp
         serial.cpp

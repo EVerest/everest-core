@@ -6,7 +6,11 @@
 #include <string>
 
 #include <framework/runtime.hpp>
+#include <utils/mqtt_settings.hpp>
 #include <utils/types.hpp>
+
+const std::string get_variable_from_env(const std::string& variable);
+const std::string get_variable_from_env(const std::string& variable, const std::string& default_value);
 
 class RuntimeSession {
 public:
@@ -14,19 +18,12 @@ public:
 
     RuntimeSession();
 
-    std::shared_ptr<Everest::RuntimeSettings> get_runtime_settings() const {
-        return rs;
-    }
-
-    Everest::Config& get_config() const {
-        return *config;
+    const Everest::MQTTSettings& get_mqtt_settings() const {
+        return mqtt_settings;
     }
 
 private:
-    std::shared_ptr<Everest::RuntimeSettings> rs;
-    std::unique_ptr<Everest::Config> config;
-
-    static std::unique_ptr<Everest::Config> create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs);
+    Everest::MQTTSettings mqtt_settings;
 };
 
 struct Interface {

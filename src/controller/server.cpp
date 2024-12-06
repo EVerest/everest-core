@@ -2,6 +2,7 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 #include "server.hpp"
 
+#include <cstddef>
 #include <cstring>
 
 #include <fstream>
@@ -28,7 +29,7 @@ public:
     public:
         OutputState state{OutputState::EMPTY};
         unsigned char* buffer{nullptr};
-        size_t len{0};
+        std::size_t len{0};
 
         void set_data(const std::string& data) {
             len = data.size();
@@ -43,7 +44,7 @@ public:
 
     void push_output_data(std::string data);
     Output pop_output();
-    void add_input(const char*, size_t len);
+    void add_input(const char*, std::size_t len);
     std::string finish_input();
 
 private:
@@ -52,7 +53,7 @@ private:
     std::mutex output_mtx;
 };
 
-void WebsocketSession::add_input(const char* in, size_t len) {
+void WebsocketSession::add_input(const char* in, std::size_t len) {
     input.append(in, len);
 }
 
@@ -104,7 +105,7 @@ private:
 
     std::mutex context_mtx;
 
-    static int callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len);
+    static int callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, std::size_t len);
 
     void create_session(WebsocketSession* session);
     void destroy_session(WebsocketSession* session);
@@ -139,7 +140,7 @@ lws_http_mount Server::Impl::mount = {
     nullptr,      // const char *basic_auth_login_file;
 };
 
-int Server::Impl::callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) {
+int Server::Impl::callback(struct lws* wsi, lws_callback_reasons reason, void* user, void* in, std::size_t len) {
     auto session = static_cast<WebsocketSession*>(user);
 
     auto& instance = *static_cast<Server::Impl*>(lws_get_protocol(wsi)->user);

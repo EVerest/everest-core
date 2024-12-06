@@ -122,4 +122,6 @@ fn main() {
 
     print_link_options(&libs.everestrs_sys);
     print_link_options(&libs.framework);
+    println!("cargo:rustc-link-lib=boost_log");
+    println!("cargo:rustc-link-lib=boost_log_setup");
 }

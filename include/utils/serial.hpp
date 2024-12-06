@@ -3,6 +3,7 @@
 #ifndef UTILS_SERIAL_HPP
 #define UTILS_SERIAL_HPP
 
+#include <cstddef>
 #include <cstdio>
 #include <stdint.h>
 #include <termios.h>
@@ -31,7 +32,7 @@ private:
     void handlePacket(uint8_t* buf, int len);
     void cobsDecode(uint8_t* buf, int len);
     void cobsDecodeByte(uint8_t byte);
-    size_t cobsEncode(const void* data, size_t length, uint8_t* buffer);
+    std::size_t cobsEncode(const void* data, std::size_t length, uint8_t* buffer);
     uint8_t msg[2048];
     uint8_t code;
     uint8_t block;

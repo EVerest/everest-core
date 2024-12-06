@@ -68,8 +68,8 @@ date:
     ]
 catch2:
   git: https://github.com/catchorg/Catch2.git
-  git_tag: v3.4.0
-  cmake_condition: "BUILD_TESTING"
+  git_tag: v3.7.1
+  cmake_condition: "EVEREST_FRAMEWORK_BUILD_TESTING"
 pybind11:
   git: https://github.com/pybind/pybind11.git
   git_tag: v2.11.1

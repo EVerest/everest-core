@@ -23,14 +23,6 @@
 
 namespace {
 
-std::unique_ptr<Everest::Everest> create_everest_instance(const std::string& module_id,
-                                                          std::shared_ptr<Everest::RuntimeSettings> rs,
-                                                          const Everest::Config& config) {
-    return std::make_unique<Everest::Everest>(module_id, config, rs->validate_schema, rs->mqtt_broker_socket_path,
-                                              rs->mqtt_broker_host, rs->mqtt_broker_port, rs->mqtt_everest_prefix,
-                                              rs->mqtt_external_prefix, rs->telemetry_prefix, rs->telemetry_enabled);
-}
-
 JsonBlob json2blob(const json& j) {
     // I did not find a way to not copy the data at least once here.
     const std::string dumped = j.dump();
@@ -77,11 +69,26 @@ inline ConfigField get_config_field(const std::string& _name, int _value) {
 
 } // namespace
 
-Module::Module(const std::string& module_id, const std::string& prefix, const std::string& config_file) :
-    module_id_(module_id),
-    rs_(std::make_shared<Everest::RuntimeSettings>(prefix, config_file)),
-    config_(std::make_unique<Everest::Config>(rs_)),
-    handle_(create_everest_instance(module_id, rs_, *config_)) {
+Module::Module(const std::string& module_id, const std::string& prefix, const Everest::MQTTSettings& mqtt_settings) :
+    module_id_(module_id), mqtt_settings_(mqtt_settings) {
+
+    this->mqtt_abstraction_ = std::make_shared<Everest::MQTTAbstraction>(this->mqtt_settings_);
+    this->mqtt_abstraction_->connect();
+    this->mqtt_abstraction_->spawn_main_loop_thread();
+
+    const auto result = Everest::get_module_config(this->mqtt_abstraction_, this->module_id_);
+
+    this->rs_ = std::make_unique<Everest::RuntimeSettings>(result.at("settings"));
+
+    config_ = std::make_shared<Everest::Config>(this->mqtt_settings_, result);
+
+    handle_ = std::make_unique<Everest::Everest>(this->module_id_, *this->config_, this->rs_->validate_schema,
+                                                 this->mqtt_abstraction_, this->rs_->telemetry_prefix,
+                                                 this->rs_->telemetry_enabled);
+}
+
+std::shared_ptr<Everest::Config> Module::get_config() const {
+    return this->config_;
 }
 
 JsonBlob Module::get_interface(rust::Str interface_name) const {
@@ -109,7 +116,7 @@ void Module::provide_command(const Runtime& rt, rust::String implementation_id, 
     });
 }
 
-void Module::subscribe_variable(const Runtime& rt, rust::String implementation_id, size_t index,
+void Module::subscribe_variable(const Runtime& rt, rust::String implementation_id, std::size_t index,
                                 rust::String name) const {
     const auto req = Requirement{std::string(implementation_id), index};
     handle_->subscribe_var(req, std::string(name), [&rt, implementation_id, index, name](json args) {
@@ -133,7 +140,7 @@ void Module::subscribe_all_errors(const Runtime& rt) const {
     }
 }
 
-JsonBlob Module::call_command(rust::Str implementation_id, size_t index, rust::Str name, JsonBlob blob) const {
+JsonBlob Module::call_command(rust::Str implementation_id, std::size_t index, rust::Str name, JsonBlob blob) const {
     const auto req = Requirement{std::string(implementation_id), index};
     json return_value = handle_->call_cmd(req, std::string(name), json::parse(blob.data.begin(), blob.data.end()));
 
@@ -143,6 +150,25 @@ JsonBlob Module::call_command(rust::Str implementation_id, size_t index, rust::S
 void Module::publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const {
     handle_->publish_var(std::string(implementation_id), std::string(name),
                          json::parse(blob.data.begin(), blob.data.end()));
+}
+
+std::shared_ptr<Module> mod;
+
+std::shared_ptr<Module> create_module(rust::Str module_name, rust::Str prefix, rust::Str mqtt_broker_socket_path,
+                                      rust::Str mqtt_broker_host, rust::Str mqtt_broker_port,
+                                      rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
+    auto socket_path = std::string(mqtt_broker_socket_path);
+    Everest::MQTTSettings mqtt_settings;
+    if (not socket_path.empty()) {
+        Everest::populate_mqtt_settings(mqtt_settings, socket_path, std::string(mqtt_everest_prefix),
+                                        std::string(mqtt_external_prefix));
+    } else {
+        Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host),
+                                        std::stoi(std::string(mqtt_broker_port)), std::string(mqtt_everest_prefix),
+                                        std::string(mqtt_external_prefix));
+    }
+    mod = std::make_shared<Module>(std::string(module_name), std::string(prefix), mqtt_settings);
+    return mod;
 }
 
 void Module::raise_error(rust::Str implementation_id, ErrorType error_type) const {
@@ -166,14 +192,9 @@ void Module::clear_error(rust::Str implementation_id, rust::Str error_type, bool
     }
 }
 
-std::unique_ptr<Module> create_module(rust::Str module_id, rust::Str prefix, rust::Str conf) {
-    return std::make_unique<Module>(std::string(module_id), std::string(prefix), std::string(conf));
-}
-
-rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
-    const auto rs = std::make_shared<Everest::RuntimeSettings>(std::string(prefix), std::string(config_file));
-    const Everest::Config config{rs};
-    const auto module_configs = config.get_module_configs(std::string(module_id));
+rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id) {
+    // TODO(ddo) We call this before initializing the logger.
+    const auto module_configs = mod->get_config()->get_module_configs(std::string(module_id));
 
     rust::Vec<RsModuleConfig> out;
     out.reserve(module_configs.size());
@@ -206,24 +227,23 @@ rust::Vec<RsModuleConnections> Module::get_module_connections() const {
     return out;
 }
 
-int init_logging(rust::Str module_id, rust::Str prefix, rust::Str config_file) {
+int init_logging(rust::Str module_id, rust::Str prefix, rust::Str logging_config_file) {
     using namespace boost::log;
     using namespace Everest::Logging;
 
     const std::string module_id_cpp{module_id};
     const std::string prefix_cpp{prefix};
-    const std::string config_file_cpp{config_file};
+    const std::string logging_config_file_cpp{logging_config_file};
 
     // Init the CPP logger.
-    Everest::RuntimeSettings rs{prefix_cpp, config_file_cpp};
-    init(rs.logging_config_file, module_id_cpp);
+    init(logging_config_file_cpp, module_id_cpp);
 
     // Below is something really ugly. Boost's log filter rules may actually be
     // quite "complex" but the library does not expose any way to check the
     // already installed filters. We therefore reopen the config and construct
     // or own filter - and feed it with dummy values to determine its filtering
     // behaviour (the lowest severity which is accepted by the filter)
-    std::filesystem::path logging_path{rs.logging_config_file};
+    std::filesystem::path logging_path{logging_config_file_cpp};
     std::ifstream logging_config(logging_path.c_str());
     if (!logging_config.is_open()) {
         return info;

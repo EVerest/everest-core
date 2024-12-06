@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include <utils/yaml_loader.hpp>
 
+#include <cstddef>
 #include <fstream>
 
 #include <fmt/core.h>
@@ -10,7 +11,7 @@
 
 #include <everest/logging.hpp>
 
-static void yaml_error_handler(const char* msg, size_t len, ryml::Location loc, void*) {
+static void yaml_error_handler(const char* msg, std::size_t len, ryml::Location loc, void*) {
     std::stringstream error_msg;
     error_msg << "YAML parsing error: ";
 

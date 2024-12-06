@@ -101,7 +101,7 @@ void RPC::run(const NotificationHandler& notification_handler) {
 
     while (true) {
         // polling on command api ..
-        auto msg = Everest::controller_ipc::receive_message(this->ipc_fd);
+        const auto msg = Everest::controller_ipc::receive_message(this->ipc_fd);
 
         if (msg.status != Everest::controller_ipc::MESSAGE_RETURN_STATUS::OK) {
             // FIXME (aw): proper error handling!
@@ -186,14 +186,14 @@ nlohmann::json RPC::ipc_request(const std::string& method, const nlohmann::json&
         new_call = this->ipc_calls.emplace(this->rng(), std::promise<nlohmann::json>());
     }
 
-    auto id = new_call.first->first;
+    const auto id = new_call.first->first;
     auto call_result_future = std::move(new_call.first->second.get_future());
 
     lock.unlock();
 
     Everest::controller_ipc::send_message(this->ipc_fd, {{"method", method}, {"params", params}, {"id", id}});
 
-    auto status = call_result_future.wait_for(this->rpc_timeout);
+    const auto status = call_result_future.wait_for(this->rpc_timeout);
 
     lock.lock();
     this->ipc_calls.erase(new_call.first);

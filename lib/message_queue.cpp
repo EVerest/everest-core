@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include <thread>
 
 #include <fmt/format.h>
@@ -32,7 +32,7 @@ MessageQueue::MessageQueue(MessageCallback message_callback_) :
 
 void MessageQueue::add(std::unique_ptr<Message> message) {
     {
-        std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
+        const std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
         this->message_queue.push(std::move(message));
     }
     this->cv.notify_all();
@@ -40,7 +40,7 @@ void MessageQueue::add(std::unique_ptr<Message> message) {
 
 void MessageQueue::stop() {
     {
-        std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
+        const std::lock_guard<std::mutex> lock(this->queue_ctrl_mutex);
         this->running = false;
     }
     this->cv.notify_all();
@@ -115,7 +115,7 @@ MessageHandler::MessageHandler() : running(true) {
 
 void MessageHandler::add(std::shared_ptr<ParsedMessage> message) {
     {
-        std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
+        const std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
         this->message_queue.push(std::move(message));
     }
     this->cv.notify_all();
@@ -123,7 +123,7 @@ void MessageHandler::add(std::shared_ptr<ParsedMessage> message) {
 
 void MessageHandler::stop() {
     {
-        std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
+        const std::lock_guard<std::mutex> lock(this->handler_ctrl_mutex);
         this->running = false;
     }
     this->cv.notify_all();
@@ -131,23 +131,23 @@ void MessageHandler::stop() {
 
 void MessageHandler::add_handler(std::shared_ptr<TypedHandler> handler) {
     {
-        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
+        const std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         this->handlers.insert(handler);
     }
 }
 
 void MessageHandler::remove_handler(std::shared_ptr<TypedHandler> handler) {
     {
-        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
+        const std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         auto it = std::find(this->handlers.begin(), this->handlers.end(), handler);
         this->handlers.erase(it);
     }
 }
 
-size_t MessageHandler::count_handlers() {
-    size_t count = 0;
+std::size_t MessageHandler::count_handlers() {
+    std::size_t count = 0;
     {
-        std::lock_guard<std::mutex> lock(this->handler_list_mutex);
+        const std::lock_guard<std::mutex> lock(this->handler_list_mutex);
         count = this->handlers.size();
     }
     return count;

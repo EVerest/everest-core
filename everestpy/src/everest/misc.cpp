@@ -1,51 +1,94 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #include "misc.hpp"
 
+#include <cstddef>
 #include <cstdlib>
 #include <stdexcept>
 
-static std::string get_ev_prefix_from_env() {
-    const auto prefix = std::getenv("EV_PREFIX");
-    if (prefix == nullptr) {
-        throw std::runtime_error("EV_PREFIX needed for everestpy");
+#include <utils/filesystem.hpp>
+
+const std::string get_variable_from_env(const std::string& variable) {
+    const auto value = std::getenv(variable.c_str());
+    if (value == nullptr) {
+        throw std::runtime_error(variable + " needed for everestpy");
     }
 
-    return prefix;
+    return value;
 }
 
-static std::string get_ev_conf_file_from_env() {
-    const auto config_file = std::getenv("EV_CONF_FILE");
-    if (config_file == nullptr) {
-        throw std::runtime_error("EV_CONF_FILE needed for everestpy");
+const std::string get_variable_from_env(const std::string& variable, const std::string& default_value) {
+    const auto value = std::getenv(variable.c_str());
+    if (value == nullptr) {
+        return default_value;
     }
 
-    return config_file;
+    return value;
 }
 
-RuntimeSession::RuntimeSession(const std::string& prefix, const std::string& config_file) :
-    rs(std::make_shared<Everest::RuntimeSettings>(prefix, config_file)), config(create_config_instance(rs)) {
+static Everest::MQTTSettings get_mqtt_settings_from_env() {
+    const auto mqtt_everest_prefix =
+        get_variable_from_env(Everest::EV_MQTT_EVEREST_PREFIX, Everest::defaults::MQTT_EVEREST_PREFIX);
+    const auto mqtt_external_prefix =
+        get_variable_from_env(Everest::EV_MQTT_EXTERNAL_PREFIX, Everest::defaults::MQTT_EXTERNAL_PREFIX);
+    const auto mqtt_broker_socket_path = std::getenv(Everest::EV_MQTT_BROKER_SOCKET_PATH);
+    const auto mqtt_broker_host = std::getenv(Everest::EV_MQTT_BROKER_HOST);
+    const auto mqtt_broker_port = std::getenv(Everest::EV_MQTT_BROKER_PORT);
+
+    if (mqtt_broker_socket_path == nullptr) {
+        if (mqtt_broker_host == nullptr or mqtt_broker_port == nullptr) {
+            throw std::runtime_error("If EV_MQTT_BROKER_SOCKET_PATH is not set EV_MQTT_BROKER_HOST and "
+                                     "EV_MQTT_BROKER_PORT are needed for everestpy");
+        }
+        auto mqtt_broker_port_ = Everest::defaults::MQTT_BROKER_PORT;
+        try {
+            mqtt_broker_port_ = std::stoi(mqtt_broker_port);
+        } catch (...) {
+            EVLOG_warning << "Could not parse MQTT broker port, using default: " << mqtt_broker_port_;
+        }
+        return Everest::create_mqtt_settings(mqtt_broker_host, mqtt_broker_port_, mqtt_everest_prefix,
+                                             mqtt_external_prefix);
+    } else {
+        return Everest::create_mqtt_settings(mqtt_broker_socket_path, mqtt_everest_prefix, mqtt_external_prefix);
+    }
 }
 
-RuntimeSession::RuntimeSession() : RuntimeSession(get_ev_prefix_from_env(), get_ev_conf_file_from_env()) {
+/// This is just kept for compatibility
+RuntimeSession::RuntimeSession(const std::string& prefix, const std::string& config_file) {
+    EVLOG_warning
+        << "everestpy: Usage of the old RuntimeSession ctor detected, config should be loaded via MQTT not via "
+           "the provided config_file. For this please set the appropriate environment variables and call "
+           "RuntimeSession()";
+
+    // We extract the settings from the config file so everest-testing doesn't break
+    const auto ms = Everest::ManagerSettings(prefix, config_file);
+
+    Everest::Logging::init(ms.runtime_settings->logging_config_file.string());
+
+    this->mqtt_settings = ms.mqtt_settings;
 }
 
-std::unique_ptr<Everest::Config> RuntimeSession::create_config_instance(std::shared_ptr<Everest::RuntimeSettings> rs) {
-    // FIXME (aw): where to initialize the logger?
-    Everest::Logging::init(rs->logging_config_file);
-    return std::make_unique<Everest::Config>(rs);
+RuntimeSession::RuntimeSession() {
+    const auto module_id = get_variable_from_env("EV_MODULE");
+
+    namespace fs = std::filesystem;
+    const fs::path logging_config_file =
+        Everest::assert_file(get_variable_from_env("EV_LOG_CONF_FILE"), "Default logging config");
+    Everest::Logging::init(logging_config_file.string(), module_id);
+
+    this->mqtt_settings = get_mqtt_settings_from_env();
 }
 
 ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Config& config) {
     ModuleSetup setup;
 
     const std::string& module_name = config.get_main_config().at(module_id).at("module");
-    auto module_manifest = config.get_manifests().at(module_name);
+    const auto module_manifest = config.get_manifests().at(module_name);
 
     // setup connections
-    for (auto& requirement : module_manifest.at("requires").items()) {
+    for (const auto& requirement : module_manifest.at("requires").items()) {
 
-        auto const& requirement_id = requirement.key();
+        const auto& requirement_id = requirement.key();
 
         json req_route_list = config.resolve_requirement(module_id, requirement_id);
         // if this was a requirement with min_connections == 1 and max_connections == 1,
@@ -60,9 +103,10 @@ ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Conf
         auto& fulfillment_list = fulfillment_list_it->second;
         fulfillment_list.reserve(req_route_list.size());
 
-        for (size_t i = 0; i < req_route_list.size(); i++) {
+        for (std::size_t i = 0; i < req_route_list.size(); i++) {
             const auto& req_route = req_route_list[i];
-            auto fulfillment = Fulfillment{req_route["module_id"], req_route["implementation_id"], {requirement_id, i}};
+            const auto fulfillment =
+                Fulfillment{req_route["module_id"], req_route["implementation_id"], {requirement_id, i}};
             fulfillment_list.emplace_back(std::move(fulfillment));
         }
     }
@@ -105,7 +149,7 @@ Interface create_everest_interface_from_definition(const json& def) {
     if (def.contains("errors")) {
         const auto& errors = def.at("errors");
 
-        int errors_size = 0;
+        std::size_t errors_size = 0;
         for (const auto& error_namespace_it : errors.items()) {
             errors_size += error_namespace_it.value().size();
         }

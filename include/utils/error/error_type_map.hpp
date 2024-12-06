@@ -37,6 +37,12 @@ public:
     void load_error_types(std::filesystem::path error_types_dir);
 
     ///
+    /// \brief Loads error types from a given map
+    /// \param error_types_dir The map to load the error types from.
+    ///
+    void load_error_types_map(std::map<ErrorType, std::string> error_types_map);
+
+    ///
     /// \brief Gets the description of an error type.
     /// \param error_type The error type to get the description of.
     /// \return The description of the error type.
@@ -49,6 +55,12 @@ public:
     /// \return True if the error type exists, false otherwise.
     ///
     bool has(const ErrorType& error_type) const;
+
+    ///
+    /// \brief Returns the contained ErrorType map
+    /// \return The error types map
+    ///
+    std::map<ErrorType, std::string> get_error_types();
 
 private:
     std::map<ErrorType, std::string> error_types;

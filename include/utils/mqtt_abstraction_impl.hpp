@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MQTT_ABSTRACTION_IMPL_HPP
 #define UTILS_MQTT_ABSTRACTION_IMPL_HPP
 
+#include <cstddef>
 #include <functional>
 #include <future>
 #include <map>
@@ -19,11 +20,9 @@
 
 #include <utils/thread.hpp>
 
-#define MQTT_BUF_SIZE 500 * 1024
+constexpr std::size_t MQTT_BUF_SIZE = 500 * 1024;
 
 namespace Everest {
-using json = nlohmann::json;
-
 /// \brief Contains a payload and the topic it was received on with additional QOS
 struct MessageWithQOS : Message {
     QOS qos; ///< The Quality of Service level
@@ -55,11 +54,11 @@ public:
 
     ///
     /// \brief publishes the given \p json on the given \p topic with QOS level 0
-    void publish(const std::string& topic, const json& json);
+    void publish(const std::string& topic, const nlohmann::json& json);
 
     ///
     /// \brief publishes the given \p json on the given \p topic with the given \p qos
-    void publish(const std::string& topic, const json& json, QOS qos);
+    void publish(const std::string& topic, const nlohmann::json& json, QOS qos, bool retain = false);
 
     ///
     /// \brief publishes the given \p data on the given \p topic with QOS level 0
@@ -67,7 +66,7 @@ public:
 
     ///
     /// \brief publishes the given \p data on the given \p topic with the given \p qos
-    void publish(const std::string& topic, const std::string& data, QOS qos);
+    void publish(const std::string& topic, const std::string& data, QOS qos, bool retain = false);
 
     ///
     /// \brief subscribes to the given \p topic with QOS level 0
@@ -82,9 +81,17 @@ public:
     void unsubscribe(const std::string& topic);
 
     ///
+    /// \brief subscribe and wait for value on the subscribed topic
+    nlohmann::json get(const std::string& topic, QOS qos);
+
+    ///
     /// \brief Spawn a thread running the mqtt main loop
     /// \returns a future, which will be fulfilled on thread termination
-    std::future<void> spawn_main_loop_thread();
+    std::shared_future<void> spawn_main_loop_thread();
+
+    ///
+    /// \returns the main loop future, which will be fulfilled on thread termination
+    std::shared_future<void> get_main_loop_future();
 
     ///
     /// \brief subscribes to the given \p topic and registers a callback \p handler that is called when a message
@@ -116,6 +123,7 @@ private:
     std::mutex messages_before_connected_mutex;
 
     Thread mqtt_mainloop_thread;
+    std::shared_future<void> main_loop_future;
 
     std::string mqtt_server_socket_path;
     std::string mqtt_server_address;

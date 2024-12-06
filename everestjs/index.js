@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 const util = require('util');
 const addon = require('./everestjs.node');
 
@@ -28,9 +28,12 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
   const env_settings = {
     module: process.env.EV_MODULE,
     prefix: process.env.EV_PREFIX,
-    config_file: process.env.EV_CONF_FILE,
-    mqtt_server_address: process.env.MQTT_SERVER_ADDRESS,
-    mqtt_server_port: process.env.MQTT_SERVER_PORT,
+    logging_config_file: process.env.EV_LOG_CONF_FILE,
+    mqtt_everest_prefix: process.env.EV_MQTT_EVEREST_PREFIX,
+    mqtt_external_prefix: process.env.EV_MQTT_EXTERNAL_PREFIX,
+    mqtt_broker_socket_path: process.env.EV_MQTT_BROKER_SOCKET_PATH,
+    mqtt_server_address: process.env.EV_MQTT_BROKER_HOST,
+    mqtt_server_port: process.env.EV_MQTT_BROKER_PORT,
     validate_schema: process.env.EV_VALIDATE_SCHEMA,
   };
 
@@ -43,7 +46,12 @@ const EverestModule = function EverestModule(handler_setup, user_settings) {
   const config = {
     module: settings.module,
     prefix: settings.prefix,
-    config_file: settings.config_file,
+    logging_config_file: settings.logging_config_file,
+    mqtt_everest_prefix: settings.mqtt_everest_prefix,
+    mqtt_external_prefix: helpers.get_default(settings, 'mqtt_external_prefix', ''),
+    mqtt_broker_socket_path: helpers.get_default(settings, 'mqtt_broker_socket_path', ''),
+    mqtt_server_address: helpers.get_default(settings, 'mqtt_server_address', ''),
+    mqtt_server_port: helpers.get_default(settings, 'mqtt_server_port', 0),
     validate_schema: helpers.get_default(settings, 'validate_schema', false),
   };
 

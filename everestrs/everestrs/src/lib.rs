@@ -153,7 +153,9 @@ mod ffi {
         include!("everestrs/src/everestrs_sys.hpp");
 
         type Module;
-        fn create_module(module_id: &str, prefix: &str, conf: &str) -> UniquePtr<Module>;
+        fn create_module(module_id: &str, prefix: &str, mqtt_broker_socket_path: &str, mqtt_broker_host: &str,
+             mqtt_broker_port: &str,  mqtt_everest_prefix: &str,
+             mqtt_external_prefix: &str) -> SharedPtr<Module>;
 
         /// Connects to the message broker and launches the main everest thread to push work
         /// forward. Returns the module manifest.
@@ -214,7 +216,7 @@ mod ffi {
         fn clear_error(self: &Module, implementation_id: &str, error_type: &str, clear_all: bool);
 
         /// Returns the module config from cpp.
-        fn get_module_configs(module_id: &str, prefix: &str, conf: &str) -> Vec<RsModuleConfig>;
+        fn get_module_configs(module_id: &str) -> Vec<RsModuleConfig>;
 
         /// Call this once.
         fn init_logging(module_id: &str, prefix: &str, conf: &str) -> i32;
@@ -318,19 +320,42 @@ pub use ffi::{ErrorSeverity, ErrorType};
 /// Arguments for an EVerest node.
 #[derive(FromArgs, Debug)]
 struct Args {
+    /// TODO: add version param
+
     /// prefix of installation.
     #[argh(option)]
     #[allow(unused)]
     pub prefix: PathBuf,
 
-    /// configuration yml that we are running.
+    /// logging configuration yml that we are using.
     #[argh(option)]
     #[allow(unused)]
-    pub conf: PathBuf,
+    pub log_config: PathBuf,
 
     /// module name for us.
     #[argh(option)]
     pub module: String,
+
+    /// MQTT broker socket path
+    #[argh(option)]
+    #[allow(unused)]
+    pub mqtt_broker_socket_path: PathBuf,
+
+    /// MQTT broker hostname
+    #[argh(option)]
+    pub mqtt_broker_host: String,
+
+    /// MQTT broker port
+    #[argh(option)]
+    pub mqtt_broker_port: String, // TODO: int?
+
+    /// MQTT EVerest prefix
+    #[argh(option)]
+    pub mqtt_everest_prefix: String,
+
+    /// MQTT external prefix
+    #[argh(option)]
+    pub mqtt_external_prefix: String,
 }
 
 /// Implements the handling of commands & variables, but has no specific information about the
@@ -377,7 +402,7 @@ pub trait Subscriber: Sync + Send {
 /// code the `Subscriber` might take ownership of the [Runtime] - the weak
 /// ownership hence is necessary to break possible ownership cycles.
 pub struct Runtime {
-    cpp_module: cxx::UniquePtr<ffi::Module>,
+    cpp_module: cxx::SharedPtr<ffi::Module>,
     sub_impl: RwLock<Option<Weak<dyn Subscriber>>>,
 }
 
@@ -518,13 +543,17 @@ impl Runtime {
         logger::Logger::init_logger(
             &args.module,
             &args.prefix.to_string_lossy(),
-            &args.conf.to_string_lossy(),
+            &args.log_config.to_string_lossy(),
         );
 
         let cpp_module = ffi::create_module(
             &args.module,
             &args.prefix.to_string_lossy(),
-            &args.conf.to_string_lossy(),
+            &args.mqtt_broker_socket_path.to_string_lossy(),
+            &args.mqtt_broker_host,
+            &args.mqtt_broker_port,
+            &args.mqtt_everest_prefix,
+            &args.mqtt_external_prefix,
         );
 
         Arc::pin(Self {
@@ -645,15 +674,13 @@ impl TryFrom<&Config> for i64 {
 /// to create the [Runtime].
 pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
     let args: Args = argh::from_env();
-    logger::Logger::init_logger(
-        &args.module,
-        &args.prefix.to_string_lossy(),
-        &args.conf.to_string_lossy(),
-    );
+    // logger::Logger::init_logger(
+    //     &args.module,
+    //     &args.prefix.to_string_lossy(),
+    //     &args.conf.to_string_lossy(),
+    // );
     let raw_config = ffi::get_module_configs(
-        &args.module,
-        &args.prefix.to_string_lossy(),
-        &args.conf.to_string_lossy(),
+        &args.module
     );
 
     // Convert the nested Vec's into nested HashMaps.

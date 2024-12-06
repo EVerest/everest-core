@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 #ifndef UTILS_MESSAGE_QUEUE_HPP
 #define UTILS_MESSAGE_QUEUE_HPP
 
 #include <condition_variable>
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -17,8 +18,6 @@
 #include <utils/types.hpp>
 
 namespace Everest {
-using json = nlohmann::json;
-
 /// \brief Contains a payload and the topic it was received on
 struct Message {
     std::string topic;   ///< The MQTT topic where this message originated from
@@ -86,7 +85,7 @@ public:
     void remove_handler(std::shared_ptr<TypedHandler> handler);
 
     /// \brief \returns the number of registered handlers
-    size_t count_handlers();
+    std::size_t count_handlers();
 };
 
 } // namespace Everest

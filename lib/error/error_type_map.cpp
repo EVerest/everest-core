@@ -66,6 +66,10 @@ void ErrorTypeMap::load_error_types(std::filesystem::path error_types_dir) {
     }
 }
 
+void ErrorTypeMap::load_error_types_map(std::map<ErrorType, std::string> error_types_map) {
+    this->error_types = error_types_map;
+}
+
 std::string ErrorTypeMap::get_description(const ErrorType& error_type) const {
     std::string description;
     try {
@@ -79,6 +83,10 @@ std::string ErrorTypeMap::get_description(const ErrorType& error_type) const {
 
 bool ErrorTypeMap::has(const ErrorType& error_type) const {
     return error_types.find(error_type) != error_types.end();
+}
+
+std::map<ErrorType, std::string> ErrorTypeMap::get_error_types() {
+    return error_types;
 }
 
 } // namespace error
