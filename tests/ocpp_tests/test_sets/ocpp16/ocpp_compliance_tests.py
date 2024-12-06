@@ -6230,6 +6230,77 @@ async def test_chargepoint_update_http_auth_key(
     assert len(response.configuration_key) > 20
 
 
+@pytest.mark.asyncio
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment([("Security", "SecurityProfile", 0)])
+)
+async def test_chargepoint_update_security_profile(
+    central_system_v16: CentralSystem,
+    charge_point_v16: ChargePoint16,
+    test_utility: TestUtility,
+):
+    logging.info("######### test_chargepoint_update_security_profile #########")
+
+    await charge_point_v16.change_configuration_req(key="SecurityProfile", value="1")
+    # expect ChangeConfiguration.conf with status Accepted
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ChangeConfiguration",
+        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+    )
+
+    # wait for reconnect
+    await central_system_v16.wait_for_chargepoint(wait_for_bootnotification=False)
+
+    charge_point_v16 = central_system_v16.chargepoint
+    test_utility = TestUtility()
+
+    response = await charge_point_v16.get_configuration_req(key=["SecurityProfile"])
+
+    assert response.configuration_key[0]["key"] == "SecurityProfile"
+    assert response.configuration_key[0]["value"] == "1"
+
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment(
+        [
+            ("Internal", "RetryBackoffRandomRange", 1),
+            ("Internal", "RetryBackoffWaitMinimum", 2),
+        ]
+    )
+)
+async def test_chargepoint_update_security_profile_fallback(
+    central_system_v16: CentralSystem,
+    charge_point_v16: ChargePoint16,
+    test_utility: TestUtility,
+):
+    logging.info(
+        "######### test_chargepoint_update_security_profile_fallback #########"
+    )
+
+    await charge_point_v16.change_configuration_req(key="SecurityProfile", value="2")
+    # expect ChangeConfiguration.conf with status Accepted
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ChangeConfiguration",
+        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+    )
+
+    # wait for reconnect
+    await central_system_v16.wait_for_chargepoint(wait_for_bootnotification=False)
+
+    charge_point_v16 = central_system_v16.chargepoint
+    test_utility = TestUtility()
+
+    response = await charge_point_v16.get_configuration_req(key=["SecurityProfile"])
+
+    assert response.configuration_key[0]["key"] == "SecurityProfile"
+    assert response.configuration_key[0]["value"] == "0"
+
+
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-security-profile-2.yaml")
 )
