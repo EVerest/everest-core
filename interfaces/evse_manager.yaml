@@ -49,8 +49,8 @@ cmds:
     arguments:
       reservation_id:
         description: >-
-          The reservation id (should be added to the TransactionStarted
-          event)
+          The reservation id (should be added to the TransactionStarted event). Negative value if there was
+          no specific reservation id for this evse (if there are 'global' reservations for 'any' evse).
         type: integer
     result:
       description: Returns true if the EVSE accepted the reservation, else false.
