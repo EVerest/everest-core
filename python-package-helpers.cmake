@@ -1,4 +1,4 @@
-function (ev_add_pip_package)
+function(ev_add_pip_package)
     set(one_value_args
         NAME
         SOURCE_DIRECTORY
@@ -12,7 +12,7 @@ function (ev_add_pip_package)
         ${ARGN}
     )
 
-    if ("${args_NAME}" STREQUAL "")
+    if("${args_NAME}" STREQUAL "")
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: NAME is required")
     endif()
 
@@ -27,7 +27,7 @@ function (ev_add_pip_package)
     )
 endfunction()
 
-function (ev_install_pip_package)
+function(ev_install_pip_package)
     set(options
         LOCAL
         FORCE
@@ -47,7 +47,7 @@ function (ev_install_pip_package)
 
     set(TARGET_NAME "ev_pip_package_${args_NAME}")
 
-    if (NOT TARGET ${TARGET_NAME})
+    if(NOT TARGET ${TARGET_NAME})
         message(FATAL_ERROR "${CMAKE_CURRENT_FUNCTION}: target ${TARGET_NAME} for package ${args_NAME} does not exist")
     endif()
 
@@ -55,27 +55,27 @@ function (ev_install_pip_package)
 
     # NOTE (aw): probably we also want to directly forward arguments
     set(PIP_INSTALL_ARGS "")
-    if (args_LOCAL)
+
+    if(args_LOCAL)
         list(APPEND PIP_INSTALL_ARGS --user)
     endif()
-    if (args_FORCE)
+
+    if(args_FORCE)
         list(APPEND PIP_INSTALL_ARGS --force-reinstall)
     endif()
 
     # FIXME (aw): check wether a check done file is necessary here
-    #             if so, it should be inside a separate function
-    #             discussion of update behavior is needed before
-
+    # if so, it should be inside a separate function
+    # discussion of update behavior is needed before
     execute_process(
         COMMAND
             ${Python3_EXECUTABLE} -m pip install ${PIP_INSTALL_ARGS} .
         WORKING_DIRECTORY
             ${SOURCE_DIRECTORY}
-
     )
 endfunction()
 
-function (ev_create_pip_install_dist_target)
+function(ev_create_pip_install_dist_target)
     set(oneValueArgs
         PACKAGE_NAME
         PACKAGE_SOURCE_DIRECTORY
@@ -90,10 +90,12 @@ function (ev_create_pip_install_dist_target)
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${arg_PACKAGE_NAME}" STREQUAL "")
+
+    if("${arg_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+
+    if("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
         set(arg_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         message(STATUS "ev_create_pip_install_dist_target: no PACKAGE_SOURCE_DIRECTORY provided, using: ${arg_PACKAGE_SOURCE_DIRECTORY}")
     endif()
@@ -106,6 +108,7 @@ function (ev_create_pip_install_dist_target)
             "Installing ${arg_PACKAGE_NAME} from distribution"
         WORKING_DIRECTORY
             ${arg_PACKAGE_SOURCE_DIRECTORY}
+
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
@@ -118,17 +121,17 @@ function (ev_create_pip_install_dist_target)
     set(TARGET_NAME "${arg_PACKAGE_NAME}_pip_install_dist")
     add_custom_target(${TARGET_NAME}
         DEPENDS
-            "${CHECK_DONE_FILE}"
+        "${CHECK_DONE_FILE}"
         DEPENDS
-            ${arg_DEPENDS}
+        ${arg_DEPENDS}
     )
     set_target_properties(${TARGET_NAME}
         PROPERTIES
-            PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
+        PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
     )
 endfunction()
 
-function (ev_create_pip_install_local_target)
+function(ev_create_pip_install_local_target)
     set(oneValueArgs
         PACKAGE_NAME
         PACKAGE_SOURCE_DIRECTORY
@@ -143,16 +146,19 @@ function (ev_create_pip_install_local_target)
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${arg_PACKAGE_NAME}" STREQUAL "")
+
+    if("${arg_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+
+    if("${arg_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
         set(arg_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
         message(STATUS "ev_create_pip_install_local_target: no PACKAGE_SOURCE_DIRECTORY provided, using: ${arg_PACKAGE_SOURCE_DIRECTORY}")
     endif()
 
     set(TARGET_NAME "${arg_PACKAGE_NAME}_pip_install_local")
     add_custom_target(${TARGET_NAME}
+
         # Remove build dir from pip
         COMMAND
             ${CMAKE_COMMAND} -E remove_directory build
@@ -167,7 +173,7 @@ function (ev_create_pip_install_local_target)
     )
     set_target_properties(${TARGET_NAME}
         PROPERTIES
-            PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
+        PACKAGE_SOURCE_DIRECTORY "${arg_PACKAGE_SOURCE_DIRECTORY}"
     )
 endfunction()
 
@@ -199,7 +205,7 @@ function(ev_create_pip_install_targets)
     )
 endfunction()
 
-function (ev_create_python_wheel_targets)
+function(ev_create_python_wheel_targets)
     set(oneValueArgs
         PACKAGE_NAME
         PACKAGE_SOURCE_DIRECTORY
@@ -215,15 +221,18 @@ function (ev_create_python_wheel_targets)
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}" STREQUAL "")
+
+    if("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+
+    if("${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
         set(EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
-    if (NOT DEFINED ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX})
-        if ("${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}" STREQUAL "")
-            message(FATAL_ERROR 
+
+    if(NOT DEFINED ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX})
+        if("${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}" STREQUAL "")
+            message(FATAL_ERROR
                 "No install prefix for wheel specified, please set ${PROJECT_NAME}_WHEEL_INSTALL_PREFIX, use the INSTALL_PREFIX argument or use macro ev_setup_cmake_variables_python_wheel() to set a default value."
             )
         else()
@@ -239,14 +248,25 @@ function (ev_create_python_wheel_targets)
             "${CHECK_DONE_FILE}"
     )
 
+    set(USE_WHEELS "ON" CACHE STRING "Enable or disable the use of python wheels - if off switch to tar.gz format")
+    message(STATUS "USE_WHEELS is set to: ${USE_WHEELS}")
+
+    if(USE_WHEELS)
+        set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .)
+        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf build src/*.egg-info)
+    else()
+        set(PACKAGE_BUILD_COMMAND ${Python3_EXECUTABLE} setup.py sdist --dist-dir ${WHEEL_OUTDIR})
+        set(PACKAGE_REMOVE_DIR_COMMAND ${CMAKE_COMMAND} -E rm -rf src/*.egg-info)
+    endif()
+
     add_custom_command(
         OUTPUT
-            "${CHECK_DONE_FILE}"
-        # Remove build dir from pip
+        "${CHECK_DONE_FILE}"
+
         COMMAND
-            ${CMAKE_COMMAND} -E remove_directory build
+            ${PACKAGE_BUILD_COMMAND}
         COMMAND
-            ${Python3_EXECUTABLE} -m build --wheel --outdir ${WHEEL_OUTDIR} .
+            ${PACKAGE_REMOVE_DIR_COMMAND}
         COMMAND
             ${CMAKE_COMMAND} -E touch "${CHECK_DONE_FILE}"
         WORKING_DIRECTORY
@@ -254,7 +274,7 @@ function (ev_create_python_wheel_targets)
         DEPENDS
             ${EV_CREATE_PYTHON_WHEEL_TARGETS_DEPENDS}
         COMMENT
-            "Building wheel for ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
+            "Building Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}"
     )
 
     add_custom_target(${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_install_wheel
@@ -267,13 +287,14 @@ function (ev_create_python_wheel_targets)
         DEPENDS
             ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME}_build_wheel
         COMMENT
-            "Copy wheel for ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
+            "Copy Python package for module ${EV_CREATE_PYTHON_WHEEL_TARGETS_PACKAGE_NAME} to ${EV_CREATE_PYTHON_WHEEL_TARGETS_INSTALL_PREFIX}"
     )
 endfunction()
 
 macro(ev_setup_cmake_variables_python_wheel)
-    set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "" CACHE PATH "Path to install python wheels to")
-    if (${PROJECT_NAME}_WHEEL_INSTALL_PREFIX STREQUAL "")
+    set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "" CACHE PATH "Path to install python package to")
+
+    if(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX STREQUAL "")
         if(NOT ${WHEEL_INSTALL_PREFIX} STREQUAL "")
             set(${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX "${WHEEL_INSTALL_PREFIX}")
             message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX not set, using: WHEEL_INSTALL_PREFIX=${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}")
@@ -281,11 +302,12 @@ macro(ev_setup_cmake_variables_python_wheel)
             set(${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/../dist-wheels")
             message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX and WHEEL_INSTALL_PREFIX not set, using default: \${CMAKE_INSTALL_PREFIX}/../dist-wheels=${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}")
         endif()
-        set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}" CACHE PATH "Path to install python wheels to" FORCE)
+
+        set(${PROJECT_NAME}_WHEEL_INSTALL_PREFIX "${${PROJECT_NAME}_DEFAULT_WHEEL_INSTALL_PREFIX}" CACHE PATH "Path to install python package to" FORCE)
     endif()
+
     message(STATUS "${PROJECT_NAME}_WHEEL_INSTALL_PREFIX=${${PROJECT_NAME}_WHEEL_INSTALL_PREFIX}")
 endmacro()
-
 
 function(ev_pip_install_local)
     set(oneValueArgs
@@ -302,10 +324,12 @@ function(ev_pip_install_local)
         "${multiValueArgs}"
         ${ARGN}
     )
-    if ("${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME}" STREQUAL "")
+
+    if("${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME}" STREQUAL "")
         message(FATAL_ERROR "PACKAGE_NAME is required")
     endif()
-    if ("${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
+
+    if("${EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY}" STREQUAL "")
         set(EV_PIP_INSTALL_LOCAL_PACKAGE_SOURCE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 
@@ -320,6 +344,7 @@ function(ev_pip_install_local)
     )
 
     set(CHECK_DONE_FILE "${CMAKE_BINARY_DIR}/${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME}_pip_install_local_installed_${EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION}")
+
     if(NOT EXISTS "${CHECK_DONE_FILE}")
         message(STATUS "${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME} not found, installing.")
         execute_process(
@@ -335,5 +360,6 @@ function(ev_pip_install_local)
             RESULTS_VARIABLE EV_RESULTS
         )
     endif()
+
     message(STATUS "Using ${EV_PIP_INSTALL_LOCAL_PACKAGE_NAME} from ${CMAKE_CURRENT_SOURCE_DIR} version: ${EV_PIP_INSTALL_LOCAL_INSTALLED_PACKAGE_VERSION}")
 endfunction()
