@@ -36,14 +36,14 @@
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
 /modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 /modules/rust_examples/ @SirVer @dorezyuk
-**/Cargo.toml @SirVer @dorezyuk
-**/Cargo.lock @SirVer @dorezyuk
+**/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
+**/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
 
 
 # Rust & Bazel
-*.rs @SirVer @dorezyuk
-*.bazel @SirVer @dorezyuk
-*.bzl @SirVer @dorezyuk
+*.rs @SirVer @dorezyuk @pietfried @hikinggrass
+*.bazel @SirVer @dorezyuk @pietfried @hikinggrass
+*.bzl @SirVer @dorezyuk @pietfried @hikinggrass
 
 # third-party/bazel
 /third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @dorezyuk
