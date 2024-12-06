@@ -4,10 +4,6 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/dist" CACHE PATH "..." FORCE)
 endif()
 
-# FIXME (aw): our packaging does not play well with lib64 and these kind of
-#             variations.  Either we need to change our directory layout or ...?
-set(CMAKE_INSTALL_LIBDIR lib)
-
 # set RPATH to the planned install path of lib folder
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
