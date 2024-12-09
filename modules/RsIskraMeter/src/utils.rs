@@ -1,5 +1,6 @@
 use anyhow::Result;
 use rand::Rng;
+use std::sync::Mutex;
 
 pub fn to_8_string(input: &[u16]) -> Result<String> {
     let u8_slice = input.iter().flat_map(|&x| u16::to_be_bytes(x)).collect();
@@ -72,9 +73,219 @@ pub fn create_ocmf(signed_meter_values: String, signature: String) -> String {
     format!("OCMF|{}|{{\"SD\":\"{}\"}}", signed_meter_values, signature)
 }
 
+pub struct ErrorReporter<F, G>
+where
+    F: Fn() + Send + Sync + 'static,
+    G: Fn() + Send + Sync + 'static,
+{
+    error_count: Mutex<usize>,
+    error_reported: Mutex<bool>,
+    report_error: F,
+    clear_error: G,
+    threshold: usize,
+}
+
+impl<F, G> ErrorReporter<F, G>
+where
+    F: Fn() + Send + Sync + 'static,
+    G: Fn() + Send + Sync + 'static,
+{
+    pub fn new(report_error: F, clear_error: G, threshold: usize) -> Self {
+        Self {
+            error_count: Mutex::new(0),
+            error_reported: Mutex::new(false),
+            report_error,
+            clear_error,
+            threshold,
+        }
+    }
+
+    pub fn record_error(&self) {
+        let mut reported = self.error_reported.lock().unwrap();
+
+        if !*reported {
+            let mut count = self.error_count.lock().unwrap();
+            *count += 1;
+
+            if *count >= self.threshold {
+                (self.report_error)();
+                *reported = true;
+            }
+        }
+    }
+
+    pub fn clear_errors(&self) {
+        let mut reported = self.error_reported.lock().unwrap();
+
+        if *reported {
+            let mut count = self.error_count.lock().unwrap();
+            (self.clear_error)();
+            *count = 0;
+            *reported = false;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    #[test]
+    fn test_report_error_called_when_threshold_reached() {
+        let report_called = Arc::new(AtomicBool::new(false));
+        let clear_called = Arc::new(AtomicBool::new(false));
+
+        let report_error = {
+            let report_called = Arc::clone(&report_called);
+            move || {
+                report_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let clear_error = {
+            let clear_called = Arc::clone(&clear_called);
+            move || {
+                clear_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let threshold = 3;
+        let error_reporter = ErrorReporter::new(report_error, clear_error, threshold);
+
+        // Simulate errors
+        error_reporter.record_error();
+        error_reporter.record_error();
+        error_reporter.record_error(); // should trigger report_error
+
+        // Verify the closure was called when threshold was reached
+        assert!(
+            report_called.load(Ordering::SeqCst),
+            "Report error was not called!"
+        );
+        assert!(
+            !clear_called.load(Ordering::SeqCst),
+            "Clear error was incorrectly called!"
+        );
+    }
+
+    #[test]
+    fn test_clear_error_called_after_successful_read() {
+        let report_called = Arc::new(AtomicBool::new(false));
+        let clear_called = Arc::new(AtomicBool::new(false));
+
+        let report_error = {
+            let report_called = Arc::clone(&report_called);
+            move || {
+                report_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let clear_error = {
+            let clear_called = Arc::clone(&clear_called);
+            move || {
+                clear_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let threshold = 3;
+        let error_reporter = ErrorReporter::new(report_error, clear_error, threshold);
+
+        // Simulate errors and then a successful read
+        error_reporter.record_error();
+        error_reporter.record_error();
+        error_reporter.record_error(); // should trigger report_error
+        error_reporter.clear_errors(); // should trigger clear_error
+
+        // Verify the closures were called in the correct order
+        assert!(
+            report_called.load(Ordering::SeqCst),
+            "Report error was not called!"
+        );
+        assert!(
+            clear_called.load(Ordering::SeqCst),
+            "Clear error was not called!"
+        );
+    }
+
+    #[test]
+    fn test_report_error_not_called_before_threshold() {
+        let report_called = Arc::new(AtomicBool::new(false));
+        let clear_called = Arc::new(AtomicBool::new(false));
+
+        let report_error = {
+            let report_called = Arc::clone(&report_called);
+            move || {
+                report_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let clear_error = {
+            let clear_called = Arc::clone(&clear_called);
+            move || {
+                clear_called.store(true, Ordering::SeqCst);
+            }
+        };
+
+        let threshold = 3;
+        let error_reporter = ErrorReporter::new(report_error, clear_error, threshold);
+
+        // Simulate errors, but not enough to reach the threshold
+        error_reporter.record_error(); // Count: 1
+        error_reporter.record_error(); // Count: 2
+
+        // Verify that report_error was not called before threshold is reached
+        assert!(
+            !report_called.load(Ordering::SeqCst),
+            "Report error was incorrectly called!"
+        );
+        assert!(
+            !clear_called.load(Ordering::SeqCst),
+            "Clear error was incorrectly called!"
+        );
+    }
+
+    #[test]
+    fn test_error_reported_only_once_after_reaching_threshold_multiple_times() {
+        let report_call_count = Arc::new(Mutex::new(0));
+        let clear_call_count = Arc::new(Mutex::new(0));
+
+        let report_error = {
+            let report_call_count = Arc::clone(&report_call_count);
+            move || {
+                let mut count = report_call_count.lock().unwrap();
+                *count += 1; // Increment report_error call count
+            }
+        };
+
+        let clear_error = {
+            let clear_call_count = Arc::clone(&clear_call_count);
+            move || {
+                let mut count = clear_call_count.lock().unwrap();
+                *count += 1; // Increment clear_error call count
+            }
+        };
+
+        let threshold = 3;
+        let error_reporter = ErrorReporter::new(report_error, clear_error, threshold);
+
+        // Simulate errors and trigger the error reporting
+        error_reporter.record_error();
+        error_reporter.record_error();
+        error_reporter.record_error(); // should trigger report_error
+        error_reporter.record_error(); // should NOT trigger report_error again
+        error_reporter.record_error(); // should NOT trigger report_error again
+        error_reporter.record_error(); // should NOT trigger report_error again
+        error_reporter.record_error(); // should NOT trigger report_error again
+
+        // Verify the closure was called only once, even if threshold is reached multiple times
+        assert!(
+            *report_call_count.lock().unwrap() == 1,
+            "Report error was called more than once!"
+        );
+        assert!(*clear_call_count.lock().unwrap() == 0, "Clear was called!");
+    }
 
     #[test]
     /// Tests for the `to_8_string` conversion.
