@@ -703,8 +703,12 @@ void EvseManager::ready() {
                 car_manufacturer = types::evse_manager::CarManufacturer::Unknown;
                 r_slac[0]->call_enter_bcd();
             } else if (event == CPEvent::CarUnplugged) {
+                // Make a local copy as leave_bcd() will overwrite the slac_unmatched flag
+                bool unmatched_on_unplug = not slac_unmatched;
                 r_slac[0]->call_leave_bcd();
-                r_slac[0]->call_reset(false);
+                if (unmatched_on_unplug) {
+                    r_slac[0]->call_reset(false);
+                }
             }
         }
 
@@ -796,8 +800,10 @@ void EvseManager::ready() {
             // Notify charger whether matching was started (or is done) or not
             if (s == "UNMATCHED") {
                 charger->set_matching_started(false);
+                slac_unmatched = true;
             } else {
                 charger->set_matching_started(true);
+                slac_unmatched = false;
             }
         });
 
