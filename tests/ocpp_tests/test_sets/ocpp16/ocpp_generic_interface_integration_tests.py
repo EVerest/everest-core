@@ -156,6 +156,12 @@ async def _env(
         {"status": "NotFound", "info": []},
         skip_implementation,
     )
+    _add_pm_command_mock(
+        "security",
+        "get_verify_location",
+        "",
+        skip_implementation,
+    )
     _add_pm_command_mock("auth", "set_connection_timeout", None, skip_implementation)
     _add_pm_command_mock("auth", "set_master_pass_group_id", None, skip_implementation)
     _add_pm_command_mock(

@@ -4,6 +4,7 @@
 #include <AuthHandler.hpp>
 
 #include <everest/logging.hpp>
+#include <everest/staging/helpers/helpers.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
 
 namespace module {
@@ -73,7 +74,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     TokenHandlingResult result;
 
     // check if token is already currently processed
-    EVLOG_info << "Received new token: " << provided_token;
+    EVLOG_info << "Received new token: " << everest::staging::helpers::redact(provided_token);
     this->token_in_process_mutex.lock();
     const auto referenced_evses = this->get_referenced_evses(provided_token);
 
@@ -86,7 +87,8 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         this->unlock_plug_in_mutex(referenced_evses);
     } else {
         // do nothing if token is currently processed
-        EVLOG_info << "Received token " << provided_token.id_token.value << " repeatedly while still processing it";
+        EVLOG_info << "Received token " << everest::staging::helpers::redact(provided_token.id_token.value)
+                   << " repeatedly while still processing it";
         this->token_in_process_mutex.unlock();
         result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
@@ -113,7 +115,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         this->tokens_in_process.erase(provided_token.id_token.value);
     }
 
-    EVLOG_info << "Result for token: " << provided_token.id_token.value << ": "
+    EVLOG_info << "Result for token: " << everest::staging::helpers::redact(provided_token.id_token.value) << ": "
                << conversions::token_handling_result_to_string(result);
     return result;
 }
@@ -276,7 +278,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - compare referenced_evses against the evses listed in the validation_result
                 */
                 int evse_id = this->select_evse(referenced_evses); // might block
-                EVLOG_debug << "Selected evse#" << evse_id << " for token: " << provided_token.id_token.value;
+                EVLOG_debug << "Selected evse#" << evse_id
+                            << " for token: " << everest::staging::helpers::redact(provided_token.id_token.value);
                 if (evse_id != -1) { // indicates timeout of evse selection
                     std::optional<std::string> parent_id_token;
                     if (validation_result.parent_id_token.has_value()) {
@@ -312,7 +315,8 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     this->notify_evse(evse_id, provided_token, validation_result);
                 } else {
                     // in this case we dont need / cannot notify an evse, because no evse was selected
-                    EVLOG_info << "Timeout while selecting evse for provided token: " << provided_token;
+                    EVLOG_info << "Timeout while selecting evse for provided token: "
+                               << everest::staging::helpers::redact(provided_token);
                     return TokenHandlingResult::TIMEOUT;
                 }
             }
