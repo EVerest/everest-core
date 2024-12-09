@@ -1,20 +1,15 @@
 from datetime import timezone
-from unittest.mock import Mock, ANY
+from unittest.mock import Mock
 
-import pytest_asyncio
 import pytest
 
 import logging
-from copy import deepcopy
-from typing import Dict
 
 from everest.testing.ocpp_utils.central_system import CentralSystem
 
 from everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
-from everest.testing.core_utils.probe_module import ProbeModule
-from everest.testing.core_utils import EverestConfigAdjustmentStrategy
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
 from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
@@ -22,7 +17,7 @@ from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
 
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, IdTokenType, ConnectorStatusType)
+from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ConnectorStatusType)
 from ocpp.v201.datatypes import *
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
