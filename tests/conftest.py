@@ -27,3 +27,9 @@ def pytest_configure(config):
             continue
         pytest.everest_configs['params'].append(config_path)
         pytest.everest_configs['ids'].append(config_id)
+
+@pytest.fixture
+def started_test_controller(test_controller):
+    test_controller.start()
+    yield test_controller
+    test_controller.stop()
