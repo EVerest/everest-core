@@ -17,6 +17,9 @@ from everest.testing.core_utils.probe_module import ProbeModule
 from everest.testing.core_utils import EverestConfigAdjustmentStrategy
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
+from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
+                                              ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment)
+
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
 from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, IdTokenType, ConnectorStatusType)
@@ -29,38 +32,6 @@ from everest.testing.core_utils._configuration.libocpp_configuration_helper impo
 from validations import validate_status_notification_201
 
 log = logging.getLogger("ocpp201DisplayMessageTest")
-
-
-@pytest.fixture
-def probe_module(started_test_controller, everest_core) -> ProbeModule:
-    # initiate the probe module, connecting to the same runtime session the test controller started
-    module = ProbeModule(everest_core.get_runtime_session())
-
-    return module
-
-
-@pytest_asyncio.fixture
-async def chargepoint_with_pm(central_system: CentralSystem, probe_module: ProbeModule):
-    """Fixture for ChargePoint16. Requires central_system_v201 and test_controller. Starts test_controller immediately
-    """
-    # wait for libocpp to go online
-    cp = await central_system.wait_for_chargepoint()
-    yield cp
-    await cp.stop()
-
-
-class ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment(EverestConfigAdjustmentStrategy):
-    """
-    Probe module to be able to mock display messages
-    """
-
-    def adjust_everest_configuration(self, everest_config: Dict):
-        adjusted_config = deepcopy(everest_config)
-
-        adjusted_config["active_modules"]["ocpp"]["connections"]["display_message"] = [
-            {"module_id": "probe", "implementation_id": "ProbeModuleDisplayMessage"}]
-
-        return adjusted_config
 
 
 @pytest.mark.asyncio

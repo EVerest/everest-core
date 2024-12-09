@@ -6,23 +6,22 @@ import pytest
 
 import logging
 from copy import deepcopy
-from typing import Dict
-
-from everest.testing.ocpp_utils.central_system import CentralSystem
 
 from everest_test_utils import *  # Needs to be before the datatypes below since it overrides the v201 Action enum with the v16 one
-from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
+from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
-from everest.testing.core_utils.probe_module import ProbeModule
-from everest.testing.core_utils import EverestConfigAdjustmentStrategy
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, IdTokenType, ConnectorStatusType, SetVariableStatusType,
+from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, IdTokenType, ConnectorStatusType,
                              ClearCacheStatusType)
 from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
+from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
+                                              ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment,
+                                              ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment,
+                                              ProbeModuleCostAndPriceSessionCostConfigurationAdjustment)
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
     GenericOCPP201ConfigAdjustment,
@@ -32,70 +31,6 @@ from everest.testing.core_utils._configuration.libocpp_configuration_helper impo
 from validations import validate_status_notification_201
 
 log = logging.getLogger("ocpp201CaliforniaPricingTest")
-
-
-@pytest.fixture
-def probe_module(started_test_controller, everest_core) -> ProbeModule:
-    # initiate the probe module, connecting to the same runtime session the test controller started
-    module = ProbeModule(everest_core.get_runtime_session())
-
-    return module
-
-
-@pytest_asyncio.fixture
-async def chargepoint_with_pm(central_system: CentralSystem, probe_module: ProbeModule):
-    """Fixture for ChargePoint16. Requires central_system_v201 and test_controller. Starts test_controller immediately
-    """
-    # wait for libocpp to go online
-    cp = await central_system.wait_for_chargepoint()
-    yield cp
-    await cp.stop()
-
-
-class ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment(EverestConfigAdjustmentStrategy):
-    """
-    Probe module to be able to 'inject' metervalues
-    """
-
-    def adjust_everest_configuration(self, everest_config: Dict):
-        adjusted_config = deepcopy(everest_config)
-
-        adjusted_config["active_modules"]["grid_connection_point"]["connections"]["powermeter"] = [
-            {"module_id": "probe", "implementation_id": "ProbeModulePowerMeter"}]
-        adjusted_config["active_modules"]["connector_1"]["connections"]["powermeter_grid_side"] = [
-            {"module_id": "probe", "implementation_id": "ProbeModulePowerMeter"}]
-        adjusted_config["active_modules"]["connector_2"]["connections"]["powermeter_grid_side"] = [
-            {"module_id": "probe", "implementation_id": "ProbeModulePowerMeter"}]
-
-        return adjusted_config
-
-
-class ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment(EverestConfigAdjustmentStrategy):
-    """
-    Probe module to be able to mock display messages
-    """
-
-    def adjust_everest_configuration(self, everest_config: Dict):
-        adjusted_config = deepcopy(everest_config)
-
-        adjusted_config["active_modules"]["ocpp"]["connections"]["display_message"] = [
-            {"module_id": "probe", "implementation_id": "ProbeModuleDisplayMessage"}]
-
-        return adjusted_config
-
-
-class ProbeModuleCostAndPriceSessionCostConfigurationAdjustment(EverestConfigAdjustmentStrategy):
-    """
-    Probe module to be able to mock the session cost interface calls
-    """
-
-    def adjust_everest_configuration(self, everest_config: Dict):
-        adjusted_config = deepcopy(everest_config)
-
-        adjusted_config["active_modules"]["probe"]["connections"]["session_cost"] = [
-            {"module_id": "ocpp", "implementation_id": "session_cost"}]
-
-        return adjusted_config
 
 
 @pytest.mark.asyncio
@@ -236,12 +171,6 @@ class TestOcpp201CostAndPrice:
 
         probe_module_mock_fn = Mock()
 
-        # probe_module.implement_command("ProbeModuleDisplayMessage", "set_display_message",
-        #                                probe_module_mock_fn)
-        # probe_module.implement_command("ProbeModuleDisplayMessage", "get_display_messages",
-        #                                probe_module_mock_fn)
-        # probe_module.implement_command("ProbeModuleDisplayMessage", "clear_display_message",
-        #                                probe_module_mock_fn)
         probe_module.subscribe_variable("session_cost", "session_cost", probe_module_mock_fn)
 
         probe_module.start()
@@ -417,7 +346,8 @@ class TestOcpp201CostAndPrice:
 
     @pytest.mark.asyncio
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment(
+        evse_manager_ids=["connector_1", "connector_2"]))
     async def test_running_cost_trigger_time(self, central_system: CentralSystem,
                                              test_controller: TestController, test_utility: TestUtility,
                                              test_config: OcppTestConfiguration, probe_module):
@@ -473,7 +403,9 @@ class TestOcpp201CostAndPrice:
 
     @pytest.mark.asyncio
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment(
+        evse_manager_ids=["connector_1", "connector_2"]
+    ))
     async def test_running_cost_trigger_energy(self, central_system: CentralSystem,
                                                test_controller: TestController, test_utility: TestUtility,
                                                test_config: OcppTestConfiguration, probe_module):
@@ -531,7 +463,9 @@ class TestOcpp201CostAndPrice:
 
     @pytest.mark.asyncio
     @pytest.mark.probe_module
-    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment())
+    @pytest.mark.everest_config_adaptions(ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment(
+        evse_manager_ids=["connector_1", "connector_2"]
+    ))
     async def test_running_cost_trigger_power(self, central_system: CentralSystem,
                                               test_controller: TestController, test_utility: TestUtility,
                                               test_config: OcppTestConfiguration, probe_module):
