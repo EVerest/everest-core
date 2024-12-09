@@ -38,7 +38,6 @@
         "CpoName": "Pionix",
         "AuthorizationKey": "AABBCCDDEEFFGGHH",
         "SecurityProfile": 0,
-        "CpoName": "Pionix",
         "AdditionalRootCertificateCheck": true
     },
     "LocalAuthListManagement": {

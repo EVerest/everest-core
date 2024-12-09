@@ -17,7 +17,6 @@ from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
 from everest_test_utils_probe_modules import (probe_module,
                                               ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment,
-                                              ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment,
                                               ProbeModuleCostAndPriceSessionCostConfigurationAdjustment)
 
 from everest.testing.core_utils._configuration.libocpp_configuration_helper import (
