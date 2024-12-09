@@ -3,19 +3,10 @@
 
 #include "ErrorHandling.hpp"
 
-namespace module {
+#include "lib/error_defs.hpp"
+#include "lib/util.hpp"
 
-using ErrorList = std::list<Everest::error::ErrorType>;
-static const struct IgnoreErrors {
-    // p_evse. We need to ignore Inoperative here as this is the result of this check.
-    ErrorList evse{"evse_manager/Inoperative"};
-    ErrorList bsp{"evse_board_support/MREC3HighTemperature", "evse_board_support/MREC18CableOverTempDerate",
-                  "evse_board_support/VendorWarning"};
-    ErrorList connector_lock{"connector_lock/VendorWarning"};
-    ErrorList ac_rcd{"ac_rcd/VendorWarning"};
-    ErrorList imd{"isolation_monitor/VendorWarning"};
-    ErrorList powersupply{"power_supply_DC/VendorWarning"};
-} ignore_errors;
+namespace module {
 
 ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_bsp,
                              const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& _r_hlc,
@@ -109,57 +100,55 @@ void ErrorHandling::process_error() {
     }
 }
 
-// Check all errors from p_evse and all requirements to see if they block charging
-std::optional<std::string> ErrorHandling::errors_prevent_charging() {
+template <typename T> struct ErrorView {
+    const T& source;
+    const ErrorList& to_ignore;
+};
+template <typename T> ErrorView(T&, const ErrorList&) -> ErrorView<T>;
 
-    auto is_fatal = [](auto errors, auto ignore_list) -> std::optional<std::string> {
-        for (const auto e : errors) {
-            if (std::none_of(ignore_list.begin(), ignore_list.end(), [e](const auto& ign) { return e->type == ign; })) {
-                return e->type;
-            }
-        }
-        return std::nullopt;
-    };
-
-    auto fatal = is_fatal(p_evse->error_state_monitor->get_active_errors(), ignore_errors.evse);
-    if (fatal) {
-        return fatal;
-    }
-
-    fatal = is_fatal(r_bsp->error_state_monitor->get_active_errors(), ignore_errors.bsp);
-    if (fatal) {
-        return fatal;
-    }
-
-    if (r_connector_lock.size() > 0) {
-        fatal = is_fatal(r_connector_lock[0]->error_state_monitor->get_active_errors(), ignore_errors.connector_lock);
-        if (fatal) {
-            return fatal;
-        }
-    }
-
-    if (r_ac_rcd.size() > 0) {
-        fatal = is_fatal(r_ac_rcd[0]->error_state_monitor->get_active_errors(), ignore_errors.ac_rcd);
-        if (fatal) {
-            return fatal;
-        }
-    }
-
-    if (r_imd.size() > 0) {
-        fatal = is_fatal(r_imd[0]->error_state_monitor->get_active_errors(), ignore_errors.imd);
-        if (fatal) {
-            return fatal;
-        }
-    }
-
-    if (r_powersupply.size() > 0) {
-        fatal = is_fatal(r_powersupply[0]->error_state_monitor->get_active_errors(), ignore_errors.powersupply);
-        if (fatal) {
-            return fatal;
+std::optional<std::string> find_first_error(const std::list<Everest::error::ErrorPtr>& active_errors,
+                                            const ErrorList& to_ignore) {
+    for (const auto& error : active_errors) {
+        if (std::none_of(std::begin(to_ignore), std::end(to_ignore),
+                         [&error](const auto& error_to_ignore) { return error->type == error_to_ignore; })) {
+            return error->type;
         }
     }
 
     return std::nullopt;
+}
+
+struct Matcher {
+    using return_type = std::optional<std::string>;
+
+    template <typename T> return_type operator()(const T& error_view) {
+        return find_first_error(error_view.source.error_state_monitor->get_active_errors(), error_view.to_ignore);
+    }
+
+    // specialization for requirement lists
+    template <typename T> return_type operator()(const ErrorView<const std::vector<T>>& error_view) {
+        for (const auto& elem : error_view.source) {
+            auto match = find_first_error(elem->error_state_monitor->get_active_errors(), error_view.to_ignore);
+            if (match) {
+                return match;
+            }
+        }
+        return std::nullopt;
+    }
+};
+
+// Check all errors from p_evse and all requirements to see if they block charging
+std::optional<std::string> ErrorHandling::errors_prevent_charging() {
+    /* clang-format off */
+    return ev::util::find_first_match(Matcher(),
+        ErrorView{*p_evse, errors_to_ignore::evse},
+        ErrorView{*r_bsp, errors_to_ignore::bsp},
+        ErrorView{r_connector_lock, errors_to_ignore::connector_lock},
+        ErrorView{r_ac_rcd, errors_to_ignore::ac_rcd},
+        ErrorView{r_imd, errors_to_ignore::imd},
+        ErrorView{r_powersupply, errors_to_ignore::powersupply}
+    );
+    /* clang-format on */
 }
 
 void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
