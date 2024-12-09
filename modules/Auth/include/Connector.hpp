@@ -66,7 +66,12 @@ struct EVSEContext {
     }
 
     EVSEContext(int evse_id, int evse_index, const std::vector<Connector>& connectors) :
-        evse_id(evse_id), evse_index(evse_index), transaction_active(false), connectors(connectors), plugged_in(false) {
+        evse_id(evse_id),
+        evse_index(evse_index),
+        transaction_active(false),
+        connectors(connectors),
+        plugged_in(false),
+        plug_in_timeout(false) {
     }
 
     int32_t evse_id;
@@ -80,6 +85,8 @@ struct EVSEContext {
     std::mutex plug_in_mutex;
     std::mutex event_mutex;
     bool plugged_in;
+    bool plug_in_timeout; // indicates no authorization received within connection_timeout. Replug is required for this
+                          // EVSE to get authorization and start a transaction
 
     bool is_available();
     bool is_unavailable();

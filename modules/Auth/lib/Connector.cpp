@@ -40,6 +40,10 @@ std::string connector_state_to_string(const ConnectorState& state) {
 } // namespace conversions
 
 bool EVSEContext::is_available() {
+    if (this->plug_in_timeout) {
+        return false;
+    }
+
     bool occupied = false;
     bool available = false;
     for (const auto& connector : this->connectors) {
