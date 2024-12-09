@@ -12,7 +12,7 @@ from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate,
 from everest.testing.ocpp_utils.charge_point_v201 import ChargePoint201
 from everest.testing.core_utils.controller.test_controller_interface import TestController
 
-from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
+from everest_test_utils_probe_modules import (probe_module,
                                               ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment)
 
 from ocpp.v201 import call as call201
