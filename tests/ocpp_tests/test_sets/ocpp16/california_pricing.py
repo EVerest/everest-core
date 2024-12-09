@@ -1,19 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-import pytest
 import asyncio
 import logging
 import json
 
-from copy import deepcopy
-from typing import Dict
 from datetime import datetime, timedelta, timezone
 
 from unittest.mock import Mock, ANY
 
-from everest.testing.core_utils.probe_module import ProbeModule
-from everest.testing.core_utils import EverestConfigAdjustmentStrategy
 
 # fmt: off
 

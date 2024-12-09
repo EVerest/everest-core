@@ -1,9 +1,6 @@
 from datetime import timezone
 from unittest.mock import Mock, ANY
 
-import pytest_asyncio
-import pytest
-
 import logging
 from copy import deepcopy
 
@@ -14,7 +11,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 from ocpp.v201 import call as call201
 from ocpp.v201 import call_result as call_result201
-from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, IdTokenType, ConnectorStatusType,
+from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ConnectorStatusType,
                              ClearCacheStatusType)
 from ocpp.v201.datatypes import *
 from everest.testing.ocpp_utils.fixtures import *
