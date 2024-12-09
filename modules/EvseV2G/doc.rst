@@ -35,9 +35,9 @@ TCP & TLS 1.2            :heavy_check_mark:
 ExternalPayment          :heavy_check_mark:
 Plug&Charge              :heavy_check_mark:
 CertificateInstallation  :heavy_check_mark:
-CertificateUpdate        :heavy_check_mark:
+CertificateUpdate        
 Pause/Resume             :heavy_check_mark:
-Schedule Renegotation    :heavy_check_mark:
-Smart Charging           :heavy_check_mark:
-Internet Service         :heavy_check_mark:
+Schedule Renegotation    
+Smart Charging           
+Internet Service         
 =======================  ==================
