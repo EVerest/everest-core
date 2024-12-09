@@ -1,15 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright Pionix GmbH and Contributors to EVerest
 
-import os
-import pytest
-import json
-from copy import deepcopy
-from typing import Dict
-from unittest.mock import Mock, ANY
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import logging
-import getpass
 import asyncio
 
 from everest.testing.core_utils.controller.test_controller_interface import (
