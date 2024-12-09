@@ -13,5 +13,6 @@ types:
       identification:
         description: A (vendor specific) ID if required
         type: string
-
-
+      location:
+        description: Location of the measurement
+        type: string
