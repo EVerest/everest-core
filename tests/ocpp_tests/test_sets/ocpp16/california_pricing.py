@@ -24,7 +24,7 @@ from everest.testing.core_utils.controller.test_controller_interface import Test
 
 from everest_test_utils import *
 
-from everest_test_utils_probe_modules import (probe_module, chargepoint_with_pm,
+from everest_test_utils_probe_modules import (probe_module,
                                               ProbeModuleCostAndPriceMetervaluesConfigurationAdjustment,
                                               ProbeModuleCostAndPriceDisplayMessageConfigurationAdjustment,
                                               ProbeModuleCostAndPriceSessionCostConfigurationAdjustment)
