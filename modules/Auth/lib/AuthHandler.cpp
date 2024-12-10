@@ -283,20 +283,21 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - process it against placed reservations
                     - compare referenced_evses against the evses listed in the validation_result
                 */
-                const SelectEvseStatus status = this->select_evse(referenced_evses, provided_token.id_token); // might block
+                const SelectEvseStatus status =
+                    this->select_evse(referenced_evses, provided_token.id_token); // might block
 
                 if (!status.evse_id.has_value()) {
                     // TODO mz return timeout or withdrawn
                     if (status.status == SelectEvseReturnStatus::TimeOut) {
                         return TokenHandlingResult::TIMEOUT;
                     }
-                    else if (status.status == SelectEvseReturnStatus::Interrupted) {
+                    if (status.status == SelectEvseReturnStatus::Interrupted) {
                         // TODO mz is this always the case?
                         return TokenHandlingResult::WITHDRAWN;
-                    } else {
-                        EVLOG_error << "Evse selected but no evse id is given";
-                        return TokenHandlingResult::TIMEOUT;
                     }
+
+                    EVLOG_error << "Evse selected but no evse id is given";
+                    return TokenHandlingResult::TIMEOUT;
                 }
 
                 int evse_id = status.evse_id.value();
@@ -492,7 +493,8 @@ void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& evse_ids) {
     }
 }
 
-AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& selected_evses, const IdToken& id_token) {
+AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& selected_evses,
+                                                       const IdToken& id_token) {
 
     if (selected_evses.size() == 1) {
         SelectEvseStatus status;
@@ -514,7 +516,7 @@ AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& s
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, selected_evses, id_token] {
                                        return this->get_latest_plugin(selected_evses) != -1 ||
-                                              this->is_authorization_withdrawn(selected_evses, id_token);
+                                              this->is_authorization_withdrawn(selected_evses, id_token, false);
                                    })) {
                 SelectEvseStatus status;
                 status.status = SelectEvseReturnStatus::TimeOut;
@@ -524,7 +526,7 @@ AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& s
         }
 
         SelectEvseStatus status;
-        if (this->is_authorization_withdrawn(selected_evses, id_token)) {
+        if (this->is_authorization_withdrawn(selected_evses, id_token, true)) {
             status.status = SelectEvseReturnStatus::Interrupted;
         } else {
             status.status = SelectEvseReturnStatus::EvseSelected;
@@ -564,27 +566,34 @@ AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& s
     }
 }
 
-bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_evses, const IdToken& id_token) {
-    for (auto& withdraw_request : withdraw_requests) {
-        const bool withdraw_evse = withdraw_request.evse_id.has_value();
-        bool is_withdraw_evse_in_selected_evses = false;
-        if (withdraw_evse) {
-            if (std::find(selected_evses.begin(), selected_evses.end(), withdraw_request.evse_id.value()) !=
-                selected_evses.end()) {
-                is_withdraw_evse_in_selected_evses = true;
-            }
-        }
+bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_evses, const IdToken& id_token,
+                                             const bool remove_last_withdrawn_request) {
+    bool result = false;
 
-        // TODO mz check for evse id's
+    if (last_withdraw_request == nullptr) {
+        return false;
+    }
 
-        if ((!withdraw_request.id_token.has_value() ||
-             (withdraw_request.id_token.has_value() && withdraw_request.id_token.value().value == id_token.value)) &&
-            (!withdraw_evse || is_withdraw_evse_in_selected_evses)) {
-            return true;
+    const bool withdraw_evse = last_withdraw_request->evse_id.has_value();
+    bool is_withdraw_evse_in_selected_evses = false;
+    if (withdraw_evse) {
+        if (std::find(selected_evses.begin(), selected_evses.end(), last_withdraw_request->evse_id.value()) !=
+            selected_evses.end()) {
+            is_withdraw_evse_in_selected_evses = true;
         }
     }
 
-    return false;
+    // TODO mz check for evse id's
+
+    if ((!last_withdraw_request->id_token.has_value() ||
+         (last_withdraw_request->id_token.has_value() &&
+          last_withdraw_request->id_token.value().value == id_token.value)) &&
+        (!withdraw_evse || is_withdraw_evse_in_selected_evses)) {
+        result = true;
+        // TODO mz make it a nullptr again?
+    }
+
+    return result;
 }
 
 void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token,
@@ -887,14 +896,17 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
                   << (request.evse_id.has_value() ? " evse: " + std::to_string(request.evse_id.value()) : "")
                   << (request.id_token.has_value() ? " id token: " + request.id_token.value().value : "");
 
-    this->token_in_process_mutex.lock();
+    // TODO mz mutex withdraw_in_progress
+    // TODO mz That mutex should be unlocked as it is totally processed, so if other threads also handled the
+    //         request (also the one that is waiting in select_evse)
+    std::unique_lock<std::mutex> lock(this->token_in_process_mutex);
 
     if (request.id_token.has_value()) {
         // TODO mz mutex.
         if (this->tokens_in_process.find(request.id_token.value().value) != this->tokens_in_process.end()) {
             EVLOG_warning << "Remove token in process " << request.id_token.value().value;
-            this->withdraw_requests.push_back(request);
-            cv.notify_one();
+            this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
+            cv.notify_all();
             // this->tokens_in_process.erase(request.id_token.value().value);
         }
     } else if (!request.evse_id.has_value()) {
@@ -902,12 +914,12 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         EVLOG_warning << "Remove all tokens in progress";
         // this->tokens_in_process.clear();
         // this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Rejected);
-        this->withdraw_requests.push_back(request);
-        cv.notify_one();
+        this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
+        cv.notify_all();
         // TODO mz remove this request from this->withdraw_requests somewhere!!
     }
 
-    this->token_in_process_mutex.unlock();
+    lock.unlock();
 
     // TODO mz make it less complicated?
     if (request.evse_id.has_value()) {
