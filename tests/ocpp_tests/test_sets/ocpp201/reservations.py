@@ -336,7 +336,7 @@ async def test_reservation_connector_faulted(
     logging.info("######### test_reservation_connector_faulted #########")
 
     # Set evse in state 'faulted'
-    test_controller.raise_error()
+    test_controller.raise_error("MREC6UnderVoltage", 1)
 
     await asyncio.sleep(1)
 
@@ -396,7 +396,7 @@ async def test_reservation_connector_faulted_after_reservation(
     )
 
     # Set evse in state 'faulted'
-    test_controller.raise_error(1)
+    test_controller.raise_error("MREC6UnderVoltage", 1)
 
     # This should result in the reservation being cancelled.
     assert await wait_for_and_validate(
@@ -847,7 +847,7 @@ async def test_reservation_faulted_state(
     """
     logging.info("######### test_reservation_faulted_state #########")
 
-    test_controller.raise_error(1)
+    test_controller.raise_error("MREC6UnderVoltage", 1)
 
     assert await wait_for_and_validate(
         test_utility,
@@ -879,7 +879,7 @@ async def test_reservation_faulted_state(
         call_result201.ReserveNowPayload(ReserveNowStatusType.faulted),
     )
 
-    test_controller.clear_error(1)
+    test_controller.clear_error("MREC6UnderVoltage", 1)
 
     test_utility.messages.clear()
 
