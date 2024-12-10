@@ -940,6 +940,18 @@ bool ChargePointConfiguration::validate_measurands(const json& config) {
     return true;
 }
 
+bool validate_connector_evse_ids(const std::string& value) {
+    // this fullfills parts of HUB-24-003 of Requirements EVSE Check PnC with ISO15118-2 v4
+    const auto evse_ids = split_string(value, ',');
+    for (const auto& evse_id : evse_ids) {
+        if (evse_id.size() < 7 or evse_id.size() > 37) {
+            EVLOG_warning << "Attempting to set ConnectorEvseIds to invalid value: " << evse_id;
+            return false;
+        }
+    }
+    return true;
+}
+
 bool ChargePointConfiguration::measurands_supported(std::string csv) {
 
     if (csv.empty()) {
@@ -3802,7 +3814,11 @@ ConfigurationStatus ChargePointConfiguration::set(CiString<50> key, CiString<500
     }
     if (key == "ConnectorEvseIds") {
         if (this->getConnectorEvseIds().has_value()) {
-            this->setConnectorEvseIds(value.get());
+            if (validate_connector_evse_ids(value.get())) {
+                this->setConnectorEvseIds(value.get());
+            } else {
+                return ConfigurationStatus::Rejected;
+            }
         } else {
             return ConfigurationStatus::NotSupported;
         }

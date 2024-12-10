@@ -111,7 +111,9 @@
       "variable_name": "ISO15118EvseId",
       "characteristics": {
         "supportsMonitoring": true,
-        "dataType": "string"
+        "dataType": "string",
+        "minLimit": 7,
+        "maxLimit": 37
       },
       "attributes": [
         {
