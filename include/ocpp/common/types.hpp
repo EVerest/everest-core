@@ -339,7 +339,7 @@ struct RPM {
 struct Measurement {
     Powermeter power_meter;                   ///< Powermeter data
     std::optional<StateOfCharge> soc_Percent; ///< State of Charge in percent
-    std::optional<Temperature> temperature_C; ///< Temperature in degree Celsius
+    std::vector<Temperature> temperature_C;   ///< Temperature in degree Celsius
     std::optional<RPM> rpm;                   ///< RPM
 
     /// \brief Conversion from a given Measurement \p k to a given json object \p j

@@ -528,9 +528,7 @@ std::ostream& operator<<(std::ostream& os, const RPM& k) {
 
 void to_json(json& j, const Measurement& k) {
     to_json(j, k.power_meter);
-    if (k.temperature_C) {
-        j["temperature_C"] = k.temperature_C.value();
-    }
+    j["temperature_C"] = k.temperature_C;
     if (k.soc_Percent) {
         j["soc_Percent"] = k.soc_Percent.value();
     }
@@ -541,9 +539,7 @@ void to_json(json& j, const Measurement& k) {
 
 void from_json(const json& j, Measurement& k) {
     from_json(j, k.power_meter);
-    if (j.contains("temperature_C")) {
-        k.temperature_C.emplace(j.at("temperature_C"));
-    }
+    k.temperature_C = j.at("temperature_C");
     if (j.contains("soc_Percent")) {
         k.soc_Percent.emplace(j.at("soc_Percent"));
     }
