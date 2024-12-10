@@ -144,6 +144,32 @@ public:
     /// \returns the module config cache
     std::unordered_map<std::string, ConfigCache> get_module_config_cache();
 
+    ///
+    /// \return the cached mapping of module ids to module names
+    std::unordered_map<std::string, std::string> get_module_names();
+
+    ///
+    /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
+    ///
+    /// \returns a json object that contains the requirement
+    nlohmann::json resolve_requirement(const std::string& module_id, const std::string& requirement_id) const;
+
+    ///
+    /// \brief resolves all Requirements of the given \p module_id to their Fulfillments
+    ///
+    /// \returns a map indexed by Requirements
+    std::map<Requirement, Fulfillment> resolve_requirements(const std::string& module_id) const;
+
+    ///
+    /// \returns a list of Requirements for \p module_id
+    std::list<Requirement> get_requirements(const std::string& module_id) const;
+
+    ///
+    /// \brief A Fulfillment is a combination of a Requirement and the module and implementation ids where this is
+    /// implemented
+    /// \returns a map of Fulfillments for \p module_id
+    std::map<std::string, std::vector<Fulfillment>> get_fulfillments(const std::string& module_id) const;
+
     /// \returns the 3 tier model mappings
     std::unordered_map<std::string, ModuleTierMappings> get_3_tier_model_mappings();
 
@@ -266,28 +292,6 @@ public:
     ///
     /// \returns the commands that the modules \p module_name implements from the given implementation \p impl_id
     nlohmann::json get_module_cmds(const std::string& module_name, const std::string& impl_id);
-
-    ///
-    /// \brief checks if the given \p module_id provides the requirement given in \p requirement_id
-    ///
-    /// \returns a json object that contains the requirement
-    nlohmann::json resolve_requirement(const std::string& module_id, const std::string& requirement_id) const;
-
-    ///
-    /// \brief resolves all Requirements of the given \p module_id to their Fulfillments
-    ///
-    /// \returns a map indexed by Requirements
-    std::map<Requirement, Fulfillment> resolve_requirements(const std::string& module_id) const;
-
-    ///
-    /// \returns a list of Requirements for \p module_id
-    std::list<Requirement> get_requirements(const std::string& module_id) const;
-
-    ///
-    /// \brief A Fulfillment is a combination of a Requirement and the module and implementation ids where this is
-    /// implemented
-    /// \returns a map of Fulfillments for \p module_id
-    std::map<std::string, std::vector<Fulfillment>> get_fulfillments(const std::string& module_id) const;
 
     ///
     /// \brief A RequirementInitialization contains everything needed to initialize a requirement in user code. This

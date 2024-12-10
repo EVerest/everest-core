@@ -356,10 +356,21 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         const std::string module_name = module.key();
         json serialized_mod_config = serialized_config;
         serialized_mod_config["module_config"] = json::object();
+        // add mappings of fulfillments
         serialized_mod_config["module_config"][module_name] = serialized_config.at("main").at(module_name);
+        const auto fulfillments = config.get_fulfillments(module_name);
+        serialized_mod_config["mappings"] = json::object();
+        for (const auto& fulfillment_list : fulfillments) {
+            for (const auto& fulfillment : fulfillment_list.second) {
+                const auto mappings = config.get_module_3_tier_model_mappings(fulfillment.module_id);
+                if (mappings.has_value()) {
+                    serialized_mod_config["mappings"][fulfillment.module_id] = mappings.value();
+                }
+            }
+        }
+        // also add mappings of module
         const auto mappings = config.get_module_3_tier_model_mappings(module_name);
         if (mappings.has_value()) {
-            serialized_mod_config["mappings"] = json::object();
             serialized_mod_config["mappings"][module_name] = mappings.value();
         }
         serialized_mod_config.erase("main"); // FIXME: do not put this "main" config in there in the first place

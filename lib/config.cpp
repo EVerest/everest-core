@@ -357,6 +357,88 @@ std::unordered_map<std::string, ConfigCache> ConfigBase::get_module_config_cache
     return this->module_config_cache;
 }
 
+std::unordered_map<std::string, std::string> ConfigBase::get_module_names() {
+    return this->module_names;
+}
+
+json ConfigBase::resolve_requirement(const std::string& module_id, const std::string& requirement_id) const {
+    BOOST_LOG_FUNCTION();
+
+    // FIXME (aw): this function should throw, if the requirement id
+    //             isn't even listed in the module manifest
+    // FIXME (aw): the following if doesn't check for the requirement id
+    //             at all
+    const auto module_name_it = this->module_names.find(module_id);
+    if (module_name_it == this->module_names.end()) {
+        EVLOG_AND_THROW(EverestApiError(fmt::format("Requested requirement id '{}' of module {} not found in config!",
+                                                    requirement_id, printable_identifier(module_id))));
+    }
+
+    // check for connections for this requirement
+    const auto& module_config = this->main.at(module_id);
+    const std::string module_name = module_name_it->second;
+    const auto& requirement = this->manifests.at(module_name).at("requires").at(requirement_id);
+    if (!module_config.at("connections").contains(requirement_id)) {
+        return json::array(); // return an empty array if our config does not contain any connections for this
+                              // requirement id
+    }
+
+    // if only one single connection entry was required, return only this one
+    // callers can check with is_array() if this is a single connection (legacy) or a connection list
+    if (requirement.at("min_connections") == 1 && requirement.at("max_connections") == 1) {
+        return module_config.at("connections").at(requirement_id).at(0);
+    }
+    return module_config.at("connections").at(requirement_id);
+}
+
+std::map<Requirement, Fulfillment> ConfigBase::resolve_requirements(const std::string& module_id) const {
+    std::map<Requirement, Fulfillment> requirements;
+
+    const auto& module_name = get_module_name(module_id);
+    for (const auto& req_id : Config::keys(this->manifests.at(module_name).at("requires"))) {
+        const auto& resolved_req = this->resolve_requirement(module_id, req_id);
+        if (!resolved_req.is_array()) {
+            const auto& resolved_module_id = resolved_req.at("module_id");
+            const auto& resolved_impl_id = resolved_req.at("implementation_id");
+            const auto req = Requirement{req_id, 0};
+            requirements[req] = {resolved_module_id, resolved_impl_id, req};
+        } else {
+            for (std::size_t i = 0; i < resolved_req.size(); i++) {
+                const auto& resolved_module_id = resolved_req.at(i).at("module_id");
+                const auto& resolved_impl_id = resolved_req.at(i).at("implementation_id");
+                const auto req = Requirement{req_id, i};
+                requirements[req] = {resolved_module_id, resolved_impl_id, req};
+            }
+        }
+    }
+
+    return requirements;
+}
+
+std::list<Requirement> ConfigBase::get_requirements(const std::string& module_id) const {
+    BOOST_LOG_FUNCTION();
+
+    std::list<Requirement> res;
+
+    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
+        res.push_back(requirement);
+    }
+
+    return res;
+}
+
+std::map<std::string, std::vector<Fulfillment>> ConfigBase::get_fulfillments(const std::string& module_id) const {
+    BOOST_LOG_FUNCTION();
+
+    std::map<std::string, std::vector<Fulfillment>> res;
+
+    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
+        res[requirement.id].push_back(fulfillment);
+    }
+
+    return res;
+}
+
 std::unordered_map<std::string, ModuleTierMappings> ConfigBase::get_3_tier_model_mappings() {
     return this->tier_mappings;
 }
@@ -1052,84 +1134,6 @@ bool Config::module_provides(const std::string& module_name, const std::string& 
 
 json Config::get_module_cmds(const std::string& module_name, const std::string& impl_id) {
     return this->module_config_cache.at(module_name).cmds.at(impl_id);
-}
-
-json Config::resolve_requirement(const std::string& module_id, const std::string& requirement_id) const {
-    BOOST_LOG_FUNCTION();
-
-    // FIXME (aw): this function should throw, if the requirement id
-    //             isn't even listed in the module manifest
-    // FIXME (aw): the following if doesn't check for the requirement id
-    //             at all
-    const auto module_name_it = this->module_names.find(module_id);
-    if (module_name_it == this->module_names.end()) {
-        EVLOG_AND_THROW(EverestApiError(fmt::format("Requested requirement id '{}' of module {} not found in config!",
-                                                    requirement_id, printable_identifier(module_id))));
-    }
-
-    // check for connections for this requirement
-    const auto& module_config = this->main.at(module_id);
-    const std::string module_name = module_name_it->second;
-    const auto& requirement = this->manifests.at(module_name).at("requires").at(requirement_id);
-    if (!module_config.at("connections").contains(requirement_id)) {
-        return json::array(); // return an empty array if our config does not contain any connections for this
-                              // requirement id
-    }
-
-    // if only one single connection entry was required, return only this one
-    // callers can check with is_array() if this is a single connection (legacy) or a connection list
-    if (requirement.at("min_connections") == 1 && requirement.at("max_connections") == 1) {
-        return module_config.at("connections").at(requirement_id).at(0);
-    }
-    return module_config.at("connections").at(requirement_id);
-}
-
-std::map<Requirement, Fulfillment> Config::resolve_requirements(const std::string& module_id) const {
-    std::map<Requirement, Fulfillment> requirements;
-
-    const auto& module_name = get_module_name(module_id);
-    for (const auto& req_id : Config::keys(this->manifests.at(module_name).at("requires"))) {
-        const auto& resolved_req = this->resolve_requirement(module_id, req_id);
-        if (!resolved_req.is_array()) {
-            const auto& resolved_module_id = resolved_req.at("module_id");
-            const auto& resolved_impl_id = resolved_req.at("implementation_id");
-            const auto req = Requirement{req_id, 0};
-            requirements[req] = {resolved_module_id, resolved_impl_id, req};
-        } else {
-            for (std::size_t i = 0; i < resolved_req.size(); i++) {
-                const auto& resolved_module_id = resolved_req.at(i).at("module_id");
-                const auto& resolved_impl_id = resolved_req.at(i).at("implementation_id");
-                const auto req = Requirement{req_id, i};
-                requirements[req] = {resolved_module_id, resolved_impl_id, req};
-            }
-        }
-    }
-
-    return requirements;
-}
-
-std::list<Requirement> Config::get_requirements(const std::string& module_id) const {
-    BOOST_LOG_FUNCTION();
-
-    std::list<Requirement> res;
-
-    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
-        res.push_back(requirement);
-    }
-
-    return res;
-}
-
-std::map<std::string, std::vector<Fulfillment>> Config::get_fulfillments(const std::string& module_id) const {
-    BOOST_LOG_FUNCTION();
-
-    std::map<std::string, std::vector<Fulfillment>> res;
-
-    for (const auto& [requirement, fulfillment] : this->resolve_requirements(module_id)) {
-        res[requirement.id].push_back(fulfillment);
-    }
-
-    return res;
 }
 
 RequirementInitialization Config::get_requirement_initialization(const std::string& module_id) const {

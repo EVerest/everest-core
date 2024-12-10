@@ -663,8 +663,7 @@ void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
         clear_callback(error);
     };
 
-    for (const std::string module_id : Config::keys(this->config.get_main_config())) {
-        const std::string module_name = this->config.get_module_name(module_id);
+    for (const auto& [module_id, module_name] : this->config.get_module_names()) {
         const json provides = this->config.get_manifests().at(module_name).at("provides");
         for (const auto& impl : provides.items()) {
             const std::string impl_id = impl.key();
