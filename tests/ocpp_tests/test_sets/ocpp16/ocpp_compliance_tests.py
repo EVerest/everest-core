@@ -4770,7 +4770,7 @@ async def test_reservation_faulted_state(
 ):
     logging.info("######### test_reservation_faulted_state #########")
 
-    test_controller.raise_error(1)
+    test_controller.raise_error("MREC6UnderVoltage", 1)
 
     await asyncio.sleep(1)
 
