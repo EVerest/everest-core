@@ -624,8 +624,6 @@ class TestErrorHandling:
             len_test_error_handling_errors_cleared_all=1,
             len_test_error_handling_errors_cleared_global_all=1
         )
-        logging.info(f"STATE: {error_handling_tester.get_state()}")
-        logging.info(f"EXPSTATE: {expected_state}")
         assert error_handling_tester.get_state() == expected_state, 'State does not match expected state'
         raised_error = error_handling_tester.test_error_handling['errors_TestErrorA'][0]
         cleared_error = error_handling_tester.test_error_handling['errors_cleared_TestErrorA'][0]
