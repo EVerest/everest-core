@@ -912,6 +912,12 @@ function power_meter_external(p) {
       L2: p.freqL2,
       L3: p.freqL3,
     },
+    temperatures: [
+      {
+        temperature: p.tempL1,
+        location: "Body"
+      }
+    ]
   });
 }
 
