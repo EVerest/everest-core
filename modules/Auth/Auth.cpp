@@ -20,8 +20,7 @@ void Auth::init() {
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
-            std::thread t([this, provided_token]() { this->auth_handler->on_token(provided_token); });
-            t.detach();
+            this->auth_handler->on_token(provided_token);
         });
     }
 }

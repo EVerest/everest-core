@@ -1401,4 +1401,61 @@ TEST_F(AuthTest, test_token_timed_out) {
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
 }
 
+/// \brief Test if a authorization can be withdrawn
+TEST_F(AuthTest, test_simple_withdraw_authorization) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Accepted));
+
+    const auto result = this->auth_handler->on_token(provided_token);
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.evse_id = 1;
+
+    this->auth_handler->handle_withdraw_authorization(withdraw_request);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test if a authorization can be withdrawn
+TEST_F(AuthTest, test_simple_withdraw_authorization_while_waiting_for_ev_plugin) {
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    // EXPECT_CALL(mock_publish_token_validation_status_callback,
+    //             Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Withdrawn));
+
+    TokenHandlingResult on_token_result;
+    WithdrawAuthorizationResult withdraw_authorization_result;
+
+    std::thread t1(
+        [this, provided_token, &on_token_result]() { on_token_result = this->auth_handler->on_token(provided_token); });
+    types::authorization::WithdrawAuthorizationRequest withdraw_request;
+    withdraw_request.id_token = {VALID_TOKEN_1, types::authorization::IdTokenType::ISO14443};
+
+    std::thread t2([this, withdraw_request, &withdraw_authorization_result]() {
+        withdraw_authorization_result = this->auth_handler->handle_withdraw_authorization(withdraw_request);
+    });
+
+    t1.join();
+    t2.join();
+
+    ASSERT_TRUE(on_token_result == TokenHandlingResult::WITHDRAWN);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
 } // namespace module

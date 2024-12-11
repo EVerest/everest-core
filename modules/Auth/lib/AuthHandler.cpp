@@ -496,6 +496,8 @@ void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& evse_ids) {
 AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& selected_evses,
                                                        const IdToken& id_token) {
 
+    this->lock_plug_in_mutex(selected_evses);
+
     if (selected_evses.size() == 1) {
         SelectEvseStatus status;
         status.status = SelectEvseReturnStatus::EvseSelected;
@@ -506,7 +508,6 @@ AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& s
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
         // locks all referenced evses for this request. Subsequent requests referencing one or more of the locked
         // evses are blocked until handle_token returns
-        this->lock_plug_in_mutex(selected_evses);
         if (this->get_latest_plugin(selected_evses) == -1) {
             // no EV has been plugged in yet at the referenced evses
             EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
@@ -536,7 +537,6 @@ AuthHandler::SelectEvseStatus AuthHandler::select_evse(const std::vector<int>& s
         return status;
     } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {
         EVLOG_debug << "SelectionAlgorithm FindFirst: Selecting first available evse without an active transaction";
-        this->lock_plug_in_mutex(selected_evses);
         const auto selected_evse_id = this->get_latest_plugin(selected_evses);
         std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         if (selected_evse_id != -1 and !this->evses.at(selected_evse_id)->transaction_active) {
@@ -571,6 +571,7 @@ bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_ev
     bool result = false;
 
     if (last_withdraw_request == nullptr) {
+        EVLOG_critical << "Is nullptr";
         return false;
     }
 
@@ -589,9 +590,12 @@ bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_ev
          (last_withdraw_request->id_token.has_value() &&
           last_withdraw_request->id_token.value().value == id_token.value)) &&
         (!withdraw_evse || is_withdraw_evse_in_selected_evses)) {
+        EVLOG_critical << "token withdrawn";
         result = true;
         // TODO mz make it a nullptr again?
     }
+
+    EVLOG_critical << "return result";
 
     return result;
 }
@@ -896,74 +900,80 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
                   << (request.evse_id.has_value() ? " evse: " + std::to_string(request.evse_id.value()) : "")
                   << (request.id_token.has_value() ? " id token: " + request.id_token.value().value : "");
 
-    // TODO mz mutex withdraw_in_progress
-    // TODO mz That mutex should be unlocked as it is totally processed, so if other threads also handled the
-    //         request (also the one that is waiting in select_evse)
-    std::unique_lock<std::mutex> lock(this->token_in_process_mutex);
+    auto result = WithdrawAuthorizationResult::Rejected;
 
-    if (request.id_token.has_value()) {
-        // TODO mz mutex.
-        if (this->tokens_in_process.find(request.id_token.value().value) != this->tokens_in_process.end()) {
-            EVLOG_warning << "Remove token in process " << request.id_token.value().value;
-            this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
-            cv.notify_all();
-            // this->tokens_in_process.erase(request.id_token.value().value);
-        }
-    } else if (!request.evse_id.has_value()) {
-        // No evse id and no id token, all tokens should be withdrawn, remove all tokens in process as well.
-        EVLOG_warning << "Remove all tokens in progress";
-        // this->tokens_in_process.clear();
-        // this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Rejected);
-        this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
-        cv.notify_all();
-        // TODO mz remove this request from this->withdraw_requests somewhere!!
-    }
+    // set withdraw_auth_request
+    this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
 
-    lock.unlock();
+    EVLOG_critical << "Notify all";
+    // notify all threads that are waiting
+    this->cv.notify_all();
 
-    // TODO mz make it less complicated?
+    // wait for threads to finish execution by acquiring the respective mutexes
+    // acquire all mutexes for specified evse id's of the request or all evse id's if no evse id is specified
+    // this blocks the execution of all incoming on_token calls until this request is processed
     if (request.evse_id.has_value()) {
-        const int evse_id = request.evse_id.value();
-        if (this->evses.count(evse_id) > 0) {
-            if (request.id_token.has_value()) {
-                if (this->evses.at(evse_id)->identifier.has_value() &&
-                    request.id_token.value().value == this->evses.at(evse_id)->identifier.value().id_token.value &&
-                    request.id_token.value().type == this->evses.at(evse_id)->identifier.value().id_token.type) {
-                    EVLOG_warning << "Withdrawing authorization accepted";
-                    this->evses.at(evse_id)->identifier.reset();
-                    withdraw_authorization_callback(evse_id);
-                    return WithdrawAuthorizationResult::Accepted;
-                }
-
-                EVLOG_warning << "Withdrawing authorization not found";
-                return WithdrawAuthorizationResult::AuthorizationNotFound;
-            }
-
-            this->evses.at(evse_id)->identifier.reset();
-            withdraw_authorization_callback(evse_id);
-            EVLOG_warning << "Withdrawing authorization accepted 2";
-            return WithdrawAuthorizationResult::Accepted;
+        this->lock_plug_in_mutex({request.evse_id.value()});
+    } else {
+        // FIXME: better solution to lock all evses
+        for (const auto& evse : this->evses) {
+            this->lock_plug_in_mutex({evse.first});
         }
-
-        EVLOG_warning << "Withdraw authorization: evse id " << evse_id << " not found.";
-        return WithdrawAuthorizationResult::Rejected;
     }
 
-    WithdrawAuthorizationResult result = WithdrawAuthorizationResult::AuthorizationNotFound;
-    for (const auto& evse : this->evses) {
-        if (evse.second->identifier.has_value()) {
-            if (!request.id_token.has_value() ||
-                (request.id_token.value().value == evse.second->identifier.value().id_token.value &&
-                 request.id_token.value().type == evse.second->identifier.value().id_token.type)) {
-                evse.second->identifier.reset();
-                withdraw_authorization_callback(evse.first);
-                EVLOG_warning << "Withdrawing authorization accepted 3 for evse id " << evse.first;
+    // find if there is a granted authorization for id_token and evse_id
+    if (request.evse_id.has_value() and request.id_token.has_value()) {
+        const auto evse_id = request.evse_id.value();
+        const auto id_token = request.id_token.value();
+        if (this->evses.find(evse_id) == this->evses.end()) {
+            EVLOG_warning << "Evse not found";
+            result = WithdrawAuthorizationResult::Rejected;
+        } else {
+            const auto& evse = this->evses.at(evse_id);
+            if (evse->identifier.has_value() &&
+                request.id_token.value().value == evse->identifier.value().id_token.value &&
+                request.id_token.value().type == evse->identifier.value().id_token.type) {
+                EVLOG_warning << "Withdrawing authorization accepted";
+                // evse->identifier.reset(); not sure if this is required
+                withdraw_authorization_callback(evse_id - 1);
                 result = WithdrawAuthorizationResult::Accepted;
             }
         }
+    } else if (request.evse_id.has_value()) {
+        EVLOG_critical << "here here !!!";
+        withdraw_authorization_callback(request.evse_id.value() - 1);
+        result = WithdrawAuthorizationResult::Accepted;
+    } else if (request.id_token.has_value()) {
+        for (const auto& evse : this->evses) {
+            if (evse.second->identifier.has_value() &&
+                request.id_token.value().value == evse.second->identifier.value().id_token.value &&
+                request.id_token.value().type == evse.second->identifier.value().id_token.type) {
+                withdraw_authorization_callback(evse.first);
+            }
+        }
+        result =  WithdrawAuthorizationResult::Accepted;
     }
 
-    EVLOG_warning << "Withdrawing authorization not found 2";
+    else {
+        // neither evse_id nor id_token is specified, withdraw all authorizations
+        for (const auto& evse : this->evses) {
+            withdraw_authorization_callback(evse.first - 1);
+        }
+        result = WithdrawAuthorizationResult::Accepted;
+    }
+
+    // unlock all mutexes AND FIX
+    if (request.evse_id.has_value()) {
+        this->unlock_plug_in_mutex({request.evse_id.value()});
+    } else {
+        for (const auto& evse : this->evses) {
+            this->unlock_plug_in_mutex({evse.first});
+        }
+    }
+
+    // reset last_withdraw_request
+    this->last_withdraw_request = nullptr;
+
     return result;
 }
 
