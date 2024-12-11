@@ -338,6 +338,15 @@ async def test_reservation_connector_faulted(
     # Set evse in state 'faulted'
     test_controller.raise_error("MREC6UnderVoltage", 1)
 
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, 'Faulted', 1, 1
+        ),
+    )
+
     await asyncio.sleep(1)
 
     t = datetime.utcnow() + timedelta(minutes=10)

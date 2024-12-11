@@ -849,7 +849,7 @@ void AuthHandler::check_evse_reserved_and_send_updates() {
     for (const auto& available_evse : reservation_status.available) {
         EVLOG_debug << "Evse " << available_evse << " is now available";
         this->reservation_cancelled_callback(
-            available_evse, -1, types::reservation::ReservationEndReason::GlobalReservationConnectorFree, false);
+            available_evse, -1, types::reservation::ReservationEndReason::GlobalReservationRequirementDropped, false);
     }
 
     for (const auto& reserved_evse : reservation_status.reserved) {

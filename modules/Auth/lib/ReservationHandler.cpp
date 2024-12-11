@@ -1,7 +1,6 @@
 #include <ReservationHandler.hpp>
 
 #include <algorithm>
-#include <iostream>
 
 #include <Connector.hpp>
 
@@ -414,7 +413,6 @@ bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t>
 }
 
 ReservationEvseStatus ReservationHandler::check_number_global_reservations_match_number_available_evses() {
-    ReservationEvseStatus evse_status;
     std::set<int32_t> available_evses;
     std::unique_lock<std::recursive_mutex> lock(this->evse_mutex);
     // Get all evse's that are not reserved or used.

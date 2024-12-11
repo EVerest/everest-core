@@ -4798,9 +4798,7 @@ async def test_reservation_faulted_state(
         call_result.ReserveNowPayload(ReservationStatus.faulted),
     )
 
-    test_controller.clear_error(1)
-
-    await asyncio.sleep(1)
+    test_controller.clear_error("MREC6UnderVoltage", 1)
 
 
 @pytest.mark.asyncio
