@@ -60,6 +60,8 @@ private:
     void set_external_limits(types::energy::ExternalLimits& l);
     void merge_price_into_schedule(std::vector<types::energy::ScheduleReqEntry>& schedule,
                                    const std::vector<types::energy_price_information::PricePerkWh>& price);
+
+    std::string source_cfg;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

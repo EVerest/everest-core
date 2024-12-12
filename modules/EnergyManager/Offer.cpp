@@ -16,19 +16,28 @@ std::ostream& operator<<(std::ostream& out, const Offer& self) {
     for (auto e : self.export_offer) {
         out << e;
     }*/
-    out << fmt::format("\033[1;34mOffer[0]: Import {}A {}W Export {}A {}W\033[1;0m",
-                       self.import_offer[0].limits_to_root.ac_max_current_A.value_or(-9999),
-                       self.import_offer[0].limits_to_root.total_power_W.value_or(-9999),
-                       self.export_offer[0].limits_to_root.ac_max_current_A.value_or(-9999),
-                       self.export_offer[0].limits_to_root.total_power_W.value_or(-9999));
+
+    const types::energy::NumberWithSource nonumber = {-9999.0, "Not set"};
+
+    out << fmt::format("\033[1;34mOffer[0]: Import {}A ({}) {}W ({}) Export {}A ({}) {}W ({})\033[1;0m",
+                       self.import_offer[0].limits_to_root.ac_max_current_A.value_or(nonumber).value,
+                       self.import_offer[0].limits_to_root.ac_max_current_A.value_or(nonumber).source,
+                       self.import_offer[0].limits_to_root.total_power_W.value_or(nonumber).value,
+                       self.import_offer[0].limits_to_root.total_power_W.value_or(nonumber).source,
+                       self.export_offer[0].limits_to_root.ac_max_current_A.value_or(nonumber).value,
+                       self.export_offer[0].limits_to_root.ac_max_current_A.value_or(nonumber).source,
+                       self.export_offer[0].limits_to_root.total_power_W.value_or(nonumber).value,
+                       self.export_offer[0].limits_to_root.total_power_W.value_or(nonumber).source);
     return out;
 }
 
-template <class T> static void apply_one_limit_if_smaller(T& a, const T& b) {
-    if (b) {
-        if (a) {
-            if (a.value() > b.value()) {
+template <class T> static void apply_one_limit_if_smaller(std::optional<T>& a, const std::optional<T>& b) {
+    if (b.has_value()) {
+        if (a.has_value()) {
+            if (a.value().value > b.value().value) {
                 a = b.value();
+            } else if (a.value().value == b.value().value) {
+                a.value().source += "," + b.value().source;
             }
         } else {
             a = b.value();
@@ -36,11 +45,13 @@ template <class T> static void apply_one_limit_if_smaller(T& a, const T& b) {
     }
 }
 
-template <class T> static void apply_one_limit_if_greater(T& a, const T& b) {
-    if (b) {
-        if (a) {
-            if (a.value() < b.value()) {
+template <class T> static void apply_one_limit_if_greater(std::optional<T>& a, const std::optional<T>& b) {
+    if (b.has_value()) {
+        if (a.has_value()) {
+            if (a.value().value < b.value().value) {
                 a = b.value();
+            } else if (a.value().value == b.value().value) {
+                a.value().source += "," + b.value().source;
             }
         } else {
             a = b.value();

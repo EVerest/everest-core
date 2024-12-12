@@ -120,6 +120,8 @@ private:
 
     std::filesystem::path ocpp_share_path;
 
+    std::string source_ext_limit;
+
     // key represents evse_id, value indicates if ready
     std::map<int32_t, bool> evse_ready_map;
     std::map<int32_t, std::optional<float>> evse_soc_map;
