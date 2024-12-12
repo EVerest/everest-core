@@ -276,6 +276,12 @@ private:
                               const AuthorizationType& type);
     void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
                                     const ConnectorEvent connector_event);
+    /**
+     * @brief Check reservations: if there are as many reservations as evse's, all should be set to reserved.
+     *
+     * This will check the reservation status of the evse's and send the statusses to the evse manager.
+     */
+    void check_evse_reserved_and_send_updates();
 };
 
 } // namespace module

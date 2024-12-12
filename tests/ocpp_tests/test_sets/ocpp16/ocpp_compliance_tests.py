@@ -4661,30 +4661,107 @@ async def test_reservation_connector_rejected(
     )
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip(
-    reason="Libocpp currently doesnt support ReserveConnectorZeroSupported"
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment([("Reservation", "ReserveConnectorZeroSupported", False)])
 )
-async def test_reservation_transaction(
-    charge_point_v16: ChargePoint16, test_utility: TestUtility
+@pytest.mark.asyncio
+async def test_reservation_connector_zero_not_supported(
+    charge_point_v16: ChargePoint16, test_utility: TestUtility, test_config: OcppTestConfiguration
 ):
-    logging.info("######### test_reservation_transaction #########")
+    logging.info("######### test_reservation_connector_zero_not_supported #########")
 
-    # FIXME: implement this missing testcase!
-
-    await charge_point_v16.change_configuration_req(
-        key="ReserveConnectorZeroSupported", value="true"
+    await charge_point_v16.reserve_now_req(
+        connector_id=0,
+        expiry_date=(datetime.utcnow() + timedelta(minutes=10)).isoformat(),
+        id_tag=test_config.authorization_info.valid_id_tag_1,
+        reservation_id=0,
     )
+
+    # expect ReserveNow.conf with status rejected
     assert await wait_for_and_validate(
         test_utility,
         charge_point_v16,
-        "ChangeConfiguration",
-        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+        "ReserveNow",
+        call_result.ReserveNowPayload(ReservationStatus.rejected),
+    )
+
+
+@pytest.mark.ocpp_config_adaptions(
+    GenericOCPP16ConfigAdjustment([("Reservation", "ReserveConnectorZeroSupported", True)])
+)
+@pytest.mark.asyncio
+async def test_reservation_connector_zero_supported(
+        charge_point_v16: ChargePoint16,
+        test_utility: TestUtility,
+        test_config: OcppTestConfiguration,
+        test_controller: TestController,
+):
+    logging.info("######### test_reservation_connector_zero_supported #########")
+
+    await charge_point_v16.reserve_now_req(
+        connector_id=0,
+        expiry_date=(datetime.utcnow() + timedelta(minutes=10)).isoformat(),
+        id_tag=test_config.authorization_info.valid_id_tag_1,
+        reservation_id=0,
+    )
+
+    # expect ReserveNow.conf with status rejected
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ReserveNow",
+        call_result.ReserveNowPayload(ReservationStatus.accepted),
+    )
+
+    # expect StatusNotification with status reserved
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
+        ),
+    )
+
+    # swipe valid id tag to authorize
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
+
+    # expect StatusNotification with status preparing
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.preparing
+        ),
+    )
+
+    # start charging session
+    test_controller.plug_in()
+
+    # expect StartTransaction.req
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StartTransaction",
+        call.StartTransactionPayload(
+            1, test_config.authorization_info.valid_id_tag_1, 0, ""
+        ),
+        validate_standard_start_transaction,
+    )
+
+    # expect StatusNotification with status charging
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.charging
+        ),
     )
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="EVerest SIL currently does not support faulted state")
 async def test_reservation_faulted_state(
     test_config: OcppTestConfiguration,
     charge_point_v16: ChargePoint16,
@@ -4693,7 +4770,9 @@ async def test_reservation_faulted_state(
 ):
     logging.info("######### test_reservation_faulted_state #########")
 
-    test_controller.diode_fail()
+    test_controller.raise_error("MREC6UnderVoltage", 1)
+
+    await asyncio.sleep(1)
 
     # expect StatusNotification with status faulted
     assert await wait_for_and_validate(
@@ -4701,7 +4780,7 @@ async def test_reservation_faulted_state(
         charge_point_v16,
         "StatusNotification",
         call.StatusNotificationPayload(
-            1, ChargePointErrorCode.ground_failure, ChargePointStatus.faulted
+            1, ChargePointErrorCode.other_error, ChargePointStatus.faulted
         ),
     )
     await charge_point_v16.reserve_now_req(
@@ -4718,6 +4797,8 @@ async def test_reservation_faulted_state(
         "ReserveNow",
         call_result.ReserveNowPayload(ReservationStatus.faulted),
     )
+
+    test_controller.clear_error("MREC6UnderVoltage", 1)
 
 
 @pytest.mark.asyncio
@@ -4899,13 +4980,13 @@ async def test_reservation_cancel_rejected(
 
 
 @pytest.mark.asyncio
-async def test_reservation_with_partentid(
+async def test_reservation_with_parentid(
     test_config: OcppTestConfiguration,
     charge_point_v16: ChargePoint16,
     test_utility: TestUtility,
     test_controller: TestController,
 ):
-    logging.info("######### test_reservation_with_partentid #########")
+    logging.info("######### test_reservation_with_parentid #########")
 
     # authorize.conf with parent id tag
     @on(Action.Authorize)

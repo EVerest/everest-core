@@ -125,6 +125,9 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
   persistent_store:
     module: PersistentStore
     config_module:
