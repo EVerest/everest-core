@@ -47,13 +47,14 @@ AuthHandler::AuthHandler(const SelectionAlgorithm& selection_algorithm, const in
     connection_timeout(connection_timeout),
     prioritize_authorization_over_stopping_transaction(prioritize_authorization_over_stopping_transaction),
     ignore_faults(ignore_faults),
-    reservation_handler(evses, evse_mutex, id, store) {
+    reservation_handler(evses, id, store) {
 }
 
 AuthHandler::~AuthHandler() {
 }
 
 void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors) {
+    std::lock_guard<std::mutex> lock(this->event_mutex);
     EVLOG_debug << "Add evse with evse id " << evse_id;
 
     if (evse_id < 0) {
@@ -61,36 +62,32 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
         return;
     }
 
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     this->evses[evse_id] = std::make_unique<EVSEContext>(evse_id, evse_index, connectors);
 }
 
 void AuthHandler::initialize() {
+    std::lock_guard<std::mutex> lock(this->event_mutex);
     this->reservation_handler.load_reservations();
     check_evse_reserved_and_send_updates();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
-
+    this->event_mutex.lock();
     TokenHandlingResult result;
 
     // check if token is already currently processed
     EVLOG_info << "Received new token: " << everest::staging::helpers::redact(provided_token);
-    this->token_in_process_mutex.lock();
     const auto referenced_evses = this->get_referenced_evses(provided_token);
 
     if (!this->is_token_already_in_process(provided_token.id_token.value, referenced_evses)) {
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token.value);
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
-        this->token_in_process_mutex.unlock();
         result = this->handle_token(provided_token);
-        this->unlock_plug_in_mutex(referenced_evses);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << everest::staging::helpers::redact(provided_token.id_token.value)
                    << " repeatedly while still processing it";
-        this->token_in_process_mutex.unlock();
         result = TokenHandlingResult::ALREADY_IN_PROCESS;
     }
 
@@ -112,12 +109,13 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
     }
 
     if (result != TokenHandlingResult::ALREADY_IN_PROCESS) {
-        std::lock_guard<std::mutex> lk(this->token_in_process_mutex);
         this->tokens_in_process.erase(provided_token.id_token.value);
     }
 
     EVLOG_info << "Result for token: " << everest::staging::helpers::redact(provided_token.id_token.value) << ": "
                << conversions::token_handling_result_to_string(result);
+    this->unlock_plug_in_mutex(referenced_evses); // in select_evse mutexes have been locked, here we can unlock
+    this->event_mutex.unlock();
     return result;
 }
 
@@ -218,7 +216,6 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     EVLOG_info << "Provided parent_id_token is equal to master_pass_group_id. Stopping all active "
                                   "transactions!";
 
-                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
                     for (const auto evse_id : referenced_evses) {
                         if (this->evses[evse_id]->transaction_active) {
                             StopTransactionRequest req;
@@ -235,7 +232,6 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                 const auto evse_used_for_transaction =
                     this->used_for_transaction(referenced_evses, validation_result.parent_id_token.value().value);
                 if (evse_used_for_transaction != -1) {
-                    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
                     if (!this->evses[evse_used_for_transaction]->transaction_active) {
                         return TokenHandlingResult::ALREADY_IN_PROCESS;
                     } else {
@@ -278,7 +274,9 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - process it against placed reservations
                     - compare referenced_evses against the evses listed in the validation_result
                 */
+                this->event_mutex.unlock(); // unlock to allow other threads to continue processing in case select_evse is blocking 
                 int evse_id = this->select_evse(referenced_evses); // might block
+                this->event_mutex.lock(); // lock again after evse is selected
                 EVLOG_debug << "Selected evse#" << evse_id
                             << " for token: " << everest::staging::helpers::redact(provided_token.id_token.value);
                 if (evse_id != -1) { // indicates timeout of evse selection
@@ -348,7 +346,6 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
 std::vector<int> AuthHandler::get_referenced_evses(const ProvidedIdToken& provided_token) {
     std::vector<int> evse_ids;
 
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     // either insert the given connector references of the provided token
     if (provided_token.connectors) {
         std::copy_if(provided_token.connectors.value().begin(), provided_token.connectors.value().end(),
@@ -373,7 +370,6 @@ std::vector<int> AuthHandler::get_referenced_evses(const ProvidedIdToken& provid
 }
 
 int AuthHandler::used_for_transaction(const std::vector<int>& evse_ids, const std::string& token) {
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->identifier.has_value()) {
             const auto& identifier = this->evses.at(evse_id)->identifier.value();
@@ -396,7 +392,6 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token, const
     if (this->tokens_in_process.find(id_token) != this->tokens_in_process.end()) {
         return true;
     } else {
-        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         // check if id_token was already used to authorize evse but no transaction has been started yet
         for (const auto evse_id : referenced_evses) {
             const auto& evse = this->evses.at(evse_id);
@@ -411,7 +406,6 @@ bool AuthHandler::is_token_already_in_process(const std::string& id_token, const
 
 bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
     EVLOG_debug << "Checking availability of evses...";
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->is_available()) {
             EVLOG_debug << "There is at least one evse available";
@@ -423,7 +417,6 @@ bool AuthHandler::any_evse_available(const std::vector<int>& evse_ids) {
 }
 
 bool AuthHandler::any_parent_id_present(const std::vector<int>& evse_ids) {
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     for (const auto evse_id : evse_ids) {
         if (this->evses.at(evse_id)->identifier.has_value() and
             this->evses.at(evse_id)->identifier.value().parent_id_token.has_value()) {
@@ -448,7 +441,6 @@ bool AuthHandler::equals_master_pass_group_id(const std::optional<types::authori
 }
 
 int AuthHandler::get_latest_plugin(const std::vector<int>& evse_ids) {
-    std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
     for (const auto evse_id : this->plug_in_queue) {
         if (std::find(evse_ids.begin(), evse_ids.end(), evse_id) != evse_ids.end()) {
             return evse_id;
@@ -482,7 +474,7 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
         if (this->get_latest_plugin(selected_evses) == -1) {
             // no EV has been plugged in yet at the referenced evses
             EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
-            std::unique_lock<std::mutex> lk(this->plug_in_mutex);
+            std::unique_lock<std::mutex> lk(this->event_mutex);
             // blocks until respective plugin for evse occured or until timeout
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, selected_evses] { return this->get_latest_plugin(selected_evses) != -1; })) {
@@ -495,7 +487,6 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
         EVLOG_debug << "SelectionAlgorithm FindFirst: Selecting first available evse without an active transaction";
         this->lock_plug_in_mutex(selected_evses);
         const auto selected_evse_id = this->get_latest_plugin(selected_evses);
-        std::unique_lock<std::recursive_mutex> lock(evse_mutex);
         if (selected_evse_id != -1 and !this->evses.at(selected_evse_id)->transaction_active) {
             // an EV has been plugged in yet at the referenced evses
             return this->get_latest_plugin(selected_evses);
@@ -518,7 +509,6 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
 
 void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token,
                               const ValidationResult& validation_result) {
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     const auto evse_index = this->evses.at(evse_id)->evse_index;
 
     if (validation_result.authorization_status == AuthorizationStatus::Accepted) {
@@ -537,7 +527,6 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                 this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::TimedOut);
             },
             std::chrono::seconds(this->connection_timeout));
-        std::lock_guard<std::mutex> plug_in_lk(this->plug_in_queue_mutex);
         this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
     }
 
@@ -545,6 +534,7 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
 }
 
 types::reservation::ReservationResult AuthHandler::handle_reservation(const Reservation& reservation) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     std::optional<uint32_t> evse;
     if (reservation.evse_id.has_value()) {
         if (reservation.evse_id.value() >= 0) {
@@ -556,6 +546,7 @@ types::reservation::ReservationResult AuthHandler::handle_reservation(const Rese
 }
 
 std::pair<bool, std::optional<int32_t>> AuthHandler::handle_cancel_reservation(const int32_t reservation_id) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     std::pair<bool, std::optional<uint32_t>> reservation_cancelled = this->reservation_handler.cancel_reservation(
         reservation_id, false, types::reservation::ReservationEndReason::Cancelled);
 
@@ -571,6 +562,7 @@ std::pair<bool, std::optional<int32_t>> AuthHandler::handle_cancel_reservation(c
 
 ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
                                                               std::optional<std::string>& group_id_token) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     // Evse id has no value.
     std::optional<int32_t> reservation_id =
         this->reservation_handler.matches_reserved_identifier(id_token, evse_id, group_id_token);
@@ -632,18 +624,21 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id, const int32_t connector_id) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     if (not ignore_faults) {
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::FAULTED);
     }
 }
 
 void AuthHandler::handle_permanent_fault_cleared(const int evse_id, const int32_t connector_id) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     if (not ignore_faults) {
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ERROR_CLEARED);
     }
 }
 
 void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& event) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     // When connector id is not specified, it is assumed to be '1'.
     const int32_t connector_id = event.connector_id.value_or(1);
     if (evse_id < 0) {
@@ -656,20 +651,16 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         return;
     }
 
-    std::unique_lock<std::recursive_mutex> lock(evse_mutex);
     if (this->evses.count(evse_id) == 0) {
         EVLOG_warning << "Handle session event: no evse found with evse id " << evse_id;
         return;
     }
 
-    std::lock_guard<std::mutex> lk(this->timer_mutex);
-    this->evses.at(evse_id)->event_mutex.lock();
     const auto event_type = event.event;
     bool check_reservations = false;
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted: {
-        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
         this->plug_in_queue.push_back(evse_id);
         this->cv.notify_one();
 
@@ -682,7 +673,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
                     EVLOG_info << "Plug In timeout for evse#" << evse_id;
                     this->withdraw_authorization_callback(this->evses.at(evse_id)->evse_index);
                     {
-                        std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
+                        std::lock_guard<std::mutex> lk(this->event_mutex);
                         this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
                     }
 
@@ -708,11 +699,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->identifier.reset();
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::SESSION_FINISHED);
         this->evses.at(evse_id)->timeout_timer.stop();
-        {
-            std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
-            this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
-        }
-
+        this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         check_reservations = true;
         break;
     }
@@ -762,7 +749,6 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     case SessionEventEnum::PluginTimeout:
         break;
     }
-    this->evses.at(evse_id)->event_mutex.unlock();
 
     // When reservation is started or ended, check if the number of reservations match the number of evses and
     // send 'reserved' notifications to the evse manager accordingly if needed.
@@ -772,10 +758,12 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 }
 
 void AuthHandler::set_connection_timeout(const int connection_timeout) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     this->connection_timeout = connection_timeout;
 };
 
 void AuthHandler::set_master_pass_group_id(const std::string& master_pass_group_id) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     if (master_pass_group_id.empty()) {
         this->master_pass_group_id = std::nullopt;
     } else {
@@ -784,6 +772,7 @@ void AuthHandler::set_master_pass_group_id(const std::string& master_pass_group_
 }
 
 void AuthHandler::set_prioritize_authorization_over_stopping_transaction(bool b) {
+    std::lock_guard<std::mutex> lk(this->event_mutex);
     this->prioritize_authorization_over_stopping_transaction = b;
 }
 

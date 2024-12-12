@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <map>
-#include <mutex>
 #include <optional>
 #include <set>
 #include <vector>
@@ -25,8 +24,6 @@ class ReservationHandler {
 private: // Members
     /// \brief Map of EVSE's, with EVSE id as key and the EVSE struct as value.
     std::map<int, std::unique_ptr<module::EVSEContext>>& evses;
-    /// \brief Recursive mutex for the evse map (shared with AuthHandler).
-    std::recursive_mutex& evse_mutex;
     /// \brief Key value store id.
     const std::string kvs_store_key_id;
     /// \brief Key value store for storing reservations.
@@ -35,11 +32,6 @@ private: // Members
     std::map<uint32_t, types::reservation::Reservation> evse_reservations;
     /// \brief All reservations not bound to a specific EVSE.
     std::vector<types::reservation::Reservation> global_reservations;
-    /// \brief Reservation mutex, for all reservation bound locks.
-    mutable std::recursive_mutex reservation_mutex;
-    /// \brief Timer mutex, for all timer bound locks (for `reservation_id_to_reservation_timeout_timer_map`)
-    mutable std::recursive_mutex timer_mutex;
-    /// \brief Map with reservations and their timer.
     ///
     /// Every reservation has a specific end time, which is stored in this map. Key is the reservation id. When the
     /// timer expires, it is removed from the map and the reservation is removed from the `evse_reservations` or
@@ -64,7 +56,7 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses, std::recursive_mutex& evse_mutex,
+    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses,
                        const std::string& id, kvsIntf* store);
 
     ///
