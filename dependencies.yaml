@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: feature/958-reservation-all-connectors-reserved
+  git_tag: feature/890-move-reservations-callbacks-and-handlers-to-new-functional-block
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
