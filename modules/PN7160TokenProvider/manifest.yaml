@@ -1,0 +1,28 @@
+description: PN7160 RFID/NFC token provider returning the token as soon as the tag can be read by the reader
+provides:
+  main:
+    description: Implementation of PN7160 RFID/NFC token provider
+    interface: auth_token_provider
+    config:
+      token_debounce_interval_ms:
+        description: Minimal wait time in ms until next token will be published (debounce interval). 
+        type: integer
+        default: 3000
+        minimum: 1000
+        maximum: 10000
+      disable_nfc_rfid:
+        description: Disable NFC RFID reader
+        type: boolean
+        default: false
+      debug:
+        description: Show debug output on command line.
+        type: boolean
+        default: false
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+    - Cornelius Claussen
+    - Kai-Uwe Hermann
+    - Thilo Molitor
+    - Anton Wöllert
+    - Christoph Burandt
