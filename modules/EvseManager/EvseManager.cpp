@@ -1531,32 +1531,37 @@ void EvseManager::cable_check() {
         // CC.4.1.4: Perform the insulation resistance check
         imd_start();
 
-        // read out new isolation resistance value
-        isolation_measurement.clear();
-        types::isolation_monitor::IsolationMeasurement m;
+        if (config.cable_check_wait_number_of_imd_measurements > 0) {
+            // read out new isolation resistance value
+            isolation_measurement.clear();
+            types::isolation_monitor::IsolationMeasurement m;
 
-        EVLOG_info << "CableCheck: Waiting for " << config.cable_check_wait_number_of_imd_measurements
-                   << " isolation measurement sample(s)";
-        // Wait for N isolation measurement values
-        for (int i = 0; i < config.cable_check_wait_number_of_imd_measurements; i++) {
-            if (not isolation_measurement.wait_for(m, 5s) or cable_check_should_exit()) {
-                EVLOG_info << "Did not receive isolation measurement from IMD within 5 seconds.";
+            EVLOG_info << "CableCheck: Waiting for " << config.cable_check_wait_number_of_imd_measurements
+                       << " isolation measurement sample(s)";
+            // Wait for N isolation measurement values
+            for (int i = 0; i < config.cable_check_wait_number_of_imd_measurements; i++) {
+                if (not isolation_measurement.wait_for(m, 5s) or cable_check_should_exit()) {
+                    EVLOG_info << "Did not receive isolation measurement from IMD within 5 seconds.";
+                    imd_stop();
+                    fail_cable_check();
+                    return;
+                }
+            }
+
+            charger->get_stopwatch().mark("Measure");
+
+            // Now the value is valid and can be trusted.
+            // Verify it is within ranges. Fault is <100 kOhm
+            // Note that 2023 edition removed the warning level which was included in the 2014 edition.
+            // Refer to IEC 61851-23 (2023) 6.3.1.105 and CC.4.1.2 / CC.4.1.4
+            if (not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
                 imd_stop();
                 fail_cable_check();
                 return;
             }
-        }
-
-        charger->get_stopwatch().mark("Measure");
-
-        // Now the value is valid and can be trusted.
-        // Verify it is within ranges. Fault is <100 kOhm
-        // Note that 2023 edition removed the warning level which was included in the 2014 edition.
-        // Refer to IEC 61851-23 (2023) 6.3.1.105 and CC.4.1.2 / CC.4.1.4
-        if (not check_isolation_resistance_in_range(m.resistance_F_Ohm)) {
-            imd_stop();
-            fail_cable_check();
-            return;
+        } else {
+            // If no measurements are needed after self test, report valid isolation status to ISO stack
+            r_hlc[0]->call_update_isolation_status(types::iso15118_charger::IsolationStatus::Valid);
         }
 
         // We are done with the isolation measurement and can now report success to the EV,
@@ -1576,18 +1581,20 @@ void EvseManager::cable_check() {
             charger->get_stopwatch().mark("Sleep");
         }
 
-        // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
-        powersupply_DC_off();
+        if (config.cable_check_wait_below_60V_before_finish) {
+            // CC.4.1.2: We need to wait until voltage is below 60V before sending a CableCheck Finished to the EV
+            powersupply_DC_off();
 
-        if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
-            EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
-            imd_stop();
-            fail_cable_check();
-            return;
+            if (not wait_powersupply_DC_below_voltage(CABLECHECK_SAFE_VOLTAGE)) {
+                EVLOG_error << "Voltage did not drop below " << CABLECHECK_SAFE_VOLTAGE << "V within timeout.";
+                imd_stop();
+                fail_cable_check();
+                return;
+            }
+            charger->get_stopwatch().mark("VRampDown");
+
+            EVLOG_info << "CableCheck done, output is below " << CABLECHECK_SAFE_VOLTAGE << "V";
         }
-        charger->get_stopwatch().mark("VRampDown");
-
-        EVLOG_info << "CableCheck done, output is below " << CABLECHECK_SAFE_VOLTAGE << "V";
 
         // Report CableCheck Finished with success to EV
         r_hlc[0]->call_cable_check_finished(true);
@@ -1798,7 +1805,6 @@ void EvseManager::imd_start() {
 // This returns our active local limits, which is either externally set limits
 // or hardware capabilties
 types::energy::ExternalLimits EvseManager::get_local_energy_limits() {
-
     types::energy::ExternalLimits active_local_limits;
 
     std::scoped_lock lock(external_local_limits_mutex);

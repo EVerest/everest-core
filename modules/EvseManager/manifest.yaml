@@ -115,6 +115,12 @@ config:
       Enable self testing of IMD in cable check. This is required for IEC 61851-23 (2023) compliance.
     type: boolean
     default: true
+  cable_check_wait_below_60V_before_finish:
+    description: >-
+      Switch off power supply and wait until output voltage drops below 60V before cable check is finished.
+      This is required for IEC 61851-23 (2023) compliance, see CC.4.1.2 last sentence.
+    type: boolean
+    default: true
   hack_skoda_enyaq:
     description: >-
       Skoda Enyaq requests DC charging voltages below its battery level or even below 0 initially.
