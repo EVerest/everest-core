@@ -114,6 +114,25 @@
                   }
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 16.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 16.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:40.479Z"
               }
             ],
             "schedule_import": [
@@ -135,6 +154,139 @@
                   }
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 5.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:37.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 6.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:38.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:39.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:40.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 0.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:41.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:42.479Z"
+              },
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_leave"
+                  }
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": {
+                    "value": 32.0,
+                    "source": "external_limit_1_root"
+                  },
+                  "ac_max_phase_count": {
+                    "value": 3,
+                    "source": "external_limit_1_phase"
+                  }
+                },
+                "timestamp": "2024-12-17T13:08:43.479Z"
               }
             ],
             "schedule_setpoints": [],
@@ -273,6 +425,89 @@
               }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "",
+                "value": 0.0
+              }
+            },
+            "timestamp": "2024-12-17T13:08:37.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_1_leave",
+                "value": 6.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:38.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:39.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:40.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "",
+                "value": 0.0
+              }
+            },
+            "timestamp": "2024-12-17T13:08:41.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:42.479Z"
+          },
+          {
+            "limits_to_root": {
+              "ac_max_current_A": {
+                "source": "external_limit_2_leave",
+                "value": 31.0
+              },
+              "ac_max_phase_count": {
+                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "value": 3
+              }
+            },
+            "timestamp": "2024-12-17T13:08:43.479Z"
           }
         ],
         "uuid": "evse1",
