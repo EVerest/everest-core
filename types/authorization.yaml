@@ -246,9 +246,11 @@ types:
       The result of a WithdrawAuthorizationRequest:
       Accepted in case requested authorization was removed
       AuthorizationNotFound in case no match for request was found
+      EvseNotFound in case no match for evse_id was found
       Rejected in case module could not process the request for other reasons
     type: string
     enum:
       - Accepted
       - AuthorizationNotFound
+      - EvseNotFound
       - Rejected

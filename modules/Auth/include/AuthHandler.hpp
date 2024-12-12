@@ -226,7 +226,7 @@ private:
         TimeOut
     };
 
-    struct SelectEvseStatus {
+    struct SelectEvseResult {
         std::optional<int> evse_id;
         SelectEvseReturnStatus status;
     };
@@ -248,8 +248,8 @@ private:
     std::mutex token_in_process_mutex;
     std::condition_variable cv;
     std::recursive_mutex evse_mutex;
-    // TODO mz think about where to clear this
     std::unique_ptr<WithdrawAuthorizationRequest> last_withdraw_request;
+    bool request_was_withdrawn{false};
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -283,12 +283,13 @@ private:
      * @param id_token          The id token of the request.
      * @return The status and optional evse id if an evse was selected.
      */
-    SelectEvseStatus select_evse(const std::vector<int>& selected_evses, const IdToken& id_token);
-    bool is_authorization_withdrawn(const std::vector<int> &selected_evses, const IdToken& id_token,
-                                    const bool remove_last_withdrawn_request);
+    SelectEvseResult select_evse(const std::vector<int>& selected_evses, const IdToken& id_token);
+    bool is_authorization_withdrawn(const std::vector<int> &selected_evses, const IdToken& id_token);
 
     void lock_plug_in_mutex(const std::vector<int>& evse_ids);
     void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
+    void lock_all_plug_in_mutex();
+    void unlock_all_plug_in_mutex();
     int get_latest_plugin(const std::vector<int>& evse_ids);
     void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
