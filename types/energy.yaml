@@ -119,11 +119,34 @@ types:
       - timestamp
       - limits_to_root
       - limits_to_leaves
+      - source
     properties:
       timestamp:
         description: Absolute timestamp for this sample in RFC3339 UTC format
         type: string
         format: date-time
+      setpoint_ac_current_A:
+        description: >-
+          The target value in amps per phase for either charging or discharging depending on the sign. 
+          Positive values indicate charging, while negative values indicate discharging.
+        type: number
+      setpoint_total_power_W:
+        description: >-
+          The target value for the total power for either charging or discharging depending on the sign.
+          Positive values indicate charging, while negative values indicate discharging.
+        type: number
+      setpoint_frequency_table:
+        description: >-
+          Frequency table for the setpoint. When used it must contain at least
+        two coordinates to specify a power-frequency table to use during this period
+        type: array
+        items:
+          description: One entry for the frequency table
+          type: object
+          $ref: /energy#/FrequencyWattPoint
+      source:
+        description: Source of the ScheduleReqEntry
+        type: string
       limits_to_root:
         description: Limit for this timestamp, for the root facing side
         type: object
@@ -141,6 +164,19 @@ types:
         description: Price information for this timepoint
         type: object
         $ref: /energy_price_information#/PricePerkWh
+  FrequencyWattPoint:
+    description: A point of a frequency-watt curve
+    type: object
+    required:
+      - frequency_Hz
+      - total_power_W
+    properties:
+      frequency_Hz:
+        description: The frequency in Hz
+        type: number
+      total_power_W:
+        description: The total power in W
+        type: number
   ScheduleResEntry:
     description: One entry for the time series (result)
     type: object
@@ -148,6 +184,7 @@ types:
     required:
       - timestamp
       - limits_to_root
+      - source
     properties:
       timestamp:
         description: Absolute timestamp for this sample in RFC3339 UTC format
@@ -161,6 +198,9 @@ types:
         description: Price information for this timepoint
         type: object
         $ref: /energy_price_information#/PricePerkWh
+      source:
+        description: Source of the ScheduleResEntry
+        type: string
   EnergyFlowRequest:
     description: >-
       Request energy flow parameters to supply/limit energy import (direction from grid
