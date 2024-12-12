@@ -16,10 +16,12 @@ void energyImpl::init() {
     energy_flow_request.uuid = mod->info.id;
     energy_flow_request.node_type = types::energy::NodeType::Generic;
 
+    source_cfg = mod->info.id + "/module_config";
+
     const auto local_schedule = get_local_schedule();
     // Initialize with sane defaults
-    energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({local_schedule}));
-    energy_flow_request.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>({local_schedule}));
+    energy_flow_request.schedule_import = std::vector<types::energy::ScheduleReqEntry>({local_schedule});
+    energy_flow_request.schedule_export = std::vector<types::energy::ScheduleReqEntry>({local_schedule});
 
     for (auto& entry : mod->r_energy_consumer) {
         entry->subscribe_energy_flow_request([this](types::energy::EnergyFlowRequest e) {
@@ -69,10 +71,10 @@ types::energy::ScheduleReqEntry energyImpl::get_local_schedule() {
 
     local_schedule.timestamp =
         Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tp) + date::get_leap_second_info(tp).elapsed);
-    local_schedule.limits_to_root.ac_max_phase_count = mod->config.phase_count;
-    local_schedule.limits_to_root.ac_max_current_A = mod->config.fuse_limit_A;
-    local_schedule.limits_to_leaves.ac_max_phase_count = mod->config.phase_count;
-    local_schedule.limits_to_leaves.ac_max_current_A = mod->config.fuse_limit_A;
+    local_schedule.limits_to_root.ac_max_phase_count = {mod->config.phase_count, source_cfg};
+    local_schedule.limits_to_root.ac_max_current_A = {(float)mod->config.fuse_limit_A, source_cfg};
+    local_schedule.limits_to_leaves.ac_max_phase_count = {mod->config.phase_count, source_cfg};
+    local_schedule.limits_to_leaves.ac_max_current_A = {(float)mod->config.fuse_limit_A, source_cfg};
 
     return local_schedule;
 }
@@ -80,59 +82,44 @@ types::energy::ScheduleReqEntry energyImpl::get_local_schedule() {
 void energyImpl::set_external_limits(types::energy::ExternalLimits& l) {
     std::scoped_lock lock(energy_mutex);
 
-    if (l.schedule_import.has_value()) {
-        energy_flow_request.schedule_import = l.schedule_import;
-        if (!energy_flow_request.schedule_import.value().empty()) {
-            // add limits from our own fuse settings
-            for (auto& e : energy_flow_request.schedule_import.value()) {
-                if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                    e.limits_to_root.ac_max_current_A.value() > mod->config.fuse_limit_A)
-                    e.limits_to_root.ac_max_current_A = mod->config.fuse_limit_A;
+    energy_flow_request.schedule_import = l.schedule_import;
+    if (!energy_flow_request.schedule_import.empty()) {
+        // add limits from our own fuse settings
+        for (auto& e : energy_flow_request.schedule_import) {
+            if (!e.limits_to_root.ac_max_current_A.has_value() ||
+                e.limits_to_root.ac_max_current_A.value().value > mod->config.fuse_limit_A)
+                e.limits_to_root.ac_max_current_A = {(float)mod->config.fuse_limit_A, source_cfg};
 
-                if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                    e.limits_to_root.ac_max_phase_count.value() > mod->config.phase_count)
-                    e.limits_to_root.ac_max_phase_count = mod->config.phase_count;
-            }
-        } else {
-            const auto local_schedule = get_local_schedule();
-            // Initialize with sane defaults
-            energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({local_schedule}));
+            if (!e.limits_to_root.ac_max_phase_count.has_value() ||
+                e.limits_to_root.ac_max_phase_count.value().value > mod->config.phase_count)
+                e.limits_to_root.ac_max_phase_count = {mod->config.phase_count, source_cfg};
         }
     }
 
-    if (l.schedule_export.has_value()) {
+    energy_flow_request.schedule_export = l.schedule_export;
 
-        energy_flow_request.schedule_export = l.schedule_export;
+    if (!energy_flow_request.schedule_export.empty()) {
+        // add limits from our own fuse settings
+        for (auto& e : energy_flow_request.schedule_export) {
+            if (!e.limits_to_root.ac_max_current_A.has_value() ||
+                e.limits_to_root.ac_max_current_A.value().value > mod->config.fuse_limit_A)
+                e.limits_to_root.ac_max_current_A = {(float)mod->config.fuse_limit_A, source_cfg};
 
-        if (!energy_flow_request.schedule_export.value().empty()) {
-            // add limits from our own fuse settings
-            for (auto& e : energy_flow_request.schedule_export.value()) {
-                if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                    e.limits_to_root.ac_max_current_A.value() > mod->config.fuse_limit_A)
-                    e.limits_to_root.ac_max_current_A = mod->config.fuse_limit_A;
-
-                if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                    e.limits_to_root.ac_max_phase_count.value() > mod->config.phase_count)
-                    e.limits_to_root.ac_max_phase_count = mod->config.phase_count;
-            }
-        } else {
-            const auto local_schedule = get_local_schedule();
-            // Initialize with sane defaults
-            energy_flow_request.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>({local_schedule}));
+            if (!e.limits_to_root.ac_max_phase_count.has_value() ||
+                e.limits_to_root.ac_max_phase_count.value().value > mod->config.phase_count)
+                e.limits_to_root.ac_max_phase_count = {mod->config.phase_count, source_cfg};
         }
     }
+
+    energy_flow_request.schedule_setpoints = l.schedule_setpoints;
 }
 
 void energyImpl::publish_complete_energy_object() {
     // join the different schedules to the complete array (with resampling)
     types::energy::EnergyFlowRequest energy_complete = energy_flow_request;
 
-    if (energy_flow_request.schedule_import.has_value() && energy_pricing.schedule_import.has_value()) {
-        merge_price_into_schedule(energy_complete.schedule_import.value(), energy_pricing.schedule_import.value());
-    }
-
-    if (energy_flow_request.schedule_export.has_value() && energy_pricing.schedule_export.has_value()) {
-        merge_price_into_schedule(energy_complete.schedule_export.value(), energy_pricing.schedule_export.value());
+    if (not energy_flow_request.schedule_export.empty() and not energy_pricing.schedule_export.empty()) {
+        merge_price_into_schedule(energy_complete.schedule_export, energy_pricing.schedule_export);
     }
 
     publish_energy_flow_request(energy_complete);

@@ -160,6 +160,8 @@ private:
     std::mutex session_event_mutex;
     EventQueue event_queue;
     void process_session_event(int32_t evse_id, const types::evse_manager::SessionEvent& session_event);
+
+    std::string source_ext_limit;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
