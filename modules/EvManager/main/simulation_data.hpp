@@ -52,5 +52,8 @@ struct SimulationData {
 
     bool dc_power_on{false};
 
+    double battery_charge_wh{0};
+    double battery_capacity_wh{0};
+
     types::board_support_common::Event actual_bsp_event{types::board_support_common::Event::Disconnected};
 };
