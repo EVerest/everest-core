@@ -228,12 +228,9 @@ private:
 
     std::mutex timer_mutex;
     std::list<int> plug_in_queue;
-    std::mutex plug_in_queue_mutex;
-    std::mutex plug_in_mutex;
     std::set<std::string> tokens_in_process;
-    std::mutex token_in_process_mutex;
     std::condition_variable cv;
-    std::recursive_mutex evse_mutex;
+    std::mutex event_mutex;
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
