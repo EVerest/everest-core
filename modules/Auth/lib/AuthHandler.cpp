@@ -274,9 +274,10 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - process it against placed reservations
                     - compare referenced_evses against the evses listed in the validation_result
                 */
-                this->event_mutex.unlock(); // unlock to allow other threads to continue processing in case select_evse is blocking 
+                this->event_mutex
+                    .unlock(); // unlock to allow other threads to continue processing in case select_evse is blocking
                 int evse_id = this->select_evse(referenced_evses); // might block
-                this->event_mutex.lock(); // lock again after evse is selected
+                this->event_mutex.lock();                          // lock again after evse is selected
                 EVLOG_debug << "Selected evse#" << evse_id
                             << " for token: " << everest::staging::helpers::redact(provided_token.id_token.value);
                 if (evse_id != -1) { // indicates timeout of evse selection

@@ -56,8 +56,8 @@ public:
     ///
     /// \brief Constructor.
     ///
-    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses,
-                       const std::string& id, kvsIntf* store);
+    ReservationHandler(std::map<int, std::unique_ptr<module::EVSEContext>>& evses, const std::string& id,
+                       kvsIntf* store);
 
     ///
     /// \brief Destructor.
