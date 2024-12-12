@@ -242,12 +242,9 @@ private:
 
     std::mutex timer_mutex;
     std::list<int> plug_in_queue;
-    std::mutex plug_in_queue_mutex;
-    std::mutex plug_in_mutex;
     std::set<std::string> tokens_in_process;
-    std::mutex token_in_process_mutex;
     std::condition_variable cv;
-    std::recursive_mutex evse_mutex;
+    std::mutex event_mutex;
     std::unique_ptr<WithdrawAuthorizationRequest> last_withdraw_request;
     bool request_was_withdrawn{false};
 
