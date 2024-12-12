@@ -547,6 +547,7 @@ AuthHandler::SelectEvseResult AuthHandler::select_evse(const std::vector<int>& s
                 if (!evse->transaction_active) {
                     result.status = SelectEvseReturnStatus::EvseSelected;
                     result.evse_id = evse_id;
+                    return result;
                 }
             }
         }
