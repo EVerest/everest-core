@@ -32,6 +32,10 @@ config:
     description: Identification information for the charge point.
     default: ""
     type: string
+  communication_errors_threshold:
+    description: The maximum number of consecutive errors allowed before a persistent error is reported
+    default: 10
+    type: integer
 provides:
   meter:
     description: Implementation of the driver functionality
