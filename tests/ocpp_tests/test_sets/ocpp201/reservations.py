@@ -106,8 +106,85 @@ async def test_reservation_local_start_tx(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="There is a bug in the EVSE manager with setting an evse to occupied on plug in without "
-                         "checking if it is reserved. As soon as it is fixed, this test can be done")
+@pytest.mark.ocpp_version("ocpp2.0.1")
+async def test_reservation_local_start_tx_plugin_first(
+        test_config: OcppTestConfiguration,
+        charge_point_v201: ChargePoint201,
+        test_controller: TestController,
+        test_utility: TestUtility,
+):
+    """
+    Test making a reservation and start a transaction on the reserved evse id with the correct id token.
+    """
+    logging.info("######### test_reservation_local_start_tx #########")
+
+    t = datetime.utcnow() + timedelta(minutes=10)
+
+    await charge_point_v201.reserve_now_req(
+        id=0,
+        id_token=IdTokenType(id_token=test_config.authorization_info.valid_id_tag_1,
+                             type=IdTokenTypeEnum.iso14443),
+        expiry_date_time=t.isoformat(),
+        evse_id=1
+    )
+
+    # expect ReserveNow response with status accepted
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "ReserveNow",
+        call_result201.ReserveNowPayload(ReserveNowStatusType.accepted),
+    )
+
+    # expect StatusNotification with status reserved
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, ConnectorStatusType.reserved, 1, 1
+        ),
+    )
+
+    test_utility.messages.clear()
+
+    # start charging session
+    test_controller.plug_in()
+
+    await asyncio.sleep(2)
+
+    test_utility.messages.clear()
+
+    # swipe valid id tag that belongs to this reservation to authorize
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
+
+    # expect StatusNotification with status available (reservation is now used)
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "StatusNotification",
+        call_201.StatusNotificationPayload(
+            ANY, ConnectorStatusType.occupied, 1, 1
+        ),
+    )
+
+    # expect TransactionEvent with event type Started and the reservation id.
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Started", "reservationId": 0}
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v201,
+        "TransactionEvent",
+        {"eventType": "Updated"}
+    )
+
+
+@pytest.mark.asyncio
 @pytest.mark.ocpp_version("ocpp2.0.1")
 async def test_reservation_plug_in_other_idtoken(
         test_config: OcppTestConfiguration,
@@ -167,7 +244,7 @@ async def test_reservation_plug_in_other_idtoken(
     test_utility.messages.clear()
 
     # swipe invalid id tag
-    test_controller.swipe(test_config.authorization_info.invalid_id_tag)
+    test_controller.swipe(test_config.authorization_info.valid_id_tag_2)
 
     assert not await wait_for_and_validate(
         test_utility,
@@ -183,19 +260,6 @@ async def test_reservation_plug_in_other_idtoken(
 
     # swipe valid id tag to authorize
     test_controller.swipe(test_config.authorization_info.valid_id_tag_1)
-
-    # expect StatusNotification with status available (reservation is now used)
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v201,
-        "StatusNotification",
-        call_201.StatusNotificationPayload(
-            ANY, ConnectorStatusType.available, 1, 1
-        ),
-    )
-
-    # start charging session
-    test_controller.plug_in()
 
     # expect TransactionEvent with event type Started and the reservation id.
     assert await wait_for_and_validate(

@@ -334,7 +334,7 @@ void ReservationHandler::register_reservation_cancelled_callback(
 
 void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
     const std::pair<bool, std::optional<uint32_t>> cancelled =
-        this->cancel_reservation(reservation_id, true, types::reservation::ReservationEndReason::UsedToStartCharging);
+        this->cancel_reservation(reservation_id, false, types::reservation::ReservationEndReason::UsedToStartCharging);
     if (cancelled.first) {
         if (cancelled.second.has_value()) {
             EVLOG_info << "Reservation (" << reservation_id << ") for evse#" << cancelled.second.value()

@@ -949,14 +949,14 @@ TEST_F(ReservationHandlerTest, reservation_timer) {
     Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::cCCS2);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
     EXPECT_EQ(r.make_reservation(std::nullopt, reservation), ReservationResult::Accepted);
-    sleep(1);
+    sleep(2);
     EXPECT_FALSE(evse_id.has_value());
 
     EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Expired, true))
         .WillOnce(SaveArg<0>(&evse_id));
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::seconds(1));
     EXPECT_EQ(r.make_reservation(0, reservation), ReservationResult::Accepted);
-    sleep(1);
+    sleep(2);
     ASSERT_TRUE(evse_id.has_value());
     EXPECT_EQ(evse_id.value(), 0);
 }
@@ -1153,7 +1153,7 @@ TEST_F(ReservationHandlerTest, on_reservation_used) {
 
     r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
 
-    EXPECT_CALL(reservation_callback_mock, Call(_, _, _, true)).Times(3);
+    EXPECT_CALL(reservation_callback_mock, Call(_, _, _, true)).Times(0);
 
     add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
     add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
