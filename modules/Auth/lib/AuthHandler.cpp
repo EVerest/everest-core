@@ -518,10 +518,10 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
                               validation_result.parent_id_token};
         this->evses.at(evse_id)->identifier.emplace(identifier);
 
-        std::lock_guard<std::mutex> timer_lk(this->timer_mutex);
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
             [this, evse_index, evse_id, provided_token]() {
+                std::lock_guard<std::mutex> timer_lk(this->event_mutex);
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 this->evses.at(evse_id)->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);

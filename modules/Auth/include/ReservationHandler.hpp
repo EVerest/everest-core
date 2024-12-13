@@ -32,8 +32,8 @@ private: // Members
     std::map<uint32_t, types::reservation::Reservation> evse_reservations;
     /// \brief All reservations not bound to a specific EVSE.
     std::vector<types::reservation::Reservation> global_reservations;
-    /// \brief Timer mutex, for all timer bound locks (for `reservation_id_to_reservation_timeout_timer_map`)
-    mutable std::recursive_mutex timer_mutex;
+    /// \brief event mutex, for all timer bound locks (for `reservation_id_to_reservation_timeout_timer_map`)
+    mutable std::recursive_mutex event_mutex;
     /// \brief Map with reservations and their timer.
     ///
     /// Every reservation has a specific end time, which is stored in this map. Key is the reservation id. When the

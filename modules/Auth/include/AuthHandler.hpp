@@ -226,7 +226,6 @@ private:
 
     std::map<int, std::unique_ptr<EVSEContext>> evses;
 
-    std::mutex timer_mutex;
     std::list<int> plug_in_queue;
     std::set<std::string> tokens_in_process;
     std::condition_variable cv;

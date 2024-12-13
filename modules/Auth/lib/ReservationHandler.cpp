@@ -29,6 +29,7 @@ ReservationHandler::~ReservationHandler() {
 }
 
 void ReservationHandler::load_reservations() {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (this->store == nullptr) {
         EVLOG_info << "Can not load reservations because the store is a nullptr.";
         return;
@@ -68,6 +69,7 @@ void ReservationHandler::load_reservations() {
 types::reservation::ReservationResult
 ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
                                      const types::reservation::Reservation& reservation) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (date::utc_clock::now() > Everest::Date::from_rfc3339(reservation.expiry_time)) {
         EVLOG_info << "Rejecting reservation because expire time is in the past.";
         return types::reservation::ReservationResult::Rejected;
@@ -177,6 +179,7 @@ ReservationHandler::make_reservation(const std::optional<uint32_t> evse_id,
 
 void ReservationHandler::on_connector_state_changed(const ConnectorState connector_state, const uint32_t evse_id,
                                                     const uint32_t connector_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (connector_state == ConnectorState::AVAILABLE) {
         // Nothing to cancel.
         return;
@@ -215,6 +218,7 @@ void ReservationHandler::on_connector_state_changed(const ConnectorState connect
 }
 
 bool ReservationHandler::is_charging_possible(const uint32_t evse_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (this->evse_reservations.count(evse_id) > 0) {
         return false;
     }
@@ -234,6 +238,7 @@ bool ReservationHandler::is_charging_possible(const uint32_t evse_id) {
 }
 
 bool ReservationHandler::is_evse_reserved(const uint32_t evse_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (this->evse_reservations.count(evse_id) > 0) {
         return true;
     }
@@ -244,20 +249,17 @@ bool ReservationHandler::is_evse_reserved(const uint32_t evse_id) {
 std::pair<bool, std::optional<uint32_t>>
 ReservationHandler::cancel_reservation(const int reservation_id, const bool execute_callback,
                                        const types::reservation::ReservationEndReason reason) {
-
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     std::pair<bool, std::optional<uint32_t>> result;
 
     bool reservation_cancelled = false;
 
-    {
-        std::unique_lock<std::recursive_mutex> lk(this->timer_mutex);
-        auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
-        if (reservation_id_timer_it != this->reservation_id_to_reservation_timeout_timer_map.end()) {
-            reservation_id_timer_it->second->stop();
-            this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
-            reservation_cancelled = true;
-            result.first = true;
-        }
+    auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
+    if (reservation_id_timer_it != this->reservation_id_to_reservation_timeout_timer_map.end()) {
+        reservation_id_timer_it->second->stop();
+        this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
+        reservation_cancelled = true;
+        result.first = true;
     }
 
     if (!reservation_cancelled) {
@@ -326,6 +328,7 @@ void ReservationHandler::register_reservation_cancelled_callback(
 }
 
 void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     const std::pair<bool, std::optional<uint32_t>> cancelled =
         this->cancel_reservation(reservation_id, false, types::reservation::ReservationEndReason::UsedToStartCharging);
     if (cancelled.first) {
@@ -343,6 +346,7 @@ void ReservationHandler::on_reservation_used(const int32_t reservation_id) {
 std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std::string& id_token,
                                                                        const std::optional<uint32_t> evse_id,
                                                                        std::optional<std::string> parent_id_token) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     EVLOG_debug << "Matches reserved identifier for evse id " << (evse_id.has_value() ? evse_id.value() : 9999)
                 << " and id token " << everest::staging::helpers::redact(id_token) << " and parent id token "
                 << (parent_id_token.has_value() ? everest::staging::helpers::redact(parent_id_token.value()) : "-");
@@ -380,6 +384,7 @@ std::optional<int32_t> ReservationHandler::matches_reserved_identifier(const std
 }
 
 bool ReservationHandler::has_reservation_parent_id(const std::optional<uint32_t> evse_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     if (evse_id.has_value()) {
         if (this->evses.count(evse_id.value()) == 0) {
             // EVSE id does not exist.
@@ -626,7 +631,7 @@ bool ReservationHandler::is_reservation_possible(
 
 void ReservationHandler::set_reservation_timer(const types::reservation::Reservation& reservation,
                                                const std::optional<uint32_t> evse_id) {
-    std::lock_guard<std::recursive_mutex> lk(this->timer_mutex);
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
         std::make_unique<Everest::SteadyTimer>(&this->io_service);
 
