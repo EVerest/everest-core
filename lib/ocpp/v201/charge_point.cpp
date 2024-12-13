@@ -4438,13 +4438,26 @@ ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& 
     GetCompositeScheduleResponse response;
     response.status = GenericStatusEnum::Rejected;
 
-    auto supported_charging_rate_units =
-        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit);
-    auto unit_supported = supported_charging_rate_units.find(conversions::charging_rate_unit_enum_to_string(
-                              request.chargingRateUnit.value())) != supported_charging_rate_units.npos;
+    std::vector<std::string> supported_charging_rate_units = ocpp::split_string(
+        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit), ',',
+        true);
+
+    std::optional<ChargingRateUnitEnum> charging_rate_unit = std::nullopt;
+    if (request.chargingRateUnit.has_value()) {
+        bool unit_supported = std::any_of(
+            supported_charging_rate_units.begin(), supported_charging_rate_units.end(), [&request](std::string item) {
+                return conversions::string_to_charging_rate_unit_enum(item) == request.chargingRateUnit.value();
+            });
+
+        if (unit_supported) {
+            charging_rate_unit = request.chargingRateUnit.value();
+        }
+    } else if (supported_charging_rate_units.size() > 0) {
+        charging_rate_unit = conversions::string_to_charging_rate_unit_enum(supported_charging_rate_units.at(0));
+    }
 
     // K01.FR.05 & K01.FR.07
-    if (this->evse_manager->does_evse_exist(request.evseId) and unit_supported) {
+    if (this->evse_manager->does_evse_exist(request.evseId) and charging_rate_unit.has_value()) {
         auto start_time = ocpp::DateTime();
         auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(request.duration));
 
@@ -4452,13 +4465,14 @@ ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& 
             this->smart_charging_handler->get_valid_profiles(request.evseId, profiles_to_ignore);
 
         auto schedule = this->smart_charging_handler->calculate_composite_schedule(
-            valid_profiles, start_time, end_time, request.evseId, request.chargingRateUnit);
+            valid_profiles, start_time, end_time, request.evseId, charging_rate_unit.value());
 
         response.schedule = schedule;
         response.status = GenericStatusEnum::Accepted;
     } else {
-        auto reason = unit_supported ? ProfileValidationResultEnum::EvseDoesNotExist
-                                     : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
+        auto reason = charging_rate_unit.has_value()
+                          ? ProfileValidationResultEnum::EvseDoesNotExist
+                          : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
         response.statusInfo = StatusInfo();
         response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(reason);
         response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(reason);
