@@ -108,7 +108,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Accepted);
         break;
     case TokenHandlingResult::WITHDRAWN:
-        this->request_was_withdrawn = true; // signal to thread that processes withdraw of authorization
+        this->request_was_withdrawn.store(true); // signal to thread that processes withdraw of authorization
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Withdrawn);
         break;
     }
@@ -502,7 +502,6 @@ AuthHandler::SelectEvseResult AuthHandler::select_evse(const std::vector<int>& s
             EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
             std::unique_lock<std::mutex> lk(this->event_mutex);
             // blocks until respective plugin for evse occured or until timeout
-            // TODO mz add condition to withdraw authorization (think about thread safety!)
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, selected_evses, id_token] {
                                        return this->get_latest_plugin(selected_evses) != -1 ||
@@ -542,7 +541,6 @@ AuthHandler::SelectEvseResult AuthHandler::select_evse(const std::vector<int>& s
                 }
             }
         }
-        // FIXME: can this even happen since we check earlier if evse is available...?
         result.status = SelectEvseReturnStatus::TimeOut;
         return result;
     } else {
@@ -552,19 +550,19 @@ AuthHandler::SelectEvseResult AuthHandler::select_evse(const std::vector<int>& s
 }
 
 bool AuthHandler::is_authorization_withdrawn(const std::vector<int>& selected_evses, const IdToken& id_token) {
-    if (last_withdraw_request == nullptr) {
+    if (withdraw_request == nullptr) {
         return false;
     }
 
     // Check if the withdraw request is specific to an EVSE.
-    const bool has_evse_id = last_withdraw_request->evse_id.has_value();
+    const bool has_evse_id = withdraw_request->evse_id.has_value();
     const bool is_evse_in_selected =
         has_evse_id and (std::find(selected_evses.begin(), selected_evses.end(),
-                                   last_withdraw_request->evse_id.value()) != selected_evses.end());
+                                   withdraw_request->evse_id.value()) != selected_evses.end());
 
     // Check if the ID token matches or is absent.
-    const bool is_id_token_valid = not last_withdraw_request->id_token.has_value() or
-                                   (last_withdraw_request->id_token.value().value == id_token.value);
+    const bool is_id_token_valid = not withdraw_request->id_token.has_value() or
+                                   (withdraw_request->id_token.value().value == id_token.value);
 
     // Combine the conditions for withdrawal authorization
     return is_id_token_valid and (not has_evse_id or is_evse_in_selected);
@@ -764,14 +762,15 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     case SessionEventEnum::Enabled:
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ENABLE);
         break;
+    case SessionEventEnum::Deauthorized:
+        this->evses.at(evse_id)->identifier.reset();
+        this->evses.at(evse_id)->timeout_timer.stop();
     case SessionEventEnum::ReservationStart:
         break;
     case SessionEventEnum::ReservationEnd:
         break;
     /// explicitly fall through all the SessionEventEnum values we are not handling
     case SessionEventEnum::Authorized:
-        [[fallthrough]];
-    case SessionEventEnum::Deauthorized:
         [[fallthrough]];
     case SessionEventEnum::AuthRequired:
         [[fallthrough]];
@@ -865,7 +864,7 @@ void AuthHandler::register_publish_token_validation_status_callback(
 }
 
 WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
-    EVLOG_warning << "Witdrawing authorization!! "
+    EVLOG_info << "Witdrawing authorization "
                   << (request.evse_id.has_value() ? " evse: " + std::to_string(request.evse_id.value()) : "")
                   << (request.id_token.has_value() ? " id token: " + request.id_token.value().value : "");
 
@@ -878,7 +877,7 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
 
     // set withdraw_auth_request so that authorization requests running in other threads can check if they should be
     // interrupted
-    this->last_withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
+    this->withdraw_request = std::make_unique<WithdrawAuthorizationRequest>(request);
 
     // notify all threads that are waiting
     this->cv.notify_all();
@@ -891,6 +890,17 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
     } else {
         this->lock_all_plug_in_mutex();
     }
+
+    const auto withdraw_authorization_or_stop_transaction = [this](const EVSEContext& evse) {
+        if (evse.transaction_active) {
+            StopTransactionRequest req;
+            req.reason = StopTransactionReason::DeAuthorized;
+            this->stop_transaction_callback(evse.evse_index, req);
+        } else {
+            this->withdraw_authorization_callback(evse.evse_index);
+        }
+    };
+
     // lock evse_mutex to prevent race conditions with handle_session_event which might reset the identifier
     std::lock_guard<std::mutex> lk(this->event_mutex);
     if (request.evse_id.has_value() and request.id_token.has_value()) {
@@ -901,7 +911,7 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         const auto& evse = this->evses.at(evse_id);
         if (evse->identifier.has_value() && request.id_token.value().value == evse->identifier.value().id_token.value &&
             request.id_token.value().type == evse->identifier.value().id_token.type) {
-            withdraw_authorization_callback(evse_id - 1);
+            withdraw_authorization_or_stop_transaction(*evse);
             result = WithdrawAuthorizationResult::Accepted;
         }
 
@@ -911,7 +921,7 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         const auto evse_id = request.evse_id.value();
         const auto& evse = this->evses.at(evse_id);
         if (evse->identifier.has_value()) {
-            withdraw_authorization_callback(evse_id - 1);
+            withdraw_authorization_or_stop_transaction(*evse);
             result = WithdrawAuthorizationResult::Accepted;
         }
     } else if (request.id_token.has_value()) {
@@ -921,7 +931,7 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
             if (evse.second->identifier.has_value() &&
                 request.id_token.value().value == evse.second->identifier.value().id_token.value &&
                 request.id_token.value().type == evse.second->identifier.value().id_token.type) {
-                withdraw_authorization_callback(evse.first);
+                withdraw_authorization_or_stop_transaction(*evse.second);
                 result = WithdrawAuthorizationResult::Accepted;
             }
         }
@@ -929,14 +939,14 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         // neither evse_id nor id_token is specified, withdraw all authorizations that have been granted
         for (const auto& evse : this->evses) {
             if (evse.second->identifier.has_value()) {
-                withdraw_authorization_callback(evse.first - 1);
+                withdraw_authorization_or_stop_transaction(*evse.second);
                 result = WithdrawAuthorizationResult::Accepted;
             }
         }
     }
 
-    // this->request_was_withdrawn was set by other thread if request was withdrawn
-    if (this->request_was_withdrawn) {
+    // this->request_was_withdrawn was set by other thread if request was withdrawn (while waiting in select_evse)
+    if (this->request_was_withdrawn.load()) {
         result = WithdrawAuthorizationResult::Accepted;
     }
 
@@ -946,9 +956,9 @@ WithdrawAuthorizationResult AuthHandler::handle_withdraw_authorization(const Wit
         this->unlock_all_plug_in_mutex();
     }
 
-    // reset last_withdraw_request and request_was_withdrawn
-    this->last_withdraw_request = nullptr;
-    this->request_was_withdrawn = false;
+    // reset withdraw_request and request_was_withdrawn
+    this->withdraw_request.reset();
+    this->request_was_withdrawn.store(false);
 
     // result was either set in one of the if statements above or is still AuthorizationNotFound
     return result;

@@ -245,8 +245,8 @@ private:
     std::set<std::string> tokens_in_process;
     std::condition_variable cv;
     std::mutex event_mutex;
-    std::unique_ptr<WithdrawAuthorizationRequest> last_withdraw_request;
-    bool request_was_withdrawn{false};
+    std::unique_ptr<WithdrawAuthorizationRequest> withdraw_request;
+    std::atomic<bool> request_was_withdrawn{false};
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
