@@ -13,6 +13,7 @@
 
 using ::testing::_;
 using ::testing::Field;
+using ::testing::Invoke;
 using ::testing::MockFunction;
 using ::testing::StrictMock;
 
@@ -198,6 +199,74 @@ TEST_F(AuthTest, test_two_referenced_connectors) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
 }
 
+/// \brief Test if connector that triggered a SessionStarted event receives authorization when two connectors are
+/// referenced in the provided token
+TEST_F(AuthTest, test_multiple_referenced_connectors) {
+
+    this->auth_handler->init_evse(3, 2, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_receiver->add_evse_index(2);
+
+    std::vector<int32_t> connectors1{1, 2};
+    ProvidedIdToken provided_token1 = get_provided_token(VALID_TOKEN_1, connectors1);
+
+    std::vector<int32_t> connectors2 = {3};
+    ProvidedIdToken provided_token2 = get_provided_token(VALID_TOKEN_2, connectors2);
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool processing_called = false;
+
+    // Set up expectations for mock_publish_token_validation_status_callback
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Processing))
+        .WillOnce(Invoke([&]() {
+            std::unique_lock<std::mutex> lock(mtx);
+            processing_called = true;
+            cv.notify_all();
+        }));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Accepted));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::TimedOut));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Accepted));
+
+    TokenHandlingResult result1;
+    std::thread t1([this, &result1, provided_token1] { result1 = this->auth_handler->on_token(provided_token1); });
+
+    // Wait for TokenValidationStatus::Processing to be triggered for t1 before starting t2
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]() { return processing_called; });
+    }
+
+    TokenHandlingResult result2;
+    std::thread t2([this, &result2, provided_token2] { result2 = this->auth_handler->on_token(provided_token2); });
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(3, session_event);
+
+    t2.join();
+
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(2));
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token2);
+    this->auth_handler->handle_session_event(3, session_event2);
+
+    t1.join();
+    ASSERT_TRUE(result1 == TokenHandlingResult::TIMEOUT);
+}
+
 /// \brief Test if a transaction is stopped when an id_token is swiped twice
 TEST_F(AuthTest, test_stop_transaction) {
     std::vector<int32_t> connectors{1};
@@ -268,7 +337,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
-        .Times(1);
+                .Times(1);
 
     TokenHandlingResult result1;
     TokenHandlingResult result2;
@@ -1099,7 +1168,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
-        .Times(1);
+                .Times(1);
 
     TokenHandlingResult result;
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
