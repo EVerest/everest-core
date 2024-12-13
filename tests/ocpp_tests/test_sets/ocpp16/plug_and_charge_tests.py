@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath(
 from everest.testing.ocpp_utils.fixtures import *
 from ocpp.v201.enums import (CertificateSigningUseType)
 from ocpp.v201 import call as call201
-from ocpp.v16.enums import ChargePointErrorCode, ChargePointStatus
+from ocpp.v16.enums import ChargePointErrorCode, ChargePointStatus, ConfigurationStatus
 from ocpp.v16 import call
 from ocpp.charge_point import asdict, remove_nones, snake_to_camel_case, camel_to_snake_case
 from ocpp.routing import create_route_map
@@ -23,6 +23,7 @@ from validations import (validate_standard_start_transaction,
                                     validate_data_transfer_sign_certificate)
 from everest.testing.ocpp_utils.charge_point_utils import wait_for_and_validate, TestUtility
 from everest.testing.ocpp_utils.charge_point_v16 import ChargePoint16
+from everest.testing.core_utils._configuration.libocpp_configuration_helper import GenericOCPP16ConfigAdjustment
 from everest_test_utils import *
 # fmt: on
 
@@ -662,3 +663,59 @@ class TestPlugAndCharge:
 
         assert json.loads(data_transfer_response.data) == {"status": "Accepted"}
         assert data_transfer_response.status == "Accepted"
+
+
+@pytest.mark.asyncio
+@pytest.mark.ocpp_config_adaptions(
+        GenericOCPP16ConfigAdjustment(
+            [("Internal", "ConnectorEvseIds", "test_value")]
+        )
+    )
+async def test_set_connector_evse_ids(
+    charge_point_v16: ChargePoint16, test_utility: TestUtility
+):
+    
+    initial_value = "test_value"
+    invalid_value = "WRONG,DE*PNX*100001"
+    new_valid_value = "DE*PNX*100001,DE*PNX*100002"
+
+    await charge_point_v16.change_configuration_req(
+        key="ConnectorEvseIds", value=invalid_value
+    )
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ChangeConfiguration",
+        call_result.ChangeConfigurationPayload(ConfigurationStatus.rejected),
+    )
+
+    await charge_point_v16.get_configuration_req(key=["ConnectorEvseIds"])
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetConfiguration",
+        call_result.GetConfigurationPayload(
+            [{"key": "ConnectorEvseIds", "readonly": False, "value": initial_value}]
+        ),
+    )
+
+    await charge_point_v16.change_configuration_req(
+        key="ConnectorEvseIds", value=new_valid_value
+    )
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ChangeConfiguration",
+        call_result.ChangeConfigurationPayload(ConfigurationStatus.accepted),
+    )
+
+    await charge_point_v16.get_configuration_req(key=["ConnectorEvseIds"])
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "GetConfiguration",
+        call_result.GetConfigurationPayload(
+            [{"key": "ConnectorEvseIds", "readonly": False, "value": new_valid_value}]
+        ),
+    )
+
