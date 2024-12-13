@@ -32,7 +32,8 @@ enum class TokenHandlingResult {
     REJECTED,
     USED_TO_STOP_TRANSACTION,
     TIMEOUT,
-    NO_CONNECTOR_AVAILABLE
+    NO_CONNECTOR_AVAILABLE,
+    WITHDRAWN
 };
 
 namespace conversions {
@@ -216,7 +217,20 @@ public:
     void register_publish_token_validation_status_callback(
         const std::function<void(const ProvidedIdToken&, TokenValidationStatus)>& callback);
 
+    WithdrawAuthorizationResult handle_withdraw_authorization(const WithdrawAuthorizationRequest& request);
+
 private:
+    enum class SelectEvseReturnStatus {
+        EvseSelected,
+        Interrupted,
+        TimeOut
+    };
+
+    struct SelectEvseResult {
+        std::optional<int> evse_id;
+        SelectEvseReturnStatus status;
+    };
+
     SelectionAlgorithm selection_algorithm;
     int connection_timeout;
     std::optional<std::string> master_pass_group_id;
@@ -231,6 +245,8 @@ private:
     std::set<std::string> tokens_in_process;
     std::condition_variable cv;
     std::mutex event_mutex;
+    std::unique_ptr<WithdrawAuthorizationRequest> withdraw_request;
+    std::atomic<bool> request_was_withdrawn{false};
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -261,12 +277,16 @@ private:
      * occurs that can be used to determine an evse.
      *
      * @param selected_evses
-     * @return int
+     * @param id_token          The id token of the request.
+     * @return The status and optional evse id if an evse was selected.
      */
-    int select_evse(const std::vector<int>& selected_evses);
+    SelectEvseResult select_evse(const std::vector<int>& selected_evses, const IdToken& id_token);
+    bool is_authorization_withdrawn(const std::vector<int> &selected_evses, const IdToken& id_token);
 
     void lock_plug_in_mutex(const std::vector<int>& evse_ids);
     void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
+    void lock_all_plug_in_mutex();
+    void unlock_all_plug_in_mutex();
     int get_latest_plugin(const std::vector<int>& evse_ids);
     void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
