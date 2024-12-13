@@ -73,7 +73,7 @@ void AuthHandler::initialize() {
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
-    this->event_mutex.lock();
+    this->event_mutex.lock(); // lock mutex directly because it needs to be unlocked within handle_token 
     TokenHandlingResult result;
 
     // check if token is already currently processed
@@ -119,7 +119,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     EVLOG_info << "Result for token: " << everest::staging::helpers::redact(provided_token.id_token.value) << ": "
                << conversions::token_handling_result_to_string(result);
-    this->unlock_plug_in_mutex(referenced_evses);
+    this->unlock_plug_in_mutex(referenced_evses); // in select_evse mutexes have been locked, here we can unlock
     this->event_mutex.unlock();
     return result;
 }
