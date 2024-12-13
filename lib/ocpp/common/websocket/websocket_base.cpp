@@ -10,7 +10,7 @@ namespace ocpp {
 WebsocketBase::WebsocketBase() :
     m_is_connected(false),
     connected_callback(nullptr),
-    closed_callback(nullptr),
+    stopped_connecting_callback(nullptr),
     message_callback(nullptr),
     reconnect_timer(nullptr),
     connection_attempts(1),
@@ -44,8 +44,9 @@ void WebsocketBase::register_disconnected_callback(const std::function<void()>& 
     this->disconnected_callback = callback;
 }
 
-void WebsocketBase::register_closed_callback(const std::function<void(const WebsocketCloseReason reason)>& callback) {
-    this->closed_callback = callback;
+void WebsocketBase::register_stopped_connecting_callback(
+    const std::function<void(const WebsocketCloseReason reason)>& callback) {
+    this->stopped_connecting_callback = callback;
 }
 
 void WebsocketBase::register_message_callback(const std::function<void(const std::string& message)>& callback) {
@@ -61,7 +62,7 @@ bool WebsocketBase::initialized() {
         EVLOG_error << "Not properly initialized: please register connected callback.";
         return false;
     }
-    if (this->closed_callback == nullptr) {
+    if (this->stopped_connecting_callback == nullptr) {
         EVLOG_error << "Not properly initialized: please closed_callback.";
         return false;
     }

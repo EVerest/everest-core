@@ -323,7 +323,7 @@ void ChargePointImpl::init_websocket() {
             this->signal_set_charging_profiles_callback();
         }
     });
-    this->websocket->register_closed_callback([this](const WebsocketCloseReason reason) {
+    this->websocket->register_stopped_connecting_callback([this](const WebsocketCloseReason reason) {
         if (this->switch_security_profile_callback != nullptr) {
             this->switch_security_profile_callback();
         }
@@ -397,8 +397,7 @@ WebsocketConnectionOptions ChargePointImpl::get_ws_connection_options() {
 
 void ChargePointImpl::connect_websocket() {
     if (!this->websocket->is_connected()) {
-        this->init_websocket();
-        this->websocket->connect();
+        this->websocket->start_connecting();
     }
 }
 
@@ -1080,7 +1079,7 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     this->bootreason = bootreason;
     this->init_state_machine(connector_status_map);
     this->init_websocket();
-    this->websocket->connect();
+    this->websocket->start_connecting();
     // push transaction messages including SecurityEventNotification.req onto the message queue
     this->message_queue->get_persisted_messages_from_db(this->configuration->getDisableSecurityEventNotifications());
     this->boot_notification();
@@ -1840,12 +1839,11 @@ void ChargePointImpl::switchSecurityProfile(int32_t new_security_profile, int32_
     // we need to reinitialize because it could be plain or tls websocket
     this->websocket_timer.timeout(
         [this, max_connection_attempts, new_security_profile]() {
-            this->init_websocket();
             auto connection_options = this->get_ws_connection_options();
             connection_options.security_profile = new_security_profile;
             connection_options.max_connection_attempts = max_connection_attempts;
             this->websocket->set_connection_options(connection_options);
-            this->websocket->connect();
+            this->websocket->start_connecting();
         },
         WEBSOCKET_INIT_DELAY);
 }

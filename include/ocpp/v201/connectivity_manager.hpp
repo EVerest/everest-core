@@ -168,9 +168,10 @@ private:
     ///
     void on_websocket_disconnected();
 
-    /// \brief Function invoked when the web socket closes
+    /// \brief Function invoked when the web socket stops connecting
+    ///        and does not re-attempt to connect again
     ///
-    void on_websocket_closed(ocpp::WebsocketCloseReason reason);
+    void on_websocket_stopped_connecting(ocpp::WebsocketCloseReason reason);
 
     ///
     /// \brief Get the active network configuration slot in use.
