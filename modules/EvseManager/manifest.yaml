@@ -122,7 +122,19 @@ config:
   cable_check_wait_below_60V_before_finish:
     description: >-
       Switch off power supply and wait until output voltage drops below 60V before cable check is finished.
-      This is required for IEC 61851-23 (2023) compliance, see CC.4.1.2 last sentence.
+      Note: There are different versions of IEC 61851-23:2023 in the wild with the same version number but slightly different content.
+      The IEC was correcting mistakes _after_ releasing the document initially without tagging a new version number.
+      Some early versions require to wait for the output voltage to drop below 60V in CC.4.1.2 (last sentence).
+      Later versions do not have that requirement. The later versions are correct and should be used according to IEC.
+      Both settings (true and false) are compliant with the correct version of IEC 61851-23:2023.
+      Set to true when:
+        - the power supply has no active discharge, and lowering the voltage with no load takes a very long time. In this case
+          this option usually helps to ramp the voltage down quickly by switching it off. It will be switched on again in precharge.
+          Also, some EVs switch their internal relay on at a too high voltage when the voltage is ramped down directly from cablecheck voltage to precharge voltage,
+          so true is the recommended default.
+      Set to false when:
+        - the power supply has active discharge and can ramp down quickly without a switch off (by just setting a lower target voltage).
+          This may save a few seconds as it avoids unnecessary voltage down and up ramping.
     type: boolean
     default: true
   hack_skoda_enyaq:
