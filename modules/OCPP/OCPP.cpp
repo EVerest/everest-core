@@ -265,6 +265,9 @@ void OCPP::init_evse_subscriptions() {
                 // soc is present, so add this to the measurement
                 measurement.soc_Percent = ocpp::StateOfCharge{this->evse_soc_map[evse_id].value()};
             }
+            if (powermeter.temperatures.has_value()) {
+                measurement.temperature_C = conversions::to_ocpp_temperatures(powermeter.temperatures.value());
+            }
             this->charge_point->on_meter_values(evse_id, measurement);
         });
 
