@@ -176,12 +176,13 @@ void ConnectivityManager::try_connect_websocket() {
 
     const int configuration_slot_to_set =
         this->pending_configuration_slot.value_or(this->get_active_network_configuration_slot());
+    const std::optional<int> priority_to_set = this->get_priority_from_configuration_slot(configuration_slot_to_set);
     const auto network_connection_profile = this->get_network_connection_profile(configuration_slot_to_set);
     // Not const as the iface member can be set by the configure network connection profile callback
     auto connection_options = this->get_ws_connection_options(configuration_slot_to_set);
     bool can_use_connection_profile = true;
 
-    if (!network_connection_profile.has_value()) {
+    if (!network_connection_profile.has_value() || !priority_to_set.has_value()) {
         EVLOG_warning << "No network connection profile configured for " << configuration_slot_to_set;
         can_use_connection_profile = false;
     } else if (!connection_options.has_value()) {
@@ -211,8 +212,7 @@ void ConnectivityManager::try_connect_websocket() {
     }
 
     this->pending_configuration_slot.reset();
-    this->active_network_configuration_priority =
-        get_priority_from_configuration_slot(configuration_slot_to_set).value();
+    this->active_network_configuration_priority = priority_to_set.value();
 
     if (connection_options->security_profile ==
         security::OCPP_1_6_ONLY_UNSECURED_TRANSPORT_WITHOUT_BASIC_AUTHENTICATION) {
