@@ -173,6 +173,7 @@ struct EvseSlacConfig {
     struct link_status_struct {
         bool do_detect = false;
         int retry_ms = 100;
+        int poll_in_matched_state_ms = 1000;
         int timeout_ms = 5000;
         bool debug_simulate_failed_matching = false;
     } link_status;
