@@ -72,7 +72,7 @@ void AuthHandler::initialize() {
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
-    this->event_mutex.lock(); // lock mutex directly because it needs to be unlocked within handle_token 
+    this->event_mutex.lock(); // lock mutex directly because it needs to be unlocked within handle_token
     TokenHandlingResult result;
 
     // check if token is already currently processed

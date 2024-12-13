@@ -337,7 +337,7 @@ TEST_F(AuthTest, test_swipe_multiple_times_with_timeout) {
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
-                .Times(1);
+        .Times(1);
 
     TokenHandlingResult result1;
     TokenHandlingResult result2;
@@ -1168,7 +1168,7 @@ TEST_F(AuthTest, test_authorization_timeout_and_reswipe) {
         .Times(2);
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut))
-                .Times(1);
+        .Times(1);
 
     TokenHandlingResult result;
     std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
