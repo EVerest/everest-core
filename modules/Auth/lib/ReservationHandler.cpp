@@ -249,12 +249,15 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
 
     bool reservation_cancelled = false;
 
-    auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
-    if (reservation_id_timer_it != this->reservation_id_to_reservation_timeout_timer_map.end()) {
-        reservation_id_timer_it->second->stop();
-        this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
-        reservation_cancelled = true;
-        result.first = true;
+    {
+        std::unique_lock<std::recursive_mutex> lk(this->timer_mutex);
+        auto reservation_id_timer_it = this->reservation_id_to_reservation_timeout_timer_map.find(reservation_id);
+        if (reservation_id_timer_it != this->reservation_id_to_reservation_timeout_timer_map.end()) {
+            reservation_id_timer_it->second->stop();
+            this->reservation_id_to_reservation_timeout_timer_map.erase(reservation_id_timer_it);
+            reservation_cancelled = true;
+            result.first = true;
+        }
     }
 
     if (!reservation_cancelled) {
@@ -623,6 +626,7 @@ bool ReservationHandler::is_reservation_possible(
 
 void ReservationHandler::set_reservation_timer(const types::reservation::Reservation& reservation,
                                                const std::optional<uint32_t> evse_id) {
+    std::lock_guard<std::recursive_mutex> lk(this->timer_mutex);
     this->reservation_id_to_reservation_timeout_timer_map[reservation.reservation_id] =
         std::make_unique<Everest::SteadyTimer>(&this->io_service);
 
