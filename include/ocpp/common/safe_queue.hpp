@@ -13,9 +13,6 @@ namespace ocpp {
 /// that can be waited upon. Will take up the waiting thread on each
 /// operation of push/pop/clear
 template <typename T> class SafeQueue {
-    using safe_queue_reference = typename std::queue<T>::reference;
-    using safe_queue_const_reference = typename std::queue<T>::const_reference;
-
 public:
     /// \return True if the queue is empty
     inline bool empty() const {
@@ -23,12 +20,9 @@ public:
         return queue.empty();
     }
 
-    inline safe_queue_reference front() {
-        std::lock_guard lock(mutex);
-        return queue.front();
-    }
-
-    inline safe_queue_const_reference front() const {
+    /// \brief We return a copy here, since while might be accessing the
+    /// reference while another thread uses pop and makes the reference stale
+    inline T front() {
         std::lock_guard lock(mutex);
         return queue.front();
     }
