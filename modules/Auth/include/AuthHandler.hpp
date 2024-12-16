@@ -264,8 +264,6 @@ private:
      */
     int select_evse(const std::vector<int>& selected_evses);
 
-    void lock_plug_in_mutex(const std::vector<int>& evse_ids);
-    void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
     int get_latest_plugin(const std::vector<int>& evse_ids);
     void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,

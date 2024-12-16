@@ -77,7 +77,6 @@ struct EVSEContext {
     std::optional<Identifier> identifier = std::nullopt;
     std::vector<Connector> connectors;
     Everest::SteadyTimer timeout_timer;
-    std::mutex plug_in_mutex;
     bool plugged_in;
 
     bool is_available();

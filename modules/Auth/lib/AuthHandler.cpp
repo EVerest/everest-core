@@ -114,7 +114,6 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     EVLOG_info << "Result for token: " << everest::staging::helpers::redact(provided_token.id_token.value) << ": "
                << conversions::token_handling_result_to_string(result);
-    this->unlock_plug_in_mutex(referenced_evses); // in select_evse mutexes have been locked, here we can unlock
     this->event_mutex.unlock();
     return result;
 }
@@ -450,20 +449,8 @@ int AuthHandler::get_latest_plugin(const std::vector<int>& evse_ids) {
     return -1;
 }
 
-void AuthHandler::lock_plug_in_mutex(const std::vector<int>& evse_ids) {
-    for (const auto evse_id : evse_ids) {
-        this->evses.at(evse_id)->plug_in_mutex.lock();
-    }
-}
-
-void AuthHandler::unlock_plug_in_mutex(const std::vector<int>& evse_ids) {
-    for (const auto evse_id : evse_ids) {
-        this->evses.at(evse_id)->plug_in_mutex.unlock();
-    }
-}
-
 int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
-
+    std::unique_lock<std::mutex> lk(this->event_mutex);
     if (selected_evses.size() == 1) {
         return selected_evses.at(0);
     }
@@ -471,11 +458,9 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
     if (this->selection_algorithm == SelectionAlgorithm::PlugEvents) {
         // locks all referenced evses for this request. Subsequent requests referencing one or more of the locked
         // evses are blocked until handle_token returns
-        this->lock_plug_in_mutex(selected_evses);
         if (this->get_latest_plugin(selected_evses) == -1) {
             // no EV has been plugged in yet at the referenced evses
             EVLOG_debug << "No evse in authorization queue. Waiting for a plug in...";
-            std::unique_lock<std::mutex> lk(this->event_mutex);
             // blocks until respective plugin for evse occured or until timeout
             if (!this->cv.wait_for(lk, std::chrono::seconds(this->connection_timeout),
                                    [this, selected_evses] { return this->get_latest_plugin(selected_evses) != -1; })) {
@@ -486,7 +471,6 @@ int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
         return this->get_latest_plugin(selected_evses);
     } else if (this->selection_algorithm == SelectionAlgorithm::FindFirst) {
         EVLOG_debug << "SelectionAlgorithm FindFirst: Selecting first available evse without an active transaction";
-        this->lock_plug_in_mutex(selected_evses);
         const auto selected_evse_id = this->get_latest_plugin(selected_evses);
         if (selected_evse_id != -1 and !this->evses.at(selected_evse_id)->transaction_active) {
             // an EV has been plugged in yet at the referenced evses
@@ -663,7 +647,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     switch (event_type) {
     case SessionEventEnum::SessionStarted: {
         this->plug_in_queue.push_back(evse_id);
-        this->cv.notify_one();
+        this->cv.notify_all();
 
         // only set plug in timeout when SessionStart is caused by plug in
         if (event.session_started.value().reason == StartSessionReason::EVConnected) {
