@@ -168,7 +168,9 @@ async def _env(
         "reservation", "cancel_reservation", "Accepted", skip_implementation
     )
     _add_pm_command_mock("reservation", "reserve_now", False, skip_implementation)
-    _add_pm_command_mock("reservation", "exists_reservation", False, skip_implementation)
+    _add_pm_command_mock(
+        "reservation", "exists_reservation", False, skip_implementation
+    )
     _add_pm_command_mock("system", "get_boot_reason", "PowerUp", skip_implementation)
     _add_pm_command_mock("system", "update_firmware", "Accepted", skip_implementation)
     _add_pm_command_mock(
@@ -239,6 +241,7 @@ class TestOCPP16GenericInterfaceIntegration:
         await asyncio.sleep(5)
         assert not csms_connection.is_connected
         res = await _env.probe_module.call_command("ocpp", "restart", None)
+        await asyncio.sleep(5)
         assert res is True
         assert csms_connection.is_connected
 
