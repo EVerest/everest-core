@@ -1086,9 +1086,9 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | H01.FR.17 | ✅      |        |
 | H01.FR.18 | ✅      |        |
 | H01.FR.19 | ✅      |        |
-| H01.FR.20 |        |        |
-| H01.FR.23 |        |        |
-| H01.FR.24 |        |        |
+| H01.FR.20 | ⛽️      |        |
+| H01.FR.23 | ⛽️      |        |
+| H01.FR.24 | ⛽️      |        |
 
 ## Reservation - Cancel Reservation
 
@@ -1118,7 +1118,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 |-----------|--------|--------|
 | H04.FR.01 | ✅      |        |
 | H04.FR.02 | ✅      |        |
-| H04.FR.03 |        | Not all the connectors maybe?       |
+| H04.FR.03 | ⛽️      |        |
 
 ## TariffAndCost - Show EV Driver-specific Tariff Information
 

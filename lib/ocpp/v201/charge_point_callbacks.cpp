@@ -75,6 +75,22 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) c
                 valid = false;
             }
         }
+
+        if (device_model->get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
+                .value_or(false)) {
+            if (!this->reserve_now_callback.has_value() or this->reserve_now_callback == nullptr) {
+                EVLOG_error << "Reservation is set to 'Available' and 'Enabled' in device model, but "
+                               "reserve_now_callback is not implemented.";
+                valid = false;
+            }
+
+            if (!this->cancel_reservation_callback.has_value() or this->cancel_reservation_callback == nullptr) {
+                EVLOG_error
+                    << "Reservation is set to 'Available' and 'Enabled' in device model, but cancel_reservation "
+                       "callback is not implemented";
+                valid = false;
+            }
+        }
     }
 
     return valid;

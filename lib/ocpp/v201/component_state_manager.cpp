@@ -283,7 +283,13 @@ OperationalStatusEnum ComponentStateManager::get_connector_persisted_operational
 
 void ComponentStateManager::set_connector_occupied(int32_t evse_id, int32_t connector_id, bool is_occupied) {
     this->individual_connector_status(evse_id, connector_id).occupied = is_occupied;
-    this->send_status_notification_single_connector_internal(evse_id, connector_id, true);
+    // Check if the connector is set to reserved. Because if it is, it should not go to occupied but stay reserved.
+    // If the connector is reserved and there is a plug in, the internal state should be 'occupied' and 'reserved',
+    // but a status notification with 'occupied' should not be sent yet. Only when the transaction is started, this
+    // should be sent.
+    if (!this->individual_connector_status(evse_id, connector_id).reserved) {
+        this->send_status_notification_single_connector_internal(evse_id, connector_id, true);
+    }
 }
 void ComponentStateManager::set_connector_reserved(int32_t evse_id, int32_t connector_id, bool is_reserved) {
     this->individual_connector_status(evse_id, connector_id).reserved = is_reserved;
