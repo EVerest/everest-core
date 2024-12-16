@@ -1114,7 +1114,9 @@ void OCPP201::process_transaction_started(const int32_t evse_id, const int32_t c
     auto tx_event = TxEvent::AUTHORIZED;
     auto trigger_reason = ocpp::v201::TriggerReasonEnum::Authorized;
     const auto transaction_started = session_event.transaction_started.value();
-    transaction_data->reservation_id = transaction_started.reservation_id;
+    if (transaction_started.reservation_id.has_value()) {
+        transaction_data->reservation_id = transaction_started.reservation_id;
+    }
     transaction_data->remote_start_id = transaction_started.id_tag.request_id;
     const auto id_token = conversions::to_ocpp_id_token(transaction_started.id_tag.id_token);
     transaction_data->id_token = id_token;
