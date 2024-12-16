@@ -1,20 +1,4 @@
 active_modules:
-  iso15118_charger:
-    module: EvseV2G
-    config_module:
-      device: auto
-      tls_security: allow
-    connections:
-      security:
-        - module_id: evse_security
-          implementation_id: main
-  iso15118_car:
-    module: PyEvJosev
-    config_module:
-      supported_DIN70121: false
-      supported_ISO15118_2: true
-      supported_ISO15118_20_AC: false
-      supported_ISO15118_20_DC: false
   connector_1:
     module: EvseManager
     config_module:
@@ -33,12 +17,6 @@ active_modules:
       powermeter_grid_side:
         - module_id: yeti_driver_1
           implementation_id: powermeter
-      slac:
-        - module_id: slac
-          implementation_id: evse
-      hlc:
-        - module_id: iso15118_charger
-          implementation_id: charger
   connector_2:
     module: EvseManager
     config_module:
@@ -57,12 +35,6 @@ active_modules:
       powermeter_grid_side:
         - module_id: yeti_driver_2
           implementation_id: powermeter
-      slac:
-        - module_id: slac
-          implementation_id: evse
-      hlc:
-        - module_id: iso15118_charger
-          implementation_id: charger
   yeti_driver_1:
     module: JsYetiSimulator
     config_module:
@@ -71,79 +43,6 @@ active_modules:
     module: JsYetiSimulator
     config_module:
       connector_id: 2
-  slac:
-    module: JsSlacSimulator
-  car_simulator_1:
-    module: JsEvManager
-    config_module:
-      connector_id: 1
-      auto_enable: true
-      auto_exec: false
-      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
-    connections:
-      ev_board_support:
-        - module_id: yeti_driver_1
-          implementation_id: ev_board_support
-      ev:
-        - module_id: iso15118_car
-          implementation_id: ev
-      slac:
-        - module_id: slac
-          implementation_id: ev
-  car_simulator_2:
-    module: JsEvManager
-    config_module:
-      connector_id: 2
-      auto_enable: true
-      auto_exec: false
-    connections:
-      ev_board_support:
-        - module_id: yeti_driver_2
-          implementation_id: ev_board_support
-      ev:
-        - module_id: iso15118_car
-          implementation_id: ev
-      slac:
-        - module_id: slac
-          implementation_id: ev
-  ocpp:
-    module: OCPP201
-    config_module:
-      EnableExternalWebsocketControl: true
-    connections:
-      evse_manager:
-        - module_id: connector_1
-          implementation_id: evse
-        - module_id: connector_2
-          implementation_id: evse
-      auth:
-        - module_id: auth
-          implementation_id: main
-      system:
-        - module_id: system
-          implementation_id: main
-      security:
-        - module_id: evse_security
-          implementation_id: main
-      reservation:
-        - module_id: auth
-          implementation_id: reservation
-  persistent_store:
-    module: PersistentStore
-    config_module:
-      sqlite_db_file_path: persistent_store.db
-  evse_security:
-    module: EvseSecurity
-    config_module:
-      csms_ca_bundle: "ca/csms/CSMS_ROOT_CA.pem"
-      csms_leaf_cert_directory: "client/csms"
-      csms_leaf_key_directory: "client/csms"
-      mf_ca_bundle: "ca/mf/MF_ROOT_CA.pem"
-      mo_ca_bundle: "ca/mo/MO_ROOT_CA.pem"
-      v2g_ca_bundle: "ca/v2g/V2G_ROOT_CA.pem"
-      secc_leaf_cert_directory: "client/cso"
-      secc_leaf_key_directory: "client/cso"
-      private_key_password: "123456"
   auth:
     module: Auth
     config_module:
@@ -163,6 +62,50 @@ active_modules:
           implementation_id: evse
         - module_id: connector_2
           implementation_id: evse
+  ocpp:
+    module: OCPP201
+    config_module:
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+        - module_id: connector_1
+          implementation_id: evse
+        - module_id: connector_2
+          implementation_id: evse
+      auth:
+        - module_id: auth
+          implementation_id: main
+      system:
+        - module_id: system
+          implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+      display_message:
+        - module_id: display_message
+          implementation_id: display_message
+  persistent_store:
+    module: PersistentStore
+    config_module:
+      sqlite_db_file_path: persistent_store.db
+  display_message:
+    module: TerminalCostAndPriceMessage
+    connections:
+      session_cost:
+        - module_id: ocpp
+          implementation_id: session_cost
+  evse_security:
+    module: EvseSecurity
+    config_module:
+      csms_ca_bundle: "ca/csms/CSMS_ROOT_CA.pem"
+      csms_leaf_cert_directory: "client/csms"
+      csms_leaf_key_directory: "client/csms"
+      mf_ca_bundle: "ca/mf/MF_ROOT_CA.pem"
+      mo_ca_bundle: "ca/mo/MO_ROOT_CA.pem"
+      v2g_ca_bundle: "ca/v2g/V2G_ROOT_CA.pem"
+      secc_leaf_cert_directory: "client/cso"
+      secc_leaf_key_directory: "client/cso"
+      private_key_password: "123456"
   token_provider_manual:
     module: DummyTokenProviderManual
   energy_manager:
@@ -186,6 +129,33 @@ active_modules:
       powermeter:
         - module_id: yeti_driver_1
           implementation_id: powermeter
+  ev_manager_1:
+    module: EvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_1
+          implementation_id: ev_board_support
+  ev_manager_2:
+    module: EvManager
+    config_module:
+      connector_id: 2
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver_2
+          implementation_id: ev_board_support
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
   system:
     module: System
 
