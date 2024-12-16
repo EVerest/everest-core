@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <vector>

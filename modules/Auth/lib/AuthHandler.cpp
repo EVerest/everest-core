@@ -505,7 +505,7 @@ void AuthHandler::notify_evse(int evse_id, const ProvidedIdToken& provided_token
         this->evses.at(evse_id)->timeout_timer.stop();
         this->evses.at(evse_id)->timeout_timer.timeout(
             [this, evse_index, evse_id, provided_token]() {
-                std::lock_guard<std::mutex> timer_lk(this->event_mutex);
+                std::lock_guard<std::mutex> lk(this->event_mutex);
                 EVLOG_debug << "Authorization timeout for evse#" << evse_index;
                 this->evses.at(evse_id)->identifier.reset();
                 this->withdraw_authorization_callback(evse_index);
@@ -655,13 +655,12 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
 
             this->evses.at(evse_id)->timeout_timer.timeout(
                 [this, evse_id]() {
+                    std::lock_guard<std::mutex> lk(this->event_mutex);
+
                     EVLOG_info << "Plug In timeout for evse#" << evse_id;
                     this->withdraw_authorization_callback(this->evses.at(evse_id)->evse_index);
-                    {
-                        std::lock_guard<std::mutex> lk(this->event_mutex);
-                        this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
-                    }
 
+                    this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
                     this->evses.at(evse_id)->plugged_in = false;
                 },
                 std::chrono::seconds(this->connection_timeout));
