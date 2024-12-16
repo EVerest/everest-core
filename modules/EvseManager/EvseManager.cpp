@@ -161,8 +161,13 @@ void EvseManager::ready() {
         bsp->set_ev_simplified_mode_evse_limit(true);
     }
 
+    // we provide the powermeter interface to the ErrorHandling only if we need to react to powermeter errors
+    // otherwise we provide an empty vector of pointers to the powermeter interface
+    const std::vector<std::unique_ptr<powermeterIntf>> empty;
     error_handling = std::unique_ptr<ErrorHandling>(
-        new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC));
+        new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
+                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty));
+
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
                          "should not be used in public environments!";
