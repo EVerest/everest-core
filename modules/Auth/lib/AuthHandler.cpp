@@ -66,6 +66,7 @@ void AuthHandler::init_evse(const int evse_id, const int evse_index, const std::
 
 void AuthHandler::initialize() {
     this->reservation_handler.load_reservations();
+    check_evse_reserved_and_send_updates();
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
@@ -607,7 +608,12 @@ ReservationCheckStatus AuthHandler::handle_reservation_exists(std::string& id_to
 }
 
 bool AuthHandler::call_reserved(const int reservation_id, const std::optional<int>& evse_id) {
-    return this->reserved_callback(evse_id, reservation_id);
+    const bool reserved = this->reserved_callback(evse_id, reservation_id);
+    if (reserved) {
+        this->check_evse_reserved_and_send_updates();
+    }
+
+    return reserved;
 }
 
 void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
@@ -615,7 +621,7 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
                                              const std::optional<int>& evse_id, const bool send_reservation_update) {
     std::optional<int32_t> evse_index;
     if (evse_id.has_value() && evse_id.value() > 0) {
-        EVLOG_info << "Cancel reservation for evse id" << evse_id.value();
+        EVLOG_info << "Cancel reservation for evse id " << evse_id.value();
     }
 
     this->reservation_cancelled_callback(evse_id, reservation_id, reason, send_reservation_update);
@@ -655,6 +661,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     std::lock_guard<std::mutex> lk(this->timer_mutex);
     this->evses.at(evse_id)->event_mutex.lock();
     const auto event_type = event.event;
+    bool check_reservations = false;
 
     switch (event_type) {
     case SessionEventEnum::SessionStarted: {
@@ -685,6 +692,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         this->evses.at(evse_id)->transaction_active = true;
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::TRANSACTION_STARTED);
         this->evses.at(evse_id)->timeout_timer.stop();
+        check_reservations = true;
         break;
     }
     case SessionEventEnum::TransactionFinished:
@@ -700,18 +708,26 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
             std::lock_guard<std::mutex> lk(this->plug_in_queue_mutex);
             this->plug_in_queue.remove_if([evse_id](int value) { return value == evse_id; });
         }
+
+        check_reservations = true;
         break;
     }
     case SessionEventEnum::Disabled:
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::DISABLE);
+        check_reservations = true;
         break;
     case SessionEventEnum::Enabled:
         this->submit_event_for_connector(evse_id, connector_id, ConnectorEvent::ENABLE);
+        check_reservations = true;
         break;
     case SessionEventEnum::ReservationStart:
         break;
-    case SessionEventEnum::ReservationEnd:
+    case SessionEventEnum::ReservationEnd: {
+        if (reservation_handler.is_evse_reserved(evse_id)) {
+            reservation_handler.cancel_reservation(evse_id, true);
+        }
         break;
+    }
     /// explicitly fall through all the SessionEventEnum values we are not handling
     case SessionEventEnum::Authorized:
         [[fallthrough]];
@@ -743,6 +759,12 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
         break;
     }
     this->evses.at(evse_id)->event_mutex.unlock();
+
+    // When reservation is started or ended, check if the number of reservations match the number of evses and
+    // send 'reserved' notifications to the evse manager accordingly if needed.
+    if (check_reservations) {
+        check_evse_reserved_and_send_updates();
+    }
 }
 
 void AuthHandler::set_connection_timeout(const int connection_timeout) {
@@ -813,6 +835,26 @@ void AuthHandler::submit_event_for_connector(const int32_t evse_id, const int32_
             connector.submit_event(connector_event);
             this->reservation_handler.on_connector_state_changed(connector.get_state(), evse_id, connector_id);
             break;
+        }
+    }
+}
+
+void AuthHandler::check_evse_reserved_and_send_updates() {
+    ReservationEvseStatus reservation_status =
+        this->reservation_handler.check_number_global_reservations_match_number_available_evses();
+    for (const auto& available_evse : reservation_status.available) {
+        EVLOG_debug << "Evse " << available_evse << " is now available";
+        this->reservation_cancelled_callback(
+            available_evse, -1, types::reservation::ReservationEndReason::GlobalReservationRequirementDropped, false);
+    }
+
+    for (const auto& reserved_evse : reservation_status.reserved) {
+        EVLOG_debug << "Evse " << reserved_evse << " is now reserved";
+        if (this->reserved_callback != nullptr) {
+            const bool reserved = this->reserved_callback(reserved_evse, -1);
+            if (!reserved) {
+                EVLOG_warning << "Could not reserve " << reserved_evse << " for non evse specific reservations";
+            }
         }
     }
 }

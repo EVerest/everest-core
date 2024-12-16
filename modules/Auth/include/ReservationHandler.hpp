@@ -4,6 +4,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include <Connector.hpp>
@@ -14,6 +15,11 @@
 class kvsIntf;
 
 namespace module {
+
+struct ReservationEvseStatus {
+    std::set<int32_t> reserved;
+    std::set<int32_t> available;
+};
 
 class ReservationHandler {
 private: // Members
@@ -44,6 +50,8 @@ private: // Members
     std::function<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
                        const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
         reservation_cancelled_callback;
+
+    std::set<int32_t> last_reserved_status;
 
     /// \brief worker for the timers.
     boost::shared_ptr<boost::asio::io_service::work> work;
@@ -126,6 +134,14 @@ public:
                                                                 const types::reservation::ReservationEndReason reason);
 
     ///
+    /// \brief Cancel a reservation.
+    /// \param evse_id              The evse id to cancel the reservation for.
+    /// \param execute_callback     True if the `reservation_cancelled_callback` must be called.
+    /// \return True if the reservation could be cancelled.
+    ///
+    bool cancel_reservation(const uint32_t evse_id, const bool execute_callback);
+
+    ///
     /// \brief Register reservation cancelled callback.
     /// \param callback The callback that should be called when a reservation is cancelled.
     ///
@@ -162,6 +178,15 @@ public:
     /// @return true if reservation for \p evse_id exists and reservation contains a parent_id
     ///
     bool has_reservation_parent_id(const std::optional<uint32_t> evse_id);
+
+    ///
+    /// \brief Check if the number of global reservations match the number of available evse's.
+    /// \return The new reservation status of the evse's.
+    ///
+    /// \note The return value has the new reserved and new available statusses (so the ones that were already reserved
+    ///       are not added to those lists).
+    ///
+    ReservationEvseStatus check_number_global_reservations_match_number_available_evses();
 
 private: // Functions
     ///
@@ -307,6 +332,19 @@ private: // Functions
     /// \brief Store reservations to key value store.
     ///
     void store_reservations();
+
+    ///
+    /// \brief Get new reserved / available status for evse's and store it.
+    /// \param currently_available_evses    Current available evse's.
+    /// \param reserved_evses               Current reserved evse's.
+    /// \return A struct with changed reservation statuses compared with the last time this function was called.
+    ///
+    /// When an evse is reserved and it was available before, it will be added to the set in the struct (return value).
+    /// But when an evse is reserved and last time it was already reserved, it is not added.
+    ///
+    ReservationEvseStatus
+    get_evse_global_reserved_status_and_set_new_status(const std::set<int32_t>& currently_available_evses,
+                                                       const std::set<int32_t>& reserved_evses);
 
     ///
     /// \brief Helper function to print information about reservations and evses, to find out why a reservation has
