@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#include "EnergyManager.hpp"
-#include "EnergyManagerImplStub.hpp"
+#include "EnergyManagerImpl.hpp"
 #include "Market.hpp"
 #include <gtest/gtest.h>
 #include <utils/date.hpp>
@@ -625,24 +624,20 @@ namespace module::test {
 void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, const std::string& start_time_str,
                    float expected_limit) {
     SCOPED_TRACE(std::string("schedule_test(") + start_time_str + ")");
-    struct module::Conf config {
-        230.0,     // nominal_ac_voltage
-            1,     // update_interval
-            60,    // schedule_interval_duration
-            1,     // schedule_total_duration
-            0.5,   // slice_ampere
-            500,   // slice_watt
-            false, // debug
+    EnergyManagerConfig config{
+        230.0, // nominal_ac_voltage
+        1,     // update_interval
+        60,    // schedule_interval_duration
+        1,     // schedule_total_duration
+        0.5,   // slice_ampere
+        500,   // slice_watt
+        false, // debug
     };
-    std::unique_ptr<energyIntf> energy;
-    auto energy_managerImpl = std::make_unique<module::stub::energy_managerImplStub>();
 
-    module::EnergyManager manager(c_module_info, std::move(energy_managerImpl), std::move(energy), config);
+    module::EnergyManagerImpl manager(config, [](const std::vector<types::energy::EnforcedLimits>& limits) { return; });
 
     const auto start_time = Everest::Date::from_rfc3339(start_time_str);
-    module::globals.init(start_time, config.schedule_interval_duration, config.schedule_total_duration,
-                         config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
-    auto optimized_values = manager.run_optimizer(energy_flow_request);
+    auto optimized_values = manager.run_optimizer(energy_flow_request, start_time);
 
     // check result
     // std::cout << optimized_values << std::endl;
@@ -718,42 +713,36 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
 namespace module {
 
 TEST(EnergyManagerTest, empty) {
-    struct module::Conf config {
-        230.0,     // nominal_ac_voltage
-            1,     // update_interval
-            60,    // schedule_interval_duration
-            1,     // schedule_total_duration
-            0.5,   // slice_ampere
-            500,   // slice_watt
-            false, // debug
+    EnergyManagerConfig config{
+        230.0, // nominal_ac_voltage
+        1,     // update_interval
+        60,    // schedule_interval_duration
+        1,     // schedule_total_duration
+        0.5,   // slice_ampere
+        500,   // slice_watt
+        false, // debug
     };
-    std::unique_ptr<energyIntf> energy;
-    auto energy_managerImpl = std::make_unique<module::stub::energy_managerImplStub>();
 
-    module::EnergyManager manager(c_module_info, std::move(energy_managerImpl), std::move(energy), config);
+    module::EnergyManagerImpl manager(config, [](const std::vector<types::energy::EnforcedLimits>& limits) { return; });
 
     types::energy::EnergyFlowRequest energy_flow_request;
-    module::globals.init(date::utc_clock::now(), config.schedule_interval_duration, config.schedule_total_duration,
-                         config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
-    auto optimized_values = manager.run_optimizer(energy_flow_request);
+    auto optimized_values = manager.run_optimizer(energy_flow_request, date::utc_clock::now());
     std::cout << optimized_values << std::endl;
     EXPECT_EQ(optimized_values.size(), 0);
 }
 
 TEST(EnergyManagerTest, noSchedules) {
-    struct module::Conf config {
-        230.0,     // nominal_ac_voltage
-            1,     // update_interval
-            60,    // schedule_interval_duration
-            1,     // schedule_total_duration
-            0.5,   // slice_ampere
-            500,   // slice_watt
-            false, // debug
+    EnergyManagerConfig config{
+        230.0, // nominal_ac_voltage
+        1,     // update_interval
+        60,    // schedule_interval_duration
+        1,     // schedule_total_duration
+        0.5,   // slice_ampere
+        500,   // slice_watt
+        false, // debug
     };
-    std::unique_ptr<energyIntf> energy;
-    auto energy_managerImpl = std::make_unique<module::stub::energy_managerImplStub>();
 
-    module::EnergyManager manager(c_module_info, std::move(energy_managerImpl), std::move(energy), config);
+    module::EnergyManagerImpl manager(config, [](const std::vector<types::energy::EnforcedLimits>& limits) { return; });
 
     types::energy::EnergyFlowRequest energy_flow_request{
         {},                            // children, std::vector<types::energy::EnergyFlowRequest>
@@ -770,9 +759,7 @@ TEST(EnergyManagerTest, noSchedules) {
 
     // use a fixed time for repeatable tests
     const auto start_time = Everest::Date::from_rfc3339("2024-01-01T12:00:00.000Z");
-    module::globals.init(start_time, config.schedule_interval_duration, config.schedule_total_duration,
-                         config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
-    auto optimized_values = manager.run_optimizer(energy_flow_request);
+    auto optimized_values = manager.run_optimizer(energy_flow_request, start_time);
 
     // check result
     // std::cout << optimized_values << std::endl;
@@ -802,19 +789,17 @@ TEST(EnergyManagerTest, noSchedules) {
 }
 
 TEST(EnergyManagerTest, schedules) {
-    struct module::Conf config {
-        230.0,     // nominal_ac_voltage
-            2,     // update_interval
-            60,    // schedule_interval_duration
-            1,     // schedule_total_duration
-            0.5,   // slice_ampere
-            500,   // slice_watt
-            false, // debug
+    EnergyManagerConfig config{
+        230.0, // nominal_ac_voltage
+        2,     // update_interval
+        60,    // schedule_interval_duration
+        1,     // schedule_total_duration
+        0.5,   // slice_ampere
+        500,   // slice_watt
+        false, // debug
     };
-    std::unique_ptr<energyIntf> energy;
-    auto energy_managerImpl = std::make_unique<module::stub::energy_managerImplStub>();
 
-    module::EnergyManager manager(c_module_info, std::move(energy_managerImpl), std::move(energy), config);
+    module::EnergyManagerImpl manager(config, [](const std::vector<types::energy::EnforcedLimits>& limits) { return; });
 
     types::energy::EnergyFlowRequest energy_flow_request{
         {},                            // children, std::vector<types::energy::EnergyFlowRequest>
@@ -840,9 +825,7 @@ TEST(EnergyManagerTest, schedules) {
 
     // start a little ahead of the 1st schedule
     const auto start_time = Everest::Date::from_rfc3339("2024-03-27T12:40:40.000Z");
-    module::globals.init(start_time, config.schedule_interval_duration, config.schedule_total_duration,
-                         config.slice_ampere, config.slice_watt, config.debug, energy_flow_request);
-    auto optimized_values = manager.run_optimizer(energy_flow_request);
+    auto optimized_values = manager.run_optimizer(energy_flow_request, start_time);
 
     // check result
     // std::cout << optimized_values << std::endl;

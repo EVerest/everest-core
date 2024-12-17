@@ -1,0 +1,316 @@
+{
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "energy_usage_root": {
+                  "current_A": {
+                    "L1": 15.941856384277344,
+                    "L2": 15.941856384277344,
+                    "L3": 15.941856384277344,
+                    "N": 0.19927319884300232
+                  },
+                  "energy_Wh_import": {
+                    "L1": 100.0,
+                    "L2": 100.0,
+                    "L3": 100.0,
+                    "total": 299.0
+                  },
+                  "frequency_Hz": {
+                    "L1": 50.081581115722656,
+                    "L2": 50.081581115722656,
+                    "L3": 50.081581115722656
+                  },
+                  "meter_id": "YETI_POWERMETER",
+                  "phase_seq_error": false,
+                  "power_W": {
+                    "L1": 3526.0,
+                    "L2": 3526.0,
+                    "L3": 3526.0,
+                    "total": 10578.0
+                  },
+                  "temperatures": [
+                    {
+                      "location": "Body",
+                      "temperature": 56.736080169677734
+                    }
+                  ],
+                  "timestamp": "2024-12-17T13:08:35.797Z",
+                  "voltage_V": {
+                    "L1": 221.19325256347656,
+                    "L2": 221.19325256347656,
+                    "L3": 221.19325256347656
+                  }
+                },
+                "evse_state": "Charging",
+                "node_type": "Evse",
+                "priority_request": false,
+                "schedule_export": [
+                  {
+                    "limits_to_leaves": {
+                      "ac_max_current_A": 0.0
+                    },
+                    "limits_to_root": {
+                      "ac_max_current_A": 16.0,
+                      "ac_max_phase_count": 3,
+                      "ac_min_current_A": 0.0,
+                      "ac_min_phase_count": 1,
+                      "ac_number_of_active_phases": 3,
+                      "ac_supports_changing_phases_during_charging": true
+                    },
+                    "timestamp": "2024-12-17T13:08:36.479Z"
+                  }
+                ],
+                "schedule_import": [
+                  {
+                    "limits_to_leaves": {
+                      "ac_max_current_A": 32.0
+                    },
+                    "limits_to_root": {
+                      "ac_max_current_A": 32.0,
+                      "ac_max_phase_count": 3,
+                      "ac_min_current_A": 6.0,
+                      "ac_min_phase_count": 1,
+                      "ac_number_of_active_phases": 3,
+                      "ac_supports_changing_phases_during_charging": true
+                    },
+                    "timestamp": "2024-12-17T13:08:36.479Z"
+                  }
+                ],
+                "uuid": "evse_manager_1"
+              }
+            ],
+            "node_type": "Generic",
+            "schedule_export": [
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "timestamp": "2024-12-17T13:00:00.000Z"
+              }
+            ],
+            "schedule_import": [
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": 48.0,
+                  "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "timestamp": "2024-12-17T13:08:14.413Z"
+              }
+            ],
+            "uuid": "evse_manager_1_ocpp_sink"
+          }
+        ],
+        "node_type": "Generic",
+        "schedule_export": [
+          {
+            "limits_to_leaves": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "limits_to_root": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "timestamp": "2024-12-17T13:00:00.000Z"
+          }
+        ],
+        "schedule_import": [
+          {
+            "limits_to_leaves": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "limits_to_root": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "timestamp": "2024-12-17T13:00:00.000Z"
+          }
+        ],
+        "uuid": "evse_manager_1_api_sink"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "energy_usage_root": {
+                  "current_A": {
+                    "L1": 0.0,
+                    "L2": 0.0,
+                    "L3": 0.0,
+                    "N": 0.0
+                  },
+                  "energy_Wh_import": {
+                    "L1": 0.0,
+                    "L2": 0.0,
+                    "L3": 0.0,
+                    "total": 0.0
+                  },
+                  "frequency_Hz": {
+                    "L1": 49.92838668823242,
+                    "L2": 49.92838668823242,
+                    "L3": 49.92838668823242
+                  },
+                  "meter_id": "YETI_POWERMETER",
+                  "phase_seq_error": false,
+                  "power_W": {
+                    "L1": 0.0,
+                    "L2": 0.0,
+                    "L3": 0.0,
+                    "total": 0.0
+                  },
+                  "temperatures": [
+                    {
+                      "location": "Body",
+                      "temperature": 25.0
+                    }
+                  ],
+                  "timestamp": "2024-12-17T13:08:35.790Z",
+                  "voltage_V": {
+                    "L1": 228.7653350830078,
+                    "L2": 228.7653350830078,
+                    "L3": 228.7653350830078
+                  }
+                },
+                "evse_state": "Unplugged",
+                "node_type": "Evse",
+                "priority_request": false,
+                "schedule_export": [
+                  {
+                    "limits_to_leaves": {
+                      "ac_max_current_A": 0.0
+                    },
+                    "limits_to_root": {
+                      "ac_max_current_A": 16.0,
+                      "ac_max_phase_count": 3,
+                      "ac_min_current_A": 0.0,
+                      "ac_min_phase_count": 1,
+                      "ac_number_of_active_phases": 3,
+                      "ac_supports_changing_phases_during_charging": true
+                    },
+                    "timestamp": "2024-12-17T13:00:00.000Z"
+                  }
+                ],
+                "schedule_import": [
+                  {
+                    "limits_to_leaves": {
+                      "ac_max_current_A": 0.0
+                    },
+                    "limits_to_root": {
+                      "ac_max_current_A": 32.0,
+                      "ac_max_phase_count": 3,
+                      "ac_min_current_A": 6.0,
+                      "ac_min_phase_count": 1,
+                      "ac_number_of_active_phases": 3,
+                      "ac_supports_changing_phases_during_charging": true
+                    },
+                    "timestamp": "2024-12-17T13:00:00.000Z"
+                  }
+                ],
+                "uuid": "evse_manager_2"
+              }
+            ],
+            "node_type": "Generic",
+            "schedule_export": [
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "timestamp": "2024-12-17T13:00:00.000Z"
+              }
+            ],
+            "schedule_import": [
+              {
+                "limits_to_leaves": {
+                  "ac_max_current_A": 48.0,
+                  "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                  "ac_max_current_A": 32.0,
+                  "ac_max_phase_count": 3
+                },
+                "timestamp": "2024-12-17T13:08:14.413Z"
+              }
+            ],
+            "uuid": "evse_manager_2_ocpp_sink"
+          }
+        ],
+        "node_type": "Generic",
+        "schedule_export": [
+          {
+            "limits_to_leaves": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "limits_to_root": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "timestamp": "2024-12-17T13:00:00.000Z"
+          }
+        ],
+        "schedule_import": [
+          {
+            "limits_to_leaves": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "limits_to_root": {
+              "ac_max_current_A": 32.0,
+              "ac_max_phase_count": 3
+            },
+            "timestamp": "2024-12-17T13:00:00.000Z"
+          }
+        ],
+        "uuid": "evse_manager_2_api_sink"
+      }
+    ],
+    "node_type": "Generic",
+    "schedule_export": [
+      {
+        "limits_to_leaves": {
+          "ac_max_current_A": 40.0,
+          "ac_max_phase_count": 3
+        },
+        "limits_to_root": {
+          "ac_max_current_A": 40.0,
+          "ac_max_phase_count": 3
+        },
+        "timestamp": "2024-12-17T13:00:00.000Z"
+      }
+    ],
+    "schedule_import": [
+      {
+        "limits_to_leaves": {
+          "ac_max_current_A": 48.0,
+          "ac_max_phase_count": 3
+        },
+        "limits_to_root": {
+          "ac_max_current_A": 40.0,
+          "ac_max_phase_count": 3
+        },
+        "timestamp": "2024-12-17T13:08:14.413Z"
+      }
+    ],
+    "uuid": "grid_connection_point"
+}
