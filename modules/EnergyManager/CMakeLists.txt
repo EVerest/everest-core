@@ -15,6 +15,7 @@ target_sources(${MODULE_NAME}
         Broker.cpp
         Offer.cpp
         BrokerFastCharging.cpp
+        EnergyManagerImpl.cpp
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
