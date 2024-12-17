@@ -1541,4 +1541,30 @@ TEST_F(AuthTest, test_token_timed_out) {
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
 }
 
+/// \brief Test that in case of a plug in timeout, no authorization is given to the EVSE afterwards
+TEST_F(AuthTest, test_plug_in_time_out) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
+
+    // no connector should be available since the plug-in event has timed out
+    TokenHandlingResult result;
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+    t1.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
 } // namespace module
