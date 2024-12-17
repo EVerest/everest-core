@@ -7,7 +7,7 @@
 
 namespace module {
 
-BrokerFastCharging::BrokerFastCharging(Market& _market, BrokerContext& _context, Config _config) :
+BrokerFastCharging::BrokerFastCharging(Market& _market, BrokerContext& _context, EnergyManagerConfig _config) :
     Broker(_market, _context), config(_config) {
 }
 
