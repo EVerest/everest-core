@@ -2953,9 +2953,9 @@ ConfigurationStatus ChargePointConfiguration::setCustomKey(CiString<50> key, CiS
 
         // validate the updated key against the schema
         Schemas schema(custom_schema);
-        json model;
-        model[key] = new_value;
-        schema.get_validator()->validate(model); // throws exception on error
+        json modelUnderTest = config["Custom"];
+        modelUnderTest[key] = new_value;
+        schema.get_validator()->validate(modelUnderTest); // throws exception on error
         config["Custom"][key] = new_value;
     } catch (const std::exception& e) {
         EVLOG_warning << "Could not set custom configuration key: " << e.what();
