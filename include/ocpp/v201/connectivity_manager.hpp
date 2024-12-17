@@ -21,7 +21,97 @@ using WebsocketConnectionFailedCallback = std::function<void(ConnectionFailedRea
 using ConfigureNetworkConnectionProfileCallback = std::function<std::future<ConfigNetworkResult>(
     const int32_t configuration_slot, const NetworkConnectionProfile& network_connection_profile)>;
 
-class ConnectivityManager {
+class ConnectivityManagerInterface {
+public:
+    virtual ~ConnectivityManagerInterface() {
+    }
+    /// \brief Set the websocket \p authorization_key
+    ///
+    virtual void set_websocket_authorization_key(const std::string& authorization_key) = 0;
+
+    /// \brief Set the websocket \p connection_options
+    ///
+    virtual void set_websocket_connection_options(const WebsocketConnectionOptions& connection_options) = 0;
+
+    /// \brief Set the websocket connection options without triggering a reconnect
+    ///
+    virtual void set_websocket_connection_options_without_reconnect() = 0;
+
+    /// \brief Set the \p callback that is called when the websocket is connected.
+    ///
+    virtual void set_websocket_connected_callback(WebsocketConnectionCallback callback) = 0;
+
+    /// \brief Set the \p callback that is called when the websocket is disconnected.
+    ///
+    virtual void set_websocket_disconnected_callback(WebsocketConnectionCallback callback) = 0;
+
+    /// \brief Set the \p callback that is called when the websocket could not connect with a specific reason
+    ///
+    virtual void set_websocket_connection_failed_callback(WebsocketConnectionFailedCallback callback) = 0;
+
+    /// \brief Set the \p callback that is called to configure a network connection profile when none is configured
+    ///
+    virtual void
+    set_configure_network_connection_profile_callback(ConfigureNetworkConnectionProfileCallback callback) = 0;
+
+    /// \brief Gets the cached NetworkConnectionProfile based on the given \p configuration_slot.
+    /// This returns the value from the cached network connection profiles.
+    /// \return Returns a profile if the slot is found
+    virtual std::optional<NetworkConnectionProfile>
+    get_network_connection_profile(const int32_t configuration_slot) const = 0;
+
+    /// \brief Get the priority of the given configuration slot.
+    /// \param configuration_slot   The configuration slot to get the priority from.
+    /// \return The priority if the configuration slot exists.
+    ///
+    virtual std::optional<int32_t> get_priority_from_configuration_slot(const int configuration_slot) const = 0;
+
+    /// @brief Get the network connection slots sorted by priority.
+    /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
+    /// priority.
+    /// @return The network connection slots
+    ///
+    virtual const std::vector<int>& get_network_connection_slots() const = 0;
+
+    /// \brief Check if the websocket is connected
+    /// \return True is the websocket is connected, else false
+    ///
+    virtual bool is_websocket_connected() = 0;
+
+    /// \brief Connect to the websocket
+    /// \param configuration_slot Optional the network_profile_slot to connect to. std::nullopt will select the slot
+    /// internally.
+    ///
+    virtual void connect(std::optional<int32_t> network_profile_slot = std::nullopt) = 0;
+
+    /// \brief Disconnect the websocket
+    ///
+    virtual void disconnect() = 0;
+
+    /// \brief send a \p message over the websocket
+    /// \returns true if the message was sent successfully
+    ///
+    virtual bool send_to_websocket(const std::string& message) = 0;
+
+    ///
+    /// \brief Can be called when a network is disconnected, for example when an ethernet cable is removed.
+    ///
+    /// This is introduced because the websocket can take several minutes to timeout when a network interface becomes
+    /// unavailable, whereas the system can detect this sooner.
+    ///
+    /// \param ocpp_interface The interface that is disconnected.
+    ///
+    virtual void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) = 0;
+
+    /// \brief Called when the charging station certificate is changed
+    ///
+    virtual void on_charging_station_certificate_changed() = 0;
+
+    /// \brief Confirms the connection is successful so the security profile requirements can be handled
+    virtual void confirm_successful_connection() = 0;
+};
+
+class ConnectivityManager : public ConnectivityManagerInterface {
 private:
     /// \brief Reference to the device model
     DeviceModel& device_model;
@@ -58,88 +148,24 @@ public:
                         std::shared_ptr<MessageLogging> logging,
                         const std::function<void(const std::string& message)>& message_callback);
 
-    /// \brief Set the websocket \p authorization_key
-    ///
-    void set_websocket_authorization_key(const std::string& authorization_key);
-
-    /// \brief Set the websocket \p connection_options
-    ///
-    void set_websocket_connection_options(const WebsocketConnectionOptions& connection_options);
-
-    /// \brief Set the websocket connection options without triggering a reconnect
-    ///
-    void set_websocket_connection_options_without_reconnect();
-
-    /// \brief Set the \p callback that is called when the websocket is connected.
-    ///
-    void set_websocket_connected_callback(WebsocketConnectionCallback callback);
-
-    /// \brief Set the \p callback that is called when the websocket is disconnected.
-    ///
-    void set_websocket_disconnected_callback(WebsocketConnectionCallback callback);
-
-    /// \brief Set the \p callback that is called when the websocket could not connect with a specific reason
-    ///
-    void set_websocket_connection_failed_callback(WebsocketConnectionFailedCallback callback);
-
-    /// \brief Set the \p callback that is called to configure a network connection profile when none is configured
-    ///
-    void set_configure_network_connection_profile_callback(ConfigureNetworkConnectionProfileCallback callback);
-
-    /// \brief Gets the cached NetworkConnectionProfile based on the given \p configuration_slot.
-    /// This returns the value from the cached network connection profiles.
-    /// \return Returns a profile if the slot is found
-    std::optional<NetworkConnectionProfile> get_network_connection_profile(const int32_t configuration_slot) const;
-
-    /// \brief Get the priority of the given configuration slot.
-    /// \param configuration_slot   The configuration slot to get the priority from.
-    /// \return The priority if the configuration slot exists.
-    ///
-    std::optional<int32_t> get_priority_from_configuration_slot(const int configuration_slot) const;
-
-    /// @brief Get the network connection slots sorted by priority.
-    /// Each item in the vector contains the configured configuration slots, where the slot with index 0 has the highest
-    /// priority.
-    /// @return The network connection slots
-    ///
-    const std::vector<int>& get_network_connection_slots() const;
-
-    /// \brief Check if the websocket is connected
-    /// \return True is the websocket is connected, else false
-    ///
-    bool is_websocket_connected();
-
-    /// \brief Connect to the websocket
-    /// \param configuration_slot Optional the network_profile_slot to connect to. std::nullopt will select the slot
-    /// internally.
-    ///
-    void connect(std::optional<int32_t> network_profile_slot = std::nullopt);
-
-    /// \brief Disconnect the websocket
-    ///
-    void disconnect();
-
-    /// \brief send a \p message over the websocket
-    /// \returns true if the message was sent successfully
-    ///
-    bool send_to_websocket(const std::string& message);
-
-    ///
-    /// \brief Can be called when a network is disconnected, for example when an ethernet cable is removed.
-    ///
-    /// This is introduced because the websocket can take several minutes to timeout when a network interface becomes
-    /// unavailable, whereas the system can detect this sooner.
-    ///
-    /// \param ocpp_interface The interface that is disconnected.
-    ///
-    void on_network_disconnected(OCPPInterfaceEnum ocpp_interface);
-
-    /// \brief Called when the charging station certificate is changed
-    ///
-    void on_charging_station_certificate_changed();
-
-    /// \brief Confirms the connection is successful so the security profile requirements can be handled
-    void confirm_successful_connection();
+    void set_websocket_authorization_key(const std::string& authorization_key) override;
+    void set_websocket_connection_options(const WebsocketConnectionOptions& connection_options) override;
+    void set_websocket_connection_options_without_reconnect() override;
+    void set_websocket_connected_callback(WebsocketConnectionCallback callback) override;
+    void set_websocket_disconnected_callback(WebsocketConnectionCallback callback) override;
+    void set_websocket_connection_failed_callback(WebsocketConnectionFailedCallback callback) override;
+    void set_configure_network_connection_profile_callback(ConfigureNetworkConnectionProfileCallback callback) override;
+    std::optional<NetworkConnectionProfile>
+    get_network_connection_profile(const int32_t configuration_slot) const override;
+    std::optional<int32_t> get_priority_from_configuration_slot(const int configuration_slot) const override;
+    const std::vector<int>& get_network_connection_slots() const override;
+    bool is_websocket_connected() override;
+    void connect(std::optional<int32_t> network_profile_slot = std::nullopt) override;
+    void disconnect() override;
+    bool send_to_websocket(const std::string& message) override;
+    void on_network_disconnected(OCPPInterfaceEnum ocpp_interface) override;
+    void on_charging_station_certificate_changed() override;
+    void confirm_successful_connection() override;
 
 private:
     /// \brief Initializes the websocket and tries to connect

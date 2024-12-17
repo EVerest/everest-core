@@ -5,6 +5,7 @@
 #define OCPP_OCSP_UPDATER_HPP
 
 #include <chrono>
+#include <condition_variable>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
@@ -40,19 +41,30 @@ typedef std::function<GetCertificateStatusResponse(GetCertificateStatusRequest)>
 class ChargePoint;
 class UnexpectedMessageTypeFromCSMS;
 
-class OcspUpdater {
+class OcspUpdaterInterface {
+public:
+    virtual ~OcspUpdaterInterface() {
+    }
+    virtual void start() = 0;
+    virtual void stop() = 0;
+    // Wake up the updater thread and tell it to update
+    // Used e.g. when a new charging station cert was just installed
+    virtual void trigger_ocsp_cache_update() = 0;
+};
+
+class OcspUpdater : public OcspUpdaterInterface {
 public:
     OcspUpdater() = delete;
     OcspUpdater(std::shared_ptr<EvseSecurity> evse_security, cert_status_func get_cert_status_from_csms,
                 std::chrono::seconds ocsp_cache_update_interval = std::chrono::hours(167),
                 std::chrono::seconds ocsp_cache_update_retry_interval = std::chrono::hours(24));
+    virtual ~OcspUpdater() {
+    }
 
-    void start();
-    void stop();
+    void start() override;
+    void stop() override;
 
-    // Wake up the updater thread and tell it to update
-    // Used e.g. when a new charging station cert was just installed
-    void trigger_ocsp_cache_update();
+    void trigger_ocsp_cache_update() override;
 
 private:
     // Updater thread responsible for executing the updates
