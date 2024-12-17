@@ -226,14 +226,10 @@ private:
 
     std::map<int, std::unique_ptr<EVSEContext>> evses;
 
-    std::mutex timer_mutex;
     std::list<int> plug_in_queue;
-    std::mutex plug_in_queue_mutex;
-    std::mutex plug_in_mutex;
     std::set<std::string> tokens_in_process;
-    std::mutex token_in_process_mutex;
     std::condition_variable cv;
-    std::recursive_mutex evse_mutex;
+    std::mutex event_mutex;
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -268,8 +264,6 @@ private:
      */
     int select_evse(const std::vector<int>& selected_evses);
 
-    void lock_plug_in_mutex(const std::vector<int>& evse_ids);
-    void unlock_plug_in_mutex(const std::vector<int>& evse_ids);
     int get_latest_plugin(const std::vector<int>& evse_ids);
     void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
