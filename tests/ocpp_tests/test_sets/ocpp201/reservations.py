@@ -15,7 +15,7 @@ from ocpp.v201.enums import (IdTokenType as IdTokenTypeEnum, ReserveNowStatusTyp
 from ocpp.v201.datatypes import *
 from ocpp.v201 import call as call_201
 from ocpp.v201 import call_result as call_result201
-from validations import validate_remote_start_stop_transaction
+from validations import (validate_remote_start_stop_transaction, wait_for_callerror_and_validate)
 from ocpp.routing import on, create_route_map
 
 
@@ -629,7 +629,6 @@ async def test_reservation_connector_occupied(
     # start charging session
     test_controller.plug_in()
 
-    # TODO mz fix comments everywhere in this file!!!
     # expect StatusNotification with status occupied
     assert await wait_for_and_validate(
         test_utility,
@@ -735,13 +734,9 @@ async def test_reservation_connector_rejected(
         evse_id=1
     )
 
-    # expect ReserveNow response with status rejected
-    assert await wait_for_and_validate(
-        test_utility,
-        charge_point_v201,
-        "ReserveNow",
-        call_result201.ReserveNowPayload(ReserveNowStatusType.rejected),
-    )
+    assert await wait_for_callerror_and_validate(test_utility,
+                                                 charge_point_v201,
+                                                 "NotImplemented")
 
 
 @pytest.mark.asyncio
