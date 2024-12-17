@@ -2514,7 +2514,7 @@ KeyValue ChargePointConfiguration::getCustomDisplayCostAndPriceEnabledKeyValue()
     const bool enabled = getCustomDisplayCostAndPriceEnabled();
     KeyValue kv;
     kv.key = "CustomDisplayCostAndPrice";
-    kv.value = std::to_string(enabled);
+    kv.value = ocpp::conversions::bool_to_string(enabled);
     kv.readonly = true;
     return kv;
 }
