@@ -9,6 +9,7 @@
 
 #include <ocpp/common/message_dispatcher.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
+#include <ocpp/v201/functional_blocks/reservation.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
 
@@ -30,7 +31,6 @@
 #include "ocpp/v201/messages/Get15118EVCertificate.hpp"
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
-#include <ocpp/v201/messages/CancelReservation.hpp>
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/ClearCache.hpp>
@@ -62,7 +62,6 @@
 #include <ocpp/v201/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
-#include <ocpp/v201/messages/ReserveNow.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SendLocalList.hpp>
@@ -390,6 +389,7 @@ private:
 
     std::unique_ptr<MessageDispatcherInterface<MessageType>> message_dispatcher;
     std::unique_ptr<DataTransferInterface> data_transfer;
+    std::unique_ptr<ReservationInterface> reservation;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -735,11 +735,6 @@ private:
     void handle_change_availability_req(Call<ChangeAvailabilityRequest> call);
     void handle_heartbeat_response(CallResult<HeartbeatResponse> call);
 
-    // Function Block H: Reservations
-    void handle_reserve_now_request(Call<ReserveNowRequest> call);
-    void handle_cancel_reservation_callback(Call<CancelReservationRequest> call);
-    void send_reserve_now_rejected_response(const MessageId& unique_id, const std::string& status_info);
-
     // Functional Block I: TariffAndCost
     void handle_costupdated_req(const Call<CostUpdatedRequest> call);
 
@@ -977,6 +972,8 @@ public:
     std::optional<int> get_priority_from_configuration_slot(const int configuration_slot) const override;
 
     const std::vector<int>& get_network_connection_slots() const override;
+
+    void send_not_implemented_error(const MessageId unique_message_id, const MessageTypeId message_type_id);
 
     /// \brief Requests a value of a VariableAttribute specified by combination of \p component_id and \p variable_id
     /// from the device model

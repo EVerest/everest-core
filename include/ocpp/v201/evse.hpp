@@ -41,7 +41,7 @@ public:
     /// \param connector_type   The connector type to check.
     /// \return True if connector type is unknown or this evse has the given connector type.
     ///
-    virtual bool does_connector_exist(ConnectorEnum connector_type) = 0;
+    virtual bool does_connector_exist(ConnectorEnum connector_type) const = 0;
 
     ///
     /// \brief Get connector status.
@@ -121,7 +121,7 @@ public:
     virtual void clear_idle_meter_values() = 0;
 
     /// \brief Returns a pointer to the connector with ID \param connector_id in this EVSE.
-    virtual Connector* get_connector(int32_t connector_id) = 0;
+    virtual Connector* get_connector(int32_t connector_id) const = 0;
 
     /// \brief Gets the effective Operative/Inoperative status of this EVSE
     virtual OperationalStatusEnum get_effective_operational_status() = 0;
@@ -223,7 +223,7 @@ private:
     /// \param connector_id     Connector id
     /// \return The connector type. If evse or connector id is not correct: std::nullopt.
     ///
-    std::optional<ConnectorEnum> get_evse_connector_type(const uint32_t connector_id);
+    std::optional<ConnectorEnum> get_evse_connector_type(const uint32_t connector_id) const;
 
 public:
     /// \brief Construct a new Evse object
@@ -247,7 +247,7 @@ public:
     int32_t get_id() const;
 
     uint32_t get_number_of_connectors() const;
-    bool does_connector_exist(const ConnectorEnum connector_type) override;
+    bool does_connector_exist(const ConnectorEnum connector_type) const override;
     std::optional<ConnectorStatusEnum> get_connector_status(std::optional<ConnectorEnum> connector_type) override;
 
     void open_transaction(const std::string& transaction_id, const int32_t connector_id, const DateTime& timestamp,
@@ -273,7 +273,7 @@ public:
     MeterValue get_idle_meter_value();
     void clear_idle_meter_values();
 
-    Connector* get_connector(int32_t connector_id);
+    Connector* get_connector(int32_t connector_id) const;
 
     OperationalStatusEnum get_effective_operational_status();
     void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);

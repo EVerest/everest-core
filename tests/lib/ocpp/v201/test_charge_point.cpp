@@ -195,6 +195,7 @@ public:
     testing::MockFunction<void()> set_charging_profiles_callback_mock;
     testing::MockFunction<ReserveNowStatusEnum(const ReserveNowRequest& request)> reserve_now_callback_mock;
     testing::MockFunction<bool(const int32_t reservationId)> cancel_reservation_callback_mock;
+
     ocpp::v201::Callbacks callbacks;
 };
 

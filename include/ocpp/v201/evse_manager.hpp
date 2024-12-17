@@ -25,6 +25,12 @@ public:
     /// \note If \p id is not present this could throw an EvseOutOfRangeException
     virtual const EvseInterface& get_evse(int32_t id) const = 0;
 
+    /// \brief Check if the connector exists on the given evse id.
+    /// \param evse_id          The evse id to check for.
+    /// \param connector_type   The connector type.
+    /// \return False if evse id does not exist or evse does not have the given connector type.
+    virtual bool does_connector_exist(const int32_t evse_id, ConnectorEnum connector_type) const = 0;
+
     /// \brief Check if an evse with \p id exists
     virtual bool does_evse_exist(int32_t id) const = 0;
 
@@ -52,6 +58,7 @@ public:
     EvseInterface& get_evse(int32_t id) override;
     const EvseInterface& get_evse(const int32_t id) const override;
 
+    virtual bool does_connector_exist(const int32_t evse_id, const ConnectorEnum connector_type) const override;
     bool does_evse_exist(const int32_t id) const override;
 
     size_t get_number_of_evses() const override;
