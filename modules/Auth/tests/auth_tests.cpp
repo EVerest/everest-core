@@ -336,7 +336,6 @@ TEST_F(AuthTest, test_multiple_authorization_requests) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(2));
     ASSERT_FALSE(this->auth_receiver->get_authorization(3));
     ASSERT_FALSE(this->auth_receiver->get_authorization(4));
-
 }
 
 /// \brief Test if a transaction is stopped when an id_token is swiped twice
