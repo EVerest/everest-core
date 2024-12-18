@@ -46,8 +46,7 @@ protected:
 
     kvsIntf kvs;
     std::map<int32_t, std::unique_ptr<EVSEContext>> evses;
-    std::recursive_mutex mutex;
-    ReservationHandler r{evses, mutex, "reservation_kvs", &kvs};
+    ReservationHandler r{evses, "reservation_kvs", &kvs};
 };
 
 TEST_F(ReservationHandlerTest, global_reservation_scenario_01) {
