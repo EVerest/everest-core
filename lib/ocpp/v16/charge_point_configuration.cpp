@@ -2832,7 +2832,7 @@ std::optional<KeyValue> ChargePointConfiguration::getCustomIdleFeeAfterStopKeyVa
     if (idle_fee.has_value()) {
         result = KeyValue();
         result->key = "CustomIdleFeeAfterStop";
-        result->value = std::to_string(idle_fee.value());
+        result->value = ocpp::conversions::bool_to_string(idle_fee.value());
         result->readonly = false;
     }
 
@@ -2854,7 +2854,7 @@ std::optional<KeyValue> ChargePointConfiguration::getCustomMultiLanguageMessages
     if (multi_language.has_value()) {
         result = KeyValue();
         result->key = "CustomMultiLanguageMessages";
-        result->value = std::to_string(multi_language.value());
+        result->value = ocpp::conversions::bool_to_string(multi_language.value());
         result->readonly = true;
     }
 
