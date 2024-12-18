@@ -23,7 +23,6 @@ namespace main {
 struct Conf {
     std::string serial_port;
     int baud_rate;
-    double timeout;
     int read_timeout;
     bool debug;
 };
