@@ -16,6 +16,9 @@ void log_handler(openssl::log_level_t level, const std::string& str) {
     case openssl::log_level_t::debug:
         // ignore debug logs
         break;
+    case openssl::log_level_t::info:
+        EVLOG_info << str;
+        break;
     case openssl::log_level_t::warning:
         EVLOG_warning << str;
         break;
@@ -60,11 +63,13 @@ void EvseV2G::ready() {
         goto err_out;
     }
 
-    rv = sdp_init(v2g_ctx);
+    if (config.enable_sdp_server) {
+        rv = sdp_init(v2g_ctx);
 
-    if (rv == -1) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
-        goto err_out;
+        if (rv == -1) {
+            dlog(DLOG_LEVEL_ERROR, "Failed to start SDP responder");
+            goto err_out;
+        }
     }
 
     dlog(DLOG_LEVEL_DEBUG, "starting socket server(s)");

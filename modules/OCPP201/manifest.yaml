@@ -1,11 +1,12 @@
 description: A OCPP charge point / charging station module for OCPP 2.0.1
 config:
   MessageLogPath:
-    description: Path to folder where logs of all OCPP messages get written to
+    description: Path to directory where logs of all OCPP messages are written to
     type: string
     default: /tmp/everest_ocpp_logs
   CoreDatabasePath:
-    description: Path to the persistent SQLite database folder
+    description: Path to the persistent SQLite database directory. Please refer to the libocpp documentation for more information
+      about the database and its structure.
     type: string
     default: /tmp/ocpp201
   DeviceModelDatabasePath:
@@ -17,15 +18,17 @@ config:
     type: string
     default: device_model_migrations
   DeviceModelConfigPath:
-    description: Path to the device model component config directory
+    description: Path to the device model component config directory. Libocpp defines a certain schema for these files. Please refer to the documentation
+      of libocpp for more information about the configuration options.
     type: string
     default: component_config
   EnableExternalWebsocketControl:
-    description: If true websocket can be disconnected and connected externally
+    description: If true websocket can be disconnected and connected externally. This parameter is for debug and testing purposes.
     type: boolean
     default: false
   MessageQueueResumeDelay:
-    description: Time (seconds) to delay resuming the message queue after reconnecting
+    description: Time (seconds) to delay resuming the message queue after reconnecting. This parameter was introduced because
+      some OCTT test cases require that the first message after a reconnect is sent by the CSMS.
     type: integer
     default: 0
   CompositeScheduleIntervalS:
@@ -51,9 +54,6 @@ config:
     type: string
     default: 'A'
 provides:
-  main:
-    description: This is a OCPP 2.0.1 charge point
-    interface: empty
   auth_validator:
     description: Validates the provided token using CSMS, AuthorizationList or AuthorizationCache
     interface: auth_token_validator
@@ -90,12 +90,16 @@ requires:
     interface: auth
     min_connections: 1
     max_connections: 1
-  connector_zero_sink:
+  evse_energy_sink:
     interface: external_energy_limits
     min_connections: 0
-    max_connections: 1
+    max_connections: 129
   display_message:
     interface: display_message
+    min_connections: 0
+    max_connections: 1
+  reservation:
+    interface: reservation
     min_connections: 0
     max_connections: 1
 enable_external_mqtt: true

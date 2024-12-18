@@ -1,3 +1,17 @@
-cd @EVEREST_DOCKER_DIR@
-docker build -t everest-nodered .
-docker run --rm --network host --name everest_nodered --mount type=bind,source=@FLOW_FILE@,target=/data/flows.json everest-nodered
+# In the following a volume is created to contain the nodered config, this is done to
+# allow starting the nodered container from inside a devcontainer
+
+# Create docker volume to contain nodered config
+docker volume create everest-nodered-config-volume
+
+# Create temporarily container to copy nodered config into the created volume
+docker run --name everest-nodered-config-container -v everest-nodered-config-volume:/data debian:12-slim chown -R 1000:1000 /data
+
+# Copy nodered config to the created volume with the temporarily created container
+docker cp @FLOW_FILE@ everest-nodered-config-container:/data/flows.json
+
+# Remove temporarily container
+docker rm everest-nodered-config-container
+
+# Start nodered container with the volume mounted to /data
+docker run -it --rm --network host --name everest_nodered --mount type=volume,source=everest-nodered-config-volume,target=/data ghcr.io/everest/everest-dev-environment/nodered:docker-images-v0.1.0

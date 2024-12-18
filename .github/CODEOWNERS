@@ -22,26 +22,28 @@
 /modules/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
 /modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried
 /modules/EvManager/ @SebaLukas @pietfried @MarzellT
+/modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen
 /modules/EvseSecurity/ @AssemblyJohn @pietfried @hikinggrass
 /modules/EvseV2G/ @corneliusclaussen @SebaLukas @james-ctc
 /modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
 /modules/OCPP/ @hikinggrass @pietfried @maaikez
 /modules/OCPP201/ @hikinggrass @pietfried @maaikez
 /modules/PacketSniffer @corneliusclaussen @SebaLukas @hikinggrass
+/modules/PhyVersoBSP @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
 /modules/PyEvJosev @SebaLukas @corneliusclaussen @pietfried
 /modules/Setup @hikinggrass @corneliusclaussen @pietfried
 /modules/YetiDriver @corneliusclaussen @hikinggrass
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
 /modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
-/modules/rust_examples/ @SirVer @golovasteek @dorezyuk
-**/Cargo.toml @SirVer @golovasteek @dorezyuk
-**/Cargo.lock @SirVer @golovasteek @dorezyuk
+/modules/rust_examples/ @SirVer @dorezyuk
+**/Cargo.toml @SirVer @dorezyuk @pietfried @hikinggrass
+**/Cargo.lock @SirVer @dorezyuk @pietfried @hikinggrass
 
 
 # Rust & Bazel
-*.rs @SirVer @golovasteek @dorezyuk
-*.bazel @SirVer @golovasteek @dorezyuk
-*.bzl @SirVer @golovasteek @dorezyuk
+*.rs @SirVer @dorezyuk @pietfried @hikinggrass
+*.bazel @SirVer @dorezyuk @pietfried @hikinggrass
+*.bzl @SirVer @dorezyuk @pietfried @hikinggrass
 
 # third-party/bazel
-/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @golovasteek @dorezyuk
+/third-party/bazel/deps_versions.bzl @pietfried @hikinggrass @corneliusclaussen @SebaLukas @a-w50 @SirVer @dorezyuk

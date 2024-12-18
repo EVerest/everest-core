@@ -14,6 +14,12 @@ target_include_directories(ocpp_evse_security
     "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
 )
 
+target_compile_options(ocpp_evse_security
+    PRIVATE
+        -Wimplicit-fallthrough
+        -Werror=switch-enum
+)
+
 add_dependencies(ocpp_evse_security generate_cpp_files)
 
 target_link_libraries(ocpp_evse_security
@@ -39,6 +45,12 @@ target_include_directories(ocpp_conversions
     "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
 )
 
+target_compile_options(ocpp_conversions
+    PRIVATE
+        -Wimplicit-fallthrough
+        -Werror=switch-enum
+)
+
 add_dependencies(ocpp_conversions generate_cpp_files)
 
 target_link_libraries(ocpp_conversions
@@ -46,3 +58,4 @@ target_link_libraries(ocpp_conversions
         everest::ocpp
         everest::framework
 )
+

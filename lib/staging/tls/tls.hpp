@@ -12,9 +12,12 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <netinet/in.h>
+#include <openssl/types.h>
 #include <optional>
 #include <pthread.h>
 #include <string>
@@ -54,6 +57,27 @@ public:
     inline operator const char*() const {
         return (value) ? value.value().c_str() : nullptr;
     }
+};
+
+class TlsKeyLoggingServer {
+public:
+    TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_);
+    ~TlsKeyLoggingServer();
+
+    ssize_t send(const char* line);
+
+    auto get_fd() const {
+        return fd;
+    }
+
+    auto get_port() const {
+        return port;
+    }
+
+private:
+    int fd{-1};
+    uint16_t port{0};
+    sockaddr_in6 destination_address{};
 };
 
 // ----------------------------------------------------------------------------
@@ -221,6 +245,23 @@ public:
      * \note the certificate must not be freed
      */
     [[nodiscard]] const Certificate* peer_certificate() const;
+
+    /**
+     * \brief obtain the underlying SSL context
+     * \returns the underlying SSL context pointer
+     */
+    [[nodiscard]] [[deprecated(
+        "Temporarily used with IsoMux module. Will be removed together with IsoMux module in the future.")]] SSL*
+    ssl_context() const;
+
+    /**
+     * \brief set the read timeout in ms
+     */
+    [[deprecated(
+        "Temporarily used with IsoMux module. Will be removed together with IsoMux module in the future.")]] void
+    set_read_timeout(int ms) {
+        m_timeout_ms = ms;
+    }
 };
 
 /**
@@ -240,8 +281,11 @@ private:
     StatusFlags m_flags;                 //!< extension flags
     server_trusted_ca_keys_t m_tck_data; //!< extension per connection data
 
+    std::unique_ptr<TlsKeyLoggingServer> m_keylog_server{nullptr};
+
 public:
-    ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in, std::int32_t timeout_ms);
+    ServerConnection(SslContext* ctx, int soc, const char* ip_in, const char* service_in, std::int32_t timeout_ms,
+                     const ConfigItem& tls_key_interface);
     ServerConnection() = delete;
     ServerConnection(const ServerConnection&) = delete;
     ServerConnection(ServerConnection&&) = delete;
@@ -341,6 +385,7 @@ public:
         //!< server certificate is the first certificate in the file followed by any intermediate CAs
         ConfigItem certificate_chain_file{nullptr};
         ConfigItem trust_anchor_file{nullptr};       //!< one or more trust anchor PEM certificates
+        ConfigItem trust_anchor_pem{nullptr};        //!< one or more trust anchor PEM certificates
         ConfigItem private_key_file{nullptr};        //!< key associated with the server certificate
         ConfigItem private_key_password{nullptr};    //!< optional password to read private key
         std::vector<ConfigItem> ocsp_response_files; //!< list of OCSP files in certificate chain order
@@ -362,6 +407,9 @@ public:
         ConfigItem service{nullptr}; //!< TLS port number as a string
         int socket{INVALID_SOCKET};  //!< use this specific socket - bypasses socket setup in init_socket() when set
         bool ipv6_only{true};        //!< listen on IPv6 only, when false listen on IPv4 only
+
+        bool tls_key_logging{false};      //!< tls key logging is active when true
+        std::string tls_key_logging_path; //!< tls key logging file path
     };
 
     using ConnectionPtr = std::unique_ptr<ServerConnection>;
@@ -389,6 +437,9 @@ private:
     pthread_t m_server_thread{};                        //!< serve() POSIX threads ID
     static int s_sig_int;                               //!< signal to use to wakeup serve()
     ConfigurationCallback m_init_callback{nullptr};     //!< callback to retrieve SSL configuration
+
+    ConfigItem m_tls_key_interface{nullptr};
+    std::filesystem::path tls_key_log_file_path{};
 
     /**
      * \brief initialise the server socket

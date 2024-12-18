@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.17.1
+  git_tag: v0.19.1
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -17,10 +17,6 @@ sigslot:
   options:
     - "SIGSLOT_COMPILE_EXAMPLES OFF"
     - "SIGSLOT_COMPILE_TESTS OFF"
-libmodbus:
-  git: https://github.com/EVerest/libmodbus.git
-  git_tag: v0.3.1
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBMODBUS"
 pugixml:
   git: https://github.com/zeux/pugixml
   git_tag: v1.12.1
@@ -43,6 +39,17 @@ libfsm:
   git_tag: v0.2.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBFSM"
 
+# libcbv2g
+libcbv2g:
+  git: https://github.com/EVerest/libcbv2g.git
+  git_tag: v0.2.1
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
+# libiso15118
+libiso15118:
+  git: https://github.com/EVerest/libiso15118.git
+  git_tag: v0.3.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
+
 # LEM DCBM 400/600 module
 libcurl:
   git: https://github.com/curl/curl.git
@@ -50,28 +57,23 @@ libcurl:
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCURL"
 
 # EvseSecurity
-# This has to appear before libocpp in this file since it is also a direct dependency of libocpp
-# and would otherwise be overwritten by the version used there
+# This has to appear before libocpp in this file since it is also a direct dependency 
+# of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.8.0
+  git_tag: v0.9.2
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: v0.17.0
+  git_tag: c66383782a32827920af80314165843deed63c98
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
   git: https://github.com/EVerest/ext-switchev-iso15118.git
-  git_tag: 2024.9.0
+  git_tag: 2024.10.0
   cmake_condition: "EVEREST_ENABLE_PY_SUPPORT AND EVEREST_DEPENDENCY_ENABLED_JOSEV"
-# libcbv2g
-libcbv2g:
-  git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.0
-  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # mbedtls
 ext-mbedtls:
   git: https://github.com/EVerest/ext-mbedtls.git
@@ -84,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.3.1
+  git_tag: v0.4.4
 
 # unit testing
 gtest:

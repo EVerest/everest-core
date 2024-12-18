@@ -20,9 +20,10 @@ public:
     virtual void ready() {
     }
 
-    virtual void handle_setup(types::iso15118_charger::EVSEID& evse_id,
-                              std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-                              types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    virtual void
+    handle_setup(types::iso15118_charger::EVSEID& evse_id,
+                 std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
+                 types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
         std::cout << "ISO15118_chargerImplBase::handle_setup called" << std::endl;
     }
     virtual void handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) {

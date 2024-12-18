@@ -52,6 +52,7 @@ namespace module {
 
 struct Conf {
     int connector_id;
+    std::string connector_type;
     std::string evse_id;
     std::string evse_id_din;
     bool payment_enable_eim;
@@ -75,6 +76,7 @@ struct Conf {
     int hack_sleep_in_cable_check_volkswagen;
     int cable_check_wait_number_of_imd_measurements;
     bool cable_check_enable_imd_self_test;
+    bool cable_check_wait_below_60V_before_finish;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
     bool hack_pause_imd_during_precharge;
@@ -99,6 +101,7 @@ struct Conf {
     std::string switch_3ph1ph_cp_state;
     int soft_over_current_timeout_ms;
     bool lock_connector_in_state_b;
+    int state_F_after_fault_ms;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -133,7 +136,8 @@ public:
         r_imd(std::move(r_imd)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
-        config(config){};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     Everest::TelemetryProvider& telemetry;
@@ -171,7 +175,15 @@ public:
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
-    bool reserve(int32_t id);
+
+    ///
+    /// \brief Reserve this evse.
+    /// \param id                       The reservation id.
+    /// \param signal_reservation_event True when other modules must be signalled about a new reservation (session
+    ///                                 event).
+    /// \return True on success.
+    ///
+    bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
@@ -226,11 +238,13 @@ public:
         types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
         evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
+        evse_min_limits.evse_minimum_power_limit =
+            evse_min_limits.evse_minimum_current_limit * evse_min_limits.evse_minimum_voltage_limit;
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
-        // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
-        // so it is enough to set the powersupply_capabilities here.
+        // energy management first. Those limits will be applied in energy_grid implementation when requesting
+        // energy, so it is enough to set the powersupply_capabilities here.
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
 
@@ -289,7 +303,7 @@ private:
 
     types::authorization::ProvidedIdToken autocharge_token;
 
-    void log_v2g_message(Object m);
+    void log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages);
 
     // Reservations
     bool reserved;
@@ -338,6 +352,7 @@ private:
     static constexpr int CABLECHECK_SELFTEST_TIMEOUT{30};
 
     std::atomic_bool current_demand_active{false};
+    std::atomic_bool slac_unmatched{false};
     std::mutex powermeter_mutex;
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};

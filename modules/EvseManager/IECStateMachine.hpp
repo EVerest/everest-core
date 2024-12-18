@@ -46,6 +46,7 @@ enum class CPEvent {
     CarUnplugged,
     EFtoBCD,
     BCDtoEF,
+    BCDtoE,
     EvseReplugStarted,
     EvseReplugFinished,
 };
@@ -125,6 +126,7 @@ private:
 
     RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
+    AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
     void feed_state_machine();
@@ -140,6 +142,9 @@ private:
 
     std::atomic_bool enabled{false};
     std::atomic_bool relais_on{false};
+
+    static constexpr std::chrono::seconds power_off_under_load_in_c1_timeout{6};
+    static constexpr std::chrono::seconds unlock_in_state_f_timeout{5};
 };
 
 } // namespace module

@@ -4,6 +4,8 @@
 #include "ocppImpl.hpp"
 #include "ocpp/v16/messages/ChangeAvailability.hpp"
 
+#include <ocpp_conversions.hpp>
+
 namespace module {
 namespace ocpp_generic {
 
@@ -124,11 +126,7 @@ bool ocppImpl::handle_restart() {
 void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
     std::optional<ocpp::DateTime> timestamp;
     if (event.timestamp.has_value()) {
-        try {
-            timestamp = ocpp::DateTime(event.timestamp.value());
-        } catch (...) {
-            EVLOG_warning << "Timestamp in security event could not be parsed, using current datetime.";
-        }
+        timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
     }
     this->mod->charge_point->on_security_event(event.type, event.info, event.critical, timestamp);
 }

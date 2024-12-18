@@ -26,7 +26,7 @@ cmds:
       type: boolean
   authorize_response:
     description: >-
-      Reports the result of an authorization request to the EvseManager. 
+      Reports the result of an authorization request to the EvseManager.
       Contains the provided_token for which authorization was requested and
       the validation_result
     arguments:
@@ -49,8 +49,9 @@ cmds:
     arguments:
       reservation_id:
         description: >-
-          The reservation id (should be added to the TransactionStarted
-          event)
+          The reservation id (should be added to the TransactionStarted event). Set this to a negative value if there is
+          no specific reservation id for this evse but the evse should still move to a Reserved state because of total
+          global reservations.
         type: integer
     result:
       description: Returns true if the EVSE accepted the reservation, else false.
@@ -101,13 +102,6 @@ cmds:
     result:
       description: Returns true if unlocking sequence was successfully executed
       type: boolean
-  set_external_limits:
-    description: Set additional external energy flow limits at this node.
-    arguments:
-      value:
-        description: UUID of node that this limit applies to
-        type: object
-        $ref: /energy#/ExternalLimits
   set_get_certificate_response:
     description: >-
       CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
@@ -150,6 +144,9 @@ vars:
     description: Measured dataset
     type: object
     $ref: /powermeter#/Powermeter
+  powermeter_public_key_ocmf:
+    description: Powermeter public key
+    type: string
   evse_id:
     description: EVSE ID including the connector number, e.g. DE*PNX*E123456*1
     type: string
@@ -159,7 +156,7 @@ vars:
     $ref: /evse_board_support#/HardwareCapabilities
   iso15118_certificate_request:
     description: >-
-      The vehicle requests the SECC to deliver the certificate that belong 
+      The vehicle requests the SECC to deliver the certificate that belong
       to the currently valid contract of the vehicle.
       Response will be reported async via set_get_certificate_response
     type: object

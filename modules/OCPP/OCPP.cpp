@@ -1,23 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2022 Pionix GmbH and Contributors to EVerest
 #include "OCPP.hpp"
+
+#include <fstream>
+#include <optional>
+#include <sstream>
+#include <string>
+
 #include "generated/types/ocpp.hpp"
 #include "ocpp/common/types.hpp"
 #include "ocpp/v16/types.hpp"
 #include <fmt/core.h>
-#include <fstream>
 #include <ocpp_conversions.hpp>
 
 #include <conversions.hpp>
 #include <error_mapping.hpp>
 #include <evse_security_ocpp.hpp>
-#include <optional>
+#include <external_energy_limits.hpp>
 
 namespace module {
 
 const std::string CERTS_SUB_DIR = "certs";
 const std::string SQL_CORE_MIGRTATIONS = "core_migrations";
 const std::string INOPERATIVE_ERROR_TYPE = "evse_manager/Inoperative";
+const std::string SWITCHING_PHASES_REASON = "SwitchingPhases";
 
 namespace fs = std::filesystem;
 
@@ -46,16 +52,44 @@ static ocpp::v16::ErrorInfo get_error_info(const Everest::error::Error& error) {
                                     "EVerest", "caused_by:" + error.message};
     }
 
-    // check if is VendorError
-    if (error_type.find("VendorError") != std::string::npos) {
-        return ocpp::v16::ErrorInfo{
-            uuid,          ocpp::v16::ChargePointErrorCode::OtherError, false, error.message, error.origin.to_string(),
-            error.sub_type};
-    }
+    const auto get_simplified_error_type = [](const std::string& error_type) {
+        // this function should return everything after the first '/'
+        // delimiter - if there is no delimiter or the delimiter is at
+        // the end, it should return the input itself
+        static constexpr auto TYPE_INTERFACE_DELIMITER = '/';
 
-    // Default case
-    return ocpp::v16::ErrorInfo{
-        uuid, ocpp::v16::ChargePointErrorCode::InternalError, false, error.description, std::nullopt, error_type};
+        auto input = std::istringstream(error_type);
+        std::string tmp;
+
+        // move right after the first delimiter
+        std::getline(input, tmp, TYPE_INTERFACE_DELIMITER);
+
+        if (!input) {
+            // no delimiter found or delimiter at the end
+            return error_type;
+        }
+
+        // get the rest of the input
+        std::getline(input, tmp);
+
+        return tmp;
+    };
+
+    const auto is_fault = [](const Everest::error::Error&) {
+        // NOTE (aw): this could be customized, depending on the error
+        return false;
+    };
+
+    static constexpr auto TYPE_DELIMITER = '/';
+
+    return {
+        uuid,
+        ocpp::v16::ChargePointErrorCode::OtherError,
+        is_fault(error),
+        error.origin.to_string(),                                                // info
+        error.message,                                                           // vendor id
+        get_simplified_error_type(error.type) + TYPE_DELIMITER + error.sub_type, // vendor error code
+    };
 }
 
 void create_empty_user_config(const fs::path& user_config_path) {
@@ -76,6 +110,13 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
     // iterate over all schedules reported by the libocpp to create ExternalLimits
     // for each connector
     for (auto const& [connector_id, schedule] : charging_schedules) {
+
+        if (not external_energy_limits::is_evse_sink_configured(this->r_evse_energy_sink, connector_id)) {
+            EVLOG_warning << "Can not apply external limits! No evse energy sink configured for evse_id: "
+                          << connector_id;
+            continue;
+        }
+
         types::energy::ExternalLimits limits;
         std::vector<types::energy::ScheduleReqEntry> schedule_import;
         for (const auto period : schedule.chargingSchedulePeriod) {
@@ -83,11 +124,11 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             types::energy::LimitsReq limits_req;
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
+            if (period.numberPhases.has_value()) {
+                limits_req.ac_max_phase_count = period.numberPhases.value();
+            }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
                 limits_req.ac_max_current_A = period.limit;
-                if (period.numberPhases.has_value()) {
-                    limits_req.ac_max_phase_count = period.numberPhases.value();
-                }
                 if (schedule.minChargingRate.has_value()) {
                     limits_req.ac_min_current_A = schedule.minChargingRate.value();
                 }
@@ -98,19 +139,8 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             schedule_import.push_back(schedule_req_entry);
         }
         limits.schedule_import.emplace(schedule_import);
-
-        if (connector_id == 0) {
-            if (!this->r_connector_zero_sink.empty()) {
-                EVLOG_debug << "OCPP sets the following external limits for connector 0: \n" << limits;
-                this->r_connector_zero_sink.at(0)->call_set_external_limits(limits);
-            } else {
-                EVLOG_debug << "OCPP cannot set external limits for connector 0. No "
-                               "sink is configured.";
-            }
-        } else {
-            EVLOG_debug << "OCPP sets the following external limits for connector " << connector_id << ": \n" << limits;
-            this->r_evse_manager.at(connector_id - 1)->call_set_external_limits(limits);
-        }
+        auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
+        evse_sink.call_set_external_limits(limits);
     }
 }
 
@@ -141,7 +171,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                    << "Received TransactionStarted";
         const auto transaction_started = session_event.transaction_started.value();
 
-        const auto timestamp = ocpp::DateTime(session_event.timestamp);
+        const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
         const auto energy_Wh_import = transaction_started.meter_value.energy_Wh_import.total;
         const auto session_id = session_event.uuid;
         const auto id_token = transaction_started.id_tag.id_token.value;
@@ -167,6 +197,10 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
                     << "Received ChargingPausedEVSE";
         this->charge_point->on_suspend_charging_evse(ocpp_connector_id);
+    } else if (session_event.event == types::evse_manager::SessionEventEnum::SwitchingPhases) {
+        EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
+                    << "Received SwitchingPhases";
+        this->charge_point->on_suspend_charging_evse(ocpp_connector_id, SWITCHING_PHASES_REASON);
     } else if (session_event.event == types::evse_manager::SessionEventEnum::ChargingStarted ||
                session_event.event == types::evse_manager::SessionEventEnum::ChargingResumed) {
         EVLOG_debug << "Connector#" << ocpp_connector_id << ": "
@@ -177,7 +211,7 @@ void OCPP::process_session_event(int32_t evse_id, const types::evse_manager::Ses
                     << "Received TransactionFinished";
 
         const auto transaction_finished = session_event.transaction_finished.value();
-        const auto timestamp = ocpp::DateTime(session_event.timestamp);
+        const auto timestamp = ocpp_conversions::to_ocpp_datetime_or_now(session_event.timestamp);
         const auto energy_Wh_import = transaction_finished.meter_value.energy_Wh_import.total;
         const auto signed_meter_value = transaction_finished.signed_meter_value;
 
@@ -230,6 +264,9 @@ void OCPP::init_evse_subscriptions() {
             if (this->evse_soc_map[evse_id].has_value()) {
                 // soc is present, so add this to the measurement
                 measurement.soc_Percent = ocpp::StateOfCharge{this->evse_soc_map[evse_id].value()};
+            }
+            if (powermeter.temperatures.has_value()) {
+                measurement.temperature_C = conversions::to_ocpp_temperatures(powermeter.temperatures.value());
             }
             this->charge_point->on_meter_values(evse_id, measurement);
         });
@@ -325,12 +362,32 @@ bool OCPP::all_evse_ready() {
     return true;
 }
 
+ocpp::v16::ChargingRateUnit get_unit_or_default(const std::string& unit_string) {
+    try {
+        return ocpp::v16::conversions::string_to_charging_rate_unit(unit_string);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << "RequestCompositeScheduleUnit configured incorrectly with: " << unit_string
+                      << ". Defaulting to using Amps.";
+        return ocpp::v16::ChargingRateUnit::A;
+    }
+}
+
 void OCPP::init() {
     invoke_init(*p_main);
     invoke_init(*p_ocpp_generic);
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
+
+    // ensure all evse_energy_sink(s) that are connected have an evse id mapping
+    for (const auto& evse_sink : this->r_evse_energy_sink) {
+        if (not evse_sink->get_mapping().has_value()) {
+            EVLOG_critical << "Please configure an evse mapping your configuration file for the connected "
+                              "r_evse_energy_sink with module_id: "
+                           << evse_sink->module_id;
+            throw std::runtime_error("At least one connected evse_energy_sink misses a mapping to an evse.");
+        }
+    }
 
     const auto error_handler = [this](const Everest::error::Error& error) {
         const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
@@ -497,10 +554,18 @@ void OCPP::ready() {
         reservation.id_token = idTag.get();
         reservation.reservation_id = reservation_id;
         reservation.expiry_time = expiryDate.to_rfc3339();
+
         if (parent_id) {
             reservation.parent_id_token.emplace(parent_id.value().get());
         }
-        auto response = this->r_reservation->call_reserve_now(connector, reservation);
+
+        if (connector == 0) {
+            reservation.evse_id = std::nullopt;
+        } else {
+            reservation.evse_id = connector;
+        }
+
+        auto response = this->r_reservation->call_reserve_now(reservation);
         return conversions::to_ocpp_reservation_status(response);
     });
 
@@ -577,10 +642,7 @@ void OCPP::ready() {
         firmware_update_request.location = msg.firmware.location;
         firmware_update_request.signature.emplace(msg.firmware.signature.get());
         firmware_update_request.signing_certificate.emplace(msg.firmware.signingCertificate.get());
-
-        if (msg.firmware.retrieveDateTime.has_value()) {
-            firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.value().to_rfc3339());
-        }
+        firmware_update_request.retrieve_timestamp.emplace(msg.firmware.retrieveDateTime.to_rfc3339());
 
         if (msg.firmware.installDateTime.has_value()) {
             firmware_update_request.install_timestamp.emplace(msg.firmware.installDateTime.value());
@@ -664,15 +726,29 @@ void OCPP::ready() {
                              [this](const std::string& data) { this->charge_point->disconnect_websocket(); });
     }
 
+    this->charge_point->register_is_token_reserved_for_connector_callback(
+        [this](const int32_t connector, const std::string& id_token) -> ocpp::ReservationCheckStatus {
+            types::reservation::ReservationCheck reservation_check_request;
+            reservation_check_request.evse_id = connector;
+            reservation_check_request.id_token = id_token;
+
+            types::reservation::ReservationCheckStatus status =
+                this->r_reservation->call_exists_reservation(reservation_check_request);
+
+            return ocpp_conversions::to_ocpp_reservation_check_status(status);
+        });
+
+    const auto composite_schedule_unit = get_unit_or_default(this->config.RequestCompositeScheduleUnit);
+
     // publish charging schedules at least once on startup
     const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-        this->config.PublishChargingScheduleDurationS);
+        this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
     this->set_external_limits(charging_schedules);
     this->publish_charging_schedules(charging_schedules);
 
-    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this]() {
+    this->charging_schedules_timer = std::make_unique<Everest::SteadyTimer>([this, composite_schedule_unit]() {
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });
@@ -680,12 +756,12 @@ void OCPP::ready() {
         this->charging_schedules_timer->interval(std::chrono::seconds(this->config.PublishChargingScheduleIntervalS));
     }
 
-    this->charge_point->register_signal_set_charging_profiles_callback([this]() {
+    this->charge_point->register_signal_set_charging_profiles_callback([this, composite_schedule_unit]() {
         // this is executed when CSMS sends new ChargingProfile that is accepted by
         // the ChargePoint
         EVLOG_info << "Received new Charging Schedules from CSMS";
         const auto charging_schedules = this->charge_point->get_all_enhanced_composite_charging_schedules(
-            this->config.PublishChargingScheduleDurationS);
+            this->config.PublishChargingScheduleDurationS, composite_schedule_unit);
         this->set_external_limits(charging_schedules);
         this->publish_charging_schedules(charging_schedules);
     });
@@ -708,8 +784,12 @@ void OCPP::ready() {
                const ocpp::v201::CertificateActionEnum& certificate_action) {
             types::iso15118_charger::ResponseExiStreamStatus response;
             response.status = conversions::to_everest_iso15118_charger_status(certificate_response.status);
-            response.exi_response.emplace(certificate_response.exiResponse.get());
             response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
+            if (not certificate_response.exiResponse.get().empty()) {
+                // since exi_response is an optional in the EVerest type we only set it when not empty
+                response.exi_response.emplace(certificate_response.exiResponse.get());
+            }
+
             this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
                 ->call_set_get_certificate_response(response);
         });
@@ -724,25 +804,32 @@ void OCPP::ready() {
 
     this->charge_point->register_transaction_started_callback(
         [this](const int32_t connector, const std::string& session_id) {
-            types::ocpp::OcppTransactionEvent tevent = {
-                types::ocpp::TransactionEvent::Started, connector, 1, session_id, std::nullopt,
-            };
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Started;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_updated_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id,
                const ocpp::v16::IdTagInfo& id_tag_info) {
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Updated, connector, 1,
-                                                        session_id, std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Updated;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 
     this->charge_point->register_transaction_stopped_callback(
         [this](const int32_t connector, const std::string& session_id, const int32_t transaction_id) {
             EVLOG_info << "Transaction stopped at connector: " << connector << "session_id: " << session_id;
-            types::ocpp::OcppTransactionEvent tevent = {types::ocpp::TransactionEvent::Ended, connector, 1, session_id,
-                                                        std::to_string(transaction_id)};
+            types::ocpp::OcppTransactionEvent tevent;
+            tevent.transaction_event = types::ocpp::TransactionEvent::Ended;
+            tevent.evse = {connector, 1};
+            tevent.session_id = session_id;
+            tevent.transaction_id = std::to_string(transaction_id);
             p_ocpp_generic->publish_ocpp_transaction_event(tevent);
         });
 

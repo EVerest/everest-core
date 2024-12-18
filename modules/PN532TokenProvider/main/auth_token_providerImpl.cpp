@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2022 - 2022 Pionix GmbH and Contributors to EVerest
+// Copyright Pionix GmbH and Contributors to EVerest
 
 #include "auth_token_providerImpl.hpp"
+
+#include <everest/staging/helpers/helpers.hpp>
+
+#include <fmt/core.h>
 
 namespace module {
 namespace main {
@@ -13,8 +17,13 @@ void auth_token_providerImpl::init() {
         EVLOG_info << "Serial port: " << config.serial_port << " baud rate: " << config.baud_rate;
     }
     if (!serial.openDevice(config.serial_port.c_str(), config.baud_rate)) {
-        EVLOG_AND_THROW(EVEXCEPTION(Everest::EverestConfigError, "Could not open serial port ", config.serial_port,
-                                    " with baud rate ", config.baud_rate));
+        if (!this->error_state_monitor->is_error_active("generic/CommunicationFault", "Communication timed out")) {
+            auto error_message =
+                fmt::format("Could not open serial port {} with baud rate {}", config.serial_port, config.baud_rate);
+            auto error = this->error_factory->create_error("generic/CommunicationFault", "Communication timed out",
+                                                           error_message);
+            raise_error(error);
+        }
         return;
     }
 }
@@ -63,7 +72,8 @@ void auth_token_providerImpl::ready() {
                 provided_token.id_token = {entry.getNFCID(), types::authorization::IdTokenType::ISO14443};
                 provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                 if (config.debug) {
-                    EVLOG_info << "Publishing new rfid/nfc token: " << provided_token;
+                    EVLOG_info << "Publishing new rfid/nfc token: "
+                               << everest::staging::helpers::redact(provided_token);
                 }
                 this->publish_provided_token(provided_token);
             }

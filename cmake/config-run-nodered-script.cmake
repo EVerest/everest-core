@@ -32,9 +32,6 @@ function(generate_nodered_run_script)
         set(SCRIPT_OUTPUT_FILE "${SCRIPT_OUTPUT_PATH}/nodered-${OPTNS_OUTPUT}.sh")
     endif()
 
-    # other necessary variables
-    set(EVEREST_DOCKER_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/everest/docker")
-
     configure_file("${EVEREST_CONFIG_ASSET_DIR}/run_nodered_template.sh.in" ${SCRIPT_OUTPUT_FILE})
 
 endfunction()

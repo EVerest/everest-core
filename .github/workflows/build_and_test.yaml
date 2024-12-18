@@ -14,196 +14,109 @@ on:
   schedule:
     - cron: '37 13,1 * * *'
 
-env:
-  DOCKER_REGISTRY: ghcr.io
-  EVEREST_CI_VERSION: v1.3.1
-
 jobs:
-  lint:
-    name: Lint
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
-    steps:
-      - name: Checkout everest-core
-        uses: actions/checkout@v4.1.6
-        with:
-          path: source
-      - name: Run clang-format
-        uses: everest/everest-ci/github-actions/run-clang-format@v1.3.1
-        with:
-          source-dir: source
-          extensions: hpp,cpp
-          exclude: cache
-
-  # Since env variables can't be passed to reusable workflows, we need to pass them as outputs
-  setup-env:
-    # This job is currently disabled to allow running ci on PRs from forks
-    if: false
-    name: Setup Environment
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
-    outputs:
-      docker_registry: ${{ env.DOCKER_REGISTRY }}
-      everest_ci_version: ${{ env.EVEREST_CI_VERSION }}
-    steps:
-      - id: check
-        run: |
-          echo "Setting up environment"
-  build-and-push-build-kit:
-    # This job is currently disabled to allow running ci on PRs from forks
-    if: false
-    name: Build and Push Build Kit
-    uses: everest/everest-ci/.github/workflows/deploy-single-docker-image.yml@v1.3.1
-    needs: setup-env
+  ci:
+    name: Build, Lint and Test
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.2
+    permissions:
+      contents: read
     secrets:
-      SA_GITHUB_PAT: ${{ secrets.SA_GITHUB_PAT }}
-      SA_GITHUB_USERNAME: ${{ secrets.SA_GITHUB_USERNAME }}
+      coverage_deploy_token: ${{ secrets.SA_GITHUB_PAT }}
     with:
-      image_name: ${{ github.event.repository.name }}/build-kit-everest-core
-      directory: .ci/build-kit/docker
-      docker_registry: ${{ needs.setup-env.outputs.docker_registry }}
-      github_ref_before: ${{ github.event.before }}
-      github_ref_after: ${{ github.event.after }}
-      platforms: linux/amd64
-      depends_on_paths: |
-        .ci/build-kit
-        .github/workflows/build_and_test.yaml
-      build_args: |
-        BASE_IMAGE_TAG=${{ needs.setup-env.outputs.everest_ci_version }}
-
-  build:
-    name: Build and Unit Tests
-    # needs: build-and-push-build-kit
-    runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
-    env:
-      # Currently the build-kit-base image is used to allow running ci on PRs from forks
-      # BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
-      BUILD_KIT_IMAGE: ghcr.io/everest/everest-ci/build-kit-base:v1.3.1
-    steps:
-      - name: Format branch name for cache key
-        run: |
-          BRANCH_NAME_FOR_CACHE="${GITHUB_REF_NAME//-/_}"
-          echo "branch_name_for_cache=${BRANCH_NAME_FOR_CACHE}" >> "$GITHUB_ENV"
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: cache
-          key: compile-${{ env.branch_name_for_cache }}-${{ github.sha }}
-          restore-keys: |
-            compile-${{ env.branch_name_for_cache }}-
-            compile-
-      - name: Checkout everest-core
-        uses: actions/checkout@v4.1.6
-        with:
-          path: source
-      - name: Setup run scripts
-        run: |
-          mkdir scripts
-          rsync -a source/.ci/build-kit/scripts/ scripts
-      - name: Pull build-kit image
-        run: |
-          docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
-          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
-      - name: Compile
-        run: |
-          docker run \
-          --volume "$(pwd):/ext" \
-          --name compile-container \
-          build-kit run-script compile
-      - name: Commit compile-container
-        run: |
-          docker commit compile-container build-image
-      - name: Run unit tests
-        run: |
-          docker run \
-          --volume "$(pwd):/ext" \
-          --name unit-tests-container \
-          build-image run-script run_unit_tests
-      - name: Create dist
-        run: |
-          docker run \
-          --volume "$(pwd):/ext" \
-          --name install-container \
-          build-image run-script install
-      - name: Tar dist dir and keep permissions
-        run: |
-          tar -czf dist.tar.gz dist
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4.3.3
-        with:
-          path: dist.tar.gz
-          name: dist
-      - name: Upload wheels artifact
-        uses: actions/upload-artifact@v4.3.3
-        with:
-          path: dist-wheels
-          name: wheels
-      - name: Archive unit test results
-        if: always()
-        uses: actions/upload-artifact@v4.3.3
-        with:
-          name: ctest-report
-          path: ${{ github.workspace }}/ctest-report
-  integration-tests:
-    name: Integration Tests
+      runner: ${{ inputs.runner || 'ubuntu-22.04' }}
+      artifact_deploy_target_repo: EVerest/everest.github.io
+      run_coverage: false
+      do_not_run_coverage_badge_creation: true
+      run_install_wheels: true
+      run_integration_tests: true
+  ocpp-tests:
+    name: OCPP Tests
     needs:
-      - build
-      # - build-and-push-build-kit
-    env:
-      # Currently the build-kit-base image is used to allow running ci on PRs from forks
-      # BUILD_KIT_IMAGE: ${{ needs.build-and-push-build-kit.outputs.one_image_tag_long }}
-      BUILD_KIT_IMAGE: ghcr.io/everest/everest-ci/build-kit-base:v1.3.1
+      - ci
     runs-on: ${{ inputs.runner || 'ubuntu-22.04' }}
     steps:
       - name: Download dist dir
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4.1.8
         with:
           name: dist
       - name: Extract dist.tar.gz
         run: |
           tar -xzf ${{ github.workspace }}/dist.tar.gz -C ${{ github.workspace }}
       - name: Download wheels
-        uses: actions/download-artifact@v4.1.7
+        # if: ${{ inputs.run_install_wheels == 'true' }}
+        uses: actions/download-artifact@v4.1.8
         with:
           name: wheels
           path: wheels
-      - name: Checkout everest-core
-        uses: actions/checkout@v4.1.6
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
         with:
           path: source
       - name: Setup run scripts
         run: |
           mkdir scripts
           rsync -a source/.ci/build-kit/scripts/ scripts
-      - name: Pull build-kit image
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.BUILD_KIT_IMAGE_NAME }}
+      - name: Set output tag
+        id: buildkit_tag
+        shell: python3 {0}
         run: |
-          docker pull --quiet ${{ env.BUILD_KIT_IMAGE }}
-          docker image tag ${{ env.BUILD_KIT_IMAGE }} build-kit
+          import os
+          tags = "${{ steps.meta.outputs.tags }}".split(",")
+          if len(tags) == 0:
+            print("No tags found!❌")
+            exit(1)
+          tag = f"local/build-kit-everest-core:{tags[0]}"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"tag={tag}\n")
+            print(f"Set tag={tag}")
+      - name: Download build-kit image
+        uses: actions/download-artifact@v4
+        with:
+          name: build-kit
+      - name: Load build-kit image
+        run: |
+          docker load -i build-kit.tar
+          docker image tag ${{ steps.buildkit_tag.outputs.tag }} build-kit
       - name: Create integration-image
         run: |
           docker run \
-          --volume "$(pwd):/ext" \
-          --name prepare-container \
-          build-kit run-script prepare_integration_tests
-          docker commit prepare-container integration-image
-      - name: Run integration tests
+          --volume "${{ github.workspace }}:/ext" \
+          --name integration-container \
+          build-kit run-script create_ocpp_tests_image
+          docker commit integration-container integration-image
+      - name: Run OCPP tests
+        id: run_ocpp_tests
+        continue-on-error: true
         run: |
-          pushd source/.ci/e2e
-          docker compose run \
+          docker compose \
+          -f source/.ci/e2e/docker-compose.yaml \
+          run \
           e2e-test-server \
-          run-script run_integration_tests
-      - name: Upload result & report as artifact
-        if: always()
-        uses: actions/upload-artifact@v4.3.3
+          run-script run_ocpp_tests
+      - name: Upload result and report as artifact
+        continue-on-error: true
+        if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4.4.3
         with:
+          if-no-files-found: error
+          name: ocpp-tests-report
           path: |
-            ${{ github.workspace }}/result.xml
-            ${{ github.workspace }}/report.html
-          name: pytest-results
-      - name: Render result
-        if: always()
-        uses: pmeier/pytest-results-action@v0.6.0
+            ocpp-tests-result.xml
+            ocpp-tests-report.html
+      - name: Render OCPP tests result
+        if: ${{ steps.run_ocpp_tests.outcome == 'success' || steps.run_ocpp_tests.outcome == 'failure' }}
+        uses: pmeier/pytest-results-action@v0.7.1
         with:
-          path: ${{ github.workspace }}/result.xml
+          path: ocpp-tests-result.xml
           summary: True
           display-options: fEX
           fail-on-empty: True
           title: Test results
+      - name: Check if OCPP tests failed
+        if: ${{ steps.run_ocpp_tests.outcome == 'failure' }}
+        run: exit 1

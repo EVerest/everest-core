@@ -68,7 +68,7 @@ void ISO15118_chargerImpl::ready() {
 
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
+    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
     types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     uint8_t len = evse_id.evse_id.length();
@@ -89,9 +89,14 @@ void ISO15118_chargerImpl::handle_setup(
 
         v2g_ctx->is_dc_charger = true;
 
-        for (auto& energy_transfer_mode : supported_energy_transfer_modes) {
+        for (const auto& mode : supported_energy_transfer_modes) {
 
-            switch (energy_transfer_mode) {
+            if (mode.bidirectional) {
+                dlog(DLOG_LEVEL_INFO, "Ignoring bidirectional SupportedEnergyTransferMode");
+                continue;
+            }
+
+            switch (mode.energy_transfer_mode) {
             case types::iso15118_charger::EnergyTransferMode::AC_single_phase_core:
                 energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_single_phase_core;
                 v2g_ctx->is_dc_charger = false;
@@ -116,7 +121,7 @@ void ISO15118_chargerImpl::handle_setup(
                 if (energyArrayLen == 0) {
 
                     dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
-                         types::iso15118_charger::energy_transfer_mode_to_string(energy_transfer_mode).c_str());
+                         types::iso15118_charger::energy_transfer_mode_to_string(mode.energy_transfer_mode).c_str());
                 }
                 break;
             }
@@ -208,7 +213,7 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
 void ISO15118_chargerImpl::handle_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
-    if (exi_stream_status.exi_response.has_value()) {
+    if (exi_stream_status.exi_response.has_value() and not exi_stream_status.exi_response.value().empty()) {
         v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(exi_stream_status.exi_response.value());
     }
     v2g_ctx->evse_v2g_data.cert_install_status =

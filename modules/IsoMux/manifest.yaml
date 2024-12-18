@@ -1,0 +1,58 @@
+description: >-
+  This module is a multiplexer to support switching over between different ISO module implementations
+config:
+  device:
+    description: >-
+      Ethernet device used for HLC. Any local interface that has an ipv6
+      link-local and a MAC addr will work
+    type: string
+    default: eth0
+  tls_security:
+    description: >-
+      Controls how to handle encrypted communication
+    type: string
+    enum:
+    - prohibit
+    - allow
+    - force
+    default: prohibit
+  tls_key_logging:
+    description: >-
+      Enable/Disable the export of TLS session keys (pre-master-secret)
+      during a TLS handshake. This log file can be used to decrypt TLS
+      sessions. Note that this option is for testing and simulation
+      purpose only
+    type: boolean
+    default: false
+  tls_timeout:
+    description: >-
+      Set the TLS timeout in ms when establishing a tls connection 
+    type: integer
+    default: 15000
+  proxy_port_iso2:
+    description: >-
+      TCP port of the local ISO2 instance
+    type: integer
+    default: 61341
+  proxy_port_iso20:
+    description: >-
+      TCP port of the local ISO20 instance
+    type: integer
+    default: 50000
+provides:
+  charger:
+    interface: ISO15118_charger
+    description: >-
+      This module implements the ISO15118-2 implementation of
+      an AC or DC charger
+requires:
+  security:
+    interface: evse_security
+  iso2:
+    interface: ISO15118_charger
+  iso20:
+    interface: ISO15118_charger
+metadata:
+  license: https://opensource.org/licenses/Apache-2.0
+  authors:
+  - Cornelius Claussen

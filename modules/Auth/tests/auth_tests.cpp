@@ -13,8 +13,11 @@
 
 using ::testing::_;
 using ::testing::Field;
+using ::testing::Invoke;
 using ::testing::MockFunction;
 using ::testing::StrictMock;
+
+class kvsIntf;
 
 namespace types {
 namespace authorization {
@@ -84,8 +87,9 @@ protected:
         std::vector<int32_t> evse_indices{0, 1};
         this->auth_receiver = std::make_unique<FakeAuthReceiver>(evse_indices);
 
-        this->auth_handler =
-            std::make_unique<AuthHandler>(SelectionAlgorithm::PlugEvents, CONNECTION_TIMEOUT, false, false);
+        const std::string id = "auth_handler_test_id";
+        this->auth_handler = std::make_unique<AuthHandler>(SelectionAlgorithm::PlugEvents, CONNECTION_TIMEOUT, false,
+                                                           false, id, nullptr);
 
         this->auth_handler->register_notify_evse_callback([this](const int evse_index,
                                                                  const ProvidedIdToken& provided_token,
@@ -132,15 +136,20 @@ protected:
             return validation_results;
         });
 
-        this->auth_handler->register_reservation_cancelled_callback([this](const int32_t evse_index) {
-            EVLOG_info << "Signaling reservating cancelled to evse#" << evse_index;
-        });
+        this->auth_handler->register_reservation_cancelled_callback(
+            [](const std::optional<int32_t> evse_index, const int32_t reservation_id, const ReservationEndReason reason,
+               const bool send_reservation_update) {
+                EVLOG_info << "Signaling reservating cancelled to evse#"
+                           << (evse_index.has_value() ? evse_index.value() : 0);
+            });
 
         this->auth_handler->register_publish_token_validation_status_callback(
             mock_publish_token_validation_status_callback.AsStdFunction());
 
-        this->auth_handler->init_connector(1, 0);
-        this->auth_handler->init_connector(2, 1);
+        this->auth_handler->init_evse(1, 0, {Connector(1, types::evse_manager::ConnectorTypeEnum::cCCS2)});
+        this->auth_handler->init_evse(2, 1,
+                                      {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2),
+                                       Connector(2, types::evse_manager::ConnectorTypeEnum::cCCS2)});
     }
 
     void TearDown() override {
@@ -188,6 +197,145 @@ TEST_F(AuthTest, test_two_referenced_connectors) {
     ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(1));
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+}
+
+/// \brief Test if connector that triggered a SessionStarted event receives authorization when two connectors are
+/// referenced in the provided token
+TEST_F(AuthTest, test_multiple_referenced_connectors) {
+
+    this->auth_handler->init_evse(3, 2, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_receiver->add_evse_index(2);
+
+    std::vector<int32_t> connectors1{1, 2};
+    ProvidedIdToken provided_token1 = get_provided_token(VALID_TOKEN_1, connectors1);
+
+    std::vector<int32_t> connectors2 = {3};
+    ProvidedIdToken provided_token2 = get_provided_token(VALID_TOKEN_2, connectors2);
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool processing_called = false;
+
+    // Set up expectations for mock_publish_token_validation_status_callback
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Processing))
+        .WillOnce(Invoke([&]() {
+            std::unique_lock<std::mutex> lock(mtx);
+            processing_called = true;
+            cv.notify_all();
+        }));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Accepted));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::TimedOut));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Accepted));
+
+    TokenHandlingResult result1;
+    std::thread t1([this, &result1, provided_token1] { result1 = this->auth_handler->on_token(provided_token1); });
+
+    // Wait for TokenValidationStatus::Processing to be triggered for t1 before starting t2
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [&]() { return processing_called; });
+    }
+
+    TokenHandlingResult result2;
+    std::thread t2([this, &result2, provided_token2] { result2 = this->auth_handler->on_token(provided_token2); });
+
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(3, session_event);
+
+    t2.join();
+
+    ASSERT_TRUE(result2 == TokenHandlingResult::ACCEPTED);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_TRUE(this->auth_receiver->get_authorization(2));
+
+    SessionEvent session_event2 = get_transaction_started_event(provided_token2);
+    this->auth_handler->handle_session_event(3, session_event2);
+
+    t1.join();
+    ASSERT_TRUE(result1 == TokenHandlingResult::TIMEOUT);
+}
+
+/// \brief Test three authorization requests for different referenced EVSEs with only one EV plugin. Two requests should
+/// timeout, one should receive authorization
+TEST_F(AuthTest, test_multiple_authorization_requests) {
+    std::vector<int32_t> connectors1{1, 2};
+    std::vector<int32_t> connectors2{3, 4};
+    std::vector<int32_t> connectors3{5, 6};
+
+    this->auth_handler->init_evse(3, 2, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_handler->init_evse(4, 3, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_handler->init_evse(5, 4, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_handler->init_evse(6, 5, {Connector(1, types::evse_manager::ConnectorTypeEnum::sType2)});
+    this->auth_receiver->add_evse_index(2);
+    this->auth_receiver->add_evse_index(3);
+    this->auth_receiver->add_evse_index(4);
+    this->auth_receiver->add_evse_index(5);
+
+    ProvidedIdToken provided_token1 = get_provided_token(VALID_TOKEN_1, connectors1);
+    ProvidedIdToken provided_token2 = get_provided_token(VALID_TOKEN_2, connectors2);
+    ProvidedIdToken provided_token3 = get_provided_token(VALID_TOKEN_3, connectors3);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token1.id_token), TokenValidationStatus::TimedOut));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token2.id_token), TokenValidationStatus::TimedOut));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token3.id_token), TokenValidationStatus::TimedOut))
+        .Times(0);
+
+    TokenHandlingResult result1;
+    TokenHandlingResult result2;
+    TokenHandlingResult result3;
+
+    std::thread t1([this, provided_token1, &result1]() { result1 = this->auth_handler->on_token(provided_token1); });
+    std::thread t2([this, provided_token2, &result2]() { result2 = this->auth_handler->on_token(provided_token2); });
+    std::thread t3([this, provided_token3, &result3]() { result3 = this->auth_handler->on_token(provided_token3); });
+
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(6, session_event);
+
+    t3.join();
+
+    SessionEvent transaction_started_event = get_transaction_started_event(provided_token3);
+    this->auth_handler->handle_session_event(6, transaction_started_event);
+
+    ASSERT_TRUE(this->auth_receiver->get_authorization(5));
+    ASSERT_TRUE(result3 == TokenHandlingResult::ACCEPTED);
+
+    t1.join();
+    t2.join();
+
+    ASSERT_TRUE(result1 == TokenHandlingResult::TIMEOUT);
+    ASSERT_TRUE(result2 == TokenHandlingResult::TIMEOUT);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(2));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(3));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(4));
 }
 
 /// \brief Test if a transaction is stopped when an id_token is swiped twice
@@ -458,15 +606,16 @@ TEST_F(AuthTest, test_two_plugins_with_invalid_rfid) {
 
 /// \brief Test if state permanent fault leads to not provide authorization
 TEST_F(AuthTest, test_faulted_state) {
-
     TokenHandlingResult result1;
     TokenHandlingResult result2;
 
-    std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1); });
-    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
+    std::thread t1([this]() { this->auth_handler->handle_permanent_fault_raised(1, 1); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2, 1); });
+    std::thread t3([this]() { this->auth_handler->handle_permanent_fault_raised(2, 2); });
 
     t1.join();
     t2.join();
+    t3.join();
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
@@ -482,11 +631,11 @@ TEST_F(AuthTest, test_faulted_state) {
     EXPECT_CALL(mock_publish_token_validation_status_callback,
                 Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Rejected));
 
-    std::thread t3([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
-    std::thread t4([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
+    std::thread t4([this, provided_token_1, &result1]() { result1 = this->auth_handler->on_token(provided_token_1); });
+    std::thread t5([this, provided_token_2, &result2]() { result2 = this->auth_handler->on_token(provided_token_2); });
 
-    t3.join();
     t4.join();
+    t5.join();
 
     ASSERT_TRUE(result1 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
     ASSERT_TRUE(result2 == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
@@ -662,7 +811,10 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     SessionEvent session_event_1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
 
     std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(1, session_event_1); });
-    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(2); });
+    std::thread t2([this]() {
+        this->auth_handler->handle_permanent_fault_raised(2, 1);
+        this->auth_handler->handle_permanent_fault_raised(2, 2);
+    });
 
     std::vector<int32_t> connectors{1, 2};
     ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
@@ -705,14 +857,70 @@ TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector) {
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
+/// \brief Test if transaction doesnt finish with parent_id when prioritize_authorization_over_stopping_transaction is
+/// true. Instead: Authorization should be given to connector#2
+TEST_F(AuthTest, test_parent_id_finish_because_no_available_connector_2) {
+    // Same test as above, but now the other evse is set to faulted.
+    TokenHandlingResult result;
+
+    this->auth_handler->set_prioritize_authorization_over_stopping_transaction(true);
+
+    SessionEvent session_event_1 = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+    std::thread t2([this]() { this->auth_handler->handle_permanent_fault_raised(1, 1); });
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+    ProvidedIdToken provided_token_2 = get_provided_token(VALID_TOKEN_3, connectors);
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_2.id_token), TokenValidationStatus::Accepted));
+
+    // swipe VALID_TOKEN_1
+    std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
+
+    t1.join();
+    t2.join();
+    t3.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+
+    SessionEvent session_event_3 = get_transaction_started_event(provided_token_1);
+    std::thread t4([this, session_event_3]() { this->auth_handler->handle_session_event(2, session_event_3); });
+
+    t4.join();
+
+    ASSERT_TRUE(this->auth_receiver->get_authorization(1));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+
+    // swipe VALID_TOKEN_3. This does finish transaction because no connector is available
+    std::thread t5([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
+
+    t5.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::USED_TO_STOP_TRANSACTION);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
 /// \brief Test if a reservation can be placed
 TEST_F(AuthTest, test_reservation) {
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() + std::chrono::hours(1)));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 }
@@ -720,11 +928,13 @@ TEST_F(AuthTest, test_reservation) {
 /// \brief Test if a reservation cannot be placed if expiry_time is in the past
 TEST_F(AuthTest, test_reservation_in_past) {
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339((date::utc_clock::now() - std::chrono::hours(1)));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Rejected);
 }
@@ -735,11 +945,13 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     TokenHandlingResult result;
 
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_2;
     reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 
@@ -776,7 +988,7 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     std::thread t3([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
     t3.join();
 
-    ASSERT_TRUE(result == TokenHandlingResult::REJECTED);
+    ASSERT_EQ(result, TokenHandlingResult::REJECTED);
     ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 
@@ -784,8 +996,108 @@ TEST_F(AuthTest, test_reservation_with_authorization) {
     std::thread t4([this, provided_token_2, &result]() { result = this->auth_handler->on_token(provided_token_2); });
     t4.join();
 
-    ASSERT_TRUE(result == TokenHandlingResult::ACCEPTED);
+    ASSERT_EQ(result, TokenHandlingResult::ACCEPTED);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a token that is not reserved gets rejected when it is not possible to charge because of global
+///        reservations.
+TEST_F(AuthTest, test_reservation_with_authorization_global_reservations) {
+    TokenHandlingResult result;
+
+    Reservation reservation;
+    reservation.id_token = VALID_TOKEN_2;
+    reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::sType2;
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
+
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
+
+    ASSERT_EQ(reservation_result, ReservationResult::Accepted);
+
+    SessionEvent session_event_1;
+    session_event_1.event = SessionEventEnum::ReservationStart;
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+
+    t1.join();
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_1 = get_provided_token(VALID_TOKEN_1, connectors);
+
+    // In general the token gets accepted but the connector that was picked up by the user is the only one that has
+    // the correct connector for the reservation so it can not be used as it has to be available for the one who
+    // reserved it.
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Accepted));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_1.id_token), TokenValidationStatus::Rejected));
+
+    // this token is not valid for the reservation
+    std::thread t2([this, provided_token_1, &result]() { result = this->auth_handler->on_token(provided_token_1); });
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+
+    t2.join();
+    t3.join();
+
+    ASSERT_EQ(result, TokenHandlingResult::REJECTED);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
+}
+
+/// \brief Test if a token that is not reserved gets rejected when it is not possible to charge because of global
+///        reservations.
+TEST_F(AuthTest, test_reservation_with_authorization_global_reservations_2) {
+    TokenHandlingResult result;
+
+    // Make two global reservations.
+
+    Reservation reservation;
+    reservation.id_token = VALID_TOKEN_2;
+    reservation.reservation_id = 1;
+    reservation.connector_type = types::evse_manager::ConnectorTypeEnum::cCCS2;
+    reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
+
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
+
+    ASSERT_EQ(reservation_result, ReservationResult::Accepted);
+
+    reservation.reservation_id = 2;
+    reservation.id_token = VALID_TOKEN_1;
+    const auto reservation_result2 = this->auth_handler->handle_reservation(reservation);
+    ASSERT_EQ(reservation_result2, ReservationResult::Accepted);
+
+    SessionEvent session_event_1;
+    session_event_1.event = SessionEventEnum::ReservationStart;
+    std::thread t1([this, session_event_1]() { this->auth_handler->handle_session_event(2, session_event_1); });
+
+    t1.join();
+
+    std::vector<int32_t> connectors{1, 2};
+    ProvidedIdToken provided_token_3 = get_provided_token(VALID_TOKEN_3, connectors);
+
+    // There are two global reservations and two evse's, so  no evse is available.
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_3.id_token), TokenValidationStatus::Processing));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token_3.id_token), TokenValidationStatus::Rejected));
+
+    // this token is not valid for the reservation
+    std::thread t2([this, provided_token_3, &result]() { result = this->auth_handler->on_token(provided_token_3); });
+    SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::Authorized);
+    std::thread t3([this, session_event]() { this->auth_handler->handle_session_event(2, session_event); });
+
+    t2.join();
+    t3.join();
+
+    ASSERT_EQ(result, TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
     ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
@@ -856,12 +1168,13 @@ TEST_F(AuthTest, test_reservation_with_parent_id_tag) {
     TokenHandlingResult result;
 
     Reservation reservation;
+    reservation.evse_id = 1;
     reservation.id_token = VALID_TOKEN_1;
     reservation.reservation_id = 1;
     reservation.parent_id_token.emplace(PARENT_ID_TOKEN);
     reservation.expiry_time = Everest::Date::to_rfc3339(date::utc_clock::now() + std::chrono::hours(1));
 
-    const auto reservation_result = this->auth_handler->handle_reservation(1, reservation);
+    const auto reservation_result = this->auth_handler->handle_reservation(reservation);
 
     ASSERT_EQ(reservation_result, ReservationResult::Accepted);
 
@@ -974,6 +1287,9 @@ TEST_F(AuthTest, test_authorization_without_transaction) {
 
     ASSERT_TRUE(result == TokenHandlingResult::ALREADY_IN_PROCESS);
     ASSERT_TRUE(this->auth_receiver->get_authorization(0));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::TimedOut));
 
     // wait for timeout
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
@@ -1206,7 +1522,6 @@ TEST_F(AuthTest, test_token_timed_out) {
     // To get select_connector to wait for a plug-in event, we must provide more then one connector here, since if we
     // provide only 1, select_connector would just return the single connector.
     std::vector<int32_t> connectors{1, 2};
-
     ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
 
     EXPECT_CALL(mock_publish_token_validation_status_callback,
@@ -1224,6 +1539,32 @@ TEST_F(AuthTest, test_token_timed_out) {
 
     // wait for timeout, after which TimedOut should be published.
     std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT + 1));
+}
+
+/// \brief Test that in case of a plug in timeout, no authorization is given to the EVSE afterwards
+TEST_F(AuthTest, test_plug_in_time_out) {
+    const SessionEvent session_event = get_session_started_event(types::evse_manager::StartSessionReason::EVConnected);
+    this->auth_handler->handle_session_event(1, session_event);
+
+    std::vector<int32_t> connectors{1};
+    ProvidedIdToken provided_token = get_provided_token(VALID_TOKEN_1, connectors);
+
+    std::this_thread::sleep_for(std::chrono::seconds(CONNECTION_TIMEOUT));
+
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Processing));
+    EXPECT_CALL(mock_publish_token_validation_status_callback,
+                Call(Field(&ProvidedIdToken::id_token, provided_token.id_token), TokenValidationStatus::Rejected));
+
+    // no connector should be available since the plug-in event has timed out
+    TokenHandlingResult result;
+    std::thread t1([this, provided_token, &result]() { result = this->auth_handler->on_token(provided_token); });
+    t1.join();
+
+    ASSERT_TRUE(result == TokenHandlingResult::NO_CONNECTOR_AVAILABLE);
+
+    ASSERT_FALSE(this->auth_receiver->get_authorization(0));
+    ASSERT_FALSE(this->auth_receiver->get_authorization(1));
 }
 
 } // namespace module

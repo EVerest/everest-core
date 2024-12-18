@@ -63,6 +63,7 @@ struct Conf {
     int PublishChargingScheduleDurationS;
     std::string MessageLogPath;
     int MessageQueueResumeDelay;
+    std::string RequestCompositeScheduleUnit;
 };
 
 class OCPP : public Everest::ModuleBase {
@@ -75,7 +76,7 @@ public:
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
          std::unique_ptr<session_costImplBase> p_session_cost,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
-         std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink,
+         std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
          std::unique_ptr<systemIntf> r_system, std::unique_ptr<evse_securityIntf> r_security,
          std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer,
@@ -89,14 +90,15 @@ public:
         p_ocpp_generic(std::move(p_ocpp_generic)),
         p_session_cost(std::move(p_session_cost)),
         r_evse_manager(std::move(r_evse_manager)),
-        r_connector_zero_sink(std::move(r_connector_zero_sink)),
+        r_evse_energy_sink(std::move(r_evse_energy_sink)),
         r_reservation(std::move(r_reservation)),
         r_auth(std::move(r_auth)),
         r_system(std::move(r_system)),
         r_security(std::move(r_security)),
         r_data_transfer(std::move(r_data_transfer)),
         r_display_message(std::move(r_display_message)),
-        config(config){};
+        config(config) {
+    }
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ocpp_1_6_charge_pointImplBase> p_main;
@@ -106,7 +108,7 @@ public:
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<session_costImplBase> p_session_cost;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
-    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_connector_zero_sink;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
     const std::unique_ptr<authIntf> r_auth;
     const std::unique_ptr<systemIntf> r_system;
@@ -138,6 +140,7 @@ private:
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
     std::filesystem::path ocpp_share_path;
+    ocpp::v16::ChargingRateUnit composite_schedule_charging_rate_unit;
     void set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
     void publish_charging_schedules(const std::map<int32_t, ocpp::v16::EnhancedChargingSchedule>& charging_schedules);
 
@@ -162,6 +165,7 @@ private:
 };
 
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
+// insert other definitions here
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module

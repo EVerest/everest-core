@@ -1,5 +1,7 @@
 #include "ocpp_conversions.hpp"
 
+#include <everest/logging.hpp>
+
 #include "generated/types/display_message.hpp"
 
 namespace ocpp_conversions {
@@ -12,10 +14,9 @@ to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& prior
         return types::display_message::MessagePriorityEnum::InFront;
     case ocpp::v201::MessagePriorityEnum::NormalCycle:
         return types::display_message::MessagePriorityEnum::NormalCycle;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::MessagePriorityEnum to types::display_message::MessagePriorityEnum");
     }
+    throw std::out_of_range(
+        "Could not convert ocpp::v201::MessagePriorityEnum to types::display_message::MessagePriorityEnum");
 }
 
 ocpp::v201::MessagePriorityEnum
@@ -27,10 +28,9 @@ to_ocpp_201_message_priority(const types::display_message::MessagePriorityEnum& 
         return ocpp::v201::MessagePriorityEnum::InFront;
     case types::display_message::MessagePriorityEnum::NormalCycle:
         return ocpp::v201::MessagePriorityEnum::NormalCycle;
-    default:
-        throw std::out_of_range(
-            "Could not convert types::display_message::MessagePriorityEnum to ocpp::v201::MessagePriorityEnum");
     }
+    throw std::out_of_range(
+        "Could not convert types::display_message::MessagePriorityEnum to ocpp::v201::MessagePriorityEnum");
 }
 
 types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state) {
@@ -43,10 +43,9 @@ types::display_message::MessageStateEnum to_everest_display_message_state(const 
         return types::display_message::MessageStateEnum::Idle;
     case ocpp::v201::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::MessageStateEnum to types::display_message::MessageStateEnum");
     }
+    throw std::out_of_range(
+        "Could not convert ocpp::v201::MessageStateEnum to types::display_message::MessageStateEnum");
 }
 
 ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state) {
@@ -59,10 +58,9 @@ ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::disp
         return ocpp::v201::MessageStateEnum::Idle;
     case types::display_message::MessageStateEnum::Unavailable:
         return ocpp::v201::MessageStateEnum::Unavailable;
-    default:
-        throw std::out_of_range(
-            "Could not convert types::display_message::MessageStateEnum to ocpp::v201::MessageStateEnum");
     }
+    throw std::out_of_range(
+        "Could not convert types::display_message::MessageStateEnum to ocpp::v201::MessageStateEnum");
 }
 
 types::display_message::MessageFormat
@@ -76,10 +74,8 @@ to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_f
         return types::display_message::MessageFormat::URI;
     case ocpp::v201::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
     }
+    throw std::out_of_range("Could not convert ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
 }
 
 ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format) {
@@ -191,8 +187,16 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
         m.state = to_ocpp_201_display_message_state(display_message.state.value());
     }
 
-    m.timestamp_from = display_message.timestamp_from;
-    m.timestamp_to = display_message.timestamp_to;
+    try {
+        if (display_message.timestamp_from.has_value()) {
+            m.timestamp_from = ocpp::DateTime(display_message.timestamp_from.value());
+        }
+        if (display_message.timestamp_to.has_value()) {
+            m.timestamp_to = ocpp::DateTime(display_message.timestamp_to.value());
+        }
+    } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse timestamp when converting DisplayMessage: " << e.what();
+    }
 
     return m;
 }
@@ -205,9 +209,8 @@ types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::Run
         return types::session_cost::SessionStatus::Idle;
     case ocpp::RunningCostState::Finished:
         return types::session_cost::SessionStatus::Finished;
-    default:
-        throw std::out_of_range("Could not convert ocpp::RunningCostState to types::session_cost::SessionStatus");
     }
+    throw std::out_of_range("Could not convert ocpp::RunningCostState to types::session_cost::SessionStatus");
 }
 
 types::session_cost::SessionCostChunk create_session_cost_chunk(const double& price, const uint32_t& number_of_decimals,
@@ -354,4 +357,32 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
 
     return cost;
 }
+
+ocpp::DateTime to_ocpp_datetime_or_now(const std::string& datetime_string) {
+    std::optional<ocpp::DateTime> timestamp;
+    try {
+        return ocpp::DateTime(datetime_string);
+    } catch (const ocpp::TimePointParseException& e) {
+        EVLOG_warning << "Could not parse datetime string: " << e.what() << ". Using current DateTime instead";
+    }
+    return ocpp::DateTime();
+}
+
+ocpp::ReservationCheckStatus
+to_ocpp_reservation_check_status(const types::reservation::ReservationCheckStatus& status) {
+    switch (status) {
+    case types::reservation::ReservationCheckStatus::NotReserved:
+        return ocpp::ReservationCheckStatus::NotReserved;
+    case types::reservation::ReservationCheckStatus::ReservedForToken:
+        return ocpp::ReservationCheckStatus::ReservedForToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherToken;
+    case types::reservation::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken:
+        return ocpp::ReservationCheckStatus::ReservedForOtherTokenAndHasParentToken;
+    }
+
+    EVLOG_warning << "Could not convert reservation check status. Returning default 'NotReserved.";
+    return ocpp::ReservationCheckStatus::NotReserved;
+}
+
 } // namespace ocpp_conversions

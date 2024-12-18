@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
@@ -31,7 +32,6 @@
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <sigslot/signal.hpp>
 
-#include "EnumFlags.hpp"
 #include "Timeout.hpp"
 #include "utils/thread.hpp"
 
@@ -68,7 +68,7 @@ private:
     void process_error();
     void raise_inoperative_error(const std::string& caused_by);
     void clear_inoperative_error();
-    std::pair<bool, std::string> errors_prevent_charging();
+    std::optional<std::string> errors_prevent_charging();
 
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>>& r_hlc;

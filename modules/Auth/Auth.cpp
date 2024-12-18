@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
+#include <everest/staging/helpers/helpers.hpp>
 
 #include <utility>
 
@@ -14,7 +15,8 @@ void Auth::init() {
 
     this->auth_handler = std::make_unique<AuthHandler>(
         string_to_selection_algorithm(this->config.selection_algorithm), this->config.connection_timeout,
-        this->config.prioritize_authorization_over_stopping_transaction, this->config.ignore_connector_faults);
+        this->config.prioritize_authorization_over_stopping_transaction, this->config.ignore_connector_faults,
+        this->info.id, (!this->r_kvs.empty() ? this->r_kvs.at(0).get() : nullptr));
 
     for (const auto& token_provider : this->r_token_provider) {
         token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
@@ -30,20 +32,28 @@ void Auth::ready() {
 
     int32_t evse_index = 0;
     for (const auto& evse_manager : this->r_evse_manager) {
-        int32_t connector_id = evse_manager->call_get_evse().id;
-        this->auth_handler->init_connector(connector_id, evse_index);
+        const int32_t evse_id = evse_manager->call_get_evse().id;
+        std::vector<Connector> connectors;
+        for (const auto& connector : evse_manager->call_get_evse().connectors) {
+            connectors.push_back(
+                Connector(connector.id, connector.type.value_or(types::evse_manager::ConnectorTypeEnum::Unknown)));
+        }
 
-        evse_manager->subscribe_session_event([this, connector_id](SessionEvent session_event) {
-            this->auth_handler->handle_session_event(connector_id, session_event);
+        this->auth_handler->init_evse(evse_id, evse_index, connectors);
+
+        evse_manager->subscribe_session_event([this, evse_id](SessionEvent session_event) {
+            this->auth_handler->handle_session_event(evse_id, session_event);
         });
 
         evse_manager->subscribe_error(
             "evse_manager/Inoperative",
-            [this, connector_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_raised(connector_id);
+            // If no connector id is given, it defaults to connector id 1.
+            [this, evse_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_raised(evse_id, 1);
             },
-            [this, connector_id](const Everest::error::Error& error) {
-                this->auth_handler->handle_permanent_fault_cleared(connector_id);
+            // If no connector id is given, it defaults to connector id 1.
+            [this, evse_id](const Everest::error::Error& error) {
+                this->auth_handler->handle_permanent_fault_cleared(evse_id, 1);
             });
 
         evse_index++;
@@ -53,6 +63,7 @@ void Auth::ready() {
         [this](const ProvidedIdToken& token, TokenValidationStatus status) {
             this->p_main->publish_token_validation_status({token, status});
         });
+
     this->auth_handler->register_notify_evse_callback(
         [this](const int evse_index, const ProvidedIdToken& provided_token, const ValidationResult& validation_result) {
             this->r_evse_manager.at(evse_index)->call_authorize_response(provided_token, validation_result);
@@ -70,11 +81,51 @@ void Auth::ready() {
         [this](const int32_t evse_index, const StopTransactionRequest& request) {
             this->r_evse_manager.at(evse_index)->call_stop_transaction(request);
         });
-    this->auth_handler->register_reserved_callback([this](const int32_t evse_index, const int32_t& reservation_id) {
-        this->r_evse_manager.at(evse_index)->call_reserve(reservation_id);
-    });
+    this->auth_handler->register_reserved_callback(
+        [this](const std::optional<int32_t> evse_id, const int32_t& reservation_id) {
+            // Only call the evse manager to store the reservation if it is done for a specific evse.
+            if (evse_id.has_value()) {
+                EVLOG_info << "Call reserved callback for evse id " << evse_id.value();
+
+                if (!this->r_evse_manager.at(evse_id.value() - 1)->call_reserve(reservation_id)) {
+                    EVLOG_warning << "EVSE manager does not allow placing a reservation for evse id " << evse_id.value()
+                                  << ": cancelling reservation.";
+                    this->auth_handler->handle_cancel_reservation(reservation_id);
+                    return false;
+                }
+            }
+
+            ReservationUpdateStatus status;
+            status.reservation_id = reservation_id;
+            status.reservation_status = Reservation_status::Placed;
+            this->p_reservation->publish_reservation_update(status);
+            return true;
+        });
     this->auth_handler->register_reservation_cancelled_callback(
-        [this](const int32_t evse_index) { this->r_evse_manager.at(evse_index)->call_cancel_reservation(); });
+        [this](const std::optional<int32_t> evse_id, const int32_t reservation_id, const ReservationEndReason reason,
+               const bool send_reservation_update) {
+            // Only call the evse manager to cancel the reservation if it was for a specific evse
+            if (evse_id.has_value() && evse_id.value() > 0) {
+                EVLOG_debug << "Call evse manager to cancel the reservation with evse id " << evse_id.value();
+                this->r_evse_manager.at(evse_id.value() - 1)->call_cancel_reservation();
+            }
+
+            if (send_reservation_update) {
+                ReservationUpdateStatus status;
+                status.reservation_id = reservation_id;
+                if (reason == ReservationEndReason::Expired) {
+                    status.reservation_status = Reservation_status::Expired;
+                } else if (reason == ReservationEndReason::Cancelled) {
+                    status.reservation_status = Reservation_status::Removed;
+                } else {
+                    // On reservation used: do not publish a reservation update!!
+                    return;
+                }
+                this->p_reservation->publish_reservation_update(status);
+            }
+        });
+
+    this->auth_handler->initialize();
 }
 
 void Auth::set_connection_timeout(int& connection_timeout) {
