@@ -175,6 +175,9 @@ void evse_managerImpl::ready() {
             session_started.id_tag = provided_id_token;
             if (mod->is_reserved()) {
                 session_started.reservation_id = mod->get_reservation_id();
+                if (start_reason == types::evse_manager::StartSessionReason::Authorized) {
+                    this->mod->cancel_reservation(true);
+                }
             }
 
             session_started.logging_path = session_log.startSession(
@@ -206,7 +209,7 @@ void evse_managerImpl::ready() {
         transaction_started.meter_value = mod->get_latest_powermeter_data_billing();
         if (mod->is_reserved()) {
             transaction_started.reservation_id.emplace(mod->get_reservation_id());
-            mod->cancel_reservation(false);
+            mod->cancel_reservation(true);
         }
 
         transaction_started.id_tag = id_token;
@@ -292,7 +295,7 @@ void evse_managerImpl::ready() {
             // Cancel reservation, reservation might be stored when swiping rfid, but timed out, so we should not
             // set the reservation id here.
             if (mod->is_reserved()) {
-                mod->cancel_reservation(false);
+                mod->cancel_reservation(true);
             }
             session_log.stopSession();
             mod->telemetry.publish("session", "events",

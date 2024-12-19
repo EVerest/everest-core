@@ -49,8 +49,9 @@ cmds:
     arguments:
       reservation_id:
         description: >-
-          The reservation id (should be added to the TransactionStarted
-          event)
+          The reservation id (should be added to the TransactionStarted event). Set this to a negative value if there is
+          no specific reservation id for this evse but the evse should still move to a Reserved state because of total
+          global reservations.
         type: integer
     result:
       description: Returns true if the EVSE accepted the reservation, else false.
