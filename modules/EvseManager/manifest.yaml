@@ -293,7 +293,7 @@ config:
     default: 300
   fail_on_powermeter_errors:
     description: >-
-      Set the EVSE Manager as inoperable if the powermeter is configured and has errors
+      Set the EVSE Manager to an inoperative state if the powermeter requirement is configured and has reported errors
     type: boolean
     default: false
 provides:
