@@ -108,6 +108,7 @@ else()
 
     find_package(fsm REQUIRED)
     find_package(slac REQUIRED)
+    find_package(libnfc-nci REQUIRED)
 
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
