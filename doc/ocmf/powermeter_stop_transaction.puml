@@ -21,12 +21,12 @@ alt EvseManager configured to become inoperative in case of PowermeterCommError
     EVSE_Manager->EVSE_Manager: Pause charging
     EVSE_Manager -> OCPP: raiseError (Inoperative)
     OCPP->CSMS: StatusNotification.req(Faulted)
-    note over EVSE_Manager: Note that we just continue charging otherwise    
+    note over EVSE_Manager: Note that we just continue charging otherwise
 end
 
 !pragma teoz true
 
-== User stops transaction while powermeter communication error ==
+== User stops transaction after powermeter communication error ==
 
 alt successful case
 EVSE_Manager -> Powermeter: stopTransaction (ID)
@@ -45,5 +45,14 @@ note right of OCPP: In this case we can't stop the transaction including the OCM
 OCPP->CSMS: StopTransaction.req()
 return StopTransaction.conf
 end
+
+== User stops transaction while powermeter communication error ==
+
+EVSE_Manager -> Powermeter: stopTransaction (ID)
+return stopTransaction Response (FAIL)
+EVSE_Manager -> OCPP: Event(TransactionFinished)
+
+OCPP->CSMS: StopTransaction.req()
+return StopTransaction.conf
 
 @enduml
