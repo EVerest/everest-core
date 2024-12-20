@@ -49,6 +49,18 @@ if(LIBOCPP_ENABLE_V16)
             ocpp/v16/ocpp_types.cpp
             ocpp/v16/types.cpp
             ocpp/v16/utils.cpp
+            ocpp/v201/messages/InstallCertificate.cpp
+            ocpp/v201/messages/CertificateSigned.cpp
+            ocpp/v201/messages/Authorize.cpp
+            ocpp/v201/messages/GetCertificateStatus.cpp
+            ocpp/v201/messages/Get15118EVCertificate.cpp
+            ocpp/v201/messages/DeleteCertificate.cpp
+            ocpp/v201/messages/TriggerMessage.cpp
+            ocpp/v201/ocpp_enums.cpp
+            ocpp/v201/ocpp_types.cpp
+            ocpp/v201/types.cpp
+            ocpp/v201/messages/SignCertificate.cpp
+            ocpp/v201/messages/GetInstalledCertificateIds.cpp
     )
     add_subdirectory(ocpp/v16/messages)
 endif()
