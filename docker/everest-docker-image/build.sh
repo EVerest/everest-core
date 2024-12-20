@@ -11,12 +11,16 @@ usage() {
     echo -e "\t--no-ssh: Do not append \"--ssh default\" to docker build - Optional"
     echo -e "\t--container-runtime: Set container runtime (e.g. docker or podman) for build - Optional"
     echo -e "\t--additional-cmake-parameters: Set additional cmake parameters for build - Optional, default \"-DEVEREST_BUILD_ALL_MODULES=ON\""
+    echo -e "\t--ev-cli-version: Version of ev-cli to use - Optional, defaults to: main"
+    echo -e "\t--no-ev-cli: Do not install specific ev-cli version, since EVerest 2024.9 this can be done automatically - Optional"
     exit 1
 }
 
 ssh_param="--ssh=default"
 container_runtime="docker"
 additional_cmake_parameters="-DEVEREST_BUILD_ALL_MODULES=ON"
+ev_cli_version="main"
+install_ev_cli="install_ev_cli"
 
 while [ ! -z "$1" ]; do
     if [ "$1" == "--repo" ]; then
@@ -46,6 +50,12 @@ while [ ! -z "$1" ]; do
     elif [ "$1" == "--additional-cmake-parameters" ]; then
         additional_cmake_parameters="${2}"
         shift 2
+    elif [ "$1" == "--ev-cli-version" ]; then
+        ev_cli_version="${2}"
+        shift 2
+    elif [ "$1" == "--no-ev-cli" ]; then
+        install_ev_cli="do_not_install_ev_cli"
+        shift 1
     else
         usage
         break
@@ -89,6 +99,7 @@ fi
 echo "Build date: ${NOW}"
 echo "Using container runtime \"${container_runtime}\" for building. Version: $(${container_runtime} --version)"
 echo "Additional CMake parameters for EVerest build: \"${additional_cmake_parameters}\""
+echo "ev-cli version: \"${ev_cli_version}\""
 trap 'echo "Build not successful"; exit 1' ERR
 DOCKER_BUILDKIT=1 ${container_runtime} build \
     --build-arg BUILD_DATE="${NOW}" \
@@ -97,5 +108,7 @@ DOCKER_BUILDKIT=1 ${container_runtime} build \
     --build-arg OCPP_CONFIG="${ocpp_conf}" \
     --build-arg BRANCH="${branch}" \
     --build-arg ADDITIONAL_CMAKE_PARAMETERS="${additional_cmake_parameters}" \
+    --build-arg EV_CLI_VERSION="${ev_cli_version}" \
+    --build-arg INSTALL_EV_CLI="${install_ev_cli}" \
     -t "${name}" "${ssh_param}" .
 ${container_runtime} save "${name}":latest | gzip >"$name-${NOW}.tar.gz"
