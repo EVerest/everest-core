@@ -68,12 +68,21 @@ ocpp::v2::EventData get_event_data(const Everest::error::Error& error, const boo
         event_data.component = {CHARGING_STATION_COMPONENT_NAME}; // TODO: use origin of error for mapping to component?
     } else if (not error.origin.mapping.value().connector.has_value()) {
         // component is EVSE
-        ocpp::v2::EVSE evse = {evse_id};
-        event_data.component = {EVSE_COMPONENT_NAME, std::nullopt, evse};
+        ocpp::v2::EVSE evse;
+        evse.id = evse_id;
+        ocpp::v2::Component component;
+        component.name = EVSE_COMPONENT_NAME;
+        component.evse = evse;
+        event_data.component = component;
     } else {
         // component is Connector
-        ocpp::v2::EVSE evse = {evse_id, std::nullopt, error.origin.mapping.value().connector.value()};
-        event_data.component = {CONNECTOR_COMPONENT_NAME, std::nullopt, evse};
+        ocpp::v2::EVSE evse;
+        evse.id = evse_id;
+        evse.connectorId = error.origin.mapping.value().connector.value();
+        ocpp::v2::Component component;
+        component.name = EVSE_COMPONENT_NAME;
+        component.evse = evse;
+        event_data.component = component;
     }
     event_data.variable = {PROBLEM_VARIABLE_NAME}; // TODO: use type of error for mapping to variable?
     return event_data;
