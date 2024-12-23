@@ -652,9 +652,7 @@ void OCPP201::ready() {
     callbacks.connection_state_changed_callback =
         [this](const bool is_connected, const int /*configuration_slot*/,
                const ocpp::v201::NetworkConnectionProfile& /*network_connection_profile*/,
-               const auto) {
-            this->p_ocpp_generic->publish_is_connected(is_connected);
-        };
+               const auto) { this->p_ocpp_generic->publish_is_connected(is_connected); };
 
     callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
@@ -701,7 +699,8 @@ void OCPP201::ready() {
             reservation.parent_id_token = request.groupIdToken.value().idToken;
         }
         if (request.connectorType.has_value()) {
-            reservation.connector_type = types::evse_manager::string_to_connector_type_enum(request.connectorType.value());
+            reservation.connector_type =
+                types::evse_manager::string_to_connector_type_enum(request.connectorType.value());
         }
 
         types::reservation::ReservationResult result = this->r_reservation.at(0)->call_reserve_now(reservation);
