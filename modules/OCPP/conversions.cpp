@@ -100,6 +100,7 @@ ocpp::v16::Reason to_ocpp_reason(const types::evse_manager::StopTransactionReaso
     case types::evse_manager::StopTransactionReason::StoppedByEV:
     case types::evse_manager::StopTransactionReason::TimeLimitReached:
     case types::evse_manager::StopTransactionReason::Timeout:
+    case types::evse_manager::StopTransactionReason::ReqEnergyTransferRejected:
     case types::evse_manager::StopTransactionReason::Other:
         return ocpp::v16::Reason::Other;
     }
