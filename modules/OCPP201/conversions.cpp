@@ -1279,7 +1279,7 @@ to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& pe
     if (not period.limit.has_value()) {
         EVLOG_warning << "Received ChargingSchedulePeriod without a limit. Limit defaults to 0!";
     }
-    
+
     types::ocpp::ChargingSchedulePeriod _period;
     _period.start_period = period.startPeriod;
     _period.limit = period.limit.value_or(0);
