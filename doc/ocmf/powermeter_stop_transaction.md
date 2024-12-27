@@ -11,7 +11,7 @@ title Stopping Transaction in Error
 Note over Powermeter, CSMS: Transaction is running
 
 Powermeter->>Powermeter: detects a <br/> CommunicationError
-Note over Powermeter,EvseManager: raise_error not actual messages between them, <br/>Powermeter raises an CommunicationError <br/>and EvseManager is registered for notification
+Note over Powermeter,EvseManager: Powermeter raises an CommunicationError <br/>and EvseManager is registered for notification
 Powermeter->>EvseManager: raise_error (CommunicationFault)
 Powermeter->>OCPP: raise_error (CommunicationFault)
 
