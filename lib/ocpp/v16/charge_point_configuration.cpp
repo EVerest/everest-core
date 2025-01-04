@@ -3289,12 +3289,12 @@ std::optional<KeyValue> ChargePointConfiguration::get(CiString<50> key) {
         }
     }
 
-    // California Pricing
-    if (key == "CustomDisplayCostAndPrice") {
-        return this->getCustomDisplayCostAndPriceEnabledKeyValue();
-    }
+    if (this->supported_feature_profiles.count(SupportedFeatureProfiles::CostAndPrice)) {
+        // California Pricing
+        if (key == "CustomDisplayCostAndPrice") {
+            return this->getCustomDisplayCostAndPriceEnabledKeyValue();
+        }
 
-    if (getCustomDisplayCostAndPriceEnabled()) {
         if (key == "NumberOfDecimalsForCostValues") {
             return this->getPriceNumberOfDecimalsForCostValuesKeyValue();
         }
