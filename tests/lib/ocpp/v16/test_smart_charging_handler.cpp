@@ -209,6 +209,7 @@ protected:
         auto database = std::make_unique<common::DatabaseConnection>(database_path / (chargepoint_id + ".db"));
         std::shared_ptr<DatabaseHandlerMock> database_handler =
             std::make_shared<DatabaseHandlerMock>(std::move(database), init_script_path);
+        addConnector(0);
         auto handler = new SmartChargingHandler(connectors, database_handler, *configuration);
         return handler;
     }
@@ -302,11 +303,18 @@ TEST_F(ChargepointTestFixture, ValidateProfile__ConnectorIdGreaterThanConnectors
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units{ChargingRateUnit::A};
     auto handler = createSmartChargingHandler();
 
-    const int connector_id = INT_MAX;
+    int connector_id = INT_MAX;
     bool sut = handler->validate_profile(profile, connector_id, ignore_no_transaction, profile_max_stack_level,
                                          max_charging_profiles_installed, charging_schedule_max_periods,
                                          charging_schedule_allowed_charging_rate_units);
 
+    ASSERT_FALSE(sut);
+
+    // if we have connectors 0,1,2 this->connectors.size() == 3 and a connector_id of 3 is invalid
+    connector_id = this->connectors.size();
+    sut = handler->validate_profile(profile, connector_id, ignore_no_transaction, profile_max_stack_level,
+                                    max_charging_profiles_installed, charging_schedule_max_periods,
+                                    charging_schedule_allowed_charging_rate_units);
     ASSERT_FALSE(sut);
 }
 
