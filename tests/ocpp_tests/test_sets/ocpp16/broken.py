@@ -13,6 +13,7 @@ from everest.testing.core_utils.probe_module import ProbeModule
 from ocpp.v16 import call, call_result
 from ocpp.v16.enums import *
 from ocpp.v16.datatypes import IdTagInfo
+from ocpp.exceptions import GenericError
 from ocpp.messages import Call, _DecimalEncoder
 from ocpp.charge_point import snake_to_camel_case
 from ocpp.routing import on, create_route_map
@@ -281,7 +282,7 @@ async def test_boot_notification_call_error(
 
     @on(Action.BootNotification)
     def on_boot_notification_error(**kwargs):
-        raise InternalError()
+        raise GenericError()
 
     @on(Action.BootNotification)
     def on_boot_notification_accepted(**kwargs):

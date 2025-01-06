@@ -38,6 +38,12 @@ def pytest_sessionfinish(session, exitstatus):
     pass
 
 
+def pytest_collection_modifyitems(session, config, items):
+    session = session
+    config = config
+    items[:] = [item for item in items if item.name != 'test_config']
+
+
 @pytest.fixture
 def test_config(request):
     return everest_test_utils.test_config(request)
