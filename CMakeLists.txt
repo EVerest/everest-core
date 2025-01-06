@@ -160,20 +160,22 @@ if(EVEREST_CORE_BUILD_TESTING)
         EXECUTABLE test_config
         DEPENDENCIES test_config everest
     )
+
+    # install everest-testing
+    get_target_property(SOURCE_DIRECTORY ev_pip_package_everest-testing SOURCE_DIRECTORY)
+    message(STATUS "Installing everest-testing from: ${SOURCE_DIRECTORY}")
+    ev_pip_install_local(
+        PACKAGE_NAME "everest-testing"
+        PACKAGE_SOURCE_DIRECTORY "${SOURCE_DIRECTORY}"
+    )
 else()
     message("Not running unit tests")
 endif()
 
 # convenience target for integration tests
 add_custom_target(install_everest_testing
-    COMMAND
-        if [ -z "${CPM_PACKAGE_everest-utils_SOURCE_DIR}" ] \;
-        then echo "Could not determine location of everest-utils, please install everest-testing manually!" \;
-        else echo "Found everest-utils at ${CPM_PACKAGE_everest-utils_SOURCE_DIR}" \;
-             ${Python3_EXECUTABLE} -m pip install -e "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
-        fi\;
     DEPENDS
         everestpy_pip_install_dist
     COMMENT
-        "Installing dependencies for testing EVerest"
+        "Installing dependencies for testing EVerest (note that everest-testing is already installed automatically)"
 )
