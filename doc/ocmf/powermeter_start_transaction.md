@@ -43,7 +43,7 @@ end
 
 alt EvseManager configured to become inoperative in case of Powermeter CommunicationError
     Powermeter->>EvseManager: raise_error(CommunicationError)
-    Note over Powermeter,EvseManager: Powermeter raises an CommunicationError <br/>and EvseManager is registered for notification
+    Note over Powermeter,EvseManager: Powermeter raises a CommunicationError <br/>and EvseManager is registered for notification
     EvseManager->>OCPP: raise_error (Inoperative)
     OCPP->>CSMS: StatusNotification.req(Faulted)
     CSMS-->>OCPP: StatusNotification.conf
