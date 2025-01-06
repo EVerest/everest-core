@@ -211,7 +211,9 @@ async def test_remote_start_stop_in_pending(
         test_utility, charge_point_v16, "RemoteStopTransaction", {"status": "Rejected"}
     )
 
-
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp-minimal.yaml")
+)
 @pytest.mark.asyncio
 async def test_boot_notification_rejected(
     test_config: OcppTestConfiguration,
@@ -277,7 +279,9 @@ async def test_boot_notification_rejected(
         test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
     )
 
-
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp-minimal.yaml")
+)
 @pytest.mark.asyncio
 async def test_boot_notification_callerror(
     test_config: OcppTestConfiguration,
@@ -335,7 +339,9 @@ async def test_boot_notification_callerror(
         test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
     )
 
-
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp-minimal.yaml")
+)
 @pytest.mark.asyncio
 async def test_boot_notification_no_response(
     test_config: OcppTestConfiguration,
@@ -544,7 +550,9 @@ async def test_initiate_message_in_pending(
         test_utility, charge_point_v16, "Heartbeat", call.HeartbeatPayload()
     )
 
-
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-sil-ocpp-minimal.yaml")
+)
 @pytest.mark.asyncio
 async def test_boot_notification_rejected_and_call_by_csms(
     test_config: OcppTestConfiguration,
