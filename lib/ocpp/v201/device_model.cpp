@@ -249,6 +249,16 @@ GetVariableStatusEnum DeviceModel::request_value_internal(const Component& compo
     return GetVariableStatusEnum::Accepted;
 }
 
+std::optional<MutabilityEnum> DeviceModel::get_mutability(const Component& component, const Variable& variable,
+                                                          const AttributeEnum& attribute_enum) {
+    const auto attribute = this->device_model->get_variable_attribute(component, variable, attribute_enum);
+    if (!attribute.has_value()) {
+        return std::nullopt;
+    }
+
+    return attribute.value().mutability.value();
+}
+
 SetVariableStatusEnum DeviceModel::set_value(const Component& component, const Variable& variable,
                                              const AttributeEnum& attribute_enum, const std::string& value,
                                              const std::string& source, bool allow_read_only) {

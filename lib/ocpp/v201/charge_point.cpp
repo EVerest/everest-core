@@ -1820,8 +1820,18 @@ void ChargePoint::handle_variables_changed(const std::map<SetVariableData, SetVa
     // iterate over set_variable_results
     for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
         if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
-            EVLOG_info << set_variable_data.component.name << ":" << set_variable_data.variable.name << " changed to "
-                       << set_variable_data.attributeValue.get();
+            std::optional<MutabilityEnum> mutability =
+                this->device_model->get_mutability(set_variable_data.component, set_variable_data.variable,
+                                                   set_variable_data.attributeType.value_or(AttributeEnum::Actual));
+            // If a nullopt is returned for whatever reason, assume it's write-only to prevent leaking secrets
+            if (!mutability.has_value() || (mutability.value() == MutabilityEnum::WriteOnly)) {
+                EVLOG_info << "Write-only " << set_variable_data.component.name << ":"
+                           << set_variable_data.variable.name << " changed";
+            } else {
+                EVLOG_info << set_variable_data.component.name << ":" << set_variable_data.variable.name
+                           << " changed to " << set_variable_data.attributeValue.get();
+            }
+
             // handles required behavior specified within OCPP2.0.1 (e.g. reconnect when BasicAuthPassword has changed)
             this->handle_variable_changed(set_variable_data);
             // notifies libocpp user application that a variable has changed

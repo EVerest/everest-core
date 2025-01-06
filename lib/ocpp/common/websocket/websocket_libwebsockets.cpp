@@ -1490,7 +1490,6 @@ void WebsocketLibwebsockets::on_conn_message(std::string&& message) {
         return;
     }
 
-    EVLOG_debug << "Received message over TLS websocket polling for process: " << message;
     recv_message_queue.push(std::move(message));
 }
 

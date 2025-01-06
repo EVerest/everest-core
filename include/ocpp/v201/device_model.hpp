@@ -209,6 +209,14 @@ public:
         }
     }
 
+    /// \brief Get the mutability for the given component, variable and attribute_enum
+    /// \param component_id
+    /// \param variable_id
+    /// \param attribute_enum
+    /// \return The mutability of the given component variable, else std::nullopt
+    std::optional<MutabilityEnum> get_mutability(const Component& component_id, const Variable& variable,
+                                                 const AttributeEnum& attribute_enum);
+
     /// \brief Sets the variable_id attribute \p value specified by \p component_id , \p variable_id and \p
     /// attribute_enum
     /// \param component_id
