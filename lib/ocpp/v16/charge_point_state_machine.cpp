@@ -309,7 +309,7 @@ void ChargePointStates::submit_event(const int connector_id, FSMEvent event, con
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
         this->state_machine_connector_zero->handle_event(event, timestamp, info);
-    } else if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+    } else if (connector_id > 0 && static_cast<size_t>(connector_id) <= this->state_machines.size()) {
         this->state_machines.at(connector_id - 1).handle_event(event, timestamp, info);
     }
 }
@@ -318,7 +318,7 @@ void ChargePointStates::submit_error(const int connector_id, const ErrorInfo& er
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
         this->state_machine_connector_zero->handle_error(error_info);
-    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+    } else if (connector_id > 0 && static_cast<size_t>(connector_id) <= state_machines.size()) {
         state_machines.at(connector_id - 1).handle_error(error_info);
     }
 }
@@ -327,7 +327,7 @@ void ChargePointStates::submit_error_cleared(const int connector_id, const std::
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
         this->state_machine_connector_zero->handle_error_cleared(uuid);
-    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+    } else if (connector_id > 0 && static_cast<size_t>(connector_id) <= state_machines.size()) {
         state_machines.at(connector_id - 1).handle_error_cleared(uuid);
     }
 }
@@ -336,7 +336,7 @@ void ChargePointStates::submit_all_errors_cleared(const int32_t connector_id) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
     if (connector_id == 0) {
         this->state_machine_connector_zero->handle_all_errors_cleared();
-    } else if (connector_id > 0 && (size_t)connector_id <= state_machines.size()) {
+    } else if (connector_id > 0 && static_cast<size_t>(connector_id) <= state_machines.size()) {
         state_machines.at(connector_id - 1).handle_all_errors_cleared();
     }
 }
@@ -360,7 +360,7 @@ void ChargePointStates::trigger_status_notifications() {
 
 ChargePointStatus ChargePointStates::get_state(int connector_id) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+    if (connector_id > 0 && static_cast<size_t>(connector_id) <= this->state_machines.size()) {
         return state_machines.at(connector_id - 1).get_state();
     } else if (connector_id == 0) {
         return state_machine_connector_zero->get_state();
@@ -372,7 +372,7 @@ ChargePointStatus ChargePointStates::get_state(int connector_id) {
 
 std::optional<ErrorInfo> ChargePointStates::get_latest_error(int connector_id) {
     const std::lock_guard<std::mutex> lck(state_machines_mutex);
-    if (connector_id > 0 && (size_t)connector_id <= this->state_machines.size()) {
+    if (connector_id > 0 && static_cast<size_t>(connector_id) <= this->state_machines.size()) {
         return state_machines.at(connector_id - 1).get_latest_error();
     } else {
         return state_machine_connector_zero->get_latest_error();

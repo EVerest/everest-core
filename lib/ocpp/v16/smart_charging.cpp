@@ -17,7 +17,7 @@ namespace v16 {
 bool validate_schedule(const ChargingSchedule& schedule, const int charging_schedule_max_periods,
                        const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units) {
 
-    if (schedule.chargingSchedulePeriod.size() > (size_t)charging_schedule_max_periods) {
+    if (schedule.chargingSchedulePeriod.size() > static_cast<size_t>(charging_schedule_max_periods)) {
         EVLOG_warning << "INVALID SCHEDULE - Number of chargingSchedulePeriod(s) is greater than configured "
                          "ChargingScheduleMaxPeriods of "
                       << charging_schedule_max_periods;
@@ -166,7 +166,7 @@ bool SmartChargingHandler::validate_profile(
     ChargingProfile& profile, const int connector_id, bool ignore_no_transaction, const int profile_max_stack_level,
     const int max_charging_profiles_installed, const int charging_schedule_max_periods,
     const std::vector<ChargingRateUnit>& charging_schedule_allowed_charging_rate_units) {
-    if ((size_t)connector_id >= this->connectors.size() or connector_id < 0 or profile.stackLevel < 0 or
+    if (static_cast<size_t>(connector_id) >= this->connectors.size() or connector_id < 0 or profile.stackLevel < 0 or
         profile.stackLevel > profile_max_stack_level) {
         EVLOG_warning << "INVALID PROFILE - connector_id invalid or invalid stack level";
         return false;

@@ -357,7 +357,7 @@ void ChargePointImpl::init_state_machine(const std::map<int, ChargePointStatus>&
         }
         this->status->reset(_connector_status_map);
     } else {
-        if ((size_t)this->configuration->getNumberOfConnectors() + 1 != connector_status_map.size()) {
+        if (static_cast<size_t>(this->configuration->getNumberOfConnectors()) + 1 != connector_status_map.size()) {
             throw std::runtime_error(
                 "Number of configured connectors doesn't match number of connectors in the database.");
         }
@@ -3768,7 +3768,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
                         "V2GCertificate";
             EVLOG_warning << tech_info;
         } else if (this->configuration->getCertificateSignedMaxChainSize().has_value() and
-                   (size_t) this->configuration->getCertificateSignedMaxChainSize().value() <
+                   static_cast<size_t>(this->configuration->getCertificateSignedMaxChainSize().value()) <
                        req.certificateChain.get().size()) {
             tech_info = "Received DataTransfer.req containing CertificateSigned.req where chain size is greater "
                         "than configured CertificateSignedMaxChainSize";
