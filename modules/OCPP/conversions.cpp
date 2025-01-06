@@ -245,6 +245,19 @@ ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powerm
     return ocpp_powermeter;
 }
 
+std::vector<ocpp::Temperature> to_ocpp_temperatures(const std::vector<types::temperature::Temperature>& temperatures) {
+    std::vector<ocpp::Temperature> ocpp_temperatures;
+    for (const auto temperature : temperatures) {
+        ocpp::Temperature ocpp_temperature;
+        ocpp_temperature.value = temperature.temperature;
+        if (temperature.location.has_value()) {
+            ocpp_temperature.location = temperature.location.value();
+        }
+        ocpp_temperatures.push_back(ocpp_temperature);
+    }
+    return ocpp_temperatures;
+}
+
 ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm) {
     switch (hash_algorithm) {
     case types::iso15118_charger::HashAlgorithm::SHA256:

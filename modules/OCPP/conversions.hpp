@@ -63,6 +63,9 @@ ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReas
 /// \brief  Converts a given types::powermeter::Powermeter \p powermeter to a ocpp::Powermeter
 ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter);
 
+/// \brief Converts a given vector of types::temperature::Temperature \p powermeter to a vector of ocpp::Temperature
+std::vector<ocpp::Temperature> to_ocpp_temperatures(const std::vector<types::temperature::Temperature>& temperatures);
+
 /// \brief Converts a given types::iso15118_charger::HashAlgorithm \p hash_algorithm to a ocpp::v201::HashAlgorithmEnum.
 ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm);
 
