@@ -7,7 +7,7 @@ pub mod {{ name }} {
 use everestrs::serde as __serde;
 
 {% for object in types.objects %}
-#[derive(Debug, Clone, __serde::Serialize, __serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, __serde::Serialize, __serde::Deserialize)]
 #[serde(crate = "__serde")]
 pub struct {{ object.name }} {
 {% for p in object.properties %}
@@ -19,7 +19,7 @@ pub {{ p.name | identifier }}: {{ p.data_type.name }},
 {% endfor %}
 
 {% for enum in types.enums %}
-#[derive(Debug, Clone, __serde::Serialize, __serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, __serde::Serialize, __serde::Deserialize)]
 #[serde(crate = "__serde")]
 pub enum {{ enum.name }} {
 {% for item in enum.items %}
