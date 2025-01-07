@@ -22,7 +22,7 @@ alt EvseManager configured to become inoperative in case of PowermeterCommError
     EvseManager->>EvseManager: Pause charging
     EvseManager->>OCPP: raiseError (Inoperative)
     OCPP->>CSMS: StatusNotification.req(Faulted)
-    Note over EvseManager: Note that we just continue charging otherwise
+    Note over EvseManager: Note that we would just continue charging otherwise
 end
 
 Note over Powermeter, CSMS: User stops the transaction
