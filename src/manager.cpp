@@ -627,7 +627,7 @@ int boot(const po::variables_map& vm) {
     EVLOG_info << ms.version_information;
     EVLOG_info << "";
 
-    if (ms.mqtt_settings.uses_socket()) {
+    if (not ms.mqtt_settings.uses_socket()) {
         EVLOG_info << "Using MQTT broker " << ms.mqtt_settings.broker_host << ":" << ms.mqtt_settings.broker_port;
     } else {
         EVLOG_info << "Using MQTT broker unix domain sockets:" << ms.mqtt_settings.broker_socket_path;
@@ -745,7 +745,7 @@ int boot(const po::variables_map& vm) {
     auto mqtt_abstraction = MQTTAbstraction(ms.mqtt_settings);
 
     if (!mqtt_abstraction.connect()) {
-        if (ms.mqtt_settings.broker_socket_path.empty()) {
+        if (not ms.mqtt_settings.uses_socket()) {
             EVLOG_error << fmt::format("Cannot connect to MQTT broker at {}:{}", ms.mqtt_settings.broker_host,
                                        ms.mqtt_settings.broker_port);
         } else {
