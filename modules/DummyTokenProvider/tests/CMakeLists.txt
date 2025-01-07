@@ -23,6 +23,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
     GTest::gmock
     GTest::gtest_main
     everest::framework
-    )
+    everest::staging::helpers
+)
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
