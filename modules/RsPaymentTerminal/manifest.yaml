@@ -41,7 +41,7 @@ config:
     description: Password for the Feig terminal.
     type: integer
   accept_credit_cards:
-    description: Indicates whether credit cards should be accepted for all connectors
+    description: Indicates whether credit cards should be accepted for the connectors given with `credit_card_connectors`
     type: boolean
     default: true
   credit_card_connectors:
