@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.18.0
+  git_tag: v0.19.1
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -61,13 +61,13 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.1
+  git_tag: v0.9.2
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: https://github.com/EVerest/libocpp.git
-  git_tag: 9836ac4766e99a79555adb15c3001c8704f8b7a7
+  git_tag: c66383782a32827920af80314165843deed63c98
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
@@ -86,7 +86,12 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: v0.4.3
+  git_tag: v0.4.4
+# linux_libnfc-nci for RFID
+libnfc-nci:
+  git: https://github.com/EVerest/linux_libnfc-nci.git
+  git_tag: 2024.11.0
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBNFC_NCI"
 
 # unit testing
 gtest:

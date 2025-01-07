@@ -433,6 +433,13 @@ def probe_module(
         module,
         skip_implementation,
         "ProbeModuleSecurity",
+        "get_verify_location",
+        lambda arg: "",
+    )
+    implement_command(
+        module,
+        skip_implementation,
+        "ProbeModuleSecurity",
         "verify_file_signature",
         lambda arg: True,
     )

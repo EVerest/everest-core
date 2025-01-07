@@ -76,6 +76,7 @@ struct Conf {
     int hack_sleep_in_cable_check_volkswagen;
     int cable_check_wait_number_of_imd_measurements;
     bool cable_check_enable_imd_self_test;
+    bool cable_check_wait_below_60V_before_finish;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
     bool hack_pause_imd_during_precharge;
@@ -351,6 +352,7 @@ private:
     static constexpr int CABLECHECK_SELFTEST_TIMEOUT{30};
 
     std::atomic_bool current_demand_active{false};
+    std::atomic_bool slac_unmatched{false};
     std::mutex powermeter_mutex;
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};

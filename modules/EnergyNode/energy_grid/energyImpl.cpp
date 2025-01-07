@@ -42,7 +42,7 @@ void energyImpl::init() {
         });
     }
 
-    if (!mod->r_price_information.empty()) {
+    if (!mod->r_powermeter.empty()) {
         mod->r_powermeter[0]->subscribe_powermeter([this](types::powermeter::Powermeter p) {
             EVLOG_debug << "Incoming powermeter readings: " << p;
             std::scoped_lock lock(energy_mutex);

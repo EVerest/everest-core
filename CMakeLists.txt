@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2024.10.0
+    VERSION 2024.11.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -108,6 +108,7 @@ else()
 
     find_package(fsm REQUIRED)
     find_package(slac REQUIRED)
+    find_package(libnfc-nci REQUIRED)
 
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
