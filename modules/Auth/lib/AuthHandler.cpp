@@ -71,7 +71,8 @@ void AuthHandler::initialize() {
 }
 
 TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token) {
-    this->event_mutex.lock(); // lock mutex directly because it needs to be unlocked within handle_token
+    std::unique_lock<std::mutex> lk(this->event_mutex);
+
     TokenHandlingResult result;
 
     // check if token is already currently processed
@@ -82,7 +83,7 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
         // process token if not already in process
         this->tokens_in_process.insert(provided_token.id_token.value);
         this->publish_token_validation_status_callback(provided_token, TokenValidationStatus::Processing);
-        result = this->handle_token(provided_token);
+        result = this->handle_token(provided_token, lk);
     } else {
         // do nothing if token is currently processed
         EVLOG_info << "Received token " << provided_token.id_token.value << " repeatedly while still processing it";
@@ -112,11 +113,10 @@ TokenHandlingResult AuthHandler::on_token(const ProvidedIdToken& provided_token)
 
     EVLOG_info << "Result for token: " << provided_token.id_token.value << ": "
                << conversions::token_handling_result_to_string(result);
-    this->event_mutex.unlock();
     return result;
 }
 
-TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token) {
+TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk) {
     std::vector<int> referenced_evses = this->get_referenced_evses(provided_token);
 
     // Only provided token with type RFID can be used to stop a transaction
@@ -271,11 +271,9 @@ TokenHandlingResult AuthHandler::handle_token(const ProvidedIdToken& provided_to
                     - process it against placed reservations
                     - compare referenced_evses against the evses listed in the validation_result
                 */
-                this->event_mutex
-                    .unlock(); // unlock to allow other threads to continue processing in case select_evse is blocking
-                int evse_id = this->select_evse(referenced_evses); // might block
-                this->event_mutex.lock();                          // lock again after evse is selected
-                EVLOG_debug << "Selected evse#" << evse_id << " for token: " << provided_token.id_token.value;
+                int evse_id = this->select_evse(referenced_evses, lk); // might block
+                EVLOG_debug << "Selected evse#" << evse_id
+                            << " for token: " << provided_token.id_token.value;
                 if (evse_id != -1) { // indicates timeout of evse selection
                     std::optional<std::string> parent_id_token;
                     if (validation_result.parent_id_token.has_value()) {
@@ -445,8 +443,7 @@ int AuthHandler::get_latest_plugin(const std::vector<int>& evse_ids) {
     return -1;
 }
 
-int AuthHandler::select_evse(const std::vector<int>& selected_evses) {
-    std::unique_lock<std::mutex> lk(this->event_mutex);
+int AuthHandler::select_evse(const std::vector<int>& selected_evses, std::unique_lock<std::mutex>& lk) {
     if (selected_evses.size() == 1) {
         return selected_evses.at(0);
     }
