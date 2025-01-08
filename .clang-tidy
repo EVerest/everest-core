@@ -1,6 +1,8 @@
 Checks: >
     bugprone*,
     misc-const-correctness,
+    performance*,
+    -performance-avoid-endl,
     -llvmlibc*,
     -fuchsia-overloaded-operator,
     -fuchsia-statically-constructed-objects,
@@ -18,3 +20,5 @@ Checks: >
     -cppcoreguidelines-non-private-member-variables-in-classes,
     -bugprone-easily-swappable-parameters
 HeaderFilterRegex:  ".*"
+CheckOptions:
+  - { key: performance-unnecessary-value-param.AllowedTypes, value: ((std::shared_ptr)) }

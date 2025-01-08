@@ -396,9 +396,8 @@ ModuleCallbacks::ModuleCallbacks(
     register_module_adapter(register_module_adapter), everest_register(everest_register), init(init), ready(ready) {
 }
 
-ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks,
-                           const VersionInformation version_information) :
-    runtime_settings(nullptr), callbacks(callbacks), version_information(version_information) {
+ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks, VersionInformation version_information) :
+    runtime_settings(nullptr), callbacks(std::move(callbacks)), version_information(std::move(version_information)) {
     if (!this->parse_command_line(argc, argv)) {
         this->should_exit = true;
         return;
@@ -478,11 +477,11 @@ int ModuleLoader::initialize() {
         ModuleAdapter module_adapter;
 
         module_adapter.call = [&everest](const Requirement& req, const std::string& cmd_name, Parameters args) {
-            return everest.call_cmd(req, cmd_name, args);
+            return everest.call_cmd(req, cmd_name, std::move(args));
         };
 
         module_adapter.publish = [&everest](const std::string& param1, const std::string& param2, Value param3) {
-            return everest.publish_var(param1, param2, param3);
+            return everest.publish_var(param1, param2, std::move(param3));
         };
 
         module_adapter.subscribe = [&everest](const Requirement& req, const std::string& var_name,

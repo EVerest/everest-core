@@ -78,8 +78,8 @@ static ParsedConfigMap parse_config_map(const json& config_map_schema, const jso
 
     // validate each config entry
     for (const auto& config_entry_el : config_map_schema.items()) {
-        const std::string config_entry_name = config_entry_el.key();
-        const json config_entry = config_entry_el.value();
+        const std::string& config_entry_name = config_entry_el.key();
+        const json& config_entry = config_entry_el.value();
 
         // only convenience exception, would be catched by schema validation below if not thrown here
         if (!config_entry.contains("default") and !config_map.contains(config_entry_name)) {
@@ -125,7 +125,7 @@ static auto get_provides_for_probe_module(const std::string& probe_module_id, co
         const auto& connections = module_config.value("connections", json::object());
 
         for (const auto& connection : connections.items()) {
-            const std::string req_id = connection.key();
+            const std::string& req_id = connection.key();
             const std::string module_name = module_config.at("module");
             const auto& module_manifest = manifests.at(module_name);
 
@@ -161,7 +161,7 @@ static auto get_provides_for_probe_module(const std::string& probe_module_id, co
 
 static auto get_requirements_for_probe_module(const std::string& probe_module_id, const json& config,
                                               const json& manifests) {
-    const auto probe_module_config = config.at(probe_module_id);
+    const auto& probe_module_config = config.at(probe_module_id);
 
     auto requirements = json::object();
 
@@ -181,7 +181,7 @@ static auto get_requirements_for_probe_module(const std::string& probe_module_id
 
             if (module_config_it == config.end()) {
                 EVLOG_AND_THROW(
-                    EverestConfigError("ProbeModule refers to a non-existent module id '" + module_id + "'"));
+                    EverestConfigError(fmt::format("ProbeModule refers to a non-existent module id '{}'", module_id)));
             }
 
             const auto& module_manifest = manifests.at(module_config_it->at("module"));
@@ -189,14 +189,15 @@ static auto get_requirements_for_probe_module(const std::string& probe_module_id
             const auto& module_provides_it = module_manifest.find("provides");
 
             if (module_provides_it == module_manifest.end()) {
-                EVLOG_AND_THROW(EverestConfigError("ProbeModule requires something from module id' " + module_id +
-                                                   "', but it does not provide anything"));
+                EVLOG_AND_THROW(EverestConfigError(fmt::format(
+                    "ProbeModule requires something from module id '{}' but it does not provide anything", module_id)));
             }
 
             const auto& provide_it = module_provides_it->find(impl_id);
             if (provide_it == module_provides_it->end()) {
-                EVLOG_AND_THROW(EverestConfigError("ProbeModule requires something from module id '" + module_id +
-                                                   "', but it does not provide '" + impl_id + "'"));
+                EVLOG_AND_THROW(EverestConfigError(
+                    fmt::format("ProbeModule requires something from module id '{}', but it does not provide '{}'",
+                                module_id, impl_id)));
             }
 
             const std::string interface = provide_it->at("interface");
@@ -269,7 +270,7 @@ std::string create_printable_identifier(const ImplementationInfo& info, const st
     BOOST_LOG_FUNCTION();
 
     // no implementation id yet so only return this kind of string:
-    const auto module_string = fmt::format("{}:{}", info.module_id, info.module_name);
+    auto module_string = fmt::format("{}:{}", info.module_id, info.module_name);
     if (impl_id.empty()) {
         return module_string;
     }
@@ -579,7 +580,7 @@ void ManagerConfig::load_and_validate_manifest(const std::string& module_id, con
 
     // validate config for !module
     {
-        const json config_map = module_config.at("config_module");
+        const json& config_map = module_config.at("config_module");
         const json config_map_schema = this->manifests[module_config.at("module").get<std::string>()]["config"];
 
         try {
@@ -887,7 +888,7 @@ void ManagerConfig::resolve_all_requirements() {
 }
 
 void ManagerConfig::parse(json config) {
-    this->main = config;
+    this->main = std::move(config);
     // load type files
     if (this->ms.runtime_settings->validate_schema) {
         int64_t total_time_validation_ms = 0, total_time_parsing_ms = 0;
@@ -1167,7 +1168,7 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
             for (const auto& entry : conf_map.value().items()) {
                 const json entry_type = config_schema.at(entry.key()).at("type");
                 ConfigEntry value;
-                const json data = entry.value();
+                const json& data = entry.value();
 
                 if (data.is_string()) {
                     value = data.get<std::string>();
@@ -1239,7 +1240,7 @@ void Config::ref_loader(const json_uri& uri, json& schema) {
         schema = nlohmann::json_schema::draft7_schema_builtin;
         return;
     } else {
-        const auto path = uri.path();
+        const auto& path = uri.path();
         if (this->types.contains(path)) {
             schema = this->types[path];
             EVLOG_verbose << fmt::format("ref path \"{}\" schema has been found.", path);

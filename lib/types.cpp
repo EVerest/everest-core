@@ -7,15 +7,15 @@
 
 TypedHandler::TypedHandler(const std::string& name_, const std::string& id_, HandlerType type_,
                            std::shared_ptr<Handler> handler_) :
-    name(name_), id(id_), type(type_), handler(handler_) {
+    name(name_), id(id_), type(type_), handler(std::move(handler_)) {
 }
 
 TypedHandler::TypedHandler(const std::string& name_, HandlerType type_, std::shared_ptr<Handler> handler_) :
-    TypedHandler(name_, "", type_, handler_) {
+    TypedHandler(name_, "", type_, std::move(handler_)) {
 }
 
 TypedHandler::TypedHandler(HandlerType type_, std::shared_ptr<Handler> handler_) :
-    TypedHandler("", "", type_, handler_) {
+    TypedHandler("", "", type_, std::move(handler_)) {
 }
 
 bool operator<(const Requirement& lhs, const Requirement& rhs) {

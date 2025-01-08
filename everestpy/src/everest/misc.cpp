@@ -82,8 +82,8 @@ RuntimeSession::RuntimeSession() {
 ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Config& config) {
     ModuleSetup setup;
 
-    const std::string& module_name = config.get_main_config().at(module_id).at("module");
-    const auto module_manifest = config.get_manifests().at(module_name);
+    const std::string& module_name = config.get_module_name(module_id);
+    const auto& module_manifest = config.get_manifests().at(module_name);
 
     // setup connections
     for (const auto& requirement : module_manifest.at("requires").items()) {
@@ -107,7 +107,7 @@ ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Conf
             const auto& req_route = req_route_list[i];
             const auto fulfillment =
                 Fulfillment{req_route["module_id"], req_route["implementation_id"], {requirement_id, i}};
-            fulfillment_list.emplace_back(std::move(fulfillment));
+            fulfillment_list.emplace_back(fulfillment);
         }
     }
 

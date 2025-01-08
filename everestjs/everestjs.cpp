@@ -612,10 +612,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
                                 "Module with identifier '" << module_id << "' not found in config!"));
         }
 
-        const std::string& module_name = config->get_main_config()[module_id]["module"].get<std::string>();
-        auto module_manifest = config->get_manifests()[module_name];
+        const std::string& module_name = config->get_module_name(module_id);
+        const auto& module_manifest = config->get_manifests().at(module_name);
         // FIXME (aw): get_classes should be called get_units and should contain the type of class for each unit
-        auto module_impls = config->get_interfaces()[module_name];
+        const auto& module_impls = config->get_interfaces().at(module_name);
 
         // initialize everest framework
         const auto& module_identifier = config->printable_identifier(module_id);
@@ -733,9 +733,9 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         auto uses_list_reqs_prop = Napi::Object::New(env);
         auto uses_cmds_prop = Napi::Object::New(env);
         auto uses_list_cmds_prop = Napi::Object::New(env);
-        for (auto& requirement : module_manifest["requires"].items()) {
+        for (const auto& requirement : module_manifest.at("requires").items()) {
             auto req_prop = Napi::Object::New(env);
-            auto const& requirement_id = requirement.key();
+            const auto& requirement_id = requirement.key();
             json req_route_list = config->resolve_requirement(module_id, requirement_id);
             // if this was a requirement with min_connections == 1 and max_connections == 1,
             // this will be simply a single connection, but an array of connections otherwise
@@ -747,13 +747,13 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
             auto req_array_prop = Napi::Array::New(env);
             auto req_mod_cmds_array = Napi::Array::New(env);
             for (std::size_t i = 0; i < req_route_list.size(); i++) {
-                auto req_route = req_route_list[i];
+                const auto& req_route = req_route_list[i];
                 const std::string& requirement_module_id = req_route["module_id"];
                 const std::string& requirement_impl_id = req_route["implementation_id"];
                 // FIXME (aw): why is const auto& not possible for the following line?
                 // we only want cmds/vars from the required interface to be usable, not from it's child interfaces
-                std::string interface_name = req_route["required_interface"].get<std::string>();
-                auto requirement_impl_intf = config->get_interface_definition(interface_name);
+                const std::string& interface_name = req_route["required_interface"].get<std::string>();
+                const auto& requirement_impl_intf = config->get_interface_definition(interface_name);
                 auto requirement_vars = Everest::Config::keys(requirement_impl_intf["vars"]);
                 auto requirement_cmds = Everest::Config::keys(requirement_impl_intf["cmds"]);
 

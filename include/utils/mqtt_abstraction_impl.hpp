@@ -20,7 +20,7 @@
 
 #include <utils/thread.hpp>
 
-constexpr std::size_t MQTT_BUF_SIZE = 500 * 1024;
+constexpr auto MQTT_BUF_SIZE = 500 * std::size_t{1024};
 
 namespace Everest {
 /// \brief Contains a payload and the topic it was received on with additional QOS

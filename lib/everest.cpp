@@ -71,7 +71,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     // setup error_manager_req_global if enabled + error_database + error_state_monitor
     if (this->module_manifest.contains("enable_global_errors") &&
         this->module_manifest.at("enable_global_errors").get<bool>()) {
-        std::shared_ptr<error::ErrorDatabaseMap> global_error_database = std::make_shared<error::ErrorDatabaseMap>();
+        auto global_error_database = std::make_shared<error::ErrorDatabaseMap>();
         const error::ErrorManagerReqGlobal::SubscribeGlobalAllErrorsFunc subscribe_global_all_errors_func =
             [this](const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback) {
                 this->subscribe_global_all_errors(callback, clear_callback);
@@ -90,7 +90,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     // setup error_managers, error_state_monitors, error_factories and error_databases for all implementations
     for (const std::string& impl : Config::keys(this->module_manifest.at("provides"))) {
         // setup shared database
-        std::shared_ptr<error::ErrorDatabaseMap> error_database = std::make_shared<error::ErrorDatabaseMap>();
+        auto error_database = std::make_shared<error::ErrorDatabaseMap>();
 
         // setup error manager
         const std::string interface_name = this->module_manifest.at("provides").at(impl).at("interface");
@@ -188,7 +188,7 @@ Everest::Everest(std::string module_id_, const Config& config_, bool validate_da
     }
 
     // register handler for global ready signal
-    const auto handle_ready_wrapper = [this](const std::string&, json data) { this->handle_ready(data); };
+    const auto handle_ready_wrapper = [this](const std::string&, const json& data) { this->handle_ready(data); };
     const auto everest_ready =
         std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(handle_ready_wrapper));
     this->mqtt_abstraction->register_handler(fmt::format("{}ready", mqtt_everest_prefix), everest_ready, QOS::QOS2);
@@ -265,7 +265,7 @@ void Everest::check_code() {
         this->config.get_manifests()[this->config.get_main_config()[this->module_id]["module"].get<std::string>()];
     for (const auto& element : module_manifest.at("provides").items()) {
         const auto& impl_id = element.key();
-        const auto impl_manifest = element.value();
+        const auto& impl_manifest = element.value();
         const auto interface_definition = this->config.get_interface_definition(impl_manifest.at("interface"));
 
         std::set<std::string> cmds_not_registered;
@@ -666,13 +666,13 @@ void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
     for (const auto& [module_id, module_name] : this->config.get_module_names()) {
         const json provides = this->config.get_manifests().at(module_name).at("provides");
         for (const auto& impl : provides.items()) {
-            const std::string impl_id = impl.key();
-            const std::string interface = impl.value().at("interface");
+            const std::string& impl_id = impl.key();
+            const std::string& interface = impl.value().at("interface");
             const json errors = this->config.get_interface_definition(interface).at("errors");
             for (const auto& error_namespace_it : errors.items()) {
-                const std::string error_type_namespace = error_namespace_it.key();
+                const std::string& error_type_namespace = error_namespace_it.key();
                 for (const auto& error_name_it : error_namespace_it.value().items()) {
-                    const std::string error_type_name = error_name_it.key();
+                    const std::string& error_type_name = error_name_it.key();
                     const std::string raise_topic =
                         fmt::format("{}/error/{}/{}", this->config.mqtt_prefix(module_id, impl_id),
                                     error_type_namespace, error_type_name);
@@ -784,7 +784,7 @@ void Everest::signal_ready() {
 /// \brief Ready handler for global readyness (e.g. all modules are ready now).
 /// This will called when receiving the global ready signal from manager.
 ///
-void Everest::handle_ready(json data) {
+void Everest::handle_ready(const json& data) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << fmt::format("handle_ready: {}", data.dump());
@@ -818,7 +818,7 @@ void Everest::handle_ready(json data) {
     // this->heartbeat_thread = std::thread(&Everest::heartbeat, this);
 }
 
-void Everest::provide_cmd(const std::string impl_id, const std::string cmd_name, const JsonCommand handler) {
+void Everest::provide_cmd(const std::string& impl_id, const std::string& cmd_name, const JsonCommand& handler) {
     BOOST_LOG_FUNCTION();
 
     // extract manifest definition of this command
@@ -975,7 +975,7 @@ void Everest::provide_cmd(const cmd& cmd) {
         // call cmd handlers (handle async or normal handlers being both:
         // methods or functions)
         // FIXME (aw): this behaviour needs to be checked, i.e. how to distinguish in json between no value and null?
-        return handler(data).value_or(nullptr);
+        return handler(std::move(data)).value_or(nullptr);
     });
 }
 
@@ -983,8 +983,8 @@ json Everest::get_cmd_definition(const std::string& module_id, const std::string
                                  bool is_call) {
     BOOST_LOG_FUNCTION();
 
-    const std::string module_name = this->config.get_module_name(module_id);
-    const auto cmds = this->config.get_module_cmds(module_name, impl_id);
+    const auto& module_name = this->config.get_module_name(module_id);
+    const auto& cmds = this->config.get_module_cmds(module_name, impl_id);
 
     if (!this->config.module_provides(module_name, impl_id)) {
         if (!is_call) {
