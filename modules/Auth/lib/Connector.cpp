@@ -44,6 +44,11 @@ bool EVSEContext::is_available() {
         return false;
     }
 
+    // if an identifier is present, an EVSE is not considered available
+    if (this->identifier.has_value()) {
+        return false;
+    }
+
     bool occupied = false;
     bool available = false;
     for (const auto& connector : this->connectors) {
