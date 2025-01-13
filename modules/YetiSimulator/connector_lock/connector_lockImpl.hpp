@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
-#define CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
+#pragma once
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -58,5 +57,3 @@ private:
 
 } // namespace connector_lock
 } // namespace module
-
-#endif // CONNECTOR_LOCK_CONNECTOR_LOCK_IMPL_HPP
