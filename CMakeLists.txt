@@ -72,8 +72,6 @@ if(EVEREST_CORE_BUILD_TESTING)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
     evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
 endif()
 
 include(ev-define-dependency)

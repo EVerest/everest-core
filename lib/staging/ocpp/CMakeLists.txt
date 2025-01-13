@@ -28,6 +28,9 @@ target_link_libraries(ocpp_evse_security
         everest::framework
 )
 
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(ocpp_evse_security)
+endif()
 
 # OCPP conversions
 
@@ -58,4 +61,8 @@ target_link_libraries(ocpp_conversions
         everest::ocpp
         everest::framework
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(ocpp_conversions)
+endif()
 

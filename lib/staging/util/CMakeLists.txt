@@ -9,3 +9,7 @@ target_include_directories(everest_staging_util
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(everest_staging_util)
+endif()

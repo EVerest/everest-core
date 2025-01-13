@@ -29,3 +29,7 @@ target_link_libraries(yeti_comms
         everest::framework
         everest::gpio
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(yeti_comms)
+endif()

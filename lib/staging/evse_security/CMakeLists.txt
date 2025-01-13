@@ -19,3 +19,7 @@ target_link_libraries(evse_security_conversions
         everest::evse_security
         everest::framework
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(evse_security_conversions)
+endif()

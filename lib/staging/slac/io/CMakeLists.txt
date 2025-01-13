@@ -15,3 +15,7 @@ target_link_libraries(slac_io
     PUBLIC
         slac::slac
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(slac_io)
+endif()

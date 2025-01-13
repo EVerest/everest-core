@@ -13,3 +13,7 @@ target_sources(can_dpm1000
 if(BUILD_DEV_TESTS)
     add_subdirectory(tests)
 endif()
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(can_dpm1000)
+endif()

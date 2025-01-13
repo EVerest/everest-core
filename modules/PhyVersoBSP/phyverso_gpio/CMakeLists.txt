@@ -29,3 +29,7 @@ target_link_libraries(phyverso_gpio
         phyverso_config
         fmt::fmt
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(phyverso_gpio)
+endif()

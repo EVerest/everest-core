@@ -26,3 +26,7 @@ add_dependencies(everest_staging_helpers generate_cpp_files)
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(everest_staging_helpers)
+endif()

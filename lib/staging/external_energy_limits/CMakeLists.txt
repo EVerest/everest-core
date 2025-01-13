@@ -20,3 +20,7 @@ target_link_libraries(external_energy_limits
     PRIVATE
         everest::framework
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(external_energy_limits)
+endif()

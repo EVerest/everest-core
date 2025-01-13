@@ -25,6 +25,10 @@ target_link_libraries(phyverso_config
         fmt::fmt
 )
 
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(phyverso_config)
+endif()
+
 add_library(phyverso_mcu_comms STATIC)
 target_sources(phyverso_mcu_comms
     PRIVATE
@@ -49,3 +53,7 @@ target_link_libraries(phyverso_mcu_comms
         everest::framework
         phyverso_config
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(phyverso_mcu_comms)
+endif()
