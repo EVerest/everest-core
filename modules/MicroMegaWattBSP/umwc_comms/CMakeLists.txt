@@ -32,3 +32,7 @@ target_link_libraries(umwc_comms
         everest::framework
         everest::gpio
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(umwc_comms)
+endif()

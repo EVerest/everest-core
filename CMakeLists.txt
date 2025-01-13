@@ -72,8 +72,6 @@ if(EVEREST_CORE_BUILD_TESTING)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
     evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
 endif()
 
 include(ev-define-dependency)
@@ -148,17 +146,16 @@ endif()
 # testing
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
-
+    set(GCOVR_ADDITIONAL_ARGS "--gcov-ignore-errors=all")
     setup_target_for_coverage_gcovr_html(
         NAME ${PROJECT_NAME}_gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
+        EXECUTABLE ctest
+        EXCLUDE "${CMAKE_BINARY_DIR}/*" "${CPM_SOURCE_CACHE}" "${PROJECT_SOURCE_DIR}/lib/3rd_party/*"
     )
-
-    setup_target_for_coverage_lcov(
-        NAME ${PROJECT_NAME}_lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
+    setup_target_for_coverage_gcovr_xml(
+        NAME ${PROJECT_NAME}_gcovr_coverage_xml
+        EXECUTABLE ctest
+        EXCLUDE "${CMAKE_BINARY_DIR}/*" "${CPM_SOURCE_CACHE}" "${PROJECT_SOURCE_DIR}/lib/3rd_party/*"
     )
 else()
     message("Not running unit tests")

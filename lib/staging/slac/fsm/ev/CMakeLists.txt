@@ -17,3 +17,7 @@ target_link_libraries(slac_fsm_ev
         slac::slac
         fsm::fsm
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(slac_fsm_ev)
+endif()

@@ -532,6 +532,10 @@ function (ev_add_cpp_module MODULE_NAME)
                 )
             endif()
 
+            if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
+                append_coverage_compiler_flags_to_target("${MODULE_NAME}")
+            endif()
+
             add_dependencies(${MODULE_NAME} generate_cpp_files)
 
             install(TARGETS ${MODULE_NAME}

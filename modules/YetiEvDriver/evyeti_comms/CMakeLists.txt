@@ -32,3 +32,7 @@ target_link_libraries(evyeti_comms
         Pal::Sigslot
         everest::framework
 )
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(evyeti_comms)
+endif()

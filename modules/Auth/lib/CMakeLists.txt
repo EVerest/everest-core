@@ -35,3 +35,7 @@ if(EVEREST_ENABLE_COMPILE_WARNINGS)
         PRIVATE ${EVEREST_COMPILE_OPTIONS}
     )
 endif()
+
+if(EVEREST_CORE_BUILD_TESTING)
+    append_coverage_compiler_flags_to_target(auth_handler)
+endif()
