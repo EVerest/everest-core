@@ -154,6 +154,11 @@ if(EVEREST_CORE_BUILD_TESTING)
         EXECUTABLE ctest
         EXCLUDE "${CMAKE_BINARY_DIR}/*" "${CPM_SOURCE_CACHE}" "${PROJECT_SOURCE_DIR}/lib/3rd_party/*"
     )
+    setup_target_for_coverage_gcovr_xml(
+        NAME ${PROJECT_NAME}_gcovr_coverage_xml
+        EXECUTABLE ctest
+        EXCLUDE "${CMAKE_BINARY_DIR}/*" "${CPM_SOURCE_CACHE}" "${PROJECT_SOURCE_DIR}/lib/3rd_party/*"
+    )
 else()
     message("Not running unit tests")
 endif()
