@@ -556,6 +556,8 @@ static Napi::Value is_condition_satisfied_req(const Requirement& req, const Napi
 static Napi::Value boot_module(const Napi::CallbackInfo& info) {
     BOOST_LOG_FUNCTION();
 
+    const auto start_time = std::chrono::system_clock::now();
+
     auto env = info.Env();
 
     auto available_handlers_prop = Napi::Object::New(env);
@@ -945,6 +947,10 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         ctx->js_module_ref = Napi::Persistent(module_this);
         ctx->js_cb = std::make_unique<JsExecCtx>(env, callback_wrapper);
         ctx->everest->register_on_ready_handler(framework_ready_handler);
+
+        const auto end_time = std::chrono::system_clock::now();
+        EVLOG_info << "Module " << fmt::format(Everest::TERMINAL_STYLE_BLUE, "{}", module_id) << " initialized ["
+                   << std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << "ms]";
 
         ctx->everest->spawn_main_loop_thread();
 
