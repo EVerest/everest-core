@@ -29,6 +29,8 @@ jobs:
       do_not_run_coverage_badge_creation: true
       run_install_wheels: true
       run_integration_tests: true
+      coverage_report_path: gcovr-coverage
+      coverage_xml_path: gcovr-coverage-xml.xml
   ocpp-tests:
     name: OCPP Tests
     needs:
