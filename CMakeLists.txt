@@ -148,7 +148,7 @@ endif()
 # testing
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
-
+    set(GCOVR_ADDITIONAL_ARGS "--gcov-ignore-errors=no_working_dir_found")
     setup_target_for_coverage_gcovr_html(
         NAME ${PROJECT_NAME}_gcovr_coverage
         EXECUTABLE ctest
