@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
-#ifndef EVEREST_CORE_MODULES_YETISIMULATOR_UTIL_STATE_HPP
-#define EVEREST_CORE_MODULES_YETISIMULATOR_UTIL_STATE_HPP
+#pragma once
 
 // NOLINTBEGIN: ignore things like public access or magic values
 #include "nlohmann/json.hpp"
@@ -237,5 +235,4 @@ void to_json(nlohmann::json& json, const PowermeterData& powermeter_data);
 
 } // namespace module::state
 
-#endif
 // NOLINTEND

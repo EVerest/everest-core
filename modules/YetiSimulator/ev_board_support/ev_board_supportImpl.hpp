@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EV_BOARD_SUPPORT_EV_BOARD_SUPPORT_IMPL_HPP
-#define EV_BOARD_SUPPORT_EV_BOARD_SUPPORT_IMPL_HPP
+#pragma once
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -63,5 +62,3 @@ private:
 
 } // namespace ev_board_support
 } // namespace module
-
-#endif // EV_BOARD_SUPPORT_EV_BOARD_SUPPORT_IMPL_HPP

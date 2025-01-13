@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef RCD_AC_RCD_IMPL_HPP
-#define RCD_AC_RCD_IMPL_HPP
+#pragma once
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -58,5 +57,3 @@ private:
 
 } // namespace rcd
 } // namespace module
-
-#endif // RCD_AC_RCD_IMPL_HPP

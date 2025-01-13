@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef YETI_SIMULATOR_HPP
-#define YETI_SIMULATOR_HPP
+#pragma once
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -96,5 +95,3 @@ private:
 // ev@087e516b-124c-48df-94fb-109508c7cda9:v1
 
 } // namespace module
-
-#endif // YETI_SIMULATOR_HPP
