@@ -12,4 +12,8 @@ void ExampleUser::ready() {
     invoke_ready(*p_example_user);
 }
 
+void ExampleUser::shutdown() {
+    EVLOG_info << "shutting down";
+}
+
 } // namespace module

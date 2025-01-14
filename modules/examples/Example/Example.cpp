@@ -16,4 +16,8 @@ void Example::ready() {
     mqtt.publish("external/topic", "data");
 }
 
+void Example::shutdown() {
+    EVLOG_info << "shutting down";
+}
+
 } // namespace module
