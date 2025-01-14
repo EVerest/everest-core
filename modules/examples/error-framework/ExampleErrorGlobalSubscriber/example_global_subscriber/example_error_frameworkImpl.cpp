@@ -19,7 +19,7 @@ void example_error_frameworkImpl::init() {
 }
 
 void example_error_frameworkImpl::test_state_monitor() {
-    EVLOG_info << "Currently there are " << get_global_error_state_monitor()->get_ative_error_count()
+    EVLOG_info << "Currently there are " << get_global_error_state_monitor()->get_active_errors().size()
                << " errors active.";
 }
 

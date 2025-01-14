@@ -31,8 +31,12 @@ types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
     auto ocpp_response = mod->charge_point->data_transfer(request.vendor_id, request.message_id, request.data);
     types::ocpp::DataTransferResponse response;
-    response.status = to_everest(ocpp_response.status);
-    response.data = ocpp_response.data;
+    if (ocpp_response.has_value()) {
+        response.status = to_everest(ocpp_response.value().status);
+        response.data = ocpp_response.value().data;
+    } else {
+        response.status = types::ocpp::DataTransferStatus::Offline;
+    }
     return response;
 }
 

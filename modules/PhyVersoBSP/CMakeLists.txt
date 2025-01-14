@@ -11,6 +11,7 @@ ev_setup_cpp_module()
 # insert your custom targets and additional config variables here
 add_subdirectory(phyverso_mcu_comms)
 add_subdirectory(phyverso_cli)
+add_subdirectory(phyverso_gpio)
 
 target_include_directories(${MODULE_NAME}
     PRIVATE
@@ -19,13 +20,16 @@ target_include_directories(${MODULE_NAME}
         "phyverso_mcu_comms/nanopb"
         "phyverso_mcu_comms/protobuf"
         "phyverso_config"
+        "phyverso_gpio"
 )
 
 target_link_libraries(${MODULE_NAME}
     PRIVATE
         Pal::Sigslot
+        everest::gpio
         phyverso_mcu_comms
         phyverso_config
+        phyverso_gpio
 )
 # ev@bcc62523-e22b-41d7-ba2f-825b493a3c97:v1
 
@@ -49,9 +53,12 @@ target_sources(${MODULE_NAME}
 )
 
 # install MCU configs
-install(
-    DIRECTORY "."
-    DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest"
-    FILES_MATCHING PATTERN "*.json"
-)
+# List all JSON files in the current directory and subdirectories
+file(GLOB_RECURSE JSON_FILES "*.json")
+
+# Check if the list is not empty
+if(JSON_FILES)
+    # Install JSON files
+    install(FILES ${JSON_FILES} DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/everest")
+endif()
 # ev@c55432ab-152c-45a9-9d2e-7281d50c69c3:v1

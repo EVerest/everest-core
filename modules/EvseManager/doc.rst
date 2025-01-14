@@ -152,8 +152,13 @@ EvseManager will send out its wishes at regular intervals: It sends a
 requested energy schedule into the energy tree that is merged from hardware 
 capabilities (as reported by board_support module), EvseManager module 
 configuration settings 
-(max_current, three_phases) and external limts (via ``set_local_max_current`` 
+(max_current, three_phases) and external limts (via ``set_external_limits`` 
 command) e.g. set by OCPP module.
+
+Note that the ``set_external_limits`` should not be used by multiple modules,
+as the last one always wins. If you have multiple sources of exernal limits
+that you want to combine, add extra EnergyNode modules in the chain and 
+feed in limits via those.
 
 The combined schedule sent to the energy tree is the minimum of all energy 
 limits.
@@ -170,13 +175,94 @@ The EvseManager will never assign energy to itself, it always requests energy
 from the energy manager and only charges
 if the energy manager responds with an assignment.
 
-The ``set_local_max_current`` command will be extended to schedules (and not 
-just one instantaneous limit) soon to fully
-support schedules from OCPP smart charging profile.
-
 Limits in the energy object can be specified in ampere (per phase) and/or watt.
 Currently watt limits are unsupported, but it should behave according to that 
 logic:
 
-If both are specified also both limits will be applied, whichever is lower. With DC charging, ampere limits apply
+If both are specified also both limits will be applied, whichever is lower. 
+With DC charging, ampere limits apply
 to the AC side and watt limits apply to both AC and DC side.
+
+Energy Management: 1ph/3ph switching
+====================================
+
+EVerest has support for switching between 1ph and 3ph configurations during AC
+charging (e.g. for solar charging when sometimes charging with less then 4.2kW (6A*230V*3ph)
+if desired).
+
+Be warned: Some vehicles (such as first generation of Renault Zoe) may be permanently
+damaged when switching from 1ph to 3ph during charging. Use at your own risk!
+
+To use this feature several things need to be enabled:
+
+- In EvseManager, adjust two config options to your needs: ``switch_3ph1ph_delay_s``, ``switch_3ph1ph_cp_state``
+- In the BSP driver, set ``supports_changing_phases_during_charging`` to true in the reported capabilities.
+  If your bsp hardware detects e.g. the Zoe, you can set that flag to false and publish updated capabilities any time.
+- BSP driver capabilities: Also make sure that minimum phases are set to one and maximum phases to 3
+- BSP driver: make sure the ``ac_switch_three_phases_while_charging`` command is correctly implemented
+- EnergyManager: Adjust ``switch_3ph1ph_while_charging_mode``, ``switch_3ph1ph_max_nr_of_switches_per_session``,
+  ``switch_3ph1ph_switch_limit_stickyness``, ``switch_3ph1ph_power_hysteresis_W``, ``switch_3ph1ph_time_hysteresis_s``
+  config options to your needs
+
+If all of this is properly set up, the EnergyManager will drive the 1ph/3ph switching. In order to do so,
+it needs an (external) limit to be set. There are two options: The external limit can be in Watt (not in Ampere),
+even though we are AC charging. This is the preferred option as it gives the freedom to the EnergyManager to
+decide when to switch. The limit can come from OCPP schedule or e.g. via an additional EnergyNode.
+
+The second option is to set a limit in Ampere and set a limitation on the number of phases (e.g. min_phase=1, max_phase=1).
+This will enforce switching and can be used to decide the switching time externally. EnergyManager does not have the
+freedom to make the choice in this case.
+
+Take care especially with the power(watt) and time based hysteresis settings. They should be adjusted to the
+actual use case to avoid relays wearing due too a lot of switching cycles. Consider also to limit the maximum
+number of switching cycles per charging session.
+
+Error Handling
+==============
+
+The control flow of this module can be influenced by the error implementation of its requirements. This section documents
+the side effects that can be caused by errors raised by a requirement.
+
+This module subscribes to all errors of the following requirements:
+
+* evse_board_support
+* connector_lock
+* ac_rcd
+* isolation_monitor
+* power_supply_DC
+
+A raised error can cause the EvseManager to become Inoperative. This means that charging is not possible until the error is cleared.
+If no charging session is currently running, it will prevent sessions from being started. If a charging session is currently running and an error is raised
+this will interrupt the charging session.
+
+Almost all errors that are reported from the requirements of this module cause the EvseManager to become Inoperative until the error is cleared. 
+The following sections provide an overview of the errors that do **not** cause the EvseManager to become Inoperative.
+
+evse_board_support
+------------------
+
+* evse_board_support/MREC3HighTemperature
+* evse_board_support/MREC18CableOverTempDerate
+* evse_board_support/VendorWarning
+
+connector_lock
+--------------
+
+* connector_lock/VendorWarning
+
+ac_rcd
+------
+
+* ac_rcd/VendorWarning
+
+isolation_monitor
+-----------------
+
+* isolation_monitor/VendorWarning
+
+power_supply_DC
+---------------
+
+* power_supply_DC/VendorWarning
+
+

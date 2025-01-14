@@ -15,8 +15,7 @@ cmds:
         $ref: /ev_board_support#/EvCpState
   allow_power_on:
     description: >-
-      Sets allow_power_on flag. If false, contactor must never be switched
-      on. Onyly for dc charging
+      Sets allow_power_on flag. If false, contactor must never be switched on.
     arguments:
       value:
         description: 'True: allow power on, false: do not allow power on.'

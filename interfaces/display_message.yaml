@@ -1,0 +1,46 @@
+description: >-
+  A module that implements this interface should be able to:
+  - store (add, remove, change) and retrieve predefined messages
+  - show messages on a display
+
+  When a display message contains a session id, the display message must be removed once the session has ended.
+cmds:
+  set_display_message:
+    description: >-
+      Command to set or replace a display message.
+    arguments:
+      request:
+        description: >-
+          Request to set a display message
+        type: array
+        items:
+          description: The display messages to set
+          type: object
+          $ref: /display_message#/DisplayMessage
+    result:
+      description: >-
+        Response to the set display message request.
+      type: object
+      $ref: /display_message#/SetDisplayMessageResponse
+  get_display_messages:
+    description: Command to get one or more display messages.
+    arguments:
+      request:
+        description: The request for display messages
+        type: object
+        $ref: /display_message#/GetDisplayMessageRequest
+    result:
+      description: The display messages or an empty array if there are none
+      type: object
+      $ref: /display_message#/GetDisplayMessageResponse
+  clear_display_message:
+    description: Command to remove a display message
+    arguments:
+      request:
+        description: The request to clear a message
+        type: object
+        $ref: /display_message#/ClearDisplayMessageRequest
+    result:
+      description: Response on the clear message request
+      type: object
+      $ref: /display_message#/ClearDisplayMessageResponse

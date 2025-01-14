@@ -4,6 +4,8 @@
 #include "ocppImpl.hpp"
 #include "ocpp/v16/messages/ChangeAvailability.hpp"
 
+#include <ocpp_conversions.hpp>
+
 namespace module {
 namespace ocpp_generic {
 
@@ -102,7 +104,7 @@ void ocppImpl::ready() {
 }
 
 bool ocppImpl::handle_stop() {
-    std::lock_guard<std::mutex>(this->chargepoint_state_mutex);
+    std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->stop();
     bool success = mod->charge_point->stop();
     if (success) {
@@ -112,7 +114,7 @@ bool ocppImpl::handle_stop() {
 }
 
 bool ocppImpl::handle_restart() {
-    std::lock_guard<std::mutex>(this->chargepoint_state_mutex);
+    std::lock_guard<std::mutex> lock(this->chargepoint_state_mutex);
     mod->charging_schedules_timer->interval(std::chrono::seconds(this->mod->config.PublishChargingScheduleIntervalS));
     bool success = mod->charge_point->restart();
     if (success) {
@@ -121,8 +123,12 @@ bool ocppImpl::handle_restart() {
     return success;
 }
 
-void ocppImpl::handle_security_event(std::string& type, std::string& info) {
-    this->mod->charge_point->on_security_event(type, info);
+void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
+    std::optional<ocpp::DateTime> timestamp;
+    if (event.timestamp.has_value()) {
+        timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
+    }
+    this->mod->charge_point->on_security_event(event.type, event.info, event.critical, timestamp);
 }
 
 std::vector<types::ocpp::GetVariableResult>

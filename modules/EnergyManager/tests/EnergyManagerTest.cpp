@@ -456,6 +456,7 @@ types::energy::EnergyFlowRequest energy_flow_request{
     "evse_manager",                // UUID for this node
     types::energy::NodeType::Evse, // node_type
     false,                         // optional - bool priority_request
+    std::nullopt,                  // optional - EvseState
     std::nullopt,                  // optional - types::energy::OptimizerTarget
     c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
     std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
@@ -542,6 +543,7 @@ const types::energy::EnergyFlowRequest c_efr_evse_manager{
     "evse_manager",                   // UUID for this node
     types::energy::NodeType::Evse,    // node_type
     false,                            // optional - bool priority_request
+    std::nullopt,                     // optional - EvseState
     std::nullopt,                     // optional - types::energy::OptimizerTarget
     c_energy_usage_root_evse_manager, // optional - types::powermeter::Powermeter - root
     std::nullopt,                     // optional - types::powermeter::Powermeter - leaf
@@ -574,6 +576,7 @@ const types::energy::EnergyFlowRequest c_efr_cls_energy_node{
     "cls_energy_node",                   // UUID for this node
     types::energy::NodeType::Generic,    // node_type
     std::nullopt,                        // optional - bool priority_request
+    std::nullopt,                        // optional - EvseState
     std::nullopt,                        // optional - types::energy::OptimizerTarget
     std::nullopt,                        // optional - types::powermeter::Powermeter - root
     std::nullopt,                        // optional - types::powermeter::Powermeter - leaf
@@ -606,6 +609,7 @@ const types::energy::EnergyFlowRequest c_efr_grid_connection_point{
     "grid_connection_point",                   // UUID for this node
     types::energy::NodeType::Generic,          // node_type
     std::nullopt,                              // optional - bool priority_request
+    std::nullopt,                              // optional - EvseState
     std::nullopt,                              // optional - types::energy::OptimizerTarget
     std::nullopt,                              // optional - types::powermeter::Powermeter - root
     std::nullopt,                              // optional - types::powermeter::Powermeter - leaf
@@ -652,7 +656,6 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
     ASSERT_TRUE(optimized_values[0].limits_root_side.has_value());
     ASSERT_FALSE(optimized_values[0].limits_root_side.value().total_power_W.has_value());
     ASSERT_TRUE(optimized_values[0].limits_root_side.value().ac_max_current_A.has_value());
-    ASSERT_FALSE(optimized_values[0].limits_root_side.value().ac_max_phase_count.has_value());
     EXPECT_EQ(optimized_values[0].limits_root_side.value().ac_max_current_A.value(), expected_limit);
 
     ASSERT_TRUE(optimized_values[0].schedule.has_value());
@@ -668,7 +671,6 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
                   energy_flow_request.schedule_export.value()[0].timestamp);
         EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.total_power_W.has_value());
         EXPECT_TRUE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.has_value());
-        EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_phase_count.has_value());
         EXPECT_FALSE(optimized_values[0].schedule.value()[0].price_per_kwh.has_value());
         EXPECT_EQ(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.value(), 24.0);
 
@@ -681,7 +683,6 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
             EXPECT_EQ(schedules[index].timestamp, energy_flow_schedules[i].timestamp);
             EXPECT_FALSE(schedules[index].limits_to_root.total_power_W.has_value());
             EXPECT_TRUE(schedules[index].limits_to_root.ac_max_current_A.has_value());
-            EXPECT_FALSE(schedules[index].limits_to_root.ac_max_phase_count.has_value());
             EXPECT_EQ(schedules[index].limits_to_root.ac_max_current_A.value(),
                       energy_flow_schedules[i].limits_to_leaves.ac_max_current_A.value());
         }
@@ -694,7 +695,6 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
         EXPECT_EQ(optimized_values[0].schedule.value()[0].timestamp, "2024-03-27T12:00:00.000Z");
         EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.total_power_W.has_value());
         EXPECT_TRUE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.has_value());
-        EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_phase_count.has_value());
         EXPECT_FALSE(optimized_values[0].schedule.value()[0].price_per_kwh.has_value());
         EXPECT_EQ(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.value(), 24.0);
 
@@ -707,7 +707,6 @@ void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, 
             EXPECT_EQ(itt->timestamp, c_schedule_import[i].timestamp);
             EXPECT_FALSE(itt->limits_to_root.total_power_W.has_value());
             EXPECT_TRUE(itt->limits_to_root.ac_max_current_A.has_value());
-            EXPECT_FALSE(itt->limits_to_root.ac_max_phase_count.has_value());
             EXPECT_EQ(itt->limits_to_root.ac_max_current_A.value(),
                       c_schedule_import[i].limits_to_leaves.ac_max_current_A.value());
         }
@@ -762,6 +761,7 @@ TEST(EnergyManagerTest, noSchedules) {
         types::energy::NodeType::Evse, // node_type
         false,                         // optional - bool priority_request
         std::nullopt,                  // optional - types::energy::OptimizerTarget
+        std::nullopt,                  // optional - EvseState
         c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
         std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
         std::nullopt,                  // optional - std::vector<types::energy::ScheduleReqEntry> - import
@@ -821,6 +821,7 @@ TEST(EnergyManagerTest, schedules) {
         "evse_manager",                // UUID for this node
         types::energy::NodeType::Evse, // node_type
         false,                         // optional - bool priority_request
+        std::nullopt,                  // optional - EvseState
         std::nullopt,                  // optional - types::energy::OptimizerTarget
         c_energy_usage_root,           // optional - types::powermeter::Powermeter - root
         std::nullopt,                  // optional - types::powermeter::Powermeter - leaf
@@ -855,7 +856,6 @@ TEST(EnergyManagerTest, schedules) {
     ASSERT_TRUE(optimized_values[0].limits_root_side.has_value());
     ASSERT_FALSE(optimized_values[0].limits_root_side.value().total_power_W.has_value());
     ASSERT_TRUE(optimized_values[0].limits_root_side.value().ac_max_current_A.has_value());
-    ASSERT_FALSE(optimized_values[0].limits_root_side.value().ac_max_phase_count.has_value());
     EXPECT_EQ(optimized_values[0].limits_root_side.value().ac_max_current_A.value(), 24.0);
 
     ASSERT_TRUE(optimized_values[0].schedule.has_value());
@@ -867,7 +867,6 @@ TEST(EnergyManagerTest, schedules) {
     EXPECT_EQ(optimized_values[0].schedule.value()[0].timestamp, "2024-03-27T12:00:00.000Z");
     EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.total_power_W.has_value());
     EXPECT_TRUE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.has_value());
-    EXPECT_FALSE(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_phase_count.has_value());
     EXPECT_FALSE(optimized_values[0].schedule.value()[0].price_per_kwh.has_value());
     EXPECT_EQ(optimized_values[0].schedule.value()[0].limits_to_root.ac_max_current_A.value(), 24.0);
 
@@ -880,7 +879,6 @@ TEST(EnergyManagerTest, schedules) {
         EXPECT_EQ(itt->timestamp, c_schedule_import[i].timestamp);
         EXPECT_FALSE(itt->limits_to_root.total_power_W.has_value());
         EXPECT_TRUE(itt->limits_to_root.ac_max_current_A.has_value());
-        EXPECT_FALSE(itt->limits_to_root.ac_max_phase_count.has_value());
         EXPECT_EQ(itt->limits_to_root.ac_max_current_A.value(),
                   c_schedule_import[i].limits_to_leaves.ac_max_current_A.value());
     }

@@ -7,6 +7,7 @@
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
 #include <generated/types/reservation.hpp>
+#include <generated/types/session_cost.hpp>
 #include <generated/types/system.hpp>
 
 #include <ocpp/common/types.hpp>
@@ -62,6 +63,9 @@ ocpp::v16::BootReasonEnum to_ocpp_boot_reason_enum(const types::system::BootReas
 /// \brief  Converts a given types::powermeter::Powermeter \p powermeter to a ocpp::Powermeter
 ocpp::Powermeter to_ocpp_power_meter(const types::powermeter::Powermeter& powermeter);
 
+/// \brief Converts a given vector of types::temperature::Temperature \p powermeter to a vector of ocpp::Temperature
+std::vector<ocpp::Temperature> to_ocpp_temperatures(const std::vector<types::temperature::Temperature>& temperatures);
+
 /// \brief Converts a given types::iso15118_charger::HashAlgorithm \p hash_algorithm to a ocpp::v201::HashAlgorithmEnum.
 ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm);
 
@@ -109,6 +113,9 @@ to_everest_boot_notification_response(const ocpp::v16::BootNotificationResponse&
 /// types::ocpp::RegistrationStatus
 types::ocpp::RegistrationStatus
 to_everest_registration_status(const ocpp::v16::RegistrationStatus& registration_status);
+
+ocpp::v16::DataTransferResponse
+to_ocpp_data_transfer_response(const types::display_message::SetDisplayMessageResponse& set_display_message_response);
 
 } // namespace conversions
 } // namespace module

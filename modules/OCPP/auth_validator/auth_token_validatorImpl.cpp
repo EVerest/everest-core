@@ -3,7 +3,7 @@
 #include "auth_token_validatorImpl.hpp"
 #include <conversions.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v16/enums.hpp>
+#include <ocpp/v16/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 
 namespace module {
@@ -66,7 +66,13 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
         validation_result.parent_id_token = {authorize_response.idTokenInfo.groupIdToken.value().idToken.get(),
                                              types::authorization::IdTokenType::Central};
     }
-    validation_result.reason = "PnC OCPP1.6 Validiation result by CSMS";
+
+    validation_result.reason = types::authorization::TokenValidationStatusMessage();
+    validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+    types::display_message::MessageContent content;
+    content.content = "PnC OCPP1.6 Validiation result by CSMS";
+    validation_result.reason->messages->push_back(content);
+
     return validation_result;
 }
 
@@ -84,7 +90,13 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
                                   types::authorization::IdTokenType::Central}; // For OCPP1.6 no IdTokenType is given,
                                                                                // so we assume it is a central token
     }
-    result.reason = "Validation by OCPP 1.6 Central System";
+
+    result.reason = types::authorization::TokenValidationStatusMessage();
+    result.reason->messages = std::vector<types::display_message::MessageContent>();
+    types::display_message::MessageContent content;
+    content.content = "Validation by OCPP 1.6 Central System";
+    result.reason->messages->push_back(content);
+
     return result;
 };
 

@@ -14,12 +14,15 @@
 #include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
+#include <generated/interfaces/error_history/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
+#include <generated/interfaces/external_energy_limits/Interface.hpp>
 #include <generated/interfaces/ocpp/Interface.hpp>
 #include <generated/interfaces/uk_random_delay/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
+#include <condition_variable>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -28,6 +31,7 @@
 #include <date/date.h>
 #include <date/tz.h>
 
+#include "StartupMonitor.hpp"
 #include "limit_decimal_places.hpp"
 
 namespace module {
@@ -50,7 +54,7 @@ public:
         false}; ///< Indicate if end export energy value (optional) has been received or not
 
     void reset();
-    void update_state(const types::evse_manager::SessionEventEnum event, const SessionInfo::Error& error);
+    void update_state(const types::evse_manager::SessionEventEnum event);
     void set_start_energy_import_wh(int32_t start_energy_import_wh);
     void set_end_energy_import_wh(int32_t end_energy_import_wh);
     void set_latest_energy_import_wh(int32_t latest_energy_wh);
@@ -61,15 +65,15 @@ public:
     void set_uk_random_delay_remaining(const types::uk_random_delay::CountDown& c);
     void set_enable_disable_source(const std::string& active_source, const std::string& active_state,
                                    const int active_priority);
+    void set_permanent_fault(bool f) {
+        permanent_fault = f;
+    }
 
     /// \brief Converts this struct into a serialized json object
     operator std::string();
 
 private:
     std::mutex session_info_mutex;
-
-    std::vector<Error> active_permanent_faults; ///< Array of currently active permanent faults that prevent charging
-    std::vector<Error> active_errors;           ///< Array of currently active errors that do not prevent charging
     int32_t start_energy_import_wh; ///< Energy reading (import) at the beginning of this charging session in Wh
     int32_t end_energy_import_wh;   ///< Energy reading (import) at the end of this charging session in Wh
     int32_t start_energy_export_wh; ///< Energy reading (export) at the beginning of this charging session in Wh
@@ -101,6 +105,7 @@ private:
     std::string active_enable_disable_source{"Unspecified"};
     std::string active_enable_disable_state{"Enabled"};
     int active_enable_disable_priority{0};
+    bool permanent_fault{false};
 };
 } // namespace module
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -152,13 +157,17 @@ public:
     API() = delete;
     API(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider, std::unique_ptr<emptyImplBase> p_main,
         std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager, std::vector<std::unique_ptr<ocppIntf>> r_ocpp,
-        std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay, Conf& config) :
+        std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay,
+        std::vector<std::unique_ptr<error_historyIntf>> r_error_history,
+        std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_main(std::move(p_main)),
         r_evse_manager(std::move(r_evse_manager)),
         r_ocpp(std::move(r_ocpp)),
         r_random_delay(std::move(r_random_delay)),
+        r_error_history(std::move(r_error_history)),
+        r_evse_energy_sink(std::move(r_evse_energy_sink)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
@@ -166,6 +175,8 @@ public:
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<ocppIntf>> r_ocpp;
     const std::vector<std::unique_ptr<uk_random_delayIntf>> r_random_delay;
+    const std::vector<std::unique_ptr<error_historyIntf>> r_error_history;
+    const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
@@ -188,6 +199,8 @@ private:
     std::vector<std::thread> api_threads;
     bool running = true;
 
+    StartupMonitor evse_manager_check;
+
     std::list<std::unique_ptr<SessionInfo>> info;
     std::list<std::string> hw_capabilities_str;
     std::string selected_protocol;
@@ -198,6 +211,8 @@ private:
     json ocpp_charging_schedule;
     bool ocpp_charging_schedule_updated = false;
     std::string ocpp_connection_status = "unknown";
+
+    const std::string api_base = "everest_api/";
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 

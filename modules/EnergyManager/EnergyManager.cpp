@@ -71,11 +71,44 @@ bool EnergyManager::is_priority_request(const types::energy::EnergyFlowRequest& 
 void EnergyManager::enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits) {
     for (const auto& it : limits) {
         if (globals.debug)
-            EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W \033[1;0m", it.uuid,
+            EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W {} ph\033[1;0m", it.uuid,
                                       it.limits_root_side.value().ac_max_current_A.value_or(-9999),
-                                      it.limits_root_side.value().total_power_W.value_or(-9999));
+                                      it.limits_root_side.value().total_power_W.value_or(-9999),
+                                      it.limits_root_side.value().ac_max_phase_count.value_or(-9999));
         r_energy_trunk->call_enforce_limits(it);
     }
+}
+
+static BrokerFastCharging::Switch1ph3phMode to_switch_1ph3ph_mode(const std::string& m) {
+    if (m == "Both") {
+        return BrokerFastCharging::Switch1ph3phMode::Both;
+    } else if (m == "Oneway") {
+        return BrokerFastCharging::Switch1ph3phMode::Oneway;
+    } else {
+        return BrokerFastCharging::Switch1ph3phMode::Never;
+    }
+}
+
+static BrokerFastCharging::StickyNess to_stickyness(const std::string& m) {
+    if (m == "DontChange") {
+        return BrokerFastCharging::StickyNess::DontChange;
+    } else if (m == "SinglePhase") {
+        return BrokerFastCharging::StickyNess::SinglePhase;
+    } else {
+        return BrokerFastCharging::StickyNess::ThreePhase;
+    }
+}
+
+static BrokerFastCharging::Config to_broker_fast_charging_config(const Conf& module_config) {
+    BrokerFastCharging::Config broker_conf;
+
+    broker_conf.max_nr_of_switches_per_session = module_config.switch_3ph1ph_max_nr_of_switches_per_session;
+    broker_conf.power_hysteresis_W = module_config.switch_3ph1ph_power_hysteresis_W;
+    broker_conf.switch_1ph_3ph_mode = to_switch_1ph3ph_mode(module_config.switch_3ph1ph_while_charging_mode);
+    broker_conf.time_hysteresis_s = module_config.switch_3ph1ph_time_hysteresis_s;
+    broker_conf.stickyness = to_stickyness(module_config.switch_3ph1ph_switch_limit_stickyness);
+
+    return broker_conf;
 }
 
 std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::energy::EnergyFlowRequest request) {
@@ -100,9 +133,19 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     auto evse_markets = market.get_list_of_evses();
 
     for (auto m : evse_markets) {
+        // Check if we need to clear the context
+        // Note that context is created here if it does not exist implicitly by operator[] of the map
+        if (m->energy_flow_request.evse_state == types::energy::EvseState::Unplugged or
+            m->energy_flow_request.evse_state == types::energy::EvseState::Finished) {
+            contexts[m->energy_flow_request.uuid].clear();
+            contexts[m->energy_flow_request.uuid].ts_1ph_optimal =
+                globals.start_time - std::chrono::seconds(config.switch_3ph1ph_time_hysteresis_s);
+        }
+
         // FIXME: check for actual optimizer_targets and create correct broker for this evse
         // For now always create simple FastCharging broker
-        brokers.push_back(std::make_shared<BrokerFastCharging>(*m));
+        brokers.push_back(std::make_shared<BrokerFastCharging>(*m, contexts[m->energy_flow_request.uuid],
+                                                               to_broker_fast_charging_config(config)));
         // EVLOG_info << fmt::format("Created broker for {}", m->energy_flow_request.uuid);
     }
 
@@ -147,8 +190,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
     std::vector<types::energy::EnforcedLimits> optimized_values;
     optimized_values.reserve(brokers.size());
 
-    for (auto broker : brokers) {
-        auto local_market = broker->get_local_market();
+    for (auto& broker : brokers) {
+        auto& local_market = broker->get_local_market();
         const auto sold_energy = local_market.get_sold_energy();
 
         if (sold_energy.size() > 0) {
@@ -177,7 +220,7 @@ std::vector<types::energy::EnforcedLimits> EnergyManager::run_optimizer(types::e
             optimized_values.push_back(l);
 
             if (globals.debug && l.limits_root_side.has_value()) {
-                EVLOG_info << "Sending enfored limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
+                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
             }
         }
     }

@@ -1,5 +1,65 @@
 description: Types to provide the session price
 types:
+  IdlePrice:
+    description: >-
+      Price components when idle
+    type: object
+    additionalProperties: false
+    properties:
+      grace_minutes:
+        description: >-
+          Grace period in minutes before idle time is charged.
+          Grace minutes start counting from the timestamp of the message in which state
+          changed from "Charging" to "Idle".
+        type: integer
+      hour_price:
+        description: >-
+          Price per hour while idle
+        type: object
+        $ref: /money#/Price
+  CostCategory:
+    description: Cost category
+    type: string
+    enum:
+      - Energy
+      - Time
+      - FlatFee
+      - Other
+  ChargingPriceComponent:
+    description: >-
+      Charging price for a category
+    type: object
+    properties:
+      category:
+        description: >-
+          Component type for this charging price
+        type: string
+        $ref: /session_cost#/CostCategory
+      price:
+        description: >-
+          Price for this component
+        type: object
+        $ref: /money#/Price
+  NextPeriodPrice:
+    description: Pricing for the next period
+    type: object
+    properties:
+      timestamp_from:
+        description: Time when these prices become active.
+        type: string
+      charging_price:
+        description: Price components while charging
+        type: array
+        items:
+          type: object
+          $ref: /session_cost#/ChargingPriceComponent
+      idle_price:
+        description: Price components while idle. Optional if no idle fee charged.
+        type: object
+        $ref: /session_cost#/IdlePrice
+    required:
+      - timestamp_from
+      - charging_price
   SessionCostChunk:
     description: >-
       A chunk of the session cost. The total cost of the session is the sum of
@@ -17,6 +77,14 @@ types:
           Absolute timestamp for the end of this chunk in RFC3339 UTC format
         type: string
         format: date-time
+      metervalue_from:
+        description: >-
+          Metervalue (energie Wh import) for the start of this chunk
+        type: integer
+      metervalue_to:
+        description: >-
+          Metervalue (energie Wh import) for the end of this chunk
+        type: integer
       cost:
         description: >-
           Cost of the energy (or other things like time, base price, ...) 
@@ -26,12 +94,9 @@ types:
         $ref: /money#/MoneyAmount
       category:
         description: >-
-          Cost category. Typically this is energy or time.
+          Cost category. Typically this is energy, time or a flat fee.
         type: string
-        enum:
-          - Energy
-          - Time
-          - Other
+        $ref: /session_cost#/CostCategory
   SessionStatus:
     description: >-
       Session status enum. Session can be running or finished. Costs of the
@@ -39,6 +104,7 @@ types:
     type: string
     enum:
       - Running
+      - Idle
       - Finished
   SessionCost:
     description: >-
@@ -47,7 +113,7 @@ types:
     type: object
     additionalProperties: false
     required:
-      - id_tag
+      - session_id
       - currency
       - status
     properties:
@@ -55,6 +121,9 @@ types:
         description: The id tag assigned to this transaction
         type: object
         $ref: /authorization#/ProvidedIdToken
+      session_id:
+        description: The session id
+        type: string
       currency:
         description: >-
           Currency of the session cost. It applies to all chunks.
@@ -68,7 +137,25 @@ types:
         items:
           description: One chunk of the session cost
           type: object
-          $ref: /session_cost#/SessionCostChunk  
+          $ref: /session_cost#/SessionCostChunk
+      idle_price:
+        description: >-
+          Prices for when the EV is idle.
+        type: object
+        $ref: /session_cost#/IdlePrice
+      charging_price:
+        description: >-
+          Charging prices.
+        type: array
+        items:
+          description: Charging price per type
+          type: object
+          $ref: /session_cost#/ChargingPriceComponent
+      next_period:
+        description: >-
+          Charging prices for the next period, starting from the given date/time
+        type: object
+        $ref: /session_cost#/NextPeriodPrice
       status:
         description: >-
           Session status. Session can be running or finished. Costs of the
@@ -77,3 +164,16 @@ types:
           to bank and/or backend.
         type: object
         $ref: /session_cost#/SessionStatus
+      message:
+        description: >-
+          Message to show to the user containing information about the price
+        type: array
+        items:
+          description: Message with pricing information in a specific language
+          type: object
+          $ref: /display_message#/MessageContent
+      qr_code:
+        description: >-
+          QR Code with more information. For example when the charging is finished,
+          to download the invoice from
+        type: string

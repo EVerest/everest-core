@@ -12,7 +12,11 @@ cmds:
       type: object
       $ref: /powermeter#/TransactionStartResponse
   stop_transaction:
-    description: Stop the transaction on the power meter and return the signed metering information
+    description: >-
+      Stop the transaction on the power meter and return the signed metering information.
+      If the transaction id is an empty string, all ongoing transaction should be cancelled.
+      This is used on start up to clear dangling transactions that might still be ongoing
+      in the power meter but are not known to the EvseManager.
     arguments:
       transaction_id:
         description: Transaction id

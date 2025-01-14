@@ -6,14 +6,18 @@
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
+#include <generated/types/reservation.hpp>
 #include <generated/types/system.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
+#include <ocpp/v201/messages/ClearDisplayMessage.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v201/messages/GetDisplayMessages.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
+#include <ocpp/v201/messages/SetDisplayMessage.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/UpdateFirmware.hpp>
 
@@ -114,10 +118,19 @@ ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse);
 /// \brief Converts a given types::ocpp::AttributeEnum to ocpp::v201::AttributeEnum
 ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum);
 
-/// \brief Converts a given types::types::iso15118_charger::Request_Exi_Stream_Schema to
+/// \brief Converts a given types::types::iso15118_charger::RequestExiStreamSchema to
 /// ocpp::v201::Get15118EVCertificateRequest
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request);
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request);
+
+/// \brief Converts a given types::reservation::ReservationResult to ocpp::v201::ReserveNowStatusEnum
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
+
+/// \brief Converts a given types::reservation::Reservation_status to ocpp::v201::ReservationUpdateStatusEnum
+/// \warning This function can throw when there is no existing ocpp::v201::ReservationUpdateStatusEnum that is equal to
+///          types::reservation::Reservation_status.
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status);
 
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason
@@ -169,11 +182,11 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
 
 /// \brief Converts a given ocpp::v201::MessageFormat \p message_format to a
 /// types::ocpp::MessageFormat
-types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
+types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
 
 /// \brief Converts a given ocpp::v201::MessageContent \p message_content to a
 /// types::ocpp::MessageContent
-types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
+types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
 
 /// \brief Converts a given ocpp::v201::TransactionEventResponse \p transaction_event_response to a
 /// types::ocpp::OcppTransactionEventResponse
@@ -225,6 +238,44 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
 /// types::ocpp::SetVariableStatusEnumType
 types::ocpp::SetVariableStatusEnumType
 to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status);
+
+/// \brief Converts a given vector of ocpp::v201::CompositeSchedule \p composite_schedules to a
+/// types::ocpp::ChargingSchedules
+types::ocpp::ChargingSchedules
+to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
+
+/// \brief Converts a given ocpp::v201::CompositeSchedule \p composite_schedule to a types::ocpp::ChargingSchedule
+types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule);
+
+/// \brief Converst a given ocpp::v201::ChargingSchedulePeriod \p period to a types::ocpp::ChargingSchedulePeriod
+types::ocpp::ChargingSchedulePeriod
+to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period);
+
+ocpp::v201::DisplayMessageStatusEnum
+to_ocpp_display_message_status_enum(const types::display_message::DisplayMessageStatusEnum& from);
+
+ocpp::v201::SetDisplayMessageResponse
+to_ocpp_set_display_message_response(const types::display_message::SetDisplayMessageResponse& response);
+
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& priority);
+types::display_message::MessageStateEnum
+to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& message_state);
+
+types::display_message::GetDisplayMessageRequest
+to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& request);
+
+types::display_message::ClearDisplayMessageRequest
+to_everest_clear_display_message_request(const ocpp::v201::ClearDisplayMessageRequest& request);
+
+ocpp::v201::ClearMessageStatusEnum
+to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageResponseEnum& response_enum);
+
+ocpp::v201::ClearDisplayMessageResponse
+to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
+
+/// \brief Convert a given ocpp::v201::ConnectorEnum connector type to a types::evse_manager::ConnectorTypeEnum
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type);
 
 } // namespace conversions
 } // namespace module

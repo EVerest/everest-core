@@ -68,8 +68,8 @@ config:
     description: Discharge minimal soc at which the evse should shutdown
     type: integer
     default: 20
-  max_curent:
-    description: Ac max current in Ampere
+  max_current:
+    description: AC max current in Ampere
     type: number
     default: 16
   three_phases:

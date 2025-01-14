@@ -15,11 +15,11 @@ active_modules:
       supported_ISO15118_2: true
   evse_manager_1:
     module: EvseManager
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
       evse_id: DE*PNX*E12345*1
       session_logging: true
       session_logging_xml: false
@@ -46,11 +46,11 @@ active_modules:
           implementation_id: charger
   evse_manager_2:
     module: EvseManager
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
       evse_id: DE*PNX*E12345*2
       session_logging: true
       session_logging_xml: false
@@ -74,7 +74,7 @@ active_modules:
     config_module:
       connector_id: 2
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   ev_manager_1:
     module: EvManager
     config_module:
@@ -165,20 +165,59 @@ active_modules:
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1
+        - module_id: evse_manager_1_sink
           implementation_id: energy_grid
-        - module_id: evse_manager_2
+        - module_id: evse_manager_2_sink
           implementation_id: energy_grid
       powermeter:
         - module_id: yeti_driver_1
           implementation_id: powermeter
+  evse_manager_1_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+  evse_manager_2_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
   api:
     module: API
     connections:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
       random_delay:
         - module_id: evse_manager_1
           implementation_id: random_delay
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
+      evse_energy_sink:
+        - module_id: evse_manager_1_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_sink
+          implementation_id: external_limits
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
 x-module-layout: {}

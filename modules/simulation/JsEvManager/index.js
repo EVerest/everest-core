@@ -227,7 +227,7 @@ function enable(mod, { value }) {
 
   mod.uses.ev_board_support.call.allow_power_on({ value: false });
 
-  mod.uses.ev_board_support.call.set_ac_max_current({ current: globalconf.module.max_curent });
+  mod.uses.ev_board_support.call.set_ac_max_current({ current: globalconf.module.max_current });
   mod.uses.ev_board_support.call.set_three_phases({ three_phases: globalconf.module.three_phases });
 
   // Start/Stop execution timer

@@ -103,8 +103,8 @@ bool SoundingState::do_sounding() {
         std::mt19937 rng(rnd_dev());
         std::uniform_int_distribution<std::mt19937::result_type> dist256(0, 255);
 
-        for (auto i = 0; i < sizeof(msg.random); ++i) {
-            msg.random[i] = dist256(rng);
+        for (auto& random : msg.random) {
+            random = dist256(rng);
         }
 
         ctx.send_slac_message(session_parameters.evse_mac, msg);

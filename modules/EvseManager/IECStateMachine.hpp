@@ -46,6 +46,7 @@ enum class CPEvent {
     CarUnplugged,
     EFtoBCD,
     BCDtoEF,
+    BCDtoE,
     EvseReplugStarted,
     EvseReplugFinished,
 };
@@ -67,8 +68,7 @@ enum class RawCPState {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    explicit IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp);
-
+    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -77,13 +77,17 @@ public:
     double read_pp_ampacity();
     void evse_replug(int ms);
     void switch_three_phases_while_charging(bool n);
-    void setup(bool three_phases, bool has_ventilation, std::string country_code);
+    void setup(bool has_ventilation);
 
     void set_overcurrent_limit(double amps);
 
     void set_pwm(double value);
     void set_pwm_off();
     void set_pwm_F();
+
+    void set_three_phases(bool t) {
+        three_phases = t;
+    }
 
     void enable(bool en);
 
@@ -103,6 +107,7 @@ private:
     void connector_unlock();
     void check_connector_lock();
     const std::unique_ptr<evse_board_supportIntf>& r_bsp;
+    bool lock_connector_in_state_b{true};
 
     bool pwm_running{false};
     bool last_pwm_running{false};
@@ -115,11 +120,13 @@ private:
     bool power_on_allowed{false};
     bool last_power_on_allowed{false};
     std::atomic<double> last_amps{-1};
+    std::atomic_bool three_phases{true};
 
     bool car_plugged_in{false};
 
     RawCPState cp_state{RawCPState::Disabled}, last_cp_state{RawCPState::Disabled};
     AsyncTimeout timeout_state_c1;
+    AsyncTimeout timeout_unlock_state_F;
 
     Everest::timed_mutex_traceable state_machine_mutex;
     void feed_state_machine();
@@ -129,13 +136,15 @@ private:
     types::evse_board_support::Reason power_on_reason{types::evse_board_support::Reason::PowerOff};
     void call_allow_power_on_bsp(bool value);
 
-    std::atomic_bool three_phases{true};
     std::atomic_bool is_locked{false};
     std::atomic_bool should_be_locked{false};
     std::atomic_bool force_unlocked{false};
 
     std::atomic_bool enabled{false};
     std::atomic_bool relais_on{false};
+
+    static constexpr std::chrono::seconds power_off_under_load_in_c1_timeout{6};
+    static constexpr std::chrono::seconds unlock_in_state_f_timeout{5};
 };
 
 } // namespace module

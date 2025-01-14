@@ -69,6 +69,8 @@ const std::string cpevent_to_string(CPEvent e) {
         return "EFtoBCD";
     case CPEvent::BCDtoEF:
         return "BCDtoEF";
+    case CPEvent::BCDtoE:
+        return "BCDtoE";
     case CPEvent::EvseReplugStarted:
         return "EvseReplugStarted";
     case CPEvent::EvseReplugFinished:
@@ -77,9 +79,12 @@ const std::string cpevent_to_string(CPEvent e) {
     throw std::out_of_range("No known string conversion for provided enum of type CPEvent");
 }
 
-IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp) : r_bsp(r_bsp) {
+IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
+                                 bool lock_connector_in_state_b_) :
+    r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
+    timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
     r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
@@ -140,12 +145,17 @@ void IECStateMachine::feed_state_machine_no_thread() {
 std::queue<CPEvent> IECStateMachine::state_machine() {
 
     std::queue<CPEvent> events;
-    auto timer = TimerControl::do_nothing;
+    auto timer_state_C1 = TimerControl::do_nothing;
+    auto timer_unlock_state_F = TimerControl::do_nothing;
 
     {
         // mutex protected section
 
         Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::IEC_state_machine);
+
+        if (cp_state not_eq RawCPState::F and last_cp_state == RawCPState::F) {
+            timer_unlock_state_F = TimerControl::stop;
+        }
 
         switch (cp_state) {
 
@@ -154,7 +164,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 pwm_running = false;
                 r_bsp->call_pwm_off();
                 ev_simplified_mode = false;
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
                 connector_unlock();
             }
@@ -167,7 +177,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 ev_simplified_mode = false;
                 car_plugged_in = false;
                 call_allow_power_on_bsp(false);
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
                 connector_unlock();
             }
 
@@ -182,7 +192,11 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             // Table A.6: Sequence 7 EV stops charging
             // Table A.6: Sequence 8.2 EV supply equipment
             // responds to EV opens S2 (w/o PWM)
-            connector_lock();
+            if (lock_connector_in_state_b) {
+                connector_lock();
+            } else {
+                connector_unlock();
+            }
 
             if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 
@@ -190,13 +204,14 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 // Need to switch off according to Table A.6 Sequence 8.1
                 // within 100ms
                 call_allow_power_on_bsp(false);
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
             }
 
             // Table A.6: Sequence 1.1 Plug-in
             if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled ||
                 (!car_plugged_in && last_cp_state == RawCPState::F)) {
                 events.push(CPEvent::CarPluggedIn);
+                car_plugged_in = true;
                 ev_simplified_mode = false;
             }
 
@@ -211,7 +226,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             // If state D is not supported switch off.
             if (not has_ventilation) {
                 call_allow_power_on_bsp(false);
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
                 break;
             }
             // no break, intended fall through: If we support state D it is handled the same way as state C
@@ -223,6 +238,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (last_cp_state == RawCPState::A || last_cp_state == RawCPState::Disabled ||
                 (!car_plugged_in && last_cp_state == RawCPState::F)) {
                 events.push(CPEvent::CarPluggedIn);
+                car_plugged_in = true;
                 EVLOG_info << "Detected simplified mode.";
                 ev_simplified_mode = true;
             } else if (last_cp_state == RawCPState::B) {
@@ -232,13 +248,13 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (!pwm_running && last_pwm_running) { // X2->C1
                                                     // Table A.6 Sequence 10.2: EV does not stop drawing power
                                                     // even if PWM stops. Stop within 6 seconds (E.g. Kona1!)
-                timer = TimerControl::start;
+                timer_state_C1 = TimerControl::start;
             }
 
             // PWM switches on while in state C
             if (pwm_running && !last_pwm_running) {
                 // when resuming after a pause before the EV goes to state B, stop the timer.
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
 
                 // If we resume charging and the EV never left state C during pause we allow non-compliant EVs to switch
                 // on again.
@@ -258,6 +274,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             if (pwm_running) { // C2
                 // 1) When we come from state B: switch on if we are allowed to
                 // 2) When we are in C2 for a while now and finally get a delayed power_on_allowed: also switch on
+
                 if (power_on_allowed && (!last_power_on_allowed || last_cp_state == RawCPState::B)) {
                     // Table A.6: Sequence 4 EV ready to charge.
                     // Must enable power within 3 seconds.
@@ -278,24 +295,31 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         case RawCPState::E:
             connector_unlock();
             if (last_cp_state != RawCPState::E) {
-                timer = TimerControl::stop;
+                timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
                 pwm_running = false;
                 r_bsp->call_pwm_off();
                 if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C ||
                     last_cp_state == RawCPState::D) {
                     events.push(CPEvent::BCDtoEF);
+                    events.push(CPEvent::BCDtoE);
                 }
             }
             break;
 
         case RawCPState::F:
-            connector_unlock();
-            timer = TimerControl::stop;
+            timer_state_C1 = TimerControl::stop;
             call_allow_power_on_bsp(false);
-            pwm_running = false;
+            if (last_cp_state not_eq RawCPState::F) {
+                timer_unlock_state_F = TimerControl::start;
+                pwm_running = false;
+            }
             if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C || last_cp_state == RawCPState::D) {
                 events.push(CPEvent::BCDtoEF);
+            }
+
+            if (timeout_unlock_state_F.reached()) {
+                connector_unlock();
             }
             break;
         }
@@ -311,12 +335,24 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
 
     // stopping the timer could lead to a deadlock when called from the
     // mutex protected section
-    switch (timer) {
+    switch (timer_state_C1) {
     case TimerControl::start:
-        timeout_state_c1.start(std::chrono::seconds(6));
+        timeout_state_c1.start(power_off_under_load_in_c1_timeout);
         break;
     case TimerControl::stop:
         timeout_state_c1.stop();
+        break;
+    case TimerControl::do_nothing:
+    default:
+        break;
+    }
+
+    switch (timer_unlock_state_F) {
+    case TimerControl::start:
+        timeout_unlock_state_F.start(unlock_in_state_f_timeout);
+        break;
+    case TimerControl::stop:
+        timeout_unlock_state_F.stop();
         break;
     case TimerControl::do_nothing:
     default:
@@ -432,10 +468,8 @@ void IECStateMachine::switch_three_phases_while_charging(bool n) {
 }
 
 // Forwards config parameters from EvseManager module config to BSP
-void IECStateMachine::setup(bool three_phases, bool has_ventilation, std::string country_code) {
-    r_bsp->call_setup(three_phases, has_ventilation, country_code);
+void IECStateMachine::setup(bool has_ventilation) {
     this->has_ventilation = has_ventilation;
-    this->three_phases = three_phases;
 }
 
 // enable/disable the charging port and CP signal
@@ -471,6 +505,13 @@ void IECStateMachine::connector_force_unlock() {
         cp = cp_state;
     }
 
+    if (not relais_on) {
+        // Unconditionally try to unlock, as `is_locked` might not always reflect the physical state of the lock.
+        // This can occur for example in case of a failed unlock due to a hardware issue.
+        signal_unlock();
+        is_locked = false;
+    }
+
     if (cp == RawCPState::B or cp == RawCPState::C) {
         force_unlocked = true;
         check_connector_lock();
@@ -478,10 +519,12 @@ void IECStateMachine::connector_force_unlock() {
 }
 
 void IECStateMachine::check_connector_lock() {
-    if (should_be_locked and not force_unlocked and not is_locked) {
+    bool should_be_locked_considering_relais_and_force = relais_on or (should_be_locked and not force_unlocked);
+
+    if (not is_locked and should_be_locked_considering_relais_and_force) {
         signal_lock();
         is_locked = true;
-    } else if ((not should_be_locked or force_unlocked) and is_locked and not relais_on) {
+    } else if (is_locked and not should_be_locked_considering_relais_and_force) {
         signal_unlock();
         is_locked = false;
     }

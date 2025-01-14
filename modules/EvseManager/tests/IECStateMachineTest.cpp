@@ -85,7 +85,7 @@ TEST(IECStateMachine, init) {
     module::stub::ModuleAdapterStub module_adapter = module::stub::ModuleAdapterStub();
     std::unique_ptr<evse_board_supportIntf> bsp_if =
         std::make_unique<module::stub::evse_board_supportIntfStub>(module_adapter);
-    module::IECStateMachine state_machine(std::move(bsp_if));
+    module::IECStateMachine state_machine(std::move(bsp_if), true);
 }
 
 #if 0
@@ -108,7 +108,7 @@ TEST(IECStateMachine, init_subscribe) {
 
     BspStubTimeout bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
-    module::IECStateMachine state_machine(std::move(bsp_if));
+    module::IECStateMachine state_machine(std::move(bsp_if), true);
 
     state_machine.enable(true);
     state_machine.allow_power_on(true, Reason::FullPowerCharging);
@@ -215,7 +215,7 @@ TEST(IECStateMachine, deadlock_test) {
 
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
-    module::IECStateMachine state_machine(std::move(bsp_if));
+    module::IECStateMachine state_machine(std::move(bsp_if), true);
 
     std::uint8_t signal_lock_count = 0;
 
@@ -281,7 +281,7 @@ TEST(IECStateMachine, deadlock_fix) {
 
     BspStubDeadlock bsp;
     std::unique_ptr<evse_board_supportIntf> bsp_if = std::make_unique<module::stub::evse_board_supportIntfStub>(bsp);
-    module::IECStateMachine state_machine(std::move(bsp_if));
+    module::IECStateMachine state_machine(std::move(bsp_if), true);
 
     std::uint8_t signal_lock_count = 0;
 

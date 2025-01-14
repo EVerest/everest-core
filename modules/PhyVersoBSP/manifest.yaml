@@ -11,15 +11,11 @@ config:
     maximum: 230400
     default: 115200
   reset_gpio:
-    description: Reset GPIO number to use to HW reset Yeti. If set <0 it is disabled.
+    description: If set <0 it is disabled. If > 0, configured reset_gpio_bank and reset_gpio_pin configuration is used for hard reset of MCU
     type: integer
     minimum: -1
     maximum: 1000
     default: -1
-  mcu_config_file:
-    description: config file that should be sent to the MCU
-    type: string
-    default: example_config_pionix.json
   conn1_max_current_A_import:
     description: Maximum import current in amps
     type: integer
@@ -126,6 +122,54 @@ config:
     default: false
   conn2_dc:
     description: Set to true if it is for DC, false if it is AC
+    type: boolean
+    default: false
+  reset_gpio_bank:
+    description: GPIO peripheral bank the nRST pin of the MCU is mapped to
+    type: integer
+    default: 1
+  reset_gpio_pin:
+    description: GPIO peripheral pin the nRST pin of the MCU is mapped to
+    type: integer
+    default: 23
+  conn1_motor_lock_type:
+    description: Connector 1 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    type: integer
+    default: 2
+  conn2_motor_lock_type:
+    description: Connector 2 motor lock type; 1 == Hella Style time-based lock, 2 == Valeo potentiometer feedback based
+    type: integer
+    default: 2
+  conn1_gpio_stop_button_enabled:
+    description: Set to true to enable external charging stop button for connector 1 on a GPIO connected to the SOM
+    type: boolean
+    default: false
+  conn1_gpio_stop_button_bank:
+    description: GPIO peripheral bank for connector 1 stop button
+    type: string
+    default: gpiochip1
+  conn1_gpio_stop_button_pin:
+    description: GPIO peripheral pin for connector 1 stop button
+    type: integer
+    default: 36
+  conn1_gpio_stop_button_invert:
+    description: Set to true to invert pin logic
+    type: boolean
+    default: false
+  conn2_gpio_stop_button_enabled:
+    description: Set to true to enable external charging stop button for connector 2 on a GPIO connected to the SOM
+    type: boolean
+    default: false
+  conn2_gpio_stop_button_bank:
+    description: GPIO peripheral bank for connector 2 stop button
+    type: string
+    default: gpiochip1
+  conn2_gpio_stop_button_pin:
+    description: GPIO peripheral pin for connector 2 stop button
+    type: integer
+    default: 37
+  conn2_gpio_stop_button_invert:
+    description: Set to true to invert pin logic
     type: boolean
     default: false
 provides:

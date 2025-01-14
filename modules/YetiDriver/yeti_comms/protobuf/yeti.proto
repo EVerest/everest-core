@@ -14,6 +14,7 @@ message EverestToMcu {
     uint32 pwm_duty_cycle = 103; // in 0.01 %, 0 = State F, 10000 = X1
     bool allow_power_on = 104;
     bool reset = 105;
+    bool set_number_of_phases = 106;
   }
 }
 
@@ -53,6 +54,7 @@ message ErrorFlags {
   bool ventilation_not_available = 4;
   bool connector_lock_failed = 5;
   bool cp_signal_fault = 6;
+  bool over_current = 7;
 }
 
 enum ResetReason {

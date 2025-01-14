@@ -5,6 +5,7 @@
 #include "RunApplication.hpp"
 
 #include <filesystem>
+#include <functional>
 #include <regex>
 #include <sstream>
 #include <thread>
@@ -21,6 +22,49 @@
  *
  * This is common across all calls to `wpa_cli`.
  */
+
+namespace {
+inline int hex_digit_to_nibble(std::uint8_t c) {
+    int result{-1};
+    if ((c >= '0') && (c <= '9')) {
+        result = static_cast<std::uint8_t>(c - '0');
+    } else if ((c >= 'a') && (c <= 'f')) {
+        result = static_cast<std::uint8_t>(c - 'a') + 10;
+    } else if ((c >= 'A') && (c <= 'F')) {
+        result = static_cast<std::uint8_t>(c - 'A') + 10;
+    }
+    return result;
+}
+
+inline int hex_to_int(std::uint8_t high, std::uint8_t low) {
+    int result{-1};
+    const auto h = hex_digit_to_nibble(high);
+    const auto l = hex_digit_to_nibble(low);
+    if ((h != -1) && (l != -1)) {
+        const auto hc = static_cast<std::uint8_t>(h) << 4U;
+        const auto lc = static_cast<std::uint8_t>(l);
+        result = static_cast<int>(hc | lc);
+    }
+    return result;
+}
+
+inline std::uint8_t nibble_to_hex_digit(std::uint8_t c) {
+    std::uint8_t result{};
+    c &= 0x0fU;
+    if (c <= 9) {
+        result = c + '0';
+    } else {
+        result = (c - 10) + 'a';
+    }
+    return result;
+}
+
+inline void int_to_hex(std::uint8_t& high, std::uint8_t& low, std::uint8_t c) {
+    high = nibble_to_hex_digit(c >> 4U);
+    low = nibble_to_hex_digit(c);
+}
+
+} // namespace
 
 namespace module {
 
@@ -217,7 +261,10 @@ bool WpaCliSetup::set_network(const std::string& interface, int network_id, cons
     }
 
     auto network_id_string = std::to_string(network_id);
-    auto ssid_parameter = "\"" + ssid + "\"";
+
+    // de-escaping SSID strings in wpa_supplicant is not reliable.
+    // hence providing the SSID as a string of hex digits
+    auto ssid_parameter = ssid_to_hex(ssid);
 
     auto output = run_application(wpa_cli, {"-i", interface, "set_network", network_id_string, "ssid", ssid_parameter});
 
@@ -377,6 +424,153 @@ bool WpaCliSetup::is_wifi_interface(const std::string& interface) {
     path /= "wireless";
 
     return std::filesystem::exists(path);
+}
+
+int Ssid::standard(std::uint8_t c) {
+    int output{-1};
+    if (c == '\\') {
+        handler = &Ssid::backslash;
+    } else {
+        output = static_cast<int>(c);
+    }
+    return output;
+}
+
+int Ssid::backslash(std::uint8_t c) {
+    int output{static_cast<int>(c)};
+    handler = &Ssid::standard;
+    switch (c) {
+    case '"':
+    case '\\':
+        break;
+    case 'n':
+        output = '\n';
+        break;
+    case 'r':
+        output = '\r';
+        break;
+    case 't':
+        output = '\t';
+        break;
+    case 'e':
+        output = '\033';
+        break;
+    case 'x':
+        handler = &Ssid::hex_1;
+        output = -1;
+        break;
+    default:
+        // malformed
+        error = true;
+        output = -1;
+        break;
+    }
+    return output;
+}
+
+int Ssid::hex_1(std::uint8_t c) {
+    tmp = static_cast<std::uint8_t>(c);
+    handler = &Ssid::hex_2;
+    return -1;
+}
+
+int Ssid::hex_2(std::uint8_t c) {
+    int output{-1};
+    handler = &Ssid::standard;
+    const auto res = hex_to_int(tmp, c);
+    if (res != -1) {
+        output = res;
+    } else {
+        error = true;
+        // malformed
+    }
+    return output;
+}
+
+std::string Ssid::to_hex(const std::string& ssid) {
+    std::ostringstream ss;
+    handler = &Ssid::standard;
+    error = false;
+
+    for (const auto& c : ssid) {
+        const auto output = std::invoke(handler, this, static_cast<std::uint8_t>(c));
+        if (error) {
+            break;
+        }
+        if (output != -1) {
+            ss << std::hex << std::setw(2) << std::setfill('0') << output;
+        }
+    }
+    return (error) ? std::string{} : ss.str();
+}
+
+void Ssid::encode(int c, std::ostringstream& ss) {
+    if ((c < 0) || (c > 255)) {
+        error = true;
+    } else {
+        switch (c) {
+        case '"':
+            ss << R"(\")";
+            break;
+        case '\\':
+            ss << R"(\\)";
+            break;
+        case '\033':
+            ss << R"(\e)";
+            break;
+        case '\n':
+            ss << R"(\n)";
+            break;
+        case '\r':
+            ss << R"(\r)";
+            break;
+        case '\t':
+            ss << R"(\t)";
+            break;
+        default: {
+            if ((c >= 32) && (c <= 126)) {
+                ss << static_cast<char>(c);
+            } else {
+                std::uint8_t high{};
+                std::uint8_t low{};
+                int_to_hex(high, low, c);
+                ss << R"(\x)" << static_cast<char>(high) << static_cast<char>(low);
+            }
+            break;
+        }
+        }
+    }
+}
+
+std::string Ssid::from_hex(const std::string& hex) {
+    std::ostringstream ss;
+    bool high{true};
+
+    error = (hex.size() % 2) != 0;
+    for (const auto& c : hex) {
+        if (error) {
+            break;
+        }
+        if (high) {
+            tmp = static_cast<std::uint8_t>(c);
+            high = false;
+        } else {
+            const auto output = hex_to_int(tmp, static_cast<std::uint8_t>(c));
+            encode(output, ss);
+            high = true;
+        }
+    }
+    return (error) ? std::string{} : ss.str();
+}
+
+std::string WpaCliSetup::hex_to_ssid(const std::string& hex) {
+    Ssid converter;
+    return converter.from_hex(hex);
+}
+
+std::string WpaCliSetup::ssid_to_hex(const std::string& ssid) {
+    Ssid converter;
+    return converter.to_hex(ssid);
 }
 
 } // namespace module

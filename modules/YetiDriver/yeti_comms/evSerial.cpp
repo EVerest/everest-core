@@ -340,6 +340,13 @@ void evSerial::forceUnlock() {
     linkWrite(&msg_out);
 }
 
+void evSerial::set_number_of_phases(bool p) {
+    EverestToMcu msg_out = EverestToMcu_init_default;
+    msg_out.which_payload = EverestToMcu_set_number_of_phases_tag;
+    msg_out.payload.set_number_of_phases = p;
+    linkWrite(&msg_out);
+}
+
 bool evSerial::reset(const std::string& reset_chip, const int reset_line) {
 
     reset_done_flag = false;

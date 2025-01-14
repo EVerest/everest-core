@@ -25,7 +25,7 @@ types:
       - Warning
       - Fault
       - No_IMD
-  DC_EVErrorCode:
+  DcEvErrorCode:
     description: Indicates the DC EV internal status
     type: string
     enum:
@@ -56,7 +56,7 @@ types:
       - Error_UtilityInterruptEvent
       - Error_Malfunction
       - Error_EmergencyShutdown
-  V2G_Message_ID:
+  V2gMessageId:
     description: This element contains the id of the v2g message body
     type: string
     enum:
@@ -100,14 +100,40 @@ types:
       - CertificateInstallationRes
       - CertificateUpdateReq
       - CertificateUpdateRes
+      - AuthorizationSetupReq
+      - AuthorizationSetupRes
+      - ScheduleExchangeReq
+      - ScheduleExchangeRes
+      - ServiceSelectionReq
+      - ServiceSelectionRes
+      - AcChargeLoopReq
+      - AcChargeLoopRes
+      - AcChargeParameterDiscoveryReq
+      - AcChargeParameterDiscoveryRes
+      - DcCableCheckReq
+      - DcCableCheckRes
+      - DcChargeLoopReq
+      - DcChargeLoopRes
+      - DcChargeParameterDiscoveryReq
+      - DcChargeParameterDiscoveryRes
+      - DcPreChargeReq
+      - DcPreChargeRes
+      - DcWeldingDetectionReq
+      - DcWeldingDetectionRes
       - UnknownMessage
-  SAE_J2847_Bidi_Mode:
+  SaeJ2847BidiMode:
     description: Bidi mode for sae j2847_2 
     type: string
     enum:
       - None
       - V2G
       - V2H
+  CertificateActionEnum:
+    description: Specifies the type of a certificate request
+    type: string
+    enum:
+      - Install
+      - Update
   EVSEID:
     description: >-
       An ID that uniquely identifies the EVSE and the power outlet the
@@ -115,73 +141,99 @@ types:
     type: object
     additionalProperties: false
     required:
-      - EVSE_ID
+      - evse_id
     properties:
-      EVSE_ID:
+      evse_id:
         description: EVSE ID
         type: string
-      EVSEID_DIN:
+      evse_id_din:
         description: EVSE ID (DIN70121) according to DIN SPEC 91286
         type: string
-  DC_EVSEPresentVoltage_Current:
+  DcEvsePresentVoltageCurrent:
     description: Set the present voltage and current for the EVSE
     type: object
     additionalProperties: false
     required:
-      - EVSEPresentVoltage
+      - evse_present_voltage
     properties:
-      EVSEPresentVoltage:
+      evse_present_voltage:
         description: Output voltage of the EVSE as defined in IEC CDV 61851-23 in V
         type: number
         minimum: 0
         maximum: 1500
-      EVSEPresentCurrent:
+      evse_present_current:
         description: Present output current of the EVSE in A
         type: number
         minimum: 0
         maximum: 10000
-  DC_EVSEMaximumLimits:
+  DcEvseMaximumLimits:
     description: Maximum Values (current, power and voltage) the EVSE can deliver
     type: object
     additionalProperties: false
     required:
-      - EVSEMaximumCurrentLimit
-      - EVSEMaximumPowerLimit
-      - EVSEMaximumVoltageLimit
+      - evse_maximum_current_limit
+      - evse_maximum_power_limit
+      - evse_maximum_voltage_limit
     properties:
-      EVSEMaximumCurrentLimit:
+      evse_maximum_current_limit:
         description: Maximum current the EVSE can deliver in A
         type: number
         minimum: -10000
         maximum: 10000
-      EVSEMaximumPowerLimit:
+      evse_maximum_power_limit:
         description: Maximum power the EVSE can deliver in W
         type: number
         minimum: -1000000
         maximum: 1000000
-      EVSEMaximumVoltageLimit:
+      evse_maximum_voltage_limit:
         description: Maximum voltage the EVSE can deliver in V
         type: number
         minimum: 0
         maximum: 1500
-  DC_EVSEMinimumLimits:
-    description: Minimum Values (current and voltage) the EVSE can deliver
+      evse_maximum_discharge_current_limit:
+        description: Maximum discharge current the EVSE can deliver in A
+        type: number
+        minimum: 0
+        maximum: 10000
+      evse_maximum_discharge_power_limit:
+        description: Maximum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
+  DcEvseMinimumLimits:
+    description: Minimum Values the EVSE can deliver
     type: object
     additionalProperties: false
     required:
-      - EVSEMinimumCurrentLimit
-      - EVSEMinimumVoltageLimit
+      - evse_minimum_current_limit
+      - evse_minimum_voltage_limit
+      - evse_minimum_power_limit
     properties:
-      EVSEMinimumCurrentLimit:
+      evse_minimum_current_limit:
         description: Minimum current the EVSE can deliver with the expected accuracy in A
         type: number
         minimum: 0
         maximum: 10000
-      EVSEMinimumVoltageLimit:
+      evse_minimum_voltage_limit:
         description: Minimum voltage the EVSE can deliver with the expected accuracy in V
         type: number
         minimum: 0
         maximum: 1500
+      evse_minimum_power_limit:
+        description: Minimum power the EVSE can deliver with the expected accuracy in W
+        type: number
+        minimum: 0
+        maximum: 1000000
+      evse_minimum_discharge_current_limit:
+        description: Minimum discharge current the EVSE can deliver in A
+        type: number
+        minimum: 0
+        maximum: 10000
+      evse_minimum_discharge_power_limit:
+        description: Minimum discharge power the EVSE can deliver in W
+        type: number
+        minimum: 0
+        maximum: 1000000
   SetupPhysicalValues:
     description: >-
       Initial physical values for setup a AC or DC charging session
@@ -212,89 +264,89 @@ types:
         type: number
         minimum: 0
         maximum: 200000
-  DC_EVStatusType:
+  DcEvStatus:
     description: Current status of the EV
     type: object
     additionalProperties: false
     required:
-      - DC_EVReady
-      - DC_EVErrorCode
-      - DC_EVRESSSOC
+      - dc_ev_ready
+      - dc_ev_error_code
+      - dc_ev_ress_soc
     properties:
-      DC_EVReady:
+      dc_ev_ready:
         description: If set to TRUE, the EV is ready to charge
         type: boolean
-      DC_EVErrorCode:
+      dc_ev_error_code:
         description: Indicates the EV internal status
         type: string
-        $ref: /iso15118_charger#/DC_EVErrorCode
-      DC_EVRESSSOC:
+        $ref: /iso15118_charger#/DcEvErrorCode
+      dc_ev_ress_soc:
         description: State of charge of the EVs battery (RESS)
         type: number
         minimum: 0
         maximum: 100
-      DC_EVCabinConditioning:
+      dc_ev_cabin_conditioning:
         description: >-
           'DIN70121 only: The EV is using energy from the DC supply toheat
           or cool the passenger compartment.'
         type: boolean
-      DC_EVRESSConiditioning:
+      dc_ev_ress_conditioning:
         description: >-
           'DIN70121 only: The vehicle is using energy from the DC charger
           to condition the RESS to a target temperature.'
         type: boolean
-  DC_EVTargetValues:
+  DcEvTargetValues:
     description: Target voltage and current requested by the EV
     type: object
     additionalProperties: false
     required:
-      - DC_EVTargetVoltage
-      - DC_EVTargetCurrent
+      - dc_ev_target_voltage
+      - dc_ev_target_current
     properties:
-      DC_EVTargetVoltage:
+      dc_ev_target_voltage:
         description: Target Voltage requested by EV in V
         type: number
         minimum: -2
         maximum: 1500
-      DC_EVTargetCurrent:
+      dc_ev_target_current:
         description: Current demanded by EV in A
         type: number
         minimum: -2
         maximum: 10000
-  DC_EVMaximumLimits:
+  DcEvMaximumLimits:
     description:
       Maximum Values (current, power and voltage) supported and allowed
       by the EV
     type: object
     additionalProperties: false
     properties:
-      DC_EVMaximumCurrentLimit:
+      dc_ev_maximum_current_limit:
         description: Maximum current supported and allowed by the EV in A
         type: number
         minimum: -2
         maximum: 10000
-      DC_EVMaximumPowerLimit:
+      dc_ev_maximum_power_limit:
         description: Maximum power supported and allowed by the EV in W (optional)
         type: number
         minimum: -2
         maximum: 350000
-      DC_EVMaximumVoltageLimit:
+      dc_ev_maximum_voltage_limit:
         description: Maximum voltage supported and allowed by the EV in V
         type: number
         minimum: -2
         maximum: 1500
-  DC_EVRemainingTime:
+  DcEvRemainingTime:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
     additionalProperties: false
     properties:
-      EV_RemainingTimeToFullSoC:
+      ev_remaining_time_to_full_soc:
         description:
           "[RFC3339 UTC] Estimated or calculated time until full charge
           (100% SOC) is complete"
         type: string
         format: date-time
-      EV_RemainingTimeToBulkSoC:
+      ev_remaining_time_to_full_bulk_soc:
         description:
           "[RFC3339 UTC] Estimated or calculated time until bulk charge
           (approx. 80% SOC) is complete"
@@ -307,39 +359,39 @@ types:
     type: object
     additionalProperties: false
     required:
-      - ProtocolNamespace
-      - VersionNumberMajor
-      - VersionNumberMinor
-      - SchemaID
-      - Priority
+      - protocol_namespace
+      - version_number_major
+      - version_number_minor
+      - schema_id
+      - priority
     properties:
-      ProtocolNamespace:
+      protocol_namespace:
         description: >-
           This message element is used by the EVCC to uniquely identify
           the Namespace URI of a specific protocol supported by the EVCC
         type: string
         minLength: 1
         maxLength: 100
-      VersionNumberMajor:
+      version_number_major:
         description: >-
           This message element is used by the EVCC to indicate the major
           version number of the protocol
         type: integer
         minimum: 0
-      VersionNumberMinor:
+      version_number_minor:
         description: >-
           This message element is used by the EVCC to indicate the minor
           version number of the protocol
         type: integer
         minimum: 0
-      SchemaID:
+      schema_id:
         description: >-
           This message element is used by the EVCC to indicate the SchemaID
           assigned by the EVCC to the protocol
         type: integer
         minimum: 0
         maximum: 255
-      Priority:
+      priority:
         description: >-
           This message element is used by the EVCC for indicating the protocol
           priority of a specific protocol allowing the SECC to select a protocol based
@@ -364,80 +416,80 @@ types:
           additionalProperties: false
         minItems: 1
         maxItems: 20
-  V2G_Messages:
+  V2gMessages:
     description: This element contains all V2G elements
     type: object
     additionalProperties: false
     required:
-      - V2G_Message_ID
+      - id
     properties:
-      V2G_Message_ID:
+      id:
         description: This element contains the id of the v2g message body
         type: string
-        $ref: /iso15118_charger#/V2G_Message_ID
-      V2G_Message_XML:
+        $ref: /iso15118_charger#/V2gMessageId
+      xml:
         description: Contains the decoded EXI stream as V2G message XML file
         type: string
         minLength: 0
-      V2G_Message_JSON:
+      v2g_json:
         description: Contains the decoded EXI stream as V2G message JSON file
         type: string
         minLength: 0
-      V2G_Message_EXI_Hex:
+      exi:
         description: Contains the EXI stream as hex string
         type: string
         minLength: 0
-      V2G_Message_EXI_Base64:
+      exi_base64:
         description: Contains the EXI stream as base64 string
         type: string
         minLength: 0
-  Response_Exi_Stream_Status:
+  ResponseExiStreamStatus:
     description: The response raw exi stream and the status from the CSMS system
     type: object
     additionalProperties: false
     required:
       - status
-      - certificateAction
+      - certificate_action
     properties:
       status:
         description: >-
           Indicates whether the message was processed properly
-          Accepted - The message was processed properly, exiResponse included
-          Failed - Processing of the message was not successful, no exiResponse included
+          Accepted - The message was processed properly, exi_response included
+          Failed - Processing of the message was not successful, no exi_response included
         type: string
         enum:
           - Accepted
           - Failed
-      exiResponse:
+      exi_response:
         description: >-
           Raw CertificateInstallationRes or CertificateUpdateRes message
           as exi stream (Base64 encoded)
         type: string
         maxLength: 5600
-      certificateAction:
+      certificate_action:
         description: Type of the certificate request
         type: string
         $ref: /iso15118_charger#/CertificateActionEnum
-  Request_Exi_Stream_Schema:
+  RequestExiStreamSchema:
     description: The request raw exi stream and the schema version for the CSMS system
     type: object
     additionalProperties: false
     required:
-      - exiRequest
-      - iso15118SchemaVersion
-      - certificateAction
+      - exi_request
+      - iso15118_schema_version
+      - certificate_action
     properties:
-      exiRequest:
+      exi_request:
         description: >-
           Raw CertificateInstallationReq or CertificateUpdateReq message as
           exi stream (Base64 encoded)
         type: string
         maxLength: 5600
-      iso15118SchemaVersion:
+      iso15118_schema_version:
         description: Schema Version used for CertificateReq message between EV and Charger
         type: string
         maxLength: 50 
-      certificateAction:
+      certificate_action:
         description: Type of the certificate request
         type: string
         $ref: /iso15118_charger#/CertificateActionEnum
@@ -475,10 +527,139 @@ types:
         description: This contains the responder URL
         type: string
         maxLength: 512
-  CertificateActionEnum:
-    description: Specifies the type of a certificate request
-    type: string
-    enum:
-      - Install
-      - Update
-
+  SupportedEnergyMode:
+    description: Supported energy mode and if the mode supports bidirectional
+    type: object
+    additionalProperties: false
+    required:
+      - energy_transfer_mode
+      - bidirectional
+    properties:
+      energy_transfer_mode:
+        description: The energy mode supported by the SECC 
+        type: string
+        $ref: /iso15118_charger#/EnergyTransferMode
+      bidirectional:
+        description: Set true if the powersupply (AC or DC) supports bidi mode
+        type: boolean
+  DisplayParameters:
+    description: Parameters that may be displayed on the EVSE
+    type: object
+    additionalProperties: false
+    properties:
+      present_soc:
+        description: Current SoC of the EV battery
+        type: number
+        minimum: 0
+        maximum: 100
+      minimum_soc:
+        description: Minimum SoC EV needs after charging
+        type: number
+        minimum: 0
+        maximum: 100
+      target_soc:
+        description: Target SoC EV needs after charging
+        type: number
+        minimum: 0
+        maximum: 100
+      maximum_soc:
+        description: The SoC at which the EV will prohibit
+        type: number
+        minimum: 0
+        maximum: 100
+      remaining_time_to_minimum_soc:
+        description: Remaining time it takes to reach minimum SoC
+        type: number
+        minimum: 0
+      remaining_time_to_target_soc:
+        description: Remaining time it takes to reach target SoC
+        type: number
+        minimum: 0
+      remaining_time_to_maximum_soc:
+        description: Remaining time it takes to reach maximum SoC
+        type: number
+        minimum: 0
+      charging_complete:
+        description: Indication if the charging is complete
+        type: boolean
+      battery_energy_capacity:
+        description: Energy capacity in Wh of the EV battery
+        type: number
+        minimum: 0
+      inlet_hot:
+        description: Inlet temperature is too high
+        type: boolean
+  DcChargeDynamicModeValues:
+    description: Parameters for dynamic control mode
+    type: object
+    additionalProperties: false
+    required:
+      - target_energy_request
+      - max_energy_request
+      - min_energy_request
+      - max_charge_power
+      - min_charge_power
+      - max_charge_current
+      - max_voltage
+      - min_voltage
+    properties:
+      departure_time:
+        description: The time when the EV wants to finish charging
+        type: number
+        minimum: 0
+      target_energy_request:
+        description: Energy request to fulfil the target SoC
+        type: number
+        minimum: 0
+      max_energy_request:
+        description: Maximum acceptable energy level of the EV
+        type: number
+        minimum: 0
+      min_energy_request:
+        description: Energy request to fulfil the minimum SoC
+        type: number
+        minimum: 0
+      max_charge_power:
+        description: Maximum charge power allowed by the EV
+        type: number
+        minimum: 0
+      min_charge_power:
+        description: Minimum charge power allowed by the EV
+        type: number
+        minimum: 0
+      max_charge_current:
+        description: Maximum charge current allowed by the EV
+        type: number
+        minimum: 0
+      max_voltage:
+        description: Maximum voltage allowed by the EV
+        type: number
+        minimum: 0
+      min_voltage:
+        description: Minimum voltage allowd by the EV
+        type: number
+        minimum: 0
+      max_discharge_power:
+        description: Maximum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      min_discharge_power:
+        description: Minimum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      max_discharge_current:
+        description: Maximum discharge current allowed by the EV
+        type: number
+        minimum: 0
+      max_v2x_energy_request:
+        description: >-
+          Energy which may be charged until the PresentSOC has left the range
+          dedicated for cycling activity.
+        type: number
+        minimum: 0
+      min_v2x_energy_request:
+        description: >-
+          Energy which needs to be charged until the PresentSOC has left the
+          range dedicated for cycling activity.
+        type: number
+        minimum: 0

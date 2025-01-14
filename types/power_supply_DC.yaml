@@ -7,9 +7,18 @@ types:
     type: string
     enum:
       - "Off"
-      - Export
-      - Import
-      - Fault
+      - "Export"
+      - "Import"
+      - "Fault"
+  ChargingPhase:
+    description: >-
+      Charging phase of the current mode change. Other is used for e.g. switching it off or any other internal testing not related to real charging.
+    type: string
+    enum:
+      - "Other"
+      - "CableCheck"
+      - "PreCharge"
+      - "Charging"
   VoltageCurrent:
     description: Voltage (V) and Current (A) at the input/output of the power supply
     type: object

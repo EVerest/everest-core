@@ -33,7 +33,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_setMode(types::power_supply_DC::Mode& value) override;
+    virtual void handle_setMode(types::power_supply_DC::Mode& mode,
+                                types::power_supply_DC::ChargingPhase& phase) override;
     virtual void handle_setExportVoltageCurrent(double& voltage, double& current) override;
     virtual void handle_setImportVoltageCurrent(double& voltage, double& current) override;
 
@@ -50,8 +51,9 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    float req_voltage{0}, req_current{0};
-    bool is_on{false};
+    std::atomic<float> req_voltage{0};
+    std::atomic<float> req_current{0};
+    std::atomic_bool is_on{false};
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

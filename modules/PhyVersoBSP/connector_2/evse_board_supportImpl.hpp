@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-
 #ifndef CONNECTOR_2_EVSE_BOARD_SUPPORT_IMPL_HPP
 #define CONNECTOR_2_EVSE_BOARD_SUPPORT_IMPL_HPP
 
@@ -35,8 +34,6 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) override;
-    virtual types::evse_board_support::HardwareCapabilities handle_get_hw_capabilities() override;
     virtual void handle_enable(bool& value) override;
     virtual void handle_pwm_on(double& value) override;
     virtual void handle_pwm_off() override;
@@ -63,6 +60,7 @@ private:
     std::mutex caps_mutex;
     CpState last_cp_state;
     PpState last_pp_state; ///< The last pp state received from the MCU.
+    bool last_stop_button_state;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

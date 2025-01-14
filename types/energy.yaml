@@ -7,6 +7,19 @@ types:
       - Undefined
       - Evse
       - Generic
+  EvseState:
+    description: Enum for simplified EVSE state
+    type: string
+    enum:
+      - Unplugged
+      - WaitForAuth
+      - WaitForEnergy
+      - PrepareCharging
+      - PausedEV
+      - PausedEVSE
+      - Charging
+      - Finished
+      - Disabled
   LimitsReq:
     description: Energy flow limiting object request (Evses to EnergyManager)
     type: object
@@ -43,6 +56,12 @@ types:
           Indicate whether phase switching is allowed during charging or
           not
         type: boolean
+      ac_number_of_active_phases:
+        description: >-
+          Number of phases currently offered to the vehicle (1ph or 3ph mode)
+        type: integer
+        minimum: 1
+        maximum: 3
   LimitsRes:
     description: Energy flow limiting object Result (Energy manager to Evses)
     type: object
@@ -174,6 +193,10 @@ types:
           If set to true, this is a high priority request that needs to be handled now. 
           Otherwise energymanager may merge multiple requests and address them later.
         type: boolean
+      evse_state:
+        description: State of the EVSE
+        type: object
+        $ref: /energy#/EvseState
       optimizer_target:
         description: User defined optimizer targets for this evse
         type: object

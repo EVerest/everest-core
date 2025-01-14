@@ -86,6 +86,8 @@ public:
         }
     };
 
+    void update_lem_status();
+
 private:
     const std::unique_ptr<HttpClientInterface> http_client;
     std::string meter_id;
@@ -93,11 +95,14 @@ private:
     std::string public_key_ocmf;
     std::string version;
     bool v2_capable = false;
-    bool trasaction_is_ongoing = false;
-    Conf config;
+    // transaction ongoing and current transaction are used ONLY at startup
+    bool transaction_is_ongoing_at_startup = false;
+    std::string current_transaction_id;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
+    Conf config;
 
     void fetch_meter_id_from_device();
+    std::string get_current_transaction();
     void request_device_to_start_transaction(const types::powermeter::TransactionReq& value);
     void request_device_to_stop_transaction(const std::string& transaction_id);
     std::string fetch_ocmf_result(const std::string& transaction_id);
@@ -146,6 +151,9 @@ public:
     types::powermeter::TransactionStartResponse start_transaction(const types::powermeter::TransactionReq& value);
     types::powermeter::TransactionStopResponse stop_transaction(const std::string& transaction_id);
     types::powermeter::Powermeter get_powermeter();
+    inline bool is_initialized() {
+        return ("" != meter_id);
+    }
     inline std::string get_public_key_ocmf() {
         return public_key_ocmf;
     }

@@ -3,9 +3,13 @@
 #include "RunApplicationStub.hpp"
 #include <WiFiSetup.hpp>
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
+#include <string>
 
 namespace {
 using namespace module;
+using nlohmann::json;
+
 constexpr const char* example_psk = "e3003974af901976485f3e655b455791dcc20a5380f42a7839de3bfdc9d70d71";
 constexpr const char* example_password = "LetMeIn2";
 constexpr const char* example_long_password = "e3003974af901976485f3e655b455791dcc20a5380f42a7839de3bfdc9d70d71X";
@@ -22,6 +26,125 @@ public:
         return true;
     };
 };
+
+struct WifiCredentials {
+    std::string interface;
+    std::string ssid;
+    std::string psk;
+    bool hidden;
+
+    operator std::string() {
+
+        json wifi_credentials = *this;
+
+        return wifi_credentials.dump();
+    }
+};
+void to_json(json& j, const WifiCredentials& k) {
+    j = json::object({{"interface", k.interface}, {"ssid", k.ssid}, {"psk", k.psk}, {"hidden", k.hidden}});
+}
+
+void from_json(const json& j, WifiCredentials& k) {
+    k.interface = j.at("interface");
+    k.ssid = j.at("ssid");
+    k.psk = j.at("psk");
+    k.hidden = false;
+    // optional item
+    auto it = j.find("hidden");
+    if ((it != j.end() && *it)) {
+        k.hidden = true;
+    }
+}
+
+//-----------------------------------------------------------------------------
+// SSID conversions
+TEST(Ssid, toHex) {
+    Ssid ssid;
+    EXPECT_EQ(ssid.to_hex("0123456789"), "30313233343536373839");
+    EXPECT_EQ(ssid.to_hex("abcdef"), "616263646566");
+    EXPECT_EQ(ssid.to_hex("ABCDEF"), "414243444546");
+    EXPECT_EQ(ssid.to_hex(R"(\" \\ \e\n\r\t)"), "22205c201b0a0d09");
+    EXPECT_EQ(ssid.to_hex(R"(\x00\x01\xfd)"), "0001fd");
+}
+
+TEST(Ssid, fromHex) {
+    Ssid ssid;
+    EXPECT_EQ(ssid.from_hex("30313233343536373839"), "0123456789");
+    EXPECT_EQ(ssid.from_hex("616263646566"), "abcdef");
+    EXPECT_EQ(ssid.from_hex("414243444546"), "ABCDEF");
+    EXPECT_EQ(ssid.from_hex("22205c201b0a0d09"), R"(\" \\ \e\n\r\t)");
+    EXPECT_EQ(ssid.from_hex("0001fd"), R"(\x00\x01\xfd)");
+}
+
+TEST(Ssid, complete) {
+    Ssid ssid;
+
+    std::stringstream ss;
+    for (std::uint16_t i = 0; i < 256; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << i;
+    }
+    const std::string values_str(ss.str());
+    const auto result_str = ssid.from_hex(values_str);
+    const auto result_hex = ssid.to_hex(result_str);
+    // std::cout << result_str << std::endl;
+    // std::cout << result_hex << std::endl;
+    EXPECT_EQ(values_str, result_hex);
+}
+
+TEST(Ssid, unusual) {
+    Ssid ssid;
+
+    // allowing upper case hex digits
+    EXPECT_EQ(ssid.from_hex("E0E1E2E3E4E5E6E7E8E9EaEbEcEdEeEfEAEBECEDEEEF"),
+              R"(\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xea\xeb\xec\xed\xee\xef)");
+    EXPECT_EQ(
+        ssid.to_hex(R"(\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xEA\xEB\xEC\xED\xEE\xEF)"),
+        "e0e1e2e3e4e5e6e7e8e9eaebecedeeefeaebecedeeef");
+
+    // parsing errors
+    EXPECT_EQ(ssid.to_hex(R"(123\?456)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(123\?)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\?456)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\034)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\03)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\0)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\x)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\xz)"), "");
+    EXPECT_EQ(ssid.to_hex(R"(\xaz)"), "");
+
+    EXPECT_EQ(ssid.from_hex(R"(G123)"), "");
+    EXPECT_EQ(ssid.from_hex(R"(12G3)"), "");
+    EXPECT_EQ(ssid.from_hex(R"(123G)"), "");
+    EXPECT_EQ(ssid.from_hex(R"(1234568)"), "");
+}
+
+TEST(Ssid, json) {
+    /*
+     * worked example
+     * ssid=PP€-310034
+     * scan_results
+     * bssid / frequency / signal level / flags / ssid
+     * c2:ee:40:10:57:b8	2417	-45	[WPA2-PSK-CCMP][ESS]	PP\xe2\x82\xac-310034
+     *
+     * MQTT
+     * everest_api/setup/var/wifi_info: [
+     * {"bssid":"c2:ee:40:10:57:b8","flags":["WPA2-PSK-CCMP","ESS"],"frequency":2417,"signal_level":-46,"ssid":"PP\\xe2\\x82\\xac-310034"}]
+     */
+    Ssid conv;
+
+    std::string ssid_hex{"535349443de282ac3132"};
+    std::string ssid = conv.from_hex(ssid_hex);
+    WifiCredentials wifi = {"eth0", ssid, "\"psk\"", false};
+    nlohmann::json j;
+    to_json(j, wifi);
+
+    const auto transmitted = j.dump();
+    WifiCredentials received = json::parse(transmitted);
+    EXPECT_EQ(received.ssid, ssid);
+
+    const auto rec_ssid_hex = conv.to_hex(received.ssid);
+    EXPECT_EQ(rec_ssid_hex, ssid_hex);
+}
 
 //-----------------------------------------------------------------------------
 // add_network()

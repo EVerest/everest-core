@@ -3,6 +3,7 @@
 
 #include "ocppImpl.hpp"
 #include <conversions.hpp>
+#include <ocpp_conversions.hpp>
 
 namespace module {
 namespace ocpp_generic {
@@ -23,8 +24,12 @@ bool ocppImpl::handle_restart() {
     return true;
 }
 
-void ocppImpl::handle_security_event(std::string& type, std::string& info) {
-    // your code for cmd security_event goes here
+void ocppImpl::handle_security_event(types::ocpp::SecurityEvent& event) {
+    std::optional<ocpp::DateTime> timestamp;
+    if (event.timestamp.has_value()) {
+        timestamp = ocpp_conversions::to_ocpp_datetime_or_now(event.timestamp.value());
+    }
+    this->mod->charge_point->on_security_event(event.type, event.info, event.critical, timestamp);
 }
 
 std::vector<types::ocpp::GetVariableResult>

@@ -55,7 +55,6 @@ void PN532Serial::resetDataRead() {
 
 void PN532Serial::readThread() {
     uint8_t buf[2048];
-    int n;
 
     resetDataRead();
 
@@ -63,21 +62,21 @@ void PN532Serial::readThread() {
         if (readThreadHandle.shouldExit()) {
             break;
         }
-        n = read(fd, buf, sizeof buf);
+        auto n = read(fd, buf, sizeof buf);
         if (n == 0) {
             continue;
         }
 
         if (this->debug) {
             std::stringstream data_stream;
-            for (size_t i = 0; i < n; i++) {
+            for (ssize_t i = 0; i < n; i++) {
                 data_stream << "0x" << std::setfill('0') << std::setw(2) << std::right << std::hex << (int)buf[i]
                             << " ";
             }
 
             EVLOG_info << "Received bytes: " << data_stream.str();
         }
-        for (size_t i = 0; i < n; i++) {
+        for (ssize_t i = 0; i < n; i++) {
             if (!preamble_seen) {
                 if (preamble_start_seen && buf[i] == 0xff) {
                     preamble_seen = true;
@@ -137,7 +136,7 @@ void PN532Serial::readThread() {
                 tfi = buf[start_of_packet + 2];
                 command_code = buf[start_of_packet + 3];
                 first_data = false;
-                for (size_t i = start_of_packet + 4; i < n; i++) {
+                for (ssize_t i = start_of_packet + 4; i < n; i++) {
                     data.push_back(buf[i]);
                 }
             }
@@ -243,7 +242,7 @@ void PN532Serial::parseInListPassiveTargetResponse() {
 
             if (data.size() >= 6 + target_data.nfcid_length) {
                 response.valid = true;
-                for (size_t i = 6; i < 6 + target_data.nfcid_length; i++) {
+                for (ssize_t i = 6; i < 6 + target_data.nfcid_length; i++) {
                     target_data.nfcid.push_back(data.at(i));
                 }
 

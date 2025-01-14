@@ -52,5 +52,5 @@ struct SimulationData {
 
     bool dc_power_on{false};
 
-    types::board_support_common::Event actual_bsp_event{};
+    types::board_support_common::Event actual_bsp_event{types::board_support_common::Event::Disconnected};
 };

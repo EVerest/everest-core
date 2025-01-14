@@ -23,7 +23,6 @@ namespace main {
 struct Conf {
     std::string serial_port;
     int baud_rate;
-    double timeout;
     int read_timeout;
     bool debug;
 };
@@ -33,7 +32,8 @@ public:
     auth_token_providerImpl() = delete;
     auth_token_providerImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<PN532TokenProvider>& mod,
                             Conf& config) :
-        auth_token_providerImplBase(ev, "main"), mod(mod), config(config){};
+        auth_token_providerImplBase(ev, "main"), mod(mod), config(config) {
+    }
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here

@@ -22,13 +22,60 @@ config:
     type: number
     default: 0.5
   slice_watt:
-    description: Watt slice for trading. Lower values will give more even distribution but increase processing time [A].
+    description: Watt slice for trading. Lower values will give more even distribution but increase processing time [W].
     type: number
     default: 500
   debug:
     description: Show debug output on command line.
     type: boolean
     default: false
+  switch_3ph1ph_while_charging_mode:
+    description: >-
+      If supported by BSP in capabilities to switch between three phases and one phase and config option three_phases is set to true,
+      this controls the algorithm:
+        - Never: Do not use 1ph/3ph switching even if supported by the BSP
+        - Oneway: Only switch from 3ph to 1ph if power is not enough, but never switch back to 3ph for a session.
+        - Both: Switch in both directions, i.e. from 3ph to 1ph and back to 3ph if available power changes
+    type: string
+    enum:
+      - Never
+      - Oneway
+      - Both
+    default: Never
+  switch_3ph1ph_max_nr_of_switches_per_session:
+    description: >-
+      Limit the maximum number of switches between 1ph and 3ph per charging session.
+      Set to 0 for no limit.
+    type: integer
+    default: 0
+  switch_3ph1ph_switch_limit_stickyness:
+    description: >-
+      If the maximum number of switches between 1ph and 3ph is reached, select what should happen:
+        - SinglePhase: Switch to 1ph mode
+        - ThreePhase: Switch to 3ph mode
+        - DontChange: Stay in the mode it is currently in
+    type: string
+    enum:
+      - SinglePhase
+      - ThreePhase
+      - DontChange
+    default: DontChange
+  switch_3ph1ph_power_hysteresis_W:
+    description: >-
+      Power based hysteresis in Watt. If set to 200W for example,
+      the hysteresis for PWM based charging will be 4.2kW to 4.4kW.
+      Actual values will depend on configured nominal AC voltage, and they may be different for
+      PWM vs ISO based charging in the future.
+    type: integer
+    default: 200
+  switch_3ph1ph_time_hysteresis_s:
+    description: >-
+      Time based hysteresis. It will only switch to 3 phases if the condition to select 3 phases
+      is stable for the configured number of seconds. It will always switch to 1ph mode without
+      waiting for this delay.
+      Set to 0 to disable time based hysteresis.
+    type: integer
+    default: 600
 provides:
   main:
     description: Main interface of the energy manager

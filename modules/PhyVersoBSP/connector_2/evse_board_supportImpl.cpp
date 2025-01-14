@@ -54,18 +54,23 @@ void evse_board_supportImpl::init() {
         }
         last_pp_state = s;
     });
+
+    mod->gpio.signal_stop_button_state.connect([this](int connector, bool state) {
+        if (connector == 2 && (state != last_stop_button_state)) {
+            types::evse_manager::StopTransactionRequest request;
+            request.reason = types::evse_manager::StopTransactionReason::Local;
+            this->publish_request_stop_transaction(request);
+            EVLOG_info << "[2] Request stop button state: " << (state ? "PUSHED" : "RELEASED");
+            last_stop_button_state = state;
+        }
+    });
 }
 
 void evse_board_supportImpl::ready() {
-}
-
-void evse_board_supportImpl::handle_setup(bool& three_phases, bool& has_ventilation, std::string& country_code) {
-    // your code for cmd setup goes here
-}
-
-types::evse_board_support::HardwareCapabilities evse_board_supportImpl::handle_get_hw_capabilities() {
-    std::scoped_lock lock(caps_mutex);
-    return caps;
+    {
+        std::scoped_lock lock(caps_mutex);
+        publish_capabilities(caps);
+    }
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {

@@ -43,7 +43,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_setMode(types::power_supply_DC::Mode& value) override;
+    virtual void handle_setMode(types::power_supply_DC::Mode& mode,
+                                types::power_supply_DC::ChargingPhase& phase) override;
     virtual void handle_setExportVoltageCurrent(double& voltage, double& current) override;
     virtual void handle_setImportVoltageCurrent(double& voltage, double& current) override;
 

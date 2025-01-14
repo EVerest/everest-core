@@ -132,6 +132,45 @@ void time_probe::pause() {
     }
 }
 
+// returns the smaller of two optionals. Note that comparison operators on optionals are a little weird if not both
+// sides have a value, we explicitly want:
+// - If both are not set, it should return an empty optional
+// - If either a or b is set but not both, return the one set.
+// - If both have a value, return the smaller one.
+template <typename T> std::optional<T> min_optional(std::optional<T> a, std::optional<T> b) {
+
+    if (a.has_value() and b.has_value()) {
+        if (a < b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
+    if (a.has_value()) {
+        return a;
+    }
+
+    return b;
+}
+
+template <typename T> std::optional<T> max_optional(std::optional<T> a, std::optional<T> b) {
+
+    if (a.has_value() and b.has_value()) {
+        if (a > b) {
+            return a;
+        } else {
+            return b;
+        }
+    }
+
+    if (a.has_value()) {
+        return a;
+    }
+
+    return b;
+}
+
 ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
 
     ScheduleReq available = globals.empty_schedule_req;
@@ -149,40 +188,39 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
                 break;
             }
             auto tp_r_2 = Everest::Date::from_rfc3339((*(ir + 1)).timestamp);
-            if (tp_a >= tp_r_1 && tp_a < tp_r_2 || (ir == request.begin() && tp_a < tp_r_1)) {
+            if ((tp_a >= tp_r_1 && tp_a < tp_r_2) || (ir == request.begin() && tp_a < tp_r_1)) {
                 r = ir;
                 break;
             }
         }
 
         if (r != request.end()) {
-            // apply watt limit from leaf side to root side
-            if ((*r).limits_to_leaves.total_power_W.has_value()) {
-                a.limits_to_root.total_power_W =
-                    (*r).limits_to_leaves.total_power_W.value() / (*r).conversion_efficiency.value_or(1.);
+
+            {
+                auto leaves_power_W = (*r).limits_to_leaves.total_power_W;
+                if (leaves_power_W.has_value()) {
+                    leaves_power_W = leaves_power_W.value() / (*r).conversion_efficiency.value_or(1.);
+                }
+
+                a.limits_to_root.total_power_W = min_optional(leaves_power_W, (*r).limits_to_root.total_power_W);
             }
-            // do we have a lower watt limit on root side?
-            if ((*r).limits_to_root.total_power_W.has_value() && a.limits_to_root.total_power_W.has_value() &&
-                a.limits_to_root.total_power_W.value() > (*r).limits_to_root.total_power_W.value()) {
-                a.limits_to_root.total_power_W = (*r).limits_to_root.total_power_W.value();
-            }
-            // apply ampere limit from leaf side to root side
-            if ((*r).limits_to_leaves.ac_max_current_A.has_value()) {
-                a.limits_to_root.ac_max_current_A =
-                    (*r).limits_to_leaves.ac_max_current_A.value() / (*r).conversion_efficiency.value_or(1.);
-            }
-            // do we have a lower ampere limit on root side?
-            if ((*r).limits_to_root.ac_max_current_A.has_value() and
-                (a.limits_to_root.ac_max_current_A > (*r).limits_to_root.ac_max_current_A.value() or
-                 not(*r).limits_to_leaves.ac_max_current_A.has_value())) {
-                a.limits_to_root.ac_max_current_A = (*r).limits_to_root.ac_max_current_A.value();
-            }
+
+            a.limits_to_root.ac_max_current_A =
+                min_optional((*r).limits_to_leaves.ac_max_current_A, (*r).limits_to_root.ac_max_current_A);
+
+            a.limits_to_root.ac_min_phase_count =
+                max_optional((*r).limits_to_root.ac_min_phase_count, (*r).limits_to_leaves.ac_min_phase_count);
+
+            a.limits_to_root.ac_max_phase_count =
+                min_optional((*r).limits_to_root.ac_max_phase_count, (*r).limits_to_leaves.ac_max_phase_count);
+
+            a.limits_to_root.ac_min_current_A =
+                max_optional((*r).limits_to_root.ac_min_current_A, (*r).limits_to_leaves.ac_min_current_A);
+
             // all request limits have been merged on root side in available.
-            // copy pricing information data if any
+            // copy other information if any
             a.price_per_kwh = (*r).price_per_kwh;
-            a.limits_to_root.ac_min_current_A = (*r).limits_to_root.ac_min_current_A;
-            a.limits_to_root.ac_min_phase_count = (*r).limits_to_root.ac_min_phase_count;
-            a.limits_to_root.ac_max_phase_count = (*r).limits_to_root.ac_max_phase_count;
+            a.limits_to_root.ac_number_of_active_phases = (*r).limits_to_root.ac_number_of_active_phases;
         }
     }
 
@@ -191,7 +229,7 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
 
 ScheduleReq Market::get_available_energy(const ScheduleReq& max_available, bool add_sold) {
     ScheduleReq available = max_available;
-    for (int i = 0; i < available.size(); i++) {
+    for (ScheduleReq::size_type i = 0; i < available.size(); i++) {
         // FIXME: sold_root is the sum of all energy sold, but we need to limit indivdual paths as well
         // add config option for pure star type of cabling here as well.
 
@@ -222,7 +260,7 @@ ScheduleReq Market::get_available_energy_export() {
 
 Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const float __nominal_ac_voltage,
                Market* __parent) :
-    _nominal_ac_voltage(__nominal_ac_voltage), _parent(__parent), energy_flow_request(_energy_flow_request) {
+    energy_flow_request(_energy_flow_request), _parent(__parent), _nominal_ac_voltage(__nominal_ac_voltage) {
 
     // EVLOG_info << "Create market for " << _energy_flow_request.uuid;
 
@@ -246,10 +284,6 @@ Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const flo
     for (auto& flow_child : _energy_flow_request.children) {
         _children.emplace_back(flow_child, _nominal_ac_voltage, this);
     }
-}
-
-const std::vector<Market>& Market::children() {
-    return _children;
 }
 
 ScheduleRes Market::get_sold_energy() {
@@ -287,10 +321,12 @@ std::vector<Market*> Market::get_list_of_evses() {
 }
 
 static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
-    if (a.size() != b.size())
+    if (a.size() != b.size()) {
+        EVLOG_critical << "schedule_add: Schedules are not of the same size: a: " << a.size() << " b: " << b.size();
         return;
+    }
 
-    for (int i = 0; i < a.size(); i++) {
+    for (ScheduleRes::size_type i = 0; i < a.size(); i++) {
         if (b[i].limits_to_root.ac_max_current_A.has_value()) {
             a[i].limits_to_root.ac_max_current_A =
                 b[i].limits_to_root.ac_max_current_A.value() + a[i].limits_to_root.ac_max_current_A.value_or(0);
@@ -307,7 +343,7 @@ static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
                     a[i].limits_to_root.ac_max_phase_count.value() = b[i].limits_to_root.ac_max_phase_count.value();
                 }
             } else {
-                a[i].limits_to_root.ac_max_phase_count.value() = b[i].limits_to_root.ac_max_phase_count.value();
+                a[i].limits_to_root.ac_max_phase_count = b[i].limits_to_root.ac_max_phase_count.value();
             }
         }
     }

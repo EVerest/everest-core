@@ -12,7 +12,7 @@ namespace module::stub {
 
 struct evse_board_supportIntfStub : public evse_board_supportIntf {
     explicit evse_board_supportIntfStub(ModuleAdapterStub& adapter) :
-        evse_board_supportIntf(&adapter, Requirement("requirement", 1), "EvseManager") {
+        evse_board_supportIntf(&adapter, Requirement{"requirement", 1}, "EvseManager", std::nullopt) {
     }
 };
 

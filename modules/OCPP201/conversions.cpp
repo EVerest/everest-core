@@ -3,6 +3,7 @@
 
 #include <conversions.hpp>
 #include <everest/logging.hpp>
+#include <ocpp_conversions.hpp>
 
 namespace module {
 namespace conversions {
@@ -36,9 +37,8 @@ ocpp::v201::FirmwareStatusEnum to_ocpp_firmware_status_enum(const types::system:
         return ocpp::v201::FirmwareStatusEnum::InvalidSignature;
     case types::system::FirmwareUpdateStatusEnum::SignatureVerified:
         return ocpp::v201::FirmwareStatusEnum::SignatureVerified;
-    default:
-        throw std::out_of_range("Could not convert FirmwareUpdateStatusEnum to FirmwareStatusEnum");
     }
+    throw std::out_of_range("Could not convert FirmwareUpdateStatusEnum to FirmwareStatusEnum");
 }
 
 ocpp::v201::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp::DataTransferStatus status) {
@@ -51,9 +51,10 @@ ocpp::v201::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp
         return ocpp::v201::DataTransferStatusEnum::UnknownMessageId;
     case types::ocpp::DataTransferStatus::UnknownVendorId:
         return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
-    default:
+    case types::ocpp::DataTransferStatus::Offline:
         return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
     }
+    return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
 }
 
 ocpp::v201::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataTransferRequest request) {
@@ -137,28 +138,36 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
                     const ocpp::v201::ReadingContextEnum& reading_context,
                     const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
     ocpp::v201::MeterValue meter_value;
-    meter_value.timestamp = ocpp::DateTime(power_meter.timestamp);
+    meter_value.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(power_meter.timestamp);
 
-    // signed_meter_value is intended for OCMF style blobs of signed meter value reports during transaction start or end
-    // This is interpreted as Energy.Active.Import.Register
+    bool energy_Wh_import_signed_total_added = false;
+    // individual signed meter values can be provided by the power_meter itself
+
     ocpp::v201::SampledValue sampled_value = to_ocpp_sampled_value(
         reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
-    sampled_value.value = power_meter.energy_Wh_import.total;
-    // add signedMeterValue if present
-    if (signed_meter_value.has_value()) {
-        sampled_value.signedMeterValue = to_ocpp_signed_meter_value(signed_meter_value.value());
-    }
-    meter_value.sampledValue.push_back(sampled_value);
-
-    // individual signed meter values can be provided by the power_meter itself
 
     // Energy.Active.Import.Register
     if (power_meter.energy_Wh_import_signed.has_value()) {
-        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
-                                              "Wh", std::nullopt);
+        sampled_value.value = power_meter.energy_Wh_import.total;
         const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
         if (energy_Wh_import_signed.total.has_value()) {
             sampled_value.signedMeterValue = to_ocpp_signed_meter_value(energy_Wh_import_signed.total.value());
+            energy_Wh_import_signed_total_added = true;
+        }
+        meter_value.sampledValue.push_back(sampled_value);
+    }
+
+    if (not energy_Wh_import_signed_total_added) {
+        // No signed meter value for Energy.Active.Import.Register added, either no signed meter values are available or
+        // just one global signed_meter_value is present signed_meter_value is intended for OCMF style blobs of signed
+        // meter value reports during transaction start or end
+        // This is interpreted as Energy.Active.Import.Register
+        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
+                                              "Wh", std::nullopt);
+        sampled_value.value = power_meter.energy_Wh_import.total;
+        // add signedMeterValue if present
+        if (signed_meter_value.has_value()) {
+            sampled_value.signedMeterValue = to_ocpp_signed_meter_value(signed_meter_value.value());
         }
         meter_value.sampledValue.push_back(sampled_value);
     }
@@ -479,11 +488,10 @@ ocpp::v201::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatu
         return ocpp::v201::LogStatusEnum::Accepted;
     case types::system::UploadLogsStatus::Rejected:
         return ocpp::v201::LogStatusEnum::Rejected;
-    case types::system::UploadLogsStatus::AcceptedCancelled:
+    case types::system::UploadLogsStatus::AcceptedCanceled:
         return ocpp::v201::LogStatusEnum::AcceptedCanceled;
-    default:
-        throw std::runtime_error("Could not convert UploadLogsStatus");
     }
+    throw std::runtime_error("Could not convert UploadLogsStatus");
 }
 
 ocpp::v201::GetLogResponse to_ocpp_get_log_response(const types::system::UploadLogsResponse& response) {
@@ -500,15 +508,14 @@ to_ocpp_update_firmware_status_enum(const types::system::UpdateFirmwareResponse&
         return ocpp::v201::UpdateFirmwareStatusEnum::Accepted;
     case types::system::UpdateFirmwareResponse::Rejected:
         return ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
-    case types::system::UpdateFirmwareResponse::AcceptedCancelled:
+    case types::system::UpdateFirmwareResponse::AcceptedCanceled:
         return ocpp::v201::UpdateFirmwareStatusEnum::AcceptedCanceled;
     case types::system::UpdateFirmwareResponse::InvalidCertificate:
         return ocpp::v201::UpdateFirmwareStatusEnum::InvalidCertificate;
     case types::system::UpdateFirmwareResponse::RevokedCertificate:
         return ocpp::v201::UpdateFirmwareStatusEnum::RevokedCertificate;
-    default:
-        throw std::runtime_error("Could not convert UpdateFirmwareResponse");
     }
+    throw std::runtime_error("Could not convert UpdateFirmwareResponse");
 }
 
 ocpp::v201::UpdateFirmwareResponse
@@ -534,9 +541,10 @@ ocpp::v201::UploadLogStatusEnum to_ocpp_upload_logs_status_enum(types::system::L
         return ocpp::v201::UploadLogStatusEnum::UploadFailure;
     case types::system::LogStatusEnum::Uploading:
         return ocpp::v201::UploadLogStatusEnum::Uploading;
-    default:
-        throw std::runtime_error("Could not convert UploadLogStatusEnum");
+    case types::system::LogStatusEnum::AcceptedCanceled:
+        return ocpp::v201::UploadLogStatusEnum::AcceptedCanceled;
     }
+    throw std::runtime_error("Could not convert UploadLogStatusEnum");
 }
 
 ocpp::v201::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason) {
@@ -559,9 +567,8 @@ ocpp::v201::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason)
         return ocpp::v201::BootReasonEnum::Unknown;
     case types::system::BootReason::Watchdog:
         return ocpp::v201::BootReasonEnum::Watchdog;
-    default:
-        throw std::runtime_error("Could not convert BootReasonEnum");
     }
+    throw std::runtime_error("Could not convert BootReasonEnum");
 }
 
 ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason reason) {
@@ -604,9 +611,11 @@ ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason
         return ocpp::v201::ReasonEnum::TimeLimitReached;
     case types::evse_manager::StopTransactionReason::Timeout:
         return ocpp::v201::ReasonEnum::Timeout;
-    default:
+    case types::evse_manager::StopTransactionReason::SoftReset:
+    case types::evse_manager::StopTransactionReason::UnlockCommand:
         return ocpp::v201::ReasonEnum::Other;
     }
+    return ocpp::v201::ReasonEnum::Other;
 }
 
 ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type) {
@@ -627,9 +636,8 @@ ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType 
         return ocpp::v201::IdTokenEnum::Local;
     case types::authorization::IdTokenType::NoAuthorization:
         return ocpp::v201::IdTokenEnum::NoAuthorization;
-    default:
-        throw std::runtime_error("Could not convert IdTokenEnum");
     }
+    throw std::runtime_error("Could not convert IdTokenEnum");
 }
 
 ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
@@ -697,9 +705,8 @@ to_everest_stop_transaction_reason(const ocpp::v201::ReasonEnum& stop_reason) {
         return types::evse_manager::StopTransactionReason::TimeLimitReached;
     case ocpp::v201::ReasonEnum::Timeout:
         return types::evse_manager::StopTransactionReason::Timeout;
-    default:
-        return types::evse_manager::StopTransactionReason::Other;
     }
+    return types::evse_manager::StopTransactionReason::Other;
 }
 
 std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
@@ -726,10 +733,9 @@ ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_
         return ocpp::v201::HashAlgorithmEnum::SHA384;
     case types::iso15118_charger::HashAlgorithm::SHA512:
         return ocpp::v201::HashAlgorithmEnum::SHA512;
-    default:
-        throw std::out_of_range(
-            "Could not convert types::iso15118_charger::HashAlgorithm to ocpp::v201::HashAlgorithmEnum");
     }
+    throw std::out_of_range(
+        "Could not convert types::iso15118_charger::HashAlgorithm to ocpp::v201::HashAlgorithmEnum");
 }
 
 std::vector<ocpp::v201::GetVariableData>
@@ -808,18 +814,52 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
         return ocpp::v201::AttributeEnum::MinSet;
     case types::ocpp::AttributeEnum::MaxSet:
         return ocpp::v201::AttributeEnum::MaxSet;
-    default:
-        throw std::out_of_range("Could not convert AttributeEnum");
     }
+    throw std::out_of_range("Could not convert AttributeEnum");
 }
 
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::Request_Exi_Stream_Schema& request) {
+to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request) {
     ocpp::v201::Get15118EVCertificateRequest _request;
-    _request.iso15118SchemaVersion = request.iso15118SchemaVersion;
-    _request.exiRequest = request.exiRequest;
-    _request.action = conversions::to_ocpp_certificate_action_enum(request.certificateAction);
+    _request.iso15118SchemaVersion = request.iso15118_schema_version;
+    _request.exiRequest = request.exi_request;
+    _request.action = conversions::to_ocpp_certificate_action_enum(request.certificate_action);
     return _request;
+}
+
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
+    switch (result) {
+    case types::reservation::ReservationResult::Accepted:
+        return ocpp::v201::ReserveNowStatusEnum::Accepted;
+    case types::reservation::ReservationResult::Faulted:
+        return ocpp::v201::ReserveNowStatusEnum::Faulted;
+    case types::reservation::ReservationResult::Occupied:
+        return ocpp::v201::ReserveNowStatusEnum::Occupied;
+    case types::reservation::ReservationResult::Rejected:
+        return ocpp::v201::ReserveNowStatusEnum::Rejected;
+    case types::reservation::ReservationResult::Unavailable:
+        return ocpp::v201::ReserveNowStatusEnum::Unavailable;
+    }
+
+    throw std::out_of_range("Could not convert ReservationResult");
+}
+
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status) {
+    switch (status) {
+    case types::reservation::Reservation_status::Expired:
+        return ocpp::v201::ReservationUpdateStatusEnum::Expired;
+    case types::reservation::Reservation_status::Removed:
+        return ocpp::v201::ReservationUpdateStatusEnum::Removed;
+
+    case types::reservation::Reservation_status::Cancelled:
+    case types::reservation::Reservation_status::Placed:
+    case types::reservation::Reservation_status::Used:
+        // OCPP should not convert a status enum that is not an OCPP type.
+        throw std::out_of_range("Could not convert ReservationUpdateStatus: OCPP does not know this type");
+    }
+
+    throw std::out_of_range("Could not convert ReservationUpdateStatus");
 }
 
 types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
@@ -880,9 +920,8 @@ types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v201::Data
         return types::ocpp::DataTransferStatus::UnknownMessageId;
     case ocpp::v201::DataTransferStatusEnum::UnknownVendorId:
         return types::ocpp::DataTransferStatus::UnknownVendorId;
-    default:
-        return types::ocpp::DataTransferStatus::UnknownVendorId;
     }
+    return types::ocpp::DataTransferStatus::UnknownVendorId;
 }
 
 types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v201::DataTransferRequest request) {
@@ -926,9 +965,31 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
     if (response.idTokenInfo.groupIdToken.has_value()) {
         validation_result.parent_id_token = to_everest_id_token(response.idTokenInfo.groupIdToken.value());
     }
+
     if (response.idTokenInfo.personalMessage.has_value()) {
-        validation_result.reason.emplace(response.idTokenInfo.personalMessage.value().content.get());
+        validation_result.reason = types::authorization::TokenValidationStatusMessage();
+        validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        const types::display_message::MessageContent content =
+            to_everest_message_content(response.idTokenInfo.personalMessage.value());
+        validation_result.reason->messages->push_back(content);
     }
+
+    if (response.idTokenInfo.customData.has_value() && response.idTokenInfo.customData.value().contains("vendorId") &&
+        response.idTokenInfo.customData.value().at("vendorId").get<std::string>() ==
+            "org.openchargealliance.multilanguage" &&
+        response.idTokenInfo.customData.value().contains("personalMessageExtra")) {
+        if (!validation_result.reason->messages.has_value()) {
+            validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+        }
+
+        const json& multi_language_personal_messages =
+            response.idTokenInfo.customData.value().at("personalMessageExtra");
+        for (const auto& messages : multi_language_personal_messages.items()) {
+            const types::display_message::MessageContent content = messages.value();
+            validation_result.reason->messages->push_back(content);
+        }
+    }
+
     if (response.certificateStatus.has_value()) {
         validation_result.certificate_status.emplace(to_everest_certificate_status(response.certificateStatus.value()));
     }
@@ -961,10 +1022,9 @@ to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status
         return types::authorization::AuthorizationStatus::NotAtThisTime;
     case ocpp::v201::AuthorizationStatusEnum::Unknown:
         return types::authorization::AuthorizationStatus::Unknown;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::AuthorizationStatusEnum to types::authorization::AuthorizationStatus");
     }
+    throw std::out_of_range(
+        "Could not convert ocpp::v201::AuthorizationStatusEnum to types::authorization::AuthorizationStatus");
 }
 
 types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdTokenEnum& type) {
@@ -985,9 +1045,8 @@ types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdT
         return types::authorization::IdTokenType::MacAddress;
     case ocpp::v201::IdTokenEnum::NoAuthorization:
         return types::authorization::IdTokenType::NoAuthorization;
-    default:
-        throw std::out_of_range("Could not convert ocpp::v201::IdTokenEnum to types::authorization::IdTokenType");
     }
+    throw std::out_of_range("Could not convert ocpp::v201::IdTokenEnum to types::authorization::IdTokenType");
 }
 
 types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_token) {
@@ -1014,10 +1073,9 @@ to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum s
         return types::authorization::CertificateStatus::CertChainError;
     case ocpp::v201::AuthorizeCertificateStatusEnum::ContractCancelled:
         return types::authorization::CertificateStatus::ContractCancelled;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to types::authorization::CertificateStatus");
     }
+    throw std::out_of_range("Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to "
+                            "types::authorization::CertificateStatus");
 }
 
 types::ocpp::OcppTransactionEvent
@@ -1035,44 +1093,31 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
         break;
     }
 
-    auto evse_id = 1;
-    auto connector_id = 1;
-
     if (transaction_event.evse.has_value()) {
-        evse_id = transaction_event.evse.value().id;
-        if (transaction_event.evse.value().connectorId.has_value()) {
-            connector_id = transaction_event.evse.value().connectorId.value();
-        }
-    } else {
-        EVLOG_warning << "Attempting to convert TransactionEventRequest that does not contain information about the "
-                         "EVSE. evse_id and connector default to 1.";
+        ocpp_transaction_event.evse = to_everest_evse(transaction_event.evse.value());
     }
-
-    ocpp_transaction_event.evse_id = evse_id;
-    ocpp_transaction_event.connector = connector_id;
     ocpp_transaction_event.session_id =
         transaction_event.transactionInfo.transactionId; // session_id == transaction_id for OCPP2.0.1
     ocpp_transaction_event.transaction_id = transaction_event.transactionInfo.transactionId;
     return ocpp_transaction_event;
 }
 
-types::ocpp::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
     switch (message_format) {
     case ocpp::v201::MessageFormatEnum::ASCII:
-        return types::ocpp::MessageFormat::ASCII;
+        return types::display_message::MessageFormat::ASCII;
     case ocpp::v201::MessageFormatEnum::HTML:
-        return types::ocpp::MessageFormat::HTML;
+        return types::display_message::MessageFormat::HTML;
     case ocpp::v201::MessageFormatEnum::URI:
-        return types::ocpp::MessageFormat::URI;
+        return types::display_message::MessageFormat::URI;
     case ocpp::v201::MessageFormatEnum::UTF8:
-        return types::ocpp::MessageFormat::UTF8;
-    default:
-        throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
+        return types::display_message::MessageFormat::UTF8;
     }
+    throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
 }
 
-types::ocpp::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
-    types::ocpp::MessageContent everest_message_content;
+types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
+    types::display_message::MessageContent everest_message_content;
     everest_message_content.format = to_everest_message_format(message_content.format);
     everest_message_content.content = message_content.content;
     everest_message_content.language = message_content.language;
@@ -1115,10 +1160,8 @@ to_everest_registration_status(const ocpp::v201::RegistrationStatusEnum& registr
         return types::ocpp::RegistrationStatus::Pending;
     case ocpp::v201::RegistrationStatusEnum::Rejected:
         return types::ocpp::RegistrationStatus::Rejected;
-    default:
-        throw std::out_of_range(
-            "Could not convert ocpp::v201::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
     }
+    throw std::out_of_range("Could not convert ocpp::v201::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
 }
 
 types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::StatusInfo& status_info) {
@@ -1206,9 +1249,8 @@ types::ocpp::AttributeEnum to_everest_attribute_enum(const ocpp::v201::Attribute
         return types::ocpp::AttributeEnum::MinSet;
     case ocpp::v201::AttributeEnum::MaxSet:
         return types::ocpp::AttributeEnum::MaxSet;
-    default:
-        throw std::out_of_range("Could not convert AttributeEnum");
     }
+    throw std::out_of_range("Could not convert AttributeEnum");
 }
 
 types::ocpp::GetVariableStatusEnumType
@@ -1224,9 +1266,8 @@ to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum
         return types::ocpp::GetVariableStatusEnumType::UnknownVariable;
     case ocpp::v201::GetVariableStatusEnum::NotSupportedAttributeType:
         return types::ocpp::GetVariableStatusEnumType::NotSupportedAttributeType;
-    default:
-        throw std::out_of_range("Could not convert GetVariableStatusEnumType");
     }
+    throw std::out_of_range("Could not convert GetVariableStatusEnumType");
 }
 
 types::ocpp::SetVariableStatusEnumType
@@ -1244,9 +1285,201 @@ to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum
         return types::ocpp::SetVariableStatusEnumType::NotSupportedAttributeType;
     case ocpp::v201::SetVariableStatusEnum::RebootRequired:
         return types::ocpp::SetVariableStatusEnumType::RebootRequired;
-    default:
-        throw std::out_of_range("Could not convert GetVariableStatusEnumType");
     }
+    throw std::out_of_range("Could not convert GetVariableStatusEnumType");
+}
+
+types::ocpp::ChargingSchedules
+to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
+    types::ocpp::ChargingSchedules charging_schedules;
+    for (const auto& composite_schedule : composite_schedules) {
+        charging_schedules.schedules.push_back(conversions::to_everest_charging_schedule(composite_schedule));
+    }
+    return charging_schedules;
+}
+
+types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule) {
+    types::ocpp::ChargingSchedule charging_schedule;
+    charging_schedule.evse = composite_schedule.evseId;
+    charging_schedule.charging_rate_unit =
+        ocpp::v201::conversions::charging_rate_unit_enum_to_string(composite_schedule.chargingRateUnit);
+    charging_schedule.evse = composite_schedule.evseId;
+    charging_schedule.duration = composite_schedule.duration;
+    charging_schedule.start_schedule = composite_schedule.scheduleStart.to_rfc3339();
+    // min_charging_rate is not given as part of a OCPP2.0.1 composite schedule
+    for (const auto& charging_schedule_period : composite_schedule.chargingSchedulePeriod) {
+        charging_schedule.charging_schedule_period.push_back(
+            to_everest_charging_schedule_period(charging_schedule_period));
+    }
+    return charging_schedule;
+}
+
+types::ocpp::ChargingSchedulePeriod
+to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period) {
+    types::ocpp::ChargingSchedulePeriod _period;
+    _period.start_period = period.startPeriod;
+    _period.limit = period.limit;
+    _period.number_phases = period.numberPhases;
+    _period.phase_to_use = period.phaseToUse;
+    return _period;
+}
+
+ocpp::v201::DisplayMessageStatusEnum
+to_ocpp_display_message_status_enum(const types::display_message::DisplayMessageStatusEnum& from) {
+    switch (from) {
+    case types::display_message::DisplayMessageStatusEnum::Accepted:
+        return ocpp::v201::DisplayMessageStatusEnum::Accepted;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedMessageFormat:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedMessageFormat;
+    case types::display_message::DisplayMessageStatusEnum::Rejected:
+        return ocpp::v201::DisplayMessageStatusEnum::Rejected;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedPriority:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedPriority;
+    case types::display_message::DisplayMessageStatusEnum::NotSupportedState:
+        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedState;
+    case types::display_message::DisplayMessageStatusEnum::UnknownTransaction:
+        return ocpp::v201::DisplayMessageStatusEnum::UnknownTransaction;
+    }
+
+    throw std::out_of_range("Could not convert DisplayMessageStatusEnum");
+}
+
+ocpp::v201::SetDisplayMessageResponse
+to_ocpp_set_display_message_response(const types::display_message::SetDisplayMessageResponse& response) {
+    ocpp::v201::SetDisplayMessageResponse ocpp_response;
+    ocpp_response.status = to_ocpp_display_message_status_enum(response.status);
+    if (response.status_info.has_value()) {
+        ocpp_response.statusInfo = ocpp::v201::StatusInfo();
+        ocpp_response.statusInfo.value().additionalInfo = response.status_info.value();
+    }
+
+    return ocpp_response;
+}
+
+types::display_message::MessagePriorityEnum
+to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& priority) {
+    switch (priority) {
+    case ocpp::v201::MessagePriorityEnum::AlwaysFront:
+        return types::display_message::MessagePriorityEnum::AlwaysFront;
+    case ocpp::v201::MessagePriorityEnum::InFront:
+        return types::display_message::MessagePriorityEnum::InFront;
+    case ocpp::v201::MessagePriorityEnum::NormalCycle:
+        return types::display_message::MessagePriorityEnum::NormalCycle;
+    }
+
+    throw std::out_of_range("Could not convert MessagePriorityEnum");
+}
+
+types::display_message::MessageStateEnum
+to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& message_state) {
+    switch (message_state) {
+    case ocpp::v201::MessageStateEnum::Charging:
+        return types::display_message::MessageStateEnum::Charging;
+    case ocpp::v201::MessageStateEnum::Faulted:
+        return types::display_message::MessageStateEnum::Faulted;
+    case ocpp::v201::MessageStateEnum::Idle:
+        return types::display_message::MessageStateEnum::Idle;
+    case ocpp::v201::MessageStateEnum::Unavailable:
+        return types::display_message::MessageStateEnum::Unavailable;
+    }
+
+    throw std::out_of_range("Could not convert display message state enum.");
+}
+
+types::display_message::GetDisplayMessageRequest
+to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& request) {
+    types::display_message::GetDisplayMessageRequest result_request;
+    result_request.id = request.id;
+    if (request.priority.has_value()) {
+        result_request.priority = to_everest_display_message_priority_enum(request.priority.value());
+    }
+    if (request.state.has_value()) {
+        result_request.state = to_everest_display_message_state_enum(request.state.value());
+    }
+
+    return result_request;
+}
+
+types::display_message::ClearDisplayMessageRequest
+to_everest_clear_display_message_request(const ocpp::v201::ClearDisplayMessageRequest& request) {
+    types::display_message::ClearDisplayMessageRequest result_request;
+    result_request.id = request.id;
+    return result_request;
+}
+
+ocpp::v201::ClearMessageStatusEnum
+to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageResponseEnum& response_enum) {
+    switch (response_enum) {
+    case types::display_message::ClearMessageResponseEnum::Accepted:
+        return ocpp::v201::ClearMessageStatusEnum::Accepted;
+    case types::display_message::ClearMessageResponseEnum::Unknown:
+        return ocpp::v201::ClearMessageStatusEnum::Unknown;
+    }
+
+    throw std::out_of_range("Could not convert ClearMessageResponseEnum");
+}
+
+ocpp::v201::ClearDisplayMessageResponse
+to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response) {
+    ocpp::v201::ClearDisplayMessageResponse result_response;
+    result_response.status = to_ocpp_clear_message_response_enum(response.status);
+    if (response.status_info.has_value()) {
+        result_response.statusInfo = ocpp::v201::StatusInfo();
+        result_response.statusInfo.value().additionalInfo = response.status_info.value();
+    }
+
+    return result_response;
+}
+
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type) {
+    switch (connector_type) {
+    case ocpp::v201::ConnectorEnum::cCCS1:
+        return types::evse_manager::ConnectorTypeEnum::cCCS1;
+    case ocpp::v201::ConnectorEnum::cCCS2:
+        return types::evse_manager::ConnectorTypeEnum::cCCS2;
+    case ocpp::v201::ConnectorEnum::cG105:
+        return types::evse_manager::ConnectorTypeEnum::cG105;
+    case ocpp::v201::ConnectorEnum::cTesla:
+        return types::evse_manager::ConnectorTypeEnum::cTesla;
+    case ocpp::v201::ConnectorEnum::cType1:
+        return types::evse_manager::ConnectorTypeEnum::cType1;
+    case ocpp::v201::ConnectorEnum::cType2:
+        return types::evse_manager::ConnectorTypeEnum::cType2;
+    case ocpp::v201::ConnectorEnum::s309_1P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_16A;
+    case ocpp::v201::ConnectorEnum::s309_1P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_1P_32A;
+    case ocpp::v201::ConnectorEnum::s309_3P_16A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_16A;
+    case ocpp::v201::ConnectorEnum::s309_3P_32A:
+        return types::evse_manager::ConnectorTypeEnum::s309_3P_32A;
+    case ocpp::v201::ConnectorEnum::sBS1361:
+        return types::evse_manager::ConnectorTypeEnum::sBS1361;
+    case ocpp::v201::ConnectorEnum::sCEE_7_7:
+        return types::evse_manager::ConnectorTypeEnum::sCEE_7_7;
+    case ocpp::v201::ConnectorEnum::sType2:
+        return types::evse_manager::ConnectorTypeEnum::sType2;
+    case ocpp::v201::ConnectorEnum::sType3:
+        return types::evse_manager::ConnectorTypeEnum::sType3;
+    case ocpp::v201::ConnectorEnum::Other1PhMax16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhMax16A;
+    case ocpp::v201::ConnectorEnum::Other1PhOver16A:
+        return types::evse_manager::ConnectorTypeEnum::Other1PhOver16A;
+    case ocpp::v201::ConnectorEnum::Other3Ph:
+        return types::evse_manager::ConnectorTypeEnum::Other3Ph;
+    case ocpp::v201::ConnectorEnum::Pan:
+        return types::evse_manager::ConnectorTypeEnum::Pan;
+    case ocpp::v201::ConnectorEnum::wInductive:
+        return types::evse_manager::ConnectorTypeEnum::wInductive;
+    case ocpp::v201::ConnectorEnum::wResonant:
+        return types::evse_manager::ConnectorTypeEnum::wResonant;
+    case ocpp::v201::ConnectorEnum::Undetermined:
+        return types::evse_manager::ConnectorTypeEnum::Undetermined;
+    case ocpp::v201::ConnectorEnum::Unknown:
+        return types::evse_manager::ConnectorTypeEnum::Unknown;
+    }
+
+    throw std::out_of_range("Could not convert ConnectorEnum");
 }
 
 } // namespace conversions

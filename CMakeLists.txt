@@ -1,18 +1,18 @@
-cmake_minimum_required(VERSION 3.14.7)
+cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2024.6.0
+    VERSION 2024.11.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.4
+find_package(everest-cmake 0.5
     COMPONENTS bundling
     PATHS ../everest-cmake
 )
 
 if (NOT everest-cmake_FOUND)
-    message(STATUS "Retreiving everest-cmake using FetchContent")
+    message(STATUS "Retrieving everest-cmake using FetchContent")
     include(FetchContent)
     FetchContent_Declare(
         everest-cmake
@@ -42,6 +42,14 @@ option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and 
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
+option(EVEREST_ENABLE_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag" OFF)
+option(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS "Enable compile warnings set in the EVEREST_COMPILE_OPTIONS flag globally" OFF)
+# list of compile options that are passed to modules if EVEREST_ENABLE_COMPILE_WARNINGS=ON
+# generated code has functions often not used
+set(EVEREST_COMPILE_OPTIONS "-Wall;-Wno-unused-function" CACHE STRING "A list of compile options used for building modules")
+if(EVEREST_ENABLE_GLOBAL_COMPILE_WARNINGS)
+    add_compile_options(${EVEREST_COMPILE_OPTIONS})
+endif()
 if((${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME} OR ${PROJECT_NAME}_BUILD_TESTING) AND BUILD_TESTING)
     set(EVEREST_CORE_BUILD_TESTING ON)
 endif()
@@ -94,11 +102,13 @@ else()
     find_package(everest-modbus REQUIRED)
     find_package(everest-ocpp REQUIRED)
     find_package(cbv2g REQUIRED)
+    find_package(iso15118 REQUIRED)
 
     find_package(PalSigslot REQUIRED)
 
     find_package(fsm REQUIRED)
     find_package(slac REQUIRED)
+    find_package(libnfc-nci REQUIRED)
 
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
@@ -119,12 +129,6 @@ endif()
 # config
 # FIXME (aw): this should be optional
 add_subdirectory(config)
-
-# install docker related files
-install(
-    DIRECTORY "cmake/assets/docker"
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/everest"
-)
 
 ev_install_project()
 
@@ -166,7 +170,7 @@ add_custom_target(install_everest_testing
         if [ -z "${CPM_PACKAGE_everest-utils_SOURCE_DIR}" ] \;
         then echo "Could not determine location of everest-utils, please install everest-testing manually!" \;
         else echo "Found everest-utils at ${CPM_PACKAGE_everest-utils_SOURCE_DIR}" \;
-             ${PYTHON_EXECUTABLE} -m pip install "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
+             ${Python3_EXECUTABLE} -m pip install -e "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
         fi\;
     DEPENDS
         everestpy_pip_install_dist

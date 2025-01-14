@@ -127,7 +127,6 @@ endfunction()
 
 macro(ev_add_project)
     ev_setup_cmake_variables_python_wheel()
-    option(${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV "Install ev-cli in python venv instead of using system" ON)
     set(${PROJECT_NAME}_PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv" CACHE PATH "Path to python venv")
 
     ev_setup_python_executable(
@@ -136,9 +135,6 @@ macro(ev_add_project)
     )
 
     setup_ev_cli()
-    if(NOT ${${PROJECT_NAME}_INSTALL_EV_CLI_IN_PYTHON_VENV})
-        require_ev_cli_version(${EVEREST_REQUIRED_EV_CLI_VERSION})
-    endif()
 
     # FIXME (aw): resort to proper argument handling!
     if (${ARGC} EQUAL 2)
@@ -307,7 +303,7 @@ function (_ev_add_interfaces)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            "$<TARGET_PROPERTY:ev-cli,INTERFACE_TEMPLATES>"
         COMMENT
             "Generating/updating interface files ..."
         VERBATIM
@@ -346,7 +342,7 @@ function (_ev_add_types)
             "${CHECK_DONE_FILE}"
         DEPENDS
             ${ARGV}
-            ev-cli
+            "$<TARGET_PROPERTY:ev-cli,TYPES_TEMPLATES>"
         COMMENT
             "Generating/updating type files ..."
         VERBATIM
@@ -490,7 +486,7 @@ function (ev_add_cpp_module MODULE_NAME)
                         ${RELATIVE_MODULE_DIR}
                 DEPENDS
                     ${MODULE_PATH}/manifest.yaml
-                    ev-cli
+                    "$<TARGET_PROPERTY:ev-cli,MODULE_TEMPLATES>"
                 WORKING_DIRECTORY
                     ${PROJECT_SOURCE_DIR}
                 COMMENT
@@ -528,6 +524,13 @@ function (ev_add_cpp_module MODULE_NAME)
                     everest::framework
                     ${ATOMIC_LIBS}
             )
+
+            if(EVEREST_ENABLE_COMPILE_WARNINGS)
+                message(STATUS "Building ${MODULE_NAME} with the following compile options: ${EVEREST_COMPILE_OPTIONS}")
+                target_compile_options(${MODULE_NAME}
+                    PRIVATE ${EVEREST_COMPILE_OPTIONS}
+                )
+            endif()
 
             add_dependencies(${MODULE_NAME} generate_cpp_files)
 

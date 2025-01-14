@@ -42,7 +42,10 @@ typedef enum _LockState {
 typedef enum _CoilType {
     CoilType_COIL_UNKNOWN = 0,
     CoilType_COIL_AC = 1,
-    CoilType_COIL_DC1 = 2 /* add precharge and discharge coils here later */
+    CoilType_COIL_DC1 = 2,
+    /* add precharge and discharge coils here later */
+    CoilType_COIL_DC2 = 3,
+    CoilType_COIL_DC3 = 4
 } CoilType;
 
 typedef enum _ConfigHardwareRevision {
@@ -107,22 +110,6 @@ typedef struct _BootConfigResponse {
     ConfigMotorLockType lock_2;
 } BootConfigResponse;
 
-/* This container message is send from EVerest to MCU and may contain any allowed message in that direction. */
-typedef struct _EverestToMcu {
-    pb_size_t which_payload;
-    union {
-        KeepAlive keep_alive;
-        bool firmware_update;
-        bool connector_lock; /* false: unlock, true: lock */
-        uint32_t pwm_duty_cycle; /* in 0.01 %, 0 = State F, 10000 = X1 */
-        CoilState set_coil_state_request;
-        bool reset;
-        BootConfigResponse config_response;
-        FanState set_fan_state;
-    } payload;
-    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
-} EverestToMcu;
-
 typedef struct _Temperature {
     /* The temperature readings */
     pb_size_t temp_count;
@@ -164,6 +151,28 @@ typedef struct _OpaqueData {
     int32_t connector;
 } OpaqueData;
 
+typedef struct _RcdCommand {
+    bool test; /* true -> set TEST pin high, false -> set TEST pin low */
+    bool reset; /* reset RCD/emergency off if set to true */
+} RcdCommand;
+
+/* This container message is send from EVerest to MCU and may contain any allowed message in that direction. */
+typedef struct _EverestToMcu {
+    pb_size_t which_payload;
+    union {
+        KeepAlive keep_alive;
+        bool firmware_update;
+        bool connector_lock; /* false: unlock, true: lock */
+        uint32_t pwm_duty_cycle; /* in 0.01 %, 0 = State F, 10000 = X1 */
+        CoilState set_coil_state_request;
+        bool reset;
+        BootConfigResponse config_response;
+        FanState set_fan_state;
+        RcdCommand rcd_cmd;
+    } payload;
+    int32_t connector; /* 0: None, 1: Connector 1, 2: Connector 2 */
+} EverestToMcu;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,8 +196,8 @@ extern "C" {
 #define _LockState_ARRAYSIZE ((LockState)(LockState_LOCKED+1))
 
 #define _CoilType_MIN CoilType_COIL_UNKNOWN
-#define _CoilType_MAX CoilType_COIL_DC1
-#define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC1+1))
+#define _CoilType_MAX CoilType_COIL_DC3
+#define _CoilType_ARRAYSIZE ((CoilType)(CoilType_COIL_DC3+1))
 
 #define _ConfigHardwareRevision_MIN ConfigHardwareRevision_HW_REV_UNKNOWN
 #define _ConfigHardwareRevision_MAX ConfigHardwareRevision_HW_REV_B
@@ -218,6 +227,7 @@ extern "C" {
 
 
 
+
 /* Initializer values for message structs */
 #define EverestToMcu_init_default                {0, {KeepAlive_init_default}, 0}
 #define McuToEverest_init_default                {0, {KeepAlive_init_default}, 0}
@@ -231,6 +241,7 @@ extern "C" {
 #define ConfigMotorLockType_init_default         {_MotorLockType_MIN}
 #define Temperature_init_default                 {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_default                  {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
+#define RcdCommand_init_default                  {0, 0}
 #define EverestToMcu_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define McuToEverest_init_zero                   {0, {KeepAlive_init_zero}, 0}
 #define ErrorFlags_init_zero                     {0, 0, 0, 0, 0, 0}
@@ -243,6 +254,7 @@ extern "C" {
 #define ConfigMotorLockType_init_zero            {_MotorLockType_MIN}
 #define Temperature_init_zero                    {0, {0, 0, 0, 0, 0, 0}}
 #define OpaqueData_init_zero                     {0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, 0, 0}
+#define RcdCommand_init_zero                     {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define ErrorFlags_diode_fault_tag               1
@@ -267,15 +279,6 @@ extern "C" {
 #define BootConfigResponse_hw_rev_tag            1
 #define BootConfigResponse_lock_1_tag            2
 #define BootConfigResponse_lock_2_tag            3
-#define EverestToMcu_keep_alive_tag              1
-#define EverestToMcu_firmware_update_tag         2
-#define EverestToMcu_connector_lock_tag          3
-#define EverestToMcu_pwm_duty_cycle_tag          4
-#define EverestToMcu_set_coil_state_request_tag  5
-#define EverestToMcu_reset_tag                   6
-#define EverestToMcu_config_response_tag         8
-#define EverestToMcu_set_fan_state_tag           9
-#define EverestToMcu_connector_tag               7
 #define Temperature_temp_tag                     1
 #define McuToEverest_keep_alive_tag              1
 #define McuToEverest_reset_tag                   2
@@ -294,6 +297,18 @@ extern "C" {
 #define OpaqueData_chunks_total_tag              3
 #define OpaqueData_chunk_current_tag             4
 #define OpaqueData_connector_tag                 5
+#define RcdCommand_test_tag                      1
+#define RcdCommand_reset_tag                     2
+#define EverestToMcu_keep_alive_tag              1
+#define EverestToMcu_firmware_update_tag         2
+#define EverestToMcu_connector_lock_tag          3
+#define EverestToMcu_pwm_duty_cycle_tag          4
+#define EverestToMcu_set_coil_state_request_tag  5
+#define EverestToMcu_reset_tag                   6
+#define EverestToMcu_config_response_tag         8
+#define EverestToMcu_set_fan_state_tag           9
+#define EverestToMcu_rcd_cmd_tag                 10
+#define EverestToMcu_connector_tag               7
 
 /* Struct field encoding specification for nanopb */
 #define EverestToMcu_FIELDLIST(X, a) \
@@ -305,13 +320,15 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_coil_state_request,payload.set_c
 X(a, STATIC,   ONEOF,    BOOL,     (payload,reset,payload.reset),   6) \
 X(a, STATIC,   SINGULAR, INT32,    connector,         7) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,config_response,payload.config_response),   8) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_fan_state,payload.set_fan_state),   9)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,set_fan_state,payload.set_fan_state),   9) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload,rcd_cmd,payload.rcd_cmd),  10)
 #define EverestToMcu_CALLBACK NULL
 #define EverestToMcu_DEFAULT NULL
 #define EverestToMcu_payload_keep_alive_MSGTYPE KeepAlive
 #define EverestToMcu_payload_set_coil_state_request_MSGTYPE CoilState
 #define EverestToMcu_payload_config_response_MSGTYPE BootConfigResponse
 #define EverestToMcu_payload_set_fan_state_MSGTYPE FanState
+#define EverestToMcu_payload_rcd_cmd_MSGTYPE RcdCommand
 
 #define McuToEverest_FIELDLIST(X, a) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload,keep_alive,payload.keep_alive),   1) \
@@ -407,6 +424,12 @@ X(a, STATIC,   SINGULAR, INT32,    connector,         5)
 #define OpaqueData_CALLBACK NULL
 #define OpaqueData_DEFAULT NULL
 
+#define RcdCommand_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     test,              1) \
+X(a, STATIC,   SINGULAR, BOOL,     reset,             2)
+#define RcdCommand_CALLBACK NULL
+#define RcdCommand_DEFAULT NULL
+
 extern const pb_msgdesc_t EverestToMcu_msg;
 extern const pb_msgdesc_t McuToEverest_msg;
 extern const pb_msgdesc_t ErrorFlags_msg;
@@ -419,6 +442,7 @@ extern const pb_msgdesc_t BootConfigResponse_msg;
 extern const pb_msgdesc_t ConfigMotorLockType_msg;
 extern const pb_msgdesc_t Temperature_msg;
 extern const pb_msgdesc_t OpaqueData_msg;
+extern const pb_msgdesc_t RcdCommand_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define EverestToMcu_fields &EverestToMcu_msg
@@ -433,6 +457,7 @@ extern const pb_msgdesc_t OpaqueData_msg;
 #define ConfigMotorLockType_fields &ConfigMotorLockType_msg
 #define Temperature_fields &Temperature_msg
 #define OpaqueData_fields &OpaqueData_msg
+#define RcdCommand_fields &RcdCommand_msg
 
 /* Maximum encoded size of messages (where known) */
 #define BootConfigRequest_size                   0
@@ -446,6 +471,7 @@ extern const pb_msgdesc_t OpaqueData_msg;
 #define McuToEverest_size                        83
 #define OpaqueData_size                          285
 #define PHYVERSO_PB_H_MAX_SIZE                   OpaqueData_size
+#define RcdCommand_size                          4
 #define Telemetry_size                           12
 #define Temperature_size                         24
 

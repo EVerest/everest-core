@@ -12,6 +12,7 @@
 
 #include <ConnectorStateMachine.hpp>
 #include <generated/types/authorization.hpp>
+#include <generated/types/evse_manager.hpp>
 
 namespace module {
 
@@ -25,23 +26,16 @@ struct Identifier {
 };
 
 struct Connector {
-    explicit Connector(int id) :
-        id(id),
-        transaction_active(false),
-        reserved(false),
-        is_reservable(true),
-        state_machine(ConnectorState::AVAILABLE){};
+    explicit Connector(
+        int id, const types::evse_manager::ConnectorTypeEnum type = types::evse_manager::ConnectorTypeEnum::Unknown) :
+        id(id), transaction_active(false), state_machine(ConnectorState::AVAILABLE), type(type) {
+    }
 
     int id;
 
     bool transaction_active;
     ConnectorStateMachine state_machine;
-
-    // identifier is set when transaction is running and none if not
-    std::optional<Identifier> identifier = std::nullopt;
-
-    bool is_reservable;
-    bool reserved;
+    types::evse_manager::ConnectorTypeEnum type;
 
     /**
      * @brief Submits the given \p event to the state machine
@@ -56,20 +50,44 @@ struct Connector {
      * @return true
      * @return false
      */
-    bool is_unavailable();
+    bool is_unavailable() const;
 
     ConnectorState get_state() const;
 };
 
-struct ConnectorContext {
+struct EVSEContext {
 
-    ConnectorContext(int connector_id, int evse_index) : evse_index(evse_index), connector(connector_id){};
+    EVSEContext(
+        int evse_id, int evse_index, int connector_id,
+        const types::evse_manager::ConnectorTypeEnum connector_type = types::evse_manager::ConnectorTypeEnum::Unknown) :
+        evse_id(evse_id), evse_index(evse_index), transaction_active(false), plugged_in(false) {
+        Connector c(connector_id, connector_type);
+        connectors.push_back(c);
+    }
 
-    int evse_index;
-    Connector connector;
+    EVSEContext(int evse_id, int evse_index, const std::vector<Connector>& connectors) :
+        evse_id(evse_id),
+        evse_index(evse_index),
+        transaction_active(false),
+        connectors(connectors),
+        plugged_in(false),
+        plug_in_timeout(false) {
+    }
+
+    int32_t evse_id;
+    int32_t evse_index;
+    bool transaction_active;
+
+    // identifier is set when transaction is running and none if not
+    std::optional<Identifier> identifier = std::nullopt;
+    std::vector<Connector> connectors;
     Everest::SteadyTimer timeout_timer;
-    std::mutex plug_in_mutex;
-    std::mutex event_mutex;
+    bool plugged_in;
+    bool plug_in_timeout; // indicates no authorization received within connection_timeout. Replug is required for this
+                          // EVSE to get authorization and start a transaction
+
+    bool is_available();
+    bool is_unavailable();
 };
 
 namespace conversions {

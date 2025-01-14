@@ -127,18 +127,28 @@ mod sync_feig {
 #[mockall_double::double]
 use sync_feig::SyncFeig;
 
+fn string_to_vec(s: &String) -> Vec<i64> {
+    s.split(',')
+        .filter_map(|s| s.trim().parse::<i64>().ok())
+        .collect()
+}
+
 impl ProvidedIdToken {
-    fn new(id_token: String, authorization_type: AuthorizationType) -> Self {
+    fn new(
+        id_token: String,
+        authorization_type: AuthorizationType,
+        connectors: Option<Vec<i64>>,
+    ) -> Self {
         Self {
             parent_id_token: None,
             id_token: IdToken {
                 value: id_token,
                 r#type: IdTokenType::Local,
-                additional_info: None
+                additional_info: None,
             },
             authorization_type,
             certificate: None,
-            connectors: None,
+            connectors: connectors,
             iso_15118_certificate_hash_data: None,
             prevalidated: None,
             request_id: None,
@@ -154,6 +164,12 @@ pub struct PaymentTerminalModule {
 
     /// The Feig interface.
     feig: SyncFeig,
+
+    /// For which connectors credit cards should be accepted
+    credit_cards_connectors: Vec<i64>,
+
+    /// If credit cards should be accepted
+    accept_credit_cards: bool,
 }
 
 impl PaymentTerminalModule {
@@ -188,27 +204,46 @@ impl PaymentTerminalModule {
         };
         let card_info = read_card_loop()?;
 
-        let provided_token = match card_info {
+        if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
-                self.feig.begin_transaction(&token)?;
-
-                // Reuse the bank token as invoice token so we can use the
-                // invoice token later on to commit our transactions.
-                ProvidedIdToken::new(token, AuthorizationType::BankCard)
+                if !self.accept_credit_cards {
+                    None
+                } else {
+                    self.feig.begin_transaction(&token)?;
+                    let credit_cards_connectors = if self.credit_cards_connectors.is_empty() {
+                        None
+                    } else {
+                        Some(self.credit_cards_connectors.clone())
+                    };
+                    // Reuse the bank token as invoice token so we can use the
+                    // invoice token later on to commit our transactions.
+                    Some(ProvidedIdToken::new(
+                        token,
+                        AuthorizationType::BankCard,
+                        credit_cards_connectors,
+                    ))
+                }
             }
-            CardInfo::MembershipCard(id_token) => {
-                ProvidedIdToken::new(id_token, AuthorizationType::RFID)
-            }
-        };
-        publishers.token_provider.provided_token(provided_token)?;
+            CardInfo::MembershipCard(id_token) => Some(ProvidedIdToken::new(
+                id_token,
+                AuthorizationType::RFID,
+                None,
+            )),
+        } {
+            publishers.token_provider.provided_token(provided_token)?;
+        }
         Ok(())
     }
 
     /// The implementation of the `SessionCostClientSubscriber::on_session_cost`,
     /// but here we can return errors.
     fn on_session_cost_impl(&self, context: &Context, value: SessionCost) -> Result<()> {
+        let Some(id_tag) = value.id_tag else {
+            return Ok(());
+        };
+
         // We only care about bank cards.
-        match value.id_tag.authorization_type {
+        match id_tag.authorization_type {
             AuthorizationType::BankCard => (),
             _ => return Ok(()),
         }
@@ -228,14 +263,14 @@ impl PaymentTerminalModule {
 
         let res = self
             .feig
-            .commit_transaction(&value.id_tag.id_token.value, total_cost as u64)?;
+            .commit_transaction(&id_tag.id_token.value, total_cost as u64)?;
 
         context
             .publisher
             .bank_transaction_summary
             .bank_transaction_summary(BankTransactionSummary {
                 session_token: Some(BankSessionToken {
-                    token: Some(value.id_tag.id_token.value.clone()),
+                    token: Some(id_tag.id_token.value.clone()),
                 }),
                 transaction_data: Some(format!("{:06}", res.trace_number.unwrap_or_default())),
             })?;
@@ -290,6 +325,8 @@ fn main() -> Result<()> {
     let pt_module = Arc::new(PaymentTerminalModule {
         tx,
         feig: SyncFeig::new(pt_config),
+        credit_cards_connectors: string_to_vec(&config.credit_card_connectors),
+        accept_credit_cards: config.accept_credit_cards,
     });
 
     let _module = Module::new(
@@ -345,7 +382,12 @@ mod tests {
             let feig = SyncFeig::default();
             let (tx, _) = channel();
 
-            let pt_module = PaymentTerminalModule { tx, feig };
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig,
+                credit_cards_connectors: vec![],
+                accept_credit_cards: true,
+            };
 
             assert!(pt_module.begin_transaction(&everest_mock).is_err());
         }
@@ -399,6 +441,113 @@ mod tests {
             let pt_module = PaymentTerminalModule {
                 tx,
                 feig: feig_mock,
+                credit_cards_connectors: vec![],
+                accept_credit_cards: true,
+            };
+
+            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
+        }
+    }
+    #[test]
+    /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
+    fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
+        // Now test the successful execution.
+        let parameters = [
+            (
+                CardInfo::Bank,
+                "my bank token",
+                true,
+                true,
+                String::from(""),
+                None,
+            ),
+            (
+                CardInfo::Bank,
+                "my bank token",
+                false,
+                false,
+                String::from("1,2"),
+                None,
+            ),
+            (
+                CardInfo::Bank,
+                "my bank token",
+                true,
+                true,
+                String::from("1"),
+                Some(vec![1]),
+            ),
+            (
+                CardInfo::Bank,
+                "my bank token",
+                true,
+                true,
+                String::from("1,2"),
+                Some(vec![1, 2]),
+            ),
+            (
+                CardInfo::Bank,
+                "my bank token",
+                true,
+                true,
+                String::from(""),
+                None,
+            ),
+        ];
+
+        for (
+            card_info,
+            expected_token,
+            expected_transaction,
+            accept_credit_cards,
+            credit_card_connectors,
+            expected_connectors,
+        ) in parameters
+        {
+            let mut everest_mock = ModulePublisher::default();
+            let mut feig_mock = SyncFeig::default();
+
+            everest_mock
+                .bank_session_token
+                .expect_get_bank_session_token()
+                .times(1)
+                .return_once(|| {
+                    Ok(BankSessionToken {
+                        token: Some("my bank token".to_string()),
+                    })
+                });
+            if expected_transaction {
+                everest_mock
+                    .token_provider
+                    .expect_provided_token()
+                    .times(1)
+                    .withf(move |arg| {
+                        arg.id_token.value == expected_token.to_string()
+                            && arg.connectors == expected_connectors
+                    })
+                    .return_once(|_| Ok(()));
+            }
+
+            feig_mock
+                .expect_read_card()
+                .times(1)
+                .return_once(|| Ok(card_info));
+
+            if expected_transaction {
+                feig_mock
+                    .expect_begin_transaction()
+                    .times(1)
+                    .with(eq("my bank token"))
+                    .return_once(|_| Ok(()));
+            }
+
+            let (tx, _) = channel();
+
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig: feig_mock,
+                credit_cards_connectors: string_to_vec(&credit_card_connectors),
+                accept_credit_cards,
             };
 
             assert!(pt_module.begin_transaction(&everest_mock).is_ok());
@@ -412,29 +561,59 @@ mod tests {
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::OCPP),
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    AuthorizationType::OCPP,
+                    None,
+                )),
                 status: SessionStatus::Finished,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::RFID),
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    AuthorizationType::RFID,
+                    None,
+                )),
                 status: SessionStatus::Finished,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
             SessionCost {
                 cost_chunks: None,
                 currency: Currency {
-                    code: CurrencyCode::EUR,
+                    code: Some(CurrencyCode::EUR),
                     decimals: None,
                 },
-                id_tag: ProvidedIdToken::new(String::new(), AuthorizationType::BankCard),
+                id_tag: Some(ProvidedIdToken::new(
+                    String::new(),
+                    AuthorizationType::BankCard,
+                    None,
+                )),
                 status: SessionStatus::Running,
+                session_id: String::new(),
+                idle_price: None,
+                charging_price: None,
+                next_period: None,
+                message: None,
+                qr_code: None,
             },
         ];
 
@@ -448,7 +627,12 @@ mod tests {
             let feig = SyncFeig::default();
             let (tx, _) = channel();
 
-            let pt_module = PaymentTerminalModule { tx, feig };
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig,
+                credit_cards_connectors: vec![],
+                accept_credit_cards: true,
+            };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());
@@ -464,11 +648,21 @@ mod tests {
                 SessionCost {
                     cost_chunks: None,
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new(
+                        "token".to_string(),
+                        AuthorizationType::BankCard,
+                        None,
+                    )),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -476,11 +670,21 @@ mod tests {
                 SessionCost {
                     cost_chunks: Some(Vec::new()),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new(
+                        "token".to_string(),
+                        AuthorizationType::BankCard,
+                        None,
+                    )),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -491,13 +695,25 @@ mod tests {
                         cost: None,
                         timestamp_from: None,
                         timestamp_to: None,
+                        metervalue_from: None,
+                        metervalue_to: None,
                     }]),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new(
+                        "token".to_string(),
+                        AuthorizationType::BankCard,
+                        None,
+                    )),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 0,
             ),
@@ -509,20 +725,34 @@ mod tests {
                             cost: Some(MoneyAmount { value: 1 }),
                             timestamp_from: None,
                             timestamp_to: None,
+                            metervalue_from: None,
+                            metervalue_to: None,
                         },
                         SessionCostChunk {
                             category: None,
                             cost: Some(MoneyAmount { value: 2 }),
                             timestamp_from: None,
                             timestamp_to: None,
+                            metervalue_from: None,
+                            metervalue_to: None,
                         },
                     ]),
                     currency: Currency {
-                        code: CurrencyCode::EUR,
+                        code: Some(CurrencyCode::EUR),
                         decimals: None,
                     },
-                    id_tag: ProvidedIdToken::new("token".to_string(), AuthorizationType::BankCard),
+                    id_tag: Some(ProvidedIdToken::new(
+                        "token".to_string(),
+                        AuthorizationType::BankCard,
+                        None,
+                    )),
                     status: SessionStatus::Finished,
+                    session_id: String::new(),
+                    idle_price: None,
+                    charging_price: None,
+                    next_period: None,
+                    message: None,
+                    qr_code: None,
                 },
                 3,
             ),
@@ -556,7 +786,12 @@ mod tests {
                 });
             let (tx, _) = channel();
 
-            let pt_module = PaymentTerminalModule { tx, feig };
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig,
+                credit_cards_connectors: vec![],
+                accept_credit_cards: true,
+            };
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());

@@ -43,11 +43,11 @@ public:
     }
 
     explicit LemDCBMTimeSyncHelper(ntp_server_spec ntp_spec, timing_config tc) :
-        timing_constants(tc),
         ntp_spec(std::move(ntp_spec)),
-        unsafe_period_start_time({}),
+        timing_constants(tc),
         meter_timezone(""),
-        meter_dst("") {
+        meter_dst(""),
+        unsafe_period_start_time({}) {
     }
 
     virtual ~LemDCBMTimeSyncHelper() = default;

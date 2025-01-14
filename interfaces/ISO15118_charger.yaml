@@ -14,15 +14,15 @@ cmds:
         description: Available energy transfer modes supported by the EVSE
         type: array
         items:
-          description: The different energy modes supported by the SECC
-          type: string
-          $ref: /iso15118_charger#/EnergyTransferMode
+          description: The different energy modes supported by the SECC 
+          type: object
+          $ref: /iso15118_charger#/SupportedEnergyMode
         minItems: 1
         maxItems: 6
       sae_j2847_mode:
         description: Charger is supporting SAE J2847 V2G/V2H version
         type: string
-        $ref: /iso15118_charger#/SAE_J2847_Bidi_Mode
+        $ref: /iso15118_charger#/SaeJ2847BidiMode
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
@@ -55,18 +55,18 @@ cmds:
 # Response messages to vars:
   certificate_response:
     description: >-
-      This message is an async response to a previously published Certificate_Request.
+      This message is an async response to a previously published certificate_request.
       The new/updated Contract Certificate (including the certificate chain) and the
       corresponding encrypted private key are sent via the SECC to the EVCC.
     arguments:
       exi_stream_status:
         description: The response raw EXI stream and the status from the CSMS
         type: object
-        $ref: /iso15118_charger#/Response_Exi_Stream_Status
+        $ref: /iso15118_charger#/ResponseExiStreamStatus
   authorization_response:
     description: >-
-      This message is an async response to a previously published Require_Auth_EIM
-      or Require_Auth_PnC. The SECC informs the EVCC whether the authorization
+      This message is an async response to a previously published require_auth_eim
+      or require_auth_pnc. The SECC informs the EVCC whether the authorization
       is accecpted or not.
     arguments:
       authorization_status:
@@ -79,8 +79,8 @@ cmds:
         $ref: /authorization#/CertificateStatus
   ac_contactor_closed:
     description: >-
-      This message is an async response to a previously published AC_Close_Contactor
-      or AC_Open_Contactor.
+      This message is an async response to a previously published ac_close_contactor
+      or ac_open_contactor.
     arguments:
       status:
         description: Set to true when contactor is closed, false when contactor is open
@@ -133,14 +133,14 @@ cmds:
       maximum_limits:
         description: Maximum values (current, power and voltage) the EVSE can deliver
         type: object
-        $ref: /iso15118_charger#/DC_EVSEMaximumLimits
+        $ref: /iso15118_charger#/DcEvseMaximumLimits
   update_dc_minimum_limits:
     description: Update the minimum limits. Call at least once during start up.
     arguments:
       minimum_limits:
         description: Minimum values (current and voltage) the EVSE can deliver
         type: object
-        $ref: /iso15118_charger#/DC_EVSEMinimumLimits
+        $ref: /iso15118_charger#/DcEvseMinimumLimits
   update_isolation_status:
     description: Update the isolation condition 
     arguments:
@@ -154,7 +154,7 @@ cmds:
       present_voltage_current:
         description: Present voltage and current
         type: object
-        $ref: /iso15118_charger#/DC_EVSEPresentVoltage_Current
+        $ref: /iso15118_charger#/DcEvsePresentVoltageCurrent
   update_meter_info:
     description: Update meter info
     arguments:
@@ -175,64 +175,67 @@ cmds:
   reset_error:
     description: Reset all errors
 vars:
-  Require_Auth_EIM:
+  require_auth_eim:
     description: An EIM authorization is requiered
     type: "null"
-  Require_Auth_PnC:
+  require_auth_pnc:
     description: >- 
       The EVCC provides the payment details for a PnC authorization by sending
       the signature certificate chain and eMAID.
     type: object
     $ref: /authorization#/ProvidedIdToken
-  AC_Close_Contactor:
+  ac_close_contactor:
     description: The contactor should be closed
     type: "null"
-  AC_Open_Contactor:
+  ac_open_contactor:
     description: The contactor should be opened
     type: "null"
-  Start_CableCheck:
+  start_cable_check:
     description: The charger should now start a cable check
     type: "null"
-  DC_Open_Contactor:
+  start_pre_charge:
+    description: The charger should now start the pre charge phase
+    type: "null"
+  dc_open_contactor:
     description: The contactor should be opened
     type: "null"
-  V2G_Setup_Finished:
+  v2g_setup_finished:
     description: >-
-      V2G_Setup_Finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
+      v2g_setup_finished from ISO15118-3. Trigger when EV sends a PowerDeliveryReq
       message with ChargeProgess equals Start or Stop
     type: "null"
-  currentDemand_Started:
+  current_demand_started:
     description: The charging process has started and the EV wants to be charged
     type: "null"
-  currentDemand_Finished:
+  current_demand_finished:
     description: The charging process was finished
     type: "null"
   sae_bidi_mode_active:
       description: The SAE J2847 bidi mode is active
       type: "null"
-  EVCCIDD:
+  evcc_id:
     description:
       Specifies the EVs identification in a readable format. It contains
       the MAC address of the EVCC in uppercase
     type: string
     pattern: ^[A-F0-9]{2}(:[A-F0-9]{2}){5}$
-  SelectedPaymentOption:
+  selected_payment_option:
     description: This element is used for indicating the payment type
     type: string
     $ref: /iso15118_charger#/PaymentOption
-  RequestedEnergyTransferMode:
+  requested_energy_transfer_mode:
     description:
       Selected energy transfer mode for charging that is requested by the
       EVCC.
     type: string
     $ref: /iso15118_charger#/EnergyTransferMode
-  DepartureTime:
+  departure_time:
     description: >-
       Optional: [RFC3339 UTC] This element is used to indicate when the
       vehicle intends to finish the charging process
     type: string
     format: date-time
-  AC_EAmount:
+  ac_eamount:
     description: >-
       [Wh] Amount of energy reflecting the EV's estimate how much energy
       is needed to fulfill the user configured charging goal for the current charging
@@ -240,84 +243,84 @@ vars:
     type: number
     minimum: 0
     maximum: 200000
-  AC_EVMaxVoltage:
+  ac_ev_max_voltage:
     description: >-
       [V] The RMS of the maximal nominal voltage the vehicle can accept,
       measured between one phase and neutral
     type: number
     minimum: 0
     maximum: 1000
-  AC_EVMaxCurrent:
+  ac_ev_max_current:
     description: "[A] Maximum current supported by the EV per phase"
     type: number
     minimum: 0
     maximum: 400
-  AC_EVMinCurrent:
+  ac_ev_min_current:
     description: >-
       [A] EVMinCurrent is used to indicate to the SECC that charging below
       this minimum is not energy/cost efficient for the EV
     type: number
     minimum: 0
     maximum: 400
-  DC_EVEnergyCapacity:
+  dc_ev_energy_capacity:
     description: "Optional: [Wh] Energy capacity of the EV"
     type: number
     minimum: 0
     maximum: 200000
-  DC_EVEnergyRequest:
+  dc_ev_energy_request:
     description: "Optional: [Wh] Amount of energy the EV requests from the EVSE"
     type: number
     minimum: 0
     maximum: 200000
-  DC_FullSOC:
+  dc_full_soc:
     description: >-
       Optional: [%] SOC at which the EV considers the battery to be fully
       charged
     type: number
     minimum: 0
     maximum: 100
-  DC_BulkSOC:
+  dc_bulk_soc:
     description: >-
       Optional: [%] SOC at which the EV considers a fast charge process
       to end
     type: number
     minimum: 0
     maximum: 100
-  DC_EVStatus:
+  dc_ev_status:
     description: Current status of the EV
     type: object
-    $ref: /iso15118_charger#/DC_EVStatusType
-  DC_BulkChargingComplete:
+    $ref: /iso15118_charger#/DcEvStatus
+  dc_bulk_charging_complete:
     description: >-
       Optional: If set to TRUE, the EV indicates that bulk charge (approx.
       80% SOC) is complete
     type: boolean
-  DC_ChargingComplete:
+  dc_charging_complete:
     description: >-
       Optional: If set to TRUE, the EV indicates that full charge (100%
       SOC) is complete
     type: boolean
-  DC_EVTargetVoltageCurrent:
+  dc_ev_target_voltage_current:
     description: Target voltage and current requested by the EV
     type: object
-    $ref: /iso15118_charger#/DC_EVTargetValues
-  DC_EVMaximumLimits:
+    $ref: /iso15118_charger#/DcEvTargetValues
+  dc_ev_maximum_limits:
     description:
       Maximum Values (current, power and voltage) supported and allowed
       by the EV
     type: object
-    $ref: /iso15118_charger#/DC_EVMaximumLimits
-  DC_EVRemainingTime:
+    $ref: /iso15118_charger#/DcEvMaximumLimits
+  dc_ev_remaining_time:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
-    $ref: /iso15118_charger#/DC_EVRemainingTime
-  Certificate_Request:
+    $ref: /iso15118_charger#/DcEvRemainingTime
+  certificate_request:
     description: >-
       The vehicle requests the SECC to deliver the certificate that belong 
       to the currently valid contract of the vehicle.
-      Response will be reported async via  set_Get_Certificate_Response
+      Response will be reported async via set_Get_Certificate_Response
     type: object
-    $ref: /iso15118_charger#/Request_Exi_Stream_Schema
+    $ref: /iso15118_charger#/RequestExiStreamSchema
   dlink_terminate:
     description: Terminate the data link and become UNMATCHED.
     type: "null"
@@ -327,61 +330,35 @@ vars:
   dlink_pause:
     description: Request power saving mode, while staying MATCHED.
     type: "null"
-  EV_AppProtocol:
+  ev_app_protocol:
     description: >-
       Debug_Lite - This request message provides a list of charging protocols
       supported by the EVCC
-    type: array
-    items:
-      description: >-
-        This message element is used by the EVCC for transmitting the list
-        of supported protocols
-      type: object
-      properties:
-        ProtocolNamespace:
-          description: >-
-            This message element is used by the EVCC to uniquely identify
-            the Namespace URI of a specific protocol supported by the EVCC
-          type: string
-          minLength: 1
-          maxLength: 100
-        VersionNumberMajor:
-          description: >-
-            This message element is used by the EVCC to indicate the major
-            version number of the protocol
-          type: integer
-          minimum: 0
-        VersionNumberMinor:
-          description: >-
-            This message element is used by the EVCC to indicate the minor
-            version number of the protocol
-          type: integer
-          minimum: 0
-        SchemaID:
-          description: >-
-            This message element is used by the EVCC to indicate the SchemaID
-            assigned by the EVCC to the protocol
-          type: integer
-          minimum: 0
-          maximum: 255
-        Priority:
-          description: >-
-            This message element is used by the EVCC for indicating the
-            protocol priority of a specific protocol allowing the SECC to select a
-            protocol based on priorities
-          type: integer
-          minimum: 1
-          maximum: 20
-      additionalProperties: false
-    minItems: 1
-    maxItems: 20
-  V2G_Messages:
+    type: object
+    $ref: /iso15118_charger#/AppProtocols
+  v2g_messages:
     description: >-
       Debug - This element contains all V2G elements and should be used
       for debug purposes only
     type: object
-    $ref: /iso15118_charger#/V2G_Messages
-  Selected_Protocol:
+    $ref: /iso15118_charger#/V2gMessages
+  selected_protocol:
     description: >-
       Debug - Contains the selected protocol
     type: string
+  display_parameters:
+    description: >-
+      Parameters that may be displayed on the EVSE (Soc, battery capacity)
+    type: object
+    $ref: /iso15118_charger#/DisplayParameters
+  d20_dc_dynamic_charge_mode:
+    description: >-
+      The parameters the EVCC offers and sets for dynamic control mode
+    type: object
+    $ref: /iso15118_charger#/DcChargeDynamicModeValues
+  dc_ev_present_voltage:
+    description: Present Voltage measured from the EV
+    type: number
+  meter_info_requested:
+    description: The EV requested meter infos from the EVSE
+    type: "null"

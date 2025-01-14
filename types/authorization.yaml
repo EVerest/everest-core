@@ -141,6 +141,11 @@ types:
       status:
         type: string
         $ref: /authorization#/TokenValidationStatus
+      messages:
+        type: array
+        items:
+          type: object
+          $ref: /display_message#/MessageContent
   ValidationResult:
     description: >-
       Result object containing authorization status enum value and an optional
@@ -157,8 +162,8 @@ types:
         type: string
         $ref: /authorization#/CertificateStatus
       reason:
-        type: string
-        minLength: 5
+        type: object
+        $ref: /authorization#/TokenValidationStatusMessage
       expiry_time:
         description: Absolute UTC time point when reservation expires in RFC3339 format
         type: string
@@ -176,6 +181,9 @@ types:
         items:
           minimum: 1
           type: integer
+      reservation_id:
+        description: The reservation id that is used with this validated token.
+        type: integer
   SelectionAlgorithm:
     description: >-
       The selection algorithm defines the logic to select one connector

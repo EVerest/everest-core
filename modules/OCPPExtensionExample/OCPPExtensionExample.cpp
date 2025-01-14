@@ -51,7 +51,7 @@ void OCPPExtensionExample::ready() {
     component_variables.push_back({{""}, {"KeyThatIsNotConfigured"}});
 
     std::vector<types::ocpp::GetVariableRequest> get_variables_requests;
-    for (const auto component_variable : component_variables) {
+    for (const auto& component_variable : component_variables) {
         get_variables_requests.push_back({component_variable});
     }
 

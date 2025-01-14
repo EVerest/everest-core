@@ -1,0 +1,190 @@
+description: >-
+  Message to show on a display
+types:
+  MessagePriorityEnum:
+    description: >-
+      Priority of the message.
+      AlwaysFront is the highest priority: The Charging Station SHALL show this message at the configured moment,
+      regardless of other installed messages. Hence, it shall not cycle it with other messages and the Charging
+      Station’s own message shall not override this message. When a newer message with this MessagePriority is received,
+      this message is replaced.
+      InFront: The Charging Station SHALL show this message at the configured moment, regardless of the normal cycle of
+      messages. If there are multiple InFront message that must be shown at the same time, they must be cycled.
+      NormalCycle: Show this message in the cycle of messages.
+    type: string
+    enum:
+      - AlwaysFront
+      - InFront
+      - NormalCycle
+  MessageStateEnum:
+    description: During what state the message should be shown
+    type: string
+    enum:
+      - Charging
+      - Faulted
+      - Idle
+      - Unavailable
+  DisplayMessageStatusEnum:
+    description: Response on a display message request
+    type: string
+    enum:
+      - Accepted
+      - NotSupportedMessageFormat
+      - Rejected
+      - NotSupportedPriority
+      - NotSupportedState
+      - UnknownTransaction
+  ClearMessageResponseEnum:
+    description: Response on a clear display message request
+    type: string
+    enum:
+      - Accepted
+      - Unknown
+  MessageContent:
+    description: Contains message details
+    required:
+      - content
+    type: object
+    properties:
+      format:
+        type: string
+        $ref: /display_message#/MessageFormat
+      language:
+        type: string
+      content:
+        type: string
+  MessageFormat:
+    description: Format of the message to be displayed
+    type: string
+    enum:
+      - ASCII
+      - HTML
+      - URI
+      - UTF8
+  DisplayMessage:
+    description: Message to show on a display
+    type: object
+    additionalProperties: false
+    properties:
+      id:
+        description: The message id
+        type: integer
+      priority:
+        description: >-
+          Priority of the message. For OCPP 2.0.1, this is a required property. But as we also use this interface
+          outside of ocpp, for other messages it is not required and if priority is not given, we assume it is the
+          lowest priority, 'NormalCycle'. When priority is 'AlwaysFront' and there already is a message with priority
+          'AlwaysFront', the last received message shall replace the already existing message.
+        type: string
+        $ref: /display_message#/MessagePriorityEnum
+      state:
+        description: >-
+          During what state should this message be shown. When omitted, this message should be shown in any state of
+          the Charging Station
+        type: string
+        $ref: /display_message#/MessageStateEnum
+      timestamp_from:
+        description: >-
+          From what date-time should this message be shown. If omitted: directly.
+        type: string
+        format: date-time
+      timestamp_to:
+        description: >-
+          Until what date-time should this message be shown, after this date/time this message SHALL be removed. If
+          omitted, message can be shown 'forever' (until it is specifically removed).
+        type: string
+        format: date-time
+      identifier_id:
+        description: >-
+          To which user / during which session shall this message be shown. User can be identified by id token (when
+          the session did not start yet), session id or transaction id. identifier_type will hold the type of
+          identifier_id (default session id).
+          Message SHALL be removed by the Charging Station after session has ended. If omitted, message is not tight to
+          a session.
+        type: string
+        minLength: 0
+        maxLength: 36
+      identifier_type:
+        description: >-
+          The type of 'identifier_id'. If omitted, type will be session id.
+        type: string
+        enum:
+          - IdToken
+          - SessionId
+          - TransactionId
+      message:  
+        type: object
+        description: The message to show
+        $ref: /display_message#/MessageContent
+      qr_code:
+        description: >-
+          QR Code to scan for more information.
+        type: string
+    required:
+      - message
+  SetDisplayMessageResponse:
+    description: >-
+      Response to the set display message request.
+    type: object
+    properties:
+      status:
+        description: Whether the charging station is able to display the message
+        $ref: /display_message#/DisplayMessageStatusEnum
+        type: object
+      status_info:
+        description: Detailed status information
+        type: string
+    required:
+      - status
+  GetDisplayMessageRequest:
+    description: >-
+      Request display messages. The properties are filtered. If the properties are omitted, there will be no filter
+      applied (if all properties are omitted, all stored display messages will be returned).
+    type: object
+    properties:
+      id:
+        description: If provided the Charging Station shall return Display Messages of the given ids.
+        type: array
+        items:
+          type: integer
+      priority:
+        description: If provided the Charging Station shall return Display Messages with the given priority only.
+        $ref: /display_message#/MessagePriorityEnum
+        type: string
+      state:
+        description: If provided the Charging Station shall return Display Messages with the given state only.
+        $ref: /display_message#/MessageStateEnum
+        type: string
+  GetDisplayMessageResponse:
+    description: Reponse on the 'get display message' request. Will return the requested display messages.
+    type: object
+    properties:
+      status_info:
+        description: Detailed status information
+        type: string
+      messages:
+        description: Requested messages, if any
+        type: array
+        items:
+          type: object
+          $ref: /display_message#/DisplayMessage
+  ClearDisplayMessageRequest:
+    description: Request to remove a specific display message.
+    type: object
+    properties:
+      id:
+        description: Id of display message that should be removed from the charging station
+        type: integer
+    required:
+      - id
+  ClearDisplayMessageResponse:
+    description: Response on the clear display message request.
+    type: object
+    properties:
+      status:
+        type: object
+        $ref: /display_message#/ClearMessageResponseEnum
+      status_info:
+        type: string
+    required:
+      - status

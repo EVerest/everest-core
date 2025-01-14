@@ -1,21 +1,15 @@
 description: Interface for reservations
 cmds:
   reserve_now:
-    description: Reserves this evse.
+    description: Reserves an evse.
     arguments:
-      connector_id:
-        description: >-
-          The id of the connector to be reserved. A value of 0 means that
-          the reservation is not for a specific connector
-        type: integer
-      reservation:
-        description: The information about the Reservation to be placed
+      request:
         type: object
         $ref: /reservation#/Reservation
+        description: Requests to make a reservation
     result:
       description: >-
-        Returns Accepted if reservation was succesfull or specifies error
-        code.
+        Returns Accepted if reservation was succesful or specifies error code.
       type: string
       $ref: /reservation#/ReservationResult
   cancel_reservation:
@@ -29,4 +23,24 @@ cmds:
         Returns true if reservation was cancelled. Returns false if there
         was no reservation to cancel.
       type: boolean
-vars: {}
+  exists_reservation:
+    description: >-
+      Checks if there is a reservation made for the given connector and token. Will also return true if there
+      is a reservation with this token for evse id 0.
+    arguments:
+      request:
+        type: object
+        $ref: /reservation#/ReservationCheck
+        description: >-
+          The information to send for the check if there is a reservation on the given connector for the given token.
+    result:
+      description: >-
+        Returns an enum which indicates the reservation status of the given id / id token / group id token combination.
+      type: string
+      $ref: /reservation#/ReservationCheckStatus
+vars:
+  reservation_update:
+    description: >-
+      Update of the reservation.
+    type: object
+    $ref: /reservation#/ReservationUpdateStatus

@@ -48,17 +48,24 @@ class AuthHandler {
 
 public:
     AuthHandler(const SelectionAlgorithm& selection_algorithm, const int connection_timeout,
-                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults);
+                bool prioritize_authorization_over_stopping_transaction, bool ignore_connector_faults,
+                const std::string& id, kvsIntf* store);
     virtual ~AuthHandler();
 
     /**
-     * @brief Initializes the connector with the given \p connector_id and the given \p evse_id . It instantiates new
+     * @brief Initializes the evse with the given \p connectors and the given \p evse_id . It instantiates new
      * connector objects and fills data sturctures of the class.
      *
-     * @param connector_id
+     * @param evse_id
      * @param evse_index
+     * @param connectors    The connectors.
      */
-    void init_connector(const int connector_id, const int evse_index);
+    void init_evse(const int evse_id, const int evse_index, const std::vector<Connector>& connectors);
+
+    /**
+     * @brief Call when everything is initialized. This will call 'init' of the reservation handler.
+     */
+    void initialize();
 
     /**
      * @brief Handler for a new incoming \p provided_token
@@ -70,44 +77,67 @@ public:
     /**
      * @brief Handler for new incoming \p reservation for the given \p connector . Places the reservation if possible.
      *
-     * @param connector_id
      * @param reservation
      * @return types::reservation::ReservationResult
      */
-    types::reservation::ReservationResult handle_reservation(int connector_id, const Reservation& reservation);
+    types::reservation::ReservationResult handle_reservation(const Reservation& reservation);
 
     /**
      * @brief Handler for incoming cancel reservation request for the given \p reservation_id .
      *
      * @param reservation_id
-     * @return int Returns -1 if the reservation could not been cancelled, else the id of the connector.
+     * @return return value first returns false if the reservation could not been cancelled. Return value second is the
+     *         evse id or nullopt if the reservation was a 'global' reservation without evse id.
      */
-    int handle_cancel_reservation(int reservation_id);
+    std::pair<bool, std::optional<int32_t>> handle_cancel_reservation(const int32_t reservation_id);
+
+    /**
+     * @brief Callback to check if there is a reservation for the given token (on the given evse id).
+     * @param id_token          The token to check.
+     * @param evse_id           The evse to check the reservation for.
+     * @param group_id_token    The group id token to check.
+     * @return The reservation check status
+     */
+    ReservationCheckStatus handle_reservation_exists(std::string& id_token, const std::optional<int>& evse_id,
+                                                     std::optional<std::string>& group_id_token);
 
     /**
      * @brief Callback to signal EvseManager that the given \p connector_id has been reserved with the given \p
      * reservation_id .
      *
-     * @param connector_id
+     * @param evse_id
      * @param reservation_id
+     *
+     * @return true of EvseManager accepted the reservation.
      */
-    void call_reserved(const int& connector_id, const int reservation_id);
+    bool call_reserved(const int reservation_id, const std::optional<int>& evse_id);
 
     /**
-     * @brief Callback to signal EvseManager that the reservation for the given \p connector_id has been cancelled.
+     * @brief Callback to signal EvseManager that the reservation for the given \p evse_id has been cancelled.
      *
-     * @param connector_id
+     * @param reservation_id    The id of the cancelled reservation.
+     * @param reason            The reason the reservation was cancelled.
+     * @param evse_id           Evse id if reservation was for a specific evse.
+     * @param send_reservation_update   True to send a reservation update. This should not be sent if OCPP cancels
+     *                                  the reservation.
      */
-    void call_reservation_cancelled(const int& connector_id);
+    void call_reservation_cancelled(const int32_t reservation_id, const ReservationEndReason reason,
+                                    const std::optional<int>& evse_id, const bool send_reservation_update);
 
     /**
      * @brief Handler for the given \p events at the given \p connector . Submits events to the state machine of the
      * handler.
      *
-     * @param connector_id
+     * @param evse_id
      * @param events
      */
-    void handle_session_event(const int connector_id, const SessionEvent& events);
+    void handle_session_event(const int evse_id, const SessionEvent& events);
+
+    /**
+     * @brief Handler for permanent faults from evsemanager that prevents charging
+     */
+    void handle_permanent_fault_cleared(const int evse_id, const int32_t connector_id);
+    void handle_permanent_fault_raised(const int evse_id, const int32_t connector_id);
 
     /**
      * @brief Set the connection timeout of the handler.
@@ -166,15 +196,17 @@ public:
      *
      * @param callback
      */
-    void
-    register_reserved_callback(const std::function<void(const int& evse_index, const int& reservation_id)>& callback);
+    void register_reserved_callback(
+        const std::function<bool(const std::optional<int>& evse_id, const int& reservation_id)>& callback);
 
     /**
      * @brief Registers the given \p callback to signal a reservation has been cancelled to the EvseManager.
      *
      * @param callback
      */
-    void register_reservation_cancelled_callback(const std::function<void(const int& evse_index)>& callback);
+    void register_reservation_cancelled_callback(
+        const std::function<void(const std::optional<int32_t>& evse_id, const int32_t reservation_id,
+                                 const ReservationEndReason reason, const bool send_reservation_update)>& callback);
 
     /**
      * @brief Registers the given \p callback to publish the intermediate token validation status.
@@ -192,15 +224,12 @@ private:
     bool ignore_faults;
     ReservationHandler reservation_handler;
 
-    std::map<int, std::unique_ptr<ConnectorContext>> connectors;
+    std::map<int, std::unique_ptr<EVSEContext>> evses;
 
-    std::mutex timer_mutex;
     std::list<int> plug_in_queue;
-    std::mutex plug_in_queue_mutex;
-    std::mutex plug_in_mutex;
     std::set<std::string> tokens_in_process;
-    std::mutex token_in_process_mutex;
     std::condition_variable cv;
+    std::mutex event_mutex;
 
     // callbacks
     std::function<void(const int evse_index, const ProvidedIdToken& provided_token,
@@ -210,36 +239,43 @@ private:
     std::function<std::vector<ValidationResult>(const ProvidedIdToken& provided_token)> validate_token_callback;
     std::function<void(const int evse_index, const StopTransactionRequest& request)> stop_transaction_callback;
     std::function<void(const Array& reservations)> reservation_update_callback;
-    std::function<void(const int& evse_index, const int& reservation_id)> reserved_callback;
-    std::function<void(const int& evse_index)> reservation_cancelled_callback;
+    std::function<bool(const std::optional<int>& evse_index, const int& reservation_id)> reserved_callback;
+    std::function<void(const std::optional<int>& evse_index, const int32_t reservation_id,
+                       const types::reservation::ReservationEndReason reason, const bool send_reservation_update)>
+        reservation_cancelled_callback;
     std::function<void(const ProvidedIdToken& token, TokenValidationStatus status)>
         publish_token_validation_status_callback;
 
-    std::vector<int> get_referenced_connectors(const ProvidedIdToken& provided_token);
-    int used_for_transaction(const std::vector<int>& connectors, const std::string& id_token);
-    bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_connectors);
-    bool any_connector_available(const std::vector<int>& connectors);
-    bool any_parent_id_present(const std::vector<int> connector_ids);
+    std::vector<int> get_referenced_evses(const ProvidedIdToken& provided_token);
+    int used_for_transaction(const std::vector<int>& evse_ids, const std::string& id_token);
+    bool is_token_already_in_process(const std::string& id_token, const std::vector<int>& referenced_evses);
+    bool any_evse_available(const std::vector<int>& evse_ids);
+    bool any_parent_id_present(const std::vector<int>& evse_ids);
     bool equals_master_pass_group_id(const std::optional<types::authorization::IdToken> parent_id_token);
 
-    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token);
+    TokenHandlingResult handle_token(const ProvidedIdToken& provided_token, std::unique_lock<std::mutex>& lk);
 
     /**
-     * @brief Method selects a connector based on the configured selection algorithm. It might block until an event
-     * occurs that can be used to determine a connector.
+     * @brief Method selects an evse based on the configured selection algorithm. It might block until an event
+     * occurs that can be used to determine an evse.
      *
-     * @param connectors
+     * @param selected_evses
      * @return int
      */
-    int select_connector(const std::vector<int>& connectors);
+    int select_evse(const std::vector<int>& selected_evses, std::unique_lock<std::mutex>& lk);
 
-    void lock_plug_in_mutex(const std::vector<int>& connectors);
-    void unlock_plug_in_mutex(const std::vector<int>& connectors);
-    int get_latest_plugin(const std::vector<int>& connectors);
-    void notify_evse(int connector_id, const ProvidedIdToken& provided_token,
-                     const ValidationResult& validation_result);
+    int get_latest_plugin(const std::vector<int>& evse_ids);
+    void notify_evse(int evse_id, const ProvidedIdToken& provided_token, const ValidationResult& validation_result);
     Identifier get_identifier(const ValidationResult& validation_result, const std::string& id_token,
                               const AuthorizationType& type);
+    void submit_event_for_connector(const int32_t evse_id, const int32_t connector_id,
+                                    const ConnectorEvent connector_event);
+    /**
+     * @brief Check reservations: if there are as many reservations as evse's, all should be set to reserved.
+     *
+     * This will check the reservation status of the evse's and send the statusses to the evse manager.
+     */
+    void check_evse_reserved_and_send_updates();
 };
 
 } // namespace module

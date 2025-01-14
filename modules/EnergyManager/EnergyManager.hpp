@@ -25,6 +25,8 @@
 
 #include <mutex>
 
+#include "Broker.hpp"
+
 #ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
 #include <gtest/gtest_prod.h>
 namespace module::test {
@@ -45,6 +47,11 @@ struct Conf {
     double slice_ampere;
     double slice_watt;
     bool debug;
+    std::string switch_3ph1ph_while_charging_mode;
+    int switch_3ph1ph_max_nr_of_switches_per_session;
+    std::string switch_3ph1ph_switch_limit_stickyness;
+    int switch_3ph1ph_power_hysteresis_W;
+    int switch_3ph1ph_time_hysteresis_s;
 };
 
 class EnergyManager : public Everest::ModuleBase {
@@ -88,6 +95,8 @@ private:
     std::mutex mainloop_sleep_mutex;
     std::thread optimizer_thread;
     bool running = true;
+
+    std::map<std::string, BrokerContext> contexts;
 
 #ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
     FRIEND_TEST(EnergyManagerTest, empty);

@@ -104,14 +104,13 @@ types:
         ChargingFinished: Charging is finished. Essentially the same as TransactionFinished, but emitted for clarity
         TransactionFinished: Signaled when the transaction finished. Transaction finishes at the point where one of the preconditions for charging irrevocably becomes false: When a user swipes to stop the transaction and the stop is authorized.
         SessionFinished: Session finishes at the point that the EVSE is available again (no cable plugged)
-        Error: Signaled when an error occured. An error doesnt prevent further charging operations.
-        AllErrorsCleared: Signalled when all errors are cleared
-        PermanentFault: Signaled when there is a permanent fault at the EVSE. A permanent fault prevents further charging operations
         ReservationStart: Signaled when a reservation starts
         ReservationEnd: Signaled when a reservation ends
         ReplugStarted: Signaled when the EVSE Manager virtually replugs without interrupting the session or transaction
         ReplugFinished: Signaled when the virtual replug process has finished
-        PluginTimeout: Signaled when an EV has been Plugged in but no authorization is present within specified ConnectionTimeout
+        PluginTimeout: Signaled when an EV has been plugged in but no authorization is present within specified ConnectionTimeout
+        SwitchingPhases: Signaled when the EVSE Manager starts switching phases
+        SessionResumed: Signaled when a session is resumed at startup (e.g. because of previous powerloss)
     type: string
     enum:
       - Authorized
@@ -131,16 +130,13 @@ types:
       - ChargingFinished
       - TransactionFinished
       - SessionFinished
-      - Error
-      - ErrorCleared
-      - AllErrorsCleared
-      - PermanentFault
-      - PermanentFaultCleared
       - ReservationStart
       - ReservationEnd
       - ReplugStarted
       - ReplugFinished
       - PluginTimeout
+      - SwitchingPhases
+      - SessionResumed
   SessionStarted:
     description: Data for the SessionStarted event
     type: object
@@ -258,73 +254,6 @@ types:
         description: Exported meter value
         type: object
         $ref: /powermeter#/Powermeter
-  ErrorEnum:
-    description: >-
-      Note this is only kept for compatibility with the legacy error handling and will be removed soon.
-    type: string
-    enum:
-      - RCD_Selftest
-      - RCD_DC
-      - RCD_AC
-      - VendorError
-      - VendorWarning
-      - ConnectorLockCapNotCharged
-      - ConnectorLockUnexpectedOpen
-      - ConnectorLockUnexpectedClose
-      - ConnectorLockFailedLock
-      - ConnectorLockFailedUnlock
-      - MREC1ConnectorLockFailure
-      - MREC2GroundFailure
-      - MREC3HighTemperature
-      - MREC4OverCurrentFailure
-      - MREC5OverVoltage
-      - MREC6UnderVoltage
-      - MREC8EmergencyStop
-      - MREC10InvalidVehicleMode
-      - MREC14PilotFault
-      - MREC15PowerLoss
-      - MREC17EVSEContactorFault
-      - MREC18CableOverTempDerate
-      - MREC19CableOverTempStop
-      - MREC20PartialInsertion
-      - MREC23ProximityFault
-      - MREC24ConnectorVoltageHigh
-      - MREC25BrokenLatch
-      - MREC26CutCable
-      - DiodeFault
-      - VentilationNotAvailable
-      - BrownOut
-      - EnergyManagement
-      - PermanentFault
-      - PowermeterTransactionStartFailed
-      - IMDFault
-  Error:
-    description: >-
-      Error object that contains information about the error and optional vendor error information
-    type: object
-    additionalProperties: false
-    required:
-      - error_code
-      - error_description
-      - error_severity
-    properties:
-      error_code:
-        description: The error enum
-        type: string
-        $ref: /evse_manager#/ErrorEnum
-      error_description:
-        description: Description of the error (human readable)
-        type: string
-      error_severity:
-        description: Severity of the error
-        type: string
-        enum:
-          - High
-          - Medium
-          - Low
-      vendor_error:
-        description: The error code of the vendor
-        type: string
   EnableDisableSource:
     description: >-
       Source of a Enable or Disable command/event
@@ -417,10 +346,6 @@ types:
           Authorized, Deauthorized
         type: object
         $ref: /evse_manager#/AuthorizationEvent
-      error:
-        description: Details on error type
-        type: object
-        $ref: /evse_manager#/Error
       source:
         description: >-
           Additional data for Enabled/Disabled events. Specifies the source of the command that changed the state.
@@ -554,6 +479,14 @@ types:
       sCEE-7_7: CEE 7/7 16A socket a.k.a Schuko
       sType2: IEC62196-2 Type 2 socket a.k.a. Mennekes connector
       sType3: IEC62196-2 Type 2 socket a.k.a. Scame
+      Other1PhMax16A: Other single phase (domestic) sockets not mentioned above, rated at no more than 16A. CEE7/17, AS3112,
+                      NEMA 5-15, NEMA 5-20, JISC8303, TIS166, SI 32, CPCS-CCC, SEV1011, etc
+      Other1PhOver16A: Other single phase sockets not mentioned above (over 16A)
+      Other3Ph: Other 3 phase sockets not mentioned above. NEMA14-30, NEMA14-50.
+      Pan: Pantograph connector
+      wInductive: Wireless inductively coupled connection (generic)
+      wResonant: Wireless resonant coupled connection (generic)
+      Undetermined: Yet to be determined (e.g. before plugged in)
       Unknown: Unknown
     type: string
     enum:
@@ -571,6 +504,13 @@ types:
       - sCEE_7_7
       - sType2
       - sType3
+      - Other1PhMax16A
+      - Other1PhOver16A
+      - Other3Ph
+      - Pan
+      - wInductive
+      - wResonant
+      - Undetermined
       - Unknown
   Evse:
     description: Type that defines properties of an EVSE including its connectors

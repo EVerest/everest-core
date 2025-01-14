@@ -15,11 +15,11 @@ active_modules:
       supported_ISO15118_2: true
   evse_manager_1:
     module: EvseManager
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
       evse_id: "1"
       session_logging: true
       session_logging_xml: false
@@ -27,6 +27,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_1
@@ -42,11 +43,11 @@ active_modules:
           implementation_id: charger
   evse_manager_2:
     module: EvseManager
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
-      three_phases: true
-      has_ventilation: true
-      country_code: DE
       evse_id: "2"
       session_logging: true
       session_logging_xml: false
@@ -54,6 +55,7 @@ active_modules:
       ac_hlc_enabled: false
       ac_hlc_use_5percent: false
       ac_enforce_hlc: false
+      external_ready_to_start_charging: true
     connections:
       bsp:
         - module_id: yeti_driver_2
@@ -69,14 +71,20 @@ active_modules:
           implementation_id: charger
   yeti_driver_1:
     module: JsYetiSimulator
+    mapping:
+      module:
+        evse: 1
     config_module:
       connector_id: 1
   yeti_driver_2:
     module: JsYetiSimulator
+    mapping:
+      module:
+        evse: 2
     config_module:
       connector_id: 2
   slac:
-    module: JsSlacSimulator
+    module: SlacSimulator
   ev_manager_1:
     module: EvManager
     config_module:
@@ -154,6 +162,13 @@ active_modules:
       data_transfer:
         - module_id: ocpp_extension
           implementation_id: data_transfer
+      evse_energy_sink:
+        - module_id: grid_connection_point
+          implementation_id: external_limits
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: external_limits
   evse_security:
     module: EvseSecurity
     config_module:
@@ -177,27 +192,99 @@ active_modules:
       energy_trunk:
         - module_id: grid_connection_point
           implementation_id: energy_grid
+  evse_manager_1_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1
+          implementation_id: energy_grid
+  evse_manager_2_ocpp_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2
+          implementation_id: energy_grid
+  evse_manager_1_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_1_ocpp_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_1
+          implementation_id: powermeter
+  evse_manager_2_api_sink:
+    module: EnergyNode
+    mapping:
+      module:
+        evse: 2
+    config_module:
+      fuse_limit_A: 32.0
+      phase_count: 3
+    connections:
+      energy_consumer:
+        - module_id: evse_manager_2_ocpp_sink
+          implementation_id: energy_grid
+      powermeter:
+        - module_id: yeti_driver_2
+          implementation_id: powermeter
   grid_connection_point:
     module: EnergyNode
+    mapping:
+      module:
+        evse: 0
     config_module:
       fuse_limit_A: 40.0
       phase_count: 3
     connections:
       price_information: []
       energy_consumer:
-        - module_id: evse_manager_1
+        - module_id: evse_manager_1_api_sink
           implementation_id: energy_grid
-        - module_id: evse_manager_2
+        - module_id: evse_manager_2_api_sink
           implementation_id: energy_grid
-      powermeter:
-        - module_id: yeti_driver_1
-          implementation_id: powermeter
   api:
     module: API
     connections:
       evse_manager:
         - module_id: evse_manager_1
           implementation_id: evse
+        - module_id: evse_manager_2
+          implementation_id: evse
+      ocpp:
+        - module_id: ocpp
+          implementation_id: ocpp_generic
+      error_history:
+        - module_id: error_history
+          implementation_id: error_history
+      evse_energy_sink:
+        - module_id: evse_manager_1_api_sink
+          implementation_id: external_limits
+        - module_id: evse_manager_2_api_sink
+          implementation_id: external_limits
+  error_history:
+    module: ErrorHistory
+    config_implementation:
+      error_history:
+        database_path: /tmp/error_history.db
   system:
     module: System
 

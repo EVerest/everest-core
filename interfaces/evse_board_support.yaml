@@ -3,27 +3,6 @@ description: >-
   output contactors. 
   Other components of the power path such as IMD(DC)/RCD(AC)/Connector Lock etc have their own interfaces.
 cmds:
-  setup:
-    description: Setup config options
-    arguments:
-      three_phases:
-        description: 'true: Three phases enabled, false: only single phase'
-        type: boolean
-      has_ventilation:
-        description: 'true: Allow mode D charging, false: do not allow mode D charging'
-        type: boolean
-      country_code:
-        description: A two-letter country code in ISO 3166-1 alpha-2 format
-        type: string
-  get_hw_capabilities:
-    description: >-
-      Get Hardware capability/limits. For AC these are the limits of the power path (e.g. relais etc). 
-      For DC, these are the limits for the AC input of the ACDC converter stack, i.e. the complete AC input.
-      Note that DC output limits are reported by the DC power supply itself.
-    result:
-      description: Hardware capability/limits
-      type: object
-      $ref: /evse_board_support#/HardwareCapabilities
   enable:
     description: >-
       Enables or disables the charging port. Typically disabled results in control
@@ -116,8 +95,8 @@ vars:
     $ref: /evse_board_support#/Telemetry
   capabilities:
     description: >-
-      Hardware capabilities/limits. Initially EvseManager will call get_hw_capabilities once to fetch the limits and caches the limits internally.
-      The BSP module does not have to publish this variable at all, then the initially fetched capabilities will be used.
+      Hardware capabilities/limits. The BSP must publish this variable at least once during start up.
+      For AC, the capabilities are the limits of the AC hardware power path. For DC, this are the limits for the AC input for the AC/DC converter.
       The BSP may publish this variable to update limits in case they change during runtime, e.g. if the maximum current changes because the hardware gets too hot.
     type: object
     $ref: /evse_board_support#/HardwareCapabilities

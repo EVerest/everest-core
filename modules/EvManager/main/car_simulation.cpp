@@ -21,7 +21,9 @@ void CarSimulation::state_machine() {
             // Wait for physical plugin (ev BSP sees state A on CP and not Disconnected)
 
             sim_data.slac_state = "UNMATCHED";
-            r_ev[0]->call_stop_charging();
+            if (!r_ev.empty()) {
+                r_ev[0]->call_stop_charging();
+            }
         }
         break;
     case SimState::PLUGGED_IN:
@@ -36,8 +38,10 @@ void CarSimulation::state_machine() {
             // do not draw power if EVSE paused by stopping PWM
             if (sim_data.pwm_duty_cycle > 7.0 && sim_data.pwm_duty_cycle < 97.0) {
                 r_ev_board_support->call_set_cp_state(EvCpState::C);
+                r_ev_board_support->call_allow_power_on(true);
             } else {
                 r_ev_board_support->call_set_cp_state(EvCpState::B);
+                r_ev_board_support->call_allow_power_on(false);
             }
         }
         break;
@@ -47,6 +51,7 @@ void CarSimulation::state_machine() {
             // Also draw power if EVSE stopped PWM - this is a break the rules simulator->mode to test the charging
             // implementation!
             r_ev_board_support->call_set_cp_state(EvCpState::C);
+            r_ev_board_support->call_allow_power_on(true);
         }
         break;
 
@@ -70,6 +75,7 @@ void CarSimulation::state_machine() {
     case SimState::ISO_CHARGING_REGULATED:
         if (state_has_changed) {
             r_ev_board_support->call_set_cp_state(EvCpState::C);
+            r_ev_board_support->call_allow_power_on(true);
         }
         break;
     case SimState::BCB_TOGGLE:
@@ -89,13 +95,14 @@ void CarSimulation::state_machine() {
 };
 
 bool CarSimulation::sleep(const CmdArguments& arguments, size_t loop_interval_ms) {
-    if (!sim_data.sleep_ticks_left.has_value()) {
+    if (not sim_data.sleep_ticks_left.has_value()) {
         const auto sleep_time = std::stold(arguments[0]);
         const auto sleep_time_ms = sleep_time * 1000;
         sim_data.sleep_ticks_left = static_cast<long long>(sleep_time_ms / loop_interval_ms) + 1;
     }
-    sim_data.sleep_ticks_left = sim_data.sleep_ticks_left.value() - 1;
-    if (!(sim_data.sleep_ticks_left > 0)) {
+    auto& sleep_ticks_left = sim_data.sleep_ticks_left.value();
+    sleep_ticks_left -= 1;
+    if (not(sleep_ticks_left > 0)) {
         sim_data.sleep_ticks_left.reset();
         return true;
     } else {
@@ -234,21 +241,24 @@ bool CarSimulation::iso_stop_charging(const CmdArguments& arguments) {
 }
 
 bool CarSimulation::iso_wait_for_stop(const CmdArguments& arguments, size_t loop_interval_ms) {
-    if (!sim_data.sleep_ticks_left.has_value()) {
-        sim_data.sleep_ticks_left =
-            std::stoll(arguments[0]) * static_cast<long>(1 / static_cast<float>(loop_interval_ms)) + 1;
+    if (not sim_data.sleep_ticks_left.has_value()) {
+        const auto sleep_time_ms = std::stold(arguments[0]) * 1000;
+        sim_data.sleep_ticks_left = static_cast<long long>(sleep_time_ms / loop_interval_ms) + 1;
     }
-    sim_data.sleep_ticks_left = sim_data.sleep_ticks_left.value() - 1;
-    if (!sim_data.sleep_ticks_left > 0) {
+    auto& sleep_ticks_left = sim_data.sleep_ticks_left.value();
+    sleep_ticks_left -= 1;
+    if (not(sleep_ticks_left > 0)) {
         r_ev[0]->call_stop_charging();
         r_ev_board_support->call_allow_power_on(false);
         sim_data.state = SimState::PLUGGED_IN;
+        sim_data.sleep_ticks_left.reset();
         return true;
     }
     if (sim_data.iso_stopped) {
         EVLOG_info << "POWER OFF iso stopped";
         r_ev_board_support->call_allow_power_on(false);
         sim_data.state = SimState::PLUGGED_IN;
+        sim_data.sleep_ticks_left.reset();
         return true;
     }
     return false;

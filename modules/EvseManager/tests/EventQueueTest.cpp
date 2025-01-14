@@ -10,9 +10,9 @@
 namespace {
 
 enum class ErrorHandlingEvents : std::uint8_t {
-    prevent_charging,
-    prevent_charging_welded,
-    all_errors_cleared
+    PreventCharging,
+    PreventChargingWelded,
+    AllErrorsCleared
 };
 
 TEST(EventQueue, init) {
@@ -26,10 +26,10 @@ TEST(EventQueue, one) {
     auto events = queue.get_events();
     EXPECT_EQ(events.size(), 0);
 
-    queue.push(ErrorHandlingEvents::prevent_charging);
+    queue.push(ErrorHandlingEvents::PreventCharging);
     events = queue.get_events();
     ASSERT_EQ(events.size(), 1);
-    EXPECT_EQ(events[0], ErrorHandlingEvents::prevent_charging);
+    EXPECT_EQ(events[0], ErrorHandlingEvents::PreventCharging);
 
     events = queue.get_events();
     EXPECT_EQ(events.size(), 0);
@@ -40,12 +40,12 @@ TEST(EventQueue, two) {
     auto events = queue.get_events();
     EXPECT_EQ(events.size(), 0);
 
-    queue.push(ErrorHandlingEvents::prevent_charging);
-    queue.push(ErrorHandlingEvents::prevent_charging_welded);
+    queue.push(ErrorHandlingEvents::PreventCharging);
+    queue.push(ErrorHandlingEvents::PreventChargingWelded);
     events = queue.get_events();
     ASSERT_EQ(events.size(), 2);
-    EXPECT_EQ(events[0], ErrorHandlingEvents::prevent_charging);
-    EXPECT_EQ(events[1], ErrorHandlingEvents::prevent_charging_welded);
+    EXPECT_EQ(events[0], ErrorHandlingEvents::PreventCharging);
+    EXPECT_EQ(events[1], ErrorHandlingEvents::PreventChargingWelded);
 
     events = queue.get_events();
     EXPECT_EQ(events.size(), 0);
@@ -80,7 +80,7 @@ TEST(EventQueue, wait) {
     cv.wait(ul, [&ready] { return ready; });
     ASSERT_EQ(count, 0U);
 
-    queue.push(ErrorHandlingEvents::prevent_charging);
+    queue.push(ErrorHandlingEvents::PreventCharging);
 
     cv.wait(ul, [&ready] { return !ready; });
     ASSERT_EQ(count, 1U);

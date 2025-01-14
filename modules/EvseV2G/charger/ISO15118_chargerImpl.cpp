@@ -8,7 +8,7 @@
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
 using namespace std::chrono_literals;
-using BidiMode = types::iso15118_charger::SAE_J2847_Bidi_Mode;
+using BidiMode = types::iso15118_charger::SaeJ2847BidiMode;
 
 namespace module {
 namespace charger {
@@ -68,12 +68,12 @@ void ISO15118_chargerImpl::ready() {
 
 void ISO15118_chargerImpl::handle_setup(
     types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::EnergyTransferMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SAE_J2847_Bidi_Mode& sae_j2847_mode, bool& debug_mode) {
+    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
+    types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
-    uint8_t len = evse_id.EVSE_ID.length();
+    uint8_t len = evse_id.evse_id.length();
     if (len < iso2_EVSEID_CHARACTER_SIZE) {
-        memcpy(v2g_ctx->evse_v2g_data.evse_id.bytes, reinterpret_cast<uint8_t*>(evse_id.EVSE_ID.data()), len);
+        memcpy(v2g_ctx->evse_v2g_data.evse_id.bytes, reinterpret_cast<uint8_t*>(evse_id.evse_id.data()), len);
         v2g_ctx->evse_v2g_data.evse_id.bytesLen = len;
     } else {
         dlog(DLOG_LEVEL_WARNING, "EVSEID_CHARACTER_SIZE exceeded (received: %u, max: %u)", len,
@@ -89,9 +89,14 @@ void ISO15118_chargerImpl::handle_setup(
 
         v2g_ctx->is_dc_charger = true;
 
-        for (auto& energy_transfer_mode : supported_energy_transfer_modes) {
+        for (const auto& mode : supported_energy_transfer_modes) {
 
-            switch (energy_transfer_mode) {
+            if (mode.bidirectional) {
+                dlog(DLOG_LEVEL_INFO, "Ignoring bidirectional SupportedEnergyTransferMode");
+                continue;
+            }
+
+            switch (mode.energy_transfer_mode) {
             case types::iso15118_charger::EnergyTransferMode::AC_single_phase_core:
                 energyArray[(energyArrayLen)++] = iso2_EnergyTransferModeType_AC_single_phase_core;
                 v2g_ctx->is_dc_charger = false;
@@ -116,7 +121,7 @@ void ISO15118_chargerImpl::handle_setup(
                 if (energyArrayLen == 0) {
 
                     dlog(DLOG_LEVEL_WARNING, "Unable to configure SupportedEnergyTransferMode %s",
-                         types::iso15118_charger::energy_transfer_mode_to_string(energy_transfer_mode).c_str());
+                         types::iso15118_charger::energy_transfer_mode_to_string(mode.energy_transfer_mode).c_str());
                 }
                 break;
             }
@@ -206,10 +211,10 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
 }
 
 void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::Response_Exi_Stream_Status& exi_stream_status) {
+    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
     pthread_mutex_lock(&v2g_ctx->mqtt_lock);
-    if (exi_stream_status.exiResponse.has_value()) {
-        v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(exi_stream_status.exiResponse.value());
+    if (exi_stream_status.exi_response.has_value() and not exi_stream_status.exi_response.value().empty()) {
+        v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(exi_stream_status.exi_response.value());
     }
     v2g_ctx->evse_v2g_data.cert_install_status =
         (exi_stream_status.status == types::iso15118_charger::Status::Accepted) ? true : false;
@@ -270,7 +275,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
 
     if (stop) {
         // spawn new thread to not block command handler
-        std::thread([this, stop] {
+        std::thread([stop] {
             // try to gracefully shutdown charging session
             v2g_ctx->evse_v2g_data.evse_notification = iso2_EVSENotificationType_StopCharging;
             memset(v2g_ctx->evse_v2g_data.evse_status_code, iso2_DC_EVSEStatusCodeType_EVSE_Shutdown,
@@ -329,33 +334,33 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
-    types::iso15118_charger::DC_EVSEMaximumLimits& maximum_limits) {
-    if (maximum_limits.EVSEMaximumCurrentLimit > 300.) {
+    types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
+    if (maximum_limits.evse_maximum_current_limit > 300.) {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.EVSEMaximumCurrentLimit, 1, iso2_unitSymbolType_A);
+                                      maximum_limits.evse_maximum_current_limit, 1, iso2_unitSymbolType_A);
     } else {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_current_limit,
-                                      maximum_limits.EVSEMaximumCurrentLimit, 2, iso2_unitSymbolType_A);
+                                      maximum_limits.evse_maximum_current_limit, 2, iso2_unitSymbolType_A);
     }
     v2g_ctx->evse_v2g_data.evse_maximum_current_limit_is_used = 1;
 
-    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, maximum_limits.EVSEMaximumPowerLimit,
+    populate_physical_value(&v2g_ctx->evse_v2g_data.evse_maximum_power_limit, maximum_limits.evse_maximum_power_limit,
                             iso2_unitSymbolType_W);
     v2g_ctx->evse_v2g_data.evse_maximum_power_limit_is_used = 1;
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit,
-                                  maximum_limits.EVSEMaximumVoltageLimit, 1, iso2_unitSymbolType_V);
+                                  maximum_limits.evse_maximum_voltage_limit, 1, iso2_unitSymbolType_V);
     v2g_ctx->evse_v2g_data.evse_maximum_voltage_limit_is_used = 1;
 }
 
 void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
-    types::iso15118_charger::DC_EVSEMinimumLimits& minimum_limits) {
+    types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
 
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_current_limit,
-                                  static_cast<long long int>(minimum_limits.EVSEMinimumCurrentLimit), 1,
+                                  static_cast<long long int>(minimum_limits.evse_minimum_current_limit), 1,
                                   iso2_unitSymbolType_A);
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_minimum_voltage_limit,
-                                  static_cast<long long int>(minimum_limits.EVSEMinimumVoltageLimit), 1,
+                                  static_cast<long long int>(minimum_limits.evse_minimum_voltage_limit), 1,
                                   iso2_unitSymbolType_V);
 }
 
@@ -365,13 +370,13 @@ void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charge
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
-    types::iso15118_charger::DC_EVSEPresentVoltage_Current& present_voltage_current) {
+    types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
     populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_present_voltage,
-                                  present_voltage_current.EVSEPresentVoltage, 1, iso2_unitSymbolType_V);
+                                  present_voltage_current.evse_present_voltage, 1, iso2_unitSymbolType_V);
 
-    if (present_voltage_current.EVSEPresentCurrent.has_value()) {
+    if (present_voltage_current.evse_present_current.has_value()) {
         populate_physical_value_float(&v2g_ctx->evse_v2g_data.evse_present_current,
-                                      static_cast<float>(present_voltage_current.EVSEPresentCurrent.value()), 1,
+                                      static_cast<float>(present_voltage_current.evse_present_current.value()), 1,
                                       iso2_unitSymbolType_A);
     }
 }
