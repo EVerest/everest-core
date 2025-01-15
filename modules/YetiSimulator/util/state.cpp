@@ -3,6 +3,7 @@
 
 #include "state.hpp"
 #include <chrono>
+#include <cstdint>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
@@ -11,17 +12,23 @@ using std::chrono::milliseconds;
 using std::chrono::system_clock;
 using std::chrono::time_point_cast;
 
-PowermeterData::PowermeterData() :
-    time_stamp{time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count() / 1000} {
-}
-ModuleState::ModuleState() :
-    time_stamp{time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count() / 1000} {
+TimeStamp::TimeStamp() :
+    time_stamp{time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count() / milliseconds_in_second} {
 }
 
-std::string state_to_string(state::ModuleState& module_state) {
+TimeStamp& TimeStamp::operator=(const double value) {
+    time_stamp = static_cast<int64_t>(value);
+    return *this;
+}
+
+TimeStamp::operator int64_t() const {
+    return time_stamp;
+}
+
+std::string state_to_string(const ModuleState& module_state) {
     using state::State;
 
-    const auto pwm = (module_state.pwm_running ? '2' : '1');
+    const auto pwm = module_state.pwm_running ? '2' : '1';
 
     switch (module_state.current_state) {
     case State::STATE_DISABLED:
@@ -44,7 +51,7 @@ std::string state_to_string(state::ModuleState& module_state) {
 }
 
 void to_json(nlohmann::json& json, const PowermeterData& powermeter_data) {
-    json = nlohmann::json{{"time_stamp", powermeter_data.time_stamp},
+    json = nlohmann::json{{"time_stamp", static_cast<uint64_t>(powermeter_data.time_stamp)},
                           {"totalWattHr", powermeter_data.totalWattHr},
                           {"wattL1", powermeter_data.wattL1},
                           {"vrmsL1", powermeter_data.vrmsL1},

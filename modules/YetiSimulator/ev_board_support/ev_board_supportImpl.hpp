@@ -15,8 +15,7 @@
 // insert your custom include headers here
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
-namespace module {
-namespace ev_board_support {
+namespace module::ev_board_support {
 
 struct Conf {};
 
@@ -24,7 +23,7 @@ class ev_board_supportImpl : public ev_board_supportImplBase {
 public:
     ev_board_supportImpl() = delete;
     ev_board_supportImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<YetiSimulator>& mod, Conf& config) :
-        ev_board_supportImplBase(ev, "ev_board_support"), mod(mod), config(config){};
+        ev_board_supportImplBase(ev, "ev_board_support"), mod(mod), config(config) {};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -58,7 +57,10 @@ private:
 
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 // insert other definitions here
+constexpr auto inline cp_voltage_a = 12.0;
+constexpr auto inline cp_voltage_b = 9.0;
+constexpr auto inline cp_voltage_c = 6.0;
+constexpr auto inline cp_voltage_d = 3.0;
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace ev_board_support
-} // namespace module
+} // namespace module::ev_board_support

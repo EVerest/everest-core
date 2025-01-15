@@ -3,8 +3,7 @@
 
 #include "ac_rcdImpl.hpp"
 
-namespace module {
-namespace rcd {
+namespace module::rcd {
 
 void ac_rcdImpl::init() {
 }
@@ -21,5 +20,4 @@ bool ac_rcdImpl::handle_reset() {
     return true;
 }
 
-} // namespace rcd
-} // namespace module
+} // namespace module::rcd

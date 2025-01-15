@@ -7,9 +7,8 @@
 // template version 3
 //
 
+#include <YetiSimulator.hpp>
 #include <generated/interfaces/evse_board_support/Implementation.hpp>
-
-#include "../YetiSimulator.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 // insert your custom include headers here
@@ -28,7 +27,7 @@ public:
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
-    void pwm_off();
+    void pwm_off() const;
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
 
 protected:
@@ -56,13 +55,14 @@ private:
 
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
     // insert your private definitions here
-    void pwm_on(double dutycycle);
-    void pwm_f();
+    void pwm_on(double dutycycle) const;
+    void pwm_f() const;
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 // insert other definitions here
+types::evse_board_support::HardwareCapabilities set_default_capabilities();
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
 } // namespace board_support

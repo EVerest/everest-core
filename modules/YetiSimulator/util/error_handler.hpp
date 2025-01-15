@@ -9,49 +9,124 @@
 
 namespace module {
 
+struct ErrorDefinition {
+    const char* type;
+    const char* sub_type{""};
+    const char* message{""};
+    Everest::error::Severity severity{Everest::error::Severity::High};
+    enum class ErrorDestination : uint8_t {
+        board_support,
+        rcd,
+        connector_lock,
+    } error_destination;
+};
+
+Everest::error::Error create_error(const Everest::error::ErrorFactory& error_factory, const ErrorDefinition& def);
+
 class ErrorHandler {
 public:
     ErrorHandler(evse_board_supportImplBase* p_board_support, ac_rcdImplBase* p_rcd,
                  connector_lockImplBase* p_connector_lock);
-
-    void error_DiodeFault(bool raise);
-    void error_BrownOut(bool raise);
-    void error_EnergyManagement(bool raise);
-    void error_PermanentFault(bool raise);
-    void error_MREC2GroundFailure(bool raise);
-    void error_MREC3HighTemperature(bool raise);
-    void error_MREC4OverCurrentFailure(bool raise);
-    void error_MREC5OverVoltage(bool raise);
-    void error_MREC6UnderVoltage(bool raise);
-    void error_MREC8EmergencyStop(bool raise);
-    void error_MREC10InvalidVehicleMode(bool raise);
-    void error_MREC14PilotFault(bool raise);
-    void error_MREC15PowerLoss(bool raise);
-    void error_MREC17EVSEContactorFault(bool raise);
-    void error_MREC18CableOverTempDerate(bool raise);
-    void error_MREC19CableOverTempStop(bool raise);
-    void error_MREC20PartialInsertion(bool raise);
-    void error_MREC23ProximityFault(bool raise);
-    void error_MREC24ConnectorVoltageHigh(bool raise);
-    void error_MREC25BrokenLatch(bool raise);
-    void error_MREC26CutCable(bool raise);
-    void error_ac_rcd_MREC2GroundFailure(bool raise);
-    void error_ac_rcd_VendorError(bool raise);
-    void error_ac_rcd_Selftest(bool raise);
-    void error_ac_rcd_AC(bool raise);
-    void error_ac_rcd_DC(bool raise);
-    void error_lock_ConnectorLockCapNotCharged(bool raise);
-    void error_lock_ConnectorLockUnexpectedOpen(bool raise);
-    void error_lock_ConnectorLockUnexpectedClose(bool raise);
-    void error_lock_ConnectorLockFailedLock(bool raise);
-    void error_lock_ConnectorLockFailedUnlock(bool raise);
-    void error_lock_MREC1ConnectorLockFailure(bool raise);
-    void error_lock_VendorError(bool raise);
 
 private:
     evse_board_supportImplBase* p_board_support;
     ac_rcdImplBase* p_rcd;
     connector_lockImplBase* p_connector_lock;
 };
+
+namespace error_definitions {
+inline const auto connector_lock_ConnectorLockUnexpectedClose =
+    ErrorDefinition{"connector_lock/ConnectorLockUnexpectedClose"};
+
+inline const auto evse_board_support_DiodeFault =
+    ErrorDefinition{"evse_board_support/DiodeFault", "", "Simulated fault event"};
+
+inline const auto evse_board_support_BrownOut =
+    ErrorDefinition{"evse_board_support/BrownOut", "", "Simulated fault event"};
+
+inline const auto evse_board_support_EnergyManagement =
+    ErrorDefinition{"evse_board_support/EnergyManagement", "", "Simulated fault event"};
+
+inline const auto evse_board_support_PermanentFault =
+    ErrorDefinition{"evse_board_support/PermanentFault", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC2GroundFailure =
+    ErrorDefinition{"evse_board_support/MREC2GroundFailure", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC3HighTemperature =
+    ErrorDefinition{"evse_board_support/MREC3HighTemperature", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC4OverCurrentFailure =
+    ErrorDefinition{"evse_board_support/MREC4OverCurrentFailure", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC5OverVoltage =
+    ErrorDefinition{"evse_board_support/MREC5OverVoltage", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC6UnderVoltage =
+    ErrorDefinition{"evse_board_support/MREC6UnderVoltage", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC8EmergencyStop =
+    ErrorDefinition{"evse_board_support/MREC8EmergencyStop", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC10InvalidVehicleMode =
+    ErrorDefinition{"evse_board_support/MREC10InvalidVehicleMode", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC14PilotFault =
+    ErrorDefinition{"evse_board_support/MREC14PilotFault", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC15PowerLoss =
+    ErrorDefinition{"evse_board_support/MREC15PowerLoss", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC17EVSEContactorFault =
+    ErrorDefinition{"evse_board_support/MREC17EVSEContactorFault", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC18CableOverTempDerate =
+    ErrorDefinition{"evse_board_support/MREC18CableOverTempDerate", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC19CableOverTempStop =
+    ErrorDefinition{"evse_board_support/MREC19CableOverTempStop", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC20PartialInsertion =
+    ErrorDefinition{"evse_board_support/MREC20PartialInsertion", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC23ProximityFault =
+    ErrorDefinition{"evse_board_support/MREC23ProximityFault", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC24ConnectorVoltageHigh =
+    ErrorDefinition{"evse_board_support/MREC24ConnectorVoltageHigh", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC25BrokenLatch =
+    ErrorDefinition{"evse_board_support/MREC25BrokenLatch", "", "Simulated fault event"};
+
+inline const auto evse_board_support_MREC26CutCable =
+    ErrorDefinition{"evse_board_support/MREC26CutCable", "", "Simulated fault event"};
+
+inline const auto ac_rcd_VendorError = ErrorDefinition{"ac_rcd/VendorError", "", "Simulated fault event"};
+
+inline const auto ac_rcd_Selftest = ErrorDefinition{"ac_rcd/Selftest", "", "Simulated fault event"};
+
+inline const auto ac_rcd_AC = ErrorDefinition{"ac_rcd/AC", "", "Simulated fault event"};
+
+inline const auto ac_rcd_DC = ErrorDefinition{"ac_rcd/DC", "", "Simulated fault event"};
+
+inline const auto connector_lock_ConnectorLockCapNotCharged =
+    ErrorDefinition{"connector_lock/ConnectorLockCapNotCharged", "", "Simulated fault event"};
+
+inline const auto connector_lock_ConnectorLockUnexpectedOpen =
+    ErrorDefinition{"connector_lock/ConnectorLockUnexpectedOpen", "", "Simulated fault event"};
+
+inline const auto connector_lock_ConnectorLockFailedLock =
+    ErrorDefinition{"connector_lock/ConnectorLockFailedLock", "", "Simulated fault event"};
+
+inline const auto connector_lock_ConnectorLockFailedUnlock =
+    ErrorDefinition{"connector_lock/ConnectorLockFailedUnlock", "", "Simulated fault event"};
+
+inline const auto connector_lock_MREC1ConnectorLockFailure =
+    ErrorDefinition{"connector_lock/MREC1ConnectorLockFailure", "", "Simulated fault event"};
+
+inline const auto connector_lock_VendorError =
+    ErrorDefinition{"connector_lock/VendorError", "", "Simulated fault event"};
+
+} // namespace error_definitions
 
 } // namespace module
