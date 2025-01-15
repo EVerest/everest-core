@@ -4,6 +4,10 @@
 
 #include "{{ info.ld_ev_header }}"
 
+#ifdef EVEREST_COVERAGE_ENABLED
+#include <everest/staging/helpers/coverage.hpp>
+#endif
+
 #include "{{ info.module_header }}"
 {% for impl in provides %}
 #include "{{ impl.class_header }}"
@@ -150,6 +154,10 @@ std::vector<Everest::cmd> everest_register(const RequirementInitialization& requ
 } // namespace module
 
 int main(int argc, char* argv[]) {
+#ifdef EVEREST_COVERAGE_ENABLED
+    everest::helpers::install_signal_handlers_for_gcov();
+#endif
+
     auto module_loader = Everest::ModuleLoader(argc, argv, Everest::ModuleCallbacks(
         module::register_module_adapter, module::everest_register,
         module::LdEverest::init, module::LdEverest::ready),
