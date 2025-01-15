@@ -2,6 +2,16 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <framework/runtime.hpp>
+
+#include <algorithm>
+#include <atomic>
+#include <cstdlib>
+#include <fstream>
+
+#include <signal.h>
+
+#include <boost/program_options.hpp>
+
 #include <utils/error.hpp>
 #include <utils/error/error_factory.hpp>
 #include <utils/error/error_json.hpp>
@@ -10,15 +20,37 @@
 #include <utils/error/error_state_monitor.hpp>
 #include <utils/filesystem.hpp>
 
-#include <algorithm>
-#include <cstdlib>
-#include <fstream>
-
-#include <boost/program_options.hpp>
-
 namespace Everest {
 
 namespace po = boost::program_options;
+
+namespace {
+
+static std::atomic_flag going_to_terminate = ATOMIC_FLAG_INIT;
+
+void terminate_handler(int signal) {
+    if (going_to_terminate.test_and_set()) {
+        return;
+    }
+
+    // NOTE (aw): calling exit() in a signal handler is not advised due
+    // to race condition.  For now we only do that in order for getting
+    // gcov `atexit` handlers to run (to write out coverage statistics).
+    // This should be properly handled by an event loop in the
+    // corresponding process.
+    exit(EXIT_FAILURE);
+};
+
+void setup_signal_handlers() {
+    struct sigaction action {};
+    action.sa_handler = &terminate_handler;
+    // action.sa_mask should be zero, so no blocked signals within the signal handler
+    // action.sa_flags should be fine with being zero
+    sigaction(SIGINT, &action, nullptr);
+    sigaction(SIGTERM, &action, nullptr);
+}
+
+} // namespace
 
 std::string parse_string_option(const po::variables_map& vm, const char* option) {
     if (vm.count(option) == 0) {
@@ -398,6 +430,16 @@ ModuleCallbacks::ModuleCallbacks(
 
 ModuleLoader::ModuleLoader(int argc, char* argv[], ModuleCallbacks callbacks, VersionInformation version_information) :
     runtime_settings(nullptr), callbacks(std::move(callbacks)), version_information(std::move(version_information)) {
+
+    // FIXME (aw): this shouldn't been done in this constructor, but
+    // rather in a seperate `framework/module_init` function.  For now
+    // we're leaving it here as the signal handlers should be set up as
+    // early as possible - and the `ModuleLoader` is the thing, which
+    // gets constructed first.
+    // NOTE (aw): it was decided not to add this call to ev-cli in order
+    // to reduce the amount of generated code.
+    setup_signal_handlers();
+
     if (!this->parse_command_line(argc, argv)) {
         this->should_exit = true;
         return;
