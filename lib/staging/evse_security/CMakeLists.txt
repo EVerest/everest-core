@@ -19,3 +19,5 @@ target_link_libraries(evse_security_conversions
         everest::evse_security
         everest::framework
 )
+
+ev_register_library_target(evse_security_conversions)

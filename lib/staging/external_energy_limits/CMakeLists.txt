@@ -20,3 +20,5 @@ target_link_libraries(external_energy_limits
     PRIVATE
         everest::framework
 )
+
+ev_register_library_target(external_energy_limits)

@@ -15,3 +15,5 @@ target_link_libraries(gpio
     PRIVATE
 )
 
+ev_register_library_target(gpio)
+

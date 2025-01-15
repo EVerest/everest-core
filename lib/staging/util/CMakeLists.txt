@@ -9,3 +9,5 @@ target_include_directories(everest_staging_util
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
+
+ev_register_library_target(everest_staging_helpers)
