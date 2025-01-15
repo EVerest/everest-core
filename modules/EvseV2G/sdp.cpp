@@ -36,16 +36,6 @@
 
 #define POLL_TIMEOUT 20
 
-enum sdp_security {
-    SDP_SECURITY_TLS = 0x00,
-    SDP_SECURITY_NONE = 0x10,
-};
-
-enum sdp_transport_protocol {
-    SDP_TRANSPORT_PROTOCOL_TCP = 0x00,
-    SDP_TRANSPORT_PROTOCOL_UDP = 0x10,
-};
-
 /* link-local multicast address ff02::1 aka ip6-allnodes */
 #define IN6ADDR_ALLNODES                                                                                               \
     { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01 }
@@ -63,7 +53,7 @@ struct sdp_query {
 /*
  * Fills the SDP header into a given buffer
  */
-static int sdp_write_header(uint8_t* buffer, uint16_t payload_type, uint32_t payload_len) {
+int sdp_write_header(uint8_t* buffer, uint16_t payload_type, uint32_t payload_len) {
     int offset = 0;
 
     buffer[offset++] = SDP_VERSION;
@@ -82,7 +72,7 @@ static int sdp_write_header(uint8_t* buffer, uint16_t payload_type, uint32_t pay
     return offset;
 }
 
-static int sdp_validate_header(uint8_t* buffer, uint16_t expected_payload_type, uint32_t expected_payload_len) {
+int sdp_validate_header(uint8_t* buffer, uint16_t expected_payload_type, uint32_t expected_payload_len) {
     uint16_t payload_type;
     uint32_t payload_len;
 
@@ -134,7 +124,6 @@ int sdp_create_response(uint8_t* buffer, struct sockaddr_in6* addr, enum sdp_sec
 
     return offset;
 }
-
 /*
  * Sends a SDP response packet
  */
