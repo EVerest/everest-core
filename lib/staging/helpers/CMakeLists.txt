@@ -8,6 +8,15 @@ target_sources(everest_staging_helpers
         lib/helpers.cpp
 )
 
+if (EVEREST_CORE_BUILD_TESTING)
+    target_compile_definitions(everest_staging_helpers PUBLIC EVEREST_COVERAGE_ENABLED)
+
+    target_sources(everest_staging_helpers
+        PRIVATE
+            lib/coverage.cpp
+    )
+endif()
+
 target_include_directories(everest_staging_helpers
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

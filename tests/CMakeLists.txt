@@ -9,6 +9,10 @@ foreach(type MODULES LIBRARIES)
 
     foreach(target ${targets})
         append_coverage_compiler_flags_to_target(${target})
+
+        if (type STREQUAL "MODULES")
+            target_link_libraries(${target} PRIVATE everest::staging::helpers)
+        endif()
     endforeach()
 endforeach()
 
