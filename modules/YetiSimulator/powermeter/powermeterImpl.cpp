@@ -2,9 +2,9 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "powermeterImpl.hpp"
+#include <string>
 
-namespace module {
-namespace powermeter {
+namespace module::powermeter {
 
 void powermeterImpl::init() {
 }
@@ -13,7 +13,7 @@ void powermeterImpl::ready() {
 }
 
 types::powermeter::TransactionStartResponse
-powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& value) {
+powermeterImpl::handle_start_transaction(types::powermeter::TransactionReq& _) {
     return {.status = types::powermeter::TransactionRequestStatus::OK};
 }
 
@@ -22,5 +22,4 @@ types::powermeter::TransactionStopResponse powermeterImpl::handle_stop_transacti
             .error = "YetiDriver does not support stop transaction request."};
 }
 
-} // namespace powermeter
-} // namespace module
+} // namespace module::powermeter

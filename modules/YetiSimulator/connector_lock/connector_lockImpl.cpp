@@ -2,9 +2,9 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "connector_lockImpl.hpp"
+#include <everest/logging.hpp>
 
-namespace module {
-namespace connector_lock {
+namespace module::connector_lock {
 
 void connector_lockImpl::init() {
 }
@@ -20,5 +20,4 @@ void connector_lockImpl::handle_unlock() {
     EVLOG_info << "Unlock connector";
 }
 
-} // namespace connector_lock
-} // namespace module
+} // namespace module::connector_lock

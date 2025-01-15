@@ -2,26 +2,16 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "evse_board_supportImpl.hpp"
+#include "util/state.hpp"
 
-namespace module {
-namespace board_support {
+namespace module::board_support {
 
 void evse_board_supportImpl::init() {
 }
 
 void evse_board_supportImpl::ready() {
-    const auto capabilities = types::evse_board_support::HardwareCapabilities{
-        .max_current_A_import = 32.0,
-        .min_current_A_import = 6.0,
-        .max_phase_count_import = 3,
-        .min_phase_count_import = 1,
-        .max_current_A_export = 16.0,
-        .min_current_A_export = 0.0,
-        .max_phase_count_export = 3,
-        .min_phase_count_export = 1,
-        .supports_changing_phases_during_charging = true,
-        .connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable};
-    publish_capabilities(capabilities);
+    const auto default_capabilities = set_default_capabilities();
+    publish_capabilities(default_capabilities);
 }
 
 void evse_board_supportImpl::handle_enable(bool& value) {
@@ -61,7 +51,7 @@ void evse_board_supportImpl::handle_ac_switch_three_phases_while_charging(bool& 
     module_state.use_three_phases_confirmed = value;
 }
 
-void evse_board_supportImpl::handle_evse_replug(int& value) {
+void evse_board_supportImpl::handle_evse_replug(int& _) {
     EVLOG_error << "Replugging not supported";
 }
 
@@ -69,27 +59,30 @@ types::board_support_common::ProximityPilot evse_board_supportImpl::handle_ac_re
     using types::board_support_common::Ampacity;
     const auto pp_resistor = mod->get_module_state().simulation_data.pp_resistor;
 
-    if (pp_resistor < 80 || pp_resistor > 2460) {
+    if (pp_resistor < 80 or pp_resistor > 2460) {
         EVLOG_error << "PP resistor value " << pp_resistor << " Ohm seems to be outside the allowed range.";
         return {.ampacity = Ampacity::None};
-    } else if (pp_resistor > 936 && pp_resistor <= 2460) {
-        return {.ampacity = Ampacity::A_13};
-    } else if (pp_resistor > 308 && pp_resistor <= 936) {
-        return {.ampacity = Ampacity::A_20};
-    } else if (pp_resistor > 140 && pp_resistor <= 308) {
-        return {.ampacity = Ampacity::A_32};
-    } else if (pp_resistor > 80 && pp_resistor <= 140) {
-        return {.ampacity = Ampacity::A_63_3ph_70_1ph};
-    } else {
-        return {.ampacity = Ampacity::None};
     }
+    if (pp_resistor > 936 && pp_resistor <= 2460) {
+        return {.ampacity = Ampacity::A_13};
+    }
+    if (pp_resistor > 308 && pp_resistor <= 936) {
+        return {.ampacity = Ampacity::A_20};
+    }
+    if (pp_resistor > 140 && pp_resistor <= 308) {
+        return {.ampacity = Ampacity::A_32};
+    }
+    if (pp_resistor > 80 && pp_resistor <= 140) {
+        return {.ampacity = Ampacity::A_63_3ph_70_1ph};
+    }
+    return {.ampacity = Ampacity::None};
 }
 
 void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     // TODO: intentional?
 }
 
-void evse_board_supportImpl::pwm_on(double dutycycle) {
+void evse_board_supportImpl::pwm_on(const double dutycycle) const {
     auto& module_state = mod->get_module_state();
 
     if (dutycycle > 0.0) {
@@ -101,7 +94,7 @@ void evse_board_supportImpl::pwm_on(double dutycycle) {
     }
 }
 
-void evse_board_supportImpl::pwm_off() {
+void evse_board_supportImpl::pwm_off() const {
     auto& module_state = mod->get_module_state();
 
     module_state.pwm_duty_cycle = 1.0;
@@ -109,7 +102,7 @@ void evse_board_supportImpl::pwm_off() {
     module_state.pwm_error_f = false;
 }
 
-void evse_board_supportImpl::pwm_f() {
+void evse_board_supportImpl::pwm_f() const {
     auto& module_state = mod->get_module_state();
 
     module_state.pwm_duty_cycle = 1.0;
@@ -117,5 +110,16 @@ void evse_board_supportImpl::pwm_f() {
     module_state.pwm_error_f = true;
 }
 
-} // namespace board_support
-} // namespace module
+types::evse_board_support::HardwareCapabilities set_default_capabilities() {
+    return {.max_current_A_import = 32.0,
+            .min_current_A_import = 6.0,
+            .max_phase_count_import = 3,
+            .min_phase_count_import = 1,
+            .max_current_A_export = 16.0,
+            .min_current_A_export = 0.0,
+            .max_phase_count_export = 3,
+            .min_phase_count_export = 1,
+            .supports_changing_phases_during_charging = true,
+            .connector_type = types::evse_board_support::Connector_type::IEC62196Type2Cable};
+}
+} // namespace module::board_support

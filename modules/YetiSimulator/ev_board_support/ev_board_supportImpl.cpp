@@ -2,9 +2,9 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include "ev_board_supportImpl.hpp"
+#include <everest/logging.hpp>
 
-namespace module {
-namespace ev_board_support {
+namespace module::ev_board_support {
 
 void ev_board_supportImpl::init() {
 }
@@ -14,9 +14,9 @@ void ev_board_supportImpl::ready() {
 
 void ev_board_supportImpl::handle_enable(bool& value) {
     auto& module_state = mod->get_module_state();
-    if (module_state.simulation_enabled && !value) {
+    if (module_state.simulation_enabled and not value) {
         publish_bsp_event({types::board_support_common::Event::A});
-        mod->clear_data();
+        mod->reset_module_state();
     }
     module_state.simulation_enabled = value;
 }
@@ -27,23 +27,23 @@ void ev_board_supportImpl::handle_set_cp_state(types::ev_board_support::EvCpStat
 
     switch (cp_state) {
     case EvCpState::A:
-        simdata_setting.cp_voltage = 12.0;
+        simdata_setting.cp_voltage = cp_voltage_a;
         break;
     case EvCpState::B:
-        simdata_setting.cp_voltage = 9.0;
+        simdata_setting.cp_voltage = cp_voltage_b;
         break;
     case EvCpState::C:
-        simdata_setting.cp_voltage = 6.0;
+        simdata_setting.cp_voltage = cp_voltage_c;
         break;
     case EvCpState::D:
-        simdata_setting.cp_voltage = 3.0;
+        simdata_setting.cp_voltage = cp_voltage_d;
         break;
     case EvCpState::E:
         simdata_setting.error_e = true;
         break;
     default:
         break;
-    };
+    }
 }
 
 void ev_board_supportImpl::handle_allow_power_on(bool& value) {
@@ -78,5 +78,4 @@ void ev_board_supportImpl::handle_set_rcd_error(double& rcd_current_mA) {
     simdata_setting.rcd_current = rcd_current_mA;
 }
 
-} // namespace ev_board_support
-} // namespace module
+} // namespace module::ev_board_support

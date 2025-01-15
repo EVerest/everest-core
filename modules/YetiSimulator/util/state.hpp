@@ -8,10 +8,16 @@
 
 namespace module::state {
 
-struct PowermeterData {
-    PowermeterData();
-    int64_t time_stamp;
+struct TimeStamp {
+    TimeStamp();
+    TimeStamp& operator=(const double value);
 
+    operator int64_t() const;
+
+    int64_t time_stamp;
+};
+struct PowermeterData {
+    TimeStamp time_stamp;
     double totalWattHr = 0.0;
 
     double wattL1 = 0.0;
@@ -186,8 +192,6 @@ enum class State {
 };
 
 struct ModuleState {
-    ModuleState();
-
     PowermeterData powermeter_data;
     SimulationData simulation_data;
     SimdataSetting simdata_setting;
@@ -200,7 +204,7 @@ struct ModuleState {
     bool relais_on = false;
     State current_state = State::STATE_DISABLED;
     State last_state = State::STATE_DISABLED;
-    int64_t time_stamp;
+    TimeStamp time_stamp;
     bool use_three_phases = true;
     bool simplified_mode = false;
 
@@ -229,9 +233,11 @@ struct ModuleState {
     int ev_three_phases = 3;
 };
 
-std::string state_to_string(state::ModuleState& module_state);
+std::string state_to_string(const state::ModuleState& module_state);
 
 void to_json(nlohmann::json& json, const PowermeterData& powermeter_data);
+
+constexpr inline auto milliseconds_in_second = 1000;
 
 } // namespace module::state
 
