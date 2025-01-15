@@ -29,3 +29,5 @@ target_link_libraries(yeti_comms
         everest::framework
         everest::gpio
 )
+
+ev_register_library_target(yeti_comms)

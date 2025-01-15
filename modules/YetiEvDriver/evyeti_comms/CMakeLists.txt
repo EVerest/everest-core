@@ -32,3 +32,5 @@ target_link_libraries(evyeti_comms
         Pal::Sigslot
         everest::framework
 )
+
+ev_register_library_target(evyeti_comms)

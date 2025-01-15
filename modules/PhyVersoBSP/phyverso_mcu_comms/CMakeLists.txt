@@ -25,6 +25,8 @@ target_link_libraries(phyverso_config
         fmt::fmt
 )
 
+ev_register_library_target(phyverso_config)
+
 add_library(phyverso_mcu_comms STATIC)
 target_sources(phyverso_mcu_comms
     PRIVATE
@@ -49,3 +51,5 @@ target_link_libraries(phyverso_mcu_comms
         everest::framework
         phyverso_config
 )
+
+ev_register_library_target(phyverso_mcu_comms)

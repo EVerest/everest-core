@@ -32,3 +32,5 @@ target_link_libraries(umwc_comms
         everest::framework
         everest::gpio
 )
+
+ev_register_library_target(umwc_comms)

@@ -15,3 +15,5 @@ add_library(pn532_serial STATIC PN532Serial.cpp)
 
 target_include_directories(pn532_serial PUBLIC "${PROJECT_BINARY_DIR}")
 target_link_libraries(pn532_serial PRIVATE Threads::Threads everest::framework)
+
+ev_register_library_target(pn532_serial)
