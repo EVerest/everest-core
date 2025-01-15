@@ -29,3 +29,5 @@ target_link_libraries(phyverso_gpio
         phyverso_config
         fmt::fmt
 )
+
+ev_register_library_target(phyverso_gpio)

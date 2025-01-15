@@ -15,3 +15,5 @@ target_link_libraries(slac_io
     PUBLIC
         slac::slac
 )
+
+ev_register_library_target(slac_io)

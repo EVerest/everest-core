@@ -35,3 +35,5 @@ if(EVEREST_ENABLE_COMPILE_WARNINGS)
         PRIVATE ${EVEREST_COMPILE_OPTIONS}
     )
 endif()
+
+ev_register_library_target(auth_handler)

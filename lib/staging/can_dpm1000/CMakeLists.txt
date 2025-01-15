@@ -10,6 +10,8 @@ target_sources(can_dpm1000
         src/dpm1000.cpp
 )
 
+ev_register_library_target(can_dpm1000)
+
 if(BUILD_DEV_TESTS)
     add_subdirectory(tests)
 endif()

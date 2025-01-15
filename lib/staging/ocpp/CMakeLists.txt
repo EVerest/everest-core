@@ -28,6 +28,8 @@ target_link_libraries(ocpp_evse_security
         everest::framework
 )
 
+ev_register_library_target(ocpp_evse_security)
+
 
 # OCPP conversions
 
@@ -58,4 +60,6 @@ target_link_libraries(ocpp_conversions
         everest::ocpp
         everest::framework
 )
+
+ev_register_library_target(ocpp_conversions)
 

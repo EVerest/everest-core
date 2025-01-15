@@ -23,6 +23,8 @@ target_link_libraries(everest_staging_helpers
 
 add_dependencies(everest_staging_helpers generate_cpp_files)
 
+ev_register_library_target(everest_staging_helpers)
+
 if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()

@@ -17,3 +17,5 @@ target_link_libraries(slac_fsm_ev
         slac::slac
         fsm::fsm
 )
+
+ev_register_library_target(slac_fsm_ev)
