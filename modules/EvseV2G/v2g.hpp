@@ -194,8 +194,6 @@ struct v2g_context {
     struct event_base* event_base;
     pthread_t event_thread;
 
-    struct event* com_setup_timeout;
-
     const char* if_name;
     struct sockaddr_in6* local_tcp_addr;
     struct sockaddr_in6* local_tls_addr;

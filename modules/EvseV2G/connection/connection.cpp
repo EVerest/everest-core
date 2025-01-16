@@ -497,9 +497,6 @@ void connection_teardown(struct v2g_connection* conn) {
     /* init charging session */
     v2g_ctx_init_charging_session(conn->ctx, true);
 
-    /* stop timer */
-    stop_timer(&conn->ctx->com_setup_timeout, nullptr, conn->ctx);
-
     /* print dlink status */
     switch (conn->dlink_action) {
     case MQTT_DLINK_ACTION_ERROR:
@@ -861,8 +858,7 @@ static void* connection_handle_tls(void* data) {
 
             if (rv != 0) {
                 if (((rv != MBEDTLS_ERR_SSL_WANT_READ) && (rv != MBEDTLS_ERR_SSL_WANT_WRITE) &&
-                     (rv != MBEDTLS_ERR_SSL_TIMEOUT)) ||
-                    (NULL == conn->ctx->com_setup_timeout)) {
+                     (rv != MBEDTLS_ERR_SSL_TIMEOUT)) {
                     dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_handshake returned -0x%04x", -rv);
                     goto thread_exit;
                 }
