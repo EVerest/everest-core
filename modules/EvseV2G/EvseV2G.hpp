@@ -19,9 +19,7 @@
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 #include "v2g_ctx.hpp"
-#ifndef EVEREST_MBED_TLS
 #include <tls.hpp>
-#endif // EVEREST_MBED_TLS
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -74,9 +72,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-#ifndef EVEREST_MBED_TLS
     tls::Server tls_server;
-#endif // EVEREST_MBED_TLS
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
