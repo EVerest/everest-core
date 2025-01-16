@@ -847,9 +847,6 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
             goto error_out;
         }
 
-        // Convert the public key in the certificate to a mbed TLS ECDSA public key
-        // This also verifies that it's an ECDSA key and not an RSA key
-
         assert(conn->pubkey != nullptr);
         *conn->pubkey = certificate_public_key(contract_crt.get());
         err = (*conn->pubkey == nullptr) ? -1 : 0;

@@ -265,7 +265,6 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, const s
             conn->tls_connection->wait_for(read_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout, is_sequence_timeout() is used instead
             break;
         case tls::Connection::result_t::closed:
         default:
@@ -309,7 +308,6 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, std::s
             conn->tls_connection->wait_for(write_res, default_timeout_ms);
             break;
         case tls::Connection::result_t::timeout:
-            // the MBedTLS code loops on timeout
             break;
         case tls::Connection::result_t::closed:
         default:

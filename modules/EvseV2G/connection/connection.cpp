@@ -278,42 +278,37 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
 
         int num_of_bytes;
 
-        if (conn->is_tls_connection) {
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() not configured");
-            return -1;
-        } else {
-            /* use select for timeout handling */
-            struct timeval tv;
-            fd_set read_fds;
+        /* use select for timeout handling */
+        struct timeval tv;
+        fd_set read_fds;
 
-            FD_ZERO(&read_fds);
-            FD_SET(conn->conn.socket_fd, &read_fds);
+        FD_ZERO(&read_fds);
+        FD_SET(conn->conn.socket_fd, &read_fds);
 
-            tv.tv_sec = conn->ctx->network_read_timeout / 1000;
-            tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
+        tv.tv_sec = conn->ctx->network_read_timeout / 1000;
+        tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
 
-            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
+        num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
 
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
-
-            /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
-            if (num_of_bytes == 0) {
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
-            }
 
-            num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
+            return -1;
+        }
 
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
+        /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
+        if (num_of_bytes == 0) {
+            continue;
+        }
 
-                return -1;
-            }
+        num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
+
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
+                continue;
+
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -346,18 +341,13 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
     while (bytes_written < count) {
         int num_of_bytes;
 
-        if (conn->is_tls_connection) {
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_write() not configured");
-            return -1; // shouldn't be using this function
-        } else {
-            num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
+        num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
 
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
+                continue;
 
-                return -1;
-            }
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -494,20 +484,13 @@ static void* connection_server(void* data) {
         conn->ctx = ctx;
         conn->read = &connection_read;
         conn->write = &connection_write;
-
-        /* if this thread is the TLS thread, then connections are TLS secured;
-         * return code is non-zero if equal so align it
-         */
         conn->is_tls_connection = false;
 
         /* wait for an incoming connection */
-        if (conn->is_tls_connection) {
-        } else {
-            conn->conn.socket_fd = accept(ctx->tcp_socket, (struct sockaddr*)&addr, &addrlen);
-            if (conn->conn.socket_fd == -1) {
-                dlog(DLOG_LEVEL_ERROR, "Accept(tcp) failed: %s", strerror(errno));
-                continue;
-            }
+        conn->conn.socket_fd = accept(ctx->tcp_socket, (struct sockaddr*)&addr, &addrlen);
+        if (conn->conn.socket_fd == -1) {
+            dlog(DLOG_LEVEL_ERROR, "Accept(tcp) failed: %s", strerror(errno));
+            continue;
         }
 
         if (inet_ntop(AF_INET6, &addr, client_addr, sizeof(client_addr)) != NULL) {
@@ -521,8 +504,7 @@ static void* connection_server(void* data) {
         // store the port to create a udp socket
         conn->ctx->udp_port = ntohs(addr.sin6_port);
 
-        if (pthread_create(&conn->thread_id, &attr,
-                           conn->is_tls_connection ? connection_handle_tls : connection_handle_tcp, conn) != 0) {
+        if (pthread_create(&conn->thread_id, &attr, connection_handle_tcp, conn) != 0) {
             dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
             continue;
         }
