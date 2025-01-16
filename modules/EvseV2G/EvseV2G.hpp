@@ -49,7 +49,7 @@ public:
         mqtt(mqtt_provider),
         p_charger(std::move(p_charger)),
         r_security(std::move(r_security)),
-        config(config) {};
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
