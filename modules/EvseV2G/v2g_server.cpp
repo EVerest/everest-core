@@ -9,10 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef EVEREST_MBED_TLS
-#include <mbedtls/base64.h>
-#endif // EVEREST_MBED_TLS
-
 #include <cbv2g/app_handshake/appHand_Decoder.h>
 #include <cbv2g/app_handshake/appHand_Encoder.h>
 #include <cbv2g/common/exi_basetypes.h>
@@ -120,27 +116,10 @@ static void publish_var_V2G_Message(v2g_connection* conn, bool is_req) {
 
     std::string EXI_Base64;
 
-#ifdef EVEREST_MBED_TLS
-    unsigned char* base64_buffer = NULL;
-    size_t base64_buffer_len = 0;
-    mbedtls_base64_encode(NULL, 0, &base64_buffer_len, conn->buffer, (size_t)conn->payload_len + V2GTP_HEADER_LENGTH);
-    base64_buffer = static_cast<unsigned char*>(malloc(base64_buffer_len));
-    if ((base64_buffer == NULL) || (mbedtls_base64_encode(base64_buffer, base64_buffer_len, &base64_buffer_len,
-                                                          static_cast<unsigned char*>(conn->buffer),
-                                                          (size_t)conn->payload_len + V2GTP_HEADER_LENGTH) != 0)) {
-        dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
-    }
-
-    EXI_Base64 = std::string(reinterpret_cast<char const*>(base64_buffer), base64_buffer_len);
-    if (base64_buffer != NULL) {
-        free(base64_buffer);
-    }
-#else
     EXI_Base64 = openssl::base64_encode(conn->buffer, conn->payload_len + V2GTP_HEADER_LENGTH);
     if (EXI_Base64.size() == 0) {
         dlog(DLOG_LEVEL_WARNING, "Unable to base64 encode EXI buffer");
     }
-#endif // EVEREST_MBED_TLS
 
     v2g_message.exi_base64 = EXI_Base64;
     v2g_message.id = get_v2g_message_id(conn->ctx->current_v2g_msg, conn->ctx->selected_protocol, is_req);

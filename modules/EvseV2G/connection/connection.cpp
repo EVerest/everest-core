@@ -26,52 +26,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef EVEREST_MBED_TLS
-#include <mbedtls/debug.h>
-#include <mbedtls/error.h>
-#include <mbedtls/sha1.h>
-#include <mbedtls/ssl_cache.h>
-#include <mbedtls/ssl_internal.h>
-#endif // EVEREST_MBED_TLS
-
 #define DEFAULT_SOCKET_BACKLOG        3
 #define DEFAULT_TCP_PORT              61341
 #define DEFAULT_TLS_PORT              64109
 #define ERROR_SESSION_ALREADY_STARTED 2
-
-#ifdef EVEREST_MBED_TLS
-#define MBEDTLS_DEBUG_LEVEL_VERBOSE  4
-#define MBEDTLS_DEBUG_LEVEL_NO_DEBUG 0
-
-mbedtls_ctr_drbg_context ctr_drbg;
-mbedtls_entropy_context entropy;
-#if defined(MBEDTLS_SSL_CACHE_C)
-mbedtls_ssl_cache_context cache;
-#endif
-
-static const int v2g_cipher_suites[] = {MBEDTLS_TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-                                        MBEDTLS_TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256, 0};
-
-/* list of allowed hashes which our TLS server supports; this list is
- * copied from mbedtls' ssl_preset_default_hashes (ssl_tls.c) with one
- * nitpick: the MBEDTLS_MD_SHA1 is enabled unconditionally since TLSv1.2
- * uses it as fallback when the client don't send 'signature_algorithms'
- * extension; this means that we require this algo and including it without
- * define results in a compile error in case we try to build against
- * a library where it is disabled (by error).
- */
-static const int v2g_ssl_allowed_hashes[] = {
-#if defined(MBEDTLS_SHA512_C)
-    MBEDTLS_MD_SHA512,
-#if !defined(MBEDTLS_SHA512_NO_SHA384)
-    MBEDTLS_MD_SHA384,
-#endif
-#endif
-#if defined(MBEDTLS_SHA256_C)
-    MBEDTLS_MD_SHA256, MBEDTLS_MD_SHA224,
-#endif
-    MBEDTLS_MD_SHA1,   MBEDTLS_MD_NONE};
-#endif // EVEREST_MBED_TLS
 
 /*!
  * \brief connection_create_socket This function creates a tcp/tls socket
@@ -137,46 +95,6 @@ static int connection_create_socket(struct sockaddr_in6* sockaddr) {
     return s;
 }
 
-static int connection_ssl_initialize() {
-#ifdef EVEREST_MBED_TLS
-    unsigned char random_data[64];
-    int rv;
-
-    if (generate_random_data(random_data, sizeof(random_data)) != 0) {
-        dlog(DLOG_LEVEL_ERROR, "generate_random_data failed: %s", strerror(errno));
-        return -1;
-    }
-
-    mbedtls_entropy_init(&entropy);
-
-    if ((rv = mbedtls_entropy_gather(&entropy)) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_entropy_gather returned -0x%04x - %s", -rv, error_buf);
-        mbedtls_entropy_free(&entropy);
-        return -1;
-    }
-
-    mbedtls_ctr_drbg_init(&ctr_drbg);
-
-    if ((rv = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, random_data, sizeof(random_data))) !=
-        0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_ctr_drbg_seed returned -0x%04x - %s", -rv, error_buf);
-        mbedtls_ctr_drbg_free(&ctr_drbg);
-        mbedtls_entropy_free(&entropy);
-        return -1;
-    }
-
-#if defined(MBEDTLS_SSL_CACHE_C)
-    mbedtls_ssl_cache_init(&cache);
-#endif
-#endif // EVEREST_MBED_TLS
-
-    return 0;
-}
-
 /*!
  * \brief check_interface This function checks the interface name. The interface name is
  * configured automatically in case it is pre-initialized to “auto.
@@ -222,15 +140,6 @@ int connection_init(struct v2g_context* v2g_ctx) {
         v2g_ctx->local_tcp_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tcp_addr)));
         if (v2g_ctx->local_tcp_addr == nullptr) {
             dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TCP address");
-            return -1;
-        }
-    }
-
-    if (v2g_ctx->tls_security != TLS_SECURITY_PROHIBIT) {
-        v2g_ctx->local_tls_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tls_addr)));
-        connection_ssl_initialize();
-        if (!v2g_ctx->local_tls_addr) {
-            dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TLS address");
             return -1;
         }
     }
@@ -309,11 +218,9 @@ int connection_init(struct v2g_context* v2g_ctx) {
         break;
     }
 
-#ifndef EVEREST_MBED_TLS
     if (v2g_ctx->local_tls_addr) {
         return tls::connection_init(v2g_ctx);
     }
-#endif // EVEREST_MBED_TLS
     return 0;
 }
 
@@ -358,61 +265,37 @@ ssize_t connection_read(struct v2g_connection* conn, unsigned char* buf, size_t 
 
         int num_of_bytes;
 
-        if (conn->is_tls_connection) {
-#ifdef EVEREST_MBED_TLS
-            num_of_bytes = mbedtls_ssl_read(&conn->conn.ssl.ssl_context, &buf[bytes_read], count - bytes_read);
+        /* use select for timeout handling */
+        struct timeval tv;
+        fd_set read_fds;
 
-            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE ||
-                num_of_bytes == MBEDTLS_ERR_SSL_TIMEOUT)
+        FD_ZERO(&read_fds);
+        FD_SET(conn->conn.socket_fd, &read_fds);
+
+        tv.tv_sec = conn->ctx->network_read_timeout / 1000;
+        tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
+
+        num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
+
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
 
-            if (num_of_bytes == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || num_of_bytes == MBEDTLS_ERR_SSL_CONN_EOF)
-                return bytes_read;
-
-            if (num_of_bytes < 0) {
-                char error_buf[100];
-                mbedtls_strerror(num_of_bytes, error_buf, sizeof(error_buf));
-                dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() error: %s", error_buf);
-
-                return -1;
-            }
-#else
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_read() not configured");
             return -1;
-#endif // EVEREST_MBED_TLS
-        } else {
-            /* use select for timeout handling */
-            struct timeval tv;
-            fd_set read_fds;
+        }
 
-            FD_ZERO(&read_fds);
-            FD_SET(conn->conn.socket_fd, &read_fds);
+        /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
+        if (num_of_bytes == 0) {
+            continue;
+        }
 
-            tv.tv_sec = conn->ctx->network_read_timeout / 1000;
-            tv.tv_usec = (conn->ctx->network_read_timeout % 1000) * 1000;
+        num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
 
-            num_of_bytes = select(conn->conn.socket_fd + 1, &read_fds, nullptr, nullptr, &tv);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
-
-            /* Zero fds ready means we timed out, so let upper loop check our sequence timeout */
-            if (num_of_bytes == 0) {
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
-            }
 
-            num_of_bytes = (int)read(conn->conn.socket_fd, &buf[bytes_read], count - bytes_read);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -445,28 +328,13 @@ ssize_t connection_write(struct v2g_connection* conn, unsigned char* buf, size_t
     while (bytes_written < count) {
         int num_of_bytes;
 
-        if (conn->is_tls_connection) {
-#ifdef EVEREST_MBED_TLS
-            num_of_bytes = mbedtls_ssl_write(&conn->conn.ssl.ssl_context, &buf[bytes_written], count - bytes_written);
+        num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
 
-            if (num_of_bytes == MBEDTLS_ERR_SSL_WANT_READ || num_of_bytes == MBEDTLS_ERR_SSL_WANT_WRITE)
+        if (num_of_bytes == -1) {
+            if (errno == EINTR)
                 continue;
 
-            if (num_of_bytes < 0)
-                return -1;
-#else
-            dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_write() not configured");
-            return -1; // shouldn't be using this function
-#endif // EVEREST_MBED_TLS
-        } else {
-            num_of_bytes = (int)write(conn->conn.socket_fd, &buf[bytes_written], count - bytes_written);
-
-            if (num_of_bytes == -1) {
-                if (errno == EINTR)
-                    continue;
-
-                return -1;
-            }
+            return -1;
         }
 
         /* return when peer closed connection */
@@ -512,194 +380,6 @@ void connection_teardown(struct v2g_connection* conn) {
         break;
     }
 }
-
-#ifdef EVEREST_MBED_TLS
-static bool connection_init_tls(struct v2g_context* ctx) {
-
-    int rv;
-    uint8_t max_idx = 0;
-
-    std::string v2g_root_cert_path =
-        ctx->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
-
-    const auto key_pair_response = ctx->r_security->call_get_leaf_certificate_info(
-        types::evse_security::LeafCertificateType::V2G, types::evse_security::EncodingFormat::PEM, false);
-    if (key_pair_response.status != types::evse_security::GetCertificateInfoStatus::Accepted) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to read key/pair!");
-        return false;
-    }
-
-    std::string evse_leaf_cert_path = key_pair_response.info.value().certificate.value();
-    std::string evse_leaf_key_path = key_pair_response.info.value().key;
-    std::string secc_leaf_key_password = key_pair_response.info.value().password.value_or("");
-
-    uint8_t num_of_v2g_root = 1;
-    mbedtls_x509_crt* root_crt = &ctx->v2g_root_crt;
-
-    /* Allocate and initialize TLS certificate and key array*/
-    ctx->num_of_tls_crt = 1;
-    ctx->evseTlsCrt = static_cast<mbedtls_x509_crt*>(malloc(sizeof(mbedtls_x509_crt) * (num_of_v2g_root)));
-    ctx->evse_tls_crt_key = static_cast<mbedtls_pk_context*>(malloc(sizeof(mbedtls_pk_context) * (num_of_v2g_root)));
-
-    for (uint8_t idx = 0; idx < ctx->num_of_tls_crt; idx++) {
-        mbedtls_x509_crt_init(&ctx->evseTlsCrt[idx]);
-        mbedtls_pk_init(&ctx->evse_tls_crt_key[idx]);
-    }
-
-    if (ctx->evseTlsCrt == nullptr || ctx->evse_tls_crt_key == nullptr) {
-        dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory!");
-        goto error_out;
-    }
-
-    /* Load supported v2g root certificates */
-    if ((rv = mbedtls_x509_crt_parse_file(root_crt, v2g_root_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse v2g root certificate %s (err: -0x%04x - %s)",
-             v2g_root_cert_path.c_str(), -rv, error_buf);
-        goto error_out;
-    }
-
-#ifdef MBEDTLS_SSL_TRUSTED_CA_KEYS
-    /* Configure trusted ca certificates */
-    unsigned char trusted_id[20];
-    mbedtls_sha1(root_crt->raw.p, root_crt->raw.len, trusted_id);
-    mbedtls_ssl_conf_trusted_authority(&ctx->ssl_config, trusted_id, sizeof(trusted_id),
-                                       MBEDTLS_SSL_CA_ID_TYPE_CERT_SHA1_HASH);
-#endif // MBEDTLS_SSL_TRUSTED_CA_KEYS
-
-    rv =
-        mbedtls_pk_parse_keyfile(&ctx->evse_tls_crt_key[0], evse_leaf_key_path.c_str(), secc_leaf_key_password.c_str());
-    if (rv != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_pk_parse_keyfile returned -0x%04x - %s", -rv, error_buf);
-        goto error_out;
-    }
-
-    if ((rv = mbedtls_x509_crt_parse_file(&ctx->evseTlsCrt[0], evse_leaf_cert_path.c_str())) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "Unable to parse evse-leaf certficate %s (err: -0x%04x - %s)",
-             evse_leaf_cert_path.c_str(), -rv, error_buf);
-        goto error_out;
-    }
-
-    if ((rv = mbedtls_ssl_conf_own_cert(&ctx->ssl_config, &ctx->evseTlsCrt[0], &ctx->evse_tls_crt_key[0])) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_conf_own_cert returned -0x%04x - %s", -rv, error_buf);
-        goto error_out;
-    }
-
-    if ((rv = mbedtls_ssl_config_defaults(&ctx->ssl_config, MBEDTLS_SSL_IS_SERVER, MBEDTLS_SSL_TRANSPORT_STREAM,
-                                          MBEDTLS_SSL_PRESET_DEFAULT)) != 0) {
-        char error_buf[100];
-        mbedtls_strerror(rv, error_buf, sizeof(error_buf));
-        dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_config_defaults returned -0x%04x - %s", -rv, error_buf);
-        goto error_out;
-    }
-
-    mbedtls_ssl_conf_authmode(&ctx->ssl_config, MBEDTLS_SSL_VERIFY_NONE);
-    mbedtls_ssl_conf_rng(&ctx->ssl_config, mbedtls_ctr_drbg_random, &ctr_drbg);
-#if defined(MBEDTLS_SSL_CACHE_C)
-    mbedtls_ssl_conf_session_cache(&ctx->ssl_config, &cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
-#endif
-    mbedtls_ssl_conf_ciphersuites(&ctx->ssl_config, v2g_cipher_suites);
-    mbedtls_ssl_conf_sig_hashes(&ctx->ssl_config, v2g_ssl_allowed_hashes);
-    mbedtls_ssl_conf_read_timeout(&ctx->ssl_config, ctx->network_read_timeout_tls);
-
-    return true;
-
-error_out:
-
-    return false;
-}
-
-/*!
- * \brief ssl_key_log_debug_callback This static function is the example code to produce key log file compatible with
- *  Wireshark from https://github.com/Lekensteyn/mbedtls/commit/68aea15833e1ac9290b8f52a4223fb4585fb3986.
- * \param ACtx is the context of the call back.
- * \param ALevel is the debug level.
- * \param AFile
- * \param ALine
- * \param AStr
- */
-static void ssl_key_log_debug_callback(void* ACtx, int ALevel, const char* AFile, int ALine, const char* AStr) {
-    keylogDebugCtx* ctx = static_cast<keylogDebugCtx*>(ACtx);
-
-    const auto add_to_udp_message = [&](const auto str) { ctx->udp_buffer.append(str); };
-
-    const auto add_character_to_udp_message = [&](const auto character) { ctx->udp_buffer.push_back(character); };
-
-    const auto send_udp_message = [&]() {
-        const auto message_size = ctx->udp_buffer.size();
-        const auto ret = send(ctx->udp_socket, ctx->udp_buffer.c_str(), message_size, 0);
-
-        if (ret != message_size) {
-            EVLOG_error << "send() failed: " << strerror(errno);
-        }
-    };
-
-    ((void)ALevel);
-    ((void)AFile);
-    ((void)ALine);
-
-    if (strstr(AStr, "dumping 'client hello, random bytes' (32 bytes)")) {
-        ctx->inClientRandom = true;
-        ctx->hexdumpLinesToProcess = 2;
-        const auto message = "CLIENT_RANDOM ";
-        fputs(message, ctx->file);
-        add_to_udp_message(message);
-        return;
-    } else if (strstr(AStr, "dumping 'master secret' (48 bytes)")) {
-        ctx->inMasterSecret = true;
-        ctx->hexdumpLinesToProcess = 3;
-        const auto message = ' ';
-        fputc(message, ctx->file);
-        add_character_to_udp_message(message);
-        return;
-    } else if (((ctx->inClientRandom == false) && (ctx->inMasterSecret == false)) ||
-               (ctx->hexdumpLinesToProcess == 0)) {
-        if ((ctx->inClientRandom == true) && (ctx->inMasterSecret == true)) {
-        }
-        return;
-    }
-    /* Parse "0000:  64 df 18 71 ca 4a 4b e4 63 87 2a ef 5f 29 ca ff  ..." */
-    AStr = strstr(AStr, ":  ");
-    if (!AStr || std::string(AStr).size() < 3 + 3 * 16) {
-        goto reset; /* not the expected hex buffer */
-    }
-    AStr += 3; /* skip over ":  " */
-    /* Process sequences of "hh " */
-    for (int i = 0; i < (3 * 16); i += 3) {
-        char c1 = AStr[i], c2 = AStr[i + 1], c3 = AStr[i + 2];
-        if ((('0' <= c1 && c1 <= '9') || ('a' <= c1 && c1 <= 'f')) &&
-            (('0' <= c2 && c2 <= '9') || ('a' <= c2 && c2 <= 'f')) && c3 == ' ') {
-            fputc(c1, ctx->file);
-            add_character_to_udp_message(c1);
-            fputc(c2, ctx->file);
-            add_character_to_udp_message(c2);
-        } else {
-            goto reset; /* unexpected non-hex char */
-        }
-    }
-    if (((--ctx->hexdumpLinesToProcess) != 0) || (false == ctx->inMasterSecret)) {
-        return; /* line is not yet finished. */
-    }
-reset:
-    ctx->hexdumpLinesToProcess = 0;
-    ctx->inClientRandom = false;
-    ctx->inMasterSecret = false;
-
-    const auto message = '\n';
-    fputc(message, ctx->file); /* finish key log line */
-    fflush(ctx->file);
-
-    send_udp_message();
-    ctx->udp_buffer = {};
-}
-#endif // EVEREST_MBED_TLS
 
 /**
  * This is the 'main' function of a thread, which handles a TCP connection.
@@ -858,7 +538,8 @@ static void* connection_handle_tls(void* data) {
 
             if (rv != 0) {
                 if (((rv != MBEDTLS_ERR_SSL_WANT_READ) && (rv != MBEDTLS_ERR_SSL_WANT_WRITE) &&
-                     (rv != MBEDTLS_ERR_SSL_TIMEOUT)) {
+                     (rv != MBEDTLS_ERR_SSL_TIMEOUT)) ||
+                    (NULL == conn->ctx->com_setup_timeout)) {
                     dlog(DLOG_LEVEL_ERROR, "mbedtls_ssl_handshake returned -0x%04x", -rv);
                     goto thread_exit;
                 }
@@ -969,36 +650,13 @@ static void* connection_server(void* data) {
         conn->ctx = ctx;
         conn->read = &connection_read;
         conn->write = &connection_write;
-
-        /* if this thread is the TLS thread, then connections are TLS secured;
-         * return code is non-zero if equal so align it
-         */
-#ifdef EVEREST_MBED_TLS
-        conn->is_tls_connection = !!pthread_equal(pthread_self(), ctx->tls_thread);
-#else
         conn->is_tls_connection = false;
-#endif // EVEREST_MBED_TLS
 
         /* wait for an incoming connection */
-        if (conn->is_tls_connection) {
-#ifdef EVEREST_MBED_TLS
-            conn->conn.ssl.ssl_config = &ctx->ssl_config;
-
-            /* at the moment, this is simply resetting the fd to -1; kept for upwards compatibility */
-            mbedtls_net_init(&conn->conn.ssl.tls_client_fd);
-
-            conn->conn.ssl.tls_client_fd.fd = accept(ctx->tls_socket.fd, (struct sockaddr*)&addr, &addrlen);
-            if (conn->conn.ssl.tls_client_fd.fd == -1) {
-                dlog(DLOG_LEVEL_ERROR, "Accept(tls) failed: %s", strerror(errno));
-                continue;
-            }
-#endif // EVEREST_MBED_TLS
-        } else {
-            conn->conn.socket_fd = accept(ctx->tcp_socket, (struct sockaddr*)&addr, &addrlen);
-            if (conn->conn.socket_fd == -1) {
-                dlog(DLOG_LEVEL_ERROR, "Accept(tcp) failed: %s", strerror(errno));
-                continue;
-            }
+        conn->conn.socket_fd = accept(ctx->tcp_socket, (struct sockaddr*)&addr, &addrlen);
+        if (conn->conn.socket_fd == -1) {
+            dlog(DLOG_LEVEL_ERROR, "Accept(tcp) failed: %s", strerror(errno));
+            continue;
         }
 
         if (inet_ntop(AF_INET6, &addr, client_addr, sizeof(client_addr)) != NULL) {
@@ -1012,8 +670,7 @@ static void* connection_server(void* data) {
         // store the port to create a udp socket
         conn->ctx->udp_port = ntohs(addr.sin6_port);
 
-        if (pthread_create(&conn->thread_id, &attr,
-                           conn->is_tls_connection ? connection_handle_tls : connection_handle_tcp, conn) != 0) {
+        if (pthread_create(&conn->thread_id, &attr, connection_handle_tcp, conn) != 0) {
             dlog(DLOG_LEVEL_ERROR, "pthread_create() failed: %s", strerror(errno));
             continue;
         }
@@ -1046,11 +703,7 @@ int connection_start_servers(struct v2g_context* ctx) {
     }
 
     if (ctx->tls_socket.fd != -1) {
-#ifdef EVEREST_MBED_TLS
-        rv = pthread_create(&ctx->tls_thread, NULL, connection_server, ctx);
-#else
         rv = tls::connection_start_server(ctx);
-#endif // EVEREST_MBED_TLS
         if (rv != 0) {
             if (tcp_started) {
                 pthread_cancel(ctx->tcp_thread);
