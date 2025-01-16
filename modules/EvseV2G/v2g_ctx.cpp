@@ -132,7 +132,6 @@ void v2g_ctx_init_charging_state(struct v2g_context* const ctx, bool is_connecti
     ctx->selected_protocol = V2G_UNKNOWN_PROTOCOL;
     ctx->session.renegotiation_required = false;
     ctx->session.is_charging = false;
-
 }
 
 void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
