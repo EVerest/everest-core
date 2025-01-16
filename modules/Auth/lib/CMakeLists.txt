@@ -1,6 +1,7 @@
 set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/modules/Auth/include")
 
 add_library(auth_handler STATIC)
+ev_register_library_target(auth_handler)
 
 target_sources(auth_handler PRIVATE
     AuthHandler.cpp
@@ -35,5 +36,3 @@ if(EVEREST_ENABLE_COMPILE_WARNINGS)
         PRIVATE ${EVEREST_COMPILE_OPTIONS}
     )
 endif()
-
-ev_register_library_target(auth_handler)

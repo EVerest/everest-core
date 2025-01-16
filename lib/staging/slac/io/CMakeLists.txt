@@ -1,5 +1,6 @@
 add_library(slac_io)
 add_library(slac::io ALIAS slac_io)
+ev_register_library_target(slac_io)
 
 target_include_directories(slac_io
     PUBLIC
@@ -15,5 +16,3 @@ target_link_libraries(slac_io
     PUBLIC
         slac::slac
 )
-
-ev_register_library_target(slac_io)

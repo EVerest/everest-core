@@ -2,6 +2,7 @@
 
 add_library(everest_staging_helpers STATIC)
 add_library(everest::staging::helpers ALIAS everest_staging_helpers)
+ev_register_library_target(everest_staging_helpers)
 
 target_sources(everest_staging_helpers
     PRIVATE
@@ -31,8 +32,6 @@ target_link_libraries(everest_staging_helpers
 )
 
 add_dependencies(everest_staging_helpers generate_cpp_files)
-
-ev_register_library_target(everest_staging_helpers)
 
 if (BUILD_TESTING)
     add_subdirectory(tests)

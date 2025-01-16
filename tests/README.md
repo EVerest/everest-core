@@ -90,3 +90,96 @@ For the moment, there is a *workaround available:* Use a new test-set (another p
 **Cause:** Currently there is a bug in the EVSE manager implementation in everest-core, causing a race-condition between resetting the "amount charged" parameter and the event reporting for a "*transaction_finished*" event. Sometimes it reports correctly, other times it reports a value of 0.0kWh charged.
 
 **Solution:** This problem is known and a fix is under way. For the moment, just re-run the test. Usually, this should then produce a passing result.
+
+
+# Code coverage
+
+To activate code coverage, you need to configure the project with
+`BUILD_TESTING` enabled.  Furthermore, `gcovr` needs to be installed.
+
+## Generating coverage reports
+
+Before generating a coverage report you will typically need to run some
+executables or tests, which contain or link to code, that generates coverage
+statistics.
+
+After that, just run:
+```bash
+cmake --build build --target everest-core_create_coverage
+# or ninja -C build everest-core_create_coverage
+```
+
+The generated `index.html` will be available at
+`build/everest-core_create_coverage/index.html`.
+
+**Note**: the code coverage for a specific compilation unit (cpp file) will
+accumulate if you run multiple executables that use this compilation unit.  The
+code coverage is recorded in `gcda` files.  If you want to get separate coverage
+reports for different executables, these `gcda` files need to be deleted for
+each new *run*.
+
+
+## Adding code/targets to code coverage
+
+By default, all *cpp* modules are added automatically to a list of targets that
+will be compiled with coverage flags.  If additional libraries or tests need to
+be added to code coverage, you should use the following functions in your
+*cmake* code:
+```cmake
+ev_register_library_target(LIBRARY_TARGET_NAME)
+ev_register_test_target(TEST_TARGET_NAME)
+```
+
+## Conventions
+
+For the `ev_register_*_target` functions, call these function close to their
+scope of detail - meaning near `add_library` for libraries like:
+
+```cmake
+add_library(evse_security_conversions STATIC)
+add_library(everest::evse_security_conversions ALIAS evse_security_conversions)
+ev_register_library_target(evse_security_conversions)
+```
+
+and near `add_test` for tests like:
+
+```cmake
+add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+ev_register_test_target(${TLS_GTEST_NAME})
+```
+
+and not scattered around.
+
+---
+
+By default, all directories ending with `tests` will be excluded from the code
+coverage report (because we're not interested in the code coverage of the unit
+test code itself).  So when adding unit tests for code coverage, place them into
+a `tests` folder.
+
+## Troubleshooting
+
+`no_working_dir_found`: while developing code (e.g. an `example.cpp`), it might
+happen, that the created object file `example.cpp.o` will get out of sync with
+its corresponding `example.cpp.gcno` (`gcov` note file) and/or
+`example.cpp.gcda` (`gcov` data file).  When creating a report, `gcovr` will
+complain, because it can't find the corresponding `example.cpp.o` file for a
+stale `example.cpp.gcno` file.  It might also not be able to find the
+`example.cpp.gcno` file for a stale `example.cpp.gcda` file or an older `gcda`
+file might got out of sync due to a newer `gcno` file and so forth.  Do not
+simply ignore these warnings/errors, as the report might not be accurate
+anymore.
+
+The current sledgehammer approach is to manually delete the files in question or
+just do (**be careful** with `rm` commands and wildcards!):
+```bash
+find ./build -name "*.gcno" | xargs rm
+find ./build -name "*.gcda" | xargs rm
+ninja -C build clean
+ninja -C build
+# run code
+# create coverage
+```
+
+We're currently trying to write some tooling around this to make this more
+usable.
