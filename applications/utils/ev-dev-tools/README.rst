@@ -193,3 +193,68 @@ Auto generating NodeJS modules
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **tbd**
+
+
+
+======================
+EVerest code coverage
+======================
+
+This python project currently consists of the following packages
+
+- `ev-coverage`: EVerest module auto generation
+
+Install
+-------
+To install `ev-coverage`:
+
+    python3 -m pip install .
+
+ev-coverage
+-----------
+
+Script to be able to remove unnecessary files that are used for coverage information.
+
+| When compiling the C++ code, for each class a `.o` object file is created.
+| When compiling with coverage flags, the compiler also creates `.gcno` files.
+| When running the executable, it will write the coverage information to `.gcda` files.
+| `.gcov` files are created when the gcovr is running. This will read the `.gcda` files combined with the `.gcno` files
+  and creates the `.gcov` files and depending on the options also xml and html files containing readable coverage
+  information.
+
+This script is doing two things:
+- It removes all gcda files.
+- It searches for dangling / orphaned object files and removes them. It will also remove the dangling `.gcno` files.
+
+Dangling / orphaned object files can exist when switching branches and in the old branch was a file that does not exist
+in the new branch. When running gcovr in the new branch, it will fail with a file not found error. After running this
+script and re-running the unit tests and gcovr, this should not occur anymore.
+
+Note: this script can use llvm-dwarfdump or gdb. gdb is very slow, so if you want a better experience, just install
+      llvm-dwarfdump
+
+
+Usage:
+
+    ev-coverage remove_files --build-dir <build-dir>
+
+Required options:
+- --build-dir
+  Build directory. In some subdirectory of this build dir, the object, gcno and gcda files are present.
+
+Other options:
+- --version
+  Only show version of the tool and quit
+- --dry-run
+  Does not remove any files
+- --summary
+  Show a summary of removed files
+- --silent
+  Suppress all output, summary is still shown when requested
+
+
+Example usage:
+
+For only removing the files from libocpp built from the everest repo:
+
+    ev-coverage remove_files --build-dir=/data/work/pionix/workspace/everest-core/build/_deps/libocpp-build
