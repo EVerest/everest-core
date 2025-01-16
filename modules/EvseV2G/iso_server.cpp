@@ -578,7 +578,6 @@ static enum v2g_event handle_iso_session_setup(struct v2g_connection* conn) {
 
     dlog(DLOG_LEVEL_INFO, "SessionSetupReq.EVCCID: %s", std::string(buffer).size() ? buffer : "(zero length provided)");
 
-
     /* [V2G2-756]: If the SECC receives a SessionSetupReq including a SessionID value which is not
      * equal to zero (0) and not equal to the SessionID value stored from the preceding V2G
      * Communication Session, it shall send a SessionID value in the SessionSetupRes message that is
