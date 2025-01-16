@@ -67,20 +67,6 @@ void populate_physical_value_float(struct iso2_PhysicalValueType* pv, float valu
     pv->Value = value;
 }
 
-void setMinPhysicalValue(struct iso2_PhysicalValueType* ADstPhyValue, const struct iso2_PhysicalValueType* ASrcPhyValue,
-                         unsigned int* AIsUsed) {
-
-    if (((NULL != AIsUsed) && (0 == *AIsUsed)) || ((pow(10, ASrcPhyValue->Multiplier) * ASrcPhyValue->Value) <
-                                                   (pow(10, ADstPhyValue->Multiplier) * ADstPhyValue->Value))) {
-        ADstPhyValue->Multiplier = ASrcPhyValue->Multiplier;
-        ADstPhyValue->Value = ASrcPhyValue->Value;
-
-        if (NULL != AIsUsed) {
-            *AIsUsed = 1;
-        }
-    }
-}
-
 static void* v2g_ctx_eventloop(void* data) {
     struct v2g_context* ctx = static_cast<struct v2g_context*>(data);
 
