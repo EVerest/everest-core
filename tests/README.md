@@ -173,8 +173,8 @@ anymore.
 The current sledgehammer approach is to manually delete the files in question or
 just do (**be careful** with `rm` commands and wildcards!):
 ```bash
-find ./build -name "*.gcno" | xargs rm
-find ./build -name "*.gcda" | xargs rm
+find ./build -name "*.gcno" -delete
+find ./build -name "*.gcda" -delete
 ninja -C build clean
 ninja -C build
 # run code
