@@ -6,6 +6,7 @@ set_target_properties(everest_targets
     PROPERTIES
         LIBRARIES ""
         MODULES ""
+        TESTS ""
 )
 
 function(_ev_register_target TYPE NAME)
@@ -26,6 +27,10 @@ endfunction()
 
 function(ev_register_module_target NAME)
     _ev_register_target(MODULES ${NAME})
+endfunction()
+
+function(ev_register_test_target NAME)
+    _ev_register_target(TESTS ${NAME})
 endfunction()
 
 function(ev_get_targets NAME TYPE)

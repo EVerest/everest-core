@@ -1,5 +1,6 @@
 add_library(tls STATIC)
 add_library(everest::tls ALIAS tls)
+ev_register_library_target(tls)
 
 find_package(OpenSSL 3)
 
@@ -35,5 +36,3 @@ target_link_libraries(tls
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
 endif()
-
-ev_register_library_target(tls)
