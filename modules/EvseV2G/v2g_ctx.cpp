@@ -361,9 +361,6 @@ free_out:
     return NULL;
 }
 
-static void v2g_ctx_free_tls(struct v2g_context* ctx) {
-}
-
 void v2g_ctx_free(struct v2g_context* ctx) {
     if (ctx->event_base) {
         event_base_loopbreak(ctx->event_base);
@@ -372,8 +369,6 @@ void v2g_ctx_free(struct v2g_context* ctx) {
 
     pthread_cond_destroy(&ctx->mqtt_cond);
     pthread_mutex_destroy(&ctx->mqtt_lock);
-
-    v2g_ctx_free_tls(ctx);
 
     free(ctx->local_tls_addr);
     ctx->local_tls_addr = NULL;

@@ -95,10 +95,6 @@ static int connection_create_socket(struct sockaddr_in6* sockaddr) {
     return s;
 }
 
-static int connection_ssl_initialize() {
-    return 0;
-}
-
 /*!
  * \brief check_interface This function checks the interface name. The interface name is
  * configured automatically in case it is pre-initialized to “auto.
@@ -144,15 +140,6 @@ int connection_init(struct v2g_context* v2g_ctx) {
         v2g_ctx->local_tcp_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tcp_addr)));
         if (v2g_ctx->local_tcp_addr == nullptr) {
             dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TCP address");
-            return -1;
-        }
-    }
-
-    if (v2g_ctx->tls_security != TLS_SECURITY_PROHIBIT) {
-        v2g_ctx->local_tls_addr = static_cast<sockaddr_in6*>(calloc(1, sizeof(*v2g_ctx->local_tls_addr)));
-        connection_ssl_initialize();
-        if (!v2g_ctx->local_tls_addr) {
-            dlog(DLOG_LEVEL_ERROR, "Failed to allocate memory for TLS address");
             return -1;
         }
     }
@@ -442,13 +429,6 @@ static void* connection_handle_tcp(void* data) {
 
     free(conn);
 
-    return nullptr;
-}
-
-/**
- * This is the 'main' function of a thread, which handles a TLS connection.
- */
-static void* connection_handle_tls(void* data) {
     return nullptr;
 }
 
