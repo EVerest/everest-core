@@ -70,6 +70,36 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
     return external_limits;
 }
 
+types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
+    const auto timestamp = Everest::Date::to_rfc3339(date::utc_clock::now());
+    types::energy::ExternalLimits external_limits;
+    types::energy::ScheduleReqEntry target_entry;
+    target_entry.timestamp = timestamp;
+
+    types::energy::ScheduleReqEntry zero_entry;
+    zero_entry.timestamp = timestamp;
+    zero_entry.limits_to_leaves.total_power_W = 0;
+
+    // check if phases are 1 or 3, otherwise throw an exception
+    const auto is_valid = (phases == 1 || phases == 3);
+    if (is_valid) {
+        target_entry.limits_to_leaves.ac_max_phase_count = phases;
+        target_entry.limits_to_leaves.ac_min_phase_count = phases;
+        target_entry.limits_to_leaves.ac_max_current_A = std::fabs(amps);
+    } else {
+        std::string error_msg = "Invalid phase count " + std::to_string(phases);
+        throw std::out_of_range(error_msg);
+    }
+
+    if (amps > 0) {
+        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+    } else {
+        external_limits.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>(1, target_entry));
+        external_limits.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>(1, zero_entry));
+    }
+    return external_limits;
+}
+
 static void remove_error_from_list(std::vector<module::SessionInfo::Error>& list, const std::string& error_type) {
     list.erase(std::remove_if(list.begin(), list.end(),
                               [error_type](const module::SessionInfo::Error& err) { return err.type == error_type; }),
@@ -526,6 +556,37 @@ void API::init() {
                     evse_energy_sink.call_set_external_limits(external_limits);
                 } catch (const std::invalid_argument& e) {
                     EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                }
+            });
+
+            std::string cmd_set_limit_phases = cmd_base + "set_limit_amps_phases";
+
+            this->mqtt.subscribe(cmd_set_limit_phases, [&evse_manager_check = this->evse_manager_check,
+                                                        &evse_energy_sink = evse_energy_sink](const std::string& data) {
+                int32_t phases;
+                float amps;
+                try {
+                    auto arg = json::parse(data);
+                    if (arg.contains("amps") && arg.contains("phases")) {
+                        amps = arg.at("amps");
+                        phases = arg.at("phases");
+                    } else {
+                        EVLOG_error << "Invalid limit: Missing amps or phases.";
+                        return;
+                    }
+                } catch (const std::exception& e) {
+                    EVLOG_error << "set_limit_amps_phases: Cannot parse argument, command ignored: " << e.what();
+                    return;
+                }
+                try {
+                    const auto external_limits = get_external_limits(phases, amps);
+                    evse_manager_check.wait_ready();
+                    evse_energy_sink.call_set_external_limits(external_limits);
+                } catch (const std::invalid_argument& e) {
+                    EVLOG_warning << "Invalid limit: No conversion of given input could be performed.";
+                } catch (const std::out_of_range& e) {
+                    EVLOG_warning << "Invalid limit: Out of range "
+                                  << ", error: " << e.what();
                 }
             });
         } else {
