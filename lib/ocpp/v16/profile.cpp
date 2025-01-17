@@ -447,8 +447,9 @@ EnhancedChargingSchedule calculate_composite_schedule(std::vector<period_entry_t
             // there is a schedule to use
             const auto [limit, number_phases] =
                 convert_limit(chosen, selected_unit, default_number_phases, supply_voltage);
-            composite.chargingSchedulePeriod.push_back(
-                {elapsed_seconds(current, now), limit, number_phases, chosen->stack_level});
+            composite.chargingSchedulePeriod.push_back({elapsed_seconds(current, now), limit, number_phases,
+                                                        chosen->stack_level,
+                                                        selected_unit != chosen->charging_rate_unit});
             if (chosen->end < next_earliest) {
                 current = chosen->end;
             } else {

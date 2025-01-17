@@ -206,6 +206,7 @@ struct EnhancedChargingSchedulePeriod {
     float limit;
     std::optional<int32_t> numberPhases;
     int32_t stackLevel;
+    bool periodTransformed = false; // indicates that a period was transformed from chargingRateUnit
 };
 
 /// \brief Conversion from a given EnhancedChargingSchedulePeriod \p k to a given json object \p j
