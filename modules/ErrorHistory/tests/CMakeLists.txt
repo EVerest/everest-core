@@ -27,3 +27,4 @@ if(NOT DISABLE_EDM)
 endif()
 
 add_test(${TARGET_NAME} ${TARGET_NAME})
+ev_register_test_target(${TARGET_NAME})

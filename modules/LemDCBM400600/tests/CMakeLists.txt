@@ -31,6 +31,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+ev_register_test_target(${TEST_TARGET_NAME})
 
 ## Time sync helper test
 set(TEST_TARGET_NAME ${PROJECT_NAME}_lem_time_sync_helper_tests)
@@ -65,6 +66,7 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+ev_register_test_target(${TEST_TARGET_NAME})
 
 
 ## http client integration client
@@ -80,7 +82,7 @@ target_include_directories(integration_test_http_client PRIVATE
         ${GENERATED_INCLUDE_DIR}
 )
 
-#
+
 target_link_libraries(integration_test_http_client PRIVATE
         GTest::gmock_main
         everest::timer
