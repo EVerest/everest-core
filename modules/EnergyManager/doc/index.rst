@@ -509,6 +509,49 @@ The EnergyManager module implements an algorithm to distribute available power t
 * The algorithm prefers charging over discharging if the specified limits allow for both
 * It supports phase switching between single-phase and three-phase modes, optimizing power usage for low-demand scenarios if **switch_3ph1ph_while_charging_mode** is enabled.
 
+Phase Switching
+===============
+
+This module supports switching between single-phase (1ph) and three-phase (3ph) configurations during AC charging.
+
+.. warning::
+
+   Some vehicles (such as the first generation of Renault Zoe) may be permanently damaged when switching from 1ph to 3ph during
+   charging. Use at your own risk!
+
+To use this feature, several configurations must be enabled across different EVerest modules:
+
+- **EvseManager**: Adjust the following configuration options to your needs:
+  - ``switch_3ph1ph_delay_s``
+  - ``switch_3ph1ph_cp_state``
+- **Module implementing the `evse_board_support <../interfaces/evse_board_support.yaml>`_ interface:**
+  - Set ``supports_changing_phases_during_charging`` to ``true`` in the reported capabilities.
+  - Define the minimum number of phases as 1 and the maximum as 3.
+  - Ensure the ``ac_switch_three_phases_while_charging`` command is implemented.
+- **EnergyManager**: Adjust the ``switch_3ph1ph_while_charging_mode`` configuration option to your requirements.
+
+If all of these are properly configured, the EnergyManager will handle the 1ph/3ph switching. To enable this, an external limit must be set.
+There are two ways to configure the limit:
+
+1. **Watt-based limit (preferred option):** The limit is set in Watts (not Amperes), even though this involves AC charging. This provides
+the EnergyManager with the flexibility to decide when to switch. The limit can be defined by an OCPP schedule or through an additional
+EnergyNode.
+2. **Ampere-based limit:** The limit is defined in Amperes, along with a restriction on the number of phases (e.g., ``min_phase=1`` and
+``max_phase=1``). This enforces switching and allows external control over the switching time, but the EnergyManager loses its ability to
+choose when to switch.
+
+Best Practices
+^^^^^^^^^^^^^^
+
+In general, this feature works best in a configuration with 32A per phase and a Watt-based limit. In this setup, there is a hysteresis
+because the single-phase and three-phase charging intervals overlap:
+
+- Single-phase charging: 1.3kW to 7.4kW
+- Three-phase charging: 4.2kW to 22kW (or 11kW)
+
+If the intervals do not overlap, there is no hysteresis. Be aware that some vehicles support 32A on 1ph but are limited to 16A on 3ph.
+Others may be limited to 16A in 1ph mode, resulting in slower-than-expected charging in 1ph mode.
+
 Current Limitations
 -------------------
 
