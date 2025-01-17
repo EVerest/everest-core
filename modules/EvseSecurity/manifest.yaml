@@ -21,7 +21,7 @@ config:
   csms_leaf_cert_directory:
     description: Directory where CSMS leaf certificates are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
-    default: client/csms
+    default: ca/csms
   csms_leaf_key_directory:
     description: Directory where CSMS private keys are stored. If relative will be prefixed with everest prefix + etc/everest/certs. Otherwise absolute file path is used.
     type: string
