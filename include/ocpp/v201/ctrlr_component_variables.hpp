@@ -155,6 +155,7 @@ extern const ComponentVariable LocalAuthListCtrlrEnabled;
 extern const RequiredComponentVariable LocalAuthListCtrlrEntries;
 extern const RequiredComponentVariable ItemsPerMessageSendLocalList;
 extern const ComponentVariable LocalAuthListCtrlrStorage;
+extern const ComponentVariable LocalAuthListDisablePostAuthorize;
 extern const ComponentVariable MonitoringCtrlrAvailable;
 extern const ComponentVariable BytesPerMessageClearVariableMonitoring;
 extern const RequiredComponentVariable BytesPerMessageSetVariableMonitoring;

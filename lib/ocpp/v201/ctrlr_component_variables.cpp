@@ -826,6 +826,13 @@ const ComponentVariable LocalAuthListCtrlrStorage = {
         "Storage",
     }),
 };
+const ComponentVariable LocalAuthListDisablePostAuthorize = {
+    ControllerComponents::LocalAuthListCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "DisablePostAuthorize",
+    }),
+};
 const ComponentVariable MonitoringCtrlrAvailable = {
     ControllerComponents::MonitoringCtrlr,
     std::nullopt,
