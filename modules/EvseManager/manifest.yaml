@@ -176,7 +176,7 @@ config:
     default: 0.5
   hack_fix_hlc_integer_current_requests:
     description: >-
-      Some cars request only integer ampere values during DC charging. For low power DC charging that 
+      Some cars request only integer ampere values during DC charging. For low power DC charging that
       means that they charge a few hundred watts slower then needed. If enabled, this will charge at full power if the difference
       between EV requested current (integer) and HLC current limit is less then 1.0
     type: boolean
@@ -241,8 +241,8 @@ config:
     default: 10
   switch_3ph1ph_cp_state:
     description: >-
-      CP state to use for switching. 
-      WARNING: Some EVs may be permanently destroyed when switching from 1ph to 3ph. 
+      CP state to use for switching.
+      WARNING: Some EVs may be permanently destroyed when switching from 1ph to 3ph.
       It is the responsibiltiy of the evse_board_support implementation to ensure the EV is capable of performing
       the switch. If it is not, the capabilities must set the supports_changing_phases_during_charging to false.
       Phase switching is only possible in basic charging mode.
@@ -267,7 +267,7 @@ config:
     description: >-
       Set state F after any fault that stops charging for the specified time in ms while in Charging mode (CX->F(300ms)->C1/B1).
       When a fault occurs in state B2, no state F is added (B2->B1 on fault).
-      Some (especially older hybrid vehicles) may go into a permanent fault mode once they detect state F, 
+      Some (especially older hybrid vehicles) may go into a permanent fault mode once they detect state F,
       in this case EVerest cannot recover the charging session if the fault is cleared.
       In this case you can set this parameter to 0, which will avoid to use state F in case of a fault
       and only disables PWM (C2->C1) while switching off power. This will violate IEC 61851-1:2017 however.
@@ -275,6 +275,11 @@ config:
       This setting is only active in BASIC charging mode.
     type: integer
     default: 300
+  fail_on_powermeter_errors:
+    description: >-
+      Set the EVSE Manager to an inoperative state if the powermeter requirement is configured and has reported errors
+    type: boolean
+    default: true
 provides:
   evse:
     interface: evse_manager

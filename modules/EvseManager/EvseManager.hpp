@@ -101,6 +101,7 @@ struct Conf {
     int soft_over_current_timeout_ms;
     bool lock_connector_in_state_b;
     int state_F_after_fault_ms;
+    bool fail_on_powermeter_errors;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -184,7 +185,7 @@ public:
 
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
 
-    // FIXME: this will be removed with proper intergration of BPT on ISO-20
+    // FIXME: this will be removed with proper integration of BPT on ISO-20
     // on DIN SPEC and -2 we claim a positive charging current on ISO protocol,
     // but the power supply switches to discharge if this flag is set.
     std::atomic_bool is_actually_exporting_to_grid{false};
