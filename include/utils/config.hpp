@@ -30,12 +30,25 @@ struct RuntimeSettings;
 ///
 /// \brief A structure that contains all available schemas
 ///
-struct schemas {
+struct Schemas {
     nlohmann::json config;                 ///< The config schema
     nlohmann::json manifest;               ///< The manifest scheme
     nlohmann::json interface;              ///< The interface schema
     nlohmann::json type;                   ///< The type schema
     nlohmann::json error_declaration_list; ///< The error-declaration-list schema
+};
+
+struct Validators {
+    nlohmann::json_schema::json_validator config;
+    nlohmann::json_schema::json_validator manifest;
+    nlohmann::json_schema::json_validator type;
+    nlohmann::json_schema::json_validator interface;
+    nlohmann::json_schema::json_validator error_declaration_list;
+};
+
+struct SchemaValidation {
+    Schemas schemas;
+    Validators validators;
 };
 
 ///
@@ -51,6 +64,30 @@ struct ImplementationInfo {
 };
 
 ///
+/// \brief A simple json schema loader that uses the builtin draft7 schema of
+/// the json schema validator when it encounters it, throws an exception
+/// otherwise
+void loader(const nlohmann::json_uri& uri, nlohmann::json& schema);
+
+///
+/// \brief An extension to the default format checker of the json schema
+/// validator supporting uris
+void format_checker(const std::string& format, const std::string& value);
+
+///
+/// \brief loads and validates a json schema at the provided \p path
+///
+/// \returns the loaded json schema as a json object as well as a related schema validator
+std::tuple<nlohmann::json, nlohmann::json_schema::json_validator> load_schema(const fs::path& path);
+
+///
+/// \brief loads the config.json and manifest.json in the schemes subfolder of
+/// the provided \p schemas_dir
+///
+/// \returns the loaded configs and related validators
+SchemaValidation load_schemas(const fs::path& schemas_dir);
+
+///
 /// \brief Base class for configs
 ///
 class ConfigBase {
@@ -62,7 +99,7 @@ protected:
     nlohmann::json interfaces;
     nlohmann::json interface_definitions;
     nlohmann::json types;
-    schemas _schemas;
+    Schemas schemas;
 
     std::unordered_map<std::string, ModuleTierMappings> tier_mappings;
     // experimental caches
@@ -190,6 +227,8 @@ class ManagerConfig : public ConfigBase {
 private:
     const ManagerSettings& ms;
     std::unordered_map<std::string, std::optional<TelemetryConfig>> telemetry_configs;
+    Validators validators;
+    std::unique_ptr<nlohmann::json_schema::json_validator> draft7_validator;
 
     ///
     /// \brief loads and validates the manifest of the module \p module_id using the provided \p module config
@@ -329,19 +368,6 @@ public:
     void ref_loader(const nlohmann::json_uri& uri, nlohmann::json& schema);
 
     ///
-    /// \brief loads the config.json and manifest.json in the schemes subfolder of
-    /// the provided \p schemas_dir
-    ///
-    /// \returns the config and manifest schemas
-    static schemas load_schemas(const fs::path& schemas_dir);
-
-    ///
-    /// \brief loads and validates a json schema at the provided \p path
-    ///
-    /// \returns the loaded json schema as a json object
-    static nlohmann::json load_schema(const fs::path& path);
-
-    ///
     /// \brief loads all module manifests relative to the \p main_dir
     ///
     /// \returns all module manifests as a json object
@@ -352,25 +378,14 @@ public:
     ///
     /// \returns a set of object keys
     static std::set<std::string> keys(const nlohmann::json& object);
-
-    ///
-    /// \brief A simple json schema loader that uses the builtin draft7 schema of
-    /// the json schema validator when it encounters it, throws an exception
-    /// otherwise
-    static void loader(const nlohmann::json_uri& uri, nlohmann::json& schema);
-
-    ///
-    /// \brief An extension to the default format checker of the json schema
-    /// validator supporting uris
-    static void format_checker(const std::string& format, const std::string& value);
 };
 } // namespace Everest
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-template <> struct adl_serializer<Everest::schemas> {
-    static void to_json(nlohmann::json& j, const Everest::schemas& s);
+template <> struct adl_serializer<Everest::Schemas> {
+    static void to_json(nlohmann::json& j, const Everest::Schemas& s);
 
-    static void from_json(const nlohmann::json& j, Everest::schemas& s);
+    static void from_json(const nlohmann::json& j, Everest::Schemas& s);
 };
 NLOHMANN_JSON_NAMESPACE_END
 
