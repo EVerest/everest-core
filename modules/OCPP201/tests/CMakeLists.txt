@@ -1,4 +1,4 @@
-set(TEST_TARGET_NAME ${PROJECT_NAME}transaction_handler_tests)
+set(TEST_TARGET_NAME ${PROJECT_NAME}_transaction_handler_tests)
 add_executable(${TEST_TARGET_NAME} transaction_handler_tests.cpp)
 
 set(INCLUDE_DIR 
@@ -16,3 +16,4 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 target_sources(${TEST_TARGET_NAME} PRIVATE "../transaction_handler.cpp")
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+ev_register_test_target(${TEST_TARGET_NAME})

@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable
 add_library(yeti_comms STATIC)
+ev_register_library_target(yeti_comms)
+
 target_sources(yeti_comms
     PRIVATE
         evSerial.cpp

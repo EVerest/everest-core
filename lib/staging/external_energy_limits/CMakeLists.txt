@@ -2,6 +2,7 @@
 
 add_library(external_energy_limits STATIC)
 add_library(everest::external_energy_limits ALIAS external_energy_limits)
+ev_register_library_target(external_energy_limits)
 
 target_sources(external_energy_limits
     PRIVATE

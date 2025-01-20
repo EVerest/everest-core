@@ -140,3 +140,4 @@ target_link_libraries(${TLS_PATCH_NAME}
 )
 
 add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+ev_register_test_target(${TLS_GTEST_NAME})

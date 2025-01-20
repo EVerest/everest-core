@@ -1,5 +1,6 @@
 add_library(slac_fsm_evse)
 add_library(slac::fsm::evse ALIAS slac_fsm_evse)
+ev_register_library_target(slac_fsm_evse)
 
 target_include_directories(slac_fsm_evse
     PUBLIC
