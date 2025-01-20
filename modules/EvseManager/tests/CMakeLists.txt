@@ -31,3 +31,4 @@ target_link_libraries(${TEST_TARGET_NAME} PRIVATE
 )
 
 add_test(${TEST_TARGET_NAME} ${TEST_TARGET_NAME})
+ev_register_test_target(${TEST_TARGET_NAME})

@@ -1,5 +1,6 @@
 add_library(evse_security_conversions STATIC)
 add_library(everest::evse_security_conversions ALIAS evse_security_conversions)
+ev_register_library_target(evse_security_conversions)
 
 target_sources(evse_security_conversions
     PRIVATE
@@ -19,5 +20,3 @@ target_link_libraries(evse_security_conversions
         everest::evse_security
         everest::framework
 )
-
-ev_register_library_target(evse_security_conversions)

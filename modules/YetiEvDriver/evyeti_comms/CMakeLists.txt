@@ -11,6 +11,8 @@ configure_file(config.h.in config.h)
 
 # add the executable
 add_library(evyeti_comms STATIC)
+ev_register_library_target(evyeti_comms)
+
 target_sources(evyeti_comms
     PRIVATE
         evSerial.cpp
@@ -32,5 +34,3 @@ target_link_libraries(evyeti_comms
         Pal::Sigslot
         everest::framework
 )
-
-ev_register_library_target(evyeti_comms)

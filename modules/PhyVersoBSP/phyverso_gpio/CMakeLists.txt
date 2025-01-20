@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(phyverso_gpio STATIC)
+ev_register_library_target(phyverso_gpio)
+
 target_sources(phyverso_gpio
     PRIVATE
         evGpio.cpp
@@ -29,5 +31,3 @@ target_link_libraries(phyverso_gpio
         phyverso_config
         fmt::fmt
 )
-
-ev_register_library_target(phyverso_gpio)

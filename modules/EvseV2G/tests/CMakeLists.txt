@@ -92,3 +92,4 @@ target_link_libraries(${V2G_MAIN_NAME} PRIVATE
 
 # runs fine locally, fails in CI
 add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
+ev_register_test_target(${TLS_GTEST_NAME})
