@@ -30,6 +30,7 @@
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
+#include <generated/interfaces/powermeter/Interface.hpp>
 #include <sigslot/signal.hpp>
 
 #include "Timeout.hpp"
@@ -47,7 +48,8 @@ public:
                            const std::vector<std::unique_ptr<ac_rcdIntf>>& r_ac_rcd,
                            const std::unique_ptr<evse_managerImplBase>& _p_evse,
                            const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
-                           const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply);
+                           const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply,
+                           const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter);
 
     // Signal that error set has changed. Bool argument is true if it is preventing charging at the moment and false if
     // charging can continue.
@@ -77,6 +79,7 @@ private:
     const std::unique_ptr<evse_managerImplBase>& p_evse;
     const std::vector<std::unique_ptr<isolation_monitorIntf>>& r_imd;
     const std::vector<std::unique_ptr<power_supply_DCIntf>>& r_powersupply;
+    const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter;
 };
 
 } // namespace module
