@@ -25,4 +25,6 @@ target_sources(libocpp_unit_tests PRIVATE
 # Copy the json files used for testing to the destination directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/json DESTINATION ${TEST_PROFILES_LOCATION_V201})
 
+set(LIBOCPP_TESTS_V201_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_subdirectory(functional_blocks)
