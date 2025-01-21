@@ -18,7 +18,7 @@ Energy nodes can typically be classified into the following categories:
 
 * **Physical Components**: Circuit breakers, electrical fuses
 * **Logical Components**: Limits from OCPP, EEBus, or other external sources
-* **Charging Stations**
+* **Charging Stations**: Unidirectional or bidirectional charging stations (or in general any sink or source of power)
 
 An EVerest module becomes an energy node by implementing the `energy <../interfaces/energy.yaml>`_ interface.
 
@@ -528,7 +528,14 @@ To use this feature, several configurations must be enabled across different EVe
   - Set ``supports_changing_phases_during_charging`` to ``true`` in the reported capabilities.
   - Define the minimum number of phases as 1 and the maximum as 3.
   - Ensure the ``ac_switch_three_phases_while_charging`` command is implemented.
-- **EnergyManager**: Adjust the ``switch_3ph1ph_while_charging_mode`` configuration option to your requirements.
+- **EnergyManager**: Adjust the following config options to your needs:
+  - switch_3ph1ph_while_charging_mode
+  - switch_3ph1ph_max_nr_of_switches_per_session
+  - switch_3ph1ph_switch_limit_stickyness
+  - switch_3ph1ph_power_hysteresis_W
+  - switch_3ph1ph_time_hysteresis_s
+
+  Refer to the manifest.yaml for documentation of these configuration options.
 
 If all of these are properly configured, the EnergyManager will handle the 1ph/3ph switching. To enable this, an external limit must be set.
 There are two ways to configure the limit:
@@ -543,14 +550,14 @@ choose when to switch.
 Best Practices
 ^^^^^^^^^^^^^^
 
-In general, this feature works best in a configuration with 32A per phase and a Watt-based limit. In this setup, there is a hysteresis
-because the single-phase and three-phase charging intervals overlap:
+In general, this feature works best in a configuration with 32A per phase and a Watt-based limit. In this setup, there is 
+an overlap between the single phase and three phase domain:
 
 - Single-phase charging: 1.3kW to 7.4kW
 - Three-phase charging: 4.2kW to 22kW (or 11kW)
 
-If the intervals do not overlap, there is no hysteresis. Be aware that some vehicles support 32A on 1ph but are limited to 16A on 3ph.
-Others may be limited to 16A in 1ph mode, resulting in slower-than-expected charging in 1ph mode.
+This avoids switching too often in the most elegant way. Other methods to reduce the number of switch cycles can be configured in the EnergyManager, 
+see config options above.
 
 Current Limitations
 -------------------
