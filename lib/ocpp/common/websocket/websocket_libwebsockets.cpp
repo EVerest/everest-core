@@ -797,11 +797,10 @@ void WebsocketLibwebsockets::thread_websocket_client_loop(std::shared_ptr<Connec
                         lws_callback_on_writable(local_data->get_conn());
                     }
                 } while (n >= 0 && processing);
-
-                // After this point no minimal_callback can be called, we have finished
-                // using the connection information and we will recreate it if required
-                local_data->reset_connection_data();
             }
+            // After this point no minimal_callback can be called, we have finished
+            // using the connection information and we will recreate it if required
+            local_data->reset_connection_data();
         } // End init connection
 
         long reconnect_delay = 0;
