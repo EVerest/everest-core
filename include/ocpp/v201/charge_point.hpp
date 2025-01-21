@@ -11,7 +11,9 @@
 #include <ocpp/v201/functional_blocks/authorization.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
+#include <ocpp/v201/functional_blocks/security.hpp>
 
+#include <ocpp/common/aligned_timer.hpp>
 #include <ocpp/common/charging_station_base.hpp>
 
 #include <ocpp/v201/average_meter_values.hpp>
@@ -32,7 +34,6 @@
 #include "ocpp/v201/messages/Get15118EVCertificate.hpp"
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
-#include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
 #include <ocpp/v201/messages/ClearChargingProfile.hpp>
 #include <ocpp/v201/messages/ClearDisplayMessage.hpp>
@@ -62,7 +63,6 @@
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
-#include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/messages/SetDisplayMessage.hpp>
 #include <ocpp/v201/messages/SetMonitoringBase.hpp>
@@ -70,7 +70,6 @@
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariableMonitoring.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
-#include <ocpp/v201/messages/SignCertificate.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
@@ -389,6 +388,7 @@ private:
     std::unique_ptr<DataTransferInterface> data_transfer;
     std::unique_ptr<ReservationInterface> reservation;
     std::unique_ptr<AuthorizationInterface> authorization;
+    std::unique_ptr<SecurityInterface> security;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -407,8 +407,6 @@ private:
 
     // time keeping
     std::chrono::time_point<std::chrono::steady_clock> heartbeat_request_time;
-
-    Everest::SteadyTimer certificate_signed_timer;
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
@@ -447,9 +445,6 @@ private:
     bool reset_scheduled;
     /// \brief If `reset_scheduled` is true and the reset is for a specific evse id, it will be stored in this member.
     std::set<int32_t> reset_scheduled_evseids;
-
-    int csr_attempt;
-    std::optional<ocpp::CertificateSigningUseEnum> awaited_certificate_signing_use_enum;
 
     // callback struct
     Callbacks callbacks;
@@ -632,13 +627,6 @@ private:
 
     /* OCPP message requests */
 
-    // Functional Block A: Security
-    void security_event_notification_req(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info,
-                                         const bool triggered_internally, const bool critical,
-                                         const std::optional<DateTime>& timestamp = std::nullopt);
-    void sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
-                              const bool initiated_by_trigger_message = false);
-
     // Functional Block B: Provisioning
     void boot_notification_req(const BootReasonEnum& reason, const bool initiated_by_trigger_message = false);
     void notify_report_req(const int request_id, const std::vector<ReportData>& report_data);
@@ -676,10 +664,6 @@ private:
     void notify_monitoring_report_req(const int request_id, const std::vector<MonitoringData>& montoring_data);
 
     /* OCPP message handlers */
-
-    // Functional Block A: Security
-    void handle_certificate_signed_req(Call<CertificateSignedRequest> call);
-    void handle_sign_certificate_response(CallResult<SignCertificateResponse> call_result);
 
     // Functional Block B: Provisioning
     void handle_boot_notification_response(CallResult<BootNotificationResponse> call_result);
