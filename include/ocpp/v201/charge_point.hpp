@@ -8,6 +8,7 @@
 #include <set>
 
 #include <ocpp/common/message_dispatcher.hpp>
+#include <ocpp/v201/functional_blocks/authorization.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 
@@ -33,7 +34,6 @@
 #include <ocpp/v201/messages/BootNotification.hpp>
 #include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
-#include <ocpp/v201/messages/ClearCache.hpp>
 #include <ocpp/v201/messages/ClearChargingProfile.hpp>
 #include <ocpp/v201/messages/ClearDisplayMessage.hpp>
 #include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
@@ -46,7 +46,6 @@
 #include <ocpp/v201/messages/GetCompositeSchedule.hpp>
 #include <ocpp/v201/messages/GetDisplayMessages.hpp>
 #include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
-#include <ocpp/v201/messages/GetLocalListVersion.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetMonitoringReport.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
@@ -64,7 +63,6 @@
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
-#include <ocpp/v201/messages/SendLocalList.hpp>
 #include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/messages/SetDisplayMessage.hpp>
 #include <ocpp/v201/messages/SetMonitoringBase.hpp>
@@ -390,6 +388,7 @@ private:
     std::unique_ptr<MessageDispatcherInterface<MessageType>> message_dispatcher;
     std::unique_ptr<DataTransferInterface> data_transfer;
     std::unique_ptr<ReservationInterface> reservation;
+    std::unique_ptr<AuthorizationInterface> authorization;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -410,13 +409,6 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> heartbeat_request_time;
 
     Everest::SteadyTimer certificate_signed_timer;
-
-    // threads and synchronization
-    bool auth_cache_cleanup_required;
-    std::condition_variable auth_cache_cleanup_cv;
-    std::mutex auth_cache_cleanup_mutex;
-    std::thread auth_cache_cleanup_thread;
-    std::atomic_bool stop_auth_cache_cleanup_handler;
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
@@ -485,8 +477,6 @@ private:
                                       const ConnectorStatusEnum status);
     void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 
-    void trigger_authorization_cache_cleanup();
-    void cache_cleanup_handler();
     GetCompositeScheduleResponse
     get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
                                     const std::set<ChargingProfilePurposeEnum>& profiles_to_ignore = {});
@@ -530,16 +520,6 @@ private:
 
     /// \brief Restores all connectors to their persisted state
     void restore_all_connector_states();
-
-    ///\brief Calculate and update the authorization cache size in the device model
-    ///
-    void update_authorization_cache_size();
-
-    ///\brief Apply a local list request to the database if allowed
-    ///
-    ///\param request The local list request to apply
-    ///\retval Accepted if applied, otherwise will return either Failed or VersionMismatch
-    SendLocalListStatusEnum apply_local_authorization_list(const SendLocalListRequest& request);
 
     ///
     /// \brief Get evseid for the given transaction id.
@@ -663,10 +643,6 @@ private:
     void boot_notification_req(const BootReasonEnum& reason, const bool initiated_by_trigger_message = false);
     void notify_report_req(const int request_id, const std::vector<ReportData>& report_data);
 
-    // Functional Block C: Authorization
-    AuthorizeResponse authorize_req(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
-                                    const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data);
-
     // Functional Block G: Availability
     void status_notification_req(const int32_t evse_id, const int32_t connector_id, const ConnectorStatusEnum status,
                                  const bool initiated_by_trigger_message = false);
@@ -713,13 +689,6 @@ private:
     void handle_get_report_req(const EnhancedMessage<v201::MessageType>& message);
     void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);
     void handle_reset_req(Call<ResetRequest> call);
-
-    // Functional Block C: Authorization
-    void handle_clear_cache_req(Call<ClearCacheRequest> call);
-
-    // Functional Block D: Local authorization list management
-    void handle_send_local_authorization_list_req(Call<SendLocalListRequest> call);
-    void handle_get_local_authorization_list_version_req(Call<GetLocalListVersionRequest> call);
 
     // Functional Block E: Transaction
     void handle_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);

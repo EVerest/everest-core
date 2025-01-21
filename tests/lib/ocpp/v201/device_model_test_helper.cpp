@@ -64,11 +64,97 @@ bool DeviceModelTestHelper::remove_variable_from_db(const std::string& component
         delete_stmt->bind_null(6);
     }
 
-    if (delete_stmt->step() == SQLITE_DONE) {
+    if (delete_stmt->step() != SQLITE_DONE) {
         EVLOG_error << this->database_connection->get_error_message();
         return false;
     }
 
+    this->device_model = create_device_model(false);
+    return true;
+}
+
+bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharacteristics& characteristics,
+                                                            const std::string& component_name,
+                                                            const std::optional<std::string>& component_instance,
+                                                            const std::optional<uint32_t>& evse_id,
+                                                            const std::optional<uint32_t>& connector_id,
+                                                            const std::string& variable_name,
+                                                            const std::optional<std::string>& variable_instance) {
+    const std::string update_query =
+        "UPDATE VARIABLE_CHARACTERISTICS SET DATATYPE_ID=@datatype_id, MAX_LIMIT=@max_limit, "
+        "MIN_LIMIT=@min_limit, SUPPORTS_MONITORING=@supports_monitoring, UNIT=@unit, VALUES_LIST=@values_list WHERE "
+        "VARIABLE_ID=(SELECT ID FROM VARIABLE WHERE COMPONENT_ID = "
+        "(SELECT ID FROM COMPONENT WHERE NAME = @component_name AND INSTANCE IS @component_instance AND "
+        "EVSE_ID IS @evse_id AND CONNECTOR_ID IS @connector_id) "
+        "AND NAME = @variable_name AND INSTANCE IS @variable_instance)";
+
+    std::unique_ptr<common::SQLiteStatementInterface> update_statement;
+    try {
+        update_statement = this->database_connection->new_statement(update_query);
+    } catch (const common::QueryExecutionException&) {
+        throw InitDeviceModelDbError("Could not create statement " + update_query);
+    }
+
+    update_statement->bind_int("@datatype_id", static_cast<int>(characteristics.dataType));
+
+    const uint8_t supports_monitoring = (characteristics.supportsMonitoring ? 1 : 0);
+    update_statement->bind_int("@supports_monitoring", supports_monitoring);
+
+    if (characteristics.unit.has_value()) {
+        update_statement->bind_text("@unit", characteristics.unit.value(), ocpp::common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@unit");
+    }
+
+    if (characteristics.valuesList.has_value()) {
+        update_statement->bind_text("@values_list", characteristics.valuesList.value(),
+                                    ocpp::common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@values_list");
+    }
+
+    if (characteristics.maxLimit.has_value()) {
+        update_statement->bind_double("@max_limit", static_cast<double>(characteristics.maxLimit.value()));
+    } else {
+        update_statement->bind_null("@max_limit");
+    }
+
+    if (characteristics.minLimit.has_value()) {
+        update_statement->bind_double("@min_limit", static_cast<double>(characteristics.minLimit.value()));
+    } else {
+        update_statement->bind_null("@min_limit");
+    }
+
+    update_statement->bind_text("@component_name", component_name, common::SQLiteString::Transient);
+    if (component_instance.has_value()) {
+        update_statement->bind_text("@component_instance", component_instance.value(), common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@component_instance");
+    }
+    if (evse_id.has_value()) {
+        update_statement->bind_int("@evse_id", evse_id.value());
+        if (connector_id.has_value()) {
+            update_statement->bind_int("@connector_id", connector_id.value());
+        } else {
+            update_statement->bind_null("@connector_id");
+        }
+    } else {
+        update_statement->bind_null("@evse_id");
+        update_statement->bind_null("@connector_id");
+    }
+
+    update_statement->bind_text("@variable_name", variable_name, common::SQLiteString::Transient);
+    if (variable_instance.has_value()) {
+        update_statement->bind_text("@variable_instance", variable_instance.value(), common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@variable_instance");
+    }
+
+    if (update_statement->step() != SQLITE_DONE) {
+        return false;
+    }
+
+    this->device_model = create_device_model(false);
     return true;
 }
 
@@ -77,8 +163,10 @@ void DeviceModelTestHelper::create_device_model_db() {
     db.initialize_database(this->config_path, true);
 }
 
-std::unique_ptr<DeviceModel> DeviceModelTestHelper::create_device_model() {
-    create_device_model_db();
+std::unique_ptr<DeviceModel> DeviceModelTestHelper::create_device_model(const bool init) {
+    if (init) {
+        create_device_model_db();
+    }
     auto device_model_storage = std::make_unique<DeviceModelStorageSqlite>(this->database_path);
     auto dm = std::make_unique<DeviceModel>(std::move(device_model_storage));
 

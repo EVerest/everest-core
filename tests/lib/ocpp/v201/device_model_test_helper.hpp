@@ -47,10 +47,35 @@ public:
     /// \param variable_instance    Variable instance (optional).
     /// \return True on success.
     ///
+    /// \note After using this function, request a new device model with DeviceModelTestHelper::get_device_model(),
+    ///       because the device model has been changed in the database and the device model map has been read again.
+    ///
     bool remove_variable_from_db(const std::string& component_name,
                                  const std::optional<std::string>& component_instance,
                                  const std::optional<uint32_t>& evse_id, const std::optional<uint32_t>& connector_id,
                                  const std::string& variable_name, const std::optional<std::string>& variable_instance);
+
+    ///
+    /// \brief Update characteristics of a variable.
+    /// \param characteristics      The updated characteristics.
+    /// \param component_name       Component name.
+    /// \param component_instance   Component instance.
+    /// \param evse_id              The evse id.
+    /// \param connector_id         The connector id.
+    /// \param variable_name        The variable name.
+    /// \param variable_instance    The variable instance.
+    /// \return     True on success.
+    ///
+    /// \note After using this function, request a new device model with DeviceModelTestHelper::get_device_model(),
+    ///       because the device model has been changed in the database and the device model map has been read again.
+    /// \note We assume with this function that there each variable has only one characteristics entry.
+    ///
+    bool update_variable_characteristics(const VariableCharacteristics& characteristics,
+                                         const std::string& component_name,
+                                         const std::optional<std::string>& component_instance,
+                                         const std::optional<uint32_t>& evse_id,
+                                         const std::optional<uint32_t>& connector_id, const std::string& variable_name,
+                                         const std::optional<std::string>& variable_instance);
 
 private:
     const std::string& database_path;
@@ -76,7 +101,7 @@ private:
     /// \brief Create device model.
     /// \return The created device model.
     ///
-    std::unique_ptr<DeviceModel> create_device_model();
+    std::unique_ptr<DeviceModel> create_device_model(const bool init = true);
 };
 } // namespace v201
 } // namespace ocpp
