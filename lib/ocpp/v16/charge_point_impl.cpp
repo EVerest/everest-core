@@ -2633,16 +2633,23 @@ void ChargePointImpl::handleExtendedTriggerMessageRequest(ocpp::Call<ExtendedTri
 void ChargePointImpl::sign_certificate(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
                                        bool initiated_by_trigger_message) {
 
-    EVLOG_info << "Create CSR (TPM=" << this->configuration->getUseTPM() << ")";
+    bool use_tpm = false;
+
+    if (certificate_signing_use == CertificateSigningUseEnum::ChargingStationCertificate) {
+        use_tpm = this->configuration->getUseTPM();
+    } else if (certificate_signing_use == CertificateSigningUseEnum::V2GCertificate) {
+        use_tpm = this->configuration->getUseTPMSeccLeafCertificate();
+    }
+
+    EVLOG_info << "Create CSR (TPM=" << use_tpm << ")";
     SignCertificateRequest req;
 
     const auto response = this->evse_security->generate_certificate_signing_request(
         certificate_signing_use, this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
-        this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber(),
-        this->configuration->getUseTPM());
+        this->configuration->getCpoName().value(), this->configuration->getChargeBoxSerialNumber(), use_tpm);
 
     if (response.status != GetCertificateSignRequestStatus::Accepted || !response.csr.has_value()) {
-        EVLOG_error << "Create CSR (TPM=" << this->configuration->getUseTPM() << ")"
+        EVLOG_error << "Create CSR (TPM=" << use_tpm << ")"
                     << " failed for:"
                     << ocpp::conversions::certificate_signing_use_enum_to_string(certificate_signing_use);
 
@@ -3598,7 +3605,7 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
         this->configuration->getSeccLeafSubjectCountry().value_or("DE"),
         this->configuration->getSeccLeafSubjectOrganization().value_or(this->configuration->getCpoName().value()),
         this->configuration->getSeccLeafSubjectCommonName().value_or(this->configuration->getChargeBoxSerialNumber()),
-        this->configuration->getUseTPM());
+        this->configuration->getUseTPMSeccLeafCertificate());
 
     if (result.status != GetCertificateSignRequestStatus::Accepted || !result.csr.has_value()) {
         EVLOG_error << "Could not request new V2GCertificate, because the CSR was not successful.";

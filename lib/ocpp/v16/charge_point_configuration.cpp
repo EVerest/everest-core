@@ -527,6 +527,10 @@ bool ChargePointConfiguration::getUseTPM() {
     return this->config["Internal"]["UseTPM"];
 }
 
+bool ChargePointConfiguration::getUseTPMSeccLeafCertificate() {
+    return this->config["Internal"]["UseTPMSeccLeafCertificate"];
+}
+
 bool ChargePointConfiguration::getVerifyCsmsAllowWildcards() {
     return this->config["Internal"]["VerifyCsmsAllowWildcards"];
 }

@@ -247,6 +247,13 @@ const ComponentVariable UseTPM = {
         "UseTPM",
     }),
 };
+const ComponentVariable UseTPMSeccLeafCertificate = {
+    ControllerComponents::InternalCtrlr,
+    std::nullopt,
+    std::optional<Variable>({
+        "UseTPMSeccLeafCertificate",
+    }),
+};
 const ComponentVariable VerifyCsmsAllowWildcards = {
     ControllerComponents::InternalCtrlr,
     std::nullopt,

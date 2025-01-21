@@ -115,6 +115,7 @@ public:
     void setVerifyCsmsAllowWildcards(bool verify_csms_allow_wildcards);
     KeyValue getVerifyCsmsAllowWildcardsKeyValue();
     bool getUseTPM();
+    bool getUseTPMSeccLeafCertificate();
     std::string getSupportedMeasurands();
     KeyValue getSupportedMeasurandsKeyValue();
     int getMaxMessageSize();

@@ -1715,6 +1715,7 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
     std::optional<std::string> common;
     std::optional<std::string> country;
     std::optional<std::string> organization;
+    bool should_use_tpm = false;
 
     if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
         req.certificateType = ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate;
@@ -1724,6 +1725,8 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::OrganizationName);
         country =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
+        should_use_tpm =
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
     } else {
         req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
         common = this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrSeccId);
@@ -1731,6 +1734,9 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
             ControllerComponentVariables::ISO15118CtrlrOrganizationName);
         country =
             this->device_model->get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
+        should_use_tpm =
+            this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPMSeccLeafCertificate)
+                .value_or(false);
     }
 
     if (!common.has_value()) {
@@ -1747,9 +1753,6 @@ void ChargePoint::sign_certificate_req(const ocpp::CertificateSigningUseEnum& ce
         EVLOG_warning << "Missing configuration of organizationName to generate CSR";
         return;
     }
-
-    bool should_use_tpm =
-        this->device_model->get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
 
     const auto result = this->evse_security->generate_certificate_signing_request(
         certificate_signing_use, country.value(), organization.value(), common.value(), should_use_tpm);

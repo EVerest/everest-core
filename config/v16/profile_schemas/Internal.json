@@ -110,6 +110,13 @@
             ]
         },
         "UseTPM": {
+            "$comment": "Indicates if TPM is used to generate and retrieve private keys for the CSMS leaf certificate",
+            "type": "boolean",
+            "readOnly": true,
+            "default": false
+        },
+        "UseTPMSeccLeafCertificate": {
+            "$comment": "Indicates if TPM is used to generate and retrieve private keys for the SECC leaf certificate",
             "type": "boolean",
             "readOnly": true,
             "default": false
