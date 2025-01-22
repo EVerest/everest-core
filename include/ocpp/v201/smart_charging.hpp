@@ -91,13 +91,11 @@ public:
 
     virtual std::vector<ReportedChargingProfile>
     get_reported_profiles(const GetChargingProfilesRequest& request) const = 0;
-    virtual std::vector<ChargingProfile>
-    get_valid_profiles(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {}) = 0;
 
-    virtual CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
-                                                           const ocpp::DateTime& start_time,
+    virtual CompositeSchedule calculate_composite_schedule(const ocpp::DateTime& start_time,
                                                            const ocpp::DateTime& end_time, const int32_t evse_id,
-                                                           std::optional<ChargingRateUnitEnum> charging_rate_unit) = 0;
+                                                           std::optional<ChargingRateUnitEnum> charging_rate_unit,
+                                                           bool is_offline, bool simulate_transaction_active) = 0;
 };
 
 /// \brief This class handles and maintains incoming ChargingProfiles and contains the logic
@@ -107,11 +105,11 @@ private:
     EvseManagerInterface& evse_manager;
     std::shared_ptr<DeviceModel>& device_model;
 
-    std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler;
+    ocpp::v201::DatabaseHandlerInterface& database_handler;
 
 public:
     SmartChargingHandler(EvseManagerInterface& evse_manager, std::shared_ptr<DeviceModel>& device_model,
-                         std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler);
+                         ocpp::v201::DatabaseHandlerInterface& database_handler);
 
     ///
     /// \brief for the given \p transaction_id removes the associated charging profile.
@@ -154,20 +152,13 @@ public:
     std::vector<ReportedChargingProfile>
     get_reported_profiles(const GetChargingProfilesRequest& request) const override;
 
-    /// \brief Retrieves all profiles that should be considered for calculating the composite schedule. Only profiles
-    /// that belong to the given \p evse_id and that are not contained in \p purposes_to_ignore are included in the
-    /// response.
-    ///
-    std::vector<ChargingProfile>
-    get_valid_profiles(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {}) override;
-
     ///
     /// \brief Calculates the composite schedule for the given \p valid_profiles and the given \p connector_id
     ///
-    CompositeSchedule calculate_composite_schedule(std::vector<ChargingProfile>& valid_profiles,
-                                                   const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
+    CompositeSchedule calculate_composite_schedule(const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
                                                    const int32_t evse_id,
-                                                   std::optional<ChargingRateUnitEnum> charging_rate_unit) override;
+                                                   std::optional<ChargingRateUnitEnum> charging_rate_unit,
+                                                   bool is_offline, bool simulate_transaction_active) override;
 
 protected:
     ///
@@ -219,8 +210,16 @@ protected:
 private:
     std::vector<ChargingProfile> get_evse_specific_tx_default_profiles() const;
     std::vector<ChargingProfile> get_station_wide_tx_default_profiles() const;
+
+    /// \brief Retrieves all profiles that should be considered for calculating the composite schedule. Only profiles
+    /// that belong to the given \p evse_id and that are not contained in \p purposes_to_ignore are included in the
+    /// response.
+    ///
     std::vector<ChargingProfile>
-    get_valid_profiles_for_evse(int32_t evse_id, const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore = {});
+    get_valid_profiles(int32_t evse_id, const std::vector<ChargingProfilePurposeEnum>& purposes_to_ignore = {});
+    std::vector<ChargingProfile>
+    get_valid_profiles_for_evse(int32_t evse_id,
+                                const std::vector<ChargingProfilePurposeEnum>& purposes_to_ignore = {});
     void conform_schedule_number_phases(int32_t profile_id, ChargingSchedulePeriod& charging_schedule_period) const;
     void conform_validity_periods(ChargingProfile& profile) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;

@@ -238,7 +238,7 @@ protected:
         database_handler =
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
         database_handler->open_connection();
-        return TestSmartChargingHandler(*this->evse_manager, device_model, database_handler);
+        return TestSmartChargingHandler(*this->evse_manager, device_model, *database_handler);
     }
 
     std::string uuid() {
@@ -1600,70 +1600,6 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K10_ClearChargingProfile_UnknownId) 
     EXPECT_THAT(profiles, testing::Contains(profile));
 }
 
-TEST_F(SmartChargingHandlerTestFixtureV201, K08_GetValidProfiles_IfNoProfiles_ThenNoValidProfilesReturned) {
-    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
-    EXPECT_THAT(profiles, testing::IsEmpty());
-}
-
-TEST_F(SmartChargingHandlerTestFixtureV201, K08_GetValidProfiles_IfEvseHasProfiles_ThenThoseProfilesReturned) {
-    auto profile = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
-    ASSERT_TRUE(profile.has_value());
-
-    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
-    EXPECT_THAT(profiles, testing::Contains(profile));
-}
-
-TEST_F(SmartChargingHandlerTestFixtureV201,
-       K08_GetValidProfiles_IfOtherEvseHasProfiles_ThenThoseProfilesAreNotReturned) {
-    auto profile1 = add_valid_profile_to(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
-    ASSERT_TRUE(profile1.has_value());
-    auto profile2 = add_valid_profile_to(DEFAULT_EVSE_ID + 1, DEFAULT_PROFILE_ID + 1);
-    ASSERT_TRUE(profile2.has_value());
-
-    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
-    EXPECT_THAT(profiles, testing::Contains(profile1));
-    EXPECT_THAT(profiles, testing::Not(testing::Contains(profile2)));
-}
-
-TEST_F(SmartChargingHandlerTestFixtureV201,
-       K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturned) {
-    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
-    ASSERT_TRUE(profile.has_value());
-
-    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
-    EXPECT_THAT(profiles, testing::Contains(profile));
-}
-
-TEST_F(SmartChargingHandlerTestFixtureV201,
-       K08_GetValidProfiles_IfStationWideProfilesExist_ThenThoseProfilesAreReturnedOnce) {
-    auto profile = add_valid_profile_to(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
-    ASSERT_TRUE(profile.has_value());
-
-    auto profiles = handler.get_valid_profiles(STATION_WIDE_ID);
-    EXPECT_THAT(profiles, testing::Contains(profile));
-    EXPECT_THAT(profiles.size(), testing::Eq(1));
-}
-
-TEST_F(SmartChargingHandlerTestFixtureV201, K08_GetValidProfiles_IfInvalidProfileExists_ThenThatProfileIsNotReturned) {
-    auto extraneous_start_schedule = ocpp::DateTime("2024-01-17T17:00:00");
-    auto periods = create_charging_schedule_periods(0);
-    auto invalid_profile =
-        create_charging_profile(DEFAULT_PROFILE_ID, ChargingProfilePurposeEnum::TxProfile,
-                                create_charge_schedule(ChargingRateUnitEnum::A, periods, extraneous_start_schedule),
-                                DEFAULT_TX_ID, ChargingProfileKindEnum::Relative, 1);
-    handler.add_profile(invalid_profile, DEFAULT_EVSE_ID);
-
-    auto invalid_station_wide_profile =
-        create_charging_profile(DEFAULT_PROFILE_ID + 1, ChargingProfilePurposeEnum::TxProfile,
-                                create_charge_schedule(ChargingRateUnitEnum::A, periods, extraneous_start_schedule),
-                                DEFAULT_TX_ID, ChargingProfileKindEnum::Relative, 1);
-    handler.add_profile(invalid_station_wide_profile, STATION_WIDE_ID);
-
-    auto profiles = handler.get_valid_profiles(DEFAULT_EVSE_ID);
-    EXPECT_THAT(profiles, testing::Not(testing::Contains(invalid_profile)));
-    EXPECT_THAT(profiles, testing::Not(testing::Contains(invalid_station_wide_profile)));
-}
-
 TEST_F(SmartChargingHandlerTestFixtureV201, K02FR05_SmartChargingTransactionEnds_DeletesTxProfilesByTransactionId) {
     auto transaction_id = uuid();
     EVLOG_debug << "TRANSACTION ID: " << transaction_id;
@@ -1716,7 +1652,7 @@ TEST_F(SmartChargingHandlerTestFixtureV201, K05FR02_RequestStartTransactionReque
 
 TEST_F(SmartChargingHandlerTestFixtureV201, K01_ValidateChargingStationMaxProfile_AllowsExistingMatchingProfile) {
     auto profile =
-        SmartChargingTestUtils::get_charging_profile_from_file("max/ChargingStationMaxProfile_grid_hourly.json");
+        SmartChargingTestUtils::get_charging_profile_from_file("max/0/ChargingStationMaxProfile_grid_hourly.json");
     auto res = handler.conform_validate_and_add_profile(profile, STATION_WIDE_ID);
     ASSERT_THAT(res.status, testing::Eq(ChargingProfileStatusEnum::Accepted));
 

@@ -3,8 +3,6 @@
 #ifndef V201_UTILS_HPP
 #define V201_UTILS_HPP
 
-#include <set>
-
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/types.hpp>
 namespace ocpp {
@@ -73,8 +71,8 @@ std::optional<float> get_total_power_active_import(const MeterValue& meter_value
 /// \brief Determines if a given \p security_event is critical as defined in the OCPP 2.0.1 appendix
 bool is_critical(const std::string& security_event);
 
-/// \brief Converts the given \p csl of ChargingProfilePurpose strings into a std::set<ChargingProfilePurposeEnum>
-std::set<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string& csl, const bool is_offline);
+/// \brief Converts the given \p csl of ChargingProfilePurpose strings into a std::vector<ChargingProfilePurposeEnum>
+std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string& csl, const bool is_offline);
 
 } // namespace utils
 } // namespace v201

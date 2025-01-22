@@ -871,7 +871,7 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
 
     this->smart_charging_handler =
-        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, this->database_handler);
+        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, *this->database_handler);
 
     this->configure_message_logging_format(message_log_path);
     this->monitoring_updater.start_monitoring();
@@ -2865,6 +2865,10 @@ void ChargePoint::handle_clear_charging_profile_req(Call<ClearChargingProfileReq
         response = this->smart_charging_handler->clear_profiles(msg);
     }
 
+    if (response.status == ClearChargingProfileStatusEnum::Accepted) {
+        this->callbacks.set_charging_profiles_callback();
+    }
+
     ocpp::CallResult<ClearChargingProfileResponse> call_result(response, call.uniqueId);
     this->message_dispatcher->dispatch_call_result(call_result);
 }
@@ -3591,9 +3595,8 @@ void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
     }
 }
 
-GetCompositeScheduleResponse
-ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
-                                             const std::set<ChargingProfilePurposeEnum>& profiles_to_ignore) {
+GetCompositeScheduleResponse ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
+                                                                          bool simulate_transaction_active) {
     GetCompositeScheduleResponse response;
     response.status = GenericStatusEnum::Rejected;
 
@@ -3620,11 +3623,9 @@ ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& 
         auto start_time = ocpp::DateTime();
         auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(request.duration));
 
-        std::vector<ChargingProfile> valid_profiles =
-            this->smart_charging_handler->get_valid_profiles(request.evseId, profiles_to_ignore);
-
         auto schedule = this->smart_charging_handler->calculate_composite_schedule(
-            valid_profiles, start_time, end_time, request.evseId, charging_rate_unit.value());
+            start_time, end_time, request.evseId, charging_rate_unit.value(), this->is_offline(),
+            simulate_transaction_active);
 
         response.schedule = schedule;
         response.status = GenericStatusEnum::Accepted;
@@ -3776,21 +3777,28 @@ ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data
 }
 
 GetCompositeScheduleResponse ChargePoint::get_composite_schedule(const GetCompositeScheduleRequest& request) {
-    std::set<ChargingProfilePurposeEnum> purposes_to_ignore = utils::get_purposes_to_ignore(
-        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
-            .value_or(""),
-        this->is_offline());
-    return this->get_composite_schedule_internal(request, purposes_to_ignore);
+    return this->get_composite_schedule_internal(request);
+}
+
+std::optional<CompositeSchedule> ChargePoint::get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,
+                                                                     ChargingRateUnitEnum unit) {
+    GetCompositeScheduleRequest request;
+    request.duration = duration.count();
+    request.evseId = evse_id;
+    request.chargingRateUnit = unit;
+
+    auto composite_schedule_response = this->get_composite_schedule_internal(request, false);
+    if (composite_schedule_response.status == GenericStatusEnum::Accepted and
+        composite_schedule_response.schedule.has_value()) {
+        return composite_schedule_response.schedule.value();
+    } else {
+        return std::nullopt;
+    }
 }
 
 std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const int32_t duration_s,
                                                                         const ChargingRateUnitEnum& unit) {
     std::vector<CompositeSchedule> composite_schedules;
-
-    std::set<ChargingProfilePurposeEnum> purposes_to_ignore = utils::get_purposes_to_ignore(
-        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
-            .value_or(""),
-        this->is_offline());
 
     const auto number_of_evses = this->evse_manager->get_number_of_evses();
     // get all composite schedules including the one for evse_id == 0
@@ -3799,7 +3807,7 @@ std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const in
         request.duration = duration_s;
         request.evseId = evse_id;
         request.chargingRateUnit = unit;
-        auto composite_schedule_response = this->get_composite_schedule_internal(request, purposes_to_ignore);
+        auto composite_schedule_response = this->get_composite_schedule_internal(request);
         if (composite_schedule_response.status == GenericStatusEnum::Accepted and
             composite_schedule_response.schedule.has_value()) {
             composite_schedules.push_back(composite_schedule_response.schedule.value());

@@ -147,12 +147,12 @@ CurrentPhaseType SmartChargingHandler::get_current_phase_type(const std::optiona
 
 SmartChargingHandler::SmartChargingHandler(EvseManagerInterface& evse_manager,
                                            std::shared_ptr<DeviceModel>& device_model,
-                                           std::shared_ptr<ocpp::v201::DatabaseHandler> database_handler) :
+                                           ocpp::v201::DatabaseHandlerInterface& database_handler) :
     evse_manager(evse_manager), device_model(device_model), database_handler(database_handler) {
 }
 
 void SmartChargingHandler::delete_transaction_tx_profiles(const std::string& transaction_id) {
-    this->database_handler->delete_charging_profile_by_transaction_id(transaction_id);
+    this->database_handler.delete_charging_profile_by_transaction_id(transaction_id);
 }
 
 SetChargingProfileResponse
@@ -311,8 +311,8 @@ SmartChargingHandler::validate_tx_profile(const ChargingProfile& profile, int32_
     }
 
     auto conflicts_stmt =
-        this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = "
-                                              "@transaction_id AND STACK_LEVEL = @stack_level AND ID != @id");
+        this->database_handler.new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE TRANSACTION_ID = "
+                                             "@transaction_id AND STACK_LEVEL = @stack_level AND ID != @id");
     conflicts_stmt->bind_int("@stack_level", profile.stackLevel);
     conflicts_stmt->bind_int("@id", profile.id);
     if (profile.transactionId.has_value()) {
@@ -340,6 +340,8 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                                                  std::optional<EvseInterface*> evse_opt) const {
     auto charging_station_supply_phases =
         this->device_model->get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
+
+    auto phase_type = this->get_current_phase_type(evse_opt);
 
     for (auto& schedule : profile.chargingSchedule) {
         // K01.FR.26; We currently need to do string conversions for this manually because our DeviceModel class
@@ -383,7 +385,6 @@ SmartChargingHandler::validate_profile_schedules(ChargingProfile& profile,
                 }
             }
 
-            auto phase_type = this->get_current_phase_type(evse_opt);
             // K01.FR.44; We reject profiles that provide invalid numberPhases/phaseToUse instead
             // of silently acccepting them.
             if (phase_type == CurrentPhaseType::DC && (charging_schedule_period.numberPhases.has_value() ||
@@ -431,7 +432,7 @@ SetChargingProfileResponse SmartChargingHandler::add_profile(ChargingProfile& pr
     try {
         // K01.FR05 - replace non-ChargingStationExternalConstraints profiles if id exists.
         // K01.FR27 - add profiles to database when valid
-        this->database_handler->insert_or_update_charging_profile(evse_id, profile, charging_limit_source);
+        this->database_handler.insert_or_update_charging_profile(evse_id, profile, charging_limit_source);
     } catch (const QueryExecutionException& e) {
         EVLOG_error << "Could not store ChargingProfile in the database: " << e.what();
         response.status = ChargingProfileStatusEnum::Rejected;
@@ -446,8 +447,8 @@ ClearChargingProfileResponse SmartChargingHandler::clear_profiles(const ClearCha
     ClearChargingProfileResponse response;
     response.status = ClearChargingProfileStatusEnum::Unknown;
 
-    if (this->database_handler->clear_charging_profiles_matching_criteria(request.chargingProfileId,
-                                                                          request.chargingProfileCriteria)) {
+    if (this->database_handler.clear_charging_profiles_matching_criteria(request.chargingProfileId,
+                                                                         request.chargingProfileCriteria)) {
         response.status = ClearChargingProfileStatusEnum::Accepted;
     }
 
@@ -456,15 +457,15 @@ ClearChargingProfileResponse SmartChargingHandler::clear_profiles(const ClearCha
 
 std::vector<ReportedChargingProfile>
 SmartChargingHandler::get_reported_profiles(const GetChargingProfilesRequest& request) const {
-    return this->database_handler->get_charging_profiles_matching_criteria(request.evseId, request.chargingProfile);
+    return this->database_handler.get_charging_profiles_matching_criteria(request.evseId, request.chargingProfile);
 }
 
 std::vector<ChargingProfile>
 SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id,
-                                                  const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore) {
+                                                  const std::vector<ChargingProfilePurposeEnum>& purposes_to_ignore) {
     std::vector<ChargingProfile> valid_profiles;
 
-    auto evse_profiles = this->database_handler->get_charging_profiles_for_evse(evse_id);
+    auto evse_profiles = this->database_handler.get_charging_profiles_for_evse(evse_id);
     for (auto profile : evse_profiles) {
         if (this->conform_and_validate_profile(profile, evse_id) == ProfileValidationResultEnum::Valid and
             std::find(std::begin(purposes_to_ignore), std::end(purposes_to_ignore), profile.chargingProfilePurpose) ==
@@ -478,7 +479,7 @@ SmartChargingHandler::get_valid_profiles_for_evse(int32_t evse_id,
 
 std::vector<ChargingProfile>
 SmartChargingHandler::get_valid_profiles(int32_t evse_id,
-                                         const std::set<ChargingProfilePurposeEnum>& purposes_to_ignore) {
+                                         const std::vector<ChargingProfilePurposeEnum>& purposes_to_ignore) {
     std::vector<ChargingProfile> valid_profiles = get_valid_profiles_for_evse(evse_id, purposes_to_ignore);
 
     if (evse_id != STATION_WIDE_ID) {
@@ -492,8 +493,8 @@ SmartChargingHandler::get_valid_profiles(int32_t evse_id,
 std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_profiles() const {
     std::vector<ChargingProfile> evse_specific_tx_default_profiles;
 
-    auto stmt = this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE "
-                                                      "EVSE_ID != 0 AND CHARGING_PROFILE_PURPOSE = 'TxDefaultProfile'");
+    auto stmt = this->database_handler.new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE "
+                                                     "EVSE_ID != 0 AND CHARGING_PROFILE_PURPOSE = 'TxDefaultProfile'");
     while (stmt->step() != SQLITE_DONE) {
         ChargingProfile profile = json::parse(stmt->column_text(0));
         evse_specific_tx_default_profiles.push_back(profile);
@@ -505,7 +506,7 @@ std::vector<ChargingProfile> SmartChargingHandler::get_evse_specific_tx_default_
 std::vector<ChargingProfile> SmartChargingHandler::get_station_wide_tx_default_profiles() const {
     std::vector<ChargingProfile> station_wide_tx_default_profiles;
 
-    auto stmt = this->database_handler->new_statement(
+    auto stmt = this->database_handler.new_statement(
         "SELECT PROFILE FROM CHARGING_PROFILES WHERE EVSE_ID = 0 AND CHARGING_PROFILE_PURPOSE = 'TxDefaultProfile'");
     while (stmt->step() != SQLITE_DONE) {
         ChargingProfile profile = json::parse(stmt->column_text(0));
@@ -522,7 +523,7 @@ bool SmartChargingHandler::is_overlapping_validity_period(const ChargingProfile&
         return false;
     }
 
-    auto overlap_stmt = this->database_handler->new_statement(
+    auto overlap_stmt = this->database_handler.new_statement(
         "SELECT PROFILE FROM CHARGING_PROFILES WHERE CHARGING_PROFILE_PURPOSE = @purpose AND EVSE_ID = "
         "@evse_id AND ID != @profile_id AND CHARGING_PROFILES.STACK_LEVEL = @stack_level");
 
@@ -562,7 +563,7 @@ void SmartChargingHandler::conform_schedule_number_phases(int32_t profileId,
 ///
 void SmartChargingHandler::conform_validity_periods(ChargingProfile& profile) const {
     if (!profile.validFrom.has_value()) {
-        auto validFrom = ocpp::DateTime();
+        auto validFrom = ocpp::DateTime("1970-01-01T00:00:00Z");
         EVLOG_debug << "Conforming profile: " << profile.id << " added validFrom as " << validFrom;
         profile.validFrom = validFrom;
     }
@@ -578,8 +579,8 @@ ProfileValidationResultEnum
 SmartChargingHandler::verify_no_conflicting_external_constraints_id(const ChargingProfile& profile) const {
     auto result = ProfileValidationResultEnum::Valid;
     auto conflicts_stmt =
-        this->database_handler->new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE ID = @profile_id AND "
-                                              "CHARGING_PROFILE_PURPOSE = 'ChargingStationExternalConstraints'");
+        this->database_handler.new_statement("SELECT PROFILE FROM CHARGING_PROFILES WHERE ID = @profile_id AND "
+                                             "CHARGING_PROFILE_PURPOSE = 'ChargingStationExternalConstraints'");
 
     conflicts_stmt->bind_int("@profile_id", profile.id);
     if (conflicts_stmt->step() == SQLITE_ROW) {
@@ -590,8 +591,15 @@ SmartChargingHandler::verify_no_conflicting_external_constraints_id(const Chargi
 }
 
 CompositeSchedule SmartChargingHandler::calculate_composite_schedule(
-    std::vector<ChargingProfile>& valid_profiles, const ocpp::DateTime& start_time, const ocpp::DateTime& end_time,
-    const int32_t evse_id, std::optional<ChargingRateUnitEnum> charging_rate_unit) {
+    const ocpp::DateTime& start_time, const ocpp::DateTime& end_time, const int32_t evse_id,
+    std::optional<ChargingRateUnitEnum> charging_rate_unit, bool is_offline, bool simulate_transaction_active) {
+
+    std::vector<ChargingProfilePurposeEnum> purposes_to_ignore = utils::get_purposes_to_ignore(
+        this->device_model->get_optional_value<std::string>(ControllerComponentVariables::IgnoredProfilePurposesOffline)
+            .value_or(""),
+        is_offline);
+
+    std::vector<ChargingProfile> valid_profiles = get_valid_profiles(evse_id, purposes_to_ignore);
 
     std::optional<ocpp::DateTime> session_start{};
 
@@ -619,10 +627,14 @@ CompositeSchedule SmartChargingHandler::calculate_composite_schedule(
             charge_point_max_periods.insert(charge_point_max_periods.end(), periods.begin(), periods.end());
             break;
         case ChargingProfilePurposeEnum::TxDefaultProfile:
-            tx_default_periods.insert(tx_default_periods.end(), periods.begin(), periods.end());
+            if (session_start.has_value() || simulate_transaction_active) {
+                tx_default_periods.insert(tx_default_periods.end(), periods.begin(), periods.end());
+            }
             break;
         case ChargingProfilePurposeEnum::TxProfile:
-            tx_periods.insert(tx_periods.end(), periods.begin(), periods.end());
+            if (session_start.has_value() || simulate_transaction_active) {
+                tx_periods.insert(tx_periods.end(), periods.begin(), periods.end());
+            }
             break;
         default:
             break;

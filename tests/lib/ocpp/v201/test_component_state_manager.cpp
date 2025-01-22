@@ -9,6 +9,8 @@
 
 namespace ocpp::v201 {
 
+namespace {
+
 class DatabaseHandlerMock : public DatabaseHandler {
 private:
     std::map<std::pair<int32_t, int32_t>, OperationalStatusEnum> data;
@@ -55,6 +57,8 @@ public:
         return this->get(evse_id, connector_id);
     }
 };
+
+} // namespace
 
 class MockCallbacks {
 public:

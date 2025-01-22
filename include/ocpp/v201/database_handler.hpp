@@ -26,6 +26,8 @@ struct AuthorizationCacheEntry {
 
 class DatabaseHandlerInterface {
 public:
+    virtual ~DatabaseHandlerInterface() = default;
+
     // Authorization cache management
 
     /// \brief Inserts cache entry
