@@ -6,6 +6,7 @@ set(TLS_TEST_FILES
         openssl-pki.conf
         ocsp_response.der
         pki.sh
+        pki-tpm.sh
 )
 
 add_custom_command(
@@ -45,6 +46,15 @@ target_sources(${TLS_GTEST_NAME} PRIVATE
     ../tls.cpp
 )
 
+if(USING_TPM2)
+    target_sources(${TLS_GTEST_NAME} PRIVATE
+        tls_connection_test_tpm.cpp
+    )
+    target_compile_definitions(${TLS_GTEST_NAME} PRIVATE
+        USING_TPM2
+    )
+endif()
+
 target_link_libraries(${TLS_GTEST_NAME}
     PRIVATE
         GTest::gtest
@@ -79,6 +89,7 @@ target_link_libraries(${TLS_MAIN_NAME}
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
+        everest::evse_security
         everest::staging::util
 )
 
@@ -107,6 +118,7 @@ target_link_libraries(${TLS_CLIENT_NAME}
     PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
+        everest::evse_security
         everest::staging::util
 )
 
@@ -136,6 +148,7 @@ target_link_libraries(${TLS_PATCH_NAME}
         GTest::gtest_main
         OpenSSL::SSL
         OpenSSL::Crypto
+        everest::evse_security
         everest::staging::util
 )
 
