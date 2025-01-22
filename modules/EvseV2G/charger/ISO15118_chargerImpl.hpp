@@ -41,8 +41,6 @@ protected:
     virtual void handle_set_charging_parameters(types::iso15118_charger::SetupPhysicalValues& physical_values) override;
     virtual void handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
                                       bool& supported_certificate_service) override;
-    virtual void
-    handle_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) override;
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) override;
     virtual void handle_ac_contactor_closed(bool& status) override;

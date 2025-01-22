@@ -102,6 +102,10 @@ requires:
     interface: reservation
     min_connections: 0
     max_connections: 1
+  extensions_15118:
+    interface: iso15118_ocpp_extensions
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: true
 enable_global_errors: true
 metadata:

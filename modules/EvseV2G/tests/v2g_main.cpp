@@ -20,6 +20,7 @@
 #include "ISO15118_chargerImplStub.hpp"
 #include "ModuleAdapterStub.hpp"
 #include "evse_securityIntfStub.hpp"
+#include "iso15118_ocpp_extensionsImplStub.hpp"
 
 #include <connection.hpp>
 #include <tls.hpp>
@@ -126,8 +127,10 @@ int main(int argc, char** argv) {
     module::stub::ModuleAdapterStub adapter;
     module::stub::ISO15118_chargerImplStub charger(adapter);
     EvseSecurity security(adapter);
+    module::stub::iso15118_ocpp_extensionsImplStub extensions_ocpp;
 
-    auto* ctx = v2g_ctx_create(&charger, &security);
+    auto* ctx = v2g_ctx_create(&charger, &extensions_ocpp, &security);
+
     if (ctx == nullptr) {
         std::cerr << "failed to create context" << std::endl;
     } else {

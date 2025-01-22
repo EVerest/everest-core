@@ -37,7 +37,7 @@ namespace module {
 
 void EvseV2G::init() {
     /* create v2g context */
-    v2g_ctx = v2g_ctx_create(&(*p_charger), &(*r_security));
+    v2g_ctx = v2g_ctx_create(&(*p_charger), &(*p_extensions_ocpp), &(*r_security));
 
     if (v2g_ctx == nullptr)
         return;
@@ -49,6 +49,7 @@ void EvseV2G::init() {
 #endif // EVEREST_MBED_TLS
 
     invoke_init(*p_charger);
+    invoke_init(*p_extensions_ocpp);
 }
 
 void EvseV2G::ready() {
@@ -79,6 +80,7 @@ void EvseV2G::ready() {
     }
 
     invoke_ready(*p_charger);
+    invoke_ready(*p_extensions_ocpp);
 
     rv = sdp_listen(v2g_ctx);
 

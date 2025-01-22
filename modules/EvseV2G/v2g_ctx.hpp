@@ -17,7 +17,8 @@ static const char* selected_energy_transfer_mode_string[] = {
     "AC_single_phase_core", "AC_three_phase_core", "DC_core", "DC_extended", "DC_combo_core", "DC_unique",
 };
 
-struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase, evse_securityIntf* r_security);
+struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
+                                   iso15118_ocpp_extensionsImplBase* p_extensions_ocpp, evse_securityIntf* r_security);
 
 /*!
  * \brief v2g_ctx_init_charging_session This funcion inits a charging session.

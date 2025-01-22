@@ -23,6 +23,7 @@
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
 #include <generated/interfaces/external_energy_limits/Interface.hpp>
+#include <generated/interfaces/iso15118_ocpp_extensions/Interface.hpp>
 #include <generated/interfaces/ocpp_data_transfer/Interface.hpp>
 #include <generated/interfaces/reservation/Interface.hpp>
 #include <generated/interfaces/system/Interface.hpp>
@@ -63,7 +64,8 @@ public:
             std::vector<std::unique_ptr<ocpp_data_transferIntf>> r_data_transfer, std::unique_ptr<authIntf> r_auth,
             std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
             std::vector<std::unique_ptr<display_messageIntf>> r_display_message,
-            std::vector<std::unique_ptr<reservationIntf>> r_reservation, Conf& config) :
+            std::vector<std::unique_ptr<reservationIntf>> r_reservation,
+            std::vector<std::unique_ptr<iso15118_ocpp_extensionsIntf>> r_extensions_15118, Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_auth_validator(std::move(p_auth_validator)),
@@ -79,8 +81,8 @@ public:
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
         r_display_message(std::move(r_display_message)),
         r_reservation(std::move(r_reservation)),
-        config(config) {
-    }
+        r_extensions_15118(std::move(r_extensions_15118)),
+        config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<auth_token_validatorImplBase> p_auth_validator;
@@ -96,6 +98,7 @@ public:
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::vector<std::unique_ptr<display_messageIntf>> r_display_message;
     const std::vector<std::unique_ptr<reservationIntf>> r_reservation;
+    const std::vector<std::unique_ptr<iso15118_ocpp_extensionsIntf>> r_extensions_15118;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
