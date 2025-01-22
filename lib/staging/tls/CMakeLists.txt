@@ -1,5 +1,6 @@
 add_library(tls STATIC)
 add_library(everest::tls ALIAS tls)
+ev_register_library_target(tls)
 
 find_package(OpenSSL 3)
 

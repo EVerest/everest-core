@@ -13,3 +13,5 @@ target_link_libraries(${TEST_TARGET_NAME}
 
 include(GoogleTest)
 gtest_discover_tests(${TEST_TARGET_NAME})
+
+ev_register_test_target(${TEST_TARGET_NAME})

@@ -17,13 +17,19 @@
 //-----------------------------------------------------------------------------
 namespace module::stub {
 
-class evse_securityIntfStub : public ModuleAdapterStub, public evse_securityIntf {
+class evse_securityIntfStub : public evse_securityIntf {
 private:
     std::map<const std::string, Result (evse_securityIntfStub::*)(const Requirement& req, const Parameters& args)>
         functions;
 
 public:
-    evse_securityIntfStub() : evse_securityIntf(this, Requirement{"", 0}, "EvseSecurity", std::nullopt) {
+    evse_securityIntfStub(ModuleAdapterStub* adapter) :
+        evse_securityIntf(adapter, Requirement{"", 0}, "EvseSecurity", std::nullopt) {
+        functions["get_verify_file"] = &evse_securityIntfStub::get_verify_file;
+        functions["get_leaf_certificate_info"] = &evse_securityIntfStub::get_leaf_certificate_info;
+    }
+    evse_securityIntfStub(ModuleAdapterStub& adapter) :
+        evse_securityIntf(&adapter, Requirement{"", 0}, "EvseSecurity", std::nullopt) {
         functions["get_verify_file"] = &evse_securityIntfStub::get_verify_file;
         functions["get_leaf_certificate_info"] = &evse_securityIntfStub::get_leaf_certificate_info;
     }
