@@ -30,6 +30,12 @@ active_modules:
       iso20:
         - module_id: iso15118_20
           implementation_id: charger
+      ext_ocpp2:
+        - module_id: iso15118_2
+          implementation_id: extensions_ocpp
+      ext_ocpp20:
+        - module_id: iso15118_20
+          implementation_id: extensions_ocpp
   iso15118_car:
     module: PyEvJosev
     config_module:

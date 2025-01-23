@@ -18,6 +18,9 @@ active_modules:
       security:
         - module_id: probe
           implementation_id: ProbeModuleSecurity
+      extensions_15118:
+        - module_id: probe
+          implementation_id: ProbeModuleIso15118Extensions
   auth:
     module: Auth
     config_module:
