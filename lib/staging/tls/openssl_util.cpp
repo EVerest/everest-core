@@ -407,6 +407,7 @@ pkey_ptr load_private_key(const char* filename, const char* password) {
     OpenSSLProvider provider;
 
     if (custom_key) {
+        // set global provider to custom settings
         provider.set_global_mode(OpenSSLProvider::mode_t::custom_provider);
     } else {
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
@@ -425,6 +426,7 @@ pkey_ptr load_private_key(const char* filename, const char* password) {
     }
 
     if (custom_key) {
+        // reset global provider back to default settings
         provider.set_global_mode(OpenSSLProvider::mode_t::default_provider);
     }
 
