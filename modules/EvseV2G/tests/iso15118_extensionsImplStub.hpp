@@ -6,14 +6,14 @@
 
 #include <iostream>
 
-#include <generated/interfaces/iso15118_ocpp_extensions/Implementation.hpp>
+#include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
 //-----------------------------------------------------------------------------
 namespace module::stub {
 
-class iso15118_ocpp_extensionsImplStub : public iso15118_ocpp_extensionsImplBase {
+class iso15118_extensionsImplStub : public iso15118_extensionsImplBase {
 public:
-    iso15118_ocpp_extensionsImplStub() : iso15118_ocpp_extensionsImplBase(nullptr, "EvseV2G"){};
+    iso15118_extensionsImplStub() : iso15118_extensionsImplBase(nullptr, "EvseV2G"){};
 
     virtual void init() {
     }
@@ -22,7 +22,7 @@ public:
 
     virtual void
     handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
-        std::cout << "iso15118_ocpp_extensionsImplBase::handle_set_get_certificate_response called" << std::endl;
+        std::cout << "iso15118_extensionsImplBase::handle_set_get_certificate_response called" << std::endl;
     }
 };
 

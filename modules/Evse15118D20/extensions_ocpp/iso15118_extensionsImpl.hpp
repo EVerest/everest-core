@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EXTENSIONS_OCPP_ISO15118_OCPP_EXTENSIONS_IMPL_HPP
-#define EXTENSIONS_OCPP_ISO15118_OCPP_EXTENSIONS_IMPL_HPP
+#ifndef EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP
+#define EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
 // template version 3
 //
 
-#include <generated/interfaces/iso15118_ocpp_extensions/Implementation.hpp>
+#include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
-#include "EvseV2G.hpp"
+#include "../Evse15118D20.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
-#include "v2g.hpp"
-extern struct v2g_context* v2g_ctx;
+// insert your custom include headers here
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
@@ -22,11 +21,11 @@ namespace extensions_ocpp {
 
 struct Conf {};
 
-class iso15118_ocpp_extensionsImpl : public iso15118_ocpp_extensionsImplBase {
+class iso15118_extensionsImpl : public iso15118_extensionsImplBase {
 public:
-    iso15118_ocpp_extensionsImpl() = delete;
-    iso15118_ocpp_extensionsImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseV2G>& mod, Conf& config) :
-        iso15118_ocpp_extensionsImplBase(ev, "extensions_ocpp"), mod(mod), config(config){};
+    iso15118_extensionsImpl() = delete;
+    iso15118_extensionsImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Evse15118D20>& mod, Conf& config) :
+        iso15118_extensionsImplBase(ev, "extensions_ocpp"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -42,7 +41,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<EvseV2G>& mod;
+    const Everest::PtrContainer<Evse15118D20>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -60,4 +59,4 @@ private:
 } // namespace extensions_ocpp
 } // namespace module
 
-#endif // EXTENSIONS_OCPP_ISO15118_OCPP_EXTENSIONS_IMPL_HPP
+#endif // EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP

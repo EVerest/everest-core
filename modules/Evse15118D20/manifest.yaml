@@ -63,7 +63,7 @@ provides:
     description: >-
       This interface provides limited access to iso15118-20
   extensions_ocpp:
-    interface: iso15118_ocpp_extensions
+    interface: iso15118_extensions
     description: >-
       This interface is used to share data between ISO15118 and OCPP modules
       to support the requirements of the OCPP protocol

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "iso15118_ocpp_extensionsImpl.hpp"
+#include "iso15118_extensionsImpl.hpp"
 #include "log.hpp"
 
 namespace module {
 namespace extensions_ocpp {
 
-void iso15118_ocpp_extensionsImpl::init() {
+void iso15118_extensionsImpl::init() {
     if (!v2g_ctx) {
         dlog(DLOG_LEVEL_ERROR, "v2g_ctx not created");
         return;
@@ -26,10 +26,10 @@ void iso15118_ocpp_extensionsImpl::init() {
     });
 }
 
-void iso15118_ocpp_extensionsImpl::ready() {
+void iso15118_extensionsImpl::ready() {
 }
 
-void iso15118_ocpp_extensionsImpl::handle_set_get_certificate_response(
+void iso15118_extensionsImpl::handle_set_get_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
     if (mod->selected_iso20()) {
         mod->r_ext_ocpp20->call_set_get_certificate_response(certificate_response);

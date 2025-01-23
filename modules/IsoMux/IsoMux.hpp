@@ -12,12 +12,12 @@
 
 // headers for provided interface implementations
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
-#include <generated/interfaces/iso15118_ocpp_extensions/Implementation.hpp>
+#include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/ISO15118_charger/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
-#include <generated/interfaces/iso15118_ocpp_extensions/Interface.hpp>
+#include <generated/interfaces/iso15118_extensions/Interface.hpp>
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
@@ -40,10 +40,10 @@ class IsoMux : public Everest::ModuleBase {
 public:
     IsoMux() = delete;
     IsoMux(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
-           std::unique_ptr<iso15118_ocpp_extensionsImplBase> p_extensions_ocpp,
+           std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp,
            std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<ISO15118_chargerIntf> r_iso2,
-           std::unique_ptr<ISO15118_chargerIntf> r_iso20, std::unique_ptr<iso15118_ocpp_extensionsIntf> r_ext_ocpp2,
-           std::unique_ptr<iso15118_ocpp_extensionsIntf> r_ext_ocpp20, Conf& config) :
+           std::unique_ptr<ISO15118_chargerIntf> r_iso20, std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp2,
+           std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp20, Conf& config) :
         ModuleBase(info),
         p_charger(std::move(p_charger)),
         p_extensions_ocpp(std::move(p_extensions_ocpp)),
@@ -55,12 +55,12 @@ public:
         config(config){};
 
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
-    const std::unique_ptr<iso15118_ocpp_extensionsImplBase> p_extensions_ocpp;
+    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp;
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::unique_ptr<ISO15118_chargerIntf> r_iso2;
     const std::unique_ptr<ISO15118_chargerIntf> r_iso20;
-    const std::unique_ptr<iso15118_ocpp_extensionsIntf> r_ext_ocpp2;
-    const std::unique_ptr<iso15118_ocpp_extensionsIntf> r_ext_ocpp20;
+    const std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp2;
+    const std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp20;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

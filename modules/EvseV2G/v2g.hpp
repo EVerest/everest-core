@@ -6,7 +6,7 @@
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
-#include <generated/interfaces/iso15118_ocpp_extensions/Implementation.hpp>
+#include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -189,7 +189,7 @@ struct v2g_context {
 
     evse_securityIntf* r_security;
     ISO15118_chargerImplBase* p_charger;
-    iso15118_ocpp_extensionsImplBase* p_extensions_ocpp;
+    iso15118_extensionsImplBase* p_extensions_ocpp;
 
     struct event_base* event_base;
     pthread_t event_thread;

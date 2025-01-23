@@ -106,7 +106,7 @@ requires:
     min_connections: 0
     max_connections: 1
   extensions_15118:
-    interface: iso15118_ocpp_extensions
+    interface: iso15118_extensions
     min_connections: 0
     max_connections: 128
 enable_external_mqtt: true

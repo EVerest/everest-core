@@ -18,7 +18,7 @@ static const char* selected_energy_transfer_mode_string[] = {
 };
 
 struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
-                                   iso15118_ocpp_extensionsImplBase* p_extensions_ocpp, evse_securityIntf* r_security);
+                                   iso15118_extensionsImplBase* p_extensions_ocpp, evse_securityIntf* r_security);
 
 /*!
  * \brief v2g_ctx_init_charging_session This funcion inits a charging session.
