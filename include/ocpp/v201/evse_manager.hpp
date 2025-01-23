@@ -37,6 +37,13 @@ public:
     /// \brief Get the number of evses
     virtual size_t get_number_of_evses() const = 0;
 
+    /// \brief Get evseid for the given transaction id.
+    /// \param transaction_id   The transactionid
+    /// \return The evse id belonging the the transaction id. std::nullopt if there is no transaction with the given
+    ///         transaction id.
+    ///
+    virtual std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id) const = 0;
+
     /// \brief Gets an iterator pointing to the first evse
     virtual EvseIterator begin() = 0;
     /// \brief Gets an iterator pointing past the last evse
@@ -62,6 +69,8 @@ public:
     bool does_evse_exist(const int32_t id) const override;
 
     size_t get_number_of_evses() const override;
+
+    std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id) const override;
 
     EvseIterator begin() override;
     EvseIterator end() override;

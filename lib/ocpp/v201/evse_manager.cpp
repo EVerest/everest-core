@@ -63,5 +63,17 @@ size_t EvseManager::get_number_of_evses() const {
     return this->evses.size();
 }
 
+std::optional<int32_t> EvseManager::get_transaction_evseid(const CiString<36>& transaction_id) const {
+    for (const auto& evse : this->evses) {
+        if (evse->has_active_transaction()) {
+            if (transaction_id == evse->get_transaction()->get_transaction().transactionId) {
+                return evse->get_id();
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
 } // namespace v201
 } // namespace ocpp

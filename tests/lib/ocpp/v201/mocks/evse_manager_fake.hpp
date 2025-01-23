@@ -68,6 +68,18 @@ public:
         return this->evses.size();
     }
 
+    std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id) const override {
+        for (const auto& evse : this->evses) {
+            if (evse->has_active_transaction()) {
+                if (transaction_id == evse->get_transaction()->get_transaction().transactionId) {
+                    return evse->get_id();
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
     void open_transaction(int evse_id, const std::string& transaction_id) {
         auto& transaction = this->transactions.at(evse_id - 1);
         transaction = std::make_unique<EnhancedTransaction>(db_handler, false);
