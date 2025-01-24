@@ -123,7 +123,7 @@ types:
         items:
           description: An array of contract certificate infos
           type: object
-          $ref: /iso15118_charger#/CertificateHashDataInfo
+          $ref: /iso15118#/CertificateHashDataInfo
         minItems: 1
         maxItems: 4
   TokenValidationStatusMessage:

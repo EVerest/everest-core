@@ -81,7 +81,7 @@ void evse_managerImpl::init() {
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
                                 mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+                                    types::iso15118::EvseError::Error_EmergencyShutdown);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
@@ -91,7 +91,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_Malfunction);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -102,7 +102,7 @@ void evse_managerImpl::init() {
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
                                 mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_UtilityInterruptEvent);
+                                    types::iso15118::EvseError::Error_UtilityInterruptEvent);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -449,7 +449,7 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
 };
 
 void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
+    types::iso15118::ResponseExiStreamStatus& certificate_reponse) {
     mod->r_hlc[0]->call_certificate_response(certificate_reponse);
 }
 

@@ -279,7 +279,7 @@ types:
       dc_ev_error_code:
         description: Indicates the EV internal status
         type: string
-        $ref: /iso15118_charger#/DcEvErrorCode
+        $ref: /iso15118#/DcEvErrorCode
       dc_ev_ress_soc:
         description: State of charge of the EVs battery (RESS)
         type: number
@@ -412,7 +412,7 @@ types:
         type: array
         items:
           type: object
-          $ref: /iso15118_charger#/AppProtocol
+          $ref: /iso15118#/AppProtocol
           additionalProperties: false
         minItems: 1
         maxItems: 20
@@ -426,7 +426,7 @@ types:
       id:
         description: This element contains the id of the v2g message body
         type: string
-        $ref: /iso15118_charger#/V2gMessageId
+        $ref: /iso15118#/V2gMessageId
       xml:
         description: Contains the decoded EXI stream as V2G message XML file
         type: string
@@ -469,7 +469,7 @@ types:
       certificate_action:
         description: Type of the certificate request
         type: string
-        $ref: /iso15118_charger#/CertificateActionEnum
+        $ref: /iso15118#/CertificateActionEnum
   RequestExiStreamSchema:
     description: The request raw exi stream and the schema version for the CSMS system
     type: object
@@ -492,7 +492,7 @@ types:
       certificate_action:
         description: Type of the certificate request
         type: string
-        $ref: /iso15118_charger#/CertificateActionEnum
+        $ref: /iso15118#/CertificateActionEnum
   CertificateHashDataInfo:
     description: Contains the certificate information
     type: object
@@ -538,7 +538,7 @@ types:
       energy_transfer_mode:
         description: The energy mode supported by the SECC 
         type: string
-        $ref: /iso15118_charger#/EnergyTransferMode
+        $ref: /iso15118#/EnergyTransferMode
       bidirectional:
         description: Set true if the powersupply (AC or DC) supports bidi mode
         type: boolean
