@@ -64,6 +64,18 @@ public:
         return id <= this->evses.size();
     }
 
+    bool are_all_connectors_effectively_inoperative() const override {
+        for (const auto& evse : this->evses) {
+            for (int connector_id = 1; connector_id <= evse->get_number_of_connectors(); connector_id++) {
+                OperationalStatusEnum connector_status = evse->get_connector_effective_operational_status(connector_id);
+                if (connector_status == OperationalStatusEnum::Operative) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     size_t get_number_of_evses() const override {
         return this->evses.size();
     }
@@ -92,6 +104,14 @@ public:
 
     EvseMock& get_mock(int32_t evse_id) {
         return dynamic_cast<EvseMock&>(*evses.at(evse_id - 1).get());
+    }
+
+    bool any_transaction_active(const std::optional<EVSE>& /*evse*/) const override {
+        return false;
+    }
+
+    bool is_valid_evse(const EVSE& evse) const override {
+        return (static_cast<int32_t>(evses.size()) > evse.id);
     }
 };
 

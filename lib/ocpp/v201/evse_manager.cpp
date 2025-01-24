@@ -59,6 +59,19 @@ bool EvseManager::does_evse_exist(const int32_t id) const {
     return id >= 0 && static_cast<uint64_t>(id) <= this->evses.size();
 }
 
+bool EvseManager::are_all_connectors_effectively_inoperative() const {
+    // Check that all connectors on all EVSEs are inoperative
+    for (const auto& evse : this->evses) {
+        for (int connector_id = 1; connector_id <= evse->get_number_of_connectors(); connector_id++) {
+            OperationalStatusEnum connector_status = evse->get_connector_effective_operational_status(connector_id);
+            if (connector_status == OperationalStatusEnum::Operative) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 size_t EvseManager::get_number_of_evses() const {
     return this->evses.size();
 }
@@ -73,6 +86,34 @@ std::optional<int32_t> EvseManager::get_transaction_evseid(const CiString<36>& t
     }
 
     return std::nullopt;
+}
+
+bool EvseManager::any_transaction_active(const std::optional<EVSE>& evse) const {
+    if (!evse.has_value()) {
+        for (auto const& evse : this->evses) {
+            if (evse->has_active_transaction()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    return this->get_evse(evse.value().id).has_active_transaction();
+}
+
+bool EvseManager::is_valid_evse(const EVSE& evse) const {
+    return this->does_evse_exist(evse.id) and
+           (!evse.connectorId.has_value() or
+            this->get_evse(evse.id).get_number_of_connectors() >= evse.connectorId.value());
+}
+
+// Free functions
+
+void set_evse_connectors_unavailable(EvseInterface& evse, bool persist) {
+    uint32_t number_of_connectors = evse.get_number_of_connectors();
+
+    for (uint32_t i = 1; i <= number_of_connectors; ++i) {
+        evse.set_connector_operative_status(static_cast<int32_t>(i), OperationalStatusEnum::Inoperative, persist);
+    }
 }
 
 } // namespace v201

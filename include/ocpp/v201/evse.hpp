@@ -142,6 +142,11 @@ public:
     /// effective status \param connector_id The ID of the connector
     virtual void restore_connector_operative_status(int32_t connector_id) = 0;
 
+    /// \brief Get the operational status of a connector within this evse.
+    /// \param connector_id The id of the connector.
+    /// \return The operational status.
+    virtual OperationalStatusEnum get_connector_effective_operational_status(const int32_t connector_id) = 0;
+
     /// \brief Returns the phase type for the EVSE based on its SupplyPhases. It can be AC, DC, or Unknown.
     virtual CurrentPhaseType get_current_phase_type() = 0;
 
@@ -279,6 +284,7 @@ public:
     void set_evse_operative_status(OperationalStatusEnum new_status, bool persist);
     void set_connector_operative_status(int32_t connector_id, OperationalStatusEnum new_status, bool persist);
     void restore_connector_operative_status(int32_t connector_id);
+    OperationalStatusEnum get_connector_effective_operational_status(const int32_t connector_id) override;
 
     CurrentPhaseType get_current_phase_type();
 

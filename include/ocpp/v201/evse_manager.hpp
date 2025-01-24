@@ -9,6 +9,14 @@
 namespace ocpp {
 namespace v201 {
 
+///
+/// \brief Set all connectors of a given evse to unavailable.
+/// \param evse The evse.
+/// \param persist  True if unavailability should persist. If it is set to false, there will be a check per
+///                 connector if it was already set to true and if that is the case, it will be persisted anyway.
+///
+void set_evse_connectors_unavailable(EvseInterface& evse, bool persist);
+
 /// \brief Class used to access the Evse instances
 class EvseManagerInterface {
 public:
@@ -34,6 +42,11 @@ public:
     /// \brief Check if an evse with \p id exists
     virtual bool does_evse_exist(int32_t id) const = 0;
 
+    /// \brief Checks if all connectors are effectively inoperative.
+    /// If this is the case, calls the all_connectors_unavailable_callback
+    /// This is used e.g. to allow firmware updates once all transactions have finished
+    virtual bool are_all_connectors_effectively_inoperative() const = 0;
+
     /// \brief Get the number of evses
     virtual size_t get_number_of_evses() const = 0;
 
@@ -43,6 +56,19 @@ public:
     ///         transaction id.
     ///
     virtual std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id) const = 0;
+
+    /// \brief Helper function to determine if there is any active transaction for the given \p evse
+    /// \param evse if optional is not set, this function will check if there is any transaction active for the whole
+    /// charging station
+    /// \return
+    virtual bool any_transaction_active(const std::optional<EVSE>& evse) const = 0;
+
+    ///
+    /// \brief Check if the given evse is valid.
+    /// \param evse The evse to check.
+    /// \return True when evse is valid.
+    ///
+    virtual bool is_valid_evse(const EVSE& evse) const = 0;
 
     /// \brief Gets an iterator pointing to the first evse
     virtual EvseIterator begin() = 0;
@@ -68,9 +94,14 @@ public:
     virtual bool does_connector_exist(const int32_t evse_id, const ConnectorEnum connector_type) const override;
     bool does_evse_exist(const int32_t id) const override;
 
+    bool are_all_connectors_effectively_inoperative() const override;
+
     size_t get_number_of_evses() const override;
 
     std::optional<int32_t> get_transaction_evseid(const CiString<36>& transaction_id) const override;
+
+    bool any_transaction_active(const std::optional<EVSE>& evse) const override;
+    bool is_valid_evse(const EVSE& evse) const override;
 
     EvseIterator begin() override;
     EvseIterator end() override;
