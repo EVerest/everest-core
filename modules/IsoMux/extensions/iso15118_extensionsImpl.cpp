@@ -30,7 +30,7 @@ void iso15118_extensionsImpl::ready() {
 }
 
 void iso15118_extensionsImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
+    types::iso15118::ResponseExiStreamStatus& certificate_response) {
     if (mod->selected_iso20()) {
         mod->r_ext20->call_set_get_certificate_response(certificate_response);
     } else {

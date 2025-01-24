@@ -287,7 +287,7 @@ void Charger::run_state_machine() {
             // If we have zero power, some cars will not like the ChargingParameter message.
             if (config_context.charge_mode == ChargeMode::DC) {
                 // Create a copy of the atomic struct
-                types::iso15118_charger::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
+                types::iso15118::DcEvseMaximumLimits evse_limit = shared_context.current_evse_max_limits;
                 if (not(evse_limit.evse_maximum_current_limit > 0 and evse_limit.evse_maximum_power_limit > 0)) {
                     if (not internal_context.no_energy_warning_printed) {
                         EVLOG_warning << "No energy available, still retrying...";
@@ -1735,14 +1735,13 @@ void Charger::notify_currentdemand_started() {
     }
 }
 
-void Charger::inform_new_evse_max_hlc_limits(
-    const types::iso15118_charger::DcEvseMaximumLimits& _currentEvseMaxLimits) {
+void Charger::inform_new_evse_max_hlc_limits(const types::iso15118::DcEvseMaximumLimits& _currentEvseMaxLimits) {
     Everest::scoped_lock_timeout lock(state_machine_mutex,
                                       Everest::MutexDescription::Charger_inform_new_evse_max_hlc_limits);
     shared_context.current_evse_max_limits = _currentEvseMaxLimits;
 }
 
-types::iso15118_charger::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
+types::iso15118::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_get_evse_max_hlc_limits);
     return shared_context.current_evse_max_limits;
 }

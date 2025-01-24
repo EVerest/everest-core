@@ -4,7 +4,7 @@
 #define OCPP_V201_CONVERSIONS_HPP
 
 #include <generated/types/evse_manager.hpp>
-#include <generated/types/iso15118_charger.hpp>
+#include <generated/types/iso15118.hpp>
 #include <generated/types/ocpp.hpp>
 #include <generated/types/reservation.hpp>
 #include <generated/types/system.hpp>
@@ -82,19 +82,18 @@ ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType 
 /// \brief Converts a given types::authorization::IdToken \p id_token to an ocpp::v201::IdToken.
 ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token);
 
-/// \brief Converts a given types::iso15118_charger::CertificateActionEnum \p action to an
+/// \brief Converts a given types::iso15118::CertificateActionEnum \p action to an
 /// ocpp::v201::CertificateActionEnum.
-ocpp::v201::CertificateActionEnum
-to_ocpp_certificate_action_enum(const types::iso15118_charger::CertificateActionEnum& action);
+ocpp::v201::CertificateActionEnum to_ocpp_certificate_action_enum(const types::iso15118::CertificateActionEnum& action);
 
-/// \brief Converts a vector of types::iso15118_charger::CertificateHashDataInfo to a vector of
+/// \brief Converts a vector of types::iso15118::CertificateHashDataInfo to a vector of
 /// ocpp::v201::OCSPRequestData.
 std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
-    const std::vector<types::iso15118_charger::CertificateHashDataInfo>& certificate_hash_data_info);
+    const std::vector<types::iso15118::CertificateHashDataInfo>& certificate_hash_data_info);
 
-/// \brief Converts a given types::iso15118_charger::HashAlgorithm \p hash_algorithm to an
+/// \brief Converts a given types::iso15118::HashAlgorithm \p hash_algorithm to an
 /// ocpp::v201::HashAlgorithmEnum.
-ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm);
+ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118::HashAlgorithm hash_algorithm);
 
 /// \brief Converts a given types::ocpp::GetVariableRequest \p get_variable_request_vector to an
 /// std::vector<ocpp::v201::GetVariableData>
@@ -118,10 +117,10 @@ ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse);
 /// \brief Converts a given types::ocpp::AttributeEnum to ocpp::v201::AttributeEnum
 ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum);
 
-/// \brief Converts a given types::types::iso15118_charger::RequestExiStreamSchema to
+/// \brief Converts a given types::types::iso15118::RequestExiStreamSchema to
 /// ocpp::v201::Get15118EVCertificateRequest
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request);
+to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request);
 
 /// \brief Converts a given types::reservation::ReservationResult to ocpp::v201::ReserveNowStatusEnum
 ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
@@ -143,9 +142,8 @@ types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201
 types::system::FirmwareUpdateRequest
 to_everest_firmware_update_request(const ocpp::v201::UpdateFirmwareRequest& request);
 
-/// \brief Converts a given ocpp::v201::Iso15118EVCertificateStatusEnum \p status to a types::iso15118_charger::Status.
-types::iso15118_charger::Status
-to_everest_iso15118_charger_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status);
+/// \brief Converts a given ocpp::v201::Iso15118EVCertificateStatusEnum \p status to a types::iso15118::Status.
+types::iso15118::Status to_everest_iso15118_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status);
 
 /// \brief Converts a given ocpp::v201::DataTransferStatusEnum \p status to a types::ocpp::DataTransferStatus.
 types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v201::DataTransferStatusEnum status);

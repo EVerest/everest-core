@@ -34,8 +34,8 @@ public:
 
 protected:
     // command handler functions (virtual)
-    virtual void handle_set_get_certificate_response(
-        types::iso15118_charger::ResponseExiStreamStatus& certificate_response) override;
+    virtual void
+    handle_set_get_certificate_response(types::iso15118::ResponseExiStreamStatus& certificate_response) override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
