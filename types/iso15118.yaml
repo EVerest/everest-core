@@ -672,92 +672,92 @@ types:
           range dedicated for cycling activity.
         type: number
         minimum: 0
-  DERControlEnum:
+  DERControl:
     description: >-
       Name of control settings to clear. Not used when _controlId_ is provided.
     type: string
     enum:
-      - "EnterService"
-      - "FreqDroop"
-      - "FreqWatt"
-      - "FixedPFAbsorb"
-      - "FixedPFInject"
-      - "FixedVar"
-      - "Gradients"
-      - "HFMustTrip"
-      - "HFMayTrip"
-      - "HVMustTrip"
-      - "HVMomCess"
-      - "HVMayTrip"
-      - "LimitMaxDischarge"
-      - "LFMustTrip"
-      - "LVMustTrip"
-      - "LVMomCess"
-      - "LVMayTrip"
-      - "PowerMonitoringMustTrip"
-      - "VoltVar"
-      - "VoltWatt"
-      - "WattPF"
-      - "WattVar"
-  ChargingRateUnitEnum:
+      - EnterService
+      - FreqDroop
+      - FreqWatt
+      - FixedPFAbsorb
+      - FixedPFInject
+      - FixedVar
+      - Gradients
+      - HFMustTrip
+      - HFMayTrip
+      - HVMustTrip
+      - HVMomCess
+      - HVMayTrip
+      - LimitMaxDischarge
+      - LFMustTrip
+      - LVMustTrip
+      - LVMomCess
+      - LVMayTrip
+      - PowerMonitoringMustTrip
+      - VoltVar
+      - VoltWatt
+      - WattPF
+      - WattVar
+  ChargingRateUnit:
     description: >-
       Can be used to force a power or current profile.
     type: string
     enum:
-      - "W"
-      - "A"
-  OperationModeEnum:
+      - W
+      - A
+  OperationMode:
     description: >-
       (2.1) Charging operation mode to use during this time interval. When absent
       defaults to `ChargingOnly`.
     type: string
     enum:
-      - "Idle"
-      - "ChargingOnly"
-      - "CentralSetpoint"
-      - "ExternalSetpoint"
-      - "ExternalLimits"
-      - "CentralFrequency"
-      - "LocalFrequency"
-      - "LocalLoadBalancing"
-  CostKindEnum:
+      - Idle
+      - ChargingOnly
+      - CentralSetpoint
+      - ExternalSetpoint
+      - ExternalLimits
+      - CentralFrequency
+      - LocalFrequency
+      - LocalLoadBalancing
+  CostKind:
     description: >-
       The kind of cost referred to in the message element amount
     type: string
     enum:
-      - "CarbonDioxideEmission"
-      - "RelativePricePercentage"
-      - "RenewableGenerationPercentage"
-  ControlModeEnum:
+      - CarbonDioxideEmission
+      - RelativePricePercentage
+      - RenewableGenerationPercentage
+  ControlMode:
     description: >-
       (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
       absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20:
       ServiceSelectionReq(SelectedEnergyTransferService)
     type: string
     enum:
-      - "ScheduledControl"
-      - "DynamicControl"
-  IslandingDetectionEnum:
+      - ScheduledControl
+      - DynamicControl
+  IslandingDetection:
     description: >-
       None
     type: string
     enum:
-      - "NoAntiIslandingSupport"
-      - "RoCoF"
-      - "UVP_OVP"
-      - "UFP_OFP"
-      - "VoltageVectorShift"
-      - "ZeroCrossingDetection"
-      - "OtherPassive"
-      - "ImpedanceMeasurement"
-      - "ImpedanceAtFrequency"
-      - "SlipModeFrequencyShift"
-      - "SandiaFrequencyShift"
-      - "SandiaVoltageShift"
-      - "FrequencyJump"
-      - "RCLQFactor"
-      - "OtherActive"
-  MobilityNeedsModeEnum:
+      - NoAntiIslandingSupport
+      - RoCoF
+      - UVP_OVP
+      - UFP_OFP
+      - VoltageVectorShift
+      - ZeroCrossingDetection
+      - OtherPassive
+      - ImpedanceMeasurement
+      - ImpedanceAtFrequency
+      - SlipModeFrequencyShift
+      - SandiaFrequencyShift
+      - SandiaVoltageShift
+      - FrequencyJump
+      - RCLQFactor
+      - OtherActive
+  MobilityNeedsMode:
     description: >-
       (2.1) Value of EVCC indicates that EV determines min/target SOC and departure
       time. A value of EVCC_SECC indicates that charging station or CSMS may also
@@ -765,8 +765,8 @@ types:
       ServiceSelectionReq(SelectedEnergyTransferService)
     type: string
     enum:
-      - "EVCC"
-      - "EVCC_SECC"
+      - EVCC
+      - EVCC_SECC
   V2XChargingParameters:
     description: >-
       Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
@@ -1071,7 +1071,7 @@ types:
         type: array
         items:
           type: string
-          $ref: /iso15118#/DERControlEnum
+          $ref: /iso15118#/DERControl
         minItems: 1
       ev_over_excited_max_discharge_power:
         description: >-
@@ -1287,7 +1287,7 @@ types:
         type: array
         items:
           type: string
-          $ref: /iso15118#/IslandingDetectionEnum
+          $ref: /iso15118#/IslandingDetection
         minItems: 1
       ev_islanding_trip_time:
         description: >-
@@ -1471,7 +1471,7 @@ types:
           absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20:
           ServiceSelectionReq(SelectedEnergyTransferService)
         type: object
-        $ref: /iso15118#/ControlModeEnum
+        $ref: /iso15118#/ControlMode
       mobility_needs_mode:
         description: >-
           (2.1) Value of EVCC indicates that EV determines min/target SOC and departure
@@ -1479,7 +1479,7 @@ types:
           update min/target SOC and departure time. ISO 15118-20:
           ServiceSelectionReq(SelectedEnergyTransferService)
         type: object
-        $ref: /iso15118#/MobilityNeedsModeEnum
+        $ref: /iso15118#/MobilityNeedsMode
       departure_time:
         description: >-
           Estimated departure time of the EV. ISO 15118-2: AC/DC_EVChargeParameterType:
@@ -1760,7 +1760,7 @@ types:
         description: >-
           The kind of cost referred to in the message element amount
         type: object
-        $ref: /iso15118#/CostKindEnum
+        $ref: /iso15118#/CostKind
       amount:
         description: >-
           The estimated or actual cost per kWh
@@ -2107,7 +2107,7 @@ types:
           (2.1) Charging operation mode to use during this time interval. When absent
           defaults to `ChargingOnly`.
         type: object
-        $ref: /iso15118#/OperationModeEnum
+        $ref: /iso15118#/OperationMode
       v2x_freq_watt_curve:
         description: >-
           (2.1) A point of a frequency-watt curve.
@@ -2165,7 +2165,7 @@ types:
         description: >-
           The unit of measure in which limits and setpoints are expressed.
         type: object
-        $ref: /iso15118#/ChargingRateUnitEnum
+        $ref: /iso15118#/ChargingRateUnit
       min_charging_rate:
         description: >-
           Minimum charging rate supported by the EV. The unit of measure is defined by the
