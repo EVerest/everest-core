@@ -11,11 +11,20 @@ types:
     type: string
     enum:
       - AC_single_phase_core
+      - AC_two_phase
       - AC_three_phase_core
       - DC_core
       - DC_extended
       - DC_combo_core
       - DC_unique
+      - DC
+      - AC_BPT
+      - AC_BPT_DER
+      - AC_DER
+      - DC_BPT
+      - DC_ACDP
+      - DC_ACDP_BPT
+      - WPT
   IsolationStatus:
     description: The different charger isolation status
     type: string
@@ -663,6 +672,1567 @@ types:
           range dedicated for cycling activity.
         type: number
         minimum: 0
+  DERControlEnum:
+    description: >-
+      Name of control settings to clear. Not used when _controlId_ is provided.
+    type: string
+    enum:
+      - "EnterService"
+      - "FreqDroop"
+      - "FreqWatt"
+      - "FixedPFAbsorb"
+      - "FixedPFInject"
+      - "FixedVar"
+      - "Gradients"
+      - "HFMustTrip"
+      - "HFMayTrip"
+      - "HVMustTrip"
+      - "HVMomCess"
+      - "HVMayTrip"
+      - "LimitMaxDischarge"
+      - "LFMustTrip"
+      - "LVMustTrip"
+      - "LVMomCess"
+      - "LVMayTrip"
+      - "PowerMonitoringMustTrip"
+      - "VoltVar"
+      - "VoltWatt"
+      - "WattPF"
+      - "WattVar"
+  ChargingRateUnitEnum:
+    description: >-
+      Can be used to force a power or current profile.
+    type: string
+    enum:
+      - "W"
+      - "A"
+  OperationModeEnum:
+    description: >-
+      (2.1) Charging operation mode to use during this time interval. When absent
+      defaults to `ChargingOnly`.
+    type: string
+    enum:
+      - "Idle"
+      - "ChargingOnly"
+      - "CentralSetpoint"
+      - "ExternalSetpoint"
+      - "ExternalLimits"
+      - "CentralFrequency"
+      - "LocalFrequency"
+      - "LocalLoadBalancing"
+  CostKindEnum:
+    description: >-
+      The kind of cost referred to in the message element amount
+    type: string
+    enum:
+      - "CarbonDioxideEmission"
+      - "RelativePricePercentage"
+      - "RenewableGenerationPercentage"
+  ControlModeEnum:
+    description: >-
+      (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
+      absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20:
+      ServiceSelectionReq(SelectedEnergyTransferService)
+    type: string
+    enum:
+      - "ScheduledControl"
+      - "DynamicControl"
+  IslandingDetectionEnum:
+    description: >-
+      None
+    type: string
+    enum:
+      - "NoAntiIslandingSupport"
+      - "RoCoF"
+      - "UVP_OVP"
+      - "UFP_OFP"
+      - "VoltageVectorShift"
+      - "ZeroCrossingDetection"
+      - "OtherPassive"
+      - "ImpedanceMeasurement"
+      - "ImpedanceAtFrequency"
+      - "SlipModeFrequencyShift"
+      - "SandiaFrequencyShift"
+      - "SandiaVoltageShift"
+      - "FrequencyJump"
+      - "RCLQFactor"
+      - "OtherActive"
+  MobilityNeedsModeEnum:
+    description: >-
+      (2.1) Value of EVCC indicates that EV determines min/target SOC and departure
+      time. A value of EVCC_SECC indicates that charging station or CSMS may also
+      update min/target SOC and departure time. ISO 15118-20:
+      ServiceSelectionReq(SelectedEnergyTransferService)
+    type: string
+    enum:
+      - "EVCC"
+      - "EVCC_SECC"
+  V2XChargingParameters:
+    description: >-
+      Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
+      All values are greater or equal to zero, with the exception of
+      EVMinEnergyRequest, EVMaxEnergyRequest, EVTargetEnergyRequest,
+      EVMinV2XEnergyRequest and EVMaxV2XEnergyRequest.
+    type: object
+    required:
+      []
+    properties:
+      min_charge_power:
+        description: >-
+          Minimum charge power in W, defined by max(EV, EVSE). This field represents the
+          sum of all phases, unless values are provided for L2 and L3, in which case this
+          field represents phase L1. Relates to: ISO 15118-20:
+          BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower
+        type: number
+      min_charge_power_l2:
+        description: >-
+          Minimum charge power on phase L2 in W, defined by max(EV, EVSE). Relates to: ISO
+          15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower_L2
+        type: number
+      min_charge_power_l3:
+        description: >-
+          Minimum charge power on phase L3 in W, defined by max(EV, EVSE). Relates to: ISO
+          15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMinimumChargePower_L3
+        type: number
+      max_charge_power:
+        description: >-
+          Maximum charge (absorbed) power in W, defined by min(EV, EVSE) at unity power
+          factor. This field represents the sum of all phases, unless values are provided
+          for L2 and L3, in which case this field represents phase L1. It corresponds to
+          the ChaWMax attribute in the IEC 61850. It is usually equivalent to the rated
+          apparent power of the EV when discharging (ChaVAMax) in IEC 61850. Relates to:
+          ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower
+        type: number
+      max_charge_power_l2:
+        description: >-
+          Maximum charge power on phase L2 in W, defined by min(EV, EVSE) Relates to: ISO
+          15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower_L2
+        type: number
+      max_charge_power_l3:
+        description: >-
+          Maximum charge power on phase L3 in W, defined by min(EV, EVSE) Relates to: ISO
+          15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType: EVMaximumChargePower_L3
+        type: number
+      min_discharge_power:
+        description: >-
+          Minimum discharge (injected) power in W, defined by max(EV, EVSE) at unity power
+          factor. Value >= 0. This field represents the sum of all phases, unless values
+          are provided for L2 and L3, in which case this field represents phase L1. It
+          corresponds to the WMax attribute in the IEC 61850. It is usually equivalent to
+          the rated apparent power of the EV when discharging (VAMax attribute in the IEC
+          61850). Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMinimumDischargePower
+        type: number
+      min_discharge_power_l2:
+        description: >-
+          Minimum discharge power on phase L2 in W, defined by max(EV, EVSE).  Value >= 0.
+          Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMinimumDischargePower_L2
+        type: number
+      min_discharge_power_l3:
+        description: >-
+          Minimum discharge power on phase L3 in W, defined by max(EV, EVSE).  Value >= 0.
+          Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMinimumDischargePower_L3
+        type: number
+      max_discharge_power:
+        description: >-
+          Maximum discharge (injected) power in W, defined by min(EV, EVSE) at unity power
+          factor.  Value >= 0. This field represents the sum of all phases, unless values
+          are provided for L2 and L3, in which case this field represents phase L1.
+          Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMaximumDischargePower
+        type: number
+      max_discharge_power_l2:
+        description: >-
+          Maximum discharge power on phase L2 in W, defined by min(EV, EVSE).  Value >= 0.
+          Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMaximumDischargePowe_L2
+        type: number
+      max_discharge_power_l3:
+        description: >-
+          Maximum discharge power on phase L3 in W, defined by min(EV, EVSE).  Value >= 0.
+          Relates to: ISO 15118-20: BPT_AC/DC_CPDReqEnergyTransferModeType:
+          EVMaximumDischargePower_L3
+        type: number
+      min_charge_current:
+        description: >-
+          Minimum charge current in A, defined by max(EV, EVSE) Relates to: ISO 15118-20:
+          BPT_DC_CPDReqEnergyTransferModeType: EVMinimumChargeCurrent
+        type: number
+      max_charge_current:
+        description: >-
+          Maximum charge current in A, defined by min(EV, EVSE) Relates to: ISO 15118-20:
+          BPT_DC_CPDReqEnergyTransferModeType: EVMaximumChargeCurrent
+        type: number
+      min_discharge_current:
+        description: >-
+          Minimum discharge current in A, defined by max(EV, EVSE).  Value >= 0. Relates
+          to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMinimumDischargeCurrent
+        type: number
+      max_discharge_current:
+        description: >-
+          Maximum discharge current in A, defined by min(EV, EVSE).  Value >= 0. Relates
+          to: ISO 15118-20: BPT_DC_CPDReqEnergyTransferModeType: EVMaximumDischargeCurrent
+        type: number
+      min_voltage:
+        description: >-
+          Minimum voltage in V, defined by max(EV, EVSE) Relates to: ISO 15118-20:
+          BPT_DC_CPDReqEnergyTransferModeType: EVMinimumVoltage
+        type: number
+      max_voltage:
+        description: >-
+          Maximum voltage in V, defined by min(EV, EVSE) Relates to: ISO 15118-20:
+          BPT_DC_CPDReqEnergyTransferModeType: EVMaximumVoltage
+        type: number
+      ev_target_energy_request:
+        description: >-
+          Energy to requested state of charge in Wh Relates to: ISO 15118-20:
+          Dynamic/Scheduled_SEReqControlModeType: EVTargetEnergyRequest
+        type: number
+      ev_min_energy_request:
+        description: >-
+          Energy to minimum allowed state of charge in Wh Relates to: ISO 15118-20:
+          Dynamic/Scheduled_SEReqControlModeType: EVMinimumEnergyRequest
+        type: number
+      ev_max_energy_request:
+        description: >-
+          Energy to maximum state of charge in Wh Relates to: ISO 15118-20:
+          Dynamic/Scheduled_SEReqControlModeType: EVMaximumEnergyRequest
+        type: number
+      ev_min_v2xenergy_request:
+        description: >-
+          Energy (in Wh) to minimum state of charge for cycling (V2X) activity. Positive
+          value means that current state of charge is below V2X range. Relates to: ISO
+          15118-20: Dynamic_SEReqControlModeType: EVMinimumV2XEnergyRequest
+        type: number
+      ev_max_v2xenergy_request:
+        description: >-
+          Energy (in Wh) to maximum state of charge for cycling (V2X) activity. Negative
+          value indicates that current state of charge is above V2X range. Relates to: ISO
+          15118-20: Dynamic_SEReqControlModeType: EVMaximumV2XEnergyRequest
+        type: number
+      target_soc:
+        description: >-
+          Target state of charge at departure as percentage. Relates to: ISO 15118-20:
+          BPT_DC_CPDReqEnergyTransferModeType: TargetSOC
+        type: integer
+  EVPriceRule:
+    description: >-
+      (2.1) An entry in price schedule over time for which EV is willing to discharge.
+    type: object
+    required:
+      - energy_fee
+      - power_range_start
+    properties:
+      energy_fee:
+        description: >-
+          Cost per kWh.
+        type: number
+      power_range_start:
+        description: >-
+          The EnergyFee applies between this value and the value of the PowerRangeStart of
+          the subsequent EVPriceRule. If the power is below this value, the EnergyFee of
+          the previous EVPriceRule applies. Negative values are used for discharging.
+        type: number
+  EVPowerScheduleEntry:
+    description: >-
+      (2.1) An entry in schedule of the energy amount over time that EV is willing to
+      discharge. A negative value indicates the willingness to discharge under
+      specific conditions, a positive value indicates that the EV currently is not
+      able to offer energy to discharge.
+    type: object
+    required:
+      - duration
+      - power
+    properties:
+      duration:
+        description: >-
+          The duration of this entry.
+        type: integer
+      power:
+        description: >-
+          Defines maximum amount of power for the duration of this EVPowerScheduleEntry to
+          be discharged from the EV battery through EVSE power outlet. Negative values are
+          used for discharging.
+        type: number
+  EVPowerSchedule:
+    description: >-
+      (2.1) Schedule of EV energy offer.
+    type: object
+    required:
+      - ev_power_schedule_entries
+      - time_anchor
+    properties:
+      ev_power_schedule_entries:
+        description: >-
+          (2.1) An entry in schedule of the energy amount over time that EV is willing to
+          discharge. A negative value indicates the willingness to discharge under
+          specific conditions, a positive value indicates that the EV currently is not
+          able to offer energy to discharge.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/EVPowerScheduleEntry
+        minItems: 1
+        maxItems: 1024
+      time_anchor:
+        description: >-
+          The time that defines the starting point for the EVEnergyOffer.
+        type: string
+  EVAbsolutePriceScheduleEntry:
+    description: >-
+      (2.1) An entry in price schedule over time for which EV is willing to discharge.
+    type: object
+    required:
+      - duration
+      - ev_price_rule
+    properties:
+      duration:
+        description: >-
+          The amount of seconds of this entry.
+        type: integer
+      ev_price_rule:
+        description: >-
+          (2.1) An entry in price schedule over time for which EV is willing to discharge.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/EVPriceRule
+        minItems: 1
+        maxItems: 8
+  EVAbsolutePriceSchedule:
+    description: >-
+      (2.1) Price schedule of EV energy offer.
+    type: object
+    required:
+      - time_anchor
+      - currency
+      - ev_absolute_price_schedule_entries
+      - price_algorithm
+    properties:
+      time_anchor:
+        description: >-
+          Starting point in time of the EVEnergyOffer.
+        type: string
+      currency:
+        description: >-
+          Currency code according to ISO 4217.
+        type: string
+      ev_absolute_price_schedule_entries:
+        description: >-
+          (2.1) An entry in price schedule over time for which EV is willing to discharge.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/EVAbsolutePriceScheduleEntry
+        minItems: 1
+        maxItems: 1024
+      price_algorithm:
+        description: >-
+          ISO 15118-20 URN of price algorithm: Power, PeakPower, StackedEnergy.
+        type: string
+  EVEnergyOffer:
+    description: >-
+      (2.1) A schedule of the energy amount over time that EV is willing to discharge.
+      A negative value indicates the willingness to discharge under specific
+      conditions, a positive value indicates that the EV currently is not able to
+      offer energy to discharge.
+    type: object
+    required:
+      - ev_power_schedule
+    properties:
+      ev_absolute_price_schedule:
+        description: >-
+          (2.1) Price schedule of EV energy offer.
+        type: object
+        $ref: /iso15118#/EVAbsolutePriceSchedule
+      ev_power_schedule:
+        description: >-
+          (2.1) Schedule of EV energy offer.
+        type: object
+        $ref: /iso15118#/EVPowerSchedule
+  DERChargingParameters:
+    description: >-
+      (2.1) DERChargingParametersType is used in ChargingNeedsType during an ISO
+      15118-20 session for AC_BPT_DER to report the inverter settings related to DER
+      control that were agreed between EVSE and EV. Fields starting with "ev" contain
+      values from the EV. Other fields contain a value that is supported by both EV
+      and EVSE. DERChargingParametersType type is only relevant in case of an ISO
+      15118-20 AC_BPT_DER/AC_DER charging session.
+    type: object
+    required:
+      []
+    properties:
+      ev_supported_dercontrol:
+        description: >-
+          DER control functions supported by EV. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType:DERControlFunctions (bitmap)
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/DERControlEnum
+        minItems: 1
+      ev_over_excited_max_discharge_power:
+        description: >-
+          Rated maximum injected active power by EV, at specified over-excited power
+          factor (overExcitedPowerFactor). It can also be defined as the rated maximum
+          discharge power at the rated minimum injected reactive power value. This means
+          that if the EV is providing reactive power support, and it is requested to
+          discharge at max power (e.g. to satisfy an EMS request), the EV may override the
+          request and discharge up to overExcitedMaximumDischargePower to meet the minimum
+          reactive power requirements. Corresponds to the WOvPF attribute in IEC 61850.
+          ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVOverExcitedMaximumDischargePower
+        type: number
+      ev_over_excited_power_factor:
+        description: >-
+          EV power factor when injecting (over excited) the minimum reactive power.
+          Corresponds to the OvPF attribute in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVOverExcitedPowerFactor
+        type: number
+      ev_under_excited_max_discharge_power:
+        description: >-
+          Rated maximum injected active power by EV supported at specified under-excited
+          power factor (EVUnderExcitedPowerFactor). It can also be defined as the rated
+          maximum dischargePower at the rated minimum absorbed reactive power value. This
+          means that if the EV is providing reactive power support, and it is requested to
+          discharge at max power (e.g. to satisfy an EMS request), the EV may override the
+          request and discharge up to underExcitedMaximumDischargePower to meet the
+          minimum reactive power requirements. This corresponds to the WUnPF attribute in
+          the IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVUnderExcitedMaximumDischargePower
+        type: number
+      ev_under_excited_power_factor:
+        description: >-
+          EV power factor when injecting (under excited) the minimum reactive power.
+          Corresponds to the OvPF attribute in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVUnderExcitedPowerFactor
+        type: number
+      max_apparent_power:
+        description: >-
+          Rated maximum total apparent power, defined by min(EV, EVSE) in va. Corresponds
+          to the VAMaxRtg in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumApparentPower
+        type: number
+      max_charge_apparent_power:
+        description: >-
+          Rated maximum absorbed apparent power, defined by min(EV, EVSE) in va. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. Corresponds to the ChaVAMaxRtg
+          in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMaximumChargeApparentPower
+        type: number
+      max_charge_apparent_power_l2:
+        description: >-
+          Rated maximum absorbed apparent power on phase L2, defined by min(EV, EVSE) in
+          va. Corresponds to the ChaVAMaxRtg in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeApparentPower_L2
+        type: number
+      max_charge_apparent_power_l3:
+        description: >-
+          Rated maximum absorbed apparent power on phase L3, defined by min(EV, EVSE) in
+          va. Corresponds to the ChaVAMaxRtg in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeApparentPower_L3
+        type: number
+      max_discharge_apparent_power:
+        description: >-
+          Rated maximum injected apparent power, defined by min(EV, EVSE) in va. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. Corresponds to the DisVAMaxRtg
+          in IEC 61850. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMaximumDischargeApparentPower
+        type: number
+      max_discharge_apparent_power_l2:
+        description: >-
+          Rated maximum injected apparent power on phase L2, defined by min(EV, EVSE) in
+          va. Corresponds to the DisVAMaxRtg in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeApparentPower_L2
+        type: number
+      max_discharge_apparent_power_l3:
+        description: >-
+          Rated maximum injected apparent power on phase L3, defined by min(EV, EVSE) in
+          va. Corresponds to the DisVAMaxRtg in IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeApparentPower_L3
+        type: number
+      max_charge_reactive_power:
+        description: >-
+          Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. Corresponds to the AvarMax
+          attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower
+        type: number
+      max_charge_reactive_power_l2:
+        description: >-
+          Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars on
+          phase L2. Corresponds to the AvarMax attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower_L2
+        type: number
+      max_charge_reactive_power_l3:
+        description: >-
+          Rated maximum absorbed reactive power, defined by min(EV, EVSE), in vars on
+          phase L3. Corresponds to the AvarMax attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumChargeReactivePower_L3
+        type: number
+      min_charge_reactive_power:
+        description: >-
+          Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumChargeReactivePower
+        type: number
+      min_charge_reactive_power_l2:
+        description: >-
+          Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars on
+          phase L2. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMinimumChargeReactivePower_L2
+        type: number
+      min_charge_reactive_power_l3:
+        description: >-
+          Rated minimum absorbed reactive power, defined by max(EV, EVSE), in vars on
+          phase L3. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMinimumChargeReactivePower_L3
+        type: number
+      max_discharge_reactive_power:
+        description: >-
+          Rated maximum injected reactive power, defined by min(EV, EVSE), in vars. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. Corresponds to the IvarMax
+          attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower
+        type: number
+      max_discharge_reactive_power_l2:
+        description: >-
+          Rated maximum injected reactive power, defined by min(EV, EVSE), in vars on
+          phase L2. Corresponds to the IvarMax attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower_L2
+        type: number
+      max_discharge_reactive_power_l3:
+        description: >-
+          Rated maximum injected reactive power, defined by min(EV, EVSE), in vars on
+          phase L3. Corresponds to the IvarMax attribute in the IEC 61850. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumDischargeReactivePower_L3
+        type: number
+      min_discharge_reactive_power:
+        description: >-
+          Rated minimum injected reactive power, defined by max(EV, EVSE), in vars. This
+          field represents the sum of all phases, unless values are provided for L2 and
+          L3, in which case this field represents phase L1. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumDischargeReactivePower
+        type: number
+      min_discharge_reactive_power_l2:
+        description: >-
+          Rated minimum injected reactive power, defined by max(EV, EVSE), in var on phase
+          L2. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMinimumDischargeReactivePower_L2
+        type: number
+      min_discharge_reactive_power_l3:
+        description: >-
+          Rated minimum injected reactive power, defined by max(EV, EVSE), in var on phase
+          L3. ISO 15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType:
+          EVMinimumDischargeReactivePower_L3
+        type: number
+      nominal_voltage:
+        description: >-
+          Line voltage supported by EVSE and EV. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVNominalVoltage
+        type: number
+      nominal_voltage_offset:
+        description: >-
+          The nominal AC voltage (rms) offset between the Charging Station's electrical
+          connection point and the utility’s point of common coupling. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVNominalVoltageOffset
+        type: number
+      max_nominal_voltage:
+        description: >-
+          Maximum AC rms voltage, as defined by min(EV, EVSE)  to operate with. ISO
+          15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumNominalVoltage
+        type: number
+      min_nominal_voltage:
+        description: >-
+          Minimum AC rms voltage, as defined by max(EV, EVSE)  to operate with. ISO
+          15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVMinimumNominalVoltage
+        type: number
+      ev_inverter_manufacturer:
+        description: >-
+          Manufacturer of the EV inverter. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterManufacturer
+        type: string
+      ev_inverter_model:
+        description: >-
+          Model name of the EV inverter. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterModel
+        type: string
+      ev_inverter_serial_number:
+        description: >-
+          Serial number of the EV inverter. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterSerialNumber
+        type: string
+      ev_inverter_sw_version:
+        description: >-
+          Software version of EV inverter. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterSwVersion
+        type: string
+      ev_inverter_hw_version:
+        description: >-
+          Hardware version of EV inverter. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVInverterHwVersion
+        type: string
+      ev_islanding_detection_method:
+        description: >-
+          Type of islanding detection method. Only mandatory when islanding detection is
+          required at the site, as set in the ISO 15118 Service Details configuration. ISO
+          15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVIslandingDetectionMethod
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/IslandingDetectionEnum
+        minItems: 1
+      ev_islanding_trip_time:
+        description: >-
+          Time after which EV will trip if an island has been detected. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVIslandingTripTime
+        type: number
+      ev_maximum_level1dcinjection:
+        description: >-
+          Maximum injected DC current allowed at level 1 charging. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumLevel1DCInjection
+        type: number
+      ev_duration_level1dcinjection:
+        description: >-
+          Maximum allowed duration of DC injection at level 1 charging. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVDurationLevel1DCInjection
+        type: number
+      ev_maximum_level2dcinjection:
+        description: >-
+          Maximum injected DC current allowed at level 2 charging. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVMaximumLevel2DCInjection
+        type: number
+      ev_duration_level2dcinjection:
+        description: >-
+          Maximum allowed duration of DC injection at level 2 charging. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVDurationLevel2DCInjection
+        type: number
+      ev_reactive_susceptance:
+        description: >-
+          Measure of the susceptibility of the circuit to reactance, in Siemens (S). ISO
+          15118-20: DER_BPT_AC_CPDReqEnergyTransferModeType: EVReactiveSusceptance
+        type: number
+      ev_session_total_discharge_energy_available:
+        description: >-
+          Total energy value, in Wh, that EV is allowed to provide during the entire V2G
+          session. The value is independent of the V2X Cycling area. Once this value
+          reaches the value of 0, the EV may block any attempt to discharge in order to
+          protect the battery health. ISO 15118-20:
+          DER_BPT_AC_CPDReqEnergyTransferModeType: EVSessionTotalDischargeEnergyAvailable
+        type: number
+  DCChargingParameters:
+    description: >-
+      EV DC charging parameters for ISO 15118-2
+    type: object
+    required:
+      - ev_max_current
+      - ev_max_voltage
+    properties:
+      ev_max_current:
+        description: >-
+          Maximum current (in A) supported by the electric vehicle. Includes cable
+          capacity. Relates to: ISO 15118-2:
+          DC_EVChargeParameterType:EVMaximumCurrentLimit
+        type: number
+      ev_max_voltage:
+        description: >-
+          Maximum voltage supported by the electric vehicle. Relates to: ISO 15118-2:
+          DC_EVChargeParameterType: EVMaximumVoltageLimit
+        type: number
+      ev_max_power:
+        description: >-
+          Maximum power (in W) supported by the electric vehicle. Required for DC
+          charging. Relates to: ISO 15118-2: DC_EVChargeParameterType: EVMaximumPowerLimit
+        type: number
+      ev_energy_capacity:
+        description: >-
+          Capacity of the electric vehicle battery (in Wh). Relates to: ISO 15118-2:
+          DC_EVChargeParameterType: EVEnergyCapacity
+        type: number
+      energy_amount:
+        description: >-
+          Amount of energy requested (in Wh). This inludes energy required for
+          preconditioning. Relates to: ISO 15118-2: DC_EVChargeParameterType:
+          EVEnergyRequest
+        type: number
+      state_of_charge:
+        description: >-
+          Energy available in the battery (in percent of the battery capacity) Relates to:
+          ISO 15118-2: DC_EVChargeParameterType: DC_EVStatus: EVRESSSOC
+        type: integer
+      full_soc:
+        description: >-
+          Percentage of SoC at which the EV considers the battery fully charged. (possible
+          values: 0 - 100) Relates to: ISO 15118-2: DC_EVChargeParameterType: FullSOC
+        type: integer
+      bulk_soc:
+        description: >-
+          Percentage of SoC at which the EV considers a fast charging process to end.
+          (possible values: 0 - 100) Relates to: ISO 15118-2: DC_EVChargeParameterType:
+          BulkSOC
+        type: integer
+  ACChargingParameters:
+    description: >-
+      EV AC charging parameters for ISO 15118-2
+    type: object
+    required:
+      - energy_amount
+      - ev_min_current
+      - ev_max_current
+      - ev_max_voltage
+    properties:
+      energy_amount:
+        description: >-
+          Amount of energy requested (in Wh). This includes energy required for
+          preconditioning. Relates to: ISO 15118-2: AC_EVChargeParameterType: EAmount ISO
+          15118-20: Dynamic/Scheduled_SEReqControlModeType: EVTargetEnergyRequest
+        type: number
+      ev_min_current:
+        description: >-
+          Minimum current (amps) supported by the electric vehicle (per phase). Relates
+          to: ISO 15118-2: AC_EVChargeParameterType: EVMinCurrent
+        type: number
+      ev_max_current:
+        description: >-
+          Maximum current (amps) supported by the electric vehicle (per phase). Includes
+          cable capacity. Relates to: ISO 15118-2: AC_EVChargeParameterType: EVMaxCurrent
+        type: number
+      ev_max_voltage:
+        description: >-
+          Maximum voltage supported by the electric vehicle. Relates to: ISO 15118-2:
+          AC_EVChargeParameterType: EVMaxVoltage
+        type: number
+  ChargingNeeds:
+    description: >-
+      None
+    type: object
+    required:
+      - requested_energy_transfer
+    properties:
+      ac_charging_parameters:
+        description: >-
+          EV AC charging parameters for ISO 15118-2
+        type: object
+        $ref: /iso15118#/ACChargingParameters
+      der_charging_parameters:
+        description: >-
+          (2.1) DERChargingParametersType is used in ChargingNeedsType during an ISO
+          15118-20 session for AC_BPT_DER to report the inverter settings related to DER
+          control that were agreed between EVSE and EV. Fields starting with "ev" contain
+          values from the EV. Other fields contain a value that is supported by both EV
+          and EVSE. DERChargingParametersType type is only relevant in case of an ISO
+          15118-20 AC_BPT_DER/AC_DER charging session.
+        type: object
+        $ref: /iso15118#/DERChargingParameters
+      ev_energy_offer:
+        description: >-
+          (2.1) A schedule of the energy amount over time that EV is willing to discharge.
+          A negative value indicates the willingness to discharge under specific
+          conditions, a positive value indicates that the EV currently is not able to
+          offer energy to discharge.
+        type: object
+        $ref: /iso15118#/EVEnergyOffer
+      requested_energy_transfer:
+        description: >-
+          Mode of energy transfer requested by the EV.
+        type: object
+        $ref: /iso15118#/EnergyTransferMode
+      dc_charging_parameters:
+        description: >-
+          EV DC charging parameters for ISO 15118-2
+        type: object
+        $ref: /iso15118#/DCChargingParameters
+      v2x_charging_parameters:
+        description: >-
+          Charging parameters for ISO 15118-20, also supporting V2X charging/discharging.
+          All values are greater or equal to zero, with the exception of
+          EVMinEnergyRequest, EVMaxEnergyRequest, EVTargetEnergyRequest,
+          EVMinV2XEnergyRequest and EVMaxV2XEnergyRequest.
+        type: object
+        $ref: /iso15118#/V2XChargingParameters
+      available_energy_transfer:
+        description: >-
+          (2.1) Modes of energy transfer that are marked as available by EV.
+        type: array
+        items:
+          type: string
+          $ref: /iso15118#/EnergyTransferMode
+        minItems: 1
+      control_mode:
+        description: >-
+          (2.1) Indicates whether EV wants to operate in Dynamic or Scheduled mode. When
+          absent, Scheduled mode is assumed for backwards compatibility. ISO 15118-20:
+          ServiceSelectionReq(SelectedEnergyTransferService)
+        type: object
+        $ref: /iso15118#/ControlModeEnum
+      mobility_needs_mode:
+        description: >-
+          (2.1) Value of EVCC indicates that EV determines min/target SOC and departure
+          time. A value of EVCC_SECC indicates that charging station or CSMS may also
+          update min/target SOC and departure time. ISO 15118-20:
+          ServiceSelectionReq(SelectedEnergyTransferService)
+        type: object
+        $ref: /iso15118#/MobilityNeedsModeEnum
+      departure_time:
+        description: >-
+          Estimated departure time of the EV. ISO 15118-2: AC/DC_EVChargeParameterType:
+          DepartureTime ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType:
+          DepartureTIme
+        type: string
+  RelativeTimeInterval:
+    description: >-
+      None
+    type: object
+    required:
+      - start
+    properties:
+      start:
+        description: >-
+          Start of the interval, in seconds from NOW.
+        type: integer
+      duration:
+        description: >-
+          Duration of the interval, in seconds.
+        type: integer
+  RationalNumber:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - exponent
+      - value
+    properties:
+      exponent:
+        description: >-
+          The exponent to base 10 (dec)
+        type: integer
+      value:
+        description: >-
+          Value which shall be multiplied.
+        type: integer
+  TaxRule:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - tax_rule_id
+      - applies_to_energy_fee
+      - applies_to_parking_fee
+      - applies_to_overstay_fee
+      - applies_to_minimum_maximum_cost
+      - tax_rate
+    properties:
+      tax_rule_id:
+        description: >-
+          Id for the tax rule.
+        type: integer
+      tax_rule_name:
+        description: >-
+          Human readable string to identify the tax rule.
+        type: string
+      tax_included_in_price:
+        description: >-
+          Indicates whether the tax is included in any price or not.
+        type: boolean
+      applies_to_energy_fee:
+        description: >-
+          Indicates whether this tax applies to Energy Fees.
+        type: boolean
+      applies_to_parking_fee:
+        description: >-
+          Indicates whether this tax applies to Parking Fees.
+        type: boolean
+      applies_to_overstay_fee:
+        description: >-
+          Indicates whether this tax applies to Overstay Fees.
+        type: boolean
+      applies_to_minimum_maximum_cost:
+        description: >-
+          Indicates whether this tax applies to Minimum/Maximum Cost.
+        type: boolean
+      tax_rate:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+  PriceRule:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - energy_fee
+      - power_range_start
+    properties:
+      parking_fee_period:
+        description: >-
+          The duration of the parking fee period (in seconds). When the time enters into a
+          ParkingFeePeriod, the ParkingFee will apply to the session. .
+        type: integer
+      carbon_dioxide_emission:
+        description: >-
+          Number of grams of CO2 per kWh.
+        type: integer
+      renewable_generation_percentage:
+        description: >-
+          Percentage of the power that is created by renewable resources.
+        type: integer
+      energy_fee:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      parking_fee:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      power_range_start:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+  PriceRuleStack:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - duration
+      - price_rule
+    properties:
+      duration:
+        description: >-
+          Duration of the stack of price rules.  he amount of seconds that define the
+          duration of the given PriceRule(s).
+        type: integer
+      price_rule:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/PriceRule
+        minItems: 1
+        maxItems: 8
+  PriceLevelScheduleEntry:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - duration
+      - price_level
+    properties:
+      duration:
+        description: >-
+          The amount of seconds that define the duration of this given
+          PriceLevelScheduleEntry.
+        type: integer
+      price_level:
+        description: >-
+          Defines the price level of this PriceLevelScheduleEntry (referring to
+          NumberOfPriceLevels). Small values for the PriceLevel represent a cheaper
+          PriceLevelScheduleEntry. Large values for the PriceLevel represent a more
+          expensive PriceLevelScheduleEntry.
+        type: integer
+  PriceLevelSchedule:
+    description: >-
+      The PriceLevelScheduleType is modeled after the same type that is defined in ISO
+      15118-20, such that if it is supplied by an EMSP as a signed EXI message, the
+      conversion from EXI to JSON (in OCPP) and back to EXI (for ISO 15118-20) does
+      not change the digest and therefore does not invalidate the signature.
+    type: object
+    required:
+      - price_level_schedule_entries
+      - time_anchor
+      - price_schedule_id
+      - number_of_price_levels
+    properties:
+      price_level_schedule_entries:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/PriceLevelScheduleEntry
+        minItems: 1
+        maxItems: 100
+      time_anchor:
+        description: >-
+          Starting point of this price schedule.
+        type: string
+      price_schedule_id:
+        description: >-
+          Unique ID of this price schedule.
+        type: integer
+      price_schedule_description:
+        description: >-
+          Description of the price schedule.
+        type: string
+      number_of_price_levels:
+        description: >-
+          Defines the overall number of distinct price level elements used across all
+          PriceLevelSchedules.
+        type: integer
+  OverstayRule:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - overstay_fee
+      - start_time
+      - overstay_fee_period
+    properties:
+      overstay_fee:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      overstay_rule_description:
+        description: >-
+          Human readable string to identify the overstay rule.
+        type: string
+      start_time:
+        description: >-
+          Time in seconds after trigger of the parent Overstay Rules for this particular
+          fee to apply.
+        type: integer
+      overstay_fee_period:
+        description: >-
+          Time till overstay will be reapplied
+        type: integer
+  OverstayRuleList:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - overstay_rule
+    properties:
+      overstay_power_threshold:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      overstay_rule:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/OverstayRule
+        minItems: 1
+        maxItems: 5
+      overstay_time_threshold:
+        description: >-
+          Time till overstay is applied in seconds.
+        type: integer
+  LimitAtSoC:
+    description: >-
+      None
+    type: object
+    required:
+      - soc
+      - limit
+    properties:
+      soc:
+        description: >-
+          The SoC value beyond which the charging rate limit should be applied.
+        type: integer
+      limit:
+        description: >-
+          Charging rate limit beyond the SoC value. The unit is defined by
+          _chargingSchedule.chargingRateUnit_.
+        type: number
+  Cost:
+    description: >-
+      None
+    type: object
+    required:
+      - cost_kind
+      - amount
+    properties:
+      cost_kind:
+        description: >-
+          The kind of cost referred to in the message element amount
+        type: object
+        $ref: /iso15118#/CostKindEnum
+      amount:
+        description: >-
+          The estimated or actual cost per kWh
+        type: integer
+      amount_multiplier:
+        description: >-
+          Values: -3..3, The amountMultiplier defines the exponent to base 10 (dec). The
+          final value is determined by: amount * 10 ^ amountMultiplier
+        type: integer
+  ConsumptionCost:
+    description: >-
+      None
+    type: object
+    required:
+      - start_value
+      - cost
+    properties:
+      start_value:
+        description: >-
+          The lowest level of consumption that defines the starting point of this
+          consumption block. The block interval extends to the start of the next interval.
+        type: number
+      cost:
+        description: >-
+          None
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/Cost
+        minItems: 1
+        maxItems: 3
+  SalesTariffEntry:
+    description: >-
+      None
+    type: object
+    required:
+      - relative_time_interval
+    properties:
+      relative_time_interval:
+        description: >-
+          None
+        type: object
+        $ref: /iso15118#/RelativeTimeInterval
+      e_price_level:
+        description: >-
+          Defines the price level of this SalesTariffEntry (referring to NumEPriceLevels).
+          Small values for the EPriceLevel represent a cheaper TariffEntry. Large values
+          for the EPriceLevel represent a more expensive TariffEntry.
+        type: integer
+      consumption_cost:
+        description: >-
+          None
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/ConsumptionCost
+        minItems: 1
+        maxItems: 3
+  SalesTariff:
+    description: >-
+      A SalesTariff provided by a Mobility Operator (EMSP) .
+    type: object
+    required:
+      - id
+      - sales_tariff_entry
+    properties:
+      id:
+        description: >-
+          SalesTariff identifier used to identify one sales tariff. An SAID remains a
+          unique identifier for one schedule throughout a charging session.
+        type: integer
+      sales_tariff_description:
+        description: >-
+          A human readable title/short description of the sales tariff e.g. for HMI
+          display purposes.
+        type: string
+      num_eprice_levels:
+        description: >-
+          Defines the overall number of distinct price levels used across all provided
+          SalesTariff elements.
+        type: integer
+      sales_tariff_entry:
+        description: >-
+          None
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/SalesTariffEntry
+        minItems: 1
+        maxItems: 1024
+  AdditionalSelectedServices:
+    description: >-
+      Part of ISO 15118-20 price schedule.
+    type: object
+    required:
+      - service_fee
+      - service_name
+    properties:
+      service_fee:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      service_name:
+        description: >-
+          Human readable string to identify this service.
+        type: string
+  AbsolutePriceSchedule:
+    description: >-
+      The AbsolutePriceScheduleType is modeled after the same type that is defined in
+      ISO 15118-20, such that if it is supplied by an EMSP as a signed EXI message,
+      the conversion from EXI to JSON (in OCPP) and back to EXI (for ISO 15118-20)
+      does not change the digest and therefore does not invalidate the signature.
+      image::images/AbsolutePriceSchedule-Simple.png[]
+    type: object
+    required:
+      - time_anchor
+      - price_schedule_id
+      - currency
+      - language
+      - price_algorithm
+      - price_rule_stacks
+    properties:
+      time_anchor:
+        description: >-
+          Starting point of price schedule.
+        type: string
+      price_schedule_id:
+        description: >-
+          Unique ID of price schedule
+        type: integer
+      price_schedule_description:
+        description: >-
+          Description of the price schedule.
+        type: string
+      currency:
+        description: >-
+          Currency according to ISO 4217.
+        type: string
+      language:
+        description: >-
+          String that indicates what language is used for the human readable strings in
+          the price schedule. Based on ISO 639.
+        type: string
+      price_algorithm:
+        description: >-
+          A string in URN notation which shall uniquely identify an algorithm that defines
+          how to compute an energy fee sum for a specific power profile based on the
+          EnergyFee information from the PriceRule elements.
+        type: string
+      minimum_cost:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      maximum_cost:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/RationalNumber
+      price_rule_stacks:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/PriceRuleStack
+        minItems: 1
+        maxItems: 1024
+      tax_rules:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/TaxRule
+        minItems: 1
+        maxItems: 10
+      overstay_rule_list:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: object
+        $ref: /iso15118#/OverstayRuleList
+      additional_selected_services:
+        description: >-
+          Part of ISO 15118-20 price schedule.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/AdditionalSelectedServices
+        minItems: 1
+        maxItems: 5
+  V2XSignalWattPoint:
+    description: >-
+      (2.1) A point of a signal-watt curve.
+    type: object
+    required:
+      - signal
+      - power
+    properties:
+      signal:
+        description: >-
+          Signal value from an AFRRSignalRequest.
+        type: integer
+      power:
+        description: >-
+          Power in W to charge (positive) or discharge (negative) at specified frequency.
+        type: number
+  V2XFreqWattPoint:
+    description: >-
+      (2.1) A point of a frequency-watt curve.
+    type: object
+    required:
+      - frequency
+      - power
+    properties:
+      frequency:
+        description: >-
+          Net frequency in Hz.
+        type: number
+      power:
+        description: >-
+          Power in W to charge (positive) or discharge (negative) at specified frequency.
+        type: number
+  ChargingSchedulePeriod:
+    description: >-
+      Charging schedule period structure defines a time period in a charging schedule.
+      It is used in: CompositeScheduleType and in ChargingScheduleType. When used in a
+      NotifyEVChargingScheduleRequest only _startPeriod_, _limit_, _limit_L2_,
+      _limit_L3_ are relevant.
+    type: object
+    required:
+      - start_period
+    properties:
+      start_period:
+        description: >-
+          Start of the period, in seconds from the start of schedule. The value of
+          StartPeriod also defines the stop time of the previous period.
+        type: integer
+      limit:
+        description: >-
+          Optional only when not required by the _operationMode_, as in CentralSetpoint,
+          ExternalSetpoint, ExternalLimits, LocalFrequency,  LocalLoadBalancing. Charging
+          rate limit during the schedule period, in the applicable _chargingRateUnit_.
+          This SHOULD be a non-negative value; a negative value is only supported for
+          backwards compatibility with older systems that use a negative value to specify
+          a discharging limit. When using _chargingRateUnit_ = `W`, this field represents
+          the sum of the power of all phases, unless values are provided for L2 and L3, in
+          which case this field represents phase L1.
+        type: number
+      limit_l2:
+        description: >-
+          (2.1) Charging rate limit on phase L2  in the applicable _chargingRateUnit_.
+        type: number
+      limit_l3:
+        description: >-
+          (2.1) Charging rate limit on phase L3  in the applicable _chargingRateUnit_.
+        type: number
+      number_phases:
+        description: >-
+          The number of phases that can be used for charging. For a DC EVSE this field
+          should be omitted. For an AC EVSE a default value of _numberPhases_ = 3 will be
+          assumed if the field is absent.
+        type: integer
+      phase_to_use:
+        description: >-
+          Values: 1..3, Used if numberPhases=1 and if the EVSE is capable of switching the
+          phase connected to the EV, i.e. ACPhaseSwitchingSupported is defined and true.
+          It’s not allowed unless both conditions above are true. If both conditions are
+          true, and phaseToUse is omitted, the Charging Station / EVSE will make the
+          selection on its own.
+        type: integer
+      discharge_limit:
+        description: >-
+          (2.1) Limit in _chargingRateUnit_ that the EV is allowed to discharge with.
+          Note, these are negative values in order to be consistent with _setpoint_, which
+          can be positive and negative. For AC this field represents the sum of all
+          phases, unless values are provided for L2 and L3, in which case this field
+          represents phase L1.
+        type: number
+      discharge_limit_l2:
+        description: >-
+          (2.1) Limit in _chargingRateUnit_ on phase L2 that the EV is allowed to
+          discharge with.
+        type: number
+      discharge_limit_l3:
+        description: >-
+          (2.1) Limit in _chargingRateUnit_ on phase L3 that the EV is allowed to
+          discharge with.
+        type: number
+      setpoint:
+        description: >-
+          (2.1) Setpoint in _chargingRateUnit_ that the EV should follow as close as
+          possible. Use negative values for discharging. When a limit and/or
+          _dischargeLimit_ are given the overshoot when following _setpoint_ must remain
+          within these values. This field represents the sum of all phases, unless values
+          are provided for L2 and L3, in which case this field represents phase L1.
+        type: number
+      setpoint_l2:
+        description: >-
+          (2.1) Setpoint in _chargingRateUnit_ that the EV should follow on phase L2 as
+          close as possible.
+        type: number
+      setpoint_l3:
+        description: >-
+          (2.1) Setpoint in _chargingRateUnit_ that the EV should follow on phase L3 as
+          close as possible.
+        type: number
+      setpoint_reactive:
+        description: >-
+          (2.1) Setpoint for reactive power (or current) in _chargingRateUnit_ that the EV
+          should follow as closely as possible. Positive values for inductive, negative
+          for capacitive reactive power or current. This field represents the sum of all
+          phases, unless values are provided for L2 and L3, in which case this field
+          represents phase L1.
+        type: number
+      setpoint_reactive_l2:
+        description: >-
+          (2.1) Setpoint for reactive power (or current) in _chargingRateUnit_ that the EV
+          should follow on phase L2 as closely as possible.
+        type: number
+      setpoint_reactive_l3:
+        description: >-
+          (2.1) Setpoint for reactive power (or current) in _chargingRateUnit_ that the EV
+          should follow on phase L3 as closely as possible.
+        type: number
+      preconditioning_request:
+        description: >-
+          (2.1) If  true, the EV should attempt to keep the BMS preconditioned for this
+          time interval.
+        type: boolean
+      evse_sleep:
+        description: >-
+          (2.1) If true, the EVSE must turn off power electronics/modules associated with
+          this transaction. Default value when absent is false.
+        type: boolean
+      v2x_baseline:
+        description: >-
+          (2.1) Power value that, when present, is used as a baseline on top of which
+          values from _v2xFreqWattCurve_ and _v2xSignalWattCurve_ are added.
+        type: number
+      operation_mode:
+        description: >-
+          (2.1) Charging operation mode to use during this time interval. When absent
+          defaults to `ChargingOnly`.
+        type: object
+        $ref: /iso15118#/OperationModeEnum
+      v2x_freq_watt_curve:
+        description: >-
+          (2.1) A point of a frequency-watt curve.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/V2XFreqWattPoint
+        minItems: 1
+        maxItems: 20
+      v2x_signal_watt_curve:
+        description: >-
+          (2.1) A point of a signal-watt curve.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/V2XSignalWattPoint
+        minItems: 1
+        maxItems: 20
+  ChargingSchedule:
+    description: >-
+      Charging schedule structure defines a list of charging periods, as used in:
+      NotifyEVChargingScheduleRequest and ChargingProfileType. When used in a
+      NotifyEVChargingScheduleRequest only _duration_ and _chargingSchedulePeriod_ are
+      relevant and _chargingRateUnit_ must be 'W'. An ISO 15118-20 session may provide
+      either an _absolutePriceSchedule_ or a _priceLevelSchedule_. An ISO 15118-2
+      session can only provide a_salesTariff_ element. The field _digestValue_ is used
+      when price schedule or sales tariff are signed.
+      image::images/ChargingSchedule-Simple.png[]
+    type: object
+    required:
+      - id
+      - charging_rate_unit
+      - charging_schedule_period
+    properties:
+      id:
+        description: >-
+          None
+        type: integer
+      limit_at_soc:
+        description: >-
+          None
+        type: object
+        $ref: /iso15118#/LimitAtSoC
+      start_schedule:
+        description: >-
+          Starting point of an absolute schedule or recurring schedule.
+        type: string
+      duration:
+        description: >-
+          Duration of the charging schedule in seconds. If the duration is left empty, the
+          last period will continue indefinitely or until end of the transaction in case
+          startSchedule is absent.
+        type: integer
+      charging_rate_unit:
+        description: >-
+          The unit of measure in which limits and setpoints are expressed.
+        type: object
+        $ref: /iso15118#/ChargingRateUnitEnum
+      min_charging_rate:
+        description: >-
+          Minimum charging rate supported by the EV. The unit of measure is defined by the
+          chargingRateUnit. This parameter is intended to be used by a local smart
+          charging algorithm to optimize the power allocation for in the case a charging
+          process is inefficient at lower charging rates.
+        type: number
+      power_tolerance:
+        description: >-
+          (2.1) Power tolerance when following EVPowerProfile.
+        type: number
+      signature_id:
+        description: >-
+          (2.1) Id of this element for referencing in a signature.
+        type: integer
+      digest_value:
+        description: >-
+          (2.1) Base64 encoded hash (SHA256 for ISO 15118-2, SHA512 for ISO 15118-20) of
+          the EXI price schedule element. Used in signature.
+        type: string
+      use_local_time:
+        description: >-
+          (2.1) Defaults to false. When true, disregard time zone offset in dateTime
+          fields of  _ChargingScheduleType_ and use unqualified local time at Charging
+          Station instead. This allows the same `Absolute` or `Recurring` charging profile
+          to be used in both summer and winter time.
+        type: boolean
+      charging_schedule_period:
+        description: >-
+          Charging schedule period structure defines a time period in a charging schedule.
+          It is used in: CompositeScheduleType and in ChargingScheduleType. When used in a
+          NotifyEVChargingScheduleRequest only _startPeriod_, _limit_, _limit_L2_,
+          _limit_L3_ are relevant.
+        type: array
+        items:
+          type: object
+          $ref: /iso15118#/ChargingSchedulePeriod
+        minItems: 1
+        maxItems: 1024
+      randomized_delay:
+        description: >-
+          (2.1) Defaults to 0. When _randomizedDelay_ not equals zero, then the start of
+          each  is delayed by a randomly chosen number of seconds between 0 and
+          _randomizedDelay_.  Only allowed for TxProfile and TxDefaultProfile.
+        type: integer
+      sales_tariff:
+        description: >-
+          A SalesTariff provided by a Mobility Operator (EMSP) .
+        type: object
+        $ref: /iso15118#/SalesTariff
+      absolute_price_schedule:
+        description: >-
+          The AbsolutePriceScheduleType is modeled after the same type that is defined in
+          ISO 15118-20, such that if it is supplied by an EMSP as a signed EXI message,
+          the conversion from EXI to JSON (in OCPP) and back to EXI (for ISO 15118-20)
+          does not change the digest and therefore does not invalidate the signature.
+          image::images/AbsolutePriceSchedule-Simple.png[]
+        type: object
+        $ref: /iso15118#/AbsolutePriceSchedule
+      price_level_schedule:
+        description: >-
+          The PriceLevelScheduleType is modeled after the same type that is defined in ISO
+          15118-20, such that if it is supplied by an EMSP as a signed EXI message, the
+          conversion from EXI to JSON (in OCPP) and back to EXI (for ISO 15118-20) does
+          not change the digest and therefore does not invalidate the signature.
+        type: object
+        $ref: /iso15118#/PriceLevelSchedule  
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging
