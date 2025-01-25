@@ -79,6 +79,7 @@ ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const b
         ocpp::v201::EVSE evse;
         evse.id = evse_id;
         evse.connectorId = error.origin.mapping.value().connector.value();
+        ocpp::v201::Component component;
         component.name = EVSE_COMPONENT_NAME;
         component.evse = evse;
         event_data.component = component;
