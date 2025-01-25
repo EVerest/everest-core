@@ -1345,7 +1345,7 @@ to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& messag
         return types::display_message::MessageStateEnum::Idle;
     case ocpp::v201::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
-    case ocpp::v201::MessageStateEnum::Suspending:
+    case ocpp::v201::MessageStateEnum::Suspended:
         return types::display_message::MessageStateEnum::Suspending;
     case ocpp::v201::MessageStateEnum::Discharging:
         return types::display_message::MessageStateEnum::Discharging;

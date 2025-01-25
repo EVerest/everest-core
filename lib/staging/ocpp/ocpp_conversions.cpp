@@ -43,7 +43,7 @@ types::display_message::MessageStateEnum to_everest_display_message_state(const 
         return types::display_message::MessageStateEnum::Idle;
     case ocpp::v201::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
-    case ocpp::v201::MessageStateEnum::Suspending:
+    case ocpp::v201::MessageStateEnum::Suspended:
         return types::display_message::MessageStateEnum::Suspending;
     case ocpp::v201::MessageStateEnum::Discharging:
         return types::display_message::MessageStateEnum::Discharging;
@@ -63,7 +63,7 @@ ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::disp
     case types::display_message::MessageStateEnum::Unavailable:
         return ocpp::v201::MessageStateEnum::Unavailable;
     case types::display_message::MessageStateEnum::Suspending:
-        return ocpp::v201::MessageStateEnum::Suspending;
+        return ocpp::v201::MessageStateEnum::Suspended;
     case types::display_message::MessageStateEnum::Discharging:
         return ocpp::v201::MessageStateEnum::Discharging;
     }
