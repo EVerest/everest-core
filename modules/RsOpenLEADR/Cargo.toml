@@ -1,0 +1,18 @@
+[package]
+name = "RsOpenLEADR"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+everestrs = { workspace = true }
+serde = { version = "1.0.200", features = ["derive"] }
+serde_json = "1"
+openleadr-client = "0.0.3"
+openleadr-wire = "0.0.3"
+tokio = "1.43.0"
+
+[build-dependencies]
+everestrs-build = { workspace = true }
+
+[features]
+mockall = []
