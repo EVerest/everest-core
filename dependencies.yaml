@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 165f2c8acd7819e2c788f438d4f00a56dd030be0
+  git_tag: d53721a05af7be4b70170c41a2e9f0a3849af541
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
