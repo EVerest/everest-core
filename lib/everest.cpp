@@ -513,7 +513,7 @@ void Everest::subscribe_var(const Requirement& req, const std::string& var_name,
 }
 
 void Everest::subscribe_error(const Requirement& req, const error::ErrorType& error_type,
-                              const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback) {
+                              const error::ErrorCallback& raise_callback, const error::ErrorCallback& clear_callback) {
     BOOST_LOG_FUNCTION();
 
     EVLOG_debug << fmt::format("subscribing to error: {}:{}", req.id, error_type);
@@ -548,36 +548,39 @@ void Everest::subscribe_error(const Requirement& req, const error::ErrorType& er
         return;
     }
 
-    const auto raise_handler = [this, requirement_module_id, requirement_impl_id, error_type,
-                                callback](const std::string&, json const& data) {
-        EVLOG_debug << fmt::format("Incoming error {}->{}",
-                                   this->config.printable_identifier(requirement_module_id, requirement_impl_id),
-                                   error_type);
-
-        callback(data.get<error::Error>());
-    };
-
-    const auto clear_handler = [this, requirement_module_id, requirement_impl_id, error_type,
+    const auto error_handler = [this, requirement_module_id, requirement_impl_id, error_type, raise_callback,
                                 clear_callback](const std::string&, json const& data) {
-        EVLOG_debug << fmt::format("Error cleared {}->{}",
-                                   this->config.printable_identifier(requirement_module_id, requirement_impl_id),
-                                   error_type);
-        clear_callback(data.get<error::Error>());
+        auto error = data.get<error::Error>();
+        if (error.type != error_type) {
+            // error type doesn't match, ignoring
+            return;
+        }
+
+        switch (error.state) {
+        case error::State::Active:
+            EVLOG_debug << fmt::format("Incoming error {}->{}",
+                                       this->config.printable_identifier(requirement_module_id, requirement_impl_id),
+                                       error_type);
+
+            raise_callback(error);
+            break;
+        case error::State::ClearedByModule:
+        case error::State::ClearedByReboot:
+            EVLOG_debug << fmt::format("Error cleared {}->{}",
+                                       this->config.printable_identifier(requirement_module_id, requirement_impl_id),
+                                       error_type);
+            clear_callback(error);
+            break;
+        }
     };
 
-    const std::string raise_topic =
-        fmt::format("{}/error/{}", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id), error_type);
+    const std::string error_topic =
+        fmt::format("{}/error", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id));
 
-    const std::string clear_topic = fmt::format(
-        "{}/error-cleared/{}", this->config.mqtt_prefix(requirement_module_id, requirement_impl_id), error_type);
+    const std::shared_ptr<TypedHandler> error_token = std::make_shared<TypedHandler>(
+        error_type, HandlerType::SubscribeError, std::make_shared<Handler>(error_handler));
 
-    const std::shared_ptr<TypedHandler> raise_token = std::make_shared<TypedHandler>(
-        error_type, HandlerType::SubscribeError, std::make_shared<Handler>(raise_handler));
-    const std::shared_ptr<TypedHandler> clear_token = std::make_shared<TypedHandler>(
-        error_type, HandlerType::SubscribeError, std::make_shared<Handler>(clear_handler));
-
-    this->mqtt_abstraction->register_handler(raise_topic, raise_token, QOS::QOS2);
-    this->mqtt_abstraction->register_handler(clear_topic, clear_token, QOS::QOS2);
+    this->mqtt_abstraction->register_handler(error_topic, error_token, QOS::QOS2);
 }
 
 std::shared_ptr<error::ErrorManagerImpl> Everest::get_error_manager_impl(const std::string& impl_id) {
@@ -634,7 +637,7 @@ std::shared_ptr<error::ErrorStateMonitor> Everest::get_global_error_state_monito
     return this->global_error_state_monitor;
 }
 
-void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
+void Everest::subscribe_global_all_errors(const error::ErrorCallback& raise_callback,
                                           const error::ErrorCallback& clear_callback) {
     BOOST_LOG_FUNCTION();
 
@@ -646,47 +649,33 @@ void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
         return;
     }
 
-    const auto raise_handler = [this, callback](const std::string&, json const& data) {
+    const auto error_handler = [this, raise_callback, clear_callback](const std::string&, json const& data) {
         error::Error error = data.get<error::Error>();
-        EVLOG_debug << fmt::format(
-            "Incoming error {}->{}",
-            this->config.printable_identifier(error.origin.module_id, error.origin.implementation_id), error.type);
-        callback(error);
-    };
-
-    const auto clear_handler = [this, clear_callback](const std::string&, json const& data) {
-        error::Error error = data.get<error::Error>();
-        EVLOG_debug << fmt::format(
-            "Incoming error cleared {}->{}",
-            this->config.printable_identifier(error.origin.module_id, error.origin.implementation_id), error.type);
-        clear_callback(error);
+        switch (error.state) {
+        case error::State::Active:
+            EVLOG_debug << fmt::format(
+                "Incoming error {}->{}",
+                this->config.printable_identifier(error.origin.module_id, error.origin.implementation_id), error.type);
+            raise_callback(error);
+            break;
+        case error::State::ClearedByModule:
+        case error::State::ClearedByReboot:
+            EVLOG_debug << fmt::format(
+                "Incoming error cleared {}->{}",
+                this->config.printable_identifier(error.origin.module_id, error.origin.implementation_id), error.type);
+            clear_callback(error);
+            break;
+        }
     };
 
     for (const auto& [module_id, module_name] : this->config.get_module_names()) {
         const json provides = this->config.get_manifests().at(module_name).at("provides");
         for (const auto& impl : provides.items()) {
             const std::string& impl_id = impl.key();
-            const std::string& interface = impl.value().at("interface");
-            const json errors = this->config.get_interface_definition(interface).at("errors");
-            for (const auto& error_namespace_it : errors.items()) {
-                const std::string& error_type_namespace = error_namespace_it.key();
-                for (const auto& error_name_it : error_namespace_it.value().items()) {
-                    const std::string& error_type_name = error_name_it.key();
-                    const std::string raise_topic =
-                        fmt::format("{}/error/{}/{}", this->config.mqtt_prefix(module_id, impl_id),
-                                    error_type_namespace, error_type_name);
-                    const std::shared_ptr<TypedHandler> raise_token = std::make_shared<TypedHandler>(
-                        HandlerType::SubscribeError, std::make_shared<Handler>(raise_handler));
-                    this->mqtt_abstraction->register_handler(raise_topic, raise_token, QOS::QOS2);
-
-                    const std::string clear_topic =
-                        fmt::format("{}/error-cleared/{}/{}", this->config.mqtt_prefix(module_id, impl_id),
-                                    error_type_namespace, error_type_name);
-                    const std::shared_ptr<TypedHandler> clear_token = std::make_shared<TypedHandler>(
-                        HandlerType::SubscribeError, std::make_shared<Handler>(clear_handler));
-                    this->mqtt_abstraction->register_handler(clear_topic, clear_token, QOS::QOS2);
-                }
-            }
+            const std::string error_topic = fmt::format("{}/error", this->config.mqtt_prefix(module_id, impl_id));
+            const std::shared_ptr<TypedHandler> error_token =
+                std::make_shared<TypedHandler>(HandlerType::SubscribeError, std::make_shared<Handler>(error_handler));
+            this->mqtt_abstraction->register_handler(error_topic, error_token, QOS::QOS2);
         }
     }
 }
@@ -694,7 +683,7 @@ void Everest::subscribe_global_all_errors(const error::ErrorCallback& callback,
 void Everest::publish_raised_error(const std::string& impl_id, const error::Error& error) {
     BOOST_LOG_FUNCTION();
 
-    const auto error_topic = fmt::format("{}/error/{}", this->config.mqtt_prefix(this->module_id, impl_id), error.type);
+    const auto error_topic = fmt::format("{}/error", this->config.mqtt_prefix(this->module_id, impl_id));
 
     this->mqtt_abstraction->publish(error_topic, json(error), QOS::QOS2);
 }
@@ -702,8 +691,7 @@ void Everest::publish_raised_error(const std::string& impl_id, const error::Erro
 void Everest::publish_cleared_error(const std::string& impl_id, const error::Error& error) {
     BOOST_LOG_FUNCTION();
 
-    const auto error_topic =
-        fmt::format("{}/error-cleared/{}", this->config.mqtt_prefix(this->module_id, impl_id), error.type);
+    const auto error_topic = fmt::format("{}/error", this->config.mqtt_prefix(this->module_id, impl_id));
 
     this->mqtt_abstraction->publish(error_topic, json(error), QOS::QOS2);
 }

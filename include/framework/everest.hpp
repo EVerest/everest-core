@@ -238,17 +238,18 @@ private:
 
     ///
     /// \brief Subscribes to an error of another module indentified by the given \p req and error type
-    /// \p error_type. The given \p callback is called when a new error is raised and \p clear_callback is called when
-    /// an error is cleared
+    /// \p error_type. The given \p raise_callback is called when a new error is raised and \p clear_callback is called
+    /// when an error is cleared
     ///
     void subscribe_error(const Requirement& req, const error::ErrorType& error_type,
-                         const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
+                         const error::ErrorCallback& raise_callback, const error::ErrorCallback& clear_callback);
 
     ///
-    /// \brief Subscribes globally to all errors of all modules. The given \p callback is called when a new error is
-    /// raised. The given \p clear_callback is called when an error is cleared
+    /// \brief Subscribes globally to all errors of all modules. The given \p raise_callback is called when a new error
+    /// is raised. The given \p clear_callback is called when an error is cleared
     ///
-    void subscribe_global_all_errors(const error::ErrorCallback& callback, const error::ErrorCallback& clear_callback);
+    void subscribe_global_all_errors(const error::ErrorCallback& raise_callback,
+                                     const error::ErrorCallback& clear_callback);
 
     ///
     /// \brief Check that external MQTT is configured - raises exception on error
