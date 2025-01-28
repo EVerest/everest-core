@@ -20,6 +20,7 @@
 
 // headers for required interface implementations
 #include <generated/interfaces/auth/Interface.hpp>
+#include <generated/interfaces/charger_information/Interface.hpp>
 #include <generated/interfaces/display_message/Interface.hpp>
 #include <generated/interfaces/evse_manager/Interface.hpp>
 #include <generated/interfaces/evse_security/Interface.hpp>
@@ -78,6 +79,7 @@ public:
          std::unique_ptr<auth_token_providerImplBase> p_auth_provider,
          std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer, std::unique_ptr<ocppImplBase> p_ocpp_generic,
          std::unique_ptr<session_costImplBase> p_session_cost,
+         std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information,
          std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager,
          std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink,
          std::unique_ptr<reservationIntf> r_reservation, std::unique_ptr<authIntf> r_auth,
@@ -93,6 +95,7 @@ public:
         p_data_transfer(std::move(p_data_transfer)),
         p_ocpp_generic(std::move(p_ocpp_generic)),
         p_session_cost(std::move(p_session_cost)),
+        r_charger_information(std::move(r_charger_information)),
         r_evse_manager(std::move(r_evse_manager)),
         r_evse_energy_sink(std::move(r_evse_energy_sink)),
         r_reservation(std::move(r_reservation)),
@@ -111,6 +114,7 @@ public:
     const std::unique_ptr<ocpp_data_transferImplBase> p_data_transfer;
     const std::unique_ptr<ocppImplBase> p_ocpp_generic;
     const std::unique_ptr<session_costImplBase> p_session_cost;
+    const std::vector<std::unique_ptr<charger_informationIntf>> r_charger_information;
     const std::vector<std::unique_ptr<evse_managerIntf>> r_evse_manager;
     const std::vector<std::unique_ptr<external_energy_limitsIntf>> r_evse_energy_sink;
     const std::unique_ptr<reservationIntf> r_reservation;
