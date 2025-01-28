@@ -901,6 +901,13 @@ void OCPP::ready() {
         this->evse_ready_cv.wait(lk);
     }
 
+    // if charger information interface is connected, override only these specific properties
+    // which were loaded from configuration file(s)
+    if (!this->r_charger_information.empty()) {
+        auto ci = this->r_charger_information.at(0)->call_get_charger_information();
+        this->charge_point->update_chargepoint_information(ci.vendor, ci.model, ci.serial, ci.firmware_version);
+    }
+
     const auto boot_reason = conversions::to_ocpp_boot_reason_enum(this->r_system->call_get_boot_reason());
     if (this->charge_point->start({}, boot_reason, this->resuming_session_ids)) {
         // signal that we're started
