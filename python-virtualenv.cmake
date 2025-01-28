@@ -50,7 +50,7 @@ macro(ev_activate_python_venv)
         message(FATAL_ERROR "Directory is not a python venv: ${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}")
     endif()
     set(ENV{VIRTUAL_ENV} "${EV_ACTIVATE_PYTHON_VENV_PATH_TO_VENV}")
-    set(Python3_FIND_VIRTUALENV FIRST)
+    set(Python3_FIND_VIRTUALENV ONLY)
     unset(Python3_EXECUTABLE)
     find_package(Python3
         REQUIRED
