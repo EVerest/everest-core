@@ -19,18 +19,6 @@ namespace dt = iso15118::message_20::datatypes;
 
 namespace {
 
-std::filesystem::path construct_cert_path(const std::filesystem::path& initial_path, const std::string& config_path) {
-    if (config_path.empty()) {
-        return initial_path;
-    }
-
-    if (config_path.front() == '/') {
-        return config_path;
-    } else {
-        return initial_path / config_path;
-    }
-}
-
 iso15118::config::TlsNegotiationStrategy convert_tls_negotiation_strategy(const std::string& strategy) {
     using Strategy = iso15118::config::TlsNegotiationStrategy;
     if (strategy == "ACCEPT_CLIENT_OFFER") {
@@ -164,12 +152,13 @@ void ISO15118_chargerImpl::ready() {
 
     const auto session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
 
-    const auto default_cert_path = mod->info.paths.etc / "certs";
-    const auto cert_path = construct_cert_path(default_cert_path, mod->config.certificate_path);
+    // Obtain certificate location from the security module
+    const auto cert_path = mod->r_security->call_get_verify_location(types::evse_security::CaCertificateType::V2G);
+
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            cert_path.string(),
+            cert_path,
             mod->config.private_key_password,
             mod->config.enable_ssl_logging,
             mod->config.enable_tls_key_logging,
