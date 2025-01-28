@@ -69,14 +69,14 @@ static din_responseCodeType din_validate_state(int state, enum V2gMsgTypeId curr
                                                                          : din_responseCodeType_FAILED_SequenceError;
 }
 
+namespace utils {
 /*!
  * \brief din_validate_response_code This function checks if an external error has occurred (sequence error, user
  * abort)... ). \param din_response_code is a pointer to the current response code. The value will be modified if an
  * external error has occurred. \param conn the structure with the external error information. \return Returns the next
  * v2g-event.
  */
-static v2g_event din_validate_response_code(din_responseCodeType* const din_response_code,
-                                            struct v2g_connection const* conn) {
+v2g_event din_validate_response_code(din_responseCodeType* const din_response_code, struct v2g_connection const* conn) {
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
     din_responseCodeType response_code_tmp;
 
@@ -118,6 +118,7 @@ static v2g_event din_validate_response_code(din_responseCodeType* const din_resp
 
     return nextEvent;
 }
+} // namespace utils
 
 /*!
  * \brief publish_DIN_DcEvStatus This function is a helper function to publish EVStatusType.
@@ -295,6 +296,8 @@ static void publish_din_current_demand_req(struct v2g_context* ctx,
 //             Request Handling
 //=============================================
 
+namespace states {
+
 /*!
  * \brief handle_iso_session_setup This function handles the din_session_setup msg pair. It analyzes the request msg and
  * fills the response msg. The request and response msg based on the open V2G structures. This structures must be
@@ -302,7 +305,7 @@ static void publish_din_current_demand_req(struct v2g_context* ctx,
  * \param conn holds the structure with the V2G msg pair.
  * \return Returns the next V2G-event.
  */
-static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
+enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     struct din_SessionSetupReqType* req = &conn->exi_in.dinEXIDocument->V2G_Message.Body.SessionSetupReq;
     struct din_SessionSetupResType* res = &conn->exi_out.dinEXIDocument->V2G_Message.Body.SessionSetupRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
@@ -344,7 +347,7 @@ static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
     res->DateTimeNow = time(NULL);
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_SERVICEDISCOVERY; // [V2G-DC-438]
@@ -359,7 +362,7 @@ static enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
  * \param conn is the structure with the V2G msg pair.
  * \return Returns the next V2G-event.
  */
-static enum v2g_event handle_din_service_discovery(struct v2g_connection* conn) {
+enum v2g_event handle_din_service_discovery(struct v2g_connection* conn) {
     struct din_ServiceDiscoveryReqType* req = &conn->exi_in.dinEXIDocument->V2G_Message.Body.ServiceDiscoveryReq;
     struct din_ServiceDiscoveryResType* res = &conn->exi_out.dinEXIDocument->V2G_Message.Body.ServiceDiscoveryRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
@@ -397,13 +400,15 @@ static enum v2g_event handle_din_service_discovery(struct v2g_connection* conn) 
     res->PaymentOptions.PaymentOption.arrayLen = 1;
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_PAYMENTSERVICESELECTION; // [V2G-DC-441]
 
     return nextEvent;
 }
+
+} // namespace states
 
 /*!
  * \brief handle_din_service_discovery This function handles the din service payment selection msg pair. It analyzes the
@@ -437,7 +442,7 @@ static enum v2g_event handle_din_service_payment_selection(struct v2g_connection
                                                                                    // shall be limited to 1)
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_AUTHORIZATION; // [V2G-DC-444]
@@ -452,7 +457,7 @@ static enum v2g_event handle_din_service_payment_selection(struct v2g_connection
  * \param conn is the structure with the V2G msg pair.
  * \return Returns the next V2G-event.
  */
-static enum v2g_event handle_din_contract_authentication(struct v2g_connection* conn) {
+enum v2g_event states::handle_din_contract_authentication(struct v2g_connection* conn) {
     struct din_ContractAuthenticationResType* res =
         &conn->exi_out.dinEXIDocument->V2G_Message.Body.ContractAuthenticationRes;
     enum v2g_event nextEvent = V2G_EVENT_NO_EVENT;
@@ -464,7 +469,7 @@ static enum v2g_event handle_din_contract_authentication(struct v2g_connection* 
                               : din_EVSEProcessingType_Ongoing;
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = (res->EVSEProcessing == din_EVSEProcessingType_Ongoing)
@@ -596,7 +601,7 @@ static enum v2g_event handle_din_charge_parameter(struct v2g_connection* conn) {
     res->SASchedules_isUsed = (unsigned int)0;
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     if (res->EVSEProcessing == din_EVSEProcessingType_Finished) {
@@ -680,7 +685,7 @@ static enum v2g_event handle_din_power_delivery(struct v2g_connection* conn) {
                             : res->ResponseCode; // [V2G-DC-401]
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     if ((req->ReadyToChargeState == (int)1) && (V2G_CURRENT_DEMAND_MSG != conn->ctx->last_v2g_msg)) {
@@ -736,7 +741,7 @@ static enum v2g_event handle_din_cable_check(struct v2g_connection* conn) {
     }
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     if ((res->EVSEProcessing == din_EVSEProcessingType_Finished) &&
@@ -790,7 +795,7 @@ static enum v2g_event handle_din_pre_charge(struct v2g_connection* conn) {
     load_din_physical_value(&res->EVSEPresentVoltage, &conn->ctx->evse_v2g_data.evse_present_voltage);
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_PRECHARGE_POWERDELIVERY; // [V2G-DC-458]
@@ -844,7 +849,7 @@ static enum v2g_event handle_din_current_demand(struct v2g_connection* conn) {
     res->EVSEVoltageLimitAchieved = conn->ctx->evse_v2g_data.evse_voltage_limit_achieved;
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_CURRENTDEMAND_POWERDELIVERY; // [V2G-DC-465]
@@ -884,7 +889,7 @@ static enum v2g_event handle_din_welding_detection(struct v2g_connection* conn) 
     load_din_physical_value(&res->EVSEPresentVoltage, &conn->ctx->evse_v2g_data.evse_present_voltage);
 
     /* Check the current response code and check if no external error has occurred */
-    nextEvent = din_validate_response_code(&res->ResponseCode, conn);
+    nextEvent = utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Set next expected req msg */
     conn->ctx->state = WAIT_FOR_WELDINGDETECTION_SESSIONSTOP; // [V2G-DC-469]
@@ -906,7 +911,7 @@ static enum v2g_event handle_din_session_stop(struct v2g_connection* conn) {
     res->ResponseCode = din_responseCodeType_OK; // [V2G-DC-388]
 
     /* Check the current response code and check if no external error has occurred */
-    din_validate_response_code(&res->ResponseCode, conn);
+    utils::din_validate_response_code(&res->ResponseCode, conn);
 
     /* Setuo dlink action */
     conn->dlink_action = MQTT_DLINK_ACTION_TERMINATE;
@@ -919,6 +924,8 @@ static enum v2g_event handle_din_session_stop(struct v2g_connection* conn) {
 }
 
 enum v2g_event din_handle_request(v2g_connection* conn) {
+    using namespace states;
+
     struct din_exiDocument* exi_in = conn->exi_in.dinEXIDocument;
     struct din_exiDocument* exi_out = conn->exi_out.dinEXIDocument;
     enum v2g_event next_v2g_event = V2G_EVENT_TERMINATE_CONNECTION; // ERROR_UNEXPECTED_REQUEST_MESSAGE;

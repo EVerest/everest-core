@@ -1,5 +1,6 @@
 get_target_property(GENERATED_INCLUDE_DIR generate_cpp_files EVEREST_GENERATED_INCLUDE_DIR)
 find_package(libevent)
+find_package(OpenSSL 3)
 
 set(TLS_TEST_FILES
         alt_openssl-pki.conf
@@ -93,3 +94,111 @@ target_link_libraries(${V2G_MAIN_NAME} PRIVATE
 # runs fine locally, fails in CI
 add_test(${TLS_GTEST_NAME} ${TLS_GTEST_NAME})
 ev_register_test_target(${TLS_GTEST_NAME})
+
+
+set(DIN_SERVER_NAME din_server_test)
+add_executable(${DIN_SERVER_NAME})
+
+target_include_directories(${DIN_SERVER_NAME} PRIVATE
+    .. ../connection ../../../tests/include
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+
+target_compile_definitions(${DIN_SERVER_NAME} PRIVATE
+    -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
+target_sources(${DIN_SERVER_NAME} PRIVATE
+    din_server_test.cpp
+    log.cpp
+    ../din_server.cpp
+    ../tools.cpp # TODO: Maybe mock this one
+)
+
+target_link_libraries(${DIN_SERVER_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
+        everest::framework
+        everest::evse_security
+        everest::tls
+)
+
+add_test(${DIN_SERVER_NAME} ${DIN_SERVER_NAME})
+ev_register_test_target(${DIN_SERVER_NAME})
+
+set(SDP_NAME sdp_test)
+add_executable(${SDP_NAME})
+target_include_directories(${SDP_NAME} PRIVATE
+    .. ../connection ../../../tests/include
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+
+target_compile_definitions(${SDP_NAME} PRIVATE
+    -DUNIT_TEST
+)
+
+target_sources(${SDP_NAME} PRIVATE
+    sdp_test.cpp
+    log.cpp
+    ../sdp.cpp
+)
+
+target_link_libraries(${SDP_NAME}
+    PRIVATE
+        GTest::gtest_main
+        cbv2g::tp
+        everest::framework
+        everest::tls
+)
+
+add_test(${SDP_NAME} ${SDP_NAME})
+ev_register_test_target(${SDP_NAME})
+
+set(V2GCTX_NAME v2g_ctx_test)
+add_executable(${V2GCTX_NAME})
+
+target_include_directories(${V2GCTX_NAME} PRIVATE
+    .. ../connection ../../../tests/include
+    ${GENERATED_INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
+    ${CMAKE_BINARY_DIR}/generated/include
+)
+
+target_compile_definitions(${V2GCTX_NAME} PRIVATE
+    -DUNIT_TEST
+    -DLIBEVSE_CRYPTO_SUPPLIER_OPENSSL
+)
+
+target_sources(${V2GCTX_NAME} PRIVATE
+    v2g_ctx_test.cpp
+    log.cpp
+    ../v2g_ctx.cpp
+    ../tools.cpp # TODO: Maybe mock this one
+)
+
+target_link_libraries(${V2GCTX_NAME}
+    PRIVATE
+        GTest::gtest_main
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        cbv2g::din
+        cbv2g::iso2
+        cbv2g::tp
+        everest::framework
+        everest::evse_security
+        everest::tls
+        -levent -lpthread -levent_pthreads
+)
+
+add_test(${V2GCTX_NAME} ${V2GCTX_NAME})
+ev_register_test_target(${V2GCTX_NAME})
