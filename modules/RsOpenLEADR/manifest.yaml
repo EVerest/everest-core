@@ -18,6 +18,10 @@ config:
   openadr_vtn_event_target_values:
     description: Target values of the OpenADR 3.0 events to retrieve
     type: string
+  openadr_vtn_retrieve_schedule:
+    description: Duration in seconds to retrieve OpenADR 3.0 schedules
+    type: string
+    default: "0 14 * * *"
 provides:
 requires:
   limits_iface:
