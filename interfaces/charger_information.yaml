@@ -1,0 +1,8 @@
+description: This interface is the internal charger information inteface between nodes.
+cmds:
+  get_charger_information:
+    description: Queries the current charger information
+    result:
+      description: Returns an object with the current charger meta information
+      type: object
+      $ref: /charger_information#/ChargerInformation
