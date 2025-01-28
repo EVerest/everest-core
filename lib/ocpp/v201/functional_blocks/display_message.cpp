@@ -21,6 +21,20 @@ DisplayMessageBlock::DisplayMessageBlock(MessageDispatcherInterface<MessageType>
 }
 
 void DisplayMessageBlock::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
+    const auto& json_message = message.message;
+    switch (message.messageType) {
+    case MessageType::GetDisplayMessages:
+        this->handle_get_display_message(json_message);
+        break;
+    case MessageType::SetDisplayMessage:
+        this->handle_set_display_message(json_message);
+        break;
+    case MessageType::ClearDisplayMessage:
+        this->handle_clear_display_message(json_message);
+        break;
+    default:
+        throw MessageTypeNotImplementedException(message.messageType);
+    }
 }
 
 void DisplayMessageBlock::handle_get_display_message(const Call<GetDisplayMessagesRequest> call) {
