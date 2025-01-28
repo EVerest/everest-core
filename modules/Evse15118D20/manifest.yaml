@@ -62,6 +62,10 @@ provides:
     interface: ISO15118_charger
     description: >-
       This interface provides limited access to iso15118-20
+requires:
+  security:
+    interface: evse_security
+
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
