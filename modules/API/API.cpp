@@ -736,6 +736,10 @@ void API::init() {
 void API::ready() {
     invoke_ready(*p_main);
 
+    if (not r_charger_information.empty()) {
+        this->charger_information = r_charger_information.at(0)->call_get_charger_information();
+    }
+
     std::string var_active_errors = this->api_base + "errors/var/active_errors";
     this->api_threads.push_back(std::thread([this, var_active_errors]() {
         auto next_tick = std::chrono::steady_clock::now();
