@@ -73,7 +73,16 @@ void Auth::ready() {
     this->auth_handler->register_validate_token_callback([this](const ProvidedIdToken& provided_token) {
         std::vector<ValidationResult> validation_results;
         for (const auto& token_validator : this->r_token_validator) {
-            validation_results.push_back(token_validator->call_validate_token(provided_token));
+            try {
+                const auto result = token_validator->call_validate_token(provided_token);
+                validation_results.push_back(result);
+            // TODO: This is very broad catch, make it more narrow when the everest-framework error handling will be established
+            } catch (const std::exception& e) {
+                EVLOG_warning << "Exception during validating token: " << e.what();
+                ValidationResult validation_result;
+                validation_result.authorization_status = AuthorizationStatus::Unknown;
+                validation_results.push_back(validation_result);
+            }
         }
         return validation_results;
     });
