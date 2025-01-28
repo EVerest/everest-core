@@ -293,7 +293,7 @@ void v2g_ctx_init_charging_values(struct v2g_context* const ctx) {
 }
 
 struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
-                                   iso15118_extensionsImplBase* p_extensions_ocpp, evse_securityIntf* r_security) {
+                                   iso15118_extensionsImplBase* p_extensions, evse_securityIntf* r_security) {
     struct v2g_context* ctx;
 
     // TODO There are c++ objects within v2g_context and calloc doesn't call initialisers.
@@ -304,7 +304,7 @@ struct v2g_context* v2g_ctx_create(ISO15118_chargerImplBase* p_chargerImplBase,
 
     ctx->r_security = r_security;
     ctx->p_charger = p_chargerImplBase;
-    ctx->p_extensions_ocpp = p_extensions_ocpp;
+    ctx->p_extensions = p_extensions;
 
     ctx->tls_security = TLS_SECURITY_PROHIBIT; // default
 

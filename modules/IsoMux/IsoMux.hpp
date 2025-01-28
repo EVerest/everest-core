@@ -40,27 +40,27 @@ class IsoMux : public Everest::ModuleBase {
 public:
     IsoMux() = delete;
     IsoMux(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
-           std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp,
-           std::unique_ptr<evse_securityIntf> r_security, std::unique_ptr<ISO15118_chargerIntf> r_iso2,
-           std::unique_ptr<ISO15118_chargerIntf> r_iso20, std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp2,
-           std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp20, Conf& config) :
+           std::unique_ptr<iso15118_extensionsImplBase> p_extensions, std::unique_ptr<evse_securityIntf> r_security,
+           std::unique_ptr<ISO15118_chargerIntf> r_iso2, std::unique_ptr<ISO15118_chargerIntf> r_iso20,
+           std::unique_ptr<iso15118_extensionsIntf> r_ext2, std::unique_ptr<iso15118_extensionsIntf> r_ext20,
+           Conf& config) :
         ModuleBase(info),
         p_charger(std::move(p_charger)),
-        p_extensions_ocpp(std::move(p_extensions_ocpp)),
+        p_extensions(std::move(p_extensions)),
         r_security(std::move(r_security)),
         r_iso2(std::move(r_iso2)),
         r_iso20(std::move(r_iso20)),
-        r_ext_ocpp2(std::move(r_ext_ocpp2)),
-        r_ext_ocpp20(std::move(r_ext_ocpp20)),
+        r_ext2(std::move(r_ext2)),
+        r_ext20(std::move(r_ext20)),
         config(config){};
 
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
-    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp;
+    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions;
     const std::unique_ptr<evse_securityIntf> r_security;
     const std::unique_ptr<ISO15118_chargerIntf> r_iso2;
     const std::unique_ptr<ISO15118_chargerIntf> r_iso20;
-    const std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp2;
-    const std::unique_ptr<iso15118_extensionsIntf> r_ext_ocpp20;
+    const std::unique_ptr<iso15118_extensionsIntf> r_ext2;
+    const std::unique_ptr<iso15118_extensionsIntf> r_ext20;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

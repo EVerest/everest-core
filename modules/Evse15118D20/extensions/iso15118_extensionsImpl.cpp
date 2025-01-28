@@ -4,7 +4,7 @@
 #include "iso15118_extensionsImpl.hpp"
 
 namespace module {
-namespace extensions_ocpp {
+namespace extensions {
 
 void iso15118_extensionsImpl::init() {
 }
@@ -17,5 +17,5 @@ void iso15118_extensionsImpl::handle_set_get_certificate_response(
     // your code for cmd set_get_certificate_response goes here
 }
 
-} // namespace extensions_ocpp
+} // namespace extensions
 } // namespace module

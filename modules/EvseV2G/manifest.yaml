@@ -81,7 +81,7 @@ provides:
     description: >-
       This module implements the ISO15118-2 implementation of
       an AC or DC charger
-  extensions_ocpp:
+  extensions:
     interface: iso15118_extensions
     description: >-
       This interface is used to share data between ISO15118 and OCPP modules

@@ -38,14 +38,11 @@ class Evse15118D20 : public Everest::ModuleBase {
 public:
     Evse15118D20() = delete;
     Evse15118D20(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
-                 std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp, Conf& config) :
-        ModuleBase(info),
-        p_charger(std::move(p_charger)),
-        p_extensions_ocpp(std::move(p_extensions_ocpp)),
-        config(config){};
+                 std::unique_ptr<iso15118_extensionsImplBase> p_extensions, Conf& config) :
+        ModuleBase(info), p_charger(std::move(p_charger)), p_extensions(std::move(p_extensions)), config(config){};
 
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
-    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions_ocpp;
+    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1

@@ -127,9 +127,9 @@ int main(int argc, char** argv) {
     module::stub::ModuleAdapterStub adapter;
     module::stub::ISO15118_chargerImplStub charger(adapter);
     EvseSecurity security(adapter);
-    module::stub::iso15118_extensionsImplStub extensions_ocpp;
+    module::stub::iso15118_extensionsImplStub extensions;
 
-    auto* ctx = v2g_ctx_create(&charger, &extensions_ocpp, &security);
+    auto* ctx = v2g_ctx_create(&charger, &extensions, &security);
 
     if (ctx == nullptr) {
         std::cerr << "failed to create context" << std::endl;

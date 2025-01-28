@@ -26,7 +26,7 @@ protected:
     module::stub::QuietModuleAdapterStub adapter;
     module::stub::ISO15118_chargerImplStub charger;
     module::stub::evse_securityIntfStub security;
-    module::stub::iso15118_extensionsImplStub ocpp_extensions;
+    module::stub::iso15118_extensionsImplStub extensions;
 
     V2gCtxTest() : charger(adapter), security(adapter) {
     }
@@ -61,7 +61,7 @@ protected:
     }
 
     void SetUp() override {
-        auto ptr = v2g_ctx_create(&charger, &ocpp_extensions, &security);
+        auto ptr = v2g_ctx_create(&charger, &extensions, &security);
         ctx = std::unique_ptr<v2g_context, v2g_contextDeleter>(ptr, v2g_contextDeleter());
         module::stub::clear_logs();
     }
@@ -164,8 +164,8 @@ TEST(valgrind, memcheck) {
     module::stub::QuietModuleAdapterStub adapter;
     module::stub::ISO15118_chargerImplStub charger(adapter);
     module::stub::evse_securityIntfStub security(adapter);
-    module::stub::iso15118_extensionsImplStub ocpp_extensions;
-    auto ptr = v2g_ctx_create(&charger, &ocpp_extensions, &security);
+    module::stub::iso15118_extensionsImplStub extensions;
+    auto ptr = v2g_ctx_create(&charger, &extensions, &security);
     v2g_ctx_free(ptr);
 }
 

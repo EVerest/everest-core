@@ -5,7 +5,7 @@
 #include "v2g_ctx.hpp"
 
 namespace module {
-namespace extensions_ocpp {
+namespace extensions {
 
 void iso15118_extensionsImpl::init() {
     if (!v2g_ctx) {
@@ -30,5 +30,5 @@ void iso15118_extensionsImpl::handle_set_get_certificate_response(
     pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
 }
 
-} // namespace extensions_ocpp
+} // namespace extensions
 } // namespace module

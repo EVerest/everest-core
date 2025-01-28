@@ -189,7 +189,7 @@ struct v2g_context {
 
     evse_securityIntf* r_security;
     ISO15118_chargerImplBase* p_charger;
-    iso15118_extensionsImplBase* p_extensions_ocpp;
+    iso15118_extensionsImplBase* p_extensions;
 
     struct event_base* event_base;
     pthread_t event_thread;

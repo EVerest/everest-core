@@ -5,7 +5,7 @@
 #include "log.hpp"
 
 namespace module {
-namespace extensions_ocpp {
+namespace extensions {
 
 void iso15118_extensionsImpl::init() {
     if (!v2g_ctx) {
@@ -13,13 +13,13 @@ void iso15118_extensionsImpl::init() {
         return;
     }
 
-    mod->r_ext_ocpp2->subscribe_iso15118_certificate_request([this](const auto o) {
+    mod->r_ext2->subscribe_iso15118_certificate_request([this](const auto o) {
         if (not mod->selected_iso20()) {
             publish_iso15118_certificate_request(o);
         }
     });
 
-    mod->r_ext_ocpp20->subscribe_iso15118_certificate_request([this](const auto o) {
+    mod->r_ext20->subscribe_iso15118_certificate_request([this](const auto o) {
         if (mod->selected_iso20()) {
             publish_iso15118_certificate_request(o);
         }
@@ -32,11 +32,11 @@ void iso15118_extensionsImpl::ready() {
 void iso15118_extensionsImpl::handle_set_get_certificate_response(
     types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
     if (mod->selected_iso20()) {
-        mod->r_ext_ocpp20->call_set_get_certificate_response(certificate_response);
+        mod->r_ext20->call_set_get_certificate_response(certificate_response);
     } else {
-        mod->r_ext_ocpp20->call_set_get_certificate_response(certificate_response);
+        mod->r_ext20->call_set_get_certificate_response(certificate_response);
     }
 }
 
-} // namespace extensions_ocpp
+} // namespace extensions
 } // namespace module

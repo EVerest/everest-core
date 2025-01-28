@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#ifndef ISO15118_OCPP_EXTENTSIONSIMPLSTUB_H
-#define ISO15118_OCPP_EXTENTSIONSIMPLSTUB_H
+#ifndef ISO15118_EXTENTSIONSIMPLSTUB_H
+#define ISO15118_EXTENTSIONSIMPLSTUB_H
 
 #include <iostream>
 
@@ -28,4 +28,4 @@ public:
 
 } // namespace module::stub
 
-#endif // ISO15118_OCPP_EXTENTSIONSIMPLSTUB_H
+#endif // ISO15118_EXTENTSIONSIMPLSTUB_H

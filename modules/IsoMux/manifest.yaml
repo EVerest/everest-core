@@ -45,7 +45,7 @@ provides:
     description: >-
       This module implements the ISO15118-2 implementation of
       an AC or DC charger
-  extensions_ocpp:
+  extensions:
     interface: iso15118_extensions
     description: >-
       This interface is used to share data between ISO15118 and OCPP modules
@@ -57,9 +57,9 @@ requires:
     interface: ISO15118_charger
   iso20:
     interface: ISO15118_charger
-  ext_ocpp2:
+  ext2:
     interface: iso15118_extensions
-  ext_ocpp20:
+  ext20:
     interface: iso15118_extensions
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

@@ -178,7 +178,7 @@ active_modules:
           implementation_id: external_limits
       extensions_15118:
         - module_id: iso15118_charger
-          implementation_id: extensions_ocpp
+          implementation_id: extensions
   evse_security:
     module: EvseSecurity
     config_module:

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP
-#define EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP
+#ifndef extensions_ISO15118_EXTENSIONS_IMPL_HPP
+#define extensions_ISO15118_EXTENSIONS_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -10,22 +10,23 @@
 
 #include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
-#include "../Evse15118D20.hpp"
+#include "EvseV2G.hpp"
 
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
-// insert your custom include headers here
+#include "v2g.hpp"
+extern struct v2g_context* v2g_ctx;
 // ev@75ac1216-19eb-4182-a85c-820f1fc2c091:v1
 
 namespace module {
-namespace extensions_ocpp {
+namespace extensions {
 
 struct Conf {};
 
 class iso15118_extensionsImpl : public iso15118_extensionsImplBase {
 public:
     iso15118_extensionsImpl() = delete;
-    iso15118_extensionsImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<Evse15118D20>& mod, Conf& config) :
-        iso15118_extensionsImplBase(ev, "extensions_ocpp"), mod(mod), config(config){};
+    iso15118_extensionsImpl(Everest::ModuleAdapter* ev, const Everest::PtrContainer<EvseV2G>& mod, Conf& config) :
+        iso15118_extensionsImplBase(ev, "extensions"), mod(mod), config(config){};
 
     // ev@8ea32d28-373f-4c90-ae5e-b4fcc74e2a61:v1
     // insert your public definitions here
@@ -41,7 +42,7 @@ protected:
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
 
 private:
-    const Everest::PtrContainer<Evse15118D20>& mod;
+    const Everest::PtrContainer<EvseV2G>& mod;
     const Conf& config;
 
     virtual void init() override;
@@ -56,7 +57,7 @@ private:
 // insert other definitions here
 // ev@3d7da0ad-02c2-493d-9920-0bbbd56b9876:v1
 
-} // namespace extensions_ocpp
+} // namespace extensions
 } // namespace module
 
-#endif // EXTENSIONS_OCPP_ISO15118_EXTENSIONS_IMPL_HPP
+#endif // extensions_ISO15118_EXTENSIONS_IMPL_HPP
