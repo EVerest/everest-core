@@ -38,12 +38,6 @@ void DisplayMessageBlock::handle_message(const ocpp::EnhancedMessage<MessageType
 }
 
 void DisplayMessageBlock::handle_get_display_message(const Call<GetDisplayMessagesRequest> call) {
-    GetDisplayMessagesResponse response;
-    response.status = GetDisplayMessagesStatusEnum::Unknown;
-    ocpp::CallResult<GetDisplayMessagesResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
-    return;
-
     // Call 'get display message callback' to get all display messages from the charging station.
     const std::vector<DisplayMessage> display_messages = this->get_display_message_callback(call.msg);
 
@@ -62,6 +56,7 @@ void DisplayMessageBlock::handle_get_display_message(const Call<GetDisplayMessag
 
     // Send 'accepted' back to the CSMS if there is at least one message and send all the messages in another
     // request.
+    GetDisplayMessagesResponse response;
     if (messages_request.messageInfo.value().empty()) {
         response.status = GetDisplayMessagesStatusEnum::Unknown;
         ocpp::CallResult<GetDisplayMessagesResponse> call_result(response, call.uniqueId);
