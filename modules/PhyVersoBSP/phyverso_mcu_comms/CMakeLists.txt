@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(phyverso_config STATIC)
+ev_register_library_target(phyverso_config)
+
 target_sources(phyverso_config
     PRIVATE
         evConfig.cpp
@@ -26,6 +28,8 @@ target_link_libraries(phyverso_config
 )
 
 add_library(phyverso_mcu_comms STATIC)
+ev_register_library_target(phyverso_mcu_comms)
+
 target_sources(phyverso_mcu_comms
     PRIVATE
         evSerial.cpp

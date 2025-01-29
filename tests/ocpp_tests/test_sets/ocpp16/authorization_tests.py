@@ -616,6 +616,7 @@ async def test_authorization_cache_entry_1(
         validate_standard_stop_transaction,
     )
 
+    test_utility.messages.clear()
     test_controller.plug_out()
 
     # expect StatusNotification with status finishing
@@ -740,6 +741,7 @@ async def test_authorization_cache_entry_1(
         ),
     )
 
+    test_utility.messages.clear()
     # swipe card
     test_controller.swipe(test_config.authorization_info.valid_id_tag_2)
 
