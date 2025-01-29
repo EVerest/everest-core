@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 8f2cac050c421f72acd6124f5e039e0ecf8e26ce
+  git_tag: aeac763c9f04e6c3f83cc0de777484a37a2c1f21
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
