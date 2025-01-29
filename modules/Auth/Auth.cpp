@@ -76,7 +76,8 @@ void Auth::ready() {
             try {
                 const auto result = token_validator->call_validate_token(provided_token);
                 validation_results.push_back(result);
-            // TODO: This is very broad catch, make it more narrow when the everest-framework error handling will be established
+                // TODO: This is very broad catch, make it more narrow when the everest-framework error handling will be
+                // established
             } catch (const std::exception& e) {
                 EVLOG_warning << "Exception during validating token: " << e.what();
                 ValidationResult validation_result;
