@@ -313,10 +313,6 @@ enum v2g_event handle_din_session_setup(struct v2g_connection* conn) {
                 1]; /* format: (%02x:) * n - 1x ':' + 1x NUL */
     int idx;
 
-    /* un-arm a potentially communication setup timeout */
-    /* dis-arm our communication setup timeout, for this we must hold the MQTT lock */
-    stop_timer(&conn->ctx->com_setup_timeout, "session_setup: V2G_COMMUNICATION_SETUP_TIMER", conn->ctx);
-
     /* format EVCC ID */
     for (idx = 0; idx < req->EVCCID.bytesLen; idx++) {
         sprintf(&buffer[idx * 3], "%02" PRIX8 ":", req->EVCCID.bytes[idx]);
