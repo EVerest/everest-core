@@ -585,10 +585,17 @@ impl Runtime {
 
         // Subscribe to all variables that might be of interest.
         for (implementation_id, requires) in manifest.requires {
+            let connection = connections.get(&implementation_id).cloned().unwrap_or(0);
             let interface_s = self.cpp_module.get_interface(&requires.interface);
+            // EVerest framework may return null if an interface is not used in
+            // the config (the connection is then 0).
+            if interface_s.as_bytes() == b"null" && connection == 0 {
+                debug!("Skipping the interface {implementation_id}");
+                continue;
+            }
             let interface: schema::InterfaceFromEverest = interface_s.deserialize();
 
-            for i in 0usize..connections.get(&implementation_id).cloned().unwrap_or(0) {
+            for i in 0usize..connection {
                 for (name, _) in interface.vars.iter() {
                     self.cpp_module.as_ref().unwrap().subscribe_variable(
                         self,
