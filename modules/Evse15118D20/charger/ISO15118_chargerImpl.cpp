@@ -142,7 +142,6 @@ void ISO15118_chargerImpl::init() {
 }
 
 void ISO15118_chargerImpl::ready() {
-
     while (true) {
         if (setup_steps_done.all()) {
             break;
@@ -153,13 +152,39 @@ void ISO15118_chargerImpl::ready() {
     const auto session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
 
     // Obtain certificate location from the security module
-    const auto cert_path = mod->r_security->call_get_verify_location(types::evse_security::CaCertificateType::V2G);
+    const auto certificate_response = mod->r_security->call_get_leaf_certificate_info(
+        types::evse_security::LeafCertificateType::V2G, types::evse_security::EncodingFormat::PEM, false);
+
+    if (certificate_response.status != types::evse_security::GetCertificateInfoStatus::Accepted or
+        !certificate_response.info.has_value()) {
+        // TODO(ioan): generic handling
+        EVLOG_critical << "Certificate not found";
+        return;
+    }
+
+    const auto& certificate_info = certificate_response.info.value();
+
+    std::optional<std::string> private_key_password;
+    std::string path_chain;
+    std::string path_key;
+
+    if (certificate_info.certificate.has_value()) {
+        path_chain = certificate_info.certificate.value();
+    } else if (certificate_info.certificate_single.has_value()) {
+        path_chain = certificate_info.certificate_single.value();
+    } else {
+        // TODO(ioan): generic handling
+        EVLOG_critical << "Certificate not found";
+        return;
+    }
 
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            cert_path,
-            mod->config.private_key_password,
+            {},
+            path_chain,
+            certificate_info.key,
+            certificate_info.password,
             mod->config.enable_ssl_logging,
             mod->config.enable_tls_key_logging,
         },

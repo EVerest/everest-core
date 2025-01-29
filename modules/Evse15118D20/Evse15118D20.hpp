@@ -27,6 +27,7 @@ struct Conf {
     std::string certificate_path;
     std::string logging_path;
     std::string tls_negotiation_strategy;
+    // TODO(ioan): remove this since it's received from the sec module
     std::string private_key_password;
     bool enable_ssl_logging;
     bool enable_tls_key_logging;
