@@ -162,6 +162,22 @@ macro(find_everest_log)
     FetchContent_MakeAvailable(${EXTERNAL_EVEREST_LOG_NAME})
 endmacro()
 
+
+macro(find_everest_evse_security)
+    message(STATUS "Using FetchContent for everest-evse_security library")
+    set(EXTERNAL_EVEREST_SEC_NAME everest-evse_security)
+    set(EXTERNAL_EVEREST_SEC_URL https://github.com/EVerest/libevse-security.git)
+    set(EXTERNAL_EVEREST_SEC_TAG v0.9.2)
+
+    FetchContent_Declare(
+        ${EXTERNAL_EVEREST_SEC_NAME}
+        GIT_REPOSITORY ${EXTERNAL_EVEREST_SEC_URL}
+        GIT_TAG ${EXTERNAL_EVEREST_SEC_TAG}
+    )
+
+    FetchContent_MakeAvailable(${EXTERNAL_EVEREST_SEC_NAME})
+endmacro()
+
 macro(find_package PACKAGE_NAME)
     message(STATUS "FIND PACKAGE ${PACKAGE_NAME}")
 
@@ -183,6 +199,8 @@ macro(find_package PACKAGE_NAME)
         find_everest_timer()
     elseif("${PACKAGE_NAME}" STREQUAL "everest-log")
         find_everest_log()
+    elseif("${PACKAGE_NAME}" STREQUAL "everest-evse_security")
+        find_everest_evse_security()
     else()
         message(STATUS "Using regular findpackage for ${PACKAGE_NAME}")
         _find_package(${ARGV})
