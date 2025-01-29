@@ -1205,14 +1205,15 @@ bool Charger::start_transaction() {
         // we can't bill the customer.
         if (response.status == types::powermeter::TransactionRequestStatus::UNEXPECTED_ERROR) {
             EVLOG_error << "Failed to start a transaction on the power meter " << response.error.value_or("");
-            error_handling->raise_powermeter_transaction_start_failed_error(
-                "Failed to start transaction on the power meter");
-            return false;
+            if (true == config_context.fail_on_powermeter_errors) {
+                error_handling->raise_powermeter_transaction_start_failed_error(
+                    "Failed to start transaction on the power meter");
+                return false;
+            }
         }
     }
 
     store->store_session(shared_context.session_uuid);
-
     signal_transaction_started_event(shared_context.id_token);
     return true;
 }
@@ -1324,7 +1325,8 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     bool _ac_hlc_use_5percent, bool _ac_enforce_hlc, bool _ac_with_soc_timeout,
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
-                    const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms) {
+                    const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
+                    const bool fail_on_powermeter_errors) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1344,6 +1346,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
     config_context.switch_3ph1ph_cp_state_F = _switch_3ph1ph_cp_state == "F";
 
     config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
+    config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";

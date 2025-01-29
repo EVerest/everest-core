@@ -1,5 +1,6 @@
 add_library(everest_staging_util INTERFACE)
 add_library(everest::staging::util ALIAS everest_staging_util)
+ev_register_library_target(everest_staging_helpers)
 
 target_include_directories(everest_staging_util
     INTERFACE
