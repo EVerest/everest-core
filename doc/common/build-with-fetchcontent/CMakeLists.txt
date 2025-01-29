@@ -85,6 +85,21 @@ macro(find_nlohmann_json_schema_validator)
     FetchContent_MakeAvailable(${EXTERNAL_JSON_SCHEMA_NAME})
 endmacro()
 
+macro(find_libwebsockets)
+    message(STATUS "Using FetchContent for libwebsockets library")
+    set(EXTERNAL_LIBWEBSOCKET_NAME libwebsockets)
+    set(EXTERNAL_LIBWEBSOCKET_URL https://github.com/warmcat/libwebsockets.git)
+    set(EXTERNAL_LIBWEBSOCKET_TAG v4.3.3)
+    
+    FetchContent_Declare(
+        ${EXTERNAL_LIBWEBSOCKET_NAME}
+        GIT_REPOSITORY ${EXTERNAL_LIBWEBSOCKET_URL}
+        GIT_TAG ${EXTERNAL_LIBWEBSOCKET_TAG}
+    )
+    
+    FetchContent_MakeAvailable(${EXTERNAL_LIBWEBSOCKET_NAME})
+endmacro()
+
 macro(find_websocketpp)
     message(STATUS "Using FetchContent for websocketpp library")
     set(EXTERNAL_WEBSOCKET_NAME websocketpp)
@@ -158,6 +173,8 @@ macro(find_package PACKAGE_NAME)
         find_nlohmann_json()
     elseif("${PACKAGE_NAME}" STREQUAL "nlohmann_json_schema_validator")
         find_nlohmann_json_schema_validator()
+    elseif("${PACKAGE_NAME}" STREQUAL "libwebsockets")
+        find_libwebsockets()
     elseif("${PACKAGE_NAME}" STREQUAL "websocketpp")
         find_websocketpp()
     elseif("${PACKAGE_NAME}" STREQUAL "fsm")
