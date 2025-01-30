@@ -1129,7 +1129,15 @@ bool Charger::cancel_transaction(const types::evse_manager::StopTransactionReque
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_cancel_transaction);
 
     if (shared_context.transaction_active) {
+
         if (shared_context.hlc_charging_active) {
+
+            if (request.reason == types::evse_manager::StopTransactionReason::EmergencyStop) {
+                signal_hlc_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+            } else if (request.reason == types::evse_manager::StopTransactionReason::PowerLoss) {
+                signal_hlc_error(types::iso15118_charger::EvseError::Error_UtilityInterruptEvent);
+            }
+
             shared_context.current_state = EvseState::StoppingCharging;
             signal_hlc_stop_charging();
         } else {
