@@ -221,6 +221,22 @@ void ErrorHandling::clear_internal_error() {
     }
 }
 
+void ErrorHandling::raise_authorization_timeout_error(const std::string& description) {
+    // raise externally
+    Everest::error::Error error_object = p_evse->error_factory->create_error(
+        "evse_manager/MREC9AuthorizationTimeout", "", description, Everest::error::Severity::High);
+    p_evse->raise_error(error_object);
+    process_error();
+}
+
+void ErrorHandling::clear_authorization_timeout_error() {
+    // clear externally
+    if (p_evse->error_state_monitor->is_error_active("evse_manager/MREC9AuthorizationTimeout", "")) {
+        p_evse->clear_error("evse_manager/MREC9AuthorizationTimeout");
+        process_error();
+    }
+}
+
 void ErrorHandling::raise_powermeter_transaction_start_failed_error(const std::string& description) {
     // raise externally
     Everest::error::Error error_object = p_evse->error_factory->create_error(
