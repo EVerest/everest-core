@@ -3,6 +3,7 @@
 
 #include <ocpp/v201/functional_blocks/security.hpp>
 
+#include <ocpp/common/constants.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/utils.hpp>
@@ -22,11 +23,14 @@ Security::Security(MessageDispatcherInterface<MessageType>& message_dispatcher, 
     connectivity_manager(connectivity_manager),
     ocsp_updater(ocsp_updater),
     security_event_callback(security_event_callback),
-    csr_attempt(1) {
+    csr_attempt(1),
+    client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
+    v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }) {
 }
 
 Security::~Security() {
     stop_certificate_signed_timer();
+    stop_certificate_expiration_check_timers();
 }
 
 void Security::handle_message(const EnhancedMessage<MessageType>& message) {
@@ -38,6 +42,15 @@ void Security::handle_message(const EnhancedMessage<MessageType>& message) {
     case MessageType::SignCertificateResponse:
         this->handle_sign_certificate_response(json_message);
         break;
+    case MessageType::GetInstalledCertificateIds:
+        this->handle_get_installed_certificate_ids_req(json_message);
+        break;
+    case MessageType::InstallCertificate:
+        this->handle_install_certificate_req(json_message);
+        break;
+    case MessageType::DeleteCertificate:
+        this->handle_delete_certificate_req(json_message);
+        break;
     default:
         throw MessageTypeNotImplementedException(message.messageType);
     }
@@ -45,6 +58,71 @@ void Security::handle_message(const EnhancedMessage<MessageType>& message) {
 
 void Security::stop_certificate_signed_timer() {
     this->certificate_signed_timer.stop();
+}
+
+Get15118EVCertificateResponse
+Security::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) {
+    Get15118EVCertificateResponse response;
+
+    if (!this->device_model
+             .get_optional_value<bool>(ControllerComponentVariables::ContractCertificateInstallationEnabled)
+             .value_or(false)) {
+        EVLOG_warning << "Can not fulfill Get15118EVCertificateRequest because ContractCertificateInstallationEnabled "
+                         "is configured as false!";
+        response.status = Iso15118EVCertificateStatusEnum::Failed;
+        return response;
+    }
+
+    EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
+    auto future_res = this->message_dispatcher.dispatch_call_async(ocpp::Call<Get15118EVCertificateRequest>(request));
+
+    if (future_res.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
+        EVLOG_warning << "Waiting for Get15118EVCertificateRequest.conf future timed out!";
+        response.status = Iso15118EVCertificateStatusEnum::Failed;
+        return response;
+    }
+
+    const auto response_message = future_res.get();
+    EVLOG_debug << "Received Get15118EVCertificateResponse " << response_message.message;
+    if (response_message.messageType != MessageType::Get15118EVCertificateResponse) {
+        response.status = Iso15118EVCertificateStatusEnum::Failed;
+        return response;
+    }
+
+    try {
+        ocpp::CallResult<Get15118EVCertificateResponse> call_result = response_message.message;
+        return call_result.msg;
+    } catch (const EnumConversionException& e) {
+        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        auto call_error = CallError(response_message.uniqueId, "FormationViolation", e.what(), json({}));
+        this->message_dispatcher.dispatch_call_error(call_error);
+        return response;
+    }
+}
+
+void Security::init_certificate_expiration_check_timers() {
+    // Timers started with initial delays; callback functions are supposed to re-schedule on their own!
+
+    // Client Certificate only needs to be checked for SecurityProfile 3; if SecurityProfile changes, timers get
+    // re-initialized at reconnect
+    if (this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
+        this->client_certificate_expiration_check_timer.timeout(std::chrono::seconds(
+            this->device_model
+                .get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckInitialDelaySeconds)
+                .value_or(60)));
+    }
+
+    // V2G Certificate timer is started in any case; condition (V2GCertificateInstallationEnabled) is validated in
+    // callback (ChargePoint::scheduled_check_v2g_certificate_expiration)
+    this->v2g_certificate_expiration_check_timer.timeout(std::chrono::seconds(
+        this->device_model
+            .get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckInitialDelaySeconds)
+            .value_or(60)));
+}
+
+void Security::stop_certificate_expiration_check_timers() {
+    this->client_certificate_expiration_check_timer.stop();
+    this->v2g_certificate_expiration_check_timer.stop();
 }
 
 void Security::security_event_notification_req(const CiString<50>& event_type,
@@ -252,6 +330,160 @@ void Security::handle_sign_certificate_response(CallResult<SignCertificateRespon
         this->csr_attempt = 1;
         EVLOG_warning << "SignCertificate.req has not been accepted by CSMS";
     }
+}
+
+void Security::handle_get_installed_certificate_ids_req(Call<GetInstalledCertificateIdsRequest> call) {
+    EVLOG_debug << "Received GetInstalledCertificateIdsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+    GetInstalledCertificateIdsResponse response;
+
+    const auto msg = call.msg;
+
+    // prepare argument for getRootCertificate
+    std::vector<ocpp::CertificateType> certificate_types;
+    if (msg.certificateType.has_value()) {
+        certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType.value());
+    } else {
+        certificate_types.push_back(CertificateType::CSMSRootCertificate);
+        certificate_types.push_back(CertificateType::MFRootCertificate);
+        certificate_types.push_back(CertificateType::MORootCertificate);
+        certificate_types.push_back(CertificateType::V2GCertificateChain);
+        certificate_types.push_back(CertificateType::V2GRootCertificate);
+    }
+
+    // retrieve installed certificates
+    const auto certificate_hash_data_chains = this->evse_security.get_installed_certificates(certificate_types);
+
+    // convert the common type back to the v201 type(s) for the response
+    std::vector<CertificateHashDataChain> certificate_hash_data_chain_v201;
+    for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chains) {
+        certificate_hash_data_chain_v201.push_back(
+            ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
+    }
+
+    if (certificate_hash_data_chain_v201.empty()) {
+        response.status = GetInstalledCertificateStatusEnum::NotFound;
+    } else {
+        response.certificateHashDataChain = certificate_hash_data_chain_v201;
+        response.status = GetInstalledCertificateStatusEnum::Accepted;
+    }
+
+    ocpp::CallResult<GetInstalledCertificateIdsResponse> call_result(response, call.uniqueId);
+    this->message_dispatcher.dispatch_call_result(call_result);
+}
+
+void Security::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
+    EVLOG_debug << "Received InstallCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+
+    const auto msg = call.msg;
+    InstallCertificateResponse response;
+
+    if (!should_allow_certificate_install(msg.certificateType)) {
+        response.status = InstallCertificateStatusEnum::Rejected;
+        response.statusInfo = StatusInfo();
+        response.statusInfo->reasonCode = "UnsecureConnection";
+        response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
+    } else {
+        const auto result = this->evse_security.install_ca_certificate(
+            msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
+        response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+        if (response.status == InstallCertificateStatusEnum::Accepted) {
+            const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+            std::string tech_info =
+                "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
+            this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                                  utils::is_critical(security_event));
+        }
+    }
+    ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
+    this->message_dispatcher.dispatch_call_result(call_result);
+}
+
+void Security::handle_delete_certificate_req(Call<DeleteCertificateRequest> call) {
+    EVLOG_debug << "Received DeleteCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
+
+    const auto msg = call.msg;
+    DeleteCertificateResponse response;
+
+    const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateHashData);
+
+    const auto status = this->evse_security.delete_certificate(certificate_hash_data);
+
+    response.status = ocpp::evse_security_conversions::to_ocpp_v201(status);
+
+    if (response.status == DeleteCertificateStatusEnum::Accepted) {
+        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
+        std::string tech_info = "Deleted certificate wit serial number: " + msg.certificateHashData.serialNumber.get();
+        this->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
+                                              utils::is_critical(security_event));
+    }
+
+    ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
+    this->message_dispatcher.dispatch_call_result(call_result);
+}
+
+bool Security::should_allow_certificate_install(InstallCertificateUseEnum cert_type) const {
+    const int security_profile = this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+
+    if (security_profile > 1) {
+        return true;
+    }
+    switch (cert_type) {
+    case InstallCertificateUseEnum::CSMSRootCertificate:
+        return this->device_model
+            .get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWithUnsecureConnection)
+            .value_or(true);
+
+    case InstallCertificateUseEnum::ManufacturerRootCertificate:
+        return this->device_model
+            .get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWithUnsecureConnection)
+            .value_or(true);
+    default:
+        return true;
+    }
+}
+
+void Security::scheduled_check_client_certificate_expiration() {
+    EVLOG_info << "Checking if CSMS client certificate has expired";
+    int expiry_days_count =
+        this->evse_security.get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    if (expiry_days_count < 30) {
+        EVLOG_info << "CSMS client certificate is invalid in " << expiry_days_count
+                   << " days. Requesting new certificate with certificate signing request";
+        this->sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    } else {
+        EVLOG_info << "CSMS client certificate is still valid.";
+    }
+
+    this->client_certificate_expiration_check_timer.interval(std::chrono::seconds(
+        this->device_model
+            .get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckIntervalSeconds)
+            .value_or(12 * 60 * 60)));
+}
+
+void Security::scheduled_check_v2g_certificate_expiration() {
+    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
+            .value_or(false)) {
+        EVLOG_info << "Checking if V2GCertificate has expired";
+        int expiry_days_count =
+            this->evse_security.get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        if (expiry_days_count < 30) {
+            EVLOG_info << "V2GCertificate is invalid in " << expiry_days_count
+                       << " days. Requesting new certificate with certificate signing request";
+            this->sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate);
+        } else {
+            EVLOG_info << "V2GCertificate is still valid.";
+        }
+    } else {
+        if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::PnCEnabled).value_or(false)) {
+            EVLOG_warning << "PnC is enabled but V2G certificate installation is not, so no certificate expiration "
+                             "check is performed.";
+        }
+    }
+
+    this->v2g_certificate_expiration_check_timer.interval(std::chrono::seconds(
+        this->device_model
+            .get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckIntervalSeconds)
+            .value_or(12 * 60 * 60)));
 }
 
 } // namespace ocpp::v201

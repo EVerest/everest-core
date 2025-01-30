@@ -33,7 +33,6 @@
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
-#include "ocpp/v201/messages/Get15118EVCertificate.hpp"
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
 #include <ocpp/v201/messages/ClearChargingProfile.hpp>
@@ -41,17 +40,15 @@
 #include <ocpp/v201/messages/CostUpdated.hpp>
 #include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
-#include <ocpp/v201/messages/DeleteCertificate.hpp>
+#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
 #include <ocpp/v201/messages/GetChargingProfiles.hpp>
 #include <ocpp/v201/messages/GetCompositeSchedule.hpp>
-#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetMonitoringReport.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
 #include <ocpp/v201/messages/GetTransactionStatus.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
-#include <ocpp/v201/messages/InstallCertificate.hpp>
 #include <ocpp/v201/messages/MeterValues.hpp>
 #include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
 #include <ocpp/v201/messages/NotifyEvent.hpp>
@@ -380,8 +377,6 @@ private:
 
     // timers
     Everest::SteadyTimer boot_notification_timer;
-    Everest::SteadyTimer client_certificate_expiration_check_timer;
-    Everest::SteadyTimer v2g_certificate_expiration_check_timer;
     ClockAlignedTimer aligned_meter_values_timer;
 
     // states
@@ -436,9 +431,6 @@ private:
 
     // internal helper functions
     void initialize(const std::map<int32_t, int32_t>& evse_connector_structure, const std::string& message_log_path);
-    void init_certificate_expiration_check_timers();
-    void scheduled_check_client_certificate_expiration();
-    void scheduled_check_v2g_certificate_expiration();
     void websocket_connected_callback(const int configuration_slot,
                                       const NetworkConnectionProfile& network_connection_profile);
     void websocket_disconnected_callback(const int configuration_slot,
@@ -633,11 +625,6 @@ private:
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
-    // Functional Block M: ISO 15118 Certificate Management
-    void handle_get_installed_certificate_ids_req(Call<GetInstalledCertificateIdsRequest> call);
-    void handle_install_certificate_req(Call<InstallCertificateRequest> call);
-    void handle_delete_certificate_req(Call<DeleteCertificateRequest> call);
-
     // Functional Block N: Diagnostics
     void handle_get_log_req(Call<GetLogRequest> call);
     void handle_customer_information_req(Call<CustomerInformationRequest> call);
@@ -664,11 +651,6 @@ private:
             return call_result.msg;
         };
     }
-
-    /// \brief Helper function to determine if a certificate installation should be allowed
-    /// \param cert_type is the certificate type to be checked
-    /// \return true if it should be allowed
-    bool should_allow_certificate_install(InstallCertificateUseEnum cert_type) const;
 
 protected:
     std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;

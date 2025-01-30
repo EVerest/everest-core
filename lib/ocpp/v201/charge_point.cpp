@@ -50,8 +50,6 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     monitoring_updater(
         device_model, [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
         [this]() { return this->is_offline(); }),
-    client_certificate_expiration_check_timer([this]() { this->scheduled_check_client_certificate_expiration(); }),
-    v2g_certificate_expiration_check_timer([this]() { this->scheduled_check_v2g_certificate_expiration(); }),
     callbacks(callbacks) {
 
     if (!this->device_model) {
@@ -145,8 +143,7 @@ void ChargePoint::stop() {
     this->availability->stop_heartbeat_timer();
     this->boot_notification_timer.stop();
     this->connectivity_manager->disconnect();
-    this->client_certificate_expiration_check_timer.stop();
-    this->v2g_certificate_expiration_check_timer.stop();
+    this->security->stop_certificate_expiration_check_timers();
     this->monitoring_updater.stop_monitoring();
     this->message_queue->stop();
     this->security->stop_certificate_signed_timer();
@@ -226,42 +223,7 @@ void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connec
 Get15118EVCertificateResponse
 ChargePoint::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) {
 
-    Get15118EVCertificateResponse response;
-
-    if (!this->device_model
-             ->get_optional_value<bool>(ControllerComponentVariables::ContractCertificateInstallationEnabled)
-             .value_or(false)) {
-        EVLOG_warning << "Can not fulfill Get15118EVCertificateRequest because ContractCertificateInstallationEnabled "
-                         "is configured as false!";
-        response.status = Iso15118EVCertificateStatusEnum::Failed;
-        return response;
-    }
-
-    EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
-    auto future_res = this->message_dispatcher->dispatch_call_async(ocpp::Call<Get15118EVCertificateRequest>(request));
-
-    if (future_res.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
-        EVLOG_warning << "Waiting for Get15118EVCertificateRequest.conf future timed out!";
-        response.status = Iso15118EVCertificateStatusEnum::Failed;
-        return response;
-    }
-
-    const auto response_message = future_res.get();
-    EVLOG_debug << "Received Get15118EVCertificateResponse " << response_message.message;
-    if (response_message.messageType != MessageType::Get15118EVCertificateResponse) {
-        response.status = Iso15118EVCertificateStatusEnum::Failed;
-        return response;
-    }
-
-    try {
-        ocpp::CallResult<Get15118EVCertificateResponse> call_result = response_message.message;
-        return call_result.msg;
-    } catch (const EnumConversionException& e) {
-        EVLOG_error << "EnumConversionException during handling of message: " << e.what();
-        auto call_error = CallError(response_message.uniqueId, "FormationViolation", e.what(), json({}));
-        this->message_dispatcher->dispatch_call_error(call_error);
-        return response;
-    }
+    return this->security->on_get_15118_ev_certificate_request(request);
 }
 
 void ChargePoint::on_transaction_started(const int32_t evse_id, const int32_t connector_id,
@@ -966,27 +928,6 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL, true);
 }
 
-void ChargePoint::init_certificate_expiration_check_timers() {
-
-    // Timers started with initial delays; callback functions are supposed to re-schedule on their own!
-
-    // Client Certificate only needs to be checked for SecurityProfile 3; if SecurityProfile changes, timers get
-    // re-initialized at reconnect
-    if (this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
-        this->client_certificate_expiration_check_timer.timeout(std::chrono::seconds(
-            this->device_model
-                ->get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckInitialDelaySeconds)
-                .value_or(60)));
-    }
-
-    // V2G Certificate timer is started in any case; condition (V2GCertificateInstallationEnabled) is validated in
-    // callback (ChargePoint::scheduled_check_v2g_certificate_expiration)
-    this->v2g_certificate_expiration_check_timer.timeout(std::chrono::seconds(
-        this->device_model
-            ->get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckInitialDelaySeconds)
-            .value_or(60)));
-}
-
 void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
     const auto& json_message = message.message;
     try {
@@ -1055,19 +996,13 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
             break;
         case MessageType::CertificateSigned:
         case MessageType::SignCertificateResponse:
+        case MessageType::GetInstalledCertificateIds:
+        case MessageType::InstallCertificate:
+        case MessageType::DeleteCertificate:
             this->security->handle_message(message);
             break;
         case MessageType::GetTransactionStatus:
             this->handle_get_transaction_status(json_message);
-            break;
-        case MessageType::GetInstalledCertificateIds:
-            this->handle_get_installed_certificate_ids_req(json_message);
-            break;
-        case MessageType::InstallCertificate:
-            this->handle_install_certificate_req(json_message);
-            break;
-        case MessageType::DeleteCertificate:
-            this->handle_delete_certificate_req(json_message);
             break;
         case MessageType::CustomerInformation:
             this->handle_customer_information_req(json_message);
@@ -1790,7 +1725,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         // in case the BootNotification.req was triggered by a TriggerMessage.req the timer might still run
         this->boot_notification_timer.stop();
 
-        this->init_certificate_expiration_check_timers();
+        this->security->init_certificate_expiration_check_timers();
         this->update_aligned_data_interval();
         this->component_state_manager->send_status_notification_all_connectors();
         this->ocsp_updater.start();
@@ -2792,116 +2727,6 @@ void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
     }
 }
 
-void ChargePoint::handle_get_installed_certificate_ids_req(Call<GetInstalledCertificateIdsRequest> call) {
-    EVLOG_debug << "Received GetInstalledCertificateIdsRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    GetInstalledCertificateIdsResponse response;
-
-    const auto msg = call.msg;
-
-    // prepare argument for getRootCertificate
-    std::vector<ocpp::CertificateType> certificate_types;
-    if (msg.certificateType.has_value()) {
-        certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType.value());
-    } else {
-        certificate_types.push_back(CertificateType::CSMSRootCertificate);
-        certificate_types.push_back(CertificateType::MFRootCertificate);
-        certificate_types.push_back(CertificateType::MORootCertificate);
-        certificate_types.push_back(CertificateType::V2GCertificateChain);
-        certificate_types.push_back(CertificateType::V2GRootCertificate);
-    }
-
-    // retrieve installed certificates
-    const auto certificate_hash_data_chains = this->evse_security->get_installed_certificates(certificate_types);
-
-    // convert the common type back to the v201 type(s) for the response
-    std::vector<CertificateHashDataChain> certificate_hash_data_chain_v201;
-    for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-        certificate_hash_data_chain_v201.push_back(
-            ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
-    }
-
-    if (certificate_hash_data_chain_v201.empty()) {
-        response.status = GetInstalledCertificateStatusEnum::NotFound;
-    } else {
-        response.certificateHashDataChain = certificate_hash_data_chain_v201;
-        response.status = GetInstalledCertificateStatusEnum::Accepted;
-    }
-
-    ocpp::CallResult<GetInstalledCertificateIdsResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
-bool ChargePoint::should_allow_certificate_install(InstallCertificateUseEnum cert_type) const {
-    const int security_profile = this->device_model->get_value<int>(ControllerComponentVariables::SecurityProfile);
-
-    if (security_profile > 1) {
-        return true;
-    }
-    switch (cert_type) {
-    case InstallCertificateUseEnum::CSMSRootCertificate:
-        return this->device_model
-            ->get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWithUnsecureConnection)
-            .value_or(true);
-
-    case InstallCertificateUseEnum::ManufacturerRootCertificate:
-        return this->device_model
-            ->get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWithUnsecureConnection)
-            .value_or(true);
-    default:
-        return true;
-    }
-}
-
-void ChargePoint::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
-    EVLOG_debug << "Received InstallCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-
-    const auto msg = call.msg;
-    InstallCertificateResponse response;
-
-    if (!should_allow_certificate_install(msg.certificateType)) {
-        response.status = InstallCertificateStatusEnum::Rejected;
-        response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = "UnsecureConnection";
-        response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
-    } else {
-        const auto result = this->evse_security->install_ca_certificate(
-            msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
-        response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
-        if (response.status == InstallCertificateStatusEnum::Accepted) {
-            const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
-            std::string tech_info =
-                "Installed certificate: " + conversions::install_certificate_use_enum_to_string(msg.certificateType);
-            this->security->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info),
-                                                            true, utils::is_critical(security_event));
-        }
-    }
-    ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
-void ChargePoint::handle_delete_certificate_req(Call<DeleteCertificateRequest> call) {
-    EVLOG_debug << "Received DeleteCertificateRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-
-    const auto msg = call.msg;
-    DeleteCertificateResponse response;
-
-    const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateHashData);
-
-    const auto status = this->evse_security->delete_certificate(certificate_hash_data);
-
-    response.status = ocpp::evse_security_conversions::to_ocpp_v201(status);
-
-    if (response.status == DeleteCertificateStatusEnum::Accepted) {
-        const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
-        std::string tech_info = "Deleted certificate wit serial number: " + msg.certificateHashData.serialNumber.get();
-        this->security->security_event_notification_req(CiString<50>(security_event), CiString<255>(tech_info), true,
-                                                        utils::is_critical(security_event));
-    }
-
-    ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
 void ChargePoint::handle_get_log_req(Call<GetLogRequest> call) {
     const GetLogResponse response = this->callbacks.get_log_request_callback(call.msg);
 
@@ -3148,51 +2973,6 @@ std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const DataTra
     return this->data_transfer->data_transfer_req(request);
 }
 
-void ChargePoint::scheduled_check_client_certificate_expiration() {
-
-    EVLOG_info << "Checking if CSMS client certificate has expired";
-    int expiry_days_count =
-        this->evse_security->get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
-    if (expiry_days_count < 30) {
-        EVLOG_info << "CSMS client certificate is invalid in " << expiry_days_count
-                   << " days. Requesting new certificate with certificate signing request";
-        this->security->sign_certificate_req(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
-    } else {
-        EVLOG_info << "CSMS client certificate is still valid.";
-    }
-
-    this->client_certificate_expiration_check_timer.interval(std::chrono::seconds(
-        this->device_model
-            ->get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckIntervalSeconds)
-            .value_or(12 * 60 * 60)));
-}
-
-void ChargePoint::scheduled_check_v2g_certificate_expiration() {
-    if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
-            .value_or(false)) {
-        EVLOG_info << "Checking if V2GCertificate has expired";
-        int expiry_days_count =
-            this->evse_security->get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
-        if (expiry_days_count < 30) {
-            EVLOG_info << "V2GCertificate is invalid in " << expiry_days_count
-                       << " days. Requesting new certificate with certificate signing request";
-            this->security->sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate);
-        } else {
-            EVLOG_info << "V2GCertificate is still valid.";
-        }
-    } else {
-        if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::PnCEnabled).value_or(false)) {
-            EVLOG_warning << "PnC is enabled but V2G certificate installation is not, so no certificate expiration "
-                             "check is performed.";
-        }
-    }
-
-    this->v2g_certificate_expiration_check_timer.interval(std::chrono::seconds(
-        this->device_model
-            ->get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckIntervalSeconds)
-            .value_or(12 * 60 * 60)));
-}
-
 void ChargePoint::websocket_connected_callback(const int configuration_slot,
                                                const NetworkConnectionProfile& network_connection_profile) {
     this->message_queue->resume(this->message_queue_resume_delay);
@@ -3218,7 +2998,7 @@ void ChargePoint::websocket_connected_callback(const int configuration_slot,
                 EVLOG_debug << "offline for less than offline threshold ";
                 this->component_state_manager->send_status_notification_changed_connectors();
             }
-            this->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
+            this->security->init_certificate_expiration_check_timers(); // re-init as timers are stopped on disconnect
         }
     }
     this->time_disconnected = std::chrono::time_point<std::chrono::steady_clock>();
@@ -3241,8 +3021,7 @@ void ChargePoint::websocket_disconnected_callback(const int configuration_slot,
         this->time_disconnected = std::chrono::steady_clock::now();
     }
 
-    this->client_certificate_expiration_check_timer.stop();
-    this->v2g_certificate_expiration_check_timer.stop();
+    this->security->stop_certificate_expiration_check_timers();
     if (this->callbacks.connection_state_changed_callback.has_value()) {
         this->callbacks.connection_state_changed_callback.value()(false, configuration_slot,
                                                                   network_connection_profile);
