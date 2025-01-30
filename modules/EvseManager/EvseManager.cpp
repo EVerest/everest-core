@@ -1473,7 +1473,7 @@ void EvseManager::cable_check() {
         float ev_max_voltage = 500.;
 
         if (ev_info.maximum_voltage_limit.has_value()) {
-            EVLOG_info << "EV reports " << ev_info.maximum_voltage_limit.has_value() << " V as maximum voltage";
+            EVLOG_info << "EV reports " << ev_info.maximum_voltage_limit.value() << " V as maximum voltage";
             ev_max_voltage = ev_info.maximum_voltage_limit.value();
         } else {
             EVLOG_error << "CableCheck: Did not receive EV maximum voltage, falling back to 500V";
