@@ -55,5 +55,9 @@ vars:
       BSP Measurements
     type: object
     $ref: /board_support_common#/BspMeasurement
+  ev_info:
+    description: More details about the EV if available
+    type: object
+    $ref: /evse_manager#/EVInfo
 errors:
   - reference: /errors/generic
