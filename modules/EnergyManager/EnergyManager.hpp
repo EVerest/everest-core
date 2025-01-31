@@ -18,23 +18,7 @@
 
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
-#include <chrono>
-#include <date/date.h>
-#include <date/tz.h>
-#include <utils/date.hpp>
-
-#include <mutex>
-
-#include "Broker.hpp"
-
-#ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
-#include <gtest/gtest_prod.h>
-namespace module::test {
-void schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request, const std::string& start_time_str,
-                   float expected_limit);
-}
-
-#endif
+#include "EnergyManagerImpl.hpp"
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
 namespace module {
@@ -81,27 +65,7 @@ private:
 
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
     // insert your private definitions here
-    bool is_priority_request(const types::energy::EnergyFlowRequest& e);
-    std::mutex energy_mutex;
-
-    // complete energy tree requests
-    types::energy::EnergyFlowRequest energy_flow_request;
-
-    void enforce_limits(const std::vector<types::energy::EnforcedLimits>& limits);
-    std::vector<types::energy::EnforcedLimits> run_optimizer(types::energy::EnergyFlowRequest request);
-
-    std::condition_variable mainloop_sleep_condvar;
-    std::mutex mainloop_sleep_mutex;
-
-    std::map<std::string, BrokerContext> contexts;
-
-#ifdef BUILD_TESTING_MODULE_ENERGY_MANAGER
-    FRIEND_TEST(EnergyManagerTest, empty);
-    FRIEND_TEST(EnergyManagerTest, noSchedules);
-    FRIEND_TEST(EnergyManagerTest, schedules);
-    friend void test::schedule_test(const types::energy::EnergyFlowRequest& energy_flow_request,
-                                    const std::string& start_time_str, float expected_limit);
-#endif
+    std::unique_ptr<EnergyManagerImpl> impl;
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
