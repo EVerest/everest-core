@@ -439,9 +439,11 @@ void API::init() {
 
                 } catch (const std::exception& e) {
                     EVLOG_error << "enable: Cannot parse argument, command ignored: " << e.what();
+                    return;
                 }
             } else {
                 EVLOG_error << "enable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -459,9 +461,11 @@ void API::init() {
                     EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
                 } catch (const std::exception& e) {
                     EVLOG_error << "disable: Cannot parse argument, ignoring command";
+                    return;
                 }
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -479,9 +483,11 @@ void API::init() {
                     EVLOG_warning << "disable: Argument is an integer, using deprecated compatibility mode";
                 } catch (const std::exception& e) {
                     EVLOG_error << "disable: Cannot parse argument, ignoring command";
+                    return;
                 }
             } else {
                 EVLOG_error << "disable: No argument specified, ignoring command";
+                return;
             }
             this->evse_manager_check.wait_ready();
             evse->call_enable_disable(connector_id, enable_source);
@@ -579,9 +585,9 @@ void API::init() {
                     try {
                         seconds = std::stoi(data);
                     } catch (const std::exception& e) {
-                        EVLOG_error
-                            << "Could not parse connector duration value for uk_random_delay_set_max_duration_s: "
-                            << e.what();
+                        EVLOG_error << "Could not parse connector duration value for "
+                                       "uk_random_delay_set_max_duration_s, using default value of "
+                                    << seconds << " seconds, error: " << e.what();
                     }
                     random_delay->call_set_duration_s(seconds);
                 });
