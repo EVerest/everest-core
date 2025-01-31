@@ -275,10 +275,11 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
     std::vector<ModuleStartInfo> modules_to_spawn;
 
     const auto& main_config = config.get_main_config();
+    const auto& module_names = config.get_module_names();
+    modules_to_spawn.reserve(main_config.size());
     const auto number_of_modules = main_config.size();
     EVLOG_info << "Starting " << number_of_modules << " modules";
 
-    const auto serialized_config = config.serialize();
     const auto interface_definitions = config.get_interface_definitions();
     std::vector<std::string> interface_names;
     for (auto& interface_definition : interface_definitions.items()) {
@@ -317,7 +318,13 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
     mqtt_abstraction.publish(fmt::format("{}schemas", ms.mqtt_settings.everest_prefix), schemas, QOS::QOS2, true);
 
     const auto manifests = config.get_manifests();
-    mqtt_abstraction.publish(fmt::format("{}manifests", ms.mqtt_settings.everest_prefix), manifests, QOS::QOS2, true);
+
+    for (const auto& manifest : manifests.items()) {
+        auto manifest_copy = manifest.value();
+        manifest_copy.erase("config");
+        mqtt_abstraction.publish(fmt::format("{}manifests/{}", ms.mqtt_settings.everest_prefix, manifest.key()),
+                                 manifest_copy, QOS::QOS2, true);
+    }
 
     const auto error_types_map = config.get_error_types();
     mqtt_abstraction.publish(fmt::format("{}error_types_map", ms.mqtt_settings.everest_prefix), error_types_map,
@@ -327,12 +334,16 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
     mqtt_abstraction.publish(fmt::format("{}module_config_cache", ms.mqtt_settings.everest_prefix), module_config_cache,
                              QOS::QOS2, true);
 
-    for (const auto& module : serialized_config.at("module_names").items()) {
-        const std::string& module_name = module.key();
-        json serialized_mod_config = serialized_config;
+    mqtt_abstraction.publish(fmt::format("{}module_names", ms.mqtt_settings.everest_prefix), module_names, QOS::QOS2,
+                             true);
+
+    for (const auto& module_name_entry : module_names) {
+        const auto& module_name = module_name_entry.first;
+        const auto& module_type = module_name_entry.second;
+        json serialized_mod_config = json::object();
         serialized_mod_config["module_config"] = json::object();
+        serialized_mod_config["module_config"][module_name] = main_config.at(module_name);
         // add mappings of fulfillments
-        serialized_mod_config["module_config"][module_name] = serialized_config.at("main").at(module_name);
         const auto fulfillments = config.get_fulfillments(module_name);
         serialized_mod_config["mappings"] = json::object();
         for (const auto& fulfillment_list : fulfillments) {
@@ -348,7 +359,6 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         if (mappings.has_value()) {
             serialized_mod_config["mappings"][module_name] = mappings.value();
         }
-        serialized_mod_config.erase("main"); // FIXME: do not put this "main" config in there in the first place
         const auto telemetry_config = config.get_telemetry_config(module_name);
         if (telemetry_config.has_value()) {
             serialized_mod_config["telemetry_config"] = telemetry_config.value();
@@ -359,10 +369,19 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
             continue;
         }
 
-        // FIXME (aw): shall create a ref to main_confit.at(module_name)!
-        const std::string module_type = main_config.at(module_name).at("module");
         // FIXME (aw): implicitely adding ModuleReadyInfo and setting its ready member
         auto module_it = modules_ready.emplace(module_name, ModuleReadyInfo{false, nullptr, nullptr}).first;
+
+        const std::string config_topic = fmt::format("{}/config", config.mqtt_module_prefix(module_name));
+        const Handler module_get_config_handler = [module_name, config_topic, serialized_mod_config,
+                                                   &mqtt_abstraction](const std::string&, const nlohmann::json& json) {
+            mqtt_abstraction.publish(config_topic, serialized_mod_config.dump(), QOS::QOS2);
+        };
+
+        const std::string get_config_topic = fmt::format("{}/get_config", config.mqtt_module_prefix(module_name));
+        module_it->second.get_config_token = std::make_shared<TypedHandler>(
+            HandlerType::ExternalMQTT, std::make_shared<Handler>(module_get_config_handler));
+        mqtt_abstraction.register_handler(get_config_topic, module_it->second.get_config_token, QOS::QOS2);
 
         const auto capabilities = [&module_config = main_config.at(module_name)]() {
             const auto cap_it = module_config.find("capabilities");
@@ -426,17 +445,6 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         module_it->second.ready_token =
             std::make_shared<TypedHandler>(HandlerType::ExternalMQTT, std::make_shared<Handler>(module_ready_handler));
         mqtt_abstraction.register_handler(ready_topic, module_it->second.ready_token, QOS::QOS2);
-
-        const std::string config_topic = fmt::format("{}/config", config.mqtt_module_prefix(module_name));
-        const Handler module_get_config_handler = [module_name, config_topic, serialized_mod_config,
-                                                   &mqtt_abstraction](const std::string&, const nlohmann::json& json) {
-            mqtt_abstraction.publish(config_topic, serialized_mod_config.dump());
-        };
-
-        const std::string get_config_topic = fmt::format("{}/get_config", config.mqtt_module_prefix(module_name));
-        module_it->second.get_config_token = std::make_shared<TypedHandler>(
-            HandlerType::ExternalMQTT, std::make_shared<Handler>(module_get_config_handler));
-        mqtt_abstraction.register_handler(get_config_topic, module_it->second.get_config_token, QOS::QOS2);
 
         if (std::any_of(standalone_modules.begin(), standalone_modules.end(),
                         [module_name](const auto& element) { return element == module_name; })) {

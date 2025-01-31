@@ -887,14 +887,15 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         auto module_config_prop = Napi::Object::New(env);
         auto module_config_impl_prop = Napi::Object::New(env);
 
-        for (auto& config_map : module_config.items()) {
+        for (const auto& config_map : module_config.items()) {
+            const auto& json_config_map = convertToConfigMap(config_map.value());
             if (config_map.key() == "!module") {
                 module_config_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-                    "module", convertToNapiValue(env, config_map.value()), napi_enumerable));
+                    "module", convertToNapiValue(env, json_config_map), napi_enumerable));
                 continue;
             }
             module_config_impl_prop.DefineProperty(Napi::PropertyDescriptor::Value(
-                config_map.key(), convertToNapiValue(env, config_map.value()), napi_enumerable));
+                config_map.key(), convertToNapiValue(env, json_config_map), napi_enumerable));
         }
         module_config_prop.DefineProperty(
             Napi::PropertyDescriptor::Value("impl", module_config_impl_prop, napi_enumerable));

@@ -29,6 +29,7 @@ static const char* const napi_valuetype_strings[] = {
 };
 
 Everest::json convertToJson(const Napi::Value& value);
+Everest::json convertToConfigMap(const Everest::json& json_config);
 Everest::TelemetryMap convertToTelemetryMap(const Napi::Object& obj);
 Napi::Value convertToNapiValue(const Napi::Env& env, const Everest::json& value);
 

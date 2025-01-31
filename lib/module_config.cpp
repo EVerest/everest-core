@@ -92,8 +92,18 @@ json get_module_config(std::shared_ptr<MQTTAbstraction> mqtt, const std::string&
     const auto schemas = mqtt->get(schemas_topic, QOS::QOS2);
     result["schemas"] = schemas;
 
+    const auto module_names_topic = fmt::format("{}module_names", everest_prefix);
+    const auto module_names = mqtt->get(module_names_topic, QOS::QOS2);
+    result["module_names"] = module_names;
+
     const auto manifests_topic = fmt::format("{}manifests", everest_prefix);
-    const auto manifests = mqtt->get(manifests_topic, QOS::QOS2);
+    auto manifests = json::object();
+    for (const auto& module_name : module_names) {
+        auto manifest_topic = fmt::format("{}manifests/{}", everest_prefix, module_name.get<std::string>());
+        auto manifest = mqtt->get(manifest_topic, QOS::QOS2);
+        manifests[module_name] = manifest;
+    }
+
     result["manifests"] = manifests;
 
     const auto error_types_map_topic = fmt::format("{}error_types_map", everest_prefix);

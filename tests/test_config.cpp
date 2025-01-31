@@ -171,18 +171,6 @@ SCENARIO("Check Config Constructor", "[!throws]") {
             }());
         }
     }
-    GIVEN("A valid config with a valid module serialized") {
-        auto ms =
-            Everest::ManagerSettings(bin_dir + "valid_module_config/", bin_dir + "valid_module_config/config.yaml");
-        THEN("It should not throw at all") {
-            CHECK_NOTHROW([&]() {
-                auto mc = Everest::ManagerConfig(ms);
-                auto serialized = mc.serialize();
-                CHECK(serialized.at("module_names").size() == 1);
-                CHECK(serialized.at("module_names").at("valid_module") == "TESTValidManifest");
-            }());
-        }
-    }
     GIVEN("A valid config in legacy json format with a valid module") {
         auto ms = Everest::ManagerSettings(bin_dir + "valid_module_config_json/",
                                            bin_dir + "valid_module_config_json/config.json");

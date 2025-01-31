@@ -182,7 +182,8 @@ static ParsedConfigMap parse_config_map(const json& config_map_schema, const jso
             throw ConfigParseException(ConfigParseException::SCHEMA, config_entry_name, err.what());
         }
 
-        parsed_config_map[config_entry_name] = config_entry_value;
+        parsed_config_map[config_entry_name] =
+            json::object({{"value", config_entry_value}, {"type", config_entry.at("type")}});
     }
 
     return {parsed_config_map, unknown_config_entries};
@@ -1155,16 +1156,11 @@ ManagerConfig::ManagerConfig(const ManagerSettings& ms) : ConfigBase(ms.mqtt_set
             complete_config = complete_config.patch(patch);
         }
 
-        const auto config = complete_config.at("active_modules");
         this->settings = this->ms.get_runtime_settings();
-        this->parse(config);
+        this->parse(complete_config.at("active_modules"));
     } catch (const std::exception& e) {
         EVLOG_AND_THROW(EverestConfigError(fmt::format("Failed to load and parse config file: {}", e.what())));
     }
-}
-
-json ManagerConfig::serialize() {
-    return json::object({{"main", this->main}, {"module_names", this->module_names}});
 }
 
 std::optional<TelemetryConfig> ManagerConfig::get_telemetry_config(const std::string& module_id) {
@@ -1208,7 +1204,7 @@ bool Config::module_provides(const std::string& module_name, const std::string& 
     return (provides.find(impl_id) != provides.end());
 }
 
-json Config::get_module_cmds(const std::string& module_name, const std::string& impl_id) {
+const json& Config::get_module_cmds(const std::string& module_name, const std::string& impl_id) {
     return this->module_config_cache.at(module_name).cmds.at(impl_id);
 }
 
@@ -1236,14 +1232,12 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
         const json manifest = this->manifests.at(module_type);
 
         for (const auto& conf_map : config_maps.items()) {
-            const json config_schema = (conf_map.key() == "!module")
-                                           ? manifest.at("config")
-                                           : manifest.at("provides").at(conf_map.key()).at("config");
             ConfigMap processed_conf_map;
             for (const auto& entry : conf_map.value().items()) {
-                const json entry_type = config_schema.at(entry.key()).at("type");
+                const auto& entry_value = entry.value();
+                const json entry_type = entry_value.at("type");
                 ConfigEntry value;
-                const json& data = entry.value();
+                const json& data = entry_value.at("value");
 
                 if (data.is_string()) {
                     value = data.get<std::string>();
@@ -1273,9 +1267,9 @@ ModuleConfigs Config::get_module_configs(const std::string& module_id) const {
 }
 
 // FIXME (aw): check if module_id does not exist
-json Config::get_module_json_config(const std::string& module_id) {
+const json& Config::get_module_json_config(const std::string& module_id) {
     BOOST_LOG_FUNCTION();
-    return this->main[module_id]["config_maps"];
+    return this->main.at(module_id).at("config_maps");
 }
 
 ModuleInfo Config::get_module_info(const std::string& module_id) const {

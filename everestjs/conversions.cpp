@@ -54,6 +54,14 @@ Everest::json convertToJson(const Napi::Value& value) {
                         napi_valuetype_strings[value.Type()]));
 }
 
+Everest::json convertToConfigMap(const Everest::json& json_config) {
+    json config_map;
+    for (auto& entry : json_config.items()) {
+        config_map[entry.key()] = entry.value().at("value");
+    }
+    return config_map;
+}
+
 Everest::TelemetryMap convertToTelemetryMap(const Napi::Object& obj) {
     BOOST_LOG_FUNCTION();
     Everest::TelemetryMap telemetry;

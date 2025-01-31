@@ -229,11 +229,11 @@ void Everest::heartbeat() {
 void Everest::publish_metadata() {
     BOOST_LOG_FUNCTION();
 
-    const auto module_info = this->config.get_module_info(this->module_id);
-    const auto manifest = this->config.get_manifests().at(module_info.name);
+    const auto& module_name = this->config.get_module_name(this->module_id);
+    const auto& manifest = this->config.get_manifests().at(module_name);
 
     json metadata = json({});
-    metadata["module"] = module_info.name;
+    metadata["module"] = module_name;
     if (manifest.contains("provides")) {
         metadata["provides"] = json({});
 
