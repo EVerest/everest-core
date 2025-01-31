@@ -95,8 +95,7 @@ private:
     std::string public_key_ocmf;
     std::string version;
     bool v2_capable = false;
-    // transaction ongoing and current transaction are used ONLY at startup
-    bool transaction_is_ongoing_at_startup = false;
+    bool need_to_stop_transaction = false;
     std::string current_transaction_id;
     std::unique_ptr<LemDCBMTimeSyncHelper> time_sync_helper;
     Conf config;
