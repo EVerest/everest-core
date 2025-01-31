@@ -265,37 +265,11 @@ struct ModuleReadyInfo {
 std::map<std::string, ModuleReadyInfo> modules_ready;
 std::mutex modules_ready_mutex;
 
-void cleanup_retained_topics(ManagerConfig& config, MQTTAbstraction& mqtt_abstraction,
-                             const std::string& mqtt_everest_prefix) {
-    const auto& interface_definitions = config.get_interface_definitions();
-
-    mqtt_abstraction.publish(fmt::format("{}interfaces", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    for (const auto& interface_definition : interface_definitions.items()) {
-        mqtt_abstraction.publish(
-            fmt::format("{}interface_definitions/{}", mqtt_everest_prefix, interface_definition.key()), std::string(),
-            QOS::QOS2, true);
-    }
-
-    mqtt_abstraction.publish(fmt::format("{}types", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}module_provides", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}settings", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}schemas", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}manifests", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}error_types_map", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-
-    mqtt_abstraction.publish(fmt::format("{}module_config_cache", mqtt_everest_prefix), std::string(), QOS::QOS2, true);
-}
-
 static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbstraction& mqtt_abstraction,
                                                   const std::vector<std::string>& ignored_modules,
                                                   const std::vector<std::string>& standalone_modules,
-                                                  const ManagerSettings& ms, StatusFifo& status_fifo) {
+                                                  const ManagerSettings& ms, StatusFifo& status_fifo,
+                                                  bool retain_topics) {
     BOOST_LOG_FUNCTION();
 
     std::vector<ModuleStartInfo> modules_to_spawn;
@@ -405,8 +379,8 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
         }
 
         const Handler module_ready_handler = [module_name, &mqtt_abstraction, &config, standalone_modules,
-                                              mqtt_everest_prefix = ms.mqtt_settings.everest_prefix,
-                                              &status_fifo](const std::string&, const nlohmann::json& json) {
+                                              mqtt_everest_prefix = ms.mqtt_settings.everest_prefix, &status_fifo,
+                                              retain_topics](const std::string&, const nlohmann::json& json) {
             EVLOG_debug << fmt::format("received module ready signal for module: {}({})", module_name, json.dump());
             const std::unique_lock<std::mutex> lock(modules_ready_mutex);
             // FIXME (aw): here are race conditions, if the ready handler gets called while modules are shut down!
@@ -428,11 +402,16 @@ static std::map<pid_t, std::string> start_modules(ManagerConfig& config, MQTTAbs
                             [](const auto& element) { return element.second.ready; })) {
                 const auto complete_end_time = std::chrono::system_clock::now();
                 status_fifo.update(StatusFifo::ALL_MODULES_STARTED);
+                if (not retain_topics) {
+                    EVLOG_info << "Clearing retained topics published by manager during startup";
+                    mqtt_abstraction.clear_retained_topics();
+                } else {
+                    EVLOG_info << "Keeping retained topics published by manager during startup for inspection";
+                }
                 EVLOG_info << fmt::format(
                     TERMINAL_STYLE_OK, "🚙🚙🚙 All modules are initialized. EVerest up and running [{}ms] 🚙🚙🚙",
                     std::chrono::duration_cast<std::chrono::milliseconds>(complete_end_time - complete_start_time)
                         .count());
-                // cleanup_retained_topics(config, mqtt_abstraction, mqtt_everest_prefix);
                 mqtt_abstraction.publish(fmt::format("{}ready", mqtt_everest_prefix), nlohmann::json(true));
             } else if (!standalone_modules.empty()) {
                 if (modules_spawned == modules_ready.size() - standalone_modules.size()) {
@@ -666,6 +645,8 @@ int boot(const po::variables_map& vm) {
         return EXIT_SUCCESS;
     }
 
+    const bool retain_topics = (vm.count("retain-topics") != 0);
+
     const auto start_time = std::chrono::system_clock::now();
     std::unique_ptr<ManagerConfig> config;
     try {
@@ -759,7 +740,7 @@ int boot(const po::variables_map& vm) {
     mqtt_abstraction.spawn_main_loop_thread();
 
     auto module_handles =
-        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo);
+        start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo, retain_topics);
     bool modules_started = true;
     bool restart_modules = false;
 
@@ -814,6 +795,8 @@ int boot(const po::variables_map& vm) {
                 shutdown_modules(module_handles, *config, mqtt_abstraction);
                 modules_started = false;
 
+                mqtt_abstraction.clear_retained_topics();
+
                 // Exit if a module died, this gives systemd a change to restart manager
                 EVLOG_critical << "Exiting manager.";
                 return EXIT_FAILURE;
@@ -824,8 +807,8 @@ int boot(const po::variables_map& vm) {
 
 #ifdef ENABLE_ADMIN_PANEL
         if (module_handles.size() == 0 && restart_modules) {
-            module_handles =
-                start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, ms, status_fifo);
+            module_handles = start_modules(*config, mqtt_abstraction, ignored_modules, standalone_modules, ms,
+                                           status_fifo, retain_topics);
             restart_modules = false;
             modules_started = true;
         }
@@ -889,6 +872,8 @@ int main(int argc, char* argv[]) {
                        "looked up in the default config directory");
     desc.add_options()("status-fifo", po::value<std::string>()->default_value(""),
                        "Path to a named pipe, that shall be used for status updates from the manager");
+    desc.add_options()("retain-topics", "Retain configuration MQTT topics setup by manager for inspection, by default "
+                                        "these will be cleared after startup");
 
     po::variables_map vm;
 
