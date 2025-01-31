@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: 5d9bfcc4e82ffe7aa956188ef65df819784ef3e5
+  git_tag: 39ceaddd8526b16b300b219c893f79f468851408
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 03ce17b578b8a41404778adee585270ef44f4dbb
+  git_tag: d164457c92bf7a6e7a6a7fc7ffc61e32fcd48d03
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
