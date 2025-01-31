@@ -3,7 +3,7 @@
 #ifndef {{ info.hpp_guard }}
 #define {{ info.hpp_guard }}
 
-{{ print_template_info('4') }}
+{{ print_template_info('5') }}
 
 #include <framework/ModuleAdapter.hpp>
 #include <utils/types.hpp>
@@ -77,8 +77,8 @@ public:
         error_manager->raise_error(error);
     }
     
-    void clear_error(const Everest::error::ErrorType& type, const bool clear_all = false) {
-        error_manager->clear_error(type, clear_all);
+    void clear_error(const Everest::error::ErrorType& type) {
+        error_manager->clear_error(type);
     }
 
     void clear_error(const Everest::error::ErrorType& type, const Everest::error::ErrorSubType& sub_type) {
@@ -87,6 +87,10 @@ public:
 
     void clear_all_errors_of_impl() {
         error_manager->clear_all_errors();
+    }
+
+    void clear_all_errors_of_impl(const Everest::error::ErrorType& type) {
+        error_manager->clear_all_errors(type);
     }
 
     std::shared_ptr<Everest::error::ErrorStateMonitor> error_state_monitor;
