@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 import os
 import paho.mqtt.client as mqtt
+from paho.mqtt import __version__ as paho_mqtt_version
 
 from ._configuration.everest_configuration_strategies.everest_configuration_strategy import \
     EverestConfigAdjustmentStrategy
@@ -133,7 +134,11 @@ def test_controller(request, tmp_path, everest_core) -> EverestTestController:
 def connected_mqtt_client(everest_core: EverestCore) -> mqtt.Client:
     mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")
     mqtt_server_port = int(os.environ.get("MQTT_SERVER_PORT", "1883"))
-    client = mqtt.Client(everest_core.everest_uuid)
+    if paho_mqtt_version < '2.0':
+        client = mqtt.Client(everest_core.everest_uuid)
+    else:
+        client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=everest_core.everest_uuid)
     client.connect(mqtt_server_uri, mqtt_server_port)
     client.loop_start()
 

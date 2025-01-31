@@ -1,6 +1,7 @@
 import json
 import os
-from paho.mqtt.client import Client
+import paho.mqtt.client as mqtt
+from paho.mqtt import __version__ as paho_mqtt_version
 
 from everest.testing.core_utils.everest_core import EverestCore
 
@@ -31,7 +32,11 @@ class EverestTestController(TestController):
     def _initialize_external_mqtt_client(self):
         mqtt_server_uri = os.environ.get("MQTT_SERVER_ADDRESS", "127.0.0.1")
         mqtt_server_port = int(os.environ.get("MQTT_SERVER_PORT", "1883"))
-        self._mqtt_client = Client(self._everest_core.everest_uuid)
+        if paho_mqtt_version < '2.0':
+            self._mqtt_client = mqtt.Client(self._everest_core.everest_uuid)
+        else:
+            self._mqtt_client = mqtt.Client(
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION1, client_id=self._everest_core.everest_uuid)
         self._mqtt_client.connect(mqtt_server_uri, mqtt_server_port)
 
     def _initialize_nodered_sil(self):
