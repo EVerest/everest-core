@@ -22,7 +22,7 @@ public:
         DontChange,
     };
 
-    struct Config {
+    struct EnergyManagerConfig {
         Switch1ph3phMode switch_1ph_3ph_mode{Switch1ph3phMode::Never};
         StickyNess stickyness{StickyNess::DontChange};
         int max_nr_of_switches_per_session{0};
@@ -30,7 +30,7 @@ public:
         int time_hysteresis_s{600};
     };
 
-    explicit BrokerFastCharging(Market& market, BrokerContext& context, Config config);
+    explicit BrokerFastCharging(Market& market, BrokerContext& context, EnergyManagerConfig config);
     virtual bool trade(Offer& offer) override;
 
 private:
@@ -50,7 +50,7 @@ private:
     Offer* offer{nullptr};
     bool traded{false};
 
-    Config config;
+    EnergyManagerConfig config;
 };
 
 } // namespace module
