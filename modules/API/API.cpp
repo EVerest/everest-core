@@ -587,8 +587,7 @@ void API::init() {
                     } catch (const std::exception& e) {
                         EVLOG_error << "Could not parse connector duration value for "
                                        "uk_random_delay_set_max_duration_s, using default value of "
-                                    << seconds << " seconds "
-                                    << ", error: " << e.what();
+                                    << seconds << " seconds, error: " << e.what();
                     }
                     random_delay->call_set_duration_s(seconds);
                 });
