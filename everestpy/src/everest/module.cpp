@@ -100,8 +100,8 @@ void Module::raise_error(const std::string& impl_id, const Everest::error::Error
     handle->get_error_manager_impl(impl_id)->raise_error(error);
 }
 
-void Module::clear_error(const std::string& impl_id, const Everest::error::ErrorType& type, const bool clear_all) {
-    handle->get_error_manager_impl(impl_id)->clear_error(type, clear_all);
+void Module::clear_error(const std::string& impl_id, const Everest::error::ErrorType& type) {
+    handle->get_error_manager_impl(impl_id)->clear_error(type);
 }
 
 void Module::clear_error(const std::string& impl_id, const Everest::error::ErrorType& type,
@@ -111,6 +111,10 @@ void Module::clear_error(const std::string& impl_id, const Everest::error::Error
 
 void Module::clear_all_errors_of_impl(const std::string& impl_id) {
     handle->get_error_manager_impl(impl_id)->clear_all_errors();
+}
+
+void Module::clear_all_errors_of_impl(const std::string& impl_id, const Everest::error::ErrorType& type) {
+    handle->get_error_manager_impl(impl_id)->clear_all_errors(type);
 }
 
 std::shared_ptr<Everest::error::ErrorStateMonitor>

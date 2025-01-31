@@ -5,6 +5,7 @@
 
 #include <everest/logging.hpp>
 #include <utils/error/error_database.hpp>
+#include <utils/error/error_json.hpp>
 #include <utils/error/error_type_map.hpp>
 
 namespace Everest {
@@ -34,15 +35,21 @@ ErrorManagerReqGlobal::Subscription::Subscription(const ErrorCallback& callback_
 
 void ErrorManagerReqGlobal::on_error_raised(const Error& error) {
     if (!error_type_map->has(error.type)) {
-        EVLOG_error << "Error type '" << error.type << "' is not defined, ignoring error";
+        std::stringstream ss;
+        ss << "Error type '" << error.type << "' is not defined, ignoring error";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     std::list<ErrorPtr> errors =
         database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
                               ErrorFilter(OriginFilter(error.origin))});
     if (!errors.empty()) {
-        EVLOG_error << "Error of type '" << error.type << "' and sub type '" << error.sub_type
-                    << "' is already raised, ignoring new error";
+        std::stringstream ss;
+        ss << "Error of type '" << error.type << "' and sub type '" << error.sub_type
+           << "' is already raised, ignoring new error";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     database->add_error(std::make_shared<Error>(error));
@@ -59,26 +66,40 @@ void ErrorManagerReqGlobal::on_error_raised(const Error& error) {
 
 void ErrorManagerReqGlobal::on_error_cleared(const Error& error) {
     if (!error_type_map->has(error.type)) {
-        EVLOG_error << "Error type '" << error.type << "' is not defined, ignoring error";
+        std::stringstream ss;
+        ss << "Error type '" << error.type << "' is not defined, ignoring error";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     std::list<ErrorPtr> errors =
         database->get_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
                               ErrorFilter(OriginFilter(error.origin))});
     if (errors.empty()) {
-        EVLOG_error << "Error of type '" << error.type << "' and sub type '" << error.sub_type
-                    << "' is not raised, ignoring clear error";
+        std::stringstream ss;
+        ss << "Error of type '" << error.type << "' and sub type '" << error.sub_type
+           << "' is not raised, ignoring clear error";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     std::list<ErrorPtr> res =
         database->remove_errors({ErrorFilter(TypeFilter(error.type)), ErrorFilter(SubTypeFilter(error.sub_type)),
                                  ErrorFilter(OriginFilter(error.origin))});
     if (res.size() > 1) {
-        EVLOG_error << "More than one error is cleared, type: " << error.type << ", sub type: " << error.sub_type;
+        std::stringstream ss;
+        ss << "More than one error is cleared, type: " << error.type << ", sub type: " << error.sub_type;
+        for (const ErrorPtr& error : res) {
+            ss << std::endl << "Error object: " << nlohmann::json(*error).dump(2);
+        }
+        EVLOG_error << ss.str();
         return;
     }
     if (res.empty()) {
-        EVLOG_error << "Error wasn't removed, type: " << error.type << ", sub type: " << error.sub_type;
+        std::stringstream ss;
+        ss << "Error wasn't removed, type: " << error.type << ", sub type: " << error.sub_type;
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     for (const Subscription& sub : subscriptions) {

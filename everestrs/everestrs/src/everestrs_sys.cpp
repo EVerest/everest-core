@@ -188,7 +188,11 @@ void Module::clear_error(rust::Str implementation_id, rust::Str error_type, bool
     if (error_type.empty()) {
         manager->clear_all_errors();
     } else {
-        manager->clear_error(std::string(error_type), clear_all);
+        if (clear_all) {
+            manager->clear_all_errors(std::string(error_type));
+        } else {
+            manager->clear_error(std::string(error_type));
+        }
     }
 }
 

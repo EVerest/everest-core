@@ -5,6 +5,7 @@
 
 #include <utils/error.hpp>
 #include <utils/error/error_database.hpp>
+#include <utils/error/error_json.hpp>
 #include <utils/error/error_type_map.hpp>
 
 #include <everest/logging.hpp>
@@ -40,13 +41,19 @@ void ErrorManagerImpl::raise_error(const Error& error) {
     if (validate_error_types) {
         if (std::find(allowed_error_types.begin(), allowed_error_types.end(), error.type) ==
             allowed_error_types.end()) {
-            EVLOG_error << "Error type " << error.type << " is not allowed to be raised. Ignoring.";
+            std::stringstream ss;
+            ss << "Error type " << error.type << " is not allowed to be raised. Ignoring.";
+            ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+            EVLOG_error << ss.str();
             return;
         }
     }
     if (!can_be_raised(error.type, error.sub_type)) {
-        EVLOG_debug << "Error can't be raised, because type " << error.type << ", sub_type " << error.sub_type
-                    << " is already active.";
+        std::stringstream ss;
+        ss << "Error can't be raised, because type " << error.type << ", sub_type " << error.sub_type
+           << " is already active.";
+        ss << std::endl << "Error object: " << nlohmann::json(error).dump(2);
+        EVLOG_debug << ss.str();
         return;
     }
     database->add_error(std::make_shared<Error>(error));
@@ -55,25 +62,9 @@ void ErrorManagerImpl::raise_error(const Error& error) {
                 << ", message: " << error.message;
 }
 
-std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const bool clear_all) {
-    if (!clear_all) {
-        const ErrorSubType sub_type("");
-        return clear_error(type, sub_type);
-    }
-    if (!can_be_cleared(type)) {
-        EVLOG_debug << "Errors can't be cleared, because type " << type << " is not active.";
-        return {};
-    }
-    std::list<ErrorFilter> filters = {ErrorFilter(TypeFilter(type))};
-    std::list<ErrorPtr> res = database->remove_errors(filters);
-    std::stringstream ss;
-    ss << "Cleared " << res.size() << " errors of type " << type << " with sub_types:" << std::endl;
-    for (const ErrorPtr& error : res) {
-        this->publish_cleared_error(*error);
-        ss << "  - " << error->sub_type << std::endl;
-    }
-    EVLOG_info << ss.str();
-    return res;
+std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type) {
+    const ErrorSubType sub_type("");
+    return clear_error(type, sub_type);
 }
 
 std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const ErrorSubType& sub_type) {
@@ -85,7 +76,12 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_error(const ErrorType& type, const E
     std::list<ErrorFilter> filters = {ErrorFilter(TypeFilter(type)), ErrorFilter(SubTypeFilter(sub_type))};
     std::list<ErrorPtr> res = database->remove_errors(filters);
     if (res.size() > 1) {
-        EVLOG_error << "There are more than one matching error, this is not valid";
+        std::stringstream ss;
+        ss << "There are more than one matching error, this is not valid:" << std::endl;
+        for (const ErrorPtr& error : res) {
+            ss << nlohmann::json(*error).dump(2) << std::endl;
+        }
+        EVLOG_error << ss.str();
         return {};
     }
     const ErrorPtr error = res.front();
@@ -104,6 +100,24 @@ std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors() {
         error->state = State::ClearedByModule;
         this->publish_cleared_error(*error);
         ss << "  - type: " << error->type << ", sub_type: " << error->sub_type << std::endl;
+    }
+    EVLOG_info << ss.str();
+    return res;
+}
+
+std::list<ErrorPtr> ErrorManagerImpl::clear_all_errors(const ErrorType& error_type) {
+    if (!can_be_cleared(error_type)) {
+        EVLOG_debug << "Errors can't be cleared, because type " << error_type << " is not active.";
+        return {};
+    }
+    std::list<ErrorFilter> filters = {ErrorFilter(TypeFilter(error_type))};
+    std::list<ErrorPtr> res = database->remove_errors(filters);
+    std::stringstream ss;
+    ss << "Cleared " << res.size() << " errors of type " << error_type << " with sub_types:" << std::endl;
+    for (const ErrorPtr& error : res) {
+        error->state = State::ClearedByModule;
+        this->publish_cleared_error(*error);
+        ss << "  - " << error->sub_type << std::endl;
     }
     EVLOG_info << ss.str();
     return res;

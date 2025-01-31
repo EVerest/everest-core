@@ -51,10 +51,11 @@ public:
     void subscribe_variable(const Fulfillment& fulfillment, const std::string& var_name,
                             std::function<void(json)> callback);
     void raise_error(const std::string& impl_id, const Everest::error::Error& error);
-    void clear_error(const std::string& impl_id, const Everest::error::ErrorType& type, const bool clear_all = false);
+    void clear_error(const std::string& impl_id, const Everest::error::ErrorType& type);
     void clear_error(const std::string& impl_id, const Everest::error::ErrorType& type,
                      const Everest::error::ErrorSubType& sub_type);
     void clear_all_errors_of_impl(const std::string& impl_id);
+    void clear_all_errors_of_impl(const std::string& impl_id, const Everest::error::ErrorType& type);
     std::shared_ptr<Everest::error::ErrorStateMonitor> get_error_state_monitor_impl(const std::string& impl_id) const;
     std::shared_ptr<Everest::error::ErrorFactory> get_error_factory(const std::string& impl_id) const;
     void subscribe_error(const Fulfillment& fulfillment, const Everest::error::ErrorType& type,

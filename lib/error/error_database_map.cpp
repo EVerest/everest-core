@@ -15,7 +15,10 @@ namespace error {
 void ErrorDatabaseMap::add_error(ErrorPtr error) {
     std::lock_guard<std::mutex> lock(this->errors_mutex);
     if (this->errors.find(error->uuid) != this->errors.end()) {
-        EVLOG_error << "Error with handle " << error->uuid.to_string() << " already exists in ErrorDatabaseMap.";
+        std::stringstream ss;
+        ss << "Error with handle " << error->uuid.to_string() << " already exists in ErrorDatabaseMap." << std::endl;
+        ss << "Error object: " << nlohmann::json(*error).dump(2);
+        EVLOG_error << ss.str();
         return;
     }
     this->errors[error->uuid] = error;

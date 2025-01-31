@@ -34,9 +34,9 @@ public:
     ///
     /// \brief clear_error clears an error
     /// \param type The error type to clear
-    /// \details This function clears an error. If this type already has active subtypes, they will be cleared as well.
+    /// \details This function clears an error if there are not multiples sub types active.
     ///
-    std::list<ErrorPtr> clear_error(const ErrorType& type, const bool clear_all = false);
+    std::list<ErrorPtr> clear_error(const ErrorType& type);
 
     ///
     /// \brief clear_error clears an error
@@ -51,6 +51,13 @@ public:
     /// \details This function clears all errors that are currently active.
     ///
     std::list<ErrorPtr> clear_all_errors();
+
+    ///
+    /// \brief clear_all_errors clears all errors of a specific ErrorType
+    /// \param error_type The error type to clear
+    /// \details This function clears all errors of a specific ErrorType that are currently active.
+    ///
+    std::list<ErrorPtr> clear_all_errors(const ErrorType& error_type);
 
 private:
     bool can_be_raised(const ErrorType& type, const ErrorSubType& sub_type) const;

@@ -137,13 +137,17 @@ PYBIND11_MODULE(everestpy, m) {
         .def("subscribe_variable", &Module::subscribe_variable)
         .def("raise_error", &Module::raise_error)
         .def("clear_error",
-             py::overload_cast<const std::string&, const Everest::error::ErrorType&, const bool>(&Module::clear_error),
-             py::arg("impl_id"), py::arg("type"), py::arg("clear_all") = false)
+             py::overload_cast<const std::string&, const Everest::error::ErrorType&>(&Module::clear_error),
+             py::arg("impl_id"), py::arg("type"))
         .def("clear_error",
              py::overload_cast<const std::string&, const Everest::error::ErrorType&,
                                const Everest::error::ErrorSubType&>(&Module::clear_error),
              py::arg("impl_id"), py::arg("type"), py::arg("sub_type"))
-        .def("clear_all_errors_of_impl", &Module::clear_all_errors_of_impl)
+        .def("clear_all_errors_of_impl", py::overload_cast<const std::string&>(&Module::clear_all_errors_of_impl),
+             py::arg("impl_id"))
+        .def("clear_all_errors_of_impl",
+             py::overload_cast<const std::string&, const Everest::error::ErrorType&>(&Module::clear_all_errors_of_impl),
+             py::arg("impl_id"), py::arg("type"))
         .def("get_error_state_monitor_impl", &Module::get_error_state_monitor_impl)
         .def("get_error_factory", &Module::get_error_factory)
         .def("subscribe_error", &Module::subscribe_error)
@@ -165,5 +169,5 @@ PYBIND11_MODULE(everestpy, m) {
     log_submodule.def("error", [](const std::string& message) { EVLOG_error << message; });
     log_submodule.def("critical", [](const std::string& message) { EVLOG_critical << message; });
 
-    m.attr("__version__") = "0.6";
+    m.attr("__version__") = "0.20";
 }

@@ -320,8 +320,12 @@ static Napi::Value clear_error(const std::string& impl_id, const Napi::CallbackI
             ctx->everest->get_error_manager_impl(impl_id)->clear_error(convertToErrorType(info[0]));
         } else if (info_length == 2) {
             if (info[1].IsBoolean()) {
-                ctx->everest->get_error_manager_impl(impl_id)->clear_error(convertToErrorType(info[0]),
-                                                                           info[1].As<Napi::Boolean>());
+                if (info[1].As<Napi::Boolean>()) {
+                    ctx->everest->get_error_manager_impl(impl_id)->clear_all_errors(convertToErrorType(info[0]));
+                } else {
+                    ctx->everest->get_error_manager_impl(impl_id)->clear_error(convertToErrorType(info[0]));
+                }
+
             } else {
                 ctx->everest->get_error_manager_impl(impl_id)->clear_error(convertToErrorType(info[0]),
                                                                            convertToErrorSubType(info[1]));
