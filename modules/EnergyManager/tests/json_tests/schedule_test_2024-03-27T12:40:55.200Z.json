@@ -1,0 +1,188 @@
+{
+    "config": {
+      "nominal_ac_voltage": 230.0,
+      "update_interval": 1,
+      "schedule_interval_duration": 60,
+      "schedule_total_duration": 1,
+      "slice_ampere": 0.5,
+      "slice_watt": 500,
+      "debug": false,
+      "switch_3ph1ph_while_charging_mode": "Never",
+      "switch_3ph1ph_max_nr_of_switches_per_session": 10,
+      "switch_3ph1ph_switch_limit_stickyness": "DontChange",
+      "switch_3ph1ph_power_hysteresis_W": 500,
+      "switch_3ph1ph_time_hysteresis_s": 30
+    },
+    "expected_result": [
+        {
+            "limits_root_side": {
+                "ac_max_current_A": 24.0,
+                "ac_max_phase_count": 3
+            },
+            "schedule": [
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 24.0,
+                        "ac_max_phase_count": 3
+                    },
+                    "timestamp": "2024-03-27T12:00:00.000Z"
+                },
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 24.0,
+                        "ac_max_phase_count": 3
+                    },
+                    "timestamp": "2024-03-27T12:40:49.988Z"
+                },
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 10.0,
+                        "ac_max_phase_count": 3
+                    },
+                    "timestamp": "2024-03-27T12:41:04.988Z"
+                },
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 32.0,
+                        "ac_max_phase_count": 3
+                    },
+                    "timestamp": "2024-03-27T12:42:04.988Z"
+                },
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 12.0,
+                        "ac_max_phase_count": 3
+                    },
+                    "timestamp": "2024-03-27T12:43:04.988Z"
+                },
+                {
+                    "limits_to_root": {
+                        "ac_max_current_A": 0.0
+                    },
+                    "timestamp": "2024-03-27T12:44:04.988Z"
+                }
+            ],
+            "uuid": "evse_manager",
+            "valid_until": "2024-03-27T12:41:05.200Z"
+        }
+    ],
+    "request": {
+        "children": [],
+        "energy_usage_root": {
+            "current_A": {
+                "L1": 0.029999999329447746,
+                "L2": 0.0,
+                "L3": 0.0,
+                "N": 0.0
+            },
+            "energy_Wh_import": {
+                "L1": 1.7999999523162842,
+                "L2": 0.0,
+                "L3": 0.0,
+                "total": 1.7999999523162842
+            },
+            "power_W": {
+                "L1": 2.0,
+                "L2": 0.0,
+                "L3": 0.0,
+                "total": 2.0
+            },
+            "timestamp": "2024-03-27T12:41:16.864Z",
+            "voltage_V": {
+                "DC": 248.10000610351563,
+                "L1": 0.0,
+                "L2": 0.0
+            }
+        },
+        "node_type": "Evse",
+        "priority_request": false,
+        "schedule_export": [
+            {
+                "limits_to_leaves": {},
+                "limits_to_root": {
+                    "ac_max_current_A": 0.0,
+                    "ac_max_phase_count": 0,
+                    "ac_min_current_A": 0.0,
+                    "ac_min_phase_count": 0,
+                    "ac_supports_changing_phases_during_charging": false,
+                    "total_power_W": 0.0
+                },
+                "timestamp": "2024-03-27T12:00:00.000Z"
+            }
+        ],
+        "schedule_import": [
+            {
+                "limits_to_leaves": {
+                    "ac_max_current_A": 24.0,
+                    "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3,
+                    "ac_min_current_A": 6.0,
+                    "ac_min_phase_count": 3,
+                    "ac_supports_changing_phases_during_charging": false
+                },
+                "timestamp": "2024-03-27T12:40:49.988Z"
+            },
+            {
+                "limits_to_leaves": {
+                    "ac_max_current_A": 10.0,
+                    "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3,
+                    "ac_min_current_A": 6.0,
+                    "ac_min_phase_count": 3,
+                    "ac_supports_changing_phases_during_charging": false
+                },
+                "timestamp": "2024-03-27T12:41:04.988Z"
+            },
+            {
+                "limits_to_leaves": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3,
+                    "ac_min_current_A": 6.0,
+                    "ac_min_phase_count": 3,
+                    "ac_supports_changing_phases_during_charging": false
+                },
+                "timestamp": "2024-03-27T12:42:04.988Z"
+            },
+            {
+                "limits_to_leaves": {
+                    "ac_max_current_A": 12.0,
+                    "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3,
+                    "ac_min_current_A": 6.0,
+                    "ac_min_phase_count": 3,
+                    "ac_supports_changing_phases_during_charging": false
+                },
+                "timestamp": "2024-03-27T12:43:04.988Z"
+            },
+            {
+                "limits_to_leaves": {
+                    "ac_max_current_A": 0.0,
+                    "ac_max_phase_count": 3
+                },
+                "limits_to_root": {
+                    "ac_max_current_A": 32.0,
+                    "ac_max_phase_count": 3,
+                    "ac_min_current_A": 6.0,
+                    "ac_min_phase_count": 3,
+                    "ac_supports_changing_phases_during_charging": false
+                },
+                "timestamp": "2024-03-27T12:44:04.988Z"
+            }
+        ],
+        "uuid": "evse_manager"
+    },
+    "start_time": "2024-03-27T12:40:55.200Z"
+}
