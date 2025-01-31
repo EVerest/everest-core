@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 from __future__ import annotations
 
 import asyncio
@@ -36,7 +36,7 @@ class CentralSystem:
         self.ocpp_version = ocpp_version        
     
     @abstractmethod
-    async def on_connect(self, websocket, path):
+    async def on_connect(self, websocket):
         logging.error("'CentralSystem' did not implement 'on_connect'!")        
 
     @abstractmethod
@@ -60,10 +60,11 @@ class LocalCentralSystem(CentralSystem):
         self.chargepoint_set_event = asyncio.Event()
         self.function_overrides = []
 
-    async def on_connect(self, websocket, path):
+    async def on_connect(self, websocket):
         """ For every new charge point that connects, create a ChargePoint
         instance and start listening for messages.
         """
+        path = websocket.path
         chargepoint_id = path.strip('/')
         if chargepoint_id == self.chargepoint_id:
             logging.debug(f"Chargepoint {chargepoint_id} connected")

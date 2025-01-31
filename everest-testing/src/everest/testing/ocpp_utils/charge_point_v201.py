@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 
 import asyncio
 import logging
@@ -58,7 +58,7 @@ class ChargePoint201(cp):
             logging.debug("ConnectionClosedError: Websocket is going down")
 
     async def stop(self):
-        self._connection.close()
+        await self._connection.close()
 
     async def _send(self, message):
         logging.debug(f"CSMS: \n{message}")

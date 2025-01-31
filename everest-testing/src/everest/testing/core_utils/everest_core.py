@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
+# Copyright Pionix GmbH and Contributors to EVerest
 
 import logging
 import os
@@ -250,3 +250,4 @@ class EverestCore:
 
     def get_runtime_session(self):
         return RuntimeSession(str(self.prefix_path), str(self.everest_config_path))
+
