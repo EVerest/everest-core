@@ -15,6 +15,10 @@ active_modules:
       device: lo
       tls_negotiation_strategy: ACCEPT_CLIENT_OFFER
       enable_sdp_server: false
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso_mux:
     module: IsoMux
     config_module:
