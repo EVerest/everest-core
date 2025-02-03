@@ -163,10 +163,7 @@ void ISO15118_chargerImpl::ready() {
     }
 
     const auto& certificate_info = certificate_response.info.value();
-
-    std::optional<std::string> private_key_password;
     std::string path_chain;
-    std::string path_key;
 
     if (certificate_info.certificate.has_value()) {
         path_chain = certificate_info.certificate.value();
