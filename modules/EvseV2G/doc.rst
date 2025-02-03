@@ -19,8 +19,8 @@ DIN70121
 ===============  ==================
 Feature          Supported
 ===============  ==================
-DC               :heavy_check_mark:
-ExternalPayment  :heavy_check_mark:
+DC               ✔️
+ExternalPayment  ✔️
 ===============  ==================
 
 ISO15118-2
@@ -29,14 +29,14 @@ ISO15118-2
 =======================  ==================
 Feature                  Supported
 =======================  ==================
-AC                       :heavy_check_mark:
-DC                       :heavy_check_mark:
-TCP & TLS 1.2            :heavy_check_mark:
-ExternalPayment          :heavy_check_mark:
-Plug&Charge              :heavy_check_mark:
-CertificateInstallation  :heavy_check_mark:
+AC                       ✔️
+DC                       ✔️
+TCP & TLS 1.2            ✔️
+ExternalPayment          ✔️
+Plug&Charge              ✔️
+CertificateInstallation  ✔️
 CertificateUpdate        
-Pause/Resume             :heavy_check_mark:
+Pause/Resume             ✔️
 Schedule Renegotation    
 Smart Charging           
 Internet Service         
