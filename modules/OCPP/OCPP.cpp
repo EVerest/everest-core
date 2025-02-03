@@ -303,15 +303,18 @@ void OCPP::init_evse_subscriptions() {
 
             this->process_session_event(evse_id, session_event);
         });
+        evse_id++;
+    }
 
-        evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](types::iso15118_charger::RequestExiStreamSchema request) {
+    int32_t extensions_id = 1;
+    for (auto& extension : this->r_extensions_15118) {
+        extension->subscribe_iso15118_certificate_request(
+            [this, extensions_id](types::iso15118_charger::RequestExiStreamSchema request) {
                 this->charge_point->data_transfer_pnc_get_15118_ev_certificate(
-                    evse_id, request.exi_request, request.iso15118_schema_version,
+                    extensions_id, request.exi_request, request.iso15118_schema_version,
                     conversions::to_ocpp_certificate_action_enum(request.certificate_action));
             });
-
-        evse_id++;
+        extensions_id++;
     }
 }
 
@@ -790,8 +793,7 @@ void OCPP::ready() {
                 response.exi_response.emplace(certificate_response.exiResponse.get());
             }
 
-            this->r_evse_manager.at(this->connector_evse_index_map.at(connector_id))
-                ->call_set_get_certificate_response(response);
+            this->r_extensions_15118.at(connector_id - 1)->call_set_get_certificate_response(response);
         });
 
     this->charge_point->register_security_event_callback([this](const std::string& type, const std::string& tech_info) {

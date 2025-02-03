@@ -105,6 +105,9 @@ active_modules:
       security:
         - module_id: evse_security
           implementation_id: main
+      extensions_15118:
+        - module_id: iso15118_charger
+          implementation_id: extensions
   evse_security:
     module: EvseSecurity
     config_module:

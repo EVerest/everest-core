@@ -448,11 +448,6 @@ bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransact
     return mod->charger->cancel_transaction(request);
 };
 
-void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
-    mod->r_hlc[0]->call_certificate_response(certificate_reponse);
-}
-
 bool evse_managerImpl::handle_external_ready_to_start_charging() {
     if (mod->config.external_ready_to_start_charging) {
         EVLOG_info << "Received external ready to start charging command.";

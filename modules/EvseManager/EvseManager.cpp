@@ -683,10 +683,6 @@ void EvseManager::ready() {
                 switch_AC_mode();
             });
         }
-
-        r_hlc[0]->subscribe_certificate_request([this](types::iso15118_charger::RequestExiStreamSchema request) {
-            p_evse->publish_iso15118_certificate_request(request);
-        });
     }
 
     bsp->signal_event.connect([this](const CPEvent event) {
