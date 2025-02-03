@@ -22,96 +22,37 @@
       {
         "children": [
           {
-            "children": [
-              {
-                "children": [],
-                "evse_state": "Charging",
-                "node_type": "Evse",
-                "priority_request": false,
-                "schedule_export": [
-                  {
-                    "limits_to_leaves": {
-                      "ac_max_current_A": {
-                        "value": 0.0,
-                        "source": "EVSE1_leave"
-                      }
-                    },
-                    "limits_to_root": {
-                      "ac_max_current_A": {
-                        "value": 16.0,
-                        "source": "EVSE1_root"
-                      },
-                      "ac_max_phase_count": {
-                        "value": 3,
-                        "source": "EVSE1_phase"
-                      },
-                      "ac_min_current_A": {
-                        "value": 0.0,
-                        "source": "EVSE1_mincurrent"
-                      },
-                      "ac_min_phase_count": {
-                        "value": 1,
-                        "source": "EVSE1_minphase"
-                      },
-                      "ac_number_of_active_phases": 3,
-                      "ac_supports_changing_phases_during_charging": true
-                    },
-                    "timestamp": "2024-12-17T13:08:36.479Z"
-                  }
-                ],
-                "schedule_import": [
-                  {
-                    "limits_to_leaves": {
-                      "ac_max_current_A": {
-                        "value": 32.0,
-                        "source": "EVSE1_leave"
-                      }
-                    },
-                    "limits_to_root": {
-                      "ac_max_current_A": {
-                        "value": 32.0,
-                        "source": "EVSE1_root"
-                      },
-                      "ac_max_phase_count": {
-                        "value": 3,
-                        "source": "EVSE1_phase"
-                      },
-                      "ac_min_current_A": {
-                        "value": 6.0,
-                        "source": "EVSE1_mincurrent"
-                      },
-                      "ac_min_phase_count": {
-                        "value": 1,
-                        "source": "EVSE1_minphase"
-                      },
-                      "ac_number_of_active_phases": 3,
-                      "ac_supports_changing_phases_during_charging": true
-                    },
-                    "timestamp": "2024-12-17T13:08:36.479Z"
-                  }
-                ],
-                "schedule_setpoints": [],
-                "uuid": "evse1"
-              }
-            ],
-            "node_type": "Generic",
+            "children": [],
+            "evse_state": "Charging",
+            "node_type": "Evse",
+            "priority_request": false,
             "schedule_export": [
               {
                 "limits_to_leaves": {
                   "ac_max_current_A": {
-                    "value": 16.0,
-                    "source": "external_limit_1_leave"
+                    "value": 0.0,
+                    "source": "EVSE1_leave"
                   }
                 },
                 "limits_to_root": {
                   "ac_max_current_A": {
                     "value": 16.0,
-                    "source": "external_limit_1_root"
+                    "source": "EVSE1_root"
                   },
                   "ac_max_phase_count": {
                     "value": 3,
-                    "source": "external_limit_1_phase"
-                  }
+                    "source": "EVSE1_phase"
+                  },
+                  "ac_min_current_A": {
+                    "value": 0.0,
+                    "source": "EVSE1_mincurrent"
+                  },
+                  "ac_min_phase_count": {
+                    "value": 1,
+                    "source": "EVSE1_minphase"
+                  },
+                  "ac_number_of_active_phases": 3,
+                  "ac_supports_changing_phases_during_charging": true
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
               }
@@ -121,24 +62,34 @@
                 "limits_to_leaves": {
                   "ac_max_current_A": {
                     "value": 32.0,
-                    "source": "external_limit_1_leave"
+                    "source": "EVSE1_leave"
                   }
                 },
                 "limits_to_root": {
                   "ac_max_current_A": {
                     "value": 32.0,
-                    "source": "external_limit_1_root"
+                    "source": "EVSE1_root"
                   },
                   "ac_max_phase_count": {
                     "value": 3,
-                    "source": "external_limit_1_phase"
-                  }
+                    "source": "EVSE1_phase"
+                  },
+                  "ac_min_current_A": {
+                    "value": 6.0,
+                    "source": "EVSE1_mincurrent"
+                  },
+                  "ac_min_phase_count": {
+                    "value": 1,
+                    "source": "EVSE1_minphase"
+                  },
+                  "ac_number_of_active_phases": 3,
+                  "ac_supports_changing_phases_during_charging": true
                 },
                 "timestamp": "2024-12-17T13:08:36.479Z"
               }
             ],
             "schedule_setpoints": [],
-            "uuid": "external_limit_1"
+            "uuid": "evse1"
           }
         ],
         "node_type": "Generic",
@@ -147,17 +98,17 @@
             "limits_to_leaves": {
               "ac_max_current_A": {
                 "value": 16.0,
-                "source": "external_limit_2_leave"
+                "source": "external_limit_1_leave"
               }
             },
             "limits_to_root": {
               "ac_max_current_A": {
                 "value": 16.0,
-                "source": "external_limit_2_root"
+                "source": "external_limit_1_root"
               },
               "ac_max_phase_count": {
                 "value": 3,
-                "source": "external_limit_2_phase"
+                "source": "external_limit_1_phase"
               }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
@@ -167,18 +118,18 @@
           {
             "limits_to_leaves": {
               "ac_max_current_A": {
-                "value": 31.0,
-                "source": "external_limit_2_leave"
+                "value": 13.0,
+                "source": "external_limit_1_leave"
               }
             },
             "limits_to_root": {
               "ac_max_current_A": {
                 "value": 32.0,
-                "source": "external_limit_2_root"
+                "source": "external_limit_1_root"
               },
               "ac_max_phase_count": {
                 "value": 3,
-                "source": "external_limit_2_phase"
+                "source": "external_limit_1_phase"
               }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
@@ -239,11 +190,11 @@
       {
         "limits_root_side": {
           "ac_max_current_A": {
-            "source": "external_limit_2_leave",
-            "value": 31.0
+            "source": "external_limit_1_leave",
+            "value": 13.0
           },
           "ac_max_phase_count": {
-            "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+            "source": "grid_connection_phase,external_limit_1_phase,EVSE1_phase",
             "value": 3
           }
         },
@@ -251,11 +202,11 @@
           {
             "limits_to_root": {
               "ac_max_current_A": {
-                "source": "external_limit_2_leave",
-                "value": 31.0
+                "source": "external_limit_1_leave",
+                "value": 13.0
               },
               "ac_max_phase_count": {
-                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "source": "grid_connection_phase,external_limit_1_phase,EVSE1_phase",
                 "value": 3
               }
             },
@@ -264,17 +215,18 @@
           {
             "limits_to_root": {
               "ac_max_current_A": {
-                "source": "external_limit_2_leave",
-                "value": 31.0
+                "source": "external_limit_1_leave",
+                "value": 13.0
               },
               "ac_max_phase_count": {
-                "source": "grid_connection_phase,external_limit_2_phase,external_limit_1_phase,EVSE1_phase",
+                "source": "grid_connection_phase,external_limit_1_phase,EVSE1_phase",
                 "value": 3
               }
             },
             "timestamp": "2024-12-17T13:08:36.479Z"
           }
         ],
+        "schedule_setpoints": [],
         "uuid": "evse1",
         "valid_until": "2024-12-17T13:00:10.000Z"
       }
