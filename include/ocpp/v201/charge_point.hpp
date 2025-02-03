@@ -15,6 +15,7 @@
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
+#include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
 
@@ -37,7 +38,6 @@
 #include <ocpp/v201/messages/BootNotification.hpp>
 #include <ocpp/v201/messages/ClearChargingProfile.hpp>
 #include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
-#include <ocpp/v201/messages/CostUpdated.hpp>
 #include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
@@ -368,6 +368,7 @@ private:
     std::unique_ptr<SecurityInterface> security;
     std::unique_ptr<DisplayMessageInterface> display_message;
     std::unique_ptr<MeterValuesInterface> meter_values;
+    std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -522,36 +523,6 @@ private:
     /// @param message_log_path path to file logging
     void configure_message_logging_format(const std::string& message_log_path);
 
-    ///
-    /// \brief Create cost and / or tariff message and call the callbacks to send it, if tariff and / or cost is
-    /// enabled.
-    /// \param response             The TransactionEventResponse where the tariff and cost information is added to.
-    /// \param original_message     The original TransactionEventRequest, which contains some information we need as
-    ///                             well.
-    /// \param original_transaction_event_response  The original json from the response.
-    ///
-    void handle_cost_and_tariff(const TransactionEventResponse& response,
-                                const TransactionEventRequest& original_message,
-                                const json& original_transaction_event_response);
-
-    ///
-    /// \brief Check if multilanguage setting (variable) is enabled.
-    /// \return True if enabled.
-    ///
-    bool is_multilanguage_enabled() const;
-
-    ///
-    /// \brief Check if tariff setting (variable) is enabled.
-    /// \return True if enabled.
-    ///
-    bool is_tariff_enabled() const;
-
-    ///
-    /// \brief Check if cost setting (variable) is enabled.
-    /// \return True if enabled.
-    ///
-    bool is_cost_enabled() const;
-
     /* OCPP message requests */
 
     // Functional Block B: Provisioning
@@ -601,9 +572,6 @@ private:
     void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
     void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
     void handle_trigger_message(Call<TriggerMessageRequest> call);
-
-    // Functional Block I: TariffAndCost
-    void handle_costupdated_req(const Call<CostUpdatedRequest> call);
 
     // Functional Block K: Smart Charging
     void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);

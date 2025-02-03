@@ -53,25 +53,20 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) c
 
         // If cost is available and enabled, the running cost callback must be enabled as well.
         if (device_model->get_optional_value<bool>(ControllerComponentVariables::TariffCostCtrlrAvailableCost)
-                .value_or(false) and
-            device_model->get_optional_value<bool>(ControllerComponentVariables::TariffCostCtrlrEnabledCost)
                 .value_or(false)) {
             if (!this->set_running_cost_callback.has_value() or this->set_running_cost_callback.value() == nullptr) {
-                EVLOG_error << "TariffAndCost controller 'Cost' is set to 'Available' and 'Enabled' in device model, "
+                EVLOG_error << "TariffAndCost controller 'Cost' is set to 'Available' in device model, "
                                "but callback is not implemented";
                 valid = false;
             }
         }
 
         if (device_model->get_optional_value<bool>(ControllerComponentVariables::TariffCostCtrlrAvailableTariff)
-                .value_or(false) and
-            device_model->get_optional_value<bool>(ControllerComponentVariables::TariffCostCtrlrEnabledTariff)
                 .value_or(false)) {
             if (!this->set_display_message_callback.has_value() or
                 this->set_display_message_callback.value() == nullptr) {
-                EVLOG_error
-                    << "TariffAndCost controller 'Tariff' is set to 'Available' and 'Enabled'. In this case, the "
-                       "set_display_message_callback must be implemented to send the tariff, but it is not";
+                EVLOG_error << "TariffAndCost controller 'Tariff' is set to 'Available'. In this case, the "
+                               "set_display_message_callback must be implemented to send the tariff, but it is not";
                 valid = false;
             }
         }
