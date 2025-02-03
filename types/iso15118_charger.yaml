@@ -663,12 +663,3 @@ types:
           range dedicated for cycling activity.
         type: number
         minimum: 0
-  EVChargingNeeds:
-    description: Charging parameters reported from EVCC to SECC
-    type: object
-    properties:
-      max_schedule_tuples:
-        description: Contains the maximum schedule tuples the car supports per SASchedule (both Pmax and Tariff).
-        type: integer
-        minimum: 0
-      # TODO: TBC to fullfill requirements of OCPP NotifyEVChargingNeedsRequest type
