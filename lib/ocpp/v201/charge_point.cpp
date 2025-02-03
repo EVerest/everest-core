@@ -395,13 +395,7 @@ void ChargePoint::on_authorized(const int32_t evse_id, const int32_t connector_i
 }
 
 void ChargePoint::on_meter_value(const int32_t evse_id, const MeterValue& meter_value) {
-    if (evse_id == 0) {
-        // if evseId = 0 then store in the chargepoint metervalues
-        this->aligned_data_evse0.set_values(meter_value);
-    } else {
-        this->evse_manager->get_evse(evse_id).on_meter_value(meter_value);
-        this->update_dm_evse_power(evse_id, meter_value);
-    }
+    this->meter_values->on_meter_value(evse_id, meter_value);
 }
 
 std::string ChargePoint::get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
@@ -911,6 +905,9 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
             this->callbacks.clear_display_message_callback.value());
     }
 
+    this->meter_values =
+        std::make_unique<MeterValues>(*this->message_dispatcher, *this->device_model, *this->evse_manager);
+
     this->availability = std::make_unique<Availability>(
         *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->component_state_manager,
         this->callbacks.time_sync_callback, this->callbacks.all_connectors_unavailable_callback);
@@ -1171,16 +1168,6 @@ void ChargePoint::message_callback(const std::string& message) {
     }
 }
 
-MeterValue ChargePoint::get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                                        const RequiredComponentVariable& component_variable) {
-    auto filtered_meter_value = utils::get_meter_value_with_measurands_applied(
-        meter_value, utils::get_measurands_vec(this->device_model->get_value<std::string>(component_variable)));
-    for (auto& sampled_value : filtered_meter_value.sampledValue) {
-        sampled_value.context = context;
-    }
-    return filtered_meter_value;
-}
-
 void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
     ChangeAvailabilityResponse response;
     response.status = ChangeAvailabilityStatusEnum::Scheduled;
@@ -1227,70 +1214,6 @@ void ChargePoint::restore_all_connector_states() {
     }
 }
 
-void ChargePoint::update_aligned_data_interval() {
-    auto interval =
-        std::chrono::seconds(this->device_model->get_value<int>(ControllerComponentVariables::AlignedDataInterval));
-    if (interval <= 0s) {
-        this->aligned_meter_values_timer.stop();
-        return;
-    }
-
-    this->aligned_meter_values_timer.interval_starting_from(
-        [this, interval]() {
-            // J01.FR.20 if AlignedDataSendDuringIdle is true and any transaction is active, don't send clock aligned
-            // meter values
-            if (this->device_model->get_optional_value<bool>(ControllerComponentVariables::AlignedDataSendDuringIdle)
-                    .value_or(false)) {
-                for (auto const& evse : *this->evse_manager) {
-                    if (evse.has_active_transaction()) {
-                        return;
-                    }
-                }
-            }
-
-            const bool align_timestamps =
-                this->device_model->get_optional_value<bool>(ControllerComponentVariables::RoundClockAlignedTimestamps)
-                    .value_or(false);
-
-            // send evseID = 0 values
-            auto meter_value = get_latest_meter_value_filtered(this->aligned_data_evse0.retrieve_processed_values(),
-                                                               ReadingContextEnum::Sample_Clock,
-                                                               ControllerComponentVariables::AlignedDataMeasurands);
-
-            if (!meter_value.sampledValue.empty()) {
-                if (align_timestamps) {
-                    meter_value.timestamp = utils::align_timestamp(DateTime{}, interval);
-                }
-                this->meter_values_req(0, std::vector<ocpp::v201::MeterValue>(1, meter_value));
-            }
-            this->aligned_data_evse0.clear_values();
-
-            for (auto& evse : *this->evse_manager) {
-                if (evse.has_active_transaction()) {
-                    continue;
-                }
-
-                // this will apply configured measurands and possibly reduce the entries of sampledValue
-                // according to the configuration
-                auto meter_value =
-                    get_latest_meter_value_filtered(evse.get_idle_meter_value(), ReadingContextEnum::Sample_Clock,
-                                                    ControllerComponentVariables::AlignedDataMeasurands);
-
-                if (align_timestamps) {
-                    meter_value.timestamp = utils::align_timestamp(DateTime{}, interval);
-                }
-
-                if (!meter_value.sampledValue.empty()) {
-                    // J01.FR.14 this is the only case where we send a MeterValue.req
-                    this->meter_values_req(evse.get_id(), std::vector<ocpp::v201::MeterValue>(1, meter_value));
-                    // clear the values
-                }
-                evse.clear_idle_meter_values();
-            }
-        },
-        interval, std::chrono::floor<date::days>(date::utc_clock::to_sys(date::utc_clock::now())));
-}
-
 /**
  * Determine for a component variable whether it affects the Websocket Connection Options (cf.
  * get_ws_connection_options); return true if it is furthermore writable and does not require a reconnect
@@ -1335,7 +1258,7 @@ void ChargePoint::handle_variable_changed(const SetVariableData& set_variable_da
         }
     }
     if (component_variable == ControllerComponentVariables::AlignedDataInterval) {
-        this->update_aligned_data_interval();
+        this->meter_values->update_aligned_data_interval();
     }
 
     if (component_variable_change_requires_websocket_option_update_without_reconnect(component_variable)) {
@@ -1632,16 +1555,6 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
     }
 }
 
-void ChargePoint::meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values,
-                                   const bool initiated_by_trigger_message) {
-    MeterValuesRequest req;
-    req.evseId = evse_id;
-    req.meterValue = meter_values;
-
-    ocpp::Call<MeterValuesRequest> call(req);
-    this->message_dispatcher->dispatch_call(call, initiated_by_trigger_message);
-}
-
 void ChargePoint::report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
                                               const ChargingLimitSourceEnum source,
                                               const std::vector<ChargingProfile>& profiles, const bool tbc) {
@@ -1726,7 +1639,7 @@ void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationR
         this->boot_notification_timer.stop();
 
         this->security->init_certificate_expiration_check_timers();
-        this->update_aligned_data_interval();
+        this->meter_values->update_aligned_data_interval();
         this->component_state_manager->send_status_notification_all_connectors();
         this->ocsp_updater.start();
     } else {
@@ -2273,12 +2186,13 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
 
     case MessageTriggerEnum::MeterValues: {
         auto send_meter_value = [&](int32_t evse_id, EvseInterface& evse) {
-            const auto meter_value =
-                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
-                                                ControllerComponentVariables::AlignedDataMeasurands);
+            const auto meter_value = this->meter_values->get_latest_meter_value_filtered(
+                evse.get_meter_value(), ReadingContextEnum::Trigger,
+                ControllerComponentVariables::AlignedDataMeasurands);
 
             if (!meter_value.sampledValue.empty()) {
-                this->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value), true);
+                this->meter_values->meter_values_req(evse_id, std::vector<ocpp::v201::MeterValue>(1, meter_value),
+                                                     true);
             }
         };
         send_evse_message(send_meter_value);
@@ -2290,9 +2204,9 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
                 return;
             }
 
-            const auto meter_value =
-                get_latest_meter_value_filtered(evse.get_meter_value(), ReadingContextEnum::Trigger,
-                                                ControllerComponentVariables::SampledDataTxUpdatedMeasurands);
+            const auto meter_value = this->meter_values->get_latest_meter_value_filtered(
+                evse.get_meter_value(), ReadingContextEnum::Trigger,
+                ControllerComponentVariables::SampledDataTxUpdatedMeasurands);
 
             std::optional<std::vector<MeterValue>> opt_meter_value;
             if (!meter_value.sampledValue.empty()) {
@@ -2537,7 +2451,7 @@ void ChargePoint::handle_costupdated_req(const Call<CostUpdatedRequest> call) {
     evse.set_meter_value_pricing_triggers(
         triggers.at_power_kw, triggers.at_energy_kwh, triggers.at_time,
         [this, evse_id](const std::vector<MeterValue>& meter_values) {
-            this->meter_values_req(evse_id, meter_values, false);
+            this->meter_values->meter_values_req(evse_id, meter_values, false);
         },
         this->io_service);
 }
@@ -3118,24 +3032,6 @@ void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int3
             charging_station.component, charging_station.variable.value(), ocpp::v201::AttributeEnum::Actual,
             conversions::connector_status_enum_to_string(status), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
     }
-}
-
-void ChargePoint::update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value) {
-    ComponentVariable evse_power_cv =
-        EvseComponentVariables::get_component_variable(evse_id, EvseComponentVariables::Power);
-
-    if (!evse_power_cv.variable.has_value()) {
-        return;
-    }
-
-    const auto power = utils::get_total_power_active_import(meter_value);
-    if (!power.has_value()) {
-        return;
-    }
-
-    this->device_model->set_read_only_value(evse_power_cv.component, evse_power_cv.variable.value(),
-                                            AttributeEnum::Actual, std::to_string(power.value()),
-                                            VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
 }
 
 void ChargePoint::clear_invalid_charging_profiles() {

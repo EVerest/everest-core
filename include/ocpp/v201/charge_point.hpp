@@ -12,10 +12,10 @@
 #include <ocpp/v201/functional_blocks/availability.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
 #include <ocpp/v201/functional_blocks/display_message.hpp>
+#include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
 
-#include <ocpp/common/aligned_timer.hpp>
 #include <ocpp/common/charging_station_base.hpp>
 
 #include <ocpp/v201/average_meter_values.hpp>
@@ -49,7 +49,6 @@
 #include <ocpp/v201/messages/GetReport.hpp>
 #include <ocpp/v201/messages/GetTransactionStatus.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
-#include <ocpp/v201/messages/MeterValues.hpp>
 #include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
 #include <ocpp/v201/messages/NotifyEvent.hpp>
 #include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
@@ -368,6 +367,7 @@ private:
     std::unique_ptr<AuthorizationInterface> authorization;
     std::unique_ptr<SecurityInterface> security;
     std::unique_ptr<DisplayMessageInterface> display_message;
+    std::unique_ptr<MeterValuesInterface> meter_values;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -377,7 +377,6 @@ private:
 
     // timers
     Everest::SteadyTimer boot_notification_timer;
-    ClockAlignedTimer aligned_meter_values_timer;
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
@@ -410,7 +409,6 @@ private:
     };
 
     std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
-    AverageMeterValues aligned_data_evse0; // represents evseId = 0 meter value
 
     /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
     bool reset_scheduled;
@@ -438,13 +436,11 @@ private:
     void websocket_connection_failed(ConnectionFailedReason reason);
     void update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                       const ConnectorStatusEnum status);
-    void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 
     GetCompositeScheduleResponse get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
                                                                  bool simulate_transaction_active = true);
 
     void message_callback(const std::string& message);
-    void update_aligned_data_interval();
 
     /// \brief Helper function to determine if the requested change results in a state that the Connector(s) is/are
     /// already in \param request \return
@@ -461,9 +457,6 @@ private:
     std::map<SetVariableData, SetVariableResult>
     set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
                            const bool allow_read_only);
-
-    MeterValue get_latest_meter_value_filtered(const MeterValue& meter_value, ReadingContextEnum context,
-                                               const RequiredComponentVariable& component_variable);
 
     /// \brief Changes all unoccupied connectors to unavailable. If a transaction is running schedule an availabilty
     /// change
@@ -576,10 +569,6 @@ private:
                                const std::optional<int32_t>& number_of_phases_used, const bool offline,
                                const std::optional<int32_t>& reservation_id,
                                const bool initiated_by_trigger_message = false);
-
-    // Functional Block J: MeterValues
-    void meter_values_req(const int32_t evse_id, const std::vector<MeterValue>& meter_values,
-                          const bool initiated_by_trigger_message = false);
 
     // Functional Block K: Smart Charging
     void report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
