@@ -106,8 +106,7 @@ public:
     /// \param notify_csms_events Function that can be invoked with a number of alert events
     /// \param is_chargepoint_offline Function that can be invoked in order to retrieve the
     /// status of the charging station connection to the CSMS
-    MonitoringUpdater(std::shared_ptr<DeviceModel> device_model, notify_events notify_csms_events,
-                      is_offline is_chargepoint_offline);
+    MonitoringUpdater(DeviceModel& device_model, notify_events notify_csms_events, is_offline is_chargepoint_offline);
     ~MonitoringUpdater();
 
 public:
@@ -175,7 +174,7 @@ private:
     bool is_monitoring_enabled();
 
 private:
-    std::shared_ptr<DeviceModel> device_model;
+    DeviceModel& device_model;
     Everest::SteadyTimer monitors_timer;
 
     // Charger to CSMS message unique ID for EventData

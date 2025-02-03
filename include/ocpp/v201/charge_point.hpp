@@ -11,6 +11,7 @@
 #include <ocpp/v201/functional_blocks/authorization.hpp>
 #include <ocpp/v201/functional_blocks/availability.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
+#include <ocpp/v201/functional_blocks/diagnostics.hpp>
 #include <ocpp/v201/functional_blocks/display_message.hpp>
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
@@ -365,6 +366,7 @@ private:
     std::unique_ptr<ReservationInterface> reservation;
     std::unique_ptr<AvailabilityInterface> availability;
     std::unique_ptr<AuthorizationInterface> authorization;
+    std::unique_ptr<DiagnosticsInterface> diagnostics;
     std::unique_ptr<SecurityInterface> security;
     std::unique_ptr<DisplayMessageInterface> display_message;
     std::unique_ptr<MeterValuesInterface> meter_values;
@@ -421,9 +423,6 @@ private:
 
     /// \brief Handler for automatic or explicit OCSP cache updates
     OcspUpdater ocsp_updater;
-
-    /// \brief Updater for triggered monitors
-    MonitoringUpdater monitoring_updater;
 
     /// \brief optional delay to resumption of message queue after reconnecting to the CSMS
     std::chrono::seconds message_queue_resume_delay = std::chrono::seconds(0);
@@ -498,27 +497,6 @@ private:
     /// \return true if the charge point is offline. std::nullopt if it is online;
     bool is_offline();
 
-    /// \brief Returns customer information based on the given arguments. This function also executes the
-    /// get_customer_information_callback in case it is present
-    /// \param customer_certificate Certificate of the customer this request refers to
-    /// \param id_token IdToken of the customer this request refers to
-    /// \param customer_identifier A (e.g. vendor specific) identifier of the customer this request refers to. This
-    /// field contains a custom identifier other than IdToken and Certificate
-    /// \return customer information
-    std::string get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
-                                         const std::optional<IdToken> id_token,
-                                         const std::optional<CiString<64>> customer_identifier);
-
-    /// \brief Clears customer information based on the given arguments. This function also executes the
-    /// clear_customer_information_callback in case it is present
-    /// \param customer_certificate Certificate of the customer this request refers to
-    /// \param id_token IdToken of the customer this request refers to
-    /// \param customer_identifier A (e.g. vendor specific) identifier of the customer this request refers to. This
-    /// field contains a custom identifier other than IdToken and Certificate
-    void clear_customer_information(const std::optional<CertificateHashDataType> customer_certificate,
-                                    const std::optional<IdToken> id_token,
-                                    const std::optional<CiString<64>> customer_identifier);
-
     /// @brief Configure the message logging callback with device model parameters
     /// @param message_log_path path to file logging
     void configure_message_logging_format(const std::string& message_log_path);
@@ -546,11 +524,6 @@ private:
                                      const ChargingLimitSourceEnum source, const std::vector<ChargingProfile>& profiles,
                                      const bool tbc);
     void report_charging_profile_req(const ReportChargingProfilesRequest& req);
-
-    // Functional Block N: Diagnostics
-    void notify_event_req(const std::vector<EventData>& events);
-    void notify_customer_information_req(const std::string& data, const int32_t request_id);
-    void notify_monitoring_report_req(const int request_id, const std::vector<MonitoringData>& montoring_data);
 
     /* OCPP message handlers */
 
@@ -581,16 +554,6 @@ private:
 
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
-
-    // Functional Block N: Diagnostics
-    void handle_get_log_req(Call<GetLogRequest> call);
-    void handle_customer_information_req(Call<CustomerInformationRequest> call);
-
-    void handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> call);
-    void handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest> call);
-    void handle_set_variable_monitoring_req(const EnhancedMessage<v201::MessageType>& message);
-    void handle_get_monitoring_report_req(Call<GetMonitoringReportRequest> call);
-    void handle_clear_variable_monitoring_req(Call<ClearVariableMonitoringRequest> call);
 
     // Generates async sending callbacks
     template <class RequestType, class ResponseType>
