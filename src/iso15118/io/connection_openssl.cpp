@@ -49,13 +49,23 @@ struct SSLContext {
     std::unique_ptr<io::TlsKeyLoggingServer> key_server;
 };
 
+static int private_key_callback(char* buf, int size, [[maybe_unused]] int rwflag, void* userdata) {
+    const auto* password = static_cast<const std::string*>(userdata);
+    const std::size_t max_pass_len = (size - 1); // we exclude the endline
+    const std::size_t max_copy_chars =
+        std::min(max_pass_len, password->length()); // truncate if pass is too large and buffer too small
+
+    std::memset(buf, 0, size);
+    std::memcpy(buf, password->c_str(), max_copy_chars);
+
+    return max_copy_chars;
+}
+
 static SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
 
     // Note: openssl does not provide support for ECDH-ECDSA-AES128-SHA256 anymore
     static constexpr auto TLS1_2_CIPHERSUITES = "ECDHE-ECDSA-AES128-SHA256";
     static constexpr auto TLS1_3_CIPHERSUITES = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256";
-
-    const std::filesystem::path prefix(ssl_config.config_string);
 
     const SSL_METHOD* method = TLS_server_method();
     const auto ctx = SSL_CTX_new(method);
@@ -76,19 +86,19 @@ static SSL_CTX* init_ssl(const config::SSLConfig& ssl_config) {
         log_and_raise_openssl_error("Failed in SSL_CTX_set_ciphersuites()");
     }
 
-    // TODO(sl): Better cert path handling
-    const std::filesystem::path certificate_chain_file_path = prefix / "client/cso/CPO_CERT_CHAIN.pem";
-
-    if (SSL_CTX_use_certificate_chain_file(ctx, certificate_chain_file_path.c_str()) != 1) {
+    if (SSL_CTX_use_certificate_chain_file(ctx, ssl_config.path_certificate_chain.c_str()) != 1) {
         log_and_raise_openssl_error("Failed in SSL_CTX_use_certificate_chain_file()");
     }
 
     // INFO: the password callback uses a non-const argument
-    std::string pass_str = ssl_config.private_key_password;
-    SSL_CTX_set_default_passwd_cb_userdata(ctx, pass_str.data());
+    if (ssl_config.private_key_password.has_value()) {
+        // Lifetime of the password is important because using a callback we'll require a valid ref
+        SSL_CTX_set_default_passwd_cb_userdata(
+            ctx, &const_cast<config::SSLConfig&>(ssl_config).private_key_password.value());
+        SSL_CTX_set_default_passwd_cb(ctx, private_key_callback);
+    }
 
-    const std::filesystem::path private_key_file_path = prefix / "client/cso/SECC_LEAF.key";
-    if (SSL_CTX_use_PrivateKey_file(ctx, private_key_file_path.c_str(), SSL_FILETYPE_PEM) != 1) {
+    if (SSL_CTX_use_PrivateKey_file(ctx, ssl_config.path_certificate_key.c_str(), SSL_FILETYPE_PEM) != 1) {
         log_and_raise_openssl_error("Failed in SSL_CTX_use_PrivateKey_file()");
     }
 

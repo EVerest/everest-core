@@ -114,6 +114,8 @@ static void parse_key_file(mbedtls_pk_context* pk_context, const std::filesystem
 }
 
 static void load_certificates(SSLContext& ssl, const config::SSLConfig& ssl_config) {
+    std::string private_key_password = ssl_config.private_key_password.value_or(std::string());
+
     if (ssl_config.backend == config::CertificateBackend::JOSEPPA_LAYOUT) {
         const std::filesystem::path prefix(ssl_config.config_string);
         auto chain = &ssl.server_certificate;
@@ -121,15 +123,12 @@ static void load_certificates(SSLContext& ssl, const config::SSLConfig& ssl_conf
         parse_crt_file(chain, prefix / "seccLeafCert.pem");
         parse_crt_file(chain, prefix / "cpoSubCA2Cert.pem");
         parse_crt_file(chain, prefix / "cpoSubCA1Cert.pem");
-        parse_key_file(&ssl.pkey, prefix / "seccLeaf.key", ssl_config.private_key_password, &ssl.ctr_drbg);
+        parse_key_file(&ssl.pkey, prefix / "seccLeaf.key", private_key_password, &ssl.ctr_drbg);
     } else if (ssl_config.backend == config::CertificateBackend::EVEREST_LAYOUT) {
-        const std::filesystem::path prefix(ssl_config.config_string);
-
         auto chain = &ssl.server_certificate;
-        parse_crt_file(chain, prefix / "client/cso/SECC_LEAF.pem");
-        parse_crt_file(chain, prefix / "ca/cso/CPO_SUB_CA2.pem");
-        parse_crt_file(chain, prefix / "ca/cso/CPO_SUB_CA1.pem");
-        parse_key_file(&ssl.pkey, prefix / "client/cso/SECC_LEAF.key", ssl_config.private_key_password, &ssl.ctr_drbg);
+        // mbedtls knows how to parse multi-PEM files
+        parse_crt_file(chain, ssl_config.path_certificate_chain);
+        parse_key_file(&ssl.pkey, ssl_config.path_certificate_key, private_key_password, &ssl.ctr_drbg);
     }
 }
 
