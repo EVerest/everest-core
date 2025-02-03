@@ -312,8 +312,8 @@ void Security::handle_sign_certificate_response(CallResult<SignCertificateRespon
             this->awaited_certificate_signing_use_enum = std::nullopt;
             return;
         }
-        int retry_backoff_milliseconds =
-            std::max(minimum_cert_signing_wait_time_seconds, 1000 * cert_signing_wait_minimum.value()) *
+        int retry_backoff_seconds =
+            std::max(minimum_cert_signing_wait_time_seconds, cert_signing_wait_minimum.value()) *
             std::pow(2, this->csr_attempt); // prevent immediate repetition in case of value 0
         this->certificate_signed_timer.timeout(
             [this]() {
@@ -324,7 +324,7 @@ void Security::handle_sign_certificate_response(CallResult<SignCertificateRespon
                 this->awaited_certificate_signing_use_enum.reset();
                 this->sign_certificate_req(current_awaited_certificate_signing_use_enum);
             },
-            std::chrono::milliseconds(retry_backoff_milliseconds));
+            std::chrono::seconds(retry_backoff_seconds));
     } else {
         this->awaited_certificate_signing_use_enum = std::nullopt;
         this->csr_attempt = 1;

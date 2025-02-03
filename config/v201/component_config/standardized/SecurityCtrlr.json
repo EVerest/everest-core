@@ -101,7 +101,7 @@
         {
           "type": "Actual",
           "mutability": "ReadWrite",
-          "value": 0
+          "value": 30
         }
       ],
       "description": "Seconds to wait before generating another CSR in case CSMS does not return a signed certificate.",
