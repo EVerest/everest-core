@@ -111,7 +111,7 @@ LemDCBM400600Controller::start_transaction(const types::powermeter::TransactionR
                 // we will not return any response to stop transaction since this is a self triggered command
                 this->request_device_to_stop_transaction(this->current_transaction_id);
                 this->need_to_stop_transaction = false;
-            } catch (UnexpectedDCBMResponseCode error) {
+            } catch (UnexpectedDCBMResponseCode& error) {
                 EVLOG_error << "LEM DCBM 400/600: Could not close the current transaction, got error:" << error.what();
             }
         }
