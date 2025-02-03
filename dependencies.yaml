@@ -47,7 +47,7 @@ libcbv2g:
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: 7b260c11756f1e15d619915d72f05a9022d0e263
+  git_tag: 7582ef63f1e7cdfdf2851195b9fae7c1b2af6df8
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600 module
