@@ -33,4 +33,28 @@ types::board_support_common::BspEvent to_bsp_event(CoilState s) {
         return {types::board_support_common::Event::PowerOff};
     }
 }
+
+types::board_support_common::ProximityPilot to_pp_ampacity(PpState s) {
+    switch (s) {
+    case PpState_STATE_NC: {
+        return {types::board_support_common::Ampacity::None};
+    }
+    case PpState_STATE_13A: {
+        return {types::board_support_common::Ampacity::A_13};
+    }
+    case PpState_STATE_20A: {
+        return {types::board_support_common::Ampacity::A_20};
+    }
+    case PpState_STATE_32A: {
+        return {types::board_support_common::Ampacity::A_32};
+    }
+    case PpState_STATE_70A: {
+        return {types::board_support_common::Ampacity::A_63_3ph_70_1ph};
+    }
+    default: {
+        return {types::board_support_common::Ampacity::None};
+    }
+    }
+}
+
 } // namespace module
