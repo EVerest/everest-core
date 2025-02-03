@@ -1,20 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Pionix GmbH and Contributors to EVerest
 
-/**
- * \file testing patched version of OpenSSL
- *
- * These tests will only pass on a patched version of OpenSSL.
- * (they should compile and run fine with some test failures)
- *
- * It is recommended to also run tests alongside Wireshark
- * e.g. `./patched_test --gtest_filter=TlsTest.TLS12`
- * to check that the Server Hello record is correctly formed:
- * - no status_request or status_request_v2 then no Certificate Status record
- * - status_request or status_request_v2 then there is a Certificate Status record
- * - never both status_request and status_request_v2
- */
-
 #include "tls_connection_test.hpp"
 
 #include <memory>
