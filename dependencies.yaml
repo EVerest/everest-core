@@ -42,7 +42,7 @@ libfsm:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.1
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
