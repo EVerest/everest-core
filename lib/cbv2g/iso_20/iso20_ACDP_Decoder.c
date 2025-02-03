@@ -2418,14 +2418,14 @@ static int decode_iso20_acdp_SignedInfoType(exi_bitstream_t* stream, struct iso2
             }
             break;
         case 46:
-            // Grammar: ID=46; read/write bits=2; START (Reference), END Element
+            // Grammar: ID=46; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=47
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=46
                     // decode: element array
                     if (SignedInfoType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -2435,7 +2435,7 @@ static int decode_iso20_acdp_SignedInfoType(exi_bitstream_t* stream, struct iso2
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 47;
+                    grammar_id = 46;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -2449,76 +2449,14 @@ static int decode_iso20_acdp_SignedInfoType(exi_bitstream_t* stream, struct iso2
             }
             break;
         case 47:
-            // Grammar: ID=47; read/write bits=2; START (Reference), END Element
+            // Grammar: ID=47; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=48
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 48;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 48:
-            // Grammar: ID=48; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=49
-                    // decode: element array
-                    if (SignedInfoType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &SignedInfoType->Reference.array[SignedInfoType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 49;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 49:
-            // Grammar: ID=49; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=2
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
                     // decode: element array
                     if (SignedInfoType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -2576,7 +2514,7 @@ static int decode_iso20_acdp_SignedInfoType(exi_bitstream_t* stream, struct iso2
 //          abstract=False; final=False; derivation=extension;
 // Particle: Id, ID (0, 1); CONTENT, SignatureValueType (1, 1);
 static int decode_iso20_acdp_SignatureValueType(exi_bitstream_t* stream, struct iso20_acdp_SignatureValueType* SignatureValueType) {
-    int grammar_id = 50;
+    int grammar_id = 48;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -2587,15 +2525,15 @@ static int decode_iso20_acdp_SignatureValueType(exi_bitstream_t* stream, struct 
     {
         switch(grammar_id)
         {
-        case 50:
-            // Grammar: ID=50; read/write bits=2; START (Id), START (CONTENT)
+        case 48:
+            // Grammar: ID=48; read/write bits=2; START (Id), START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=51
+                    // Event: START (Id, ID (NCName)); next=49
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureValueType->Id.charactersLen);
                     if (error == 0)
@@ -2613,7 +2551,7 @@ static int decode_iso20_acdp_SignatureValueType(exi_bitstream_t* stream, struct 
                         }
                     }
                     SignatureValueType->Id_isUsed = 1u;
-                    grammar_id = 51;
+                    grammar_id = 49;
                     break;
                 case 1:
                     // Event: START (CONTENT, SignatureValueType (base64Binary)); next=2
@@ -2634,8 +2572,8 @@ static int decode_iso20_acdp_SignatureValueType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 51:
-            // Grammar: ID=51; read/write bits=1; START (CONTENT)
+        case 49:
+            // Grammar: ID=49; read/write bits=1; START (CONTENT)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -2695,7 +2633,7 @@ static int decode_iso20_acdp_SignatureValueType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); KeyName, string (0, 1); KeyValue, KeyValueType (0, 1); RetrievalMethod, RetrievalMethodType (0, 1); X509Data, X509DataType (0, 1); PGPData, PGPDataType (0, 1); SPKIData, SPKIDataType (0, 1); MgmtData, string (0, 1); ANY, anyType (0, 1);
 static int decode_iso20_acdp_KeyInfoType(exi_bitstream_t* stream, struct iso20_acdp_KeyInfoType* KeyInfoType) {
-    int grammar_id = 52;
+    int grammar_id = 50;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -2706,15 +2644,15 @@ static int decode_iso20_acdp_KeyInfoType(exi_bitstream_t* stream, struct iso20_a
     {
         switch(grammar_id)
         {
-        case 52:
-            // Grammar: ID=52; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 50:
+            // Grammar: ID=50; read/write bits=4; START (Id), START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=53
+                    // Event: START (Id, ID (NCName)); next=51
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &KeyInfoType->Id.charactersLen);
                     if (error == 0)
@@ -2732,7 +2670,7 @@ static int decode_iso20_acdp_KeyInfoType(exi_bitstream_t* stream, struct iso20_a
                         }
                     }
                     KeyInfoType->Id_isUsed = 1u;
-                    grammar_id = 53;
+                    grammar_id = 51;
                     break;
                 case 1:
                     // Event: START (KeyName, string (string)); next=2
@@ -2900,8 +2838,8 @@ static int decode_iso20_acdp_KeyInfoType(exi_bitstream_t* stream, struct iso20_a
                 }
             }
             break;
-        case 53:
-            // Grammar: ID=53; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
+        case 51:
+            // Grammar: ID=51; read/write bits=4; START (KeyName), START (KeyValue), START (RetrievalMethod), START (X509Data), START (PGPData), START (SPKIData), START (MgmtData), START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 4, &eventCode);
             if (error == 0)
             {
@@ -3108,7 +3046,7 @@ static int decode_iso20_acdp_KeyInfoType(exi_bitstream_t* stream, struct iso20_a
 //          abstract=False; final=False;
 // Particle: Encoding, anyURI (0, 1); Id, ID (0, 1); MimeType, string (0, 1); ANY, anyType (0, 1)(old 1, 1);
 static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_acdp_ObjectType* ObjectType) {
-    int grammar_id = 54;
+    int grammar_id = 52;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3119,15 +3057,15 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
     {
         switch(grammar_id)
         {
-        case 54:
-            // Grammar: ID=54; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 52:
+            // Grammar: ID=52; read/write bits=3; START (Encoding), START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Encoding, anyURI (anyURI)); next=55
+                    // Event: START (Encoding, anyURI (anyURI)); next=53
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Encoding.charactersLen);
                     if (error == 0)
@@ -3145,10 +3083,10 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->Encoding_isUsed = 1u;
-                    grammar_id = 55;
+                    grammar_id = 53;
                     break;
                 case 1:
-                    // Event: START (Id, ID (NCName)); next=56
+                    // Event: START (Id, ID (NCName)); next=54
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -3166,10 +3104,10 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 56;
+                    grammar_id = 54;
                     break;
                 case 2:
-                    // Event: START (MimeType, string (string)); next=57
+                    // Event: START (MimeType, string (string)); next=55
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3187,7 +3125,7 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 57;
+                    grammar_id = 55;
                     break;
                 case 3:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3215,15 +3153,15 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 55:
-            // Grammar: ID=55; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
+        case 53:
+            // Grammar: ID=53; read/write bits=3; START (Id), START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=56
+                    // Event: START (Id, ID (NCName)); next=54
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->Id.charactersLen);
                     if (error == 0)
@@ -3241,10 +3179,10 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->Id_isUsed = 1u;
-                    grammar_id = 56;
+                    grammar_id = 54;
                     break;
                 case 1:
-                    // Event: START (MimeType, string (string)); next=57
+                    // Event: START (MimeType, string (string)); next=55
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3262,7 +3200,7 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 57;
+                    grammar_id = 55;
                     break;
                 case 2:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3290,15 +3228,15 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 56:
-            // Grammar: ID=56; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
+        case 54:
+            // Grammar: ID=54; read/write bits=3; START (MimeType), START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (MimeType, string (string)); next=57
+                    // Event: START (MimeType, string (string)); next=55
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ObjectType->MimeType.charactersLen);
                     if (error == 0)
@@ -3316,7 +3254,7 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                         }
                     }
                     ObjectType->MimeType_isUsed = 1u;
-                    grammar_id = 57;
+                    grammar_id = 55;
                     break;
                 case 1:
                     // Event: START (ANY, anyType (base64Binary)); next=2
@@ -3344,8 +3282,8 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
                 }
             }
             break;
-        case 57:
-            // Grammar: ID=57; read/write bits=2; START (ANY), END Element, START (ANY)
+        case 55:
+            // Grammar: ID=55; read/write bits=2; START (ANY), END Element, START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -3412,7 +3350,7 @@ static int decode_iso20_acdp_ObjectType(exi_bitstream_t* stream, struct iso20_ac
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); SignedInfo, SignedInfoType (1, 1); SignatureValue, SignatureValueType (1, 1); KeyInfo, KeyInfoType (0, 1); Object, ObjectType (0, 1);
 static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20_acdp_SignatureType* SignatureType) {
-    int grammar_id = 58;
+    int grammar_id = 56;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3423,15 +3361,15 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
     {
         switch(grammar_id)
         {
-        case 58:
-            // Grammar: ID=58; read/write bits=2; START (Id), START (SignedInfo)
+        case 56:
+            // Grammar: ID=56; read/write bits=2; START (Id), START (SignedInfo)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=59
+                    // Event: START (Id, ID (NCName)); next=57
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignatureType->Id.charactersLen);
                     if (error == 0)
@@ -3449,15 +3387,59 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
                         }
                     }
                     SignatureType->Id_isUsed = 1u;
-                    grammar_id = 59;
+                    grammar_id = 57;
                     break;
                 case 1:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=60
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=58
                     // decode: element
                     error = decode_iso20_acdp_SignedInfoType(stream, &SignatureType->SignedInfo);
                     if (error == 0)
                     {
-                        grammar_id = 60;
+                        grammar_id = 58;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 57:
+            // Grammar: ID=57; read/write bits=1; START (SignedInfo)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=58
+                    // decode: element
+                    error = decode_iso20_acdp_SignedInfoType(stream, &SignatureType->SignedInfo);
+                    if (error == 0)
+                    {
+                        grammar_id = 58;
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 58:
+            // Grammar: ID=58; read/write bits=1; START (SignatureValue)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=59
+                    // decode: element
+                    error = decode_iso20_acdp_SignatureValueType(stream, &SignatureType->SignatureValue);
+                    if (error == 0)
+                    {
+                        grammar_id = 59;
                     }
                     break;
                 default:
@@ -3467,74 +3449,30 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
             }
             break;
         case 59:
-            // Grammar: ID=59; read/write bits=1; START (SignedInfo)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SignedInfo, SignedInfoType (SignedInfoType)); next=60
-                    // decode: element
-                    error = decode_iso20_acdp_SignedInfoType(stream, &SignatureType->SignedInfo);
-                    if (error == 0)
-                    {
-                        grammar_id = 60;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 60:
-            // Grammar: ID=60; read/write bits=1; START (SignatureValue)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (SignatureValue, SignatureValueType (base64Binary)); next=61
-                    // decode: element
-                    error = decode_iso20_acdp_SignatureValueType(stream, &SignatureType->SignatureValue);
-                    if (error == 0)
-                    {
-                        grammar_id = 61;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 61:
-            // Grammar: ID=61; read/write bits=2; START (KeyInfo), START (Object), END Element
+            // Grammar: ID=59; read/write bits=2; START (KeyInfo), START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=63
+                    // Event: START (KeyInfo, KeyInfoType (KeyInfoType)); next=61
                     // decode: element
                     error = decode_iso20_acdp_KeyInfoType(stream, &SignatureType->KeyInfo);
                     if (error == 0)
                     {
                         SignatureType->KeyInfo_isUsed = 1u;
-                        grammar_id = 63;
+                        grammar_id = 61;
                     }
                     break;
                 case 1:
-                    // Event: START (Object, ObjectType (ObjectType)); next=62
+                    // Event: START (Object, ObjectType (ObjectType)); next=60
                     // decode: element
                     error = decode_iso20_acdp_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 62;
+                        grammar_id = 60;
                     }
                     break;
                 case 2:
@@ -3548,8 +3486,8 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 62:
-            // Grammar: ID=62; read/write bits=2; START (Object), END Element
+        case 60:
+            // Grammar: ID=60; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -3576,21 +3514,21 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 63:
-            // Grammar: ID=63; read/write bits=2; START (Object), END Element
+        case 61:
+            // Grammar: ID=61; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Object, ObjectType (ObjectType)); next=64
+                    // Event: START (Object, ObjectType (ObjectType)); next=62
                     // decode: element
                     error = decode_iso20_acdp_ObjectType(stream, &SignatureType->Object);
                     if (error == 0)
                     {
                         SignatureType->Object_isUsed = 1u;
-                        grammar_id = 64;
+                        grammar_id = 62;
                     }
                     break;
                 case 1:
@@ -3604,8 +3542,8 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
                 }
             }
             break;
-        case 64:
-            // Grammar: ID=64; read/write bits=2; START (Object), END Element
+        case 62:
+            // Grammar: ID=62; read/write bits=2; START (Object), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -3667,7 +3605,7 @@ static int decode_iso20_acdp_SignatureType(exi_bitstream_t* stream, struct iso20
 //          abstract=False; final=False;
 // Particle: Exponent, byte (1, 1); Value, short (1, 1);
 static int decode_iso20_acdp_RationalNumberType(exi_bitstream_t* stream, struct iso20_acdp_RationalNumberType* RationalNumberType) {
-    int grammar_id = 65;
+    int grammar_id = 63;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3678,15 +3616,15 @@ static int decode_iso20_acdp_RationalNumberType(exi_bitstream_t* stream, struct 
     {
         switch(grammar_id)
         {
-        case 65:
-            // Grammar: ID=65; read/write bits=1; START (Exponent)
+        case 63:
+            // Grammar: ID=63; read/write bits=1; START (Exponent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Exponent, byte (short)); next=66
+                    // Event: START (Exponent, byte (short)); next=64
                     // decode: byte (restricted integer)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -3717,7 +3655,7 @@ static int decode_iso20_acdp_RationalNumberType(exi_bitstream_t* stream, struct 
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 66;
+                                grammar_id = 64;
                             }
                             else
                             {
@@ -3732,8 +3670,8 @@ static int decode_iso20_acdp_RationalNumberType(exi_bitstream_t* stream, struct 
                 }
             }
             break;
-        case 66:
-            // Grammar: ID=66; read/write bits=1; START (Value)
+        case 64:
+            // Grammar: ID=64; read/write bits=1; START (Value)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -3789,7 +3727,7 @@ static int decode_iso20_acdp_RationalNumberType(exi_bitstream_t* stream, struct 
 //          abstract=False; final=False;
 // Particle: SessionID, sessionIDType (1, 1); TimeStamp, unsignedLong (1, 1); Signature, SignatureType (0, 1);
 static int decode_iso20_acdp_MessageHeaderType(exi_bitstream_t* stream, struct iso20_acdp_MessageHeaderType* MessageHeaderType) {
-    int grammar_id = 67;
+    int grammar_id = 65;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3800,20 +3738,20 @@ static int decode_iso20_acdp_MessageHeaderType(exi_bitstream_t* stream, struct i
     {
         switch(grammar_id)
         {
-        case 67:
-            // Grammar: ID=67; read/write bits=1; START (SessionID)
+        case 65:
+            // Grammar: ID=65; read/write bits=1; START (SessionID)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (SessionID, sessionIDType (hexBinary)); next=68
+                    // Event: START (SessionID, sessionIDType (hexBinary)); next=66
                     // decode exi type: hexBinary
                     error = decode_exi_type_hex_binary(stream, &MessageHeaderType->SessionID.bytesLen, &MessageHeaderType->SessionID.bytes[0], iso20_acdp_sessionIDType_BYTES_SIZE);
                     if (error == 0)
                     {
-                        grammar_id = 68;
+                        grammar_id = 66;
                     }
                     break;
                 default:
@@ -3822,20 +3760,20 @@ static int decode_iso20_acdp_MessageHeaderType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 68:
-            // Grammar: ID=68; read/write bits=1; START (TimeStamp)
+        case 66:
+            // Grammar: ID=66; read/write bits=1; START (TimeStamp)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=69
+                    // Event: START (TimeStamp, unsignedLong (nonNegativeInteger)); next=67
                     // decode: unsigned long int
                     error = decode_exi_type_uint64(stream, &MessageHeaderType->TimeStamp);
                     if (error == 0)
                     {
-                        grammar_id = 69;
+                        grammar_id = 67;
                     }
                     break;
                 default:
@@ -3844,8 +3782,8 @@ static int decode_iso20_acdp_MessageHeaderType(exi_bitstream_t* stream, struct i
                 }
             }
             break;
-        case 69:
-            // Grammar: ID=69; read/write bits=2; START (Signature), END Element
+        case 67:
+            // Grammar: ID=67; read/write bits=2; START (Signature), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -3907,7 +3845,7 @@ static int decode_iso20_acdp_MessageHeaderType(exi_bitstream_t* stream, struct i
 //          abstract=False; final=False; choice=True;
 // Particle: Id, ID (0, 1); Target, anyURI (1, 1); ANY, anyType (0, 1);
 static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, struct iso20_acdp_SignaturePropertyType* SignaturePropertyType) {
-    int grammar_id = 70;
+    int grammar_id = 68;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -3918,15 +3856,15 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
     {
         switch(grammar_id)
         {
-        case 70:
-            // Grammar: ID=70; read/write bits=2; START (Id), START (Target)
+        case 68:
+            // Grammar: ID=68; read/write bits=2; START (Id), START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=71
+                    // Event: START (Id, ID (NCName)); next=69
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Id.charactersLen);
                     if (error == 0)
@@ -3944,10 +3882,10 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
                         }
                     }
                     SignaturePropertyType->Id_isUsed = 1u;
-                    grammar_id = 71;
+                    grammar_id = 69;
                     break;
                 case 1:
-                    // Event: START (Target, anyURI (anyURI)); next=72
+                    // Event: START (Target, anyURI (anyURI)); next=70
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -3964,7 +3902,7 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 72;
+                    grammar_id = 70;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -3972,15 +3910,15 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 71:
-            // Grammar: ID=71; read/write bits=1; START (Target)
+        case 69:
+            // Grammar: ID=69; read/write bits=1; START (Target)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Target, anyURI (anyURI)); next=72
+                    // Event: START (Target, anyURI (anyURI)); next=70
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertyType->Target.charactersLen);
                     if (error == 0)
@@ -3997,7 +3935,7 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
                             error = EXI_ERROR__STRINGVALUES_NOT_SUPPORTED;
                         }
                     }
-                    grammar_id = 72;
+                    grammar_id = 70;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -4005,8 +3943,8 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 72:
-            // Grammar: ID=72; read/write bits=1; START (ANY)
+        case 70:
+            // Grammar: ID=70; read/write bits=1; START (ANY)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -4063,7 +4001,7 @@ static int decode_iso20_acdp_SignaturePropertyType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False;
 // Particle: EVReadyToCharge, boolean (1, 1); EVImmobilizationRequest, boolean (1, 1); EVImmobilized, boolean (0, 1); EVWLANStrength, RationalNumberType (0, 1); EVCPStatus, cpStatusType (0, 1); EVSOC, percentValueType (0, 1); EVErrorCode, errorCodeType (0, 1); EVTimeout, boolean (0, 1);
 static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, struct iso20_acdp_EVTechnicalStatusType* EVTechnicalStatusType) {
-    int grammar_id = 73;
+    int grammar_id = 71;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -4074,15 +4012,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
     {
         switch(grammar_id)
         {
-        case 73:
-            // Grammar: ID=73; read/write bits=1; START (EVReadyToCharge)
+        case 71:
+            // Grammar: ID=71; read/write bits=1; START (EVReadyToCharge)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVReadyToCharge, boolean (boolean)); next=74
+                    // Event: START (EVReadyToCharge, boolean (boolean)); next=72
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4112,7 +4050,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 74;
+                                grammar_id = 72;
                             }
                             else
                             {
@@ -4127,15 +4065,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 74:
-            // Grammar: ID=74; read/write bits=1; START (EVImmobilizationRequest)
+        case 72:
+            // Grammar: ID=72; read/write bits=1; START (EVImmobilizationRequest)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVImmobilizationRequest, boolean (boolean)); next=75
+                    // Event: START (EVImmobilizationRequest, boolean (boolean)); next=73
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4165,7 +4103,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 75;
+                                grammar_id = 73;
                             }
                             else
                             {
@@ -4180,15 +4118,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 75:
-            // Grammar: ID=75; read/write bits=3; START (EVImmobilized), START (EVWLANStrength), START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
+        case 73:
+            // Grammar: ID=73; read/write bits=3; START (EVImmobilized), START (EVWLANStrength), START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVImmobilized, boolean (boolean)); next=76
+                    // Event: START (EVImmobilized, boolean (boolean)); next=74
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4219,7 +4157,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 76;
+                                grammar_id = 74;
                             }
                             else
                             {
@@ -4229,17 +4167,17 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 1:
-                    // Event: START (EVWLANStrength, RationalNumberType (RationalNumberType)); next=77
+                    // Event: START (EVWLANStrength, RationalNumberType (RationalNumberType)); next=75
                     // decode: element
                     error = decode_iso20_acdp_RationalNumberType(stream, &EVTechnicalStatusType->EVWLANStrength);
                     if (error == 0)
                     {
                         EVTechnicalStatusType->EVWLANStrength_isUsed = 1u;
-                        grammar_id = 77;
+                        grammar_id = 75;
                     }
                     break;
                 case 2:
-                    // Event: START (EVCPStatus, cpStatusType (string)); next=78
+                    // Event: START (EVCPStatus, cpStatusType (string)); next=76
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4270,7 +4208,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 78;
+                                grammar_id = 76;
                             }
                             else
                             {
@@ -4280,7 +4218,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 3:
-                    // Event: START (EVSOC, percentValueType (byte)); next=79
+                    // Event: START (EVSOC, percentValueType (byte)); next=77
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4311,7 +4249,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 79;
+                                grammar_id = 77;
                             }
                             else
                             {
@@ -4321,7 +4259,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 4:
-                    // Event: START (EVErrorCode, errorCodeType (string)); next=80
+                    // Event: START (EVErrorCode, errorCodeType (string)); next=78
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4352,7 +4290,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 80;
+                                grammar_id = 78;
                             }
                             else
                             {
@@ -4413,25 +4351,25 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 76:
-            // Grammar: ID=76; read/write bits=3; START (EVWLANStrength), START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
+        case 74:
+            // Grammar: ID=74; read/write bits=3; START (EVWLANStrength), START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVWLANStrength, RationalNumberType (RationalNumberType)); next=77
+                    // Event: START (EVWLANStrength, RationalNumberType (RationalNumberType)); next=75
                     // decode: element
                     error = decode_iso20_acdp_RationalNumberType(stream, &EVTechnicalStatusType->EVWLANStrength);
                     if (error == 0)
                     {
                         EVTechnicalStatusType->EVWLANStrength_isUsed = 1u;
-                        grammar_id = 77;
+                        grammar_id = 75;
                     }
                     break;
                 case 1:
-                    // Event: START (EVCPStatus, cpStatusType (string)); next=78
+                    // Event: START (EVCPStatus, cpStatusType (string)); next=76
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4462,7 +4400,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 78;
+                                grammar_id = 76;
                             }
                             else
                             {
@@ -4472,7 +4410,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 2:
-                    // Event: START (EVSOC, percentValueType (byte)); next=79
+                    // Event: START (EVSOC, percentValueType (byte)); next=77
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4503,7 +4441,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 79;
+                                grammar_id = 77;
                             }
                             else
                             {
@@ -4513,7 +4451,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 3:
-                    // Event: START (EVErrorCode, errorCodeType (string)); next=80
+                    // Event: START (EVErrorCode, errorCodeType (string)); next=78
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4544,7 +4482,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 80;
+                                grammar_id = 78;
                             }
                             else
                             {
@@ -4605,15 +4543,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 77:
-            // Grammar: ID=77; read/write bits=3; START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
+        case 75:
+            // Grammar: ID=75; read/write bits=3; START (EVCPStatus), START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVCPStatus, cpStatusType (string)); next=78
+                    // Event: START (EVCPStatus, cpStatusType (string)); next=76
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4644,7 +4582,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 78;
+                                grammar_id = 76;
                             }
                             else
                             {
@@ -4654,7 +4592,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 1:
-                    // Event: START (EVSOC, percentValueType (byte)); next=79
+                    // Event: START (EVSOC, percentValueType (byte)); next=77
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4685,7 +4623,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 79;
+                                grammar_id = 77;
                             }
                             else
                             {
@@ -4695,7 +4633,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 2:
-                    // Event: START (EVErrorCode, errorCodeType (string)); next=80
+                    // Event: START (EVErrorCode, errorCodeType (string)); next=78
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4726,7 +4664,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 80;
+                                grammar_id = 78;
                             }
                             else
                             {
@@ -4787,15 +4725,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 78:
-            // Grammar: ID=78; read/write bits=3; START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
+        case 76:
+            // Grammar: ID=76; read/write bits=3; START (EVSOC), START (EVErrorCode), START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 3, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSOC, percentValueType (byte)); next=79
+                    // Event: START (EVSOC, percentValueType (byte)); next=77
                     // decode: restricted integer (4096 or fewer values)
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4826,7 +4764,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 79;
+                                grammar_id = 77;
                             }
                             else
                             {
@@ -4836,7 +4774,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                     }
                     break;
                 case 1:
-                    // Event: START (EVErrorCode, errorCodeType (string)); next=80
+                    // Event: START (EVErrorCode, errorCodeType (string)); next=78
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4867,7 +4805,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 80;
+                                grammar_id = 78;
                             }
                             else
                             {
@@ -4928,15 +4866,15 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 79:
-            // Grammar: ID=79; read/write bits=2; START (EVErrorCode), START (EVTimeout), END Element
+        case 77:
+            // Grammar: ID=77; read/write bits=2; START (EVErrorCode), START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVErrorCode, errorCodeType (string)); next=80
+                    // Event: START (EVErrorCode, errorCodeType (string)); next=78
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -4967,7 +4905,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 80;
+                                grammar_id = 78;
                             }
                             else
                             {
@@ -5028,8 +4966,8 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
                 }
             }
             break;
-        case 80:
-            // Grammar: ID=80; read/write bits=2; START (EVTimeout), END Element
+        case 78:
+            // Grammar: ID=78; read/write bits=2; START (EVTimeout), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -5122,7 +5060,7 @@ static int decode_iso20_acdp_EVTechnicalStatusType(exi_bitstream_t* stream, stru
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVMobilityStatus, boolean (1, 1); EVPositioningSupport, boolean (1, 1);
 static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_VehiclePositioningReqType* ACDP_VehiclePositioningReqType) {
-    int grammar_id = 81;
+    int grammar_id = 79;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5133,20 +5071,20 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* str
     {
         switch(grammar_id)
         {
-        case 81:
-            // Grammar: ID=81; read/write bits=1; START (Header)
+        case 79:
+            // Grammar: ID=79; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=82
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=80
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_VehiclePositioningReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 82;
+                        grammar_id = 80;
                     }
                     break;
                 default:
@@ -5155,15 +5093,15 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 82:
-            // Grammar: ID=82; read/write bits=1; START (EVMobilityStatus)
+        case 80:
+            // Grammar: ID=80; read/write bits=1; START (EVMobilityStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVMobilityStatus, boolean (boolean)); next=83
+                    // Event: START (EVMobilityStatus, boolean (boolean)); next=81
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5193,7 +5131,7 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* str
                         {
                             if (eventCode == 0)
                             {
-                                grammar_id = 83;
+                                grammar_id = 81;
                             }
                             else
                             {
@@ -5208,8 +5146,8 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* str
                 }
             }
             break;
-        case 83:
-            // Grammar: ID=83; read/write bits=1; START (EVPositioningSupport)
+        case 81:
+            // Grammar: ID=81; read/write bits=1; START (EVPositioningSupport)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -5296,7 +5234,7 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningReqType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); EVSEPositioningSupport, boolean (1, 1); EVRelativeXDeviation, short (1, 1); EVRelativeYDeviation, short (1, 1); ContactWindowXc, short (1, 1); ContactWindowYc, short (1, 1); EVInChargePosition, boolean (1, 1);
 static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_VehiclePositioningResType* ACDP_VehiclePositioningResType) {
-    int grammar_id = 84;
+    int grammar_id = 82;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5307,20 +5245,20 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
     {
         switch(grammar_id)
         {
-        case 84:
-            // Grammar: ID=84; read/write bits=1; START (Header)
+        case 82:
+            // Grammar: ID=82; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=85
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=83
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_VehiclePositioningResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 85;
+                        grammar_id = 83;
                     }
                     break;
                 default:
@@ -5329,15 +5267,15 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
                 }
             }
             break;
-        case 85:
-            // Grammar: ID=85; read/write bits=1; START (ResponseCode)
+        case 83:
+            // Grammar: ID=83; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=86
+                    // Event: START (ResponseCode, responseCodeType (string)); next=84
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5349,6 +5287,112 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
                             if (error == 0)
                             {
                                 ACDP_VehiclePositioningResType->ResponseCode = (iso20_acdp_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 84;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 84:
+            // Grammar: ID=84; read/write bits=1; START (EVSEProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEProcessing, processingType (string)); next=85
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ACDP_VehiclePositioningResType->EVSEProcessing = (iso20_acdp_processingType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 85;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 85:
+            // Grammar: ID=85; read/write bits=1; START (EVSEPositioningSupport)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEPositioningSupport, boolean (boolean)); next=86
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ACDP_VehiclePositioningResType->EVSEPositioningSupport = value;
                             }
                         }
                         else
@@ -5383,50 +5427,19 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
             }
             break;
         case 86:
-            // Grammar: ID=86; read/write bits=1; START (EVSEProcessing)
+            // Grammar: ID=86; read/write bits=1; START (EVRelativeXDeviation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=87
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (EVRelativeXDeviation, short (int)); next=87
+                    // decode: short
+                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->EVRelativeXDeviation);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                ACDP_VehiclePositioningResType->EVSEProcessing = (iso20_acdp_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 87;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
+                        grammar_id = 87;
                     }
                     break;
                 default:
@@ -5436,50 +5449,19 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
             }
             break;
         case 87:
-            // Grammar: ID=87; read/write bits=1; START (EVSEPositioningSupport)
+            // Grammar: ID=87; read/write bits=1; START (EVRelativeYDeviation)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEPositioningSupport, boolean (boolean)); next=88
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    // Event: START (EVRelativeYDeviation, short (int)); next=88
+                    // decode: short
+                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->EVRelativeYDeviation);
                     if (error == 0)
                     {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ACDP_VehiclePositioningResType->EVSEPositioningSupport = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 88;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
+                        grammar_id = 88;
                     }
                     break;
                 default:
@@ -5489,16 +5471,16 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
             }
             break;
         case 88:
-            // Grammar: ID=88; read/write bits=1; START (EVRelativeXDeviation)
+            // Grammar: ID=88; read/write bits=1; START (ContactWindowXc)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVRelativeXDeviation, short (int)); next=89
+                    // Event: START (ContactWindowXc, short (int)); next=89
                     // decode: short
-                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->EVRelativeXDeviation);
+                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->ContactWindowXc);
                     if (error == 0)
                     {
                         grammar_id = 89;
@@ -5511,16 +5493,16 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
             }
             break;
         case 89:
-            // Grammar: ID=89; read/write bits=1; START (EVRelativeYDeviation)
+            // Grammar: ID=89; read/write bits=1; START (ContactWindowYc)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVRelativeYDeviation, short (int)); next=90
+                    // Event: START (ContactWindowYc, short (int)); next=90
                     // decode: short
-                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->EVRelativeYDeviation);
+                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->ContactWindowYc);
                     if (error == 0)
                     {
                         grammar_id = 90;
@@ -5533,51 +5515,7 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
             }
             break;
         case 90:
-            // Grammar: ID=90; read/write bits=1; START (ContactWindowXc)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ContactWindowXc, short (int)); next=91
-                    // decode: short
-                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->ContactWindowXc);
-                    if (error == 0)
-                    {
-                        grammar_id = 91;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 91:
-            // Grammar: ID=91; read/write bits=1; START (ContactWindowYc)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (ContactWindowYc, short (int)); next=92
-                    // decode: short
-                    error = decode_exi_type_integer16(stream, &ACDP_VehiclePositioningResType->ContactWindowYc);
-                    if (error == 0)
-                    {
-                        grammar_id = 92;
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 92:
-            // Grammar: ID=92; read/write bits=1; START (EVInChargePosition)
+            // Grammar: ID=90; read/write bits=1; START (EVInChargePosition)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -5664,7 +5602,7 @@ static int decode_iso20_acdp_ACDP_VehiclePositioningResType(exi_bitstream_t* str
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVElectricalChargingDeviceStatus, electricalChargingDeviceStatusType (1, 1);
 static int decode_iso20_acdp_ACDP_ConnectReqType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_ConnectReqType* ACDP_ConnectReqType) {
-    int grammar_id = 93;
+    int grammar_id = 91;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5675,20 +5613,20 @@ static int decode_iso20_acdp_ACDP_ConnectReqType(exi_bitstream_t* stream, struct
     {
         switch(grammar_id)
         {
-        case 93:
-            // Grammar: ID=93; read/write bits=1; START (Header)
+        case 91:
+            // Grammar: ID=91; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=94
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=92
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_ConnectReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 94;
+                        grammar_id = 92;
                     }
                     break;
                 default:
@@ -5697,8 +5635,8 @@ static int decode_iso20_acdp_ACDP_ConnectReqType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 94:
-            // Grammar: ID=94; read/write bits=1; START (EVElectricalChargingDeviceStatus)
+        case 92:
+            // Grammar: ID=92; read/write bits=1; START (EVElectricalChargingDeviceStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -5785,7 +5723,7 @@ static int decode_iso20_acdp_ACDP_ConnectReqType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEProcessing, processingType (1, 1); EVSEElectricalChargingDeviceStatus, electricalChargingDeviceStatusType (1, 1); EVSEMechanicalChargingDeviceStatus, mechanicalChargingDeviceStatusType (1, 1);
 static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_ConnectResType* ACDP_ConnectResType) {
-    int grammar_id = 95;
+    int grammar_id = 93;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -5796,20 +5734,20 @@ static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct
     {
         switch(grammar_id)
         {
-        case 95:
-            // Grammar: ID=95; read/write bits=1; START (Header)
+        case 93:
+            // Grammar: ID=93; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=96
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=94
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_ConnectResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 96;
+                        grammar_id = 94;
                     }
                     break;
                 default:
@@ -5818,15 +5756,15 @@ static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct
                 }
             }
             break;
-        case 96:
-            // Grammar: ID=96; read/write bits=1; START (ResponseCode)
+        case 94:
+            // Grammar: ID=94; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=97
+                    // Event: START (ResponseCode, responseCodeType (string)); next=95
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -5838,6 +5776,112 @@ static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct
                             if (error == 0)
                             {
                                 ACDP_ConnectResType->ResponseCode = (iso20_acdp_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 95;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 95:
+            // Grammar: ID=95; read/write bits=1; START (EVSEProcessing)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEProcessing, processingType (string)); next=96
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ACDP_ConnectResType->EVSEProcessing = (iso20_acdp_processingType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 96;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 96:
+            // Grammar: ID=96; read/write bits=1; START (EVSEElectricalChargingDeviceStatus)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEElectricalChargingDeviceStatus, electricalChargingDeviceStatusType (string)); next=97
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ACDP_ConnectResType->EVSEElectricalChargingDeviceStatus = (iso20_acdp_electricalChargingDeviceStatusType)value;
                             }
                         }
                         else
@@ -5872,113 +5916,7 @@ static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct
             }
             break;
         case 97:
-            // Grammar: ID=97; read/write bits=1; START (EVSEProcessing)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEProcessing, processingType (string)); next=98
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                ACDP_ConnectResType->EVSEProcessing = (iso20_acdp_processingType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 98;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 98:
-            // Grammar: ID=98; read/write bits=1; START (EVSEElectricalChargingDeviceStatus)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEElectricalChargingDeviceStatus, electricalChargingDeviceStatusType (string)); next=99
-                    // decode: enum
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
-                            if (error == 0)
-                            {
-                                ACDP_ConnectResType->EVSEElectricalChargingDeviceStatus = (iso20_acdp_electricalChargingDeviceStatusType)value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 99;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 99:
-            // Grammar: ID=99; read/write bits=1; START (EVSEMechanicalChargingDeviceStatus)
+            // Grammar: ID=97; read/write bits=1; START (EVSEMechanicalChargingDeviceStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -6065,7 +6003,7 @@ static int decode_iso20_acdp_ACDP_ConnectResType(exi_bitstream_t* stream, struct
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); EVTechnicalStatus, EVTechnicalStatusType (1, 1);
 static int decode_iso20_acdp_ACDP_SystemStatusReqType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_SystemStatusReqType* ACDP_SystemStatusReqType) {
-    int grammar_id = 100;
+    int grammar_id = 98;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -6076,20 +6014,20 @@ static int decode_iso20_acdp_ACDP_SystemStatusReqType(exi_bitstream_t* stream, s
     {
         switch(grammar_id)
         {
-        case 100:
-            // Grammar: ID=100; read/write bits=1; START (Header)
+        case 98:
+            // Grammar: ID=98; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=101
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=99
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_SystemStatusReqType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 101;
+                        grammar_id = 99;
                     }
                     break;
                 default:
@@ -6098,8 +6036,8 @@ static int decode_iso20_acdp_ACDP_SystemStatusReqType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 101:
-            // Grammar: ID=101; read/write bits=1; START (EVTechnicalStatus)
+        case 99:
+            // Grammar: ID=99; read/write bits=1; START (EVTechnicalStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -6155,7 +6093,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusReqType(exi_bitstream_t* stream, s
 //          abstract=False; final=False; derivation=extension;
 // Particle: Header, MessageHeaderType (1, 1); ResponseCode, responseCodeType (1, 1); EVSEMechanicalChargingDeviceStatus, mechanicalChargingDeviceStatusType (1, 1); EVSEReadyToCharge, boolean (1, 1); EVSEIsolationStatus, isolationStatusType (1, 1); EVSEDisabled, boolean (1, 1); EVSEUtilityInterruptEvent, boolean (1, 1); EVSEEmergencyShutdown, boolean (1, 1); EVSEMalfunction, boolean (1, 1); EVInChargePosition, boolean (1, 1); EVAssociationStatus, boolean (1, 1);
 static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, struct iso20_acdp_ACDP_SystemStatusResType* ACDP_SystemStatusResType) {
-    int grammar_id = 102;
+    int grammar_id = 100;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -6166,20 +6104,20 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
     {
         switch(grammar_id)
         {
-        case 102:
-            // Grammar: ID=102; read/write bits=1; START (Header)
+        case 100:
+            // Grammar: ID=100; read/write bits=1; START (Header)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=103
+                    // Event: START (Header, MessageHeaderType (MessageHeaderType)); next=101
                     // decode: element
                     error = decode_iso20_acdp_MessageHeaderType(stream, &ACDP_SystemStatusResType->Header);
                     if (error == 0)
                     {
-                        grammar_id = 103;
+                        grammar_id = 101;
                     }
                     break;
                 default:
@@ -6188,15 +6126,15 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                 }
             }
             break;
-        case 103:
-            // Grammar: ID=103; read/write bits=1; START (ResponseCode)
+        case 101:
+            // Grammar: ID=101; read/write bits=1; START (ResponseCode)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (ResponseCode, responseCodeType (string)); next=104
+                    // Event: START (ResponseCode, responseCodeType (string)); next=102
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6208,6 +6146,112 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             if (error == 0)
                             {
                                 ACDP_SystemStatusResType->ResponseCode = (iso20_acdp_responseCodeType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 102;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 102:
+            // Grammar: ID=102; read/write bits=1; START (EVSEMechanicalChargingDeviceStatus)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEMechanicalChargingDeviceStatus, mechanicalChargingDeviceStatusType (string)); next=103
+                    // decode: enum
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            if (error == 0)
+                            {
+                                ACDP_SystemStatusResType->EVSEMechanicalChargingDeviceStatus = (iso20_acdp_mechanicalChargingDeviceStatusType)value;
+                            }
+                        }
+                        else
+                        {
+                            // second level event is not supported
+                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
+                        }
+                    }
+
+                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
+                    if (error == 0)
+                    {
+                        // END Element for simple type
+                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                        if (error == 0)
+                        {
+                            if (eventCode == 0)
+                            {
+                                grammar_id = 103;
+                            }
+                            else
+                            {
+                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 103:
+            // Grammar: ID=103; read/write bits=1; START (EVSEReadyToCharge)
+            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: START (EVSEReadyToCharge, boolean (boolean)); next=104
+                    // decode: boolean
+                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
+                    if (error == 0)
+                    {
+                        if (eventCode == 0)
+                        {
+                            uint32_t value;
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
+                            if (error == 0)
+                            {
+                                ACDP_SystemStatusResType->EVSEReadyToCharge = value;
                             }
                         }
                         else
@@ -6242,14 +6286,14 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 104:
-            // Grammar: ID=104; read/write bits=1; START (EVSEMechanicalChargingDeviceStatus)
+            // Grammar: ID=104; read/write bits=1; START (EVSEIsolationStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEMechanicalChargingDeviceStatus, mechanicalChargingDeviceStatusType (string)); next=105
+                    // Event: START (EVSEIsolationStatus, isolationStatusType (string)); next=105
                     // decode: enum
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6260,7 +6304,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEMechanicalChargingDeviceStatus = (iso20_acdp_mechanicalChargingDeviceStatusType)value;
+                                ACDP_SystemStatusResType->EVSEIsolationStatus = (iso20_acdp_isolationStatusType)value;
                             }
                         }
                         else
@@ -6295,14 +6339,14 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 105:
-            // Grammar: ID=105; read/write bits=1; START (EVSEReadyToCharge)
+            // Grammar: ID=105; read/write bits=1; START (EVSEDisabled)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEReadyToCharge, boolean (boolean)); next=106
+                    // Event: START (EVSEDisabled, boolean (boolean)); next=106
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6313,7 +6357,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEReadyToCharge = value;
+                                ACDP_SystemStatusResType->EVSEDisabled = value;
                             }
                         }
                         else
@@ -6348,25 +6392,25 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 106:
-            // Grammar: ID=106; read/write bits=1; START (EVSEIsolationStatus)
+            // Grammar: ID=106; read/write bits=1; START (EVSEUtilityInterruptEvent)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEIsolationStatus, isolationStatusType (string)); next=107
-                    // decode: enum
+                    // Event: START (EVSEUtilityInterruptEvent, boolean (boolean)); next=107
+                    // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
                     {
                         if (eventCode == 0)
                         {
                             uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 2, &value);
+                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEIsolationStatus = (iso20_acdp_isolationStatusType)value;
+                                ACDP_SystemStatusResType->EVSEUtilityInterruptEvent = value;
                             }
                         }
                         else
@@ -6401,14 +6445,14 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 107:
-            // Grammar: ID=107; read/write bits=1; START (EVSEDisabled)
+            // Grammar: ID=107; read/write bits=1; START (EVSEEmergencyShutdown)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEDisabled, boolean (boolean)); next=108
+                    // Event: START (EVSEEmergencyShutdown, boolean (boolean)); next=108
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6419,7 +6463,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEDisabled = value;
+                                ACDP_SystemStatusResType->EVSEEmergencyShutdown = value;
                             }
                         }
                         else
@@ -6454,14 +6498,14 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 108:
-            // Grammar: ID=108; read/write bits=1; START (EVSEUtilityInterruptEvent)
+            // Grammar: ID=108; read/write bits=1; START (EVSEMalfunction)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEUtilityInterruptEvent, boolean (boolean)); next=109
+                    // Event: START (EVSEMalfunction, boolean (boolean)); next=109
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6472,7 +6516,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEUtilityInterruptEvent = value;
+                                ACDP_SystemStatusResType->EVSEMalfunction = value;
                             }
                         }
                         else
@@ -6507,14 +6551,14 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 109:
-            // Grammar: ID=109; read/write bits=1; START (EVSEEmergencyShutdown)
+            // Grammar: ID=109; read/write bits=1; START (EVInChargePosition)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (EVSEEmergencyShutdown, boolean (boolean)); next=110
+                    // Event: START (EVInChargePosition, boolean (boolean)); next=110
                     // decode: boolean
                     error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
                     if (error == 0)
@@ -6525,7 +6569,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
                             error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
                             if (error == 0)
                             {
-                                ACDP_SystemStatusResType->EVSEEmergencyShutdown = value;
+                                ACDP_SystemStatusResType->EVInChargePosition = value;
                             }
                         }
                         else
@@ -6560,113 +6604,7 @@ static int decode_iso20_acdp_ACDP_SystemStatusResType(exi_bitstream_t* stream, s
             }
             break;
         case 110:
-            // Grammar: ID=110; read/write bits=1; START (EVSEMalfunction)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVSEMalfunction, boolean (boolean)); next=111
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ACDP_SystemStatusResType->EVSEMalfunction = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 111;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 111:
-            // Grammar: ID=111; read/write bits=1; START (EVInChargePosition)
-            error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (EVInChargePosition, boolean (boolean)); next=112
-                    // decode: boolean
-                    error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                    if (error == 0)
-                    {
-                        if (eventCode == 0)
-                        {
-                            uint32_t value;
-                            error = exi_basetypes_decoder_nbit_uint(stream, 1, &value);
-                            if (error == 0)
-                            {
-                                ACDP_SystemStatusResType->EVInChargePosition = value;
-                            }
-                        }
-                        else
-                        {
-                            // second level event is not supported
-                            error = EXI_ERROR__UNSUPPORTED_SUB_EVENT;
-                        }
-                    }
-
-                    // if nothing went wrong, the error of exi_basetypes_decoder_nbit_uint is evaluated here
-                    if (error == 0)
-                    {
-                        // END Element for simple type
-                        error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
-                        if (error == 0)
-                        {
-                            if (eventCode == 0)
-                            {
-                                grammar_id = 112;
-                            }
-                            else
-                            {
-                                error = EXI_ERROR__DEVIANTS_NOT_SUPPORTED;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 112:
-            // Grammar: ID=112; read/write bits=1; START (EVAssociationStatus)
+            // Grammar: ID=110; read/write bits=1; START (EVAssociationStatus)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
@@ -6791,7 +6729,7 @@ static int decode_iso20_acdp_CLResControlModeType(exi_bitstream_t* stream, struc
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); Reference, ReferenceType (1, 4);
 static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_acdp_ManifestType* ManifestType) {
-    int grammar_id = 113;
+    int grammar_id = 111;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -6802,15 +6740,15 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
     {
         switch(grammar_id)
         {
-        case 113:
-            // Grammar: ID=113; read/write bits=2; START (Id), START (Reference)
+        case 111:
+            // Grammar: ID=111; read/write bits=2; START (Id), START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=118
+                    // Event: START (Id, ID (NCName)); next=114
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &ManifestType->Id.charactersLen);
                     if (error == 0)
@@ -6828,36 +6766,10 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                         }
                     }
                     ManifestType->Id_isUsed = 1u;
-                    grammar_id = 118;
-                    break;
-                case 1:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=114
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
                     grammar_id = 114;
                     break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 114:
-            // Grammar: ID=114; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=115
+                case 1:
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=112
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -6867,7 +6779,33 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 115;
+                    grammar_id = 112;
+                    break;
+                default:
+                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
+                    break;
+                }
+            }
+            break;
+        case 112:
+            // Grammar: ID=112; read/write bits=2; LOOP (Reference), END Element
+            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
+            if (error == 0)
+            {
+                switch(eventCode)
+                {
+                case 0:
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=112
+                    // decode: element array
+                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
+                    {
+                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
+                    }
+                    else
+                    {
+                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
+                    }
+                    grammar_id = 112;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -6880,77 +6818,15 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 115:
-            // Grammar: ID=115; read/write bits=2; START (Reference), END Element
+        case 113:
+            // Grammar: ID=113; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=116
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 116;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 116:
-            // Grammar: ID=116; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=117
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 117;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 117:
-            // Grammar: ID=117; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=2
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -6973,15 +6849,15 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 118:
-            // Grammar: ID=118; read/write bits=1; START (Reference)
+        case 114:
+            // Grammar: ID=114; read/write bits=1; START (Reference)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=119
+                    // Event: START (Reference, ReferenceType (ReferenceType)); next=115
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -6991,7 +6867,7 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 119;
+                    grammar_id = 115;
                     break;
                 default:
                     error = EXI_ERROR__UNKNOWN_EVENT_CODE;
@@ -6999,15 +6875,15 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 119:
-            // Grammar: ID=119; read/write bits=2; START (Reference), END Element
+        case 115:
+            // Grammar: ID=115; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=120
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=115
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -7017,7 +6893,7 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                     {
                         error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
                     }
-                    grammar_id = 120;
+                    grammar_id = 115;
                     break;
                 case 1:
                     // Event: END Element; next=3
@@ -7030,77 +6906,15 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
                 }
             }
             break;
-        case 120:
-            // Grammar: ID=120; read/write bits=2; START (Reference), END Element
+        case 116:
+            // Grammar: ID=116; read/write bits=2; LOOP (Reference), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=121
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 121;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 121:
-            // Grammar: ID=121; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=122
-                    // decode: element array
-                    if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
-                    {
-                        error = decode_iso20_acdp_ReferenceType(stream, &ManifestType->Reference.array[ManifestType->Reference.arrayLen++]);
-                    }
-                    else
-                    {
-                        error = EXI_ERROR__ARRAY_OUT_OF_BOUNDS;
-                    }
-                    grammar_id = 122;
-                    break;
-                case 1:
-                    // Event: END Element; next=3
-                    done = 1;
-                    grammar_id = 3;
-                    break;
-                default:
-                    error = EXI_ERROR__UNKNOWN_EVENT_CODE;
-                    break;
-                }
-            }
-            break;
-        case 122:
-            // Grammar: ID=122; read/write bits=2; START (Reference), END Element
-            error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
-            if (error == 0)
-            {
-                switch(eventCode)
-                {
-                case 0:
-                    // Event: START (Reference, ReferenceType (ReferenceType)); next=2
+                    // Event: LOOP (Reference, ReferenceType (ReferenceType)); next=2
                     // decode: element array
                     if (ManifestType->Reference.arrayLen < iso20_acdp_ReferenceType_4_ARRAY_SIZE)
                     {
@@ -7158,7 +6972,7 @@ static int decode_iso20_acdp_ManifestType(exi_bitstream_t* stream, struct iso20_
 //          abstract=False; final=False;
 // Particle: Id, ID (0, 1); SignatureProperty, SignaturePropertyType (1, 1);
 static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, struct iso20_acdp_SignaturePropertiesType* SignaturePropertiesType) {
-    int grammar_id = 123;
+    int grammar_id = 117;
     int done = 0;
     uint32_t eventCode;
     int error;
@@ -7169,15 +6983,15 @@ static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, st
     {
         switch(grammar_id)
         {
-        case 123:
-            // Grammar: ID=123; read/write bits=2; START (Id), START (SignatureProperty)
+        case 117:
+            // Grammar: ID=117; read/write bits=2; START (Id), START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (Id, ID (NCName)); next=125
+                    // Event: START (Id, ID (NCName)); next=119
                     // decode: string (len, characters) (Attribute)
                     error = exi_basetypes_decoder_uint_16(stream, &SignaturePropertiesType->Id.charactersLen);
                     if (error == 0)
@@ -7195,15 +7009,15 @@ static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, st
                         }
                     }
                     SignaturePropertiesType->Id_isUsed = 1u;
-                    grammar_id = 125;
+                    grammar_id = 119;
                     break;
                 case 1:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=124
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=118
                     // decode: element
                     error = decode_iso20_acdp_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 124;
+                        grammar_id = 118;
                     }
                     break;
                 default:
@@ -7212,8 +7026,8 @@ static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 124:
-            // Grammar: ID=124; read/write bits=2; START (SignatureProperty), END Element
+        case 118:
+            // Grammar: ID=118; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {
@@ -7239,20 +7053,20 @@ static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 125:
-            // Grammar: ID=125; read/write bits=1; START (SignatureProperty)
+        case 119:
+            // Grammar: ID=119; read/write bits=1; START (SignatureProperty)
             error = exi_basetypes_decoder_nbit_uint(stream, 1, &eventCode);
             if (error == 0)
             {
                 switch(eventCode)
                 {
                 case 0:
-                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=126
+                    // Event: START (SignatureProperty, SignaturePropertyType (SignaturePropertyType)); next=120
                     // decode: element
                     error = decode_iso20_acdp_SignaturePropertyType(stream, &SignaturePropertiesType->SignatureProperty);
                     if (error == 0)
                     {
-                        grammar_id = 126;
+                        grammar_id = 120;
                     }
                     break;
                 default:
@@ -7261,8 +7075,8 @@ static int decode_iso20_acdp_SignaturePropertiesType(exi_bitstream_t* stream, st
                 }
             }
             break;
-        case 126:
-            // Grammar: ID=126; read/write bits=2; START (SignatureProperty), END Element
+        case 120:
+            // Grammar: ID=120; read/write bits=2; START (SignatureProperty), END Element
             error = exi_basetypes_decoder_nbit_uint(stream, 2, &eventCode);
             if (error == 0)
             {

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(cb_v2g
-    VERSION 0.2.1
+    VERSION 0.3.0
     DESCRIPTION "V2GTP EXI library"
     HOMEPAGE_URL "https://github.com/Everest/libcbv2g"
 	LANGUAGES C CXX
@@ -16,7 +16,7 @@ option(CB_V2G_INSTALL "Install the library (shared data might be installed anywa
 
 add_subdirectory(lib)
 
-message(STATUS "library code based on cbexigen generator version: 98e3fd3 @ feature/use_big_int_for_integer_fixup")
+message(STATUS "library code based on cbexigen generator version: cc1470c")
 
 # tests
 if (CB_V2G_BUILD_TESTS)

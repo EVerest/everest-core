@@ -47,13 +47,13 @@ int exi_header_read_and_check(exi_bitstream_t* stream)
         return error;
     }
 
-    if (header == '$')
-    {
-        result = EXI_ERROR__HEADER_COOKIE_NOT_SUPPORTED;
-    }
-    else if (header & 0x20)
-    {
-        result = EXI_ERROR__HEADER_OPTIONS_NOT_SUPPORTED;
+    // EXI header:
+    // - two Distinguishing Bits 0b10
+    // - one Presence Bit for EXI Options "absence of options" 0b0
+    // - EXI format version "Final version 1" 0b00000
+    // results in eight header bits 0b10000000 = 0x80
+    if (header != EXI_SIMPLE_HEADER_VALUE) {
+        result = EXI_ERROR__HEADER_INCORRECT;
     }
 
     return result;

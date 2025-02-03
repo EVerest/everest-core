@@ -153,7 +153,7 @@ int exi_basetypes_convert_64_from_signed(const exi_signed_t* exi_signed, int64_t
 
 static void _reverse_array(uint8_t* data, size_t data_size)
 {
-    if (!data || !data_size)
+    if (!data_size)
     {
         return;
     }
@@ -171,6 +171,7 @@ static void _reverse_array(uint8_t* data, size_t data_size)
 
 int exi_basetypes_convert_bytes_from_unsigned(const exi_unsigned_t* exi_unsigned, uint8_t* data, size_t* data_len, size_t data_size)
 {
+    // raw EXI 7/8 integer byte stream with flags (exi_unsigned) to API exi_unsigned_t representation (data, data_len)
     const uint8_t* current_octet = exi_unsigned->octets;
     uint16_t temp = 0;
     *data_len = 0;
@@ -203,27 +204,56 @@ int exi_basetypes_convert_bytes_from_unsigned(const exi_unsigned_t* exi_unsigned
 
 int exi_basetypes_convert_bytes_to_unsigned(exi_unsigned_t* exi_unsigned, const uint8_t* data, size_t data_len)
 {
+    // API exi_unsigned_t representation (data, data_len) to raw EXI 7/8 integer byte stream with flags (exi_unsigned)
     uint8_t *current_octet = &exi_unsigned->octets[0];
     uint16_t dummy = 0;
     uint8_t dummy_count = 0;
+    exi_unsigned->octets_count = 0;
 
-    for (size_t n = 0; n < data_len; n++, current_octet++) {
-        if (dummy_count <= 8) {
-            dummy |= (data[data_len - n - 1] << dummy_count);
+    // first, determine the number of relevant bits (or octets), to have a termination criterion
+    size_t bytenum;
+    for (bytenum = 0; bytenum < data_len; bytenum++) {
+        if (data[bytenum] != 0)
+            break;
+    }
+    if (bytenum == data_len) {
+        // special case: all zeros
+        *current_octet = 0;
+        exi_unsigned->octets_count = 1;
+        return EXI_ERROR__NO_ERROR;
+    }
+    // bytenum is now index of big-endian first relevant byte
+    // number of total input relevant bits t is (data_len - bytenum - 1) * 8 plus number of relevant bits in data[bytenum]
+    uint8_t byte = data[bytenum];
+    int bits_in_byte = 0;
+    while (byte) {
+        bits_in_byte++;
+        byte >>= 1;
+    }
+
+    const int total_relevant_input_bits = (data_len - bytenum - 1) * 8 + bits_in_byte;
+    const size_t exi_expected_octets_count = (total_relevant_input_bits + 6) / 7; // integer division ceil
+
+    size_t incount = 0;
+    for (size_t outcount = 0; outcount < exi_expected_octets_count; outcount++) {
+        if (dummy_count < 7) {
+            // fill dummy when more flushable bits are needed
+            dummy |= (data[data_len - incount - 1] << dummy_count);
             dummy_count += 8;
+            incount++;
         }
-        exi_unsigned->octets_count++;
         *current_octet = (uint8_t)(dummy & EXI_BASETYPES_OCTET_SEQ_VALUE_MASK);
-        *current_octet |= EXI_BASETYPES_OCTET_SEQ_FLAG_MASK;
-
+        exi_unsigned->octets_count++;
+        if (exi_unsigned->octets_count < exi_expected_octets_count) {
+            *current_octet |= EXI_BASETYPES_OCTET_SEQ_FLAG_MASK;
+        } else {
+            break;
+        }
+        current_octet++;
         dummy >>= 7u;
         dummy_count -= 7;
     }
-    if (dummy_count > 0 && dummy != 0) {
-        *(current_octet - 1) |= EXI_BASETYPES_OCTET_SEQ_FLAG_MASK;
-        exi_unsigned->octets_count++;
-        *current_octet = (uint8_t)(dummy & EXI_BASETYPES_OCTET_SEQ_VALUE_MASK);
-    }
+
     return EXI_ERROR__NO_ERROR;
 }
 

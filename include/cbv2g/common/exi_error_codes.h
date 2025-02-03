@@ -36,6 +36,7 @@ extern "C" {
 //      stream header -20 to -29
 #define EXI_ERROR__HEADER_COOKIE_NOT_SUPPORTED -20
 #define EXI_ERROR__HEADER_OPTIONS_NOT_SUPPORTED -21
+#define EXI_ERROR__HEADER_INCORRECT -22
 
 //      stream read -30 to -39
 #define EXI_ERROR__SUPPORTED_MAX_OCTETS_OVERRUN -30
