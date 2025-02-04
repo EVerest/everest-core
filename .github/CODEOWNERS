@@ -1,11 +1,15 @@
 # default option unless later match takes precedence
 * @pietfried @hikinggrass @corneliusclaussen
 
+# .ci
+/.ci/ @pietfried @hikinggrass @corneliusclaussen @andistorm
+
 # .github
 /.github/ @pietfried @corneliusclaussen
+/.github/workflows/ @pietfried @corneliusclaussen @andistorm
 
 # cmake
-/cmake/ @hikinggrass @a-w50 @corneliusclaussen
+/cmake/ @hikinggrass @a-w50 @corneliusclaussen @andistorm
 
 # lib
 /lib/3rd_party/nanopb/ @a-w50 @corneliusclaussen @hikinggrass
@@ -20,6 +24,7 @@
 /modules/Auth/ @pietfried @corneliusclaussen @hikinggrass
 /modules/Energymanager/ @corneliusclaussen @hikinggrass @pietfried
 /modules/EnergyNode/ @corneliusclaussen @hikinggrass @pietfried
+/modules/ErrorHistory/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/EvseManager/ @corneliusclaussen @SebaLukas @hikinggrass @pietfried
 /modules/EvManager/ @SebaLukas @pietfried @MarzellT
 /modules/Evse15118D20/ @SebaLukas @a-w50 @corneliusclaussen
@@ -28,11 +33,12 @@
 /modules/EvseSlac/ @a-w50 @corneliusclaussen @SebaLukas
 /modules/OCPP/ @hikinggrass @pietfried @maaikez
 /modules/OCPP201/ @hikinggrass @pietfried @maaikez
-/modules/PacketSniffer @corneliusclaussen @SebaLukas @hikinggrass
-/modules/PhyVersoBSP @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
-/modules/PyEvJosev @SebaLukas @corneliusclaussen @pietfried
-/modules/Setup @hikinggrass @corneliusclaussen @pietfried
-/modules/YetiDriver @corneliusclaussen @hikinggrass
+/modules/PacketSniffer/ @corneliusclaussen @SebaLukas @hikinggrass
+/modules/PhyVersoBSP/ @pietfried @hikinggrass @corneliusclaussen @dorezyuk @rckstrh
+/modules/PyEvJosev/ @SebaLukas @corneliusclaussen @pietfried
+/modules/Setup/ @hikinggrass @corneliusclaussen @pietfried
+/modules/YetiDriver/ @corneliusclaussen @hikinggrass
+/modules/examples/error-framework/ @corneliusclaussen @hikinggrass @pietfried @andistorm
 /modules/simulation/ @SebaLukas @pietfried @hikinggrass
 /modules/SlacSimulator/ @SebaLukas @pietfried @corneliusclaussen @MarzellT
 /modules/rust_examples/ @SirVer @dorezyuk
