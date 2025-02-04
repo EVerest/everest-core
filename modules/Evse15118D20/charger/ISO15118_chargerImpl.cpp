@@ -157,9 +157,7 @@ void ISO15118_chargerImpl::ready() {
 
     if (certificate_response.status != types::evse_security::GetCertificateInfoStatus::Accepted or
         !certificate_response.info.has_value()) {
-        // TODO(ioan): generic handling
-        EVLOG_critical << "Certificate not found";
-        return;
+        EVLOG_AND_THROW(Everest::EverestConfigError("V2G certificate not found"));
     }
 
     const auto& certificate_info = certificate_response.info.value();
@@ -170,9 +168,7 @@ void ISO15118_chargerImpl::ready() {
     } else if (certificate_info.certificate_single.has_value()) {
         path_chain = certificate_info.certificate_single.value();
     } else {
-        // TODO(ioan): generic handling
-        EVLOG_critical << "Certificate not found";
-        return;
+        EVLOG_AND_THROW(Everest::EverestConfigError("V2G certificate not found"));
     }
 
     const iso15118::TbdConfig tbd_config = {
