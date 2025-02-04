@@ -22,11 +22,7 @@ config:
       - ACCEPT_CLIENT_OFFER
       - ENFORCE_TLS
       - ENFORCE_NO_TLS
-    default: ACCEPT_CLIENT_OFFER
-  private_key_password:
-    description: Password for private key files (USE ONLY FOR TESTING)
-    type: string
-    default: "123456"
+    default: ACCEPT_CLIENT_OFFER  
   enable_ssl_logging:
     description: Verbosely log the ssl/tls connection
     type: boolean
@@ -62,6 +58,10 @@ provides:
     interface: ISO15118_charger
     description: >-
       This interface provides limited access to iso15118-20
+requires:
+  security:
+    interface: evse_security
+
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
