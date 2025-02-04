@@ -116,6 +116,10 @@ void ConnectionPlain::handle_connect() {
 
     const auto address_name = sockaddr_in6_to_name(address);
 
+    if (not address_name) {
+        log_and_throw("Failed to determine string representation of ipv6 socket address");
+    }
+
     logf_info("Incoming connection from [%s]:%" PRIu16, address_name.get(), ntohs(address.sin6_port));
 
     poll_manager.unregister_fd(fd);

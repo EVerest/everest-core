@@ -51,6 +51,8 @@ private:
     const session::feedback::Callbacks callbacks;
 
     d20::EvseSetupConfig evse_setup;
+
+    std::string interface_name;
 };
 
 } // namespace iso15118

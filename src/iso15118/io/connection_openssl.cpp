@@ -3,6 +3,7 @@
 #include <iso15118/io/connection_ssl.hpp>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstring>
 #include <filesystem>
 #include <unistd.h>
@@ -36,6 +37,7 @@ public:
 namespace iso15118::io {
 
 static constexpr auto DEFAULT_SOCKET_BACKLOG = 4;
+static constexpr auto TLS_PORT = 50000;
 
 static int ex_data_idx;
 
@@ -144,6 +146,9 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
         log_and_throw(msg.c_str());
     }
 
+    end_point.port = TLS_PORT;
+    memcpy(&end_point.address, &address.sin6_addr, sizeof(address.sin6_addr));
+
     const auto address_name = sockaddr_in6_to_name(address);
 
     if (not address_name) {
@@ -152,9 +157,7 @@ ConnectionSSL::ConnectionSSL(PollManager& poll_manager_, const std::string& inte
         log_and_throw(msg.c_str());
     }
 
-    // Todo(sl): Define constexpr -> 50000 is fixed?
-    end_point.port = 50000;
-    memcpy(&end_point.address, &address.sin6_addr, sizeof(address.sin6_addr));
+    logf_info("Start TLS server [%s]:%" PRIu16, address_name.get(), end_point.port);
 
     ssl->fd = socket(AF_INET6, SOCK_STREAM, 0);
     if (ssl->fd == -1) {

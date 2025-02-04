@@ -15,6 +15,11 @@
 
 #include <iso15118/detail/helper.hpp>
 
+// FIXME(Sl): Not sure with define
+/* link-local multicast address ff02::1 aka ip6-allnodes */
+#define IN6ADDR_ALLNODES                                                                                               \
+    { 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01 }
+
 namespace iso15118 {
 
 static void log_peer_hostname(const struct sockaddr_in6& address) {
@@ -33,7 +38,7 @@ static void log_peer_hostname(const struct sockaddr_in6& address) {
 
 namespace io {
 
-SdpServer::SdpServer() {
+SdpServer::SdpServer(const std::string& interface_name) {
     fd = socket(AF_INET6, SOCK_DGRAM, 0);
 
     if (fd == -1) {
@@ -47,10 +52,35 @@ SdpServer::SdpServer() {
     socket_address.sin6_port = htobe16(v2gtp::SDP_SERVER_PORT);
     memcpy(&socket_address.sin6_addr, &in6addr_any, sizeof(socket_address.sin6_addr));
 
+    int enable = 1;
+    auto result = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(enable));
+    if (result == -1) {
+        const auto error_msg = adding_err_msg("Setsockopt(SO_REUSEPORT) failed");
+        log_and_throw(error_msg.c_str());
+    }
+
     const auto bind_result =
         bind(fd, reinterpret_cast<const struct sockaddr*>(&socket_address), sizeof(socket_address));
     if (bind_result == -1) {
         log_and_throw("Failed to bind to socket");
+    }
+
+    // Bind only to specified device
+    result = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_name.c_str(), interface_name.length());
+    if (result == -1) {
+        const auto error_msg = adding_err_msg("Setsockopt(SO_BINDTODEVICE) failed");
+        log_and_throw(error_msg.c_str());
+    }
+
+    // Join multicast group
+    struct ipv6_mreq mreq {};
+    mreq.ipv6mr_multiaddr = IN6ADDR_ALLNODES;
+    mreq.ipv6mr_interface = if_nametoindex(interface_name.c_str());
+
+    result = setsockopt(fd, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq, sizeof(mreq));
+    if (result == -1) {
+        const auto error_msg = adding_err_msg("Setsockopt(IPV6_JOIN_GROUP) failed");
+        log_and_throw(error_msg.c_str());
     }
 }
 

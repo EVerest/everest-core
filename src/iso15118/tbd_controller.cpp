@@ -11,14 +11,25 @@
 #include <iso15118/session/iso.hpp>
 
 #include <iso15118/detail/helper.hpp>
+#include <iso15118/detail/io/socket_helper.hpp>
 
 namespace iso15118 {
 
 TbdController::TbdController(TbdConfig config_, session::feedback::Callbacks callbacks_, d20::EvseSetupConfig setup_) :
-    config(std::move(config_)), callbacks(std::move(callbacks_)), evse_setup(std::move(setup_)) {
+    config(std::move(config_)),
+    callbacks(std::move(callbacks_)),
+    evse_setup(std::move(setup_)),
+    interface_name(config.interface_name) {
+
+    const auto result_interface_check = io::check_and_update_interface(interface_name);
+    if (result_interface_check) {
+        logf_info("Using ethernet interface: %s", interface_name.c_str());
+    } else {
+        throw std::runtime_error("Ethernet interface was not found!");
+    }
 
     if (config.enable_sdp_server) {
-        sdp_server = std::make_unique<io::SdpServer>();
+        sdp_server = std::make_unique<io::SdpServer>(interface_name);
         poll_manager.register_fd(sdp_server->get_fd(), [this]() { handle_sdp_server_input(); });
     }
 }
@@ -27,7 +38,7 @@ void TbdController::loop() {
     static constexpr auto POLL_MANAGER_TIMEOUT_MS = 50;
 
     if (not config.enable_sdp_server) {
-        auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
+        auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, interface_name);
         session = std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks);
     }
 
@@ -46,7 +57,7 @@ void TbdController::loop() {
                 session.reset();
 
                 if (not config.enable_sdp_server) {
-                    auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
+                    auto connection = std::make_unique<io::ConnectionPlain>(poll_manager, interface_name);
                     session =
                         std::make_unique<Session>(std::move(connection), d20::SessionConfig(evse_setup), callbacks);
                 }
@@ -103,9 +114,9 @@ void TbdController::handle_sdp_server_input() {
 
     auto connection = [this](bool secure_connection) -> std::unique_ptr<io::IConnection> {
         if (secure_connection) {
-            return std::make_unique<io::ConnectionSSL>(poll_manager, config.interface_name, config.ssl);
+            return std::make_unique<io::ConnectionSSL>(poll_manager, interface_name, config.ssl);
         } else {
-            return std::make_unique<io::ConnectionPlain>(poll_manager, config.interface_name);
+            return std::make_unique<io::ConnectionPlain>(poll_manager, interface_name);
         }
     }(request.security == io::v2gtp::Security::TLS);
 
