@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <stdexcept>
 #include <type_traits>
 #include <variant>
@@ -69,26 +70,50 @@ inline ConfigField get_config_field(const std::string& _name, int _value) {
 
 } // namespace
 
+/// @brief The flag which prevents us from re-initializing the module.
+std::once_flag mod_flag;
+
+/// @brief The central handle to the EVerest infrastructure.
+std::unique_ptr<Module> mod;
+
+const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
+                            rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
+                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
+    std::call_once(mod_flag, [&]() {
+        auto socket_path = std::string(mqtt_broker_socket_path);
+        Everest::MQTTSettings mqtt_settings;
+        if (not socket_path.empty()) {
+            Everest::populate_mqtt_settings(mqtt_settings, socket_path, std::string(mqtt_everest_prefix),
+                                            std::string(mqtt_external_prefix));
+        } else {
+            Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host), mqtt_broker_port,
+                                            std::string(mqtt_everest_prefix), std::string(mqtt_external_prefix));
+        }
+        mod = std::make_unique<Module>(std::string(module_id), std::string(prefix), mqtt_settings);
+    });
+    return *mod;
+}
+
 Module::Module(const std::string& module_id, const std::string& prefix, const Everest::MQTTSettings& mqtt_settings) :
-    module_id_(module_id), mqtt_settings_(mqtt_settings) {
+    module_id_(module_id) {
 
-    this->mqtt_abstraction_ = std::make_shared<Everest::MQTTAbstraction>(this->mqtt_settings_);
-    this->mqtt_abstraction_->connect();
-    this->mqtt_abstraction_->spawn_main_loop_thread();
+    const auto mqtt_abstraction = std::make_shared<Everest::MQTTAbstraction>(mqtt_settings);
+    // TODO(ddo) what happens when this returns false?
+    mqtt_abstraction->connect();
+    mqtt_abstraction->spawn_main_loop_thread();
 
-    const auto result = Everest::get_module_config(this->mqtt_abstraction_, this->module_id_);
+    const auto result = Everest::get_module_config(mqtt_abstraction, this->module_id_);
 
     this->rs_ = std::make_unique<Everest::RuntimeSettings>(result.at("settings"));
 
-    config_ = std::make_shared<Everest::Config>(this->mqtt_settings_, result);
+    config_ = std::make_shared<Everest::Config>(mqtt_settings, result);
 
-    handle_ = std::make_unique<Everest::Everest>(this->module_id_, *this->config_, this->rs_->validate_schema,
-                                                 this->mqtt_abstraction_, this->rs_->telemetry_prefix,
-                                                 this->rs_->telemetry_enabled);
-}
+    handle_ =
+        std::make_unique<Everest::Everest>(this->module_id_, *this->config_, this->rs_->validate_schema,
+                                           mqtt_abstraction, this->rs_->telemetry_prefix, this->rs_->telemetry_enabled);
 
-std::shared_ptr<Everest::Config> Module::get_config() const {
-    return this->config_;
+    // Not needed but done to be congruent with the other bindings.
+    handle_->spawn_main_loop_thread();
 }
 
 JsonBlob Module::get_interface(rust::Str interface_name) const {
@@ -96,10 +121,7 @@ JsonBlob Module::get_interface(rust::Str interface_name) const {
     return json2blob(interface_def);
 }
 
-JsonBlob Module::initialize() const {
-    handle_->connect();
-    handle_->spawn_main_loop_thread();
-
+JsonBlob Module::get_manifest() const {
     const std::string& module_name = config_->get_main_config().at(module_id_).at("module");
     return json2blob(config_->get_manifests().at(module_name));
 }
@@ -152,25 +174,6 @@ void Module::publish_variable(rust::Str implementation_id, rust::Str name, JsonB
                          json::parse(blob.data.begin(), blob.data.end()));
 }
 
-std::shared_ptr<Module> mod;
-
-std::shared_ptr<Module> create_module(rust::Str module_name, rust::Str prefix, rust::Str mqtt_broker_socket_path,
-                                      rust::Str mqtt_broker_host, rust::Str mqtt_broker_port,
-                                      rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix) {
-    auto socket_path = std::string(mqtt_broker_socket_path);
-    Everest::MQTTSettings mqtt_settings;
-    if (not socket_path.empty()) {
-        Everest::populate_mqtt_settings(mqtt_settings, socket_path, std::string(mqtt_everest_prefix),
-                                        std::string(mqtt_external_prefix));
-    } else {
-        Everest::populate_mqtt_settings(mqtt_settings, std::string(mqtt_broker_host),
-                                        std::stoi(std::string(mqtt_broker_port)), std::string(mqtt_everest_prefix),
-                                        std::string(mqtt_external_prefix));
-    }
-    mod = std::make_shared<Module>(std::string(module_name), std::string(prefix), mqtt_settings);
-    return mod;
-}
-
 void Module::raise_error(rust::Str implementation_id, ErrorType error_type) const {
     const Everest::error::Error error{std::string(error_type.error_type),
                                       std::string{},
@@ -196,9 +199,21 @@ void Module::clear_error(rust::Str implementation_id, rust::Str error_type, bool
     }
 }
 
-rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id) {
+rust::Vec<RsModuleConnections> Module::get_module_connections() const {
+    const auto connections = config_->get_main_config().at(std::string(module_id_))["connections"];
+
+    // Iterate over the connections block.
+    rust::Vec<RsModuleConnections> out;
+    out.reserve(connections.size());
+    for (const auto& connection : connections.items()) {
+        out.emplace_back(RsModuleConnections{rust::String{connection.key()}, connection.value().size()});
+    };
+    return out;
+}
+
+rust::Vec<RsModuleConfig> Module::get_module_configs(rust::Str module_id) const {
     // TODO(ddo) We call this before initializing the logger.
-    const auto module_configs = mod->get_config()->get_module_configs(std::string(module_id));
+    const auto module_configs = config_->get_module_configs(std::string(module_id));
 
     rust::Vec<RsModuleConfig> out;
     out.reserve(module_configs.size());
@@ -216,18 +231,6 @@ rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_id) {
         out.emplace_back(std::move(mm_out));
     }
 
-    return out;
-}
-
-rust::Vec<RsModuleConnections> Module::get_module_connections() const {
-    const auto connections = config_->get_main_config().at(std::string(module_id_))["connections"];
-
-    // Iterate over the connections block.
-    rust::Vec<RsModuleConnections> out;
-    out.reserve(connections.size());
-    for (const auto& connection : connections.items()) {
-        out.emplace_back(RsModuleConnections{rust::String{connection.key()}, connection.value().size()});
-    };
     return out;
 }
 

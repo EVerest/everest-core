@@ -6,7 +6,7 @@ rust_library(
     srcs = glob(["src/**/*.rs"]),
     edition = "2021",
     deps =  [
-        "@crate_index//:argh",
+        "@crate_index//:clap",
         "@crate_index//:log",
         "@crate_index//:serde",
         "@crate_index//:serde_json",

@@ -1,6 +1,6 @@
 use everestrs_build::schema;
 
-use argh::FromArgs;
+use clap::Parser;
 use log::debug;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -9,12 +9,18 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::Once;
-use std::sync::RwLock;
-use std::sync::Weak;
+use std::sync::OnceLock;
 use thiserror::Error;
 
 /// Prevent calling the init of loggers more than once.
 static INIT_LOGGER_ONCE: Once = Once::new();
+
+/// Prevent from calling [Runtime] more than once and keep it alive.
+///
+/// The c++ [Module] has a static lifetime. We will pass the reference of
+/// the `Runtime` to the `Module` and thus the `Module` must not outlife the
+/// `Runtime`. To achive this we make the lifetime of the `Runtime` also static.
+static INIT_RUNTIME_ONCE: OnceLock<Pin<Arc<Runtime>>> = OnceLock::new();
 
 // Reexport everything so the clients can use it.
 pub use serde;
@@ -153,13 +159,20 @@ mod ffi {
         include!("everestrs/src/everestrs_sys.hpp");
 
         type Module;
-        fn create_module(module_id: &str, prefix: &str, mqtt_broker_socket_path: &str, mqtt_broker_host: &str,
-             mqtt_broker_port: &str,  mqtt_everest_prefix: &str,
-             mqtt_external_prefix: &str) -> SharedPtr<Module>;
+        /// Creates the module only once. The module lives then until the end
+        /// of the process.
+        fn create_module(
+            module_id: &str,
+            prefix: &str,
+            mqtt_broker_socket_path: &str,
+            mqtt_broker_host: &str,
+            mqtt_broker_port: &u32,
+            mqtt_everest_prefix: &str,
+            mqtt_external_prefix: &str,
+        ) -> &'static Module;
 
-        /// Connects to the message broker and launches the main everest thread to push work
-        /// forward. Returns the module manifest.
-        fn initialize(self: &Module) -> JsonBlob;
+        /// Returns the manifest.
+        fn get_manifest(self: &Module) -> JsonBlob;
 
         /// Returns the interface definition.
         fn get_interface(self: &Module, interface_name: &str) -> JsonBlob;
@@ -216,7 +229,7 @@ mod ffi {
         fn clear_error(self: &Module, implementation_id: &str, error_type: &str, clear_all: bool);
 
         /// Returns the module config from cpp.
-        fn get_module_configs(module_id: &str) -> Vec<RsModuleConfig>;
+        fn get_module_configs(self: &Module, module_id: &str) -> Vec<RsModuleConfig>;
 
         /// Call this once.
         fn init_logging(module_id: &str, prefix: &str, conf: &str) -> i32;
@@ -318,43 +331,38 @@ unsafe impl Send for ffi::Module {}
 pub use ffi::{ErrorSeverity, ErrorType};
 
 /// Arguments for an EVerest node.
-#[derive(FromArgs, Debug)]
+#[derive(Parser, Debug)]
 struct Args {
-    /// TODO: add version param
-
     /// prefix of installation.
-    #[argh(option)]
-    #[allow(unused)]
+    #[arg(long)]
     pub prefix: PathBuf,
 
-    /// logging configuration yml that we are using.
-    #[argh(option)]
-    #[allow(unused)]
+    /// logging configuration that we are using.
+    #[arg(long, long = "log_config")]
     pub log_config: PathBuf,
 
     /// module name for us.
-    #[argh(option)]
+    #[arg(long)]
     pub module: String,
 
     /// MQTT broker socket path
-    #[argh(option)]
-    #[allow(unused)]
-    pub mqtt_broker_socket_path: PathBuf,
+    #[arg(long = "mqtt_broker_socket_path")]
+    pub mqtt_broker_socket_path: Option<PathBuf>,
 
     /// MQTT broker hostname
-    #[argh(option)]
+    #[arg(long = "mqtt_broker_host")]
     pub mqtt_broker_host: String,
 
     /// MQTT broker port
-    #[argh(option)]
-    pub mqtt_broker_port: String, // TODO: int?
+    #[arg(long = "mqtt_broker_port")]
+    pub mqtt_broker_port: u32,
 
     /// MQTT EVerest prefix
-    #[argh(option)]
+    #[arg(long = "mqtt_everest_prefix")]
     pub mqtt_everest_prefix: String,
 
     /// MQTT external prefix
-    #[argh(option)]
+    #[arg(long = "mqtt_external_prefix")]
     pub mqtt_external_prefix: String,
 }
 
@@ -394,28 +402,20 @@ pub trait Subscriber: Sync + Send {
     fn on_ready(&self) {}
 }
 
-/// The [Runtime] is the central piece of the bridge between c++ and Rust. We
-/// have to ensure that the `cpp_module` never outlives the [Runtime] object.
-/// This means that the [Runtime] **must** take ownership of `cpp_module`.
+/// The [Runtime] is the central piece of the bridge between c++ and Rust. The
+/// [ffi::Module] is owned by the c++ side and will outlife the [Runtime].
 ///
-/// The `Subscriber` is not owned by the [Runtime] - in fact in derived user
-/// code the `Subscriber` might take ownership of the [Runtime] - the weak
-/// ownership hence is necessary to break possible ownership cycles.
+/// The `Subscriber` and the `Runtime` have a cyclic dependency. Since the
+/// `Runtime` has a static lifetime we must uphold that the `Subscriber` also
+/// has a static lifetime.
 pub struct Runtime {
-    cpp_module: cxx::SharedPtr<ffi::Module>,
-    sub_impl: RwLock<Option<Weak<dyn Subscriber>>>,
+    cpp_module: &'static ffi::Module,
+    sub_impl: OnceLock<Arc<dyn Subscriber>>,
 }
 
 impl Runtime {
     fn on_ready(&self) {
-        self.sub_impl
-            .read()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .upgrade()
-            .unwrap()
-            .on_ready();
+        self.sub_impl.get().unwrap().on_ready();
     }
 
     fn handle_command(&self, impl_id: &str, name: &str, json: ffi::JsonBlob) -> ffi::JsonBlob {
@@ -423,11 +423,7 @@ impl Runtime {
         let parameters: Option<HashMap<String, serde_json::Value>> = json.deserialize();
         let blob = self
             .sub_impl
-            .read()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .upgrade()
+            .get()
             .unwrap()
             .handle_command(impl_id, name, parameters.unwrap_or_default())
             .unwrap();
@@ -440,11 +436,7 @@ impl Runtime {
             json.as_bytes()
         );
         self.sub_impl
-            .read()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .upgrade()
+            .get()
             .unwrap()
             .handle_variable(impl_id, index, name, json.deserialize())
             .unwrap();
@@ -455,11 +447,7 @@ impl Runtime {
 
         // We want to split the error type into the group and the remainder.
         self.sub_impl
-            .read()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .upgrade()
+            .get()
             .unwrap()
             .handle_on_error(impl_id, index, error, raised);
     }
@@ -473,10 +461,7 @@ impl Runtime {
         let blob = ffi::JsonBlob::from_vec(
             serde_json::to_vec(&message).expect("Serialization of data cannot fail."),
         );
-        (self.cpp_module)
-            .as_ref()
-            .unwrap()
-            .publish_variable(impl_id, var_name, blob);
+        (self.cpp_module).publish_variable(impl_id, var_name, blob);
     }
 
     pub fn call_command<T: serde::Serialize, R: serde::de::DeserializeOwned>(
@@ -489,10 +474,7 @@ impl Runtime {
         let blob = ffi::JsonBlob::from_vec(
             serde_json::to_vec(args).expect("Serialization of data cannot fail."),
         );
-        let return_value = (self.cpp_module)
-            .as_ref()
-            .unwrap()
-            .call_command(impl_id, index, name, blob);
+        let return_value = (self.cpp_module).call_command(impl_id, index, name, blob);
         serde_json::from_slice(&return_value.data).unwrap()
     }
 
@@ -513,10 +495,7 @@ impl Runtime {
             severity: ErrorSeverity::High,
         };
         debug!("Raising error {error_type:?} from {error:?}");
-        self.cpp_module
-            .as_ref()
-            .unwrap()
-            .raise_error(impl_id, error_type);
+        self.cpp_module.raise_error(impl_id, error_type);
     }
 
     /// Called from the generated code.
@@ -532,52 +511,58 @@ impl Runtime {
 
         debug!("Clearing the {error_string} from {error:?}");
         self.cpp_module
-            .as_ref()
-            .unwrap()
             .clear_error(impl_id, &error_string, clear_all);
     }
 
     // TODO(hrapp): This function could use some error handling.
     pub fn new() -> Pin<Arc<Self>> {
-        let args: Args = argh::from_env();
-        logger::Logger::init_logger(
-            &args.module,
-            &args.prefix.to_string_lossy(),
-            &args.log_config.to_string_lossy(),
-        );
+        INIT_RUNTIME_ONCE
+            .get_or_init(|| {
+                let args: Args = Args::parse();
+                logger::Logger::init_logger(
+                    &args.module,
+                    &args.prefix.to_string_lossy(),
+                    &args.log_config.to_string_lossy(),
+                );
 
-        let cpp_module = ffi::create_module(
-            &args.module,
-            &args.prefix.to_string_lossy(),
-            &args.mqtt_broker_socket_path.to_string_lossy(),
-            &args.mqtt_broker_host,
-            &args.mqtt_broker_port,
-            &args.mqtt_everest_prefix,
-            &args.mqtt_external_prefix,
-        );
-
-        Arc::pin(Self {
-            cpp_module,
-            sub_impl: RwLock::new(None),
-        })
+                let cpp_module = ffi::create_module(
+                    &args.module,
+                    &args.prefix.to_string_lossy(),
+                    &args
+                        .mqtt_broker_socket_path
+                        .unwrap_or_default()
+                        .to_string_lossy(),
+                    &args.mqtt_broker_host,
+                    &args.mqtt_broker_port,
+                    &args.mqtt_everest_prefix,
+                    &args.mqtt_external_prefix,
+                );
+                Arc::pin(Self {
+                    cpp_module,
+                    sub_impl: OnceLock::new(),
+                })
+            })
+            .clone()
     }
 
-    pub fn set_subscriber(self: Pin<&Self>, sub_impl: Weak<dyn Subscriber>) {
-        *self.sub_impl.write().unwrap() = Some(sub_impl);
-        let manifest_json = self.cpp_module.as_ref().unwrap().initialize();
+    pub fn set_subscriber(self: Pin<&Self>, sub_impl: Arc<dyn Subscriber>) {
+        self.sub_impl
+            .set(sub_impl)
+            .unwrap_or_else(|_| panic!("set_subscriber called twice"));
+        let manifest_json = self.cpp_module.get_manifest();
         let manifest: schema::Manifest = manifest_json.deserialize();
+        log::debug!("Deserialiazed the manifest {manifest:?}");
 
         // Implement all commands for all of our implementations, dispatch everything to the
         // Subscriber.
         for (implementation_id, provides) in manifest.provides {
             let interface_s = self.cpp_module.get_interface(&provides.interface);
             let interface: schema::InterfaceFromEverest = interface_s.deserialize();
+            log::debug!("Deserialiazed the interface {interface:?}");
+
             for (name, _) in interface.cmds {
-                self.cpp_module.as_ref().unwrap().provide_command(
-                    self,
-                    implementation_id.clone(),
-                    name,
-                );
+                self.cpp_module
+                    .provide_command(self, implementation_id.clone(), name);
             }
         }
 
@@ -594,10 +579,11 @@ impl Runtime {
                 continue;
             }
             let interface: schema::InterfaceFromEverest = interface_s.deserialize();
+            log::debug!("Deserialiazed the interface {interface:?}");
 
             for i in 0usize..connection {
                 for (name, _) in interface.vars.iter() {
-                    self.cpp_module.as_ref().unwrap().subscribe_variable(
+                    self.cpp_module.subscribe_variable(
                         self,
                         implementation_id.clone(),
                         i,
@@ -607,17 +593,17 @@ impl Runtime {
             }
         }
 
-        self.cpp_module.as_ref().unwrap().subscribe_all_errors(self);
+        self.cpp_module.subscribe_all_errors(self);
 
         // Since users can choose to overwrite `on_ready`, we can call signal_ready right away.
         // TODO(hrapp): There were some doubts if this strategy is too inflexible, discuss design
         // again.
-        (self.cpp_module).as_ref().unwrap().signal_ready(self);
+        (self.cpp_module).signal_ready(self);
     }
 
     /// The interface for fetching the module connections though the C++ runtime.
     pub fn get_module_connections(&self) -> HashMap<String, usize> {
-        let raw_connections = self.cpp_module.as_ref().unwrap().get_module_connections();
+        let raw_connections = self.cpp_module.get_module_connections();
         raw_connections
             .into_iter()
             .map(|connection| (connection.implementation_id, connection.slots))
@@ -680,15 +666,25 @@ impl TryFrom<&Config> for i64 {
 /// This is separetated from the module since the user might need the config
 /// to create the [Runtime].
 pub fn get_module_configs() -> HashMap<String, HashMap<String, Config>> {
-    let args: Args = argh::from_env();
-    // logger::Logger::init_logger(
-    //     &args.module,
-    //     &args.prefix.to_string_lossy(),
-    //     &args.conf.to_string_lossy(),
-    // );
-    let raw_config = ffi::get_module_configs(
-        &args.module
+    let args: Args = Args::parse();
+    logger::Logger::init_logger(
+        &args.module,
+        &args.prefix.to_string_lossy(),
+        &args.log_config.to_string_lossy(),
     );
+    let cpp_module = ffi::create_module(
+        &args.module,
+        &args.prefix.to_string_lossy(),
+        &args
+            .mqtt_broker_socket_path
+            .unwrap_or_default()
+            .to_string_lossy(),
+        &args.mqtt_broker_host,
+        &args.mqtt_broker_port,
+        &args.mqtt_everest_prefix,
+        &args.mqtt_external_prefix,
+    );
+    let raw_config = cpp_module.get_module_configs(&args.module);
 
     // Convert the nested Vec's into nested HashMaps.
     let mut out: HashMap<String, HashMap<String, Config>> = HashMap::new();

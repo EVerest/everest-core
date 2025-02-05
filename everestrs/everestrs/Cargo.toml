@@ -4,7 +4,7 @@ version = "0.20.0"
 edition = "2021"
 
 [dependencies]
-argh = "0.1.10"
+clap = { version = "4.5.27", features = ["derive"] }
 cxx = { version = "1.0.107", features = ["c++17"] }
 everestrs-build = { workspace = true }
 log = { version = "0.4.20", features = ["std"] }

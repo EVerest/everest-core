@@ -6,7 +6,6 @@
 
 #include <framework/everest.hpp>
 #include <framework/runtime.hpp>
-#include <utils/mqtt_settings.hpp>
 #include <utils/types.hpp>
 
 #include "rust/cxx.h"
@@ -24,10 +23,15 @@ enum class ErrorSeverity : uint8_t;
 
 class Module {
 public:
+    /// @brief The c'tor should not be called by the user code.
+    ///
+    /// In order to create the Module use the `create_module` function.
     Module(const std::string& module_id, const std::string& prefix, const Everest::MQTTSettings& mqtt_settings);
 
-    JsonBlob initialize() const;
+    JsonBlob get_manifest() const;
     JsonBlob get_interface(rust::Str interface_name) const;
+    rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_name) const;
+    rust::Vec<RsModuleConnections> get_module_connections() const;
 
     void signal_ready(const Runtime& rt) const;
     void provide_command(const Runtime& rt, rust::String implementation_id, rust::String name) const;
@@ -37,8 +41,6 @@ public:
     void subscribe_all_errors(const Runtime& rt) const;
 
     void publish_variable(rust::Str implementation_id, rust::Str name, JsonBlob blob) const;
-    std::shared_ptr<Everest::Config> get_config() const;
-    rust::Vec<RsModuleConnections> get_module_connections() const;
 
     void raise_error(rust::Str implementation_id, ErrorType error_type) const;
 
@@ -46,19 +48,14 @@ public:
 
 private:
     const std::string module_id_;
-    const Everest::MQTTSettings mqtt_settings_;
-    std::shared_ptr<Everest::MQTTAbstraction> mqtt_abstraction_;
     std::unique_ptr<Everest::RuntimeSettings> rs_;
     std::shared_ptr<Everest::Config> config_;
     std::unique_ptr<Everest::Everest> handle_;
 };
 
-std::shared_ptr<Module> create_module(rust::Str module_name, rust::Str prefix, rust::Str mqtt_broker_socket_path,
-                                      rust::Str mqtt_broker_host, rust::Str mqtt_broker_port,
-                                      rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix);
+const Module& create_module(rust::Str module_id, rust::Str prefix, rust::Str mqtt_broker_socket_path,
+                            rust::Str mqtt_broker_host, const unsigned int& mqtt_broker_port,
+                            rust::Str mqtt_everest_prefix, rust::Str mqtt_external_prefix);
 
-rust::Vec<RsModuleConfig> get_module_configs(rust::Str module_name);
-rust::Vec<RsModuleConnections> get_module_connections();
-
-int init_logging(rust::Str module_name, rust::Str prefix, rust::Str logging_config_file);
+int init_logging(rust::Str module_id, rust::Str prefix, rust::Str logging_config_file);
 void log2cxx(int level, int line, rust::Str file, rust::Str message);

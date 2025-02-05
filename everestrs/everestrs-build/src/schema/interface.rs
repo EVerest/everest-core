@@ -21,6 +21,9 @@ pub struct Interface {
 /// contrary to the definition inside the yaml file...
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InterfaceFromEverest {
+    // Note: EVerest config over mqtt does not return descriptions even so
+    // they should be necessary.
+    #[serde(default)]
     pub description: String,
     #[serde(default)]
     pub cmds: BTreeMap<String, Command>,
@@ -31,6 +34,9 @@ pub struct InterfaceFromEverest {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Command {
+    // Note: EVerest config over mqtt does not return descriptions even so
+    // they should be necessary.    
+    #[serde(default)]
     pub description: String,
     #[serde(default)]
     pub arguments: BTreeMap<String, Type>,

@@ -159,7 +159,7 @@ impl Module {
             publisher: ModulePublisher::default(),
         });
 
-        runtime.as_ref().set_subscriber(::std::sync::Arc::<Module>::downgrade(&this));
+        runtime.as_ref().set_subscriber(this.clone());
         this
     }
 }

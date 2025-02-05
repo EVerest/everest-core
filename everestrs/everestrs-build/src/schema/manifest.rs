@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
+    #[serde(default)]
     pub description: String,
     pub metadata: Metadata,
     pub provides: BTreeMap<String, ProvidesEntry>,
