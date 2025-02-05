@@ -14,7 +14,6 @@ target_sources(libocpp_unit_tests PRIVATE
         test_database_handler.cpp
         test_device_model.cpp
         test_init_device_model_db.cpp
-        test_smart_charging_handler.cpp
         comparators.cpp
         test_message_queue.cpp
         test_composite_schedule.cpp

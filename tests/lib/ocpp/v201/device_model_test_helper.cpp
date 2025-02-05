@@ -158,6 +158,56 @@ bool DeviceModelTestHelper::update_variable_characteristics(const VariableCharac
     return true;
 }
 
+bool DeviceModelTestHelper::set_variable_attribute_value_null(const std::string& component_name,
+                                                              const std::optional<std::string>& component_instance,
+                                                              const std::optional<uint32_t>& evse_id,
+                                                              const std::optional<uint32_t>& connector_id,
+                                                              const std::string& variable_name,
+                                                              const std::optional<std::string>& variable_instance,
+                                                              const AttributeEnum& attribute_enum) {
+    std::string update_query =
+        "UPDATE VARIABLE_ATTRIBUTE SET VALUE=NULL WHERE VARIABLE_ID="
+        "(SELECT ID FROM VARIABLE WHERE COMPONENT_ID = "
+        "(SELECT ID FROM COMPONENT WHERE NAME = @component_name AND INSTANCE IS @component_instance AND "
+        "EVSE_ID IS @evse_id AND CONNECTOR_ID IS @connector_id) "
+        "AND NAME = @variable_name AND INSTANCE IS @variable_instance) "
+        "AND TYPE_ID=@type_id";
+    auto update_statement = this->database_connection->new_statement(update_query);
+
+    update_statement->bind_text("@component_name", component_name, common::SQLiteString::Transient);
+    if (component_instance.has_value()) {
+        update_statement->bind_text("@component_instance", component_instance.value(), common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@component_instance");
+    }
+    if (evse_id.has_value()) {
+        update_statement->bind_int("@evse_id", evse_id.value());
+        if (connector_id.has_value()) {
+            update_statement->bind_int("@connector_id", connector_id.value());
+        } else {
+            update_statement->bind_null("@connector_id");
+        }
+    } else {
+        update_statement->bind_null("@evse_id");
+        update_statement->bind_null("@connector_id");
+    }
+
+    update_statement->bind_text("@variable_name", variable_name, common::SQLiteString::Transient);
+    if (variable_instance.has_value()) {
+        update_statement->bind_text("@variable_instance", variable_instance.value(), common::SQLiteString::Transient);
+    } else {
+        update_statement->bind_null("@variable_instance");
+    }
+
+    update_statement->bind_int("@type_id", static_cast<int>(attribute_enum));
+
+    if (update_statement->step() != SQLITE_DONE) {
+        return false;
+    }
+
+    return true;
+}
+
 void DeviceModelTestHelper::create_device_model_db() {
     InitDeviceModelDb db(this->database_path, this->migration_files_path);
     db.initialize_database(this->config_path, true);

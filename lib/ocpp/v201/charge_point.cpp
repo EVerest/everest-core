@@ -306,7 +306,7 @@ void ChargePoint::on_transaction_finished(const int32_t evse_id, const DateTime&
                                 transaction_id_token, meter_values, std::nullopt, this->is_offline(), std::nullopt);
 
     // K02.FR.05 The transaction is over, so delete the TxProfiles associated with the transaction.
-    smart_charging_handler->delete_transaction_tx_profiles(enhanced_transaction->get_transaction().transactionId);
+    smart_charging->delete_transaction_tx_profiles(enhanced_transaction->get_transaction().transactionId);
     evse_handle.release_transaction();
 
     bool send_reset = false;
@@ -599,10 +599,6 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
     this->evse_manager = std::make_unique<EvseManager>(
         evse_connector_structure, *this->device_model, this->database_handler, component_state_manager,
         transaction_meter_value_callback, this->callbacks.pause_charging_callback);
-
-    this->smart_charging_handler =
-        std::make_shared<SmartChargingHandler>(*this->evse_manager, this->device_model, *this->database_handler);
-
     this->configure_message_logging_format(message_log_path);
 
     this->connectivity_manager =
@@ -700,6 +696,10 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
             this->callbacks.configure_network_connection_profile_callback.value());
     }
 
+    this->smart_charging = std::make_unique<SmartCharging>(
+        *this->device_model, *this->evse_manager, *this->connectivity_manager, *this->message_dispatcher,
+        *this->database_handler, this->callbacks.set_charging_profiles_callback);
+
     this->tariff_and_cost = std::make_unique<TariffAndCost>(
         *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->meter_values,
         this->callbacks.set_display_message_callback, this->callbacks.set_running_cost_callback, this->io_service);
@@ -795,16 +795,10 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
             this->handle_get_transaction_status(json_message);
             break;
         case MessageType::SetChargingProfile:
-            this->handle_set_charging_profile_req(json_message);
-            break;
         case MessageType::ClearChargingProfile:
-            this->handle_clear_charging_profile_req(json_message);
-            break;
         case MessageType::GetChargingProfiles:
-            this->handle_get_charging_profiles_req(json_message);
-            break;
         case MessageType::GetCompositeSchedule:
-            this->handle_get_composite_schedule_req(json_message);
+            this->smart_charging->handle_message(message);
             break;
         case MessageType::GetDisplayMessages:
         case MessageType::SetDisplayMessage:
@@ -1328,25 +1322,6 @@ void ChargePoint::transaction_event_req(const TransactionEventEnum& event_type, 
     if (this->callbacks.transaction_event_callback.has_value()) {
         this->callbacks.transaction_event_callback.value()(req);
     }
-}
-
-void ChargePoint::report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
-                                              const ChargingLimitSourceEnum source,
-                                              const std::vector<ChargingProfile>& profiles, const bool tbc) {
-    ReportChargingProfilesRequest req;
-    req.requestId = request_id;
-    req.evseId = evse_id;
-    req.chargingLimitSource = source;
-    req.chargingProfile = profiles;
-    req.tbc = tbc;
-
-    ocpp::Call<ReportChargingProfilesRequest> call(req);
-    this->message_dispatcher->dispatch_call(call);
-}
-
-void ChargePoint::report_charging_profile_req(const ReportChargingProfilesRequest& req) {
-    ocpp::Call<ReportChargingProfilesRequest> call(req);
-    this->message_dispatcher->dispatch_call(call);
 }
 
 void ChargePoint::handle_boot_notification_response(CallResult<BootNotificationResponse> call_result) {
@@ -2072,7 +2047,7 @@ void ChargePoint::handle_remote_start_transaction_request(Call<RequestStartTrans
 
                 if (charging_profile.chargingProfilePurpose == ChargingProfilePurposeEnum::TxProfile) {
 
-                    const auto add_profile_response = this->smart_charging_handler->conform_validate_and_add_profile(
+                    const auto add_profile_response = this->smart_charging->conform_validate_and_add_profile(
                         msg.chargingProfile.value(), evse_id, ChargingLimitSourceEnum::CSO,
                         AddChargingProfileSource::RequestStartTransactionRequest);
                     if (add_profile_response.status == ChargingProfileStatusEnum::Accepted) {
@@ -2122,151 +2097,6 @@ void ChargePoint::handle_remote_stop_transaction_request(Call<RequestStopTransac
     }
 
     const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-void ChargePoint::handle_set_charging_profile_req(Call<SetChargingProfileRequest> call) {
-    EVLOG_debug << "Received SetChargingProfileRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    auto msg = call.msg;
-    SetChargingProfileResponse response;
-    response.status = ChargingProfileStatusEnum::Rejected;
-
-    // K01.FR.29: Respond with a CallError if SmartCharging is not available for this Charging Station
-    bool is_smart_charging_available =
-        this->device_model->get_optional_value<bool>(ControllerComponentVariables::SmartChargingCtrlrAvailable)
-            .value_or(false);
-
-    if (!is_smart_charging_available) {
-        EVLOG_warning << "SmartChargingCtrlrAvailable is not set for Charging Station. Returning NotSupported error";
-
-        const auto call_error =
-            CallError(call.uniqueId, "NotSupported", "Charging Station does not support smart charging", json({}));
-        this->message_dispatcher->dispatch_call_error(call_error);
-
-        return;
-    }
-
-    // K01.FR.22: Reject ChargingStationExternalConstraints profiles in SetChargingProfileRequest
-    if (msg.chargingProfile.chargingProfilePurpose == ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
-        response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = "InvalidValue";
-        response.statusInfo->additionalInfo = "ChargingStationExternalConstraintsInSetChargingProfileRequest";
-        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
-                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
-
-        ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher->dispatch_call_result(call_result);
-
-        return;
-    }
-
-    response = this->smart_charging_handler->conform_validate_and_add_profile(msg.chargingProfile, msg.evseId);
-    if (response.status == ChargingProfileStatusEnum::Accepted) {
-        EVLOG_debug << "Accepting SetChargingProfileRequest";
-        this->callbacks.set_charging_profiles_callback();
-    } else {
-        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
-                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
-    }
-
-    ocpp::CallResult<SetChargingProfileResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
-void ChargePoint::handle_clear_charging_profile_req(Call<ClearChargingProfileRequest> call) {
-    EVLOG_debug << "Received ClearChargingProfileRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    const auto msg = call.msg;
-    ClearChargingProfileResponse response;
-    response.status = ClearChargingProfileStatusEnum::Unknown;
-
-    // K10.FR.06
-    if (msg.chargingProfileCriteria.has_value() and
-        msg.chargingProfileCriteria.value().chargingProfilePurpose.has_value() and
-        msg.chargingProfileCriteria.value().chargingProfilePurpose.value() ==
-            ChargingProfilePurposeEnum::ChargingStationExternalConstraints) {
-        response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = "InvalidValue";
-        response.statusInfo->additionalInfo = "ChargingStationExternalConstraintsInClearChargingProfileRequest";
-        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
-                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
-    } else {
-        response = this->smart_charging_handler->clear_profiles(msg);
-    }
-
-    if (response.status == ClearChargingProfileStatusEnum::Accepted) {
-        this->callbacks.set_charging_profiles_callback();
-    }
-
-    ocpp::CallResult<ClearChargingProfileResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-}
-
-void ChargePoint::handle_get_charging_profiles_req(Call<GetChargingProfilesRequest> call) {
-    EVLOG_debug << "Received GetChargingProfilesRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    const auto msg = call.msg;
-    GetChargingProfilesResponse response;
-
-    const auto profiles_to_report = this->smart_charging_handler->get_reported_profiles(msg);
-
-    response.status =
-        profiles_to_report.empty() ? GetChargingProfileStatusEnum::NoProfiles : GetChargingProfileStatusEnum::Accepted;
-
-    ocpp::CallResult<GetChargingProfilesResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-
-    if (response.status == GetChargingProfileStatusEnum::NoProfiles) {
-        return;
-    }
-
-    // There are profiles to report.
-    // Prepare ReportChargingProfileRequest(s). The message defines the properties evseId and
-    // chargingLimitSource as required, so we can not report all profiles in a single
-    // ReportChargingProfilesRequest. We need to prepare a single ReportChargingProfilesRequest for each
-    // combination of evseId and chargingLimitSource
-    std::set<int32_t> evse_ids;                // will contain all evse_ids of the profiles
-    std::set<ChargingLimitSourceEnum> sources; // will contain all sources of the profiles
-
-    // fill evse_ids and sources sets
-    for (const auto& profile : profiles_to_report) {
-        evse_ids.insert(profile.evse_id);
-        sources.insert(profile.source);
-    }
-
-    std::vector<ReportChargingProfilesRequest> requests_to_send;
-
-    for (const auto evse_id : evse_ids) {
-        for (const auto source : sources) {
-            std::vector<ChargingProfile> original_profiles;
-            for (const auto& reported_profile : profiles_to_report) {
-                if (reported_profile.evse_id == evse_id and reported_profile.source == source) {
-                    original_profiles.push_back(reported_profile.profile);
-                }
-            }
-            if (not original_profiles.empty()) {
-                // prepare a ReportChargingProfilesRequest
-                ReportChargingProfilesRequest req;
-                req.requestId = msg.requestId; // K09.FR.01
-                req.evseId = evse_id;
-                req.chargingLimitSource = source;
-                req.chargingProfile = original_profiles;
-                req.tbc = true;
-                requests_to_send.push_back(req);
-            }
-        }
-    }
-
-    requests_to_send.back().tbc = false;
-
-    // requests_to_send are ready, send them and define tbc property
-    for (const auto& request_to_send : requests_to_send) {
-        this->report_charging_profile_req(request_to_send);
-    }
-}
-
-void ChargePoint::handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call) {
-    EVLOG_debug << "Received GetCompositeScheduleRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    const auto response = this->get_composite_schedule_internal(call.msg);
-
-    ocpp::CallResult<GetCompositeScheduleResponse> call_result(response, call.uniqueId);
     this->message_dispatcher->dispatch_call_result(call_result);
 }
 
@@ -2392,54 +2222,6 @@ void ChargePoint::websocket_connection_failed(ConnectionFailedReason reason) {
         break;
     }
 }
-
-GetCompositeScheduleResponse ChargePoint::get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
-                                                                          bool simulate_transaction_active) {
-    GetCompositeScheduleResponse response;
-    response.status = GenericStatusEnum::Rejected;
-
-    std::vector<std::string> supported_charging_rate_units = ocpp::split_string(
-        this->device_model->get_value<std::string>(ControllerComponentVariables::ChargingScheduleChargingRateUnit), ',',
-        true);
-
-    std::optional<ChargingRateUnitEnum> charging_rate_unit = std::nullopt;
-    if (request.chargingRateUnit.has_value()) {
-        bool unit_supported = std::any_of(
-            supported_charging_rate_units.begin(), supported_charging_rate_units.end(), [&request](std::string item) {
-                return conversions::string_to_charging_rate_unit_enum(item) == request.chargingRateUnit.value();
-            });
-
-        if (unit_supported) {
-            charging_rate_unit = request.chargingRateUnit.value();
-        }
-    } else if (supported_charging_rate_units.size() > 0) {
-        charging_rate_unit = conversions::string_to_charging_rate_unit_enum(supported_charging_rate_units.at(0));
-    }
-
-    // K01.FR.05 & K01.FR.07
-    if (this->evse_manager->does_evse_exist(request.evseId) and charging_rate_unit.has_value()) {
-        auto start_time = ocpp::DateTime();
-        auto end_time = ocpp::DateTime(start_time.to_time_point() + std::chrono::seconds(request.duration));
-
-        auto schedule = this->smart_charging_handler->calculate_composite_schedule(
-            start_time, end_time, request.evseId, charging_rate_unit.value(), this->is_offline(),
-            simulate_transaction_active);
-
-        response.schedule = schedule;
-        response.status = GenericStatusEnum::Accepted;
-    } else {
-        auto reason = charging_rate_unit.has_value()
-                          ? ProfileValidationResultEnum::EvseDoesNotExist
-                          : ProfileValidationResultEnum::ChargingScheduleChargingRateUnitUnsupported;
-        response.statusInfo = StatusInfo();
-        response.statusInfo->reasonCode = conversions::profile_validation_result_to_reason_code(reason);
-        response.statusInfo->additionalInfo = conversions::profile_validation_result_to_string(reason);
-        EVLOG_debug << "Rejecting SetChargingProfileRequest:\n reasonCode: " << response.statusInfo->reasonCode.get()
-                    << "\nadditionalInfo: " << response.statusInfo->additionalInfo->get();
-    }
-    return response;
-}
-
 void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                                const ConnectorStatusEnum status) {
     ComponentVariable charging_station = ControllerComponentVariables::ChargingStationAvailabilityState;
@@ -2473,7 +2255,7 @@ void ChargePoint::clear_invalid_charging_profiles() {
         for (const auto& [evse_id, profiles] : evses) {
             for (auto profile : profiles) {
                 try {
-                    if (this->smart_charging_handler->conform_and_validate_profile(profile, evse_id) !=
+                    if (this->smart_charging->conform_and_validate_profile(profile, evse_id) !=
                         ProfileValidationResultEnum::Valid) {
                         this->database_handler->delete_charging_profile(profile.id);
                     }
@@ -2517,47 +2299,17 @@ ChargePoint::set_variables(const std::vector<SetVariableData>& set_variable_data
 }
 
 GetCompositeScheduleResponse ChargePoint::get_composite_schedule(const GetCompositeScheduleRequest& request) {
-    return this->get_composite_schedule_internal(request);
+    return this->smart_charging->get_composite_schedule(request);
 }
 
 std::optional<CompositeSchedule> ChargePoint::get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,
                                                                      ChargingRateUnitEnum unit) {
-    GetCompositeScheduleRequest request;
-    request.duration = duration.count();
-    request.evseId = evse_id;
-    request.chargingRateUnit = unit;
-
-    auto composite_schedule_response = this->get_composite_schedule_internal(request, false);
-    if (composite_schedule_response.status == GenericStatusEnum::Accepted and
-        composite_schedule_response.schedule.has_value()) {
-        return composite_schedule_response.schedule.value();
-    } else {
-        return std::nullopt;
-    }
+    return this->smart_charging->get_composite_schedule(evse_id, duration, unit);
 }
 
 std::vector<CompositeSchedule> ChargePoint::get_all_composite_schedules(const int32_t duration_s,
                                                                         const ChargingRateUnitEnum& unit) {
-    std::vector<CompositeSchedule> composite_schedules;
-
-    const auto number_of_evses = this->evse_manager->get_number_of_evses();
-    // get all composite schedules including the one for evse_id == 0
-    for (int32_t evse_id = 0; evse_id <= number_of_evses; evse_id++) {
-        GetCompositeScheduleRequest request;
-        request.duration = duration_s;
-        request.evseId = evse_id;
-        request.chargingRateUnit = unit;
-        auto composite_schedule_response = this->get_composite_schedule_internal(request);
-        if (composite_schedule_response.status == GenericStatusEnum::Accepted and
-            composite_schedule_response.schedule.has_value()) {
-            composite_schedules.push_back(composite_schedule_response.schedule.value());
-        } else {
-            EVLOG_warning << "Could not internally retrieve composite schedule for evse id " << evse_id << ": "
-                          << composite_schedule_response;
-        }
-    }
-
-    return composite_schedules;
+    return this->smart_charging->get_all_composite_schedules(duration_s, unit);
 }
 
 std::optional<NetworkConnectionProfile>

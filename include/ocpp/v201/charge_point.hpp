@@ -16,6 +16,7 @@
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
+#include <ocpp/v201/functional_blocks/smart_charging.hpp>
 #include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
@@ -31,20 +32,16 @@
 #include <ocpp/v201/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
-#include <ocpp/v201/smart_charging.hpp>
 #include <ocpp/v201/types.hpp>
 #include <ocpp/v201/utils.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
 #include <ocpp/v201/messages/BootNotification.hpp>
-#include <ocpp/v201/messages/ClearChargingProfile.hpp>
 #include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
 #include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v201/messages/GetBaseReport.hpp>
-#include <ocpp/v201/messages/GetChargingProfiles.hpp>
-#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetMonitoringReport.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
@@ -54,11 +51,9 @@
 #include <ocpp/v201/messages/NotifyEvent.hpp>
 #include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
 #include <ocpp/v201/messages/NotifyReport.hpp>
-#include <ocpp/v201/messages/ReportChargingProfiles.hpp>
 #include <ocpp/v201/messages/RequestStartTransaction.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
-#include <ocpp/v201/messages/SetChargingProfile.hpp>
 #include <ocpp/v201/messages/SetMonitoringBase.hpp>
 #include <ocpp/v201/messages/SetMonitoringLevel.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
@@ -370,6 +365,7 @@ private:
     std::unique_ptr<SecurityInterface> security;
     std::unique_ptr<DisplayMessageInterface> display_message;
     std::unique_ptr<MeterValuesInterface> meter_values;
+    std::unique_ptr<SmartCharging> smart_charging;
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
 
     // utility
@@ -436,9 +432,6 @@ private:
     void websocket_connection_failed(ConnectionFailedReason reason);
     void update_dm_availability_state(const int32_t evse_id, const int32_t connector_id,
                                       const ConnectorStatusEnum status);
-
-    GetCompositeScheduleResponse get_composite_schedule_internal(const GetCompositeScheduleRequest& request,
-                                                                 bool simulate_transaction_active = true);
 
     void message_callback(const std::string& message);
 
@@ -519,12 +512,6 @@ private:
                                const std::optional<int32_t>& reservation_id,
                                const bool initiated_by_trigger_message = false);
 
-    // Functional Block K: Smart Charging
-    void report_charging_profile_req(const int32_t request_id, const int32_t evse_id,
-                                     const ChargingLimitSourceEnum source, const std::vector<ChargingProfile>& profiles,
-                                     const bool tbc);
-    void report_charging_profile_req(const ReportChargingProfilesRequest& req);
-
     /* OCPP message handlers */
 
     // Functional Block B: Provisioning
@@ -545,12 +532,6 @@ private:
     void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
     void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
     void handle_trigger_message(Call<TriggerMessageRequest> call);
-
-    // Functional Block K: Smart Charging
-    void handle_set_charging_profile_req(Call<SetChargingProfileRequest> call);
-    void handle_clear_charging_profile_req(Call<ClearChargingProfileRequest> call);
-    void handle_get_charging_profiles_req(Call<GetChargingProfilesRequest> call);
-    void handle_get_composite_schedule_req(Call<GetCompositeScheduleRequest> call);
 
     // Functional Block L: Firmware management
     void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
@@ -573,8 +554,6 @@ private:
     }
 
 protected:
-    std::shared_ptr<SmartChargingHandlerInterface> smart_charging_handler;
-
     void handle_message(const EnhancedMessage<v201::MessageType>& message);
     void clear_invalid_charging_profiles();
 
@@ -727,12 +706,9 @@ public:
 
     std::map<SetVariableData, SetVariableResult>
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) override;
-
     GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
-
     std::optional<CompositeSchedule> get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,
                                                             ChargingRateUnitEnum unit) override;
-
     std::vector<CompositeSchedule> get_all_composite_schedules(const int32_t duration,
                                                                const ChargingRateUnitEnum& unit) override;
 

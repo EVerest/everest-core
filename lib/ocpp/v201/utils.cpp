@@ -200,7 +200,7 @@ std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string
     std::vector<ChargingProfilePurposeEnum> purposes_to_ignore;
     const auto purposes_to_ignore_vec = split_string(csl, ',');
 
-    for (const auto purpose : purposes_to_ignore_vec) {
+    for (const auto& purpose : purposes_to_ignore_vec) {
         try {
             purposes_to_ignore.push_back(conversions::string_to_charging_profile_purpose_enum(purpose));
         } catch (std::out_of_range& e) {

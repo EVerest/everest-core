@@ -77,6 +77,25 @@ public:
                                          const std::optional<uint32_t>& connector_id, const std::string& variable_name,
                                          const std::optional<std::string>& variable_instance);
 
+    ///
+    /// \brief Set variable attribute to 'NULL'
+    /// \param component_name       Component name.
+    /// \param component_instance   Component instance.
+    /// \param evse_id              The evse id.
+    /// \param connector_id         The connector id.
+    /// \param variable_name        The variable name.
+    /// \param variable_instance    The variable instance.
+    /// \param attribute_enum       The variable attribute.
+    /// \return True on success.
+    ///
+    bool set_variable_attribute_value_null(const std::string& component_name,
+                                           const std::optional<std::string>& component_instance,
+                                           const std::optional<uint32_t>& evse_id,
+                                           const std::optional<uint32_t>& connector_id,
+                                           const std::string& variable_name,
+                                           const std::optional<std::string>& variable_instance,
+                                           const AttributeEnum& attribute_enum);
+
 private:
     const std::string& database_path;
     const std::string& migration_files_path;

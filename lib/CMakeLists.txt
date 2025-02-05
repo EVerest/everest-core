@@ -71,7 +71,6 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/average_meter_values.cpp
             ocpp/v201/charge_point.cpp
             ocpp/v201/charge_point_callbacks.cpp
-            ocpp/v201/smart_charging.cpp
             ocpp/v201/connector.cpp
             ocpp/v201/ctrlr_component_variables.cpp
             ocpp/v201/database_handler.cpp
@@ -97,6 +96,7 @@ if(LIBOCPP_ENABLE_V201)
             ocpp/v201/functional_blocks/authorization.cpp
             ocpp/v201/functional_blocks/availability.cpp
             ocpp/v201/functional_blocks/security.cpp
+            ocpp/v201/functional_blocks/smart_charging.cpp
             ocpp/v201/functional_blocks/data_transfer.cpp
             ocpp/v201/functional_blocks/reservation.cpp
             ocpp/v201/functional_blocks/diagnostics.cpp
