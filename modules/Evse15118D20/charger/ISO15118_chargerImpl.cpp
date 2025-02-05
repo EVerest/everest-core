@@ -19,18 +19,6 @@ namespace dt = iso15118::message_20::datatypes;
 
 namespace {
 
-std::filesystem::path construct_cert_path(const std::filesystem::path& initial_path, const std::string& config_path) {
-    if (config_path.empty()) {
-        return initial_path;
-    }
-
-    if (config_path.front() == '/') {
-        return config_path;
-    } else {
-        return initial_path / config_path;
-    }
-}
-
 iso15118::config::TlsNegotiationStrategy convert_tls_negotiation_strategy(const std::string& strategy) {
     using Strategy = iso15118::config::TlsNegotiationStrategy;
     if (strategy == "ACCEPT_CLIENT_OFFER") {
@@ -154,7 +142,6 @@ void ISO15118_chargerImpl::init() {
 }
 
 void ISO15118_chargerImpl::ready() {
-
     while (true) {
         if (setup_steps_done.all()) {
             break;
@@ -164,13 +151,33 @@ void ISO15118_chargerImpl::ready() {
 
     const auto session_logger = std::make_unique<SessionLogger>(mod->config.logging_path);
 
-    const auto default_cert_path = mod->info.paths.etc / "certs";
-    const auto cert_path = construct_cert_path(default_cert_path, mod->config.certificate_path);
+    // Obtain certificate location from the security module
+    const auto certificate_response = mod->r_security->call_get_leaf_certificate_info(
+        types::evse_security::LeafCertificateType::V2G, types::evse_security::EncodingFormat::PEM, false);
+
+    if (certificate_response.status != types::evse_security::GetCertificateInfoStatus::Accepted or
+        !certificate_response.info.has_value()) {
+        EVLOG_AND_THROW(Everest::EverestConfigError("V2G certificate not found"));
+    }
+
+    const auto& certificate_info = certificate_response.info.value();
+    std::string path_chain;
+
+    if (certificate_info.certificate.has_value()) {
+        path_chain = certificate_info.certificate.value();
+    } else if (certificate_info.certificate_single.has_value()) {
+        path_chain = certificate_info.certificate_single.value();
+    } else {
+        EVLOG_AND_THROW(Everest::EverestConfigError("V2G certificate not found"));
+    }
+
     const iso15118::TbdConfig tbd_config = {
         {
             iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            cert_path.string(),
-            mod->config.private_key_password,
+            {},
+            path_chain,
+            certificate_info.key,
+            certificate_info.password,
             mod->config.enable_ssl_logging,
             mod->config.enable_tls_key_logging,
         },
