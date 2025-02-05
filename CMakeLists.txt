@@ -10,6 +10,8 @@ find_package(everest-cmake 0.1 REQUIRED
     PATHS ../everest-cmake
 )
 
+find_package(OpenSSL 3 REQUIRED)
+
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)
 option(BUILD_TESTING "Build unit tests, used if standalone project" OFF)
@@ -20,16 +22,6 @@ Licence Agreement (“Licence Agreement”), clauses 1. ISO’s Copyright, \
 7. Termination, 8. Limitations, and 9. Governing Law." OFF)
 
 option(ISO15118_INSTALL "Enable install target" ${EVC_MAIN_PROJECT})
-
-option(ISO15118_LINK_CUSTOM_MBEDTLS "\
-Link against a pinned mbedtls library\
-" ON)
-
-option(USE_OPENSSL "Use OpenSSL" ON)
-
-if (USE_OPENSSL)
-    find_package(OpenSSL 3 REQUIRED)
-endif()
 
 # list of compile options
 set(ISO15118_COMPILE_OPTIONS_WARNING "-Wall;-Wextra;-Wno-unused-function;-Werror" CACHE STRING "A list of compile options used")
@@ -49,7 +41,6 @@ else()
     find_package(cbv2g REQUIRED)
 endif()
 
-add_subdirectory(3rd_party)
 add_subdirectory(input)
 add_subdirectory(src)
 

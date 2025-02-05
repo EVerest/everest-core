@@ -79,45 +79,16 @@ target_link_libraries(iso15118
         Threads::Threads
 )
 
-if (USE_OPENSSL)
-    target_compile_definitions(iso15118
-        PRIVATE
-            LIBISO_OPENSSL
-    )
-    target_link_libraries(iso15118
-        PRIVATE
-            OpenSSL::SSL
-            OpenSSL::Crypto
-    )
-    target_sources(iso15118
-        PRIVATE
-        io/connection_openssl.cpp
-        misc/helper_openssl.cpp
-    )
-else()
-    if (NOT ISO15118_LINK_CUSTOM_MBEDTLS)
-        set(MBEDTLS_LINK_DEPENDENCIES
-            mbedtls
-            mbedx509
-            mbedcrypto
-        )
-    else()
-        set(MBEDTLS_LINK_DEPENDENCIES
-            mbedtls_custom
-            mbedx509_custom
-            mbedcrypto_custom
-        )
-    endif()
-    target_link_libraries(iso15118
-        PRIVATE
-            ${MBEDTLS_LINK_DEPENDENCIES}
-    )
-    target_sources(iso15118
-        PRIVATE
-        io/connection_mbedtls.cpp
-        misc/helper_mbedtls.cpp
-    )
-endif()
+target_link_libraries(iso15118
+    PRIVATE
+        OpenSSL::SSL
+        OpenSSL::Crypto
+)
+target_sources(iso15118
+    PRIVATE
+    io/connection_ssl.cpp
+    misc/helper_ssl.cpp
+)
 
 # FIXME (aw): do we want to have this public here?
 target_compile_features(iso15118 PUBLIC cxx_std_17)

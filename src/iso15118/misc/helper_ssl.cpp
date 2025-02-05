@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Pionix GmbH and Contributors to EVerest
-#include <iso15118/detail/io/helper_openssl.hpp>
+#include <iso15118/detail/io/helper_ssl.hpp>
 
 #include <cassert>
 #include <stdexcept>

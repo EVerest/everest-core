@@ -15,7 +15,7 @@
 #include <openssl/ssl.h>
 
 #include <iso15118/detail/helper.hpp>
-#include <iso15118/detail/io/helper_openssl.hpp>
+#include <iso15118/detail/io/helper_ssl.hpp>
 #include <iso15118/detail/io/socket_helper.hpp>
 #include <iso15118/io/sdp_server.hpp>
 
