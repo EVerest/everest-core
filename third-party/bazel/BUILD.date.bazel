@@ -9,6 +9,7 @@ filegroup(
 cmake(
     name = "date",
     cache_entries = {
+        "CMAKE_INSTALL_LIBDIR": "lib",
         "BUILD_TZ_LIB": "ON",
         "USE_SYSTEM_TZ_DB": "ON",
         "HAS_REMOTE_API": "0",

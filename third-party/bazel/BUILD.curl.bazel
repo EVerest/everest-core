@@ -16,6 +16,7 @@ filegroup(
 )
 
 libcurl_boringssl_cache_entries_common = {
+    "CMAKE_INSTALL_LIBDIR": "lib",
     "BUILD_SHARED_LIBS": "OFF",
     "BUILD_TESTING": "OFF",
     "BUILD_CURL_EXE": "OFF",

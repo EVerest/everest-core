@@ -8,6 +8,9 @@ filegroup(
 
 cmake(
     name = "libmqtt",
+    cache_entries = {
+        "CMAKE_INSTALL_LIBDIR": "lib",
+    },
     lib_source = ":all_srcs",
     out_static_libs = ["libmqttc.a"],
     visibility = [
