@@ -132,7 +132,7 @@ void ConnectivityManager::connect(std::optional<int32_t> configuration_slot_opt)
 
     this->wants_to_be_connected = true;
     this->pending_configuration_slot = configuration_slot;
-    if (this->is_websocket_connected()) {
+    if (this->websocket != nullptr && this->is_websocket_connected()) {
         // After the websocket gets closed a reconnect will be triggered
         this->websocket->disconnect(WebsocketCloseReason::ServiceRestart);
     } else {
@@ -194,7 +194,7 @@ void ConnectivityManager::try_connect_websocket() {
         if (config.has_value() && config->success) {
             connection_options->iface = config->interface_address;
         } else {
-            EVLOG_warning << "Could not use config slot " << configuration_slot_to_set;
+            EVLOG_debug << "Could not use config slot " << configuration_slot_to_set;
             can_use_connection_profile = false;
         }
     }
@@ -305,10 +305,9 @@ void ConnectivityManager::on_network_disconnected(OCPPInterfaceEnum ocpp_interfa
 
     if (!network_connection_profile.has_value()) {
         EVLOG_warning << "Network disconnected. No network connection profile configured";
-    } else if (ocpp_interface == network_connection_profile.value().ocppInterface) {
+    } else if (ocpp_interface == network_connection_profile.value().ocppInterface && this->websocket != nullptr) {
         // Since there is no connection anymore: disconnect the websocket, the manager will try to connect with the next
         // available network connection profile as we enable reconnects.
-        EVLOG_info << "ConnectivityManager::on_network_disconnected";
         this->websocket->disconnect(ocpp::WebsocketCloseReason::GoingAway);
     }
 }
