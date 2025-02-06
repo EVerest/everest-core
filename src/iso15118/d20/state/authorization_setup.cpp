@@ -54,50 +54,50 @@ message_20::AuthorizationSetupResponse handle_request(const message_20::Authoriz
 }
 
 void AuthorizationSetup::enter() {
-    ctx.log.enter_state("AuthorizationSetup");
+    m_ctx.log.enter_state("AuthorizationSetup");
 }
 
-FsmSimpleState::HandleEventReturnType AuthorizationSetup::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result AuthorizationSetup::feed(Event ev) {
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::AuthorizationSetupRequest>()) {
-        const auto res = handle_request(*req, ctx.session, ctx.session_config.cert_install_service,
-                                        ctx.session_config.authorization_services);
+        const auto res = handle_request(*req, m_ctx.session, m_ctx.session_config.cert_install_service,
+                                        m_ctx.session_config.authorization_services);
 
         logf_info("Timestamp: %d", req->header.timestamp);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         // Todo(sl): PnC is currently not supported
-        ctx.feedback.signal(session::feedback::Signal::REQUIRE_AUTH_EIM);
+        m_ctx.feedback.signal(session::feedback::Signal::REQUIRE_AUTH_EIM);
 
-        return sa.create_simple<Authorization>(ctx);
+        return m_ctx.create_state<Authorization>();
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
-        ctx.session_stopped = true;
+        m_ctx.respond(res);
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected AuthorizationSetupReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected AuthorizationSetupReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

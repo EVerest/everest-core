@@ -2,17 +2,17 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include "../fsm.hpp"
+#include "../states.hpp"
 #include <iso15118/message/authorization.hpp>
 
 namespace iso15118::d20::state {
-
-struct Authorization : public FsmSimpleState {
-    using FsmSimpleState::FsmSimpleState;
+struct Authorization : public StateBase {
+public:
+    Authorization(Context& ctx) : StateBase(ctx, StateID::Authorization){};
 
     void enter() final;
 
-    HandleEventReturnType handle_event(AllocatorType&, FsmEvent) final;
+    Result feed(Event) final;
 
 private:
     message_20::datatypes::AuthStatus authorization_status{message_20::datatypes::AuthStatus::Pending};

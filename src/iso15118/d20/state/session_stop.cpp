@@ -36,35 +36,35 @@ message_20::SessionStopResponse handle_request(const message_20::SessionStopRequ
 }
 
 void SessionStop::enter() {
-    ctx.log.enter_state("SessionStop");
+    m_ctx.log.enter_state("SessionStop");
 }
 
-FsmSimpleState::HandleEventReturnType SessionStop::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result SessionStop::feed(Event ev) {
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         // Todo(sl): Tell the reason why the charger is stopping. Shutdown, Error, etc.
-        ctx.session_stopped = true;
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected SessionStop! But code type id: %d", variant->get_type());
+        m_ctx.log("expected SessionStop! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

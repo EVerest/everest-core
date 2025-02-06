@@ -72,16 +72,16 @@ message_20::AuthorizationResponse handle_request(const message_20::Authorization
 }
 
 void Authorization::enter() {
-    ctx.log.enter_state("Authorization");
+    m_ctx.log.enter_state("Authorization");
 }
 
-FsmSimpleState::HandleEventReturnType Authorization::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result Authorization::feed(Event ev) {
+    if (ev == Event::CONTROL_MESSAGE) {
+        const auto control_data = m_ctx.get_control_event<AuthorizationResponse>();
 
-    if (ev == FsmEvent::CONTROL_MESSAGE) {
-        const auto control_data = ctx.get_control_event<AuthorizationResponse>();
         if (not control_data) {
             // Ignore control message
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
 
         if (*control_data) {
@@ -90,46 +90,46 @@ FsmSimpleState::HandleEventReturnType Authorization::handle_event(AllocatorType&
             authorization_status = AuthStatus::Rejected;
         }
 
-        return sa.HANDLED_INTERNALLY;
+        return {};
     }
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::AuthorizationRequest>()) {
-        const auto res = handle_request(*req, ctx.session, authorization_status);
+        const auto res = handle_request(*req, m_ctx.session, authorization_status);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         if (authorization_status == AuthStatus::Accepted) {
             authorization_status = AuthStatus::Pending; // reset
-            return sa.create_simple<ServiceDiscovery>(ctx);
+            return m_ctx.create_state<ServiceDiscovery>();
         } else {
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
-        ctx.respond(res);
+        const auto res = handle_request(*req, m_ctx.session);
+        m_ctx.respond(res);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     } else {
-        ctx.log("expected AuthorizationReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected AuthorizationReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

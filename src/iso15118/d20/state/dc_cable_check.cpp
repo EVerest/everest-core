@@ -31,65 +31,65 @@ message_20::DC_CableCheckResponse handle_request(const message_20::DC_CableCheck
 }
 
 void DC_CableCheck::enter() {
-    ctx.log.enter_state("DC_CableCheck");
+    m_ctx.log.enter_state("DC_CableCheck");
 }
 
-FsmSimpleState::HandleEventReturnType DC_CableCheck::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result DC_CableCheck::feed(Event ev) {
 
-    if (ev == FsmEvent::CONTROL_MESSAGE) {
-        const auto control_data = ctx.get_control_event<CableCheckFinished>();
+    if (ev == Event::CONTROL_MESSAGE) {
+        const auto control_data = m_ctx.get_control_event<CableCheckFinished>();
         if (not control_data) {
             // Ignore control message
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
 
         cable_check_done = *control_data;
 
-        return sa.HANDLED_INTERNALLY;
+        return {};
     }
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_CableCheckRequest>()) {
         if (not cable_check_initiated) {
-            ctx.feedback.signal(session::feedback::Signal::START_CABLE_CHECK);
+            m_ctx.feedback.signal(session::feedback::Signal::START_CABLE_CHECK);
             cable_check_initiated = true;
         }
 
-        const auto res = handle_request(*req, ctx.session, cable_check_done);
+        const auto res = handle_request(*req, m_ctx.session, cable_check_done);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         if (cable_check_done) {
-            return sa.create_simple<DC_PreCharge>(ctx);
+            return m_ctx.create_state<DC_PreCharge>();
         } else {
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
-        ctx.session_stopped = true;
+        m_ctx.respond(res);
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected DC_CableCheckReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected DC_CableCheckReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

@@ -125,11 +125,11 @@ Session::Session(std::unique_ptr<io::IConnection> connection_, d20::SessionConfi
                  const session::feedback::Callbacks& callbacks) :
     connection(std::move(connection_)),
     log(this),
-    ctx(callbacks, log, std::move(session_config), active_control_event, message_exchange) {
+    ctx(callbacks, log, std::move(session_config), active_control_event, message_exchange),
+    fsm(ctx.create_state<d20::state::SupportedAppProtocol>()) {
 
     next_session_event = offset_time_point_by_ms(get_current_time_point(), SESSION_IDLE_TIMEOUT_MS);
     connection->set_event_callback([this](io::ConnectionEvent event) { this->handle_connection_event(event); });
-    fsm.reset<d20::state::SupportedAppProtocol>(ctx);
 }
 
 Session::~Session() = default;
@@ -164,7 +164,7 @@ TimePoint const& Session::poll() {
             ctx.session_config.dc_limits = *control_data;
         }
 
-        [[maybe_unused]] const auto res = fsm.handle_event(d20::FsmEvent::CONTROL_MESSAGE);
+        [[maybe_unused]] const auto res = fsm.feed(d20::Event::CONTROL_MESSAGE);
         // FIXME (aw): check result!
     }
 
@@ -180,7 +180,7 @@ TimePoint const& Session::poll() {
         const auto request_msg_type = ctx.peek_request_type();
         ctx.feedback.v2g_message(request_msg_type);
 
-        [[maybe_unused]] const auto res = fsm.handle_event(d20::FsmEvent::V2GTP_MESSAGE);
+        [[maybe_unused]] const auto res = fsm.feed(d20::Event::V2GTP_MESSAGE);
         // FIXME(sl): check result!
     }
 

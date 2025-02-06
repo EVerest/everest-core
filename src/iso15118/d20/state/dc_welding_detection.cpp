@@ -25,53 +25,53 @@ message_20::DC_WeldingDetectionResponse handle_request(const message_20::DC_Weld
 }
 
 void DC_WeldingDetection::enter() {
-    ctx.log.enter_state("DC_WeldingDetection");
+    m_ctx.log.enter_state("DC_WeldingDetection");
 }
 
-FsmSimpleState::HandleEventReturnType DC_WeldingDetection::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result DC_WeldingDetection::feed(Event ev) {
 
-    if (ev == FsmEvent::CONTROL_MESSAGE) {
-        const auto control_data = ctx.get_control_event<PresentVoltageCurrent>();
+    if (ev == Event::CONTROL_MESSAGE) {
+        const auto control_data = m_ctx.get_control_event<PresentVoltageCurrent>();
         if (not control_data) {
             // Ignore control message
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
 
         present_voltage = control_data->voltage;
 
-        return sa.HANDLED_INTERNALLY;
+        return {};
     }
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_WeldingDetectionRequest>()) {
-        const auto res = handle_request(*req, ctx.session, present_voltage);
+        const auto res = handle_request(*req, m_ctx.session, present_voltage);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         if (req->processing == dt::Processing::Ongoing) {
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
 
-        return sa.create_simple<SessionStop>(ctx);
+        return m_ctx.create_state<SessionStop>();
     } else {
-        ctx.log("expected DC_WeldingDetection! But code type id: %d", variant->get_type());
+        m_ctx.log("expected DC_WeldingDetection! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

@@ -37,7 +37,6 @@ if (NOT DISABLE_EDM)
     # In EDM mode, we can't install exports (because the dependencies usually do not install their exports)
     set(ISO15118_INSTALL OFF)
 else()
-    find_package(fsm REQUIRED)
     find_package(cbv2g REQUIRED)
 endif()
 

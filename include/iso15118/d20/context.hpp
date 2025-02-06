@@ -52,11 +52,18 @@ private:
 
 std::unique_ptr<MessageExchange> create_message_exchange(uint8_t* buf, const size_t len);
 
+class StateBase;
+using BasePointerType = std::unique_ptr<StateBase>;
+
 class Context {
 public:
     // FIXME (aw): bundle arguments
     Context(session::feedback::Callbacks, session::SessionLogger&, d20::SessionConfig,
             const std::optional<ControlEvent>&, MessageExchange&);
+
+    template <typename StateType, typename... Args> BasePointerType create_state(Args&&... args) {
+        return std::make_unique<StateType>(*this, std::forward<Args>(args)...);
+    }
 
     std::unique_ptr<message_20::Variant> pull_request();
     message_20::Type peek_request_type() const;

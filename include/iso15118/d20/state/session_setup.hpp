@@ -3,16 +3,17 @@
 #pragma once
 #include <string>
 
-#include "../fsm.hpp"
+#include "../states.hpp"
 
 namespace iso15118::d20::state {
 
-struct SessionSetup : public FsmSimpleState {
-    using FsmSimpleState::FsmSimpleState;
+struct SessionSetup : public StateBase {
+    SessionSetup(Context& ctx) : StateBase(ctx, StateID::SessionSetup) {
+    }
 
     void enter() final;
 
-    HandleEventReturnType handle_event(AllocatorType&, FsmEvent) final;
+    Result feed(Event) final;
 
 private:
     std::string evse_id;

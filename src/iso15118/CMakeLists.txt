@@ -22,8 +22,7 @@ target_sources(iso15118
         session/feedback.cpp
         session/iso.cpp
         session/logger.cpp
-        
-        d20/fsm.cpp
+
         d20/context.cpp
         d20/context_helper.cpp
         d20/control_event_queue.cpp
@@ -72,7 +71,6 @@ target_sources(iso15118
 target_link_libraries(iso15118
     PUBLIC
         # FIXME (aw): would be nice if we could make this private!
-        fsm::fsm
         cbv2g::tp
         cbv2g::iso20
     PRIVATE

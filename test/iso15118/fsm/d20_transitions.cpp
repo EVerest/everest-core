@@ -13,6 +13,7 @@ using namespace iso15118;
 
 SCENARIO("ISO15118-20 state transitions") {
 
+    // Move to helper function?
     const auto evse_id = std::string("everest se");
     const std::vector<message_20::datatypes::ServiceCategory> supported_energy_services = {
         message_20::datatypes::ServiceCategory::DC};
@@ -26,11 +27,9 @@ SCENARIO("ISO15118-20 state transitions") {
                                           dc_limits, control_mobility_modes};
 
     auto state_helper = FsmStateHelper(d20::SessionConfig(evse_setup));
+    auto ctx = state_helper.get_context();
 
-    d20::state::SupportedAppProtocol state(state_helper.get_context());
-
-    // FIXME(sl): Set SessionLogger callback here correct
-    // state.enter();
+    fsm::v2::FSM<d20::StateBase> fsm{ctx.create_state<d20::state::SupportedAppProtocol>()};
 
     message_20::SupportedAppProtocolRequest req;
     auto& ap = req.app_protocol.emplace_back();
@@ -40,9 +39,9 @@ SCENARIO("ISO15118-20 state transitions") {
     ap.version_number_major = 2;
     ap.version_number_minor = 11;
 
-    auto res = state_helper.handle_request(state, io::v2gtp::PayloadType::SAP, req);
+    state_helper.handle_request(io::v2gtp::PayloadType::SAP, req);
+    const auto result = fsm.feed(d20::Event::V2GTP_MESSAGE);
 
-    REQUIRE(res.is_new_state());
-
-    REQUIRE(state_helper.next_simple_state_is<d20::state::SessionSetup>());
+    REQUIRE(result.transitioned() == false);
+    REQUIRE(fsm.get_current_state_id() == d20::StateID::SupportedAppProtocol);
 }

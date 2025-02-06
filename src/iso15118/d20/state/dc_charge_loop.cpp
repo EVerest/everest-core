@@ -179,40 +179,40 @@ message_20::DC_ChargeLoopResponse handle_request(const message_20::DC_ChargeLoop
 }
 
 void DC_ChargeLoop::enter() {
-    ctx.log.enter_state("DC_ChargeLoop");
+    m_ctx.log.enter_state("DC_ChargeLoop");
 }
 
-FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result DC_ChargeLoop::feed(Event ev) {
 
-    if (ev == FsmEvent::CONTROL_MESSAGE) {
+    if (ev == Event::CONTROL_MESSAGE) {
 
-        if (const auto* control_data = ctx.get_control_event<PresentVoltageCurrent>()) {
+        if (const auto* control_data = m_ctx.get_control_event<PresentVoltageCurrent>()) {
             present_voltage = control_data->voltage;
             present_current = control_data->current;
-        } else if (const auto* control_data = ctx.get_control_event<StopCharging>()) {
+        } else if (const auto* control_data = m_ctx.get_control_event<StopCharging>()) {
             stop = *control_data;
-        } else if (const auto* control_data = ctx.get_control_event<UpdateDynamicModeParameters>()) {
+        } else if (const auto* control_data = m_ctx.get_control_event<UpdateDynamicModeParameters>()) {
             dynamic_parameters = *control_data;
         }
 
         // Ignore control message
-        return sa.HANDLED_INTERNALLY;
+        return {};
     }
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::PowerDeliveryRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         // Reset
@@ -220,45 +220,45 @@ FsmSimpleState::HandleEventReturnType DC_ChargeLoop::handle_event(AllocatorType&
 
         // Todo(sl): React properly to Start, Stop, Standby and ScheduleRenegotiation
         if (req->charge_progress == dt::Progress::Stop) {
-            ctx.feedback.signal(session::feedback::Signal::CHARGE_LOOP_FINISHED);
-            ctx.feedback.signal(session::feedback::Signal::DC_OPEN_CONTACTOR);
-            return sa.create_simple<DC_WeldingDetection>(ctx);
+            m_ctx.feedback.signal(session::feedback::Signal::CHARGE_LOOP_FINISHED);
+            m_ctx.feedback.signal(session::feedback::Signal::DC_OPEN_CONTACTOR);
+            return m_ctx.create_state<DC_WeldingDetection>();
         }
 
-        return sa.HANDLED_INTERNALLY;
+        return {};
     } else if (const auto req = variant->get_if<message_20::DC_ChargeLoopRequest>()) {
         if (first_entry_in_charge_loop) {
-            ctx.feedback.signal(session::feedback::Signal::CHARGE_LOOP_STARTED);
+            m_ctx.feedback.signal(session::feedback::Signal::CHARGE_LOOP_STARTED);
             first_entry_in_charge_loop = false;
         }
 
-        const auto res = handle_request(*req, ctx.session, present_voltage, present_current, stop,
-                                        ctx.session_config.dc_limits, dynamic_parameters);
+        const auto res = handle_request(*req, m_ctx.session, present_voltage, present_current, stop,
+                                        m_ctx.session_config.dc_limits, dynamic_parameters);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
-        ctx.feedback.dc_charge_loop_req(req->control_mode);
-        ctx.feedback.dc_charge_loop_req(req->present_voltage);
-        ctx.feedback.dc_charge_loop_req(req->meter_info_requested);
+        m_ctx.feedback.dc_charge_loop_req(req->control_mode);
+        m_ctx.feedback.dc_charge_loop_req(req->present_voltage);
+        m_ctx.feedback.dc_charge_loop_req(req->meter_info_requested);
         if (req->display_parameters) {
-            ctx.feedback.dc_charge_loop_req(*req->display_parameters);
+            m_ctx.feedback.dc_charge_loop_req(*req->display_parameters);
         }
 
-        return sa.HANDLED_INTERNALLY;
+        return {};
     } else {
-        ctx.log("Expected PowerDeliveryReq or DC_ChargeLoopReq! But code type id: %d", variant->get_type());
+        m_ctx.log("Expected PowerDeliveryReq or DC_ChargeLoopReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

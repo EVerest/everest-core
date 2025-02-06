@@ -102,69 +102,69 @@ message_20::ScheduleExchangeResponse handle_request(const message_20::ScheduleEx
 }
 
 void ScheduleExchange::enter() {
-    ctx.log.enter_state("ScheduleExchange");
+    m_ctx.log.enter_state("ScheduleExchange");
 }
 
-FsmSimpleState::HandleEventReturnType ScheduleExchange::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result ScheduleExchange::feed(Event ev) {
 
-    if (ev == FsmEvent::CONTROL_MESSAGE) {
+    if (ev == Event::CONTROL_MESSAGE) {
 
         // TODO(sl): Not sure if the data comes here just in time?
-        if (const auto* control_data = ctx.get_control_event<UpdateDynamicModeParameters>()) {
+        if (const auto* control_data = m_ctx.get_control_event<UpdateDynamicModeParameters>()) {
             dynamic_parameters = *control_data;
         }
 
         // Ignore control message
-        return sa.HANDLED_INTERNALLY;
+        return {};
     }
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::ScheduleExchangeRequest>()) {
 
         dt::RationalNumber max_charge_power = {0, 0};
 
-        const auto selected_energy_service = ctx.session.get_selected_services().selected_energy_service;
+        const auto selected_energy_service = m_ctx.session.get_selected_services().selected_energy_service;
 
         if (selected_energy_service == dt::ServiceCategory::DC or
             selected_energy_service == dt::ServiceCategory::DC_BPT) {
-            max_charge_power = ctx.session_config.dc_limits.charge_limits.power.max;
+            max_charge_power = m_ctx.session_config.dc_limits.charge_limits.power.max;
         }
 
-        const auto res = handle_request(*req, ctx.session, max_charge_power, dynamic_parameters);
+        const auto res = handle_request(*req, m_ctx.session, max_charge_power, dynamic_parameters);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
         if (res.processing == dt::Processing::Ongoing) {
-            return sa.HANDLED_INTERNALLY;
+            return {};
         }
 
-        return sa.create_simple<DC_CableCheck>(ctx);
+        return m_ctx.create_state<DC_CableCheck>();
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
-        ctx.session_stopped = true;
+        m_ctx.respond(res);
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected ScheduleExchangeReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected ScheduleExchangeReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

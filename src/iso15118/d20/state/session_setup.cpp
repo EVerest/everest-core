@@ -35,51 +35,51 @@ message_20::SessionSetupResponse handle_request([[maybe_unused]] const message_2
 }
 
 void SessionSetup::enter() {
-    ctx.log.enter_state("SessionSetup");
+    m_ctx.log.enter_state("SessionSetup");
 }
 
-FsmSimpleState::HandleEventReturnType SessionSetup::handle_event(AllocatorType& sa, FsmEvent ev) {
+Result SessionSetup::feed(Event ev) {
 
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::SessionSetupRequest>()) {
 
         logf_info("Received session setup with evccid: %s", req->evccid.c_str());
-        ctx.feedback.evcc_id(req->evccid);
+        m_ctx.feedback.evcc_id(req->evccid);
 
         bool new_session{true};
 
         if (session_is_zero(req->header)) {
-            ctx.session = Session();
-        } else if (req->header.session_id == ctx.session.get_id()) {
+            m_ctx.session = Session();
+        } else if (req->header.session_id == m_ctx.session.get_id()) {
             new_session = false;
         } else {
-            ctx.session = Session();
+            m_ctx.session = Session();
         }
 
-        evse_id = ctx.session_config.evse_id;
+        evse_id = m_ctx.session_config.evse_id;
 
-        const auto res = handle_request(*req, ctx.session, evse_id, new_session);
+        const auto res = handle_request(*req, m_ctx.session, evse_id, new_session);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
-        return sa.create_simple<AuthorizationSetup>(ctx);
+        return m_ctx.create_state<AuthorizationSetup>();
 
         // Todo(sl): Going straight to ChargeParameterDiscovery?
 
     } else {
-        ctx.log("expected SessionSetupReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected SessionSetupReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

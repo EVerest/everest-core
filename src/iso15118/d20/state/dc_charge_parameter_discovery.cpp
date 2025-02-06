@@ -90,15 +90,16 @@ handle_request(const message_20::DC_ChargeParameterDiscoveryRequest& req, const 
 }
 
 void DC_ChargeParameterDiscovery::enter() {
-    ctx.log.enter_state("DC_ChargeParameterDiscovery");
+    m_ctx.log.enter_state("DC_ChargeParameterDiscovery");
 }
 
-FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(AllocatorType& sa, FsmEvent ev) {
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+Result DC_ChargeParameterDiscovery::feed(Event ev) {
+
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::DC_ChargeParameterDiscoveryRequest>()) {
 
@@ -119,34 +120,34 @@ FsmSimpleState::HandleEventReturnType DC_ChargeParameterDiscovery::handle_event(
             logf_info("Max discharge current %fA", dt::from_RationalNumber(mode->max_discharge_current));
         }
 
-        const auto res = handle_request(*req, ctx.session, ctx.session_config.dc_limits);
+        const auto res = handle_request(*req, m_ctx.session, m_ctx.session_config.dc_limits);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
-        ctx.feedback.dc_max_limits(dc_max_limits);
+        m_ctx.feedback.dc_max_limits(dc_max_limits);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
-        return sa.create_simple<ScheduleExchange>(ctx);
+        return m_ctx.create_state<ScheduleExchange>();
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
-        ctx.session_stopped = true;
+        m_ctx.respond(res);
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected DC_ChargeParameterDiscovery! But code type id: %d", variant->get_type());
-        ctx.session_stopped = true;
+        m_ctx.log("expected DC_ChargeParameterDiscovery! But code type id: %d", variant->get_type());
+        m_ctx.session_stopped = true;
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        return sa.PASS_ON;
+        return {};
     }
 }
 

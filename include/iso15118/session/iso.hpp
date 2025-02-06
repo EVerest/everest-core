@@ -10,7 +10,8 @@
 #include <iso15118/d20/config.hpp>
 #include <iso15118/d20/context.hpp>
 #include <iso15118/d20/control_event_queue.hpp>
-#include <iso15118/d20/fsm.hpp>
+#include <iso15118/d20/states.hpp>
+#include <iso15118/detail/fsm/fsm.hpp>
 
 #include <iso15118/io/connection_abstract.hpp>
 #include <iso15118/io/poll_manager.hpp>
@@ -60,7 +61,7 @@ private:
 
     d20::Context ctx;
 
-    d20::Fsm fsm;
+    fsm::v2::FSM<d20::StateBase> fsm;
 
     TimePoint next_session_event;
 

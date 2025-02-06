@@ -2,16 +2,17 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include "../fsm.hpp"
+#include "../states.hpp"
 
 namespace iso15118::d20::state {
 
-struct AuthorizationSetup : public FsmSimpleState {
-    using FsmSimpleState::FsmSimpleState;
+struct AuthorizationSetup : public StateBase {
+    AuthorizationSetup(Context& ctx) : StateBase(ctx, StateID::AuthorizationSetup) {
+    }
 
     void enter() final;
 
-    HandleEventReturnType handle_event(AllocatorType&, FsmEvent) final;
+    Result feed(Event) final;
 };
 
 } // namespace iso15118::d20::state

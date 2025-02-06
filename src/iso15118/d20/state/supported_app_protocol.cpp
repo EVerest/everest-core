@@ -13,7 +13,7 @@
 
 namespace iso15118::d20::state {
 
-static std::tuple<message_20::SupportedAppProtocolResponse, std::optional<std::string>>
+std::tuple<message_20::SupportedAppProtocolResponse, std::optional<std::string>>
 handle_request(const message_20::SupportedAppProtocolRequest& req) {
     message_20::SupportedAppProtocolResponse res;
     std::optional<std::string> selected_protocol{std::nullopt};
@@ -33,33 +33,34 @@ handle_request(const message_20::SupportedAppProtocolRequest& req) {
 }
 
 void SupportedAppProtocol::enter() {
-    ctx.log.enter_state("SupportedAppProtocol");
+    m_ctx.log.enter_state("SupportedAppProtocol");
 }
 
-FsmSimpleState::HandleEventReturnType SupportedAppProtocol::handle_event(AllocatorType& sa, FsmEvent ev) {
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+Result SupportedAppProtocol::feed(Event ev) {
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    auto variant = ctx.pull_request();
+    auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::SupportedAppProtocolRequest>()) {
 
         const auto [res, selected_protocol] = handle_request(*req);
+        m_ctx.respond(res);
 
         if (selected_protocol.has_value()) {
-            ctx.feedback.selected_protocol(*selected_protocol);
+            m_ctx.feedback.selected_protocol(*selected_protocol);
+            return m_ctx.create_state<SessionSetup>();
         }
 
-        ctx.respond(res);
-
-        return sa.create_simple<SessionSetup>(ctx);
-
+        m_ctx.log("unsupported app protocol: [%s]",
+                  req->app_protocol.size() ? req->app_protocol[0].protocol_namespace.c_str() : "unknown");
+        return {};
     } else {
-        ctx.log("expected SupportedAppProtocolReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected SupportedAppProtocolReq! But code type id: %d", variant->get_type());
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

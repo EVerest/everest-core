@@ -81,15 +81,15 @@ message_20::ServiceDiscoveryResponse handle_request(const message_20::ServiceDis
 }
 
 void ServiceDiscovery::enter() {
-    ctx.log.enter_state("ServiceDiscovery");
+    m_ctx.log.enter_state("ServiceDiscovery");
 }
 
-FsmSimpleState::HandleEventReturnType ServiceDiscovery::handle_event(AllocatorType& sa, FsmEvent ev) {
-    if (ev != FsmEvent::V2GTP_MESSAGE) {
-        return sa.PASS_ON;
+Result ServiceDiscovery::feed(Event ev) {
+    if (ev != Event::V2GTP_MESSAGE) {
+        return {};
     }
 
-    const auto variant = ctx.pull_request();
+    const auto variant = m_ctx.pull_request();
 
     if (const auto req = variant->get_if<message_20::ServiceDiscoveryRequest>()) {
         if (req->supported_service_ids) {
@@ -99,33 +99,33 @@ FsmSimpleState::HandleEventReturnType ServiceDiscovery::handle_event(AllocatorTy
             }
         }
 
-        const auto res = handle_request(*req, ctx.session, ctx.session_config.supported_energy_transfer_services,
-                                        ctx.session_config.supported_vas_services);
+        const auto res = handle_request(*req, m_ctx.session, m_ctx.session_config.supported_energy_transfer_services,
+                                        m_ctx.session_config.supported_vas_services);
 
-        ctx.respond(res);
+        m_ctx.respond(res);
 
         if (res.response_code >= dt::ResponseCode::FAILED) {
-            ctx.session_stopped = true;
-            return sa.PASS_ON;
+            m_ctx.session_stopped = true;
+            return {};
         }
 
-        return sa.create_simple<ServiceDetail>(ctx);
+        return m_ctx.create_state<ServiceDetail>();
     } else if (const auto req = variant->get_if<message_20::SessionStopRequest>()) {
-        const auto res = handle_request(*req, ctx.session);
+        const auto res = handle_request(*req, m_ctx.session);
 
-        ctx.respond(res);
-        ctx.session_stopped = true;
+        m_ctx.respond(res);
+        m_ctx.session_stopped = true;
 
-        return sa.PASS_ON;
+        return {};
     } else {
-        ctx.log("expected ServiceDiscoveryReq! But code type id: %d", variant->get_type());
+        m_ctx.log("expected ServiceDiscoveryReq! But code type id: %d", variant->get_type());
 
         // Sequence Error
         const message_20::Type req_type = variant->get_type();
-        send_sequence_error(req_type, ctx);
+        send_sequence_error(req_type, m_ctx);
 
-        ctx.session_stopped = true;
-        return sa.PASS_ON;
+        m_ctx.session_stopped = true;
+        return {};
     }
 }
 

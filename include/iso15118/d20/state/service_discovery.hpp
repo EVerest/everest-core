@@ -2,16 +2,18 @@
 // Copyright 2023 Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include "../fsm.hpp"
+#include "../states.hpp"
 
 namespace iso15118::d20::state {
 
-struct ServiceDiscovery : public FsmSimpleState {
-    using FsmSimpleState::FsmSimpleState;
+struct ServiceDiscovery : public StateBase {
+public:
+    ServiceDiscovery(Context& ctx) : StateBase(ctx, StateID::ServiceDiscovery) {
+    }
 
     void enter() final;
 
-    HandleEventReturnType handle_event(AllocatorType&, FsmEvent) final;
+    Result feed(Event) final;
 };
 
 } // namespace iso15118::d20::state
