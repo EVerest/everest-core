@@ -126,6 +126,14 @@ SchemaValidation load_schemas(const fs::path& schemas_dir) {
     return schema_validation;
 }
 
+nlohmann::json typed_json_map_to_config_map(const nlohmann::json& typed_json_config) {
+    nlohmann::json config_map;
+    for (auto& entry : typed_json_config.items()) {
+        config_map[entry.key()] = entry.value().at("value");
+    }
+    return config_map;
+}
+
 static void validate_config_schema(const json& config_map_schema) {
     // iterate over every config entry
     json_validator validator(loader, format_checker);

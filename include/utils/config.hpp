@@ -88,6 +88,13 @@ std::tuple<nlohmann::json, nlohmann::json_schema::json_validator> load_schema(co
 SchemaValidation load_schemas(const fs::path& schemas_dir);
 
 ///
+/// \brief converts the given typed \p json_config with entries like {"type": "xyz", "value": "val"}
+/// to a config map that just contains the values
+///
+/// \returns the converted config map
+nlohmann::json typed_json_map_to_config_map(const nlohmann::json& typed_json_config);
+
+///
 /// \brief Base class for configs
 ///
 class ConfigBase {
@@ -220,8 +227,8 @@ public:
 };
 
 ///
-/// \brief Config intended to be created by the manager for validation and serialization. Contains config and manifest
-/// parsing
+/// \brief Config intended to be created by the manager for validation and serialization. Contains config and
+/// manifest parsing
 ///
 class ManagerConfig : public ConfigBase {
 private:
@@ -242,15 +249,15 @@ private:
                                                                       const nlohmann::json& schema);
 
     ///
-    /// \brief resolves inheritance tree of json interface \p intf_name, throws an exception if variables or commands
-    /// would be overwritten
+    /// \brief resolves inheritance tree of json interface \p intf_name, throws an exception if variables or
+    /// commands would be overwritten
     ///
     /// \returns the resulting interface definition
     nlohmann::json resolve_interface(const std::string& intf_name);
 
     ///
-    /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates its
-    /// contents
+    /// \brief loads the contents of the interface file referenced by the give \p intf_name from disk and validates
+    /// its contents
     ///
     /// \returns a json object containing the interface definition
     nlohmann::json load_interface_file(const std::string& intf_name);
@@ -272,7 +279,8 @@ private:
     void resolve_all_requirements();
 
     ///
-    /// \brief parses the provided \p config resolving types, errors, manifests, requirements and 3 tier module mappings
+    /// \brief parses the provided \p config resolving types, errors, manifests, requirements and 3 tier module
+    /// mappings
     void parse(nlohmann::json config);
 
     ///

@@ -892,7 +892,7 @@ static Napi::Value boot_module(const Napi::CallbackInfo& info) {
         auto module_config_impl_prop = Napi::Object::New(env);
 
         for (const auto& config_map : module_config.items()) {
-            const auto& json_config_map = convertToConfigMap(config_map.value());
+            const auto& json_config_map = Everest::typed_json_map_to_config_map(config_map.value());
             if (config_map.key() == "!module") {
                 module_config_prop.DefineProperty(Napi::PropertyDescriptor::Value(
                     "module", convertToNapiValue(env, json_config_map), napi_enumerable));

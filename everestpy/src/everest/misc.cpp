@@ -114,13 +114,14 @@ ModuleSetup create_setup_from_config(const std::string& module_id, Everest::Conf
     const auto& config_maps = config.get_module_json_config(module_id);
 
     for (const auto& config_map : config_maps.items()) {
+        const auto& json_config_map = Everest::typed_json_map_to_config_map(config_map.value());
         const auto& impl_id = config_map.key();
         if (impl_id == "!module") {
-            setup.configs.module = config_map.value();
+            setup.configs.module = json_config_map;
             continue;
         }
 
-        setup.configs.implementations.emplace(impl_id, config_map.value());
+        setup.configs.implementations.emplace(impl_id, json_config_map);
     }
 
     return setup;
