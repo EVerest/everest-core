@@ -1,6 +1,7 @@
 *build
 *build-cross
 build*
+!build.rs
 !everestrs-build
 target
 bazel-bin

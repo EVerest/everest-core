@@ -791,7 +791,7 @@ pub fn emit(manifest_path: PathBuf, everest_core: Vec<PathBuf>) -> Result<String
     let module_config = emit_config(manifest.config);
     let requires_with_generics = requires
         .iter()
-        .any(|elem| elem.min_connections != 0 || elem.max_connections != 1);
+        .any(|elem| elem.min_connections != 1 || elem.max_connections != 1);
 
     let involved_errors = provided_interfaces
         .iter()
