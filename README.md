@@ -74,3 +74,41 @@ Version 8.2 or higher of gcovr is required for the coverage report. Install gcov
 ```
 pip install gcovr
 ```
+
+GDB Debugging (VS Code)
+-----------------------
+
+Run the cmake (from the build dir) with the debug commands on:
+```
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+```
+
+Run the GDB debugger with the following configuration:
+```
+{
+    "name": "(gdb) Launch LIBISO TESTS",
+    "type": "cppdbg",
+    "request": "launch",
+    "program": "${workspaceFolder}/libiso15118/build/test/iso15118/fsm/test_d20_transitions",
+    "args": [],
+    "stopAtEntry": false,
+    "cwd": "${workspaceFolder}/libiso15118/build/test/iso15118/fsm/",
+    "environment": [],
+    "externalConsole": false,
+    "MIMode": "gdb",
+    "setupCommands": [
+        {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+        },
+        {
+            "description": "Set Disassembly Flavor to Intel",
+            "text": "-gdb-set disassembly-flavor intel",
+            "ignoreFailures": true
+        }
+    ]
+},
+```
+
+Replace the `program` path to any test executable you are debugging.
