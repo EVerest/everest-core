@@ -30,7 +30,7 @@ The file `openssl-3.2.1-feat-updates-to-support-status_request_v2.patch` is the 
 patch to OpenSSL 3.2.1 to support the `status_request_v2` TLS extension defined
 in [RFC 6961](https://datatracker.ietf.org/doc/html/rfc6961).
 It is a slightly modified version of the 3.0.8 patch to allow compatibility with
-the OpenSSL version (3.2.1( shipped by Yocto scarthgap and can be applied similarly
+the OpenSSL version (3.2.1) shipped by Yocto scarthgap and can be applied similarly
 to the other patch.
 
 
