@@ -25,6 +25,15 @@ The patch can also be added to `SRC_URI` in a yocto bbappend file
 SRC_URI:append = " file://openssl-3.0.8-feat-updates-to-support-status_request_v2.patch"
 ```
 
+## OpenSSL 3.2.1 patch
+The file `openssl-3.2.1-feat-updates-to-support-status_request_v2.patch` is the same
+patch to OpenSSL 3.2.1 to support the `status_request_v2` TLS extension defined
+in [RFC 6961](https://datatracker.ietf.org/doc/html/rfc6961).
+It is a slightly modified version of the 3.0.8 patch to allow compatibility with
+the OpenSSL version (3.2.1( shipped by Yocto scarthgap and can be applied similarly
+to the other patch.
+
+
 ## Notes
 
 The patch is designed to be a minimal change so that `status_request_v2` can be
