@@ -45,6 +45,7 @@ use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
 use std::{net::Ipv4Addr, str::FromStr};
+use zvt::constants::ErrorMessages;
 use zvt_feig_terminal::config::{Config, FeigConfig};
 use zvt_feig_terminal::feig::{CardInfo, Error};
 
@@ -203,7 +204,18 @@ impl PaymentTerminalModule {
                             log::debug!("No card presented");
                             continue;
                         }
-                        _ => return Err(anyhow::anyhow!("Failed to read card: {e:?}")),
+                        _ => {
+                            match e.downcast_ref::<ErrorMessages>() {
+                                Some(rejection_reason) => {
+                                    log::info!("Recieved rejection reason {}", rejection_reason);
+                                    publishers
+                                        .payment_terminal
+                                        .rejection_reason(*rejection_reason as u8 as i64)?;
+                                }
+                                None => log::debug!("No error code provided"),
+                            };
+                            return Err(anyhow::anyhow!("Failed to read card: {e:?}"));
+                        }
                     },
                 };
             }
