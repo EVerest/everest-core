@@ -15,6 +15,32 @@ types:
       data:
         description: Custom json data object encoded as string
         type: string
+  V2XFreqWattPointType:
+    description: A point of a frequency-watt curve.
+    type: object
+    required:
+      - frequency
+      - power
+    properties:
+      frequency:
+        type: number
+        description: Net frequency in Hz
+      power:
+        type: number
+        description: Power in W to charge (positive) or discharge (negative) at specified frequency.
+  V2XSignalWattPointCurve:
+    description: A point of a signal-watt curve.
+    type: object
+    required:
+      - signal
+      - power
+    properties:
+      signal:
+        type: integer
+        description: Signal value from an AFRRSignalRequest.
+      power:
+        type: number
+        description: Power in W to charge (positive) or discharge (negative) at specified frequency.
   ChargingSchedulePeriod:
     description: >-
       Element providing information on a charging schedule period.
@@ -27,12 +53,115 @@ types:
         type: integer
       limit:
         type: number
+        description: >-
+          Optional only when not required by the operationMode, as in CentralSetpoint, ExternalSetpoint, ExternalLimits,
+          LocalFrequency, LocalLoadBalancing.
+          Charging rate limit during the schedule period, in the applicable chargingRateUnit. This SHOULD be a
+          non-negative value; a negative value is only supported for backwards compatibility with older systems that
+          use a negative value to specify a discharging limit. When using chargingRateUnit = W, this field represents
+          the sum of the power of all phases, unless values are provided for L2 and L3, in which case this field
+          represents phase L1.
+      limit_L2:
+        type: number
+        description: Charging rate limit on phase L2 in the applicable chargingRateUnit.
+      limit_L3:
+        type: number
+        description: Charging rate limit on phase L3 in the applicable chargingRateUnit.
       number_phases:
         type: integer
       stack_level:
         type: integer
       phase_to_use:
         type: integer
+      discharge_limit:
+        type: number
+        description: >-
+          value <= 0. Limit in chargingRateUnit that the EV is allowed to discharge with. Note, these are negative
+          values in order to be consistent with setpoint, which can be positive and negative.
+          For AC this field represents the sum of all phases, unless values are provided for L2 and L3, in which case
+          this field represents phase L1.
+      discharge_limit_L2:
+        type: number
+        description: Limit in chargingRateUnit on phase L2 that the EV is allowed to discharge with
+      discharge_limit_L3:
+        type: number
+        description: Limit in chargingRateUnit on phase L3 that the EV is allowed to discharge with
+      setpoint:
+        type: number
+        description: >-
+          Setpoint in chargingRateUnit that the EV should follow as close as possible. Use negative values for
+          discharging.
+          When a limit and/or dischargeLimit are given the overshoot when following setpoint must remain within
+          these values. This field represents the sum of all phases,unless values are provided for L2 and L3, in which
+          case this field represents phase L1.
+      setpoint_L2:
+        type: number
+        description: Setpoint in chargingRateUnit that the EV should follow on phase L2 as close as possible.
+      setpoint_L3:
+        type: number
+        description: Setpoint in chargingRateUnit that the EV should follow on phase L3 as close as possible.
+      setpoint_reactive:
+        type: number
+        description: >-
+          Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow as closely as possible.
+          Positive values for inductive, negative for capacitive reactive power or current.
+          This field represents the sum of all phases, unless values are provided for L2 and L3, in which case this
+          field represents phase L1.
+      setpoint_reactive_L2:
+        type: number
+        description: >-
+          Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L2 as closely
+          as possible.
+      setpoint_reactive_L3:
+        type: number
+        description: >-
+          Setpoint for reactive power (or current) in chargingRateUnit that the EV should follow on phase L3 as closely
+          as possible.
+      preconditioning_request:
+        type: number
+        description: If true, the EV should attempt to keep the BMS preconditioned for this time interval.
+      evse_sleep:
+        type: boolean
+        description: >-
+          If true, the EVSE must turn off power electronics/modules associated with this transaction. Default value when
+          absent is false.
+      v2x_baseline:
+        type: number
+        description: >-
+          Power value that, when present, is used as a baseline on top of which values from v2xFreqWattCurve and
+          v2xSignalWattCurve are added
+      operation_mode:
+        type: string
+        description: Operation mode for (bi-)directional charging during a charging schedule period.
+        enum:
+          - Idle
+          - ChargingOnly
+          - CentralSetpoint
+          - ExternalSetpoint
+          - ExternalLimits
+          - CentralFrequency
+          - LocalFrequency
+          - LocalLoadBalancing
+      v2x_freq_watt_curve:
+        type: array
+        description: >-
+          Only required when operationMode = LocalFrequency. When used it must contain at least two coordinates to
+          specify a power-frequency table to use during this period. The table determines the value of setpoint power
+          for a given frequency. chargingRateUnit must be W for LocalFrequency control.
+        items:
+          type: object
+          $ref: /ocpp#/V2XFreqWattPointType
+          description: A point of a frequency-watt curve.
+      v2x_signal_watt_curve:
+        type: array
+        description: >-
+          Only used, but not required, when operationMode = LocalFrequency. When used it must contain at least two
+          coordinates to specify a signal-frequency curve to use during this period. The curve determines the value of
+          setpoint power for a given signal. chargingRateUnit must be W for LocalFrequency control.
+        items:
+          type: object
+          $ref: /ocpp#/V2XSignalWattPointCurve
+          description: A point of a signal-watt curve.
   ChargingSchedule:
     description: >-
       Element providing information on an OCPP charging schedule.
