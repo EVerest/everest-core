@@ -276,15 +276,52 @@ it initiates a **StatusNotification.req** that contains information about the er
 The field **status** of the **StatusNotification.req** will be set to faulted only in case the error is of the special type  
 **evse_manager/Inoperative**. The field **connectorId** is set based on the mapping (for EVSE id and connector id) of the origin of the error.  
 If no mapping is provided, the error will be reported on connectorId 0. Note that the mapping can be configured per module inside the  
-EVerest config file. The field **errorCode** is set based on the **type** property of the error.
+EVerest config file.
 
-The fields **info**, **vendorId**, and **vendorErrorCode** are set based on the error type and the provided error properties. Please see the  
-definition of `get_error_info` to see how the **StatusNotification.req** is constructed based on the given error.
+For all other errors, raised in EVerest, the following mapping to an
+OCPP **StatusNotification.req** will be used:
 
-The **StatusNotification.req** message has some limitations with respect to reporting errors:
+* **StatusNotification.req** property ``errorCode`` will always be
+  ``OtherError``
+* **StatusNotification.req** property ``status`` will reflect the present status of the
+  charge point
+* **StatusNotification.req** property ``info`` -> origin of EVerest error
+* **StatusNotification.req** property ``vendorErrorCode`` -> EVerest error type and
+  subtype (the error type is simplified, meaning, that its leading part,
+  the interface name, is stripped)
+* **StatusNotification.req** property ``vendorId`` -> EVerest error message
 
-* Single errors cannot simply be cleared. If multiple errors are raised, it is not possible to clear individual errors.
-* Some fields of the message have relatively small character limits (e.g., **info** with 50 characters, **vendorErrorCode** with 50 characters).
+The reason for using the **StatusNotification.req** property property
+``vendorId`` for the error message is that it can carry the largest
+string (255 characters), whereas the other fields (``info`` and
+``vendorErrorCode``) only allow up to 50 characters.
+
+If for example the module with id `yeti_driver` within its
+implementation with id `board_support` creates the following error:
+
+.. code-block:: cpp
+
+  error_factory->create_error("evse_board_support/EnergyManagement",
+                              "OutOfEnergy", "someone cut the wires")
+
+the corresponding fields in the **StatusNotification.req** message will
+look like this:
+
+.. code-block:: JSON
+
+  {
+    "info": "yeti_driver->board_support",
+    "vendorErrorCode": "EnergyManagement/OutOfEnergy",
+    "vendorId": "someone cut the wires"
+  }
+
+The **StatusNotification.req** message has some limitations with respect
+to reporting errors:
+
+* Single errors cannot simply be cleared. If multiple errors are raised,
+  it is not possible to clear individual errors.
+* ``vendorId``, ``info`` and ``vendorErrorCode`` are limited in length
+  (see above).
 
 This module attempts to follow the Minimum Required Error Codes (MRECS): https://inl.gov/chargex/mrec/. This proposes a unified  
 methodology to define and classify a minimum required set of error codes and how to report them via OCPP1.6.

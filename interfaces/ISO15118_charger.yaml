@@ -351,3 +351,14 @@ vars:
       Parameters that may be displayed on the EVSE (Soc, battery capacity)
     type: object
     $ref: /iso15118_charger#/DisplayParameters
+  d20_dc_dynamic_charge_mode:
+    description: >-
+      The parameters the EVCC offers and sets for dynamic control mode
+    type: object
+    $ref: /iso15118_charger#/DcChargeDynamicModeValues
+  dc_ev_present_voltage:
+    description: Present Voltage measured from the EV
+    type: number
+  meter_info_requested:
+    description: The EV requested meter infos from the EVSE
+    type: "null"

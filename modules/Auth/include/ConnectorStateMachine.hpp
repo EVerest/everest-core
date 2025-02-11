@@ -18,6 +18,7 @@ enum class ConnectorEvent {
     SESSION_FINISHED
 };
 
+/// @warning Do not change the order of ConnectorState, or if you do it, fix the code in ReservationHandler.
 enum class ConnectorState {
     AVAILABLE,
     UNAVAILABLE,

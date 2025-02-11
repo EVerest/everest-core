@@ -2,6 +2,7 @@
 
 add_library(ocpp_evse_security STATIC)
 add_library(everest::ocpp_evse_security ALIAS ocpp_evse_security)
+ev_register_library_target(ocpp_evse_security)
 
 target_sources(ocpp_evse_security
     PRIVATE
@@ -33,6 +34,7 @@ target_link_libraries(ocpp_evse_security
 
 add_library(ocpp_conversions STATIC)
 add_library(everest::ocpp_conversions ALIAS ocpp_conversions)
+ev_register_library_target(ocpp_conversions)
 
 target_sources(ocpp_conversions
     PRIVATE
@@ -58,4 +60,3 @@ target_link_libraries(ocpp_conversions
         everest::ocpp
         everest::framework
 )
-

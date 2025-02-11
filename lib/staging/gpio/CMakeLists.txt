@@ -1,5 +1,6 @@
 add_library(gpio STATIC)
 add_library(everest::gpio ALIAS gpio)
+ev_register_library_target(gpio)
 
 target_sources(gpio
     PRIVATE
@@ -14,4 +15,3 @@ target_include_directories(gpio
 target_link_libraries(gpio
     PRIVATE
 )
-

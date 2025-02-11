@@ -21,6 +21,7 @@ active_modules:
     config_module:
       connector_id: 1
       evse_id: "1"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp
@@ -49,6 +50,7 @@ active_modules:
     config_module:
       connector_id: 2
       evse_id: "2"
+      connector_type: "cType2"
       session_logging: true
       session_logging_xml: false
       session_logging_path: /tmp
@@ -142,6 +144,9 @@ active_modules:
           implementation_id: external_limits
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
+      reservation:
+        - module_id: auth
+          implementation_id: reservation
   persistent_store:
     module: PersistentStore
   evse_security:
@@ -169,6 +174,9 @@ active_modules:
           implementation_id: evse
         - module_id: evse_manager_2
           implementation_id: evse
+      kvs:
+        - module_id: persistent_store
+          implementation_id: main
   energy_manager:
     module: EnergyManager
     connections:

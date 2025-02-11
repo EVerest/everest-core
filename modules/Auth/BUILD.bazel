@@ -11,6 +11,8 @@ cc_library(
         "@everest-framework//:framework",
         "@com_github_HowardHinnant_date//:date",
         "//types:types_lib",
+        "//interfaces:interfaces_lib",
+        "//lib/staging/helpers",
     ],
     # See https://github.com/HowardHinnant/date/issues/324
     local_defines = [

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(everest-core
-    VERSION 2024.10.0
+    VERSION 2025.1.0
     DESCRIPTION "The open operating system for e-mobility charging stations"
 	LANGUAGES CXX C
 )
@@ -70,10 +70,6 @@ if(EVEREST_CORE_BUILD_TESTING)
     include(CTest)
 
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-
-    evc_include(CodeCoverage)
-
-    append_coverage_compiler_flags()
 endif()
 
 include(ev-define-dependency)
@@ -108,13 +104,13 @@ else()
 
     find_package(fsm REQUIRED)
     find_package(slac REQUIRED)
+    find_package(libnfc-nci REQUIRED)
 
     find_package(pugixml REQUIRED)
     find_package(CURL 7.84.0 REQUIRED)
     find_package(ryml REQUIRED)
 endif()
 
-add_subdirectory(lib)
 
 include(ev-project-bootstrap)
 
@@ -124,6 +120,8 @@ ev_add_project()
 if (ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES)
     file(TOUCH config/certs/ca/mf/MF_ROOT_CA.pem)
 endif()
+
+add_subdirectory(lib)
 
 # config
 # FIXME (aw): this should be optional
@@ -147,18 +145,6 @@ endif()
 # testing
 if(EVEREST_CORE_BUILD_TESTING)
     add_subdirectory(tests)
-
-    setup_target_for_coverage_gcovr_html(
-        NAME ${PROJECT_NAME}_gcovr_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
-
-    setup_target_for_coverage_lcov(
-        NAME ${PROJECT_NAME}_lcov_coverage
-        EXECUTABLE test_config
-        DEPENDENCIES test_config everest
-    )
 else()
     message("Not running unit tests")
 endif()
@@ -169,7 +155,7 @@ add_custom_target(install_everest_testing
         if [ -z "${CPM_PACKAGE_everest-utils_SOURCE_DIR}" ] \;
         then echo "Could not determine location of everest-utils, please install everest-testing manually!" \;
         else echo "Found everest-utils at ${CPM_PACKAGE_everest-utils_SOURCE_DIR}" \;
-             ${PYTHON_EXECUTABLE} -m pip install "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
+             ${Python3_EXECUTABLE} -m pip install -e "${CPM_PACKAGE_everest-utils_SOURCE_DIR}/everest-testing" \;
         fi\;
     DEPENDS
         everestpy_pip_install_dist

@@ -10,6 +10,7 @@
 namespace module {
 types::board_support_common::BspEvent to_bsp_event(CpState s);
 types::board_support_common::BspEvent to_bsp_event(CoilState s);
+types::board_support_common::ProximityPilot to_pp_ampacity(PpState s);
 } // namespace module
 
 #endif // EVSE_BOARD_SUPPORT_COMMON_HPP

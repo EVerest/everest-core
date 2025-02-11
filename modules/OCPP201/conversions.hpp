@@ -6,6 +6,7 @@
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
+#include <generated/types/reservation.hpp>
 #include <generated/types/system.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
@@ -121,6 +122,15 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
 /// ocpp::v201::Get15118EVCertificateRequest
 ocpp::v201::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request);
+
+/// \brief Converts a given types::reservation::ReservationResult to ocpp::v201::ReserveNowStatusEnum
+ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result);
+
+/// \brief Converts a given types::reservation::Reservation_status to ocpp::v201::ReservationUpdateStatusEnum
+/// \warning This function can throw when there is no existing ocpp::v201::ReservationUpdateStatusEnum that is equal to
+///          types::reservation::Reservation_status.
+ocpp::v201::ReservationUpdateStatusEnum
+to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status);
 
 /// \brief Converts a given ocpp::v201::ReasonEnum \p stop_reason to a types::evse_manager::StopTransactionReason.
 types::evse_manager::StopTransactionReason
@@ -263,6 +273,9 @@ to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageRe
 
 ocpp::v201::ClearDisplayMessageResponse
 to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response);
+
+/// \brief Convert a given ocpp::v201::ConnectorEnum connector type to a types::evse_manager::ConnectorTypeEnum
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type);
 
 } // namespace conversions
 } // namespace module

@@ -534,6 +534,8 @@ function (ev_add_cpp_module MODULE_NAME)
 
             add_dependencies(${MODULE_NAME} generate_cpp_files)
 
+            ev_register_module_target(${MODULE_NAME})
+
             install(TARGETS ${MODULE_NAME}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )

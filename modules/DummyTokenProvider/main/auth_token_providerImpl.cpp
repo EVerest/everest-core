@@ -3,6 +3,8 @@
 
 #include "auth_token_providerImpl.hpp"
 
+#include <everest/staging/helpers/helpers.hpp>
+
 namespace module {
 namespace main {
 
@@ -16,9 +18,9 @@ void auth_token_providerImpl::init() {
             if (config.connector_id > 0) {
                 token.connectors.emplace({config.connector_id});
             }
+            token.parent_id_token = {config.token, types::authorization::IdTokenType::ISO14443};
 
-            EVLOG_info << "Publishing new dummy token: " << token.id_token << " ("
-                       << types::authorization::authorization_type_to_string(token.authorization_type) << ")";
+            EVLOG_info << "Publishing new dummy token: " << everest::staging::helpers::redact(token);
             publish_provided_token(token);
         }
     });

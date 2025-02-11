@@ -435,6 +435,36 @@ void ISO15118_chargerImpl::init() {
             publish_display_parameters(o);
         }
     });
+
+    mod->r_iso20->subscribe_d20_dc_dynamic_charge_mode([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_d20_dc_dynamic_charge_mode(o);
+        }
+    });
+
+    mod->r_iso2->subscribe_dc_ev_present_voltage([this](const auto o) {
+        if (not mod->selected_iso20()) {
+            publish_dc_ev_present_voltage(o);
+        }
+    });
+
+    mod->r_iso20->subscribe_dc_ev_present_voltage([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_dc_ev_present_voltage(o);
+        }
+    });
+
+    mod->r_iso2->subscribe_meter_info_requested([this]() {
+        if (not mod->selected_iso20()) {
+            publish_meter_info_requested(nullptr);
+        }
+    });
+
+    mod->r_iso20->subscribe_meter_info_requested([this]() {
+        if (mod->selected_iso20()) {
+            publish_meter_info_requested(nullptr);
+        }
+    });
 }
 
 void ISO15118_chargerImpl::ready() {

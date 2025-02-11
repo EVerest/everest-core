@@ -2031,7 +2031,7 @@ enum v2g_event iso_handle_request(v2g_connection* conn) {
         conn->ctx->current_v2g_msg = V2G_SERVICE_DISCOVERY_MSG;
         exi_out->V2G_Message.Body.ServiceDiscoveryRes_isUsed = 1u;
         init_iso2_ServiceDiscoveryResType(&exi_out->V2G_Message.Body.ServiceDiscoveryRes);
-        next_v2g_event = handle_iso_service_discovery(conn); // [V2G2-542]
+        next_v2g_event = handle_iso_service_discovery(conn); // [V2G2-544]
     } else if (exi_in->V2G_Message.Body.ServiceDetailReq_isUsed) {
         dlog(DLOG_LEVEL_TRACE, "Handling ServiceDetailReq");
         conn->ctx->current_v2g_msg = V2G_SERVICE_DETAIL_MSG;

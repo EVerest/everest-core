@@ -3,6 +3,8 @@
 
 #include "auth_token_providerImpl.hpp"
 
+#include <everest/staging/helpers/helpers.hpp>
+
 #include <fmt/core.h>
 
 namespace module {
@@ -70,7 +72,8 @@ void auth_token_providerImpl::ready() {
                 provided_token.id_token = {entry.getNFCID(), types::authorization::IdTokenType::ISO14443};
                 provided_token.authorization_type = types::authorization::AuthorizationType::RFID;
                 if (config.debug) {
-                    EVLOG_info << "Publishing new rfid/nfc token: " << provided_token;
+                    EVLOG_info << "Publishing new rfid/nfc token: "
+                               << everest::staging::helpers::redact(provided_token);
                 }
                 this->publish_provided_token(provided_token);
             }

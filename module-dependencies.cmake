@@ -7,10 +7,6 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST EnergyNode EvseManager MicroMegaWattBSP YetiDriver)
 
 ev_define_dependency(
-    DEPENDENCY_NAME libmodbus
-    DEPENDENT_MODULES_LIST PowermeterBSM)
-
-ev_define_dependency(
     DEPENDENCY_NAME pugixml
     DEPENDENT_MODULES_LIST EvseManager)
 
@@ -61,6 +57,11 @@ ev_define_dependency(
     DEPENDENCY_NAME libiso15118
     OUTPUT_VARIABLE_SUFFIX LIBISO15118
     DEPENDENT_MODULES_LIST Evse15118D20)
+
+ev_define_dependency(
+    DEPENDENCY_NAME libnfc-nci
+    OUTPUT_VARIABLE_SUFFIX LIBNFC_NCI
+    DEPENDENT_MODULES_LIST PN7160TokenProvider)
 
 if(NOT everest-gpio IN_LIST EVEREST_EXCLUDE_DEPENDENCIES)
     set(EVEREST_DEPENDENCY_ENABLED_EVEREST_GPIO ON)

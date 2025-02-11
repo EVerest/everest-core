@@ -14,12 +14,6 @@ provides:
         minimum: 9600
         maximum: 230400
         default: 115200
-      timeout:
-        description: Time a new token is valid (in s)
-        type: number
-        minimum: 0
-        maximum: 120
-        default: 30
       read_timeout:
         description: Time between subsequent card reads (in s)
         type: integer

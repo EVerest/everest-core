@@ -1,0 +1,30 @@
+{
+    "csms_port": 9000,
+    "charge_point_info": {
+        "charge_point_id": "cp001",
+        "charge_point_vendor": "Pionix",
+        "charge_point_model": "Yeti",
+        "firmware_version": "0.4"
+    },
+    "authorization_info": {
+        "emaid": "UKSWI123456789A",
+        "valid_id_tag_1": "RFID_VALID1",
+        "valid_id_tag_2": "RFID_VALID2",
+        "invalid_id_tag": "RFID_INVALID",
+        "parent_id_tag": "RFID_PARENT",
+        "invalid_parent_id_tag": "RFID_PARENT_INVALID"
+    },
+    "certificate_info": {
+        "csms_root_ca": "everest-aux/certs/ca/csms/CSMS_ROOT_CA.pem",
+        "csms_root_ca_key": "everest-aux/certs/ca/csms/CSMS_ROOT_CA.key",
+        "csms_root_ca_invalid": "everest-aux/certs/CSMS_RootCA_RSA_invalid.pem",
+        "csms_cert": "everest-aux/certs/CSMS_SERVER.pem",
+        "csms_key": "everest-aux/certs/CSMS_SERVER.key",
+        "csms_passphrase": "123456",
+        "mf_root_ca": "everest-aux/certs/ca/mf/MF_ROOT_CA.pem"
+    },
+    "firmware_info": {
+        "update_file": "everest-aux/firmware/firmware_update.pnx",
+        "update_file_signature": "everest-aux/firmware/firmware_update.pnx.base64"
+    }
+}

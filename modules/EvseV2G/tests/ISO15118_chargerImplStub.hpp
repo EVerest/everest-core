@@ -5,6 +5,9 @@
 #define ISO15118_CHARGERIMPLSTUB_H_
 
 #include <iostream>
+#include <memory>
+
+#include "ModuleAdapterStub.hpp"
 
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
@@ -12,8 +15,8 @@
 namespace module::stub {
 
 struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
-public:
-    ISO15118_chargerImplStub() : ISO15118_chargerImplBase(nullptr, "EvseV2G"){};
+    ISO15118_chargerImplStub(ModuleAdapterStub& adapter) : ISO15118_chargerImplBase(&adapter, "EvseV2G"){};
+    ISO15118_chargerImplStub(ModuleAdapterStub* adapter) : ISO15118_chargerImplBase(adapter, "EvseV2G"){};
 
     virtual void init() {
     }

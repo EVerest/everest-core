@@ -145,6 +145,10 @@ std::string evse_securityImpl::handle_get_verify_file(types::evse_security::CaCe
     return this->evse_security->get_verify_file(conversions::from_everest(certificate_type));
 }
 
+std::string evse_securityImpl::handle_get_verify_location(types::evse_security::CaCertificateType& certificate_type) {
+    return this->evse_security->get_verify_location(conversions::from_everest(certificate_type));
+}
+
 int evse_securityImpl::handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) {
     return this->evse_security->get_leaf_expiry_days_count(conversions::from_everest(certificate_type));
 }

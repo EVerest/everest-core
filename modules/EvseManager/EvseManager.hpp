@@ -52,6 +52,7 @@ namespace module {
 
 struct Conf {
     int connector_id;
+    std::string connector_type;
     std::string evse_id;
     std::string evse_id_din;
     bool payment_enable_eim;
@@ -75,6 +76,7 @@ struct Conf {
     int hack_sleep_in_cable_check_volkswagen;
     int cable_check_wait_number_of_imd_measurements;
     bool cable_check_enable_imd_self_test;
+    bool cable_check_wait_below_60V_before_finish;
     bool hack_skoda_enyaq;
     int hack_present_current_offset;
     bool hack_pause_imd_during_precharge;
@@ -100,6 +102,7 @@ struct Conf {
     int soft_over_current_timeout_ms;
     bool lock_connector_in_state_b;
     int state_F_after_fault_ms;
+    bool fail_on_powermeter_errors;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -172,7 +175,15 @@ public:
 
     void cancel_reservation(bool signal_event);
     bool is_reserved();
-    bool reserve(int32_t id);
+
+    ///
+    /// \brief Reserve this evse.
+    /// \param id                       The reservation id.
+    /// \param signal_reservation_event True when other modules must be signalled about a new reservation (session
+    ///                                 event).
+    /// \return True on success.
+    ///
+    bool reserve(int32_t id, const bool signal_reservation_event = true);
     int32_t get_reservation_id();
 
     bool get_hlc_enabled();
@@ -183,7 +194,7 @@ public:
 
     const std::vector<std::unique_ptr<powermeterIntf>>& r_powermeter_billing();
 
-    // FIXME: this will be removed with proper intergration of BPT on ISO-20
+    // FIXME: this will be removed with proper integration of BPT on ISO-20
     // on DIN SPEC and -2 we claim a positive charging current on ISO protocol,
     // but the power supply switches to discharge if this flag is set.
     std::atomic_bool is_actually_exporting_to_grid{false};
@@ -232,8 +243,8 @@ public:
         r_hlc[0]->call_update_dc_minimum_limits(evse_min_limits);
 
         // HLC layer will also get new maximum current/voltage/watt limits etc, but those will need to run through
-        // energy management first. Those limits will be applied in energy_grid implementation when requesting energy,
-        // so it is enough to set the powersupply_capabilities here.
+        // energy management first. Those limits will be applied in energy_grid implementation when requesting
+        // energy, so it is enough to set the powersupply_capabilities here.
         // FIXME: this is not implemented yet: enforce_limits uses the enforced limits to tell HLC, but capabilities
         // limits are not yet included in request.
 
@@ -341,6 +352,7 @@ private:
     static constexpr int CABLECHECK_SELFTEST_TIMEOUT{30};
 
     std::atomic_bool current_demand_active{false};
+    std::atomic_bool slac_unmatched{false};
     std::mutex powermeter_mutex;
     std::condition_variable powermeter_cv;
     bool initial_powermeter_value_received{false};

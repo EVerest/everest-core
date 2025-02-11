@@ -41,9 +41,12 @@ include!(concat!(env!("OUT_DIR"), "/generated.rs"));
 mod utils;
 
 use anyhow::Result;
+use backon::BlockingRetryable;
+use backon::ConstantBuilder;
 use chrono::{Local, Offset, Utc};
 use everestrs::serde as everest_serde;
 use everestrs::serde_json as everest_serde_json;
+use generated::errors::powermeter::{Error, PowermeterError};
 use generated::types::powermeter::{
     Powermeter, TransactionRequestStatus, TransactionStartResponse, TransactionStopResponse,
 };
@@ -821,6 +824,7 @@ enum StateMachine {
 /// Main class implementing all EVerest traits.
 struct IskraMeter {
     state_machine: Mutex<StateMachine>,
+    communication_errors_threshold: usize,
 }
 
 impl generated::OnReadySubscriber for IskraMeter {
@@ -850,19 +854,36 @@ impl generated::OnReadySubscriber for IskraMeter {
 
         let ready_state_clone = ready_state.clone();
         let power_meter_clone = publishers.meter.clone();
+
+        let backoff = ConstantBuilder::default()
+            .with_delay(std::time::Duration::from_secs(10))
+            .with_max_times(self.communication_errors_threshold);
+
         std::thread::spawn(move || loop {
             std::thread::sleep(std::time::Duration::from_secs(5));
-            let res = ready_state_clone.read_meter_value();
-            match res {
+
+            match (|| ready_state_clone.read_meter_value())
+                .retry(backoff)
+                .notify(|err: &anyhow::Error, dur: std::time::Duration| {
+                    log::warn!("retrying {:?} after {:?}", err, dur);
+                })
+                .call()
+            {
                 Ok(meter) => {
                     log::debug!("Got meter value {:?}", meter);
                     match power_meter_clone.powermeter(meter) {
                         Ok(_) => log::debug!("Successfully published meter value"),
                         Err(e) => log::error!("Failed to post meter values {:?}", e),
                     }
+                    power_meter_clone
+                        .clear_error(Error::Powermeter(PowermeterError::CommunicationFault));
                 }
-                Err(e) => log::error!("Failed to read meter value {:?}", e),
-            }
+                Err(e) => {
+                    log::error!("Failed to read meter value {:?}", e);
+                    power_meter_clone
+                        .raise_error(Error::Powermeter(PowermeterError::CommunicationFault));
+                }
+            };
         });
 
         // Finally update the state in the lock.
@@ -931,6 +952,7 @@ fn main() {
             config.powermeter_device_id,
             (&config).into(),
         ))),
+        communication_errors_threshold: config.communication_errors_threshold as usize,
     });
 
     let _module = Module::new(class.clone(), class.clone(), class.clone());

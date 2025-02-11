@@ -1,0 +1,27 @@
+active_modules:
+  ocpp:
+    module: OCPP
+    config_module:
+      ChargePointConfigPath: libocpp-config-test.json
+      UserConfigPath: user_config.json
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+        - module_id: probe
+          implementation_id: evse_manager
+        - module_id: probe
+          implementation_id: evse_manager_b
+      reservation:
+        - module_id: probe
+          implementation_id: reservation
+      auth:
+        - module_id: probe
+          implementation_id: auth
+      system:
+        - module_id: probe
+          implementation_id: system
+      security:
+        - module_id: probe
+          implementation_id: security
+x-module-layout: {}
+

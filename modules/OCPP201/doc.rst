@@ -334,3 +334,95 @@ the `external_energy_limits` interface. In addition, the config parameter `Compo
 the composite schedule also in case no charging profiles have been changed. The configuration parameter `RequestCompositeScheduleDurationS` defines 
 the duration in seconds of the requested composite schedules starting now. The value configured for `RequestCompositeScheduleDurationS` shall be greater
 than the value configured for `CompositeScheduleIntervalS` because otherwise time periods could be missed by the application.
+
+Device model implementation details
+-----------------------------------
+
+For managing configuration and telemetry data of a charging station, the OCPP2.0.1 specification introduces
+a device model that is very different to the design of OCPP1.6. 
+The specified device model comes with these high-level requirements:
+
+* 3-tier model: Break charging station down into 3 main tiers: ChargingStation, EVSE and Connector
+* Components and Variables: Break down charging station into components and variables for configuration and telemetry
+* Complex data structure for reporting and configuration of variables
+* Device model contains variables of the whole charging station, beyond OCPP business logic
+
+The device model of OCPP2.0.1 can contain various physical or logical components and
+variables. While in OCPP1.6 almost all of the standardized configuration keys are used to influence the control flow of
+libocpp, in OCPP2.0.1 the configuration and telemetry variables that can be part of the device model go beyond the
+control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2.0.1
+that do influence the control flow of libocpp.
+
+Internally and externally managed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+EVerest has multiple different data sources that control the values variables that OCPP requires to report to the CSMS.
+It is therefore required to make a distinction between **internally** and **externally** managed variables of the device model.
+
+We define **internally** and **externally** managed variables as follows:
+
+* Internally Managed: Owned, stored and accessed in libocpp in device model storage
+  Examples: HeartbeatInterval, AuthorizeRemoteStart, SampledDataTxEndedMeasurands, AuthCacheStorage
+* Externally Managed: Owned, stored and accessed via EVerest config service (not yet supported)
+  Examples: ConnectionTimeout, MasterPassGroupId
+* For externally managed variables a mapping to the EVerest configuration parameter is defined (not yet supported)
+
+Note that the EVerest config service is not yet implemented. Currently all components and variables are controlled
+by the libocpp device model storage implementation.
+
+Device Model Implementation of this module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This module provides an implementation of device model API provided as part of libocpp (it implements
+`device_model_storage_interface.hpp`).
+The implementation is designed to fullfill the requirements of the device model API even if the components and variables are
+controlled by different sources (Internally, Externally).
+
+Device Model Sources
+^^^^^^^^^^^^^^^^^^^^
+
+Device Model variables are defined in JSON component configs. For each variable a property `source` can be used to define
+the source that controls it. This design allows for a single source of truth for each variable and it 
+allows the device model implementation of this module to address the correct source for the requested operation.
+Today `OCPP` is the only supported source for internally managed variables.
+
+Sources for externally managed configuration variables like the EVerest config service are under development.
+
+Sequence of variable access for internally and externally managed variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: doc/sequence_config_service_and_ocpp.png
+
+Class diagram for device model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: doc/device_model_class_diagram.png
+
+Clarification of the device model classes of this diagram:
+
+* DeviceModel:
+
+  * Part of libocpp
+  * Contains device model representation and business logic to prevalidate requests to the device model variables
+  * Contains reference to device model interface implementation
+
+* DeviceModelStorageInterface:
+
+  * Pure virtual class of libocpp
+  * Defines contract for device model implementations
+
+* DeviceModelStorageSqlite
+
+  * Implements DeviceModelStorageInterface as part of libocpp
+  * This storage holds internally managed variables
+
+* EverestDeviceModelStorage
+
+  * Implements DeviceModelStorageInterface as part of everest-core (OCPP201 module)
+  * Uses EVerest config service to retrieve configuration variables of EVerest modules
+
+* ComposedDeviceModelStorage
+
+  * (Final) implementation of DeviceModelStorageInterface as part of everest-core (OCPP201 module)
+  * A reference of this class will be passed to libocpp's ChargePoint constructor
+  * Differentiates between externally and internally managed variables

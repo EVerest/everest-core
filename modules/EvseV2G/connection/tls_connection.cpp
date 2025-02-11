@@ -61,9 +61,6 @@ void process_connection_thread(std::shared_ptr<tls::ServerConnection> con, struc
         const auto result = con->accept();
         switch (result) {
         case tls::Connection::result_t::success:
-
-            // TODO(james-ctc) v2g_ctx->tls_key_logging
-
             if (ctx->state == 0) {
                 const auto rv = ::v2g_handle_connection(connection.get());
                 dlog(DLOG_LEVEL_INFO, "v2g_dispatch_connection exited with %d", rv);

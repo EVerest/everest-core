@@ -1,0 +1,120 @@
+active_modules:
+  iso15118_car:
+    module: PyEvJosev
+    config_module:
+      supported_DIN70121: false
+      supported_ISO15118_2: true
+      supported_ISO15118_20_AC: false
+      supported_ISO15118_20_DC: false
+  connector_1:
+    module: EvseManager
+    mapping:
+      module:
+        evse: 1
+    config_module:
+      connector_id: 1
+      has_ventilation: true
+      evse_id: '1'
+      external_ready_to_start_charging: true
+    connections:
+      bsp:
+      - module_id: yeti_driver
+        implementation_id: board_support
+      powermeter_grid_side:
+      - module_id: yeti_driver
+        implementation_id: powermeter
+  yeti_driver:
+    mapping:
+      module:
+        evse: 1
+    module: JsYetiSimulator
+    config_module:
+      connector_id: 1
+  slac:
+    module: JsSlacSimulator
+  car_simulator:
+    module: JsEvManager
+    config_module:
+      connector_id: 1
+      auto_enable: true
+      auto_exec: false
+      auto_exec_commands: sleep 1;iec_wait_pwr_ready;sleep 1;draw_power_regulated 16,3;sleep 30;unplug
+    connections:
+      ev_board_support:
+        - module_id: yeti_driver
+          implementation_id: ev_board_support
+      ev:
+        - module_id: iso15118_car
+          implementation_id: ev
+      slac:
+        - module_id: slac
+          implementation_id: ev
+  ocpp:
+    module: OCPP
+    config_module:
+      ChargePointConfigPath: libocpp-config-test.json
+      UserConfigPath: user_config.json
+      EnableExternalWebsocketControl: true
+    connections:
+      evse_manager:
+      - module_id: connector_1
+        implementation_id: evse
+      reservation:
+      - module_id: auth
+        implementation_id: reservation
+      auth:
+      - module_id: auth
+        implementation_id: main
+      system:
+      - module_id: system
+        implementation_id: main
+      security:
+        - module_id: evse_security
+          implementation_id: main
+  evse_security:
+    module: EvseSecurity
+  auth:
+    module: Auth
+    config_module:
+      connection_timeout: 20
+    connections:
+      token_provider:
+      - module_id: token_provider_manual
+        implementation_id: main
+      - module_id: ocpp
+        implementation_id: auth_provider
+      token_validator:
+      - module_id: ocpp
+        implementation_id: auth_validator
+      evse_manager:
+      - module_id: connector_1
+        implementation_id: evse
+  token_provider_manual:
+    module: DummyTokenProviderManual
+    connections: {}
+    config_implementation:
+      main:
+        token: '123'
+        type: dummy
+  energy_manager:
+    module: EnergyManager
+    connections:
+      energy_trunk:
+      - module_id: grid_connection_point
+        implementation_id: energy_grid
+  grid_connection_point:
+    module: EnergyNode
+    config_module:
+      fuse_limit_A: 63.0
+      phase_count: 3
+    connections:
+      price_information: []
+      energy_consumer:
+      - module_id: connector_1
+        implementation_id: energy_grid
+      powermeter:
+      - module_id: yeti_driver
+        implementation_id: powermeter
+  system:
+    module: System
+x-module-layout: {}

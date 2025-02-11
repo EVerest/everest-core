@@ -6,6 +6,7 @@ import pytest
 import asyncio
 
 from everest.framework import error
+from everest.testing.core_utils.common import Requirement
 from everest.testing.core_utils.fixtures import *
 from everest.testing.core_utils.everest_core import EverestCore
 from everest.testing.core_utils.probe_module import ProbeModule
@@ -436,12 +437,23 @@ class ErrorHandlingTester:
             len_test_error_handling_errors_cleared_global_all=len(self.test_error_handling['errors_cleared_global_all']),
         )
         return state
+
+@pytest.mark.probe_module(
+    connections={
+        "test_error_handling": [
+            Requirement(module_id="test_error_handling", implementation_id="main")
+        ],
+        "test_error_handling_not_req": [
+            Requirement(module_id="test_error_handling_not_req", implementation_id="main")
+        ]
+    }
+)
 class TestErrorHandling:
     """
     Tests for error handling
     """
     @pytest.fixture
-    def probe_module(self, everest_core: EverestCore):
+    def probe_module(self, started_test_controller, everest_core):
         return ProbeModule(everest_core.get_runtime_session())
 
     @pytest.fixture
@@ -455,15 +467,13 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_raise_error(
         self,
-        everest_core: EverestCore,
-        error_handling_tester: ErrorHandlingTester
+        error_handling_tester: ErrorHandlingTester,
     ):
         """
         Tests that errors are raised correctly.
         The probe module triggers the TestErrorHandling module to raise an error,
         and then checks that the error is raised by subscribing to it.
         """
-        everest_core.start(standalone_module='probe')
         err_args = await error_handling_tester.test_error_handling_raise_error_a()
         await asyncio.sleep(0.5)
         expected_state = ErrorHandlingTesterState(
@@ -481,7 +491,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_clear_errors_by_type(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -491,7 +500,6 @@ class TestErrorHandling:
         and then checks that the correct errors are cleared.
         """
 
-        everest_core.start(standalone_module='probe')
         await error_handling_tester.test_error_handling_raise_error_a()
         await error_handling_tester.test_error_handling_raise_error_b()
         await error_handling_tester.test_error_handling_raise_error_c()
@@ -521,7 +529,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_clear_all_errors(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -531,7 +538,6 @@ class TestErrorHandling:
         and then checks that all errors are cleared.
         """
 
-        everest_core.start(standalone_module='probe')
         await error_handling_tester.test_error_handling_raise_error_a()
         await error_handling_tester.test_error_handling_raise_error_b()
         await error_handling_tester.test_error_handling_raise_error_c()
@@ -570,7 +576,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_req_error(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -579,7 +584,6 @@ class TestErrorHandling:
         Checks that the error is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_object = error_handling_tester.probe_module_main_raise_error_a()
         await asyncio.sleep(0.5)
         expected_state = ErrorHandlingTesterState(
@@ -599,7 +603,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_req_error_cleared(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -609,7 +612,6 @@ class TestErrorHandling:
         Checks that the error_cleared is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_object = error_handling_tester.probe_module_main_raise_error_a()
         await asyncio.sleep(0.5)
         error_handling_tester.probe_module_main_clear_error(err_object.type, err_object.sub_type)
@@ -633,7 +635,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_req_not_sub_error(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -642,7 +643,6 @@ class TestErrorHandling:
         Checks that the error is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_object = error_handling_tester.probe_module_main_raise_error_c()
         await asyncio.sleep(0.5)
         expected_state = ErrorHandlingTesterState(
@@ -660,7 +660,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_req_not_sub_error_cleared(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -670,7 +669,6 @@ class TestErrorHandling:
         Checks that the error_cleared is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_object = error_handling_tester.probe_module_main_raise_error_c()
         await asyncio.sleep(0.5)
         error_handling_tester.probe_module_main_clear_error(err_object.type, err_object.sub_type)
@@ -692,7 +690,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_not_req_error(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -702,7 +699,6 @@ class TestErrorHandling:
         Checks that the error is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_arg = await error_handling_tester.test_error_handling_not_req_raise_error_a()
         await asyncio.sleep(0.5)
         expected_state = ErrorHandlingTesterState(
@@ -718,7 +714,6 @@ class TestErrorHandling:
     @pytest.mark.asyncio
     async def test_receive_not_req_error_cleared(
         self,
-        everest_core: EverestCore,
         error_handling_tester: ErrorHandlingTester
     ):
         """
@@ -730,7 +725,6 @@ class TestErrorHandling:
         Checks that the error is subscribed correctly.
         """
 
-        everest_core.start(standalone_module='probe')
         err_arg = await error_handling_tester.test_error_handling_not_req_raise_error_a()
         await asyncio.sleep(0.5)
         await error_handling_tester.test_error_handling_not_req_clear_error(err_arg['type'], err_arg['sub_type'])
