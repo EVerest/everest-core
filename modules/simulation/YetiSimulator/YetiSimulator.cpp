@@ -33,10 +33,10 @@ types::powermeter::Powermeter power_meter_external(const state::PowermeterData& 
                 static_cast<float>(wattL1),
                 static_cast<float>(wattL2),
                 static_cast<float>(wattL3),
-            },                                                    // power_W
-            types::units::Voltage{vrmsL1, vrmsL2, vrmsL3},        // voltage_V
-            {},                                                   // VAR
-            types::units::Current{irmsL1, irmsL2, irmsL3, irmsN}, // current_A
+            },                                                                  // power_W
+            types::units::Voltage{std::nullopt, vrmsL1, vrmsL2, vrmsL3},        // voltage_V
+            {},                                                                 // VAR
+            types::units::Current{std::nullopt, irmsL1, irmsL2, irmsL3, irmsN}, // current_A
             types::units::Frequency{static_cast<float>(freqL1), static_cast<float>(freqL2),
                                     static_cast<float>(freqL3)}, // frequency_Hz
             {},                                                  // energy_Wh_import_signed
