@@ -112,3 +112,14 @@ Run the GDB debugger with the following configuration:
 ```
 
 Replace the `program` path to any test executable you are debugging.
+
+Acknowledgment
+--------------
+
+This library has thankfully received support from the German Federal Ministry
+for Economic Affairs and Climate Action.
+Information on the corresponding research project can be found here (in
+German only):
+[InterBDL research project](https://www.thu.de/de/org/iea/smartgrids/Seiten/InterBDL.aspx).
+
+![Logo of funding by Federal Ministry of Economic Affairs and Climate Action](https://raw.githubusercontent.com/EVerest/EVerest/main/docs/img/bmwk-logo-incl-supporting.png)
