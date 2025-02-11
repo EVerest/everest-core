@@ -65,6 +65,10 @@ config:
       - AC
       - DC
     default: AC
+  supported_iso_ac_bpt:
+    description: Set to true if ISO15118-20 AC BPT is supported and should be offered to the EV
+    type: boolean
+    default: false
   ac_hlc_enabled:
     description: Enable or disable HLC (aka ISO15118) for AC mode
     type: boolean

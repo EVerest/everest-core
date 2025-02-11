@@ -15,8 +15,8 @@
 namespace module::stub {
 
 struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
-    ISO15118_chargerImplStub(ModuleAdapterStub& adapter) : ISO15118_chargerImplBase(&adapter, "EvseV2G"){};
-    ISO15118_chargerImplStub(ModuleAdapterStub* adapter) : ISO15118_chargerImplBase(adapter, "EvseV2G"){};
+    ISO15118_chargerImplStub(ModuleAdapterStub& adapter) : ISO15118_chargerImplBase(&adapter, "EvseV2G") {};
+    ISO15118_chargerImplStub(ModuleAdapterStub* adapter) : ISO15118_chargerImplBase(adapter, "EvseV2G") {};
 
     virtual void init() {
     }
@@ -65,6 +65,21 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
     }
     virtual void handle_update_ac_max_current(double& max_current) {
         std::cout << "ISO15118_chargerImplBase::handle_update_ac_max_current called" << std::endl;
+    }
+    virtual void handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_parameters called" << std::endl;
+    }
+    virtual void handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_maximum_limits called" << std::endl;
+    }
+    virtual void handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_minimum_limits called" << std::endl;
+    }
+    virtual void handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_target_values called" << std::endl;
+    }
+    virtual void handle_update_ac_present_power(types::units::Power& present_power) {
+        std::cout << "ISO15118_chargerImplBase::handle_update_ac_present_power called" << std::endl;
     }
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
         std::cout << "ISO15118_chargerImplBase::handle_update_dc_maximum_limits called" << std::endl;

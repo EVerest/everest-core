@@ -564,6 +564,36 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     mod->r_iso2->call_update_ac_max_current(max_current);
 }
 
+void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_parameters(ac_parameters);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_maximum_limits(maximum_limits);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_minimum_limits(minimum_limits);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_target_values(target_values);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_present_power(types::units::Power& present_power) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_present_power(present_power);
+    }
+}
+
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
     mod->r_iso20->call_update_dc_maximum_limits(maximum_limits);
     mod->r_iso2->call_update_dc_maximum_limits(maximum_limits);
