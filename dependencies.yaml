@@ -27,7 +27,7 @@ date:
   options: ["BUILD_TZ_LIB ON", "HAS_REMOTE_API 0", "USE_AUTOLOAD 0", "USE_SYSTEM_TZ_DB ON"]
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.2
+  git_tag: v0.9.3
 libwebsockets:
   git: https://github.com/warmcat/libwebsockets.git
   git_tag: v4.3.3  
