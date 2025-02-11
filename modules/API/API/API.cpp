@@ -54,19 +54,21 @@ types::energy::ExternalLimits get_external_limits(const std::string& data, bool 
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = {0};
 
     if (is_watts) {
         target_entry.limits_to_leaves.total_power_W = {std::fabs(limit), API_MODULE_SOURCE};
+        zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
     } else {
         target_entry.limits_to_leaves.ac_max_current_A = {std::fabs(limit), API_MODULE_SOURCE};
+        zero_entry.limits_to_leaves.ac_max_current_A = {0, API_MODULE_SOURCE};
     }
 
     if (limit > 0) {
         external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
     } else {
-        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
         external_limits.schedule_import = std::vector<types::energy::ScheduleReqEntry>(1, zero_entry);
+        external_limits.schedule_export = std::vector<types::energy::ScheduleReqEntry>(1, target_entry);
     }
     return external_limits;
 }
@@ -79,7 +81,7 @@ types::energy::ExternalLimits get_external_limits(int32_t phases, float amps) {
 
     types::energy::ScheduleReqEntry zero_entry;
     zero_entry.timestamp = timestamp;
-    zero_entry.limits_to_leaves.total_power_W = {0, API_MODULE_SOURCE};
+    zero_entry.limits_to_leaves.ac_max_current_A = {0, API_MODULE_SOURCE};
 
     // check if phases are 1 or 3, otherwise throw an exception
     const auto is_valid = (phases == 1 || phases == 3);

@@ -52,25 +52,29 @@ std::string state_to_string(const ModuleState& module_state) {
 
 void to_json(nlohmann::json& json, const PowermeterData& powermeter_data) {
     json = nlohmann::json{{"time_stamp", static_cast<uint64_t>(powermeter_data.time_stamp)},
-                          {"totalWattHr", powermeter_data.totalWattHr},
+                          {"total_importWattHr", powermeter_data.import_totalWattHr},
+                          {"total_exportWattHr", powermeter_data.export_totalWattHr},
                           {"wattL1", powermeter_data.wattL1},
                           {"vrmsL1", powermeter_data.vrmsL1},
                           {"irmsL1", powermeter_data.irmsL1},
-                          {"wattHrL1", powermeter_data.wattHrL1},
+                          {"import_wattHrL1", powermeter_data.import_wattHrL1},
+                          {"export_wattHrL1", powermeter_data.export_wattHrL1},
                           {"tempL1", powermeter_data.tempL1},
                           {"freqL1", powermeter_data.freqL1},
 
                           {"wattL2", powermeter_data.wattL2},
                           {"vrmsL2", powermeter_data.vrmsL2},
                           {"irmsL2", powermeter_data.irmsL2},
-                          {"wattHrL2", powermeter_data.wattHrL2},
+                          {"import_wattHrL2", powermeter_data.import_wattHrL2},
+                          {"export_wattHrL2", powermeter_data.export_wattHrL2},
                           {"tempL2", powermeter_data.tempL2},
                           {"freqL2", powermeter_data.freqL2},
 
                           {"wattL3", powermeter_data.wattL3},
                           {"vrmsL3", powermeter_data.vrmsL3},
                           {"irmsL3", powermeter_data.irmsL3},
-                          {"wattHrL3", powermeter_data.wattHrL3},
+                          {"import_wattHrL3", powermeter_data.import_wattHrL3},
+                          {"export_wattHrL3", powermeter_data.export_wattHrL3},
                           {"tempL3", powermeter_data.tempL3},
                           {"freqL3", powermeter_data.freqL3},
 
