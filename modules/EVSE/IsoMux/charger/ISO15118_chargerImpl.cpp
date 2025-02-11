@@ -249,6 +249,24 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso20->subscribe_ac_ev_power_limits([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_power_limits(o);
+        }
+    });
+
+    mod->r_iso20->subscribe_ac_ev_present_powers([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_present_powers(o);
+        }
+    });
+
+    mod->r_iso20->subscribe_ac_ev_dynamic_control_mode([this](const auto o) {
+        if (mod->selected_iso20()) {
+            publish_ac_ev_dynamic_control_mode(o);
+        }
+    });
+
     mod->r_iso2->subscribe_dc_ev_energy_capacity([this](const auto o) {
         if (not mod->selected_iso20()) {
             publish_dc_ev_energy_capacity(o);
@@ -425,6 +443,18 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
+    mod->r_iso2->subscribe_selected_service_parameters([this](const auto& param) {
+        if (not mod->selected_iso20()) {
+            publish_selected_service_parameters(param);
+        }
+    });
+
+    mod->r_iso20->subscribe_selected_service_parameters([this](const auto& param) {
+        if (mod->selected_iso20()) {
+            publish_selected_service_parameters(param);
+        }
+    });
+
     mod->r_iso2->subscribe_display_parameters([this](const auto o) {
         if (not mod->selected_iso20()) {
             publish_display_parameters(o);
@@ -488,6 +518,12 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::Pay
                                      central_contract_validation_allowed);
     mod->r_iso2->call_session_setup(payment_options, supported_certificate_service,
                                     central_contract_validation_allowed);
+}
+
+void ISO15118_chargerImpl::handle_bpt_setup(types::iso15118::BptSetup& bpt_config) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_bpt_setup(bpt_config);
+    }
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
@@ -562,6 +598,36 @@ void ISO15118_chargerImpl::handle_update_energy_transfer_modes(
 void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     mod->r_iso20->call_update_ac_max_current(max_current);
     mod->r_iso2->call_update_ac_max_current(max_current);
+}
+
+void ISO15118_chargerImpl::handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_parameters(ac_parameters);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_maximum_limits(maximum_limits);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_minimum_limits(minimum_limits);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_target_values(target_values);
+    }
+}
+
+void ISO15118_chargerImpl::handle_update_ac_present_power(types::units::Power& present_power) {
+    if (mod->selected_iso20()) {
+        mod->r_iso20->call_update_ac_present_power(present_power);
+    }
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
