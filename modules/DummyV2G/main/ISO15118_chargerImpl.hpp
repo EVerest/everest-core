@@ -49,6 +49,11 @@ protected:
     virtual void handle_stop_charging(bool& stop) override;
     virtual void handle_pause_charging(bool& pause) override;
     virtual void handle_update_ac_max_current(double& max_current) override;
+    virtual void handle_update_ac_parameters(types::iso15118::AcParameters& ac_parameters) override;
+    virtual void handle_update_ac_maximum_limits(types::iso15118::AcEvseMaximumPower& maximum_limits) override;
+    virtual void handle_update_ac_minimum_limits(types::iso15118::AcEvseMinimumPower& minimum_limits) override;
+    virtual void handle_update_ac_target_values(types::iso15118::AcTargetValues& target_values) override;
+    virtual void handle_update_ac_present_power(types::units::Power& present_power) override;
     virtual void handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) override;
     virtual void handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) override;
     virtual void handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) override;
