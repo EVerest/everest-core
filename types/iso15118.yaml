@@ -1459,6 +1459,74 @@ types:
           DepartureTime ISO 15118-20: Dynamic/Scheduled_SEReqControlModeType:
           DepartureTime
         type: string
+  AcParameters:
+    description: TODO
+    type: object
+    additionalProperties: false
+    required:
+      - nominal_frequency
+    properties:
+      nominal_frequency:
+        description: TODO
+        type: number
+        minimum: 0
+      max_power_asymmetry:
+        description: TODO
+        type: number
+        minimum: 0
+      power_ramp_limitation:
+        description: TODO
+        type: number
+        minimum: 0
+  AcEvseMaximumPower:
+    description: TODO
+    type: object
+    additionalProperties: false
+    required:
+      - charge_power
+    properties:
+      charge_power:
+        description: TODO
+        type: object
+        $ref: /units#/Power
+      discharge_power:
+        description: TODO
+        type: object
+        $ref: /units#/Power
+  AcEvseMinimumPower:
+    description: TODO
+    type: object
+    additionalProperties: false
+    required:
+      - charge_power
+    properties:
+      charge_power:
+        description: TODO
+        type: object
+        $ref: /units#/Power
+      discharge_power:
+        description: TODO
+        type: object
+        $ref: /units#/Power
+  AcTargetValues:
+    description: TODO
+    type: object
+    additionalProperties: false
+    required:
+      - target_active_power
+    properties:
+      target_active_power:
+        description: TODO
+        type: object
+        $ref: /units#/Power
+      target_reactive_power:
+        description: TODO
+        type: object
+        $ref: /units#/ReactivePower
+      target_frequency:
+        description: TODO
+        type: number
+        minimum: 0
 # EV Side
   DcEvParameters:
     description: Target settings for dc charging
