@@ -167,6 +167,8 @@ template <> void convert(const ServiceDetailResponse& in, iso20_ServiceDetailRes
         uint8_t t = 0;
         for (auto const& in_parameter : in_parameter_set.parameter) {
             auto& out_parameter = out_paramater_set.Parameter.array[t++];
+            init_iso20_ParameterType(&out_parameter);
+
             CPP2CB_STRING(in_parameter.name, out_parameter.Name);
             std::visit(ParamterValueVisitor(out_parameter), in_parameter.value);
         }
