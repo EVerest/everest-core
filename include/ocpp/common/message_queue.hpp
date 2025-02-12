@@ -601,7 +601,7 @@ public:
                         }
                     } else {
                         std::shared_ptr<ControlMessage<M>> message =
-                            std::make_shared<ControlMessage<M>>(persisted_message.json_message);
+                            std::make_shared<ControlMessage<M>>(persisted_message.json_message, true);
                         message->messageType = string_to_messagetype(persisted_message.message_type);
                         message->timestamp = persisted_message.timestamp;
                         message->message_attempts = persisted_message.message_attempts;
