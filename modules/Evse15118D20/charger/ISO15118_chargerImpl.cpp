@@ -420,8 +420,12 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
-void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
-    // your code for cmd update_ac_max_current goes here
+void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {    
+    std::scoped_lock lock(GEL);
+
+    // TODO(ioan, sl): see what to do here
+    setup_steps_done.set(to_underlying_value(SetupStep::MAX_LIMITS));
+    setup_steps_done.set(to_underlying_value(SetupStep::MIN_LIMITS));
 }
 
 void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
