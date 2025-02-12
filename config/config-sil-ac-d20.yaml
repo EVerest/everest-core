@@ -19,39 +19,50 @@ active_modules:
   evse_manager:
     module: EvseManager
     config_module:
+      ac_enforce_hlc: false
+      ac_hlc_enabled: true
+      ac_hlc_use_5percent: false
+      ac_nominal_voltage: 230
+      charge_mode: AC
       connector_id: 1
+      ev_receipt_required: false
       evse_id: DE*PNX*E12345*1
-      evse_id_din: 49A80737A45678
+      has_ventilation: true
+      max_current_import_A: 32
+      max_current_export_A: 32
+      payment_enable_contract: true
+      payment_enable_eim: true
       session_logging: true
-      session_logging_xml: false
       session_logging_path: /tmp/everest-logs
-      charge_mode: DC
-      payment_enable_contract: false
+      session_logging_xml: false
+      switch_3ph1ph_delay_s: 5
+      switch_3ph1ph_cp_state: X1
     connections:
       bsp:
-        - module_id: yeti_driver
+        - module_id: connector_1_powerpath
           implementation_id: board_support
+      hlc:
+        - module_id: iso15118_charger
+          implementation_id: charger
       powermeter_car_side:
-        - module_id: powersupply_dc
+        - module_id: connector_1_powerpath
           implementation_id: powermeter
       slac:
         - module_id: slac
           implementation_id: evse
-      hlc:
-        - module_id: iso15118_charger
-          implementation_id: charger
-      powersupply_DC:
-        - module_id: powersupply_dc
-          implementation_id: main
-      imd:
-        - module_id: imd
-          implementation_id: main
-  powersupply_dc:
-    module: DCSupplySimulator
-  yeti_driver:
-    module: JsYetiSimulator
+      ac_rcd:
+        - implementation_id: rcd
+          module_id: connector_1_powerpath
+      connector_lock:
+        - implementation_id: connector_lock
+          module_id: connector_1_powerpath
+  connector_1_powerpath:
     config_module:
       connector_id: 1
+    connections: {}
+    module: JsYetiSimulator
+    telemetry:
+      id: 1  
   slac:
     module: SlacSimulator
   imd:
@@ -70,7 +81,7 @@ active_modules:
       dc_target_voltage: 400
     connections:
       ev_board_support:
-        - module_id: yeti_driver
+        - module_id: connector_1_powerpath
           implementation_id: ev_board_support
       ev:
         - module_id: iso15118_car
@@ -134,7 +145,7 @@ active_modules:
         - module_id: evse_manager
           implementation_id: energy_grid
       powermeter:
-        - module_id: yeti_driver
+        - module_id: connector_1_powerpath
           implementation_id: powermeter
   api:
     module: API
