@@ -200,10 +200,15 @@ void ISO15118_chargerImpl::ready() {
 
 iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() {
 
-    using ScheduleControlMode = dt::Scheduled_DC_CLReqControlMode;
-    using BPT_ScheduleReqControlMode = dt::BPT_Scheduled_DC_CLReqControlMode;
-    using DynamicReqControlMode = dt::Dynamic_DC_CLReqControlMode;
-    using BPT_DynamicReqControlMode = dt::BPT_Dynamic_DC_CLReqControlMode;
+    using ScheduleControlModeDC = dt::Scheduled_DC_CLReqControlMode;
+    using BPT_ScheduleReqControlModeDC = dt::BPT_Scheduled_DC_CLReqControlMode;
+    using DynamicReqControlModeDC = dt::Dynamic_DC_CLReqControlMode;
+    using BPT_DynamicReqControlModeDC = dt::BPT_Dynamic_DC_CLReqControlMode;
+
+    using ScheduleControlModeAC = dt::Scheduled_AC_CLReqControlMode;
+    using BPT_ScheduleReqControlModeAC = dt::BPT_Scheduled_AC_CLReqControlMode;
+    using DynamicReqControlModeAC = dt::Dynamic_AC_CLReqControlMode;
+    using BPT_DynamicReqControlModeAC = dt::BPT_Dynamic_AC_CLReqControlMode;
 
     namespace feedback = iso15118::session::feedback;
 
@@ -215,7 +220,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
     callbacks.dc_charge_loop_req = [this](const feedback::DcChargeLoopReq& dc_charge_loop_req) {
         if (const auto* dc_control_mode = std::get_if<feedback::DcReqControlMode>(&dc_charge_loop_req)) {
-            if (const auto* scheduled_mode = std::get_if<ScheduleControlMode>(dc_control_mode)) {
+            if (const auto* scheduled_mode = std::get_if<ScheduleControlModeDC>(dc_control_mode)) {
                 const auto target_voltage = dt::from_RationalNumber(scheduled_mode->target_voltage);
                 const auto target_current = dt::from_RationalNumber(scheduled_mode->target_current);
 
@@ -229,7 +234,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                     publish_dc_ev_maximum_limits({max_current, max_power, max_voltage});
                 }
 
-            } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlMode>(dc_control_mode)) {
+            } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlModeDC>(dc_control_mode)) {
                 const auto target_voltage = dt::from_RationalNumber(bpt_scheduled_mode->target_voltage);
                 const auto target_current = dt::from_RationalNumber(bpt_scheduled_mode->target_current);
                 publish_dc_ev_target_voltage_current({target_voltage, target_current});
@@ -243,9 +248,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 }
 
                 // publish_dc_ev_maximum_limits({max_limits.current, max_limits.power, max_limits.voltage});
-            } else if (const auto* dynamic_mode = std::get_if<DynamicReqControlMode>(dc_control_mode)) {
+            } else if (const auto* dynamic_mode = std::get_if<DynamicReqControlModeDC>(dc_control_mode)) {
                 publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(*dynamic_mode));
-            } else if (const auto* bpt_dynamic_mode = std::get_if<BPT_DynamicReqControlMode>(dc_control_mode)) {
+            } else if (const auto* bpt_dynamic_mode = std::get_if<BPT_DynamicReqControlModeDC>(dc_control_mode)) {
                 publish_d20_dc_dynamic_charge_mode(convert_dynamic_values(*bpt_dynamic_mode));
             }
         } else if (const auto* display_parameters = std::get_if<dt::DisplayParameters>(&dc_charge_loop_req)) {
@@ -262,6 +267,29 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 
     callbacks.dc_max_limits = [this](const feedback::DcMaximumLimits& max_limits) {
         publish_dc_ev_maximum_limits({max_limits.current, max_limits.power, max_limits.voltage});
+    };
+
+    callbacks.ac_charge_loop_req = [this](const feedback::AcChargeLoopReq& ac_charge_loop_req) {
+        if (const auto* ac_control_mode = std::get_if<feedback::AcReqControlMode>(&ac_charge_loop_req)) {
+            if (const auto* scheduled_mode = std::get_if<ScheduleControlModeAC>(ac_control_mode)) {
+                // TODO(ioan, sl): see here what is required
+            } else if (const auto* bpt_scheduled_mode = std::get_if<BPT_ScheduleReqControlModeAC>(ac_control_mode)) {
+                // TODO(ioan, sl): see here what is required
+            } else if (const auto* dynamic_mode = std::get_if<DynamicReqControlModeAC>(ac_control_mode)) {
+                // TODO(ioan, sl): see here what is required
+            } else if (const auto* bpt_dynamic_mode = std::get_if<BPT_DynamicReqControlModeAC>(ac_control_mode)) {
+                // TODO(ioan, sl): see here what is required
+            }
+        } else if (const auto* display_parameters = std::get_if<dt::DisplayParameters>(&ac_charge_loop_req)) {
+            publish_display_parameters(convert_display_parameters(*display_parameters));
+        } else if (const auto* present_voltage = std::get_if<feedback::PresentVoltage>(&ac_charge_loop_req)) {
+            // TODO(ioan, sl): see here what is required
+        } else if (const auto* meter_info_requested = std::get_if<feedback::MeterInfoRequested>(&ac_charge_loop_req)) {
+            if (*meter_info_requested) {
+                EVLOG_info << "Meter info is requested from EV";
+                publish_meter_info_requested(nullptr);
+            }
+        }
     };
 
     callbacks.signal = [this](feedback::Signal signal) {
@@ -284,6 +312,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
             break;
         case Signal::DC_OPEN_CONTACTOR:
             publish_dc_open_contactor(nullptr);
+            break;
+        case Signal::AC_OPEN_CONTACTOR:
+            publish_ac_open_contactor(nullptr);
             break;
         case Signal::DLINK_TERMINATE:
             publish_dlink_terminate(nullptr);
@@ -420,7 +451,7 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     }
 }
 
-void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {    
+void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     std::scoped_lock lock(GEL);
 
     // TODO(ioan, sl): see what to do here
