@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #include "ISO15118_chargerImplStub.hpp"
+#include "ModuleAdapterStub.hpp"
 #include "evse_securityIntfStub.hpp"
 
 #include <connection.hpp>
@@ -79,6 +80,9 @@ void parse_options(int argc, char** argv) {
 
 // EvseSecurity "implementation"
 struct EvseSecurity : public module::stub::evse_securityIntfStub {
+    EvseSecurity(module::stub::ModuleAdapterStub& adapter) : module::stub::evse_securityIntfStub(&adapter) {
+    }
+
     Result get_verify_file(const Requirement& req, const Parameters& args) override {
         return "client_root_cert.pem";
     }
@@ -119,8 +123,9 @@ int main(int argc, char** argv) {
     parse_options(argc, argv);
 
     tls::Server tls_server;
-    module::stub::ISO15118_chargerImplStub charger;
-    EvseSecurity security;
+    module::stub::ModuleAdapterStub adapter;
+    module::stub::ISO15118_chargerImplStub charger(adapter);
+    EvseSecurity security(adapter);
 
     auto* ctx = v2g_ctx_create(&charger, &security);
     if (ctx == nullptr) {

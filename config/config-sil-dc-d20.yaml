@@ -3,6 +3,10 @@ active_modules:
     module: Evse15118D20
     config_module:
       device: auto
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso15118_car:
     module: PyEvJosev
     config_module:

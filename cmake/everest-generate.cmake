@@ -534,6 +534,8 @@ function (ev_add_cpp_module MODULE_NAME)
 
             add_dependencies(${MODULE_NAME} generate_cpp_files)
 
+            ev_register_module_target(${MODULE_NAME})
+
             install(TARGETS ${MODULE_NAME}
                 DESTINATION "${EVEREST_MODULE_INSTALL_PREFIX}/${MODULE_NAME}"
             )
@@ -734,6 +736,7 @@ function(ev_install_project)
             ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-cli.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/project-config.cmake.in
             ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-project-bootstrap.cmake
+            ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-targets.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-script.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-nodered-script.cmake
         DESTINATION

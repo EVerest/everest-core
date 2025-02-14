@@ -13,6 +13,9 @@
 // headers for provided interface implementations
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
 
+// headers for required interface implementations
+#include <generated/interfaces/evse_security/Interface.hpp>
+
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 // insert your custom include headers here
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
@@ -24,7 +27,6 @@ struct Conf {
     std::string certificate_path;
     std::string logging_path;
     std::string tls_negotiation_strategy;
-    std::string private_key_password;
     bool enable_ssl_logging;
     bool enable_tls_key_logging;
     bool enable_sdp_server;
@@ -36,10 +38,12 @@ struct Conf {
 class Evse15118D20 : public Everest::ModuleBase {
 public:
     Evse15118D20() = delete;
-    Evse15118D20(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger, Conf& config) :
-        ModuleBase(info), p_charger(std::move(p_charger)), config(config){};
+    Evse15118D20(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
+                 std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
+        ModuleBase(info), p_charger(std::move(p_charger)), r_security(std::move(r_security)), config(config){};
 
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
+    const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
