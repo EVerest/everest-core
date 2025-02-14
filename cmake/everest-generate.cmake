@@ -736,6 +736,7 @@ function(ev_install_project)
             ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-cli.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/project-config.cmake.in
             ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-project-bootstrap.cmake
+            ${EV_CORE_CMAKE_SCRIPT_DIR}/ev-targets.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-script.cmake
             ${EV_CORE_CMAKE_SCRIPT_DIR}/config-run-nodered-script.cmake
         DESTINATION
