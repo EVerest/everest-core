@@ -313,6 +313,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         case Signal::DC_OPEN_CONTACTOR:
             publish_dc_open_contactor(nullptr);
             break;
+        case Signal::AC_CLOSE_CONTACTOR:
+            publish_ac_close_contactor(nullptr);
+            break;
         case Signal::AC_OPEN_CONTACTOR:
             publish_ac_open_contactor(nullptr);
             break;
