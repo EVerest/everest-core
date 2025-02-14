@@ -181,11 +181,19 @@ impl PaymentTerminalModule {
     /// custom validation steps on top.
     fn begin_transaction(&self, publishers: &ModulePublisher) -> Result<()> {
         // Get a valid invoice token.
-        let invoice_token = publishers.bank_session_token.get_bank_session_token()?;
-        let token = invoice_token
-            .token
-            .ok_or(anyhow::anyhow!("No token received"))?;
-        log::info!("Received the BankSessionToken {token}");
+        let token = {
+            match publishers.bank_session_token_slots.get(0) {
+                None => None,
+                Some(publisher) => {
+                    let invoice_token = publisher.get_bank_session_token()?;
+                    if invoice_token.token.is_none() {
+                        anyhow::bail!("No token received")
+                    }
+                    invoice_token.token
+                }
+            }
+        };
+        log::info!("Received the BankSessionToken {token:?}");
 
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
@@ -206,10 +214,10 @@ impl PaymentTerminalModule {
 
         if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
-                if !self.accept_credit_cards {
+                if !self.accept_credit_cards || token.is_none() {
                     None
                 } else {
-                    self.feig.begin_transaction(&token)?;
+                    self.feig.begin_transaction(token.as_ref().unwrap())?;
                     let credit_cards_connectors = if self.credit_cards_connectors.is_empty() {
                         None
                     } else {
@@ -218,7 +226,7 @@ impl PaymentTerminalModule {
                     // Reuse the bank token as invoice token so we can use the
                     // invoice token later on to commit our transactions.
                     Some(ProvidedIdToken::new(
-                        token,
+                        token.unwrap(),
                         AuthorizationType::BankCard,
                         credit_cards_connectors,
                     ))
@@ -333,8 +341,8 @@ fn main() -> Result<()> {
         pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
-        pt_module.clone(),
-        pt_module.clone(),
+        |_index| pt_module.clone(),
+        |_index| pt_module.clone(),
     );
 
     let read_card_debounce = Duration::from_secs(config.read_card_debounce as u64);
@@ -357,6 +365,7 @@ mod tests {
     use self::generated::types::money::Currency;
     use self::generated::types::money::CurrencyCode;
     use self::generated::types::session_cost::SessionCostChunk;
+    use self::generated::BankSessionTokenProviderClientPublisher;
 
     use super::*;
     use mockall::predicate::eq;
@@ -374,7 +383,9 @@ mod tests {
         for input in parameters {
             let mut everest_mock = ModulePublisher::default();
             everest_mock
-                .bank_session_token
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+            everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
                 .times(1)
                 .return_once(|| input);
@@ -407,7 +418,9 @@ mod tests {
             let mut feig_mock = SyncFeig::default();
 
             everest_mock
-                .bank_session_token
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+            everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
                 .times(1)
                 .return_once(|| {
@@ -508,7 +521,13 @@ mod tests {
             let mut feig_mock = SyncFeig::default();
 
             everest_mock
-                .bank_session_token
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+            everest_mock
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+
+            everest_mock.bank_session_token_slots[0]
                 .expect_get_bank_session_token()
                 .times(1)
                 .return_once(|| {

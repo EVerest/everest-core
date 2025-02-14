@@ -55,8 +55,12 @@ config:
 requires:
     session:
       interface: session_cost
+      min_connections: 0
+      max_connections: 1
     bank_session_token:
       interface: bank_session_token_provider
+      min_connections: 0
+      max_connections: 1
 provides:
   token_provider:
     interface: auth_token_provider
