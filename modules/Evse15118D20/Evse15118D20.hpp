@@ -40,6 +40,7 @@ class Evse15118D20 : public Everest::ModuleBase {
 public:
     Evse15118D20() = delete;
     Evse15118D20(const ModuleInfo& info, std::unique_ptr<ISO15118_chargerImplBase> p_charger,
+                 std::unique_ptr<iso15118_extensionsImplBase> p_extensions,
                  std::unique_ptr<evse_securityIntf> r_security, Conf& config) :
         ModuleBase(info),
         p_charger(std::move(p_charger)),

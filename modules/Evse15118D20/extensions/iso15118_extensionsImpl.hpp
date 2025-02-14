@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef extensions_ISO15118_EXTENSIONS_IMPL_HPP
-#define extensions_ISO15118_EXTENSIONS_IMPL_HPP
+#ifndef EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP
+#define EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -59,4 +59,4 @@ private:
 } // namespace extensions
 } // namespace module
 
-#endif // extensions_ISO15118_EXTENSIONS_IMPL_HPP
+#endif // EXTENSIONS_ISO15118_EXTENSIONS_IMPL_HPP
