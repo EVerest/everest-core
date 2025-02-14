@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: https://github.com/EVerest/everest-framework.git
-  git_tag: v0.19.1
+  git_tag: v0.20.2
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
@@ -42,12 +42,12 @@ libfsm:
 # libcbv2g
 libcbv2g:
   git: https://github.com/EVerest/libcbv2g.git
-  git_tag: v0.2.1
+  git_tag: v0.3.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBCBV2G"
 # libiso15118
 libiso15118:
   git: https://github.com/EVerest/libiso15118.git
-  git_tag: v0.3.0
+  git_tag: v0.4.0
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBISO15118"
 
 # LEM DCBM 400/600 module
@@ -61,7 +61,7 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: https://github.com/EVerest/libevse-security.git
-  git_tag: v0.9.2
+  git_tag: v0.9.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
@@ -86,7 +86,7 @@ ext-mbedtls:
 # everest-testing and ev-dev-tools
 everest-utils:
   git: https://github.com/EVerest/everest-utils.git
-  git_tag: 165f2c8acd7819e2c788f438d4f00a56dd030be0
+  git_tag: v0.5.0
 # linux_libnfc-nci for RFID
 libnfc-nci:
   git: https://github.com/EVerest/linux_libnfc-nci.git
