@@ -12,6 +12,7 @@
 
 // headers for provided interface implementations
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
+#include <generated/interfaces/iso15118_extensions/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/evse_security/Interface.hpp>
@@ -45,16 +46,19 @@ class EvseV2G : public Everest::ModuleBase {
 public:
     EvseV2G() = delete;
     EvseV2G(const ModuleInfo& info, Everest::MqttProvider& mqtt_provider,
-            std::unique_ptr<ISO15118_chargerImplBase> p_charger, std::unique_ptr<evse_securityIntf> r_security,
+            std::unique_ptr<ISO15118_chargerImplBase> p_charger,
+            std::unique_ptr<iso15118_extensionsImplBase> p_extensions, std::unique_ptr<evse_securityIntf> r_security,
             Conf& config) :
         ModuleBase(info),
         mqtt(mqtt_provider),
         p_charger(std::move(p_charger)),
+        p_extensions(std::move(p_extensions)),
         r_security(std::move(r_security)),
         config(config){};
 
     Everest::MqttProvider& mqtt;
     const std::unique_ptr<ISO15118_chargerImplBase> p_charger;
+    const std::unique_ptr<iso15118_extensionsImplBase> p_extensions;
     const std::unique_ptr<evse_securityIntf> r_security;
     const Conf& config;
 
