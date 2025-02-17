@@ -43,6 +43,8 @@ protected:
     virtual void handle_evse_replug(int& value) override;
     virtual types::board_support_common::ProximityPilot handle_ac_read_pp_ampacity() override;
     virtual void handle_ac_set_overcurrent_limit_A(double& value) override;
+    virtual void handle_ce_on() override;
+    virtual void handle_ce_off() override;
 
     // ev@d2d1847a-7b88-41dd-ad07-92785f06f5c4:v1
     // insert your protected definitions here
