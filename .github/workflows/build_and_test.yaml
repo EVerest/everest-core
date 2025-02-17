@@ -16,7 +16,7 @@ on:
 jobs:
   ci:
     name: Build, Lint and Test
-    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@bugfix/ci-artifacts-on-forks
+    uses: everest/everest-ci/.github/workflows/continuous_integration.yml@v1.4.6
     permissions:
       contents: read
     secrets:
