@@ -130,5 +130,13 @@ void evse_board_supportImpl::handle_ac_set_overcurrent_limit_A(double& value) {
     // your code for cmd ac_set_overcurrent_limit_A goes here
 }
 
+void evse_board_supportImpl::handle_ce_on() {
+    // your code for cmd ce_on goes here
+}
+
+void evse_board_supportImpl::handle_ce_off() {
+    // your code for cmd ce_off goes here
+}
+
 } // namespace connector_2
 } // namespace module

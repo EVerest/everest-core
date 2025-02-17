@@ -200,5 +200,13 @@ void evse_board_supportImpl::handle_enable(bool& value) {
     publish_event(cast_event_type(last_cp_state));
 }
 
+void evse_board_supportImpl::handle_ce_on() {
+    // your code for cmd ce_on goes here
+}
+
+void evse_board_supportImpl::handle_ce_off() {
+    // your code for cmd ce_off goes here
+}
+
 } // namespace board_support
 } // namespace module

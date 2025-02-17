@@ -79,6 +79,10 @@ cmds:
       value:
         description: Ampere current limit value
         type: number
+  ce_on:
+    description: Turns CE on (in MCS mode)
+  ce_off:
+    description: Turns CE off (in MCS mode)
 vars:
   event:
     description: Event from ControlPilot signal/output relais
@@ -112,6 +116,9 @@ vars:
     description: Publish to stop the transaction gracefully (e.g. user pressed the stop button)
     type: object
     $ref: /evse_manager#/StopTransactionRequest
+  id_on_event:
+    description: Insertion indication (in MCS mode)
+    type: boolean
 errors:
   - reference: /errors/evse_board_support
   - reference: /errors/ac_rcd
