@@ -146,6 +146,9 @@ active_modules:
       reservation:
         - module_id: auth
           implementation_id: reservation
+      extensions_15118:
+        - module_id: iso15118_charger
+          implementation_id: extensions
   evse_security:
     module: EvseSecurity
     config_module:

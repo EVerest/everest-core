@@ -36,9 +36,6 @@ struct ISO15118_chargerImplStub : public ISO15118_chargerImplBase {
                                       bool& supported_certificate_service) {
         std::cout << "ISO15118_chargerImplBase::handle_session_setup called" << std::endl;
     }
-    virtual void handle_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-        std::cout << "ISO15118_chargerImplBase::handle_certificate_response called" << std::endl;
-    }
     virtual void handle_authorization_response(types::authorization::AuthorizationStatus& authorization_status,
                                                types::authorization::CertificateStatus& certificate_status) {
         std::cout << "ISO15118_chargerImplBase::handle_authorization_response called" << std::endl;

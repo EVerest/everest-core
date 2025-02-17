@@ -210,19 +210,6 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
     }
 }
 
-void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-    pthread_mutex_lock(&v2g_ctx->mqtt_lock);
-    if (exi_stream_status.exi_response.has_value() and not exi_stream_status.exi_response.value().empty()) {
-        v2g_ctx->evse_v2g_data.cert_install_res_b64_buffer = std::string(exi_stream_status.exi_response.value());
-    }
-    v2g_ctx->evse_v2g_data.cert_install_status =
-        (exi_stream_status.status == types::iso15118_charger::Status::Accepted) ? true : false;
-    pthread_cond_signal(&v2g_ctx->mqtt_cond);
-    /* unlock */
-    pthread_mutex_unlock(&v2g_ctx->mqtt_lock);
-}
-
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

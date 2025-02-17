@@ -370,11 +370,6 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
     setup_steps_done.set(to_underlying_value(SetupStep::AUTH_SETUP));
 }
 
-void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-    // your code for cmd certificate_response goes here
-}
-
 void ISO15118_chargerImpl::handle_authorization_response(
     types::authorization::AuthorizationStatus& authorization_status,
     types::authorization::CertificateStatus& certificate_status) {

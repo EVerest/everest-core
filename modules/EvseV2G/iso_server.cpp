@@ -493,7 +493,7 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 
     certificate_request.iso15118_schema_version = ISO_15118_2013_MSG_DEF;
     certificate_request.certificate_action = types::iso15118_charger::CertificateActionEnum::Install;
-    ctx->p_charger->publish_certificate_request(certificate_request);
+    ctx->p_extensions->publish_iso15118_certificate_request(certificate_request);
 
 #ifdef EVEREST_MBED_TLS
 exit:

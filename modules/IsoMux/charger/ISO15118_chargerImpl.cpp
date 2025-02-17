@@ -348,17 +348,6 @@ void ISO15118_chargerImpl::init() {
         }
     });
 
-    mod->r_iso2->subscribe_certificate_request([this](const auto o) {
-        if (not mod->selected_iso20()) {
-            publish_certificate_request(o);
-        }
-    });
-    mod->r_iso20->subscribe_certificate_request([this](const auto o) {
-        if (mod->selected_iso20()) {
-            publish_certificate_request(o);
-        }
-    });
-
     mod->r_iso2->subscribe_dlink_terminate([this]() {
         if (not mod->selected_iso20()) {
             publish_dlink_terminate(nullptr);
@@ -488,15 +477,6 @@ void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_char
                                                 bool& supported_certificate_service) {
     mod->r_iso20->call_session_setup(payment_options, supported_certificate_service);
     mod->r_iso2->call_session_setup(payment_options, supported_certificate_service);
-}
-
-void ISO15118_chargerImpl::handle_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& exi_stream_status) {
-    if (mod->selected_iso20()) {
-        mod->r_iso20->call_certificate_response(exi_stream_status);
-    } else {
-        mod->r_iso2->call_certificate_response(exi_stream_status);
-    }
 }
 
 void ISO15118_chargerImpl::handle_authorization_response(
