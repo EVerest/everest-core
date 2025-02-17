@@ -488,7 +488,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     auto powersupply_capabilities = mod->get_powersupply_capabilities();
 
                     // tell car our new limits
-                    types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+                    types::iso15118::DcEvseMaximumLimits evse_max_limits;
 
                     if (target_voltage > 10) {
                         // we use target_voltage here to calculate current limit.

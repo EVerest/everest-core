@@ -219,8 +219,8 @@ static void publish_DcEvStatus(struct v2g_context* ctx, const struct iso2_DC_EVS
         ctx->ev_v2g_data.iso2_dc_ev_status.EVReady = iso2_ev_status.EVReady;
         ctx->ev_v2g_data.iso2_dc_ev_status.EVRESSSOC = iso2_ev_status.EVRESSSOC;
 
-        types::iso15118_charger::DcEvStatus ev_status;
-        ev_status.dc_ev_error_code = static_cast<types::iso15118_charger::DcEvErrorCode>(iso2_ev_status.EVErrorCode);
+        types::iso15118::DcEvStatus ev_status;
+        ev_status.dc_ev_error_code = static_cast<types::iso15118::DcEvErrorCode>(iso2_ev_status.EVErrorCode);
         ev_status.dc_ev_ready = iso2_ev_status.EVReady;
         ev_status.dc_ev_ress_soc = static_cast<float>(iso2_ev_status.EVRESSSOC);
         ctx->p_charger->publish_dc_ev_status(ev_status);
@@ -282,7 +282,7 @@ static void publish_iso_charge_parameter_discovery_req(
     struct v2g_context* ctx,
     struct iso2_ChargeParameterDiscoveryReqType const* const v2g_charge_parameter_discovery_req) {
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118_charger::EnergyTransferMode>(
+    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118::EnergyTransferMode>(
         v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode));
     if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
@@ -456,7 +456,7 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
     // PnC only
 
     bool rv = true;
-    types::iso15118_charger::RequestExiStreamSchema certificate_request;
+    types::iso15118::RequestExiStreamSchema certificate_request;
 
 #ifdef EVEREST_MBED_TLS
     /* Parse contract leaf certificate */
@@ -492,7 +492,7 @@ static bool publish_iso_certificate_installation_exi_req(struct v2g_context* ctx
 #endif // EVEREST_MBED_TLS
 
     certificate_request.iso15118_schema_version = ISO_15118_2013_MSG_DEF;
-    certificate_request.certificate_action = types::iso15118_charger::CertificateActionEnum::Install;
+    certificate_request.certificate_action = types::iso15118::CertificateActionEnum::Install;
     ctx->p_extensions->publish_iso15118_certificate_request(certificate_request);
 
 #ifdef EVEREST_MBED_TLS
@@ -750,7 +750,7 @@ static enum v2g_event handle_iso_payment_service_selection(struct v2g_connection
         if (conn->ctx->evse_v2g_data.payment_option_list[idx] == req->SelectedPaymentOption) {
             list_element_found = true;
             conn->ctx->p_charger->publish_selected_payment_option(
-                static_cast<types::iso15118_charger::PaymentOption>(req->SelectedPaymentOption));
+                static_cast<types::iso15118::PaymentOption>(req->SelectedPaymentOption));
             break;
         }
     }
@@ -931,7 +931,7 @@ static enum v2g_event handle_iso_payment_details(struct v2g_connection* conn) {
         // Save the certificate chain in a variable in PEM format to publish it
         std::string contract_cert_chain_pem = chain_to_pem(contract_crt, &chain);
 
-        std::optional<std::vector<types::iso15118_charger::CertificateHashDataInfo>> iso15118_certificate_hash_data;
+        std::optional<std::vector<types::iso15118::CertificateHashDataInfo>> iso15118_certificate_hash_data;
 
         /* Only if certificate chain verification should be done locally by the EVSE */
         if (conn->ctx->session.verify_contract_cert_chain == true) {

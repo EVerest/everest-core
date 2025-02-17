@@ -8,7 +8,7 @@
 const std::string CERTS_SUB_DIR = "certs"; // relativ path of the certs
 
 using namespace std::chrono_literals;
-using BidiMode = types::iso15118_charger::SaeJ2847BidiMode;
+using BidiMode = types::iso15118::SaeJ2847BidiMode;
 
 namespace module {
 namespace charger {
@@ -460,20 +460,19 @@ void ISO15118_chargerImpl::ready() {
 }
 
 void ISO15118_chargerImpl::handle_setup(
-    types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    types::iso15118::EVSEID& evse_id,
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
     mod->r_iso20->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
     mod->r_iso2->call_setup(evse_id, supported_energy_transfer_modes, sae_j2847_mode, debug_mode);
 }
 
-void ISO15118_chargerImpl::handle_set_charging_parameters(
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     mod->r_iso20->call_set_charging_parameters(physical_values);
     mod->r_iso2->call_set_charging_parameters(physical_values);
 }
 
-void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                                 bool& supported_certificate_service) {
     mod->r_iso20->call_session_setup(payment_options, supported_certificate_service);
     mod->r_iso2->call_session_setup(payment_options, supported_certificate_service);
@@ -531,19 +530,17 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     mod->r_iso2->call_update_ac_max_current(max_current);
 }
 
-void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
-    types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
     mod->r_iso20->call_update_dc_maximum_limits(maximum_limits);
     mod->r_iso2->call_update_dc_maximum_limits(maximum_limits);
 }
 
-void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
-    types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
     mod->r_iso20->call_update_dc_minimum_limits(minimum_limits);
     mod->r_iso2->call_update_dc_minimum_limits(minimum_limits);
 }
 
-void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
+void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) {
     if (mod->selected_iso20()) {
         mod->r_iso20->call_update_isolation_status(isolation_status);
     } else {
@@ -552,7 +549,7 @@ void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charge
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
-    types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
+    types::iso15118::DcEvsePresentVoltageCurrent& present_voltage_current) {
     mod->r_iso20->call_update_dc_present_values(present_voltage_current);
     mod->r_iso2->call_update_dc_present_values(present_voltage_current);
 }
@@ -562,7 +559,7 @@ void ISO15118_chargerImpl::handle_update_meter_info(types::powermeter::Powermete
     mod->r_iso2->call_update_meter_info(powermeter);
 }
 
-void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError& error) {
+void ISO15118_chargerImpl::handle_send_error(types::iso15118::EvseError& error) {
     if (mod->selected_iso20()) {
         mod->r_iso20->call_send_error(error);
     } else {

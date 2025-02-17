@@ -855,13 +855,13 @@ void OCPP201::ready() {
     int32_t extensions_id = 0;
     for (auto& extension : this->r_extensions_15118) {
         extension->subscribe_iso15118_certificate_request(
-            [this, extensions_id](const types::iso15118_charger::RequestExiStreamSchema& certificate_request) {
+            [this, extensions_id](const types::iso15118::RequestExiStreamSchema& certificate_request) {
                 auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
                     conversions::to_ocpp_get_15118_certificate_request(certificate_request));
                 EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
                 // transform response, inject action, send to associated EvseManager
-                types::iso15118_charger::ResponseExiStreamStatus everest_response;
-                everest_response.status = conversions::to_everest_iso15118_charger_status(ocpp_response.status);
+                types::iso15118::ResponseExiStreamStatus everest_response;
+                everest_response.status = conversions::to_everest_iso15118_status(ocpp_response.status);
                 everest_response.certificate_action = certificate_request.certificate_action;
                 if (not ocpp_response.exiResponse.get().empty()) {
                     // since exi_response is an optional in the EVerest type we only set it when not empty

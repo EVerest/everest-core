@@ -186,7 +186,7 @@ void ErrorHandling::raise_inoperative_error(const std::string& caused_by) {
     }
 
     if (r_hlc.size() > 0) {
-        r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+        r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
     }
 
     // raise externally

@@ -9,7 +9,7 @@ cmds:
       certificate_response:
         description: The response raw exi stream and the status from the CSMS system
         type: object
-        $ref: /iso15118_charger#/ResponseExiStreamStatus
+        $ref: /iso15118#/ResponseExiStreamStatus
 vars:
   iso15118_certificate_request:
     description: >-
@@ -17,4 +17,4 @@ vars:
       to the currently valid contract of the vehicle.
       Response will be reported async via set_get_certificate_response
     type: object
-    $ref: /iso15118_charger#/RequestExiStreamSchema
+    $ref: /iso15118#/RequestExiStreamSchema
