@@ -65,7 +65,7 @@ private:
     double settings_connector_import_voltage{0.0};
     double settings_connector_max_export_current{0.0};
     double settings_connector_max_import_current{0.0};
-    types::power_supply_DC::Mode mode;
+    types::power_supply_DC::Mode mode{types::power_supply_DC::Mode::Off};
     double connector_voltage{0.0};
     double connector_current{0.0};
     double energy_import_total{0.0};
