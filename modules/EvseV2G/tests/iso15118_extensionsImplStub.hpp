@@ -20,8 +20,7 @@ public:
     virtual void ready() {
     }
 
-    virtual void
-    handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
+    virtual void handle_set_get_certificate_response(types::iso15118::ResponseExiStreamStatus& certificate_response) {
         std::cout << "iso15118_extensionsImplBase::handle_set_get_certificate_response called" << std::endl;
     }
 };

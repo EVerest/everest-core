@@ -5,7 +5,7 @@
 #define TOOLS_H
 
 #include <generated/types/evse_security.hpp>
-#include <generated/types/iso15118_charger.hpp>
+#include <generated/types/iso15118.hpp>
 #include <netinet/in.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -121,19 +121,18 @@ uint8_t get_dir_numbered_file_names(char file_names[MAX_PKI_CA_LENGTH][MAX_FILE_
 std::string convert_to_hex_str(const uint8_t* data, int len);
 
 /**
- * \brief convert the given \p hash_algorithm to type types::iso15118_charger::HashAlgorithm
+ * \brief convert the given \p hash_algorithm to type types::iso15118::HashAlgorithm
  * \param hash_algorithm
- * \return types::iso15118_charger::HashAlgorithm
+ * \return types::iso15118::HashAlgorithm
  */
-types::iso15118_charger::HashAlgorithm
-convert_to_hash_algorithm(const types::evse_security::HashAlgorithm hash_algorithm);
+types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_security::HashAlgorithm hash_algorithm);
 
 /**
- * \brief convert the given \p ocsp_request_data_list to std::vector<types::iso15118_charger::CertificateHashDataInfo>
+ * \brief convert the given \p ocsp_request_data_list to std::vector<types::iso15118::CertificateHashDataInfo>
  * \param ocsp_request_data_list
- * \return std::vector<types::iso15118_charger::CertificateHashDataInfo>
+ * \return std::vector<types::iso15118::CertificateHashDataInfo>
  */
-std::vector<types::iso15118_charger::CertificateHashDataInfo>
+std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list);
 
 #endif /* TOOLS_H */

@@ -229,13 +229,13 @@ public:
         powersupply_capabilities = caps;
 
         // Inform HLC layer about update of physical values
-        types::iso15118_charger::SetupPhysicalValues setup_physical_values;
+        types::iso15118::SetupPhysicalValues setup_physical_values;
         setup_physical_values.dc_current_regulation_tolerance = powersupply_capabilities.current_regulation_tolerance_A;
         setup_physical_values.dc_peak_current_ripple = powersupply_capabilities.peak_current_ripple_A;
         setup_physical_values.dc_energy_to_be_delivered = 10000;
         r_hlc[0]->call_set_charging_parameters(setup_physical_values);
 
-        types::iso15118_charger::DcEvseMinimumLimits evse_min_limits;
+        types::iso15118::DcEvseMinimumLimits evse_min_limits;
         evse_min_limits.evse_minimum_current_limit = powersupply_capabilities.min_export_current_A;
         evse_min_limits.evse_minimum_voltage_limit = powersupply_capabilities.min_export_voltage_V;
         evse_min_limits.evse_minimum_power_limit =
@@ -249,7 +249,7 @@ public:
         // limits are not yet included in request.
 
         // Inform charger about new max limits
-        types::iso15118_charger::DcEvseMaximumLimits evse_max_limits;
+        types::iso15118::DcEvseMaximumLimits evse_max_limits;
         evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
         evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
         evse_max_limits.evse_maximum_voltage_limit = powersupply_capabilities.max_export_voltage_V;
@@ -303,7 +303,7 @@ private:
 
     types::authorization::ProvidedIdToken autocharge_token;
 
-    void log_v2g_message(types::iso15118_charger::V2gMessages v2g_messages);
+    void log_v2g_message(types::iso15118::V2gMessages v2g_messages);
 
     // Reservations
     bool reserved;

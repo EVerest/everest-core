@@ -2,7 +2,7 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 #pragma once
 
-#include <generated/types/iso15118_charger.hpp>
+#include <generated/types/iso15118.hpp>
 #include <iso15118/message/type.hpp>
 
 static constexpr auto NUMBER_OF_SETUP_STEPS = 4;
@@ -21,10 +21,10 @@ template <typename T> constexpr auto to_underlying_value(T t) {
 static_assert(NUMBER_OF_SETUP_STEPS == to_underlying_value(SetupStep::MIN_LIMITS) + 1,
               "NUMBER_OF_SETUP_STEPS should be in sync with the SetupStep enum definition");
 
-constexpr types::iso15118_charger::V2gMessageId convert_v2g_message_type(iso15118::message_20::Type type) {
+constexpr types::iso15118::V2gMessageId convert_v2g_message_type(iso15118::message_20::Type type) {
 
     using Type = iso15118::message_20::Type;
-    using Id = types::iso15118_charger::V2gMessageId;
+    using Id = types::iso15118::V2gMessageId;
 
     switch (type) {
     case Type::None:
