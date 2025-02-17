@@ -67,6 +67,8 @@ std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
         return "DuplicateProfileValidityPeriod";
     case ProfileValidationResultEnum::RequestStartTransactionNonTxProfile:
         return "RequestStartTransactionNonTxProfile";
+    case ProfileValidationResultEnum::ChargingProfileEmptyChargingSchedules:
+        return "ChargingProfileEmptyChargingSchedules";
     }
 
     throw EnumToStringException{e, "ProfileValidationResultEnum"};
@@ -96,6 +98,7 @@ std::string profile_validation_result_to_reason_code(ProfileValidationResultEnum
     case ProfileValidationResultEnum::ChargingSchedulePeriodUnsupportedNumberPhases:
     case ProfileValidationResultEnum::ChargingSchedulePeriodExtraneousPhaseValues:
     case ProfileValidationResultEnum::ChargingSchedulePeriodPhaseToUseACPhaseSwitchingUnsupported:
+    case ProfileValidationResultEnum::ChargingProfileEmptyChargingSchedules:
         return "InvalidSchedule";
     case ProfileValidationResultEnum::TxProfileMissingTransactionId:
         return "MissingParam";
@@ -516,6 +519,10 @@ ProfileValidationResultEnum SmartCharging::validate_tx_profile(const ChargingPro
 
 ProfileValidationResultEnum SmartCharging::validate_profile_schedules(ChargingProfile& profile,
                                                                       std::optional<EvseInterface*> evse_opt) const {
+    if (profile.chargingSchedule.empty()) {
+        return ProfileValidationResultEnum::ChargingProfileEmptyChargingSchedules;
+    }
+
     auto charging_station_supply_phases =
         this->device_model.get_value<int32_t>(ControllerComponentVariables::ChargingStationSupplyPhases);
 

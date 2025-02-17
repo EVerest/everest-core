@@ -47,7 +47,8 @@ enum class ProfileValidationResultEnum {
     ChargingStationMaxProfileEvseIdGreaterThanZero,
     DuplicateTxDefaultProfileFound,
     DuplicateProfileValidityPeriod,
-    RequestStartTransactionNonTxProfile
+    RequestStartTransactionNonTxProfile,
+    ChargingProfileEmptyChargingSchedules
 };
 
 /// \brief This is used to associate charging profiles with a source.
