@@ -426,7 +426,7 @@ void publish_dc_ev_maximum_limits(struct v2g_context* ctx, const float& v2g_dc_e
                                   const unsigned int& v2g_dc_ev_max_power_limit_is_used,
                                   const float& v2g_dc_ev_max_voltage_limit,
                                   const unsigned int& v2g_dc_ev_max_voltage_limit_is_used) {
-    types::iso15118_charger::DcEvMaximumLimits dc_ev_maximum_limits;
+    types::iso15118::DcEvMaximumLimits dc_ev_maximum_limits;
     bool publish_message = false;
 
     if (v2g_dc_ev_max_current_limit_is_used == (unsigned int)1) {
@@ -460,7 +460,7 @@ void publish_dc_ev_target_voltage_current(struct v2g_context* ctx, const float& 
                                           const float& v2g_dc_ev_target_current) {
     if ((ctx->ev_v2g_data.v2g_target_voltage != v2g_dc_ev_target_voltage) ||
         (ctx->ev_v2g_data.v2g_target_current != v2g_dc_ev_target_current)) {
-        types::iso15118_charger::DcEvTargetValues dc_ev_target_values;
+        types::iso15118::DcEvTargetValues dc_ev_target_values;
         dc_ev_target_values.dc_ev_target_voltage = v2g_dc_ev_target_voltage;
         dc_ev_target_values.dc_ev_target_current = v2g_dc_ev_target_current;
 
@@ -475,7 +475,7 @@ void publish_dc_ev_remaining_time(struct v2g_context* ctx, const float& v2g_dc_e
                                   const unsigned int& v2g_dc_ev_remaining_time_to_full_soc_is_used,
                                   const float& v2g_dc_ev_remaining_time_to_bulk_soc,
                                   const unsigned int& v2g_dc_ev_remaining_time_to_bulk_soc_is_used) {
-    types::iso15118_charger::DcEvRemainingTime dc_ev_remaining_time;
+    types::iso15118::DcEvRemainingTime dc_ev_remaining_time;
     const char* format = "%Y-%m-%dT%H:%M:%SZ";
     char buffer[100];
     std::time_t time_now_in_sec = time(NULL);

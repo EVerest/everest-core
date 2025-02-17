@@ -13,7 +13,7 @@ void iso15118_extensionsImpl::ready() {
 }
 
 void iso15118_extensionsImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
+    types::iso15118::ResponseExiStreamStatus& certificate_response) {
     // your code for cmd set_get_certificate_response goes here
 }
 

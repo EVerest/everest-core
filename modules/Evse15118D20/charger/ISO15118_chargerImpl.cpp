@@ -41,7 +41,7 @@ template <> std::optional<float> convert_from_optional(const std::optional<dt::R
     return (in) ? std::make_optional(dt::from_RationalNumber(*in)) : std::nullopt;
 }
 
-types::iso15118_charger::DisplayParameters convert_display_parameters(const dt::DisplayParameters& in) {
+types::iso15118::DisplayParameters convert_display_parameters(const dt::DisplayParameters& in) {
     return {in.present_soc,
             in.min_soc,
             in.target_soc,
@@ -54,7 +54,7 @@ types::iso15118_charger::DisplayParameters convert_display_parameters(const dt::
             in.inlet_hot};
 }
 
-types::iso15118_charger::DcChargeDynamicModeValues convert_dynamic_values(const dt::Dynamic_DC_CLReqControlMode& in) {
+types::iso15118::DcChargeDynamicModeValues convert_dynamic_values(const dt::Dynamic_DC_CLReqControlMode& in) {
     return {dt::from_RationalNumber(in.target_energy_request),
             dt::from_RationalNumber(in.max_energy_request),
             dt::from_RationalNumber(in.min_energy_request),
@@ -71,7 +71,7 @@ types::iso15118_charger::DcChargeDynamicModeValues convert_dynamic_values(const 
             std::nullopt};
 }
 
-types::iso15118_charger::DcChargeDynamicModeValues
+types::iso15118::DcChargeDynamicModeValues
 convert_dynamic_values(const iso15118::message_20::datatypes::BPT_Dynamic_DC_CLReqControlMode& in) {
     return {dt::from_RationalNumber(in.target_energy_request),
             dt::from_RationalNumber(in.max_energy_request),
@@ -310,9 +310,9 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
 }
 
 void ISO15118_chargerImpl::handle_setup(
-    types::iso15118_charger::EVSEID& evse_id,
-    std::vector<types::iso15118_charger::SupportedEnergyMode>& supported_energy_transfer_modes,
-    types::iso15118_charger::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
+    types::iso15118::EVSEID& evse_id,
+    std::vector<types::iso15118::SupportedEnergyMode>& supported_energy_transfer_modes,
+    types::iso15118::SaeJ2847BidiMode& sae_j2847_mode, bool& debug_mode) {
 
     std::scoped_lock lock(GEL);
     setup_config.evse_id = evse_id.evse_id; // TODO(SL): Check format for d20
@@ -320,17 +320,17 @@ void ISO15118_chargerImpl::handle_setup(
     std::vector<dt::ServiceCategory> services;
 
     for (const auto& mode : supported_energy_transfer_modes) {
-        if (mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::AC_single_phase_core ||
-            mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::AC_three_phase_core) {
+        if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_single_phase_core ||
+            mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::AC_three_phase_core) {
             if (mode.bidirectional) {
                 services.push_back(dt::ServiceCategory::AC_BPT);
             } else {
                 services.push_back(dt::ServiceCategory::AC);
             }
-        } else if (mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::DC_core ||
-                   mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::DC_extended ||
-                   mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::DC_combo_core ||
-                   mode.energy_transfer_mode == types::iso15118_charger::EnergyTransferMode::DC_unique) {
+        } else if (mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_core ||
+                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_extended ||
+                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_combo_core ||
+                   mode.energy_transfer_mode == types::iso15118::EnergyTransferMode::DC_unique) {
             if (mode.bidirectional) {
                 services.push_back(dt::ServiceCategory::DC_BPT);
             } else {
@@ -344,21 +344,20 @@ void ISO15118_chargerImpl::handle_setup(
     setup_steps_done.set(to_underlying_value(SetupStep::ENERGY_SERVICE));
 }
 
-void ISO15118_chargerImpl::handle_set_charging_parameters(
-    types::iso15118_charger::SetupPhysicalValues& physical_values) {
+void ISO15118_chargerImpl::handle_set_charging_parameters(types::iso15118::SetupPhysicalValues& physical_values) {
     // your code for cmd set_charging_parameters goes here
 }
 
-void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118_charger::PaymentOption>& payment_options,
+void ISO15118_chargerImpl::handle_session_setup(std::vector<types::iso15118::PaymentOption>& payment_options,
                                                 bool& supported_certificate_service) {
     std::scoped_lock lock(GEL);
 
     std::vector<dt::Authorization> auth_services;
 
     for (auto& option : payment_options) {
-        if (option == types::iso15118_charger::PaymentOption::ExternalPayment) {
+        if (option == types::iso15118::PaymentOption::ExternalPayment) {
             auth_services.push_back(dt::Authorization::EIM);
-        } else if (option == types::iso15118_charger::PaymentOption::Contract) {
+        } else if (option == types::iso15118::PaymentOption::Contract) {
             // auth_services.push_back(iso15118::message_20::Authorization::PnC);
             EVLOG_warning << "Currently Plug&Charge is not supported and ignored";
         }
@@ -419,8 +418,7 @@ void ISO15118_chargerImpl::handle_update_ac_max_current(double& max_current) {
     // your code for cmd update_ac_max_current goes here
 }
 
-void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
-    types::iso15118_charger::DcEvseMaximumLimits& maximum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_maximum_limits(types::iso15118::DcEvseMaximumLimits& maximum_limits) {
 
     std::scoped_lock lock(GEL);
     setup_config.dc_limits.charge_limits.current.max = dt::from_float(maximum_limits.evse_maximum_current_limit);
@@ -447,8 +445,7 @@ void ISO15118_chargerImpl::handle_update_dc_maximum_limits(
     setup_steps_done.set(to_underlying_value(SetupStep::MAX_LIMITS));
 }
 
-void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
-    types::iso15118_charger::DcEvseMinimumLimits& minimum_limits) {
+void ISO15118_chargerImpl::handle_update_dc_minimum_limits(types::iso15118::DcEvseMinimumLimits& minimum_limits) {
 
     std::scoped_lock lock(GEL);
     setup_config.dc_limits.charge_limits.current.min = dt::from_float(minimum_limits.evse_minimum_current_limit);
@@ -476,12 +473,12 @@ void ISO15118_chargerImpl::handle_update_dc_minimum_limits(
     setup_steps_done.set(to_underlying_value(SetupStep::MIN_LIMITS));
 }
 
-void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118_charger::IsolationStatus& isolation_status) {
+void ISO15118_chargerImpl::handle_update_isolation_status(types::iso15118::IsolationStatus& isolation_status) {
     // your code for cmd update_isolation_status goes here
 }
 
 void ISO15118_chargerImpl::handle_update_dc_present_values(
-    types::iso15118_charger::DcEvsePresentVoltageCurrent& present_voltage_current) {
+    types::iso15118::DcEvsePresentVoltageCurrent& present_voltage_current) {
 
     float voltage = present_voltage_current.evse_present_voltage;
     float current = present_voltage_current.evse_present_current.value_or(0);
@@ -496,7 +493,7 @@ void ISO15118_chargerImpl::handle_update_meter_info(types::powermeter::Powermete
     // your code for cmd update_meter_info goes here
 }
 
-void ISO15118_chargerImpl::handle_send_error(types::iso15118_charger::EvseError& error) {
+void ISO15118_chargerImpl::handle_send_error(types::iso15118::EvseError& error) {
     // your code for cmd send_error goes here
 }
 
