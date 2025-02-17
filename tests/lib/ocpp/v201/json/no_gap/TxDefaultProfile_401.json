@@ -1,5 +1,5 @@
 {
-    "id": 301,
+    "id": 401,
     "chargingProfileKind": "Recurring",
     "chargingProfilePurpose": "TxDefaultProfile",
     "chargingSchedule": [
@@ -10,22 +10,12 @@
                 {
                     "limit": 16.0,
                     "startPeriod": 0
-                },
-                {
-                    "limit": 15.0,
-                    "startPeriod": 1800
-                },
-                {
-                    "limit": 14.0,
-                    "startPeriod": 2700
                 }
             ],
-            "duration": 3600,
+            "duration": 300,
             "startSchedule": "2024-01-01T08:00:00Z"
         }
     ],
     "recurrencyKind": "Daily",
-    "stackLevel": 5,
-    "validFrom": "2024-01-01T12:00:00Z",
-    "validTo": "2024-02-01T12:00:00Z"
+    "stackLevel": 5
 }

@@ -1,5 +1,5 @@
 {
-    "id": 301,
+    "id": 302,
     "chargingProfileKind": "Recurring",
     "chargingProfilePurpose": "TxDefaultProfile",
     "chargingSchedule": [
@@ -9,14 +9,17 @@
             "chargingSchedulePeriod": [
                 {
                     "limit": 16.0,
+                    "numberPhases": 1,
                     "startPeriod": 0
                 },
                 {
                     "limit": 15.0,
+                    "numberPhases": 1,
                     "startPeriod": 1800
                 },
                 {
                     "limit": 14.0,
+                    "numberPhases": 3,
                     "startPeriod": 2700
                 }
             ],
