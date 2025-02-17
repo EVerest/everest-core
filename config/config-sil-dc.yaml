@@ -44,6 +44,9 @@ active_modules:
       imd:
         - module_id: imd
           implementation_id: main
+      over_voltage_monitor:
+        - module_id: ovm
+          implementation_id: main
   powersupply_dc:
     module: DCSupplySimulator
   yeti_driver:
@@ -57,6 +60,12 @@ active_modules:
       main:
         selftest_success: true
     module: IMDSimulator
+  ovm:
+    config_implementation:
+      main:
+        simulate_error: false
+        simulate_error_delay: 5
+    module: OVMSimulator
   ev_manager:
     module: EvManager
     config_module:

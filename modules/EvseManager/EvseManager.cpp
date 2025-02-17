@@ -166,7 +166,7 @@ void EvseManager::ready() {
     const std::vector<std::unique_ptr<powermeterIntf>> empty;
     error_handling = std::unique_ptr<ErrorHandling>(
         new ErrorHandling(r_bsp, r_hlc, r_connector_lock, r_ac_rcd, p_evse, r_imd, r_powersupply_DC,
-                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty));
+                          config.fail_on_powermeter_errors ? r_powermeter_billing() : empty, r_over_voltage_monitor));
 
     if (not config.lock_connector_in_state_b) {
         EVLOG_warning << "Unlock connector in CP state B. This violates IEC61851-1:2019 D.6.5 Table D.9 line 4 and "
@@ -293,11 +293,17 @@ void EvseManager::ready() {
                 current_demand_active = true;
                 apply_new_target_voltage_current();
                 charger->notify_currentdemand_started();
+                if (not r_over_voltage_monitor.empty()) {
+                    r_over_voltage_monitor[0]->call_start(get_over_voltage_threshold());
+                }
             });
 
             r_hlc[0]->subscribe_current_demand_finished([this] {
                 current_demand_active = false;
                 sae_bidi_active = false;
+                if (not r_over_voltage_monitor.empty()) {
+                    r_over_voltage_monitor[0]->call_stop();
+                }
             });
 
             // Isolation monitoring for DC charging handler
@@ -710,6 +716,10 @@ void EvseManager::ready() {
                     r_slac[0]->call_reset(false);
                 }
             }
+        }
+
+        if (not r_over_voltage_monitor.empty() and event == CPEvent::CarUnplugged) {
+            r_over_voltage_monitor[0]->call_reset_over_voltage_error();
         }
 
         charger->process_event(event);
@@ -1384,6 +1394,38 @@ static double get_cable_check_voltage(double ev_max_cpd, double evse_max_cpd) {
     }
 
     return cable_check_voltage;
+}
+
+double EvseManager::get_over_voltage_threshold() {
+
+    float ev_max_voltage = 500.;
+
+    if (ev_info.maximum_voltage_limit.has_value()) {
+        ev_max_voltage = ev_info.maximum_voltage_limit.value();
+    } else {
+        EVLOG_error << "OverVoltageThreshold: Did not receive EV maximum voltage, falling back to 500V";
+    }
+
+    auto evse_caps = get_powersupply_capabilities();
+
+    double negotiated_max_voltage = std::min(ev_max_voltage, evse_caps.max_export_voltage_V);
+
+    double ovp = 550.;
+
+    // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
+    if (negotiated_max_voltage > 500) {
+        ovp = 825.;
+    }
+
+    if (negotiated_max_voltage > 750) {
+        ovp = 935.;
+    }
+
+    if (negotiated_max_voltage > 850) {
+        ovp = 1100.;
+    }
+
+    return ovp;
 }
 
 bool EvseManager::cable_check_should_exit() {
