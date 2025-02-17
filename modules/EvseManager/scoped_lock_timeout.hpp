@@ -58,6 +58,8 @@ enum class MutexDescription {
     IEC_set_pwm,
     IEC_set_pwm_off,
     IEC_set_pwm_F,
+    ISO_set_ce,
+    ISO_set_ce_off,
     IEC_allow_power_on,
     IEC_force_unlock,
     EVSE_set_ev_info,

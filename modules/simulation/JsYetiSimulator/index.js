@@ -128,6 +128,8 @@ function event_to_enum(event) {
 
 function publish_event(mod, event) {
   mod.provides.board_support.publish.event({ event: event_to_enum(event) });
+  if (event == STATE_B)
+    mod.provides.board_support.publish.id_on_event(true);
 }
 
 function check_error_rcd(mod) {

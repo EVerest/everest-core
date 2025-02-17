@@ -66,6 +66,7 @@ struct Conf {
     double max_current_import_A;
     double max_current_export_A;
     std::string charge_mode;
+    bool mcs_enable;
     bool ac_hlc_enabled;
     bool ac_hlc_use_5percent;
     bool ac_enforce_hlc;

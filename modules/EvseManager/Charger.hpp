@@ -106,7 +106,7 @@ public:
                bool ac_enforce_hlc, bool ac_with_soc_timeout, float soft_over_current_tolerance_percent,
                float soft_over_current_measurement_noise_A, const int switch_3ph1ph_delay_s,
                const std::string switch_3ph1ph_cp_state, const int soft_over_current_timeout_ms,
-               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors);
+               const int _state_F_after_fault_ms, const bool fail_on_powermeter_errors, bool mcs_enable);
 
     bool enable_disable(int connector_id, const types::evse_manager::EnableDisableSource& source);
 
@@ -269,6 +269,9 @@ private:
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;
 
+    // Signals insertion detected
+    std::atomic_bool mcs_insertion_detection;
+
     // used by different threads, complete main loop must be locked for write access
     struct SharedContext {
         // As per IEC61851-1 A.5.3
@@ -329,6 +332,8 @@ private:
         int state_F_after_fault_ms{300};
         // Fail on powermeter errors
         bool fail_on_powermeter_errors;
+        // MCS mode enabled
+        bool mcs_enabled;
     } config_context;
 
     // Used by different threads, but requires no complete state machine locking

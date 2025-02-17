@@ -1326,7 +1326,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
-                    const bool fail_on_powermeter_errors) {
+                    const bool fail_on_powermeter_errors, bool mcs_enable) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1350,6 +1350,10 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
+
+    config_context.mcs_enabled = mcs_enable;
+    if (config_context.mcs_enabled)
+        EVLOG_info << "MCS mode enabled.";
 }
 
 Charger::EvseState Charger::get_current_state() {
