@@ -263,7 +263,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | B01.FR.10 | ❎     |        |
 | B01.FR.11 | ❎     |        |
 | B01.FR.12 | ❎     |        |
-| B01.FR.13 |        |        |
+| B01.FR.13 | ✅     |        |
 
 ## Provisioning - Cold Boot Charging Station – Pending
 
@@ -412,7 +412,7 @@ This document contains the status of which OCPP 2.0.1 numbered functional requir
 | B11.FR.02 | ✅     |                                               |
 | B11.FR.03 | ✅     |                                               |
 | B11.FR.04 | ✅     |                                               |
-| B11.FR.05 |        |                                               |
+| B11.FR.05 | ✅     |                                               |
 | B11.FR.06 | ⛽️     | In EVerest, the System module is responsible. |
 | B11.FR.07 | ⛽️     | In EVerest, the System module is responsible. |
 | B11.FR.08 | ✅     |                                               |

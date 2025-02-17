@@ -15,6 +15,7 @@
 #include <ocpp/v201/functional_blocks/display_message.hpp>
 #include <ocpp/v201/functional_blocks/firmware_update.hpp>
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
+#include <ocpp/v201/functional_blocks/provisioning.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
 #include <ocpp/v201/functional_blocks/smart_charging.hpp>
@@ -363,13 +364,11 @@ private:
     std::unique_ptr<SmartCharging> smart_charging;
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
     std::unique_ptr<TransactionInterface> transaction;
+    std::unique_ptr<ProvisioningInterface> provisioning;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::shared_ptr<DatabaseHandler> database_handler;
-
-    // timers
-    Everest::SteadyTimer boot_notification_timer;
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
@@ -419,22 +418,6 @@ private:
 
     void message_callback(const std::string& message);
 
-    /// \brief Helper function to determine if the requested change results in a state that the Connector(s) is/are
-    /// already in \param request \return
-    void handle_variable_changed(const SetVariableData& set_variable_data);
-    void handle_variables_changed(const std::map<SetVariableData, SetVariableResult>& set_variable_results);
-    bool validate_set_variable(const SetVariableData& set_variable_data);
-
-    /// \brief Sets variables specified within \p set_variable_data_vector in the device model and returns the result.
-    /// \param set_variable_data_vector contains data of the variables to set
-    /// \param source   value source (who sets the value, for example 'csms' or 'libocpp')
-    /// \param allow_read_only if true, setting VariableAttribute values with mutability ReadOnly is allowed
-    /// \return Map containing the SetVariableData as a key and the  SetVariableResult as a value for each requested
-    /// change
-    std::map<SetVariableData, SetVariableResult>
-    set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
-                           const bool allow_read_only);
-
     ///
     /// \brief Check if EVSE connector is reserved for another than the given id token and / or group id token.
     /// \param evse             The evse id that must be checked. Reservation will be checked for all connectors.
@@ -471,20 +454,7 @@ private:
 
     /* OCPP message requests */
 
-    // Functional Block B: Provisioning
-    void boot_notification_req(const BootReasonEnum& reason, const bool initiated_by_trigger_message = false);
-    void notify_report_req(const int request_id, const std::vector<ReportData>& report_data);
-
     /* OCPP message handlers */
-
-    // Functional Block B: Provisioning
-    void handle_boot_notification_response(CallResult<BootNotificationResponse> call_result);
-    void handle_set_variables_req(Call<SetVariablesRequest> call);
-    void handle_get_variables_req(const EnhancedMessage<v201::MessageType>& message);
-    void handle_get_base_report_req(Call<GetBaseReportRequest> call);
-    void handle_get_report_req(const EnhancedMessage<v201::MessageType>& message);
-    void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);
-    void handle_reset_req(Call<ResetRequest> call);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
