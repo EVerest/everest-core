@@ -95,6 +95,11 @@ void EvseManager::init() {
         EVLOG_warning << "DC mode without isolation monitoring configured, please check your national regulations.";
     }
 
+    if (config.charge_mode == "AC" and config.mcs_enable) {
+        EVLOG_error << "MCS mode requires DC charge_mode";
+        exit(255);
+    }
+
     reserved = false;
     reservation_id = -1;
 
@@ -155,7 +160,7 @@ void EvseManager::init() {
 }
 
 void EvseManager::ready() {
-    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b));
+    bsp = std::unique_ptr<IECStateMachine>(new IECStateMachine(r_bsp, config.lock_connector_in_state_b, config.mcs_enable));
 
     if (config.hack_simplified_mode_limit_10A) {
         bsp->set_ev_simplified_mode_evse_limit(true);
@@ -898,7 +903,7 @@ void EvseManager::ready() {
                        config.ac_hlc_use_5percent, config.ac_enforce_hlc, false,
                        config.soft_over_current_tolerance_percent, config.soft_over_current_measurement_noise_A,
                        config.switch_3ph1ph_delay_s, config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms,
-                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.raise_mrec9);
+                       config.state_F_after_fault_ms, config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
     }
 
     telemetryThreadHandle = std::thread([this]() {
@@ -1079,7 +1084,7 @@ void EvseManager::setup_fake_DC_mode() {
                    config.ac_enforce_hlc, false, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 
@@ -1119,7 +1124,7 @@ void EvseManager::setup_AC_mode() {
                    config.ac_enforce_hlc, true, config.soft_over_current_tolerance_percent,
                    config.soft_over_current_measurement_noise_A, config.switch_3ph1ph_delay_s,
                    config.switch_3ph1ph_cp_state, config.soft_over_current_timeout_ms, config.state_F_after_fault_ms,
-                   config.fail_on_powermeter_errors, config.raise_mrec9);
+                   config.fail_on_powermeter_errors, config.mcs_enable, config.raise_mrec9);
 
     types::iso15118::EVSEID evseid = {config.evse_id, config.evse_id_din};
 

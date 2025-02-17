@@ -68,7 +68,7 @@ enum class RawCPState {
 class IECStateMachine {
 public:
     // We need the r_bsp reference to be able to talk to the bsp driver module
-    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_);
+    IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_, bool lock_connector_in_state_b_, bool mcs_enable);
     // Call when new events from BSP requirement come in. Will signal internal events
     void process_bsp_event(const types::board_support_common::BspEvent bsp_event);
     // Allow power on from Charger state machine
@@ -84,6 +84,8 @@ public:
     void set_pwm(double value);
     void set_pwm_off();
     void set_pwm_F();
+    void set_ce_off();
+    void set_ce_on();
 
     void set_three_phases(bool t) {
         three_phases = t;
@@ -111,6 +113,8 @@ private:
 
     bool pwm_running{false};
     bool last_pwm_running{false};
+    bool ce_is_set{false};
+    bool id_is_set{false};
 
     static constexpr float ev_simplified_mode_evse_limit_pwm{10 / 0.6 / 100.}; // Fixed 10A limit
     // If set to true, EVSE will limit to 10A in case of simplified charging

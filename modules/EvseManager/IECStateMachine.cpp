@@ -80,11 +80,20 @@ const std::string cpevent_to_string(CPEvent e) {
 }
 
 IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& r_bsp_,
-                                 bool lock_connector_in_state_b_) :
+                                 bool lock_connector_in_state_b_, bool mcs_enable) :
     r_bsp(r_bsp_), lock_connector_in_state_b(lock_connector_in_state_b_) {
     // feed the state machine whenever the timer expires
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
     timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
+
+    if (mcs_enable) {
+        r_bsp->subscribe_id_on_event([this](bool value) {
+            if (value) {
+                types::board_support_common::BspEvent bsp_event{.event = types::board_support_common::Event::B};
+                process_bsp_event(bsp_event);
+            }
+        });
+    }
 
     // Subscribe to bsp driver to receive BspEvents from the hardware
     r_bsp->subscribe_event([this](const types::board_support_common::BspEvent event) {
@@ -391,6 +400,26 @@ void IECStateMachine::set_pwm_off() {
         pwm_running = false;
     }
     r_bsp->call_pwm_off();
+    // Don't run the state machine in the callers context
+    feed_state_machine();
+}
+
+void IECStateMachine::set_ce_off() {
+    {
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::ISO_set_ce_off);
+        ce_is_set = false;
+    }
+    r_bsp->call_ce_off();
+    // Don't run the state machine in the callers context
+    feed_state_machine();
+}
+
+void IECStateMachine::set_ce_on() {
+    {
+        Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::ISO_set_ce);
+        ce_is_set = true;
+    }
+    r_bsp->call_ce_on();
     // Don't run the state machine in the callers context
     feed_state_machine();
 }
