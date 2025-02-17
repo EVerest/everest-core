@@ -16,6 +16,7 @@ enum class Event {
 
     // internal events
     FAILED,
+    SUCCESS,
 };
 
 using FSMReturnType = int;
