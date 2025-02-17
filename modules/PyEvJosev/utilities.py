@@ -54,6 +54,7 @@ def choose_first_ipv6_local() -> str:
 
 
 def determine_network_interface(preferred_interface: str) -> str:
+    preferred_interface = preferred_interface.__getitem__('value')
     if preferred_interface == "auto":
         return choose_first_ipv6_local()
     elif preferred_interface not in netifaces.interfaces():
