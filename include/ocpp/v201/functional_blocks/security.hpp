@@ -52,6 +52,14 @@ public:
     Get15118EVCertificateResponse
     on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) override;
 
+    /* OCPP message requests */
+    virtual void security_event_notification_req(const CiString<50>& event_type,
+                                                 const std::optional<CiString<255>>& tech_info,
+                                                 const bool triggered_internally, const bool critical,
+                                                 const std::optional<DateTime>& timestamp = std::nullopt) override;
+    virtual void sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
+                                      const bool initiated_by_trigger_message = false) override;
+
 private: // Members
     MessageDispatcherInterface<MessageType>& message_dispatcher;
     DeviceModel& device_model;
@@ -69,14 +77,6 @@ private: // Members
     Everest::SteadyTimer v2g_certificate_expiration_check_timer;
 
 private: // Functions
-    /* OCPP message requests */
-    virtual void security_event_notification_req(const CiString<50>& event_type,
-                                                 const std::optional<CiString<255>>& tech_info,
-                                                 const bool triggered_internally, const bool critical,
-                                                 const std::optional<DateTime>& timestamp = std::nullopt) override;
-    virtual void sign_certificate_req(const ocpp::CertificateSigningUseEnum& certificate_signing_use,
-                                      const bool initiated_by_trigger_message = false) override;
-
     /* OCPP message handlers */
 
     // Functional Block A: Security

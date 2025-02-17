@@ -7,7 +7,6 @@
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 #include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
 #include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/notify_report_requests_splitter.hpp>
 
@@ -39,7 +38,6 @@ ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_struct
     skip_invalid_csms_certificate_notifications(false),
     reset_scheduled(false),
     reset_scheduled_evseids{},
-    firmware_status(FirmwareStatusEnum::Idle),
     upload_log_status(UploadLogStatusEnum::Idle),
     bootreason(BootReasonEnum::PowerUp),
     ocsp_updater(this->evse_security, this->send_callback<GetCertificateStatusRequest, GetCertificateStatusResponse>(
@@ -151,65 +149,14 @@ void ChargePoint::on_network_disconnected(OCPPInterfaceEnum ocpp_interface) {
     this->connectivity_manager->on_network_disconnected(ocpp_interface);
 }
 
+void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
+                                                         const FirmwareStatusEnum& firmware_update_status) {
+    this->firmware_update->on_firmware_update_status_notification(request_id, firmware_update_status);
+}
+
 void ChargePoint::connect_websocket(std::optional<int32_t> network_profile_slot) {
     this->connectivity_manager->connect(network_profile_slot);
 }
-
-void ChargePoint::on_firmware_update_status_notification(int32_t request_id,
-                                                         const FirmwareStatusEnum& firmware_update_status) {
-    if (this->firmware_status == firmware_update_status) {
-        if (request_id == -1 or
-            this->firmware_status_id.has_value() and this->firmware_status_id.value() == request_id) {
-            // already sent, do not send again
-            return;
-        }
-    }
-    FirmwareStatusNotificationRequest req;
-    req.status = firmware_update_status;
-    // Firmware status and id are stored for future trigger message request.
-    this->firmware_status = req.status;
-
-    if (request_id != -1) {
-        req.requestId = request_id; // L01.FR.20
-        this->firmware_status_id = request_id;
-    }
-
-    ocpp::Call<FirmwareStatusNotificationRequest> call(req);
-    this->message_dispatcher->dispatch_call_async(call);
-
-    if (req.status == FirmwareStatusEnum::Installed) {
-        std::string firmwareVersionMessage = "New firmware succesfully installed! Version: ";
-        firmwareVersionMessage.append(
-            this->device_model->get_value<std::string>(ControllerComponentVariables::FirmwareVersion));
-        this->security->security_event_notification_req(CiString<50>(ocpp::security_events::FIRMWARE_UPDATED),
-                                                        std::optional<CiString<255>>(firmwareVersionMessage), true,
-                                                        true); // L01.FR.31
-    } else if (req.status == FirmwareStatusEnum::InvalidSignature) {
-        this->security->security_event_notification_req(
-            CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNATURE),
-            std::optional<CiString<255>>("Signature of the provided firmware is not valid!"), true,
-            true); // L01.FR.03 - critical because TC_L_06_CS requires this message to be sent
-    } else if (req.status == FirmwareStatusEnum::InstallVerificationFailed or
-               req.status == FirmwareStatusEnum::InstallationFailed) {
-        this->restore_all_connector_states();
-    }
-
-    if (this->firmware_status_before_installing == req.status) {
-        // FIXME(Kai): This is a temporary workaround, because the EVerest System module does not keep track of
-        // transactions and can't inquire about their status from the OCPP modules. If the firmware status is expected
-        // to become "Installing", but we still have a transaction running, the update will wait for the transaction to
-        // finish, and so we send an "InstallScheduled" status. This is necessary for OCTT TC_L_15_CS to pass.
-        const auto transaction_active = this->evse_manager->any_transaction_active(std::nullopt);
-        if (transaction_active) {
-            this->firmware_status = FirmwareStatusEnum::InstallScheduled;
-            req.status = firmware_status;
-            ocpp::Call<FirmwareStatusNotificationRequest> call(req);
-            this->message_dispatcher->dispatch_call_async(call);
-        }
-        this->change_all_connectors_to_unavailable_for_firmware_update();
-    }
-}
-
 void ChargePoint::on_session_started(const int32_t evse_id, const int32_t connector_id) {
     this->evse_manager->get_evse(evse_id).submit_event(connector_id, ConnectorEvent::PlugIn);
 }
@@ -704,6 +651,11 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
         *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->meter_values,
         this->callbacks.set_display_message_callback, this->callbacks.set_running_cost_callback, this->io_service);
 
+    this->firmware_update = std::make_unique<FirmwareUpdate>(
+        *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->evse_security, *this->availability,
+        *this->security, this->callbacks.update_firmware_request_callback,
+        this->callbacks.all_connectors_unavailable_callback);
+
     Component ocpp_comm_ctrlr = {"OCPPCommCtrlr"};
     Variable field_length = {"FieldLength"};
     field_length.instance = "Get15118EVCertificateResponse.exiResponse";
@@ -768,7 +720,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
             this->authorization->handle_message(message);
             break;
         case MessageType::UpdateFirmware:
-            this->handle_firmware_update_req(json_message);
+            this->firmware_update->handle_message(message);
             break;
         case MessageType::UnlockConnector:
             this->handle_unlock_connector(json_message);
@@ -945,52 +897,6 @@ void ChargePoint::message_callback(const std::string& message) {
         if (json_message.is_array() and json_message.size() > MESSAGE_ID) {
             auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
             this->message_dispatcher->dispatch_call_error(call_error);
-        }
-    }
-}
-
-void ChargePoint::change_all_connectors_to_unavailable_for_firmware_update() {
-    ChangeAvailabilityResponse response;
-    response.status = ChangeAvailabilityStatusEnum::Scheduled;
-
-    ChangeAvailabilityRequest msg;
-    msg.operationalStatus = OperationalStatusEnum::Inoperative;
-
-    const auto transaction_active = this->evse_manager->any_transaction_active(std::nullopt);
-
-    if (!transaction_active) {
-        // execute change availability if possible
-        for (auto& evse : *this->evse_manager) {
-            if (!evse.has_active_transaction()) {
-                set_evse_connectors_unavailable(evse, false);
-            }
-        }
-        // Check succeeded, trigger the callback if needed
-        if (this->callbacks.all_connectors_unavailable_callback.has_value() and
-            this->evse_manager->are_all_connectors_effectively_inoperative()) {
-            this->callbacks.all_connectors_unavailable_callback.value()();
-        }
-    } else if (response.status == ChangeAvailabilityStatusEnum::Scheduled) {
-        // put all EVSEs to unavailable that do not have active transaction
-        for (auto& evse : *this->evse_manager) {
-            if (!evse.has_active_transaction()) {
-                set_evse_connectors_unavailable(evse, false);
-            } else {
-                EVSE e;
-                e.id = evse.get_id();
-                msg.evse = e;
-                this->availability->set_scheduled_change_availability_requests(evse.get_id(), {msg, false});
-            }
-        }
-    }
-}
-
-void ChargePoint::restore_all_connector_states() {
-    for (auto& evse : *this->evse_manager) {
-        uint32_t number_of_connectors = evse.get_number_of_connectors();
-
-        for (uint32_t i = 1; i <= number_of_connectors; ++i) {
-            evse.restore_connector_operative_status(static_cast<int32_t>(i));
         }
     }
 }
@@ -1976,22 +1882,7 @@ void ChargePoint::handle_trigger_message(Call<TriggerMessageRequest> call) {
     } break;
 
     case MessageTriggerEnum::FirmwareStatusNotification: {
-        FirmwareStatusNotificationRequest request;
-        switch (this->firmware_status) {
-        case FirmwareStatusEnum::Idle:
-        case FirmwareStatusEnum::Installed: // L01.FR.25
-            request.status = FirmwareStatusEnum::Idle;
-            // do not set requestId when idle: L01.FR.20
-            break;
-
-        default: // So not Idle or Installed                   // L01.FR.26
-            request.status = this->firmware_status;
-            request.requestId = this->firmware_status_id;
-            break;
-        }
-
-        ocpp::Call<FirmwareStatusNotificationRequest> call(request);
-        this->message_dispatcher->dispatch_call(call, true);
+        this->firmware_update->on_firmware_status_notification_request();
     } break;
 
     case MessageTriggerEnum::SignChargingStationCertificate: {
@@ -2110,45 +2001,6 @@ void ChargePoint::handle_remote_stop_transaction_request(Call<RequestStopTransac
 
     const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, call.uniqueId);
     this->message_dispatcher->dispatch_call_result(call_result);
-}
-
-void ChargePoint::handle_firmware_update_req(Call<UpdateFirmwareRequest> call) {
-    EVLOG_debug << "Received UpdateFirmwareRequest: " << call.msg << "\nwith messageId: " << call.uniqueId;
-    if (call.msg.firmware.signingCertificate.has_value() or call.msg.firmware.signature.has_value()) {
-        this->firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
-    } else {
-        this->firmware_status_before_installing = FirmwareStatusEnum::Downloaded;
-    }
-
-    UpdateFirmwareResponse response;
-    const auto msg = call.msg;
-    bool cert_valid_or_not_set = true;
-
-    // L01.FR.22 check if certificate is valid
-    if (msg.firmware.signingCertificate.has_value() and
-        this->evse_security->verify_certificate(msg.firmware.signingCertificate.value().get(),
-                                                ocpp::LeafCertificateType::MF) !=
-            ocpp::CertificateValidationResult::Valid) {
-        response.status = UpdateFirmwareStatusEnum::InvalidCertificate;
-        cert_valid_or_not_set = false;
-    }
-
-    if (cert_valid_or_not_set) {
-        // execute firwmare update callback
-        response = callbacks.update_firmware_request_callback(msg);
-    }
-
-    ocpp::CallResult<UpdateFirmwareResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher->dispatch_call_result(call_result);
-
-    if ((response.status == UpdateFirmwareStatusEnum::InvalidCertificate) or
-        (response.status == UpdateFirmwareStatusEnum::RevokedCertificate)) {
-        // L01.FR.02
-        this->security->security_event_notification_req(
-            CiString<50>(ocpp::security_events::INVALIDFIRMWARESIGNINGCERTIFICATE),
-            std::optional<CiString<255>>("Provided signing certificate is not valid!"), true,
-            true); // critical because TC_L_05_CS requires this message to be sent
-    }
 }
 
 std::optional<DataTransferResponse> ChargePoint::data_transfer_req(const CiString<255>& vendorId,

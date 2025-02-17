@@ -13,6 +13,7 @@
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
 #include <ocpp/v201/functional_blocks/diagnostics.hpp>
 #include <ocpp/v201/functional_blocks/display_message.hpp>
+#include <ocpp/v201/functional_blocks/firmware_update.hpp>
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
@@ -62,7 +63,6 @@
 #include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
 #include <ocpp/v201/messages/UnlockConnector.hpp>
-#include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 #include "component_state_manager.hpp"
 
@@ -364,6 +364,7 @@ private:
     std::unique_ptr<DiagnosticsInterface> diagnostics;
     std::unique_ptr<SecurityInterface> security;
     std::unique_ptr<DisplayMessageInterface> display_message;
+    std::unique_ptr<FirmwareUpdateInterface> firmware_update;
     std::unique_ptr<MeterValuesInterface> meter_values;
     std::unique_ptr<SmartCharging> smart_charging;
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
@@ -379,11 +380,6 @@ private:
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
-    FirmwareStatusEnum firmware_status;
-    // The request ID in the last firmware update status received
-    std::optional<int32_t> firmware_status_id;
-    // The last firmware status which will be posted before the firmware is installed.
-    FirmwareStatusEnum firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
     UploadLogStatusEnum upload_log_status;
     int32_t upload_log_status_id;
     BootReasonEnum bootreason;
@@ -450,15 +446,6 @@ private:
     std::map<SetVariableData, SetVariableResult>
     set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
                            const bool allow_read_only);
-
-    /// \brief Changes all unoccupied connectors to unavailable. If a transaction is running schedule an availabilty
-    /// change
-    /// If all connectors are unavailable signal to the firmware updater that installation of the firmware update can
-    /// proceed
-    void change_all_connectors_to_unavailable_for_firmware_update();
-
-    /// \brief Restores all connectors to their persisted state
-    void restore_all_connector_states();
 
     ///
     /// \brief Check if EVSE connector is reserved for another than the given id token and / or group id token.
@@ -532,9 +519,6 @@ private:
     void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
     void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
     void handle_trigger_message(Call<TriggerMessageRequest> call);
-
-    // Functional Block L: Firmware management
-    void handle_firmware_update_req(Call<UpdateFirmwareRequest> call);
 
     // Generates async sending callbacks
     template <class RequestType, class ResponseType>
