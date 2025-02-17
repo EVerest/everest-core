@@ -324,6 +324,10 @@ requires:
     interface: isolation_monitor
     min_connections: 0
     max_connections: 1
+  over_voltage_monitor:
+    interface: over_voltage_monitor
+    min_connections: 0
+    max_connections: 1
   powersupply_DC:
     interface: power_supply_DC
     min_connections: 0
@@ -335,7 +339,7 @@ requires:
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
-  license: https://spdx.org/licenses/Apache-2.0.html
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Cornelius Claussen
     - Anton Woellert
