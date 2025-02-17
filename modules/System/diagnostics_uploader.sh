@@ -4,7 +4,7 @@
 
 echo "$UPLOADING"
 sleep 2
-curl --progress-bar --connect-timeout "$CONNECTION_TIMEOUT" -T "${4}" "${2}"
+curl --progress-bar --ssl --connect-timeout "$CONNECTION_TIMEOUT" -T "${4}" "${2}"
 curl_exit_code=$?
 if [[ $curl_exit_code -eq 0 ]]; then
     echo "$UPLOADED"
