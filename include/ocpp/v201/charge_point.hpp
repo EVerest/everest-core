@@ -16,6 +16,7 @@
 #include <ocpp/v201/functional_blocks/firmware_update.hpp>
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 #include <ocpp/v201/functional_blocks/provisioning.hpp>
+#include <ocpp/v201/functional_blocks/remote_transaction_control.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
 #include <ocpp/v201/functional_blocks/smart_charging.hpp>
@@ -53,16 +54,12 @@
 #include <ocpp/v201/messages/NotifyEvent.hpp>
 #include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
 #include <ocpp/v201/messages/NotifyReport.hpp>
-#include <ocpp/v201/messages/RequestStartTransaction.hpp>
-#include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SetMonitoringBase.hpp>
 #include <ocpp/v201/messages/SetMonitoringLevel.hpp>
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariableMonitoring.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
-#include <ocpp/v201/messages/TriggerMessage.hpp>
-#include <ocpp/v201/messages/UnlockConnector.hpp>
 
 #include "component_state_manager.hpp"
 
@@ -365,6 +362,7 @@ private:
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
     std::unique_ptr<TransactionInterface> transaction;
     std::unique_ptr<ProvisioningInterface> provisioning;
+    std::unique_ptr<RemoteTransactionControl> remote_transaction_control;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
@@ -372,8 +370,8 @@ private:
 
     // states
     std::atomic<RegistrationStatusEnum> registration_status;
-    UploadLogStatusEnum upload_log_status;
-    int32_t upload_log_status_id;
+    std::atomic<UploadLogStatusEnum> upload_log_status;
+    std::atomic<int32_t> upload_log_status_id;
     BootReasonEnum bootreason;
     bool skip_invalid_csms_certificate_notifications;
 
@@ -419,24 +417,6 @@ private:
     void message_callback(const std::string& message);
 
     ///
-    /// \brief Check if EVSE connector is reserved for another than the given id token and / or group id token.
-    /// \param evse             The evse id that must be checked. Reservation will be checked for all connectors.
-    /// \param id_token         The id token to check if it is reserved for that token.
-    /// \param group_id_token   The group id token to check if it is reserved for that group id.
-    /// \return The status of the reservation for this evse, id token and group id token.
-    ///
-    ReservationCheckStatus is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
-                                                      const std::optional<IdToken>& group_id_token) const;
-
-    ///
-    /// \brief Check if one of the connectors of the evse is available (both connectors faulted or unavailable or on of
-    ///        the connectors occupied).
-    /// \param evse Evse to check.
-    /// \return True if at least one connector is not faulted or unavailable.
-    ///
-    bool is_evse_connector_available(EvseInterface& evse) const;
-
-    ///
     /// \brief Check if the connector exists on the given evse id.
     /// \param evse_id          The evse id to check for.
     /// \param connector_type   The connector type.
@@ -455,12 +435,6 @@ private:
     /* OCPP message requests */
 
     /* OCPP message handlers */
-
-    // Function Block F: Remote transaction control
-    void handle_unlock_connector(Call<UnlockConnectorRequest> call);
-    void handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call);
-    void handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call);
-    void handle_trigger_message(Call<TriggerMessageRequest> call);
 
     // Generates async sending callbacks
     template <class RequestType, class ResponseType>
