@@ -19,6 +19,7 @@
 #include <ocpp/v201/functional_blocks/security.hpp>
 #include <ocpp/v201/functional_blocks/smart_charging.hpp>
 #include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
+#include <ocpp/v201/functional_blocks/transaction.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
 
@@ -46,7 +47,6 @@
 #include <ocpp/v201/messages/GetLog.hpp>
 #include <ocpp/v201/messages/GetMonitoringReport.hpp>
 #include <ocpp/v201/messages/GetReport.hpp>
-#include <ocpp/v201/messages/GetTransactionStatus.hpp>
 #include <ocpp/v201/messages/GetVariables.hpp>
 #include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
 #include <ocpp/v201/messages/NotifyEvent.hpp>
@@ -60,7 +60,6 @@
 #include <ocpp/v201/messages/SetNetworkProfile.hpp>
 #include <ocpp/v201/messages/SetVariableMonitoring.hpp>
 #include <ocpp/v201/messages/SetVariables.hpp>
-#include <ocpp/v201/messages/TransactionEvent.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
 #include <ocpp/v201/messages/UnlockConnector.hpp>
 
@@ -256,11 +255,6 @@ public:
 
     /// @}
 
-    /// \brief Gets the transaction id for a certain \p evse_id if there is an active transaction
-    /// \param evse_id The evse to tet the transaction for
-    /// \return The transaction id if a transaction is active, otherwise nullopt
-    virtual std::optional<std::string> get_evse_transaction_id(int32_t evse_id) = 0;
-
     /// \brief Validates provided \p id_token \p certificate and \p ocsp_request_data using CSMS, AuthCache or AuthList
     /// \param id_token
     /// \param certificate
@@ -368,12 +362,11 @@ private:
     std::unique_ptr<MeterValuesInterface> meter_values;
     std::unique_ptr<SmartCharging> smart_charging;
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
+    std::unique_ptr<TransactionInterface> transaction;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
     std::shared_ptr<DatabaseHandler> database_handler;
-
-    std::map<int32_t, std::pair<IdToken, int32_t>> remote_start_id_per_evse;
 
     // timers
     Everest::SteadyTimer boot_notification_timer;
@@ -404,11 +397,6 @@ private:
     };
 
     std::chrono::time_point<std::chrono::steady_clock> time_disconnected;
-
-    /// \brief Used when an 'OnIdle' reset is requested, to perform the reset after the charging has stopped.
-    bool reset_scheduled;
-    /// \brief If `reset_scheduled` is true and the reset is for a specific evse id, it will be stored in this member.
-    std::set<int32_t> reset_scheduled_evseids;
 
     // callback struct
     Callbacks callbacks;
@@ -487,18 +475,6 @@ private:
     void boot_notification_req(const BootReasonEnum& reason, const bool initiated_by_trigger_message = false);
     void notify_report_req(const int request_id, const std::vector<ReportData>& report_data);
 
-    // Functional Block E: Transactions
-    void transaction_event_req(const TransactionEventEnum& event_type, const DateTime& timestamp,
-                               const ocpp::v201::Transaction& transaction,
-                               const ocpp::v201::TriggerReasonEnum& trigger_reason, const int32_t seq_no,
-                               const std::optional<int32_t>& cable_max_current,
-                               const std::optional<ocpp::v201::EVSE>& evse,
-                               const std::optional<ocpp::v201::IdToken>& id_token,
-                               const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
-                               const std::optional<int32_t>& number_of_phases_used, const bool offline,
-                               const std::optional<int32_t>& reservation_id,
-                               const bool initiated_by_trigger_message = false);
-
     /* OCPP message handlers */
 
     // Functional Block B: Provisioning
@@ -509,10 +485,6 @@ private:
     void handle_get_report_req(const EnhancedMessage<v201::MessageType>& message);
     void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);
     void handle_reset_req(Call<ResetRequest> call);
-
-    // Functional Block E: Transaction
-    void handle_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);
-    void handle_get_transaction_status(const Call<GetTransactionStatusRequest> call);
 
     // Function Block F: Remote transaction control
     void handle_unlock_connector(Call<UnlockConnectorRequest> call);
@@ -658,8 +630,6 @@ public:
     bool on_charging_state_changed(
         const uint32_t evse_id, const ChargingStateEnum charging_state,
         const TriggerReasonEnum trigger_reason = TriggerReasonEnum::ChargingStateChanged) override;
-
-    std::optional<std::string> get_evse_transaction_id(int32_t evse_id) override;
 
     AuthorizeResponse validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                      const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) override;
