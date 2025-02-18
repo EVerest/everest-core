@@ -19,10 +19,8 @@ void Auth::init() {
         this->info.id, (!this->r_kvs.empty() ? this->r_kvs.at(0).get() : nullptr));
 
     for (const auto& token_provider : this->r_token_provider) {
-        token_provider->subscribe_provided_token([this](ProvidedIdToken provided_token) {
-            std::thread t([this, provided_token]() { this->auth_handler->on_token(provided_token); });
-            t.detach();
-        });
+        token_provider->subscribe_provided_token(
+            [this](ProvidedIdToken provided_token) { this->auth_handler->on_token(provided_token); });
     }
 }
 
@@ -144,6 +142,10 @@ void Auth::set_connection_timeout(int& connection_timeout) {
 
 void Auth::set_master_pass_group_id(const std::string& master_pass_group_id) {
     this->auth_handler->set_master_pass_group_id(master_pass_group_id);
+}
+
+WithdrawAuthorizationResult Auth::handle_withdraw_authorization(const WithdrawAuthorizationRequest& request) {
+    return this->auth_handler->handle_withdraw_authorization(request);
 }
 
 } // namespace module
