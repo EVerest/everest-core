@@ -141,10 +141,12 @@ void SessionInfo::update_state(const types::evse_manager::SessionEventEnum event
         this->state = State::WaitingForEnergy;
         break;
     case Event::ChargingFinished:
-    case Event::PluginTimeout:
     case Event::StoppingCharging:
     case Event::TransactionFinished:
         this->state = State::Finished;
+        break;
+    case Event::PluginTimeout:
+        this->state = State::AuthTimeout;
         break;
     case Event::ReservationStart:
         this->state = State::Reserved;
@@ -184,6 +186,8 @@ std::string SessionInfo::state_to_string(SessionInfo::State s) {
         return "Charging";
     case SessionInfo::State::Finished:
         return "Finished";
+    case SessionInfo::State::AuthTimeout:
+        return "AuthTimeout";
     }
     return "Unknown";
 }
