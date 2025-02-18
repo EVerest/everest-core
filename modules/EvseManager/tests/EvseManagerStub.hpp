@@ -62,6 +62,9 @@ struct evse_managerImplStub : public evse_managerImplBase {
     virtual bool handle_external_ready_to_start_charging() {
         return true;
     }
+    virtual void handle_set_plug_and_charge_configuration(
+        types::evse_manager::PlugAndChargeConfiguration& plug_and_charge_configuration) {
+    }
     virtual void
     handle_set_get_certificate_response(types::iso15118_charger::ResponseExiStreamStatus& certificate_response) {
     }

@@ -45,6 +45,16 @@ int main(int argc, char** argv) {
         }
         return 1;
     }
+#ifdef USING_TPM2
+    if (std::system("./pki-tpm.sh") != 0) {
+        std::cerr << "Problem creating TPM test certificates and keys" << std::endl;
+        char buf[PATH_MAX];
+        if (getcwd(&buf[0], sizeof(buf)) != nullptr) {
+            std::cerr << "./pki-tpm.sh not found in " << buf << std::endl;
+        }
+        return 1;
+    }
+#endif
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
