@@ -1,0 +1,10 @@
+description: This interface defines enabling/disabling functionallity of EVerest module
+
+cmds:
+  enable_module:
+    description: >-
+      Enables or disables the module
+    arguments:
+      value:
+        description: Enable/Disable given module
+        type: boolean
