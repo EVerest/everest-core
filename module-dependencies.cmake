@@ -40,11 +40,6 @@ ev_define_dependency(
     DEPENDENT_MODULES_LIST EvseV2G)
 
 ev_define_dependency(
-    DEPENDENCY_NAME ext-mbedtls
-    OUTPUT_VARIABLE_SUFFIX MBEDTLS
-    DEPENDENT_MODULES_LIST EvseV2G)
-
-ev_define_dependency(
     DEPENDENCY_NAME libevse-security
     OUTPUT_VARIABLE_SUFFIX LIBEVSE_SECURITY
     DEPENDENT_MODULES_LIST OCPP OCPP201 EvseSecurity EvseV2G)
