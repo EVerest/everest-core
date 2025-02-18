@@ -46,6 +46,8 @@ static void handle_main(VariantAccess& va) {
 
     if (doc.SessionSetupReq_isUsed) {
         insert_type(va, doc.SessionSetupReq);
+    } else if (doc.SessionSetupRes_isUsed) {
+        insert_type(va, doc.SessionSetupRes);
     } else if (doc.AuthorizationSetupReq_isUsed) {
         insert_type(va, doc.AuthorizationSetupReq);
     } else if (doc.AuthorizationReq_isUsed) {
