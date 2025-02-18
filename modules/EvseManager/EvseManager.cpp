@@ -87,7 +87,7 @@ void EvseManager::init() {
         hlc_enabled = false;
 
     if (config.charge_mode == "DC" and (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
-        EVLOG_error << "DC mode requires slac, HLC and powersupply DCDC to be connected";
+        EVLOG_error << "DC mode requires slac, HLC and powersupply DC to be connected";
         exit(255);
     }
 

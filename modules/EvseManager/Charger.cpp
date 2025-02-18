@@ -87,6 +87,7 @@ Charger::Charger(const std::unique_ptr<IECStateMachine>& bsp, const std::unique_
 
 Charger::~Charger() {
     pwm_F();
+    ce_off();
     // need to send an event to wake up processing
     error_handling_event_queue.push(ErrorHandlingEvents::PreventCharging);
     error_thread_handle.stop();
@@ -200,7 +201,12 @@ void Charger::run_state_machine() {
         case EvseState::Disabled:
             if (initialize_state) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::Disabled);
-                pwm_F();
+                if (config_context.mcs_enabled) {
+                    if (ce_active)
+                        ce_off();
+                } else { 
+                    pwm_F();
+                }
             }
             break;
 
@@ -225,7 +231,12 @@ void Charger::run_state_machine() {
                 shared_context.max_current_cable = 0;
                 shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Unknown;
                 shared_context.legacy_wakeup_done = false;
-                pwm_off();
+                if (config_context.mcs_enabled) {
+                   if (ce_active)
+                        ce_off();
+                } else {
+                    pwm_off();
+                }
                 deauthorize_internal();
                 shared_context.transaction_active = false;
                 clear_errors_on_unplug();
@@ -268,13 +279,17 @@ void Charger::run_state_machine() {
                     error_handling->raise_internal_error("Unsupported charging mode.");
                 }
 
-                if (hlc_use_5percent_current_session) {
+                if (hlc_use_5percent_current_session and not config_context.mcs_enabled) {
                     // FIXME: wait for SLAC to be ready. Teslas are really fast with sending the first slac packet after
                     // enabling PWM.
                     std::this_thread::sleep_for(SLEEP_BEFORE_ENABLING_PWM_HLC_MODE);
                     update_pwm_now(PWM_5_PERCENT);
                     stopwatch.mark("HLC_PWM_5%_ON");
                 }
+            }
+
+            if (config_context.mcs_enabled and not ce_active) {
+                ce_on();
             }
 
             // Read PP value in case of AC socket
@@ -406,7 +421,7 @@ void Charger::run_state_machine() {
                     // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                     // simple here as we always stay within 5 percent mode anyway.
                     session_log.evse(false,
-                                     "DC mode. We are in 5percent mode so we can continue without further action.");
+                                    config_context.mcs_enabled ? "MCS mode" : "DC mode. We are in 5percent mode so we can continue without further action.");
                     shared_context.current_state = target_state;
                 } else {
                     // unsupported charging mode, give up here.
@@ -436,7 +451,7 @@ void Charger::run_state_machine() {
                     // Figure 8 of ISO15118-3: DC with EIM before or after plugin or PnC
                     // simple here as we always stay within 5 percent mode anyway.
                     session_log.evse(false,
-                                     "DC mode. We are in 5percent mode so we can continue without further action.");
+                                    config_context.mcs_enabled ? "MCS mode" : "DC mode. We are in 5percent mode so we can continue without further action.");
                     shared_context.current_state = target_state;
                 } else {
                     // unsupported charging mode, give up here.
@@ -524,11 +539,13 @@ void Charger::run_state_machine() {
             }
 
             // make sure we are enabling PWM
-            if (not hlc_use_5percent_current_session) {
-                auto m = get_max_current_internal();
-                update_pwm_now_if_changed_ampere(m);
-            } else {
-                update_pwm_now_if_changed(PWM_5_PERCENT);
+            if (not config_context.mcs_enabled) {
+                if (not hlc_use_5percent_current_session) {
+                    auto m = get_max_current_internal();
+                    update_pwm_now_if_changed_ampere(m);
+                } else {
+                    update_pwm_now_if_changed(PWM_5_PERCENT);
+                }
             }
 
             if (config_context.charge_mode == ChargeMode::AC) {
@@ -633,10 +650,12 @@ void Charger::run_state_machine() {
 
                     bsp->allow_power_on(true, types::evse_board_support::Reason::FullPowerCharging);
                     // make sure we are enabling PWM
-                    if (hlc_use_5percent_current_session) {
-                        update_pwm_now_if_changed(PWM_5_PERCENT);
-                    } else {
-                        update_pwm_now_if_changed_ampere(get_max_current_internal());
+                    if (not config_context.mcs_enabled) {
+                        if (hlc_use_5percent_current_session) {
+                            update_pwm_now_if_changed(PWM_5_PERCENT);
+                        } else {
+                            update_pwm_now_if_changed_ampere(get_max_current_internal());
+                        }
                     }
                 } else {
                     // update PWM if it has changed and 5 seconds have passed since last update
@@ -1014,6 +1033,17 @@ void Charger::pwm_F() {
     internal_context.pwm_set_last_ampere = 0.;
     internal_context.pwm_F_active = true;
     bsp->set_pwm_F();
+}
+
+void Charger::ce_off() {
+    session_log.evse(false, "Set CE Off");
+    ce_active = false;
+    bsp->set_ce_off();
+}
+void Charger::ce_on() {
+    session_log.evse(false, "Set CE On");
+    ce_active = true;
+    bsp->set_ce_on();
 }
 
 void Charger::run() {

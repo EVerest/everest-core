@@ -116,7 +116,7 @@ vars:
     description: Publish to stop the transaction gracefully (e.g. user pressed the stop button)
     type: object
     $ref: /evse_manager#/StopTransactionRequest
-  id_on_event:
+  insertion_detection_event:
     description: Insertion indication (in MCS mode)
     type: boolean
 errors:
