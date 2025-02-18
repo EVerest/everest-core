@@ -68,6 +68,9 @@ provides:
   bank_transaction_summary:
     interface: bank_transaction_summary_provider
     description: Provides details of an already processed payment
+  enable:
+    interface: enable
+    description: Enable/Disable module functionallity
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
