@@ -5,10 +5,8 @@
 
 #include <ocpp/common/message_dispatcher.hpp>
 #include <ocpp/v201/message_handler.hpp>
-#include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 namespace ocpp {
-
 // Forward declarations.
 class EvseSecurity;
 
@@ -20,14 +18,16 @@ class EvseManagerInterface;
 class AvailabilityInterface;
 class SecurityInterface;
 
+struct UpdateFirmwareRequest;
+struct UpdateFirmwareResponse;
+
 // Typedef
 typedef std::function<UpdateFirmwareResponse(const UpdateFirmwareRequest& request)> UpdateFirmwareRequestCallback;
 typedef std::function<void()> AllConnectorsUnavailableCallback;
 
 class FirmwareUpdateInterface : public MessageHandlerInterface {
 public:
-    virtual ~FirmwareUpdateInterface() {
-    }
+    virtual ~FirmwareUpdateInterface() = default;
 
     virtual void on_firmware_update_status_notification(int32_t request_id,
                                                         const FirmwareStatusEnum& firmware_update_status) = 0;

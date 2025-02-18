@@ -8,6 +8,7 @@
 #include <ocpp/v201/functional_blocks/availability.hpp>
 #include <ocpp/v201/functional_blocks/security.hpp>
 #include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
+#include <ocpp/v201/messages/UpdateFirmware.hpp>
 
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model.hpp>

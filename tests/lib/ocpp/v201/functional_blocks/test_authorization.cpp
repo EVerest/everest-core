@@ -14,6 +14,11 @@
 #include "message_dispatcher_mock.hpp"
 #include "mocks/database_handler_mock.hpp"
 
+#include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v201/messages/ClearCache.hpp>
+#include <ocpp/v201/messages/GetLocalListVersion.hpp>
+#include <ocpp/v201/messages/SendLocalList.hpp>
+
 using namespace ocpp::v201;
 using ::testing::_;
 using ::testing::InSequence;

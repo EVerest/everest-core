@@ -9,19 +9,21 @@
 #include <ocpp/v201/evse.hpp>
 #include <ocpp/v201/message_dispatcher.hpp>
 
-#include <ocpp/v201/messages/ClearChargingProfile.hpp>
-#include <ocpp/v201/messages/GetChargingProfiles.hpp>
-#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
-#include <ocpp/v201/messages/ReportChargingProfiles.hpp>
-#include <ocpp/v201/messages/SetChargingProfile.hpp>
-
 namespace ocpp::v201 {
-
 class DeviceModel;
 class EvseManagerInterface;
 class ConnectivityManagerInterface;
 class SmartChargingHandlerInterface;
 class EvseInterface;
+
+struct GetChargingProfilesRequest;
+struct SetChargingProfileRequest;
+struct SetChargingProfileResponse;
+struct GetCompositeScheduleResponse;
+struct GetCompositeScheduleRequest;
+struct ClearChargingProfileResponse;
+struct ClearChargingProfileRequest;
+struct ReportChargingProfilesRequest;
 
 enum class ProfileValidationResultEnum {
     Valid,

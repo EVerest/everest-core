@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/common/constants.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
+
+#include <ocpp/common/constants.hpp>
+#include <ocpp/v201/messages/DataTransfer.hpp>
 
 namespace ocpp {
 namespace v201 {
 
 void DataTransfer::handle_message(const EnhancedMessage<MessageType>& message) {
-
     if (message.messageType != MessageType::DataTransfer) {
         throw MessageTypeNotImplementedException(message.messageType);
     }

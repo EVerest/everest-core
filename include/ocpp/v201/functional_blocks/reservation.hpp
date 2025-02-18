@@ -3,16 +3,15 @@
 
 #include <ocpp/v201/message_dispatcher.hpp>
 #include <ocpp/v201/message_handler.hpp>
-#include <ocpp/v201/messages/CancelReservation.hpp>
-#include <ocpp/v201/messages/ReservationStatusUpdate.hpp>
-#include <ocpp/v201/messages/ReserveNow.hpp>
 
 #pragma once
 
 namespace ocpp::v201 {
-
 class EvseInterface;
 class EvseManagerInterface;
+
+struct ReserveNowRequest;
+struct CancelReservationRequest;
 
 typedef std::function<ReserveNowStatusEnum(const ReserveNowRequest& request)> ReserveNowCallback;
 typedef std::function<bool(const int32_t reservationId)> CancelReservationCallback;

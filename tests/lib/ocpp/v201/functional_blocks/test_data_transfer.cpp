@@ -5,9 +5,9 @@
 #include <gtest/gtest.h>
 
 #include <message_dispatcher_mock.hpp>
-
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v201/functional_blocks/data_transfer.hpp>
+#include <ocpp/v201/messages/DataTransfer.hpp>
 
 using namespace ocpp::v201;
 using ::testing::_;

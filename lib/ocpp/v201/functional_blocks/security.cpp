@@ -8,6 +8,13 @@
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
 #include <ocpp/v201/utils.hpp>
 
+#include <ocpp/v201/messages/CertificateSigned.hpp>
+#include <ocpp/v201/messages/DeleteCertificate.hpp>
+#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
+#include <ocpp/v201/messages/InstallCertificate.hpp>
+#include <ocpp/v201/messages/SignCertificate.hpp>
+
 constexpr int32_t minimum_cert_signing_wait_time_seconds = 250;
 
 namespace ocpp::v201 {

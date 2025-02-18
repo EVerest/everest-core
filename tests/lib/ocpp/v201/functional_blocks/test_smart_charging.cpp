@@ -10,7 +10,6 @@
 #include "ocpp/v201/ctrlr_component_variables.hpp"
 #include "ocpp/v201/device_model.hpp"
 #include "ocpp/v201/functional_blocks/smart_charging.hpp"
-#include "ocpp/v201/init_device_model_db.hpp"
 #include "ocpp/v201/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -36,6 +35,11 @@
 #include "smart_charging_test_utils.hpp"
 #include <sstream>
 #include <vector>
+
+#include <ocpp/v201/messages/ClearChargingProfile.hpp>
+#include <ocpp/v201/messages/GetChargingProfiles.hpp>
+#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
 
 using ::testing::_;
 using ::testing::ByMove;

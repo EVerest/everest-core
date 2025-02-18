@@ -7,6 +7,10 @@
 #include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/functional_blocks/reservation.hpp>
 
+#include <ocpp/v201/messages/CancelReservation.hpp>
+#include <ocpp/v201/messages/ReservationStatusUpdate.hpp>
+#include <ocpp/v201/messages/ReserveNow.hpp>
+
 namespace ocpp::v201 {
 Reservation::Reservation(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                          EvseManagerInterface& evse_manager, ReserveNowCallback reserve_now_callback,

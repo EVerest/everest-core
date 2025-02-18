@@ -6,6 +6,7 @@
 #include "gmock/gmock.h"
 
 #include <ocpp/v201/functional_blocks/smart_charging.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
 
 namespace ocpp::v201 {
 class SmartChargingMock : public SmartChargingInterface {

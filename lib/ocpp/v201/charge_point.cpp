@@ -1,15 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v201/charge_point.hpp>
+
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/charge_point.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v201/database_handler.hpp>
+#include <ocpp/v201/device_model.hpp>
+#include <ocpp/v201/device_model_storage_interface.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/notify_report_requests_splitter.hpp>
 
+#include <ocpp/v201/functional_blocks/authorization.hpp>
+#include <ocpp/v201/functional_blocks/availability.hpp>
+#include <ocpp/v201/functional_blocks/data_transfer.hpp>
+#include <ocpp/v201/functional_blocks/diagnostics.hpp>
+#include <ocpp/v201/functional_blocks/display_message.hpp>
+#include <ocpp/v201/functional_blocks/firmware_update.hpp>
+#include <ocpp/v201/functional_blocks/meter_values.hpp>
+#include <ocpp/v201/functional_blocks/provisioning.hpp>
+#include <ocpp/v201/functional_blocks/remote_transaction_control.hpp>
+#include <ocpp/v201/functional_blocks/reservation.hpp>
+#include <ocpp/v201/functional_blocks/security.hpp>
+#include <ocpp/v201/functional_blocks/smart_charging.hpp>
+#include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
+#include <ocpp/v201/functional_blocks/transaction.hpp>
+
+#include <ocpp/v201/messages/LogStatusNotification.hpp>
 #include <ocpp/v201/messages/RequestStopTransaction.hpp>
 #include <ocpp/v201/messages/TriggerMessage.hpp>
 

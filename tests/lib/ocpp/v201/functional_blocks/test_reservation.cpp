@@ -12,6 +12,10 @@
 #include <ocpp/v201/ctrlr_component_variables.hpp>
 #include <ocpp/v201/device_model_storage_sqlite.hpp>
 #include <ocpp/v201/init_device_model_db.hpp>
+
+#include <ocpp/v201/messages/CancelReservation.hpp>
+#include <ocpp/v201/messages/ReservationStatusUpdate.hpp>
+#include <ocpp/v201/messages/ReserveNow.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 
 const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";

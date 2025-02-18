@@ -3,16 +3,17 @@
 
 #pragma once
 
-#include <ocpp/v201/messages/Authorize.hpp>
-#include <ocpp/v201/messages/ClearCache.hpp>
-#include <ocpp/v201/messages/GetLocalListVersion.hpp>
-#include <ocpp/v201/messages/SendLocalList.hpp>
-
 #include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/message_dispatcher.hpp>
 #include <ocpp/v201/message_handler.hpp>
 
 namespace ocpp::v201 {
+struct AuthorizationCacheEntry;
+struct AuthorizeResponse;
+struct ClearCacheRequest;
+struct SendLocalListRequest;
+struct GetLocalListVersionRequest;
+
 class AuthorizationInterface : public MessageHandlerInterface {
 public:
     virtual ~AuthorizationInterface() {
@@ -45,7 +46,7 @@ private: // Members
     MessageDispatcherInterface<MessageType>& message_dispatcher;
     DeviceModel& device_model;
     ConnectivityManagerInterface& connectivity_manager;
-    ocpp::v201::DatabaseHandlerInterface& database_handler;
+    DatabaseHandlerInterface& database_handler;
     EvseSecurity& evse_security;
 
     // threads and synchronization

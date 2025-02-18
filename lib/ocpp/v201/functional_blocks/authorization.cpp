@@ -3,8 +3,14 @@
 
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v201/database_handler.hpp>
 #include <ocpp/v201/functional_blocks/authorization.hpp>
 #include <ocpp/v201/utils.hpp>
+
+#include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v201/messages/ClearCache.hpp>
+#include <ocpp/v201/messages/GetLocalListVersion.hpp>
+#include <ocpp/v201/messages/SendLocalList.hpp>
 
 ///
 /// \brief Check if vector of authorization data has a duplicate id token.

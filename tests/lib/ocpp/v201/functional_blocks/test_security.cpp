@@ -9,8 +9,10 @@
 #define private public // Make everything in security.hpp public so we can trigger the timer.
 #include <ocpp/v201/functional_blocks/security.hpp>
 #undef private
+#include <ocpp/v201/messages/CertificateSigned.hpp>
 #include <ocpp/v201/messages/Reset.hpp>
 #include <ocpp/v201/messages/SecurityEventNotification.hpp>
+#include <ocpp/v201/messages/SignCertificate.hpp>
 
 #include "connectivity_manager_mock.hpp"
 #include "device_model_test_helper.hpp"

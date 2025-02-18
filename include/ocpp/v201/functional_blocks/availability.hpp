@@ -7,13 +7,13 @@
 #include <ocpp/v201/message_handler.hpp>
 
 #include <ocpp/v201/messages/ChangeAvailability.hpp>
-#include <ocpp/v201/messages/Heartbeat.hpp>
 
 namespace ocpp::v201 {
-
 class DeviceModel;
 class EvseManagerInterface;
 class ComponentStateManagerInterface;
+
+struct HeartbeatResponse;
 
 /// \brief Combines ChangeAvailabilityRequest with persist flag for scheduled Availability changes
 struct AvailabilityChange {

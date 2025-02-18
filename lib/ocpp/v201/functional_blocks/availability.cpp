@@ -7,6 +7,7 @@
 #include <ocpp/v201/device_model.hpp>
 #include <ocpp/v201/evse_manager.hpp>
 
+#include <ocpp/v201/messages/Heartbeat.hpp>
 #include <ocpp/v201/messages/StatusNotification.hpp>
 
 namespace ocpp::v201 {

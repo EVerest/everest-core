@@ -8,6 +8,8 @@
 #include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/functional_blocks/meter_values.hpp>
 
+#include <ocpp/v201/messages/CostUpdated.hpp>
+
 const auto DEFAULT_PRICE_NUMBER_OF_DECIMALS = 3;
 
 namespace ocpp::v201 {

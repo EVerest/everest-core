@@ -8,31 +8,11 @@
 #include <set>
 
 #include <ocpp/common/message_dispatcher.hpp>
-#include <ocpp/v201/functional_blocks/authorization.hpp>
-#include <ocpp/v201/functional_blocks/availability.hpp>
-#include <ocpp/v201/functional_blocks/data_transfer.hpp>
-#include <ocpp/v201/functional_blocks/diagnostics.hpp>
-#include <ocpp/v201/functional_blocks/display_message.hpp>
-#include <ocpp/v201/functional_blocks/firmware_update.hpp>
-#include <ocpp/v201/functional_blocks/meter_values.hpp>
-#include <ocpp/v201/functional_blocks/provisioning.hpp>
-#include <ocpp/v201/functional_blocks/remote_transaction_control.hpp>
-#include <ocpp/v201/functional_blocks/reservation.hpp>
-#include <ocpp/v201/functional_blocks/security.hpp>
-#include <ocpp/v201/functional_blocks/smart_charging.hpp>
-#include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
-#include <ocpp/v201/functional_blocks/transaction.hpp>
 
 #include <ocpp/common/charging_station_base.hpp>
 
 #include <ocpp/v201/average_meter_values.hpp>
 #include <ocpp/v201/charge_point_callbacks.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/device_model_storage_interface.hpp>
-#include <ocpp/v201/evse_manager.hpp>
-#include <ocpp/v201/monitoring_updater.hpp>
 #include <ocpp/v201/ocpp_enums.hpp>
 #include <ocpp/v201/ocpp_types.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
@@ -40,31 +20,34 @@
 #include <ocpp/v201/utils.hpp>
 
 #include <ocpp/v201/messages/Authorize.hpp>
-#include <ocpp/v201/messages/BootNotification.hpp>
-#include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
-#include <ocpp/v201/messages/CustomerInformation.hpp>
 #include <ocpp/v201/messages/DataTransfer.hpp>
 #include <ocpp/v201/messages/Get15118EVCertificate.hpp>
-#include <ocpp/v201/messages/GetBaseReport.hpp>
-#include <ocpp/v201/messages/GetLog.hpp>
-#include <ocpp/v201/messages/GetMonitoringReport.hpp>
-#include <ocpp/v201/messages/GetReport.hpp>
-#include <ocpp/v201/messages/GetVariables.hpp>
-#include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
-#include <ocpp/v201/messages/NotifyEvent.hpp>
-#include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
-#include <ocpp/v201/messages/NotifyReport.hpp>
-#include <ocpp/v201/messages/Reset.hpp>
-#include <ocpp/v201/messages/SetMonitoringBase.hpp>
-#include <ocpp/v201/messages/SetMonitoringLevel.hpp>
-#include <ocpp/v201/messages/SetNetworkProfile.hpp>
-#include <ocpp/v201/messages/SetVariableMonitoring.hpp>
-#include <ocpp/v201/messages/SetVariables.hpp>
+#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
 
 #include "component_state_manager.hpp"
 
 namespace ocpp {
 namespace v201 {
+
+class AuthorizationInterface;
+class AvailabilityInterface;
+class DataTransferInterface;
+class DiagnosticsInterface;
+class DisplayMessageInterface;
+class FirmwareUpdateInterface;
+class MeterValuesInterface;
+class ProvisioningInterface;
+class RemoteTransactionControlInterface;
+class ReservationInterface;
+class SecurityInterface;
+class SmartChargingInterface;
+class TariffAndCostInterface;
+class TransactionInterface;
+
+class DatabaseHandler;
+class DeviceModel;
+class DeviceModelStorageInterface;
+class EvseManager;
 
 class UnexpectedMessageTypeFromCSMS : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -358,11 +341,11 @@ private:
     std::unique_ptr<DisplayMessageInterface> display_message;
     std::unique_ptr<FirmwareUpdateInterface> firmware_update;
     std::unique_ptr<MeterValuesInterface> meter_values;
-    std::unique_ptr<SmartCharging> smart_charging;
+    std::unique_ptr<SmartChargingInterface> smart_charging;
     std::unique_ptr<TariffAndCostInterface> tariff_and_cost;
     std::unique_ptr<TransactionInterface> transaction;
     std::unique_ptr<ProvisioningInterface> provisioning;
-    std::unique_ptr<RemoteTransactionControl> remote_transaction_control;
+    std::unique_ptr<RemoteTransactionControlInterface> remote_transaction_control;
 
     // utility
     std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;

@@ -9,14 +9,16 @@
 #include <ocpp/v201/message_handler.hpp>
 #include <ocpp/v201/ocsp_updater.hpp>
 
-#include <ocpp/v201/messages/CertificateSigned.hpp>
-#include <ocpp/v201/messages/DeleteCertificate.hpp>
-#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
-#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
-#include <ocpp/v201/messages/InstallCertificate.hpp>
-#include <ocpp/v201/messages/SignCertificate.hpp>
-
 namespace ocpp::v201 {
+struct CertificateSignedRequest;
+struct CertificateSignedResponse;
+struct GetInstalledCertificateIdsRequest;
+struct Get15118EVCertificateRequest;
+struct Get15118EVCertificateResponse;
+struct InstallCertificateRequest;
+struct DeleteCertificateRequest;
+struct SignCertificateResponse;
+
 typedef std::function<void(const CiString<50>& event_type, const std::optional<CiString<255>>& tech_info)>
     SecurityEventCallback;
 

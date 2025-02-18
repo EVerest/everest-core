@@ -3,14 +3,16 @@
 
 #pragma once
 
-#include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/message_dispatcher.hpp>
 #include <ocpp/v201/message_handler.hpp>
-#include <ocpp/v201/messages/ClearDisplayMessage.hpp>
-#include <ocpp/v201/messages/GetDisplayMessages.hpp>
+
 #include <ocpp/v201/messages/SetDisplayMessage.hpp>
 
 namespace ocpp::v201 {
+class EvseManagerInterface;
+struct GetDisplayMessagesRequest;
+struct ClearDisplayMessageResponse;
+struct ClearDisplayMessageRequest;
 
 ///
 /// \brief Convert message content from OCPP spec to DisplayMessageContent.

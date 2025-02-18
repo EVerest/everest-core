@@ -5,10 +5,11 @@
 
 #include <ocpp/v201/message_dispatcher.hpp>
 #include <ocpp/v201/message_handler.hpp>
-#include <ocpp/v201/messages/DataTransfer.hpp>
 
 namespace ocpp {
 namespace v201 {
+struct DataTransferRequest;
+struct DataTransferResponse;
 
 class DataTransferInterface : public MessageHandlerInterface {
 

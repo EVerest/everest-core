@@ -13,6 +13,12 @@
 
 #include <ocpp/common/constants.hpp>
 
+#include <ocpp/v201/messages/ClearChargingProfile.hpp>
+#include <ocpp/v201/messages/GetChargingProfiles.hpp>
+#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v201/messages/ReportChargingProfiles.hpp>
+#include <ocpp/v201/messages/SetChargingProfile.hpp>
+
 const int32_t STATION_WIDE_ID = 0;
 
 namespace ocpp::v201 {

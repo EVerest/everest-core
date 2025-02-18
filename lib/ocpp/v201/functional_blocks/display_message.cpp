@@ -2,7 +2,11 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v201/evse_manager.hpp>
 #include <ocpp/v201/functional_blocks/display_message.hpp>
+
+#include <ocpp/v201/messages/ClearDisplayMessage.hpp>
+#include <ocpp/v201/messages/GetDisplayMessages.hpp>
 #include <ocpp/v201/messages/NotifyDisplayMessages.hpp>
 
 namespace ocpp::v201 {
