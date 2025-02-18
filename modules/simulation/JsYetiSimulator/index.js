@@ -128,8 +128,11 @@ function event_to_enum(event) {
 
 function publish_event(mod, event) {
   mod.provides.board_support.publish.event({ event: event_to_enum(event) });
-  if (event == STATE_B)
-    mod.provides.board_support.publish.id_on_event(true);
+  if (event == STATE_A) {
+    mod.provides.board_support.publish.insertion_detection_event(false);
+  } else {
+    mod.provides.board_support.publish.insertion_detection_event(true);
+  }
 }
 
 function check_error_rcd(mod) {
@@ -1258,6 +1261,9 @@ boot_module(async ({
   setup.provides.board_support.register.pwm_on((mod, args) => { pwmOn(mod, args.value / 100.0); });
   setup.provides.board_support.register.pwm_off((mod) => { pwmOff(mod); });
   setup.provides.board_support.register.pwm_F((mod) => { pwmF(mod); });
+  setup.provides.board_support.register.ce_off((mod) => { pwmOff(mod); });
+  setup.provides.board_support.register.ce_on((mod) => { pwmOn(mod, 100.0); });
+
   setup.provides.board_support.register.evse_replug(() => {
     evlog.error('Replugging not supported');
   });

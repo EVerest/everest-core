@@ -86,11 +86,17 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
     timeout_state_c1.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
     timeout_unlock_state_F.signal_reached.connect(&IECStateMachine::feed_state_machine_no_thread, this);
 
+    // In MCS mode, subscribe to insertion detection event
     if (mcs_enable) {
-        r_bsp->subscribe_id_on_event([this](bool value) {
-            if (value) {
-                types::board_support_common::BspEvent bsp_event{.event = types::board_support_common::Event::B};
+        mcs_enabled = true;
+        r_bsp->subscribe_insertion_detection_event([this](bool value) {
+            types::board_support_common::BspEvent bsp_event;
+            if (enabled) {
+                value ? bsp_event.event = types::board_support_common::Event::B : 
+                        bsp_event.event = types::board_support_common::Event::A;
                 process_bsp_event(bsp_event);
+            } else {
+                EVLOG_info << "Ignoring ID Event, BSP is not enabled yet.";
             }
         });
     }
@@ -171,7 +177,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         case RawCPState::Disabled:
             if (last_cp_state != RawCPState::Disabled) {
                 pwm_running = false;
-                r_bsp->call_pwm_off();
+                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
                 ev_simplified_mode = false;
                 timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
@@ -182,7 +188,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         case RawCPState::A:
             if (last_cp_state != RawCPState::A) {
                 pwm_running = false;
-                r_bsp->call_pwm_off();
+                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
                 ev_simplified_mode = false;
                 car_plugged_in = false;
                 call_allow_power_on_bsp(false);
@@ -206,6 +212,9 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             } else {
                 connector_unlock();
             }
+
+            if (mcs_enabled) 
+                r_bsp->call_ce_on();
 
             if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 
@@ -307,7 +316,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
                 pwm_running = false;
-                r_bsp->call_pwm_off();
+                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
                 if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C ||
                     last_cp_state == RawCPState::D) {
                     events.push(CPEvent::BCDtoEF);

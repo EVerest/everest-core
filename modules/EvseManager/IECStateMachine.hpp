@@ -149,6 +149,8 @@ private:
 
     static constexpr std::chrono::seconds power_off_under_load_in_c1_timeout{6};
     static constexpr std::chrono::seconds unlock_in_state_f_timeout{5};
+
+    bool mcs_enabled{false};
 };
 
 } // namespace module

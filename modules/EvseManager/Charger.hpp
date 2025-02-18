@@ -246,6 +246,9 @@ private:
     void pwm_off();
     void pwm_F();
 
+    void ce_off();
+    void ce_on();
+
     void process_cp_events_independent(CPEvent cp_event);
     void process_cp_events_state(CPEvent cp_event);
     void run_state_machine();
@@ -269,7 +272,7 @@ private:
     // This mutex locks all variables related to the state machine
     Everest::timed_mutex_traceable state_machine_mutex;
 
-    // Signals insertion detected
+    // Insertion detection signal for MCS mode
     std::atomic_bool mcs_insertion_detection;
 
     // used by different threads, complete main loop must be locked for write access
@@ -344,6 +347,8 @@ private:
     std::atomic_bool hlc_use_5percent_current_session;
     // HLC enabled in current AC session. This can change during the session if e.g. HLC fails.
     std::atomic_bool ac_hlc_enabled_current_session;
+    
+    std::atomic_bool ce_active{false};
 
     // This struct is only used from main loop thread
     struct InternalContext {
@@ -378,6 +383,7 @@ private:
 
         std::chrono::time_point<std::chrono::steady_clock> fatal_error_became_active;
         bool fatal_error_timer_running{false};
+
     } internal_context;
 
     // main Charger thread

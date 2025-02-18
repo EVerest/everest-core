@@ -205,7 +205,6 @@ void evse_board_supportImpl::handle_ce_on() {
 }
 
 void evse_board_supportImpl::handle_ce_off() {
-    // your code for cmd ce_off goes here
 }
 
 } // namespace board_support
