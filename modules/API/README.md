@@ -270,7 +270,7 @@ in the EVerest documentation.
 📌 **Note:** You have to configure one evse_energy_sink connection per EVSE within the configuration file in order to use this topic!
 
 ### everest_api/evse_manager/cmd/force_unlock
-Command to force unlock a connector on the EVSE. They payload should be a positive integer identifying the connector that should be unlocked. If the payload is empty or cannot be converted to an integer connector 1 is assumed.
+Command to force unlock a connector on the EVSE. The payload should be a positive integer identifying the connector that should be unlocked. If the payload is empty or cannot be converted to an integer connector 1 is assumed.
 
 ### everest_api/evse_manager/cmd/uk_random_delay
 Command to control the UK Smart Charging random delay feature. The payload can be the following enum: "enable" and "disable" to enable/disable the feature entirely or "cancel" to cancel an ongoing delay.
