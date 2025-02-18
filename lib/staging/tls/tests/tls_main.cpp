@@ -21,8 +21,9 @@ using namespace std::chrono_literals;
 
 namespace {
 
-const char* short_opts = "ch36";
+const char* short_opts = "ch36t";
 bool disable_tls1_3{false};
+bool enable_tpm{false};
 bool ipv6_only{false};
 bool verify_client{false};
 
@@ -41,12 +42,16 @@ void parse_options(int argc, char** argv) {
         case '6':
             ipv6_only = true;
             break;
+        case 't':
+            enable_tpm = true;
+            break;
         case 'h':
         case '?':
             std::cout << "Usage: " << argv[0] << " [-c|-3|-6]" << std::endl;
             std::cout << "       -c verify client" << std::endl;
             std::cout << "       -3 disable TLS 1.3" << std::endl;
             std::cout << "       -6 IPv6 only" << std::endl;
+            std::cout << "       -t enable TPM" << std::endl;
             exit(1);
             break;
         default:
@@ -115,9 +120,15 @@ int main(int argc, char** argv) {
     }
 
     auto& ref0 = config.chains.emplace_back();
-    ref0.certificate_chain_file = "server_chain.pem";
-    ref0.private_key_file = "server_priv.pem";
-    ref0.trust_anchor_file = "server_root_cert.pem";
+    if (enable_tpm) {
+        ref0.certificate_chain_file = "tpm_pki/server_chain.pem";
+        ref0.private_key_file = "tpm_pki/server_priv.pem";
+        ref0.trust_anchor_file = "tpm_pki/server_root_cert.pem";
+    } else {
+        ref0.certificate_chain_file = "server_chain.pem";
+        ref0.private_key_file = "server_priv.pem";
+        ref0.trust_anchor_file = "server_root_cert.pem";
+    }
     ref0.ocsp_response_files = {"ocsp_response.der", "ocsp_response.der"};
     auto& ref1 = config.chains.emplace_back();
     ref1.certificate_chain_file = "alt_server_chain.pem";
