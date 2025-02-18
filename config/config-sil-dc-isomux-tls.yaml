@@ -15,6 +15,10 @@ active_modules:
       device: lo
       tls_negotiation_strategy: ACCEPT_CLIENT_OFFER
       enable_sdp_server: false
+    connections:
+      security:
+        - module_id: evse_security
+          implementation_id: main
   iso_mux:
     module: IsoMux
     config_module:
@@ -30,6 +34,12 @@ active_modules:
       iso20:
         - module_id: iso15118_20
           implementation_id: charger
+      ext2:
+        - module_id: iso15118_2
+          implementation_id: extensions
+      ext20:
+        - module_id: iso15118_20
+          implementation_id: extensions
   iso15118_car:
     module: PyEvJosev
     config_module:

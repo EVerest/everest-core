@@ -80,8 +80,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/emergency_stop", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_EmergencyShutdown);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_EmergencyShutdown);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::EmergencyStop;
@@ -91,7 +90,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_malfunction", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(types::iso15118_charger::EvseError::Error_Malfunction);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_Malfunction);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -101,8 +100,7 @@ void evse_managerImpl::init() {
     mod->mqtt.subscribe(fmt::format("everest_external/nodered/{}/cmd/evse_utility_int", mod->config.connector_id),
                         [this](const std::string& data) {
                             if (mod->get_hlc_enabled()) {
-                                mod->r_hlc[0]->call_send_error(
-                                    types::iso15118_charger::EvseError::Error_UtilityInterruptEvent);
+                                mod->r_hlc[0]->call_send_error(types::iso15118::EvseError::Error_UtilityInterruptEvent);
                             }
                             types::evse_manager::StopTransactionRequest request;
                             request.reason = types::evse_manager::StopTransactionReason::Other;
@@ -447,11 +445,6 @@ bool evse_managerImpl::handle_resume_charging() {
 bool evse_managerImpl::handle_stop_transaction(types::evse_manager::StopTransactionRequest& request) {
     return mod->charger->cancel_transaction(request);
 };
-
-void evse_managerImpl::handle_set_get_certificate_response(
-    types::iso15118_charger::ResponseExiStreamStatus& certificate_reponse) {
-    mod->r_hlc[0]->call_certificate_response(certificate_reponse);
-}
 
 bool evse_managerImpl::handle_external_ready_to_start_charging() {
     if (mod->config.external_ready_to_start_charging) {

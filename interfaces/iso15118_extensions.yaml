@@ -1,0 +1,20 @@
+description: This interface is used to share data between ISO15118 and OCPP modules to support the requirements of the OCPP protocol
+cmds:
+  set_get_certificate_response:
+    description: >-
+      CertificateInstallationRes/CertificateUpdateRes - Set the new/updated Contract Certificate (including the certificate chain)
+      and the corresponding encrypted private key. Should be forwared to EVCC.
+      This is an async response to a previously published iso15118_certificate_request
+    arguments:
+      certificate_response:
+        description: The response raw exi stream and the status from the CSMS system
+        type: object
+        $ref: /iso15118#/ResponseExiStreamStatus
+vars:
+  iso15118_certificate_request:
+    description: >-
+      The vehicle requests the SECC to deliver the certificate that belong
+      to the currently valid contract of the vehicle.
+      Response will be reported async via set_get_certificate_response
+    type: object
+    $ref: /iso15118#/RequestExiStreamSchema

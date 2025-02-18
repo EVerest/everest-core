@@ -8,7 +8,7 @@ cmds:
           Selected energy transfer mode for charging that is requested
           by the EVCC
         type: string
-        $ref: /iso15118_ev#/EnergyTransferMode
+        $ref: /iso15118#/EnergyTransferMode
     result:
       description: Returns true if the evcc simulation started
       type: boolean
@@ -23,17 +23,17 @@ cmds:
   set_dc_params:
     description: Set the target parameters for a dc charging process 
     arguments:
-      EV_Parameters:
+      EvParameters:
         description: Target parameters for dc charging
         type: object
-        $ref: /iso15118_ev#/DC_EVParameters
+        $ref: /iso15118#/DcEvParameters
   set_bpt_dc_params:
     description: Set the bpt parameters for dc charging
     arguments:
-      EV_BPT_Parameters:
+      EvBPTParameters:
         description: BPT parameters for dc charging
         type: object
-        $ref: /iso15118_ev#/DC_EV_BPT_Parameters
+        $ref: /iso15118#/DcEvBPTParameters
   enable_sae_j2847_v2g_v2h:
     description: Enable the SAE J2847 2 V2H V2G
 vars:

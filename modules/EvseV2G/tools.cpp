@@ -348,27 +348,26 @@ std::string convert_to_hex_str(const uint8_t* data, int len) {
     return string_stream.str();
 }
 
-types::iso15118_charger::HashAlgorithm
-convert_to_hash_algorithm(const types::evse_security::HashAlgorithm hash_algorithm) {
+types::iso15118::HashAlgorithm convert_to_hash_algorithm(const types::evse_security::HashAlgorithm hash_algorithm) {
     switch (hash_algorithm) {
     case types::evse_security::HashAlgorithm::SHA256:
-        return types::iso15118_charger::HashAlgorithm::SHA256;
+        return types::iso15118::HashAlgorithm::SHA256;
     case types::evse_security::HashAlgorithm::SHA384:
-        return types::iso15118_charger::HashAlgorithm::SHA384;
+        return types::iso15118::HashAlgorithm::SHA384;
     case types::evse_security::HashAlgorithm::SHA512:
-        return types::iso15118_charger::HashAlgorithm::SHA512;
+        return types::iso15118::HashAlgorithm::SHA512;
     default:
         throw std::runtime_error(
-            "Could not convert types::evse_security::HashAlgorithm to types::iso15118_charger::HashAlgorithm");
+            "Could not convert types::evse_security::HashAlgorithm to types::iso15118::HashAlgorithm");
     }
 }
 
-std::vector<types::iso15118_charger::CertificateHashDataInfo>
+std::vector<types::iso15118::CertificateHashDataInfo>
 convert_to_certificate_hash_data_info_vector(const types::evse_security::OCSPRequestDataList& ocsp_request_data_list) {
-    std::vector<types::iso15118_charger::CertificateHashDataInfo> certificate_hash_data_info_vec;
+    std::vector<types::iso15118::CertificateHashDataInfo> certificate_hash_data_info_vec;
     for (const auto& ocsp_request_data : ocsp_request_data_list.ocsp_request_data_list) {
         if (ocsp_request_data.responder_url.has_value() and ocsp_request_data.certificate_hash_data.has_value()) {
-            types::iso15118_charger::CertificateHashDataInfo certificate_hash_data;
+            types::iso15118::CertificateHashDataInfo certificate_hash_data;
             certificate_hash_data.hashAlgorithm =
                 convert_to_hash_algorithm(ocsp_request_data.certificate_hash_data.value().hash_algorithm);
             certificate_hash_data.issuerNameHash = ocsp_request_data.certificate_hash_data.value().issuer_name_hash;

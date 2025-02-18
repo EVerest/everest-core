@@ -654,11 +654,11 @@ ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_tok
 }
 
 ocpp::v201::CertificateActionEnum
-to_ocpp_certificate_action_enum(const types::iso15118_charger::CertificateActionEnum& action) {
+to_ocpp_certificate_action_enum(const types::iso15118::CertificateActionEnum& action) {
     switch (action) {
-    case types::iso15118_charger::CertificateActionEnum::Install:
+    case types::iso15118::CertificateActionEnum::Install:
         return ocpp::v201::CertificateActionEnum::Install;
-    case types::iso15118_charger::CertificateActionEnum::Update:
+    case types::iso15118::CertificateActionEnum::Update:
         return ocpp::v201::CertificateActionEnum::Update;
     }
     throw std::out_of_range("Could not convert CertificateActionEnum"); // this should never happen
@@ -710,7 +710,7 @@ to_everest_stop_transaction_reason(const ocpp::v201::ReasonEnum& stop_reason) {
 }
 
 std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
-    const std::vector<types::iso15118_charger::CertificateHashDataInfo>& certificate_hash_data_info) {
+    const std::vector<types::iso15118::CertificateHashDataInfo>& certificate_hash_data_info) {
     std::vector<ocpp::v201::OCSPRequestData> ocsp_request_data_list;
 
     for (const auto& certificate_hash_data : certificate_hash_data_info) {
@@ -725,17 +725,16 @@ std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
     return ocsp_request_data_list;
 }
 
-ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118_charger::HashAlgorithm hash_algorithm) {
+ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118::HashAlgorithm hash_algorithm) {
     switch (hash_algorithm) {
-    case types::iso15118_charger::HashAlgorithm::SHA256:
+    case types::iso15118::HashAlgorithm::SHA256:
         return ocpp::v201::HashAlgorithmEnum::SHA256;
-    case types::iso15118_charger::HashAlgorithm::SHA384:
+    case types::iso15118::HashAlgorithm::SHA384:
         return ocpp::v201::HashAlgorithmEnum::SHA384;
-    case types::iso15118_charger::HashAlgorithm::SHA512:
+    case types::iso15118::HashAlgorithm::SHA512:
         return ocpp::v201::HashAlgorithmEnum::SHA512;
     }
-    throw std::out_of_range(
-        "Could not convert types::iso15118_charger::HashAlgorithm to ocpp::v201::HashAlgorithmEnum");
+    throw std::out_of_range("Could not convert types::iso15118::HashAlgorithm to ocpp::v201::HashAlgorithmEnum");
 }
 
 std::vector<ocpp::v201::GetVariableData>
@@ -819,7 +818,7 @@ ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnu
 }
 
 ocpp::v201::Get15118EVCertificateRequest
-to_ocpp_get_15118_certificate_request(const types::iso15118_charger::RequestExiStreamSchema& request) {
+to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request) {
     ocpp::v201::Get15118EVCertificateRequest _request;
     _request.iso15118SchemaVersion = request.iso15118_schema_version;
     _request.exiRequest = request.exi_request;
@@ -899,13 +898,12 @@ to_everest_firmware_update_request(const ocpp::v201::UpdateFirmwareRequest& requ
     return _request;
 }
 
-types::iso15118_charger::Status
-to_everest_iso15118_charger_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status) {
+types::iso15118::Status to_everest_iso15118_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status) {
     switch (status) {
     case ocpp::v201::Iso15118EVCertificateStatusEnum::Accepted:
-        return types::iso15118_charger::Status::Accepted;
+        return types::iso15118::Status::Accepted;
     case ocpp::v201::Iso15118EVCertificateStatusEnum::Failed:
-        return types::iso15118_charger::Status::Failed;
+        return types::iso15118::Status::Failed;
     }
     throw std::out_of_range("Could not convert Iso15118EVCertificateStatusEnum"); // this should never happen
 }

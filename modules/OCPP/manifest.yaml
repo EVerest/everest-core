@@ -105,6 +105,10 @@ requires:
     interface: display_message
     min_connections: 0
     max_connections: 1
+  extensions_15118:
+    interface: iso15118_extensions
+    min_connections: 0
+    max_connections: 128
 enable_external_mqtt: true
 enable_global_errors: true
 metadata:

@@ -104,4 +104,17 @@ static const struct din_state din_states[] = {
  */
 enum v2g_event din_handle_request(v2g_connection* conn);
 
+namespace utils {
+enum v2g_event din_validate_response_code(din_responseCodeType* const din_response_code,
+                                          struct v2g_connection const* conn);
+} // namespace utils
+
+namespace states {
+
+enum v2g_event handle_din_session_setup(struct v2g_connection* conn);
+enum v2g_event handle_din_service_discovery(struct v2g_connection* conn);
+enum v2g_event handle_din_contract_authentication(struct v2g_connection* conn);
+
+} // namespace states
+
 #endif /* DIN_SERVER_HPP */

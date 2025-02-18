@@ -838,22 +838,6 @@ void OCPP201::ready() {
             }
         });
 
-        evse->subscribe_iso15118_certificate_request(
-            [this, evse_id](const types::iso15118_charger::RequestExiStreamSchema& certificate_request) {
-                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
-                    conversions::to_ocpp_get_15118_certificate_request(certificate_request));
-                EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
-                // transform response, inject action, send to associated EvseManager
-                types::iso15118_charger::ResponseExiStreamStatus everest_response;
-                everest_response.status = conversions::to_everest_iso15118_charger_status(ocpp_response.status);
-                everest_response.certificate_action = certificate_request.certificate_action;
-                if (not ocpp_response.exiResponse.get().empty()) {
-                    // since exi_response is an optional in the EVerest type we only set it when not empty
-                    everest_response.exi_response = ocpp_response.exiResponse.get();
-                }
-                this->r_evse_manager.at(evse_id - 1)->call_set_get_certificate_response(everest_response);
-            });
-
         auto fault_handler = [this, evse_id](const Everest::error::Error& error) {
             this->charge_point->on_faulted(evse_id, get_connector_id_from_error(error));
         };
@@ -867,6 +851,29 @@ void OCPP201::ready() {
 
         evse_id++;
     }
+
+    int32_t extensions_id = 0;
+    for (auto& extension : this->r_extensions_15118) {
+        extension->subscribe_iso15118_certificate_request(
+            [this, extensions_id](const types::iso15118::RequestExiStreamSchema& certificate_request) {
+                auto ocpp_response = this->charge_point->on_get_15118_ev_certificate_request(
+                    conversions::to_ocpp_get_15118_certificate_request(certificate_request));
+                EVLOG_debug << "Received response from get_15118_ev_certificate_request: " << ocpp_response;
+                // transform response, inject action, send to associated EvseManager
+                types::iso15118::ResponseExiStreamStatus everest_response;
+                everest_response.status = conversions::to_everest_iso15118_status(ocpp_response.status);
+                everest_response.certificate_action = certificate_request.certificate_action;
+                if (not ocpp_response.exiResponse.get().empty()) {
+                    // since exi_response is an optional in the EVerest type we only set it when not empty
+                    everest_response.exi_response = ocpp_response.exiResponse.get();
+                }
+
+                this->r_extensions_15118.at(extensions_id)->call_set_get_certificate_response(everest_response);
+            });
+
+        extensions_id++;
+    }
+
     r_system->subscribe_firmware_update_status([this](const types::system::FirmwareUpdateStatus status) {
         this->charge_point->on_firmware_update_status_notification(
             status.request_id, conversions::to_ocpp_firmware_status_enum(status.firmware_update_status));

@@ -9,20 +9,20 @@ cmds:
           Set an ID that uniquely identifies the EVSE and the power outlet the
           vehicle is connected to 
         type: object
-        $ref: /iso15118_charger#/EVSEID
+        $ref: /iso15118#/EVSEID
       supported_energy_transfer_modes:
         description: Available energy transfer modes supported by the EVSE
         type: array
         items:
           description: The different energy modes supported by the SECC 
           type: object
-          $ref: /iso15118_charger#/SupportedEnergyMode
+          $ref: /iso15118#/SupportedEnergyMode
         minItems: 1
         maxItems: 6
       sae_j2847_mode:
         description: Charger is supporting SAE J2847 V2G/V2H version
         type: string
-        $ref: /iso15118_charger#/SaeJ2847BidiMode
+        $ref: /iso15118#/SaeJ2847BidiMode
       debug_mode:
         description: Enable/Disable debug mode
         type: boolean
@@ -34,7 +34,7 @@ cmds:
       physical_values:
         description: Set up initial physical values for a AC or DC charging session
         type: object
-        $ref: /iso15118_charger#/SetupPhysicalValues
+        $ref: /iso15118#/SetupPhysicalValues
   session_setup:
     description: At each session start this info should be sent to the module.
     arguments:
@@ -44,7 +44,7 @@ cmds:
         items:
           description: These are the payment options a SECC offers to the EVCC
           type: string
-          $ref: /iso15118_charger#/PaymentOption
+          $ref: /iso15118#/PaymentOption
         minItems: 1
         maxItems: 2
       supported_certificate_service:
@@ -53,16 +53,6 @@ cmds:
           connection to an SA for this purpose
         type: boolean
 # Response messages to vars:
-  certificate_response:
-    description: >-
-      This message is an async response to a previously published certificate_request.
-      The new/updated Contract Certificate (including the certificate chain) and the
-      corresponding encrypted private key are sent via the SECC to the EVCC.
-    arguments:
-      exi_stream_status:
-        description: The response raw EXI stream and the status from the CSMS
-        type: object
-        $ref: /iso15118_charger#/ResponseExiStreamStatus
   authorization_response:
     description: >-
       This message is an async response to a previously published require_auth_eim
@@ -133,28 +123,28 @@ cmds:
       maximum_limits:
         description: Maximum values (current, power and voltage) the EVSE can deliver
         type: object
-        $ref: /iso15118_charger#/DcEvseMaximumLimits
+        $ref: /iso15118#/DcEvseMaximumLimits
   update_dc_minimum_limits:
     description: Update the minimum limits. Call at least once during start up.
     arguments:
       minimum_limits:
         description: Minimum values (current and voltage) the EVSE can deliver
         type: object
-        $ref: /iso15118_charger#/DcEvseMinimumLimits
+        $ref: /iso15118#/DcEvseMinimumLimits
   update_isolation_status:
     description: Update the isolation condition 
     arguments:
       isolation_status:
         description: Result of the isolation monitoring
         type: string
-        $ref: /iso15118_charger#/IsolationStatus
+        $ref: /iso15118#/IsolationStatus
   update_dc_present_values:
     description: Update the present values from the DC powersupply
     arguments:
       present_voltage_current:
         description: Present voltage and current
         type: object
-        $ref: /iso15118_charger#/DcEvsePresentVoltageCurrent
+        $ref: /iso15118#/DcEvsePresentVoltageCurrent
   update_meter_info:
     description: Update meter info
     arguments:
@@ -171,7 +161,7 @@ cmds:
       error:
         description: The EVSE error enum
         type: string
-        $ref: /iso15118_charger#/EvseError
+        $ref: /iso15118#/EvseError
   reset_error:
     description: Reset all errors
 vars:
@@ -222,13 +212,13 @@ vars:
   selected_payment_option:
     description: This element is used for indicating the payment type
     type: string
-    $ref: /iso15118_charger#/PaymentOption
+    $ref: /iso15118#/PaymentOption
   requested_energy_transfer_mode:
     description:
       Selected energy transfer mode for charging that is requested by the
       EVCC.
     type: string
-    $ref: /iso15118_charger#/EnergyTransferMode
+    $ref: /iso15118#/EnergyTransferMode
   departure_time:
     description: >-
       Optional: [RFC3339 UTC] This element is used to indicate when the
@@ -289,7 +279,7 @@ vars:
   dc_ev_status:
     description: Current status of the EV
     type: object
-    $ref: /iso15118_charger#/DcEvStatus
+    $ref: /iso15118#/DcEvStatus
   dc_bulk_charging_complete:
     description: >-
       Optional: If set to TRUE, the EV indicates that bulk charge (approx.
@@ -303,24 +293,17 @@ vars:
   dc_ev_target_voltage_current:
     description: Target voltage and current requested by the EV
     type: object
-    $ref: /iso15118_charger#/DcEvTargetValues
+    $ref: /iso15118#/DcEvTargetValues
   dc_ev_maximum_limits:
     description:
       Maximum Values (current, power and voltage) supported and allowed
       by the EV
     type: object
-    $ref: /iso15118_charger#/DcEvMaximumLimits
+    $ref: /iso15118#/DcEvMaximumLimits
   dc_ev_remaining_time:
     description: Estimated or calculated time until bulk and full charge is complete
     type: object
-    $ref: /iso15118_charger#/DcEvRemainingTime
-  certificate_request:
-    description: >-
-      The vehicle requests the SECC to deliver the certificate that belong 
-      to the currently valid contract of the vehicle.
-      Response will be reported async via set_Get_Certificate_Response
-    type: object
-    $ref: /iso15118_charger#/RequestExiStreamSchema
+    $ref: /iso15118#/DcEvRemainingTime
   dlink_terminate:
     description: Terminate the data link and become UNMATCHED.
     type: "null"
@@ -335,13 +318,13 @@ vars:
       Debug_Lite - This request message provides a list of charging protocols
       supported by the EVCC
     type: object
-    $ref: /iso15118_charger#/AppProtocols
+    $ref: /iso15118#/AppProtocols
   v2g_messages:
     description: >-
       Debug - This element contains all V2G elements and should be used
       for debug purposes only
     type: object
-    $ref: /iso15118_charger#/V2gMessages
+    $ref: /iso15118#/V2gMessages
   selected_protocol:
     description: >-
       Debug - Contains the selected protocol
@@ -350,12 +333,12 @@ vars:
     description: >-
       Parameters that may be displayed on the EVSE (Soc, battery capacity)
     type: object
-    $ref: /iso15118_charger#/DisplayParameters
+    $ref: /iso15118#/DisplayParameters
   d20_dc_dynamic_charge_mode:
     description: >-
       The parameters the EVCC offers and sets for dynamic control mode
     type: object
-    $ref: /iso15118_charger#/DcChargeDynamicModeValues
+    $ref: /iso15118#/DcChargeDynamicModeValues
   dc_ev_present_voltage:
     description: Present Voltage measured from the EV
     type: number

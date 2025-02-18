@@ -112,8 +112,6 @@ This module makes use of the following commands of this interface:
   publishes the result via the `Provides: ocpp_generic <#provides-ocpp_generic>`_ interface. The duration of the composite schedule can  
   be configured by the configuration parameter **PublishChargingScheduleDurationS** of this module. The configuration parameter  
   **PublishChargingScheduleIntervalS** defines the interval to use to periodically retrieve and publish the composite schedules.
-* **set_get_certificate_response** to report that the charging station received a **DataTransfer.conf(Get15118EVCertificateResponse)** from  
-  the CSMS (EV Contract installation for Plug&Charge)
 * **external_ready_to_start_charging**: To signal that the module has started to establish an OCPP connection to the CSMS
 
 The interface is used to receive the following variables:
@@ -124,7 +122,6 @@ The interface is used to receive the following variables:
 * **limits** to obtain the current offered to the EV. If present, this is reported as part of a **MeterValues.req**
 * **session_event** to trigger **StatusNotification.req**, **StartTransaction.req**, and **StopTransaction.req** based on the reported event.  
   This signal drives the state machine and the transaction handling of libocpp.
-* **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 * **waiting_for_external_ready** to obtain the information that a module implementing this interface is waiting for an external ready signal
 * **ready** to obtain a ready signal from a module implementing this interface
 
@@ -263,6 +260,23 @@ This module makes use of the following commands of this interface:
 
 * **set_display_message** to set a message on the charging station's display. This is executed when the CSMS sends a  
   **DataTransfer.req(SetUserPrice)** message to the charging station.
+
+Requires: extensions_15118
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Interface**: `iso15118_extensions <../../interfaces/iso15118_extensions.yaml>`_
+
+This module optionally requires (0-128) implementations of this interface in order to share data between ISO15118 and OCPP modules. One  
+connection represents one ISO15118 module. 
+
+This module makes use of the following commands of this interface:
+
+* **set_get_certificate_response** to report that the charging station received a **DataTransfer.conf(Get15118EVCertificateResponse)** from  
+  the CSMS (EV Contract installation for Plug&Charge)
+
+The interface is used to receive the following variables:
+
+* **iso15118_certificate_request** to trigger a **DataTransfer.req(Get15118EVCertificateRequest)** as part of the Plug&Charge process
 
 Global Errors and Error Reporting
 ---------------------------------
