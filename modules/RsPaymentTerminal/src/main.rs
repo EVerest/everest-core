@@ -38,10 +38,10 @@ use generated::types::{
 };
 use generated::{
     get_config, AuthTokenProviderServiceSubscriber, BankSessionTokenProviderClientSubscriber,
-    BankTransactionSummaryProviderServiceSubscriber, Context, Module, ModulePublisher,
-    OnReadySubscriber, SessionCostClientSubscriber,
+    BankTransactionSummaryProviderServiceSubscriber, Context, EnableServiceSubscriber, Module,
+    ModulePublisher, OnReadySubscriber, SessionCostClientSubscriber,
 };
-use std::sync::{mpsc::channel, mpsc::Sender, Arc};
+use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
 use std::time::Duration;
 use std::{net::Ipv4Addr, str::FromStr};
 use zvt_feig_terminal::config::{Config, FeigConfig};
@@ -170,6 +170,9 @@ pub struct PaymentTerminalModule {
 
     /// If credit cards should be accepted
     accept_credit_cards: bool,
+
+    /// If module should try to read cards
+    enabled: Mutex<bool>,
 }
 
 impl PaymentTerminalModule {
@@ -198,6 +201,12 @@ impl PaymentTerminalModule {
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
             loop {
+                if !*self.enabled.lock().unwrap() {
+                    log::debug!("Reading is disabled, waiting...");
+                    std::thread::sleep(Duration::from_secs(1));
+                    continue;
+                }
+
                 match self.feig.read_card() {
                     Ok(card_info) => return Ok(card_info),
                     Err(e) => match e.downcast_ref::<Error>() {
@@ -309,6 +318,13 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
     }
 }
 
+impl EnableServiceSubscriber for PaymentTerminalModule {
+    fn enable_module(&self, _context: &Context, value: bool) -> ::everestrs::Result<()> {
+        *self.enabled.lock().unwrap() = value;
+        Ok(())
+    }
+}
+
 impl PaymentTerminalModule {}
 
 fn main() -> Result<()> {
@@ -335,9 +351,11 @@ fn main() -> Result<()> {
         feig: SyncFeig::new(pt_config),
         credit_cards_connectors: string_to_vec(&config.credit_card_connectors),
         accept_credit_cards: config.accept_credit_cards,
+        enabled: Mutex::new(true),
     });
 
     let _module = Module::new(
+        pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
