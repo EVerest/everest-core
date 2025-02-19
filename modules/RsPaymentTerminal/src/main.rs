@@ -191,7 +191,7 @@ impl PaymentTerminalModule {
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
             loop {
-                if !self.is_enabled() {
+                if self.was_configured() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
                     std::thread::sleep(Duration::from_secs(1));
                     continue;
@@ -214,16 +214,21 @@ impl PaymentTerminalModule {
         if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
                 let credit_card_connectors = self.connectors_for_card_type(CardType::BankCard);
-                if credit_card_connectors.is_empty() || token.is_none() {
+                if (self.was_configured() && credit_card_connectors.is_empty()) || token.is_none() {
                     None
                 } else {
                     self.feig.begin_transaction(token.as_ref().unwrap())?;
                     // Reuse the bank token as invoice token so we can use the
                     // invoice token later on to commit our transactions.
+                    let connectors = if credit_card_connectors.is_empty() {
+                        None
+                    } else {
+                        Some(credit_card_connectors)
+                    };
                     Some(ProvidedIdToken::new(
                         token.unwrap(),
                         AuthorizationType::BankCard,
-                        Some(credit_card_connectors),
+                        connectors,
                     ))
                 }
             }
@@ -278,6 +283,11 @@ impl PaymentTerminalModule {
                 transaction_data: Some(format!("{:06}", res.trace_number.unwrap_or_default())),
             })?;
         Ok(())
+    }
+
+    fn was_configured(&self) -> bool {
+        let map_guard = self.connector_to_card_type.lock().unwrap();
+        return !map_guard.is_empty();
     }
 
     fn is_enabled(&self) -> bool {
@@ -359,14 +369,10 @@ fn main() -> Result<()> {
 
     let (tx, rx) = channel();
 
-    let mut connector_to_card_type = HashMap::new();
-    connector_to_card_type.insert(1, vec![CardType::RfidCard, CardType::BankCard]);
-    connector_to_card_type.insert(2, vec![CardType::RfidCard, CardType::BankCard]);
-
     let pt_module = Arc::new(PaymentTerminalModule {
         tx,
         feig: SyncFeig::new(pt_config),
-        connector_to_card_type: Mutex::new(connector_to_card_type),
+        connector_to_card_type: Mutex::new(HashMap::new()),
     });
 
     let _module = Module::new(
@@ -500,6 +506,13 @@ mod tests {
     fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
         // Now test the successful execution.
         let parameters = [
+            (
+                CardInfo::Bank,
+                "my bank token",
+                true,
+                HashMap::new(),
+                None,
+            ),
             (
                 CardInfo::Bank,
                 "my bank token",
