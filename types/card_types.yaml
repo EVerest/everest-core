@@ -1,4 +1,4 @@
-description: Define Card Types
+description: Card Types
 types:
   CardType:
     description: types of cards for the payment terminal
