@@ -1,0 +1,16 @@
+description: This interface defines the control over payment terminal and reading different card types
+
+cmds:
+  enable_card_reading:
+    description: >-
+      Enables or disable card reading for given connector
+    arguments:
+      supported_cards:
+        description: Supported car types array
+        type: array
+        items:
+            type: string
+            $ref: /card_types#/CardType
+      connector_id:
+        description: Which connector 
+        type: integer
