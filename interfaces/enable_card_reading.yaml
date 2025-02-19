@@ -3,10 +3,10 @@ description: This interface defines the control over payment terminal and readin
 cmds:
   enable_card_reading:
     description: >-
-      Enables or disable card reading for given connector
+      Enables or disables card reading for given connector
     arguments:
       supported_cards:
-        description: Supported car types array
+        description: Supported card types array
         type: array
         items:
             type: string
