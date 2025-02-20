@@ -345,3 +345,9 @@ vars:
   meter_info_requested:
     description: The EV requested meter infos from the EVSE
     type: "null"
+  charging_needs:
+    description: >-
+      The 2.1 bidi charging requires this variable to be sent during the
+      'ScheduleExchangeReq' state machine
+    type: object
+    $ref: /iso15118#/ChargingNeeds
