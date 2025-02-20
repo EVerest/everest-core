@@ -32,7 +32,7 @@
 // insert your custom include headers here
 #include <tuple>
 
-#include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v2/charge_point.hpp>
 #include <transaction_handler.hpp>
 // ev@4bf81b14-a215-475c-a1d3-0a484ae48918:v1
 
@@ -103,7 +103,7 @@ public:
 
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
     // insert your public definitions here
-    std::unique_ptr<ocpp::v201::ChargePoint> charge_point;
+    std::unique_ptr<ocpp::v2::ChargePoint> charge_point;
     // ev@1fce4c5e-0ab8-41bb-90f7-14277703d2ac:v1
 
 protected:
@@ -164,10 +164,10 @@ private:
     void process_reservation_end(const int32_t evse_id, const int32_t connector_id);
 
     /// \brief This function publishes the given \p composite_schedules via the ocpp interface
-    void publish_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
+    void publish_charging_schedules(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules);
 
     /// \brief This function applies given \p composite_schedules for each connected evse_energy_sink
-    void set_external_limits(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules);
+    void set_external_limits(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules);
     // ev@211cfdbe-f69a-4cd6-a4ec-f8aaa3d1b6c8:v1
 };
 
