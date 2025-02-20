@@ -25,7 +25,7 @@ Implementation details
 ===========
 
 This section offers some additional information on driver implementation. The underlying HTTP communication functionality
-is mainly duplicated from other open source powermeter modules of EVerest to support a standarization for this interface
+is mainly duplicated from other open source powermeter modules of EVerest to support a standarization of this interface
 later on.
 
 Initialization
@@ -46,9 +46,9 @@ via MQTT.
 
 Start transaction
 ------------
-Starting a transaction is not possible if a transaction is already in progress. This will return TransactionRequestStatus::NOT_SUPPORTED.
-The same status type is also returned, if given evse_id does not match CI (which was already transfered in initialization phase) and if
-IEM-DCR is in error state. Please refer to TransactionStartResponse.error for distinguishing between the errors. Starting a charging
+Starting a transaction will terminate any other running transaction (if there is one). The status type TransactionRequestStatus::
+NOT_SUPPORTED is returned, if given evse_id does not match CI (which was already transfered in initialization phase) and if IEM-DCR
+is in error state. Please refer to retrurned TransactionStartResponse.error for distinguishing between them. Starting a charging
 transaction will engage POST /user and POST /receipt. Please note that IEM-DCR automatically handles signed data tuple pagination. So
 the only place for transaction id defined by the charging station is the OCMF ID attribute. It will be filled from this driver with  
 TransactionReq.identification_data. If this optional attribute is not given or empty, TransactionReq.transaction_id will be used
