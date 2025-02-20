@@ -23,7 +23,7 @@ parameter **DeviceModelConfigPath**. It shall point to the directory where the c
 * standardized
 * custom
 
-The `device model setup from libocpp <https://github.com/EVerest/libocpp/tree/main/config/v201/component_config>`_ serves as a good example. 
+The `device model setup from libocpp <https://github.com/EVerest/libocpp/tree/main/config/v2/component_config>`_ serves as a good example. 
 The split between the directories only has semantic reasons. The **standardized** directory usually does not need to be modified since it contains
 standardized components and variables that the specification refers to in its functional requirements. The **custom** directory is meant to be used
 for components that are custom for your specific charging station. Especially the number of EVSE and Connector components, as well as their

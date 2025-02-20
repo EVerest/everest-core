@@ -3,7 +3,7 @@
 
 #include <conversions.hpp>
 #include <generated/interfaces/ISO15118_charger/Implementation.hpp>
-#include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v2/messages/Authorize.hpp>
 
 #include "auth_token_validatorImpl.hpp"
 
@@ -23,7 +23,7 @@ auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedId
     if (provided_token.certificate.has_value()) {
         certificate_opt.emplace(provided_token.certificate.value());
     }
-    std::optional<std::vector<ocpp::v201::OCSPRequestData>> ocsp_request_data_opt;
+    std::optional<std::vector<ocpp::v2::OCSPRequestData>> ocsp_request_data_opt;
     if (provided_token.iso15118CertificateHashData.has_value()) {
         ocsp_request_data_opt =
             conversions::to_ocpp_ocsp_request_data_vector(provided_token.iso15118CertificateHashData.value());

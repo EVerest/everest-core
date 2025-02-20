@@ -44,7 +44,7 @@
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/charge_point.hpp>
 #include <ocpp/v16/types.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 using EvseConnectorMap = std::map<int32_t, std::map<int32_t, int32_t>>;
 using ClearedErrorId = std::string;

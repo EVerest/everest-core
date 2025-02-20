@@ -4,7 +4,7 @@
 #include <conversions.hpp>
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace module {
 namespace auth_validator {
@@ -29,18 +29,18 @@ types::authorization::ValidationResult
 auth_token_validatorImpl::validate_pnc_request(const types::authorization::ProvidedIdToken& provided_token) {
 
     // preparing payload for data_transfer_pnc_authorize
-    std::optional<std::vector<ocpp::v201::OCSPRequestData>> iso15118_certificate_hash_data_opt;
+    std::optional<std::vector<ocpp::v2::OCSPRequestData>> iso15118_certificate_hash_data_opt;
     if (provided_token.iso15118CertificateHashData.has_value()) {
-        std::vector<ocpp::v201::OCSPRequestData> iso15118_certificate_hash_data;
+        std::vector<ocpp::v2::OCSPRequestData> iso15118_certificate_hash_data;
         for (const auto& certificate_hash_data : provided_token.iso15118CertificateHashData.value()) {
-            ocpp::v201::OCSPRequestData v201_certificate_hash_data;
-            v201_certificate_hash_data.hashAlgorithm =
+            ocpp::v2::OCSPRequestData v2_certificate_hash_data;
+            v2_certificate_hash_data.hashAlgorithm =
                 conversions::to_ocpp_hash_algorithm_enum(certificate_hash_data.hashAlgorithm);
-            v201_certificate_hash_data.issuerKeyHash = certificate_hash_data.issuerKeyHash;
-            v201_certificate_hash_data.issuerNameHash = certificate_hash_data.issuerNameHash;
-            v201_certificate_hash_data.responderURL = certificate_hash_data.responderURL;
-            v201_certificate_hash_data.serialNumber = certificate_hash_data.serialNumber;
-            iso15118_certificate_hash_data.push_back(v201_certificate_hash_data);
+            v2_certificate_hash_data.issuerKeyHash = certificate_hash_data.issuerKeyHash;
+            v2_certificate_hash_data.issuerNameHash = certificate_hash_data.issuerNameHash;
+            v2_certificate_hash_data.responderURL = certificate_hash_data.responderURL;
+            v2_certificate_hash_data.serialNumber = certificate_hash_data.serialNumber;
+            iso15118_certificate_hash_data.push_back(v2_certificate_hash_data);
         }
         iso15118_certificate_hash_data_opt.emplace(iso15118_certificate_hash_data);
     }
