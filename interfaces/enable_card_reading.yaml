@@ -14,3 +14,6 @@ cmds:
       connector_id:
         description: Which connector 
         type: integer
+  allow_all_cards_for_every_connector:
+    description: >-
+      Enable all card types on each connector. This is default behavior on the startup
