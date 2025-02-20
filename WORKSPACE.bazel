@@ -55,6 +55,19 @@ load("@crate_index//:defs.bzl", "crate_repositories")
 
 crate_repositories()
 
+crates_repository(
+    name = "validate_crate_index",
+    cargo_lockfile = "//bazel/validate:Cargo.lock",
+    isolated = False,
+    manifests = [
+        "//bazel/validate:Cargo.toml",
+    ],
+)
+
+load("@validate_crate_index//:defs.bzl", validate_crate_repositories = "crate_repositories")
+
+validate_crate_repositories()
+
 load("//third-party/bazel:repos.bzl", "everest_framework_repos")
 
 everest_framework_repos()
