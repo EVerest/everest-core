@@ -1,0 +1,13 @@
+The following commits were made pursuant to the Developer Certificate of Origin, even though a Signed-off-by: was not included in the commit message.
+
+4141b5ae15b32f07e0ad23d10f5171b1a8687001 Added IEM-DCR module
+24956ac249613a8e81b126437d7a5d49f7ba8eb9 removed license file
+6c15947a0d1a1fa47443c78d6d19700b7a26619f removed custom coding style files
+ba47ec6460de511167b4429cdcdd7d26fe04f149 fixed findings of static code analysis
+784a491ee9dc14c9f78433221753e07e719da805 fixed bug: missing clear_error(...)
+d1426b000bdc6b593ae552a2bf6325af485dd13e Rework of helper_get_current_datetime(). Now the config is only read once at init and will fail there on parsing error.
+59475a5370670a0be256c2d6439295a72d9e05ca added const for variables containing intermediate calculations
+30e0884e1e3e381aaf5f2e9284db9a9d004803f7 adapted naming to coding style
+1f0289d87f08549550d2da94e90ae8b2e49028ef documentation updated
+7fe15aaba6d00424804fda000609d2aa616faa8d bug fixed: Sometimes charging transactions were not properly stopped before starting a new one
+f96391312fb8a24a5f7b0226bfdba8e385aaeb71 added more error recilience
