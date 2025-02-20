@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 void MessageDispatcher::dispatch_call(const json& call, bool triggered) {
     const auto message_type = conversions::string_to_messagetype(call.at(CALL_ACTION));
@@ -55,5 +55,5 @@ void MessageDispatcher::dispatch_call_error(const json& call_error) {
     this->message_queue.push_call_error(call_error);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

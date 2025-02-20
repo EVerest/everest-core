@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#ifndef V201_TYPES_HPP
-#define V201_TYPES_HPP
+#ifndef V2_TYPES_HPP
+#define V2_TYPES_HPP
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 #include <ostream>
 #include <string>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Contains all supported OCPP 2.0.1 message types
 enum class MessageType {
@@ -172,7 +172,7 @@ MessageType string_to_messagetype(const std::string& s);
 /// \returns an output stream with the MessageType written to
 std::ostream& operator<<(std::ostream& os, const MessageType& message_type);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif

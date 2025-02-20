@@ -3,14 +3,14 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
 namespace ocpp {
 class EvseSecurity;
 
-namespace v201 {
+namespace v2 {
 class DeviceModel;
 class ConnectivityManagerInterface;
 class ComponentStateManagerInterface;
@@ -29,7 +29,7 @@ struct GetBaseReportRequest;
 struct ResetRequest;
 
 typedef std::function<void(const ocpp::DateTime& currentTime)> TimeSyncCallback;
-typedef std::function<void(const ocpp::v201::BootNotificationResponse& boot_notification_response)>
+typedef std::function<void(const ocpp::v2::BootNotificationResponse& boot_notification_response)>
     BootNotificationCallback;
 typedef std::function<SetNetworkProfileStatusEnum(const int32_t configuration_slot,
                                                   const NetworkConnectionProfile& network_connection_profile)>
@@ -73,7 +73,7 @@ public:
 class Provisioning : public ProvisioningInterface {
 public:
     Provisioning(DeviceModel& device_model, MessageDispatcherInterface<MessageType>& message_dispatcher,
-                 MessageQueue<v201::MessageType>& message_queue, ConnectivityManagerInterface& connectivity_manager,
+                 MessageQueue<v2::MessageType>& message_queue, ConnectivityManagerInterface& connectivity_manager,
                  ComponentStateManagerInterface& component_state_manager, OcspUpdaterInterface& ocsp_updater,
                  EvseManagerInterface& evse_manager, EvseSecurity& evse_security,
 
@@ -99,7 +99,7 @@ public:
 private: // Members
     DeviceModel& device_model;
     MessageDispatcherInterface<MessageType>& message_dispatcher;
-    MessageQueue<v201::MessageType>& message_queue;
+    MessageQueue<v2::MessageType>& message_queue;
     ConnectivityManagerInterface& connectivity_manager;
     ComponentStateManagerInterface& component_state_manager;
     OcspUpdaterInterface& ocsp_updater;
@@ -133,9 +133,9 @@ private: // Functions
 
     void handle_boot_notification_response(CallResult<BootNotificationResponse> call_result);
     void handle_set_variables_req(Call<SetVariablesRequest> call);
-    void handle_get_variables_req(const EnhancedMessage<v201::MessageType>& message);
+    void handle_get_variables_req(const EnhancedMessage<v2::MessageType>& message);
     void handle_get_base_report_req(Call<GetBaseReportRequest> call);
-    void handle_get_report_req(const EnhancedMessage<v201::MessageType>& message);
+    void handle_get_report_req(const EnhancedMessage<v2::MessageType>& message);
     void handle_set_network_profile_req(Call<SetNetworkProfileRequest> call);
     void handle_reset_req(Call<ResetRequest> call);
 
@@ -157,5 +157,5 @@ private: // Functions
     set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
                            const bool allow_read_only);
 };
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

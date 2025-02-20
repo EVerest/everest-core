@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/init_device_model_db.hpp>
+#include <ocpp/v2/init_device_model_db.hpp>
 
 #include <cstdint>
 #include <fstream>
@@ -9,12 +9,12 @@
 #include <string>
 
 #include <everest/logging.hpp>
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v2/enums.hpp>
 
 const static std::string STANDARDIZED_COMPONENT_CONFIG_DIR = "standardized";
 const static std::string CUSTOM_COMPONENT_CONFIG_DIR = "custom";
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 // Forward declarations.
 static void check_integrity(const std::map<ComponentKey, std::vector<DeviceModelVariable>>& component_configs);
@@ -43,7 +43,7 @@ static std::string get_variable_name_for_logging(const DeviceModelVariable& vari
 InitDeviceModelDb::InitDeviceModelDb(const std::filesystem::path& database_path,
                                      const std::filesystem::path& migration_files_path) :
     common::DatabaseHandlerCommon(std::make_unique<common::DatabaseConnection>(database_path), migration_files_path,
-                                  MIGRATION_DEVICE_MODEL_FILE_VERSION_V201),
+                                  MIGRATION_DEVICE_MODEL_FILE_VERSION_V2),
     database_path(database_path),
     database_exists(std::filesystem::exists(database_path)) {
 }
@@ -1654,4 +1654,4 @@ static std::string get_variable_name_for_logging(const DeviceModelVariable& vari
     return variable_name;
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

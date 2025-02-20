@@ -5,11 +5,11 @@
 #define OCPP_NOTIFY_REPORT_REQUESTS_SPLITTER_HPP
 
 #include "ocpp/common/call_types.hpp"
-#include "ocpp/v201/messages/NotifyReport.hpp"
-#include "ocpp/v201/types.hpp"
+#include "ocpp/v2/messages/NotifyReport.hpp"
+#include "ocpp/v2/types.hpp"
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Utility class that is used to split NotifyReportRequest into several ones in case ReportData is too big.
 class NotifyReportRequestsSplitter {
@@ -39,18 +39,17 @@ private:
     size_t create_request_template_json_and_return_skeleton_size();
 
     // Create next call payload (with as many reportData items as possible)
-    json create_next_payload(const int& seq_no,
-                             std::vector<ocpp::v201::ReportData>::const_iterator& report_data_iterator,
-                             const std::vector<ocpp::v201::ReportData>::const_iterator& report_data_end,
+    json create_next_payload(const int& seq_no, std::vector<ocpp::v2::ReportData>::const_iterator& report_data_iterator,
+                             const std::vector<ocpp::v2::ReportData>::const_iterator& report_data_end,
                              const std::string& message_id);
 
     // Create next request payload (with as many reportData items as possible) to be contained in next call payload
-    static json create_next_report_data_json(std::vector<ocpp::v201::ReportData>::const_iterator& report_data_iterator,
-                                             const std::vector<ocpp::v201::ReportData>::const_iterator& report_data_end,
+    static json create_next_report_data_json(std::vector<ocpp::v2::ReportData>::const_iterator& report_data_iterator,
+                                             const std::vector<ocpp::v2::ReportData>::const_iterator& report_data_end,
                                              const size_t& remaining_size);
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif // OCPP_NOTIFY_REPORT_REQUESTS_SPLITTER_HPP

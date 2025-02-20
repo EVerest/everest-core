@@ -2,16 +2,16 @@
 // Copyright Pionix GmbH and Contributors to EVerest
 
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/evse.hpp>
-#include <ocpp/v201/evse_manager.hpp>
-#include <ocpp/v201/functional_blocks/reservation.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/evse.hpp>
+#include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/reservation.hpp>
 
-#include <ocpp/v201/messages/CancelReservation.hpp>
-#include <ocpp/v201/messages/ReservationStatusUpdate.hpp>
-#include <ocpp/v201/messages/ReserveNow.hpp>
+#include <ocpp/v2/messages/CancelReservation.hpp>
+#include <ocpp/v2/messages/ReservationStatusUpdate.hpp>
+#include <ocpp/v2/messages/ReserveNow.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 Reservation::Reservation(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                          EvseManagerInterface& evse_manager, ReserveNowCallback reserve_now_callback,
                          CancelReservationCallback cancel_reservation_callback,
@@ -199,4 +199,4 @@ void Reservation::send_reserve_now_rejected_response(const MessageId& unique_id,
     this->message_dispatcher.dispatch_call_result(call_result);
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

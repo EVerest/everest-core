@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 inline bool operator==(const EVSE& lhs, const EVSE& rhs) {
     return lhs.id == rhs.id and lhs.connectorId == rhs.connectorId;
@@ -67,5 +67,5 @@ inline bool operator<(const SetVariableData& lhs, const SetVariableData& rhs) {
     return lhs.component < rhs.component;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

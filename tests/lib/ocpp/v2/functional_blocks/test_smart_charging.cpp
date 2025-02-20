@@ -7,10 +7,10 @@
 #include "lib/ocpp/common/database_testing_utils.hpp"
 #include "message_dispatcher_mock.hpp"
 #include "ocpp/common/types.hpp"
-#include "ocpp/v201/ctrlr_component_variables.hpp"
-#include "ocpp/v201/device_model.hpp"
-#include "ocpp/v201/functional_blocks/smart_charging.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
+#include "ocpp/v2/ctrlr_component_variables.hpp"
+#include "ocpp/v2/device_model.hpp"
+#include "ocpp/v2/functional_blocks/smart_charging.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <filesystem>
@@ -27,8 +27,8 @@
 #include <evse_mock.hpp>
 #include <evse_security_mock.hpp>
 #include <ocpp/common/call_types.hpp>
-#include <ocpp/v201/evse.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/evse.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 #include <optional>
 
 #include "comparators.hpp"
@@ -36,10 +36,10 @@
 #include <sstream>
 #include <vector>
 
-#include <ocpp/v201/messages/ClearChargingProfile.hpp>
-#include <ocpp/v201/messages/GetChargingProfiles.hpp>
-#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
-#include <ocpp/v201/messages/SetChargingProfile.hpp>
+#include <ocpp/v2/messages/ClearChargingProfile.hpp>
+#include <ocpp/v2/messages/GetChargingProfiles.hpp>
+#include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/SetChargingProfile.hpp>
 
 using ::testing::_;
 using ::testing::ByMove;
@@ -48,7 +48,7 @@ using ::testing::MockFunction;
 using ::testing::Return;
 using ::testing::ReturnRef;
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 static const int NR_OF_EVSES = 2;
 static const int STATION_WIDE_ID = 0;
@@ -57,8 +57,8 @@ static const int DEFAULT_PROFILE_ID = 1;
 static const int DEFAULT_STACK_LEVEL = 1;
 static const int DEFAULT_REQUEST_ID = 1;
 static const std::string DEFAULT_TX_ID = "10c75ff7-74f5-44f5-9d01-f649f3ac7b78";
-const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-const static std::string CONFIG_PATH = "./resources/example_config/v201/component_config";
+const static std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
+const static std::string CONFIG_PATH = "./resources/example_config/v2/component_config";
 const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 
 class TestSmartCharging : public SmartCharging {
@@ -196,7 +196,7 @@ protected:
     }
 
     ChargingProfileCriterion create_charging_profile_criteria(
-        std::optional<std::vector<ocpp::v201::ChargingLimitSourceEnum>> sources = std::nullopt,
+        std::optional<std::vector<ocpp::v2::ChargingLimitSourceEnum>> sources = std::nullopt,
         std::optional<std::vector<int32_t>> ids = std::nullopt,
         std::optional<ChargingProfilePurposeEnum> purpose = std::nullopt,
         std::optional<int32_t> stack_level = std::nullopt) {
@@ -263,7 +263,7 @@ protected:
         std::unique_ptr<common::DatabaseConnection> database_connection =
             std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
         database_handler =
-            std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
+            std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
         database_handler->open_connection();
         device_model = device_model_test_helper.get_device_model();
         // Defaults
@@ -648,12 +648,12 @@ TEST_F(SmartChargingTest, K01FR28_WhenEvseDoesExistThenAccept) {
  *  and a new profile with the same stack level and different profile ID will be associated with an EVSE.
  * 2-7 - We return Valid for any other case, such as using the same EVSE or using the same profile ID.
  */
-class SmartChargingHandlerTestFixtureV201_FR52
+class SmartChargingHandlerTestFixtureV2_FR52
     : public SmartChargingTest,
       public ::testing::WithParamInterface<std::tuple<int, int, ProfileValidationResultEnum>> {};
 
-INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_FR52,
-                         SmartChargingHandlerTestFixtureV201_FR52,
+INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV2_Param_Test_Instantiate_FR52,
+                         SmartChargingHandlerTestFixtureV2_FR52,
                          testing::Values(std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL,
                                                          ProfileValidationResultEnum::DuplicateTxDefaultProfileFound),
                                          std::make_tuple(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL,
@@ -661,7 +661,7 @@ INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_F
                                          std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL + 1,
                                                          ProfileValidationResultEnum::Valid)));
 
-TEST_P(SmartChargingHandlerTestFixtureV201_FR52, K01FR52_TxDefaultProfileValidationV201Tests) {
+TEST_P(SmartChargingHandlerTestFixtureV2_FR52, K01FR52_TxDefaultProfileValidationV2Tests) {
     auto [added_profile_id, added_stack_level, expected] = GetParam();
     install_profile_on_evse(DEFAULT_EVSE_ID, DEFAULT_PROFILE_ID);
 
@@ -673,12 +673,12 @@ TEST_P(SmartChargingHandlerTestFixtureV201_FR52, K01FR52_TxDefaultProfileValidat
     EXPECT_THAT(sut, testing::Eq(expected));
 }
 
-class SmartChargingHandlerTestFixtureV201_FR53
+class SmartChargingHandlerTestFixtureV2_FR53
     : public SmartChargingTest,
       public ::testing::WithParamInterface<std::tuple<int, int, ProfileValidationResultEnum>> {};
 
-INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_FR53,
-                         SmartChargingHandlerTestFixtureV201_FR53,
+INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV2_Param_Test_Instantiate_FR53,
+                         SmartChargingHandlerTestFixtureV2_FR53,
                          testing::Values(std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL,
                                                          ProfileValidationResultEnum::DuplicateTxDefaultProfileFound),
                                          std::make_tuple(DEFAULT_PROFILE_ID, DEFAULT_STACK_LEVEL,
@@ -686,7 +686,7 @@ INSTANTIATE_TEST_SUITE_P(TxDefaultProfileValidationV201_Param_Test_Instantiate_F
                                          std::make_tuple(DEFAULT_PROFILE_ID + 1, DEFAULT_STACK_LEVEL + 1,
                                                          ProfileValidationResultEnum::Valid)));
 
-TEST_P(SmartChargingHandlerTestFixtureV201_FR53, K01FR53_TxDefaultProfileValidationV201Tests) {
+TEST_P(SmartChargingHandlerTestFixtureV2_FR53, K01FR53_TxDefaultProfileValidationV2Tests) {
     auto [added_profile_id, added_stack_level, expected] = GetParam();
     install_profile_on_evse(STATION_WIDE_ID, DEFAULT_PROFILE_ID);
 
@@ -1985,4 +1985,4 @@ TEST_F(SmartChargingTest, K01_ValidateTxProfile_EmptyChargingSchedule) {
     ASSERT_THAT(sut, testing::Eq(ProfileValidationResultEnum::ChargingProfileEmptyChargingSchedules));
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

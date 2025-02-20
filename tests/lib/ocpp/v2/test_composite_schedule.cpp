@@ -10,13 +10,13 @@
 #include "message_dispatcher_mock.hpp"
 #include "ocpp/common/constants.hpp"
 #include "ocpp/common/types.hpp"
-#include "ocpp/v201/ctrlr_component_variables.hpp"
-#include "ocpp/v201/device_model.hpp"
-#include "ocpp/v201/device_model_storage_sqlite.hpp"
-#include "ocpp/v201/functional_blocks/smart_charging.hpp"
-#include "ocpp/v201/init_device_model_db.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/utils.hpp"
+#include "ocpp/v2/ctrlr_component_variables.hpp"
+#include "ocpp/v2/device_model.hpp"
+#include "ocpp/v2/device_model_storage_sqlite.hpp"
+#include "ocpp/v2/functional_blocks/smart_charging.hpp"
+#include "ocpp/v2/init_device_model_db.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
+#include "ocpp/v2/utils.hpp"
 #include <algorithm>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -34,7 +34,7 @@
 #include <evse_mock.hpp>
 #include <evse_security_mock.hpp>
 #include <ocpp/common/call_types.hpp>
-#include <ocpp/v201/evse.hpp>
+#include <ocpp/v2/evse.hpp>
 
 #include <optional>
 
@@ -46,7 +46,7 @@
 #include <sstream>
 #include <vector>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 static const int NR_OF_EVSES = 1;
 static const int STATION_WIDE_ID = 0;
 static const int DEFAULT_EVSE_ID = 1;
@@ -56,8 +56,8 @@ constexpr int32_t DEFAULT_LIMIT_AMPERE = 57;
 constexpr int32_t DEFAULT_LIMIT_WATT = 55612;
 constexpr int32_t DEFAULT_NR_PHASES = 3;
 static const std::string DEFAULT_TX_ID = "f1522902-1170-416f-8e43-9e3bce28fde7";
-static const std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-static const std::string CONFIG_PATH = "./resources/example_config/v201/component_config";
+static const std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
+static const std::string CONFIG_PATH = "./resources/example_config/v2/component_config";
 static const std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 
 using ::testing::MockFunction;
@@ -74,7 +74,7 @@ public:
     using SmartCharging::SmartCharging;
 };
 
-class CompositeScheduleTestFixtureV201 : public DatabaseTestingUtils {
+class CompositeScheduleTestFixtureV2 : public DatabaseTestingUtils {
 protected:
     void SetUp() override {
     }
@@ -154,7 +154,7 @@ protected:
         ON_CALL(*database_handler, get_charging_profiles_for_evse(evse_id)).WillByDefault(testing::Return(profiles));
     }
 
-    CompositeScheduleTestFixtureV201() :
+    CompositeScheduleTestFixtureV2() :
         evse_manager(std::make_unique<EvseManagerFake>(NR_OF_EVSES)),
         device_model_test_helper(),
         mock_dispatcher(),
@@ -189,7 +189,7 @@ protected:
         std::unique_ptr<common::DatabaseConnection> database_connection =
             std::make_unique<common::DatabaseConnection>(fs::path("/tmp/ocpp201") / "cp.db");
         this->database_handler =
-            std::make_unique<DatabaseHandlerFake>(std::move(database_connection), MIGRATION_FILES_LOCATION_V201);
+            std::make_unique<DatabaseHandlerFake>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
         database_handler->open_connection();
         return std::make_unique<TestSmartCharging>(*device_model, *this->evse_manager, connectivity_manager,
                                                    mock_dispatcher, *database_handler,
@@ -216,7 +216,7 @@ protected:
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };
 
-TEST_F(CompositeScheduleTestFixtureV201, NoSchedulesPresent) {
+TEST_F(CompositeScheduleTestFixtureV2, NoSchedulesPresent) {
     const DateTime start_time = ocpp::DateTime("2024-01-02T00:00:00");
     const DateTime end_time = ocpp::DateTime("2024-01-02T01:00:00");
 
@@ -236,7 +236,7 @@ TEST_F(CompositeScheduleTestFixtureV201, NoSchedulesPresent) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, ExtraSeconds) {
+TEST_F(CompositeScheduleTestFixtureV2, ExtraSeconds) {
     this->load_charging_profiles_for_evse("singles/Absolute_301.json", STATION_WIDE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-01-01T12:01:59");
@@ -262,7 +262,7 @@ TEST_F(CompositeScheduleTestFixtureV201, ExtraSeconds) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, FoundationTest_Grid) {
+TEST_F(CompositeScheduleTestFixtureV2, FoundationTest_Grid) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/grid/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -380,7 +380,7 @@ TEST_F(CompositeScheduleTestFixtureV201, FoundationTest_Grid) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, LayeredTest_SameStartTime) {
+TEST_F(CompositeScheduleTestFixtureV2, LayeredTest_SameStartTime) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/layered/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -465,7 +465,7 @@ TEST_F(CompositeScheduleTestFixtureV201, LayeredTest_SameStartTime) {
     }
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, LayeredRecurringTest_FutureStartTime) {
+TEST_F(CompositeScheduleTestFixtureV2, LayeredRecurringTest_FutureStartTime) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/layered_recurring/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -490,7 +490,7 @@ TEST_F(CompositeScheduleTestFixtureV201, LayeredRecurringTest_FutureStartTime) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, LayeredTest_PreviousStartTime) {
+TEST_F(CompositeScheduleTestFixtureV2, LayeredTest_PreviousStartTime) {
     this->load_charging_profiles_for_evse("singles/TXProfile_Absolute_Start18-04.json", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -517,7 +517,7 @@ TEST_F(CompositeScheduleTestFixtureV201, LayeredTest_PreviousStartTime) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, LayeredRecurringTest_PreviousStartTime) {
+TEST_F(CompositeScheduleTestFixtureV2, LayeredRecurringTest_PreviousStartTime) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/layered_recurring/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -556,7 +556,7 @@ TEST_F(CompositeScheduleTestFixtureV201, LayeredRecurringTest_PreviousStartTime)
 /**
  * Calculate Composite Schedule
  */
-TEST_F(CompositeScheduleTestFixtureV201, ValidateBaselineProfileVector) {
+TEST_F(CompositeScheduleTestFixtureV2, ValidateBaselineProfileVector) {
     const DateTime start_time = ocpp::DateTime("2024-01-17T18:01:00");
     const DateTime end_time = ocpp::DateTime("2024-01-18T06:00:00");
     std::vector<ChargingProfile> profiles = SmartChargingTestUtils::get_baseline_profile_vector();
@@ -591,7 +591,7 @@ TEST_F(CompositeScheduleTestFixtureV201, ValidateBaselineProfileVector) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, RelativeProfile_minutia) {
+TEST_F(CompositeScheduleTestFixtureV2, RelativeProfile_minutia) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/relative/", DEFAULT_EVSE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-05-17T05:00:00");
@@ -617,7 +617,7 @@ TEST_F(CompositeScheduleTestFixtureV201, RelativeProfile_minutia) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, RelativeProfile_e2e) {
+TEST_F(CompositeScheduleTestFixtureV2, RelativeProfile_e2e) {
     const DateTime start_time = ocpp::DateTime("2024-05-17T05:00:00");
     const DateTime end_time = ocpp::DateTime("2024-05-17T06:01:00");
 
@@ -647,7 +647,7 @@ TEST_F(CompositeScheduleTestFixtureV201, RelativeProfile_e2e) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, DemoCaseOne_17th) {
+TEST_F(CompositeScheduleTestFixtureV2, DemoCaseOne_17th) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/case_one/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -680,7 +680,7 @@ TEST_F(CompositeScheduleTestFixtureV201, DemoCaseOne_17th) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, DemoCaseOne_19th) {
+TEST_F(CompositeScheduleTestFixtureV2, DemoCaseOne_19th) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/case_one/", DEFAULT_EVSE_ID);
 
     evse_manager->open_transaction(DEFAULT_EVSE_ID, DEFAULT_TX_ID);
@@ -709,7 +709,7 @@ TEST_F(CompositeScheduleTestFixtureV201, DemoCaseOne_19th) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MaxOverridesHigherLimits) {
+TEST_F(CompositeScheduleTestFixtureV2, MaxOverridesHigherLimits) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/max/0/", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/max/1/", DEFAULT_EVSE_ID);
 
@@ -738,7 +738,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MaxOverridesHigherLimits) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MaxOverridenByLowerLimits) {
+TEST_F(CompositeScheduleTestFixtureV2, MaxOverridenByLowerLimits) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/max/0/", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/max/1/", DEFAULT_EVSE_ID);
 
@@ -767,7 +767,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MaxOverridenByLowerLimits) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, ExternalOverridesHigherLimits) {
+TEST_F(CompositeScheduleTestFixtureV2, ExternalOverridesHigherLimits) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/external/0/", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/external/1/", DEFAULT_EVSE_ID);
 
@@ -796,7 +796,7 @@ TEST_F(CompositeScheduleTestFixtureV201, ExternalOverridesHigherLimits) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, ExternalOverridenByLowerLimits) {
+TEST_F(CompositeScheduleTestFixtureV2, ExternalOverridenByLowerLimits) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/external/0/", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/external/1/", DEFAULT_EVSE_ID);
 
@@ -825,7 +825,7 @@ TEST_F(CompositeScheduleTestFixtureV201, ExternalOverridenByLowerLimits) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, OCTT_TC_K_41_CS) {
+TEST_F(CompositeScheduleTestFixtureV2, OCTT_TC_K_41_CS) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/OCCT_TC_K_41_CS/0/", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/OCCT_TC_K_41_CS/1/", DEFAULT_EVSE_ID);
 
@@ -871,7 +871,7 @@ TEST_F(CompositeScheduleTestFixtureV201, OCTT_TC_K_41_CS) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleStationMaxForEvse0) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleStationMaxForEvse0) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_401.json", STATION_WIDE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-08-21T08:00:00");
@@ -896,7 +896,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleStationMaxForEvse0) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithSingleEvse) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleTxDefaultProfileForEvse0WithSingleEvse) {
     this->load_charging_profiles_for_evse("singles/Relative_303.json", STATION_WIDE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-01-02T08:00:00");
@@ -920,7 +920,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithSingl
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithMultipleEvses_Current) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleTxDefaultProfileForEvse0WithMultipleEvses_Current) {
     this->load_charging_profiles_for_evse("singles/Relative_303.json", STATION_WIDE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-01-02T08:00:00");
@@ -948,7 +948,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithMulti
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithMultipleEvses_Power) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleTxDefaultProfileForEvse0WithMultipleEvses_Power) {
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", STATION_WIDE_ID);
 
     constexpr int32_t nr_of_evses = 2;
@@ -979,7 +979,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileForEvse0WithMulti
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileWithStationMaxForEvse0WithSingleEvse) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleTxDefaultProfileWithStationMaxForEvse0WithSingleEvse) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_401.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_303.json", DEFAULT_EVSE_ID);
 
@@ -1005,7 +1005,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileWithStationMaxFor
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileWithStationMaxForEvse0WithMultipleEvses) {
+TEST_F(CompositeScheduleTestFixtureV2, SingleTxDefaultProfileWithStationMaxForEvse0WithMultipleEvses) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_401.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_303.json", DEFAULT_EVSE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_303.json", 2);
@@ -1037,7 +1037,7 @@ TEST_F(CompositeScheduleTestFixtureV201, SingleTxDefaultProfileWithStationMaxFor
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, TxProfilePerEvseWithMultipleEvses) {
+TEST_F(CompositeScheduleTestFixtureV2, TxProfilePerEvseWithMultipleEvses) {
     this->load_charging_profiles_for_evse("singles/Recurring_Daily_301.json", DEFAULT_EVSE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_303.json", 2);
 
@@ -1070,7 +1070,7 @@ TEST_F(CompositeScheduleTestFixtureV201, TxProfilePerEvseWithMultipleEvses) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_16A_1P) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_16A_1P) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1094,7 +1094,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_16A_1P) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_16A_3P) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_16A_3P) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1121,7 +1121,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_16A_3P) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_1P) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_10A_1P) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1145,7 +1145,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_1P) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_3P) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_10A_3P) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1171,7 +1171,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_3P) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_1P_RequestPower) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_10A_1P_RequestPower) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1195,7 +1195,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_1P_RequestPow
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_3P_RequestPower) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingCurrentAndPower_10A_3P_RequestPower) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/TXDefaultProfile_25_Watt.json", DEFAULT_EVSE_ID);
 
@@ -1221,7 +1221,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingCurrentAndPower_10A_3P_RequestPow
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, TxProfilePerEvseWithMultipleEvses_DifferentNrOfPhases) {
+TEST_F(CompositeScheduleTestFixtureV2, TxProfilePerEvseWithMultipleEvses_DifferentNrOfPhases) {
     this->load_charging_profiles_for_evse("singles/Recurring_Daily_302_phase_limit.json", DEFAULT_EVSE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_302_phase_limit.json", 2);
 
@@ -1251,7 +1251,7 @@ TEST_F(CompositeScheduleTestFixtureV201, TxProfilePerEvseWithMultipleEvses_Diffe
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, MixingNumberOfPhasesOnSingleEvse) {
+TEST_F(CompositeScheduleTestFixtureV2, MixingNumberOfPhasesOnSingleEvse) {
     this->load_charging_profiles_for_evse("singles/ChargingStationMaxProfile_24_Ampere.json", STATION_WIDE_ID);
     this->load_charging_profiles_for_evse("singles/Relative_302_phase_limit.json", DEFAULT_EVSE_ID);
 
@@ -1278,7 +1278,7 @@ TEST_F(CompositeScheduleTestFixtureV201, MixingNumberOfPhasesOnSingleEvse) {
     // clang-format on
 }
 
-TEST_F(CompositeScheduleTestFixtureV201, NoGapsWithSequentialProfiles) {
+TEST_F(CompositeScheduleTestFixtureV2, NoGapsWithSequentialProfiles) {
     this->load_charging_profiles_for_evse(BASE_JSON_PATH + "/no_gap/", STATION_WIDE_ID);
 
     const DateTime start_time = ocpp::DateTime("2024-01-02T08:00:00");
@@ -1301,4 +1301,4 @@ TEST_F(CompositeScheduleTestFixtureV201, NoGapsWithSequentialProfiles) {
                 ));
     // clang-format on
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

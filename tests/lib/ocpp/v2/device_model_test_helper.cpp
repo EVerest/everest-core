@@ -4,10 +4,10 @@
 #include "device_model_test_helper.hpp"
 
 #include <ocpp/common/database/database_connection.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 DeviceModelTestHelper::DeviceModelTestHelper(const std::string& database_path, const std::string& migration_files_path,
                                              const std::string& config_path) :
     database_path(database_path),
@@ -222,4 +222,4 @@ std::unique_ptr<DeviceModel> DeviceModelTestHelper::create_device_model(const bo
 
     return dm;
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

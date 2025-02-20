@@ -8,11 +8,11 @@
 
 #include "component_state_manager.hpp"
 #include "database_handler.hpp"
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 #include <optional>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Enum for ConnectorEvents
 enum class ConnectorEvent {
@@ -74,5 +74,5 @@ public:
     void restore_connector_operative_status();
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

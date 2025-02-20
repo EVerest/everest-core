@@ -2,14 +2,14 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#ifndef OCPP_V201_OCPP_ENUMS_HPP
-#define OCPP_V201_OCPP_ENUMS_HPP
+#ifndef OCPP_V2_OCPP_ENUMS_HPP
+#define OCPP_V2_OCPP_ENUMS_HPP
 
 #include <iosfwd>
 #include <string>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 // from: AuthorizeRequest
 enum class IdTokenEnum {
@@ -2036,7 +2036,7 @@ UpdateFirmwareStatusEnum string_to_update_firmware_status_enum(const std::string
 /// given output stream \p os \returns an output stream with the UpdateFirmwareStatusEnum written to
 std::ostream& operator<<(std::ostream& os, const UpdateFirmwareStatusEnum& update_firmware_status_enum);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_OCPP_ENUMS_HPP
+#endif // OCPP_V2_OCPP_ENUMS_HPP

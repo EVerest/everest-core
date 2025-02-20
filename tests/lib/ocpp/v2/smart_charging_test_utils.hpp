@@ -2,9 +2,9 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
 #include "everest/logging.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/profile.hpp"
-#include "ocpp/v201/utils.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
+#include "ocpp/v2/profile.hpp"
+#include "ocpp/v2/utils.hpp"
 #include <chrono>
 #include <filesystem>
 #include <iomanip>
@@ -15,9 +15,9 @@
 #include <sstream>
 #include <vector>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
-static const std::string BASE_JSON_PATH = std::string(TEST_PROFILES_LOCATION_V201) + "/json";
+static const std::string BASE_JSON_PATH = std::string(TEST_PROFILES_LOCATION_V2) + "/json";
 
 inline bool operator==(const ChargingSchedulePeriod& a, const ChargingSchedulePeriod& b) {
     auto diff = std::abs(a.startPeriod - b.startPeriod);
@@ -235,4 +235,4 @@ public:
     }
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/transaction.hpp>
+#include <ocpp/v2/functional_blocks/transaction.hpp>
 
-#include <ocpp/v201/connectivity_manager.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/evse_manager.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/utils.hpp>
 
-#include <ocpp/v201/functional_blocks/authorization.hpp>
-#include <ocpp/v201/functional_blocks/availability.hpp>
-#include <ocpp/v201/functional_blocks/smart_charging.hpp>
-#include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
+#include <ocpp/v2/functional_blocks/authorization.hpp>
+#include <ocpp/v2/functional_blocks/availability.hpp>
+#include <ocpp/v2/functional_blocks/smart_charging.hpp>
+#include <ocpp/v2/functional_blocks/tariff_and_cost.hpp>
 
-#include <ocpp/v201/messages/GetTransactionStatus.hpp>
-#include <ocpp/v201/messages/TransactionEvent.hpp>
+#include <ocpp/v2/messages/GetTransactionStatus.hpp>
+#include <ocpp/v2/messages/TransactionEvent.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 TransactionBlock::TransactionBlock(
     MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
     ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
-    MessageQueue<v201::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
+    MessageQueue<v2::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
     AuthorizationInterface& authorization, AvailabilityInterface& availability, SmartChargingInterface& smart_charging,
     TariffAndCostInterface& tariff_and_cost, StopTransactionCallback stop_transaction_callback,
     PauseChargingCallback pause_charging_callback, std::optional<TransactionEventCallback> transaction_event_callback,
@@ -113,7 +113,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
     const auto transaction = enhanced_transaction->get_transaction();
     const auto transaction_id = enhanced_transaction->transactionId.get();
 
-    std::optional<std::vector<ocpp::v201::MeterValue>> meter_values = std::nullopt;
+    std::optional<std::vector<ocpp::v2::MeterValue>> meter_values = std::nullopt;
     try {
         meter_values = std::make_optional(utils::get_meter_values_with_measurands_applied(
             this->database_handler.transaction_metervalues_get_all(enhanced_transaction->transactionId.get()),
@@ -136,7 +136,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
 
     // E07.FR.02 The field idToken is provided when the authorization of the transaction has been ended
     const std::optional<IdToken> transaction_id_token =
-        trigger_reason == ocpp::v201::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
+        trigger_reason == ocpp::v2::TriggerReasonEnum::StopAuthorized ? id_token : std::nullopt;
 
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, enhanced_transaction->get_transaction(),
                                 trigger_reason, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
@@ -364,4 +364,4 @@ void TransactionBlock::handle_get_transaction_status(const Call<GetTransactionSt
     ocpp::CallResult<GetTransactionStatusResponse> call_result(response, call.uniqueId);
     this->message_dispatcher.dispatch_call_result(call_result);
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

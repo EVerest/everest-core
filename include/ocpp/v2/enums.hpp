@@ -2,13 +2,13 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // Manually added enums for OCPP, for the auto-generated ones see 'ocpp_enums.hpp'
 
-#ifndef OCPP_V201_ENUMS_HPP
-#define OCPP_V201_ENUMS_HPP
+#ifndef OCPP_V2_ENUMS_HPP
+#define OCPP_V2_ENUMS_HPP
 
 #include <string>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 enum class VariableMonitorType {
     HardWiredMonitor,
@@ -38,7 +38,7 @@ constexpr int32_t MIN = Danger;
 constexpr int32_t MAX = Debug;
 } // namespace MonitoringLevelSeverity
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_ENUMS_HPP
+#endif // OCPP_V2_ENUMS_HPP

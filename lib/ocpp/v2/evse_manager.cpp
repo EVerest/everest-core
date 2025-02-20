@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/evse_manager.hpp>
+#include <ocpp/v2/evse_manager.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 using EvseIteratorImpl = VectorOfUniquePtrIterator<EvseInterface>;
 
@@ -116,5 +116,5 @@ void set_evse_connectors_unavailable(EvseInterface& evse, bool persist) {
     }
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

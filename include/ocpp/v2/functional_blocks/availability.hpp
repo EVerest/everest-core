@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/messages/ChangeAvailability.hpp>
+#include <ocpp/v2/messages/ChangeAvailability.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModel;
 class EvseManagerInterface;
 class ComponentStateManagerInterface;
@@ -153,4 +153,4 @@ private: // Functions
     void set_connector_operative_status(int32_t evse_id, int32_t connector_id, OperationalStatusEnum new_status,
                                         bool persist);
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

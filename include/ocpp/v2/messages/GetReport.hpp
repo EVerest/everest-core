@@ -2,18 +2,18 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#ifndef OCPP_V201_GETREPORT_HPP
-#define OCPP_V201_GETREPORT_HPP
+#ifndef OCPP_V2_GETREPORT_HPP
+#define OCPP_V2_GETREPORT_HPP
 
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Contains a OCPP GetReport message
 struct GetReportRequest : public ocpp::Message {
@@ -58,7 +58,7 @@ void from_json(const json& j, GetReportResponse& k);
 /// \returns an output stream with the GetReportResponse written to
 std::ostream& operator<<(std::ostream& os, const GetReportResponse& k);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_GETREPORT_HPP
+#endif // OCPP_V2_GETREPORT_HPP

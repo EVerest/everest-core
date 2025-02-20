@@ -1,8 +1,8 @@
-#include <ocpp/v201/charge_point_callbacks.hpp>
+#include <ocpp/v2/charge_point_callbacks.hpp>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) const {
     bool valid =
@@ -90,4 +90,4 @@ bool Callbacks::all_callbacks_valid(std::shared_ptr<DeviceModel> device_model) c
 
     return valid;
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

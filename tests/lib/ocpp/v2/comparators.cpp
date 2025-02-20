@@ -9,8 +9,7 @@ bool operator==(const ::ocpp::CertificateHashDataType& a, const ::ocpp::Certific
     return a.serialNumber == b.serialNumber && a.issuerKeyHash == b.issuerKeyHash &&
            a.issuerNameHash == b.issuerNameHash && a.hashAlgorithm == b.hashAlgorithm;
 }
-bool operator==(const ::ocpp::v201::GetCertificateStatusRequest& a,
-                const ::ocpp::v201::GetCertificateStatusRequest& b) {
+bool operator==(const ::ocpp::v2::GetCertificateStatusRequest& a, const ::ocpp::v2::GetCertificateStatusRequest& b) {
     return a.ocspRequestData.serialNumber == b.ocspRequestData.serialNumber &&
            a.ocspRequestData.issuerKeyHash == b.ocspRequestData.issuerKeyHash &&
            a.ocspRequestData.issuerNameHash == b.ocspRequestData.issuerNameHash &&
@@ -20,10 +19,10 @@ bool operator==(const ::ocpp::v201::GetCertificateStatusRequest& a,
 
 } // namespace testing::internal
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 bool operator==(const ChargingProfile& a, const ChargingProfile& b) {
     return a.chargingProfileKind == b.chargingProfileKind && a.chargingProfilePurpose == b.chargingProfilePurpose &&
            a.id == b.id && a.stackLevel == b.stackLevel;
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

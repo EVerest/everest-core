@@ -5,9 +5,9 @@
 
 #include "gmock/gmock.h"
 
-#include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v2/ocsp_updater.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class OcspUpdaterMock : public OcspUpdaterInterface {
 public:
     virtual ~OcspUpdaterMock() {
@@ -16,4 +16,4 @@ public:
     MOCK_METHOD(void, stop, ());
     MOCK_METHOD(void, trigger_ocsp_cache_update, ());
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

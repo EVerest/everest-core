@@ -5,10 +5,10 @@
 
 #include "gmock/gmock.h"
 
-#include <ocpp/v201/functional_blocks/smart_charging.hpp>
-#include <ocpp/v201/messages/SetChargingProfile.hpp>
+#include <ocpp/v2/functional_blocks/smart_charging.hpp>
+#include <ocpp/v2/messages/SetChargingProfile.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class SmartChargingMock : public SmartChargingInterface {
 public:
     MOCK_METHOD(void, handle_message, (const ocpp::EnhancedMessage<MessageType>& message));
@@ -21,4 +21,4 @@ public:
     MOCK_METHOD(ProfileValidationResultEnum, conform_and_validate_profile,
                 (ChargingProfile & profile, int32_t evse_id, AddChargingProfileSource source_of_request));
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

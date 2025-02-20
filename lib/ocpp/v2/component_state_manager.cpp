@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/component_state_manager.hpp>
+#include <ocpp/v2/component_state_manager.hpp>
 #include <utility>
 
 using QueryExecutionException = ocpp::common::QueryExecutionException;
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 ComponentStateManagerInterface::~ComponentStateManagerInterface() {
 }
@@ -341,4 +341,4 @@ void ComponentStateManager::send_status_notification_single_connector(int32_t ev
     this->send_status_notification_single_connector_internal(evse_id, connector_id, false, true);
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

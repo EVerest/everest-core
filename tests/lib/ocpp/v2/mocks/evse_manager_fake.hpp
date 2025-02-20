@@ -6,9 +6,9 @@
 #include <gmock/gmock.h>
 
 #include <evse_mock.hpp>
-#include <ocpp/v201/evse_manager.hpp>
+#include <ocpp/v2/evse_manager.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 class EvseManagerFake : public EvseManagerInterface {
 private:
@@ -115,4 +115,4 @@ public:
     }
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

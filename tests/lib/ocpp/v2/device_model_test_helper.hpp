@@ -3,9 +3,9 @@
 
 /**
  * @file device_model_test_helper.hpp
- * @brief @copybrief ocpp::v201::DeviceModelTestHelper
+ * @brief @copybrief ocpp::v2::DeviceModelTestHelper
  *
- * @class ocpp::v201::DeviceModelTestHelper
+ * @class ocpp::v2::DeviceModelTestHelper
  * @brief Helper for tests where the device model is needed.
  *
  * If the device model is stored in memory, a database connection must be kept open at all times to prevent the
@@ -16,10 +16,10 @@
 
 #include <memory>
 
-#include <ocpp/v201/init_device_model_db.hpp>
+#include <ocpp/v2/init_device_model_db.hpp>
 
-const static std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-const static std::string CONFIG_PATH = "./resources/example_config/v201/component_config";
+const static std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
+const static std::string CONFIG_PATH = "./resources/example_config/v2/component_config";
 const static std::string DEVICE_MODEL_DB_IN_MEMORY_PATH = "file::memory:?cache=shared";
 
 namespace ocpp {
@@ -27,7 +27,7 @@ namespace common {
 class DatabaseConnection;
 }
 
-namespace v201 {
+namespace v2 {
 class DeviceModel;
 
 class DeviceModelTestHelper {
@@ -122,5 +122,5 @@ private:
     ///
     std::unique_ptr<DeviceModel> create_device_model(const bool init = true);
 };
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

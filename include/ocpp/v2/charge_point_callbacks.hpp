@@ -3,22 +3,22 @@
 #include <cstdint>
 #include <memory>
 
-#include <ocpp/v201/connectivity_manager.hpp>
-#include <ocpp/v201/device_model.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/v2/device_model.hpp>
 
-#include <ocpp/v201/messages/BootNotification.hpp>
-#include <ocpp/v201/messages/ClearDisplayMessage.hpp>
-#include <ocpp/v201/messages/DataTransfer.hpp>
-#include <ocpp/v201/messages/GetDisplayMessages.hpp>
-#include <ocpp/v201/messages/GetLog.hpp>
-#include <ocpp/v201/messages/RequestStartTransaction.hpp>
-#include <ocpp/v201/messages/ReserveNow.hpp>
-#include <ocpp/v201/messages/SetDisplayMessage.hpp>
-#include <ocpp/v201/messages/TransactionEvent.hpp>
-#include <ocpp/v201/messages/UnlockConnector.hpp>
-#include <ocpp/v201/messages/UpdateFirmware.hpp>
+#include <ocpp/v2/messages/BootNotification.hpp>
+#include <ocpp/v2/messages/ClearDisplayMessage.hpp>
+#include <ocpp/v2/messages/DataTransfer.hpp>
+#include <ocpp/v2/messages/GetDisplayMessages.hpp>
+#include <ocpp/v2/messages/GetLog.hpp>
+#include <ocpp/v2/messages/RequestStartTransaction.hpp>
+#include <ocpp/v2/messages/ReserveNow.hpp>
+#include <ocpp/v2/messages/SetDisplayMessage.hpp>
+#include <ocpp/v2/messages/TransactionEvent.hpp>
+#include <ocpp/v2/messages/UnlockConnector.hpp>
+#include <ocpp/v2/messages/UpdateFirmware.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 struct Callbacks {
     /// @addtogroup ocpp201_callbacks OCPP 2.0.1 callbacks
     /// Callbacks will call be called when necessary and must be implemented by the calling class.
@@ -112,7 +112,7 @@ struct Callbacks {
     std::function<void()> set_charging_profiles_callback;
 
     /// \brief  Callback for when a bootnotification response is received
-    std::optional<std::function<void(const ocpp::v201::BootNotificationResponse& boot_notification_response)>>
+    std::optional<std::function<void(const ocpp::v2::BootNotificationResponse& boot_notification_response)>>
         boot_notification_callback;
 
     /// \brief Callback function that can be used to get (human readable) customer information based on the given
@@ -170,4 +170,4 @@ struct Callbacks {
 
     /// @} // End group
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

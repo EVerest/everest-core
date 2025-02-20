@@ -2,7 +2,7 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
+#include <ocpp/v2/messages/ClearVariableMonitoring.hpp>
 
 #include <optional>
 #include <ostream>
@@ -11,7 +11,7 @@
 using json = nlohmann::json;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 std::string ClearVariableMonitoringRequest::get_type() const {
     return "ClearVariableMonitoring";
@@ -81,5 +81,5 @@ std::ostream& operator<<(std::ostream& os, const ClearVariableMonitoringResponse
     return os;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

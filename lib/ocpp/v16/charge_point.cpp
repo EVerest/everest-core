@@ -50,16 +50,16 @@ IdTagInfo ChargePoint::authorize_id_token(CiString<20> id_token) {
     return this->charge_point->authorize_id_token(id_token);
 }
 
-ocpp::v201::AuthorizeResponse ChargePoint::data_transfer_pnc_authorize(
+ocpp::v2::AuthorizeResponse ChargePoint::data_transfer_pnc_authorize(
 
     const std::string& emaid, const std::optional<std::string>& certificate,
-    const std::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data) {
+    const std::optional<std::vector<ocpp::v2::OCSPRequestData>>& iso15118_certificate_hash_data) {
     return this->charge_point->data_transfer_pnc_authorize(emaid, certificate, iso15118_certificate_hash_data);
 }
 
 void ChargePoint::data_transfer_pnc_get_15118_ev_certificate(
     const int32_t connector_id, const std::string& exi_request, const std::string& iso15118_schema_version,
-    const ocpp::v201::CertificateActionEnum& certificate_action) {
+    const ocpp::v2::CertificateActionEnum& certificate_action) {
 
     this->charge_point->data_transfer_pnc_get_15118_ev_certificate(connector_id, exi_request, iso15118_schema_version,
                                                                    certificate_action);
@@ -290,8 +290,8 @@ void ChargePoint::register_connection_state_changed_callback(const std::function
 
 void ChargePoint::register_get_15118_ev_certificate_response_callback(
     const std::function<void(const int32_t connector,
-                             const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
-                             const ocpp::v201::CertificateActionEnum& certificate_action)>& callback) {
+                             const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+                             const ocpp::v2::CertificateActionEnum& certificate_action)>& callback) {
     this->charge_point->register_get_15118_ev_certificate_response_callback(callback);
 }
 

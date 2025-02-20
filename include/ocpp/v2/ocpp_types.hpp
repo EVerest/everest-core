@@ -2,8 +2,8 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#ifndef OCPP_V201_OCPP_TYPES_HPP
-#define OCPP_V201_OCPP_TYPES_HPP
+#ifndef OCPP_V2_OCPP_TYPES_HPP
+#define OCPP_V2_OCPP_TYPES_HPP
 
 #include <string>
 
@@ -11,10 +11,10 @@
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 using CustomData = nlohmann::json;
 
@@ -967,7 +967,7 @@ void from_json(const json& j, Firmware& k);
 std::ostream& operator<<(std::ostream& os, const Firmware& k);
 
 struct RequiredComponentVariable : ComponentVariable {};
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_OCPP_TYPES_HPP
+#endif // OCPP_V2_OCPP_TYPES_HPP

@@ -7,7 +7,7 @@
 
 #include <ocpp/common/message_dispatcher.hpp>
 
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 
 class MockMessageDispatcher : public ocpp::MessageDispatcherInterface<MessageType> {
 public:

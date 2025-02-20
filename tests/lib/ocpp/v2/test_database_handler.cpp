@@ -3,21 +3,21 @@
 
 #include "comparators.hpp"
 #include "database_testing_utils.hpp"
-#include "ocpp/v201/enums.hpp"
-#include "ocpp/v201/messages/GetChargingProfiles.hpp"
-#include "ocpp/v201/ocpp_enums.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
+#include "ocpp/v2/enums.hpp"
+#include "ocpp/v2/messages/GetChargingProfiles.hpp"
+#include "ocpp/v2/ocpp_enums.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ocpp/v201/database_handler.hpp>
+#include <ocpp/v2/database_handler.hpp>
 #include <optional>
 
 using namespace ocpp;
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 
 const int STATION_WIDE_ID = 0;
 const int DEFAULT_EVSE_ID = 1;
@@ -25,7 +25,7 @@ const int DEFAULT_EVSE_ID = 1;
 class DatabaseHandlerTest : public DatabaseTestingUtils {
 public:
     DatabaseHandler database_handler{std::make_unique<DatabaseConnection>("file::memory:?cache=shared"),
-                                     std::filesystem::path(MIGRATION_FILES_LOCATION_V201)};
+                                     std::filesystem::path(MIGRATION_FILES_LOCATION_V2)};
 
     DatabaseHandlerTest() {
         this->database_handler.open_connection();

@@ -8,10 +8,10 @@
 #include <openssl/sha.h>
 
 #include <ocpp/common/utils.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/utils.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 namespace utils {
 
 std::vector<MeasurandEnum> get_measurands_vec(const std::string& measurands_csv) {
@@ -211,5 +211,5 @@ std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string
 }
 
 } // namespace utils
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

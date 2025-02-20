@@ -7,16 +7,16 @@
 #include <map>
 #include <memory>
 
-#include <ocpp/v201/average_meter_values.hpp>
-#include <ocpp/v201/component_state_manager.hpp>
-#include <ocpp/v201/connector.hpp>
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/transaction.hpp>
+#include <ocpp/v2/average_meter_values.hpp>
+#include <ocpp/v2/component_state_manager.hpp>
+#include <ocpp/v2/connector.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/transaction.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 enum class CurrentPhaseType {
     AC,
@@ -303,5 +303,5 @@ public:
         boost::asio::io_service& io_service);
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

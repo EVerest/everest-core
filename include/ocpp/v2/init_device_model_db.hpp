@@ -3,10 +3,10 @@
 
 ///
 /// @file init_device_model_db.hpp
-/// @brief @copybrief ocpp::v201::InitDeviceModelDb///
-/// @details @copydetails ocpp::v201::InitDeviceModelDb
+/// @brief @copybrief ocpp::v2::InitDeviceModelDb///
+/// @details @copydetails ocpp::v2::InitDeviceModelDb
 ///
-/// @class ocpp::v201::InitDeviceModelDb
+/// @class ocpp::v2::InitDeviceModelDb
 /// @brief Class to initialize the device model db using the component config files
 ///
 /// This class will read the device model config files and put them in the device model database.
@@ -36,9 +36,9 @@
 #include <filesystem>
 
 #include <ocpp/common/database/database_handler_common.hpp>
-#include <ocpp/v201/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 ///
 /// \brief Class that holds a component.
 ///
@@ -453,4 +453,4 @@ protected: // Functions
     ///
     virtual void init_sql() override;
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

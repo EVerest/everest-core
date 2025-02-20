@@ -2,10 +2,10 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <everest/logging.hpp>
-#include <ocpp/v201/notify_report_requests_splitter.hpp>
+#include <ocpp/v2/notify_report_requests_splitter.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 const std::string NotifyReportRequestsSplitter::MESSAGE_TYPE =
     conversions::messagetype_to_string(MessageType::NotifyReport);
@@ -38,8 +38,8 @@ std::vector<json> NotifyReportRequestsSplitter::create_call_payloads() {
 }
 
 json NotifyReportRequestsSplitter::create_next_report_data_json(
-    std::vector<ocpp::v201::ReportData>::const_iterator& report_data_iterator,
-    const std::vector<ocpp::v201::ReportData>::const_iterator& report_data_end, const size_t& remaining_size) {
+    std::vector<ocpp::v2::ReportData>::const_iterator& report_data_iterator,
+    const std::vector<ocpp::v2::ReportData>::const_iterator& report_data_end, const size_t& remaining_size) {
 
     if (report_data_iterator == report_data_end) {
         return json::array();
@@ -69,8 +69,8 @@ json NotifyReportRequestsSplitter::create_next_report_data_json(
 }
 
 json NotifyReportRequestsSplitter::create_next_payload(
-    const int& seq_no, std::vector<ocpp::v201::ReportData>::const_iterator& report_data_iterator,
-    const std::vector<ocpp::v201::ReportData>::const_iterator& report_data_end, const std::string& message_id) {
+    const int& seq_no, std::vector<ocpp::v2::ReportData>::const_iterator& report_data_iterator,
+    const std::vector<ocpp::v2::ReportData>::const_iterator& report_data_end, const std::string& message_id) {
 
     json call_base{MessageTypeId::CALL, message_id, MESSAGE_TYPE};
 
@@ -108,5 +108,5 @@ size_t NotifyReportRequestsSplitter::create_request_template_json_and_return_ske
            std::string{R"(,"reportData":)"}.size();
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

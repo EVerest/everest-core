@@ -5,9 +5,9 @@
 
 #include "gmock/gmock.h"
 
-#include <ocpp/v201/database_handler.hpp>
+#include <ocpp/v2/database_handler.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DatabaseHandlerMock : public DatabaseHandlerInterface {
 public:
     MOCK_METHOD(void, authorization_cache_insert_entry,
@@ -72,4 +72,4 @@ public:
     MOCK_METHOD(ChargingLimitSourceEnum, get_charging_limit_source_for_profile, (const int profile_id));
     MOCK_METHOD(std::unique_ptr<common::SQLiteStatementInterface>, new_statement, (const std::string& sql));
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModel;
 class AuthorizationInterface;
 class ConnectivityManagerInterface;
@@ -46,7 +46,7 @@ public:
     /// \param charging_state   The new charging state
     virtual void
     on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
-                           const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
+                           const DateTime& timestamp, const TriggerReasonEnum trigger_reason,
                            const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                            const std::optional<IdToken>& group_id_token, const std::optional<int32_t>& reservation_id,
                            const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state) = 0;
@@ -69,12 +69,10 @@ public:
 
     // Functional Block E: Transactions
     virtual void transaction_event_req(const TransactionEventEnum& event_type, const DateTime& timestamp,
-                                       const ocpp::v201::Transaction& transaction,
-                                       const ocpp::v201::TriggerReasonEnum& trigger_reason, const int32_t seq_no,
-                                       const std::optional<int32_t>& cable_max_current,
-                                       const std::optional<ocpp::v201::EVSE>& evse,
-                                       const std::optional<ocpp::v201::IdToken>& id_token,
-                                       const std::optional<std::vector<ocpp::v201::MeterValue>>& meter_value,
+                                       const Transaction& transaction, const TriggerReasonEnum& trigger_reason,
+                                       const int32_t seq_no, const std::optional<int32_t>& cable_max_current,
+                                       const std::optional<EVSE>& evse, const std::optional<IdToken>& id_token,
+                                       const std::optional<std::vector<MeterValue>>& meter_value,
                                        const std::optional<int32_t>& number_of_phases_used, const bool offline,
                                        const std::optional<int32_t>& reservation_id,
                                        const bool initiated_by_trigger_message = false) = 0;
@@ -88,7 +86,7 @@ class TransactionBlock : public TransactionInterface {
 public:
     TransactionBlock(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                      ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
-                     MessageQueue<v201::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
+                     MessageQueue<v2::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
                      AuthorizationInterface& authorization, AvailabilityInterface& availability,
                      SmartChargingInterface& smart_charging, TariffAndCostInterface& tariff_and_cost,
                      StopTransactionCallback stop_transaction_callback, PauseChargingCallback pause_charging_callback,
@@ -125,7 +123,7 @@ private: // Members
     DeviceModel& device_model;
     ConnectivityManagerInterface& connectivity_manager;
     EvseManagerInterface& evse_manager;
-    MessageQueue<v201::MessageType>& message_queue;
+    MessageQueue<v2::MessageType>& message_queue;
     DatabaseHandlerInterface& database_handler;
     AuthorizationInterface& authorization;
     AvailabilityInterface& availability;
@@ -147,7 +145,7 @@ private: // Functions
     /* OCPP message handlers */
 
     // Functional Block E: Transaction
-    void handle_transaction_event_response(const EnhancedMessage<v201::MessageType>& message);
+    void handle_transaction_event_response(const EnhancedMessage<v2::MessageType>& message);
     void handle_get_transaction_status(const Call<GetTransactionStatusRequest> call);
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

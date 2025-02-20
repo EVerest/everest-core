@@ -24,7 +24,7 @@ namespace {{namespace}} {
 {%- for type in parsed_types %}
 {% if not type.name.endswith('Request') and not type.name.endswith('Response') %}
 
-{% if type.name == "CustomData" and namespace == "v201" %}
+{% if type.name == "CustomData" and namespace == "v2" %}
     using CustomData = nlohmann::json;
 {% else %}
 struct {{type.name}} {
@@ -36,7 +36,7 @@ struct {{type.name}} {
 {% endfor %}
 };
 {% endif %}
-{% if not (type.name == "CustomData" and namespace == "v201") %}
+{% if not (type.name == "CustomData" and namespace == "v2") %}
     /// \brief Conversion from a given {{ type.name }} \p k to a given json object \p j
     void to_json(json& j, const {{ type.name }}& k);
 
@@ -52,7 +52,7 @@ struct {{type.name}} {
 {% endfor %}
 {%- endif %}
 {% if last %}
-{% if namespace == "v201" %}
+{% if namespace == "v2" %}
     struct RequiredComponentVariable : ComponentVariable {};
 {% endif %}
 } // namespace {{namespace}}

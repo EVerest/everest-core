@@ -4,13 +4,13 @@
 #include <utility>
 
 #include <everest/logging.hpp>
-#include <ocpp/v201/connector.hpp>
+#include <ocpp/v2/connector.hpp>
 
 using QueryExecutionException = ocpp::common::QueryExecutionException;
 using RequiredEntryNotFoundException = ocpp::common::RequiredEntryNotFoundException;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 namespace conversions {
 
@@ -102,5 +102,5 @@ ConnectorStatusEnum Connector::get_effective_connector_status() {
     return this->component_state_manager->get_connector_effective_status(this->evse_id, this->connector_id);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

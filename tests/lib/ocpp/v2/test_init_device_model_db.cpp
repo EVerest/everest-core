@@ -3,27 +3,26 @@
 
 #include <gtest/gtest.h>
 
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 #define private public
 // database_exists must be set with this test, but std::filesystem::exists is hard to stub, so this way we can set it
 // in the test.
-#include <ocpp/v201/init_device_model_db.hpp>
+#include <ocpp/v2/init_device_model_db.hpp>
 #undef private
 
 #include <lib/ocpp/common/database_testing_utils.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 class InitDeviceModelDbTest : public DatabaseTestingUtils {
 protected:
     const std::string DATABASE_PATH = "file::memory:?cache=shared";
-    const std::string MIGRATION_FILES_PATH = "./resources/v201/device_model_migration_files";
-    const std::string CONFIGS_PATH = "./resources/config/v201/component_config";
-    const std::string CONFIGS_PATH_CHANGED = "./resources/config/v201/changed/component_config";
-    const std::string CONFIGS_PATH_REQUIRED_NO_VALUE =
-        "./resources/config/v201/wrong/component_config_required_no_value";
-    const std::string CONFIGS_PATH_WRONG_VALUE_TYPE = "./resources/config/v201/wrong/component_config_wrong_value_type";
+    const std::string MIGRATION_FILES_PATH = "./resources/v2/device_model_migration_files";
+    const std::string CONFIGS_PATH = "./resources/config/v2/component_config";
+    const std::string CONFIGS_PATH_CHANGED = "./resources/config/v2/changed/component_config";
+    const std::string CONFIGS_PATH_REQUIRED_NO_VALUE = "./resources/config/v2/wrong/component_config_required_no_value";
+    const std::string CONFIGS_PATH_WRONG_VALUE_TYPE = "./resources/config/v2/wrong/component_config_wrong_value_type";
 
 public:
     InitDeviceModelDbTest() {
@@ -421,8 +420,8 @@ TEST_F(InitDeviceModelDbTest, wrong_config_path) {
 
 TEST_F(InitDeviceModelDbTest, default_device_model_config) {
     // Test if the default device model config is correct and will create a valid database with valid values.
-    const static std::string MIGRATION_FILES_PATH_DEFAULT = "./resources/v201/device_model_migration_files";
-    const static std::string CONFIG_PATH_DEFAULT = "./resources/example_config/v201/component_config";
+    const static std::string MIGRATION_FILES_PATH_DEFAULT = "./resources/v2/device_model_migration_files";
+    const static std::string CONFIG_PATH_DEFAULT = "./resources/example_config/v2/component_config";
     InitDeviceModelDb db(DATABASE_PATH, MIGRATION_FILES_PATH_DEFAULT);
     EXPECT_NO_THROW(db.initialize_database(CONFIG_PATH_DEFAULT, true));
 }
@@ -865,4 +864,4 @@ void InitDeviceModelDbTest::set_attribute_source(const std::string& component_na
     }
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

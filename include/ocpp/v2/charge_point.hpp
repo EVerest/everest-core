@@ -11,23 +11,23 @@
 
 #include <ocpp/common/charging_station_base.hpp>
 
-#include <ocpp/v201/average_meter_values.hpp>
-#include <ocpp/v201/charge_point_callbacks.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/ocsp_updater.hpp>
-#include <ocpp/v201/types.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/average_meter_values.hpp>
+#include <ocpp/v2/charge_point_callbacks.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/ocsp_updater.hpp>
+#include <ocpp/v2/types.hpp>
+#include <ocpp/v2/utils.hpp>
 
-#include <ocpp/v201/messages/Authorize.hpp>
-#include <ocpp/v201/messages/DataTransfer.hpp>
-#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
-#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/Authorize.hpp>
+#include <ocpp/v2/messages/DataTransfer.hpp>
+#include <ocpp/v2/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v2/messages/GetCompositeSchedule.hpp>
 
 #include "component_state_manager.hpp"
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class AuthorizationInterface;
 class AvailabilityInterface;
@@ -126,7 +126,7 @@ public:
     /// \param charging_state   The new charging state
     virtual void
     on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
-                           const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
+                           const DateTime& timestamp, const TriggerReasonEnum trigger_reason,
                            const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                            const std::optional<IdToken>& group_id_token, const std::optional<int32_t>& reservation_id,
                            const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state) = 0;
@@ -353,7 +353,7 @@ private:
     std::unique_ptr<RemoteTransactionControlInterface> remote_transaction_control;
 
     // utility
-    std::shared_ptr<MessageQueue<v201::MessageType>> message_queue;
+    std::shared_ptr<MessageQueue<v2::MessageType>> message_queue;
     std::shared_ptr<DatabaseHandler> database_handler;
 
     // states
@@ -434,7 +434,7 @@ private:
     }
 
 protected:
-    void handle_message(const EnhancedMessage<v201::MessageType>& message);
+    void handle_message(const EnhancedMessage<v2::MessageType>& message);
     void clear_invalid_charging_profiles();
 
 public:
@@ -456,7 +456,7 @@ public:
     /// \param callbacks Callbacks that will be registered for ChargePoint
     ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure, std::shared_ptr<DeviceModel> device_model,
                 std::shared_ptr<DatabaseHandler> database_handler,
-                std::shared_ptr<MessageQueue<v201::MessageType>> message_queue, const std::string& message_log_path,
+                std::shared_ptr<MessageQueue<v2::MessageType>> message_queue, const std::string& message_log_path,
                 const std::shared_ptr<EvseSecurity> evse_security, const Callbacks& callbacks);
 
     /// \brief Construct a new ChargePoint object
@@ -520,7 +520,7 @@ public:
     on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) override;
 
     void on_transaction_started(const int32_t evse_id, const int32_t connector_id, const std::string& session_id,
-                                const DateTime& timestamp, const ocpp::v201::TriggerReasonEnum trigger_reason,
+                                const DateTime& timestamp, const TriggerReasonEnum trigger_reason,
                                 const MeterValue& meter_start, const std::optional<IdToken>& id_token,
                                 const std::optional<IdToken>& group_id_token,
                                 const std::optional<int32_t>& reservation_id,
@@ -616,5 +616,5 @@ public:
     }
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

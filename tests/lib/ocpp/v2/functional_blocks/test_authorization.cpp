@@ -4,9 +4,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <ocpp/v201/functional_blocks/authorization.hpp>
+#include <ocpp/v2/functional_blocks/authorization.hpp>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
 
 #include "connectivity_manager_mock.hpp"
 #include "device_model_test_helper.hpp"
@@ -14,12 +14,12 @@
 #include "message_dispatcher_mock.hpp"
 #include "mocks/database_handler_mock.hpp"
 
-#include <ocpp/v201/messages/Authorize.hpp>
-#include <ocpp/v201/messages/ClearCache.hpp>
-#include <ocpp/v201/messages/GetLocalListVersion.hpp>
-#include <ocpp/v201/messages/SendLocalList.hpp>
+#include <ocpp/v2/messages/Authorize.hpp>
+#include <ocpp/v2/messages/ClearCache.hpp>
+#include <ocpp/v2/messages/GetLocalListVersion.hpp>
+#include <ocpp/v2/messages/SendLocalList.hpp>
 
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 using ::testing::_;
 using ::testing::InSequence;
 using ::testing::Invoke;
@@ -33,7 +33,7 @@ protected: // Members
     MockMessageDispatcher mock_dispatcher;
     DeviceModel* device_model;
     ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
-    ::testing::NiceMock<ocpp::v201::DatabaseHandlerMock> database_handler_mock;
+    ::testing::NiceMock<ocpp::v2::DatabaseHandlerMock> database_handler_mock;
     ocpp::EvseSecurityMock evse_security;
     std::unique_ptr<Authorization> authorization;
 

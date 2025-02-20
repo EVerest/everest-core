@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
 #include <ocpp/common/message_dispatcher.hpp>
-#include <ocpp/v201/functional_blocks/display_message.hpp>
+#include <ocpp/v2/functional_blocks/display_message.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModel;
 class EvseManagerInterface;
 class MeterValuesInterface;
@@ -78,4 +78,4 @@ private: // Functions
     ///
     bool is_cost_enabled() const;
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

@@ -5,9 +5,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <ocpp/v201/component_state_manager.hpp>
+#include <ocpp/v2/component_state_manager.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 namespace {
 
@@ -472,4 +472,4 @@ TEST_F(ComponentStateManagerTest, test_send_status_notification_single_connector
     state_mgr.send_status_notification_changed_connectors();
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

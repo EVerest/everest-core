@@ -4,10 +4,10 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ocpp/v201/notify_report_requests_splitter.hpp>
+#include <ocpp/v2/notify_report_requests_splitter.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class NotifyReportRequestsSplitterTest : public ::testing::Test {
     int message_count = 0;
@@ -160,5 +160,5 @@ TEST_F(NotifyReportRequestsSplitterTest, test_splits_contains_at_least_one_repor
     }
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

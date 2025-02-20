@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <evse_security_mock.hpp>
-#include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v2/ocsp_updater.hpp>
 
 namespace ocpp {
 
@@ -25,7 +25,7 @@ ACTION_P2(SignalCallsCompleteVoid, semaphore) {
 
 class ChargePointMock {
 public:
-    MOCK_METHOD(v201::GetCertificateStatusResponse, get_certificate_status, (v201::GetCertificateStatusRequest), ());
+    MOCK_METHOD(v2::GetCertificateStatusResponse, get_certificate_status, (v2::GetCertificateStatusRequest), ());
 };
 
 class OcspUpdaterTest : public ::testing::Test {
@@ -80,22 +80,22 @@ protected:
         certificate_hash_data3.serialNumber = "serial3";
         this->example_hash_data.push_back(certificate_hash_data3);
 
-        v201::GetCertificateStatusRequest example_get_cert_status_request_1;
-        example_get_cert_status_request_1.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA256;
+        v2::GetCertificateStatusRequest example_get_cert_status_request_1;
+        example_get_cert_status_request_1.ocspRequestData.hashAlgorithm = v2::HashAlgorithmEnum::SHA256;
         example_get_cert_status_request_1.ocspRequestData.issuerNameHash = "issuerHash1";
         example_get_cert_status_request_1.ocspRequestData.issuerKeyHash = "issuerKey1";
         example_get_cert_status_request_1.ocspRequestData.serialNumber = "serial1";
         example_get_cert_status_request_1.ocspRequestData.responderURL = "responder1";
         this->example_status_requests.push_back(example_get_cert_status_request_1);
-        v201::GetCertificateStatusRequest example_get_cert_status_request_2;
-        example_get_cert_status_request_2.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA384;
+        v2::GetCertificateStatusRequest example_get_cert_status_request_2;
+        example_get_cert_status_request_2.ocspRequestData.hashAlgorithm = v2::HashAlgorithmEnum::SHA384;
         example_get_cert_status_request_2.ocspRequestData.issuerNameHash = "issuerHash2";
         example_get_cert_status_request_2.ocspRequestData.issuerKeyHash = "issuerKey2";
         example_get_cert_status_request_2.ocspRequestData.serialNumber = "serial2";
         example_get_cert_status_request_2.ocspRequestData.responderURL = "responder2";
         this->example_status_requests.push_back(example_get_cert_status_request_2);
-        v201::GetCertificateStatusRequest example_get_cert_status_request_3;
-        example_get_cert_status_request_3.ocspRequestData.hashAlgorithm = v201::HashAlgorithmEnum::SHA512;
+        v2::GetCertificateStatusRequest example_get_cert_status_request_3;
+        example_get_cert_status_request_3.ocspRequestData.hashAlgorithm = v2::HashAlgorithmEnum::SHA512;
         example_get_cert_status_request_3.ocspRequestData.issuerNameHash = "issuerHash3";
         example_get_cert_status_request_3.ocspRequestData.issuerKeyHash = "issuerKey3";
         example_get_cert_status_request_3.ocspRequestData.serialNumber = "serial3";
@@ -106,12 +106,12 @@ protected:
     void TearDown() override {
     }
 
-    v201::cert_status_func status_update;
+    v2::cert_status_func status_update;
     std::shared_ptr<EvseSecurityMock> evse_security;
     std::shared_ptr<ChargePointMock> charge_point;
 
     std::vector<OCSPRequestData> example_ocsp_data;
-    std::vector<v201::GetCertificateStatusRequest> example_status_requests;
+    std::vector<v2::GetCertificateStatusRequest> example_status_requests;
     std::vector<CertificateHashDataType> example_hash_data;
 
     boost::interprocess::interprocess_semaphore calls_complete = boost::interprocess::interprocess_semaphore(0);
@@ -119,12 +119,12 @@ protected:
 
 /// \brief Tests a successful update for multiple certs on boot
 TEST_F(OcspUpdaterTest, test_success_boot_many) {
-    auto ocsp_updater = std::make_unique<v201::OcspUpdater>(this->evse_security, this->status_update);
+    auto ocsp_updater = std::make_unique<v2::OcspUpdater>(this->evse_security, this->status_update);
 
     testing::Sequence seq;
-    v201::GetCertificateStatusResponse response_success;
+    v2::GetCertificateStatusResponse response_success;
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
-    response_success.status = v201::GetCertificateStatusEnum::Accepted;
+    response_success.status = v2::GetCertificateStatusEnum::Accepted;
 
     EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
@@ -163,17 +163,17 @@ TEST_F(OcspUpdaterTest, test_success_boot_many) {
 
 /// \brief Tests retry logic on CSMS failure to update, multiple certs
 TEST_F(OcspUpdaterTest, test_retry_boot_many) {
-    auto ocsp_updater = std::make_unique<v201::OcspUpdater>(this->evse_security, this->status_update,
-                                                            std::chrono::hours(167), std::chrono::seconds(0));
+    auto ocsp_updater = std::make_unique<v2::OcspUpdater>(this->evse_security, this->status_update,
+                                                          std::chrono::hours(167), std::chrono::seconds(0));
 
     testing::Sequence seq;
-    v201::GetCertificateStatusResponse response_success;
+    v2::GetCertificateStatusResponse response_success;
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
-    response_success.status = v201::GetCertificateStatusEnum::Accepted;
-    v201::GetCertificateStatusResponse response_fail_status;
-    response_fail_status.status = v201::GetCertificateStatusEnum::Failed;
-    v201::GetCertificateStatusResponse response_fail_empty;
-    response_fail_empty.status = v201::GetCertificateStatusEnum::Accepted;
+    response_success.status = v2::GetCertificateStatusEnum::Accepted;
+    v2::GetCertificateStatusResponse response_fail_status;
+    response_fail_status.status = v2::GetCertificateStatusEnum::Failed;
+    v2::GetCertificateStatusResponse response_fail_empty;
+    response_fail_empty.status = v2::GetCertificateStatusEnum::Accepted;
 
     EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
@@ -235,12 +235,12 @@ TEST_F(OcspUpdaterTest, test_retry_boot_many) {
 /// \brief Tests certificates are re-verified over time
 TEST_F(OcspUpdaterTest, test_reverify_logic) {
     auto ocsp_updater =
-        std::make_unique<v201::OcspUpdater>(this->evse_security, this->status_update, std::chrono::seconds(0));
+        std::make_unique<v2::OcspUpdater>(this->evse_security, this->status_update, std::chrono::seconds(0));
 
     testing::Sequence seq;
-    v201::GetCertificateStatusResponse response_success;
+    v2::GetCertificateStatusResponse response_success;
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
-    response_success.status = v201::GetCertificateStatusEnum::Accepted;
+    response_success.status = v2::GetCertificateStatusEnum::Accepted;
 
     EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
@@ -283,12 +283,12 @@ TEST_F(OcspUpdaterTest, test_reverify_logic) {
 
 /// \brief Tests triggering an update before the deadline
 TEST_F(OcspUpdaterTest, test_trigger) {
-    auto ocsp_updater = std::make_unique<v201::OcspUpdater>(this->evse_security, this->status_update);
+    auto ocsp_updater = std::make_unique<v2::OcspUpdater>(this->evse_security, this->status_update);
 
     testing::Sequence seq;
-    v201::GetCertificateStatusResponse response_success;
+    v2::GetCertificateStatusResponse response_success;
     response_success.ocspResult = "EXAMPLE OCSP RESULT";
-    response_success.status = v201::GetCertificateStatusEnum::Accepted;
+    response_success.status = v2::GetCertificateStatusEnum::Accepted;
 
     EXPECT_CALL(*this->evse_security, get_v2g_ocsp_request_data())
         .Times(1)
@@ -333,7 +333,7 @@ TEST_F(OcspUpdaterTest, test_trigger) {
 
 /// \brief Triggering while the updater is not running should throw an exception
 TEST_F(OcspUpdaterTest, test_exception_trigger_when_not_running) {
-    auto ocsp_updater = std::make_unique<v201::OcspUpdater>(this->evse_security, this->status_update);
+    auto ocsp_updater = std::make_unique<v2::OcspUpdater>(this->evse_security, this->status_update);
 
     ASSERT_THROW(ocsp_updater->trigger_ocsp_cache_update(), std::logic_error);
     ocsp_updater->start();

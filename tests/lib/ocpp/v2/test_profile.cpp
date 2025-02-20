@@ -11,17 +11,17 @@
 #include "everest/logging.hpp"
 #include "ocpp/common/constants.hpp"
 #include "ocpp/common/types.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
-#include "ocpp/v201/utils.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
+#include "ocpp/v2/utils.hpp"
 
 #include "smart_charging_test_utils.hpp"
 
 constexpr ocpp::CompositeScheduleDefaultLimits DEFAULT_LIMITS = {48, 33120, 3};
 
 namespace {
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 using namespace ocpp;
-using ocpp::v201::dt;
+using ocpp::v2::dt;
 using std::nullopt;
 using std::chrono::minutes;
 using std::chrono::seconds;

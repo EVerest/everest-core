@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/smart_charging.hpp>
+#include <ocpp/v2/functional_blocks/smart_charging.hpp>
 
-#include <ocpp/v201/connectivity_manager.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/evse_manager.hpp>
-#include <ocpp/v201/profile.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/profile.hpp>
 
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/utils.hpp>
 
 #include <ocpp/common/constants.hpp>
 
-#include <ocpp/v201/messages/ClearChargingProfile.hpp>
-#include <ocpp/v201/messages/GetChargingProfiles.hpp>
-#include <ocpp/v201/messages/GetCompositeSchedule.hpp>
-#include <ocpp/v201/messages/ReportChargingProfiles.hpp>
-#include <ocpp/v201/messages/SetChargingProfile.hpp>
+#include <ocpp/v2/messages/ClearChargingProfile.hpp>
+#include <ocpp/v2/messages/GetChargingProfiles.hpp>
+#include <ocpp/v2/messages/GetCompositeSchedule.hpp>
+#include <ocpp/v2/messages/ReportChargingProfiles.hpp>
+#include <ocpp/v2/messages/SetChargingProfile.hpp>
 
 const int32_t STATION_WIDE_ID = 0;
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 namespace conversions {
 std::string profile_validation_result_to_string(ProfileValidationResultEnum e) {
     switch (e) {
@@ -1000,4 +1000,4 @@ CurrentPhaseType SmartCharging::get_current_phase_type(const std::optional<EvseI
 
     return CurrentPhaseType::Unknown;
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

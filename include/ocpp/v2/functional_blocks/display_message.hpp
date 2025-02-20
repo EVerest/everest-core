@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/messages/SetDisplayMessage.hpp>
+#include <ocpp/v2/messages/SetDisplayMessage.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class EvseManagerInterface;
 struct GetDisplayMessagesRequest;
 struct ClearDisplayMessageResponse;
@@ -68,4 +68,4 @@ private:
     void handle_clear_display_message(Call<ClearDisplayMessageRequest> call);
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

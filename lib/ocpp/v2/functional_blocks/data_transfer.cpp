@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/data_transfer.hpp>
+#include <ocpp/v2/functional_blocks/data_transfer.hpp>
 
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/messages/DataTransfer.hpp>
+#include <ocpp/v2/messages/DataTransfer.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 void DataTransfer::handle_message(const EnhancedMessage<MessageType>& message) {
     if (message.messageType != MessageType::DataTransfer) {
@@ -79,5 +79,5 @@ std::optional<DataTransferResponse> DataTransfer::data_transfer_req(const DataTr
     return response;
 }
 
-}; // namespace v201
+}; // namespace v2
 } // namespace ocpp

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/availability.hpp>
+#include <ocpp/v2/functional_blocks/availability.hpp>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/evse_manager.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/evse_manager.hpp>
 
-#include <ocpp/v201/messages/Heartbeat.hpp>
-#include <ocpp/v201/messages/StatusNotification.hpp>
+#include <ocpp/v2/messages/Heartbeat.hpp>
+#include <ocpp/v2/messages/StatusNotification.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 Availability::Availability(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                            EvseManagerInterface& evse_manager, ComponentStateManagerInterface& component_state_manager,
                            std::optional<TimeSyncCallback> time_sync_callback,
@@ -220,4 +220,4 @@ void Availability::set_connector_operative_status(int32_t evse_id, int32_t conne
                                                   OperationalStatusEnum new_status, bool persist) {
     this->evse_manager.get_evse(evse_id).set_connector_operative_status(connector_id, new_status, persist);
 }
-} // namespace ocpp::v201
+} // namespace ocpp::v2

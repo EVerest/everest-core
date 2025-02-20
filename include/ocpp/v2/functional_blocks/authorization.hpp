@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 struct AuthorizationCacheEntry;
 struct AuthorizeResponse;
 struct ClearCacheRequest;
@@ -97,4 +97,4 @@ private: // Functions
     ///\retval Accepted if applied, otherwise will return either Failed or VersionMismatch
     SendLocalListStatusEnum apply_local_authorization_list(const SendLocalListRequest& request);
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

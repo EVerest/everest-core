@@ -3,13 +3,13 @@
 
 #include <ocpp/common/database/database_exceptions.hpp>
 #include <ocpp/common/utils.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 namespace ocpp {
 
-namespace v201 {
+namespace v2 {
 
 using DatabaseException = ocpp::common::DatabaseException;
 
@@ -104,8 +104,7 @@ bool DeviceModel::component_criteria_match(const Component& component,
 }
 
 bool DeviceModel::component_variables_match(const std::vector<ComponentVariable>& component_variables,
-                                            const ocpp::v201::Component& component,
-                                            const ocpp::v201::Variable& variable) {
+                                            const ocpp::v2::Component& component, const ocpp::v2::Variable& variable) {
 
     return std::find_if(
                component_variables.begin(), component_variables.end(), [component, variable](ComponentVariable v) {
@@ -869,5 +868,5 @@ int32_t DeviceModel::clear_custom_monitors() {
     return 0;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

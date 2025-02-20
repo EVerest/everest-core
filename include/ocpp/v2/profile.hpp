@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 struct IntermediatePeriod {
     int32_t startPeriod;
@@ -131,5 +131,5 @@ std::vector<ChargingSchedulePeriod>
 convert_intermediate_into_schedule(const IntermediateProfile& profile, ChargingRateUnitEnum charging_rate_unit,
                                    float default_limit, int32_t default_number_phases, float supply_voltage);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

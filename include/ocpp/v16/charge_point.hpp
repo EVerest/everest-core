@@ -22,15 +22,15 @@
 
 // for OCPP1.6 PnC
 #include "ocpp/v16/messages/ChangeAvailability.hpp"
-#include <ocpp/v201/messages/Authorize.hpp>
-#include <ocpp/v201/messages/CertificateSigned.hpp>
-#include <ocpp/v201/messages/DeleteCertificate.hpp>
-#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
-#include <ocpp/v201/messages/GetCertificateStatus.hpp>
-#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
-#include <ocpp/v201/messages/InstallCertificate.hpp>
-#include <ocpp/v201/messages/SignCertificate.hpp>
-#include <ocpp/v201/messages/TriggerMessage.hpp>
+#include <ocpp/v2/messages/Authorize.hpp>
+#include <ocpp/v2/messages/CertificateSigned.hpp>
+#include <ocpp/v2/messages/DeleteCertificate.hpp>
+#include <ocpp/v2/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v2/messages/GetCertificateStatus.hpp>
+#include <ocpp/v2/messages/GetInstalledCertificateIds.hpp>
+#include <ocpp/v2/messages/InstallCertificate.hpp>
+#include <ocpp/v2/messages/SignCertificate.hpp>
+#include <ocpp/v2/messages/TriggerMessage.hpp>
 
 namespace ocpp {
 namespace v16 {
@@ -142,9 +142,9 @@ public:
     /// \param certificate contract certificate that the EVCC provides
     /// \param iso15118_certificate_hash_data
     /// \return
-    ocpp::v201::AuthorizeResponse data_transfer_pnc_authorize(
+    ocpp::v2::AuthorizeResponse data_transfer_pnc_authorize(
         const std::string& emaid, const std::optional<std::string>& certificate,
-        const std::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data);
+        const std::optional<std::vector<ocpp::v2::OCSPRequestData>>& iso15118_certificate_hash_data);
 
     /// \brief  Uses data transfer mechanism to get 15118 ev certificate from CSMS. This function can be called when the
     /// EVCC requests the update or installation of a contract certificate as part of the ISO15118
@@ -155,7 +155,7 @@ public:
     /// \param certificate_action Install or Update
     void data_transfer_pnc_get_15118_ev_certificate(const int32_t connector_id, const std::string& exi_request,
                                                     const std::string& iso15118_schema_version,
-                                                    const ocpp::v201::CertificateActionEnum& certificate_action);
+                                                    const ocpp::v2::CertificateActionEnum& certificate_action);
 
     /// \brief Allows the exchange of arbitrary \p data identified by a \p vendorId and \p messageId with a central
     /// system \returns the DataTransferResponse
@@ -514,8 +514,8 @@ public:
     /// \param callback
     void register_get_15118_ev_certificate_response_callback(
         const std::function<void(const int32_t connector,
-                                 const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
-                                 const ocpp::v201::CertificateActionEnum& certificate_action)>& callback);
+                                 const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+                                 const ocpp::v2::CertificateActionEnum& certificate_action)>& callback);
 
     /// \brief registers a \p callback function that is called when a StartTransaction.req message is sent by the
     /// chargepoint

@@ -4,15 +4,15 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
 
 #define private public // Make everything in security.hpp public so we can trigger the timer.
-#include <ocpp/v201/functional_blocks/security.hpp>
+#include <ocpp/v2/functional_blocks/security.hpp>
 #undef private
-#include <ocpp/v201/messages/CertificateSigned.hpp>
-#include <ocpp/v201/messages/Reset.hpp>
-#include <ocpp/v201/messages/SecurityEventNotification.hpp>
-#include <ocpp/v201/messages/SignCertificate.hpp>
+#include <ocpp/v2/messages/CertificateSigned.hpp>
+#include <ocpp/v2/messages/Reset.hpp>
+#include <ocpp/v2/messages/SecurityEventNotification.hpp>
+#include <ocpp/v2/messages/SignCertificate.hpp>
 
 #include "connectivity_manager_mock.hpp"
 #include "device_model_test_helper.hpp"
@@ -22,7 +22,7 @@
 #include "timer_stub.hpp"
 
 using namespace ocpp;
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 using ::testing::_;
 using ::testing::Invoke;
 using ::testing::MockFunction;
@@ -53,7 +53,7 @@ protected: // Functions
 
     ocpp::EnhancedMessage<MessageType> create_example_certificate_signed_request(
         const std::string& certificate_chain = "",
-        const std::optional<ocpp::v201::CertificateSigningUseEnum> certificate_type = std::nullopt) {
+        const std::optional<ocpp::v2::CertificateSigningUseEnum> certificate_type = std::nullopt) {
         CertificateSignedRequest request;
         request.certificateChain = certificate_chain;
         request.certificateType = certificate_type;
@@ -121,7 +121,7 @@ TEST_F(SecurityTest, handle_message_certificate_signed_v2gcertificate) {
     }));
 
     security.handle_message(
-        create_example_certificate_signed_request("", ocpp::v201::CertificateSigningUseEnum::V2GCertificate));
+        create_example_certificate_signed_request("", ocpp::v2::CertificateSigningUseEnum::V2GCertificate));
 }
 
 TEST_F(SecurityTest, handle_message_certificate_signed_v2gcertificate_symlinks_disabled) {
@@ -141,7 +141,7 @@ TEST_F(SecurityTest, handle_message_certificate_signed_v2gcertificate_symlinks_d
     }));
 
     security.handle_message(
-        create_example_certificate_signed_request("", ocpp::v201::CertificateSigningUseEnum::V2GCertificate));
+        create_example_certificate_signed_request("", ocpp::v2::CertificateSigningUseEnum::V2GCertificate));
 }
 
 TEST_F(SecurityTest, handle_message_certificate_signed_v2gcertificate_update_leaf_not_accepted) {
@@ -166,7 +166,7 @@ TEST_F(SecurityTest, handle_message_certificate_signed_v2gcertificate_update_lea
                          ocpp::InstallCertificateResult::Expired))));
 
     security.handle_message(
-        create_example_certificate_signed_request("", ocpp::v201::CertificateSigningUseEnum::V2GCertificate));
+        create_example_certificate_signed_request("", ocpp::v2::CertificateSigningUseEnum::V2GCertificate));
 }
 
 TEST_F(SecurityTest, handle_message_certificate_signed_chargingstationcertificate_accepted_securityprofile_3) {
@@ -192,8 +192,8 @@ TEST_F(SecurityTest, handle_message_certificate_signed_chargingstationcertificat
                 Call(CiString<50>("ReconfigurationOfSecurityParameters"),
                      std::optional<CiString<255>>("Changed charging station certificate")));
 
-    security.handle_message(create_example_certificate_signed_request(
-        "", ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate));
+    security.handle_message(
+        create_example_certificate_signed_request("", ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate));
 }
 
 TEST_F(SecurityTest, handle_message_certificate_signed_chargingstationcertificate_accepted_securityprofile_1) {
@@ -249,7 +249,7 @@ TEST_F(SecurityTest, sign_certificate_request_accepted) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_FALSE(triggered);
     }));
@@ -285,7 +285,7 @@ TEST_F(SecurityTest, sign_certificate_request_twice) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_FALSE(triggered);
     }));
@@ -482,7 +482,7 @@ TEST_F(SecurityTest, sign_certificate_request_v2g_accepted) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::V2GCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::V2GCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_TRUE(triggered);
     }));
@@ -519,7 +519,7 @@ TEST_F(SecurityTest, sign_certificate_request_manufacturer_cert_accepted) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::V2GCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::V2GCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_TRUE(triggered);
     }));
@@ -741,7 +741,7 @@ TEST_F(SecurityTest, handle_sign_certificate_response_successful) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_FALSE(triggered);
     }));
@@ -804,7 +804,7 @@ TEST_F(SecurityTest, handle_sign_certificate_response_no_response) {
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillRepeatedly(Invoke([](const json& call, bool triggered) {
         auto request = call[ocpp::CALL_PAYLOAD].get<SignCertificateRequest>();
         ASSERT_TRUE(request.certificateType.has_value());
-        EXPECT_EQ(request.certificateType.value(), ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate);
+        EXPECT_EQ(request.certificateType.value(), ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate);
         EXPECT_EQ(request.csr, "csr");
         EXPECT_FALSE(triggered);
     }));

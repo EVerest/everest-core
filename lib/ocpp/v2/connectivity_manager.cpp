@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/connectivity_manager.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
 
 #include <everest/logging.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
 
 namespace {
 const auto WEBSOCKET_INIT_DELAY = std::chrono::seconds(2);
@@ -16,7 +16,7 @@ constexpr int32_t default_network_config_timeout_seconds = 60;
 } // namespace
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 ConnectivityManager::ConnectivityManager(DeviceModel& device_model, std::shared_ptr<EvseSecurity> evse_security,
                                          std::shared_ptr<MessageLogging> logging,
@@ -513,5 +513,5 @@ void ConnectivityManager::remove_network_connection_profiles_below_actual_securi
                                  AttributeEnum::Actual, new_network_priority, VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

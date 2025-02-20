@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include "ocpp/v201/init_device_model_db.hpp"
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include "ocpp/v2/init_device_model_db.hpp"
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 #include <everest/logging.hpp>
 #include <ocpp/common/database/sqlite_statement.hpp>
-#include <ocpp/v201/charge_point.hpp>
-#include <ocpp/v201/init_device_model_db.hpp>
+#include <ocpp/v2/charge_point.hpp>
+#include <ocpp/v2/init_device_model_db.hpp>
 
 namespace ocpp {
 
 using namespace common;
 
-namespace v201 {
+namespace v2 {
 
 extern void filter_criteria_monitors(const std::vector<MonitoringCriterionEnum>& criteria,
                                      std::vector<VariableMonitoringMeta>& monitors);
@@ -488,5 +488,5 @@ void DeviceModelStorageSqlite::check_integrity() {
     }
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

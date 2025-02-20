@@ -4,11 +4,11 @@
 #pragma once
 
 #include <ocpp/common/message_dispatcher.hpp>
-#include <ocpp/v201/connectivity_manager.hpp>
-#include <ocpp/v201/device_model.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/v2/device_model.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class MessageDispatcher : public MessageDispatcherInterface<MessageType> {
 
@@ -27,5 +27,5 @@ private:
     std::atomic<RegistrationStatusEnum>& registration_status;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/firmware_update.hpp>
+#include <ocpp/v2/functional_blocks/firmware_update.hpp>
 
 #include <array>
 
-#include <ocpp/v201/functional_blocks/availability.hpp>
-#include <ocpp/v201/functional_blocks/security.hpp>
-#include <ocpp/v201/messages/FirmwareStatusNotification.hpp>
-#include <ocpp/v201/messages/UpdateFirmware.hpp>
+#include <ocpp/v2/functional_blocks/availability.hpp>
+#include <ocpp/v2/functional_blocks/security.hpp>
+#include <ocpp/v2/messages/FirmwareStatusNotification.hpp>
+#include <ocpp/v2/messages/UpdateFirmware.hpp>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/evse_manager.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/evse_manager.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 // Firmware update end states.
 const static std::array<FirmwareStatusEnum, 5> firmware_status_end_states = {
@@ -207,4 +207,4 @@ void FirmwareUpdate::restore_all_connector_states() {
     }
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

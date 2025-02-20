@@ -9,7 +9,7 @@ to true.
 ## Database, component config and config file paths
 
 Along with the 'initialize_device_model' flag, a few paths must be given to the constructor:
-- The path of the device model migration files (normally `resources/v201/device_model_migration_files`).
+- The path of the device model migration files (normally `resources/v2/device_model_migration_files`).
 - The path of the device model database.
 - The path of the directory with the device model config. There should be two directories in it: 'standardized' and 
   'custom', both containing device model config.

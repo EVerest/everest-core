@@ -9,10 +9,10 @@
 
 #include <everest/logging.hpp>
 #include <ocpp/common/database/database_connection.hpp>
-#include <ocpp/v201/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class DeviceModelStorageSqlite : public DeviceModelStorageInterface {
 
@@ -67,7 +67,7 @@ public:
     void check_integrity() final;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif // DEVICE_MODEL_STORAGE_SQLITE_HPP

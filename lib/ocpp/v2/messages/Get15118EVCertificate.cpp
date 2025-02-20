@@ -2,7 +2,7 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 
 #include <optional>
 #include <ostream>
@@ -11,7 +11,7 @@
 using json = nlohmann::json;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 std::string Get15118EVCertificateRequest::get_type() const {
     return "Get15118EVCertificate";
@@ -89,5 +89,5 @@ std::ostream& operator<<(std::ostream& os, const Get15118EVCertificateResponse& 
     return os;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

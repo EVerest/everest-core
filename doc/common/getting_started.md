@@ -42,13 +42,22 @@ make -j$(nproc) install
 
 Run any required tests from build/tests.
 
+## Clarifications for directory structures, namespaces and OCPP versions
+
+This repository contains multiple subdirectories and namespaces named v16, v2 and v21.
+
+* The v16 directories contain files for configuring and implementing OCPP 1.6.
+* The v2 directories include files for both OCPP2.0.1 and OCPP2.1, as OCPP 2.1
+is fully backward compatible with OCPP 2.0.1.
+* The v21 directories include files only for OCPP2.1.
+
 ## Get Started with OCPP1.6
 
 Please see the [Getting Started documentation for OCPP1.6](../v16/getting_started.md).
 
 ## Get Started with OCPP2.0.1
 
-Please see the [Getting Started documentation for OCPP2.0.1](../v201/getting_started.md).
+Please see the [Getting Started documentation for OCPP2.0.1](../v2/getting_started.md).
 
 ## Building the doxygen documentation
 
@@ -60,4 +69,4 @@ Please see the [Getting Started documentation for OCPP2.0.1](../v201/getting_sta
 You will find the generated doxygen documentation at:
 `build/dist/docs/html/index.html`
 
-The main reference for the integration of libocpp for OCPP1.6 is the ocpp::v16::ChargePoint class defined in `v16/charge_point.hpp` , for OCPP2.0.1 that is the ocpp::v201::ChargePoint class defined in `v201/charge_point.hpp` .
+The main reference for the integration of libocpp for OCPP1.6 is the ocpp::v16::ChargePoint class defined in `v16/charge_point.hpp` , for OCPP2.0.1 and OCPP2.1 that is the ocpp::v2::ChargePoint class defined in `v2/charge_point.hpp` .

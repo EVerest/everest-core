@@ -4,9 +4,9 @@
 #pragma once
 
 #include "database_handler.hpp"
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 /// \brief Exception used when an evse that does not exist is accessed.
 class EvseOutOfRangeException : public std::exception {
@@ -330,4 +330,4 @@ public:
     void send_status_notification_single_connector(int32_t evse_id, int32_t connector_id);
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

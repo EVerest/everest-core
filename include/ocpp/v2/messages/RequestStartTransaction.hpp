@@ -2,18 +2,18 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#ifndef OCPP_V201_REQUESTSTARTTRANSACTION_HPP
-#define OCPP_V201_REQUESTSTARTTRANSACTION_HPP
+#ifndef OCPP_V2_REQUESTSTARTTRANSACTION_HPP
+#define OCPP_V2_REQUESTSTARTTRANSACTION_HPP
 
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Contains a OCPP StartTransaction message
 struct RequestStartTransactionRequest : public ocpp::Message {
@@ -61,7 +61,7 @@ void from_json(const json& j, RequestStartTransactionResponse& k);
 /// \p os \returns an output stream with the RequestStartTransactionResponse written to
 std::ostream& operator<<(std::ostream& os, const RequestStartTransactionResponse& k);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_REQUESTSTARTTRANSACTION_HPP
+#endif // OCPP_V2_REQUESTSTARTTRANSACTION_HPP

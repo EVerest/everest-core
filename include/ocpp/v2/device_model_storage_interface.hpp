@@ -6,14 +6,14 @@
 #include <map>
 #include <memory>
 #include <ocpp/common/support_older_cpp_versions.hpp>
-#include <ocpp/v201/comparators.hpp>
+#include <ocpp/v2/comparators.hpp>
 #include <optional>
 
-#include <ocpp/v201/enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Helper struct that holds database only values that don't have spec coverage
 struct VariableMonitoringMeta {
@@ -138,5 +138,5 @@ public:
     virtual void check_integrity() = 0;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

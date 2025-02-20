@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/monitoring_updater.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/monitoring_updater.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModel;
 class AuthorizationInterface;
 class ConnectivityManagerInterface;
@@ -83,7 +83,7 @@ private: // Functions
 
     void handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> call);
     void handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest> call);
-    void handle_set_variable_monitoring_req(const EnhancedMessage<v201::MessageType>& message);
+    void handle_set_variable_monitoring_req(const EnhancedMessage<v2::MessageType>& message);
     void handle_get_monitoring_report_req(Call<GetMonitoringReportRequest> call);
     void handle_clear_variable_monitoring_req(Call<ClearVariableMonitoringRequest> call);
 
@@ -110,4 +110,4 @@ private: // Functions
                                     const std::optional<IdToken> id_token,
                                     const std::optional<CiString<64>> customer_identifier);
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

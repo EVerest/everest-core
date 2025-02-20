@@ -5,9 +5,9 @@
 
 #include <gmock/gmock.h>
 
-#include "ocpp/v201/component_state_manager.hpp"
+#include "ocpp/v2/component_state_manager.hpp"
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class ComponentStateManagerMock : public ComponentStateManagerInterface {
     MOCK_METHOD(void, set_cs_effective_availability_changed_callback,
                 (const std::function<void(const OperationalStatusEnum new_status)>& callback));
@@ -46,4 +46,4 @@ class ComponentStateManagerMock : public ComponentStateManagerInterface {
     MOCK_METHOD(void, send_status_notification_single_connector, (int32_t evse_id, int32_t connector_id));
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

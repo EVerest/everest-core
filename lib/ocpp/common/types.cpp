@@ -559,7 +559,7 @@ void from_json(const json& j, DisplayMessageContent& m) {
     }
 
     if (j.contains("format")) {
-        m.message_format = v201::conversions::string_to_message_format_enum(j.at("format"));
+        m.message_format = v2::conversions::string_to_message_format_enum(j.at("format"));
     }
 
     if (j.contains("language")) {
@@ -571,7 +571,7 @@ void to_json(json& j, const DisplayMessageContent& m) {
     j["message"] = m.message;
 
     if (m.message_format.has_value()) {
-        j["format"] = v201::conversions::message_format_enum_to_string(m.message_format.value());
+        j["format"] = v2::conversions::message_format_enum_to_string(m.message_format.value());
     }
 
     if (m.language.has_value()) {

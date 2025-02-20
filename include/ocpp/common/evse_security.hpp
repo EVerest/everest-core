@@ -9,7 +9,7 @@
 #include <string>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 
@@ -125,29 +125,29 @@ namespace evse_security_conversions {
 
 /** Conversions for Plug&Charge Data Transfer **/
 
-ocpp::v201::GetCertificateIdUseEnum to_ocpp_v201(ocpp::CertificateType other);
-ocpp::v201::InstallCertificateUseEnum to_ocpp_v201(ocpp::CaCertificateType other);
-ocpp::v201::CertificateSigningUseEnum to_ocpp_v201(ocpp::CertificateSigningUseEnum other);
-ocpp::v201::HashAlgorithmEnum to_ocpp_v201(ocpp::HashAlgorithmEnumType other);
-ocpp::v201::InstallCertificateStatusEnum to_ocpp_v201(ocpp::InstallCertificateResult other);
-ocpp::v201::DeleteCertificateStatusEnum to_ocpp_v201(ocpp::DeleteCertificateResult other);
+ocpp::v2::GetCertificateIdUseEnum to_ocpp_v2(ocpp::CertificateType other);
+ocpp::v2::InstallCertificateUseEnum to_ocpp_v2(ocpp::CaCertificateType other);
+ocpp::v2::CertificateSigningUseEnum to_ocpp_v2(ocpp::CertificateSigningUseEnum other);
+ocpp::v2::HashAlgorithmEnum to_ocpp_v2(ocpp::HashAlgorithmEnumType other);
+ocpp::v2::InstallCertificateStatusEnum to_ocpp_v2(ocpp::InstallCertificateResult other);
+ocpp::v2::DeleteCertificateStatusEnum to_ocpp_v2(ocpp::DeleteCertificateResult other);
 
-ocpp::v201::CertificateHashDataType to_ocpp_v201(ocpp::CertificateHashDataType other);
-ocpp::v201::CertificateHashDataChain to_ocpp_v201(ocpp::CertificateHashDataChain other);
-ocpp::v201::OCSPRequestData to_ocpp_v201(ocpp::OCSPRequestData other);
-std::vector<ocpp::v201::OCSPRequestData> to_ocpp_v201(const std::vector<ocpp::OCSPRequestData>& ocsp_request_data);
+ocpp::v2::CertificateHashDataType to_ocpp_v2(ocpp::CertificateHashDataType other);
+ocpp::v2::CertificateHashDataChain to_ocpp_v2(ocpp::CertificateHashDataChain other);
+ocpp::v2::OCSPRequestData to_ocpp_v2(ocpp::OCSPRequestData other);
+std::vector<ocpp::v2::OCSPRequestData> to_ocpp_v2(const std::vector<ocpp::OCSPRequestData>& ocsp_request_data);
 
-ocpp::CertificateType from_ocpp_v201(ocpp::v201::GetCertificateIdUseEnum other);
-std::vector<ocpp::CertificateType> from_ocpp_v201(const std::vector<ocpp::v201::GetCertificateIdUseEnum>& other);
-ocpp::CaCertificateType from_ocpp_v201(ocpp::v201::InstallCertificateUseEnum other);
-ocpp::CertificateSigningUseEnum from_ocpp_v201(ocpp::v201::CertificateSigningUseEnum other);
-ocpp::HashAlgorithmEnumType from_ocpp_v201(ocpp::v201::HashAlgorithmEnum other);
-ocpp::InstallCertificateResult from_ocpp_v201(ocpp::v201::InstallCertificateStatusEnum other);
-ocpp::DeleteCertificateResult from_ocpp_v201(ocpp::v201::DeleteCertificateStatusEnum other);
+ocpp::CertificateType from_ocpp_v2(ocpp::v2::GetCertificateIdUseEnum other);
+std::vector<ocpp::CertificateType> from_ocpp_v2(const std::vector<ocpp::v2::GetCertificateIdUseEnum>& other);
+ocpp::CaCertificateType from_ocpp_v2(ocpp::v2::InstallCertificateUseEnum other);
+ocpp::CertificateSigningUseEnum from_ocpp_v2(ocpp::v2::CertificateSigningUseEnum other);
+ocpp::HashAlgorithmEnumType from_ocpp_v2(ocpp::v2::HashAlgorithmEnum other);
+ocpp::InstallCertificateResult from_ocpp_v2(ocpp::v2::InstallCertificateStatusEnum other);
+ocpp::DeleteCertificateResult from_ocpp_v2(ocpp::v2::DeleteCertificateStatusEnum other);
 
-ocpp::CertificateHashDataType from_ocpp_v201(ocpp::v201::CertificateHashDataType other);
-ocpp::CertificateHashDataChain from_ocpp_v201(ocpp::v201::CertificateHashDataChain other);
-ocpp::OCSPRequestData from_ocpp_v201(ocpp::v201::OCSPRequestData other);
+ocpp::CertificateHashDataType from_ocpp_v2(ocpp::v2::CertificateHashDataType other);
+ocpp::CertificateHashDataChain from_ocpp_v2(ocpp::v2::CertificateHashDataChain other);
+ocpp::OCSPRequestData from_ocpp_v2(ocpp::v2::OCSPRequestData other);
 
 } // namespace evse_security_conversions
 

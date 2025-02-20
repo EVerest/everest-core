@@ -3,15 +3,15 @@
 
 #include "everest/logging.hpp"
 #include "ocpp/common/database/sqlite_statement.hpp"
-#include "ocpp/v201/ocpp_enums.hpp"
-#include "ocpp/v201/ocpp_types.hpp"
+#include "ocpp/v2/ocpp_enums.hpp"
+#include "ocpp/v2/ocpp_types.hpp"
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <numeric>
 #include <ocpp/common/message_queue.hpp>
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/types.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/types.hpp>
+#include <ocpp/v2/utils.hpp>
 #include <string>
 #include <vector>
 
@@ -19,11 +19,11 @@ namespace ocpp {
 
 using namespace common;
 
-namespace v201 {
+namespace v2 {
 
 DatabaseHandler::DatabaseHandler(std::unique_ptr<DatabaseConnectionInterface> database,
                                  const fs::path& sql_migration_files_path) :
-    DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V201) {
+    DatabaseHandlerCommon(std::move(database), sql_migration_files_path, MIGRATION_FILE_VERSION_V2) {
 }
 
 void DatabaseHandler::init_sql() {
@@ -729,7 +729,7 @@ void DatabaseHandler::transaction_delete(const std::string& transaction_id) {
     }
 }
 
-void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v201::ChargingProfile& profile,
+void DatabaseHandler::insert_or_update_charging_profile(const int evse_id, const v2::ChargingProfile& profile,
                                                         const ChargingLimitSourceEnum charging_limit_source) {
     // add or replace
     std::string sql =
@@ -931,8 +931,8 @@ DatabaseHandler::get_charging_profiles_matching_criteria(const std::optional<int
     return results;
 }
 
-std::vector<v201::ChargingProfile> DatabaseHandler::get_charging_profiles_for_evse(const int evse_id) {
-    std::vector<v201::ChargingProfile> profiles;
+std::vector<v2::ChargingProfile> DatabaseHandler::get_charging_profiles_for_evse(const int evse_id) {
+    std::vector<v2::ChargingProfile> profiles;
 
     std::string sql = "SELECT PROFILE FROM CHARGING_PROFILES WHERE EVSE_ID = @evse_id";
 
@@ -948,8 +948,8 @@ std::vector<v201::ChargingProfile> DatabaseHandler::get_charging_profiles_for_ev
     return profiles;
 }
 
-std::vector<v201::ChargingProfile> DatabaseHandler::get_all_charging_profiles() {
-    std::vector<v201::ChargingProfile> profiles;
+std::vector<v2::ChargingProfile> DatabaseHandler::get_all_charging_profiles() {
+    std::vector<v2::ChargingProfile> profiles;
 
     std::string sql = "SELECT PROFILE FROM CHARGING_PROFILES";
 
@@ -963,8 +963,8 @@ std::vector<v201::ChargingProfile> DatabaseHandler::get_all_charging_profiles() 
     return profiles;
 }
 
-std::map<int32_t, std::vector<v201::ChargingProfile>> DatabaseHandler::get_all_charging_profiles_group_by_evse() {
-    std::map<int32_t, std::vector<v201::ChargingProfile>> map;
+std::map<int32_t, std::vector<v2::ChargingProfile>> DatabaseHandler::get_all_charging_profiles_group_by_evse() {
+    std::map<int32_t, std::vector<v2::ChargingProfile>> map;
 
     std::string sql = "SELECT EVSE_ID, PROFILE FROM CHARGING_PROFILES";
 
@@ -1007,5 +1007,5 @@ std::unique_ptr<SQLiteStatementInterface> DatabaseHandler::new_statement(const s
     return this->database->new_statement(sql);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

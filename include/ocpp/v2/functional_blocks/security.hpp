@@ -5,11 +5,11 @@
 
 #include <optional>
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
-#include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
+#include <ocpp/v2/ocsp_updater.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 struct CertificateSignedRequest;
 struct CertificateSignedResponse;
 struct GetInstalledCertificateIdsRequest;
@@ -99,4 +99,4 @@ private: // Functions
     void scheduled_check_client_certificate_expiration();
     void scheduled_check_v2g_certificate_expiration();
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

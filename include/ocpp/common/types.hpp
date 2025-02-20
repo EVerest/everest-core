@@ -20,7 +20,7 @@
 #include <ocpp/common/cistring.hpp>
 #include <ocpp/common/support_older_cpp_versions.hpp>
 #include <ocpp/v16/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 
 using json = nlohmann::json;
 
@@ -356,7 +356,7 @@ struct Measurement {
 struct DisplayMessageContent {
     std::string message;
     std::optional<std::string> language;
-    std::optional<v201::MessageFormatEnum> message_format;
+    std::optional<v2::MessageFormatEnum> message_format;
 
     friend void from_json(const json& j, DisplayMessageContent& m);
     friend void to_json(json& j, const DisplayMessageContent& m);
@@ -373,8 +373,8 @@ enum class IdentifierType {
 
 struct DisplayMessage {
     std::optional<int32_t> id;
-    std::optional<v201::MessagePriorityEnum> priority;
-    std::optional<v201::MessageStateEnum> state;
+    std::optional<v2::MessagePriorityEnum> priority;
+    std::optional<v2::MessageStateEnum> state;
     std::optional<DateTime> timestamp_from;
     std::optional<DateTime> timestamp_to;
     std::optional<std::string> identifier_id;

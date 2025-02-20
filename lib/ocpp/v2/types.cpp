@@ -3,10 +3,10 @@
 
 #include <everest/logging.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/types.hpp>
+#include <ocpp/v2/types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 namespace conversions {
 
@@ -543,5 +543,5 @@ std::ostream& operator<<(std::ostream& os, const MessageType& message_type) {
     return os;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

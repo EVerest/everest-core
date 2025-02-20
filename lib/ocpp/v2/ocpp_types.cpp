@@ -2,7 +2,7 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 #include <optional>
 #include <string>
@@ -10,10 +10,10 @@
 #include <nlohmann/json.hpp>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Conversion from a given AdditionalInfo \p k to a given json object \p j
 void to_json(json& j, const AdditionalInfo& k) {
@@ -2544,5 +2544,5 @@ std::ostream& operator<<(std::ostream& os, const Firmware& k) {
     return os;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

@@ -19,8 +19,8 @@
 #include <ocpp/common/types.hpp>
 #include <ocpp/v16/messages/StopTransaction.hpp>
 #include <ocpp/v16/types.hpp>
-#include <ocpp/v201/messages/TransactionEvent.hpp>
-#include <ocpp/v201/types.hpp>
+#include <ocpp/v2/messages/TransactionEvent.hpp>
+#include <ocpp/v2/types.hpp>
 
 namespace ocpp {
 
@@ -116,7 +116,7 @@ bool is_transaction_message(const ocpp::v16::MessageType message_type);
 /// \brief Indicates if the given \p message_type is a transaction message type
 /// \param message_type
 /// \return true if MessageType is TransactionEvent or SecurityEventNotification
-bool is_transaction_message(const ocpp::v201::MessageType message_type);
+bool is_transaction_message(const ocpp::v2::MessageType message_type);
 
 /// \brief Indicates if the given \p message_type is a StartTransaction message
 /// \param message_type
@@ -126,7 +126,7 @@ bool is_start_transaction_message(const ocpp::v16::MessageType message_type);
 /// \brief Indicates if the given \p message_type is a StartTransaction message.
 /// \param message_type
 /// \return Always return false
-bool is_start_transaction_message(const ocpp::v201::MessageType message_type);
+bool is_start_transaction_message(const ocpp::v2::MessageType message_type);
 
 /// \brief Indicates if the given \p control_message is a start transaction message
 template <typename M> auto is_start_transaction_message(const ControlMessage<M>& control_message) {
@@ -145,7 +145,7 @@ bool is_boot_notification_message(const ocpp::v16::MessageType message_type);
 /// \brief Indicates if the given \p message_type is a BootNotification
 /// \param message_type
 /// \return true if MessageType is BootNotification
-bool is_boot_notification_message(const ocpp::v201::MessageType message_type);
+bool is_boot_notification_message(const ocpp::v2::MessageType message_type);
 
 template <typename M>
 bool allowed_to_send_message(const ControlMessage<M>& message, const DateTime& time,
@@ -969,8 +969,8 @@ public:
     bool contains_transaction_messages(const CiString<36> transaction_id) {
         std::lock_guard<std::recursive_mutex> lk(this->message_mutex);
         for (const auto control_message : this->transaction_message_queue) {
-            if (control_message->messageType == v201::MessageType::TransactionEvent) {
-                v201::TransactionEventRequest req = control_message->message.at(CALL_PAYLOAD);
+            if (control_message->messageType == v2::MessageType::TransactionEvent) {
+                v2::TransactionEventRequest req = control_message->message.at(CALL_PAYLOAD);
                 if (req.transactionInfo.transactionId == transaction_id) {
                     return true;
                 }

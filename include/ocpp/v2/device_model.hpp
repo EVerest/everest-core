@@ -8,10 +8,10 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/v201/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Response to requesting a value from the device model
 /// \tparam T
@@ -133,8 +133,7 @@ private:
     /// @param variable_ current variable
     /// @return true if the component is found according to any of the requirement conditions.
     bool component_variables_match(const std::vector<ComponentVariable>& component_variables,
-                                   const ocpp::v201::Component& component_,
-                                   const struct ocpp::v201::Variable& variable_);
+                                   const ocpp::v2::Component& component_, const struct ocpp::v2::Variable& variable_);
 
 public:
     /// \brief Constructor for the device model
@@ -311,7 +310,7 @@ public:
     void check_integrity(const std::map<int32_t, int32_t>& evse_connector_structure);
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif // DEVICE_MODEL_HPP

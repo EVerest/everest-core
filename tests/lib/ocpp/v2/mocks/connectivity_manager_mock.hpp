@@ -5,9 +5,9 @@
 
 #include "gmock/gmock.h"
 
-#include <ocpp/v201/connectivity_manager.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class ConnectivityManagerMock : public ConnectivityManagerInterface {
 public:
     MOCK_METHOD(void, set_websocket_authorization_key, (const std::string& authorization_key));
@@ -30,4 +30,4 @@ public:
     MOCK_METHOD(void, on_charging_station_certificate_changed, ());
     MOCK_METHOD(void, confirm_successful_connection, ());
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

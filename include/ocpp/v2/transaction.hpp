@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#ifndef OCPP_V201_TRANSACTION_HANDLER_HPP
-#define OCPP_V201_TRANSACTION_HANDLER_HPP
+#ifndef OCPP_V2_TRANSACTION_HANDLER_HPP
+#define OCPP_V2_TRANSACTION_HANDLER_HPP
 
 #include <ocpp/common/aligned_timer.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
 
-namespace v201 {
+namespace v2 {
 
 class DatabaseHandler;
 
@@ -47,8 +47,8 @@ private:
     DatabaseHandler& database_handler;
     bool database_enabled;
 };
-} // namespace v201
+} // namespace v2
 
 } // namespace ocpp
 
-#endif // OCPP_V201_TRANSACTION_HANDLER_HPP
+#endif // OCPP_V2_TRANSACTION_HANDLER_HPP

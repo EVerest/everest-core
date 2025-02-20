@@ -3,20 +3,20 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/libocpp-unittests.cmake)
 # For libocpp tests, there is one big executable, which links against the ocpp lib and all other libs.
 # When it is useful to link only to the tested cpp files, a separate executable can be created for each file.
 # The source files can be added to this variable, which is a list. For example:
-# list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v201/functional_blocks/test_security.cpp)
+# list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_security.cpp)
 # CMake will then create a new test executable based on the filename and adds 'libocpp_' in front of it. In above
 # example, a test executable 'libocpp_test_security' will be created. In this example, in the CMakeLists of
-# `lib/ocpp/v201/functional_blocks`, files to link against can be added to this target / executable.
+# `lib/ocpp/v2/functional_blocks`, files to link against can be added to this target / executable.
 #
 # For each test in this list, cmake will link agaist some 'default' cpp files (like utils and enums etc), set all
 # correct flags, add a test, set definitions, etc. See below.
 set(SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/common/utils_tests.cpp)
 
-# Add separate tests for V201 only.
-if(LIBOCPP_ENABLE_V201)
-    # Add all v201 tests you don't want to include in the default test executable here.
-    list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v201/functional_blocks/test_authorization.cpp)
-    list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v201/functional_blocks/test_security.cpp)
+# Add separate tests for V2 only.
+if(LIBOCPP_ENABLE_V2)
+    # Add all v2 tests you don't want to include in the default test executable here.
+    list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_authorization.cpp)
+    list(APPEND SEPARATE_UNIT_TESTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/ocpp/v2/functional_blocks/test_security.cpp)
 endif()
 
 
@@ -51,8 +51,8 @@ if(LIBOCPP_ENABLE_V16)
     add_subdirectory(lib/ocpp/v16)
 endif()
 
-if(LIBOCPP_ENABLE_V201)
-    add_subdirectory(lib/ocpp/v201)
+if(LIBOCPP_ENABLE_V2)
+    add_subdirectory(lib/ocpp/v2)
 endif()
 
 add_custom_command(TARGET libocpp_unit_tests POST_BUILD
@@ -64,18 +64,18 @@ add_custom_command(TARGET libocpp_unit_tests POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${OCPP1_6_CONFIG_DIR} ${CONFIG_DIR_V16}
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_LOCATION_V16}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_SOURCE_DIR_V16} ${MIGRATION_FILES_LOCATION_V16}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_SOURCE_DIR_V201} ${MIGRATION_FILES_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_DEVICE_MODEL_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_DEVICE_MODEL_SOURCE_DIR_V201} ${MIGRATION_FILES_DEVICE_MODEL_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_CHANGED_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_CHANGED_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_CHANGED_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_WRONG_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_WRONG_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_WRONG_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_EXAMPLE_CONFIG_LOCATION_V201}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_EXAMPLE_CONFIG_LOCATION_V201} ${DEVICE_MODEL_EXAMPLE_CONFIG_LOCATION_V201}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_SOURCE_DIR_V2} ${MIGRATION_FILES_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${MIGRATION_FILES_DEVICE_MODEL_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${MIGRATION_FILES_DEVICE_MODEL_SOURCE_DIR_V2} ${MIGRATION_FILES_DEVICE_MODEL_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_CHANGED_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_CHANGED_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_CHANGED_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_RESOURCES_WRONG_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_WRONG_RESOURCES_DIR} ${DEVICE_MODEL_RESOURCES_WRONG_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DEVICE_MODEL_EXAMPLE_CONFIG_LOCATION_V2}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${DEVICE_MODEL_CURRENT_EXAMPLE_CONFIG_LOCATION_V2} ${DEVICE_MODEL_EXAMPLE_CONFIG_LOCATION_V2}
 )
 
 set(GCOVR_ADDITIONAL_ARGS "--gcov-ignore-parse-errors=negative_hits.warn")

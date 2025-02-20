@@ -614,7 +614,7 @@ if __name__ == "__main__":
     if version == '1.6' or version == '16' or version == 'v16':
         version_path = 'v16'
     elif version == '2.0.1' or version == '201' or version == 'v201':
-        version_path = 'v201'
+        version_path = 'v2'
     else:
         raise ValueError(f"Version {version} not a valid ocpp version")
 

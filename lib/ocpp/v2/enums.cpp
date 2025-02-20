@@ -3,9 +3,9 @@
 
 #include <stdexcept>
 
-#include <ocpp/v201/enums.hpp>
+#include <ocpp/v2/enums.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 namespace conversions {
 /// \brief Converts the given std::string \p s to VariableMonitorType
@@ -26,4 +26,4 @@ VariableMonitorType string_to_variable_monitor_type(const std::string& s) {
 
 } // namespace conversions
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

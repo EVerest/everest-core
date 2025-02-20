@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class ConnectivityManagerInterface;
 class DeviceModel;
 class EvseManagerInterface;
@@ -110,4 +110,4 @@ private: // Functions
     ReservationCheckStatus is_evse_reserved_for_other(EvseInterface& evse, const IdToken& id_token,
                                                       const std::optional<IdToken>& group_id_token) const;
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

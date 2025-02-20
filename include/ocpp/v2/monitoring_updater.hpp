@@ -7,13 +7,13 @@
 
 #include <everest/timer.hpp>
 
-#include <ocpp/v201/enums.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
-#include <ocpp/v201/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 class DeviceModel;
 
@@ -186,4 +186,4 @@ private:
     std::unordered_map<std::int32_t, UpdaterMonitorMeta> updater_monitors_meta;
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

@@ -12,9 +12,9 @@
 
 #include <ocpp/common/call_types.hpp>
 #include <ocpp/common/evse_security.hpp>
-#include <ocpp/v201/messages/GetCertificateStatus.hpp>
+#include <ocpp/v2/messages/GetCertificateStatus.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 class OcspUpdateFailedException : public std::exception {
 public:
@@ -96,6 +96,6 @@ private:
     void execute_ocsp_update();
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2
 
 #endif // OCPP_OCSP_UPDATER_HPP

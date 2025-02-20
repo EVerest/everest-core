@@ -5,9 +5,9 @@
 
 #include <gmock/gmock.h>
 
-#include "ocpp/v201/device_model_storage_interface.hpp"
+#include "ocpp/v2/device_model_storage_interface.hpp"
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModelStorageMock : public DeviceModelStorageInterface {
 public:
     MOCK_METHOD(DeviceModelMap, get_device_model, ());
@@ -27,4 +27,4 @@ public:
     MOCK_METHOD(bool, update_monitoring_reference, (int32_t monitor_id, const std::string& reference_value),
                 (override));
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

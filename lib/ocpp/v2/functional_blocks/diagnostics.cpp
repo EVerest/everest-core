@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/diagnostics.hpp>
+#include <ocpp/v2/functional_blocks/diagnostics.hpp>
 
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/connectivity_manager.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/functional_blocks/authorization.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/functional_blocks/authorization.hpp>
+#include <ocpp/v2/utils.hpp>
 
-#include <ocpp/v201/messages/ClearVariableMonitoring.hpp>
-#include <ocpp/v201/messages/CustomerInformation.hpp>
-#include <ocpp/v201/messages/GetLog.hpp>
-#include <ocpp/v201/messages/GetMonitoringReport.hpp>
-#include <ocpp/v201/messages/NotifyCustomerInformation.hpp>
-#include <ocpp/v201/messages/NotifyEvent.hpp>
-#include <ocpp/v201/messages/NotifyMonitoringReport.hpp>
-#include <ocpp/v201/messages/SetMonitoringBase.hpp>
-#include <ocpp/v201/messages/SetMonitoringLevel.hpp>
-#include <ocpp/v201/messages/SetVariableMonitoring.hpp>
+#include <ocpp/v2/messages/ClearVariableMonitoring.hpp>
+#include <ocpp/v2/messages/CustomerInformation.hpp>
+#include <ocpp/v2/messages/GetLog.hpp>
+#include <ocpp/v2/messages/GetMonitoringReport.hpp>
+#include <ocpp/v2/messages/NotifyCustomerInformation.hpp>
+#include <ocpp/v2/messages/NotifyEvent.hpp>
+#include <ocpp/v2/messages/NotifyMonitoringReport.hpp>
+#include <ocpp/v2/messages/SetMonitoringBase.hpp>
+#include <ocpp/v2/messages/SetMonitoringLevel.hpp>
+#include <ocpp/v2/messages/SetVariableMonitoring.hpp>
 
 const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 Diagnostics::Diagnostics(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                          ConnectivityManagerInterface& connectivity_manager, AuthorizationInterface& authorization,
@@ -402,4 +402,4 @@ void Diagnostics::clear_customer_information(const std::optional<CertificateHash
     }
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

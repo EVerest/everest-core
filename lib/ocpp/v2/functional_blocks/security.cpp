@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/functional_blocks/security.hpp>
+#include <ocpp/v2/functional_blocks/security.hpp>
 
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/messages/SecurityEventNotification.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/messages/SecurityEventNotification.hpp>
+#include <ocpp/v2/utils.hpp>
 
-#include <ocpp/v201/messages/CertificateSigned.hpp>
-#include <ocpp/v201/messages/DeleteCertificate.hpp>
-#include <ocpp/v201/messages/Get15118EVCertificate.hpp>
-#include <ocpp/v201/messages/GetInstalledCertificateIds.hpp>
-#include <ocpp/v201/messages/InstallCertificate.hpp>
-#include <ocpp/v201/messages/SignCertificate.hpp>
+#include <ocpp/v2/messages/CertificateSigned.hpp>
+#include <ocpp/v2/messages/DeleteCertificate.hpp>
+#include <ocpp/v2/messages/Get15118EVCertificate.hpp>
+#include <ocpp/v2/messages/GetInstalledCertificateIds.hpp>
+#include <ocpp/v2/messages/InstallCertificate.hpp>
+#include <ocpp/v2/messages/SignCertificate.hpp>
 
 constexpr int32_t minimum_cert_signing_wait_time_seconds = 250;
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 Security::Security(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
                    MessageLogging& logging, EvseSecurity& evse_security,
@@ -172,7 +172,7 @@ void Security::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certi
     bool should_use_tpm = false;
 
     if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
-        req.certificateType = ocpp::v201::CertificateSigningUseEnum::ChargingStationCertificate;
+        req.certificateType = ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate;
         common =
             this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
         organization =
@@ -182,7 +182,7 @@ void Security::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certi
         should_use_tpm =
             this->device_model.get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
     } else {
-        req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
+        req.certificateType = ocpp::v2::CertificateSigningUseEnum::V2GCertificate;
         common = this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrSeccId);
         organization = this->device_model.get_optional_value<std::string>(
             ControllerComponentVariables::ISO15118CtrlrOrganizationName);
@@ -348,7 +348,7 @@ void Security::handle_get_installed_certificate_ids_req(Call<GetInstalledCertifi
     // prepare argument for getRootCertificate
     std::vector<ocpp::CertificateType> certificate_types;
     if (msg.certificateType.has_value()) {
-        certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType.value());
+        certificate_types = ocpp::evse_security_conversions::from_ocpp_v2(msg.certificateType.value());
     } else {
         certificate_types.push_back(CertificateType::CSMSRootCertificate);
         certificate_types.push_back(CertificateType::MFRootCertificate);
@@ -360,17 +360,17 @@ void Security::handle_get_installed_certificate_ids_req(Call<GetInstalledCertifi
     // retrieve installed certificates
     const auto certificate_hash_data_chains = this->evse_security.get_installed_certificates(certificate_types);
 
-    // convert the common type back to the v201 type(s) for the response
-    std::vector<CertificateHashDataChain> certificate_hash_data_chain_v201;
+    // convert the common type back to the v2 type(s) for the response
+    std::vector<CertificateHashDataChain> certificate_hash_data_chain_v2;
     for (const auto& certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-        certificate_hash_data_chain_v201.push_back(
-            ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
+        certificate_hash_data_chain_v2.push_back(
+            ocpp::evse_security_conversions::to_ocpp_v2(certificate_hash_data_chain_entry));
     }
 
-    if (certificate_hash_data_chain_v201.empty()) {
+    if (certificate_hash_data_chain_v2.empty()) {
         response.status = GetInstalledCertificateStatusEnum::NotFound;
     } else {
-        response.certificateHashDataChain = certificate_hash_data_chain_v201;
+        response.certificateHashDataChain = certificate_hash_data_chain_v2;
         response.status = GetInstalledCertificateStatusEnum::Accepted;
     }
 
@@ -391,8 +391,8 @@ void Security::handle_install_certificate_req(Call<InstallCertificateRequest> ca
         response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
     } else {
         const auto result = this->evse_security.install_ca_certificate(
-            msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateType));
-        response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+            msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v2(msg.certificateType));
+        response.status = ocpp::evse_security_conversions::to_ocpp_v2(result);
         if (response.status == InstallCertificateStatusEnum::Accepted) {
             const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
             std::string tech_info =
@@ -411,11 +411,11 @@ void Security::handle_delete_certificate_req(Call<DeleteCertificateRequest> call
     const auto msg = call.msg;
     DeleteCertificateResponse response;
 
-    const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v201(msg.certificateHashData);
+    const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v2(msg.certificateHashData);
 
     const auto status = this->evse_security.delete_certificate(certificate_hash_data);
 
-    response.status = ocpp::evse_security_conversions::to_ocpp_v201(status);
+    response.status = ocpp::evse_security_conversions::to_ocpp_v2(status);
 
     if (response.status == DeleteCertificateStatusEnum::Accepted) {
         const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
@@ -493,4 +493,4 @@ void Security::scheduled_check_v2g_certificate_expiration() {
             .value_or(12 * 60 * 60)));
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

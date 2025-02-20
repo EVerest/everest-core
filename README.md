@@ -103,7 +103,7 @@ The following table shows the known CSMS with which this library was tested.
 | O. DisplayMessage                    | ✅ yes  |
 | P. DataTransfer                      | ✅ yes  |
 
-The development of OCPP2.0.1 is in progress. Check the [detailed current implementation status.](doc/v201/ocpp_201_status.md).
+The development of OCPP2.0.1 is in progress. Check the [detailed current implementation status.](doc/v2/ocpp_201_status.md).
 
 | Whitepapers & Application Notes                                                                                                                              | Supported              |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |

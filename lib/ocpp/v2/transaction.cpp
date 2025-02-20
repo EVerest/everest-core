@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/transaction.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/transaction.hpp>
 
 using QueryExecutionException = ocpp::common::QueryExecutionException;
 
 namespace ocpp {
 
-namespace v201 {
+namespace v2 {
 
 Transaction EnhancedTransaction::get_transaction() {
     Transaction transaction = {this->transactionId,     std::nullopt,        this->chargingState,
@@ -50,6 +50,6 @@ void EnhancedTransaction::set_id_token_sent() {
     }
 }
 
-} // namespace v201
+} // namespace v2
 
 } // namespace ocpp

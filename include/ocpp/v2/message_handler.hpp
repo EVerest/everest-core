@@ -6,7 +6,7 @@
 #include <ocpp/common/message_queue.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Interface for handling OCPP2.0.1 CALL messages from the CSMS. Classes implementing a functional block shall
 /// extend this interface.
@@ -35,5 +35,5 @@ public:
     }
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

@@ -2,12 +2,12 @@
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
 
 #include <gtest/gtest.h>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class DeviceModelTest : public ::testing::Test {
 protected:
@@ -22,7 +22,7 @@ protected:
 
     void TearDown() override {
         // reset the value to default
-        dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "10", "test");
+        dm->set_value(cv.component, cv.variable.value(), ocpp::v2::AttributeEnum::Actual, "10", "test");
     }
 };
 
@@ -30,18 +30,18 @@ protected:
 /// set to 5
 TEST_F(DeviceModelTest, test_allow_zero) {
     // default value is 10
-    auto r = dm->get_value<int>(cv, ocpp::v201::AttributeEnum::Actual);
+    auto r = dm->get_value<int>(cv, ocpp::v2::AttributeEnum::Actual);
     ASSERT_EQ(r, 10);
 
     // try to set to value of 2, which is not allowed because minLimit of
-    auto sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "2", "test");
+    auto sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v2::AttributeEnum::Actual, "2", "test");
     ASSERT_EQ(sv_result, SetVariableStatusEnum::Rejected);
 
     // try to set to 0, which is allowed because 0 is an exception
-    sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v201::AttributeEnum::Actual, "0", "test");
+    sv_result = dm->set_value(cv.component, cv.variable.value(), ocpp::v2::AttributeEnum::Actual, "0", "test");
     ASSERT_EQ(sv_result, SetVariableStatusEnum::Accepted);
 
-    r = dm->get_value<int>(cv, ocpp::v201::AttributeEnum::Actual);
+    r = dm->get_value<int>(cv, ocpp::v2::AttributeEnum::Actual);
     ASSERT_EQ(r, 0);
 }
 
@@ -276,5 +276,5 @@ TEST_F(DeviceModelTest, test_clear_monitors) {
     dm->clear_monitors(hardwired_monitor_ids, true);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

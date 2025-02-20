@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/monitoring_updater.hpp>
+#include <ocpp/v2/monitoring_updater.hpp>
 
 #include <chrono>
 
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/utils.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 template <DataEnum T>
 bool triggers_monitor(const VariableMonitoringMeta& monitor_meta, const std::string& value_old,
@@ -690,4 +690,4 @@ void MonitoringUpdater::get_monitoring_info(bool& out_is_offline, int& out_offli
     out_active_monitoring_base = conversions::string_to_monitoring_base_enum(active_monitoring_base_string);
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

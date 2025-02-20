@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
 #include <ocpp/common/aligned_timer.hpp>
-#include <ocpp/v201/average_meter_values.hpp>
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/average_meter_values.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class EvseManagerInterface;
 class DeviceModel;
 
@@ -54,4 +54,4 @@ private: // Functions
     // Internal helper functions
     void update_dm_evse_power(const int32_t evse_id, const MeterValue& meter_value);
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

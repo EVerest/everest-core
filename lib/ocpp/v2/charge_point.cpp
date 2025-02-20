@@ -1,37 +1,37 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/charge_point.hpp>
+#include <ocpp/v2/charge_point.hpp>
 
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/device_model.hpp>
-#include <ocpp/v201/device_model_storage_interface.hpp>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
-#include <ocpp/v201/evse_manager.hpp>
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/notify_report_requests_splitter.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/device_model_storage_interface.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/notify_report_requests_splitter.hpp>
 
-#include <ocpp/v201/functional_blocks/authorization.hpp>
-#include <ocpp/v201/functional_blocks/availability.hpp>
-#include <ocpp/v201/functional_blocks/data_transfer.hpp>
-#include <ocpp/v201/functional_blocks/diagnostics.hpp>
-#include <ocpp/v201/functional_blocks/display_message.hpp>
-#include <ocpp/v201/functional_blocks/firmware_update.hpp>
-#include <ocpp/v201/functional_blocks/meter_values.hpp>
-#include <ocpp/v201/functional_blocks/provisioning.hpp>
-#include <ocpp/v201/functional_blocks/remote_transaction_control.hpp>
-#include <ocpp/v201/functional_blocks/reservation.hpp>
-#include <ocpp/v201/functional_blocks/security.hpp>
-#include <ocpp/v201/functional_blocks/smart_charging.hpp>
-#include <ocpp/v201/functional_blocks/tariff_and_cost.hpp>
-#include <ocpp/v201/functional_blocks/transaction.hpp>
+#include <ocpp/v2/functional_blocks/authorization.hpp>
+#include <ocpp/v2/functional_blocks/availability.hpp>
+#include <ocpp/v2/functional_blocks/data_transfer.hpp>
+#include <ocpp/v2/functional_blocks/diagnostics.hpp>
+#include <ocpp/v2/functional_blocks/display_message.hpp>
+#include <ocpp/v2/functional_blocks/firmware_update.hpp>
+#include <ocpp/v2/functional_blocks/meter_values.hpp>
+#include <ocpp/v2/functional_blocks/provisioning.hpp>
+#include <ocpp/v2/functional_blocks/remote_transaction_control.hpp>
+#include <ocpp/v2/functional_blocks/reservation.hpp>
+#include <ocpp/v2/functional_blocks/security.hpp>
+#include <ocpp/v2/functional_blocks/smart_charging.hpp>
+#include <ocpp/v2/functional_blocks/tariff_and_cost.hpp>
+#include <ocpp/v2/functional_blocks/transaction.hpp>
 
-#include <ocpp/v201/messages/LogStatusNotification.hpp>
-#include <ocpp/v201/messages/RequestStopTransaction.hpp>
-#include <ocpp/v201/messages/TriggerMessage.hpp>
+#include <ocpp/v2/messages/LogStatusNotification.hpp>
+#include <ocpp/v2/messages/RequestStopTransaction.hpp>
+#include <ocpp/v2/messages/TriggerMessage.hpp>
 
 #include <optional>
 #include <stdexcept>
@@ -42,13 +42,13 @@ using namespace std::chrono_literals;
 using DatabaseException = ocpp::common::DatabaseException;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 const auto DEFAULT_MESSAGE_QUEUE_SIZE_THRESHOLD = 2E5;
 
 ChargePoint::ChargePoint(const std::map<int32_t, int32_t>& evse_connector_structure,
                          std::shared_ptr<DeviceModel> device_model, std::shared_ptr<DatabaseHandler> database_handler,
-                         std::shared_ptr<MessageQueue<v201::MessageType>> message_queue,
+                         std::shared_ptr<MessageQueue<v2::MessageType>> message_queue,
                          const std::string& message_log_path, const std::shared_ptr<EvseSecurity> evse_security,
                          const Callbacks& callbacks) :
     ocpp::ChargingStationBase(evse_security),
@@ -463,7 +463,7 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
         std::bind(&ChargePoint::websocket_connection_failed, this, std::placeholders::_1));
 
     if (this->message_queue == nullptr) {
-        std::set<v201::MessageType> message_types_discard_for_queueing;
+        std::set<v2::MessageType> message_types_discard_for_queueing;
         try {
             const auto message_types_discard_for_queueing_csl = ocpp::split_string(
                 this->device_model
@@ -481,9 +481,9 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
             EVLOG_warning << "Could not apply MessageTypesDiscardForQueueing configuration";
         }
 
-        this->message_queue = std::make_unique<ocpp::MessageQueue<v201::MessageType>>(
+        this->message_queue = std::make_unique<ocpp::MessageQueue<v2::MessageType>>(
             [this](json message) -> bool { return this->connectivity_manager->send_to_websocket(message.dump()); },
-            MessageQueueConfig<v201::MessageType>{
+            MessageQueueConfig<v2::MessageType>{
                 this->device_model->get_value<int>(ControllerComponentVariables::MessageAttempts),
                 this->device_model->get_value<int>(ControllerComponentVariables::MessageAttemptInterval),
                 this->device_model->get_optional_value<int>(ControllerComponentVariables::MessageQueueSizeThreshold)
@@ -587,7 +587,7 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL, true);
 }
 
-void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& message) {
+void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message) {
     const auto& json_message = message.message;
     try {
         switch (message.messageType) {
@@ -678,7 +678,7 @@ void ChargePoint::handle_message(const EnhancedMessage<v201::MessageType>& messa
 }
 
 void ChargePoint::message_callback(const std::string& message) {
-    EnhancedMessage<v201::MessageType> enhanced_message;
+    EnhancedMessage<v2::MessageType> enhanced_message;
     try {
         enhanced_message = this->message_queue->receive(message);
     } catch (const json::exception& e) {
@@ -900,19 +900,19 @@ void ChargePoint::update_dm_availability_state(const int32_t evse_id, const int3
         evse_id, connector_id, ConnectorComponentVariables::AvailabilityState);
     if (evse_cv.variable.has_value()) {
         this->device_model->set_read_only_value(
-            evse_cv.component, evse_cv.variable.value(), ocpp::v201::AttributeEnum::Actual,
+            evse_cv.component, evse_cv.variable.value(), ocpp::v2::AttributeEnum::Actual,
             conversions::connector_status_enum_to_string(status), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
     }
     if (connector_cv.variable.has_value()) {
         this->device_model->set_read_only_value(
-            connector_cv.component, connector_cv.variable.value(), ocpp::v201::AttributeEnum::Actual,
+            connector_cv.component, connector_cv.variable.value(), ocpp::v2::AttributeEnum::Actual,
             conversions::connector_status_enum_to_string(status), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
     }
 
     // if applicable to the entire charging station
     if (evse_id == 0 and charging_station.variable.has_value()) {
         this->device_model->set_read_only_value(
-            charging_station.component, charging_station.variable.value(), ocpp::v201::AttributeEnum::Actual,
+            charging_station.component, charging_station.variable.value(), ocpp::v2::AttributeEnum::Actual,
             conversions::connector_status_enum_to_string(status), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
     }
 }
@@ -983,5 +983,5 @@ void ChargePoint::send_not_implemented_error(const MessageId unique_message_id, 
     }
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

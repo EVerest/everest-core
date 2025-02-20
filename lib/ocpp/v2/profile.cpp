@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 
-#include "ocpp/v201/profile.hpp"
+#include "ocpp/v2/profile.hpp"
 #include "everest/logging.hpp"
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::seconds;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 int32_t elapsed_seconds(const ocpp::DateTime& to, const ocpp::DateTime& from) {
     return duration_cast<seconds>(to.to_time_point() - from.to_time_point()).count();
@@ -591,5 +591,5 @@ convert_intermediate_into_schedule(const IntermediateProfile& profile, ChargingR
     return output;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

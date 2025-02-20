@@ -3,10 +3,10 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <ocpp/v201/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/device_model_storage_sqlite.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class DeviceModelStorageSQLiteTest : public ::testing::Test {
 protected:
@@ -28,5 +28,5 @@ TEST_F(DeviceModelStorageSQLiteTest, test_check_integrity_invalid) {
     EXPECT_THROW(dm_storage.check_integrity(), DeviceModelError);
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

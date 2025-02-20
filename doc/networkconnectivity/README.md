@@ -14,8 +14,8 @@ be activated before it is possible to connect to this interface. To do this, you
 
 In the implementation of this callback, you have to create a promise and return the future to the promise:
 ```cpp
-std::promise<ocpp::v201::ConfigNetworkResult> promise();
-std::future<ocpp::v201::ConfigNetworkResult> future = promise.get_future();
+std::promise<ocpp::v2::ConfigNetworkResult> promise();
+std::future<ocpp::v2::ConfigNetworkResult> future = promise.get_future();
 return future;
 ```
 

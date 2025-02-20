@@ -3,13 +3,13 @@
 
 #pragma once
 
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v201/database_handler.hpp>
-#include <ocpp/v201/evse.hpp>
-#include <ocpp/v201/message_dispatcher.hpp>
+#include <ocpp/v2/database_handler.hpp>
+#include <ocpp/v2/evse.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DeviceModel;
 class EvseManagerInterface;
 class ConnectivityManagerInterface;
@@ -266,4 +266,4 @@ private: // Functions
     void conform_validity_periods(ChargingProfile& profile) const;
     CurrentPhaseType get_current_phase_type(const std::optional<EvseInterface*> evse_opt) const;
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

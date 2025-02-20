@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 struct DataTransferRequest;
 struct DataTransferResponse;
 
@@ -57,5 +57,5 @@ public:
     std::optional<DataTransferResponse> data_transfer_req(const DataTransferRequest& request) override;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

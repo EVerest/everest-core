@@ -4,14 +4,14 @@
 #pragma once
 
 #include <ocpp/common/websocket/websocket.hpp>
-#include <ocpp/v201/messages/SetNetworkProfile.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/messages/SetNetworkProfile.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 #include <functional>
 #include <future>
 #include <optional>
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 class DeviceModel;
 
@@ -231,5 +231,5 @@ private:
     void remove_network_connection_profiles_below_actual_security_profile();
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

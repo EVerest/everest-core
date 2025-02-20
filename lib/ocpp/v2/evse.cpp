@@ -7,14 +7,14 @@
 
 #include <everest/logging.hpp>
 #include <ocpp/common/database/database_exceptions.hpp>
-#include <ocpp/v201/ctrlr_component_variables.hpp>
-#include <ocpp/v201/evse.hpp>
+#include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/evse.hpp>
 
 using namespace std::chrono_literals;
 using QueryExecutionException = ocpp::common::QueryExecutionException;
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 // Convert an energy value into Wh
 static float get_normalized_energy_value(SampledValue sampled_value) {
@@ -697,5 +697,5 @@ CurrentPhaseType Evse::get_current_phase_type() {
     return CurrentPhaseType::Unknown;
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

@@ -5,9 +5,9 @@
 
 #include "gmock/gmock.h"
 
-#include "ocpp/v201/evse.hpp"
+#include "ocpp/v2/evse.hpp"
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class EvseMock : public EvseInterface {
 public:
     MOCK_METHOD(int32_t, get_id, (), (const));
@@ -47,4 +47,4 @@ public:
                  std::function<void(const std::vector<MeterValue>& meter_values)> send_metervalue_function,
                  boost::asio::io_service& io_service));
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

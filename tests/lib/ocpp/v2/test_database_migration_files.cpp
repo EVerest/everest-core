@@ -3,19 +3,19 @@
 
 #include <lib/ocpp/common/test_database_migration_files.hpp>
 
-// Apply generic test cases to v201 migrations
-INSTANTIATE_TEST_SUITE_P(V201, DatabaseMigrationFilesTest,
-                         ::testing::Values(std::make_tuple(std::filesystem::path(MIGRATION_FILES_LOCATION_V201),
-                                                           MIGRATION_FILE_VERSION_V201)));
+// Apply generic test cases to v2 migrations
+INSTANTIATE_TEST_SUITE_P(V2, DatabaseMigrationFilesTest,
+                         ::testing::Values(std::make_tuple(std::filesystem::path(MIGRATION_FILES_LOCATION_V2),
+                                                           MIGRATION_FILE_VERSION_V2)));
 
-// Apply v201 specific test cases to migrations
-using DatabaseMigrationFilesTestV201 = DatabaseMigrationFilesTest;
+// Apply v2 specific test cases to migrations
+using DatabaseMigrationFilesTestV2 = DatabaseMigrationFilesTest;
 
-INSTANTIATE_TEST_SUITE_P(V201, DatabaseMigrationFilesTestV201,
-                         ::testing::Values(std::make_tuple(std::filesystem::path(MIGRATION_FILES_LOCATION_V201),
-                                                           MIGRATION_FILE_VERSION_V201)));
+INSTANTIATE_TEST_SUITE_P(V2, DatabaseMigrationFilesTestV2,
+                         ::testing::Values(std::make_tuple(std::filesystem::path(MIGRATION_FILES_LOCATION_V2),
+                                                           MIGRATION_FILE_VERSION_V2)));
 
-TEST_P(DatabaseMigrationFilesTestV201, V201_MigrationFile2_AuthCacheManagement) {
+TEST_P(DatabaseMigrationFilesTestV2, V2_MigrationFile2_AuthCacheManagement) {
     DatabaseSchemaUpdater updater{this->database.get()};
 
     EXPECT_TRUE(updater.apply_migration_files(this->migration_files_path, 1));

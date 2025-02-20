@@ -3,10 +3,10 @@
 
 #include <everest/logging.hpp>
 #include <everest/timer.hpp>
-#include <ocpp/v201/average_meter_values.hpp>
+#include <ocpp/v2/average_meter_values.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 AverageMeterValues::AverageMeterValues() {
 }
 void AverageMeterValues::clear_values() {
@@ -61,5 +61,5 @@ bool AverageMeterValues::is_avg_meas(const SampledValue& sample) {
         return false;
     }
 }
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

@@ -4,9 +4,9 @@
 #pragma once
 
 #include "database_handler_mock.hpp"
-#include <ocpp/v201/database_handler.hpp>
+#include <ocpp/v2/database_handler.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class DatabaseHandlerFake : public DatabaseHandlerMock {
     DatabaseHandler handler;
 
@@ -25,4 +25,4 @@ public:
         this->handler.open_connection();
     }
 };
-} // namespace ocpp::v201
+} // namespace ocpp::v2

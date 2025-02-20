@@ -12,9 +12,9 @@
 #include <ocpp/v16/charge_point_configuration.hpp>
 #include <ocpp/v16/charge_point_impl.hpp>
 #include <ocpp/v16/utils.hpp>
-#include <ocpp/v201/messages/CostUpdated.hpp>
-#include <ocpp/v201/messages/SetDisplayMessage.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/messages/CostUpdated.hpp>
+#include <ocpp/v2/messages/SetDisplayMessage.hpp>
+#include <ocpp/v2/utils.hpp>
 
 #include <optional>
 
@@ -2679,8 +2679,8 @@ void ChargePointImpl::update_ocsp_cache() {
             EVLOG_info << "Requesting OCSP response.";
             const auto ocsp_request_data = this->evse_security->get_v2g_ocsp_request_data();
             for (const auto& ocsp_request_entry : ocsp_request_data) {
-                ocpp::v201::OCSPRequestData ocsp_request =
-                    ocpp::evse_security_conversions::to_ocpp_v201(ocsp_request_entry);
+                ocpp::v2::OCSPRequestData ocsp_request =
+                    ocpp::evse_security_conversions::to_ocpp_v2(ocsp_request_entry);
                 this->data_transfer_pnc_get_certificate_status(ocsp_request);
             }
             this->database_handler->insert_ocsp_update();
@@ -3418,13 +3418,13 @@ bool ChargePointImpl::is_pnc_enabled() {
            this->configuration->getISO15118PnCEnabled();
 }
 
-ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
+ocpp::v2::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
 
     const std::string& emaid, const std::optional<std::string>& certificate,
-    const std::optional<std::vector<ocpp::v201::OCSPRequestData>>& iso15118_certificate_hash_data) {
+    const std::optional<std::vector<ocpp::v2::OCSPRequestData>>& iso15118_certificate_hash_data) {
 
-    ocpp::v201::AuthorizeResponse authorize_response;
-    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+    ocpp::v2::AuthorizeResponse authorize_response;
+    authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;
 
     if (!this->is_pnc_enabled()) {
         EVLOG_warning << "Received request to send DataTransfer(Authorize.req) while PnC is disabled";
@@ -3435,10 +3435,10 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("Authorize")));
 
-    ocpp::v201::AuthorizeRequest authorize_req;
-    ocpp::v201::IdToken id_token;
+    ocpp::v2::AuthorizeRequest authorize_req;
+    ocpp::v2::IdToken id_token;
 
-    id_token.type = ocpp::v201::IdTokenEnum::eMAID;
+    id_token.type = ocpp::v2::IdTokenEnum::eMAID;
     id_token.idToken = emaid;
     authorize_req.idToken = id_token;
 
@@ -3471,11 +3471,11 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
                     forward_to_csms = true;
                 } else {
                     EVLOG_warning << "Online: Central Contract Validation not allowed";
-                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                    authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;
                 }
             } else {
                 // Try to generate the OCSP data from the certificate chain and use that
-                const auto generated_ocsp_request_data_list = ocpp::evse_security_conversions::to_ocpp_v201(
+                const auto generated_ocsp_request_data_list = ocpp::evse_security_conversions::to_ocpp_v2(
                     this->evse_security->get_mo_ocsp_request_data(certificate.value()));
                 if (generated_ocsp_request_data_list.size() > 0) {
                     EVLOG_info << "Online: Pass generated OCSP data to CSMS";
@@ -3490,7 +3490,7 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
                     } else {
                         EVLOG_warning
                             << "Online: OCSP data could not be generated and CentralContractValidation not allowed";
-                        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+                        authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;
                     }
                 }
             }
@@ -3510,32 +3510,31 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
                     } else {
                         // No requirement states what to do when ContractValidationOffline is true
                         // and LocalAuthorizeOffline is false
-                        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
-                        authorize_response.certificateStatus = ocpp::v201::AuthorizeCertificateStatusEnum::Accepted;
+                        authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Unknown;
+                        authorize_response.certificateStatus = ocpp::v2::AuthorizeCertificateStatusEnum::Accepted;
                     }
                     break;
                 case CertificateValidationResult::Expired:
-                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Expired;
-                    authorize_response.certificateStatus =
-                        ocpp::v201::AuthorizeCertificateStatusEnum::CertificateExpired;
+                    authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Expired;
+                    authorize_response.certificateStatus = ocpp::v2::AuthorizeCertificateStatusEnum::CertificateExpired;
                     break;
                 default:
-                    authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
+                    authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Unknown;
                     break;
                 }
             } else {
                 EVLOG_warning << "Offline: ContractValidationOffline is disabled. Validation not allowed";
                 // C07.FR.07: CS shall not allow charging
-                authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::NotAtThisTime;
+                authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::NotAtThisTime;
             }
         }
     } else {
         EVLOG_warning << "Can not validate eMAID without certificate chain";
-        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+        authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;
     }
 
     if (forward_to_csms) {
-        authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Unknown;
+        authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Unknown;
         // AuthorizeRequest sent to CSMS, let's show the results
         req.data.emplace(json(authorize_req).dump());
 
@@ -3577,9 +3576,9 @@ ocpp::v201::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
     } else {
         const auto local_authorize_result = this->authorize_id_token(emaid, true);
         if (local_authorize_result.status == AuthorizationStatus::Accepted) {
-            authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Accepted;
+            authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Accepted;
         } else {
-            authorize_response.idTokenInfo.status = ocpp::v201::AuthorizationStatusEnum::Invalid;
+            authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Invalid;
         }
         return authorize_response;
     }
@@ -3598,7 +3597,7 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("SignCertificate")));
 
-    ocpp::v201::SignCertificateRequest csr_req;
+    ocpp::v2::SignCertificateRequest csr_req;
 
     const auto result = this->evse_security->generate_certificate_signing_request(
         ocpp::CertificateSigningUseEnum::V2GCertificate,
@@ -3619,7 +3618,7 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
     }
 
     csr_req.csr = result.csr.value();
-    csr_req.certificateType = ocpp::v201::CertificateSigningUseEnum::V2GCertificate;
+    csr_req.certificateType = ocpp::v2::CertificateSigningUseEnum::V2GCertificate;
     req.data.emplace(json(csr_req).dump());
 
     Call<DataTransferRequest> call(req);
@@ -3628,7 +3627,7 @@ void ChargePointImpl::data_transfer_pnc_sign_certificate() {
 
 void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
     const int32_t connector_id, const std::string& exi_request, const std::string& iso15118_schema_version,
-    const ocpp::v201::CertificateActionEnum& certificate_action) {
+    const ocpp::v2::CertificateActionEnum& certificate_action) {
 
     if (!this->is_pnc_enabled()) {
         EVLOG_warning
@@ -3641,7 +3640,7 @@ void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("Get15118EVCertificate")));
 
-    ocpp::v201::Get15118EVCertificateRequest cert_req;
+    ocpp::v2::Get15118EVCertificateRequest cert_req;
     cert_req.action = certificate_action;
     cert_req.exiRequest = exi_request;
     cert_req.iso15118SchemaVersion = iso15118_schema_version;
@@ -3663,7 +3662,7 @@ void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
         try {
             ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
             if (call_result.msg.data.has_value() and call_result.msg.status == DataTransferStatus::Accepted) {
-                ocpp::v201::Get15118EVCertificateResponse ev_certificate_response =
+                ocpp::v2::Get15118EVCertificateResponse ev_certificate_response =
                     json::parse(call_result.msg.data.value());
                 this->get_15118_ev_certificate_response_callback(connector_id, ev_certificate_response,
                                                                  certificate_action);
@@ -3686,14 +3685,14 @@ void ChargePointImpl::data_transfer_pnc_get_15118_ev_certificate(
     }
 }
 
-void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v201::OCSPRequestData& ocsp_request_data) {
+void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v2::OCSPRequestData& ocsp_request_data) {
     EVLOG_info << "Requesting OCSP certificate Status";
 
     DataTransferRequest req;
     req.vendorId = ISO15118_PNC_VENDOR_ID;
     req.messageId.emplace(CiString<50>(std::string("GetCertificateStatus")));
 
-    ocpp::v201::GetCertificateStatusRequest cert_status_req;
+    ocpp::v2::GetCertificateStatusRequest cert_status_req;
     cert_status_req.ocspRequestData = ocsp_request_data;
 
     req.data.emplace(json(cert_status_req).dump());
@@ -3712,13 +3711,12 @@ void ChargePointImpl::data_transfer_pnc_get_certificate_status(const ocpp::v201:
         try {
             ocpp::CallResult<DataTransferResponse> call_result = enhanced_message.message;
             if (call_result.msg.data.has_value()) {
-                ocpp::v201::GetCertificateStatusResponse cert_status_response =
-                    json::parse(call_result.msg.data.value());
-                if (cert_status_response.status == ocpp::v201::GetCertificateStatusEnum::Accepted) {
+                ocpp::v2::GetCertificateStatusResponse cert_status_response = json::parse(call_result.msg.data.value());
+                if (cert_status_response.status == ocpp::v2::GetCertificateStatusEnum::Accepted) {
                     if (cert_status_response.ocspResult.has_value()) {
                         ocpp::CertificateHashDataType certificate_hash_data;
                         certificate_hash_data.hashAlgorithm =
-                            ocpp::evse_security_conversions::from_ocpp_v201(ocsp_request_data.hashAlgorithm);
+                            ocpp::evse_security_conversions::from_ocpp_v2(ocsp_request_data.hashAlgorithm);
                         certificate_hash_data.issuerKeyHash = ocsp_request_data.issuerKeyHash.get();
                         certificate_hash_data.issuerNameHash = ocsp_request_data.issuerNameHash.get();
                         certificate_hash_data.serialNumber = ocsp_request_data.serialNumber.get();
@@ -3758,8 +3756,8 @@ void ChargePointImpl::handle_data_transfer_pnc_trigger_message(Call<DataTransfer
     if (this->configuration->getCpoName().has_value() or
         this->configuration->getSeccLeafSubjectOrganization().has_value()) {
         response.status = DataTransferStatus::Accepted;
-        ocpp::v201::TriggerMessageResponse trigger_message_response;
-        trigger_message_response.status = ocpp::v201::TriggerMessageStatusEnum::Accepted;
+        ocpp::v2::TriggerMessageResponse trigger_message_response;
+        trigger_message_response.status = ocpp::v2::TriggerMessageStatusEnum::Accepted;
         response.data.emplace(json(trigger_message_response).dump());
     } else {
         EVLOG_warning << "Received Data Transfer TriggerMessage to trigger CSR but no "
@@ -3785,7 +3783,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
     response.status = DataTransferStatus::Rejected;
 
     try {
-        const ocpp::v201::CertificateSignedRequest req = json::parse(call.msg.data.value());
+        const ocpp::v2::CertificateSignedRequest req = json::parse(call.msg.data.value());
 
         response.status = DataTransferStatus::Accepted;
 
@@ -3794,7 +3792,7 @@ void ChargePointImpl::handle_data_transfer_pnc_certificate_signed(Call<DataTrans
         std::string tech_info; // in case certificate is rejected this contains human readable information
 
         if (req.certificateType.has_value() and
-            req.certificateType.value() != ocpp::v201::CertificateSigningUseEnum::V2GCertificate) {
+            req.certificateType.value() != ocpp::v2::CertificateSigningUseEnum::V2GCertificate) {
             tech_info = "Received DataTransfer.req containing CertificateSigned.req where certificateType is not "
                         "V2GCertificate";
             EVLOG_warning << tech_info;
@@ -3844,30 +3842,30 @@ void ChargePointImpl::handle_data_transfer_pnc_get_installed_certificates(Call<D
 
     try {
         if (call.msg.data.has_value()) {
-            const ocpp::v201::GetInstalledCertificateIdsRequest req = json::parse(call.msg.data.value());
+            const ocpp::v2::GetInstalledCertificateIdsRequest req = json::parse(call.msg.data.value());
 
             response.status = DataTransferStatus::Accepted;
 
             // prepare argument for getRootCertificate
             std::vector<ocpp::CertificateType> certificate_types;
             if (req.certificateType.has_value()) {
-                certificate_types = ocpp::evse_security_conversions::from_ocpp_v201(req.certificateType.value());
+                certificate_types = ocpp::evse_security_conversions::from_ocpp_v2(req.certificateType.value());
             }
 
-            ocpp::v201::GetInstalledCertificateIdsResponse get_certificate_ids_response;
-            get_certificate_ids_response.status = ocpp::v201::GetInstalledCertificateStatusEnum::NotFound;
+            ocpp::v2::GetInstalledCertificateIdsResponse get_certificate_ids_response;
+            get_certificate_ids_response.status = ocpp::v2::GetInstalledCertificateStatusEnum::NotFound;
 
             const auto certificate_hash_data_chains =
                 this->evse_security->get_installed_certificates(certificate_types);
-            std::optional<std::vector<ocpp::v201::CertificateHashDataChain>> certificate_hash_data_chain_v201_opt;
-            std::vector<ocpp::v201::CertificateHashDataChain> certificate_hash_data_chain_v201;
+            std::optional<std::vector<ocpp::v2::CertificateHashDataChain>> certificate_hash_data_chain_v2_opt;
+            std::vector<ocpp::v2::CertificateHashDataChain> certificate_hash_data_chain_v2;
             for (const auto certificate_hash_data_chain_entry : certificate_hash_data_chains) {
-                certificate_hash_data_chain_v201.push_back(
-                    ocpp::evse_security_conversions::to_ocpp_v201(certificate_hash_data_chain_entry));
+                certificate_hash_data_chain_v2.push_back(
+                    ocpp::evse_security_conversions::to_ocpp_v2(certificate_hash_data_chain_entry));
             }
-            certificate_hash_data_chain_v201_opt.emplace(certificate_hash_data_chain_v201);
-            get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v201_opt;
-            get_certificate_ids_response.status = ocpp::v201::GetInstalledCertificateStatusEnum::Accepted;
+            certificate_hash_data_chain_v2_opt.emplace(certificate_hash_data_chain_v2);
+            get_certificate_ids_response.certificateHashDataChain = certificate_hash_data_chain_v2_opt;
+            get_certificate_ids_response.status = ocpp::v2::GetInstalledCertificateStatusEnum::Accepted;
 
             response.data.emplace(json(get_certificate_ids_response).dump());
         } else {
@@ -3890,13 +3888,13 @@ void ChargePointImpl::handle_data_transfer_delete_certificate(Call<DataTransferR
 
     if (call.msg.data.has_value()) {
         try {
-            const ocpp::v201::DeleteCertificateRequest req = json::parse(call.msg.data.value());
+            const ocpp::v2::DeleteCertificateRequest req = json::parse(call.msg.data.value());
             response.status = DataTransferStatus::Accepted;
 
-            ocpp::v201::DeleteCertificateResponse delete_cert_response;
+            ocpp::v2::DeleteCertificateResponse delete_cert_response;
             const ocpp::CertificateHashDataType certificate_hash_data(json(req.certificateHashData));
 
-            delete_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v201(
+            delete_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v2(
                 this->evse_security->delete_certificate(certificate_hash_data));
 
             response.data.emplace(json(delete_cert_response).dump());
@@ -3920,13 +3918,12 @@ void ChargePointImpl::handle_data_transfer_install_certificate(Call<DataTransfer
 
     if (call.msg.data.has_value()) {
         try {
-            const ocpp::v201::InstallCertificateRequest req = json::parse(call.msg.data.value());
+            const ocpp::v2::InstallCertificateRequest req = json::parse(call.msg.data.value());
             response.status = DataTransferStatus::Accepted;
-            ocpp::CaCertificateType ca_certificate_type =
-                evse_security_conversions::from_ocpp_v201(req.certificateType);
+            ocpp::CaCertificateType ca_certificate_type = evse_security_conversions::from_ocpp_v2(req.certificateType);
             const auto result = this->evse_security->install_ca_certificate(req.certificate.get(), ca_certificate_type);
-            ocpp::v201::InstallCertificateResponse install_cert_response;
-            install_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v201(result);
+            ocpp::v2::InstallCertificateResponse install_cert_response;
+            install_cert_response.status = ocpp::evse_security_conversions::to_ocpp_v2(result);
             response.data.emplace(json(install_cert_response).dump());
         } catch (const json::exception& e) {
             EVLOG_warning << "Could not parse data of DataTransfer message InstallCertificate.req: " << e.what();
@@ -4497,8 +4494,8 @@ void ChargePointImpl::register_connection_state_changed_callback(
 
 void ChargePointImpl::register_get_15118_ev_certificate_response_callback(
     const std::function<void(const int32_t connector,
-                             const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
-                             const ocpp::v201::CertificateActionEnum& certificate_action)>& callback) {
+                             const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+                             const ocpp::v2::CertificateActionEnum& certificate_action)>& callback) {
     this->get_15118_ev_certificate_response_callback = callback;
 }
 

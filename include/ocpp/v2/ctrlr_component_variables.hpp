@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 -  Pionix GmbH and Contributors to EVerest
 
-#ifndef OCPP_V201_CTRLR_COMPONENT_VARIABLES
-#define OCPP_V201_CTRLR_COMPONENT_VARIABLES
+#ifndef OCPP_V2_CTRLR_COMPONENT_VARIABLES
+#define OCPP_V2_CTRLR_COMPONENT_VARIABLES
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 namespace ControllerComponents {
 extern const Component InternalCtrlr;
@@ -256,7 +256,7 @@ extern const Variable SupplyPhases;
 ComponentVariable get_component_variable(const int32_t evse_id, const int32_t connector_id, const Variable& variable);
 } // namespace ConnectorComponentVariables
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_CTRLR_COMPONENT_VARIABLES
+#endif // OCPP_V2_CTRLR_COMPONENT_VARIABLES

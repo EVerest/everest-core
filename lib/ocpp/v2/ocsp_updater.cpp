@@ -7,12 +7,12 @@
 
 #include <everest/logging.hpp>
 
-#include <ocpp/v201/charge_point.hpp>
-#include <ocpp/v201/messages/GetCertificateStatus.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/ocsp_updater.hpp>
+#include <ocpp/v2/charge_point.hpp>
+#include <ocpp/v2/messages/GetCertificateStatus.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/ocsp_updater.hpp>
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 
 OcspUpdater::OcspUpdater(std::shared_ptr<EvseSecurity> evse_security, cert_status_func get_cert_status_from_csms,
                          std::chrono::seconds ocsp_cache_update_interval,
@@ -105,13 +105,13 @@ void OcspUpdater::execute_ocsp_update() {
         GetCertificateStatusRequest request;
         switch (ocsp_request.hashAlgorithm) {
         case HashAlgorithmEnumType::SHA256:
-            request.ocspRequestData.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA256;
+            request.ocspRequestData.hashAlgorithm = ocpp::v2::HashAlgorithmEnum::SHA256;
             break;
         case HashAlgorithmEnumType::SHA384:
-            request.ocspRequestData.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA384;
+            request.ocspRequestData.hashAlgorithm = ocpp::v2::HashAlgorithmEnum::SHA384;
             break;
         case HashAlgorithmEnumType::SHA512:
-            request.ocspRequestData.hashAlgorithm = ocpp::v201::HashAlgorithmEnum::SHA512;
+            request.ocspRequestData.hashAlgorithm = ocpp::v2::HashAlgorithmEnum::SHA512;
             break;
         }
         request.ocspRequestData.issuerKeyHash = ocsp_request.issuerKeyHash;
@@ -147,4 +147,4 @@ void OcspUpdater::execute_ocsp_update() {
     EVLOG_info << "libocpp: Done updating OCSP cache";
 }
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

@@ -19,10 +19,10 @@ option(OCPP_INSTALL "Install the library (shared data might be installed anyway)
 option(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP "Websocket++ has been removed from the project" OFF)
 
 option(LIBOCPP_ENABLE_V16 "Enable OCPP 1.6 in the ocpp library" ON)
-option(LIBOCPP_ENABLE_V201 "Enable OCPP 2.0.1 in the ocpp library" ON)
+option(LIBOCPP_ENABLE_V2 "Enable OCPP 2.0.1 and OCPP2.1 in the ocpp library" ON)
 
-if((NOT LIBOCPP_ENABLE_V16) AND (NOT LIBOCPP_ENABLE_V201))
-    message(FATAL_ERROR "At least one of LIBOCPP_ENABLE_V16 and LIBOCPP_ENABLE_V201 needs to be ON")
+if((NOT LIBOCPP_ENABLE_V16) AND (NOT LIBOCPP_ENABLE_V2))
+    message(FATAL_ERROR "At least one of LIBOCPP_ENABLE_V16 and LIBOCPP_ENABLE_V2 needs to be ON")
 endif()
 
 if(LIBOCPP_ENABLE_DEPRECATED_WEBSOCKETPP)
@@ -59,7 +59,7 @@ endif()
 
 # config and auxillary files
 add_subdirectory(config/v16)
-add_subdirectory(config/v201)
+add_subdirectory(config/v2)
 
 # library code
 add_subdirectory(lib)

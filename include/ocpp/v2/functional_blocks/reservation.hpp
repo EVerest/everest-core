@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v201/message_dispatcher.hpp>
-#include <ocpp/v201/message_handler.hpp>
+#include <ocpp/v2/message_dispatcher.hpp>
+#include <ocpp/v2/message_handler.hpp>
 
 #pragma once
 
-namespace ocpp::v201 {
+namespace ocpp::v2 {
 class EvseInterface;
 class EvseManagerInterface;
 
@@ -66,4 +66,4 @@ private: // Functions
     void send_reserve_now_rejected_response(const MessageId& unique_id, const std::string& status_info);
 };
 
-} // namespace ocpp::v201
+} // namespace ocpp::v2

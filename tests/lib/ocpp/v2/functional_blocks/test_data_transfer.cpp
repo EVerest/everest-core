@@ -6,10 +6,10 @@
 
 #include <message_dispatcher_mock.hpp>
 #include <ocpp/common/constants.hpp>
-#include <ocpp/v201/functional_blocks/data_transfer.hpp>
-#include <ocpp/v201/messages/DataTransfer.hpp>
+#include <ocpp/v2/functional_blocks/data_transfer.hpp>
+#include <ocpp/v2/messages/DataTransfer.hpp>
 
-using namespace ocpp::v201;
+using namespace ocpp::v2;
 using ::testing::_;
 using ::testing::Invoke;
 using ::testing::Return;

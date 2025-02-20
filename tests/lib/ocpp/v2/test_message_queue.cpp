@@ -4,46 +4,46 @@
 #include <gtest/gtest.h>
 
 #include <ocpp/common/message_queue.hpp>
-#include <ocpp/v201/messages/Authorize.hpp>
+#include <ocpp/v2/messages/Authorize.hpp>
 
 namespace ocpp {
 
-namespace v201 {
+namespace v2 {
 
-class ControlMessageV201Test : public ::testing::Test {
+class ControlMessageV2Test : public ::testing::Test {
 
 protected:
 };
 
-TEST_F(ControlMessageV201Test, test_is_transactional) {
+TEST_F(ControlMessageV2Test, test_is_transactional) {
 
-    EXPECT_TRUE(is_transaction_message(
-        (ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{v201::TransactionEventRequest{}}}
-             .messageType)));
+    EXPECT_TRUE(is_transaction_message((ControlMessage<v2::MessageType>{
+        Call<v2::TransactionEventRequest>{
+            v2::TransactionEventRequest{}}}.messageType)));
 
     EXPECT_TRUE(!is_transaction_message(
-        ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}}}.messageType));
+        ControlMessage<v2::MessageType>{Call<v2::AuthorizeRequest>{v2::AuthorizeRequest{}}}.messageType));
 }
 
-TEST_F(ControlMessageV201Test, test_is_transactional_update) {
+TEST_F(ControlMessageV2Test, test_is_transactional_update) {
 
-    v201::TransactionEventRequest transaction_event_request{};
-    transaction_event_request.eventType = v201::TransactionEventEnum::Updated;
+    v2::TransactionEventRequest transaction_event_request{};
+    transaction_event_request.eventType = v2::TransactionEventEnum::Updated;
 
-    EXPECT_TRUE((ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
+    EXPECT_TRUE((ControlMessage<v2::MessageType>{Call<v2::TransactionEventRequest>{transaction_event_request}}
                      .is_transaction_update_message()));
 
-    transaction_event_request.eventType = v201::TransactionEventEnum::Started;
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
+    transaction_event_request.eventType = v2::TransactionEventEnum::Started;
+    EXPECT_TRUE(!(ControlMessage<v2::MessageType>{Call<v2::TransactionEventRequest>{transaction_event_request}}
                       .is_transaction_update_message()));
 
-    transaction_event_request.eventType = v201::TransactionEventEnum::Ended;
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::TransactionEventRequest>{transaction_event_request}}
+    transaction_event_request.eventType = v2::TransactionEventEnum::Ended;
+    EXPECT_TRUE(!(ControlMessage<v2::MessageType>{Call<v2::TransactionEventRequest>{transaction_event_request}}
                       .is_transaction_update_message()));
 
-    EXPECT_TRUE(!(ControlMessage<v201::MessageType>{Call<v201::AuthorizeRequest>{v201::AuthorizeRequest{}}}
+    EXPECT_TRUE(!(ControlMessage<v2::MessageType>{Call<v2::AuthorizeRequest>{v2::AuthorizeRequest{}}}
                       .is_transaction_update_message()));
 }
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

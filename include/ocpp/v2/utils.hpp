@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef V201_UTILS_HPP
-#define V201_UTILS_HPP
+#ifndef V2_UTILS_HPP
+#define V2_UTILS_HPP
 
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/types.hpp>
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 namespace utils {
 
 /// \brief This function returns the configured Measurand as an std::vector
@@ -75,7 +75,7 @@ bool is_critical(const std::string& security_event);
 std::vector<ChargingProfilePurposeEnum> get_purposes_to_ignore(const std::string& csl, const bool is_offline);
 
 } // namespace utils
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif

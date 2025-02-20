@@ -2,17 +2,17 @@
 // Copyright 2020 - 2024 Pionix GmbH and Contributors to EVerest
 // This code is generated using the generator in 'src/code_generator/common`, please do not edit manually
 
-#ifndef OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
-#define OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
+#ifndef OCPP_V2_SECURITYEVENTNOTIFICATION_HPP
+#define OCPP_V2_SECURITYEVENTNOTIFICATION_HPP
 
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Contains a OCPP SecurityEventNotification message
 struct SecurityEventNotificationRequest : public ocpp::Message {
@@ -55,7 +55,7 @@ void from_json(const json& j, SecurityEventNotificationResponse& k);
 /// stream \p os \returns an output stream with the SecurityEventNotificationResponse written to
 std::ostream& operator<<(std::ostream& os, const SecurityEventNotificationResponse& k);
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
-#endif // OCPP_V201_SECURITYEVENTNOTIFICATION_HPP
+#endif // OCPP_V2_SECURITYEVENTNOTIFICATION_HPP

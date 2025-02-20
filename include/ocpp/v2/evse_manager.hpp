@@ -4,10 +4,10 @@
 #pragma once
 
 #include <ocpp/common/custom_iterators.hpp>
-#include <ocpp/v201/evse.hpp>
+#include <ocpp/v2/evse.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 ///
 /// \brief Set all connectors of a given evse to unavailable.
@@ -107,5 +107,5 @@ public:
     EvseIterator end() override;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp

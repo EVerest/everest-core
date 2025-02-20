@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2020 - 2023 Pionix GmbH and Contributors to EVerest
-#ifndef OCPP_V201_DATABASE_HANDLER_HPP
-#define OCPP_V201_DATABASE_HANDLER_HPP
+#ifndef OCPP_V2_DATABASE_HANDLER_HPP
+#define OCPP_V2_DATABASE_HANDLER_HPP
 
-#include "ocpp/v201/types.hpp"
+#include "ocpp/v2/types.hpp"
 #include "sqlite3.h"
 #include <memory>
 #include <ocpp/common/support_older_cpp_versions.hpp>
 
 #include <ocpp/common/database/database_connection.hpp>
 #include <ocpp/common/database/database_handler_common.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/transaction.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/transaction.hpp>
 
 #include <everest/logging.hpp>
 
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 
 /// \brief Helper class for retrieving authorization cache entries from the database
 struct AuthorizationCacheEntry {
@@ -104,13 +104,13 @@ public:
 
     /// \brief Inserts or updates a local authorization list entries \p local_authorization_list to the AUTH_LIST table.
     virtual void
-    insert_or_update_local_authorization_list(const std::vector<v201::AuthorizationData>& local_authorization_list) = 0;
+    insert_or_update_local_authorization_list(const std::vector<v2::AuthorizationData>& local_authorization_list) = 0;
 
     /// \brief Deletes the authorization list entry with the given \p id_tag
     virtual void delete_local_authorization_list_entry(const IdToken& id_token) = 0;
 
     /// \brief Returns the IdTagInfo of the given \p id_tag if it exists in the AUTH_LIST table, else std::nullopt.
-    virtual std::optional<v201::IdTokenInfo> get_local_authorization_list_entry(const IdToken& id_token) = 0;
+    virtual std::optional<v2::IdTokenInfo> get_local_authorization_list_entry(const IdToken& id_token) = 0;
 
     /// \brief Deletes all entries of the AUTH_LIST table.
     virtual void clear_local_authorization_list() = 0;
@@ -166,7 +166,7 @@ public:
 
     /// \brief Inserts or updates the given \p profile to CHARGING_PROFILES table
     virtual void insert_or_update_charging_profile(
-        const int evse_id, const v201::ChargingProfile& profile,
+        const int evse_id, const v2::ChargingProfile& profile,
         const ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) = 0;
 
     /// \brief Deletes the profile with the given \p profile_id
@@ -188,13 +188,13 @@ public:
                                             const ChargingProfileCriterion& criteria) = 0;
 
     /// \brief Retrieves the charging profiles stored on \p evse_id
-    virtual std::vector<v201::ChargingProfile> get_charging_profiles_for_evse(const int evse_id) = 0;
+    virtual std::vector<v2::ChargingProfile> get_charging_profiles_for_evse(const int evse_id) = 0;
 
     /// \brief Retrieves all ChargingProfiles
-    virtual std::vector<v201::ChargingProfile> get_all_charging_profiles() = 0;
+    virtual std::vector<v2::ChargingProfile> get_all_charging_profiles() = 0;
 
     /// \brief Retrieves all ChargingProfiles grouped by EVSE ID
-    virtual std::map<int32_t, std::vector<v201::ChargingProfile>> get_all_charging_profiles_group_by_evse() = 0;
+    virtual std::map<int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() = 0;
 
     virtual ChargingLimitSourceEnum get_charging_limit_source_for_profile(const int profile_id) = 0;
 
@@ -247,9 +247,9 @@ public:
     void insert_or_update_local_authorization_list_entry(const IdToken& id_token,
                                                          const IdTokenInfo& id_token_info) override;
     void insert_or_update_local_authorization_list(
-        const std::vector<v201::AuthorizationData>& local_authorization_list) override;
+        const std::vector<v2::AuthorizationData>& local_authorization_list) override;
     void delete_local_authorization_list_entry(const IdToken& id_token) override;
-    std::optional<v201::IdTokenInfo> get_local_authorization_list_entry(const IdToken& id_token) override;
+    std::optional<v2::IdTokenInfo> get_local_authorization_list_entry(const IdToken& id_token) override;
     void clear_local_authorization_list() override;
     int32_t get_local_authorization_list_number_of_entries() override;
 
@@ -269,7 +269,7 @@ public:
 
     /// charging profiles
     void insert_or_update_charging_profile(
-        const int evse_id, const v201::ChargingProfile& profile,
+        const int evse_id, const v2::ChargingProfile& profile,
         const ChargingLimitSourceEnum charging_limit_source = ChargingLimitSourceEnum::CSO) override;
     bool delete_charging_profile(const int profile_id) override;
     void delete_charging_profile_by_transaction_id(const std::string& transaction_id) override;
@@ -279,15 +279,15 @@ public:
     std::vector<ReportedChargingProfile>
     get_charging_profiles_matching_criteria(const std::optional<int32_t> evse_id,
                                             const ChargingProfileCriterion& criteria) override;
-    std::vector<v201::ChargingProfile> get_charging_profiles_for_evse(const int evse_id) override;
-    std::vector<v201::ChargingProfile> get_all_charging_profiles() override;
-    virtual std::map<int32_t, std::vector<v201::ChargingProfile>> get_all_charging_profiles_group_by_evse() override;
+    std::vector<v2::ChargingProfile> get_charging_profiles_for_evse(const int evse_id) override;
+    std::vector<v2::ChargingProfile> get_all_charging_profiles() override;
+    virtual std::map<int32_t, std::vector<v2::ChargingProfile>> get_all_charging_profiles_group_by_evse() override;
     ChargingLimitSourceEnum get_charging_limit_source_for_profile(const int profile_id) override;
 
     std::unique_ptr<common::SQLiteStatementInterface> new_statement(const std::string& sql) override;
 };
 
-} // namespace v201
+} // namespace v2
 } // namespace ocpp
 
 #endif

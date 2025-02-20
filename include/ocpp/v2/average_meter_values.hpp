@@ -6,13 +6,13 @@
 #include <everest/logging.hpp>
 #include <everest/timer.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
-#include <ocpp/v201/ocpp_types.hpp>
-#include <ocpp/v201/types.hpp>
-#include <ocpp/v201/utils.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
+#include <ocpp/v2/types.hpp>
+#include <ocpp/v2/utils.hpp>
 #include <vector>
 namespace ocpp {
-namespace v201 {
+namespace v2 {
 class AverageMeterValues {
 
 public:
@@ -49,6 +49,6 @@ private:
     bool is_avg_meas(const SampledValue& sample);
     void average_meter_value();
 };
-} // namespace v201
+} // namespace v2
 
 } // namespace ocpp
