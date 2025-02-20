@@ -213,6 +213,59 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         publish_dc_ev_target_voltage_current({target_voltage, 0});
     };
 
+    callbacks.notify_ev_charging_needs =
+        [this](const dt::ServiceCategory& service_category, const dt::AcConnector& ac_connector,
+               const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode) {
+            using namespace types::iso15118;
+
+            ChargingNeeds charging_needs;
+
+            EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+            if (service_category == dt::ServiceCategory::AC) {
+                if (ac_connector == dt::AcConnector::SinglePhase) {
+                    requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+                } else if (ac_connector == dt::AcConnector::ThreePhase) {
+                    requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
+                }
+            } else if (service_category == dt::ServiceCategory::AC_BPT) {
+                requested_energy_transfer = EnergyTransferMode::AC_BPT;
+            } else if (service_category == dt::ServiceCategory::DC) {
+                requested_energy_transfer = EnergyTransferMode::DC;
+            } else if (service_category == dt::ServiceCategory::DC_ACDP) {
+                requested_energy_transfer = EnergyTransferMode::DC_ACDP;
+            } else if (service_category == dt::ServiceCategory::DC_BPT) {
+                requested_energy_transfer = EnergyTransferMode::DC_BPT;
+            } else if (service_category == dt::ServiceCategory::DC_ACDP_BPT) {
+                requested_energy_transfer = EnergyTransferMode::DC_ACDP_BPT;
+            }
+
+            charging_needs.requested_energy_transfer = requested_energy_transfer;
+
+            if (control_mode == dt::ControlMode::Scheduled) {
+                charging_needs.control_mode = ControlMode::ScheduledControl;
+            } else if (control_mode == dt::ControlMode::Dynamic) {
+                charging_needs.control_mode = ControlMode::DynamicControl;
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for control mode!"));
+            }
+
+            if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
+                charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC;
+            } else if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
+                charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC_SECC;
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for mobility needs mode!"));
+            }
+
+            // TODO(ioan): first data we will publish will be related to the v2xChargingParameters
+            V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
+
+            // v2x_charging_parameters.
+
+            // Publish charging needs
+            publish_charging_needs(charging_needs);
+        };
+
     callbacks.dc_charge_loop_req = [this](const feedback::DcChargeLoopReq& dc_charge_loop_req) {
         if (const auto* dc_control_mode = std::get_if<feedback::DcReqControlMode>(&dc_charge_loop_req)) {
             if (const auto* scheduled_mode = std::get_if<ScheduleControlMode>(dc_control_mode)) {
