@@ -191,7 +191,7 @@ impl PaymentTerminalModule {
         // Wait for the card.
         let read_card_loop = || -> Result<CardInfo> {
             loop {
-                if self.was_configured() && !self.is_enabled() {
+                if !self.has_everything_enabled() && !self.is_enabled() {
                     log::debug!("Reading is disabled, waiting...");
                     std::thread::sleep(Duration::from_secs(1));
                     continue;
@@ -214,7 +214,9 @@ impl PaymentTerminalModule {
         if let Some(provided_token) = match card_info {
             CardInfo::Bank => {
                 let credit_card_connectors = self.connectors_for_card_type(CardType::BankCard);
-                if (self.was_configured() && credit_card_connectors.is_empty()) || token.is_none() {
+                if (!self.has_everything_enabled() && credit_card_connectors.is_empty())
+                    || token.is_none()
+                {
                     None
                 } else {
                     self.feig.begin_transaction(token.as_ref().unwrap())?;
@@ -285,9 +287,9 @@ impl PaymentTerminalModule {
         Ok(())
     }
 
-    fn was_configured(&self) -> bool {
+    fn has_everything_enabled(&self) -> bool {
         let map_guard = self.connector_to_card_type.lock().unwrap();
-        return !map_guard.is_empty();
+        return map_guard.is_empty(); // If the map was not configured, we read all the card types for each connector
     }
 
     fn is_enabled(&self) -> bool {
@@ -344,6 +346,11 @@ impl EnableCardReadingServiceSubscriber for PaymentTerminalModule {
     ) -> ::everestrs::Result<()> {
         let mut map_guard = self.connector_to_card_type.lock().unwrap();
         map_guard.insert(connector_id, supported_cards);
+        Ok(())
+    }
+    fn allow_all_cards_for_every_connector(&self, _context: &Context) -> ::everestrs::Result<()> {
+        let mut map_guard = self.connector_to_card_type.lock().unwrap();
+        map_guard.clear();
         Ok(())
     }
 }
@@ -506,13 +513,7 @@ mod tests {
     fn payment_terminal_module__begin_transaction_credit_cards_accepted() {
         // Now test the successful execution.
         let parameters = [
-            (
-                CardInfo::Bank,
-                "my bank token",
-                true,
-                HashMap::new(),
-                None,
-            ),
+            (CardInfo::Bank, "my bank token", true, HashMap::new(), None),
             (
                 CardInfo::Bank,
                 "my bank token",
@@ -853,6 +854,87 @@ mod tests {
             assert!(pt_module
                 .on_session_cost_impl(&context, session_cost)
                 .is_ok());
+        }
+    }
+
+    #[test]
+    /// Unit tests for the `PaymentTerminalModule::begin_transaction` with credit card acceptance.
+    fn payment_terminal_module__begin_transaction_with_configuration() {
+        {
+            let expected_token = "my bank token";
+
+            let mut everest_mock = ModulePublisher::default();
+            let mut feig_mock = SyncFeig::default();
+
+            everest_mock
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+            everest_mock
+                .bank_session_token_slots
+                .push(BankSessionTokenProviderClientPublisher::default());
+
+            everest_mock.bank_session_token_slots[0]
+                .expect_get_bank_session_token()
+                .times(3)
+                .returning(|| {
+                    Ok(BankSessionToken {
+                        token: Some(expected_token.to_string()),
+                    })
+                });
+
+            everest_mock
+                .token_provider
+                .expect_provided_token()
+                .times(2)
+                .withf(move |arg| {
+                    arg.id_token.value == expected_token.to_string() && arg.connectors == None
+                })
+                .returning(|_| Ok(()));
+
+            everest_mock
+                .token_provider
+                .expect_provided_token()
+                .times(1)
+                .withf(move |arg| {
+                    arg.id_token.value == expected_token.to_string()
+                        && arg.connectors == Some(vec![1])
+                })
+                .return_once(|_| Ok(()));
+
+            feig_mock
+                .expect_read_card()
+                .times(3)
+                .returning(|| Ok(CardInfo::Bank));
+
+            feig_mock
+                .expect_begin_transaction()
+                .times(3)
+                .with(eq("my bank token"))
+                .returning(|_| Ok(()));
+
+            let (tx, _) = channel();
+
+            let pt_module = PaymentTerminalModule {
+                tx,
+                feig: feig_mock,
+                connector_to_card_type: Mutex::new(HashMap::new()),
+            };
+
+            let context = Context {
+                name: "foo",
+                publisher: &everest_mock,
+                index: 0,
+            };
+
+            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
+
+            let _ = pt_module.enable_card_reading(&context, 1, vec![CardType::BankCard]);
+
+            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
+
+            let _ = pt_module.allow_all_cards_for_every_connector(&context);
+
+            assert!(pt_module.begin_transaction(&everest_mock).is_ok());
         }
     }
 }
