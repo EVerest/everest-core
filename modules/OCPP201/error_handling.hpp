@@ -3,7 +3,7 @@
 #ifndef OCPP201_ERROR_HANDLING_HPP
 #define OCPP201_ERROR_HANDLING_HPP
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 #include <ocpp_conversions.hpp>
 #include <utils/error.hpp>
 
@@ -40,12 +40,12 @@ const auto CONNECTOR_COMPONENT_NAME = "Connector";
 const auto PROBLEM_VARIABLE_NAME = "Problem";
 
 /// \brief Derives the EventData from the given \p error, \p cleared and \p event_id parameters
-ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const bool cleared, const int32_t event_id) {
-    ocpp::v201::EventData event_data;
+ocpp::v2::EventData get_event_data(const Everest::error::Error& error, const bool cleared, const int32_t event_id) {
+    ocpp::v2::EventData event_data;
     event_data.eventId = event_id; // This can theoretically conflict with eventIds generated in libocpp (e.g.
                                    // for monitoring events), but the spec does not strictly forbid that
     event_data.timestamp = ocpp::DateTime(error.timestamp);
-    event_data.trigger = ocpp::v201::EventTriggerEnum::Alerting;
+    event_data.trigger = ocpp::v2::EventTriggerEnum::Alerting;
     event_data.cause = std::nullopt; // TODO: use caused_by when available within error object
     event_data.actualValue = cleared ? "false" : "true";
 
@@ -59,7 +59,7 @@ ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const b
     event_data.cleared = cleared;
     event_data.transactionId = std::nullopt;        // TODO: Do we need to set this here?
     event_data.variableMonitoringId = std::nullopt; // We dont need to set this for HardwiredNotification
-    event_data.eventNotificationType = ocpp::v201::EventNotificationEnum::HardWiredNotification;
+    event_data.eventNotificationType = ocpp::v2::EventNotificationEnum::HardWiredNotification;
 
     // TODO: choose proper component
     const auto evse_id = error.origin.mapping.has_value() ? error.origin.mapping.value().evse : 0;
@@ -68,11 +68,11 @@ ocpp::v201::EventData get_event_data(const Everest::error::Error& error, const b
         event_data.component = {CHARGING_STATION_COMPONENT_NAME}; // TODO: use origin of error for mapping to component?
     } else if (not error.origin.mapping.value().connector.has_value()) {
         // component is EVSE
-        ocpp::v201::EVSE evse = {evse_id};
+        ocpp::v2::EVSE evse = {evse_id};
         event_data.component = {EVSE_COMPONENT_NAME, std::nullopt, evse};
     } else {
         // component is Connector
-        ocpp::v201::EVSE evse = {evse_id, std::nullopt, error.origin.mapping.value().connector.value()};
+        ocpp::v2::EVSE evse = {evse_id, std::nullopt, error.origin.mapping.value().connector.value()};
         event_data.component = {CONNECTOR_COMPONENT_NAME, std::nullopt, evse};
     }
     event_data.variable = {PROBLEM_VARIABLE_NAME}; // TODO: use type of error for mapping to variable?

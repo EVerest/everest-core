@@ -5,19 +5,18 @@
 #include <generated/types/reservation.hpp>
 #include <generated/types/session_cost.hpp>
 #include <ocpp/common/types.hpp>
-#include <ocpp/v201/ocpp_enums.hpp>
+#include <ocpp/v2/ocpp_enums.hpp>
 
 namespace ocpp_conversions {
 types::display_message::MessagePriorityEnum
-to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority);
-ocpp::v201::MessagePriorityEnum
-to_ocpp_201_message_priority(const types::display_message::MessagePriorityEnum& priority);
-types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state);
-ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state);
+to_everest_display_message_priority(const ocpp::v2::MessagePriorityEnum& priority);
+ocpp::v2::MessagePriorityEnum to_ocpp_201_message_priority(const types::display_message::MessagePriorityEnum& priority);
+types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v2::MessageStateEnum& state);
+ocpp::v2::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state);
 
 types::display_message::MessageFormat
-to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format);
-ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format);
+to_everest_display_message_format(const ocpp::v2::MessageFormatEnum& message_format);
+ocpp::v2::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format);
 
 ocpp::IdentifierType to_ocpp_identifiertype_enum(const types::display_message::Identifier_type identifier_type);
 types::display_message::Identifier_type to_everest_identifier_type_enum(const ocpp::IdentifierType identifier_type);

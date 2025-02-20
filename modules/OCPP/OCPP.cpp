@@ -783,8 +783,8 @@ void OCPP::ready() {
         [this](bool is_connected) { this->p_ocpp_generic->publish_is_connected(is_connected); });
 
     this->charge_point->register_get_15118_ev_certificate_response_callback(
-        [this](const int32_t connector_id, const ocpp::v201::Get15118EVCertificateResponse& certificate_response,
-               const ocpp::v201::CertificateActionEnum& certificate_action) {
+        [this](const int32_t connector_id, const ocpp::v2::Get15118EVCertificateResponse& certificate_response,
+               const ocpp::v2::CertificateActionEnum& certificate_action) {
             types::iso15118::ResponseExiStreamStatus response;
             response.status = conversions::to_everest_iso15118_status(certificate_response.status);
             response.certificate_action = conversions::to_everest_certificate_action_enum(certificate_action);
