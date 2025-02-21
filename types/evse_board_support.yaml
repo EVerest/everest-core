@@ -65,6 +65,7 @@ types:
         enum:
           - IEC62196Type2Cable
           - IEC62196Type2Socket
+          - IEC63379McsSocket
   Telemetry:
     description: Other telemetry
     type: object

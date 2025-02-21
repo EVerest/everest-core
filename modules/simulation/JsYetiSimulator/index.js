@@ -128,9 +128,10 @@ function event_to_enum(event) {
 
 function publish_event(mod, event) {
   mod.provides.board_support.publish.event({ event: event_to_enum(event) });
+
   if (event == STATE_A) {
     mod.provides.board_support.publish.insertion_detection_event(false);
-  } else {
+  } else if (event == STATE_B) {
     mod.provides.board_support.publish.insertion_detection_event(true);
   }
 }

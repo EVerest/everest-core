@@ -237,6 +237,7 @@ void Charger::run_state_machine() {
                 } else {
                     pwm_off();
                 }
+
                 deauthorize_internal();
                 shared_context.transaction_active = false;
                 clear_errors_on_unplug();
@@ -273,7 +274,8 @@ void Charger::run_state_machine() {
                         hlc_use_5percent_current_session = config_context.ac_hlc_use_5percent;
                     }
                 } else if (config_context.charge_mode == ChargeMode::DC) {
-                    hlc_use_5percent_current_session = true;
+                    if (not config_context.mcs_enabled)
+                        hlc_use_5percent_current_session = true;
                 } else {
                     // unsupported charging mode, give up here.
                     error_handling->raise_internal_error("Unsupported charging mode.");
@@ -338,10 +340,8 @@ void Charger::run_state_machine() {
             // FIXME: if slac reports a dlink_ready=false while we are still waiting for auth we should:
             // in AC mode: go back to non HLC nominal PWM mode
             // in DC mode: go to error_slac for this session
-
             if (shared_context.authorized and not shared_context.authorized_pnc) {
                 session_log.evse(false, "EIM Authorization received");
-
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
                     if (!start_transaction()) {
@@ -1848,7 +1848,12 @@ types::iso15118::DcEvseMaximumLimits Charger::get_evse_max_hlc_limits() {
 void Charger::dlink_pause() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_pause);
     shared_context.hlc_allow_close_contactor = false;
-    pwm_off();
+    
+    if (not config_context.mcs_enabled) {
+        pwm_off();
+    } else {
+        ce_off();
+    }
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Pause;
 }
 
@@ -1856,7 +1861,12 @@ void Charger::dlink_pause() {
 void Charger::dlink_terminate() {
     Everest::scoped_lock_timeout lock(state_machine_mutex, Everest::MutexDescription::Charger_dlink_terminate);
     shared_context.hlc_allow_close_contactor = false;
-    pwm_off();
+
+    if (not config_context.mcs_enabled) {
+        pwm_off();
+    } else {
+        ce_off();
+    }
     shared_context.hlc_charging_terminate_pause = HlcTerminatePause::Terminate;
 }
 
@@ -2018,6 +2028,10 @@ bool Charger::stop_charging_on_fatal_error_internal() {
 void Charger::graceful_stop_charging() {
     if (shared_context.pwm_running) {
         pwm_off();
+    }
+
+    if (config_context.mcs_enabled) {
+        ce_off();
     }
 
     // Shutdown DC power supplies

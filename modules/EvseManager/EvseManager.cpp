@@ -71,7 +71,8 @@ void EvseManager::init() {
     slac_enabled = not r_slac.empty();
 
     // if hlc is disabled in config, disable slac even if requirement is connected
-    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC")) {
+    if (not(config.ac_hlc_enabled or config.ac_with_soc or config.charge_mode == "DC")
+            or config.mcs_enable) {
         slac_enabled = false;
     }
 
@@ -83,10 +84,11 @@ void EvseManager::init() {
     }
 
     hlc_enabled = not r_hlc.empty();
-    if (not slac_enabled)
+    if (not slac_enabled and not config.mcs_enable)
         hlc_enabled = false;
 
-    if (config.charge_mode == "DC" and (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
+    if (config.charge_mode == "DC" and not config.mcs_enable and
+        (not hlc_enabled or not slac_enabled or r_powersupply_DC.empty())) {
         EVLOG_error << "DC mode requires slac, HLC and powersupply DC to be connected";
         exit(255);
     }
@@ -214,20 +216,25 @@ void EvseManager::ready() {
             // Inform charger
             charger->dlink_error();
             // Inform SLAC layer, it will leave the logical network
-            r_slac[0]->call_dlink_error();
+            if (not r_slac.empty())
+                r_slac[0]->call_dlink_error();
         });
 
         r_hlc[0]->subscribe_dlink_pause([this] {
             // tell charger (it will disable PWM)
             session_log.evse(true, "D-LINK_PAUSE.req");
             charger->dlink_pause();
-            r_slac[0]->call_dlink_pause();
+
+            if (not r_slac.empty())
+                r_slac[0]->call_dlink_pause();
         });
 
         r_hlc[0]->subscribe_dlink_terminate([this] {
             session_log.evse(true, "D-LINK_TERMINATE.req");
             charger->dlink_terminate();
-            r_slac[0]->call_dlink_terminate();
+            
+            if (not r_slac.empty())
+                r_slac[0]->call_dlink_terminate();
         });
 
         r_hlc[0]->subscribe_v2g_setup_finished([this] { charger->set_hlc_charging_active(); });
@@ -242,11 +249,13 @@ void EvseManager::ready() {
             charger->set_hlc_allow_close_contactor(false);
         });
 
-        // Trigger SLAC restart
-        charger->signal_slac_start.connect([this] { r_slac[0]->call_enter_bcd(); });
-        // Trigger SLAC reset
-        charger->signal_slac_reset.connect([this] { r_slac[0]->call_reset(false); });
-
+        if (not r_slac.empty()) {
+            // Trigger SLAC restart
+            charger->signal_slac_start.connect([this] { r_slac[0]->call_enter_bcd(); });
+            // Trigger SLAC reset
+            charger->signal_slac_reset.connect([this] { r_slac[0]->call_reset(false); });
+        }
+        
         // Ask HLC to stop charging session
         charger->signal_hlc_stop_charging.connect([this] { r_hlc[0]->call_stop_charging(true); });
 
