@@ -54,7 +54,6 @@ void car_simulatorImpl::handle_execute_charging_session(std::string& value) {
     if (!check_can_execute()) {
         return;
     }
-
     set_execution_active(false);
     reset_car_simulation_defaults();
 
@@ -127,6 +126,8 @@ void car_simulatorImpl::register_all_commands() {
         "pause", 0, [this](const CmdArguments& arguments) { return this->car_simulation->pause(arguments); });
     command_registry->register_command(
         "unplug", 0, [this](const CmdArguments& arguments) { return this->car_simulation->unplug(arguments); });
+    command_registry->register_command(
+        "plugin", 0, [this](const CmdArguments& arguments) { return this->car_simulation->plugin(arguments); });
     command_registry->register_command(
         "error_e", 0, [this](const CmdArguments& arguments) { return this->car_simulation->error_e(arguments); });
     command_registry->register_command(

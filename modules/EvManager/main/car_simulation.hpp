@@ -80,6 +80,7 @@ public:
     bool draw_power_fixed(const CmdArguments&);
     bool pause(const CmdArguments&);
     bool unplug(const CmdArguments&);
+    bool plugin(const CmdArguments&);
     bool error_e(const CmdArguments&);
     bool diode_fail(const CmdArguments&);
     bool rcd_current(const CmdArguments&);
