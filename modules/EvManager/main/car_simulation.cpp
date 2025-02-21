@@ -168,6 +168,11 @@ bool CarSimulation::rcd_current(const CmdArguments& arguments) {
     return true;
 }
 
+bool CarSimulation::plugin(const CmdArguments& arguments) {
+    sim_data.state = SimState::PLUGGED_IN;
+    return true;
+}
+
 bool CarSimulation::iso_wait_slac_matched(const CmdArguments& arguments) {
     sim_data.state = SimState::PLUGGED_IN;
 

@@ -1262,7 +1262,7 @@ boot_module(async ({
   setup.provides.board_support.register.pwm_off((mod) => { pwmOff(mod); });
   setup.provides.board_support.register.pwm_F((mod) => { pwmF(mod); });
   setup.provides.board_support.register.ce_off((mod) => { pwmOff(mod); });
-  setup.provides.board_support.register.ce_on((mod) => { pwmOn(mod, 100.0); });
+  setup.provides.board_support.register.ce_on((mod) => { pwmOn(mod, 25.0); });
 
   setup.provides.board_support.register.evse_replug(() => {
     evlog.error('Replugging not supported');
