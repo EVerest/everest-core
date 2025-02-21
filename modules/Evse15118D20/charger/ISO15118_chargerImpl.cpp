@@ -264,18 +264,22 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
 
         const auto* dc_evse_limits = std::get_if<iso15118::d20::DcTransferLimits>(&evse_limits);
-        const auto* dc_ev_limits = std::get_if<iso15118::message_20::datatypes::DC_CPDReqEnergyTransferMode>(&ev_limits);
+        const auto* dc_ev_limits =
+            std::get_if<iso15118::message_20::datatypes::DC_CPDReqEnergyTransferMode>(&ev_limits);
 
         // TODO(ioan): after AC merge handle AC limits too
         if (dc_evse_limits && dc_ev_limits) {
             // As per the spec we should use the MAX function between EV and EVSE
-            v2x_charging_parameters.min_charge_power = std::max(dt::from_RationalNumber(dc_evse_limits->charge_limits.power.min),
-                                                                dt::from_RationalNumber(dc_ev_limits->max_charge_power));
+            v2x_charging_parameters.min_charge_power =
+                std::max(dt::from_RationalNumber(dc_evse_limits->charge_limits.power.min),
+                         dt::from_RationalNumber(dc_ev_limits->max_charge_power));
 
             v2x_charging_parameters.max_charge_power = dt::from_RationalNumber(dc_evse_limits->charge_limits.power.max);
 
-            v2x_charging_parameters.min_charge_current = dt::from_RationalNumber(dc_evse_limits->charge_limits.current.min);
-            v2x_charging_parameters.max_charge_current = dt::from_RationalNumber(dc_evse_limits->charge_limits.current.max);
+            v2x_charging_parameters.min_charge_current =
+                dt::from_RationalNumber(dc_evse_limits->charge_limits.current.min);
+            v2x_charging_parameters.max_charge_current =
+                dt::from_RationalNumber(dc_evse_limits->charge_limits.current.max);
 
             v2x_charging_parameters.min_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.min);
             v2x_charging_parameters.max_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.max);
