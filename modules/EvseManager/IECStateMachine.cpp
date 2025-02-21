@@ -94,6 +94,7 @@ IECStateMachine::IECStateMachine(const std::unique_ptr<evse_board_supportIntf>& 
             if (enabled) {
                 value ? bsp_event.event = types::board_support_common::Event::B : 
                         bsp_event.event = types::board_support_common::Event::A;
+                id_is_set = value;
                 process_bsp_event(bsp_event);
             } else {
                 EVLOG_info << "Ignoring ID Event, BSP is not enabled yet.";
@@ -177,7 +178,12 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         case RawCPState::Disabled:
             if (last_cp_state != RawCPState::Disabled) {
                 pwm_running = false;
-                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
+                if (mcs_enabled) {
+                    r_bsp->call_ce_off();
+                    ce_is_set = false;
+                } else {
+                    r_bsp->call_pwm_off();
+                }
                 ev_simplified_mode = false;
                 timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
@@ -188,7 +194,12 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
         case RawCPState::A:
             if (last_cp_state != RawCPState::A) {
                 pwm_running = false;
-                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
+                if (mcs_enabled) {
+                    r_bsp->call_ce_off();
+                    ce_is_set = false;
+                } else {
+                    r_bsp->call_pwm_off();
+                }
                 ev_simplified_mode = false;
                 car_plugged_in = false;
                 call_allow_power_on_bsp(false);
@@ -213,8 +224,10 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 connector_unlock();
             }
 
-            if (mcs_enabled) 
+            if (mcs_enabled) {
                 r_bsp->call_ce_on();
+                ce_is_set = true;
+            }
 
             if (last_cp_state != RawCPState::A && last_cp_state != RawCPState::B) {
 
@@ -270,7 +283,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
             }
 
             // PWM switches on while in state C
-            if (pwm_running && !last_pwm_running) {
+            if ((pwm_running && !last_pwm_running) || ce_is_set) {
                 // when resuming after a pause before the EV goes to state B, stop the timer.
                 timer_state_C1 = TimerControl::stop;
 
@@ -289,7 +302,7 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 call_allow_power_on_bsp(false);
             }
 
-            if (pwm_running) { // C2
+            if (pwm_running || ce_is_set) { // C2
                 // 1) When we come from state B: switch on if we are allowed to
                 // 2) When we are in C2 for a while now and finally get a delayed power_on_allowed: also switch on
 
@@ -316,7 +329,12 @@ std::queue<CPEvent> IECStateMachine::state_machine() {
                 timer_state_C1 = TimerControl::stop;
                 call_allow_power_on_bsp(false);
                 pwm_running = false;
-                mcs_enabled ? r_bsp->call_ce_off() : r_bsp->call_pwm_off();
+                if (mcs_enabled) {
+                    r_bsp->call_ce_off();
+                    ce_is_set = false;
+                } else {
+                    r_bsp->call_pwm_off();
+                }
                 if (last_cp_state == RawCPState::B || last_cp_state == RawCPState::C ||
                     last_cp_state == RawCPState::D) {
                     events.push(CPEvent::BCDtoEF);

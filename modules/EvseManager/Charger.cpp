@@ -265,7 +265,8 @@ void Charger::run_state_machine() {
                         hlc_use_5percent_current_session = config_context.ac_hlc_use_5percent;
                     }
                 } else if (config_context.charge_mode == ChargeMode::DC) {
-                    hlc_use_5percent_current_session = true;
+                    if (not config_context.mcs_enabled)
+                        hlc_use_5percent_current_session = true;
                 } else {
                     // unsupported charging mode, give up here.
                     error_handling->raise_internal_error("Unsupported charging mode.");
@@ -330,10 +331,8 @@ void Charger::run_state_machine() {
             // FIXME: if slac reports a dlink_ready=false while we are still waiting for auth we should:
             // in AC mode: go back to non HLC nominal PWM mode
             // in DC mode: go to error_slac for this session
-
             if (shared_context.authorized and not shared_context.authorized_pnc) {
                 session_log.evse(false, "EIM Authorization received");
-
                 // If we are restarting, the transaction may already be active
                 if (not shared_context.transaction_active) {
                     if (!start_transaction()) {
