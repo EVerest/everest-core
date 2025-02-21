@@ -217,8 +217,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                                                 const dt::AcConnector& ac_connector,
                                                 const dt::ControlMode& control_mode,
                                                 const dt::MobilityNeedsMode& mobility_needs_mode,
-                                                const feedback::TransferLimits& evse_limits,
-                                                const feedback::TransferLimits& ev_limits) {
+                                                const feedback::EVSE_TransferLimits& evse_limits,
+                                                const feedback::EV_TransferLimits& ev_limits) {
         using namespace types::iso15118;
 
         ChargingNeeds charging_needs;
@@ -263,25 +263,25 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         // TODO(ioan): first data we will publish will be related to the v2xChargingParameters
         V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
 
-        const auto* dc_limits = std::get_if<iso15118::d20::DcTransferLimits>(&evse_limits);
-        const auto* dc_ev_limits = std::get_if<iso15118::d20::DcTransferLimits>(&ev_limits);
+        const auto* dc_evse_limits = std::get_if<iso15118::d20::DcTransferLimits>(&evse_limits);
+        const auto* dc_ev_limits = std::get_if<iso15118::message_20::datatypes::DC_CPDReqEnergyTransferMode>(&ev_limits);
 
         // TODO(ioan): after AC merge handle AC limits too
-        if (dc_limits && dc_ev_limits) {
-            // TODO(ioan): confirm this is the MAX proper way to obtain the info
-            v2x_charging_parameters.min_charge_power = std::max(dt::from_RationalNumber(dc_limits->charge_limits.power.min),
-                                                                dt::from_RationalNumber(dc_ev_limits->charge_limits.power.min));
+        if (dc_evse_limits && dc_ev_limits) {
+            // As per the spec we should use the MAX function between EV and EVSE
+            v2x_charging_parameters.min_charge_power = std::max(dt::from_RationalNumber(dc_evse_limits->charge_limits.power.min),
+                                                                dt::from_RationalNumber(dc_ev_limits->max_charge_power));
 
-            v2x_charging_parameters.max_charge_power = dt::from_RationalNumber(dc_limits->charge_limits.power.max);
+            v2x_charging_parameters.max_charge_power = dt::from_RationalNumber(dc_evse_limits->charge_limits.power.max);
 
-            v2x_charging_parameters.min_charge_current = dt::from_RationalNumber(dc_limits->charge_limits.current.min);
-            v2x_charging_parameters.max_charge_current = dt::from_RationalNumber(dc_limits->charge_limits.current.max);
+            v2x_charging_parameters.min_charge_current = dt::from_RationalNumber(dc_evse_limits->charge_limits.current.min);
+            v2x_charging_parameters.max_charge_current = dt::from_RationalNumber(dc_evse_limits->charge_limits.current.max);
 
-            v2x_charging_parameters.min_voltage = dt::from_RationalNumber(dc_limits->voltage.min);
-            v2x_charging_parameters.max_voltage = dt::from_RationalNumber(dc_limits->voltage.max);
+            v2x_charging_parameters.min_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.min);
+            v2x_charging_parameters.max_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.max);
 
-            if (dc_limits->discharge_limits.has_value()) {
-                const auto& discharge_limits = dc_limits->discharge_limits.value();
+            if (dc_evse_limits->discharge_limits.has_value()) {
+                const auto& discharge_limits = dc_evse_limits->discharge_limits.value();
 
                 v2x_charging_parameters.min_discharge_power = dt::from_RationalNumber(discharge_limits.power.min);
                 v2x_charging_parameters.max_discharge_power = dt::from_RationalNumber(discharge_limits.power.max);
