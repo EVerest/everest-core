@@ -27,14 +27,11 @@ Reservation::Reservation(MessageDispatcherInterface<MessageType>& message_dispat
 void Reservation::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
 
-    switch (message.messageType) {
-    case MessageType::ReserveNow:
+    if (message.messageType == MessageType::ReserveNow) {
         this->handle_reserve_now_request(json_message);
-        break;
-    case MessageType::CancelReservation:
+    } else if (message.messageType == MessageType::CancelReservation) {
         this->handle_cancel_reservation_callback(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }

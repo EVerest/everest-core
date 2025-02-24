@@ -48,15 +48,12 @@ TransactionBlock::TransactionBlock(
 
 void TransactionBlock::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::TransactionEventResponse:
-        this->handle_transaction_event_response(message);
-        break;
-    case MessageType::GetTransactionStatus:
-        this->handle_get_transaction_status(json_message);
-        break;
 
-    default:
+    if (message.messageType == MessageType::TransactionEventResponse) {
+        this->handle_transaction_event_response(message);
+    } else if (message.messageType == MessageType::GetTransactionStatus) {
+        this->handle_get_transaction_status(json_message);
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }

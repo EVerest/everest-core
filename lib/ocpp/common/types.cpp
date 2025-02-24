@@ -1238,9 +1238,17 @@ v16::FirmwareStatus firmware_status_notification_to_firmware_status(const Firmwa
         return v16::FirmwareStatus::Installing;
     case FirmwareStatusNotification::Installed:
         return v16::FirmwareStatus::Installed;
-    default:
-        throw std::out_of_range("Could not convert to v16::FirmwareStatus");
+    case FirmwareStatusNotification::DownloadScheduled:
+    case FirmwareStatusNotification::DownloadPaused:
+    case FirmwareStatusNotification::InstallRebooting:
+    case FirmwareStatusNotification::InstallScheduled:
+    case FirmwareStatusNotification::InstallVerificationFailed:
+    case FirmwareStatusNotification::InvalidSignature:
+    case FirmwareStatusNotification::SignatureVerified:
+        throw std::out_of_range("Could not convert FirmwareStatusNotification to v16::FirmwareStatus. Missing type");
     }
+
+    throw std::out_of_range("Could not convert to v16::FirmwareStatus");
 }
 
 v16::FirmwareStatusEnumType

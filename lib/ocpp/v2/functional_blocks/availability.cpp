@@ -29,14 +29,12 @@ Availability::~Availability() {
 
 void Availability::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::ChangeAvailability:
+
+    if (message.messageType == MessageType::ChangeAvailability) {
         this->handle_change_availability_req(json_message);
-        break;
-    case MessageType::HeartbeatResponse:
+    } else if (message.messageType == MessageType::HeartbeatResponse) {
         this->handle_heartbeat_response(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }

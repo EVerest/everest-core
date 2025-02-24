@@ -70,29 +70,22 @@ Provisioning::Provisioning(DeviceModel& device_model, MessageDispatcherInterface
 
 void Provisioning::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::BootNotificationResponse:
+
+    if (message.messageType == MessageType::BootNotificationResponse) {
         this->handle_boot_notification_response(json_message);
-        break;
-    case MessageType::SetVariables:
+    } else if (message.messageType == MessageType::SetVariables) {
         this->handle_set_variables_req(json_message);
-        break;
-    case MessageType::GetVariables:
+    } else if (message.messageType == MessageType::GetVariables) {
         this->handle_get_variables_req(message);
-        break;
-    case MessageType::GetBaseReport:
+    } else if (message.messageType == MessageType::GetBaseReport) {
         this->handle_get_base_report_req(json_message);
-        break;
-    case MessageType::GetReport:
+    } else if (message.messageType == MessageType::GetReport) {
         this->handle_get_report_req(message);
-        break;
-    case MessageType::Reset:
+    } else if (message.messageType == MessageType::Reset) {
         this->handle_reset_req(json_message);
-        break;
-    case MessageType::SetNetworkProfile:
+    } else if (message.messageType == MessageType::SetNetworkProfile) {
         this->handle_set_network_profile_req(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }

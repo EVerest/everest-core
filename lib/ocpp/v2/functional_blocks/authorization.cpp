@@ -45,17 +45,13 @@ void ocpp::v2::Authorization::start_auth_cache_cleanup_thread() {
 void ocpp::v2::Authorization::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
 
-    switch (message.messageType) {
-    case MessageType::ClearCache:
+    if (message.messageType == MessageType::ClearCache) {
         this->handle_clear_cache_req(json_message);
-        break;
-    case MessageType::SendLocalList:
+    } else if (message.messageType == MessageType::SendLocalList) {
         this->handle_send_local_authorization_list_req(json_message);
-        break;
-    case MessageType::GetLocalListVersion:
+    } else if (message.messageType == MessageType::GetLocalListVersion) {
         this->handle_get_local_authorization_list_version_req(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }
@@ -258,6 +254,11 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                         response.idTokenInfo.status = AuthorizationStatusEnum::Expired;
                         response.certificateStatus = AuthorizeCertificateStatusEnum::CertificateExpired;
                         break;
+                    case CertificateValidationResult::InvalidSignature:
+                    case CertificateValidationResult::IssuerNotFound:
+                    case CertificateValidationResult::InvalidLeafSignature:
+                    case CertificateValidationResult::InvalidChain:
+                    case CertificateValidationResult::Unknown:
                     default:
                         response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
                         break;

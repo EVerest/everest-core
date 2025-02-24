@@ -170,9 +170,9 @@ CaCertificateType to_ocpp(evse_security::CaCertificateType other) {
         return CaCertificateType::CSMS;
     case evse_security::CaCertificateType::MF:
         return CaCertificateType::MF;
-    default:
-        throw std::runtime_error("Could not convert evse_security::CaCertificateType to CaCertificateType");
     }
+
+    throw std::runtime_error("Could not convert evse_security::CaCertificateType to CaCertificateType");
 }
 
 CertificateSigningUseEnum to_ocpp(evse_security::LeafCertificateType other) {
@@ -183,9 +183,12 @@ CertificateSigningUseEnum to_ocpp(evse_security::LeafCertificateType other) {
         return CertificateSigningUseEnum::V2GCertificate;
     case evse_security::LeafCertificateType::MF:
         return CertificateSigningUseEnum::ManufacturerCertificate;
-    default:
-        throw std::runtime_error("Could not convert evse_security::LeafCertificateType to CertificateSigningUseEnum");
+    case evse_security::LeafCertificateType::MO:
+        throw std::runtime_error(
+            "Could not convert evse_security::LeafCertificateType to CertificateSigningUseEnum. Missing type");
     }
+
+    throw std::runtime_error("Could not convert evse_security::LeafCertificateType to CertificateSigningUseEnum");
 }
 
 CertificateType to_ocpp(evse_security::CertificateType other) {
@@ -276,11 +279,12 @@ CertificateValidationResult to_ocpp(evse_security::CertificateValidationResult o
         return CertificateValidationResult::InvalidChain;
     case evse_security::CertificateValidationResult::Unknown:
         return CertificateValidationResult::Unknown;
-        ;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::CertificateValidationResult to CertificateValidationResult");
+    case evse_security::CertificateValidationResult::Expired:
+        return CertificateValidationResult::Expired;
     }
+
+    throw std::runtime_error(
+        "Could not convert evse_security::CertificateValidationResult to CertificateValidationResult");
 }
 
 DeleteCertificateResult to_ocpp(evse_security::DeleteCertificateResult other) {

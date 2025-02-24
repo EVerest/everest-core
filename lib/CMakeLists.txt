@@ -7,6 +7,7 @@ target_compile_options(ocpp
          #-Werror # turn warnings into errors
         -Wimplicit-fallthrough  # avoid unintended fallthroughs
         -pedantic-errors
+        -Werror=switch-enum
 )
 
 target_compile_definitions(ocpp

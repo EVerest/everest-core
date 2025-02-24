@@ -59,20 +59,16 @@ RemoteTransactionControl::RemoteTransactionControl(
 
 void RemoteTransactionControl::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::RequestStartTransaction:
+
+    if (message.messageType == MessageType::RequestStartTransaction) {
         this->handle_remote_start_transaction_request(json_message);
-        break;
-    case MessageType::RequestStopTransaction:
+    } else if (message.messageType == MessageType::RequestStopTransaction) {
         this->handle_remote_stop_transaction_request(json_message);
-        break;
-    case MessageType::UnlockConnector:
+    } else if (message.messageType == MessageType::UnlockConnector) {
         this->handle_unlock_connector(json_message);
-        break;
-    case MessageType::TriggerMessage:
+    } else if (message.messageType == MessageType::TriggerMessage) {
         this->handle_trigger_message(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }
@@ -293,6 +289,8 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
         // PublishFirmwareStatusNotification
         // SignCombinedCertificate
 
+    case MessageTriggerEnum::PublishFirmwareStatusNotification:
+    case MessageTriggerEnum::SignCombinedCertificate:
     default:
         response.status = TriggerMessageStatusEnum::NotImplemented;
         break;
@@ -393,6 +391,8 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
         this->security.sign_certificate_req(ocpp::CertificateSigningUseEnum::V2GCertificate, true);
     } break;
 
+    case MessageTriggerEnum::PublishFirmwareStatusNotification:
+    case MessageTriggerEnum::SignCombinedCertificate:
     default:
         EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
         break;

@@ -44,29 +44,22 @@ Diagnostics::Diagnostics(MessageDispatcherInterface<MessageType>& message_dispat
 
 void Diagnostics::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::GetLog:
+
+    if (message.messageType == MessageType::GetLog) {
         this->handle_get_log_req(json_message);
-        break;
-    case MessageType::CustomerInformation:
+    } else if (message.messageType == MessageType::CustomerInformation) {
         this->handle_customer_information_req(json_message);
-        break;
-    case MessageType::SetMonitoringBase:
+    } else if (message.messageType == MessageType::SetMonitoringBase) {
         this->handle_set_monitoring_base_req(json_message);
-        break;
-    case MessageType::SetMonitoringLevel:
+    } else if (message.messageType == MessageType::SetMonitoringLevel) {
         this->handle_set_monitoring_level_req(json_message);
-        break;
-    case MessageType::SetVariableMonitoring:
+    } else if (message.messageType == MessageType::SetVariableMonitoring) {
         this->handle_set_variable_monitoring_req(message);
-        break;
-    case MessageType::GetMonitoringReport:
+    } else if (message.messageType == MessageType::GetMonitoringReport) {
         this->handle_get_monitoring_report_req(json_message);
-        break;
-    case MessageType::ClearVariableMonitoring:
+    } else if (message.messageType == MessageType::ClearVariableMonitoring) {
         this->handle_clear_variable_monitoring_req(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }

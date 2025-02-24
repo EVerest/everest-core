@@ -667,6 +667,95 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::CostUpdated:
             this->tariff_and_cost->handle_message(message);
             break;
+
+        // TODO(ioan): are we sure we want this long list of unused switches?
+        case MessageType::Authorize:
+        case MessageType::AuthorizeResponse:
+        case MessageType::BootNotification:
+        case MessageType::CancelReservationResponse:
+        case MessageType::CertificateSignedResponse:
+        case MessageType::ChangeAvailabilityResponse:
+        case MessageType::ClearCacheResponse:
+        case MessageType::ClearChargingProfileResponse:
+        case MessageType::ClearDisplayMessageResponse:
+        case MessageType::ClearedChargingLimit:
+        case MessageType::ClearedChargingLimitResponse:
+        case MessageType::ClearVariableMonitoringResponse:
+        case MessageType::CostUpdatedResponse:
+        case MessageType::CustomerInformationResponse:
+        case MessageType::DataTransferResponse:
+        case MessageType::DeleteCertificateResponse:
+        case MessageType::FirmwareStatusNotification:
+        case MessageType::FirmwareStatusNotificationResponse:
+        case MessageType::Get15118EVCertificate:
+        case MessageType::Get15118EVCertificateResponse:
+        case MessageType::GetBaseReportResponse:
+        case MessageType::GetCertificateStatus:
+        case MessageType::GetCertificateStatusResponse:
+        case MessageType::GetChargingProfilesResponse:
+        case MessageType::GetCompositeScheduleResponse:
+        case MessageType::GetDisplayMessagesResponse:
+        case MessageType::GetInstalledCertificateIdsResponse:
+        case MessageType::GetLocalListVersionResponse:
+        case MessageType::GetLogResponse:
+        case MessageType::GetMonitoringReportResponse:
+        case MessageType::GetReportResponse:
+        case MessageType::GetTransactionStatusResponse:
+        case MessageType::GetVariablesResponse:
+        case MessageType::Heartbeat:
+        case MessageType::InstallCertificateResponse:
+        case MessageType::LogStatusNotification:
+        case MessageType::LogStatusNotificationResponse:
+        case MessageType::MeterValues:
+        case MessageType::MeterValuesResponse:
+        case MessageType::NotifyChargingLimit:
+        case MessageType::NotifyChargingLimitResponse:
+        case MessageType::NotifyCustomerInformation:
+        case MessageType::NotifyCustomerInformationResponse:
+        case MessageType::NotifyDisplayMessages:
+        case MessageType::NotifyDisplayMessagesResponse:
+        case MessageType::NotifyEVChargingNeeds:
+        case MessageType::NotifyEVChargingNeedsResponse:
+        case MessageType::NotifyEVChargingSchedule:
+        case MessageType::NotifyEVChargingScheduleResponse:
+        case MessageType::NotifyEvent:
+        case MessageType::NotifyEventResponse:
+        case MessageType::NotifyMonitoringReport:
+        case MessageType::NotifyMonitoringReportResponse:
+        case MessageType::NotifyReport:
+        case MessageType::NotifyReportResponse:
+        case MessageType::PublishFirmware:
+        case MessageType::PublishFirmwareResponse:
+        case MessageType::PublishFirmwareStatusNotification:
+        case MessageType::PublishFirmwareStatusNotificationResponse:
+        case MessageType::ReportChargingProfiles:
+        case MessageType::ReportChargingProfilesResponse:
+        case MessageType::RequestStartTransactionResponse:
+        case MessageType::RequestStopTransactionResponse:
+        case MessageType::ReservationStatusUpdate:
+        case MessageType::ReservationStatusUpdateResponse:
+        case MessageType::ReserveNowResponse:
+        case MessageType::ResetResponse:
+        case MessageType::SecurityEventNotification:
+        case MessageType::SecurityEventNotificationResponse:
+        case MessageType::SendLocalListResponse:
+        case MessageType::SetChargingProfileResponse:
+        case MessageType::SetDisplayMessageResponse:
+        case MessageType::SetMonitoringBaseResponse:
+        case MessageType::SetMonitoringLevelResponse:
+        case MessageType::SetNetworkProfileResponse:
+        case MessageType::SetVariableMonitoringResponse:
+        case MessageType::SetVariablesResponse:
+        case MessageType::SignCertificate:
+        case MessageType::StatusNotification:
+        case MessageType::StatusNotificationResponse:
+        case MessageType::TransactionEvent:
+        case MessageType::TriggerMessageResponse:
+        case MessageType::UnlockConnectorResponse:
+        case MessageType::UnpublishFirmware:
+        case MessageType::UnpublishFirmwareResponse:
+        case MessageType::UpdateFirmwareResponse:
+        case MessageType::InternalError:
         default:
             send_not_implemented_error(message.uniqueId, message.messageTypeId);
             break;

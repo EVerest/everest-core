@@ -105,17 +105,15 @@ void FirmwareUpdate::on_firmware_update_status_notification(int32_t request_id,
 
 void FirmwareUpdate::on_firmware_status_notification_request() {
     FirmwareStatusNotificationRequest request;
-    switch (this->firmware_status) {
-    case FirmwareStatusEnum::Idle:
-    case FirmwareStatusEnum::Installed: // L01.FR.25
-        request.status = FirmwareStatusEnum::Idle;
-        // do not set requestId when idle: L01.FR.20
-        break;
 
-    default: // So not Idle or Installed                   // L01.FR.26
+    if (this->firmware_status == FirmwareStatusEnum::Idle || this->firmware_status == FirmwareStatusEnum::Installed) {
+        // L01.FR.25
+        // do not set requestId when idle: L01.FR.20
+        request.status = FirmwareStatusEnum::Idle;
+    } else { // L01.FR.26
+        // So not Idle or Installed
         request.status = this->firmware_status;
         request.requestId = this->firmware_status_id;
-        break;
     }
 
     ocpp::Call<FirmwareStatusNotificationRequest> call(request);

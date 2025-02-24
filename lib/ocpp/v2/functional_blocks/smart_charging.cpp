@@ -142,20 +142,16 @@ SmartCharging::SmartCharging(DeviceModel& device_model, EvseManagerInterface& ev
 
 void SmartCharging::handle_message(const ocpp::EnhancedMessage<MessageType>& message) {
     const auto& json_message = message.message;
-    switch (message.messageType) {
-    case MessageType::SetChargingProfile:
+
+    if (message.messageType == MessageType::SetChargingProfile) {
         this->handle_set_charging_profile_req(json_message);
-        break;
-    case MessageType::ClearChargingProfile:
+    } else if (message.messageType == MessageType::ClearChargingProfile) {
         this->handle_clear_charging_profile_req(json_message);
-        break;
-    case MessageType::GetChargingProfiles:
+    } else if (message.messageType == MessageType::GetChargingProfiles) {
         this->handle_get_charging_profiles_req(json_message);
-        break;
-    case MessageType::GetCompositeSchedule:
+    } else if (message.messageType == MessageType::GetCompositeSchedule) {
         this->handle_get_composite_schedule_req(json_message);
-        break;
-    default:
+    } else {
         throw MessageTypeNotImplementedException(message.messageType);
     }
 }
