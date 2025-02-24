@@ -18,3 +18,9 @@ vars:
       Response will be reported async via set_get_certificate_response
     type: object
     $ref: /iso15118#/RequestExiStreamSchema
+  charging_needs:
+    description: >-
+      The 2.1 bidi charging requires this variable to be sent during the
+      'ScheduleExchangeReq' state machine
+    type: object
+    $ref: /iso15118#/ChargingNeeds
