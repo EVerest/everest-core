@@ -709,7 +709,6 @@ void OCPP201::ready() {
 
     callbacks.cancel_reservation_callback = [this](const int32_t reservation_id) -> bool {
         EVLOG_debug << "Received cancel reservation request for reservation id " << reservation_id;
-        ocpp::v201::CancelReservationResponse response;
         if (this->r_reservation.empty() || this->r_reservation.at(0) == nullptr) {
             return false;
         }
