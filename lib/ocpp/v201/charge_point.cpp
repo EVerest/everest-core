@@ -333,6 +333,16 @@ bool ChargePoint::on_charging_state_changed(const uint32_t evse_id, const Chargi
     return true;
 }
 
+std::optional<std::string> ChargePoint::get_evse_transaction_id(int32_t evse_id) {
+    const auto& tx = this->evse_manager->get_evse(evse_id).get_transaction();
+
+    if (tx != nullptr) {
+        return tx->transactionId.get();
+    }
+
+    return std::nullopt;
+}
+
 AuthorizeResponse ChargePoint::validate_token(const IdToken id_token, const std::optional<CiString<5500>>& certificate,
                                               const std::optional<std::vector<OCSPRequestData>>& ocsp_request_data) {
     return this->authorization->validate_token(id_token, certificate, ocsp_request_data);
