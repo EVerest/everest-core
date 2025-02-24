@@ -112,6 +112,57 @@ auto fill_mobility_needs_modes_from_config(const module::Conf& module_config) {
     return mobility_needs_modes;
 }
 
+template <typename EVSE_Limits, typename EV_Limits>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const EVSE_Limits& evse_limits,
+                                  const EV_Limits& ev_limits);
+
+template <>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
+                                  const iso15118::d20::DcTransferLimits& evse_limits,
+                                  const dt::DC_CPDReqEnergyTransferMode& ev_limits) {
+    // As per the spec we should use the MIN/MAX function between EV and EVSE
+    out_params.min_charge_power = std::max(dt::from_RationalNumber(evse_limits.charge_limits.power.min),
+                                           dt::from_RationalNumber(ev_limits.min_charge_power));
+    out_params.max_charge_power = std::min(dt::from_RationalNumber(evse_limits.charge_limits.power.max),
+                                           dt::from_RationalNumber(ev_limits.max_charge_power));
+
+    out_params.min_charge_current = std::max(dt::from_RationalNumber(evse_limits.charge_limits.current.min),
+                                             dt::from_RationalNumber(ev_limits.min_charge_current));
+    out_params.max_charge_current = std::min(dt::from_RationalNumber(evse_limits.charge_limits.current.max),
+                                             dt::from_RationalNumber(ev_limits.max_charge_current));
+
+    out_params.min_voltage =
+        std::max(dt::from_RationalNumber(evse_limits.voltage.min), dt::from_RationalNumber(ev_limits.min_voltage));
+    out_params.max_voltage =
+        std::min(dt::from_RationalNumber(evse_limits.voltage.max), dt::from_RationalNumber(ev_limits.max_voltage));
+
+    out_params.target_soc = ev_limits.target_soc;
+}
+
+template <>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
+                                  const iso15118::d20::DcTransferLimits& evse_limits,
+                                  const dt::BPT_DC_CPDReqEnergyTransferMode& ev_limits) {
+    // Fill in the common data
+    fill_v2x_charging_parameters<iso15118::d20::DcTransferLimits, dt::DC_CPDReqEnergyTransferMode>(
+        out_params, evse_limits, static_cast<const dt::DC_CPDReqEnergyTransferMode&>(ev_limits));
+
+    // Fill in the bidi data
+    if (evse_limits.discharge_limits.has_value()) {
+        const auto& evse_discharge_limits = evse_limits.discharge_limits.value();
+
+        out_params.min_discharge_power = std::max(dt::from_RationalNumber(evse_discharge_limits.power.min),
+                                                  dt::from_RationalNumber(ev_limits.min_discharge_power));
+        out_params.max_discharge_power = std::min(dt::from_RationalNumber(evse_discharge_limits.power.max),
+                                                  dt::from_RationalNumber(ev_limits.max_discharge_power));
+
+        out_params.min_discharge_current = std::max(dt::from_RationalNumber(evse_discharge_limits.current.min),
+                                                    dt::from_RationalNumber(ev_limits.min_discharge_current));
+        out_params.max_discharge_current = std::min(dt::from_RationalNumber(evse_discharge_limits.current.max),
+                                                    dt::from_RationalNumber(ev_limits.max_discharge_current));
+    }
+}
+
 } // namespace
 
 void ISO15118_chargerImpl::init() {
@@ -213,94 +264,73 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
         publish_dc_ev_target_voltage_current({target_voltage, 0});
     };
 
-    callbacks.notify_ev_charging_needs = [this](const dt::ServiceCategory& service_category,
-                                                const dt::AcConnector& ac_connector,
-                                                const dt::ControlMode& control_mode,
-                                                const dt::MobilityNeedsMode& mobility_needs_mode,
-                                                const feedback::EVSE_TransferLimits& evse_limits,
-                                                const feedback::EV_TransferLimits& ev_limits) {
-        using namespace types::iso15118;
+    callbacks.notify_ev_charging_needs =
+        [this](const dt::ServiceCategory& service_category, const dt::AcConnector& ac_connector,
+               const dt::ControlMode& control_mode, const dt::MobilityNeedsMode& mobility_needs_mode,
+               const feedback::EVSE_TransferLimits& evse_limits, const feedback::EV_TransferLimits& ev_limits) {
+            // Everest types sent to OCPP
+            using namespace types::iso15118;
 
-        ChargingNeeds charging_needs;
+            ChargingNeeds charging_needs;
 
-        EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
-        if (service_category == dt::ServiceCategory::AC) {
-            if (ac_connector == dt::AcConnector::SinglePhase) {
-                requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
-            } else if (ac_connector == dt::AcConnector::ThreePhase) {
-                requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
-            }
-        } else if (service_category == dt::ServiceCategory::AC_BPT) {
-            requested_energy_transfer = EnergyTransferMode::AC_BPT;
-        } else if (service_category == dt::ServiceCategory::DC) {
-            requested_energy_transfer = EnergyTransferMode::DC;
-        } else if (service_category == dt::ServiceCategory::DC_ACDP) {
-            requested_energy_transfer = EnergyTransferMode::DC_ACDP;
-        } else if (service_category == dt::ServiceCategory::DC_BPT) {
-            requested_energy_transfer = EnergyTransferMode::DC_BPT;
-        } else if (service_category == dt::ServiceCategory::DC_ACDP_BPT) {
-            requested_energy_transfer = EnergyTransferMode::DC_ACDP_BPT;
-        }
-
-        charging_needs.requested_energy_transfer = requested_energy_transfer;
-
-        if (control_mode == dt::ControlMode::Scheduled) {
-            charging_needs.control_mode = ControlMode::ScheduledControl;
-        } else if (control_mode == dt::ControlMode::Dynamic) {
-            charging_needs.control_mode = ControlMode::DynamicControl;
-        } else {
-            EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for control mode!"));
-        }
-
-        if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
-            charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC;
-        } else if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
-            charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC_SECC;
-        } else {
-            EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for mobility needs mode!"));
-        }
-
-        // TODO(ioan): first data we will publish will be related to the v2xChargingParameters
-        V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
-
-        const auto* dc_evse_limits = std::get_if<iso15118::d20::DcTransferLimits>(&evse_limits);
-        const auto* dc_ev_limits =
-            std::get_if<iso15118::message_20::datatypes::DC_CPDReqEnergyTransferMode>(&ev_limits);
-
-        // TODO(ioan): after AC merge handle AC limits too
-        if (dc_evse_limits && dc_ev_limits) {
-            // As per the spec we should use the MAX function between EV and EVSE
-            v2x_charging_parameters.min_charge_power =
-                std::max(dt::from_RationalNumber(dc_evse_limits->charge_limits.power.min),
-                         dt::from_RationalNumber(dc_ev_limits->max_charge_power));
-
-            v2x_charging_parameters.max_charge_power = dt::from_RationalNumber(dc_evse_limits->charge_limits.power.max);
-
-            v2x_charging_parameters.min_charge_current =
-                dt::from_RationalNumber(dc_evse_limits->charge_limits.current.min);
-            v2x_charging_parameters.max_charge_current =
-                dt::from_RationalNumber(dc_evse_limits->charge_limits.current.max);
-
-            v2x_charging_parameters.min_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.min);
-            v2x_charging_parameters.max_voltage = dt::from_RationalNumber(dc_evse_limits->voltage.max);
-
-            if (dc_evse_limits->discharge_limits.has_value()) {
-                const auto& discharge_limits = dc_evse_limits->discharge_limits.value();
-
-                v2x_charging_parameters.min_discharge_power = dt::from_RationalNumber(discharge_limits.power.min);
-                v2x_charging_parameters.max_discharge_power = dt::from_RationalNumber(discharge_limits.power.max);
-
-                v2x_charging_parameters.min_discharge_current = dt::from_RationalNumber(discharge_limits.current.min);
-                v2x_charging_parameters.max_discharge_current = dt::from_RationalNumber(discharge_limits.current.max);
+            EnergyTransferMode requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+            if (service_category == dt::ServiceCategory::AC) {
+                if (ac_connector == dt::AcConnector::SinglePhase) {
+                    requested_energy_transfer = EnergyTransferMode::AC_single_phase_core;
+                } else if (ac_connector == dt::AcConnector::ThreePhase) {
+                    requested_energy_transfer = EnergyTransferMode::AC_three_phase_core;
+                }
+            } else if (service_category == dt::ServiceCategory::AC_BPT) {
+                requested_energy_transfer = EnergyTransferMode::AC_BPT;
+            } else if (service_category == dt::ServiceCategory::DC) {
+                requested_energy_transfer = EnergyTransferMode::DC;
+            } else if (service_category == dt::ServiceCategory::DC_ACDP) {
+                requested_energy_transfer = EnergyTransferMode::DC_ACDP;
+            } else if (service_category == dt::ServiceCategory::DC_BPT) {
+                requested_energy_transfer = EnergyTransferMode::DC_BPT;
+            } else if (service_category == dt::ServiceCategory::DC_ACDP_BPT) {
+                requested_energy_transfer = EnergyTransferMode::DC_ACDP_BPT;
             }
 
-        } else {
-            EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for limits!"));
-        }
+            charging_needs.requested_energy_transfer = requested_energy_transfer;
 
-        // Publish charging needs
-        publish_charging_needs(charging_needs);
-    };
+            if (control_mode == dt::ControlMode::Scheduled) {
+                charging_needs.control_mode = ControlMode::ScheduledControl;
+            } else if (control_mode == dt::ControlMode::Dynamic) {
+                charging_needs.control_mode = ControlMode::DynamicControl;
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for control mode!"));
+            }
+
+            if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedByEvcc) {
+                charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC;
+            } else if (mobility_needs_mode == dt::MobilityNeedsMode::ProvidedBySecc) {
+                charging_needs.mobility_needs_mode = MobilityNeedsMode::EVCC_SECC;
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for mobility needs mode!"));
+            }
+
+            // TODO(ioan): first data we will publish will be related to the v2xChargingParameters
+            V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
+
+            // TODO(ioan): after AC merge handle AC limits too
+            if (std::holds_alternative<iso15118::d20::DcTransferLimits>(evse_limits)) {
+                const auto& dc_evse_limits = std::get<iso15118::d20::DcTransferLimits>(evse_limits);
+
+                if (std::holds_alternative<dt::DC_CPDReqEnergyTransferMode>(ev_limits)) {
+                    const auto& dc_ev_limits = std::get<dt::DC_CPDReqEnergyTransferMode>(ev_limits);
+                    fill_v2x_charging_parameters(v2x_charging_parameters, dc_evse_limits, dc_ev_limits);
+                } else if (std::holds_alternative<dt::BPT_DC_CPDReqEnergyTransferMode>(ev_limits)) {
+                    const auto& dc_ev_limits = std::get<dt::BPT_DC_CPDReqEnergyTransferMode>(ev_limits);
+                    fill_v2x_charging_parameters(v2x_charging_parameters, dc_evse_limits, dc_ev_limits);
+                }
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for limits!"));
+            }
+
+            // Publish charging needs
+            publish_charging_needs(charging_needs);
+        };
 
     callbacks.dc_charge_loop_req = [this](const feedback::DcChargeLoopReq& dc_charge_loop_req) {
         if (const auto* dc_control_mode = std::get_if<feedback::DcReqControlMode>(&dc_charge_loop_req)) {
