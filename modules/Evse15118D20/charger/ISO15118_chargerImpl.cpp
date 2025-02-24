@@ -112,9 +112,12 @@ auto fill_mobility_needs_modes_from_config(const module::Conf& module_config) {
     return mobility_needs_modes;
 }
 
-template <typename EVSE_Limits, typename EV_Limits>
-void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const EVSE_Limits& evse_limits,
-                                  const EV_Limits& ev_limits);
+template <typename EVSE, typename EV>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const EVSE& evse_limits,
+                                  const EV& ev_limits);
+
+template <typename In>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params, const In& data);
 
 template <>
 void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
@@ -161,6 +164,25 @@ void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_pa
         out_params.max_discharge_current = std::min(dt::from_RationalNumber(evse_discharge_limits.current.max),
                                                     dt::from_RationalNumber(ev_limits.max_discharge_current));
     }
+}
+
+template <>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
+                                  const dt::Scheduled_SEReqControlMode& ev_control_mode) {
+    out_params.ev_target_energy_request = convert_from_optional<float>(ev_control_mode.target_energy);
+    out_params.ev_min_energy_request = convert_from_optional<float>(ev_control_mode.min_energy);
+    out_params.ev_max_energy_request = convert_from_optional<float>(ev_control_mode.max_energy);
+}
+
+template <>
+void fill_v2x_charging_parameters(types::iso15118::V2XChargingParameters& out_params,
+                                  const dt::Dynamic_SEReqControlMode& ev_control_mode) {
+    out_params.ev_target_energy_request = dt::from_RationalNumber(ev_control_mode.target_energy);
+    out_params.ev_min_energy_request = dt::from_RationalNumber(ev_control_mode.min_energy);
+    out_params.ev_max_energy_request = dt::from_RationalNumber(ev_control_mode.max_energy);
+
+    out_params.ev_min_v2xenergy_request = convert_from_optional<float>(ev_control_mode.min_v2x_energy);
+    out_params.ev_max_v2xenergy_request = convert_from_optional<float>(ev_control_mode.max_v2x_energy);
 }
 
 } // namespace
@@ -326,7 +348,17 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                     fill_v2x_charging_parameters(v2x_charging_parameters, dc_evse_limits, dc_ev_limits);
                 }
             } else {
-                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for limits!"));
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for EVSE limits!"));
+            }
+
+            if (std::holds_alternative<dt::Scheduled_SEReqControlMode>(ev_control_mode)) {
+                const auto& ev_se_control_mode = std::get<dt::Scheduled_SEReqControlMode>(ev_control_mode);
+                fill_v2x_charging_parameters(v2x_charging_parameters, ev_se_control_mode);
+            } else if (std::holds_alternative<dt::Dynamic_SEReqControlMode>(ev_control_mode)) {
+                const auto& ev_se_control_mode = std::get<dt::Dynamic_SEReqControlMode>(ev_control_mode);
+                fill_v2x_charging_parameters(v2x_charging_parameters, ev_se_control_mode);
+            } else {
+                EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for EV Control Mode!"));
             }
 
             // Publish charging needs
