@@ -361,11 +361,11 @@ The specified device model comes with these high-level requirements:
 * Complex data structure for reporting and configuration of variables
 * Device model contains variables of the whole charging station, beyond OCPP business logic
 
-The device model of OCPP2.0.1 can contain various physical or logical components and
+The device model of OCPP2.0.1 / OCPP2.1 can contain various physical or logical components and
 variables. While in OCPP1.6 almost all of the standardized configuration keys are used to influence the control flow of
 libocpp, in OCPP2.0.1 the configuration and telemetry variables that can be part of the device model go beyond the
 control or reporting capabilities of only libocpp. Still there is a large share of standardized variables in OCPP2.0.1
-that do influence the control flow of libocpp.
+/ OCPP 2.1 that do influence the control flow of libocpp.
 
 Internally and externally managed variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
