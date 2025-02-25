@@ -16,7 +16,7 @@ void ocpp_data_transferImpl::ready() {
 
 types::ocpp::DataTransferResponse
 ocpp_data_transferImpl::handle_data_transfer(types::ocpp::DataTransferRequest& request) {
-    ocpp::v201::DataTransferRequest ocpp_request = conversions::to_ocpp_data_transfer_request(request);
+    ocpp::v2::DataTransferRequest ocpp_request = conversions::to_ocpp_data_transfer_request(request);
     auto ocpp_response = mod->charge_point->data_transfer_req(ocpp_request);
 
     types::ocpp::DataTransferResponse response;

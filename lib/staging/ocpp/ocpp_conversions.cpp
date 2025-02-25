@@ -6,103 +6,101 @@
 
 namespace ocpp_conversions {
 types::display_message::MessagePriorityEnum
-to_everest_display_message_priority(const ocpp::v201::MessagePriorityEnum& priority) {
+to_everest_display_message_priority(const ocpp::v2::MessagePriorityEnum& priority) {
     switch (priority) {
-    case ocpp::v201::MessagePriorityEnum::AlwaysFront:
+    case ocpp::v2::MessagePriorityEnum::AlwaysFront:
         return types::display_message::MessagePriorityEnum::AlwaysFront;
-    case ocpp::v201::MessagePriorityEnum::InFront:
+    case ocpp::v2::MessagePriorityEnum::InFront:
         return types::display_message::MessagePriorityEnum::InFront;
-    case ocpp::v201::MessagePriorityEnum::NormalCycle:
+    case ocpp::v2::MessagePriorityEnum::NormalCycle:
         return types::display_message::MessagePriorityEnum::NormalCycle;
     }
     throw std::out_of_range(
-        "Could not convert ocpp::v201::MessagePriorityEnum to types::display_message::MessagePriorityEnum");
+        "Could not convert ocpp::v2::MessagePriorityEnum to types::display_message::MessagePriorityEnum");
 }
 
-ocpp::v201::MessagePriorityEnum
+ocpp::v2::MessagePriorityEnum
 to_ocpp_201_message_priority(const types::display_message::MessagePriorityEnum& priority) {
     switch (priority) {
     case types::display_message::MessagePriorityEnum::AlwaysFront:
-        return ocpp::v201::MessagePriorityEnum::AlwaysFront;
+        return ocpp::v2::MessagePriorityEnum::AlwaysFront;
     case types::display_message::MessagePriorityEnum::InFront:
-        return ocpp::v201::MessagePriorityEnum::InFront;
+        return ocpp::v2::MessagePriorityEnum::InFront;
     case types::display_message::MessagePriorityEnum::NormalCycle:
-        return ocpp::v201::MessagePriorityEnum::NormalCycle;
+        return ocpp::v2::MessagePriorityEnum::NormalCycle;
     }
     throw std::out_of_range(
-        "Could not convert types::display_message::MessagePriorityEnum to ocpp::v201::MessagePriorityEnum");
+        "Could not convert types::display_message::MessagePriorityEnum to ocpp::v2::MessagePriorityEnum");
 }
 
-types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v201::MessageStateEnum& state) {
+types::display_message::MessageStateEnum to_everest_display_message_state(const ocpp::v2::MessageStateEnum& state) {
     switch (state) {
-    case ocpp::v201::MessageStateEnum::Charging:
+    case ocpp::v2::MessageStateEnum::Charging:
         return types::display_message::MessageStateEnum::Charging;
-    case ocpp::v201::MessageStateEnum::Faulted:
+    case ocpp::v2::MessageStateEnum::Faulted:
         return types::display_message::MessageStateEnum::Faulted;
-    case ocpp::v201::MessageStateEnum::Idle:
+    case ocpp::v2::MessageStateEnum::Idle:
         return types::display_message::MessageStateEnum::Idle;
-    case ocpp::v201::MessageStateEnum::Unavailable:
+    case ocpp::v2::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
-    case ocpp::v201::MessageStateEnum::Suspended:
+    case ocpp::v2::MessageStateEnum::Suspended:
         return types::display_message::MessageStateEnum::Suspending;
-    case ocpp::v201::MessageStateEnum::Discharging:
+    case ocpp::v2::MessageStateEnum::Discharging:
         return types::display_message::MessageStateEnum::Discharging;
     }
-    throw std::out_of_range(
-        "Could not convert ocpp::v201::MessageStateEnum to types::display_message::MessageStateEnum");
+    throw std::out_of_range("Could not convert ocpp::v2::MessageStateEnum to types::display_message::MessageStateEnum");
 }
 
-ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state) {
+ocpp::v2::MessageStateEnum to_ocpp_201_display_message_state(const types::display_message::MessageStateEnum& state) {
     switch (state) {
     case types::display_message::MessageStateEnum::Charging:
-        return ocpp::v201::MessageStateEnum::Charging;
+        return ocpp::v2::MessageStateEnum::Charging;
     case types::display_message::MessageStateEnum::Faulted:
-        return ocpp::v201::MessageStateEnum::Faulted;
+        return ocpp::v2::MessageStateEnum::Faulted;
     case types::display_message::MessageStateEnum::Idle:
-        return ocpp::v201::MessageStateEnum::Idle;
+        return ocpp::v2::MessageStateEnum::Idle;
     case types::display_message::MessageStateEnum::Unavailable:
-        return ocpp::v201::MessageStateEnum::Unavailable;
+        return ocpp::v2::MessageStateEnum::Unavailable;
     case types::display_message::MessageStateEnum::Suspending:
-        return ocpp::v201::MessageStateEnum::Suspended;
+        return ocpp::v2::MessageStateEnum::Suspended;
     case types::display_message::MessageStateEnum::Discharging:
-        return ocpp::v201::MessageStateEnum::Discharging;
+        return ocpp::v2::MessageStateEnum::Discharging;
     }
-    throw std::out_of_range(
-        "Could not convert types::display_message::MessageStateEnum to ocpp::v201::MessageStateEnum");
+    throw std::out_of_range("Could not convert types::display_message::MessageStateEnum to ocpp::v2::MessageStateEnum");
 }
 
 types::display_message::MessageFormat
-to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+to_everest_display_message_format(const ocpp::v2::MessageFormatEnum& message_format) {
     switch (message_format) {
-    case ocpp::v201::MessageFormatEnum::ASCII:
+    case ocpp::v2::MessageFormatEnum::ASCII:
         return types::display_message::MessageFormat::ASCII;
-    case ocpp::v201::MessageFormatEnum::HTML:
+    case ocpp::v2::MessageFormatEnum::HTML:
         return types::display_message::MessageFormat::HTML;
-    case ocpp::v201::MessageFormatEnum::URI:
+    case ocpp::v2::MessageFormatEnum::URI:
         return types::display_message::MessageFormat::URI;
-    case ocpp::v201::MessageFormatEnum::UTF8:
+    case ocpp::v2::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
-    case ocpp::v201::MessageFormatEnum::QRCODE:
+    case ocpp::v2::MessageFormatEnum::QRCODE:
         return types::display_message::MessageFormat::QRCODE;
     }
-    throw std::out_of_range("Could not convert ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
+    throw std::out_of_range("Could not convert ocpp::v2::MessageFormat to types::display_message::MessageFormatEnum");
 }
 
-ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format) {
+ocpp::v2::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format) {
     switch (format) {
     case types::display_message::MessageFormat::ASCII:
-        return ocpp::v201::MessageFormatEnum::ASCII;
+        return ocpp::v2::MessageFormatEnum::ASCII;
     case types::display_message::MessageFormat::HTML:
-        return ocpp::v201::MessageFormatEnum::HTML;
+        return ocpp::v2::MessageFormatEnum::HTML;
     case types::display_message::MessageFormat::URI:
-        return ocpp::v201::MessageFormatEnum::URI;
+        return ocpp::v2::MessageFormatEnum::URI;
     case types::display_message::MessageFormat::UTF8:
-        return ocpp::v201::MessageFormatEnum::UTF8;
+        return ocpp::v2::MessageFormatEnum::UTF8;
     case types::display_message::MessageFormat::QRCODE:
-        return ocpp::v201::MessageFormatEnum::QRCODE;
+        return ocpp::v2::MessageFormatEnum::QRCODE;
     }
 
-    throw std::out_of_range("Could not convert types::display_message::MessageFormat to ocpp::v201::MessageFormatEnum");
+    throw std::out_of_range("Could not convert types::display_message::MessageFormat to ocpp::v2::MessageFormatEnum");
 }
 
 ocpp::IdentifierType to_ocpp_identifiertype_enum(const types::display_message::Identifier_type identifier_type) {
