@@ -4629,6 +4629,74 @@ async def test_reservation_connector_unavailable(
     )
 
 
+@pytest.mark.asyncio
+async def test_reservation_cancel_after_connector_inoperative(
+        test_config: OcppTestConfiguration,
+        charge_point_v16: ChargePoint16,
+        test_utility: TestUtility,
+):
+    logging.info("######### test_reservation_cancel_after_connector_inoperative #########")
+
+    t = datetime.utcnow() + timedelta(seconds=10)
+
+    await charge_point_v16.reserve_now_req(
+        connector_id=1,
+        expiry_date=t.isoformat(),
+        id_tag=test_config.authorization_info.valid_id_tag_1,
+        reservation_id=1,
+    )
+
+    # expect ReserveNow.conf with status accepted
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ReserveNow",
+        call_result.ReserveNowPayload(ReservationStatus.accepted)
+    )
+
+    # expect StatusNotification.req with status reserved
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.reserved
+        ),
+    )
+
+    await charge_point_v16.change_availability_req(
+        connector_id=1, type=AvailabilityType.inoperative
+    )
+
+    # expect StatusNotification.req with status unavailable
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "StatusNotification",
+        call.StatusNotificationPayload(
+            1, ChargePointErrorCode.no_error, ChargePointStatus.unavailable
+        )
+    )
+
+    await charge_point_v16.change_availability_req(
+        connector_id=1, type=AvailabilityType.operative
+    )
+
+    await charge_point_v16.reserve_now_req(
+        connector_id=1,
+        expiry_date=t.isoformat(),
+        id_tag=test_config.authorization_info.valid_id_tag_1,
+        reservation_id=1,
+    )
+
+    assert await wait_for_and_validate(
+        test_utility,
+        charge_point_v16,
+        "ReserveNow",
+        call_result.ReserveNowPayload(ReservationStatus.accepted)
+    )
+
+
 @pytest.mark.everest_core_config(
     get_everest_config_path_str("everest-config-042_1.yaml")
 )

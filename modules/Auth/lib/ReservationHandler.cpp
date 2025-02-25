@@ -202,14 +202,26 @@ void ReservationHandler::on_connector_state_changed(const ConnectorState connect
     }
 
     const bool reservation_exists = evse_reservations.count(evse_id) != 0;
+    const bool one_connector = (this->evses[evse_id]->connectors.size() == 1);
 
-    if (reservation_exists && evse_reservations[evse_id].connector_type.has_value() &&
-        (connector_it->type == evse_reservations[evse_id].connector_type.value() ||
-         connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
-         evse_reservations[evse_id].connector_type.value() == types::evse_manager::ConnectorTypeEnum::Unknown)) {
-        cancel_reservation(evse_reservations[evse_id].reservation_id, true,
-                           types::reservation::ReservationEndReason::Cancelled);
-        return;
+    if (reservation_exists) {
+        // The evse has only one connector, so this reservation can be cancelled.
+        if (one_connector) {
+            cancel_reservation(evse_reservations[evse_id].reservation_id, true,
+                               types::reservation::ReservationEndReason::Cancelled);
+            return;
+        }
+        // A reservation is done on the whole evse. But if only one connector is faulted, and the reservation is done
+        // for the other connector type, the reservation should not be cancelled.
+        else if (!evse_reservations[evse_id].connector_type.has_value() ||
+                 (connector_it->type == evse_reservations[evse_id].connector_type.value() ||
+                  connector_it->type == types::evse_manager::ConnectorTypeEnum::Unknown ||
+                  evse_reservations[evse_id].connector_type.value() ==
+                      types::evse_manager::ConnectorTypeEnum::Unknown)) {
+            cancel_reservation(evse_reservations[evse_id].reservation_id, true,
+                               types::reservation::ReservationEndReason::Cancelled);
+            return;
+        }
     }
 
     // Now we might have one connector less, let's check if all reservations are still possible now and if not, cancel

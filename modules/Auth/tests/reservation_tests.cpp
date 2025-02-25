@@ -722,6 +722,34 @@ TEST_F(ReservationHandlerTest, change_availability_scenario_02) {
     EXPECT_EQ(evse_id.value(), 3);
 }
 
+TEST_F(ReservationHandlerTest, change_availability_scenario_03) {
+    // Change availability of an EVSE and check if reservation is cancelled. The reservation has no specific type.
+    std::optional<uint32_t> evse_id;
+    MockFunction<void(const std::optional<uint32_t>& evse_id, const int32_t reservation_id,
+                      const ReservationEndReason reason, const bool send_reservation_update)>
+        reservation_callback_mock;
+
+    r.register_reservation_cancelled_callback(reservation_callback_mock.AsStdFunction());
+    add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
+    add_connector(0, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
+    add_connector(1, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
+    add_connector(1, 1, types::evse_manager::ConnectorTypeEnum::cType2, this->evses);
+
+    Reservation reservation = create_reservation(types::evse_manager::ConnectorTypeEnum::sType2);
+    // Set reservation type to nullopt (no type).
+    reservation.connector_type = std::nullopt;
+
+    EXPECT_EQ(r.make_reservation(1, reservation), ReservationResult::Accepted);
+
+    // Set an evse to not available, this will call the cancel reservation callback for the reservation of that evse id.
+    EXPECT_CALL(reservation_callback_mock, Call(_, 0, ReservationEndReason::Cancelled, true))
+        .WillOnce(SaveArg<0>(&evse_id));
+    this->evses[1]->connectors.at(1).submit_event(ConnectorEvent::DISABLE);
+    r.on_connector_state_changed(this->evses[1]->connectors.at(1).get_state(), 1, 1);
+    ASSERT_TRUE(evse_id.has_value());
+    EXPECT_EQ(evse_id.value(), 1);
+}
+
 TEST_F(ReservationHandlerTest, reservation_evse_unavailable) {
     // Set evse unavailable and check if a reservation can not be made in that case. Global reservations.
     add_connector(0, 0, types::evse_manager::ConnectorTypeEnum::cCCS2, this->evses);
