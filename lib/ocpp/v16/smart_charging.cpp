@@ -137,8 +137,6 @@ EnhancedChargingSchedule SmartChargingHandler::calculate_enhanced_composite_sche
         case ChargingProfilePurposeType::TxProfile:
             tx.insert(tx.end(), periods.begin(), periods.end());
             break;
-        default:
-            break;
         }
     }
 

@@ -558,9 +558,6 @@ public:
                     case QueueType::None:
                         // do nothing
                         break;
-
-                    default:
-                        break;
                     }
                 }
                 if (this->transaction_message_queue.empty() && this->normal_message_queue.empty()) {

@@ -154,10 +154,9 @@ GetCertificateSignRequestStatus to_ocpp(evse_security::GetCertificateSignRequest
         return GetCertificateSignRequestStatus::KeyGenError;
     case evse_security::GetCertificateSignRequestStatus::GenerationError:
         return GetCertificateSignRequestStatus::GenerationError;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::GetCertificateSignRequestStatus to GetCertificateSignRequestStatus");
     }
+    throw EnumConversionException(
+        "Could not convert evse_security::GetCertificateSignRequestStatus to GetCertificateSignRequestStatus");
 }
 
 CaCertificateType to_ocpp(evse_security::CaCertificateType other) {
@@ -172,23 +171,7 @@ CaCertificateType to_ocpp(evse_security::CaCertificateType other) {
         return CaCertificateType::MF;
     }
 
-    throw std::runtime_error("Could not convert evse_security::CaCertificateType to CaCertificateType");
-}
-
-CertificateSigningUseEnum to_ocpp(evse_security::LeafCertificateType other) {
-    switch (other) {
-    case evse_security::LeafCertificateType::CSMS:
-        return CertificateSigningUseEnum::ChargingStationCertificate;
-    case evse_security::LeafCertificateType::V2G:
-        return CertificateSigningUseEnum::V2GCertificate;
-    case evse_security::LeafCertificateType::MF:
-        return CertificateSigningUseEnum::ManufacturerCertificate;
-    case evse_security::LeafCertificateType::MO:
-        throw std::runtime_error(
-            "Could not convert evse_security::LeafCertificateType to CertificateSigningUseEnum. Missing type");
-    }
-
-    throw std::runtime_error("Could not convert evse_security::LeafCertificateType to CertificateSigningUseEnum");
+    throw EnumConversionException("Could not convert evse_security::CaCertificateType to CaCertificateType");
 }
 
 CertificateType to_ocpp(evse_security::CertificateType other) {
@@ -203,9 +186,8 @@ CertificateType to_ocpp(evse_security::CertificateType other) {
         return CertificateType::V2GCertificateChain;
     case evse_security::CertificateType::MFRootCertificate:
         return CertificateType::MFRootCertificate;
-    default:
-        throw std::runtime_error("Could not convert evse_security::CertificateType to CertificateType");
     }
+    throw EnumConversionException("Could not convert evse_security::CertificateType to CertificateType");
 }
 
 HashAlgorithmEnumType to_ocpp(evse_security::HashAlgorithm other) {
@@ -216,9 +198,8 @@ HashAlgorithmEnumType to_ocpp(evse_security::HashAlgorithm other) {
         return HashAlgorithmEnumType::SHA384;
     case evse_security::HashAlgorithm::SHA512:
         return HashAlgorithmEnumType::SHA512;
-    default:
-        throw std::runtime_error("Could not convert evse_security::HashAlgorithm to HashAlgorithmEnumType");
     }
+    throw EnumConversionException("Could not convert evse_security::HashAlgorithm to HashAlgorithmEnumType");
 }
 
 GetCertificateInfoStatus to_ocpp(evse_security::GetCertificateInfoStatus other) {
@@ -233,10 +214,9 @@ GetCertificateInfoStatus to_ocpp(evse_security::GetCertificateInfoStatus other) 
         return GetCertificateInfoStatus::NotFoundValid;
     case evse_security::GetCertificateInfoStatus::PrivateKeyNotFound:
         return GetCertificateInfoStatus::PrivateKeyNotFound;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::GetCertificateInfoStatus to GetCertificateInfoStatus");
     }
+    throw EnumConversionException(
+        "Could not convert evse_security::GetCertificateInfoStatus to GetCertificateInfoStatus");
 }
 
 InstallCertificateResult to_ocpp(evse_security::InstallCertificateResult other) {
@@ -259,10 +239,9 @@ InstallCertificateResult to_ocpp(evse_security::InstallCertificateResult other) 
         return InstallCertificateResult::WriteError;
     case evse_security::InstallCertificateResult::Accepted:
         return InstallCertificateResult::Accepted;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::InstallCertificateResult to InstallCertificateResult");
     }
+    throw EnumConversionException(
+        "Could not convert evse_security::InstallCertificateResult to InstallCertificateResult");
 }
 
 CertificateValidationResult to_ocpp(evse_security::CertificateValidationResult other) {
@@ -282,8 +261,7 @@ CertificateValidationResult to_ocpp(evse_security::CertificateValidationResult o
     case evse_security::CertificateValidationResult::Expired:
         return CertificateValidationResult::Expired;
     }
-
-    throw std::runtime_error(
+    throw EnumConversionException(
         "Could not convert evse_security::CertificateValidationResult to CertificateValidationResult");
 }
 
@@ -295,9 +273,9 @@ DeleteCertificateResult to_ocpp(evse_security::DeleteCertificateResult other) {
         return DeleteCertificateResult::Failed;
     case evse_security::DeleteCertificateResult::NotFound:
         return DeleteCertificateResult::NotFound;
-    default:
-        throw std::runtime_error("Could not convert evse_security::DeleteCertificateResult to DeleteCertificateResult");
     }
+    throw EnumConversionException(
+        "Could not convert evse_security::DeleteCertificateResult to DeleteCertificateResult");
 }
 
 CertificateHashDataType to_ocpp(evse_security::CertificateHashData other) {
@@ -371,9 +349,8 @@ evse_security::CaCertificateType from_ocpp(CaCertificateType other) {
         return evse_security::CaCertificateType::CSMS;
     case CaCertificateType::MF:
         return evse_security::CaCertificateType::MF;
-    default:
-        throw std::runtime_error("Could not convert evse_security::CaCertificateType to CaCertificateType");
     }
+    throw EnumConversionException("Could not convert evse_security::CaCertificateType to CaCertificateType");
 }
 
 evse_security::LeafCertificateType from_ocpp(LeafCertificateType other) {
@@ -386,9 +363,8 @@ evse_security::LeafCertificateType from_ocpp(LeafCertificateType other) {
         return evse_security::LeafCertificateType::CSMS;
     case LeafCertificateType::MF:
         return evse_security::LeafCertificateType::MF;
-    default:
-        throw std::runtime_error("Could not convert evse_security::CaCertificateType to CaCertificateType");
     }
+    throw EnumConversionException("Could not convert evse_security::CaCertificateType to CaCertificateType");
 }
 
 evse_security::LeafCertificateType from_ocpp(CertificateSigningUseEnum other) {
@@ -399,9 +375,8 @@ evse_security::LeafCertificateType from_ocpp(CertificateSigningUseEnum other) {
         return evse_security::LeafCertificateType::V2G;
     case CertificateSigningUseEnum::ManufacturerCertificate:
         return evse_security::LeafCertificateType::MF;
-    default:
-        throw std::runtime_error("Could not convert CertificateSigningUseEnum to evse_security::LeafCertificateType");
     }
+    throw EnumConversionException("Could not convert CertificateSigningUseEnum to evse_security::LeafCertificateType");
 }
 
 evse_security::CertificateType from_ocpp(CertificateType other) {
@@ -416,9 +391,8 @@ evse_security::CertificateType from_ocpp(CertificateType other) {
         return evse_security::CertificateType::V2GCertificateChain;
     case CertificateType::MFRootCertificate:
         return evse_security::CertificateType::MFRootCertificate;
-    default:
-        throw std::runtime_error("Could not convert CertificateType to evse_security::CertificateType");
     }
+    throw EnumConversionException("Could not convert CertificateType to evse_security::CertificateType");
 }
 
 evse_security::HashAlgorithm from_ocpp(HashAlgorithmEnumType other) {
@@ -429,9 +403,8 @@ evse_security::HashAlgorithm from_ocpp(HashAlgorithmEnumType other) {
         return evse_security::HashAlgorithm::SHA384;
     case HashAlgorithmEnumType::SHA512:
         return evse_security::HashAlgorithm::SHA512;
-    default:
-        throw std::runtime_error("Could not convert HashAlgorithmEnumType to evse_security::HashAlgorithm");
     }
+    throw EnumConversionException("Could not convert HashAlgorithmEnumType to evse_security::HashAlgorithm");
 }
 
 evse_security::InstallCertificateResult from_ocpp(InstallCertificateResult other) {
@@ -454,10 +427,9 @@ evse_security::InstallCertificateResult from_ocpp(InstallCertificateResult other
         return evse_security::InstallCertificateResult::WriteError;
     case InstallCertificateResult::Accepted:
         return evse_security::InstallCertificateResult::Accepted;
-    default:
-        throw std::runtime_error(
-            "Could not convert InstallCertificateResult to evse_security::InstallCertificateResult");
     }
+    throw EnumConversionException(
+        "Could not convert InstallCertificateResult to evse_security::InstallCertificateResult");
 }
 
 evse_security::DeleteCertificateResult from_ocpp(DeleteCertificateResult other) {
@@ -468,9 +440,9 @@ evse_security::DeleteCertificateResult from_ocpp(DeleteCertificateResult other) 
         return evse_security::DeleteCertificateResult::Failed;
     case DeleteCertificateResult::NotFound:
         return evse_security::DeleteCertificateResult::NotFound;
-    default:
-        throw std::runtime_error("Could not convert DeleteCertificateResult to evse_security::DeleteCertificateResult");
     }
+    throw EnumConversionException(
+        "Could not convert DeleteCertificateResult to evse_security::DeleteCertificateResult");
 }
 
 evse_security::CertificateHashData from_ocpp(CertificateHashDataType other) {

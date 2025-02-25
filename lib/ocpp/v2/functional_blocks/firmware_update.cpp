@@ -106,7 +106,7 @@ void FirmwareUpdate::on_firmware_update_status_notification(int32_t request_id,
 void FirmwareUpdate::on_firmware_status_notification_request() {
     FirmwareStatusNotificationRequest request;
 
-    if (this->firmware_status == FirmwareStatusEnum::Idle || this->firmware_status == FirmwareStatusEnum::Installed) {
+    if (this->firmware_status == FirmwareStatusEnum::Idle or this->firmware_status == FirmwareStatusEnum::Installed) {
         // L01.FR.25
         // do not set requestId when idle: L01.FR.20
         request.status = FirmwareStatusEnum::Idle;

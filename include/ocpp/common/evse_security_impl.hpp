@@ -64,7 +64,6 @@ namespace conversions {
 
 GetCertificateSignRequestStatus to_ocpp(evse_security::GetCertificateSignRequestStatus other);
 CaCertificateType to_ocpp(evse_security::CaCertificateType other);
-CertificateSigningUseEnum to_ocpp(evse_security::LeafCertificateType other);
 CertificateType to_ocpp(evse_security::CertificateType other);
 HashAlgorithmEnumType to_ocpp(evse_security::HashAlgorithm other);
 GetCertificateInfoStatus to_ocpp(evse_security::GetCertificateInfoStatus other);

@@ -637,7 +637,7 @@ RunningCostState string_to_running_cost_state(const std::string& state) {
         return RunningCostState::Finished;
     }
 
-    throw std::out_of_range("No known string conversion for provided enum of type RunningCostState");
+    throw StringToEnumException(state, "No known string conversion for provided enum of type RunningCostState");
 }
 
 std::string running_cost_state_to_string(const RunningCostState& state) {
@@ -649,8 +649,7 @@ std::string running_cost_state_to_string(const RunningCostState& state) {
     case RunningCostState::Finished:
         return "Finished";
     }
-
-    throw std::out_of_range("No known enum value of type RunningCostState");
+    throw EnumToStringException(state, "No known enum value of type RunningCostState");
 }
 } // namespace conversions
 
@@ -1215,9 +1214,8 @@ std::string generate_certificate_signing_request_status_to_string(const GetCerti
         return "KeyGenError";
     case GetCertificateSignRequestStatus::GenerationError:
         return "GenerationError";
-    default:
-        throw EnumToStringException(status, "GetCertificateSignRequestStatus");
     }
+    throw EnumToStringException(status, "GetCertificateSignRequestStatus");
 }
 } // namespace conversions
 
@@ -1245,10 +1243,11 @@ v16::FirmwareStatus firmware_status_notification_to_firmware_status(const Firmwa
     case FirmwareStatusNotification::InstallVerificationFailed:
     case FirmwareStatusNotification::InvalidSignature:
     case FirmwareStatusNotification::SignatureVerified:
-        throw std::out_of_range("Could not convert FirmwareStatusNotification to v16::FirmwareStatus. Missing type");
+        throw EnumConversionException(
+            "Could not convert FirmwareStatusNotification to v16::FirmwareStatus. Missing type");
     }
 
-    throw std::out_of_range("Could not convert to v16::FirmwareStatus");
+    throw EnumConversionException("Could not convert to v16::FirmwareStatus");
 }
 
 v16::FirmwareStatusEnumType
@@ -1282,9 +1281,8 @@ firmware_status_notification_to_firmware_status_enum_type(const FirmwareStatusNo
         return v16::FirmwareStatusEnumType::InvalidSignature;
     case FirmwareStatusNotification::SignatureVerified:
         return v16::FirmwareStatusEnumType::SignatureVerified;
-    default:
-        throw std::out_of_range("Could not convert to v16::FirmwareStatusEnumType");
     }
+    throw EnumConversionException("Could not convert to v16::FirmwareStatusEnumType");
 }
 
 } // namespace conversions

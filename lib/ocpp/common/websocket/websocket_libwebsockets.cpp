@@ -1385,9 +1385,6 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
     case LWS_CALLBACK_WSI_DESTROY:
     case LWS_CALLBACK_SERVER_NEW_CLIENT_INSTANTIATED:
     case LWS_CALLBACK_CLIENT_HTTP_DROP_PROTOCOL:
-        break;
-
-    // TODO(ioan): do we really want this huge switches
     case LWS_CALLBACK_PROTOCOL_INIT:
     case LWS_CALLBACK_PROTOCOL_DESTROY:
     case LWS_CALLBACK_WSI_CREATE:
@@ -1487,8 +1484,6 @@ int WebsocketLibwebsockets::process_callback(void* wsi_ptr, int callback_reason,
     case LWS_CALLBACK_MQTT_UNSUBSCRIBE_TIMEOUT:
     case LWS_CALLBACK_MQTT_SHADOW_TIMEOUT:
     case LWS_CALLBACK_USER:
-    default:
-        EVLOG_debug << "Callback with unhandled reason: " << reason;
         break;
     }
 

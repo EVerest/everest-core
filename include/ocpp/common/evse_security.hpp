@@ -127,7 +127,6 @@ namespace evse_security_conversions {
 
 ocpp::v2::GetCertificateIdUseEnum to_ocpp_v2(ocpp::CertificateType other);
 ocpp::v2::InstallCertificateUseEnum to_ocpp_v2(ocpp::CaCertificateType other);
-ocpp::v2::CertificateSigningUseEnum to_ocpp_v2(ocpp::CertificateSigningUseEnum other);
 ocpp::v2::HashAlgorithmEnum to_ocpp_v2(ocpp::HashAlgorithmEnumType other);
 ocpp::v2::InstallCertificateStatusEnum to_ocpp_v2(ocpp::InstallCertificateResult other);
 ocpp::v2::DeleteCertificateStatusEnum to_ocpp_v2(ocpp::DeleteCertificateResult other);

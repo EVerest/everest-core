@@ -259,7 +259,6 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                     case CertificateValidationResult::InvalidLeafSignature:
                     case CertificateValidationResult::InvalidChain:
                     case CertificateValidationResult::Unknown:
-                    default:
                         response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
                         break;
                     }

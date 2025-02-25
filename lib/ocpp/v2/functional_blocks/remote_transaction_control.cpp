@@ -291,7 +291,6 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     case MessageTriggerEnum::PublishFirmwareStatusNotification:
     case MessageTriggerEnum::SignCombinedCertificate:
-    default:
         response.status = TriggerMessageStatusEnum::NotImplemented;
         break;
     }
@@ -393,7 +392,6 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     case MessageTriggerEnum::PublishFirmwareStatusNotification:
     case MessageTriggerEnum::SignCombinedCertificate:
-    default:
         EVLOG_error << "Sent a TriggerMessageResponse::Accepted while not following up with a message";
         break;
     }

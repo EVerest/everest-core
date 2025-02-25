@@ -667,8 +667,6 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::CostUpdated:
             this->tariff_and_cost->handle_message(message);
             break;
-
-        // TODO(ioan): are we sure we want this long list of unused switches?
         case MessageType::Authorize:
         case MessageType::AuthorizeResponse:
         case MessageType::BootNotification:
@@ -756,7 +754,6 @@ void ChargePoint::handle_message(const EnhancedMessage<v2::MessageType>& message
         case MessageType::UnpublishFirmwareResponse:
         case MessageType::UpdateFirmwareResponse:
         case MessageType::InternalError:
-        default:
             send_not_implemented_error(message.uniqueId, message.messageTypeId);
             break;
         }

@@ -937,7 +937,6 @@ std::optional<MeterValue> ChargePointImpl::get_latest_meter_value(int32_t connec
             case Measurand::Power_Reactive_Import:
             case Measurand::Power_Factor:
             case Measurand::Current_Export:
-            default:
                 break;
             }
             // only add if value is set
@@ -1119,7 +1118,6 @@ bool ChargePointImpl::start(const std::map<int, ChargePointStatus>& connector_st
     case BootReasonEnum::Triggered:
     case BootReasonEnum::Unknown:
     case BootReasonEnum::Watchdog:
-    default:
         this->securityEventNotification(CiString<50>(ocpp::security_events::STARTUP_OF_THE_DEVICE),
                                         std::optional<CiString<255>>("The Charge Point has booted"), true);
         break;
@@ -1265,7 +1263,6 @@ void ChargePointImpl::connected_callback() {
     }
     case ChargePointConnectionState::Rejected:
     case ChargePointConnectionState::Connected:
-    default:
         EVLOG_error << "Connected but not in state 'Disconnected' or 'Booted'. This can happen when the CSMS does not "
                        "respond to the initial BootNotification.req at all or with a CALLERROR";
         break;
@@ -1513,7 +1510,6 @@ void ChargePointImpl::handle_message(const EnhancedMessage<v16::MessageType>& me
         this->handleHeartbeatResponse(json_message);
         break;
 
-    // TODO(ioan): do we really want this huge switches?
     case MessageType::Authorize:
     case MessageType::BootNotification:
     case MessageType::BootNotificationResponse:
@@ -1562,7 +1558,6 @@ void ChargePointImpl::handle_message(const EnhancedMessage<v16::MessageType>& me
     case MessageType::UpdateFirmwareResponse:
     case MessageType::InternalError:
     case MessageType::ClearCacheResponse:
-    default:
         // TODO(kai): not implemented error?
         break;
     }
@@ -3579,7 +3574,6 @@ ocpp::v2::AuthorizeResponse ChargePointImpl::data_transfer_pnc_authorize(
                 case CertificateValidationResult::InvalidLeafSignature:
                 case CertificateValidationResult::InvalidChain:
                 case CertificateValidationResult::Unknown:
-                default:
                     authorize_response.idTokenInfo.status = ocpp::v2::AuthorizationStatusEnum::Unknown;
                     break;
                 }

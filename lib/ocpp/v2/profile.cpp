@@ -134,9 +134,6 @@ std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in
                 }
                 seconds_to_go_forward = SECONDS_PER_DAY * DAYS_PER_WEEK;
                 break;
-            default:
-                EVLOG_error << "Invalid RecurrencyKindType: " << static_cast<int>(in_profile.recurrencyKind.value());
-                break;
             }
 
             start = std::move(DateTime(now_tp - seconds(seconds_to_go_back)));
@@ -153,9 +150,6 @@ std::vector<DateTime> calculate_start(const DateTime& in_now, const DateTime& in
             start = floor_seconds(in_session_start.value());
         }
         start_times.push_back(start);
-        break;
-    default:
-        EVLOG_error << "Invalid ChargingProfileKindEnum: " << static_cast<int>(in_profile.chargingProfileKind);
         break;
     }
     return start_times;
