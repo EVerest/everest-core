@@ -1347,6 +1347,9 @@ static enum v2g_event handle_iso_power_delivery(struct v2g_connection* conn) {
                 conn->ctx->p_charger->publish_ac_close_contactor(nullptr);
                 conn->ctx->session.is_charging = true;
 
+                // TODO(ioan): publish the ChargeNeedsType
+                // conn->ctx->p_charger->p_extensions->publish()
+
                 /* determine timeout for contactor */
                 clock_gettime(CLOCK_MONOTONIC, &ts_abs_timeout);
                 timespec_add_ms(&ts_abs_timeout, V2G_CONTACTOR_CLOSE_TIMEOUT);
