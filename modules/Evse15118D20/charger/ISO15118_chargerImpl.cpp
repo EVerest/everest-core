@@ -361,8 +361,8 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 EVLOG_AND_THROW(Everest::EverestInternalError("Invalid type received for EV Control Mode!"));
             }
 
-            // Publish charging needs
-            publish_charging_needs(charging_needs);
+            // Publish charging needs through the extensions
+            this->mod->p_extensions->publish_charging_needs(charging_needs);
         };
 
     callbacks.dc_charge_loop_req = [this](const feedback::DcChargeLoopReq& dc_charge_loop_req) {
