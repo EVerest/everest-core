@@ -1517,6 +1517,7 @@ void ChargePointImpl::handle_message(const EnhancedMessage<v16::MessageType>& me
     case MessageType::CertificateSignedResponse:
     case MessageType::ChangeAvailabilityResponse:
     case MessageType::ChangeConfigurationResponse:
+    case MessageType::ClearCacheResponse:
     case MessageType::ClearChargingProfileResponse:
     case MessageType::DeleteCertificateResponse:
     case MessageType::DiagnosticsStatusNotification:
@@ -1557,7 +1558,6 @@ void ChargePointImpl::handle_message(const EnhancedMessage<v16::MessageType>& me
     case MessageType::UnlockConnectorResponse:
     case MessageType::UpdateFirmwareResponse:
     case MessageType::InternalError:
-    case MessageType::ClearCacheResponse:
         // TODO(kai): not implemented error?
         break;
     }

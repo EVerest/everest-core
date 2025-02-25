@@ -441,7 +441,6 @@ bool Security::should_allow_certificate_install(InstallCertificateUseEnum cert_t
             .value_or(true);
     case InstallCertificateUseEnum::MORootCertificate:
     case InstallCertificateUseEnum::V2GRootCertificate:
-    default:
         return true;
     }
 }
