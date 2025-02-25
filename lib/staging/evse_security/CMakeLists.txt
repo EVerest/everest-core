@@ -13,6 +13,12 @@ target_include_directories(evse_security_conversions
     "$<TARGET_PROPERTY:generate_cpp_files,EVEREST_GENERATED_INCLUDE_DIR>"
 )
 
+target_compile_options(evse_security_conversions
+    PRIVATE
+        -Wimplicit-fallthrough
+        -Werror=switch-enum
+)
+
 add_dependencies(evse_security_conversions generate_cpp_files)
 
 target_link_libraries(evse_security_conversions
@@ -20,3 +26,4 @@ target_link_libraries(evse_security_conversions
         everest::evse_security
         everest::framework
 )
+
