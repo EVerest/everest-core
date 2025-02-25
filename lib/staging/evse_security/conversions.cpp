@@ -328,9 +328,10 @@ types::evse_security::CertificateValidationResult to_everest(evse_security::Cert
         return types::evse_security::CertificateValidationResult::InvalidLeafSignature;
     case evse_security::CertificateValidationResult::InvalidChain:
         return types::evse_security::CertificateValidationResult::InvalidChain;
+    case evse_security::CertificateValidationResult::Expired:
+        return types::evse_security::CertificateValidationResult::Expired;
     case evse_security::CertificateValidationResult::Unknown:
         return types::evse_security::CertificateValidationResult::Unknown;
-        ;
     default:
         throw std::runtime_error("Could not convert evse_security::CertificateValidationResult to "
                                  "types::evse_security::CertificateValidationResult");
