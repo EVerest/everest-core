@@ -5,7 +5,7 @@ errors:
     description: Communication with the underlying hardware or device has a fault
   - name: VendorError
     description: >-
-      Vendor specific error code. Will stop charging session.
+      Vendor specific error code.
   - name: VendorWarning
     description: >-
-      Vendor specific error code. Charging may continue.
+      Vendor specific error code.
