@@ -27,12 +27,14 @@ void EnergyManager::init() {
     energy_manager_config.switch_3ph1ph_time_hysteresis_s = config.switch_3ph1ph_time_hysteresis_s;
 
     const auto enforce_limits_callback = [this](const std::vector<types::energy::EnforcedLimits>& limits) {
+        const types::energy::NumberWithSource nonumber = {-9999.0};
+        const types::energy::IntegerWithSource noint = {-9999};
         for (const auto& it : limits) {
             if (globals.debug)
                 EVLOG_info << fmt::format("\033[1;92m{} Enforce limits {}A {}W {} ph\033[1;0m", it.uuid,
-                                          it.limits_root_side.value().ac_max_current_A.value_or(-9999),
-                                          it.limits_root_side.value().total_power_W.value_or(-9999),
-                                          it.limits_root_side.value().ac_max_phase_count.value_or(-9999));
+                                          it.limits_root_side.ac_max_current_A.value_or(nonumber).value,
+                                          it.limits_root_side.total_power_W.value_or(nonumber).value,
+                                          it.limits_root_side.ac_max_phase_count.value_or(noint).value);
             r_energy_trunk->call_enforce_limits(it);
         }
     };

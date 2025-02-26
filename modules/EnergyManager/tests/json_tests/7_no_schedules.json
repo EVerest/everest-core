@@ -1,36 +1,51 @@
 {
     "config": {
-      "nominal_ac_voltage": 230.0,
-      "update_interval": 1,
-      "schedule_interval_duration": 60,
-      "schedule_total_duration": 1,
-      "slice_ampere": 0.5,
-      "slice_watt": 500,
-      "debug": false,
-      "switch_3ph1ph_while_charging_mode": "Never",
-      "switch_3ph1ph_max_nr_of_switches_per_session": 10,
-      "switch_3ph1ph_switch_limit_stickyness": "DontChange",
-      "switch_3ph1ph_power_hysteresis_W": 500,
-      "switch_3ph1ph_time_hysteresis_s": 30
+        "nominal_ac_voltage": 230.0,
+        "update_interval": 1,
+        "schedule_interval_duration": 60,
+        "schedule_total_duration": 1,
+        "slice_ampere": 0.5,
+        "slice_watt": 500,
+        "debug": false,
+        "switch_3ph1ph_while_charging_mode": "Never",
+        "switch_3ph1ph_max_nr_of_switches_per_session": 10,
+        "switch_3ph1ph_switch_limit_stickyness": "DontChange",
+        "switch_3ph1ph_power_hysteresis_W": 500,
+        "switch_3ph1ph_time_hysteresis_s": 30
     },
-    "expected_result": [
-        {
-            "limits_root_side": {
-                "ac_max_current_A": 0.0,
-                "total_power_W": 0.0
-            },
-            "schedule": [
-                {
-                    "limits_to_root": {
-                        "ac_max_current_A": 0.0,
-                        "total_power_W": 0.0
+    "expected_results": [
+        [
+            {
+                "limits_root_side": {
+                    "ac_max_current_A": {
+                        "source": "",
+                        "value": 0.0
                     },
-                    "timestamp": "2024-01-01T12:00:00.000Z"
-                }
-            ],
-            "uuid": "evse_manager",
-            "valid_until": "2024-01-01T12:00:10.000Z"
-        }
+                    "total_power_W": {
+                        "source": "",
+                        "value": 0.0
+                    }
+                },
+                "schedule": [
+                    {
+                        "limits_to_root": {
+                            "ac_max_current_A": {
+                                "source": "",
+                                "value": 0.0
+                            },
+                            "total_power_W": {
+                                "source": "",
+                                "value": 0.0
+                            }
+                        },
+                        "timestamp": "2024-01-01T12:00:00.000Z"
+                    }
+                ],
+                "schedule_setpoints": [],
+                "uuid": "evse_manager",
+                "valid_until": "2024-01-01T12:00:10.000Z"
+            }
+        ]
     ],
     "request": {
         "children": [],
@@ -62,7 +77,12 @@
         },
         "node_type": "Evse",
         "priority_request": false,
+        "schedule_import": [],
+        "schedule_export": [],
+        "schedule_setpoints": [],
         "uuid": "evse_manager"
     },
-    "start_time": "2024-01-01T12:00:00.000Z"
+    "start_times": [
+        "2024-01-01T12:00:00.000Z"
+    ]
 }

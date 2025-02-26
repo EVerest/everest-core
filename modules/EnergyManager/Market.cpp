@@ -21,23 +21,25 @@ void globals_t::init(date::utc_clock::time_point _start_time, int _interval_dura
 
     create_timestamps(energy_flow_request);
 
-    zero_schedule_req = create_empty_schedule_req();
+    create_empty_schedule(zero_schedule_req);
 
     for (auto& a : zero_schedule_req) {
-        a.limits_to_root.ac_max_current_A = 0.;
-        a.limits_to_root.total_power_W = 0.;
+        a.limits_to_root.ac_max_current_A = {0.};
+        a.limits_to_root.total_power_W = {0.};
     }
 
-    empty_schedule_req = create_empty_schedule_req();
+    create_empty_schedule(empty_schedule_req);
 
-    zero_schedule_res = create_empty_schedule_res();
+    create_empty_schedule(zero_schedule_res);
 
     for (auto& a : zero_schedule_res) {
-        a.limits_to_root.ac_max_current_A = 0.;
-        a.limits_to_root.total_power_W = 0.;
+        a.limits_to_root.ac_max_current_A = {0.};
+        a.limits_to_root.total_power_W = {0.};
     }
 
-    empty_schedule_res = create_empty_schedule_res();
+    create_empty_schedule(empty_schedule_res);
+
+    create_empty_schedule(empty_schedule_setpoints);
 }
 
 void globals_t::create_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request) {
@@ -72,17 +74,19 @@ void globals_t::create_timestamps(const types::energy::EnergyFlowRequest& energy
 
 void globals_t::add_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request) {
     // add local timestamps
-    if (energy_flow_request.schedule_import.has_value()) {
-        for (auto t : energy_flow_request.schedule_import.value()) {
-            // insert current timestamp
-            timestamps.push_back(Everest::Date::from_rfc3339(t.timestamp));
-        }
+    for (auto t : energy_flow_request.schedule_import) {
+        // insert current timestamp
+        timestamps.push_back(Everest::Date::from_rfc3339(t.timestamp));
     }
-    if (energy_flow_request.schedule_export.has_value()) {
-        for (auto t : energy_flow_request.schedule_export.value()) {
-            // insert current timestamp
-            timestamps.push_back(Everest::Date::from_rfc3339(t.timestamp));
-        }
+
+    for (auto t : energy_flow_request.schedule_export) {
+        // insert current timestamp
+        timestamps.push_back(Everest::Date::from_rfc3339(t.timestamp));
+    }
+
+    for (auto t : energy_flow_request.schedule_setpoints) {
+        // insert current timestamp
+        timestamps.push_back(Everest::Date::from_rfc3339(t.timestamp));
     }
 
     // recurse to all children
@@ -90,33 +94,20 @@ void globals_t::add_timestamps(const types::energy::EnergyFlowRequest& energy_fl
         add_timestamps(c);
 }
 
-ScheduleReq globals_t::create_empty_schedule_req() {
+template <typename T> void globals_t::create_empty_schedule(T& s) {
     // initialize schedule with correct size
-    types::energy::ScheduleReqEntry e;
-    ScheduleReq s(schedule_length, e);
+    typename T::value_type e;
+    s = T(schedule_length, e);
 
     for (int i = 0; i < schedule_length; i++) {
         s[i].timestamp = Everest::Date::to_rfc3339(timestamps[i]);
     }
-
-    return s;
-}
-
-ScheduleRes globals_t::create_empty_schedule_res() {
-    // initialize schedule with correct size
-    types::energy::ScheduleResEntry e;
-    ScheduleRes s(schedule_length, e);
-
-    for (int i = 0; i < schedule_length; i++) {
-        s[i].timestamp = Everest::Date::to_rfc3339(timestamps[i]);
-    }
-
-    return s;
 }
 
 int time_probe::stop() {
-    if (running)
+    if (running) {
         pause();
+    }
     return std::chrono::duration_cast<std::chrono::milliseconds>(total_duration).count();
 }
 
@@ -140,7 +131,7 @@ void time_probe::pause() {
 template <typename T> std::optional<T> min_optional(std::optional<T> a, std::optional<T> b) {
 
     if (a.has_value() and b.has_value()) {
-        if (a < b) {
+        if (a.value().value < b.value().value) {
             return a;
         } else {
             return b;
@@ -157,7 +148,7 @@ template <typename T> std::optional<T> min_optional(std::optional<T> a, std::opt
 template <typename T> std::optional<T> max_optional(std::optional<T> a, std::optional<T> b) {
 
     if (a.has_value() and b.has_value()) {
-        if (a > b) {
+        if (a.value().value > b.value().value) {
             return a;
         } else {
             return b;
@@ -169,6 +160,38 @@ template <typename T> std::optional<T> max_optional(std::optional<T> a, std::opt
     }
 
     return b;
+}
+
+ScheduleSetpoints Market::resample(const ScheduleSetpoints& request) {
+
+    ScheduleSetpoints sp = globals.empty_schedule_setpoints;
+
+    // First resample request to the timestamps in available and merge all limits on root sides
+    for (auto& s : sp) {
+
+        // find corresponding entry in request
+        auto r = request.begin();
+        auto tp_a = Everest::Date::from_rfc3339(s.timestamp);
+        for (auto ir = request.begin(); ir != request.end(); ir++) {
+            auto tp_r_1 = Everest::Date::from_rfc3339((*ir).timestamp);
+            if ((ir + 1 == request.end())) {
+                r = ir;
+                break;
+            }
+            auto tp_r_2 = Everest::Date::from_rfc3339((*(ir + 1)).timestamp);
+            if ((tp_a >= tp_r_1 && tp_a < tp_r_2) || (ir == request.begin() && tp_a < tp_r_1)) {
+                r = ir;
+                break;
+            }
+        }
+
+        if (r != request.end()) {
+            // copy setpoint if any
+            s.setpoint = (*r).setpoint;
+        }
+    }
+
+    return sp;
 }
 
 ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
@@ -199,7 +222,8 @@ ScheduleReq Market::get_max_available_energy(const ScheduleReq& request) {
             {
                 auto leaves_power_W = (*r).limits_to_leaves.total_power_W;
                 if (leaves_power_W.has_value()) {
-                    leaves_power_W = leaves_power_W.value() / (*r).conversion_efficiency.value_or(1.);
+                    leaves_power_W.value().value =
+                        leaves_power_W.value().value / (*r).conversion_efficiency.value_or(1.);
                 }
 
                 a.limits_to_root.total_power_W = min_optional(leaves_power_W, (*r).limits_to_root.total_power_W);
@@ -233,19 +257,29 @@ ScheduleReq Market::get_available_energy(const ScheduleReq& max_available, bool 
         // FIXME: sold_root is the sum of all energy sold, but we need to limit indivdual paths as well
         // add config option for pure star type of cabling here as well.
 
-        float sold_current = (add_sold ? 1 : -1) * sold_root[i].limits_to_root.ac_max_current_A.value_or(0);
+        float sold_current = 0;
+
+        if (sold_root[i].limits_to_root.ac_max_current_A.has_value()) {
+            sold_current = (add_sold ? 1 : -1) * sold_root[i].limits_to_root.ac_max_current_A.value().value;
+        }
+
         if (sold_current > 0)
             sold_current = 0;
 
-        float sold_watt = (add_sold ? 1 : -1) * sold_root[i].limits_to_root.total_power_W.value_or(0);
+        float sold_watt = 0;
+
+        if (sold_root[i].limits_to_root.total_power_W.has_value()) {
+            sold_watt = (add_sold ? 1 : -1) * sold_root[i].limits_to_root.total_power_W.value().value;
+        }
+
         if (sold_watt > 0)
             sold_watt = 0;
 
         if (available[i].limits_to_root.ac_max_current_A.has_value())
-            available[i].limits_to_root.ac_max_current_A.value() += sold_current;
+            available[i].limits_to_root.ac_max_current_A.value().value += sold_current;
 
         if (available[i].limits_to_root.total_power_W.has_value())
-            available[i].limits_to_root.total_power_W.value() += sold_watt;
+            available[i].limits_to_root.total_power_W.value().value += sold_watt;
     }
     return available;
 }
@@ -258,6 +292,98 @@ ScheduleReq Market::get_available_energy_export() {
     return get_available_energy(export_max_available, true);
 }
 
+float get_watt_from_freq_table(std::vector<types::energy::FrequencyWattPoint> table, float freq) {
+    // the table has to be sorted by freqency
+
+    if (table.size() == 0) {
+        return 0.;
+    }
+
+    if (table.size() == 1) {
+        return table[0].total_power_W;
+    }
+
+    float watt1 = table[0].total_power_W;
+    float watt2 = 0.;
+    float freq1 = 0.;
+
+    for (const auto e : table) {
+        watt2 = e.total_power_W;
+        if (e.frequency_Hz > freq) {
+            break;
+        }
+        watt1 = e.total_power_W;
+        freq1 = e.frequency_Hz;
+    }
+    return watt1 + (freq - freq1) * (watt2 - watt1);
+}
+
+void apply_limit_if_smaller(std::optional<types::energy::NumberWithSource>& base, float limit,
+                            const std::string source) {
+    if (not base.has_value() or (base.has_value() and base.value().value > limit)) {
+        base = {limit, source};
+    }
+}
+
+void apply_setpoints(ScheduleReq& imp, ScheduleReq& exp, const ScheduleSetpoints& setpoints,
+                     std::optional<float> freq) {
+    if (setpoints.size() != imp.size()) {
+        EVLOG_error << fmt::format("apply_setpoints: setpoints({}) and import({}) do not have the same size.",
+                                   setpoints.size(), imp.size());
+        return;
+    }
+    if (setpoints.size() != exp.size()) {
+        EVLOG_error << fmt::format("apply_setpoints: setpoints({}) and export({}) do not have the same size.",
+                                   setpoints.size(), exp.size());
+        return;
+    }
+
+    for (ScheduleReq::size_type i = 0; i < setpoints.size(); i++) {
+        // apply setpoints as limits
+        if (setpoints[i].setpoint.has_value()) {
+            const auto& sp = setpoints[i].setpoint.value();
+            auto& imp_limits = imp[i].limits_to_root;
+            auto& exp_limits = exp[i].limits_to_root;
+
+            // Allow only one actual setpoint value to be set, in this priority order
+            if (sp.ac_current_A.has_value()) {
+                if (sp.ac_current_A.value() >= 0.) {
+                    // Charging setpoint
+                    apply_limit_if_smaller(imp_limits.ac_max_current_A, sp.ac_current_A.value(), sp.source);
+                    exp_limits.ac_max_current_A = {0., sp.source};
+                } else {
+                    // Discharging setpoint
+                    apply_limit_if_smaller(exp_limits.ac_max_current_A, -sp.ac_current_A.value(), sp.source);
+                    imp_limits.ac_max_current_A = {0., sp.source};
+                }
+            } else if (sp.total_power_W.has_value()) {
+                if (sp.total_power_W.value() >= 0.) {
+                    // Charging setpoint
+                    apply_limit_if_smaller(imp_limits.total_power_W, sp.total_power_W.value(), sp.source);
+                    exp_limits.total_power_W = {0., sp.source};
+                } else {
+                    // Discharging setpoint
+                    apply_limit_if_smaller(exp_limits.total_power_W, -sp.total_power_W.value(), sp.source);
+                    imp_limits.total_power_W = {0., sp.source};
+                }
+
+            } else if (sp.frequency_table.has_value() and freq.has_value()) {
+                // get actual watt limit from table and current frequency from meter
+                float watt_limit = get_watt_from_freq_table(sp.frequency_table.value(), freq.value());
+                if (watt_limit >= 0.) {
+                    // Charging setpoint
+                    apply_limit_if_smaller(imp_limits.total_power_W, watt_limit, sp.source);
+                    exp_limits.total_power_W = {0., sp.source};
+                } else {
+                    // Discharging setpoint
+                    apply_limit_if_smaller(exp_limits.total_power_W, -watt_limit, sp.source);
+                    imp_limits.total_power_W = {0., sp.source};
+                }
+            }
+        }
+    }
+}
+
 Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const float __nominal_ac_voltage,
                Market* __parent) :
     energy_flow_request(_energy_flow_request), _parent(__parent), _nominal_ac_voltage(__nominal_ac_voltage) {
@@ -266,19 +392,39 @@ Market::Market(types::energy::EnergyFlowRequest& _energy_flow_request, const flo
 
     sold_root = globals.empty_schedule_res;
 
-    if (energy_flow_request.schedule_import.has_value()) {
-        import_max_available = get_max_available_energy(energy_flow_request.schedule_import.value());
+    if (not energy_flow_request.schedule_import.empty()) {
+        import_max_available = get_max_available_energy(energy_flow_request.schedule_import);
     } else {
         // nothing is available as nothing was requested
         import_max_available = globals.zero_schedule_req;
     }
 
-    if (energy_flow_request.schedule_export.has_value()) {
-        export_max_available = get_max_available_energy(energy_flow_request.schedule_export.value());
+    if (not energy_flow_request.schedule_export.empty()) {
+        export_max_available = get_max_available_energy(energy_flow_request.schedule_export);
     } else {
         // nothing is available as nothing was requested
         export_max_available = globals.zero_schedule_req;
     }
+
+    if (not energy_flow_request.schedule_setpoints.empty()) {
+        setpoints = resample(energy_flow_request.schedule_setpoints);
+    } else {
+        // create an empty setpoint schedule
+        setpoints = globals.empty_schedule_setpoints;
+    }
+
+    // Try to find a frequency measurement
+    std::optional<float> freq;
+    if (energy_flow_request.energy_usage_root.has_value() and
+        energy_flow_request.energy_usage_root.value().frequency_Hz.has_value()) {
+        freq = energy_flow_request.energy_usage_root.value().frequency_Hz.value().L1;
+    } else if (energy_flow_request.energy_usage_leaves.has_value() and
+               energy_flow_request.energy_usage_leaves.value().frequency_Hz.has_value()) {
+        freq = energy_flow_request.energy_usage_leaves.value().frequency_Hz.value().L1;
+    }
+
+    // Apply setpoints as limit to both import and export schedules
+    apply_setpoints(import_max_available, export_max_available, setpoints, freq);
 
     // Recursion: create one Market for each child
     for (auto& flow_child : _energy_flow_request.children) {
@@ -326,24 +472,45 @@ static void schedule_add(ScheduleRes& a, const ScheduleRes& b) {
         return;
     }
 
+    const types::energy::NumberWithSource NUMZERO = {0};
+
     for (ScheduleRes::size_type i = 0; i < a.size(); i++) {
         if (b[i].limits_to_root.ac_max_current_A.has_value()) {
-            a[i].limits_to_root.ac_max_current_A =
-                b[i].limits_to_root.ac_max_current_A.value() + a[i].limits_to_root.ac_max_current_A.value_or(0);
+            std::string source;
+
+            if (b[i].limits_to_root.ac_max_current_A.value().value not_eq 0.) {
+                source = b[i].limits_to_root.ac_max_current_A.value().source;
+            } else if (a[i].limits_to_root.ac_max_current_A.has_value()) {
+                source = a[i].limits_to_root.ac_max_current_A.value().source;
+            }
+
+            a[i].limits_to_root.ac_max_current_A = {b[i].limits_to_root.ac_max_current_A.value().value +
+                                                        a[i].limits_to_root.ac_max_current_A.value_or(NUMZERO).value,
+                                                    source};
         }
 
         if (b[i].limits_to_root.total_power_W.has_value()) {
-            a[i].limits_to_root.total_power_W =
-                b[i].limits_to_root.total_power_W.value() + a[i].limits_to_root.total_power_W.value_or(0);
+            std::string source;
+
+            if (b[i].limits_to_root.total_power_W.value().value not_eq 0.) {
+                source = b[i].limits_to_root.total_power_W.value().source;
+            } else if (a[i].limits_to_root.total_power_W.has_value()) {
+                source = a[i].limits_to_root.total_power_W.value().source;
+            }
+
+            a[i].limits_to_root.total_power_W = {b[i].limits_to_root.total_power_W.value().value +
+                                                     a[i].limits_to_root.total_power_W.value_or(NUMZERO).value,
+                                                 source};
         }
 
         if (b[i].limits_to_root.ac_max_phase_count.has_value()) {
             if (a[i].limits_to_root.ac_max_phase_count.has_value()) {
-                if (b[i].limits_to_root.ac_max_phase_count.value() > a[i].limits_to_root.ac_max_phase_count.value()) {
-                    a[i].limits_to_root.ac_max_phase_count.value() = b[i].limits_to_root.ac_max_phase_count.value();
+                if (b[i].limits_to_root.ac_max_phase_count.value().value >
+                    a[i].limits_to_root.ac_max_phase_count.value().value) {
+                    a[i].limits_to_root.ac_max_phase_count = b[i].limits_to_root.ac_max_phase_count;
                 }
             } else {
-                a[i].limits_to_root.ac_max_phase_count = b[i].limits_to_root.ac_max_phase_count.value();
+                a[i].limits_to_root.ac_max_phase_count = b[i].limits_to_root.ac_max_phase_count;
             }
         }
     }
