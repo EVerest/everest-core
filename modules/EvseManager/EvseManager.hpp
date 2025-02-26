@@ -103,6 +103,7 @@ struct Conf {
     bool lock_connector_in_state_b;
     int state_F_after_fault_ms;
     bool fail_on_powermeter_errors;
+    bool raise_mrec9;
 };
 
 class EvseManager : public Everest::ModuleBase {
