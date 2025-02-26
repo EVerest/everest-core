@@ -4629,6 +4629,9 @@ async def test_reservation_connector_unavailable(
     )
 
 
+@pytest.mark.everest_core_config(
+    get_everest_config_path_str("everest-config-two-connectors.yaml")
+)
 @pytest.mark.asyncio
 async def test_reservation_cancel_after_connector_inoperative(
         test_config: OcppTestConfiguration,
@@ -4643,7 +4646,7 @@ async def test_reservation_cancel_after_connector_inoperative(
         connector_id=1,
         expiry_date=t.isoformat(),
         id_tag=test_config.authorization_info.valid_id_tag_1,
-        reservation_id=1,
+        reservation_id=657,
     )
 
     # expect ReserveNow.conf with status accepted
@@ -4686,7 +4689,7 @@ async def test_reservation_cancel_after_connector_inoperative(
         connector_id=1,
         expiry_date=t.isoformat(),
         id_tag=test_config.authorization_info.valid_id_tag_1,
-        reservation_id=1,
+        reservation_id=658,
     )
 
     assert await wait_for_and_validate(
