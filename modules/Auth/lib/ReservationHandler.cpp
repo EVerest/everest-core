@@ -320,6 +320,7 @@ ReservationHandler::cancel_reservation(const int reservation_id, const bool exec
 }
 
 bool ReservationHandler::cancel_reservation(const uint32_t evse_id, const bool execute_callback) {
+    std::lock_guard<std::recursive_mutex> lk(this->event_mutex);
     auto it = this->evse_reservations.find(evse_id);
     if (it != this->evse_reservations.end()) {
         int reservation_id = it->second.reservation_id;
