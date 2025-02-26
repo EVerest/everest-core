@@ -17,8 +17,8 @@ protected:
     }
 
     std::shared_ptr<TransactionData> transaction_data() {
-        return std::make_shared<TransactionData>(1, "123", ocpp::DateTime(), ocpp::v201::TriggerReasonEnum::Authorized,
-                                                 ocpp::v201::ChargingStateEnum::Idle);
+        return std::make_shared<TransactionData>(1, "123", ocpp::DateTime(), ocpp::v2::TriggerReasonEnum::Authorized,
+                                                 ocpp::v2::ChargingStateEnum::Idle);
     }
 };
 

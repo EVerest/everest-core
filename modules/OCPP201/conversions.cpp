@@ -7,58 +7,58 @@
 
 namespace module {
 namespace conversions {
-ocpp::v201::FirmwareStatusEnum to_ocpp_firmware_status_enum(const types::system::FirmwareUpdateStatusEnum status) {
+ocpp::v2::FirmwareStatusEnum to_ocpp_firmware_status_enum(const types::system::FirmwareUpdateStatusEnum status) {
     switch (status) {
     case types::system::FirmwareUpdateStatusEnum::Downloaded:
-        return ocpp::v201::FirmwareStatusEnum::Downloaded;
+        return ocpp::v2::FirmwareStatusEnum::Downloaded;
     case types::system::FirmwareUpdateStatusEnum::DownloadFailed:
-        return ocpp::v201::FirmwareStatusEnum::DownloadFailed;
+        return ocpp::v2::FirmwareStatusEnum::DownloadFailed;
     case types::system::FirmwareUpdateStatusEnum::Downloading:
-        return ocpp::v201::FirmwareStatusEnum::Downloading;
+        return ocpp::v2::FirmwareStatusEnum::Downloading;
     case types::system::FirmwareUpdateStatusEnum::DownloadScheduled:
-        return ocpp::v201::FirmwareStatusEnum::DownloadScheduled;
+        return ocpp::v2::FirmwareStatusEnum::DownloadScheduled;
     case types::system::FirmwareUpdateStatusEnum::DownloadPaused:
-        return ocpp::v201::FirmwareStatusEnum::DownloadPaused;
+        return ocpp::v2::FirmwareStatusEnum::DownloadPaused;
     case types::system::FirmwareUpdateStatusEnum::Idle:
-        return ocpp::v201::FirmwareStatusEnum::Idle;
+        return ocpp::v2::FirmwareStatusEnum::Idle;
     case types::system::FirmwareUpdateStatusEnum::InstallationFailed:
-        return ocpp::v201::FirmwareStatusEnum::InstallationFailed;
+        return ocpp::v2::FirmwareStatusEnum::InstallationFailed;
     case types::system::FirmwareUpdateStatusEnum::Installing:
-        return ocpp::v201::FirmwareStatusEnum::Installing;
+        return ocpp::v2::FirmwareStatusEnum::Installing;
     case types::system::FirmwareUpdateStatusEnum::Installed:
-        return ocpp::v201::FirmwareStatusEnum::Installed;
+        return ocpp::v2::FirmwareStatusEnum::Installed;
     case types::system::FirmwareUpdateStatusEnum::InstallRebooting:
-        return ocpp::v201::FirmwareStatusEnum::InstallRebooting;
+        return ocpp::v2::FirmwareStatusEnum::InstallRebooting;
     case types::system::FirmwareUpdateStatusEnum::InstallScheduled:
-        return ocpp::v201::FirmwareStatusEnum::InstallScheduled;
+        return ocpp::v2::FirmwareStatusEnum::InstallScheduled;
     case types::system::FirmwareUpdateStatusEnum::InstallVerificationFailed:
-        return ocpp::v201::FirmwareStatusEnum::InstallVerificationFailed;
+        return ocpp::v2::FirmwareStatusEnum::InstallVerificationFailed;
     case types::system::FirmwareUpdateStatusEnum::InvalidSignature:
-        return ocpp::v201::FirmwareStatusEnum::InvalidSignature;
+        return ocpp::v2::FirmwareStatusEnum::InvalidSignature;
     case types::system::FirmwareUpdateStatusEnum::SignatureVerified:
-        return ocpp::v201::FirmwareStatusEnum::SignatureVerified;
+        return ocpp::v2::FirmwareStatusEnum::SignatureVerified;
     }
     throw std::out_of_range("Could not convert FirmwareUpdateStatusEnum to FirmwareStatusEnum");
 }
 
-ocpp::v201::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp::DataTransferStatus status) {
+ocpp::v2::DataTransferStatusEnum to_ocpp_data_transfer_status_enum(types::ocpp::DataTransferStatus status) {
     switch (status) {
     case types::ocpp::DataTransferStatus::Accepted:
-        return ocpp::v201::DataTransferStatusEnum::Accepted;
+        return ocpp::v2::DataTransferStatusEnum::Accepted;
     case types::ocpp::DataTransferStatus::Rejected:
-        return ocpp::v201::DataTransferStatusEnum::Rejected;
+        return ocpp::v2::DataTransferStatusEnum::Rejected;
     case types::ocpp::DataTransferStatus::UnknownMessageId:
-        return ocpp::v201::DataTransferStatusEnum::UnknownMessageId;
+        return ocpp::v2::DataTransferStatusEnum::UnknownMessageId;
     case types::ocpp::DataTransferStatus::UnknownVendorId:
-        return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
+        return ocpp::v2::DataTransferStatusEnum::UnknownVendorId;
     case types::ocpp::DataTransferStatus::Offline:
-        return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
+        return ocpp::v2::DataTransferStatusEnum::UnknownVendorId;
     }
-    return ocpp::v201::DataTransferStatusEnum::UnknownVendorId;
+    return ocpp::v2::DataTransferStatusEnum::UnknownVendorId;
 }
 
-ocpp::v201::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataTransferRequest request) {
-    ocpp::v201::DataTransferRequest ocpp_request;
+ocpp::v2::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataTransferRequest request) {
+    ocpp::v2::DataTransferRequest ocpp_request;
     ocpp_request.vendorId = request.vendor_id;
     if (request.message_id.has_value()) {
         ocpp_request.messageId = request.message_id.value();
@@ -89,8 +89,8 @@ ocpp::v201::DataTransferRequest to_ocpp_data_transfer_request(types::ocpp::DataT
     return ocpp_request;
 }
 
-ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::DataTransferResponse response) {
-    ocpp::v201::DataTransferResponse ocpp_response;
+ocpp::v2::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::DataTransferResponse response) {
+    ocpp::v2::DataTransferResponse ocpp_response;
     ocpp_response.status = conversions::to_ocpp_data_transfer_status_enum(response.status);
     if (response.data.has_value()) {
         ocpp_response.data = json::parse(response.data.value());
@@ -107,12 +107,12 @@ ocpp::v201::DataTransferResponse to_ocpp_data_transfer_response(types::ocpp::Dat
     return ocpp_response;
 }
 
-ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextEnum& reading_context,
-                                               const ocpp::v201::MeasurandEnum& measurand, const std::string& unit,
-                                               const std::optional<ocpp::v201::PhaseEnum> phase,
-                                               ocpp::v201::LocationEnum location) {
-    ocpp::v201::SampledValue sampled_value;
-    ocpp::v201::UnitOfMeasure unit_of_measure;
+ocpp::v2::SampledValue to_ocpp_sampled_value(const ocpp::v2::ReadingContextEnum& reading_context,
+                                             const ocpp::v2::MeasurandEnum& measurand, const std::string& unit,
+                                             const std::optional<ocpp::v2::PhaseEnum> phase,
+                                             ocpp::v2::LocationEnum location) {
+    ocpp::v2::SampledValue sampled_value;
+    ocpp::v2::UnitOfMeasure unit_of_measure;
     sampled_value.context = reading_context;
     sampled_value.location = location;
     sampled_value.measurand = measurand;
@@ -122,9 +122,8 @@ ocpp::v201::SampledValue to_ocpp_sampled_value(const ocpp::v201::ReadingContextE
     return sampled_value;
 }
 
-ocpp::v201::SignedMeterValue
-to_ocpp_signed_meter_value(const types::units_signed::SignedMeterValue& signed_meter_value) {
-    ocpp::v201::SignedMeterValue ocpp_signed_meter_value;
+ocpp::v2::SignedMeterValue to_ocpp_signed_meter_value(const types::units_signed::SignedMeterValue& signed_meter_value) {
+    ocpp::v2::SignedMeterValue ocpp_signed_meter_value;
     ocpp_signed_meter_value.signedMeterData = signed_meter_value.signed_meter_data;
     ocpp_signed_meter_value.signingMethod = signed_meter_value.signing_method;
     ocpp_signed_meter_value.encodingMethod = signed_meter_value.encoding_method;
@@ -133,18 +132,18 @@ to_ocpp_signed_meter_value(const types::units_signed::SignedMeterValue& signed_m
     return ocpp_signed_meter_value;
 }
 
-ocpp::v201::MeterValue
+ocpp::v2::MeterValue
 to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
-                    const ocpp::v201::ReadingContextEnum& reading_context,
+                    const ocpp::v2::ReadingContextEnum& reading_context,
                     const std::optional<types::units_signed::SignedMeterValue> signed_meter_value) {
-    ocpp::v201::MeterValue meter_value;
+    ocpp::v2::MeterValue meter_value;
     meter_value.timestamp = ocpp_conversions::to_ocpp_datetime_or_now(power_meter.timestamp);
 
     bool energy_Wh_import_signed_total_added = false;
     // individual signed meter values can be provided by the power_meter itself
 
-    ocpp::v201::SampledValue sampled_value = to_ocpp_sampled_value(
-        reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
+    ocpp::v2::SampledValue sampled_value = to_ocpp_sampled_value(
+        reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Import_Register, "Wh", std::nullopt);
 
     // Energy.Active.Import.Register
     if (power_meter.energy_Wh_import_signed.has_value()) {
@@ -162,7 +161,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         // just one global signed_meter_value is present signed_meter_value is intended for OCMF style blobs of signed
         // meter value reports during transaction start or end
         // This is interpreted as Energy.Active.Import.Register
-        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
+        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Import_Register,
                                               "Wh", std::nullopt);
         sampled_value.value = power_meter.energy_Wh_import.total;
         // add signedMeterValue if present
@@ -173,8 +172,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     }
 
     if (power_meter.energy_Wh_import.L1.has_value()) {
-        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
-                                              "Wh", ocpp::v201::PhaseEnum::L1);
+        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Import_Register,
+                                              "Wh", ocpp::v2::PhaseEnum::L1);
         sampled_value.value = power_meter.energy_Wh_import.L1.value();
         if (power_meter.energy_Wh_import_signed.has_value()) {
             const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
@@ -185,8 +184,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         meter_value.sampledValue.push_back(sampled_value);
     }
     if (power_meter.energy_Wh_import.L2.has_value()) {
-        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
-                                              "Wh", ocpp::v201::PhaseEnum::L2);
+        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Import_Register,
+                                              "Wh", ocpp::v2::PhaseEnum::L2);
         sampled_value.value = power_meter.energy_Wh_import.L2.value();
         if (power_meter.energy_Wh_import_signed.has_value()) {
             const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
@@ -197,8 +196,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         meter_value.sampledValue.push_back(sampled_value);
     }
     if (power_meter.energy_Wh_import.L3.has_value()) {
-        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Import_Register,
-                                              "Wh", ocpp::v201::PhaseEnum::L3);
+        sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Import_Register,
+                                              "Wh", ocpp::v2::PhaseEnum::L3);
         sampled_value.value = power_meter.energy_Wh_import.L3.value();
         if (power_meter.energy_Wh_import_signed.has_value()) {
             const auto& energy_Wh_import_signed = power_meter.energy_Wh_import_signed.value();
@@ -212,7 +211,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     // Energy.Active.Export.Register
     if (power_meter.energy_Wh_export.has_value()) {
         auto sampled_value = to_ocpp_sampled_value(
-            reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh", std::nullopt);
+            reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Export_Register, "Wh", std::nullopt);
         sampled_value.value = power_meter.energy_Wh_export.value().total;
         if (power_meter.energy_Wh_export_signed.has_value()) {
             const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
@@ -222,9 +221,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.energy_Wh_export.value().L1.has_value()) {
-            sampled_value =
-                to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh",
-                                      ocpp::v201::PhaseEnum::L1);
+            sampled_value = to_ocpp_sampled_value(
+                reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Export_Register, "Wh", ocpp::v2::PhaseEnum::L1);
             sampled_value.value = power_meter.energy_Wh_export.value().L1.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
@@ -235,9 +233,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.energy_Wh_export.value().L2.has_value()) {
-            sampled_value =
-                to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh",
-                                      ocpp::v201::PhaseEnum::L2);
+            sampled_value = to_ocpp_sampled_value(
+                reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Export_Register, "Wh", ocpp::v2::PhaseEnum::L2);
             sampled_value.value = power_meter.energy_Wh_export.value().L2.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
@@ -248,9 +245,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.energy_Wh_export.value().L3.has_value()) {
-            sampled_value =
-                to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Energy_Active_Export_Register, "Wh",
-                                      ocpp::v201::PhaseEnum::L3);
+            sampled_value = to_ocpp_sampled_value(
+                reading_context, ocpp::v2::MeasurandEnum::Energy_Active_Export_Register, "Wh", ocpp::v2::PhaseEnum::L3);
             sampled_value.value = power_meter.energy_Wh_export.value().L3.value();
             if (power_meter.energy_Wh_export_signed.has_value()) {
                 const auto& energy_Wh_export_signed = power_meter.energy_Wh_export_signed.value();
@@ -265,7 +261,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     // Power.Active.Import
     if (power_meter.power_W.has_value()) {
         auto sampled_value =
-            to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W", std::nullopt);
+            to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Active_Import, "W", std::nullopt);
         sampled_value.value = power_meter.power_W.value().total;
         if (power_meter.power_W_signed.has_value()) {
             const auto& power_W_signed = power_meter.power_W_signed.value();
@@ -275,8 +271,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.power_W.value().L1.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
-                                                  ocpp::v201::PhaseEnum::L1);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Active_Import, "W",
+                                                  ocpp::v2::PhaseEnum::L1);
             sampled_value.value = power_meter.power_W.value().L1.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
@@ -287,8 +283,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.power_W.value().L2.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
-                                                  ocpp::v201::PhaseEnum::L2);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Active_Import, "W",
+                                                  ocpp::v2::PhaseEnum::L2);
             sampled_value.value = power_meter.power_W.value().L2.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
@@ -299,8 +295,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.power_W.value().L3.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Active_Import, "W",
-                                                  ocpp::v201::PhaseEnum::L3);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Active_Import, "W",
+                                                  ocpp::v2::PhaseEnum::L3);
             sampled_value.value = power_meter.power_W.value().L3.value();
             if (power_meter.power_W_signed.has_value()) {
                 const auto& power_W_signed = power_meter.power_W_signed.value();
@@ -314,8 +310,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
 
     // Power.Reactive.Import
     if (power_meter.VAR.has_value()) {
-        auto sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import,
-                                                   "var", std::nullopt);
+        auto sampled_value =
+            to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Reactive_Import, "var", std::nullopt);
         sampled_value.value = power_meter.VAR.value().total;
         if (power_meter.VAR_signed.has_value()) {
             const auto& VAR_signed = power_meter.VAR_signed.value();
@@ -325,8 +321,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         }
         meter_value.sampledValue.push_back(sampled_value);
         if (power_meter.VAR.value().L1.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import,
-                                                  "var", ocpp::v201::PhaseEnum::L1);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Reactive_Import,
+                                                  "var", ocpp::v2::PhaseEnum::L1);
             sampled_value.value = power_meter.VAR.value().L1.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
@@ -337,8 +333,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.VAR.value().L2.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import,
-                                                  "var", ocpp::v201::PhaseEnum::L2);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Reactive_Import,
+                                                  "var", ocpp::v2::PhaseEnum::L2);
             sampled_value.value = power_meter.VAR.value().L2.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
@@ -349,8 +345,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.VAR.value().L3.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Power_Reactive_Import,
-                                                  "var", ocpp::v201::PhaseEnum::L3);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Power_Reactive_Import,
+                                                  "var", ocpp::v2::PhaseEnum::L3);
             sampled_value.value = power_meter.VAR.value().L3.value();
             if (power_meter.VAR_signed.has_value()) {
                 const auto& VAR_signed = power_meter.VAR_signed.value();
@@ -365,10 +361,10 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     // Current.Import
     if (power_meter.current_A.has_value()) {
         auto sampled_value =
-            to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A", std::nullopt);
+            to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A", std::nullopt);
         if (power_meter.current_A.value().L1.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
-                                                  ocpp::v201::PhaseEnum::L1);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A",
+                                                  ocpp::v2::PhaseEnum::L1);
             sampled_value.value = power_meter.current_A.value().L1.value();
             if (power_meter.current_A_signed.has_value()) {
                 const auto& current_A_signed = power_meter.current_A_signed.value();
@@ -379,8 +375,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().L2.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
-                                                  ocpp::v201::PhaseEnum::L2);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A",
+                                                  ocpp::v2::PhaseEnum::L2);
             sampled_value.value = power_meter.current_A.value().L2.value();
             if (power_meter.current_A_signed.has_value()) {
                 const auto& current_A_signed = power_meter.current_A_signed.value();
@@ -391,8 +387,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().L3.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
-                                                  ocpp::v201::PhaseEnum::L3);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A",
+                                                  ocpp::v2::PhaseEnum::L3);
             sampled_value.value = power_meter.current_A.value().L3.value();
             if (power_meter.current_A_signed.has_value()) {
                 const auto& current_A_signed = power_meter.current_A_signed.value();
@@ -404,7 +400,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
         }
         if (power_meter.current_A.value().DC.has_value()) {
             sampled_value =
-                to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A", std::nullopt);
+                to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A", std::nullopt);
             sampled_value.value = power_meter.current_A.value().DC.value();
             if (power_meter.current_A_signed.has_value()) {
                 const auto& current_A_signed = power_meter.current_A_signed.value();
@@ -415,8 +411,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.current_A.value().N.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Current_Import, "A",
-                                                  ocpp::v201::PhaseEnum::N);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Current_Import, "A",
+                                                  ocpp::v2::PhaseEnum::N);
             sampled_value.value = power_meter.current_A.value().N.value();
             if (power_meter.current_A_signed.has_value()) {
                 const auto& current_A_signed = power_meter.current_A_signed.value();
@@ -431,8 +427,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     // Voltage
     if (power_meter.voltage_V.has_value()) {
         if (power_meter.voltage_V.value().L1.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
-                                                  ocpp::v201::PhaseEnum::L1_N);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Voltage, "V",
+                                                  ocpp::v2::PhaseEnum::L1_N);
             sampled_value.value = power_meter.voltage_V.value().L1.value();
             if (power_meter.voltage_V_signed.has_value()) {
                 const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
@@ -443,8 +439,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().L2.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
-                                                  ocpp::v201::PhaseEnum::L2_N);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Voltage, "V",
+                                                  ocpp::v2::PhaseEnum::L2_N);
             sampled_value.value = power_meter.voltage_V.value().L2.value();
             if (power_meter.voltage_V_signed.has_value()) {
                 const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
@@ -455,8 +451,8 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().L3.has_value()) {
-            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V",
-                                                  ocpp::v201::PhaseEnum::L3_N);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Voltage, "V",
+                                                  ocpp::v2::PhaseEnum::L3_N);
             sampled_value.value = power_meter.voltage_V.value().L3.value();
             if (power_meter.voltage_V_signed.has_value()) {
                 const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
@@ -467,8 +463,7 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
             meter_value.sampledValue.push_back(sampled_value);
         }
         if (power_meter.voltage_V.value().DC.has_value()) {
-            sampled_value =
-                to_ocpp_sampled_value(reading_context, ocpp::v201::MeasurandEnum::Voltage, "V", std::nullopt);
+            sampled_value = to_ocpp_sampled_value(reading_context, ocpp::v2::MeasurandEnum::Voltage, "V", std::nullopt);
             sampled_value.value = power_meter.voltage_V.value().DC.value();
             if (power_meter.voltage_V_signed.has_value()) {
                 const auto& voltage_V_signed = power_meter.voltage_V_signed.value();
@@ -482,168 +477,168 @@ to_ocpp_meter_value(const types::powermeter::Powermeter& power_meter,
     return meter_value;
 }
 
-ocpp::v201::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatus log_status) {
+ocpp::v2::LogStatusEnum to_ocpp_log_status_enum(types::system::UploadLogsStatus log_status) {
     switch (log_status) {
     case types::system::UploadLogsStatus::Accepted:
-        return ocpp::v201::LogStatusEnum::Accepted;
+        return ocpp::v2::LogStatusEnum::Accepted;
     case types::system::UploadLogsStatus::Rejected:
-        return ocpp::v201::LogStatusEnum::Rejected;
+        return ocpp::v2::LogStatusEnum::Rejected;
     case types::system::UploadLogsStatus::AcceptedCanceled:
-        return ocpp::v201::LogStatusEnum::AcceptedCanceled;
+        return ocpp::v2::LogStatusEnum::AcceptedCanceled;
     }
     throw std::runtime_error("Could not convert UploadLogsStatus");
 }
 
-ocpp::v201::GetLogResponse to_ocpp_get_log_response(const types::system::UploadLogsResponse& response) {
-    ocpp::v201::GetLogResponse _response;
+ocpp::v2::GetLogResponse to_ocpp_get_log_response(const types::system::UploadLogsResponse& response) {
+    ocpp::v2::GetLogResponse _response;
     _response.status = to_ocpp_log_status_enum(response.upload_logs_status);
     _response.filename = response.file_name;
     return _response;
 }
 
-ocpp::v201::UpdateFirmwareStatusEnum
+ocpp::v2::UpdateFirmwareStatusEnum
 to_ocpp_update_firmware_status_enum(const types::system::UpdateFirmwareResponse& response) {
     switch (response) {
     case types::system::UpdateFirmwareResponse::Accepted:
-        return ocpp::v201::UpdateFirmwareStatusEnum::Accepted;
+        return ocpp::v2::UpdateFirmwareStatusEnum::Accepted;
     case types::system::UpdateFirmwareResponse::Rejected:
-        return ocpp::v201::UpdateFirmwareStatusEnum::Rejected;
+        return ocpp::v2::UpdateFirmwareStatusEnum::Rejected;
     case types::system::UpdateFirmwareResponse::AcceptedCanceled:
-        return ocpp::v201::UpdateFirmwareStatusEnum::AcceptedCanceled;
+        return ocpp::v2::UpdateFirmwareStatusEnum::AcceptedCanceled;
     case types::system::UpdateFirmwareResponse::InvalidCertificate:
-        return ocpp::v201::UpdateFirmwareStatusEnum::InvalidCertificate;
+        return ocpp::v2::UpdateFirmwareStatusEnum::InvalidCertificate;
     case types::system::UpdateFirmwareResponse::RevokedCertificate:
-        return ocpp::v201::UpdateFirmwareStatusEnum::RevokedCertificate;
+        return ocpp::v2::UpdateFirmwareStatusEnum::RevokedCertificate;
     }
     throw std::runtime_error("Could not convert UpdateFirmwareResponse");
 }
 
-ocpp::v201::UpdateFirmwareResponse
+ocpp::v2::UpdateFirmwareResponse
 to_ocpp_update_firmware_response(const types::system::UpdateFirmwareResponse& response) {
-    ocpp::v201::UpdateFirmwareResponse _response;
+    ocpp::v2::UpdateFirmwareResponse _response;
     _response.status = conversions::to_ocpp_update_firmware_status_enum(response);
     return _response;
 }
 
-ocpp::v201::UploadLogStatusEnum to_ocpp_upload_logs_status_enum(types::system::LogStatusEnum status) {
+ocpp::v2::UploadLogStatusEnum to_ocpp_upload_logs_status_enum(types::system::LogStatusEnum status) {
     switch (status) {
     case types::system::LogStatusEnum::BadMessage:
-        return ocpp::v201::UploadLogStatusEnum::BadMessage;
+        return ocpp::v2::UploadLogStatusEnum::BadMessage;
     case types::system::LogStatusEnum::Idle:
-        return ocpp::v201::UploadLogStatusEnum::Idle;
+        return ocpp::v2::UploadLogStatusEnum::Idle;
     case types::system::LogStatusEnum::NotSupportedOperation:
-        return ocpp::v201::UploadLogStatusEnum::NotSupportedOperation;
+        return ocpp::v2::UploadLogStatusEnum::NotSupportedOperation;
     case types::system::LogStatusEnum::PermissionDenied:
-        return ocpp::v201::UploadLogStatusEnum::PermissionDenied;
+        return ocpp::v2::UploadLogStatusEnum::PermissionDenied;
     case types::system::LogStatusEnum::Uploaded:
-        return ocpp::v201::UploadLogStatusEnum::Uploaded;
+        return ocpp::v2::UploadLogStatusEnum::Uploaded;
     case types::system::LogStatusEnum::UploadFailure:
-        return ocpp::v201::UploadLogStatusEnum::UploadFailure;
+        return ocpp::v2::UploadLogStatusEnum::UploadFailure;
     case types::system::LogStatusEnum::Uploading:
-        return ocpp::v201::UploadLogStatusEnum::Uploading;
+        return ocpp::v2::UploadLogStatusEnum::Uploading;
     case types::system::LogStatusEnum::AcceptedCanceled:
-        return ocpp::v201::UploadLogStatusEnum::AcceptedCanceled;
+        return ocpp::v2::UploadLogStatusEnum::AcceptedCanceled;
     }
     throw std::runtime_error("Could not convert UploadLogStatusEnum");
 }
 
-ocpp::v201::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason) {
+ocpp::v2::BootReasonEnum to_ocpp_boot_reason(types::system::BootReason reason) {
     switch (reason) {
     case types::system::BootReason::ApplicationReset:
-        return ocpp::v201::BootReasonEnum::ApplicationReset;
+        return ocpp::v2::BootReasonEnum::ApplicationReset;
     case types::system::BootReason::FirmwareUpdate:
-        return ocpp::v201::BootReasonEnum::FirmwareUpdate;
+        return ocpp::v2::BootReasonEnum::FirmwareUpdate;
     case types::system::BootReason::LocalReset:
-        return ocpp::v201::BootReasonEnum::LocalReset;
+        return ocpp::v2::BootReasonEnum::LocalReset;
     case types::system::BootReason::PowerUp:
-        return ocpp::v201::BootReasonEnum::PowerUp;
+        return ocpp::v2::BootReasonEnum::PowerUp;
     case types::system::BootReason::RemoteReset:
-        return ocpp::v201::BootReasonEnum::RemoteReset;
+        return ocpp::v2::BootReasonEnum::RemoteReset;
     case types::system::BootReason::ScheduledReset:
-        return ocpp::v201::BootReasonEnum::ScheduledReset;
+        return ocpp::v2::BootReasonEnum::ScheduledReset;
     case types::system::BootReason::Triggered:
-        return ocpp::v201::BootReasonEnum::Triggered;
+        return ocpp::v2::BootReasonEnum::Triggered;
     case types::system::BootReason::Unknown:
-        return ocpp::v201::BootReasonEnum::Unknown;
+        return ocpp::v2::BootReasonEnum::Unknown;
     case types::system::BootReason::Watchdog:
-        return ocpp::v201::BootReasonEnum::Watchdog;
+        return ocpp::v2::BootReasonEnum::Watchdog;
     }
     throw std::runtime_error("Could not convert BootReasonEnum");
 }
 
-ocpp::v201::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason reason) {
+ocpp::v2::ReasonEnum to_ocpp_reason(types::evse_manager::StopTransactionReason reason) {
     switch (reason) {
     case types::evse_manager::StopTransactionReason::DeAuthorized:
-        return ocpp::v201::ReasonEnum::DeAuthorized;
+        return ocpp::v2::ReasonEnum::DeAuthorized;
     case types::evse_manager::StopTransactionReason::EmergencyStop:
-        return ocpp::v201::ReasonEnum::EmergencyStop;
+        return ocpp::v2::ReasonEnum::EmergencyStop;
     case types::evse_manager::StopTransactionReason::EnergyLimitReached:
-        return ocpp::v201::ReasonEnum::EnergyLimitReached;
+        return ocpp::v2::ReasonEnum::EnergyLimitReached;
     case types::evse_manager::StopTransactionReason::EVDisconnected:
-        return ocpp::v201::ReasonEnum::EVDisconnected;
+        return ocpp::v2::ReasonEnum::EVDisconnected;
     case types::evse_manager::StopTransactionReason::GroundFault:
-        return ocpp::v201::ReasonEnum::GroundFault;
+        return ocpp::v2::ReasonEnum::GroundFault;
     case types::evse_manager::StopTransactionReason::HardReset:
-        return ocpp::v201::ReasonEnum::ImmediateReset;
+        return ocpp::v2::ReasonEnum::ImmediateReset;
     case types::evse_manager::StopTransactionReason::Local:
-        return ocpp::v201::ReasonEnum::Local;
+        return ocpp::v2::ReasonEnum::Local;
     case types::evse_manager::StopTransactionReason::LocalOutOfCredit:
-        return ocpp::v201::ReasonEnum::LocalOutOfCredit;
+        return ocpp::v2::ReasonEnum::LocalOutOfCredit;
     case types::evse_manager::StopTransactionReason::MasterPass:
-        return ocpp::v201::ReasonEnum::MasterPass;
+        return ocpp::v2::ReasonEnum::MasterPass;
     case types::evse_manager::StopTransactionReason::Other:
-        return ocpp::v201::ReasonEnum::Other;
+        return ocpp::v2::ReasonEnum::Other;
     case types::evse_manager::StopTransactionReason::OvercurrentFault:
-        return ocpp::v201::ReasonEnum::OvercurrentFault;
+        return ocpp::v2::ReasonEnum::OvercurrentFault;
     case types::evse_manager::StopTransactionReason::PowerLoss:
-        return ocpp::v201::ReasonEnum::PowerLoss;
+        return ocpp::v2::ReasonEnum::PowerLoss;
     case types::evse_manager::StopTransactionReason::PowerQuality:
-        return ocpp::v201::ReasonEnum::PowerQuality;
+        return ocpp::v2::ReasonEnum::PowerQuality;
     case types::evse_manager::StopTransactionReason::Reboot:
-        return ocpp::v201::ReasonEnum::Reboot;
+        return ocpp::v2::ReasonEnum::Reboot;
     case types::evse_manager::StopTransactionReason::Remote:
-        return ocpp::v201::ReasonEnum::Remote;
+        return ocpp::v2::ReasonEnum::Remote;
     case types::evse_manager::StopTransactionReason::SOCLimitReached:
-        return ocpp::v201::ReasonEnum::SOCLimitReached;
+        return ocpp::v2::ReasonEnum::SOCLimitReached;
     case types::evse_manager::StopTransactionReason::StoppedByEV:
-        return ocpp::v201::ReasonEnum::StoppedByEV;
+        return ocpp::v2::ReasonEnum::StoppedByEV;
     case types::evse_manager::StopTransactionReason::TimeLimitReached:
-        return ocpp::v201::ReasonEnum::TimeLimitReached;
+        return ocpp::v2::ReasonEnum::TimeLimitReached;
     case types::evse_manager::StopTransactionReason::Timeout:
-        return ocpp::v201::ReasonEnum::Timeout;
+        return ocpp::v2::ReasonEnum::Timeout;
     case types::evse_manager::StopTransactionReason::SoftReset:
     case types::evse_manager::StopTransactionReason::UnlockCommand:
-        return ocpp::v201::ReasonEnum::Other;
+        return ocpp::v2::ReasonEnum::Other;
     }
-    return ocpp::v201::ReasonEnum::Other;
+    return ocpp::v2::ReasonEnum::Other;
 }
 
-ocpp::v201::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type) {
+ocpp::v2::IdTokenEnum to_ocpp_id_token_enum(types::authorization::IdTokenType id_token_type) {
     switch (id_token_type) {
     case types::authorization::IdTokenType::Central:
-        return ocpp::v201::IdTokenEnum::Central;
+        return ocpp::v2::IdTokenEnum::Central;
     case types::authorization::IdTokenType::eMAID:
-        return ocpp::v201::IdTokenEnum::eMAID;
+        return ocpp::v2::IdTokenEnum::eMAID;
     case types::authorization::IdTokenType::MacAddress:
-        return ocpp::v201::IdTokenEnum::MacAddress;
+        return ocpp::v2::IdTokenEnum::MacAddress;
     case types::authorization::IdTokenType::ISO14443:
-        return ocpp::v201::IdTokenEnum::ISO14443;
+        return ocpp::v2::IdTokenEnum::ISO14443;
     case types::authorization::IdTokenType::ISO15693:
-        return ocpp::v201::IdTokenEnum::ISO15693;
+        return ocpp::v2::IdTokenEnum::ISO15693;
     case types::authorization::IdTokenType::KeyCode:
-        return ocpp::v201::IdTokenEnum::KeyCode;
+        return ocpp::v2::IdTokenEnum::KeyCode;
     case types::authorization::IdTokenType::Local:
-        return ocpp::v201::IdTokenEnum::Local;
+        return ocpp::v2::IdTokenEnum::Local;
     case types::authorization::IdTokenType::NoAuthorization:
-        return ocpp::v201::IdTokenEnum::NoAuthorization;
+        return ocpp::v2::IdTokenEnum::NoAuthorization;
     }
     throw std::runtime_error("Could not convert IdTokenEnum");
 }
 
-ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
-    ocpp::v201::IdToken ocpp_id_token = {id_token.value, to_ocpp_id_token_enum(id_token.type)};
+ocpp::v2::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_token) {
+    ocpp::v2::IdToken ocpp_id_token = {id_token.value, to_ocpp_id_token_enum(id_token.type)};
     if (id_token.additional_info.has_value()) {
-        std::vector<ocpp::v201::AdditionalInfo> ocpp_additional_info;
+        std::vector<ocpp::v2::AdditionalInfo> ocpp_additional_info;
         const auto& additional_info = id_token.additional_info.value();
         for (const auto& entry : additional_info) {
             ocpp_additional_info.push_back({entry.value, entry.type});
@@ -653,68 +648,66 @@ ocpp::v201::IdToken to_ocpp_id_token(const types::authorization::IdToken& id_tok
     return ocpp_id_token;
 }
 
-ocpp::v201::CertificateActionEnum
-to_ocpp_certificate_action_enum(const types::iso15118::CertificateActionEnum& action) {
+ocpp::v2::CertificateActionEnum to_ocpp_certificate_action_enum(const types::iso15118::CertificateActionEnum& action) {
     switch (action) {
     case types::iso15118::CertificateActionEnum::Install:
-        return ocpp::v201::CertificateActionEnum::Install;
+        return ocpp::v2::CertificateActionEnum::Install;
     case types::iso15118::CertificateActionEnum::Update:
-        return ocpp::v201::CertificateActionEnum::Update;
+        return ocpp::v2::CertificateActionEnum::Update;
     }
     throw std::out_of_range("Could not convert CertificateActionEnum"); // this should never happen
 }
 
-types::evse_manager::StopTransactionReason
-to_everest_stop_transaction_reason(const ocpp::v201::ReasonEnum& stop_reason) {
+types::evse_manager::StopTransactionReason to_everest_stop_transaction_reason(const ocpp::v2::ReasonEnum& stop_reason) {
     switch (stop_reason) {
-    case ocpp::v201::ReasonEnum::DeAuthorized:
+    case ocpp::v2::ReasonEnum::DeAuthorized:
         return types::evse_manager::StopTransactionReason::DeAuthorized;
-    case ocpp::v201::ReasonEnum::EmergencyStop:
+    case ocpp::v2::ReasonEnum::EmergencyStop:
         return types::evse_manager::StopTransactionReason::EmergencyStop;
-    case ocpp::v201::ReasonEnum::EnergyLimitReached:
+    case ocpp::v2::ReasonEnum::EnergyLimitReached:
         return types::evse_manager::StopTransactionReason::EnergyLimitReached;
-    case ocpp::v201::ReasonEnum::EVDisconnected:
+    case ocpp::v2::ReasonEnum::EVDisconnected:
         return types::evse_manager::StopTransactionReason::EVDisconnected;
-    case ocpp::v201::ReasonEnum::GroundFault:
+    case ocpp::v2::ReasonEnum::GroundFault:
         return types::evse_manager::StopTransactionReason::GroundFault;
-    case ocpp::v201::ReasonEnum::ImmediateReset:
+    case ocpp::v2::ReasonEnum::ImmediateReset:
         return types::evse_manager::StopTransactionReason::HardReset;
-    case ocpp::v201::ReasonEnum::Local:
+    case ocpp::v2::ReasonEnum::Local:
         return types::evse_manager::StopTransactionReason::Local;
-    case ocpp::v201::ReasonEnum::LocalOutOfCredit:
+    case ocpp::v2::ReasonEnum::LocalOutOfCredit:
         return types::evse_manager::StopTransactionReason::LocalOutOfCredit;
-    case ocpp::v201::ReasonEnum::MasterPass:
+    case ocpp::v2::ReasonEnum::MasterPass:
         return types::evse_manager::StopTransactionReason::MasterPass;
-    case ocpp::v201::ReasonEnum::Other:
+    case ocpp::v2::ReasonEnum::Other:
         return types::evse_manager::StopTransactionReason::Other;
-    case ocpp::v201::ReasonEnum::OvercurrentFault:
+    case ocpp::v2::ReasonEnum::OvercurrentFault:
         return types::evse_manager::StopTransactionReason::OvercurrentFault;
-    case ocpp::v201::ReasonEnum::PowerLoss:
+    case ocpp::v2::ReasonEnum::PowerLoss:
         return types::evse_manager::StopTransactionReason::PowerLoss;
-    case ocpp::v201::ReasonEnum::PowerQuality:
+    case ocpp::v2::ReasonEnum::PowerQuality:
         return types::evse_manager::StopTransactionReason::PowerQuality;
-    case ocpp::v201::ReasonEnum::Reboot:
+    case ocpp::v2::ReasonEnum::Reboot:
         return types::evse_manager::StopTransactionReason::Reboot;
-    case ocpp::v201::ReasonEnum::Remote:
+    case ocpp::v2::ReasonEnum::Remote:
         return types::evse_manager::StopTransactionReason::Remote;
-    case ocpp::v201::ReasonEnum::SOCLimitReached:
+    case ocpp::v2::ReasonEnum::SOCLimitReached:
         return types::evse_manager::StopTransactionReason::SOCLimitReached;
-    case ocpp::v201::ReasonEnum::StoppedByEV:
+    case ocpp::v2::ReasonEnum::StoppedByEV:
         return types::evse_manager::StopTransactionReason::StoppedByEV;
-    case ocpp::v201::ReasonEnum::TimeLimitReached:
+    case ocpp::v2::ReasonEnum::TimeLimitReached:
         return types::evse_manager::StopTransactionReason::TimeLimitReached;
-    case ocpp::v201::ReasonEnum::Timeout:
+    case ocpp::v2::ReasonEnum::Timeout:
         return types::evse_manager::StopTransactionReason::Timeout;
     }
     return types::evse_manager::StopTransactionReason::Other;
 }
 
-std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
+std::vector<ocpp::v2::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
     const std::vector<types::iso15118::CertificateHashDataInfo>& certificate_hash_data_info) {
-    std::vector<ocpp::v201::OCSPRequestData> ocsp_request_data_list;
+    std::vector<ocpp::v2::OCSPRequestData> ocsp_request_data_list;
 
     for (const auto& certificate_hash_data : certificate_hash_data_info) {
-        ocpp::v201::OCSPRequestData ocsp_request_data;
+        ocpp::v2::OCSPRequestData ocsp_request_data;
         ocsp_request_data.hashAlgorithm = conversions::to_ocpp_hash_algorithm_enum(certificate_hash_data.hashAlgorithm);
         ocsp_request_data.issuerKeyHash = certificate_hash_data.issuerKeyHash;
         ocsp_request_data.issuerNameHash = certificate_hash_data.issuerNameHash;
@@ -725,23 +718,23 @@ std::vector<ocpp::v201::OCSPRequestData> to_ocpp_ocsp_request_data_vector(
     return ocsp_request_data_list;
 }
 
-ocpp::v201::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118::HashAlgorithm hash_algorithm) {
+ocpp::v2::HashAlgorithmEnum to_ocpp_hash_algorithm_enum(const types::iso15118::HashAlgorithm hash_algorithm) {
     switch (hash_algorithm) {
     case types::iso15118::HashAlgorithm::SHA256:
-        return ocpp::v201::HashAlgorithmEnum::SHA256;
+        return ocpp::v2::HashAlgorithmEnum::SHA256;
     case types::iso15118::HashAlgorithm::SHA384:
-        return ocpp::v201::HashAlgorithmEnum::SHA384;
+        return ocpp::v2::HashAlgorithmEnum::SHA384;
     case types::iso15118::HashAlgorithm::SHA512:
-        return ocpp::v201::HashAlgorithmEnum::SHA512;
+        return ocpp::v2::HashAlgorithmEnum::SHA512;
     }
-    throw std::out_of_range("Could not convert types::iso15118::HashAlgorithm to ocpp::v201::HashAlgorithmEnum");
+    throw std::out_of_range("Could not convert types::iso15118::HashAlgorithm to ocpp::v2::HashAlgorithmEnum");
 }
 
-std::vector<ocpp::v201::GetVariableData>
+std::vector<ocpp::v2::GetVariableData>
 to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableRequest>& get_variable_request_vector) {
-    std::vector<ocpp::v201::GetVariableData> ocpp_get_variable_data_vector;
+    std::vector<ocpp::v2::GetVariableData> ocpp_get_variable_data_vector;
     for (const auto& get_variable_request : get_variable_request_vector) {
-        ocpp::v201::GetVariableData get_variable_data;
+        ocpp::v2::GetVariableData get_variable_data;
         get_variable_data.component = to_ocpp_component(get_variable_request.component_variable.component);
         get_variable_data.variable = to_ocpp_variable(get_variable_request.component_variable.variable);
         if (get_variable_request.attribute_type.has_value()) {
@@ -752,11 +745,11 @@ to_ocpp_get_variable_data_vector(const std::vector<types::ocpp::GetVariableReque
     return ocpp_get_variable_data_vector;
 }
 
-std::vector<ocpp::v201::SetVariableData>
+std::vector<ocpp::v2::SetVariableData>
 to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableRequest>& set_variable_request_vector) {
-    std::vector<ocpp::v201::SetVariableData> ocpp_set_variable_data_vector;
+    std::vector<ocpp::v2::SetVariableData> ocpp_set_variable_data_vector;
     for (const auto& set_variable_request : set_variable_request_vector) {
-        ocpp::v201::SetVariableData set_variable_data;
+        ocpp::v2::SetVariableData set_variable_data;
         set_variable_data.component = to_ocpp_component(set_variable_request.component_variable.component);
         set_variable_data.variable = to_ocpp_variable(set_variable_request.component_variable.variable);
         if (set_variable_request.attribute_type.has_value()) {
@@ -773,8 +766,8 @@ to_ocpp_set_variable_data_vector(const std::vector<types::ocpp::SetVariableReque
     return ocpp_set_variable_data_vector;
 }
 
-ocpp::v201::Component to_ocpp_component(const types::ocpp::Component& component) {
-    ocpp::v201::Component _component;
+ocpp::v2::Component to_ocpp_component(const types::ocpp::Component& component) {
+    ocpp::v2::Component _component;
     _component.name = component.name;
     if (component.evse.has_value()) {
         _component.evse = to_ocpp_evse(component.evse.value());
@@ -785,8 +778,8 @@ ocpp::v201::Component to_ocpp_component(const types::ocpp::Component& component)
     return _component;
 }
 
-ocpp::v201::Variable to_ocpp_variable(const types::ocpp::Variable& variable) {
-    ocpp::v201::Variable _variable;
+ocpp::v2::Variable to_ocpp_variable(const types::ocpp::Variable& variable) {
+    ocpp::v2::Variable _variable;
     _variable.name = variable.name;
     if (variable.instance.has_value()) {
         _variable.instance = variable.instance.value();
@@ -794,8 +787,8 @@ ocpp::v201::Variable to_ocpp_variable(const types::ocpp::Variable& variable) {
     return _variable;
 }
 
-ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse) {
-    ocpp::v201::EVSE _evse;
+ocpp::v2::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse) {
+    ocpp::v2::EVSE _evse;
     _evse.id = evse.id;
     if (evse.connector_id.has_value()) {
         _evse.connectorId = evse.connector_id.value();
@@ -803,53 +796,53 @@ ocpp::v201::EVSE to_ocpp_evse(const types::ocpp::EVSE& evse) {
     return _evse;
 }
 
-ocpp::v201::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum) {
+ocpp::v2::AttributeEnum to_ocpp_attribute_enum(const types::ocpp::AttributeEnum attribute_enum) {
     switch (attribute_enum) {
     case types::ocpp::AttributeEnum::Actual:
-        return ocpp::v201::AttributeEnum::Actual;
+        return ocpp::v2::AttributeEnum::Actual;
     case types::ocpp::AttributeEnum::Target:
-        return ocpp::v201::AttributeEnum::Target;
+        return ocpp::v2::AttributeEnum::Target;
     case types::ocpp::AttributeEnum::MinSet:
-        return ocpp::v201::AttributeEnum::MinSet;
+        return ocpp::v2::AttributeEnum::MinSet;
     case types::ocpp::AttributeEnum::MaxSet:
-        return ocpp::v201::AttributeEnum::MaxSet;
+        return ocpp::v2::AttributeEnum::MaxSet;
     }
     throw std::out_of_range("Could not convert AttributeEnum");
 }
 
-ocpp::v201::Get15118EVCertificateRequest
+ocpp::v2::Get15118EVCertificateRequest
 to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSchema& request) {
-    ocpp::v201::Get15118EVCertificateRequest _request;
+    ocpp::v2::Get15118EVCertificateRequest _request;
     _request.iso15118SchemaVersion = request.iso15118_schema_version;
     _request.exiRequest = request.exi_request;
     _request.action = conversions::to_ocpp_certificate_action_enum(request.certificate_action);
     return _request;
 }
 
-ocpp::v201::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
+ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
     switch (result) {
     case types::reservation::ReservationResult::Accepted:
-        return ocpp::v201::ReserveNowStatusEnum::Accepted;
+        return ocpp::v2::ReserveNowStatusEnum::Accepted;
     case types::reservation::ReservationResult::Faulted:
-        return ocpp::v201::ReserveNowStatusEnum::Faulted;
+        return ocpp::v2::ReserveNowStatusEnum::Faulted;
     case types::reservation::ReservationResult::Occupied:
-        return ocpp::v201::ReserveNowStatusEnum::Occupied;
+        return ocpp::v2::ReserveNowStatusEnum::Occupied;
     case types::reservation::ReservationResult::Rejected:
-        return ocpp::v201::ReserveNowStatusEnum::Rejected;
+        return ocpp::v2::ReserveNowStatusEnum::Rejected;
     case types::reservation::ReservationResult::Unavailable:
-        return ocpp::v201::ReserveNowStatusEnum::Unavailable;
+        return ocpp::v2::ReserveNowStatusEnum::Unavailable;
     }
 
     throw std::out_of_range("Could not convert ReservationResult");
 }
 
-ocpp::v201::ReservationUpdateStatusEnum
+ocpp::v2::ReservationUpdateStatusEnum
 to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_status status) {
     switch (status) {
     case types::reservation::Reservation_status::Expired:
-        return ocpp::v201::ReservationUpdateStatusEnum::Expired;
+        return ocpp::v2::ReservationUpdateStatusEnum::Expired;
     case types::reservation::Reservation_status::Removed:
-        return ocpp::v201::ReservationUpdateStatusEnum::Removed;
+        return ocpp::v2::ReservationUpdateStatusEnum::Removed;
 
     case types::reservation::Reservation_status::Cancelled:
     case types::reservation::Reservation_status::Placed:
@@ -861,7 +854,7 @@ to_ocpp_reservation_update_status_enum(const types::reservation::Reservation_sta
     throw std::out_of_range("Could not convert ReservationUpdateStatus");
 }
 
-types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201::GetLogRequest& request) {
+types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v2::GetLogRequest& request) {
     types::system::UploadLogsRequest _request;
     _request.location = request.log.remoteLocation.get();
     _request.retries = request.retries;
@@ -873,13 +866,13 @@ types::system::UploadLogsRequest to_everest_upload_logs_request(const ocpp::v201
     if (request.log.latestTimestamp.has_value()) {
         _request.latest_timestamp = request.log.latestTimestamp.value().to_rfc3339();
     }
-    _request.type = ocpp::v201::conversions::log_enum_to_string(request.logType);
+    _request.type = ocpp::v2::conversions::log_enum_to_string(request.logType);
     _request.request_id = request.requestId;
     return _request;
 }
 
 types::system::FirmwareUpdateRequest
-to_everest_firmware_update_request(const ocpp::v201::UpdateFirmwareRequest& request) {
+to_everest_firmware_update_request(const ocpp::v2::UpdateFirmwareRequest& request) {
     types::system::FirmwareUpdateRequest _request;
     _request.request_id = request.requestId;
     _request.location = request.firmware.location.get();
@@ -898,31 +891,31 @@ to_everest_firmware_update_request(const ocpp::v201::UpdateFirmwareRequest& requ
     return _request;
 }
 
-types::iso15118::Status to_everest_iso15118_status(const ocpp::v201::Iso15118EVCertificateStatusEnum& status) {
+types::iso15118::Status to_everest_iso15118_status(const ocpp::v2::Iso15118EVCertificateStatusEnum& status) {
     switch (status) {
-    case ocpp::v201::Iso15118EVCertificateStatusEnum::Accepted:
+    case ocpp::v2::Iso15118EVCertificateStatusEnum::Accepted:
         return types::iso15118::Status::Accepted;
-    case ocpp::v201::Iso15118EVCertificateStatusEnum::Failed:
+    case ocpp::v2::Iso15118EVCertificateStatusEnum::Failed:
         return types::iso15118::Status::Failed;
     }
     throw std::out_of_range("Could not convert Iso15118EVCertificateStatusEnum"); // this should never happen
 }
 
-types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v201::DataTransferStatusEnum status) {
+types::ocpp::DataTransferStatus to_everest_data_transfer_status(ocpp::v2::DataTransferStatusEnum status) {
     switch (status) {
-    case ocpp::v201::DataTransferStatusEnum::Accepted:
+    case ocpp::v2::DataTransferStatusEnum::Accepted:
         return types::ocpp::DataTransferStatus::Accepted;
-    case ocpp::v201::DataTransferStatusEnum::Rejected:
+    case ocpp::v2::DataTransferStatusEnum::Rejected:
         return types::ocpp::DataTransferStatus::Rejected;
-    case ocpp::v201::DataTransferStatusEnum::UnknownMessageId:
+    case ocpp::v2::DataTransferStatusEnum::UnknownMessageId:
         return types::ocpp::DataTransferStatus::UnknownMessageId;
-    case ocpp::v201::DataTransferStatusEnum::UnknownVendorId:
+    case ocpp::v2::DataTransferStatusEnum::UnknownVendorId:
         return types::ocpp::DataTransferStatus::UnknownVendorId;
     }
     return types::ocpp::DataTransferStatus::UnknownVendorId;
 }
 
-types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v201::DataTransferRequest request) {
+types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v2::DataTransferRequest request) {
     types::ocpp::DataTransferRequest data_transfer_request;
     data_transfer_request.vendor_id = request.vendorId.get();
     if (request.messageId.has_value()) {
@@ -939,7 +932,7 @@ types::ocpp::DataTransferRequest to_everest_data_transfer_request(ocpp::v201::Da
     return data_transfer_request;
 }
 
-types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v201::DataTransferResponse response) {
+types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v2::DataTransferResponse response) {
     types::ocpp::DataTransferResponse everest_response;
     everest_response.status = conversions::to_everest_data_transfer_status(response.status);
     if (response.data.has_value()) {
@@ -953,7 +946,7 @@ types::ocpp::DataTransferResponse to_everest_data_transfer_response(ocpp::v201::
     return everest_response;
 }
 
-types::authorization::ValidationResult to_everest_validation_result(const ocpp::v201::AuthorizeResponse& response) {
+types::authorization::ValidationResult to_everest_validation_result(const ocpp::v2::AuthorizeResponse& response) {
     types::authorization::ValidationResult validation_result;
 
     validation_result.authorization_status = to_everest_authorization_status(response.idTokenInfo.status);
@@ -998,56 +991,56 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
 }
 
 types::authorization::AuthorizationStatus
-to_everest_authorization_status(const ocpp::v201::AuthorizationStatusEnum status) {
+to_everest_authorization_status(const ocpp::v2::AuthorizationStatusEnum status) {
     switch (status) {
-    case ocpp::v201::AuthorizationStatusEnum::Accepted:
+    case ocpp::v2::AuthorizationStatusEnum::Accepted:
         return types::authorization::AuthorizationStatus::Accepted;
-    case ocpp::v201::AuthorizationStatusEnum::Blocked:
+    case ocpp::v2::AuthorizationStatusEnum::Blocked:
         return types::authorization::AuthorizationStatus::Blocked;
-    case ocpp::v201::AuthorizationStatusEnum::ConcurrentTx:
+    case ocpp::v2::AuthorizationStatusEnum::ConcurrentTx:
         return types::authorization::AuthorizationStatus::ConcurrentTx;
-    case ocpp::v201::AuthorizationStatusEnum::Expired:
+    case ocpp::v2::AuthorizationStatusEnum::Expired:
         return types::authorization::AuthorizationStatus::Expired;
-    case ocpp::v201::AuthorizationStatusEnum::Invalid:
+    case ocpp::v2::AuthorizationStatusEnum::Invalid:
         return types::authorization::AuthorizationStatus::Invalid;
-    case ocpp::v201::AuthorizationStatusEnum::NoCredit:
+    case ocpp::v2::AuthorizationStatusEnum::NoCredit:
         return types::authorization::AuthorizationStatus::NoCredit;
-    case ocpp::v201::AuthorizationStatusEnum::NotAllowedTypeEVSE:
+    case ocpp::v2::AuthorizationStatusEnum::NotAllowedTypeEVSE:
         return types::authorization::AuthorizationStatus::NotAllowedTypeEVSE;
-    case ocpp::v201::AuthorizationStatusEnum::NotAtThisLocation:
+    case ocpp::v2::AuthorizationStatusEnum::NotAtThisLocation:
         return types::authorization::AuthorizationStatus::NotAtThisLocation;
-    case ocpp::v201::AuthorizationStatusEnum::NotAtThisTime:
+    case ocpp::v2::AuthorizationStatusEnum::NotAtThisTime:
         return types::authorization::AuthorizationStatus::NotAtThisTime;
-    case ocpp::v201::AuthorizationStatusEnum::Unknown:
+    case ocpp::v2::AuthorizationStatusEnum::Unknown:
         return types::authorization::AuthorizationStatus::Unknown;
     }
     throw std::out_of_range(
-        "Could not convert ocpp::v201::AuthorizationStatusEnum to types::authorization::AuthorizationStatus");
+        "Could not convert ocpp::v2::AuthorizationStatusEnum to types::authorization::AuthorizationStatus");
 }
 
-types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v201::IdTokenEnum& type) {
+types::authorization::IdTokenType to_everest_id_token_type(const ocpp::v2::IdTokenEnum& type) {
     switch (type) {
-    case ocpp::v201::IdTokenEnum::Central:
+    case ocpp::v2::IdTokenEnum::Central:
         return types::authorization::IdTokenType::Central;
-    case ocpp::v201::IdTokenEnum::eMAID:
+    case ocpp::v2::IdTokenEnum::eMAID:
         return types::authorization::IdTokenType::eMAID;
-    case ocpp::v201::IdTokenEnum::ISO14443:
+    case ocpp::v2::IdTokenEnum::ISO14443:
         return types::authorization::IdTokenType::ISO14443;
-    case ocpp::v201::IdTokenEnum::ISO15693:
+    case ocpp::v2::IdTokenEnum::ISO15693:
         return types::authorization::IdTokenType::ISO15693;
-    case ocpp::v201::IdTokenEnum::KeyCode:
+    case ocpp::v2::IdTokenEnum::KeyCode:
         return types::authorization::IdTokenType::KeyCode;
-    case ocpp::v201::IdTokenEnum::Local:
+    case ocpp::v2::IdTokenEnum::Local:
         return types::authorization::IdTokenType::Local;
-    case ocpp::v201::IdTokenEnum::MacAddress:
+    case ocpp::v2::IdTokenEnum::MacAddress:
         return types::authorization::IdTokenType::MacAddress;
-    case ocpp::v201::IdTokenEnum::NoAuthorization:
+    case ocpp::v2::IdTokenEnum::NoAuthorization:
         return types::authorization::IdTokenType::NoAuthorization;
     }
-    throw std::out_of_range("Could not convert ocpp::v201::IdTokenEnum to types::authorization::IdTokenType");
+    throw std::out_of_range("Could not convert ocpp::v2::IdTokenEnum to types::authorization::IdTokenType");
 }
 
-types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_token) {
+types::authorization::IdToken to_everest_id_token(const ocpp::v2::IdToken& id_token) {
     types::authorization::IdToken _id_token;
     _id_token.value = id_token.idToken.get();
     _id_token.type = to_everest_id_token_type(id_token.type);
@@ -1055,38 +1048,38 @@ types::authorization::IdToken to_everest_id_token(const ocpp::v201::IdToken& id_
 }
 
 types::authorization::CertificateStatus
-to_everest_certificate_status(const ocpp::v201::AuthorizeCertificateStatusEnum status) {
+to_everest_certificate_status(const ocpp::v2::AuthorizeCertificateStatusEnum status) {
     switch (status) {
-    case ocpp::v201::AuthorizeCertificateStatusEnum::Accepted:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::Accepted:
         return types::authorization::CertificateStatus::Accepted;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::SignatureError:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::SignatureError:
         return types::authorization::CertificateStatus::SignatureError;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::CertificateExpired:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::CertificateExpired:
         return types::authorization::CertificateStatus::CertificateExpired;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::CertificateRevoked:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::CertificateRevoked:
         return types::authorization::CertificateStatus::CertificateRevoked;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::NoCertificateAvailable:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::NoCertificateAvailable:
         return types::authorization::CertificateStatus::NoCertificateAvailable;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::CertChainError:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::CertChainError:
         return types::authorization::CertificateStatus::CertChainError;
-    case ocpp::v201::AuthorizeCertificateStatusEnum::ContractCancelled:
+    case ocpp::v2::AuthorizeCertificateStatusEnum::ContractCancelled:
         return types::authorization::CertificateStatus::ContractCancelled;
     }
-    throw std::out_of_range("Could not convert ocpp::v201::AuthorizeCertificateStatusEnum to "
+    throw std::out_of_range("Could not convert ocpp::v2::AuthorizeCertificateStatusEnum to "
                             "types::authorization::CertificateStatus");
 }
 
 types::ocpp::OcppTransactionEvent
-to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& transaction_event) {
+to_everest_ocpp_transaction_event(const ocpp::v2::TransactionEventRequest& transaction_event) {
     types::ocpp::OcppTransactionEvent ocpp_transaction_event;
     switch (transaction_event.eventType) {
-    case ocpp::v201::TransactionEventEnum::Started:
+    case ocpp::v2::TransactionEventEnum::Started:
         ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Started;
         break;
-    case ocpp::v201::TransactionEventEnum::Updated:
+    case ocpp::v2::TransactionEventEnum::Updated:
         ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Updated;
         break;
-    case ocpp::v201::TransactionEventEnum::Ended:
+    case ocpp::v2::TransactionEventEnum::Ended:
         ocpp_transaction_event.transaction_event = types::ocpp::TransactionEvent::Ended;
         break;
     }
@@ -1100,21 +1093,21 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
     return ocpp_transaction_event;
 }
 
-types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+types::display_message::MessageFormat to_everest_message_format(const ocpp::v2::MessageFormatEnum& message_format) {
     switch (message_format) {
-    case ocpp::v201::MessageFormatEnum::ASCII:
+    case ocpp::v2::MessageFormatEnum::ASCII:
         return types::display_message::MessageFormat::ASCII;
-    case ocpp::v201::MessageFormatEnum::HTML:
+    case ocpp::v2::MessageFormatEnum::HTML:
         return types::display_message::MessageFormat::HTML;
-    case ocpp::v201::MessageFormatEnum::URI:
+    case ocpp::v2::MessageFormatEnum::URI:
         return types::display_message::MessageFormat::URI;
-    case ocpp::v201::MessageFormatEnum::UTF8:
+    case ocpp::v2::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
     }
-    throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
+    throw std::out_of_range("Could not convert ocpp::v2::MessageFormatEnum to types::ocpp::MessageFormat");
 }
 
-types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
+types::display_message::MessageContent to_everest_message_content(const ocpp::v2::MessageContent& message_content) {
     types::display_message::MessageContent everest_message_content;
     everest_message_content.format = to_everest_message_format(message_content.format);
     everest_message_content.content = message_content.content;
@@ -1123,7 +1116,7 @@ types::display_message::MessageContent to_everest_message_content(const ocpp::v2
 }
 
 types::ocpp::OcppTransactionEventResponse
-to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse& transaction_event_response) {
+to_everest_transaction_event_response(const ocpp::v2::TransactionEventResponse& transaction_event_response) {
     types::ocpp::OcppTransactionEventResponse everest_transaction_event_response;
 
     everest_transaction_event_response.total_cost = transaction_event_response.totalCost;
@@ -1137,7 +1130,7 @@ to_everest_transaction_event_response(const ocpp::v201::TransactionEventResponse
 }
 
 types::ocpp::BootNotificationResponse
-to_everest_boot_notification_response(const ocpp::v201::BootNotificationResponse& boot_notification_response) {
+to_everest_boot_notification_response(const ocpp::v2::BootNotificationResponse& boot_notification_response) {
     types::ocpp::BootNotificationResponse everest_boot_notification_response;
     everest_boot_notification_response.status = to_everest_registration_status(boot_notification_response.status);
     everest_boot_notification_response.current_time = boot_notification_response.currentTime.to_rfc3339();
@@ -1150,19 +1143,19 @@ to_everest_boot_notification_response(const ocpp::v201::BootNotificationResponse
 }
 
 types::ocpp::RegistrationStatus
-to_everest_registration_status(const ocpp::v201::RegistrationStatusEnum& registration_status) {
+to_everest_registration_status(const ocpp::v2::RegistrationStatusEnum& registration_status) {
     switch (registration_status) {
-    case ocpp::v201::RegistrationStatusEnum::Accepted:
+    case ocpp::v2::RegistrationStatusEnum::Accepted:
         return types::ocpp::RegistrationStatus::Accepted;
-    case ocpp::v201::RegistrationStatusEnum::Pending:
+    case ocpp::v2::RegistrationStatusEnum::Pending:
         return types::ocpp::RegistrationStatus::Pending;
-    case ocpp::v201::RegistrationStatusEnum::Rejected:
+    case ocpp::v2::RegistrationStatusEnum::Rejected:
         return types::ocpp::RegistrationStatus::Rejected;
     }
-    throw std::out_of_range("Could not convert ocpp::v201::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
+    throw std::out_of_range("Could not convert ocpp::v2::RegistrationStatusEnum to types::ocpp::RegistrationStatus");
 }
 
-types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::StatusInfo& status_info) {
+types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v2::StatusInfo& status_info) {
     types::ocpp::StatusInfoType everest_status_info;
     everest_status_info.reason_code = status_info.reasonCode;
     everest_status_info.additional_info = status_info.additionalInfo;
@@ -1170,7 +1163,7 @@ types::ocpp::StatusInfoType to_everest_status_info_type(const ocpp::v201::Status
 }
 
 std::vector<types::ocpp::GetVariableResult>
-to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableResult>& get_variable_result_vector) {
+to_everest_get_variable_result_vector(const std::vector<ocpp::v2::GetVariableResult>& get_variable_result_vector) {
     std::vector<types::ocpp::GetVariableResult> response;
     for (const auto& get_variable_result : get_variable_result_vector) {
         types::ocpp::GetVariableResult _get_variable_result;
@@ -1190,7 +1183,7 @@ to_everest_get_variable_result_vector(const std::vector<ocpp::v201::GetVariableR
 }
 
 std::vector<types::ocpp::SetVariableResult>
-to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableResult>& set_variable_result_vector) {
+to_everest_set_variable_result_vector(const std::vector<ocpp::v2::SetVariableResult>& set_variable_result_vector) {
     std::vector<types::ocpp::SetVariableResult> response;
     for (const auto& set_variable_result : set_variable_result_vector) {
         types::ocpp::SetVariableResult _set_variable_result;
@@ -1207,7 +1200,7 @@ to_everest_set_variable_result_vector(const std::vector<ocpp::v201::SetVariableR
     return response;
 }
 
-types::ocpp::Component to_everest_component(const ocpp::v201::Component& component) {
+types::ocpp::Component to_everest_component(const ocpp::v2::Component& component) {
     types::ocpp::Component _component;
     _component.name = component.name;
     if (component.evse.has_value()) {
@@ -1219,7 +1212,7 @@ types::ocpp::Component to_everest_component(const ocpp::v201::Component& compone
     return _component;
 }
 
-types::ocpp::Variable to_everest_variable(const ocpp::v201::Variable& variable) {
+types::ocpp::Variable to_everest_variable(const ocpp::v2::Variable& variable) {
     types::ocpp::Variable _variable;
     _variable.name = variable.name;
     if (variable.instance.has_value()) {
@@ -1228,7 +1221,7 @@ types::ocpp::Variable to_everest_variable(const ocpp::v201::Variable& variable) 
     return _variable;
 }
 
-types::ocpp::EVSE to_everest_evse(const ocpp::v201::EVSE& evse) {
+types::ocpp::EVSE to_everest_evse(const ocpp::v2::EVSE& evse) {
     types::ocpp::EVSE _evse;
     _evse.id = evse.id;
     if (evse.connectorId.has_value()) {
@@ -1237,58 +1230,58 @@ types::ocpp::EVSE to_everest_evse(const ocpp::v201::EVSE& evse) {
     return _evse;
 }
 
-types::ocpp::AttributeEnum to_everest_attribute_enum(const ocpp::v201::AttributeEnum attribute_enum) {
+types::ocpp::AttributeEnum to_everest_attribute_enum(const ocpp::v2::AttributeEnum attribute_enum) {
     switch (attribute_enum) {
-    case ocpp::v201::AttributeEnum::Actual:
+    case ocpp::v2::AttributeEnum::Actual:
         return types::ocpp::AttributeEnum::Actual;
-    case ocpp::v201::AttributeEnum::Target:
+    case ocpp::v2::AttributeEnum::Target:
         return types::ocpp::AttributeEnum::Target;
-    case ocpp::v201::AttributeEnum::MinSet:
+    case ocpp::v2::AttributeEnum::MinSet:
         return types::ocpp::AttributeEnum::MinSet;
-    case ocpp::v201::AttributeEnum::MaxSet:
+    case ocpp::v2::AttributeEnum::MaxSet:
         return types::ocpp::AttributeEnum::MaxSet;
     }
     throw std::out_of_range("Could not convert AttributeEnum");
 }
 
 types::ocpp::GetVariableStatusEnumType
-to_everest_get_variable_status_enum_type(const ocpp::v201::GetVariableStatusEnum get_variable_status) {
+to_everest_get_variable_status_enum_type(const ocpp::v2::GetVariableStatusEnum get_variable_status) {
     switch (get_variable_status) {
-    case ocpp::v201::GetVariableStatusEnum::Accepted:
+    case ocpp::v2::GetVariableStatusEnum::Accepted:
         return types::ocpp::GetVariableStatusEnumType::Accepted;
-    case ocpp::v201::GetVariableStatusEnum::Rejected:
+    case ocpp::v2::GetVariableStatusEnum::Rejected:
         return types::ocpp::GetVariableStatusEnumType::Rejected;
-    case ocpp::v201::GetVariableStatusEnum::UnknownComponent:
+    case ocpp::v2::GetVariableStatusEnum::UnknownComponent:
         return types::ocpp::GetVariableStatusEnumType::UnknownComponent;
-    case ocpp::v201::GetVariableStatusEnum::UnknownVariable:
+    case ocpp::v2::GetVariableStatusEnum::UnknownVariable:
         return types::ocpp::GetVariableStatusEnumType::UnknownVariable;
-    case ocpp::v201::GetVariableStatusEnum::NotSupportedAttributeType:
+    case ocpp::v2::GetVariableStatusEnum::NotSupportedAttributeType:
         return types::ocpp::GetVariableStatusEnumType::NotSupportedAttributeType;
     }
     throw std::out_of_range("Could not convert GetVariableStatusEnumType");
 }
 
 types::ocpp::SetVariableStatusEnumType
-to_everest_set_variable_status_enum_type(const ocpp::v201::SetVariableStatusEnum set_variable_status) {
+to_everest_set_variable_status_enum_type(const ocpp::v2::SetVariableStatusEnum set_variable_status) {
     switch (set_variable_status) {
-    case ocpp::v201::SetVariableStatusEnum::Accepted:
+    case ocpp::v2::SetVariableStatusEnum::Accepted:
         return types::ocpp::SetVariableStatusEnumType::Accepted;
-    case ocpp::v201::SetVariableStatusEnum::Rejected:
+    case ocpp::v2::SetVariableStatusEnum::Rejected:
         return types::ocpp::SetVariableStatusEnumType::Rejected;
-    case ocpp::v201::SetVariableStatusEnum::UnknownComponent:
+    case ocpp::v2::SetVariableStatusEnum::UnknownComponent:
         return types::ocpp::SetVariableStatusEnumType::UnknownComponent;
-    case ocpp::v201::SetVariableStatusEnum::UnknownVariable:
+    case ocpp::v2::SetVariableStatusEnum::UnknownVariable:
         return types::ocpp::SetVariableStatusEnumType::UnknownVariable;
-    case ocpp::v201::SetVariableStatusEnum::NotSupportedAttributeType:
+    case ocpp::v2::SetVariableStatusEnum::NotSupportedAttributeType:
         return types::ocpp::SetVariableStatusEnumType::NotSupportedAttributeType;
-    case ocpp::v201::SetVariableStatusEnum::RebootRequired:
+    case ocpp::v2::SetVariableStatusEnum::RebootRequired:
         return types::ocpp::SetVariableStatusEnumType::RebootRequired;
     }
     throw std::out_of_range("Could not convert GetVariableStatusEnumType");
 }
 
 types::ocpp::ChargingSchedules
-to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& composite_schedules) {
+to_everest_charging_schedules(const std::vector<ocpp::v2::CompositeSchedule>& composite_schedules) {
     types::ocpp::ChargingSchedules charging_schedules;
     for (const auto& composite_schedule : composite_schedules) {
         charging_schedules.schedules.push_back(conversions::to_everest_charging_schedule(composite_schedule));
@@ -1296,11 +1289,11 @@ to_everest_charging_schedules(const std::vector<ocpp::v201::CompositeSchedule>& 
     return charging_schedules;
 }
 
-types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::CompositeSchedule& composite_schedule) {
+types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::CompositeSchedule& composite_schedule) {
     types::ocpp::ChargingSchedule charging_schedule;
     charging_schedule.evse = composite_schedule.evseId;
     charging_schedule.charging_rate_unit =
-        ocpp::v201::conversions::charging_rate_unit_enum_to_string(composite_schedule.chargingRateUnit);
+        ocpp::v2::conversions::charging_rate_unit_enum_to_string(composite_schedule.chargingRateUnit);
     charging_schedule.evse = composite_schedule.evseId;
     charging_schedule.duration = composite_schedule.duration;
     charging_schedule.start_schedule = composite_schedule.scheduleStart.to_rfc3339();
@@ -1313,7 +1306,7 @@ types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v201::Com
 }
 
 types::ocpp::ChargingSchedulePeriod
-to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& period) {
+to_everest_charging_schedule_period(const ocpp::v2::ChargingSchedulePeriod& period) {
     types::ocpp::ChargingSchedulePeriod _period;
     _period.start_period = period.startPeriod;
     _period.limit = period.limit;
@@ -1322,32 +1315,32 @@ to_everest_charging_schedule_period(const ocpp::v201::ChargingSchedulePeriod& pe
     return _period;
 }
 
-ocpp::v201::DisplayMessageStatusEnum
+ocpp::v2::DisplayMessageStatusEnum
 to_ocpp_display_message_status_enum(const types::display_message::DisplayMessageStatusEnum& from) {
     switch (from) {
     case types::display_message::DisplayMessageStatusEnum::Accepted:
-        return ocpp::v201::DisplayMessageStatusEnum::Accepted;
+        return ocpp::v2::DisplayMessageStatusEnum::Accepted;
     case types::display_message::DisplayMessageStatusEnum::NotSupportedMessageFormat:
-        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedMessageFormat;
+        return ocpp::v2::DisplayMessageStatusEnum::NotSupportedMessageFormat;
     case types::display_message::DisplayMessageStatusEnum::Rejected:
-        return ocpp::v201::DisplayMessageStatusEnum::Rejected;
+        return ocpp::v2::DisplayMessageStatusEnum::Rejected;
     case types::display_message::DisplayMessageStatusEnum::NotSupportedPriority:
-        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedPriority;
+        return ocpp::v2::DisplayMessageStatusEnum::NotSupportedPriority;
     case types::display_message::DisplayMessageStatusEnum::NotSupportedState:
-        return ocpp::v201::DisplayMessageStatusEnum::NotSupportedState;
+        return ocpp::v2::DisplayMessageStatusEnum::NotSupportedState;
     case types::display_message::DisplayMessageStatusEnum::UnknownTransaction:
-        return ocpp::v201::DisplayMessageStatusEnum::UnknownTransaction;
+        return ocpp::v2::DisplayMessageStatusEnum::UnknownTransaction;
     }
 
     throw std::out_of_range("Could not convert DisplayMessageStatusEnum");
 }
 
-ocpp::v201::SetDisplayMessageResponse
+ocpp::v2::SetDisplayMessageResponse
 to_ocpp_set_display_message_response(const types::display_message::SetDisplayMessageResponse& response) {
-    ocpp::v201::SetDisplayMessageResponse ocpp_response;
+    ocpp::v2::SetDisplayMessageResponse ocpp_response;
     ocpp_response.status = to_ocpp_display_message_status_enum(response.status);
     if (response.status_info.has_value()) {
-        ocpp_response.statusInfo = ocpp::v201::StatusInfo();
+        ocpp_response.statusInfo = ocpp::v2::StatusInfo();
         ocpp_response.statusInfo.value().additionalInfo = response.status_info.value();
     }
 
@@ -1355,13 +1348,13 @@ to_ocpp_set_display_message_response(const types::display_message::SetDisplayMes
 }
 
 types::display_message::MessagePriorityEnum
-to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& priority) {
+to_everest_display_message_priority_enum(const ocpp::v2::MessagePriorityEnum& priority) {
     switch (priority) {
-    case ocpp::v201::MessagePriorityEnum::AlwaysFront:
+    case ocpp::v2::MessagePriorityEnum::AlwaysFront:
         return types::display_message::MessagePriorityEnum::AlwaysFront;
-    case ocpp::v201::MessagePriorityEnum::InFront:
+    case ocpp::v2::MessagePriorityEnum::InFront:
         return types::display_message::MessagePriorityEnum::InFront;
-    case ocpp::v201::MessagePriorityEnum::NormalCycle:
+    case ocpp::v2::MessagePriorityEnum::NormalCycle:
         return types::display_message::MessagePriorityEnum::NormalCycle;
     }
 
@@ -1369,15 +1362,15 @@ to_everest_display_message_priority_enum(const ocpp::v201::MessagePriorityEnum& 
 }
 
 types::display_message::MessageStateEnum
-to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& message_state) {
+to_everest_display_message_state_enum(const ocpp::v2::MessageStateEnum& message_state) {
     switch (message_state) {
-    case ocpp::v201::MessageStateEnum::Charging:
+    case ocpp::v2::MessageStateEnum::Charging:
         return types::display_message::MessageStateEnum::Charging;
-    case ocpp::v201::MessageStateEnum::Faulted:
+    case ocpp::v2::MessageStateEnum::Faulted:
         return types::display_message::MessageStateEnum::Faulted;
-    case ocpp::v201::MessageStateEnum::Idle:
+    case ocpp::v2::MessageStateEnum::Idle:
         return types::display_message::MessageStateEnum::Idle;
-    case ocpp::v201::MessageStateEnum::Unavailable:
+    case ocpp::v2::MessageStateEnum::Unavailable:
         return types::display_message::MessageStateEnum::Unavailable;
     }
 
@@ -1385,7 +1378,7 @@ to_everest_display_message_state_enum(const ocpp::v201::MessageStateEnum& messag
 }
 
 types::display_message::GetDisplayMessageRequest
-to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& request) {
+to_everest_display_message_request(const ocpp::v2::GetDisplayMessagesRequest& request) {
     types::display_message::GetDisplayMessageRequest result_request;
     result_request.id = request.id;
     if (request.priority.has_value()) {
@@ -1399,81 +1392,81 @@ to_everest_display_message_request(const ocpp::v201::GetDisplayMessagesRequest& 
 }
 
 types::display_message::ClearDisplayMessageRequest
-to_everest_clear_display_message_request(const ocpp::v201::ClearDisplayMessageRequest& request) {
+to_everest_clear_display_message_request(const ocpp::v2::ClearDisplayMessageRequest& request) {
     types::display_message::ClearDisplayMessageRequest result_request;
     result_request.id = request.id;
     return result_request;
 }
 
-ocpp::v201::ClearMessageStatusEnum
+ocpp::v2::ClearMessageStatusEnum
 to_ocpp_clear_message_response_enum(const types::display_message::ClearMessageResponseEnum& response_enum) {
     switch (response_enum) {
     case types::display_message::ClearMessageResponseEnum::Accepted:
-        return ocpp::v201::ClearMessageStatusEnum::Accepted;
+        return ocpp::v2::ClearMessageStatusEnum::Accepted;
     case types::display_message::ClearMessageResponseEnum::Unknown:
-        return ocpp::v201::ClearMessageStatusEnum::Unknown;
+        return ocpp::v2::ClearMessageStatusEnum::Unknown;
     }
 
     throw std::out_of_range("Could not convert ClearMessageResponseEnum");
 }
 
-ocpp::v201::ClearDisplayMessageResponse
+ocpp::v2::ClearDisplayMessageResponse
 to_ocpp_clear_display_message_response(const types::display_message::ClearDisplayMessageResponse& response) {
-    ocpp::v201::ClearDisplayMessageResponse result_response;
+    ocpp::v2::ClearDisplayMessageResponse result_response;
     result_response.status = to_ocpp_clear_message_response_enum(response.status);
     if (response.status_info.has_value()) {
-        result_response.statusInfo = ocpp::v201::StatusInfo();
+        result_response.statusInfo = ocpp::v2::StatusInfo();
         result_response.statusInfo.value().additionalInfo = response.status_info.value();
     }
 
     return result_response;
 }
 
-types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v201::ConnectorEnum& connector_type) {
+types::evse_manager::ConnectorTypeEnum to_everest_connector_type_enum(const ocpp::v2::ConnectorEnum& connector_type) {
     switch (connector_type) {
-    case ocpp::v201::ConnectorEnum::cCCS1:
+    case ocpp::v2::ConnectorEnum::cCCS1:
         return types::evse_manager::ConnectorTypeEnum::cCCS1;
-    case ocpp::v201::ConnectorEnum::cCCS2:
+    case ocpp::v2::ConnectorEnum::cCCS2:
         return types::evse_manager::ConnectorTypeEnum::cCCS2;
-    case ocpp::v201::ConnectorEnum::cG105:
+    case ocpp::v2::ConnectorEnum::cG105:
         return types::evse_manager::ConnectorTypeEnum::cG105;
-    case ocpp::v201::ConnectorEnum::cTesla:
+    case ocpp::v2::ConnectorEnum::cTesla:
         return types::evse_manager::ConnectorTypeEnum::cTesla;
-    case ocpp::v201::ConnectorEnum::cType1:
+    case ocpp::v2::ConnectorEnum::cType1:
         return types::evse_manager::ConnectorTypeEnum::cType1;
-    case ocpp::v201::ConnectorEnum::cType2:
+    case ocpp::v2::ConnectorEnum::cType2:
         return types::evse_manager::ConnectorTypeEnum::cType2;
-    case ocpp::v201::ConnectorEnum::s309_1P_16A:
+    case ocpp::v2::ConnectorEnum::s309_1P_16A:
         return types::evse_manager::ConnectorTypeEnum::s309_1P_16A;
-    case ocpp::v201::ConnectorEnum::s309_1P_32A:
+    case ocpp::v2::ConnectorEnum::s309_1P_32A:
         return types::evse_manager::ConnectorTypeEnum::s309_1P_32A;
-    case ocpp::v201::ConnectorEnum::s309_3P_16A:
+    case ocpp::v2::ConnectorEnum::s309_3P_16A:
         return types::evse_manager::ConnectorTypeEnum::s309_3P_16A;
-    case ocpp::v201::ConnectorEnum::s309_3P_32A:
+    case ocpp::v2::ConnectorEnum::s309_3P_32A:
         return types::evse_manager::ConnectorTypeEnum::s309_3P_32A;
-    case ocpp::v201::ConnectorEnum::sBS1361:
+    case ocpp::v2::ConnectorEnum::sBS1361:
         return types::evse_manager::ConnectorTypeEnum::sBS1361;
-    case ocpp::v201::ConnectorEnum::sCEE_7_7:
+    case ocpp::v2::ConnectorEnum::sCEE_7_7:
         return types::evse_manager::ConnectorTypeEnum::sCEE_7_7;
-    case ocpp::v201::ConnectorEnum::sType2:
+    case ocpp::v2::ConnectorEnum::sType2:
         return types::evse_manager::ConnectorTypeEnum::sType2;
-    case ocpp::v201::ConnectorEnum::sType3:
+    case ocpp::v2::ConnectorEnum::sType3:
         return types::evse_manager::ConnectorTypeEnum::sType3;
-    case ocpp::v201::ConnectorEnum::Other1PhMax16A:
+    case ocpp::v2::ConnectorEnum::Other1PhMax16A:
         return types::evse_manager::ConnectorTypeEnum::Other1PhMax16A;
-    case ocpp::v201::ConnectorEnum::Other1PhOver16A:
+    case ocpp::v2::ConnectorEnum::Other1PhOver16A:
         return types::evse_manager::ConnectorTypeEnum::Other1PhOver16A;
-    case ocpp::v201::ConnectorEnum::Other3Ph:
+    case ocpp::v2::ConnectorEnum::Other3Ph:
         return types::evse_manager::ConnectorTypeEnum::Other3Ph;
-    case ocpp::v201::ConnectorEnum::Pan:
+    case ocpp::v2::ConnectorEnum::Pan:
         return types::evse_manager::ConnectorTypeEnum::Pan;
-    case ocpp::v201::ConnectorEnum::wInductive:
+    case ocpp::v2::ConnectorEnum::wInductive:
         return types::evse_manager::ConnectorTypeEnum::wInductive;
-    case ocpp::v201::ConnectorEnum::wResonant:
+    case ocpp::v2::ConnectorEnum::wResonant:
         return types::evse_manager::ConnectorTypeEnum::wResonant;
-    case ocpp::v201::ConnectorEnum::Undetermined:
+    case ocpp::v2::ConnectorEnum::Undetermined:
         return types::evse_manager::ConnectorTypeEnum::Undetermined;
-    case ocpp::v201::ConnectorEnum::Unknown:
+    case ocpp::v2::ConnectorEnum::Unknown:
         return types::evse_manager::ConnectorTypeEnum::Unknown;
     }
 

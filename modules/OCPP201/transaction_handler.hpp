@@ -10,7 +10,7 @@
 #include <set>
 #include <vector>
 
-#include <ocpp/v201/ocpp_types.hpp>
+#include <ocpp/v2/ocpp_types.hpp>
 
 namespace module {
 
@@ -142,18 +142,18 @@ struct TransactionData {
     int32_t connector_id;
     std::string session_id;
     ocpp::DateTime timestamp;
-    ocpp::v201::TriggerReasonEnum trigger_reason;
-    ocpp::v201::MeterValue meter_value;
-    ocpp::v201::ChargingStateEnum charging_state;
-    ocpp::v201::ReasonEnum stop_reason = ocpp::v201::ReasonEnum::Other;
-    std::optional<ocpp::v201::IdToken> id_token;
-    std::optional<ocpp::v201::IdToken> group_id_token;
+    ocpp::v2::TriggerReasonEnum trigger_reason;
+    ocpp::v2::MeterValue meter_value;
+    ocpp::v2::ChargingStateEnum charging_state;
+    ocpp::v2::ReasonEnum stop_reason = ocpp::v2::ReasonEnum::Other;
+    std::optional<ocpp::v2::IdToken> id_token;
+    std::optional<ocpp::v2::IdToken> group_id_token;
     std::optional<int32_t> reservation_id;
     std::optional<int32_t> remote_start_id;
 
     TransactionData(const int32_t connector_id, const std::string& session_id, const ocpp::DateTime timestamp,
-                    const ocpp::v201::TriggerReasonEnum trigger_reason,
-                    const ocpp::v201::ChargingStateEnum charging_state) :
+                    const ocpp::v2::TriggerReasonEnum trigger_reason,
+                    const ocpp::v2::ChargingStateEnum charging_state) :
         connector_id(connector_id),
         session_id(session_id),
         timestamp(timestamp),
