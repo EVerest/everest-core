@@ -1326,7 +1326,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
                     float _soft_over_current_tolerance_percent, float _soft_over_current_measurement_noise_A,
                     const int _switch_3ph1ph_delay_s, const std::string _switch_3ph1ph_cp_state,
                     const int _soft_over_current_timeout_ms, const int _state_F_after_fault_ms,
-                    const bool fail_on_powermeter_errors) {
+                    const bool fail_on_powermeter_errors, const bool raise_mrec9) {
     // set up board support package
     bsp->setup(has_ventilation);
 
@@ -1347,6 +1347,7 @@ void Charger::setup(bool has_ventilation, const ChargeMode _charge_mode, bool _a
 
     config_context.state_F_after_fault_ms = _state_F_after_fault_ms;
     config_context.fail_on_powermeter_errors = fail_on_powermeter_errors;
+    config_context.raise_mrec9 = raise_mrec9;
 
     if (config_context.charge_mode == ChargeMode::AC and config_context.ac_hlc_enabled)
         EVLOG_info << "AC HLC mode enabled.";
@@ -1430,7 +1431,9 @@ bool Charger::deauthorize_internal() {
             // We can safely remove auth as it is not in use right now
             if (not shared_context.authorized) {
                 signal_simple_event(types::evse_manager::SessionEventEnum::PluginTimeout);
-                error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
+                if (config_context.raise_mrec9) {
+                    error_handling->raise_authorization_timeout_error("No authorization was provided within timeout.");
+                }
                 return false;
             }
             shared_context.authorized = false;
