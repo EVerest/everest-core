@@ -290,11 +290,6 @@ void evse_managerImpl::ready() {
             session_finished.meter_value = mod->get_latest_powermeter_data_billing();
             se.session_finished = session_finished;
             session_log.evse(false, fmt::format("Session Finished"));
-            // Cancel reservation, reservation might be stored when swiping rfid, but timed out, so we should not
-            // set the reservation id here.
-            if (mod->is_reserved()) {
-                mod->cancel_reservation(true);
-            }
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
@@ -328,6 +323,11 @@ void evse_managerImpl::ready() {
 
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             this->mod->selected_protocol = "Unknown";
+        }
+
+        // Cancel reservations if charger is disabled
+        if (mod->is_reserved() and e == types::evse_manager::SessionEventEnum::Disabled) {
+            mod->cancel_reservation(true);
         }
 
         publish_selected_protocol(this->mod->selected_protocol);

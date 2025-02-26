@@ -832,10 +832,6 @@ void EvseManager::ready() {
     error_handling->signal_error.connect([this](bool prevents_charging) { cancel_reservation(true); });
 
     charger->signal_simple_event.connect([this](types::evse_manager::SessionEventEnum s) {
-        // Cancel reservations if charger is disabled
-        if (s == types::evse_manager::SessionEventEnum::Disabled) {
-            cancel_reservation(true);
-        }
         if (s == types::evse_manager::SessionEventEnum::SessionFinished) {
             // Reset EV information on Session start and end
             ev_info = types::evse_manager::EVInfo();
