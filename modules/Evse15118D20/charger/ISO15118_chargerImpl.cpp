@@ -333,7 +333,7 @@ iso15118::session::feedback::Callbacks ISO15118_chargerImpl::create_callbacks() 
                 EVLOG_AND_THROW(Everest::EverestInternalError("Invalid value received for mobility needs mode!"));
             }
 
-            // TODO(ioan): first data we will publish will be related to the v2xChargingParameters
+            // For dash20 the data we will publish will be the v2xChargingParameters
             V2XChargingParameters& v2x_charging_parameters = charging_needs.v2x_charging_parameters.emplace();
 
             // TODO(ioan): after AC merge handle AC limits too
