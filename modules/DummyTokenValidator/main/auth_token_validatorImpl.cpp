@@ -21,8 +21,8 @@ auth_token_validatorImpl::handle_validate_token(types::authorization::ProvidedId
     types::authorization::ValidationResult ret;
     ret.authorization_status = types::authorization::string_to_authorization_status(config.validation_result);
     ret.reason = types::authorization::TokenValidationStatusMessage();
-    ret.reason->messages = std::vector<types::display_message::MessageContent>();
-    types::display_message::MessageContent content;
+    ret.reason->messages = std::vector<types::text_message::MessageContent>();
+    types::text_message::MessageContent content;
     content.content = config.validation_reason;
     ret.reason->messages->push_back(content);
     std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(config.sleep * 1000)));
