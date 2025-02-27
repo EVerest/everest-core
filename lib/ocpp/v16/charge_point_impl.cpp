@@ -1366,18 +1366,24 @@ void ChargePointImpl::message_callback(const std::string& message) {
         }
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
+        this->securityEventNotification(ocpp::security_events::INVALIDMESSAGES, std::optional<CiString<255>>(message),
+                                        true);
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         if (json_message.is_array() && json_message.size() > MESSAGE_ID) {
             auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}, true));
             this->message_dispatcher->dispatch_call_error(call_error);
-            this->securityEventNotification(ocpp::security_events::INVALIDMESSAGES,
-                                            std::optional<CiString<255>>(message), true);
         }
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
-        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}, true));
-        this->message_dispatcher->dispatch_call_error(call_error);
         this->securityEventNotification(ocpp::security_events::INVALIDMESSAGES, std::optional<CiString<255>>(message),
                                         true);
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
+        auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}, true));
+        this->message_dispatcher->dispatch_call_error(call_error);
     }
 }
 

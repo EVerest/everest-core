@@ -867,22 +867,37 @@ void ChargePoint::message_callback(const std::string& message) {
         }
     } catch (const EvseOutOfRangeException& e) {
         EVLOG_error << "Exception during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
         this->message_dispatcher->dispatch_call_error(call_error);
     } catch (const ConnectorOutOfRangeException& e) {
         EVLOG_error << "Exception during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         auto call_error = CallError(enhanced_message.uniqueId, "OccurrenceConstraintViolation", e.what(), json({}));
         this->message_dispatcher->dispatch_call_error(call_error);
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
         this->message_dispatcher->dispatch_call_error(call_error);
     } catch (const TimePointParseException& e) {
         EVLOG_error << "Exception during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
         this->message_dispatcher->dispatch_call_error(call_error);
     } catch (json::exception& e) {
         EVLOG_error << "JSON exception during handling of message: " << e.what();
+        if (enhanced_message.messageTypeId != MessageTypeId::CALL) {
+            return; // CALLERROR shall only follow on a CALL message
+        }
         if (json_message.is_array() and json_message.size() > MESSAGE_ID) {
             auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
             this->message_dispatcher->dispatch_call_error(call_error);
