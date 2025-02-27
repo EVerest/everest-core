@@ -1,6 +1,6 @@
-# OCPP2.0.1 Functional Requirements Status
+# OCPP2.0.1 / OCPP2.1 Functional Requirements Status
 
-This document contains the status of which OCPP 2.0.1 numbered functional requirements (FRs) have been implemented in `libocpp`. This does not cover if the functionality is also implemented in `everest-core`.
+This document contains the status of which OCPP 2.0.1 and OCPP2.1 numbered functional requirements (FRs) have been implemented in `libocpp`. This does not cover if the functionality is also implemented in `everest-core`.
 
 ## Legend
 

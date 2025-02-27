@@ -6,10 +6,11 @@ body:
     id: affected-ocpp-version
     attributes:
       label: OCPP Version
-      description: For which OCPP do you suggest this feature? Mark both if applicable.
+      description: For which OCPP do you suggest this feature? Mark multiple if applicable.
       options:
         - OCPP1.6
         - OCPP2.0.1
+        - OCPP2.1
       multiple: true
     validations:
       required: true

@@ -6,7 +6,7 @@ The use cases within the Smart Charging functional block are subdivided into the
 2. External Charging Limit-based Smart Charging (K11–K14)
 3. ISO 15118-based Smart Charging (K15–K17)
 
-Support for General and External Charging Limit-based Smart Charging is largely complete, with ISO 15118-based Smart Charging under active development. For an up-to-date overview of exactly which features are currently supported as well as design decisions that have been made to address optional or ambiguous functional requirements, please refer to the [OCPP 2.0.1 Status document](ocpp_201_status.md).
+Support for General and External Charging Limit-based Smart Charging is largely complete, with ISO 15118-based Smart Charging under active development. For an up-to-date overview of exactly which features are currently supported as well as design decisions that have been made to address optional or ambiguous functional requirements, please refer to the [OCPP 2.0.1 Status document](ocpp_2x_status.md).
 
 ## K01 SetChargingProfile
 
