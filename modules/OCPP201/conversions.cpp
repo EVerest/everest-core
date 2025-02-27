@@ -974,9 +974,9 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
 
     if (idTokenInfo.personalMessage.has_value()) {
         validation_result.reason = types::authorization::TokenValidationStatusMessage();
-        validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
-        const types::display_message::MessageContent content =
-            to_everest_message_content(idTokenInfo.personalMessage.value());
+        validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
+        const types::text_message::MessageContent content =
+            to_everest_message_content(response.idTokenInfo.personalMessage.value());
         validation_result.reason->messages->push_back(content);
     }
 
@@ -984,12 +984,12 @@ types::authorization::ValidationResult to_everest_validation_result(const ocpp::
         idTokenInfo.customData.value().at("vendorId").get<std::string>() == "org.openchargealliance.multilanguage" &&
         idTokenInfo.customData.value().contains("personalMessageExtra")) {
         if (!validation_result.reason->messages.has_value()) {
-            validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
+            validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
         }
 
         const json& multi_language_personal_messages = idTokenInfo.customData.value().at("personalMessageExtra");
         for (const auto& messages : multi_language_personal_messages.items()) {
-            const types::display_message::MessageContent content = messages.value();
+            const types::text_message::MessageContent content = messages.value();
             validation_result.reason->messages->push_back(content);
         }
     }
@@ -1112,22 +1112,22 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
     return ocpp_transaction_event;
 }
 
-types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
+types::text_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
     switch (message_format) {
     case ocpp::v201::MessageFormatEnum::ASCII:
-        return types::display_message::MessageFormat::ASCII;
+        return types::text_message::MessageFormat::ASCII;
     case ocpp::v201::MessageFormatEnum::HTML:
-        return types::display_message::MessageFormat::HTML;
+        return types::text_message::MessageFormat::HTML;
     case ocpp::v201::MessageFormatEnum::URI:
-        return types::display_message::MessageFormat::URI;
+        return types::text_message::MessageFormat::URI;
     case ocpp::v201::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
     }
     throw std::out_of_range("Could not convert ocpp::v201::MessageFormatEnum to types::ocpp::MessageFormat");
 }
 
-types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
-    types::display_message::MessageContent everest_message_content;
+types::text_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content) {
+    types::text_message::MessageContent everest_message_content;
     everest_message_content.format = to_everest_message_format(message_content.format);
     everest_message_content.content = message_content.content;
     everest_message_content.language = message_content.language;

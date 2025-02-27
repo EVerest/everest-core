@@ -63,64 +63,66 @@ ocpp::v201::MessageStateEnum to_ocpp_201_display_message_state(const types::disp
         "Could not convert types::display_message::MessageStateEnum to ocpp::v201::MessageStateEnum");
 }
 
-types::display_message::MessageFormat
+types::text_message::MessageFormat
 to_everest_display_message_format(const ocpp::v201::MessageFormatEnum& message_format) {
     switch (message_format) {
     case ocpp::v201::MessageFormatEnum::ASCII:
-        return types::display_message::MessageFormat::ASCII;
+        return types::text_message::MessageFormat::ASCII;
     case ocpp::v201::MessageFormatEnum::HTML:
-        return types::display_message::MessageFormat::HTML;
+        return types::text_message::MessageFormat::HTML;
     case ocpp::v201::MessageFormatEnum::URI:
-        return types::display_message::MessageFormat::URI;
+        return types::text_message::MessageFormat::URI;
     case ocpp::v201::MessageFormatEnum::UTF8:
         return types::display_message::MessageFormat::UTF8;
     }
     throw std::out_of_range("Could not convert ocpp::v201::MessageFormat to types::display_message::MessageFormatEnum");
 }
 
-ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::display_message::MessageFormat& format) {
+ocpp::v201::MessageFormatEnum to_ocpp_201_message_format_enum(const types::text_message::MessageFormat& format) {
     switch (format) {
-    case types::display_message::MessageFormat::ASCII:
+    case types::text_message::MessageFormat::ASCII:
         return ocpp::v201::MessageFormatEnum::ASCII;
-    case types::display_message::MessageFormat::HTML:
+    case types::text_message::MessageFormat::HTML:
         return ocpp::v201::MessageFormatEnum::HTML;
-    case types::display_message::MessageFormat::URI:
+    case types::text_message::MessageFormat::URI:
         return ocpp::v201::MessageFormatEnum::URI;
-    case types::display_message::MessageFormat::UTF8:
+    case types::text_message::MessageFormat::UTF8:
         return ocpp::v201::MessageFormatEnum::UTF8;
+    case types::display_message::MessageFormat::QRCODE:
+        return ocpp::v201::MessageFormatEnum::QRCODE;
     }
 
     throw std::out_of_range("Could not convert types::display_message::MessageFormat to ocpp::v201::MessageFormatEnum");
 }
 
-ocpp::IdentifierType to_ocpp_identifiertype_enum(const types::display_message::Identifier_type identifier_type) {
+ocpp::IdentifierType to_ocpp_identifiertype_enum(const types::display_message::IdentifierType identifier_type) {
     switch (identifier_type) {
-    case types::display_message::Identifier_type::IdToken:
+    case types::display_message::IdentifierType::IdToken:
         return ocpp::IdentifierType::IdToken;
-    case types::display_message::Identifier_type::SessionId:
+    case types::display_message::IdentifierType::SessionId:
         return ocpp::IdentifierType::SessionId;
-    case types::display_message::Identifier_type::TransactionId:
+    case types::display_message::IdentifierType::TransactionId:
         return ocpp::IdentifierType::TransactionId;
     }
 
     throw std::out_of_range("types::display_message::Identifier_type to ocpp::IdentierType");
 }
 
-types::display_message::Identifier_type to_everest_identifier_type_enum(const ocpp::IdentifierType identifier_type) {
+types::display_message::IdentifierType to_everest_identifier_type_enum(const ocpp::IdentifierType identifier_type) {
     switch (identifier_type) {
     case ocpp::IdentifierType::SessionId:
-        return types::display_message::Identifier_type::SessionId;
+        return types::display_message::IdentifierType::SessionId;
     case ocpp::IdentifierType::IdToken:
-        return types::display_message::Identifier_type::IdToken;
+        return types::display_message::IdentifierType::IdToken;
     case ocpp::IdentifierType::TransactionId:
-        return types::display_message::Identifier_type::TransactionId;
+        return types::display_message::IdentifierType::TransactionId;
     }
     throw std::out_of_range("ocpp::IdentierType to types::display_message::Identifier_type");
 }
 
-types::display_message::MessageContent
+types::text_message::MessageContent
 to_everest_display_message_content(const ocpp::DisplayMessageContent& message_content) {
-    types::display_message::MessageContent message;
+    types::text_message::MessageContent message;
     message.content = message_content.message;
     if (message_content.message_format.has_value()) {
         message.format = to_everest_display_message_format(message_content.message_format.value());
@@ -201,6 +203,22 @@ ocpp::DisplayMessage to_ocpp_display_message(const types::display_message::Displ
     return m;
 }
 
+types::session_cost::SessionCostMessage
+to_everest_session_cost_message(const ocpp::SessionCostMessage& session_cost_message) {
+    types::session_cost::SessionCostMessage m;
+    m.identifier_id = session_cost_message.identifier_id;
+    if (session_cost_message.identifier_type.has_value()) {
+        m.identifier_type = to_everest_identifier_type_enum(session_cost_message.identifier_type.value());
+    }
+
+    for (const auto& message : session_cost_message.message) {
+        types::text_message::MessageContent content = to_everest_display_message_content(message);
+        m.messages.push_back(content);
+    }
+
+    return m;
+}
+
 types::session_cost::SessionStatus to_everest_running_cost_state(const ocpp::RunningCostState& state) {
     switch (state) {
     case ocpp::RunningCostState::Charging:
@@ -257,9 +275,9 @@ types::session_cost::SessionCost create_session_cost(const ocpp::RunningCost& ru
     cost.status = to_everest_running_cost_state(running_cost.state);
     cost.qr_code = running_cost.qr_code_text;
     if (running_cost.cost_messages.has_value()) {
-        cost.message = std::vector<types::display_message::MessageContent>();
+        cost.message = std::vector<types::text_message::MessageContent>();
         for (const ocpp::DisplayMessageContent& message : running_cost.cost_messages.value()) {
-            types::display_message::MessageContent m = to_everest_display_message_content(message);
+            types::text_message::MessageContent m = to_everest_display_message_content(message);
             cost.message->push_back(m);
         }
     }

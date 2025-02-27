@@ -890,6 +890,16 @@ void OCPP::ready() {
             return response;
         });
 
+    this->charge_point->register_session_cost_message_callback(
+        [this](const ocpp::SessionCostMessage& message) -> ocpp::v16::DataTransferResponse {
+            const types::session_cost::SessionCostMessage m =
+                ocpp_conversions::to_everest_session_cost_message(message);
+            this->p_session_cost->publish_session_cost_message(m);
+            ocpp::v16::DataTransferResponse response;
+            response.status = ocpp::v16::DataTransferStatus::Accepted;
+            return response;
+        });
+
     this->charge_point->register_set_display_message_callback(
         [this](const std::vector<ocpp::DisplayMessage>& messages) -> ocpp::v16::DataTransferResponse {
             ocpp::v16::DataTransferResponse response;

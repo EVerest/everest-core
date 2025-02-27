@@ -3,6 +3,7 @@
 #ifndef OCPP_V201_CONVERSIONS_HPP
 #define OCPP_V201_CONVERSIONS_HPP
 
+#include <generated/types/display_message.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118_charger.hpp>
 #include <generated/types/ocpp.hpp>
@@ -185,11 +186,11 @@ to_everest_ocpp_transaction_event(const ocpp::v201::TransactionEventRequest& tra
 
 /// \brief Converts a given ocpp::v201::MessageFormat \p message_format to a
 /// types::ocpp::MessageFormat
-types::display_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
+types::text_message::MessageFormat to_everest_message_format(const ocpp::v201::MessageFormatEnum& message_format);
 
 /// \brief Converts a given ocpp::v201::MessageContent \p message_content to a
 /// types::ocpp::MessageContent
-types::display_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
+types::text_message::MessageContent to_everest_message_content(const ocpp::v201::MessageContent& message_content);
 
 /// \brief Converts a given ocpp::v201::TransactionEventResponse \p transaction_event_response to a
 /// types::ocpp::OcppTransactionEventResponse
