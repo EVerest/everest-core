@@ -141,7 +141,7 @@ types:
       personal_message:
         description: Personal message
         type: object
-        $ref: /display_message#/MessageContent
+        $ref: /text_message#/MessageContent
   DataTransferStatus:
     description: Data Transfer Status enum
     type: string

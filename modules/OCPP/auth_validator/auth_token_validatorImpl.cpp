@@ -68,8 +68,8 @@ auth_token_validatorImpl::validate_pnc_request(const types::authorization::Provi
     }
 
     validation_result.reason = types::authorization::TokenValidationStatusMessage();
-    validation_result.reason->messages = std::vector<types::display_message::MessageContent>();
-    types::display_message::MessageContent content;
+    validation_result.reason->messages = std::vector<types::text_message::MessageContent>();
+    types::text_message::MessageContent content;
     content.content = "PnC OCPP1.6 Validiation result by CSMS";
     validation_result.reason->messages->push_back(content);
 
@@ -92,8 +92,8 @@ auth_token_validatorImpl::validate_standard_request(const types::authorization::
     }
 
     result.reason = types::authorization::TokenValidationStatusMessage();
-    result.reason->messages = std::vector<types::display_message::MessageContent>();
-    types::display_message::MessageContent content;
+    result.reason->messages = std::vector<types::text_message::MessageContent>();
+    types::text_message::MessageContent content;
     content.content = "Validation by OCPP 1.6 Central System";
     result.reason->messages->push_back(content);
 

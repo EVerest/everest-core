@@ -3,6 +3,7 @@
 #ifndef OCPP_V16_CONVERSIONS_HPP
 #define OCPP_V16_CONVERSIONS_HPP
 
+#include <generated/types/display_message.hpp>
 #include <generated/types/evse_manager.hpp>
 #include <generated/types/iso15118.hpp>
 #include <generated/types/ocpp.hpp>
