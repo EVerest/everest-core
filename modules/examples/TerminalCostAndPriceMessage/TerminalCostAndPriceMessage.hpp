@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
-#ifndef DISPLAY_MESSAGE_HPP
-#define DISPLAY_MESSAGE_HPP
+#ifndef TERMINAL_COST_AND_PRICE_MESSAGE_HPP
+#define TERMINAL_COST_AND_PRICE_MESSAGE_HPP
 
 //
 // AUTO GENERATED - MARKED REGIONS WILL BE KEPT
@@ -11,7 +11,7 @@
 #include "ld-ev.hpp"
 
 // headers for provided interface implementations
-#include <generated/interfaces/display_message/Implementation.hpp>
+#include <generated/interfaces/empty/Implementation.hpp>
 
 // headers for required interface implementations
 #include <generated/interfaces/session_cost/Interface.hpp>
@@ -27,14 +27,11 @@ struct Conf {};
 class TerminalCostAndPriceMessage : public Everest::ModuleBase {
 public:
     TerminalCostAndPriceMessage() = delete;
-    TerminalCostAndPriceMessage(const ModuleInfo& info, std::unique_ptr<display_messageImplBase> p_display_message,
+    TerminalCostAndPriceMessage(const ModuleInfo& info, std::unique_ptr<emptyImplBase> p_main,
                                 std::unique_ptr<session_costIntf> r_session_cost, Conf& config) :
-        ModuleBase(info),
-        p_display_message(std::move(p_display_message)),
-        r_session_cost(std::move(r_session_cost)),
-        config(config){};
+        ModuleBase(info), p_main(std::move(p_main)), r_session_cost(std::move(r_session_cost)), config(config) {};
 
-    const std::unique_ptr<display_messageImplBase> p_display_message;
+    const std::unique_ptr<emptyImplBase> p_main;
     const std::unique_ptr<session_costIntf> r_session_cost;
     const Conf& config;
 
@@ -63,4 +60,4 @@ private:
 
 } // namespace module
 
-#endif // DISPLAY_MESSAGE_HPP
+#endif // TERMINAL_COST_AND_PRICE_MESSAGE_HPP
