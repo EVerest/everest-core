@@ -1504,6 +1504,8 @@ void WebsocketLibwebsockets::on_conn_connected(ConnectionData* conn_data) {
     this->m_is_connected = true;
     this->reconnecting = false;
 
+    this->set_websocket_ping_interval(this->connection_options.ping_interval_s);
+
     // Stop any dangling reconnect
     {
         std::lock_guard<std::mutex> lk(this->reconnect_mutex);

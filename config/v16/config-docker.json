@@ -32,7 +32,7 @@
         "TransactionMessageAttempts": 1,
         "TransactionMessageRetryInterval": 10,
         "UnlockConnectorOnEVSideDisconnect": true,
-        "WebsocketPingInterval": 0
+        "WebsocketPingInterval": 10
     },
     "FirmwareManagement": {
         "SupportedFileTransferProtocols": "FTP"
