@@ -625,6 +625,10 @@ void AuthHandler::call_reservation_cancelled(const int32_t reservation_id,
     }
 
     this->reservation_cancelled_callback(evse_id, reservation_id, reason, send_reservation_update);
+
+    // If this was a global reservation or there are global reservations which made evse's go to reserved because of
+    // this reservation, they should be cancelled.
+    this->check_evse_reserved_and_send_updates();
 }
 
 void AuthHandler::handle_permanent_fault_raised(const int evse_id, const int32_t connector_id) {
@@ -763,7 +767,7 @@ void AuthHandler::handle_session_event(const int evse_id, const SessionEvent& ev
     // When reservation is started or ended, check if the number of reservations match the number of evses and
     // send 'reserved' notifications to the evse manager accordingly if needed.
     if (check_reservations) {
-        check_evse_reserved_and_send_updates();
+        this->check_evse_reserved_and_send_updates();
     }
 }
 
