@@ -1124,7 +1124,6 @@ function simulation_statemachine(mod) {
     case STATE_A:
       mod.use_three_phases_confirmed = mod.use_three_phases;
       pwmOff(mod);
-      reset_powermeter(mod);
       mod.simplified_mode = false;
 
       if (mod.last_state !== STATE_A && mod.last_state !== STATE_DISABLED
@@ -1149,6 +1148,7 @@ function simulation_statemachine(mod) {
       // Table A.6: Sequence 1.1 Plug-in
       if (mod.last_state === STATE_A) {
         mod.simplified_mode = false;
+        reset_powermeter(mod); // Fix race condition
       }
 
       break;
