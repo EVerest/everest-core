@@ -292,11 +292,6 @@ void evse_managerImpl::ready() {
             session_finished.meter_value = mod->get_latest_powermeter_data_billing();
             se.session_finished = session_finished;
             session_log.evse(false, fmt::format("Session Finished"));
-            // Cancel reservation, reservation might be stored when swiping rfid, but timed out, so we should not
-            // set the reservation id here.
-            if (mod->is_reserved()) {
-                mod->cancel_reservation(true);
-            }
             session_log.stopSession();
             mod->telemetry.publish("session", "events",
                                    {{"timestamp", Everest::Date::to_rfc3339(date::utc_clock::now())},
@@ -330,6 +325,11 @@ void evse_managerImpl::ready() {
 
         if (e == types::evse_manager::SessionEventEnum::SessionFinished) {
             this->mod->selected_protocol = "Unknown";
+        }
+
+        // Cancel reservations if charger is disabled
+        if (mod->is_reserved() and e == types::evse_manager::SessionEventEnum::Disabled) {
+            mod->cancel_reservation(true);
         }
 
         publish_selected_protocol(this->mod->selected_protocol);
@@ -421,6 +421,11 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
+    // reservation_id might have been stored when reserved id token has been authorized, but timed out, so
+    //  we can consider the reservation as consumed
+    if (mod->charger->get_authorized_eim() and mod->is_reserved()) {
+        mod->cancel_reservation(true);
+    }
     this->mod->charger->deauthorize();
 };
 
