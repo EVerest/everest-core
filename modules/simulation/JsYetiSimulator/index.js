@@ -1148,7 +1148,10 @@ function simulation_statemachine(mod) {
       // Table A.6: Sequence 1.1 Plug-in
       if (mod.last_state === STATE_A) {
         mod.simplified_mode = false;
-        reset_powermeter(mod); // Fix race condition
+        // Fix a race-condition between resetting powermeter parameters and reporting powermeter to the EvseManager back.
+        // The EvseManager reports in the transaction_finished event the total charged kWh.
+        // With resetting the powermeter too quickly, sometimes the EvseManager reports 0.00 kWh back.
+        reset_powermeter(mod);
       }
 
       break;
