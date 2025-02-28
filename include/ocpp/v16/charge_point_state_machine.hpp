@@ -25,6 +25,7 @@ enum class FSMEvent {
     ReserveConnector,
     TransactionStoppedAndUserActionRequired,
     ChangeAvailabilityToUnavailable,
+    ReservationEnd,
     // FaultDetected - note: this event is handled via a separate function
     I1_ReturnToAvailable,
     I2_ReturnToPreparing,

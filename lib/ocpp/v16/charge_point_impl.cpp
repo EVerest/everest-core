@@ -1693,10 +1693,6 @@ void ChargePointImpl::preprocess_change_availability_request(
 void ChargePointImpl::execute_connectors_availability_change(const std::vector<int32_t>& changed_connectors,
                                                              const ocpp::v16::AvailabilityType availability,
                                                              bool persist) {
-
-    // if evse availability changes, status event is only emitted for evse
-    bool evse_changed = std::find(changed_connectors.begin(), changed_connectors.end(), 0) != changed_connectors.end();
-
     for (const auto& connector : changed_connectors) {
         if (persist) {
             try {
@@ -1707,7 +1703,7 @@ void ChargePointImpl::execute_connectors_availability_change(const std::vector<i
             }
         }
         if (availability == AvailabilityType::Operative) {
-            if (connector == 0 or !evse_changed) {
+            if (connector == 0) {
                 this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
             }
 
@@ -1715,7 +1711,7 @@ void ChargePointImpl::execute_connectors_availability_change(const std::vector<i
                 this->enable_evse_callback(connector);
             }
         } else {
-            if (connector == 0 or !evse_changed) {
+            if (connector == 0) {
                 this->status->submit_event(connector, FSMEvent::ChangeAvailabilityToUnavailable, ocpp::DateTime());
             }
             if (this->disable_evse_callback != nullptr) {
@@ -2986,6 +2982,8 @@ void ChargePointImpl::handleReserveNowRequest(ocpp::Call<ReserveNowRequest> call
 
     if (this->status->get_state(call.msg.connectorId) == ChargePointStatus::Faulted) {
         response.status = ReservationStatus::Faulted;
+    } else if (this->status->get_state(call.msg.connectorId) == ChargePointStatus::Preparing) {
+        response.status = ReservationStatus::Occupied;
     } else if (this->reserve_now_callback != nullptr &&
                this->configuration->getSupportedFeatureProfiles().find("Reservation") != std::string::npos) {
         if (call.msg.connectorId != 0 || this->configuration->getReserveConnectorZeroSupported().value_or(false)) {
@@ -4615,7 +4613,7 @@ void ChargePointImpl::on_reservation_start(int32_t connector) {
 }
 
 void ChargePointImpl::on_reservation_end(int32_t connector) {
-    this->status->submit_event(connector, FSMEvent::BecomeAvailable, ocpp::DateTime());
+    this->status->submit_event(connector, FSMEvent::ReservationEnd, ocpp::DateTime());
 }
 
 void ChargePointImpl::on_enabled(int32_t connector) {

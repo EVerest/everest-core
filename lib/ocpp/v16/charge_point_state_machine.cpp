@@ -60,11 +60,10 @@ static const FSMDefinition FSM_DEF = {
          {FSMEvent::ChangeAvailabilityToUnavailable, FSMState::Unavailable},
      }},
     {FSMState::Reserved,
-     {
-         {FSMEvent::BecomeAvailable, FSMState::Available},
-         {FSMEvent::UsageInitiated, FSMState::Preparing},
-         {FSMEvent::ChangeAvailabilityToUnavailable, FSMState::Unavailable},
-     }},
+     {{FSMEvent::BecomeAvailable, FSMState::Available},
+      {FSMEvent::UsageInitiated, FSMState::Preparing},
+      {FSMEvent::ChangeAvailabilityToUnavailable, FSMState::Unavailable},
+      {FSMEvent::ReservationEnd, FSMState::Available}}},
     {FSMState::Unavailable,
      {
          {FSMEvent::BecomeAvailable, FSMState::Available},
