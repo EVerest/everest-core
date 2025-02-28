@@ -105,6 +105,7 @@ target_include_directories(${DIN_SERVER_NAME} PRIVATE
     ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
     ${CMAKE_BINARY_DIR}/generated/include
 )
+add_dependencies(${DIN_SERVER_NAME} generate_cpp_files)
 
 target_compile_definitions(${DIN_SERVER_NAME} PRIVATE
     -DUNIT_TEST
@@ -142,6 +143,7 @@ target_include_directories(${SDP_NAME} PRIVATE
     ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
     ${CMAKE_BINARY_DIR}/generated/include
 )
+add_dependencies(${SDP_NAME} generate_cpp_files)
 
 target_compile_definitions(${SDP_NAME} PRIVATE
     -DUNIT_TEST
@@ -173,6 +175,7 @@ target_include_directories(${V2GCTX_NAME} PRIVATE
     ${CMAKE_BINARY_DIR}/generated/modules/${MODULE_NAME}
     ${CMAKE_BINARY_DIR}/generated/include
 )
+add_dependencies(${V2GCTX_NAME} generate_cpp_files)
 
 target_compile_definitions(${V2GCTX_NAME} PRIVATE
     -DUNIT_TEST
