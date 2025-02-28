@@ -419,6 +419,11 @@ void evse_managerImpl::handle_authorize_response(types::authorization::ProvidedI
 };
 
 void evse_managerImpl::handle_withdraw_authorization() {
+    // reservation_id might have been stored when reserved id token has been authorized, but timed out, so
+    //  we can consider the reservation as consumed
+    if (mod->charger->get_authorized_eim() and mod->is_reserved()) {
+        mod->cancel_reservation(true);
+    }
     this->mod->charger->deauthorize();
 };
 
