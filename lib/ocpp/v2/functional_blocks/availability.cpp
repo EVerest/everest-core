@@ -6,19 +6,16 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/messages/Heartbeat.hpp>
 #include <ocpp/v2/messages/StatusNotification.hpp>
 
 namespace ocpp::v2 {
-Availability::Availability(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                           EvseManagerInterface& evse_manager, ComponentStateManagerInterface& component_state_manager,
+Availability::Availability(const FunctionalBlockContext& functional_block_context,
                            std::optional<TimeSyncCallback> time_sync_callback,
                            std::optional<AllConnectorsUnavailableCallback> all_connectors_unavailable_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    evse_manager(evse_manager),
-    component_state_manager(component_state_manager),
+    context(functional_block_context),
     time_sync_callback(time_sync_callback),
     all_connectors_unavailable_callback(all_connectors_unavailable_callback) {
 }
@@ -48,7 +45,7 @@ void Availability::status_notification_req(const int32_t evse_id, const int32_t 
     req.connectorStatus = status;
 
     ocpp::Call<StatusNotificationRequest> call(req);
-    this->message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 }
 
 void Availability::heartbeat_req(const bool initiated_by_trigger_message) {
@@ -56,7 +53,7 @@ void Availability::heartbeat_req(const bool initiated_by_trigger_message) {
 
     heartbeat_request_time = std::chrono::steady_clock::now();
     ocpp::Call<HeartbeatRequest> call(req);
-    this->message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 }
 
 void Availability::handle_scheduled_change_availability_requests(const int32_t evse_id) {
@@ -64,13 +61,13 @@ void Availability::handle_scheduled_change_availability_requests(const int32_t e
         EVLOG_info << "Found scheduled ChangeAvailability.req for evse_id:" << evse_id;
         const auto req = this->scheduled_change_availability_requests[evse_id].request;
         const auto persist = this->scheduled_change_availability_requests[evse_id].persist;
-        if (!this->evse_manager.any_transaction_active(req.evse)) {
+        if (!this->context.evse_manager.any_transaction_active(req.evse)) {
             EVLOG_info << "Changing availability of evse:" << evse_id;
             this->execute_change_availability_request(req, persist);
             this->scheduled_change_availability_requests.erase(evse_id);
             // Check succeeded, trigger the callback if needed
             if (this->all_connectors_unavailable_callback.has_value() and
-                this->evse_manager.are_all_connectors_effectively_inoperative()) {
+                this->context.evse_manager.are_all_connectors_effectively_inoperative()) {
                 this->all_connectors_unavailable_callback.value()();
             }
         } else {
@@ -98,16 +95,16 @@ void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest
     response.status = ChangeAvailabilityStatusEnum::Scheduled;
 
     // Sanity check: if we're addressing an EVSE or a connector, it must actually exist
-    if (msg.evse.has_value() and !this->evse_manager.is_valid_evse(msg.evse.value())) {
+    if (msg.evse.has_value() and !this->context.evse_manager.is_valid_evse(msg.evse.value())) {
         EVLOG_warning << "CSMS requested ChangeAvailability for invalid evse id or connector id";
         response.status = ChangeAvailabilityStatusEnum::Rejected;
         ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
     // Check if we have any transaction running on the EVSE (or any EVSE if we're addressing the whole CS)
-    const auto transaction_active = this->evse_manager.any_transaction_active(msg.evse);
+    const auto transaction_active = this->context.evse_manager.any_transaction_active(msg.evse);
     // Check if we're already in the requested state
     const auto is_already_in_state = this->is_already_in_state(msg);
 
@@ -134,7 +131,7 @@ void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest
     // Respond to the CSMS before performing any changes to avoid StatusNotification.req being sent before
     // the ChangeAvailabilityResponse.
     ocpp::CallResult<ChangeAvailabilityResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (!transaction_active) {
         // No transactions - execute the change now
@@ -144,7 +141,7 @@ void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest
         if (evse_id == 0) {
             // The whole CS is being addressed - we need to prevent further transactions from starting.
             // To do that, make all EVSEs without an active transaction Inoperative
-            for (auto const& evse : this->evse_manager) {
+            for (auto const& evse : this->context.evse_manager) {
                 if (!evse.has_active_transaction()) {
                     // FIXME: This will linger after the update too! We probably need another mechanism...
                     this->set_evse_operative_status(evse.get_id(), OperationalStatusEnum::Inoperative, false);
@@ -153,9 +150,9 @@ void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest
         } else {
             // A single EVSE is being addressed. We need to prevent further transactions from starting on it.
             // To do that, make all connectors of the EVSE without an active transaction Inoperative.
-            int number_of_connectors = this->evse_manager.get_evse(evse_id).get_number_of_connectors();
+            int number_of_connectors = this->context.evse_manager.get_evse(evse_id).get_number_of_connectors();
             for (int connector_id = 1; connector_id <= number_of_connectors; connector_id++) {
-                if (!this->evse_manager.get_evse(evse_id).has_active_transaction(connector_id)) {
+                if (!this->context.evse_manager.get_evse(evse_id).has_active_transaction(connector_id)) {
                     // FIXME: This will linger after the update too! We probably need another mechanism...
                     this->set_connector_operative_status(evse_id, connector_id, OperationalStatusEnum::Inoperative,
                                                          false);
@@ -167,7 +164,7 @@ void Availability::handle_change_availability_req(Call<ChangeAvailabilityRequest
 
 void Availability::handle_heartbeat_response(CallResult<HeartbeatResponse> call) {
     if (this->time_sync_callback.has_value() and
-        this->device_model.get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
             std::string::npos) {
         // the received currentTime was the time the CSMS received the heartbeat request
         // to get a system time as accurate as possible keep the time-of-flight into account
@@ -181,15 +178,16 @@ bool Availability::is_already_in_state(const ChangeAvailabilityRequest& request)
     // TODO: This checks against the individual status setting. What about effective/persisted status?
     if (!request.evse.has_value()) {
         // We're addressing the whole charging station
-        return (this->component_state_manager.get_cs_individual_operational_status() == request.operationalStatus);
+        return (this->context.component_state_manager.get_cs_individual_operational_status() ==
+                request.operationalStatus);
     }
     if (!request.evse.value().connectorId.has_value()) {
         // An EVSE is addressed
-        return (this->component_state_manager.get_evse_individual_operational_status(request.evse.value().id) ==
+        return (this->context.component_state_manager.get_evse_individual_operational_status(request.evse.value().id) ==
                 request.operationalStatus);
     }
     // A connector is being addressed
-    return (this->component_state_manager.get_connector_individual_operational_status(
+    return (this->context.component_state_manager.get_connector_individual_operational_status(
                 request.evse.value().id, request.evse.value().connectorId.value()) == request.operationalStatus);
 }
 
@@ -207,15 +205,15 @@ void Availability::execute_change_availability_request(ChangeAvailabilityRequest
 }
 
 void Availability::set_cs_operative_status(OperationalStatusEnum new_status, bool persist) {
-    this->component_state_manager.set_cs_individual_operational_status(new_status, persist);
+    this->context.component_state_manager.set_cs_individual_operational_status(new_status, persist);
 }
 
 void Availability::set_evse_operative_status(int32_t evse_id, OperationalStatusEnum new_status, bool persist) {
-    this->evse_manager.get_evse(evse_id).set_evse_operative_status(new_status, persist);
+    this->context.evse_manager.get_evse(evse_id).set_evse_operative_status(new_status, persist);
 }
 
 void Availability::set_connector_operative_status(int32_t evse_id, int32_t connector_id,
                                                   OperationalStatusEnum new_status, bool persist) {
-    this->evse_manager.get_evse(evse_id).set_connector_operative_status(connector_id, new_status, persist);
+    this->context.evse_manager.get_evse(evse_id).set_connector_operative_status(connector_id, new_status, persist);
 }
 } // namespace ocpp::v2

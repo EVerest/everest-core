@@ -4,6 +4,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "component_state_manager_mock.hpp"
+#include "connectivity_manager_mock.hpp"
+#include "evse_security_mock.hpp"
+#include "mocks/database_handler_mock.hpp"
 #include <evse_manager_fake.hpp>
 #include <message_dispatcher_mock.hpp>
 
@@ -11,6 +15,7 @@
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/init_device_model_db.hpp>
 
 #include <ocpp/v2/messages/CancelReservation.hpp>
@@ -36,8 +41,11 @@ protected: // Functions
         database_connection(std::make_unique<ocpp::common::DatabaseConnection>(DEVICE_MODEL_DB_IN_MEMORY_PATH)) {
         database_connection->open_connection();
         this->device_model = create_device_model();
+        this->functional_block_context = std::make_unique<FunctionalBlockContext>(
+            this->mock_dispatcher, *this->device_model, this->connectivity_manager, this->evse_manager,
+            this->database_handler, this->evse_security, this->component_state_manager);
         this->reservation = std::make_unique<Reservation>(
-            mock_dispatcher, *this->device_model, evse_manager, reserve_now_callback_mock.AsStdFunction(),
+            *functional_block_context, reserve_now_callback_mock.AsStdFunction(),
             cancel_reservation_callback_mock.AsStdFunction(), is_reservation_for_token_callback_mock.AsStdFunction());
         default_test_token.idToken = "SOME_TOKEN";
         default_test_token.type = IdTokenEnum::ISO14443;
@@ -160,6 +168,10 @@ protected: // Functions
     }
 
 protected: // Members
+    ConnectivityManagerMock connectivity_manager;
+    ocpp::v2::DatabaseHandlerMock database_handler;
+    ocpp::EvseSecurityMock evse_security;
+    ComponentStateManagerMock component_state_manager;
     // DatabaseConnection as member so the database keeps open and is not destroyed (because this is an in memory
     // database).
     std::unique_ptr<ocpp::common::DatabaseConnection> database_connection;
@@ -175,6 +187,7 @@ protected: // Members
     MockFunction<ocpp::ReservationCheckStatus(const int32_t evse_id, const ocpp::CiString<36> idToken,
                                               const std::optional<ocpp::CiString<36>> groupIdToken)>
         is_reservation_for_token_callback_mock;
+    std::unique_ptr<FunctionalBlockContext> functional_block_context;
     // Make reservation a unique ptr so we can create it after creating the device model.
     std::unique_ptr<Reservation> reservation;
 
@@ -205,11 +218,7 @@ TEST_F(ReservationTest, handle_reserve_now_reservation_not_available) {
 
 TEST_F(ReservationTest, handle_reserve_now_callback_nullptr) {
     // The callback to make the reservation is a nullptr. This should reject the request.
-    Reservation r{mock_dispatcher,
-                  *this->device_model,
-                  evse_manager,
-                  nullptr,
-                  cancel_reservation_callback_mock.AsStdFunction(),
+    Reservation r{*this->functional_block_context, nullptr, cancel_reservation_callback_mock.AsStdFunction(),
                   is_reservation_for_token_callback_mock.AsStdFunction()};
 
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
@@ -473,9 +482,8 @@ TEST_F(ReservationTest, handle_cancel_reservation_reservation_not_enabled) {
 
 TEST_F(ReservationTest, handle_cancel_reservation_callback_nullptr) {
     // Try to cancel a reservation, while the cancel reservation callback is a nullptr. This will reject the request.
-    Reservation r{mock_dispatcher, *this->device_model,
-                  evse_manager,    reserve_now_callback_mock.AsStdFunction(),
-                  nullptr,         is_reservation_for_token_callback_mock.AsStdFunction()};
+    Reservation r{*this->functional_block_context, reserve_now_callback_mock.AsStdFunction(), nullptr,
+                  is_reservation_for_token_callback_mock.AsStdFunction()};
 
     EXPECT_CALL(mock_dispatcher, dispatch_call_result(_)).WillOnce(Invoke([](const json& call_result) {
         auto response = call_result[ocpp::CALLRESULT_PAYLOAD].get<CancelReservationResponse>();
@@ -530,10 +538,13 @@ TEST_F(ReservationTest, handle_message_wrong_type) {
 TEST_F(ReservationTest, handle_reserve_now_no_evses) {
     // Try to make a 'global' reservation, but there are no evse's in the evse manager.
     EvseManagerFake evse_manager_no_evses{0};
-    Reservation r{mock_dispatcher,
-                  *this->device_model,
-                  evse_manager_no_evses,
-                  reserve_now_callback_mock.AsStdFunction(),
+
+    const FunctionalBlockContext b{this->mock_dispatcher,        *this->device_model,    this->connectivity_manager,
+                                   evse_manager_no_evses,        this->database_handler, this->evse_security,
+                                   this->component_state_manager};
+    this->functional_block_context = std::make_unique<FunctionalBlockContext>(b);
+
+    Reservation r{*this->functional_block_context, reserve_now_callback_mock.AsStdFunction(),
                   cancel_reservation_callback_mock.AsStdFunction(),
                   is_reservation_for_token_callback_mock.AsStdFunction()};
 

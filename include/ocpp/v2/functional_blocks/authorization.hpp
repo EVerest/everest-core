@@ -3,16 +3,17 @@
 
 #pragma once
 
-#include <ocpp/v2/database_handler.hpp>
-#include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/message_handler.hpp>
 
 namespace ocpp::v2 {
+struct FunctionalBlockContext;
 struct AuthorizationCacheEntry;
 struct AuthorizeResponse;
 struct ClearCacheRequest;
 struct SendLocalListRequest;
 struct GetLocalListVersionRequest;
+
+class DatabaseHandlerInterface;
 
 class AuthorizationInterface : public MessageHandlerInterface {
 public:
@@ -43,11 +44,7 @@ public:
 
 class Authorization : public AuthorizationInterface {
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    ConnectivityManagerInterface& connectivity_manager;
-    DatabaseHandlerInterface& database_handler;
-    EvseSecurity& evse_security;
+    const FunctionalBlockContext& context;
 
     // threads and synchronization
     bool auth_cache_cleanup_required;
@@ -57,9 +54,7 @@ private: // Members
     std::atomic_bool auth_cache_cleanup_handler_running;
 
 public:
-    Authorization(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                  ConnectivityManagerInterface& connectivity_manager, DatabaseHandlerInterface& database_handler,
-                  EvseSecurity& evse_security);
+    explicit Authorization(const FunctionalBlockContext& context);
     ~Authorization();
     void start_auth_cache_cleanup_thread() override;
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;

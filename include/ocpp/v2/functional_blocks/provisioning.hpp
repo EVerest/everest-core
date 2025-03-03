@@ -5,17 +5,9 @@
 
 #include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v2/message_dispatcher.hpp>
-
-namespace ocpp {
-class EvseSecurity;
-
-namespace v2 {
-class DeviceModel;
-class ConnectivityManagerInterface;
-class ComponentStateManagerInterface;
+namespace ocpp::v2 {
+struct FunctionalBlockContext;
 class OcspUpdaterInterface;
-class EvseManagerInterface;
 
 class AvailabilityInterface;
 class SecurityInterface;
@@ -27,10 +19,10 @@ struct BootNotificationResponse;
 struct SetVariablesRequest;
 struct GetBaseReportRequest;
 struct ResetRequest;
+struct SetNetworkProfileRequest;
 
 typedef std::function<void(const ocpp::DateTime& currentTime)> TimeSyncCallback;
-typedef std::function<void(const ocpp::v2::BootNotificationResponse& boot_notification_response)>
-    BootNotificationCallback;
+typedef std::function<void(const BootNotificationResponse& boot_notification_response)> BootNotificationCallback;
 typedef std::function<SetNetworkProfileStatusEnum(const int32_t configuration_slot,
                                                   const NetworkConnectionProfile& network_connection_profile)>
     ValidateNetworkProfileCallback;
@@ -72,15 +64,10 @@ public:
 
 class Provisioning : public ProvisioningInterface {
 public:
-    Provisioning(DeviceModel& device_model, MessageDispatcherInterface<MessageType>& message_dispatcher,
-                 MessageQueue<v2::MessageType>& message_queue, ConnectivityManagerInterface& connectivity_manager,
-                 ComponentStateManagerInterface& component_state_manager, OcspUpdaterInterface& ocsp_updater,
-                 EvseManagerInterface& evse_manager, EvseSecurity& evse_security,
-
-                 AvailabilityInterface& availability, MeterValuesInterface& meter_values, SecurityInterface& security,
-                 DiagnosticsInterface& diagnostics, TransactionInterface& transaction,
-
-                 std::optional<TimeSyncCallback> time_sync_callback,
+    Provisioning(const FunctionalBlockContext& functional_block_context, MessageQueue<v2::MessageType>& message_queue,
+                 OcspUpdaterInterface& ocsp_updater, AvailabilityInterface& availability,
+                 MeterValuesInterface& meter_values, SecurityInterface& security, DiagnosticsInterface& diagnostics,
+                 TransactionInterface& transaction, std::optional<TimeSyncCallback> time_sync_callback,
                  std::optional<BootNotificationCallback> boot_notification_callback,
                  std::optional<ValidateNetworkProfileCallback> validate_network_profile_callback,
                  IsResetAllowedCallback is_reset_allowed_callback, ResetCallback reset_callback,
@@ -97,14 +84,9 @@ public:
     set_variables(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source) override;
 
 private: // Members
-    DeviceModel& device_model;
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
+    const FunctionalBlockContext& context;
     MessageQueue<v2::MessageType>& message_queue;
-    ConnectivityManagerInterface& connectivity_manager;
-    ComponentStateManagerInterface& component_state_manager;
     OcspUpdaterInterface& ocsp_updater;
-    EvseManagerInterface& evse_manager;
-    EvseSecurity& evse_security;
 
     AvailabilityInterface& availability;
     MeterValuesInterface& meter_values;
@@ -157,5 +139,4 @@ private: // Functions
     set_variables_internal(const std::vector<SetVariableData>& set_variable_data_vector, const std::string& source,
                            const bool allow_read_only);
 };
-} // namespace v2
-} // namespace ocpp
+} // namespace ocpp::v2

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/message_handler.hpp>
 
 #pragma once
 
 namespace ocpp::v2 {
+struct FunctionalBlockContext;
 class EvseInterface;
-class EvseManagerInterface;
 
 struct ReserveNowRequest;
 struct CancelReservationRequest;
@@ -21,7 +20,7 @@ typedef std::function<ocpp::ReservationCheckStatus(const int32_t evse_id, const 
 
 class ReservationInterface : public MessageHandlerInterface {
 public:
-    virtual ~ReservationInterface(){};
+    virtual ~ReservationInterface() = default;
     virtual void on_reservation_status(const int32_t reservation_id, const ReservationUpdateStatusEnum status) = 0;
     virtual ocpp::ReservationCheckStatus
     is_evse_reserved_for_other(const EvseInterface& evse, const IdToken& id_token,
@@ -32,9 +31,7 @@ public:
 
 class Reservation : public ReservationInterface {
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    EvseManagerInterface& evse_manager;
+    const FunctionalBlockContext& context;
 
     /// \brief Callback function is called when a reservation request is received from the CSMS
     ReserveNowCallback reserve_now_callback;
@@ -47,8 +44,7 @@ private: // Members
     IsReservationForTokenCallback is_reservation_for_token_callback;
 
 public:
-    Reservation(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                EvseManagerInterface& evse_manager, ReserveNowCallback reserve_now_callback,
+    Reservation(const FunctionalBlockContext& functional_block_context, ReserveNowCallback reserve_now_callback,
                 CancelReservationCallback cancel_reservation_callback,
                 const IsReservationForTokenCallback is_reservation_for_token_callback);
     virtual void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;

@@ -11,6 +11,7 @@
 #include <ocpp/v2/device_model_storage_interface.hpp>
 #include <ocpp/v2/device_model_storage_sqlite.hpp>
 #include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/notify_report_requests_splitter.hpp>
 
@@ -497,83 +498,77 @@ void ChargePoint::initialize(const std::map<int32_t, int32_t>& evse_connector_st
 
     this->message_dispatcher =
         std::make_unique<MessageDispatcher>(*this->message_queue, *this->device_model, registration_status);
+
+    // Construct functional blocks.
+    functional_block_context = std::make_unique<FunctionalBlockContext>(
+        *this->message_dispatcher, *this->device_model, *this->connectivity_manager, *this->evse_manager,
+        *this->database_handler, *this->evse_security, *this->component_state_manager);
+
     this->data_transfer = std::make_unique<DataTransfer>(
-        *this->message_dispatcher, this->callbacks.data_transfer_callback, DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
-    this->security = std::make_unique<Security>(*this->message_dispatcher, *this->device_model, *this->logging,
-                                                *this->evse_security, *this->connectivity_manager, this->ocsp_updater,
+        *this->functional_block_context, this->callbacks.data_transfer_callback, DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+    this->security = std::make_unique<Security>(*this->functional_block_context, *this->logging, this->ocsp_updater,
                                                 this->callbacks.security_event_callback);
 
     if (device_model->get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
             .value_or(false)) {
         this->reservation = std::make_unique<Reservation>(
-            *this->message_dispatcher, *this->device_model, *this->evse_manager,
-            this->callbacks.reserve_now_callback.value(), this->callbacks.cancel_reservation_callback.value(),
-            this->callbacks.is_reservation_for_token_callback);
+            *this->functional_block_context, this->callbacks.reserve_now_callback.value(),
+            this->callbacks.cancel_reservation_callback.value(), this->callbacks.is_reservation_for_token_callback);
     }
 
-    this->authorization = std::make_unique<Authorization>(*this->message_dispatcher, *this->device_model,
-                                                          *this->connectivity_manager.get(),
-                                                          *this->database_handler.get(), *this->evse_security.get());
+    this->authorization = std::make_unique<Authorization>(*this->functional_block_context);
     this->authorization->start_auth_cache_cleanup_thread();
 
     this->diagnostics = std::make_unique<Diagnostics>(
-        *this->message_dispatcher, *this->device_model, *this->connectivity_manager, *this->authorization,
-        this->callbacks.get_log_request_callback, this->callbacks.get_customer_information_callback,
-        this->callbacks.clear_customer_information_callback);
+        *this->functional_block_context, *this->authorization, this->callbacks.get_log_request_callback,
+        this->callbacks.get_customer_information_callback, this->callbacks.clear_customer_information_callback);
     this->diagnostics->start_monitoring();
 
     if (device_model->get_optional_value<bool>(ControllerComponentVariables::DisplayMessageCtrlrAvailable)
             .value_or(false)) {
         this->display_message = std::make_unique<DisplayMessageBlock>(
-            *this->message_dispatcher, *this->device_model, *this->evse_manager,
-            this->callbacks.get_display_message_callback.value(), this->callbacks.set_display_message_callback.value(),
+            *this->functional_block_context, this->callbacks.get_display_message_callback.value(),
+            this->callbacks.set_display_message_callback.value(),
             this->callbacks.clear_display_message_callback.value());
     }
 
-    this->meter_values =
-        std::make_unique<MeterValues>(*this->message_dispatcher, *this->device_model, *this->evse_manager);
+    this->meter_values = std::make_unique<MeterValues>(*this->functional_block_context);
 
-    this->availability = std::make_unique<Availability>(
-        *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->component_state_manager,
-        this->callbacks.time_sync_callback, this->callbacks.all_connectors_unavailable_callback);
+    this->availability = std::make_unique<Availability>(*functional_block_context, this->callbacks.time_sync_callback,
+                                                        this->callbacks.all_connectors_unavailable_callback);
 
     if (this->callbacks.configure_network_connection_profile_callback.has_value()) {
         this->connectivity_manager->set_configure_network_connection_profile_callback(
             this->callbacks.configure_network_connection_profile_callback.value());
     }
 
-    this->smart_charging = std::make_unique<SmartCharging>(
-        *this->device_model, *this->evse_manager, *this->connectivity_manager, *this->message_dispatcher,
-        *this->database_handler, this->callbacks.set_charging_profiles_callback);
+    this->smart_charging = std::make_unique<SmartCharging>(*this->functional_block_context,
+                                                           this->callbacks.set_charging_profiles_callback);
 
     this->tariff_and_cost = std::make_unique<TariffAndCost>(
-        *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->meter_values,
-        this->callbacks.set_display_message_callback, this->callbacks.set_running_cost_callback, this->io_service);
+        *functional_block_context, *this->meter_values, this->callbacks.set_display_message_callback,
+        this->callbacks.set_running_cost_callback, this->io_service);
 
     this->firmware_update = std::make_unique<FirmwareUpdate>(
-        *this->message_dispatcher, *this->device_model, *this->evse_manager, *this->evse_security, *this->availability,
-        *this->security, this->callbacks.update_firmware_request_callback,
-        this->callbacks.all_connectors_unavailable_callback);
+        *this->functional_block_context, *this->availability, *this->security,
+        this->callbacks.update_firmware_request_callback, this->callbacks.all_connectors_unavailable_callback);
 
     this->transaction = std::make_unique<TransactionBlock>(
-        *this->message_dispatcher, *this->device_model, *this->connectivity_manager, *this->evse_manager,
-        *this->message_queue, *this->database_handler, *this->authorization, *this->availability, *this->smart_charging,
-        *this->tariff_and_cost, this->callbacks.stop_transaction_callback, this->callbacks.pause_charging_callback,
-        this->callbacks.transaction_event_callback, this->callbacks.transaction_event_response_callback,
-        this->callbacks.reset_callback);
+        *this->functional_block_context, *this->message_queue, *this->authorization, *this->availability,
+        *this->smart_charging, *this->tariff_and_cost, this->callbacks.stop_transaction_callback,
+        this->callbacks.pause_charging_callback, this->callbacks.transaction_event_callback,
+        this->callbacks.transaction_event_response_callback, this->callbacks.reset_callback);
 
     this->provisioning = std::make_unique<Provisioning>(
-        *this->device_model, *this->message_dispatcher, *this->message_queue, *this->connectivity_manager,
-        *this->component_state_manager, this->ocsp_updater, *this->evse_manager, *this->evse_security,
-        *this->availability, *this->meter_values, *this->security, *this->diagnostics, *this->transaction,
+        *this->functional_block_context, *this->message_queue, this->ocsp_updater, *this->availability,
+        *this->meter_values, *this->security, *this->diagnostics, *this->transaction,
         this->callbacks.time_sync_callback, this->callbacks.boot_notification_callback,
         this->callbacks.validate_network_profile_callback, this->callbacks.is_reset_allowed_callback,
         this->callbacks.reset_callback, this->callbacks.stop_transaction_callback,
         this->callbacks.variable_changed_callback, this->registration_status);
 
     this->remote_transaction_control = std::make_unique<RemoteTransactionControl>(
-        *this->message_dispatcher, *this->device_model, *this->connectivity_manager, *this->evse_manager,
-        *this->component_state_manager, *this->transaction, *this->smart_charging, *this->meter_values,
+        *this->functional_block_context, *this->transaction, *this->smart_charging, *this->meter_values,
         *this->availability, *this->firmware_update, *this->security, this->reservation.get(), *this->provisioning,
         this->callbacks.unlock_connector_callback, this->callbacks.remote_start_transaction_callback,
         this->callbacks.stop_transaction_callback, this->registration_status, this->upload_log_status,

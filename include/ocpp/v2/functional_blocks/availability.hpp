@@ -3,15 +3,12 @@
 
 #pragma once
 
-#include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/message_handler.hpp>
 
 #include <ocpp/v2/messages/ChangeAvailability.hpp>
 
 namespace ocpp::v2 {
-class DeviceModel;
-class EvseManagerInterface;
-class ComponentStateManagerInterface;
+struct FunctionalBlockContext;
 
 struct HeartbeatResponse;
 
@@ -78,10 +75,7 @@ typedef std::function<void()> AllConnectorsUnavailableCallback;
 
 class Availability : public AvailabilityInterface {
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    EvseManagerInterface& evse_manager;
-    ComponentStateManagerInterface& component_state_manager;
+    const FunctionalBlockContext& context;
 
     std::optional<TimeSyncCallback> time_sync_callback;
     std::optional<AllConnectorsUnavailableCallback> all_connectors_unavailable_callback;
@@ -92,8 +86,7 @@ private: // Members
     Everest::SteadyTimer heartbeat_timer;
 
 public:
-    Availability(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                 EvseManagerInterface& evse_manager, ComponentStateManagerInterface& component_state_manager,
+    Availability(const FunctionalBlockContext& functional_block_context,
                  std::optional<TimeSyncCallback> time_sync_callback,
                  std::optional<AllConnectorsUnavailableCallback> all_connectors_unavailable_callback);
     ~Availability();

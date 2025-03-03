@@ -13,6 +13,7 @@
 #include "ocpp/v2/ctrlr_component_variables.hpp"
 #include "ocpp/v2/device_model.hpp"
 #include "ocpp/v2/device_model_storage_sqlite.hpp"
+#include "ocpp/v2/functional_blocks/functional_block_context.hpp"
 #include "ocpp/v2/functional_blocks/smart_charging.hpp"
 #include "ocpp/v2/init_device_model_db.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
@@ -83,7 +84,7 @@ protected:
     }
 
     ChargingSchedule create_charge_schedule(ChargingRateUnitEnum charging_rate_unit) {
-        int32_t id;
+        int32_t id = 0;
         std::vector<ChargingSchedulePeriod> charging_schedule_period;
         std::optional<CustomData> custom_data;
         std::optional<ocpp::DateTime> start_schedule;
@@ -161,6 +162,7 @@ protected:
         device_model(device_model_test_helper.get_device_model()),
         connectivity_manager(),
         set_charging_profiles_callback_mock(),
+        functional_block_context(nullptr),
         handler(create_smart_charging_handler()),
         uuid_generator(boost::uuids::random_generator()) {
 
@@ -191,15 +193,19 @@ protected:
         this->database_handler =
             std::make_unique<DatabaseHandlerFake>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
         database_handler->open_connection();
-        return std::make_unique<TestSmartCharging>(*device_model, *this->evse_manager, connectivity_manager,
-                                                   mock_dispatcher, *database_handler,
+        this->functional_block_context = std::make_unique<FunctionalBlockContext>(
+            this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
+            *this->database_handler, this->evse_security, this->component_state_manager);
+        return std::make_unique<TestSmartCharging>(*functional_block_context,
                                                    set_charging_profiles_callback_mock.AsStdFunction());
     }
 
     void reconfigure_for_nr_of_evses(int32_t nr_of_evses) {
         this->evse_manager = std::make_unique<EvseManagerFake>(nr_of_evses);
-        this->handler = std::make_unique<TestSmartCharging>(*device_model, *this->evse_manager, connectivity_manager,
-                                                            mock_dispatcher, *database_handler,
+        this->functional_block_context = std::make_unique<FunctionalBlockContext>(
+            this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
+            *this->database_handler, this->evse_security, this->component_state_manager);
+        this->handler = std::make_unique<TestSmartCharging>(*functional_block_context,
                                                             set_charging_profiles_callback_mock.AsStdFunction());
     }
 
@@ -211,7 +217,10 @@ protected:
     DeviceModel* device_model;
     ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
     std::unique_ptr<DatabaseHandlerFake> database_handler{};
+    ocpp::EvseSecurityMock evse_security;
+    ComponentStateManagerMock component_state_manager;
     MockFunction<void()> set_charging_profiles_callback_mock;
+    std::unique_ptr<FunctionalBlockContext> functional_block_context;
     std::unique_ptr<TestSmartCharging> handler;
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };

@@ -9,6 +9,7 @@
 #include "ocpp/common/types.hpp"
 #include "ocpp/v2/ctrlr_component_variables.hpp"
 #include "ocpp/v2/device_model.hpp"
+#include "ocpp/v2/functional_blocks/functional_block_context.hpp"
 #include "ocpp/v2/functional_blocks/smart_charging.hpp"
 #include "ocpp/v2/ocpp_types.hpp"
 #include <boost/uuid/uuid_generators.hpp>
@@ -266,6 +267,9 @@ protected:
             std::make_shared<DatabaseHandler>(std::move(database_connection), MIGRATION_FILES_LOCATION_V2);
         database_handler->open_connection();
         device_model = device_model_test_helper.get_device_model();
+        this->functional_block_context = std::make_unique<FunctionalBlockContext>(
+            this->mock_dispatcher, *this->device_model, this->connectivity_manager, *this->evse_manager,
+            *this->database_handler, this->evse_security, this->component_state_manager);
         // Defaults
         const auto& charging_rate_unit_cv = ControllerComponentVariables::ChargingScheduleChargingRateUnit;
         device_model->set_value(charging_rate_unit_cv.component, charging_rate_unit_cv.variable.value(),
@@ -274,8 +278,7 @@ protected:
         const auto& ac_phase_switching_cv = ControllerComponentVariables::ACPhaseSwitchingSupported;
         device_model->set_value(ac_phase_switching_cv.component, ac_phase_switching_cv.variable.value(),
                                 AttributeEnum::Actual, ac_phase_switching_supported.value_or(""), "test", true);
-        return TestSmartCharging(*device_model, *this->evse_manager, connectivity_manager, mock_dispatcher,
-                                 *database_handler, set_charging_profiles_callback_mock.AsStdFunction());
+        return TestSmartCharging(*functional_block_context, set_charging_profiles_callback_mock.AsStdFunction());
     }
 
     std::string uuid() {
@@ -317,7 +320,10 @@ protected:
     bool ignore_no_transaction = true;
     DeviceModel* device_model;
     ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
+    ocpp::EvseSecurityMock evse_security;
+    ComponentStateManagerMock component_state_manager;
     MockFunction<void()> set_charging_profiles_callback_mock;
+    std::unique_ptr<FunctionalBlockContext> functional_block_context;
     TestSmartCharging smart_charging = create_smart_charging();
     boost::uuids::random_generator uuid_generator = boost::uuids::random_generator();
 };

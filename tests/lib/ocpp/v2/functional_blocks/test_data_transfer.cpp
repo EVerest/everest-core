@@ -4,9 +4,18 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <message_dispatcher_mock.hpp>
-#include <ocpp/common/constants.hpp>
 #include <ocpp/v2/functional_blocks/data_transfer.hpp>
+
+#include "component_state_manager_mock.hpp"
+#include "connectivity_manager_mock.hpp"
+#include "evse_manager_fake.hpp"
+#include "evse_security_mock.hpp"
+#include "message_dispatcher_mock.hpp"
+#include "mocks/database_handler_mock.hpp"
+#include <ocpp/common/constants.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/functional_blocks/data_transfer.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/messages/DataTransfer.hpp>
 
 using namespace ocpp::v2;
@@ -22,9 +31,34 @@ DataTransferRequest create_example_request() {
     return request;
 }
 
-TEST(DataTransferTest, HandleDataTransferReq_NotImplemented) {
+class DataTransferTest : public ::testing::Test {
+public:
+protected: // Members
     MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+    DeviceModel* device_model;
+    ::testing::NiceMock<ConnectivityManagerMock> connectivity_manager;
+    ::testing::NiceMock<DatabaseHandlerMock> database_handler_mock;
+    ocpp::EvseSecurityMock evse_security;
+    EvseManagerFake evse_manager;
+    ComponentStateManagerMock component_state_manager;
+    FunctionalBlockContext functional_block_context;
+
+    DataTransferTest() :
+        mock_dispatcher(),
+        device_model(nullptr),
+        connectivity_manager(),
+        database_handler_mock(),
+        evse_security(),
+        evse_manager(1),
+        component_state_manager(),
+        functional_block_context{this->mock_dispatcher,        *this->device_model,         this->connectivity_manager,
+                                 this->evse_manager,           this->database_handler_mock, this->evse_security,
+                                 this->component_state_manager} {
+    }
+};
+
+TEST_F(DataTransferTest, HandleDataTransferReq_NotImplemented) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
     ocpp::Call<DataTransferRequest> call(request);
@@ -35,9 +69,8 @@ TEST(DataTransferTest, HandleDataTransferReq_NotImplemented) {
     EXPECT_THROW(data_transfer.handle_message(enhanced_message), MessageTypeNotImplementedException);
 }
 
-TEST(DataTransferTest, HandleDataTransferReq_NoCallback) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+TEST_F(DataTransferTest, HandleDataTransferReq_NoCallback) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
     ocpp::Call<DataTransferRequest> call(request);
@@ -53,16 +86,14 @@ TEST(DataTransferTest, HandleDataTransferReq_NoCallback) {
     data_transfer.handle_message(enhanced_message);
 }
 
-TEST(DataTransferTest, HandleDataTransferReq_WithCallback) {
-    MockMessageDispatcher mock_dispatcher;
-
+TEST_F(DataTransferTest, HandleDataTransferReq_WithCallback) {
     auto callback = [](const DataTransferRequest&) {
         DataTransferResponse response;
         response.status = DataTransferStatusEnum::Accepted;
         return response;
     };
 
-    DataTransfer data_transfer(mock_dispatcher, callback, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+    DataTransfer data_transfer(functional_block_context, callback, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
     ocpp::Call<DataTransferRequest> call(request);
@@ -78,9 +109,8 @@ TEST(DataTransferTest, HandleDataTransferReq_WithCallback) {
     data_transfer.handle_message(enhanced_message);
 }
 
-TEST(DataTransferTest, DataTransferReq_Offline) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+TEST_F(DataTransferTest, DataTransferReq_Offline) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
 
@@ -95,9 +125,8 @@ TEST(DataTransferTest, DataTransferReq_Offline) {
     EXPECT_FALSE(response.has_value());
 }
 
-TEST(DataTransferTest, DataTransferReq_Timeout) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, std::chrono::seconds(1));
+TEST_F(DataTransferTest, DataTransferReq_Timeout) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, std::chrono::seconds(1));
 
     DataTransferRequest request = create_example_request();
 
@@ -113,9 +142,8 @@ TEST(DataTransferTest, DataTransferReq_Timeout) {
     EXPECT_FALSE(response.has_value());
 }
 
-TEST(DataTransferTest, DataTransferReq_Accepted) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+TEST_F(DataTransferTest, DataTransferReq_Accepted) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
 
@@ -137,9 +165,8 @@ TEST(DataTransferTest, DataTransferReq_Accepted) {
     EXPECT_EQ(response->status, DataTransferStatusEnum::Accepted);
 }
 
-TEST(DataTransferTest, DataTransferReq_EnumConversionException) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+TEST_F(DataTransferTest, DataTransferReq_EnumConversionException) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
 
@@ -164,9 +191,8 @@ TEST(DataTransferTest, DataTransferReq_EnumConversionException) {
     EXPECT_FALSE(result.has_value());
 }
 
-TEST(DataTransferTest, DataTransferReq_JsonException) {
-    MockMessageDispatcher mock_dispatcher;
-    DataTransfer data_transfer(mock_dispatcher, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
+TEST_F(DataTransferTest, DataTransferReq_JsonException) {
+    DataTransfer data_transfer(functional_block_context, std::nullopt, ocpp::DEFAULT_WAIT_FOR_FUTURE_TIMEOUT);
 
     DataTransferRequest request = create_example_request();
 

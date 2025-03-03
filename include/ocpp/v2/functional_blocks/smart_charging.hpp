@@ -5,16 +5,11 @@
 
 #include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v2/database_handler.hpp>
 #include <ocpp/v2/evse.hpp>
-#include <ocpp/v2/message_dispatcher.hpp>
 
 namespace ocpp::v2 {
-class DeviceModel;
-class EvseManagerInterface;
-class ConnectivityManagerInterface;
+struct FunctionalBlockContext;
 class SmartChargingHandlerInterface;
-class EvseInterface;
 
 struct GetChargingProfilesRequest;
 struct SetChargingProfileRequest;
@@ -126,19 +121,12 @@ public:
 
 class SmartCharging : public SmartChargingInterface {
 private: // Members
-    DeviceModel& device_model;
-    EvseManagerInterface& evse_manager;
-    ConnectivityManagerInterface& connectivity_manager;
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DatabaseHandlerInterface& database_handler;
-
+    const FunctionalBlockContext& context;
     std::function<void()> set_charging_profiles_callback;
 
 public:
-    SmartCharging(DeviceModel& device_model, EvseManagerInterface& evse_manager,
-                  ConnectivityManagerInterface& connectivity_manager,
-                  MessageDispatcherInterface<MessageType>& message_dispatcher,
-                  DatabaseHandlerInterface& database_handler, std::function<void()> set_charging_profiles_callback);
+    SmartCharging(const FunctionalBlockContext& functional_block_context,
+                  std::function<void()> set_charging_profiles_callback);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
     GetCompositeScheduleResponse get_composite_schedule(const GetCompositeScheduleRequest& request) override;
     std::optional<CompositeSchedule> get_composite_schedule(int32_t evse_id, std::chrono::seconds duration,

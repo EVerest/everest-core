@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v2/functional_blocks/reservation.hpp>
+
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/evse.hpp>
 #include <ocpp/v2/evse_manager.hpp>
-#include <ocpp/v2/functional_blocks/reservation.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/messages/CancelReservation.hpp>
 #include <ocpp/v2/messages/ReservationStatusUpdate.hpp>
 #include <ocpp/v2/messages/ReserveNow.hpp>
 
 namespace ocpp::v2 {
-Reservation::Reservation(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                         EvseManagerInterface& evse_manager, ReserveNowCallback reserve_now_callback,
-                         CancelReservationCallback cancel_reservation_callback,
+Reservation::Reservation(const FunctionalBlockContext& functional_block_context,
+                         ReserveNowCallback reserve_now_callback, CancelReservationCallback cancel_reservation_callback,
                          const IsReservationForTokenCallback is_reservation_for_token_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    evse_manager(evse_manager),
+    context(functional_block_context),
     reserve_now_callback(reserve_now_callback),
     cancel_reservation_callback(cancel_reservation_callback),
     is_reservation_for_token_callback(is_reservation_for_token_callback) {
@@ -42,7 +41,7 @@ void Reservation::on_reservation_status(const int32_t reservation_id, const Rese
     req.reservationUpdateStatus = status;
 
     ocpp::Call<ReservationStatusUpdateRequest> call(req);
-    this->message_dispatcher.dispatch_call(call);
+    this->context.message_dispatcher.dispatch_call(call);
 }
 
 ocpp::ReservationCheckStatus
@@ -55,11 +54,11 @@ Reservation::is_evse_reserved_for_other(const EvseInterface& evse, const IdToken
 }
 
 void Reservation::on_reserved(const int32_t evse_id, const int32_t connector_id) {
-    this->evse_manager.get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Reserve);
+    this->context.evse_manager.get_evse(evse_id).submit_event(connector_id, ConnectorEvent::Reserve);
 }
 
 void Reservation::on_reservation_cleared(const int32_t evse_id, const int32_t connector_id) {
-    this->evse_manager.get_evse(evse_id).submit_event(connector_id, ConnectorEvent::ReservationCleared);
+    this->context.evse_manager.get_evse(evse_id).submit_event(connector_id, ConnectorEvent::ReservationCleared);
 }
 
 void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
@@ -72,11 +71,13 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
     if (this->reserve_now_callback == nullptr) {
         reservation_available = false;
         status_info = "Reservation is not implemented";
-    } else if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
+    } else if (!this->context.device_model
+                    .get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
                     .value_or(false)) {
         status_info = "Reservation is not available";
         reservation_available = false;
-    } else if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrEnabled)
+    } else if (!this->context.device_model
+                    .get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrEnabled)
                     .value_or(false)) {
         reservation_available = false;
         status_info = "Reservation is not enabled";
@@ -93,7 +94,8 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
     // Check if we need a specific evse id during a reservation and if that is the case, if we recevied an evse id.
     const ReserveNowRequest request = call.msg;
     if (!request.evseId.has_value() &&
-        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrNonEvseSpecific)
+        !this->context.device_model
+             .get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrNonEvseSpecific)
              .value_or(false)) {
         // H01.FR.19
         EVLOG_warning << "Trying to make a reservation, but no evse id was given while it should be sent in the "
@@ -107,15 +109,15 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
     const std::optional<int32_t> evse_id = request.evseId;
 
     if (evse_id.has_value()) {
-        if (evse_id <= 0 || !evse_manager.does_evse_exist(evse_id.value())) {
+        if (evse_id <= 0 || !this->context.evse_manager.does_evse_exist(evse_id.value())) {
             EVLOG_error << "Trying to make a reservation, but evse " << evse_id.value() << " is not a valid evse id.";
             send_reserve_now_rejected_response(call.uniqueId, "Evse id does not exist");
             return;
         }
 
         // Check if there is a connector available for this evse id.
-        if (!this->evse_manager.does_connector_exist(static_cast<uint32_t>(evse_id.value()),
-                                                     request.connectorType.value_or(ConnectorEnum::Unknown))) {
+        if (!this->context.evse_manager.does_connector_exist(static_cast<uint32_t>(evse_id.value()),
+                                                             request.connectorType.value_or(ConnectorEnum::Unknown))) {
             EVLOG_info << "Trying to make a reservation for connector type "
                        << conversions::connector_enum_to_string(request.connectorType.value_or(ConnectorEnum::Unknown))
                        << " for evse " << evse_id.value() << ", but this connector type does not exist.";
@@ -124,7 +126,7 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
         }
     } else {
         // No evse id. Just search for all evse's if there is something available for reservation
-        const uint64_t number_of_evses = evse_manager.get_number_of_evses();
+        const uint64_t number_of_evses = this->context.evse_manager.get_number_of_evses();
         if (number_of_evses == 0) {
             send_reserve_now_rejected_response(call.uniqueId, "No evse's found in charging station");
             EVLOG_error << "Trying to make a reservation, but number of evse's is 0";
@@ -133,7 +135,8 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
 
         bool connector_exists = false;
         for (uint64_t i = 1; i <= number_of_evses; i++) {
-            if (this->evse_manager.does_connector_exist(i, request.connectorType.value_or(ConnectorEnum::Unknown))) {
+            if (this->context.evse_manager.does_connector_exist(
+                    i, request.connectorType.value_or(ConnectorEnum::Unknown))) {
                 connector_exists = true;
                 break;
             }
@@ -154,7 +157,7 @@ void Reservation::handle_reserve_now_request(Call<ReserveNowRequest> call) {
 
     // Reply with the response from the callback.
     const ocpp::CallResult<ReserveNowResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status == ReserveNowStatusEnum::Accepted) {
         EVLOG_debug << "Reservation with id " << reservation_request.id << " for "
@@ -169,9 +172,9 @@ void Reservation::handle_cancel_reservation_callback(Call<CancelReservationReque
 
     CancelReservationResponse response;
     if (this->cancel_reservation_callback == nullptr ||
-        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
+        !this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrAvailable)
              .value_or(false) ||
-        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrEnabled)
+        !this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::ReservationCtrlrEnabled)
              .value_or(false)) {
         // Reservation not available / implemented, return 'Rejected'.
         // H01.FR.01
@@ -184,7 +187,7 @@ void Reservation::handle_cancel_reservation_callback(Call<CancelReservationReque
     }
 
     const ocpp::CallResult<CancelReservationResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Reservation::send_reserve_now_rejected_response(const MessageId& unique_id, const std::string& status_info) {
@@ -193,7 +196,7 @@ void Reservation::send_reserve_now_rejected_response(const MessageId& unique_id,
     response.statusInfo = StatusInfo();
     response.statusInfo->additionalInfo = status_info;
     const ocpp::CallResult<ReserveNowResponse> call_result(response, unique_id);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 } // namespace ocpp::v2

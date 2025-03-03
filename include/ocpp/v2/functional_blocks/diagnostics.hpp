@@ -5,13 +5,11 @@
 
 #include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/monitoring_updater.hpp>
 
 namespace ocpp::v2 {
-class DeviceModel;
 class AuthorizationInterface;
-class ConnectivityManagerInterface;
+struct FunctionalBlockContext;
 
 struct GetLogRequest;
 struct GetLogResponse;
@@ -46,8 +44,7 @@ public:
 
 class Diagnostics : public DiagnosticsInterface {
 public:
-    Diagnostics(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                ConnectivityManagerInterface& connectivity_manager, AuthorizationInterface& authorization,
+    Diagnostics(const FunctionalBlockContext& context, AuthorizationInterface& authorization,
                 GetLogRequestCallback get_log_request_callback,
                 std::optional<GetCustomerInformationCallback> get_customer_information_callback,
                 std::optional<ClearCustomerInformationCallback> clear_customer_information_callback);
@@ -58,9 +55,7 @@ public:
     void process_triggered_monitors() override;
 
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    ConnectivityManagerInterface& connectivity_manager;
+    const FunctionalBlockContext& context;
     AuthorizationInterface& authorization;
     /// \brief Updater for triggered monitors
     MonitoringUpdater monitoring_updater;

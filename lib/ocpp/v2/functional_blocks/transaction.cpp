@@ -7,6 +7,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/utils.hpp>
 
 #include <ocpp/v2/functional_blocks/authorization.hpp>
@@ -19,19 +20,13 @@
 
 namespace ocpp::v2 {
 TransactionBlock::TransactionBlock(
-    MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-    ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
-    MessageQueue<v2::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
+    const FunctionalBlockContext& functional_block_context, MessageQueue<v2::MessageType>& message_queue,
     AuthorizationInterface& authorization, AvailabilityInterface& availability, SmartChargingInterface& smart_charging,
     TariffAndCostInterface& tariff_and_cost, StopTransactionCallback stop_transaction_callback,
     PauseChargingCallback pause_charging_callback, std::optional<TransactionEventCallback> transaction_event_callback,
     std::optional<TransactionEventResponseCallback> transaction_event_response_callback, ResetCallback reset_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    connectivity_manager(connectivity_manager),
-    evse_manager(evse_manager),
+    context(functional_block_context),
     message_queue(message_queue),
-    database_handler(database_handler),
     authorization(authorization),
     availability(availability),
     smart_charging(smart_charging),
@@ -63,12 +58,12 @@ void TransactionBlock::on_transaction_started(
     const TriggerReasonEnum trigger_reason, const MeterValue& meter_start, const std::optional<IdToken>& id_token,
     const std::optional<IdToken>& group_id_token, const std::optional<int32_t>& reservation_id,
     const std::optional<int32_t>& remote_start_id, const ChargingStateEnum charging_state) {
-    auto& evse_handle = this->evse_manager.get_evse(evse_id);
+    auto& evse_handle = this->context.evse_manager.get_evse(evse_id);
     evse_handle.open_transaction(session_id, connector_id, timestamp, meter_start, id_token, group_id_token,
                                  reservation_id, charging_state);
 
     const auto meter_value = utils::get_meter_value_with_measurands_applied(
-        meter_start, utils::get_measurands_vec(this->device_model.get_value<std::string>(
+        meter_start, utils::get_measurands_vec(this->context.device_model.get_value<std::string>(
                          ControllerComponentVariables::SampledDataTxStartedMeasurands)));
 
     const auto& enhanced_transaction = evse_handle.get_transaction();
@@ -89,7 +84,8 @@ void TransactionBlock::on_transaction_started(
 
     this->transaction_event_req(TransactionEventEnum::Started, timestamp, transaction, trigger_reason,
                                 enhanced_transaction->get_seq_no(), std::nullopt, evse, id_token, opt_meter_value,
-                                std::nullopt, !this->connectivity_manager.is_websocket_connected(), reservation_id);
+                                std::nullopt, !this->context.connectivity_manager.is_websocket_connected(),
+                                reservation_id);
 }
 
 void TransactionBlock::on_transaction_finished(const int32_t evse_id, const DateTime& timestamp,
@@ -98,7 +94,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
                                                const std::optional<IdToken>& id_token,
                                                const std::optional<std::string>& signed_meter_value,
                                                const ChargingStateEnum charging_state) {
-    auto& evse_handle = this->evse_manager.get_evse(evse_id);
+    auto& evse_handle = this->context.evse_manager.get_evse(evse_id);
     auto& enhanced_transaction = evse_handle.get_transaction();
     if (enhanced_transaction == nullptr) {
         EVLOG_warning << "Received notification of finished transaction while no transaction was active";
@@ -113,15 +109,15 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
     std::optional<std::vector<ocpp::v2::MeterValue>> meter_values = std::nullopt;
     try {
         meter_values = std::make_optional(utils::get_meter_values_with_measurands_applied(
-            this->database_handler.transaction_metervalues_get_all(enhanced_transaction->transactionId.get()),
-            utils::get_measurands_vec(
-                this->device_model.get_value<std::string>(ControllerComponentVariables::SampledDataTxEndedMeasurands)),
-            utils::get_measurands_vec(
-                this->device_model.get_value<std::string>(ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
+            this->context.database_handler.transaction_metervalues_get_all(enhanced_transaction->transactionId.get()),
+            utils::get_measurands_vec(this->context.device_model.get_value<std::string>(
+                ControllerComponentVariables::SampledDataTxEndedMeasurands)),
+            utils::get_measurands_vec(this->context.device_model.get_value<std::string>(
+                ControllerComponentVariables::AlignedDataTxEndedMeasurands)),
             timestamp,
-            this->device_model.get_optional_value<bool>(ControllerComponentVariables::SampledDataSignReadings)
+            this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::SampledDataSignReadings)
                 .value_or(false),
-            this->device_model.get_optional_value<bool>(ControllerComponentVariables::AlignedDataSignReadings)
+            this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::AlignedDataSignReadings)
                 .value_or(false)));
 
         if (meter_values.value().empty()) {
@@ -138,7 +134,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
     this->transaction_event_req(TransactionEventEnum::Ended, timestamp, enhanced_transaction->get_transaction(),
                                 trigger_reason, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
                                 transaction_id_token, meter_values, std::nullopt,
-                                !this->connectivity_manager.is_websocket_connected(), std::nullopt);
+                                !this->context.connectivity_manager.is_websocket_connected(), std::nullopt);
 
     // K02.FR.05 The transaction is over, so delete the TxProfiles associated with the transaction.
     smart_charging.delete_transaction_tx_profiles(enhanced_transaction->get_transaction().transactionId);
@@ -157,7 +153,7 @@ void TransactionBlock::on_transaction_finished(const int32_t evse_id, const Date
             // No evse id is given, whole charging station needs a reset. Wait
             // for last evse id to stop charging.
             bool is_charging = false;
-            for (auto const& evse : this->evse_manager) {
+            for (auto const& evse : this->context.evse_manager) {
                 if (evse.has_active_transaction()) {
                     is_charging = true;
                     break;
@@ -250,7 +246,7 @@ void TransactionBlock::transaction_event_req(const TransactionEventEnum& event_t
         remote_start_id_per_evse.erase(it);
     }
 
-    this->message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 
     if (this->transaction_event_callback.has_value()) {
         this->transaction_event_callback.value()(req);
@@ -317,15 +313,16 @@ void TransactionBlock::handle_transaction_event_response(const EnhancedMessage<M
         return;
     }
 
-    for (auto& evse : this->evse_manager) {
+    for (auto& evse : this->context.evse_manager) {
         if (auto& transaction = evse.get_transaction();
             transaction != nullptr and transaction->transactionId == original_msg.transactionInfo.transactionId) {
             // Deal with invalid token for transaction
             auto evse_id = evse.get_id();
-            if (this->device_model.get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
+            if (this->context.device_model.get_value<bool>(ControllerComponentVariables::StopTxOnInvalidId)) {
                 this->stop_transaction_callback(evse_id, ReasonEnum::DeAuthorized);
             } else {
-                if (this->device_model.get_optional_value<int32_t>(ControllerComponentVariables::MaxEnergyOnInvalidId)
+                if (this->context.device_model
+                        .get_optional_value<int32_t>(ControllerComponentVariables::MaxEnergyOnInvalidId)
                         .has_value()) {
                     // Energy delivery to the EV SHALL be allowed until the amount of energy specified in
                     // MaxEnergyOnInvalidId has been reached.
@@ -346,7 +343,7 @@ void TransactionBlock::handle_get_transaction_status(const Call<GetTransactionSt
     response.messagesInQueue = false;
 
     if (msg.transactionId.has_value()) {
-        if (this->evse_manager.get_transaction_evseid(msg.transactionId.value()).has_value()) {
+        if (this->context.evse_manager.get_transaction_evseid(msg.transactionId.value()).has_value()) {
             response.ongoingIndicator = true;
         } else {
             response.ongoingIndicator = false;
@@ -359,6 +356,6 @@ void TransactionBlock::handle_get_transaction_status(const Call<GetTransactionSt
     }
 
     ocpp::CallResult<GetTransactionStatusResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 } // namespace ocpp::v2

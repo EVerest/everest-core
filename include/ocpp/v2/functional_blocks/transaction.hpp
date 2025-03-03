@@ -5,14 +5,9 @@
 
 #include <ocpp/v2/message_handler.hpp>
 
-#include <ocpp/v2/message_dispatcher.hpp>
-
 namespace ocpp::v2 {
-class DeviceModel;
+struct FunctionalBlockContext;
 class AuthorizationInterface;
-class ConnectivityManagerInterface;
-class EvseManagerInterface;
-class DatabaseHandlerInterface;
 class AvailabilityInterface;
 class SmartChargingInterface;
 class TariffAndCostInterface;
@@ -84,12 +79,11 @@ public:
 
 class TransactionBlock : public TransactionInterface {
 public:
-    TransactionBlock(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                     ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
-                     MessageQueue<v2::MessageType>& message_queue, DatabaseHandlerInterface& database_handler,
-                     AuthorizationInterface& authorization, AvailabilityInterface& availability,
-                     SmartChargingInterface& smart_charging, TariffAndCostInterface& tariff_and_cost,
-                     StopTransactionCallback stop_transaction_callback, PauseChargingCallback pause_charging_callback,
+    TransactionBlock(const FunctionalBlockContext& functional_block_context,
+                     MessageQueue<v2::MessageType>& message_queue, AuthorizationInterface& authorization,
+                     AvailabilityInterface& availability, SmartChargingInterface& smart_charging,
+                     TariffAndCostInterface& tariff_and_cost, StopTransactionCallback stop_transaction_callback,
+                     PauseChargingCallback pause_charging_callback,
                      std::optional<TransactionEventCallback> transaction_event_callback,
                      std::optional<TransactionEventResponseCallback> transaction_event_response_callback,
                      ResetCallback reset_callback);
@@ -119,12 +113,8 @@ public:
     void schedule_reset(const std::optional<int32_t> reset_scheduled_evseid) override;
 
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    ConnectivityManagerInterface& connectivity_manager;
-    EvseManagerInterface& evse_manager;
+    const FunctionalBlockContext& context;
     MessageQueue<v2::MessageType>& message_queue;
-    DatabaseHandlerInterface& database_handler;
     AuthorizationInterface& authorization;
     AvailabilityInterface& availability;
     SmartChargingInterface& smart_charging;

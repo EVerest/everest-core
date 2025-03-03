@@ -5,11 +5,15 @@
 
 #include <optional>
 
-#include <ocpp/v2/message_dispatcher.hpp>
 #include <ocpp/v2/message_handler.hpp>
 #include <ocpp/v2/ocsp_updater.hpp>
 
-namespace ocpp::v2 {
+namespace ocpp {
+class MessageLogging;
+
+namespace v2 {
+struct FunctionalBlockContext;
+
 struct CertificateSignedRequest;
 struct CertificateSignedResponse;
 struct GetInstalledCertificateIdsRequest;
@@ -43,8 +47,7 @@ public:
 
 class Security : public SecurityInterface {
 public:
-    Security(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-             MessageLogging& logging, EvseSecurity& evse_security, ConnectivityManagerInterface& connectivity_manager,
+    Security(const FunctionalBlockContext& functional_block_context, MessageLogging& logging,
              OcspUpdaterInterface& ocsp_updater, SecurityEventCallback security_event_callback);
     virtual ~Security();
     void handle_message(const EnhancedMessage<MessageType>& message) override;
@@ -63,11 +66,8 @@ public:
                                       const bool initiated_by_trigger_message = false) override;
 
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
+    const FunctionalBlockContext& context;
     MessageLogging& logging;
-    EvseSecurity& evse_security;
-    ConnectivityManagerInterface& connectivity_manager;
     OcspUpdaterInterface& ocsp_updater;
 
     SecurityEventCallback security_event_callback;
@@ -99,4 +99,5 @@ private: // Functions
     void scheduled_check_client_certificate_expiration();
     void scheduled_check_v2g_certificate_expiration();
 };
-} // namespace ocpp::v2
+} // namespace v2
+} // namespace ocpp

@@ -3,18 +3,11 @@
 
 #pragma once
 
-#include <ocpp/common/message_dispatcher.hpp>
 #include <ocpp/v2/message_handler.hpp>
 
-namespace ocpp {
-// Forward declarations.
-class EvseSecurity;
-
-namespace v2 {
-
+namespace ocpp::v2 {
 // Formward declarations.
-class DeviceModel;
-class EvseManagerInterface;
+struct FunctionalBlockContext;
 class AvailabilityInterface;
 class SecurityInterface;
 
@@ -36,10 +29,7 @@ public:
 
 class FirmwareUpdate : public FirmwareUpdateInterface {
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    EvseManagerInterface& evse_manager;
-    EvseSecurity& evse_security;
+    const FunctionalBlockContext& context;
     AvailabilityInterface& availability;
     SecurityInterface& security;
 
@@ -53,10 +43,8 @@ private: // Members
     FirmwareStatusEnum firmware_status_before_installing = FirmwareStatusEnum::SignatureVerified;
 
 public:
-    FirmwareUpdate(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                   EvseManagerInterface& evse_manager, EvseSecurity& evse_security,
-                   ocpp::v2::AvailabilityInterface& availability, SecurityInterface& security,
-                   UpdateFirmwareRequestCallback update_firmware_request_callback,
+    FirmwareUpdate(const FunctionalBlockContext& functional_block_context, AvailabilityInterface& availability,
+                   SecurityInterface& security, UpdateFirmwareRequestCallback update_firmware_request_callback,
                    std::optional<AllConnectorsUnavailableCallback> all_connectors_unavailable_callback);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
     void on_firmware_update_status_notification(int32_t request_id,
@@ -76,5 +64,4 @@ private: // Functions
     /// \brief Restores all connectors to their persisted state
     void restore_all_connector_states();
 };
-} // namespace v2
-} // namespace ocpp
+} // namespace ocpp::v2

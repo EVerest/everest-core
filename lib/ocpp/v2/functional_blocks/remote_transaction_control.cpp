@@ -7,6 +7,7 @@
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/functional_blocks/availability.hpp>
 #include <ocpp/v2/functional_blocks/firmware_update.hpp>
@@ -27,20 +28,14 @@
 namespace ocpp::v2 {
 
 RemoteTransactionControl::RemoteTransactionControl(
-    MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-    ConnectivityManagerInterface& connectivity_manager, EvseManagerInterface& evse_manager,
-    ComponentStateManagerInterface& component_state_manager, TransactionInterface& transaction,
+    const FunctionalBlockContext& functional_block_context, TransactionInterface& transaction,
     SmartChargingInterface& smart_charging, MeterValuesInterface& meter_values, AvailabilityInterface& availability,
     FirmwareUpdateInterface& firmware_update, SecurityInterface& security, ReservationInterface* reservation,
     ProvisioningInterface& provisioning, UnlockConnectorCallback unlock_connector_callback,
     RemoteStartTransactionCallback remote_start_transaction_callback, StopTransactionCallback stop_transaction_callback,
     std::atomic<RegistrationStatusEnum>& registration_status, std::atomic<UploadLogStatusEnum>& upload_log_status,
     std::atomic<int32_t>& upload_log_status_id) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    connectivity_manager(connectivity_manager),
-    evse_manager(evse_manager),
-    component_state_manager(component_state_manager),
+    context(functional_block_context),
     transaction(transaction),
     smart_charging(smart_charging),
     meter_values(meter_values),
@@ -79,8 +74,8 @@ void RemoteTransactionControl::handle_unlock_connector(Call<UnlockConnectorReque
 
     EVSE evse = {msg.evseId, std::nullopt, msg.connectorId};
 
-    if (this->evse_manager.is_valid_evse(evse)) {
-        if (!this->evse_manager.get_evse(msg.evseId).has_active_transaction()) {
+    if (this->context.evse_manager.is_valid_evse(evse)) {
+        if (!this->context.evse_manager.get_evse(msg.evseId).has_active_transaction()) {
             unlock_response = unlock_connector_callback(msg.evseId, msg.connectorId);
         } else {
             unlock_response.status = UnlockStatusEnum::OngoingAuthorizedTransaction;
@@ -90,7 +85,7 @@ void RemoteTransactionControl::handle_unlock_connector(Call<UnlockConnectorReque
     }
 
     ocpp::CallResult<UnlockConnectorResponse> call_result(unlock_response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void RemoteTransactionControl::handle_remote_start_transaction_request(Call<RequestStartTransactionRequest> call) {
@@ -102,7 +97,7 @@ void RemoteTransactionControl::handle_remote_start_transaction_request(Call<Requ
     // Check if evse id is given.
     if (msg.evseId.has_value()) {
         const int32_t evse_id = msg.evseId.value();
-        auto& evse = this->evse_manager.get_evse(evse_id);
+        auto& evse = this->context.evse_manager.get_evse(evse_id);
 
         // F01.FR.23: Faulted or unavailable. F01.FR.24 / F02.FR.25: Occupied. Send rejected.
         const bool available = is_evse_connector_available(evse);
@@ -134,7 +129,7 @@ void RemoteTransactionControl::handle_remote_start_transaction_request(Call<Requ
         // "InvalidProfile" or "InvalidSchedule".
 
         bool is_smart_charging_enabled =
-            this->device_model.get_optional_value<bool>(ControllerComponentVariables::SmartChargingCtrlrEnabled)
+            this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::SmartChargingCtrlrEnabled)
                 .value_or(false);
 
         if (is_smart_charging_enabled) {
@@ -168,18 +163,18 @@ void RemoteTransactionControl::handle_remote_start_transaction_request(Call<Requ
 
     if (response.status == RequestStartStopStatusEnum::Accepted) {
         response.status = this->remote_start_transaction_callback(
-            msg, this->device_model.get_value<bool>(ControllerComponentVariables::AuthorizeRemoteStart));
+            msg, this->context.device_model.get_value<bool>(ControllerComponentVariables::AuthorizeRemoteStart));
     }
 
     const ocpp::CallResult<RequestStartTransactionResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void RemoteTransactionControl::handle_remote_stop_transaction_request(Call<RequestStopTransactionRequest> call) {
     const auto msg = call.msg;
 
     RequestStopTransactionResponse response;
-    std::optional<int32_t> evseid = this->evse_manager.get_transaction_evseid(msg.transactionId);
+    std::optional<int32_t> evseid = this->context.evse_manager.get_transaction_evseid(msg.transactionId);
 
     if (evseid.has_value()) {
         // F03.FR.07: send 'accepted' if there was an ongoing transaction with the given transaction id
@@ -194,7 +189,7 @@ void RemoteTransactionControl::handle_remote_stop_transaction_request(Call<Reque
     }
 
     const ocpp::CallResult<RequestStopTransactionResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest> call) {
@@ -206,7 +201,7 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     if (msg.evse.has_value()) {
         int32_t evse_id = msg.evse.value().id;
-        evse_ptr = &this->evse_manager.get_evse(evse_id);
+        evse_ptr = &this->context.evse_manager.get_evse(evse_id);
     }
 
     // F06.FR.04: First send the TriggerMessageResponse before sending the requested message
@@ -227,16 +222,16 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
 
     case MessageTriggerEnum::MeterValues:
         if (msg.evse.has_value()) {
-            if (evse_ptr != nullptr and
-                utils::meter_value_has_any_measurand(
-                    evse_ptr->get_meter_value(), utils::get_measurands_vec(this->device_model.get_value<std::string>(
-                                                     ControllerComponentVariables::AlignedDataMeasurands)))) {
+            if (evse_ptr != nullptr and utils::meter_value_has_any_measurand(
+                                            evse_ptr->get_meter_value(),
+                                            utils::get_measurands_vec(this->context.device_model.get_value<std::string>(
+                                                ControllerComponentVariables::AlignedDataMeasurands)))) {
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
             const auto measurands = utils::get_measurands_vec(
-                this->device_model.get_value<std::string>(ControllerComponentVariables::AlignedDataMeasurands));
-            for (auto& evse : this->evse_manager) {
+                this->context.device_model.get_value<std::string>(ControllerComponentVariables::AlignedDataMeasurands));
+            for (auto& evse : this->context.evse_manager) {
                 if (utils::meter_value_has_any_measurand(evse.get_meter_value(), measurands)) {
                     response.status = TriggerMessageStatusEnum::Accepted;
                     break;
@@ -251,7 +246,7 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
                 response.status = TriggerMessageStatusEnum::Accepted;
             }
         } else {
-            for (auto const& evse : this->evse_manager) {
+            for (auto const& evse : this->context.evse_manager) {
                 if (evse.has_active_transaction()) {
                     response.status = TriggerMessageStatusEnum::Accepted;
                     break;
@@ -275,7 +270,8 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
         response.status = TriggerMessageStatusEnum::Accepted;
         break;
     case MessageTriggerEnum::SignV2GCertificate:
-        if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
+        if (this->context.device_model
+                .get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
                 .value_or(false)) {
             response.status = TriggerMessageStatusEnum::Accepted;
         } else {
@@ -296,7 +292,7 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
     }
 
     ocpp::CallResult<TriggerMessageResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status != TriggerMessageStatusEnum::Accepted) {
         return;
@@ -306,7 +302,7 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
         if (evse_ptr != nullptr) {
             send(msg.evse.value().id, *evse_ptr);
         } else {
-            for (auto& evse : this->evse_manager) {
+            for (auto& evse : this->context.evse_manager) {
                 send(evse.get_id(), evse);
             }
         }
@@ -348,15 +344,15 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
             this->transaction.transaction_event_req(
                 TransactionEventEnum::Updated, DateTime(), enhanced_transaction->get_transaction(),
                 TriggerReasonEnum::Trigger, enhanced_transaction->get_seq_no(), std::nullopt, std::nullopt,
-                std::nullopt, opt_meter_value, std::nullopt, !this->connectivity_manager.is_websocket_connected(),
-                std::nullopt, true);
+                std::nullopt, opt_meter_value, std::nullopt,
+                !this->context.connectivity_manager.is_websocket_connected(), std::nullopt, true);
         };
         send_evse_message(send_transaction);
     } break;
 
     case MessageTriggerEnum::StatusNotification:
         if (evse_ptr != nullptr and msg.evse.value().connectorId.has_value()) {
-            this->component_state_manager.send_status_notification_single_connector(
+            this->context.component_state_manager.send_status_notification_single_connector(
                 msg.evse.value().id, msg.evse.value().connectorId.value());
         }
         break;
@@ -375,7 +371,7 @@ void RemoteTransactionControl::handle_trigger_message(Call<TriggerMessageRequest
         }
 
         ocpp::Call<LogStatusNotificationRequest> call(request);
-        this->message_dispatcher.dispatch_call(call, true);
+        this->context.message_dispatcher.dispatch_call(call, true);
     } break;
 
     case MessageTriggerEnum::FirmwareStatusNotification: {

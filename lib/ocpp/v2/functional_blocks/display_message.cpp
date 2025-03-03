@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v2/functional_blocks/display_message.hpp>
+
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/evse_manager.hpp>
-#include <ocpp/v2/functional_blocks/display_message.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #include <ocpp/v2/messages/ClearDisplayMessage.hpp>
 #include <ocpp/v2/messages/GetDisplayMessages.hpp>
@@ -11,14 +13,11 @@
 
 namespace ocpp::v2 {
 
-DisplayMessageBlock::DisplayMessageBlock(MessageDispatcherInterface<MessageType>& message_dispatcher,
-                                         DeviceModel& device_model, EvseManagerInterface& evse_manager,
+DisplayMessageBlock::DisplayMessageBlock(const FunctionalBlockContext& functional_block_context,
                                          GetDisplayMessageCallback get_display_message_callback,
                                          SetDisplayMessageCallback set_display_message_callback,
                                          ClearDisplayMessageCallback clear_display_message_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    evse_manager(evse_manager),
+    context(functional_block_context),
     get_display_message_callback(get_display_message_callback),
     set_display_message_callback(set_display_message_callback),
     clear_display_message_callback(clear_display_message_callback) {
@@ -61,18 +60,18 @@ void DisplayMessageBlock::handle_get_display_message(const Call<GetDisplayMessag
     if (messages_request.messageInfo.value().empty()) {
         response.status = GetDisplayMessagesStatusEnum::Unknown;
         ocpp::CallResult<GetDisplayMessagesResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     } else {
         response.status = GetDisplayMessagesStatusEnum::Accepted;
         ocpp::CallResult<GetDisplayMessagesResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
     }
 
     // Send display messages. The response is empty, so we don't have to get that back.
     // Sending multiple messages is not supported for now, because there is no need to split them up (yet).
     ocpp::Call<NotifyDisplayMessagesRequest> request(messages_request);
-    this->message_dispatcher.dispatch_call(request);
+    this->context.message_dispatcher.dispatch_call(request);
 }
 
 void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessageRequest> call) {
@@ -82,11 +81,11 @@ void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessag
     // transaction is running, if a transaction id was included in the message.
     bool error = false;
     const std::optional<bool> display_message_available =
-        this->device_model.get_optional_value<bool>(ControllerComponentVariables::DisplayMessageCtrlrAvailable);
-    const std::string supported_priorities =
-        this->device_model.get_value<std::string>(ControllerComponentVariables::DisplayMessageSupportedPriorities);
+        this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::DisplayMessageCtrlrAvailable);
+    const std::string supported_priorities = this->context.device_model.get_value<std::string>(
+        ControllerComponentVariables::DisplayMessageSupportedPriorities);
     const std::string supported_message_formats =
-        this->device_model.get_value<std::string>(ControllerComponentVariables::DisplayMessageSupportedFormats);
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::DisplayMessageSupportedFormats);
 
     const std::vector<std::string> priorities = split_string(supported_priorities, ',', true);
     const std::vector<std::string> formats = split_string(supported_message_formats, ',', true);
@@ -99,7 +98,7 @@ void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessag
     // belongs to a running transaction.
     const bool transaction_valid =
         (!call.msg.message.transactionId.has_value() or
-         this->evse_manager.get_transaction_evseid(call.msg.message.transactionId.value()) != std::nullopt);
+         this->context.evse_manager.get_transaction_evseid(call.msg.message.transactionId.value()) != std::nullopt);
 
     // Check if display messages are available.
     if (!display_message_available.has_value() or !display_message_available.value()) {
@@ -123,7 +122,7 @@ void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessag
     }
     // Check if message state is supported.
     else if (call.msg.message.state.has_value()) {
-        const std::optional<std::string> supported_states = this->device_model.get_optional_value<std::string>(
+        const std::optional<std::string> supported_states = this->context.device_model.get_optional_value<std::string>(
             ControllerComponentVariables::DisplayMessageSupportedStates);
         if (supported_states.has_value()) {
             const std::vector<std::string> states = split_string(supported_states.value(), ',', true);
@@ -139,21 +138,21 @@ void DisplayMessageBlock::handle_set_display_message(const Call<SetDisplayMessag
 
     if (error) {
         ocpp::CallResult<SetDisplayMessageResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
     const DisplayMessage message = message_info_to_display_message(call.msg.message);
     response = this->set_display_message_callback({message});
     ocpp::CallResult<SetDisplayMessageResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void DisplayMessageBlock::handle_clear_display_message(const Call<ClearDisplayMessageRequest> call) {
     ClearDisplayMessageResponse response;
     response = this->clear_display_message_callback(call.msg);
     ocpp::CallResult<ClearDisplayMessageResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 ///

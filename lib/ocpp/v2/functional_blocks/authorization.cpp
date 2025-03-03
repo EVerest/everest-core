@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
+#include <ocpp/v2/functional_blocks/authorization.hpp>
+
 #include <ocpp/common/constants.hpp>
+#include <ocpp/common/evse_security.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/database_handler.hpp>
-#include <ocpp/v2/functional_blocks/authorization.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/utils.hpp>
 
 #include <ocpp/v2/messages/Authorize.hpp>
@@ -20,15 +25,8 @@
 static bool has_duplicate_in_list(const std::vector<ocpp::v2::AuthorizationData>& list);
 static bool has_no_token_info(const ocpp::v2::AuthorizationData& item);
 
-ocpp::v2::Authorization::Authorization(MessageDispatcherInterface<MessageType>& message_dispatcher,
-                                       DeviceModel& device_model, ConnectivityManagerInterface& connectivity_manager,
-                                       DatabaseHandlerInterface& database_handler, EvseSecurity& evse_security) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    connectivity_manager(connectivity_manager),
-    database_handler(database_handler),
-    evse_security(evse_security),
-    auth_cache_cleanup_handler_running(false) {
+ocpp::v2::Authorization::Authorization(const FunctionalBlockContext& context) :
+    context(context), auth_cache_cleanup_handler_running(false) {
 }
 
 ocpp::v2::Authorization::~Authorization() {
@@ -67,12 +65,12 @@ ocpp::v2::Authorization::authorize_req(const IdToken id_token, const std::option
     AuthorizeResponse response;
     response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
 
-    if (!this->connectivity_manager.is_websocket_connected()) {
+    if (!this->context.connectivity_manager.is_websocket_connected()) {
         return response;
     }
 
     ocpp::Call<AuthorizeRequest> call(req);
-    auto future = this->message_dispatcher.dispatch_call_async(call);
+    auto future = this->context.message_dispatcher.dispatch_call_async(call);
 
     if (future.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for DataTransfer.conf(Authorize) future timed out!";
@@ -99,7 +97,7 @@ ocpp::v2::Authorization::authorize_req(const IdToken id_token, const std::option
         // might be overseen here.
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
         auto call_error = CallError(enhanced_message.uniqueId, "FormationViolation", e.what(), json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return response;
     }
 }
@@ -116,10 +114,10 @@ void ocpp::v2::Authorization::update_authorization_cache_size() {
     auto& auth_cache_size = ControllerComponentVariables::AuthCacheStorage;
     if (auth_cache_size.variable.has_value()) {
         try {
-            auto size = this->database_handler.authorization_cache_get_binary_size();
-            this->device_model.set_read_only_value(auth_cache_size.component, auth_cache_size.variable.value(),
-                                                   AttributeEnum::Actual, std::to_string(size),
-                                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+            auto size = this->context.database_handler.authorization_cache_get_binary_size();
+            this->context.device_model.set_read_only_value(auth_cache_size.component, auth_cache_size.variable.value(),
+                                                           AttributeEnum::Actual, std::to_string(size),
+                                                           VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
         } catch (const common::DatabaseException& e) {
             EVLOG_warning << "Could not get authorization cache binary size from database: " << e.what();
         } catch (const std::exception& e) {
@@ -129,22 +127,22 @@ void ocpp::v2::Authorization::update_authorization_cache_size() {
 }
 
 bool ocpp::v2::Authorization::is_auth_cache_ctrlr_enabled() {
-    return this->device_model.get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
+    return this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::AuthCacheCtrlrEnabled)
         .value_or(false);
 }
 
 void ocpp::v2::Authorization::authorization_cache_insert_entry(const std::string& id_token_hash,
                                                                const IdTokenInfo& id_token_info) {
-    this->database_handler.authorization_cache_insert_entry(id_token_hash, id_token_info);
+    this->context.database_handler.authorization_cache_insert_entry(id_token_hash, id_token_info);
 }
 
 std::optional<ocpp::v2::AuthorizationCacheEntry>
 ocpp::v2::Authorization::authorization_cache_get_entry(const std::string& id_token_hash) {
-    return this->database_handler.authorization_cache_get_entry(id_token_hash);
+    return this->context.database_handler.authorization_cache_get_entry(id_token_hash);
 }
 
 void ocpp::v2::Authorization::authorization_cache_delete_entry(const std::string& id_token_hash) {
-    this->database_handler.authorization_cache_delete_entry(id_token_hash);
+    this->context.database_handler.authorization_cache_delete_entry(id_token_hash);
 }
 
 ocpp::v2::AuthorizeResponse
@@ -161,7 +159,8 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
 
     // C03.FR.01 && C05.FR.01: We SHALL NOT send an authorize reqeust for IdTokenType Central
     if (id_token.type == IdTokenEnum::Central or
-        !this->device_model.get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled).value_or(true)) {
+        !this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::AuthCtrlrEnabled)
+             .value_or(true)) {
         response.idTokenInfo.status = AuthorizationStatusEnum::Accepted;
         return response;
     }
@@ -174,31 +173,32 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
         bool forwarded_to_csms = false;
 
         // If OCSP data is provided as argument, use it
-        if (this->connectivity_manager.is_websocket_connected() and ocsp_request_data.has_value()) {
+        if (this->context.connectivity_manager.is_websocket_connected() and ocsp_request_data.has_value()) {
             EVLOG_info << "Online: Pass provided OCSP data to CSMS";
             response = this->authorize_req(id_token, std::nullopt, ocsp_request_data);
             forwarded_to_csms = true;
         } else if (certificate.has_value()) {
             // First try to validate the contract certificate locally
-            CertificateValidationResult local_verify_result =
-                this->evse_security.verify_certificate(certificate.value().get(), ocpp::LeafCertificateType::MO);
+            CertificateValidationResult local_verify_result = this->context.evse_security.verify_certificate(
+                certificate.value().get(), ocpp::LeafCertificateType::MO);
             EVLOG_info << "Local contract validation result: " << local_verify_result;
 
             bool central_contract_validation_allowed =
-                this->device_model
+                this->context.device_model
                     .get_optional_value<bool>(ControllerComponentVariables::CentralContractValidationAllowed)
                     .value_or(true);
             bool contract_validation_offline =
-                this->device_model.get_optional_value<bool>(ControllerComponentVariables::ContractValidationOffline)
+                this->context.device_model
+                    .get_optional_value<bool>(ControllerComponentVariables::ContractValidationOffline)
                     .value_or(true);
             bool local_authorize_offline =
-                this->device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthorizeOffline)
+                this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthorizeOffline)
                     .value_or(true);
 
             // C07.FR.01: When CS is online, it shall send an AuthorizeRequest
             // C07.FR.02: The AuthorizeRequest shall at least contain the OCSP data
             // TODO: local validation results are ignored if response is based only on OCSP data, is that acceptable?
-            if (this->connectivity_manager.is_websocket_connected()) {
+            if (this->context.connectivity_manager.is_websocket_connected()) {
                 // If no OCSP data was provided, check for a contract root
                 if (local_verify_result == CertificateValidationResult::IssuerNotFound) {
                     // C07.FR.06: Pass contract validation to CSMS when no contract root is found
@@ -213,7 +213,7 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                 } else {
                     // Try to generate the OCSP data from the certificate chain and use that
                     const auto generated_ocsp_request_data_list = ocpp::evse_security_conversions::to_ocpp_v2(
-                        this->evse_security.get_mo_ocsp_request_data(certificate.value()));
+                        this->context.evse_security.get_mo_ocsp_request_data(certificate.value()));
                     if (generated_ocsp_request_data_list.size() > 0) {
                         EVLOG_info << "Online: Pass generated OCSP data to CSMS";
                         response = this->authorize_req(id_token, std::nullopt, generated_ocsp_request_data_list);
@@ -284,11 +284,11 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
         }
     }
 
-    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
+    if (this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
         std::optional<IdTokenInfo> id_token_info = std::nullopt;
         try {
-            id_token_info = this->database_handler.get_local_authorization_list_entry(id_token);
+            id_token_info = this->context.database_handler.get_local_authorization_list_entry(id_token);
         } catch (const common::DatabaseException& e) {
             EVLOG_warning << "Could not request local authorization list entry: " << e.what();
         } catch (const std::exception& e) {
@@ -300,13 +300,13 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                 // C14.FR.02: If found in local list we shall start charging without an AuthorizeRequest
                 EVLOG_info << "Found valid entry in local authorization list";
                 response.idTokenInfo = id_token_info.value();
-            } else if (this->device_model
+            } else if (this->context.device_model
                            .get_optional_value<bool>(ControllerComponentVariables::DisableRemoteAuthorization)
                            .value_or(false)) {
                 EVLOG_info << "Found invalid entry in local authorization list but not sending Authorize.req because "
                               "RemoteAuthorization is disabled";
                 response.idTokenInfo.status = AuthorizationStatusEnum::Unknown;
-            } else if (this->connectivity_manager.is_websocket_connected()) {
+            } else if (this->context.connectivity_manager.is_websocket_connected()) {
                 // C14.FR.03: If a value found but not valid we shall send an authorize request
                 EVLOG_info << "Found invalid entry in local authorization list: Sending Authorize.req";
                 response = this->authorize_req(id_token, certificate, ocsp_request_data);
@@ -330,7 +330,7 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                 const IdTokenInfo& id_token_info = cache_entry->id_token_info;
 
                 const auto lifetime =
-                    this->device_model.get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
+                    this->context.device_model.get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
                 const bool lifetime_expired =
                     lifetime.has_value() and ((cache_entry->last_used.to_time_point() +
                                                std::chrono::seconds(lifetime.value())) < now.to_time_point());
@@ -343,13 +343,14 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
                                << ": Removing from cache and sending new request";
                     this->authorization_cache_delete_entry(hashed_id_token);
                     this->update_authorization_cache_size();
-                } else if (this->device_model.get_value<bool>(ControllerComponentVariables::LocalPreAuthorize) and
+                } else if (this->context.device_model.get_value<bool>(
+                               ControllerComponentVariables::LocalPreAuthorize) and
                            id_token_info.status == AuthorizationStatusEnum::Accepted) {
                     EVLOG_info << "Found valid entry in AuthCache";
-                    this->database_handler.authorization_cache_update_last_used(hashed_id_token);
+                    this->context.database_handler.authorization_cache_update_last_used(hashed_id_token);
                     response.idTokenInfo = id_token_info;
                     return response;
-                } else if (this->device_model
+                } else if (this->context.device_model
                                .get_optional_value<bool>(ControllerComponentVariables::AuthCacheDisablePostAuthorize)
                                .value_or(false)) {
                     EVLOG_info << "Found invalid entry in AuthCache: Not sending new request because "
@@ -369,8 +370,8 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
         }
     }
 
-    if (!this->connectivity_manager.is_websocket_connected() and
-        this->device_model.get_optional_value<bool>(ControllerComponentVariables::OfflineTxForUnknownIdEnabled)
+    if (!this->context.connectivity_manager.is_websocket_connected() and
+        this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::OfflineTxForUnknownIdEnabled)
             .value_or(false)) {
         EVLOG_info << "Offline authorization due to OfflineTxForUnknownIdEnabled being enabled";
         response.idTokenInfo.status = AuthorizationStatusEnum::Accepted;
@@ -379,7 +380,7 @@ ocpp::v2::Authorization::validate_token(const IdToken id_token, const std::optio
 
     // When set to true this instructs the Charging Station to not issue any AuthorizationRequests, but only use
     // Authorization Cache and Local Authorization List to determine validity of idTokens.
-    if (!this->device_model.get_optional_value<bool>(ControllerComponentVariables::DisableRemoteAuthorization)
+    if (!this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::DisableRemoteAuthorization)
              .value_or(false)) {
         response = this->authorize_req(id_token, certificate, ocsp_request_data);
 
@@ -421,19 +422,19 @@ void ocpp::v2::Authorization::handle_clear_cache_req(Call<ClearCacheRequest> cal
 
     if (this->is_auth_cache_ctrlr_enabled()) {
         try {
-            this->database_handler.authorization_cache_clear();
+            this->context.database_handler.authorization_cache_clear();
             this->update_authorization_cache_size();
             response.status = ClearCacheStatusEnum::Accepted;
         } catch (common::DatabaseException& e) {
             auto call_error = CallError(call.uniqueId, "InternalError",
                                         "Database error while clearing authorization cache", json({}, true));
-            this->message_dispatcher.dispatch_call_error(call_error);
+            this->context.message_dispatcher.dispatch_call_error(call_error);
             return;
         }
     }
 
     ocpp::CallResult<ClearCacheResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void ocpp::v2::Authorization::cache_cleanup_handler() {
@@ -458,20 +459,21 @@ void ocpp::v2::Authorization::cache_cleanup_handler() {
             break;
         }
 
-        auto lifetime = this->device_model.get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
+        auto lifetime =
+            this->context.device_model.get_optional_value<int>(ControllerComponentVariables::AuthCacheLifeTime);
         try {
-            this->database_handler.authorization_cache_delete_expired_entries(
+            this->context.database_handler.authorization_cache_delete_expired_entries(
                 lifetime.has_value() ? std::optional<std::chrono::seconds>(*lifetime) : std::nullopt);
 
-            auto meta_data = this->device_model.get_variable_meta_data(
+            auto meta_data = this->context.device_model.get_variable_meta_data(
                 ControllerComponentVariables::AuthCacheStorage.component,
                 ControllerComponentVariables::AuthCacheStorage.variable.value());
 
             if (meta_data.has_value()) {
                 auto max_storage = meta_data->characteristics.maxLimit;
                 if (max_storage.has_value()) {
-                    while (this->database_handler.authorization_cache_get_binary_size() > max_storage.value()) {
-                        this->database_handler.authorization_cache_delete_nr_of_oldest_entries(1);
+                    while (this->context.database_handler.authorization_cache_get_binary_size() > max_storage.value()) {
+                        this->context.database_handler.authorization_cache_delete_nr_of_oldest_entries(1);
                     }
                 }
             }
@@ -488,7 +490,7 @@ void ocpp::v2::Authorization::cache_cleanup_handler() {
 void ocpp::v2::Authorization::handle_send_local_authorization_list_req(Call<SendLocalListRequest> call) {
     SendLocalListResponse response;
 
-    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
+    if (this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
         response.status = apply_local_authorization_list(call.msg);
     } else {
@@ -498,14 +500,14 @@ void ocpp::v2::Authorization::handle_send_local_authorization_list_req(Call<Send
     // Set nr of entries in device_model
     if (response.status == SendLocalListStatusEnum::Accepted) {
         try {
-            this->database_handler.insert_or_update_local_authorization_list_version(call.msg.versionNumber);
+            this->context.database_handler.insert_or_update_local_authorization_list_version(call.msg.versionNumber);
             auto& local_entries = ControllerComponentVariables::LocalAuthListCtrlrEntries;
             if (local_entries.variable.has_value()) {
                 try {
-                    auto entries = this->database_handler.get_local_authorization_list_number_of_entries();
-                    this->device_model.set_read_only_value(local_entries.component, local_entries.variable.value(),
-                                                           AttributeEnum::Actual, std::to_string(entries),
-                                                           VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
+                    auto entries = this->context.database_handler.get_local_authorization_list_number_of_entries();
+                    this->context.device_model.set_read_only_value(
+                        local_entries.component, local_entries.variable.value(), AttributeEnum::Actual,
+                        std::to_string(entries), VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL);
                 } catch (const DeviceModelError& e) {
                     EVLOG_warning << "Could not set local list count to device model:" << e.what();
                 } catch (const common::DatabaseException& e) {
@@ -521,20 +523,20 @@ void ocpp::v2::Authorization::handle_send_local_authorization_list_req(Call<Send
     }
 
     ocpp::CallResult<SendLocalListResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void ocpp::v2::Authorization::handle_get_local_authorization_list_version_req(Call<GetLocalListVersionRequest> call) {
     GetLocalListVersionResponse response;
 
-    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
+    if (this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::LocalAuthListCtrlrEnabled)
             .value_or(false)) {
         try {
-            response.versionNumber = this->database_handler.get_local_authorization_list_version();
+            response.versionNumber = this->context.database_handler.get_local_authorization_list_version();
         } catch (const common::DatabaseException& e) {
             const auto call_error = CallError(call.uniqueId, "InternalError",
                                               "Unable to retrieve LocalListVersion from the database", json({}));
-            this->message_dispatcher.dispatch_call_error(call_error);
+            this->context.message_dispatcher.dispatch_call_error(call_error);
             return;
         }
     } else {
@@ -542,7 +544,7 @@ void ocpp::v2::Authorization::handle_get_local_authorization_list_version_req(Ca
     }
 
     ocpp::CallResult<GetLocalListVersionResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 ocpp::v2::SendLocalListStatusEnum
@@ -554,7 +556,7 @@ ocpp::v2::Authorization::apply_local_authorization_list(const SendLocalListReque
     } else if (request.updateType == UpdateEnum::Full) {
         if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
             try {
-                this->database_handler.clear_local_authorization_list();
+                this->context.database_handler.clear_local_authorization_list();
                 status = SendLocalListStatusEnum::Accepted;
             } catch (const common::DatabaseException& e) {
                 status = SendLocalListStatusEnum::Failed;
@@ -566,8 +568,8 @@ ocpp::v2::Authorization::apply_local_authorization_list(const SendLocalListReque
             if (!has_duplicate_in_list(list) and
                 std::find_if(list.begin(), list.end(), has_no_token_info) == list.end()) {
                 try {
-                    this->database_handler.clear_local_authorization_list();
-                    this->database_handler.insert_or_update_local_authorization_list(list);
+                    this->context.database_handler.clear_local_authorization_list();
+                    this->context.database_handler.insert_or_update_local_authorization_list(list);
                     status = SendLocalListStatusEnum::Accepted;
                 } catch (const common::DatabaseException& e) {
                     status = SendLocalListStatusEnum::Failed;
@@ -577,7 +579,7 @@ ocpp::v2::Authorization::apply_local_authorization_list(const SendLocalListReque
             }
         }
     } else if (request.updateType == UpdateEnum::Differential) {
-        if (request.versionNumber <= this->database_handler.get_local_authorization_list_version()) {
+        if (request.versionNumber <= this->context.database_handler.get_local_authorization_list_version()) {
             // D01.FR.19: Do not allow version numbers smaller than current to update differentially
             status = SendLocalListStatusEnum::VersionMismatch;
         } else if (!request.localAuthorizationList.has_value() or request.localAuthorizationList.value().empty()) {
@@ -588,7 +590,7 @@ ocpp::v2::Authorization::apply_local_authorization_list(const SendLocalListReque
         } else {
             const auto& list = request.localAuthorizationList.value();
             try {
-                this->database_handler.insert_or_update_local_authorization_list(list);
+                this->context.database_handler.insert_or_update_local_authorization_list(list);
                 status = SendLocalListStatusEnum::Accepted;
             } catch (const common::DatabaseException& e) {
                 status = SendLocalListStatusEnum::Failed;

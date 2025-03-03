@@ -6,8 +6,10 @@
 #include <ocpp/common/constants.hpp>
 #include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/database_handler.hpp>
 #include <ocpp/v2/device_model.hpp>
 #include <ocpp/v2/functional_blocks/authorization.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/utils.hpp>
 
 #include <ocpp/v2/messages/ClearVariableMonitoring.hpp>
@@ -25,18 +27,15 @@ const auto DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH = 51200;
 
 namespace ocpp::v2 {
 
-Diagnostics::Diagnostics(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                         ConnectivityManagerInterface& connectivity_manager, AuthorizationInterface& authorization,
+Diagnostics::Diagnostics(const FunctionalBlockContext& context, AuthorizationInterface& authorization,
                          GetLogRequestCallback get_log_request_callback,
                          std::optional<GetCustomerInformationCallback> get_customer_information_callback,
                          std::optional<ClearCustomerInformationCallback> clear_customer_information_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
-    connectivity_manager(connectivity_manager),
+    context(context),
     authorization(authorization),
     monitoring_updater(
-        device_model, [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
-        [this]() { return !this->connectivity_manager.is_websocket_connected(); }),
+        context.device_model, [this](const std::vector<EventData>& events) { this->notify_event_req(events); },
+        [this]() { return !this->context.connectivity_manager.is_websocket_connected(); }),
     get_log_request_callback(get_log_request_callback),
     get_customer_information_callback(get_customer_information_callback),
     clear_customer_information_callback(clear_customer_information_callback) {
@@ -71,7 +70,7 @@ void Diagnostics::notify_event_req(const std::vector<EventData>& events) {
     req.seqNo = 0;
 
     ocpp::Call<NotifyEventRequest> call(req);
-    this->message_dispatcher.dispatch_call(call);
+    this->context.message_dispatcher.dispatch_call(call);
 }
 
 void Diagnostics::stop_monitoring() {
@@ -101,7 +100,7 @@ void Diagnostics::notify_customer_information_req(const std::string& data, const
         }();
 
         ocpp::Call<NotifyCustomerInformationRequest> call(req);
-        this->message_dispatcher.dispatch_call(call);
+        this->context.message_dispatcher.dispatch_call(call);
 
         pos += 512;
         seq_no++;
@@ -121,7 +120,7 @@ void Diagnostics::notify_monitoring_report_req(const int request_id,
         req.tbc = false;
 
         ocpp::Call<NotifyMonitoringReportRequest> call(req);
-        this->message_dispatcher.dispatch_call(call);
+        this->context.message_dispatcher.dispatch_call(call);
     } else {
         // Split for larger message sizes
         int32_t sequence_num = 0;
@@ -147,7 +146,7 @@ void Diagnostics::notify_monitoring_report_req(const int request_id,
             req.monitor = sub_data;
 
             ocpp::Call<NotifyMonitoringReportRequest> call(req);
-            this->message_dispatcher.dispatch_call(call);
+            this->context.message_dispatcher.dispatch_call(call);
 
             sequence_num++;
         }
@@ -158,7 +157,7 @@ void Diagnostics::handle_get_log_req(Call<GetLogRequest> call) {
     const GetLogResponse response = this->get_log_request_callback(call.msg);
 
     ocpp::CallResult<GetLogResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Diagnostics::handle_customer_information_req(Call<CustomerInformationRequest> call) {
@@ -178,7 +177,7 @@ void Diagnostics::handle_customer_information_req(Call<CustomerInformationReques
     }
 
     ocpp::CallResult<CustomerInformationResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status == CustomerInformationStatusEnum::Accepted) {
         std::string data = "";
@@ -190,7 +189,8 @@ void Diagnostics::handle_customer_information_req(Call<CustomerInformationReques
         }
 
         const auto max_customer_information_data_length =
-            this->device_model.get_optional_value<int>(ControllerComponentVariables::MaxCustomerInformationDataLength)
+            this->context.device_model
+                .get_optional_value<int>(ControllerComponentVariables::MaxCustomerInformationDataLength)
                 .value_or(DEFAULT_MAX_CUSTOMER_INFORMATION_DATA_LENGTH);
         if (data.length() > max_customer_information_data_length) {
             EVLOG_warning << "NotifyCustomerInformation.req data field is too large. Cropping it down to: "
@@ -206,7 +206,7 @@ void Diagnostics::handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> 
     SetMonitoringBaseResponse response;
     const auto& msg = call.msg;
 
-    auto result = this->device_model.set_value(
+    auto result = this->context.device_model.set_value(
         ControllerComponentVariables::ActiveMonitoringBase.component,
         ControllerComponentVariables::ActiveMonitoringBase.variable.value(), AttributeEnum::Actual,
         conversions::monitoring_base_enum_to_string(msg.monitoringBase), VARIABLE_ATTRIBUTE_VALUE_SOURCE_CSMS, true);
@@ -221,7 +221,7 @@ void Diagnostics::handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> 
         if (msg.monitoringBase == MonitoringBaseEnum::HardWiredOnly or
             msg.monitoringBase == MonitoringBaseEnum::FactoryDefault) {
             try {
-                this->device_model.clear_custom_monitors();
+                this->context.device_model.clear_custom_monitors();
             } catch (const DeviceModelError& e) {
                 EVLOG_warning << "Could not clear custom monitors from DB: " << e.what();
                 response.status = GenericDeviceModelStatusEnum::Rejected;
@@ -230,7 +230,7 @@ void Diagnostics::handle_set_monitoring_base_req(Call<SetMonitoringBaseRequest> 
     }
 
     ocpp::CallResult<SetMonitoringBaseResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Diagnostics::handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest> call) {
@@ -240,10 +240,10 @@ void Diagnostics::handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest
     if (msg.severity < MonitoringLevelSeverity::MIN or msg.severity > MonitoringLevelSeverity::MAX) {
         response.status = GenericStatusEnum::Rejected;
     } else {
-        auto result = this->device_model.set_value(ControllerComponentVariables::ActiveMonitoringLevel.component,
-                                                   ControllerComponentVariables::ActiveMonitoringLevel.variable.value(),
-                                                   AttributeEnum::Actual, std::to_string(msg.severity),
-                                                   VARIABLE_ATTRIBUTE_VALUE_SOURCE_CSMS, true);
+        auto result = this->context.device_model.set_value(
+            ControllerComponentVariables::ActiveMonitoringLevel.component,
+            ControllerComponentVariables::ActiveMonitoringLevel.variable.value(), AttributeEnum::Actual,
+            std::to_string(msg.severity), VARIABLE_ATTRIBUTE_VALUE_SOURCE_CSMS, true);
 
         if (result != SetVariableStatusEnum::Accepted) {
             EVLOG_warning << "Could not persist in device model new monitoring level: " << msg.severity;
@@ -254,7 +254,7 @@ void Diagnostics::handle_set_monitoring_level_req(Call<SetMonitoringLevelRequest
     }
 
     ocpp::CallResult<SetMonitoringLevelResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Diagnostics::handle_set_variable_monitoring_req(const EnhancedMessage<MessageType>& message) {
@@ -263,31 +263,31 @@ void Diagnostics::handle_set_variable_monitoring_req(const EnhancedMessage<Messa
     const auto& msg = call.msg;
 
     const auto max_items_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageSetVariableMonitoring);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageSetVariableMonitoring);
     const auto max_bytes_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageSetVariableMonitoring);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageSetVariableMonitoring);
 
     // N04.FR.09
     if (msg.setMonitoringData.size() > max_items_per_message) {
         const auto call_error = CallError(call.uniqueId, "OccurenceConstraintViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
     if (message.message_size > max_bytes_message) {
         const auto call_error = CallError(call.uniqueId, "FormatViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
     try {
-        response.setMonitoringResult = this->device_model.set_monitors(msg.setMonitoringData);
+        response.setMonitoringResult = this->context.device_model.set_monitors(msg.setMonitoringData);
     } catch (const DeviceModelError& e) {
         EVLOG_error << "Set monitors failed:" << e.what();
     }
 
     ocpp::CallResult<SetVariableMonitoringResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Diagnostics::handle_get_monitoring_report_req(Call<GetMonitoringReportRequest> call) {
@@ -296,12 +296,12 @@ void Diagnostics::handle_get_monitoring_report_req(Call<GetMonitoringReportReque
 
     const auto component_variables = msg.componentVariable.value_or(std::vector<ComponentVariable>());
     const auto max_variable_components_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetReport);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetReport);
 
     // N02.FR.07
     if (component_variables.size() > max_variable_components_per_message) {
         const auto call_error = CallError(call.uniqueId, "OccurenceConstraintViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
@@ -309,7 +309,7 @@ void Diagnostics::handle_get_monitoring_report_req(Call<GetMonitoringReportReque
     std::vector<MonitoringData> data{};
 
     try {
-        data = this->device_model.get_monitors(criteria, component_variables);
+        data = this->context.device_model.get_monitors(criteria, component_variables);
 
         if (!data.empty()) {
             response.status = GenericDeviceModelStatusEnum::Accepted;
@@ -322,7 +322,7 @@ void Diagnostics::handle_get_monitoring_report_req(Call<GetMonitoringReportReque
     }
 
     ocpp::CallResult<GetMonitoringReportResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status == GenericDeviceModelStatusEnum::Accepted) {
         // Send the result with splits if required
@@ -335,13 +335,13 @@ void Diagnostics::handle_clear_variable_monitoring_req(Call<ClearVariableMonitor
     const auto& msg = call.msg;
 
     try {
-        response.clearMonitoringResult = this->device_model.clear_monitors(msg.id);
+        response.clearMonitoringResult = this->context.device_model.clear_monitors(msg.id);
     } catch (const DeviceModelError& e) {
         EVLOG_error << "Clear variable monitoring failed:" << e.what();
     }
 
     ocpp::CallResult<ClearVariableMonitoringResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 std::string Diagnostics::get_customer_information(const std::optional<CertificateHashDataType> customer_certificate,

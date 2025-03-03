@@ -4,8 +4,11 @@
 #include <ocpp/v2/functional_blocks/security.hpp>
 
 #include <ocpp/common/constants.hpp>
+#include <ocpp/common/ocpp_logging.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
-#include <ocpp/v2/messages/SecurityEventNotification.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/utils.hpp>
 
 #include <ocpp/v2/messages/CertificateSigned.hpp>
@@ -13,21 +16,17 @@
 #include <ocpp/v2/messages/Get15118EVCertificate.hpp>
 #include <ocpp/v2/messages/GetInstalledCertificateIds.hpp>
 #include <ocpp/v2/messages/InstallCertificate.hpp>
+#include <ocpp/v2/messages/SecurityEventNotification.hpp>
 #include <ocpp/v2/messages/SignCertificate.hpp>
 
 constexpr int32_t minimum_cert_signing_wait_time_seconds = 250;
 
 namespace ocpp::v2 {
 
-Security::Security(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                   MessageLogging& logging, EvseSecurity& evse_security,
-                   ConnectivityManagerInterface& connectivity_manager, OcspUpdaterInterface& ocsp_updater,
-                   SecurityEventCallback security_event_callback) :
-    message_dispatcher(message_dispatcher),
-    device_model(device_model),
+Security::Security(const FunctionalBlockContext& functional_block_context, MessageLogging& logging,
+                   OcspUpdaterInterface& ocsp_updater, SecurityEventCallback security_event_callback) :
+    context(functional_block_context),
     logging(logging),
-    evse_security(evse_security),
-    connectivity_manager(connectivity_manager),
     ocsp_updater(ocsp_updater),
     security_event_callback(security_event_callback),
     csr_attempt(1),
@@ -66,7 +65,7 @@ Get15118EVCertificateResponse
 Security::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest& request) {
     Get15118EVCertificateResponse response;
 
-    if (!this->device_model
+    if (!this->context.device_model
              .get_optional_value<bool>(ControllerComponentVariables::ContractCertificateInstallationEnabled)
              .value_or(false)) {
         EVLOG_warning << "Can not fulfill Get15118EVCertificateRequest because ContractCertificateInstallationEnabled "
@@ -76,7 +75,8 @@ Security::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest
     }
 
     EVLOG_debug << "Received Get15118EVCertificateRequest " << request;
-    auto future_res = this->message_dispatcher.dispatch_call_async(ocpp::Call<Get15118EVCertificateRequest>(request));
+    auto future_res =
+        this->context.message_dispatcher.dispatch_call_async(ocpp::Call<Get15118EVCertificateRequest>(request));
 
     if (future_res.wait_for(DEFAULT_WAIT_FOR_FUTURE_TIMEOUT) == std::future_status::timeout) {
         EVLOG_warning << "Waiting for Get15118EVCertificateRequest.conf future timed out!";
@@ -97,7 +97,7 @@ Security::on_get_15118_ev_certificate_request(const Get15118EVCertificateRequest
     } catch (const EnumConversionException& e) {
         EVLOG_error << "EnumConversionException during handling of message: " << e.what();
         auto call_error = CallError(response_message.uniqueId, "FormationViolation", e.what(), json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return response;
     }
 }
@@ -107,9 +107,9 @@ void Security::init_certificate_expiration_check_timers() {
 
     // Client Certificate only needs to be checked for SecurityProfile 3; if SecurityProfile changes, timers get
     // re-initialized at reconnect
-    if (this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
+    if (this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
         this->client_certificate_expiration_check_timer.timeout(std::chrono::seconds(
-            this->device_model
+            this->context.device_model
                 .get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckInitialDelaySeconds)
                 .value_or(60)));
     }
@@ -117,7 +117,7 @@ void Security::init_certificate_expiration_check_timers() {
     // V2G Certificate timer is started in any case; condition (V2GCertificateInstallationEnabled) is validated in
     // callback (ChargePoint::scheduled_check_v2g_certificate_expiration)
     this->v2g_certificate_expiration_check_timer.timeout(std::chrono::seconds(
-        this->device_model
+        this->context.device_model
             .get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckInitialDelaySeconds)
             .value_or(60)));
 }
@@ -144,7 +144,7 @@ void Security::security_event_notification_req(const CiString<50>& event_type,
     this->logging.security(json(req).dump());
     if (critical) {
         ocpp::Call<SecurityEventNotificationRequest> call(req);
-        this->message_dispatcher.dispatch_call(call);
+        this->context.message_dispatcher.dispatch_call(call);
     }
     if (triggered_internally and this->security_event_callback != nullptr) {
         this->security_event_callback(event_type, tech_info);
@@ -168,23 +168,24 @@ void Security::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certi
 
     if (certificate_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate) {
         req.certificateType = ocpp::v2::CertificateSigningUseEnum::ChargingStationCertificate;
-        common =
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber);
+        common = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::ChargeBoxSerialNumber);
         organization =
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::OrganizationName);
-        country =
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
+            this->context.device_model.get_optional_value<std::string>(ControllerComponentVariables::OrganizationName);
+        country = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::ISO15118CtrlrCountryName);
         should_use_tpm =
-            this->device_model.get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
+            this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::UseTPM).value_or(false);
     } else {
         req.certificateType = ocpp::v2::CertificateSigningUseEnum::V2GCertificate;
-        common = this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrSeccId);
-        organization = this->device_model.get_optional_value<std::string>(
+        common = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::ISO15118CtrlrSeccId);
+        organization = this->context.device_model.get_optional_value<std::string>(
             ControllerComponentVariables::ISO15118CtrlrOrganizationName);
-        country =
-            this->device_model.get_optional_value<std::string>(ControllerComponentVariables::ISO15118CtrlrCountryName);
+        country = this->context.device_model.get_optional_value<std::string>(
+            ControllerComponentVariables::ISO15118CtrlrCountryName);
         should_use_tpm =
-            this->device_model.get_optional_value<bool>(ControllerComponentVariables::UseTPMSeccLeafCertificate)
+            this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::UseTPMSeccLeafCertificate)
                 .value_or(false);
     }
 
@@ -203,7 +204,7 @@ void Security::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certi
         return;
     }
 
-    const auto result = this->evse_security.generate_certificate_signing_request(
+    const auto result = this->context.evse_security.generate_certificate_signing_request(
         certificate_signing_use, country.value(), organization.value(), common.value(), should_use_tpm);
 
     if (result.status != GetCertificateSignRequestStatus::Accepted or !result.csr.has_value()) {
@@ -222,7 +223,7 @@ void Security::sign_certificate_req(const ocpp::CertificateSigningUseEnum& certi
     this->awaited_certificate_signing_use_enum = certificate_signing_use;
 
     ocpp::Call<SignCertificateRequest> call(req);
-    this->message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 }
 
 void Security::handle_certificate_signed_req(Call<CertificateSignedRequest> call) {
@@ -244,7 +245,7 @@ void Security::handle_certificate_signed_req(Call<CertificateSignedRequest> call
         cert_signing_use = ocpp::CertificateSigningUseEnum::V2GCertificate;
     }
 
-    const auto result = this->evse_security.update_leaf_certificate(certificate_chain, cert_signing_use);
+    const auto result = this->context.evse_security.update_leaf_certificate(certificate_chain, cert_signing_use);
 
     if (result == ocpp::InstallCertificateResult::Accepted) {
         response.status = CertificateSignedStatusEnum::Accepted;
@@ -256,13 +257,13 @@ void Security::handle_certificate_signed_req(Call<CertificateSignedRequest> call
 
     // Trigger a symlink update for V2G certificates
     if ((cert_signing_use == ocpp::CertificateSigningUseEnum::V2GCertificate) and
-        this->device_model.get_optional_value<bool>(ControllerComponentVariables::UpdateCertificateSymlinks)
+        this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::UpdateCertificateSymlinks)
             .value_or(false)) {
-        this->evse_security.update_certificate_links(cert_signing_use);
+        this->context.evse_security.update_certificate_links(cert_signing_use);
     }
 
     ocpp::CallResult<CertificateSignedResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (result != ocpp::InstallCertificateResult::Accepted) {
         this->security_event_notification_req("InvalidChargingStationCertificate",
@@ -273,8 +274,8 @@ void Security::handle_certificate_signed_req(Call<CertificateSignedRequest> call
     // reconnect with new certificate if valid and security profile is 3
     if (response.status == CertificateSignedStatusEnum::Accepted and
         cert_signing_use == ocpp::CertificateSigningUseEnum::ChargingStationCertificate and
-        this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
-        this->connectivity_manager.on_charging_station_certificate_changed();
+        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) == 3) {
+        this->context.connectivity_manager.on_charging_station_certificate_changed();
 
         const auto& security_event = ocpp::security_events::RECONFIGURATIONOFSECURITYPARAMETERS;
         std::string tech_info = "Changed charging station certificate";
@@ -293,9 +294,9 @@ void Security::handle_sign_certificate_response(CallResult<SignCertificateRespon
     if (call_result.msg.status == GenericStatusEnum::Accepted) {
         // set timer waiting for certificate signed
         const auto cert_signing_wait_minimum =
-            this->device_model.get_optional_value<int>(ControllerComponentVariables::CertSigningWaitMinimum);
+            this->context.device_model.get_optional_value<int>(ControllerComponentVariables::CertSigningWaitMinimum);
         const auto cert_signing_repeat_times =
-            this->device_model.get_optional_value<int>(ControllerComponentVariables::CertSigningRepeatTimes);
+            this->context.device_model.get_optional_value<int>(ControllerComponentVariables::CertSigningRepeatTimes);
 
         if (!cert_signing_wait_minimum.has_value()) {
             EVLOG_warning << "No CertSigningWaitMinimum is configured, will not attempt to retry SignCertificate.req "
@@ -353,7 +354,7 @@ void Security::handle_get_installed_certificate_ids_req(Call<GetInstalledCertifi
     }
 
     // retrieve installed certificates
-    const auto certificate_hash_data_chains = this->evse_security.get_installed_certificates(certificate_types);
+    const auto certificate_hash_data_chains = this->context.evse_security.get_installed_certificates(certificate_types);
 
     // convert the common type back to the v2 type(s) for the response
     std::vector<CertificateHashDataChain> certificate_hash_data_chain_v2;
@@ -370,7 +371,7 @@ void Security::handle_get_installed_certificate_ids_req(Call<GetInstalledCertifi
     }
 
     ocpp::CallResult<GetInstalledCertificateIdsResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Security::handle_install_certificate_req(Call<InstallCertificateRequest> call) {
@@ -385,7 +386,7 @@ void Security::handle_install_certificate_req(Call<InstallCertificateRequest> ca
         response.statusInfo->reasonCode = "UnsecureConnection";
         response.statusInfo->additionalInfo = "CertificateInstallationNotAllowedWithUnsecureConnection";
     } else {
-        const auto result = this->evse_security.install_ca_certificate(
+        const auto result = this->context.evse_security.install_ca_certificate(
             msg.certificate.get(), ocpp::evse_security_conversions::from_ocpp_v2(msg.certificateType));
         response.status = ocpp::evse_security_conversions::to_ocpp_v2(result);
         if (response.status == InstallCertificateStatusEnum::Accepted) {
@@ -397,7 +398,7 @@ void Security::handle_install_certificate_req(Call<InstallCertificateRequest> ca
         }
     }
     ocpp::CallResult<InstallCertificateResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Security::handle_delete_certificate_req(Call<DeleteCertificateRequest> call) {
@@ -408,7 +409,7 @@ void Security::handle_delete_certificate_req(Call<DeleteCertificateRequest> call
 
     const auto certificate_hash_data = ocpp::evse_security_conversions::from_ocpp_v2(msg.certificateHashData);
 
-    const auto status = this->evse_security.delete_certificate(certificate_hash_data);
+    const auto status = this->context.evse_security.delete_certificate(certificate_hash_data);
 
     response.status = ocpp::evse_security_conversions::to_ocpp_v2(status);
 
@@ -420,23 +421,24 @@ void Security::handle_delete_certificate_req(Call<DeleteCertificateRequest> call
     }
 
     ocpp::CallResult<DeleteCertificateResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 bool Security::should_allow_certificate_install(InstallCertificateUseEnum cert_type) const {
-    const int security_profile = this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+    const int security_profile =
+        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
 
     if (security_profile > 1) {
         return true;
     }
     switch (cert_type) {
     case InstallCertificateUseEnum::CSMSRootCertificate:
-        return this->device_model
+        return this->context.device_model
             .get_optional_value<bool>(ControllerComponentVariables::AllowCSMSRootCertInstallWithUnsecureConnection)
             .value_or(true);
 
     case InstallCertificateUseEnum::ManufacturerRootCertificate:
-        return this->device_model
+        return this->context.device_model
             .get_optional_value<bool>(ControllerComponentVariables::AllowMFRootCertInstallWithUnsecureConnection)
             .value_or(true);
     case InstallCertificateUseEnum::MORootCertificate:
@@ -447,8 +449,8 @@ bool Security::should_allow_certificate_install(InstallCertificateUseEnum cert_t
 
 void Security::scheduled_check_client_certificate_expiration() {
     EVLOG_info << "Checking if CSMS client certificate has expired";
-    int expiry_days_count =
-        this->evse_security.get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
+    int expiry_days_count = this->context.evse_security.get_leaf_expiry_days_count(
+        ocpp::CertificateSigningUseEnum::ChargingStationCertificate);
     if (expiry_days_count < 30) {
         EVLOG_info << "CSMS client certificate is invalid in " << expiry_days_count
                    << " days. Requesting new certificate with certificate signing request";
@@ -458,17 +460,18 @@ void Security::scheduled_check_client_certificate_expiration() {
     }
 
     this->client_certificate_expiration_check_timer.interval(std::chrono::seconds(
-        this->device_model
+        this->context.device_model
             .get_optional_value<int>(ControllerComponentVariables::ClientCertificateExpireCheckIntervalSeconds)
             .value_or(12 * 60 * 60)));
 }
 
 void Security::scheduled_check_v2g_certificate_expiration() {
-    if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
+    if (this->context.device_model
+            .get_optional_value<bool>(ControllerComponentVariables::V2GCertificateInstallationEnabled)
             .value_or(false)) {
         EVLOG_info << "Checking if V2GCertificate has expired";
         int expiry_days_count =
-            this->evse_security.get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
+            this->context.evse_security.get_leaf_expiry_days_count(ocpp::CertificateSigningUseEnum::V2GCertificate);
         if (expiry_days_count < 30) {
             EVLOG_info << "V2GCertificate is invalid in " << expiry_days_count
                        << " days. Requesting new certificate with certificate signing request";
@@ -477,14 +480,15 @@ void Security::scheduled_check_v2g_certificate_expiration() {
             EVLOG_info << "V2GCertificate is still valid.";
         }
     } else {
-        if (this->device_model.get_optional_value<bool>(ControllerComponentVariables::PnCEnabled).value_or(false)) {
+        if (this->context.device_model.get_optional_value<bool>(ControllerComponentVariables::PnCEnabled)
+                .value_or(false)) {
             EVLOG_warning << "PnC is enabled but V2G certificate installation is not, so no certificate expiration "
                              "check is performed.";
         }
     }
 
     this->v2g_certificate_expiration_check_timer.interval(std::chrono::seconds(
-        this->device_model
+        this->context.device_model
             .get_optional_value<int>(ControllerComponentVariables::V2GCertificateExpireCheckIntervalSeconds)
             .value_or(12 * 60 * 60)));
 }

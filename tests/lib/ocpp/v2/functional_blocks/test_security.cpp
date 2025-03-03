@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 
 #include <ocpp/v2/ctrlr_component_variables.hpp>
+#include <ocpp/v2/device_model.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 
 #define private public // Make everything in security.hpp public so we can trigger the timer.
 #include <ocpp/v2/functional_blocks/security.hpp>
@@ -14,10 +16,13 @@
 #include <ocpp/v2/messages/SecurityEventNotification.hpp>
 #include <ocpp/v2/messages/SignCertificate.hpp>
 
+#include "component_state_manager_mock.hpp"
 #include "connectivity_manager_mock.hpp"
 #include "device_model_test_helper.hpp"
+#include "evse_manager_fake.hpp"
 #include "evse_security_mock.hpp"
 #include "message_dispatcher_mock.hpp"
+#include "mocks/database_handler_mock.hpp"
 #include "ocsp_updater_mock.hpp"
 #include "timer_stub.hpp"
 
@@ -37,9 +42,13 @@ protected: // Members
     ocpp::MessageLogging logging;
     ocpp::EvseSecurityMock evse_security;
     ConnectivityManagerMock connectivity_manager;
+    EvseManagerFake evse_manager;
+    ComponentStateManagerMock component_state_manager;
+    ::testing::NiceMock<ocpp::v2::DatabaseHandlerMock> database_handler_mock;
     OcspUpdaterMock ocsp_updater;
     MockFunction<void(const ocpp::CiString<50>& event_type, const std::optional<ocpp::CiString<255>>& tech_info)>
         security_event_callback_mock;
+    FunctionalBlockContext functional_block_context;
     Security security;
 
 protected: // Functions
@@ -47,8 +56,14 @@ protected: // Functions
         device_model_test_helper(),
         device_model(device_model_test_helper.get_device_model()),
         logging(false, "", "", false, false, false, false, false, false, nullptr),
-        security(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-                 security_event_callback_mock.AsStdFunction()) {
+        evse_security(),
+        connectivity_manager(),
+        evse_manager(2),
+        component_state_manager(),
+        functional_block_context{this->mock_dispatcher,        *this->device_model,         this->connectivity_manager,
+                                 this->evse_manager,           this->database_handler_mock, this->evse_security,
+                                 this->component_state_manager},
+        security(functional_block_context, logging, ocsp_updater, security_event_callback_mock.AsStdFunction()) {
     }
 
     ocpp::EnhancedMessage<MessageType> create_example_certificate_signed_request(
@@ -382,8 +397,10 @@ TEST_F(SecurityTest, sign_certificate_request_no_organization_name) {
         ControllerComponentVariables::OrganizationName.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::ChargeBoxSerialNumber.component,
                                   ControllerComponentVariables::ChargeBoxSerialNumber.variable.value(),
@@ -408,8 +425,11 @@ TEST_F(SecurityTest, sign_certificate_request_no_serial_number) {
         ControllerComponentVariables::OrganizationName.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::OrganizationName.component,
                                   ControllerComponentVariables::OrganizationName.variable.value(),
@@ -434,8 +454,10 @@ TEST_F(SecurityTest, sign_certificate_request_no_country) {
         ControllerComponentVariables::OrganizationName.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::OrganizationName.component,
                                   ControllerComponentVariables::OrganizationName.variable.value(),
@@ -534,8 +556,10 @@ TEST_F(SecurityTest, sign_certificate_request_v2g_no_common_name) {
         std::nullopt, ControllerComponentVariables::ISO15118CtrlrSeccId.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::ISO15118CtrlrOrganizationName.component,
                                   ControllerComponentVariables::ISO15118CtrlrOrganizationName.variable.value(),
@@ -560,8 +584,10 @@ TEST_F(SecurityTest, sign_certificate_request_v2g_no_organization) {
         std::nullopt, ControllerComponentVariables::ISO15118CtrlrOrganizationName.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::ISO15118CtrlrSeccId.component,
                                   ControllerComponentVariables::ISO15118CtrlrSeccId.variable.value(),
@@ -586,8 +612,10 @@ TEST_F(SecurityTest, sign_certificate_request_v2g_no_country) {
         std::nullopt, ControllerComponentVariables::ISO15118CtrlrCountryName.variable->name.get(), std::nullopt);
 
     device_model = device_model_test_helper.get_device_model();
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater,
-               security_event_callback_mock.AsStdFunction());
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, security_event_callback_mock.AsStdFunction());
 
     this->device_model->set_value(ControllerComponentVariables::ISO15118CtrlrSeccId.component,
                                   ControllerComponentVariables::ISO15118CtrlrSeccId.variable.value(),
@@ -697,7 +725,10 @@ TEST_F(SecurityTest, security_event_notification_not_triggered_internally) {
 
 TEST_F(SecurityTest, security_event_notification_no_callback) {
     // Trigger a critical security event, but there is no callback to call.
-    Security s(mock_dispatcher, *device_model, logging, evse_security, connectivity_manager, ocsp_updater, nullptr);
+    const FunctionalBlockContext b{
+        this->mock_dispatcher,       *this->device_model, this->connectivity_manager,   this->evse_manager,
+        this->database_handler_mock, this->evse_security, this->component_state_manager};
+    Security s(b, logging, ocsp_updater, nullptr);
 
     // This will send a security event notification to the CSMS.
     EXPECT_CALL(mock_dispatcher, dispatch_call(_, _)).WillOnce(Invoke([&](const json& call, bool triggered) {

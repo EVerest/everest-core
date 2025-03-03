@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright Pionix GmbH and Contributors to EVerest
 
-#include "ocpp/v2/functional_blocks/transaction.hpp"
 #include <ocpp/v2/functional_blocks/provisioning.hpp>
 
 #include <ocpp/common/constants.hpp>
 #include <ocpp/common/evse_security.hpp>
 #include <ocpp/v2/component_state_manager.hpp>
+#include <ocpp/v2/connectivity_manager.hpp>
 #include <ocpp/v2/ctrlr_component_variables.hpp>
 #include <ocpp/v2/evse_manager.hpp>
+#include <ocpp/v2/functional_blocks/functional_block_context.hpp>
 #include <ocpp/v2/notify_report_requests_splitter.hpp>
 
 #include <ocpp/v2/functional_blocks/availability.hpp>
 #include <ocpp/v2/functional_blocks/diagnostics.hpp>
 #include <ocpp/v2/functional_blocks/meter_values.hpp>
 #include <ocpp/v2/functional_blocks/security.hpp>
+#include <ocpp/v2/functional_blocks/transaction.hpp>
 
 #include <ocpp/v2/messages/BootNotification.hpp>
 #include <ocpp/v2/messages/GetBaseReport.hpp>
@@ -22,6 +24,7 @@
 #include <ocpp/v2/messages/GetVariables.hpp>
 #include <ocpp/v2/messages/NotifyReport.hpp>
 #include <ocpp/v2/messages/Reset.hpp>
+#include <ocpp/v2/messages/SetNetworkProfile.hpp>
 #include <ocpp/v2/messages/SetVariables.hpp>
 
 const auto DEFAULT_MAX_MESSAGE_SIZE = 65000;
@@ -32,10 +35,8 @@ namespace ocpp::v2 {
 static bool component_variable_change_requires_websocket_option_update_without_reconnect(
     const ComponentVariable& component_variable);
 
-Provisioning::Provisioning(DeviceModel& device_model, MessageDispatcherInterface<MessageType>& message_dispatcher,
-                           MessageQueue<MessageType>& message_queue, ConnectivityManagerInterface& connectivity_manager,
-                           ComponentStateManagerInterface& component_state_manager, OcspUpdaterInterface& ocsp_updater,
-                           EvseManagerInterface& evse_manager, EvseSecurity& evse_security,
+Provisioning::Provisioning(const FunctionalBlockContext& functional_block_context,
+                           MessageQueue<MessageType>& message_queue, OcspUpdaterInterface& ocsp_updater,
                            AvailabilityInterface& availability, MeterValuesInterface& meter_values,
                            SecurityInterface& security, DiagnosticsInterface& diagnostics,
                            TransactionInterface& transaction, std::optional<TimeSyncCallback> time_sync_callback,
@@ -45,14 +46,9 @@ Provisioning::Provisioning(DeviceModel& device_model, MessageDispatcherInterface
                            StopTransactionCallback stop_transaction_callback,
                            std::optional<VariableChangedCallback> variable_changed_callback,
                            std::atomic<RegistrationStatusEnum>& registration_status) :
-    device_model(device_model),
-    message_dispatcher(message_dispatcher),
+    context(functional_block_context),
     message_queue(message_queue),
-    connectivity_manager(connectivity_manager),
-    component_state_manager(component_state_manager),
     ocsp_updater(ocsp_updater),
-    evse_manager(evse_manager),
-    evse_security(evse_security),
     availability(availability),
     meter_values(meter_values),
     security(security),
@@ -95,19 +91,20 @@ void Provisioning::boot_notification_req(const BootReasonEnum& reason, const boo
     BootNotificationRequest req;
 
     ChargingStation charging_station;
-    charging_station.model = this->device_model.get_value<std::string>(ControllerComponentVariables::ChargePointModel);
+    charging_station.model =
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::ChargePointModel);
     charging_station.vendorName =
-        this->device_model.get_value<std::string>(ControllerComponentVariables::ChargePointVendor);
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::ChargePointVendor);
     charging_station.firmwareVersion.emplace(
-        this->device_model.get_value<std::string>(ControllerComponentVariables::FirmwareVersion));
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::FirmwareVersion));
     charging_station.serialNumber.emplace(
-        this->device_model.get_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber));
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::ChargeBoxSerialNumber));
 
     req.reason = reason;
     req.chargingStation = charging_station;
 
     ocpp::Call<BootNotificationRequest> call(req);
-    this->message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
+    this->context.message_dispatcher.dispatch_call(call, initiated_by_trigger_message);
 }
 
 void Provisioning::stop_bootnotification_timer() {
@@ -126,7 +123,7 @@ Provisioning::get_variables(const std::vector<GetVariableData>& get_variable_dat
         get_variable_result.component = get_variable_data.component;
         get_variable_result.variable = get_variable_data.variable;
         get_variable_result.attributeType = get_variable_data.attributeType.value_or(AttributeEnum::Actual);
-        const auto request_value_response = this->device_model.request_value<std::string>(
+        const auto request_value_response = this->context.device_model.request_value<std::string>(
             get_variable_data.component, get_variable_data.variable,
             get_variable_data.attributeType.value_or(AttributeEnum::Actual));
         if (request_value_response.status == GetVariableStatusEnum::Accepted and
@@ -157,11 +154,11 @@ void Provisioning::notify_report_req(const int request_id, const std::vector<Rep
 
     if (report_data.size() <= 1) {
         ocpp::Call<NotifyReportRequest> call(req);
-        this->message_dispatcher.dispatch_call(call);
+        this->context.message_dispatcher.dispatch_call(call);
     } else {
         NotifyReportRequestsSplitter splitter{
             req,
-            this->device_model.get_optional_value<size_t>(ControllerComponentVariables::MaxMessageSize)
+            this->context.device_model.get_optional_value<size_t>(ControllerComponentVariables::MaxMessageSize)
                 .value_or(DEFAULT_MAX_MESSAGE_SIZE),
             []() { return ocpp::create_message_id(); }};
         for (const auto& msg : splitter.create_call_payloads()) {
@@ -182,12 +179,12 @@ void Provisioning::handle_boot_notification_response(CallResult<BootNotification
         this->message_queue.set_registration_status_accepted();
         // B01.FR.06 Only use boot timestamp if TimeSource contains Heartbeat
         if (this->time_sync_callback.has_value() and
-            this->device_model.get_value<std::string>(ControllerComponentVariables::TimeSource).find("Heartbeat") !=
-                std::string::npos) {
+            this->context.device_model.get_value<std::string>(ControllerComponentVariables::TimeSource)
+                    .find("Heartbeat") != std::string::npos) {
             this->time_sync_callback.value()(msg.currentTime);
         }
 
-        this->connectivity_manager.confirm_successful_connection();
+        this->context.connectivity_manager.confirm_successful_connection();
 
         // set timers
         if (msg.interval > 0) {
@@ -199,7 +196,7 @@ void Provisioning::handle_boot_notification_response(CallResult<BootNotification
 
         this->security.init_certificate_expiration_check_timers();
         this->meter_values.update_aligned_data_interval();
-        this->component_state_manager.send_status_notification_all_connectors();
+        this->context.component_state_manager.send_status_notification_all_connectors();
         this->ocsp_updater.start();
     } else {
         auto retry_interval = DEFAULT_BOOT_NOTIFICATION_RETRY_INTERVAL;
@@ -232,7 +229,7 @@ void Provisioning::handle_set_variables_req(Call<SetVariablesRequest> call) {
     }
 
     ocpp::CallResult<SetVariablesResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     // post handling of changed variables after the SetVariables.conf has been queued
     this->handle_variables_changed(set_variables_response);
@@ -243,15 +240,15 @@ void Provisioning::handle_get_variables_req(const EnhancedMessage<MessageType>& 
     const auto msg = call.msg;
 
     const auto max_variables_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetVariables);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetVariables);
     const auto max_bytes_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageGetVariables);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageGetVariables);
 
     // B06.FR.16
     if (msg.getVariableData.size() > max_variables_per_message) {
         // send a CALLERROR
         const auto call_error = CallError(call.uniqueId, "OccurenceConstraintViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
@@ -259,7 +256,7 @@ void Provisioning::handle_get_variables_req(const EnhancedMessage<MessageType>& 
     if (message.message_size > max_bytes_per_message) {
         // send a CALLERROR
         const auto call_error = CallError(call.uniqueId, "FormatViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
@@ -267,7 +264,7 @@ void Provisioning::handle_get_variables_req(const EnhancedMessage<MessageType>& 
     response.getVariableResult = this->get_variables(msg.getVariableData);
 
     ocpp::CallResult<GetVariablesResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Provisioning::handle_get_base_report_req(Call<GetBaseReportRequest> call) {
@@ -276,10 +273,10 @@ void Provisioning::handle_get_base_report_req(Call<GetBaseReportRequest> call) {
     response.status = GenericDeviceModelStatusEnum::Accepted;
 
     ocpp::CallResult<GetBaseReportResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status == GenericDeviceModelStatusEnum::Accepted) {
-        const auto report_data = this->device_model.get_base_report_data(msg.reportBase);
+        const auto report_data = this->context.device_model.get_base_report_data(msg.reportBase);
         this->notify_report_req(msg.requestId, report_data);
     }
 }
@@ -291,15 +288,15 @@ void Provisioning::handle_get_report_req(const EnhancedMessage<MessageType>& mes
     GetReportResponse response;
 
     const auto max_items_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetReport);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::ItemsPerMessageGetReport);
     const auto max_bytes_per_message =
-        this->device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageGetReport);
+        this->context.device_model.get_value<int>(ControllerComponentVariables::BytesPerMessageGetReport);
 
     // B08.FR.17
     if (msg.componentVariable.has_value() and msg.componentVariable->size() > max_items_per_message) {
         // send a CALLERROR
         const auto call_error = CallError(call.uniqueId, "OccurenceConstraintViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
@@ -307,13 +304,13 @@ void Provisioning::handle_get_report_req(const EnhancedMessage<MessageType>& mes
     if (message.message_size > max_bytes_per_message) {
         // send a CALLERROR
         const auto call_error = CallError(call.uniqueId, "FormatViolation", "", json({}));
-        this->message_dispatcher.dispatch_call_error(call_error);
+        this->context.message_dispatcher.dispatch_call_error(call_error);
         return;
     }
 
     // if a criteria is not supported then send a not supported response.
     auto sup_criteria =
-        this->device_model.get_optional_value<std::string>(ControllerComponentVariables::SupportedCriteria);
+        this->context.device_model.get_optional_value<std::string>(ControllerComponentVariables::SupportedCriteria);
     if (sup_criteria.has_value() and msg.componentCriteria.has_value()) {
         for (const auto& criteria : msg.componentCriteria.value()) {
             const auto variable_ = conversions::component_criterion_enum_to_string(criteria);
@@ -330,7 +327,7 @@ void Provisioning::handle_get_report_req(const EnhancedMessage<MessageType>& mes
 
         // TODO(piet): Propably split this up into several NotifyReport.req depending on ItemsPerMessage /
         // BytesPerMessage
-        report_data = this->device_model.get_custom_report_data(msg.componentVariable, msg.componentCriteria);
+        report_data = this->context.device_model.get_custom_report_data(msg.componentVariable, msg.componentCriteria);
         if (report_data.empty()) {
             response.status = GenericDeviceModelStatusEnum::EmptyResultSet;
         } else {
@@ -339,7 +336,7 @@ void Provisioning::handle_get_report_req(const EnhancedMessage<MessageType>& mes
     }
 
     ocpp::CallResult<GetReportResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     if (response.status == GenericDeviceModelStatusEnum::Accepted) {
         this->notify_report_req(msg.requestId, report_data);
@@ -355,16 +352,16 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         EVLOG_warning << "No callback registered to validate network profile";
         response.status = SetNetworkProfileStatusEnum::Rejected;
         ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
     if (msg.connectionData.securityProfile <
-        this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile)) {
+        this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile)) {
         EVLOG_warning << "CSMS attempted to set a network profile with a lower securityProfile";
         response.status = SetNetworkProfileStatusEnum::Rejected;
         ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
@@ -373,12 +370,12 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         EVLOG_warning << "CSMS attempted to set a network profile that could not be validated.";
         response.status = SetNetworkProfileStatusEnum::Rejected;
         ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
-    auto network_connection_profiles =
-        json::parse(this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+    auto network_connection_profiles = json::parse(
+        this->context.device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
 
     int index_to_override = -1;
     int index = 0;
@@ -397,14 +394,15 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
         network_connection_profiles.push_back(msg);
     }
 
-    if (this->device_model.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
-                                     ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
-                                     AttributeEnum::Actual, network_connection_profiles.dump(),
-                                     VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL) != SetVariableStatusEnum::Accepted) {
+    if (this->context.device_model.set_value(ControllerComponentVariables::NetworkConnectionProfiles.component,
+                                             ControllerComponentVariables::NetworkConnectionProfiles.variable.value(),
+                                             AttributeEnum::Actual, network_connection_profiles.dump(),
+                                             VARIABLE_ATTRIBUTE_VALUE_SOURCE_INTERNAL) !=
+        SetVariableStatusEnum::Accepted) {
         EVLOG_warning << "CSMS attempted to set a network profile that could not be written to the device model";
         response.status = SetNetworkProfileStatusEnum::Rejected;
         ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-        this->message_dispatcher.dispatch_call_result(call_result);
+        this->context.message_dispatcher.dispatch_call_result(call_result);
         return;
     }
 
@@ -418,7 +416,7 @@ void Provisioning::handle_set_network_profile_req(Call<SetNetworkProfileRequest>
 
     response.status = SetNetworkProfileStatusEnum::Accepted;
     ocpp::CallResult<SetNetworkProfileResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 }
 
 void Provisioning::handle_reset_req(Call<ResetRequest> call) {
@@ -432,11 +430,11 @@ void Provisioning::handle_reset_req(Call<ResetRequest> call) {
     bool transaction_active = false;
     std::set<int32_t> evse_active_transactions;
     std::set<int32_t> evse_no_transactions;
-    if (msg.evseId.has_value() and this->evse_manager.get_evse(msg.evseId.value()).has_active_transaction()) {
+    if (msg.evseId.has_value() and this->context.evse_manager.get_evse(msg.evseId.value()).has_active_transaction()) {
         transaction_active = true;
         evse_active_transactions.emplace(msg.evseId.value());
     } else {
-        for (const auto& evse : this->evse_manager) {
+        for (const auto& evse : this->context.evse_manager) {
             if (evse.has_active_transaction()) {
                 transaction_active = true;
                 evse_active_transactions.emplace(evse.get_id());
@@ -460,7 +458,7 @@ void Provisioning::handle_reset_req(Call<ResetRequest> call) {
         const auto allow_reset_cv =
             EvseComponentVariables::get_component_variable(msg.evseId.value(), EvseComponentVariables::AllowReset);
         // allow reset if AllowReset is not set or set to   true
-        return this->device_model.get_optional_value<bool>(allow_reset_cv).value_or(true);
+        return this->context.device_model.get_optional_value<bool>(allow_reset_cv).value_or(true);
     };
 
     if (is_reset_allowed()) {
@@ -484,7 +482,7 @@ void Provisioning::handle_reset_req(Call<ResetRequest> call) {
     }
 
     ocpp::CallResult<ResetResponse> call_result(response, call.uniqueId);
-    this->message_dispatcher.dispatch_call_result(call_result);
+    this->context.message_dispatcher.dispatch_call_result(call_result);
 
     // Reset response is sent, now set evse connectors to unavailable and / or
     // stop transaction (depending on reset type)
@@ -496,7 +494,7 @@ void Provisioning::handle_reset_req(Call<ResetRequest> call) {
             }
         } else if (msg.type == ResetEnum::OnIdle and !evse_no_transactions.empty()) {
             for (const int32_t evse_id : evse_no_transactions) {
-                auto& evse = this->evse_manager.get_evse(evse_id);
+                auto& evse = this->context.evse_manager.get_evse(evse_id);
                 set_evse_connectors_unavailable(evse, false);
             }
         }
@@ -516,9 +514,9 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
     }
 
     if (component_variable == ControllerComponentVariables::BasicAuthPassword) {
-        if (this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
+        if (this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile) < 3) {
             // TODO: A01.FR.11 log the change of BasicAuth in Security Log
-            this->connectivity_manager.set_websocket_authorization_key(set_variable_data.attributeValue.get());
+            this->context.connectivity_manager.set_websocket_authorization_key(set_variable_data.attributeValue.get());
         }
     }
     if (component_variable == ControllerComponentVariables::HeartbeatInterval and
@@ -538,27 +536,27 @@ void Provisioning::handle_variable_changed(const SetVariableData& set_variable_d
 
     if (component_variable_change_requires_websocket_option_update_without_reconnect(component_variable)) {
         EVLOG_debug << "Reconfigure websocket due to relevant change of ControllerComponentVariable";
-        this->connectivity_manager.set_websocket_connection_options_without_reconnect();
+        this->context.connectivity_manager.set_websocket_connection_options_without_reconnect();
     }
 
     if (component_variable == ControllerComponentVariables::MessageAttemptInterval) {
         if (component_variable.variable.has_value()) {
             this->message_queue.update_transaction_message_retry_interval(
-                this->device_model.get_value<int>(ControllerComponentVariables::MessageAttemptInterval));
+                this->context.device_model.get_value<int>(ControllerComponentVariables::MessageAttemptInterval));
         }
     }
 
     if (component_variable == ControllerComponentVariables::MessageAttempts) {
         if (component_variable.variable.has_value()) {
             this->message_queue.update_transaction_message_attempts(
-                this->device_model.get_value<int>(ControllerComponentVariables::MessageAttempts));
+                this->context.device_model.get_value<int>(ControllerComponentVariables::MessageAttempts));
         }
     }
 
     if (component_variable == ControllerComponentVariables::MessageTimeout) {
         if (component_variable.variable.has_value()) {
             this->message_queue.update_message_timeout(
-                this->device_model.get_value<int>(ControllerComponentVariables::MessageTimeout));
+                this->context.device_model.get_value<int>(ControllerComponentVariables::MessageTimeout));
         }
     }
 
@@ -569,9 +567,9 @@ void Provisioning::handle_variables_changed(const std::map<SetVariableData, SetV
     // iterate over set_variable_results
     for (const auto& [set_variable_data, set_variable_result] : set_variable_results) {
         if (set_variable_result.attributeStatus == SetVariableStatusEnum::Accepted) {
-            std::optional<MutabilityEnum> mutability =
-                this->device_model.get_mutability(set_variable_data.component, set_variable_data.variable,
-                                                  set_variable_data.attributeType.value_or(AttributeEnum::Actual));
+            std::optional<MutabilityEnum> mutability = this->context.device_model.get_mutability(
+                set_variable_data.component, set_variable_data.variable,
+                set_variable_data.attributeType.value_or(AttributeEnum::Actual));
             // If a nullopt is returned for whatever reason, assume it's write-only to prevent leaking secrets
             if (!mutability.has_value() || (mutability.value() == MutabilityEnum::WriteOnly)) {
                 EVLOG_info << "Write-only " << set_variable_data.component.name << ":"
@@ -599,11 +597,11 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
     if (cv == ControllerComponentVariables::NetworkConfigurationPriority) {
         const auto network_configuration_priorities = ocpp::split_string(set_variable_data.attributeValue.get(), ',');
         const auto active_security_profile =
-            this->device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
+            this->context.device_model.get_value<int>(ControllerComponentVariables::SecurityProfile);
 
         try {
-            const auto network_connection_profiles = json::parse(
-                this->device_model.get_value<std::string>(ControllerComponentVariables::NetworkConnectionProfiles));
+            const auto network_connection_profiles = json::parse(this->context.device_model.get_value<std::string>(
+                ControllerComponentVariables::NetworkConnectionProfiles));
             for (const auto configuration_slot : network_configuration_priorities) {
                 auto network_profile_it =
                     std::find_if(network_connection_profiles.begin(), network_connection_profiles.end(),
@@ -623,7 +621,7 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
                 }
 
                 if (network_profile.securityProfile == 3 and
-                    this->evse_security
+                    this->context.evse_security
                             .get_leaf_certificate_info(ocpp::CertificateSigningUseEnum::ChargingStationCertificate)
                             .status != ocpp::GetCertificateInfoStatus::Accepted) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
@@ -631,7 +629,7 @@ bool Provisioning::validate_set_variable(const SetVariableData& set_variable_dat
                     return false;
                 }
                 if (network_profile.securityProfile >= 2 and
-                    !this->evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
+                    !this->context.evse_security.is_ca_certificate_installed(ocpp::CaCertificateType::CSMS)) {
                     EVLOG_warning << "SecurityProfile of configurationSlot: " << configuration_slot
                                   << " is >= 2 but no CSMS Root Certifciate is installed";
                     return false;
@@ -666,9 +664,9 @@ Provisioning::set_variables_internal(const std::vector<SetVariableData>& set_var
         if (this->validate_set_variable(set_variable_data)) {
             // attempt to set the value includes device model validation
             set_variable_result.attributeStatus =
-                this->device_model.set_value(set_variable_data.component, set_variable_data.variable,
-                                             set_variable_data.attributeType.value_or(AttributeEnum::Actual),
-                                             set_variable_data.attributeValue.get(), source, allow_read_only);
+                this->context.device_model.set_value(set_variable_data.component, set_variable_data.variable,
+                                                     set_variable_data.attributeType.value_or(AttributeEnum::Actual),
+                                                     set_variable_data.attributeValue.get(), source, allow_read_only);
         } else {
             set_variable_result.attributeStatus = SetVariableStatusEnum::Rejected;
         }

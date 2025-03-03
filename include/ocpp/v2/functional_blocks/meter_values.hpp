@@ -7,11 +7,9 @@
 
 #include <ocpp/common/aligned_timer.hpp>
 #include <ocpp/v2/average_meter_values.hpp>
-#include <ocpp/v2/message_dispatcher.hpp>
 
 namespace ocpp::v2 {
-class EvseManagerInterface;
-class DeviceModel;
+struct FunctionalBlockContext;
 
 class MeterValuesInterface : public MessageHandlerInterface {
 public:
@@ -31,8 +29,7 @@ public:
 class MeterValues : public MeterValuesInterface {
 public:
     virtual ~MeterValues() override = default;
-    MeterValues(MessageDispatcherInterface<MessageType>& message_dispatcher, DeviceModel& device_model,
-                EvseManagerInterface& evse_manager);
+    explicit MeterValues(const FunctionalBlockContext& functional_block_context);
     void handle_message(const ocpp::EnhancedMessage<MessageType>& message) override;
     void update_aligned_data_interval() override;
     void on_meter_value(const int32_t evse_id, const MeterValue& meter_value) override;
@@ -43,9 +40,7 @@ public:
                           const bool initiated_by_trigger_message = false) override;
 
 private: // Members
-    MessageDispatcherInterface<MessageType>& message_dispatcher;
-    DeviceModel& device_model;
-    EvseManagerInterface& evse_manager;
+    const FunctionalBlockContext& context;
 
     ClockAlignedTimer aligned_meter_values_timer;
     AverageMeterValues aligned_data_evse0; // represents evseId = 0 meter value
