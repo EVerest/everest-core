@@ -134,9 +134,7 @@ int main(int argc, char** argv) {
     if (ctx == nullptr) {
         std::cerr << "failed to create context" << std::endl;
     } else {
-#ifndef EVEREST_MBED_TLS
         ctx->tls_server = &tls_server;
-#endif
         ctx->if_name = interface;
         ctx->tls_security = TLS_SECURITY_FORCE;
         ctx->is_connection_terminated = false;
