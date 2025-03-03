@@ -24,7 +24,7 @@ cmds:
       Stop over voltage monitoring at the end of the power transfer.
   reset_over_voltage_error:
     description: >-
-      Resets the detection logic to allow for new charging session after an over voltage error occured.
+      Resets the detection logic to allow for new charging session after an over voltage error occurred.
       This should clear the over voltage error.
       If monitoring is still active, it should be stopped.
 errors:
