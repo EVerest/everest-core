@@ -61,11 +61,11 @@ active_modules:
         selftest_success: true
     module: IMDSimulator
   ovm:
+    module: OVMSimulator
     config_implementation:
       main:
         simulate_error: false
         simulate_error_delay: 5
-    module: OVMSimulator
   ev_manager:
     module: EvManager
     config_module:
