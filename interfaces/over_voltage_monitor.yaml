@@ -1,5 +1,5 @@
 description: >-
-  This interface defines an fast over voltage monitoring device according
+  This interface defines a fast over voltage monitoring device according
   to IEC61851-23:2023 6.3.1.106.2 for DC charging. An emergency shutdown needs to be triggered
   if the DC output voltage is above the limit of Table 103 for 9ms. The actual shutdown needs
   to be handled in a lower layer outside of EVerest, but this interface sets the 
