@@ -1413,16 +1413,12 @@ double EvseManager::get_over_voltage_threshold() {
     double ovp = 550.;
 
     // IEC 61851-23 (2023) 6.3.1.106.2 Table 103
-    if (negotiated_max_voltage > 500) {
-        ovp = 825.;
-    }
-
-    if (negotiated_max_voltage > 750) {
-        ovp = 935.;
-    }
-
     if (negotiated_max_voltage > 850) {
         ovp = 1100.;
+    } else if (negotiated_max_voltage > 750) {
+        ovp = 935.;
+    } else if (negotiated_max_voltage > 500) {
+        ovp = 825.;
     }
 
     return ovp;
