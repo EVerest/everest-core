@@ -18,7 +18,7 @@ void over_voltage_monitorImpl::handle_start(double& over_voltage_limit_V) {
         std::thread([this]() {
             std::this_thread::sleep_for(std::chrono::seconds(config.simulate_error_delay));
             auto err = error_factory->create_error("over_voltage_monitor/MREC5OverVoltage", "",
-                                                   "Simulated Over voltage error occured.");
+                                                   "Simulated Over voltage error occurred.");
             raise_error(err);
         }).detach();
     }
