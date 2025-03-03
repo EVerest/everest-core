@@ -54,6 +54,8 @@ static void handle_main(VariantAccess& va) {
         insert_type(va, doc.AuthorizationSetupRes);
     } else if (doc.AuthorizationReq_isUsed) {
         insert_type(va, doc.AuthorizationReq);
+    } else if (doc.AuthorizationRes_isUsed) {
+        insert_type(va, doc.AuthorizationRes);
     } else if (doc.ServiceDiscoveryReq_isUsed) {
         insert_type(va, doc.ServiceDiscoveryReq);
     } else if (doc.ServiceDetailReq_isUsed) {
