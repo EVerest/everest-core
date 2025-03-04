@@ -714,10 +714,14 @@ bool ModuleLoader::parse_command_line(int argc, char* argv[]) {
             assert_file(command_line_logging_config_file, "Command line provided logging config");
 
     } else {
-        auto default_logging_config_file = assert_dir(defaults::PREFIX, "Default prefix") /
-                                           fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE /
-                                           defaults::LOGGING_CONFIG_NAME;
+        auto default_logging_config_file =
+            fs::path(defaults::SYSCONF_DIR) / defaults::NAMESPACE / defaults::LOGGING_CONFIG_NAME;
 
+        if (std::strcmp(defaults::PREFIX, "/usr") != 0) {
+            default_logging_config_file = defaults::PREFIX / default_logging_config_file;
+        } else {
+            default_logging_config_file = fs::path("/") / default_logging_config_file;
+        }
         this->logging_config_file = assert_file(default_logging_config_file, "Default logging config");
     }
 
