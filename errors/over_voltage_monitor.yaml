@@ -1,0 +1,20 @@
+description: >-
+  Errors for Over Voltage Monitor
+
+  Note that the actual shutdown needs to be performed by lower layers outside of EVerest.
+  In the event of a shutdown, this error needs to be raised to indicate the nature of the shutdown
+  to EVerest after the fact.
+errors:
+  - name: MREC5OverVoltage
+    description: The output voltage was above IEC61851-23:2023 6.3.1.106.2 Table 103 limits for more than 9ms.
+  - name: DeviceFault
+    description: The over voltage monitoring device is no longer functional.
+  - name: CommunicationFault
+    description: >-
+      The communication to the hardware or underlying driver is lost or has errors.
+  - name: VendorError
+    description: >-
+      Vendor specific error code. Will stop charging session.
+  - name: VendorWarning
+    description: >-
+      Vendor specific error code. Charging may continue.

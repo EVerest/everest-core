@@ -16,6 +16,7 @@ static const struct IgnoreErrors {
     ErrorList imd{"isolation_monitor/VendorWarning"};
     ErrorList powersupply{"power_supply_DC/VendorWarning"};
     ErrorList powermeter{};
+    ErrorList over_voltage_monitor{"over_voltage_monitor/VendorWarning"};
 } ignore_errors;
 
 ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_bsp,
@@ -25,7 +26,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
                              const std::unique_ptr<evse_managerImplBase>& _p_evse,
                              const std::vector<std::unique_ptr<isolation_monitorIntf>>& _r_imd,
                              const std::vector<std::unique_ptr<power_supply_DCIntf>>& _r_powersupply,
-                             const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter) :
+                             const std::vector<std::unique_ptr<powermeterIntf>>& _r_powermeter,
+                             const std::vector<std::unique_ptr<over_voltage_monitorIntf>>& _r_over_voltage_monitor) :
     r_bsp(_r_bsp),
     r_hlc(_r_hlc),
     r_connector_lock(_r_connector_lock),
@@ -33,7 +35,8 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
     p_evse(_p_evse),
     r_imd(_r_imd),
     r_powersupply(_r_powersupply),
-    r_powermeter(_r_powermeter) {
+    r_powermeter(_r_powermeter),
+    r_over_voltage_monitor(_r_over_voltage_monitor) {
 
     // Subscribe to bsp driver to receive Errors from the bsp hardware
     r_bsp->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
@@ -67,6 +70,13 @@ ErrorHandling::ErrorHandling(const std::unique_ptr<evse_board_supportIntf>& _r_b
     if (r_powermeter.size() > 0) {
         r_powermeter[0]->subscribe_all_errors([this](const Everest::error::Error& error) { process_error(); },
                                               [this](const Everest::error::Error& error) { process_error(); });
+    }
+
+    // Subscribe to over_voltage_monitor to receive errors from over voltage monitor hardware
+    if (r_over_voltage_monitor.size() > 0) {
+        r_over_voltage_monitor[0]->subscribe_all_errors(
+            [this](const Everest::error::Error& error) { process_error(); },
+            [this](const Everest::error::Error& error) { process_error(); });
     }
 }
 
@@ -171,6 +181,14 @@ std::optional<std::string> ErrorHandling::errors_prevent_charging() {
 
     if (r_powermeter.size() > 0) {
         fatal = is_fatal(r_powermeter[0]->error_state_monitor->get_active_errors(), ignore_errors.powermeter);
+        if (fatal) {
+            return fatal;
+        }
+    }
+
+    if (r_over_voltage_monitor.size() > 0) {
+        fatal = is_fatal(r_over_voltage_monitor[0]->error_state_monitor->get_active_errors(),
+                         ignore_errors.over_voltage_monitor);
         if (fatal) {
             return fatal;
         }
