@@ -15,10 +15,8 @@ evse_security::EncodingFormat from_everest(types::evse_security::EncodingFormat 
         return evse_security::EncodingFormat::PEM;
     case types::evse_security::EncodingFormat::DER:
         return evse_security::EncodingFormat::DER;
-    default:
-        throw std::runtime_error(
-            "Could not convert types::evse_security::EncodingFormat to evse_security::EncodingFormat");
     }
+    throw std::out_of_range("Could not convert types::evse_security::EncodingFormat to evse_security::EncodingFormat");
 }
 
 evse_security::CaCertificateType from_everest(types::evse_security::CaCertificateType other) {
@@ -31,10 +29,9 @@ evse_security::CaCertificateType from_everest(types::evse_security::CaCertificat
         return evse_security::CaCertificateType::CSMS;
     case types::evse_security::CaCertificateType::MF:
         return evse_security::CaCertificateType::MF;
-    default:
-        throw std::runtime_error(
-            "Could not convert types::evse_security::CaCertificateType to evse_security::CaCertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert types::evse_security::CaCertificateType to evse_security::CaCertificateType");
 }
 
 evse_security::LeafCertificateType from_everest(types::evse_security::LeafCertificateType other) {
@@ -47,10 +44,9 @@ evse_security::LeafCertificateType from_everest(types::evse_security::LeafCertif
         return evse_security::LeafCertificateType::MF;
     case types::evse_security::LeafCertificateType::MO:
         return evse_security::LeafCertificateType::MO;
-    default:
-        throw std::runtime_error(
-            "Could not convert types::evse_security::LeafCertificateType to evse_security::LeafCertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert types::evse_security::LeafCertificateType to evse_security::LeafCertificateType");
 }
 
 evse_security::CertificateType from_everest(types::evse_security::CertificateType other) {
@@ -65,10 +61,9 @@ evse_security::CertificateType from_everest(types::evse_security::CertificateTyp
         return evse_security::CertificateType::V2GCertificateChain;
     case types::evse_security::CertificateType::MFRootCertificate:
         return evse_security::CertificateType::MFRootCertificate;
-    default:
-        throw std::runtime_error(
-            "Could not convert types::evse_security::CertificateType to evse_security::CertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert types::evse_security::CertificateType to evse_security::CertificateType");
 }
 
 evse_security::HashAlgorithm from_everest(types::evse_security::HashAlgorithm other) {
@@ -79,10 +74,8 @@ evse_security::HashAlgorithm from_everest(types::evse_security::HashAlgorithm ot
         return evse_security::HashAlgorithm::SHA384;
     case types::evse_security::HashAlgorithm::SHA512:
         return evse_security::HashAlgorithm::SHA512;
-    default:
-        throw std::runtime_error(
-            "Could not convert types::evse_security::HashAlgorithm to evse_security::HashAlgorithm");
     }
+    throw std::out_of_range("Could not convert types::evse_security::HashAlgorithm to evse_security::HashAlgorithm");
 }
 
 evse_security::InstallCertificateResult from_everest(types::evse_security::InstallCertificateResult other) {
@@ -105,10 +98,9 @@ evse_security::InstallCertificateResult from_everest(types::evse_security::Insta
         return evse_security::InstallCertificateResult::WriteError;
     case types::evse_security::InstallCertificateResult::Accepted:
         return evse_security::InstallCertificateResult::Accepted;
-    default:
-        throw std::runtime_error("Could not convert types::evse_security::InstallCertificateResult to "
-                                 "evse_security::InstallCertificateResult");
     }
+    throw std::out_of_range("Could not convert types::evse_security::InstallCertificateResult to "
+                            "evse_security::InstallCertificateResult");
 }
 
 evse_security::DeleteCertificateResult from_everest(types::evse_security::DeleteCertificateResult other) {
@@ -119,10 +111,9 @@ evse_security::DeleteCertificateResult from_everest(types::evse_security::Delete
         return evse_security::DeleteCertificateResult::Failed;
     case types::evse_security::DeleteCertificateResult::NotFound:
         return evse_security::DeleteCertificateResult::NotFound;
-    default:
-        throw std::runtime_error("Could not convert types::evse_security::DeleteCertificateResult to "
-                                 "evse_security::DeleteCertificateResult");
     }
+    throw std::out_of_range("Could not convert types::evse_security::DeleteCertificateResult to "
+                            "evse_security::DeleteCertificateResult");
 }
 
 evse_security::GetInstalledCertificatesStatus from_everest(types::evse_security::GetInstalledCertificatesStatus other) {
@@ -131,10 +122,9 @@ evse_security::GetInstalledCertificatesStatus from_everest(types::evse_security:
         return evse_security::GetInstalledCertificatesStatus::Accepted;
     case types::evse_security::GetInstalledCertificatesStatus::NotFound:
         return evse_security::GetInstalledCertificatesStatus::NotFound;
-    default:
-        throw std::runtime_error("Could not convert types::evse_security::GetInstalledCertificatesStatus to "
-                                 "evse_security::GetInstalledCertificatesStatus");
     }
+    throw std::out_of_range("Could not convert types::evse_security::GetInstalledCertificatesStatus to "
+                            "evse_security::GetInstalledCertificatesStatus");
 }
 
 evse_security::CertificateHashData from_everest(types::evse_security::CertificateHashData other) {
@@ -220,10 +210,8 @@ types::evse_security::EncodingFormat to_everest(evse_security::EncodingFormat ot
         return types::evse_security::EncodingFormat::PEM;
     case evse_security::EncodingFormat::DER:
         return types::evse_security::EncodingFormat::DER;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::EncodingFormat to types::evse_security::EncodingFormat");
     }
+    throw std::out_of_range("Could not convert evse_security::EncodingFormat to types::evse_security::EncodingFormat");
 }
 
 types::evse_security::CaCertificateType to_everest(evse_security::CaCertificateType other) {
@@ -236,10 +224,9 @@ types::evse_security::CaCertificateType to_everest(evse_security::CaCertificateT
         return types::evse_security::CaCertificateType::CSMS;
     case evse_security::CaCertificateType::MF:
         return types::evse_security::CaCertificateType::MF;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::CaCertificateType to types::evse_security::CaCertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert evse_security::CaCertificateType to types::evse_security::CaCertificateType");
 }
 
 types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertificateType other) {
@@ -252,10 +239,9 @@ types::evse_security::LeafCertificateType to_everest(evse_security::LeafCertific
         return types::evse_security::LeafCertificateType::MF;
     case evse_security::LeafCertificateType::MO:
         return types::evse_security::LeafCertificateType::MO;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::LeafCertificateType to types::evse_security::LeafCertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert evse_security::LeafCertificateType to types::evse_security::LeafCertificateType");
 }
 
 types::evse_security::CertificateType to_everest(evse_security::CertificateType other) {
@@ -270,10 +256,9 @@ types::evse_security::CertificateType to_everest(evse_security::CertificateType 
         return types::evse_security::CertificateType::V2GCertificateChain;
     case evse_security::CertificateType::MFRootCertificate:
         return types::evse_security::CertificateType::MFRootCertificate;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::CertificateType to types::evse_security::CertificateType");
     }
+    throw std::out_of_range(
+        "Could not convert evse_security::CertificateType to types::evse_security::CertificateType");
 }
 
 types::evse_security::HashAlgorithm to_everest(evse_security::HashAlgorithm other) {
@@ -284,10 +269,8 @@ types::evse_security::HashAlgorithm to_everest(evse_security::HashAlgorithm othe
         return types::evse_security::HashAlgorithm::SHA384;
     case evse_security::HashAlgorithm::SHA512:
         return types::evse_security::HashAlgorithm::SHA512;
-    default:
-        throw std::runtime_error(
-            "Could not convert evse_security::HashAlgorithm to types::evse_security::HashAlgorithm");
     }
+    throw std::out_of_range("Could not convert evse_security::HashAlgorithm to types::evse_security::HashAlgorithm");
 }
 
 types::evse_security::InstallCertificateResult to_everest(evse_security::InstallCertificateResult other) {
@@ -310,10 +293,9 @@ types::evse_security::InstallCertificateResult to_everest(evse_security::Install
         return types::evse_security::InstallCertificateResult::WriteError;
     case evse_security::InstallCertificateResult::Accepted:
         return types::evse_security::InstallCertificateResult::Accepted;
-    default:
-        throw std::runtime_error("Could not convert evse_security::InstallCertificateResult to "
-                                 "types::evse_security::InstallCertificateResult");
     }
+    throw std::out_of_range("Could not convert evse_security::InstallCertificateResult to "
+                            "types::evse_security::InstallCertificateResult");
 }
 
 types::evse_security::CertificateValidationResult to_everest(evse_security::CertificateValidationResult other) {
@@ -332,10 +314,9 @@ types::evse_security::CertificateValidationResult to_everest(evse_security::Cert
         return types::evse_security::CertificateValidationResult::Expired;
     case evse_security::CertificateValidationResult::Unknown:
         return types::evse_security::CertificateValidationResult::Unknown;
-    default:
-        throw std::runtime_error("Could not convert evse_security::CertificateValidationResult to "
-                                 "types::evse_security::CertificateValidationResult");
     }
+    throw std::out_of_range("Could not convert evse_security::CertificateValidationResult to "
+                            "types::evse_security::CertificateValidationResult");
 }
 
 types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCertificateResult other) {
@@ -346,10 +327,9 @@ types::evse_security::DeleteCertificateResult to_everest(evse_security::DeleteCe
         return types::evse_security::DeleteCertificateResult::Failed;
     case evse_security::DeleteCertificateResult::NotFound:
         return types::evse_security::DeleteCertificateResult::NotFound;
-    default:
-        throw std::runtime_error("Could not convert evse_security::DeleteCertificateResult to "
-                                 "types::evse_security::DeleteCertificateResult");
     }
+    throw std::out_of_range("Could not convert evse_security::DeleteCertificateResult to "
+                            "types::evse_security::DeleteCertificateResult");
 }
 
 types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::GetInstalledCertificatesStatus other) {
@@ -358,10 +338,9 @@ types::evse_security::GetInstalledCertificatesStatus to_everest(evse_security::G
         return types::evse_security::GetInstalledCertificatesStatus::Accepted;
     case evse_security::GetInstalledCertificatesStatus::NotFound:
         return types::evse_security::GetInstalledCertificatesStatus::NotFound;
-    default:
-        throw std::runtime_error("Could not convert evse_security::GetInstalledCertificatesStatus to "
-                                 "types::evse_security::GetInstalledCertificatesStatus");
     }
+    throw std::out_of_range("Could not convert evse_security::GetInstalledCertificatesStatus to "
+                            "types::evse_security::GetInstalledCertificatesStatus");
 }
 
 types::evse_security::GetCertificateSignRequestStatus to_everest(evse_security::GetCertificateSignRequestStatus other) {
@@ -374,10 +353,9 @@ types::evse_security::GetCertificateSignRequestStatus to_everest(evse_security::
         return types::evse_security::GetCertificateSignRequestStatus::KeyGenError;
     case evse_security::GetCertificateSignRequestStatus::GenerationError:
         return types::evse_security::GetCertificateSignRequestStatus::GenerationError;
-    default:
-        throw std::runtime_error("Could not convert evse_security::GetCertificateSignRequestStatus to "
-                                 "types::evse_security::GetCertificateSignRequestStatus");
     }
+    throw std::out_of_range("Could not convert evse_security::GetCertificateSignRequestStatus to "
+                            "types::evse_security::GetCertificateSignRequestStatus");
 }
 
 types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCertificateInfoStatus other) {
@@ -392,10 +370,9 @@ types::evse_security::GetCertificateInfoStatus to_everest(evse_security::GetCert
         return types::evse_security::GetCertificateInfoStatus::NotFoundValid;
     case evse_security::GetCertificateInfoStatus::PrivateKeyNotFound:
         return types::evse_security::GetCertificateInfoStatus::PrivateKeyNotFound;
-    default:
-        throw std::runtime_error("Could not convert evse_security::GetCertificateInfoStatus to "
-                                 "types::evse_security::GetCertificateInfoStatus");
     }
+    throw std::out_of_range("Could not convert evse_security::GetCertificateInfoStatus to "
+                            "types::evse_security::GetCertificateInfoStatus");
 }
 
 types::evse_security::CertificateHashData to_everest(evse_security::CertificateHashData other) {
