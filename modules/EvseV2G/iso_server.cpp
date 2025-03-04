@@ -281,9 +281,16 @@ static void publish_iso_authorization_req(struct iso2_AuthorizationReqType const
 static void publish_iso_charge_parameter_discovery_req(
     struct v2g_context* ctx,
     struct iso2_ChargeParameterDiscoveryReqType const* const v2g_charge_parameter_discovery_req) {
+    // Charging needs for OCPP
+    types::iso15118::ChargingNeeds charging_needs;
+
     // V2G values that can be published: DC_EVChargeParameter, MaxEntriesSAScheduleTuple
-    ctx->p_charger->publish_requested_energy_transfer_mode(static_cast<types::iso15118::EnergyTransferMode>(
-        v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode));
+    auto transfer_mode = static_cast<types::iso15118::EnergyTransferMode>(
+        v2g_charge_parameter_discovery_req->RequestedEnergyTransferMode);
+
+    charging_needs.requested_energy_transfer = transfer_mode;
+
+    ctx->p_charger->publish_requested_energy_transfer_mode(transfer_mode);
     if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->AC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
             const char* format = "%Y-%m-%dT%H:%M:%SZ";
@@ -306,6 +313,25 @@ static void publish_iso_charge_parameter_discovery_req(
         ctx->p_charger->publish_ac_ev_min_current(
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Value,
                                 v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier));
+
+        auto& ac_charging_parameters = charging_needs.ac_charging_parameters.emplace();
+
+        // We do not require to calc a min/max here
+        ac_charging_parameters.energy_amount =
+            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Value,
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier);
+
+        ac_charging_parameters.ev_max_voltage =
+            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Value,
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxVoltage.Multiplier);
+
+        ac_charging_parameters.ev_max_current =
+            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Value,
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMaxCurrent.Multiplier);
+        ac_charging_parameters.ev_min_current =
+            calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Value,
+                                v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EVMinCurrent.Multiplier);
+
     } else if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter_isUsed == (unsigned int)1) {
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DepartureTime_isUsed == (unsigned int)1) {
             const char* format = "%Y-%m-%dT%H:%M:%SZ";
@@ -348,6 +374,9 @@ static void publish_iso_charge_parameter_discovery_req(
             (unsigned int)1);
         publish_DcEvStatus(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
     }
+
+    // Publish charging needs
+    ctx->p_extensions->publish_charging_needs(charging_needs);
 }
 
 /*!
