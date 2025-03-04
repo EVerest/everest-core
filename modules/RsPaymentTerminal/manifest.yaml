@@ -40,17 +40,6 @@ config:
   password:
     description: Password for the Feig terminal.
     type: integer
-  accept_credit_cards:
-    description: Indicates whether credit cards should be accepted for the connectors given with `credit_card_connectors`
-    type: boolean
-    default: true
-  credit_card_connectors:
-    description: >-
-      If the `accept_credit_cards` is set to true credit cards
-      will only provide authentication to the given connectors.
-      If list is empty, authentication will happen to all the connectors.
-    type: string
-    default: ""
 
 requires:
     session:
@@ -65,9 +54,9 @@ provides:
   token_provider:
     interface: auth_token_provider
     description: Provides an authentication token from the Feig terminal.
-  bank_transaction_summary:
-    interface: bank_transaction_summary_provider
-    description: Provides details of an already processed payment
+  payment_terminal:
+    interface: payment_terminal
+    description: Provides all the commands specific for bank cards handling
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0
