@@ -54,12 +54,9 @@ provides:
   token_provider:
     interface: auth_token_provider
     description: Provides an authentication token from the Feig terminal.
-  bank_transaction_summary:
-    interface: bank_transaction_summary_provider
-    description: Provides details of an already processed payment
-  enable_card_reading:
-    interface: enable_card_reading
-    description: Enable/Disable card readings for specific connectors with specific card types
+  payment_terminal:
+    interface: payment_terminal
+    description: Provides all the commands specific for bank cards handling
 enable_external_mqtt: false
 metadata:
   license: https://opensource.org/licenses/Apache-2.0

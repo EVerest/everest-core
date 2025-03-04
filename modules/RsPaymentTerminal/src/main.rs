@@ -39,8 +39,8 @@ use generated::types::{
 };
 use generated::{
     get_config, AuthTokenProviderServiceSubscriber, BankSessionTokenProviderClientSubscriber,
-    BankTransactionSummaryProviderServiceSubscriber, Context, EnableCardReadingServiceSubscriber,
-    Module, ModulePublisher, OnReadySubscriber, SessionCostClientSubscriber,
+    Context, Module, ModulePublisher, OnReadySubscriber, PaymentTerminalServiceSubscriber,
+    SessionCostClientSubscriber,
 };
 use std::collections::HashMap;
 use std::sync::{mpsc::channel, mpsc::Sender, Arc, Mutex};
@@ -277,7 +277,7 @@ impl PaymentTerminalModule {
 
         context
             .publisher
-            .bank_transaction_summary
+            .payment_terminal
             .bank_transaction_summary(BankTransactionSummary {
                 session_token: Some(BankSessionToken {
                     token: Some(id_tag.id_token.value.clone()),
@@ -316,8 +316,6 @@ impl PaymentTerminalModule {
 
 impl AuthTokenProviderServiceSubscriber for PaymentTerminalModule {}
 
-impl BankTransactionSummaryProviderServiceSubscriber for PaymentTerminalModule {}
-
 impl BankSessionTokenProviderClientSubscriber for PaymentTerminalModule {}
 
 impl OnReadySubscriber for PaymentTerminalModule {
@@ -337,7 +335,7 @@ impl SessionCostClientSubscriber for PaymentTerminalModule {
     }
 }
 
-impl EnableCardReadingServiceSubscriber for PaymentTerminalModule {
+impl PaymentTerminalServiceSubscriber for PaymentTerminalModule {
     fn enable_card_reading(
         &self,
         _context: &Context,
@@ -383,7 +381,6 @@ fn main() -> Result<()> {
     });
 
     let _module = Module::new(
-        pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
         pt_module.clone(),
@@ -818,7 +815,7 @@ mod tests {
         for (session_cost, amount) in parameters {
             let mut everest_mock = ModulePublisher::default();
             everest_mock
-                .bank_transaction_summary
+                .payment_terminal
                 .expect_bank_transaction_summary()
                 .times(1)
                 .returning(|_| Ok(()));
