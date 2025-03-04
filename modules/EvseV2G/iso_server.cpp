@@ -301,6 +301,8 @@ static void publish_iso_charge_parameter_discovery_req(
             std::strftime(buffer, sizeof(buffer), format, std::gmtime(&departure_time));
             ctx->p_charger->publish_departure_time(buffer);
         }
+
+        // TODO(ioan): calc physical once
         ctx->p_charger->publish_ac_eamount(
             calc_physical_value(v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Value,
                                 v2g_charge_parameter_discovery_req->AC_EVChargeParameter.EAmount.Multiplier));
@@ -343,21 +345,34 @@ static void publish_iso_charge_parameter_discovery_req(
             ctx->p_charger->publish_departure_time(buffer);
         }
 
+        auto& dc_charging_parameters = charging_needs.dc_charging_parameters.emplace();
+
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_ev_energy_capacity(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier));
+
+            dc_charging_parameters.ev_energy_capacity = calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyCapacity.Multiplier);
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_ev_energy_request(calc_physical_value(
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
                 v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier));
+
+            // OCPP2.1 Spec: Relates to: ISO 15118-2: DC_EVChargeParameterType: EVEnergyRequest
+            dc_charging_parameters.energy_amount = calc_physical_value(
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Value,
+                v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVEnergyRequest.Multiplier);
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_full_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC);
+            dc_charging_parameters.full_soc = v2g_charge_parameter_discovery_req->DC_EVChargeParameter.FullSOC;
         }
         if (v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC_isUsed == (unsigned int)1) {
             ctx->p_charger->publish_dc_bulk_soc(v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC);
+            dc_charging_parameters.bulk_soc = v2g_charge_parameter_discovery_req->DC_EVChargeParameter.BulkSOC;
         }
         float evMaximumCurrentLimit = calc_physical_value(
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumCurrentLimit.Value,
@@ -373,6 +388,13 @@ static void publish_iso_charge_parameter_discovery_req(
             v2g_charge_parameter_discovery_req->DC_EVChargeParameter.EVMaximumPowerLimit_isUsed, evMaximumVoltageLimit,
             (unsigned int)1);
         publish_DcEvStatus(ctx, v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus);
+
+        dc_charging_parameters.ev_max_current = evMaximumCurrentLimit;
+        dc_charging_parameters.ev_max_power = evMaximumPowerLimit;
+        dc_charging_parameters.ev_max_voltage = evMaximumVoltageLimit;
+
+        dc_charging_parameters.state_of_charge =
+            v2g_charge_parameter_discovery_req->DC_EVChargeParameter.DC_EVStatus.EVRESSSOC;
     }
 
     // Publish charging needs
