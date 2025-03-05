@@ -801,6 +801,20 @@ to_ocpp_get_15118_certificate_request(const types::iso15118::RequestExiStreamSch
     return _request;
 }
 
+ocpp::v2::NotifyEVChargingNeedsRequest
+to_ocpp_notify_ev_charging_needs_request(const types::iso15118::ChargingNeeds& charging_needs) {
+    ocpp::v2::NotifyEVChargingNeedsRequest _request;
+    ocpp::v2::ChargingNeeds& _charging_needs = _request.chargingNeeds;
+    
+    // TODO(ioan): missing 'evseId'?
+    // _request.evseId = ?
+
+    // TODO(ioan): missing v2x parameters in the message
+    // _charging_needs.requestedEnergyTransfer = charging_needs.requested_energy_transfer;
+
+    return _request;
+}
+
 ocpp::v2::ReserveNowStatusEnum to_ocpp_reservation_status(const types::reservation::ReservationResult result) {
     switch (result) {
     case types::reservation::ReservationResult::Accepted:

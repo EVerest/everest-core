@@ -869,6 +869,11 @@ void OCPP201::ready() {
                 this->r_extensions_15118.at(extensions_id)->call_set_get_certificate_response(everest_response);
             });
 
+        extension->subscribe_charging_needs([this](const types::iso15118::ChargingNeeds& charging_needs) {
+            this->charge_point->on_ev_charging_needs(
+                conversions::to_ocpp_notify_ev_charging_needs_request(charging_needs));
+        });
+
         extensions_id++;
     }
 
