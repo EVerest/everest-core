@@ -37,3 +37,4 @@ endif()
 
 add_subdirectory(everest-core_tests)
 add_subdirectory(async_api_tests)
+add_subdirectory(eebus_tests)

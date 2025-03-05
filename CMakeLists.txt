@@ -21,7 +21,7 @@ if (NOT everest-cmake_FOUND)
     FetchContent_Declare(
         everest-cmake
         GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
-        GIT_TAG        main
+        GIT_TAG        tmp/eebus
     )
     FetchContent_MakeAvailable(everest-cmake)
     set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
@@ -64,6 +64,7 @@ endif()
 option(CREATE_SYMLINKS "Create symlinks to javascript modules and auxillary files - for development purposes" OFF)
 option(CMAKE_RUN_CLANG_TIDY "Run clang-tidy" OFF)
 option(ISO15118_2_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
+option(EEBUS_GENERATE_AND_INSTALL_CERTIFICATES "Automatically generate and install certificates for development purposes" ON)
 option(EVEREST_ENABLE_RUN_SCRIPT_GENERATION "Enables the generation of run scripts (convenience scripts for starting available configurations)" ON)
 option(EVEREST_BUILD_DOCS "Build EVerest documentation" OFF)
 option(EVEREST_SKIP_BUILD_API_DOC "Skip building the async API html doc for the EVerest API" OFF)
@@ -148,6 +149,9 @@ if(NOT DISABLE_EDM)
 
     # edm
     add_subdirectory(applications/dev-environment)
+    if(GRPC_EDM)
+        enable_language(ASM)
+    endif()
 
     evc_setup_edm()
 
