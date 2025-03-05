@@ -1,0 +1,51 @@
+sequenceDiagram
+    participant EEBUS
+    participant EebusConnectionHandler
+    participant LpcUseCaseHandler
+    participant UseCaseEventReader
+    participant GrpcService as gRPC Service
+
+    EEBUS ->> EebusConnectionHandler: create()
+    activate EebusConnectionHandler
+    EebusConnectionHandler ->> EebusConnectionHandler: initialize_connection()
+    deactivate EebusConnectionHandler
+
+    EEBUS ->> EebusConnectionHandler: add_use_case(LPC)
+    activate EebusConnectionHandler
+    EebusConnectionHandler ->> LpcUseCaseHandler: create()
+    EebusConnectionHandler ->> GrpcService: AddUseCase()
+    EebusConnectionHandler ->> LpcUseCaseHandler: set_stub()
+    EebusConnectionHandler ->> LpcUseCaseHandler: configure_use_case()
+    EebusConnectionHandler ->> UseCaseEventReader: create()
+    EebusConnectionHandler ->> UseCaseEventReader: start()
+    activate UseCaseEventReader
+    UseCaseEventReader ->> GrpcService: SubscribeUseCaseEvents()
+    deactivate UseCaseEventReader
+    deactivate EebusConnectionHandler
+
+    EEBUS ->> EebusConnectionHandler: done_adding_use_case()
+    activate EebusConnectionHandler
+    EebusConnectionHandler ->> EebusConnectionHandler: start_service()
+    EebusConnectionHandler ->> GrpcService: StartService()
+    EebusConnectionHandler ->> LpcUseCaseHandler: start()
+    deactivate EebusConnectionHandler
+
+    Note over GrpcService, EebusConnectionHandler: event arrives
+
+    GrpcService ->> UseCaseEventReader: OnReadDone(event)
+    activate UseCaseEventReader
+    UseCaseEventReader ->> EebusConnectionHandler: event_callback(event)
+    deactivate UseCaseEventReader
+    activate EebusConnectionHandler
+    EebusConnectionHandler ->> EebusConnectionHandler: m_handler.add_action()
+    Note right of EebusConnectionHandler: Event is queued in the event loop
+
+    Note over EebusConnectionHandler, LpcUseCaseHandler: event loop runs
+
+    EebusConnectionHandler ->> LpcUseCaseHandler: handle_event(event)
+    activate LpcUseCaseHandler
+    LpcUseCaseHandler ->> LpcUseCaseHandler: run_state_machine()
+    LpcUseCaseHandler ->> LpcUseCaseHandler: apply_limit_for_current_state()
+    LpcUseCaseHandler ->> EEBUS: callbacks.update_limits_callback()
+    deactivate LpcUseCaseHandler
+    deactivate EebusConnectionHandler

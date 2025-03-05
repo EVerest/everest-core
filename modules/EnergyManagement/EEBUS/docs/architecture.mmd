@@ -1,0 +1,13 @@
+graph TD
+    subgraph EVerest
+        energy_manager["Energy Manager<br><div style='font-size: 80%;'>EVerest Module</div><div style='font-size: 70%;'>Manages energy distribution</div>"]
+        eebus_module["EEBUS Module<br><div style='font-size: 80%;'>EVerest C++ Module</div><div style='font-size: 70%;'>Bridge to EEBUS service for LPC</div>"]
+    end
+    subgraph External Systems
+        eebus_grpc_api["eebus-grpc-api<br><div style='font-size: 80%;'>External Go binary, gRPC server/client</div>"]
+        eebus_service["EEBUS Service (HEMS)<br><div style='font-size: 80%;'>External System</div><div style='font-size: 70%;'>Implements EEBUS standard, e.g. LPC</div>"]
+    end
+
+    eebus_module -- "Publishes ExternalLimits<br><div style='font-size: 70%;'>everest-interface</div>" --> energy_manager
+    eebus_module -- "Connects and receives events<br><div style='font-size: 70%;'>gRPC</div>" --> eebus_grpc_api
+    eebus_grpc_api -- "Communicates<br><div style='font-size: 70%;'>EEBUS (SHIP)</div>" --> eebus_service
