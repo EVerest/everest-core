@@ -4225,8 +4225,12 @@ void ChargePointImpl::on_transaction_stopped(const int32_t connector, const std:
     const auto stop_energy_wh = std::make_shared<StampedEnergyWh>(timestamp, energy_wh_import);
     transaction->add_stop_energy_wh(stop_energy_wh);
 
-    this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
     this->stop_transaction(connector, reason, id_tag_end);
+
+    if (reason != Reason::EVDisconnected) {
+        this->status->submit_event(connector, FSMEvent::TransactionStoppedAndUserActionRequired, ocpp::DateTime());
+    }
+
     this->transaction_handler->remove_active_transaction(connector);
     this->connectors.at(connector)->transaction = nullptr;
 
