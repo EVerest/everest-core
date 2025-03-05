@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> Init
+    Init: Init
+    UnlimitedControlled: Unlimited / Controlled
+    Limited: Limited
+    Failsafe: Failsafe
+    UnlimitedAutonomous: Unlimited / Autonomous
+
+    Init --> Limited : on DataUpdateLimit (active) [LPC-904]
+    Init --> UnlimitedControlled : on DataUpdateLimit (not active) [LPC-902/905]
+    Init --> UnlimitedAutonomous : on 120s timeout, no limit received [LPC-906]
+
+    Limited --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired [LPC-914/915]
+    Limited --> Failsafe : on Heartbeat Timeout 120s [LPC-911/912]
+
+    UnlimitedControlled --> Limited : on DataUpdateLimit (active) [LPC-913]
+    UnlimitedControlled --> Failsafe : on Heartbeat Timeout 120s [LPC-911]
+
+    UnlimitedAutonomous --> Limited : on DataUpdateLimit (active) [LPC-919]
+    UnlimitedAutonomous --> UnlimitedControlled : on DataUpdateLimit (not active) or Limit expired [LPC-918/920]
+
+    Failsafe --> Limited : on Heartbeat restored AND new active limit [LPC-916/919]
+    Failsafe --> UnlimitedControlled : on Heartbeat restored AND new inactive limit [LPC-916/918]
+    Failsafe --> UnlimitedAutonomous : on Failsafe Duration Minimum expires [LPC-922]
+    Failsafe --> UnlimitedAutonomous : on 120s after first post-Failsafe heartbeat, no new limit [LPC-921]
