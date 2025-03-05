@@ -296,6 +296,12 @@ config:
       Set the EVSE Manager to an inoperative state if the powermeter requirement is configured and has reported errors
     type: boolean
     default: true
+  raise_mrec9:
+    description: >-
+      Allows to configure if an MREC9 authorization timeout error shall be raised by this module in case an authorization
+      timeout occurs. It is recommended to disable it if OCPP1.6 is used.
+    type: boolean
+    default: false
 provides:
   evse:
     interface: evse_manager
@@ -340,6 +346,10 @@ requires:
     interface: isolation_monitor
     min_connections: 0
     max_connections: 1
+  over_voltage_monitor:
+    interface: over_voltage_monitor
+    min_connections: 0
+    max_connections: 1
   powersupply_DC:
     interface: power_supply_DC
     min_connections: 0
@@ -351,7 +361,7 @@ requires:
 enable_external_mqtt: true
 enable_telemetry: true
 metadata:
-  license: https://spdx.org/licenses/Apache-2.0.html
+  license: https://opensource.org/licenses/Apache-2.0
   authors:
     - Cornelius Claussen
     - Anton Woellert

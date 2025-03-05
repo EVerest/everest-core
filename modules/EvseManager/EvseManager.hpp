@@ -23,6 +23,7 @@
 #include <generated/interfaces/evse_board_support/Interface.hpp>
 #include <generated/interfaces/isolation_monitor/Interface.hpp>
 #include <generated/interfaces/kvs/Interface.hpp>
+#include <generated/interfaces/over_voltage_monitor/Interface.hpp>
 #include <generated/interfaces/power_supply_DC/Interface.hpp>
 #include <generated/interfaces/powermeter/Interface.hpp>
 #include <generated/interfaces/slac/Interface.hpp>
@@ -103,6 +104,7 @@ struct Conf {
     bool lock_connector_in_state_b;
     int state_F_after_fault_ms;
     bool fail_on_powermeter_errors;
+    bool raise_mrec9;
 };
 
 class EvseManager : public Everest::ModuleBase {
@@ -118,6 +120,7 @@ public:
                 std::vector<std::unique_ptr<powermeterIntf>> r_powermeter_car_side,
                 std::vector<std::unique_ptr<slacIntf>> r_slac, std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc,
                 std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd,
+                std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor,
                 std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC,
                 std::vector<std::unique_ptr<kvsIntf>> r_store, Conf& config) :
         ModuleBase(info),
@@ -135,6 +138,7 @@ public:
         r_slac(std::move(r_slac)),
         r_hlc(std::move(r_hlc)),
         r_imd(std::move(r_imd)),
+        r_over_voltage_monitor(std::move(r_over_voltage_monitor)),
         r_powersupply_DC(std::move(r_powersupply_DC)),
         r_store(std::move(r_store)),
         config(config){};
@@ -153,6 +157,7 @@ public:
     const std::vector<std::unique_ptr<slacIntf>> r_slac;
     const std::vector<std::unique_ptr<ISO15118_chargerIntf>> r_hlc;
     const std::vector<std::unique_ptr<isolation_monitorIntf>> r_imd;
+    const std::vector<std::unique_ptr<over_voltage_monitorIntf>> r_over_voltage_monitor;
     const std::vector<std::unique_ptr<power_supply_DCIntf>> r_powersupply_DC;
     const std::vector<std::unique_ptr<kvsIntf>> r_store;
     const Conf& config;
@@ -328,6 +333,8 @@ private:
     bool wait_powersupply_DC_below_voltage(double target_voltage);
 
     bool cable_check_should_exit();
+
+    double get_over_voltage_threshold();
 
     // EV information
     Everest::timed_mutex_traceable ev_info_mutex;
