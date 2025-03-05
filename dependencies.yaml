@@ -102,3 +102,24 @@ catch2:
   git: https://github.com/catchorg/Catch2.git
   git_tag: v3.4.0
   cmake_condition: "EVEREST_CORE_BUILD_TESTING"
+grpc:
+  git: https://github.com/grpc/grpc.git
+  git_tag: v1.70.1
+  options:
+    - gRPC_INSTALL OFF
+    - gRPC_ABSL_PROVIDER package
+    - gRPC_BUILD_GRPC_CSHARP_PLUGIN OFF
+    - gRPC_BUILD_GRPC_NODE_PLUGIN OFF
+    - gRPC_BUILD_GRPC_OBJECTIVE_C_PLUGIN OFF
+    - gRPC_BUILD_GRPC_PHP_PLUGIN OFF
+    - gRPC_BUILD_GRPC_PYTHON_PLUGIN OFF
+    - gRPC_BUILD_GRPC_RUBY_PLUGIN OFF
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_GRPC AND GRPC_EDM"
+eebus-grpc-api:
+  git: git@github.com:PionixInternal/generic-eebus.git
+  git_tag: main
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_EEBUS_GRPC_API"
+grpc-extended-cpp-plugin:
+  git: git@github.com:EVerest/grpc-extended-cpp-plugin.git
+  git_tag: main
+  cmake_condition: "EVEREST_DEPENDENCY_ENABLED_GRPC_EXTENDED_CPP_PLUGIN AND ENABLE_GRPC_GENERATOR"
