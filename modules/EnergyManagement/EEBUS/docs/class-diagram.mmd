@@ -1,0 +1,78 @@
+classDiagram
+    class EEBUS {
+        +unique_ptr~emptyImplBase~ p_main
+        +unique_ptr~external_energy_limitsIntf~ r_eebus_energy_sink
+        +Conf config
+        -thread eebus_grpc_api_thread
+        -unique_ptr~EebusConnectionHandler~ connection_handler
+        -eebus::EEBusCallbacks callbacks
+        -fd_event_handler event_handler
+        -thread event_handler_thread
+        +init()
+        +ready()
+    }
+
+    class EebusConnectionHandler {
+        -shared_ptr~ConfigValidator~ config
+        -unique_ptr~LpcUseCaseHandler~ lpc_handler
+        -unique_ptr~UseCaseEventReader~ event_reader
+        -shared_ptr~control_service::ControlService::Stub~ control_service_stub
+        -fd_event_handler m_handler
+        -State state
+        -timer_fd state_machine_timer
+        -timer_fd reconnection_timer
+        -EEBusUseCase last_use_case
+        -EEBusCallbacks last_callbacks
+        -bool use_case_added
+        +sync()
+        +get_poll_fd()
+        +add_use_case()
+        +done_adding_use_case()
+        +stop()
+        -initialize_connection()
+        -configure_service()
+        -create_channel_and_stub()
+        -handle_event()
+        -reconnect()
+        -reset()
+    }
+
+    class LpcUseCaseHandler {
+        -eebus::EEBusCallbacks callbacks
+        -shared_ptr~cs_lpc::ControllableSystemLPCControl::Stub~ stub
+        -State state
+        +start()
+        +set_stub()
+        +configure_use_case()
+        +handle_event()
+        +run_state_machine()
+        +process_received_limit()
+        -set_state()
+        -apply_limit_for_current_state()
+    }
+
+    class UseCaseEventReader {
+        -shared_ptr~control_service::ControlService::Stub~ stub
+        -function event_callback
+        +start()
+        +stop()
+        +OnReadDone()
+        +OnDone()
+    }
+
+    class ConfigValidator {
+        -Conf config
+        +validate()
+    }
+
+    class Conf {
+        // ... fields
+    }
+
+    EEBUS *-- EebusConnectionHandler
+    EEBUS ..> Conf
+    EebusConnectionHandler *-- LpcUseCaseHandler
+    EebusConnectionHandler *-- UseCaseEventReader
+    EebusConnectionHandler o-- ConfigValidator
+    LpcUseCaseHandler ..> eebus.EEBusCallbacks
+    UseCaseEventReader ..> EebusConnectionHandler : event_callback
