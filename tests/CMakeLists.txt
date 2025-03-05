@@ -23,3 +23,4 @@ setup_target_for_coverage_gcovr_html(
 )
 
 add_subdirectory(everest-core_tests)
+add_subdirectory(eebus_tests)
