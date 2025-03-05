@@ -33,28 +33,48 @@ void evse_securityImpl::ready() {
 types::evse_security::InstallCertificateResult
 evse_securityImpl::handle_install_ca_certificate(std::string& certificate,
                                                  types::evse_security::CaCertificateType& certificate_type) {
-    return conversions::to_everest(
-        this->evse_security->install_ca_certificate(certificate, conversions::from_everest(certificate_type)));
+    try {
+        return conversions::to_everest(
+            this->evse_security->install_ca_certificate(certificate, conversions::from_everest(certificate_type)));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return types::evse_security::InstallCertificateResult::WriteError;
+    }
 }
 
 types::evse_security::DeleteCertificateResult
 evse_securityImpl::handle_delete_certificate(types::evse_security::CertificateHashData& certificate_hash_data) {
-    return conversions::to_everest(
-        this->evse_security->delete_certificate(conversions::from_everest(certificate_hash_data)));
+    try {
+        return conversions::to_everest(
+            this->evse_security->delete_certificate(conversions::from_everest(certificate_hash_data)));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return types::evse_security::DeleteCertificateResult::Failed;
+    }
 }
 
 types::evse_security::InstallCertificateResult
 evse_securityImpl::handle_update_leaf_certificate(std::string& certificate_chain,
                                                   types::evse_security::LeafCertificateType& certificate_type) {
-    return conversions::to_everest(
-        this->evse_security->update_leaf_certificate(certificate_chain, conversions::from_everest(certificate_type)));
+    try {
+        return conversions::to_everest(this->evse_security->update_leaf_certificate(
+            certificate_chain, conversions::from_everest(certificate_type)));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return types::evse_security::InstallCertificateResult::WriteError;
+    }
 }
 
 types::evse_security::CertificateValidationResult
 evse_securityImpl::handle_verify_certificate(std::string& certificate_chain,
                                              types::evse_security::LeafCertificateType& certificate_type) {
-    return conversions::to_everest(
-        this->evse_security->verify_certificate(certificate_chain, conversions::from_everest(certificate_type)));
+    try {
+        return conversions::to_everest(
+            this->evse_security->verify_certificate(certificate_chain, conversions::from_everest(certificate_type)));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return types::evse_security::CertificateValidationResult::Unknown;
+    }
 }
 
 types::evse_security::GetInstalledCertificatesResult evse_securityImpl::handle_get_installed_certificates(
@@ -62,28 +82,56 @@ types::evse_security::GetInstalledCertificatesResult evse_securityImpl::handle_g
     std::vector<evse_security::CertificateType> _certificate_types;
 
     for (const auto& certificate_type : certificate_types) {
-        _certificate_types.push_back(conversions::from_everest(certificate_type));
+        try {
+            _certificate_types.push_back(conversions::from_everest(certificate_type));
+        } catch (const std::out_of_range& e) {
+            EVLOG_warning << e.what();
+        }
     }
 
-    return conversions::to_everest(this->evse_security->get_installed_certificates(_certificate_types));
+    try {
+        return conversions::to_everest(this->evse_security->get_installed_certificates(_certificate_types));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return {types::evse_security::GetInstalledCertificatesStatus::NotFound, {}};
+    }
 }
 
 types::evse_security::OCSPRequestDataList evse_securityImpl::handle_get_v2g_ocsp_request_data() {
-    return conversions::to_everest(this->evse_security->get_v2g_ocsp_request_data());
+    try {
+        return conversions::to_everest(this->evse_security->get_v2g_ocsp_request_data());
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return {};
+    }
 }
 
 types::evse_security::OCSPRequestDataList
 evse_securityImpl::handle_get_mo_ocsp_request_data(std::string& certificate_chain) {
-    return conversions::to_everest(this->evse_security->get_mo_ocsp_request_data(certificate_chain));
+    try {
+        return conversions::to_everest(this->evse_security->get_mo_ocsp_request_data(certificate_chain));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return {};
+    }
 }
 
 void evse_securityImpl::handle_update_ocsp_cache(types::evse_security::CertificateHashData& certificate_hash_data,
                                                  std::string& ocsp_response) {
-    this->evse_security->update_ocsp_cache(conversions::from_everest(certificate_hash_data), ocsp_response);
+    try {
+        this->evse_security->update_ocsp_cache(conversions::from_everest(certificate_hash_data), ocsp_response);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+    }
 }
 
 bool evse_securityImpl::handle_is_ca_certificate_installed(types::evse_security::CaCertificateType& certificate_type) {
-    return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
+    try {
+        return this->evse_security->is_ca_certificate_installed(conversions::from_everest(certificate_type));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return false;
+    }
 }
 
 types::evse_security::GetCertificateSignRequestResult evse_securityImpl::handle_generate_certificate_signing_request(
@@ -91,17 +139,23 @@ types::evse_security::GetCertificateSignRequestResult evse_securityImpl::handle_
     std::string& common, bool& use_tpm) {
     types::evse_security::GetCertificateSignRequestResult response;
 
-    auto csr_response = this->evse_security->generate_certificate_signing_request(
-        conversions::from_everest(certificate_type), country, organization, common, use_tpm);
+    try {
+        auto csr_response = this->evse_security->generate_certificate_signing_request(
+            conversions::from_everest(certificate_type), country, organization, common, use_tpm);
 
-    response.status = conversions::to_everest(csr_response.status);
+        response.status = conversions::to_everest(csr_response.status);
 
-    if (csr_response.status == evse_security::GetCertificateSignRequestStatus::Accepted &&
-        csr_response.csr.has_value()) {
-        response.csr = csr_response.csr;
+        if (csr_response.status == evse_security::GetCertificateSignRequestStatus::Accepted &&
+            csr_response.csr.has_value()) {
+            response.csr = csr_response.csr;
+        }
+
+        return response;
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        response.status = types::evse_security::GetCertificateSignRequestStatus::GenerationError;
+        return response;
     }
-
-    return response;
 }
 
 types::evse_security::GetCertificateInfoResult
@@ -109,16 +163,23 @@ evse_securityImpl::handle_get_leaf_certificate_info(types::evse_security::LeafCe
                                                     types::evse_security::EncodingFormat& encoding,
                                                     bool& include_ocsp) {
     types::evse_security::GetCertificateInfoResult response;
-    const auto leaf_info = this->evse_security->get_leaf_certificate_info(
-        conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
 
-    response.status = conversions::to_everest(leaf_info.status);
+    try {
+        const auto leaf_info = this->evse_security->get_leaf_certificate_info(
+            conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
 
-    if (leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted && leaf_info.info.has_value()) {
-        response.info = conversions::to_everest(leaf_info.info.value());
+        response.status = conversions::to_everest(leaf_info.status);
+
+        if (leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted && leaf_info.info.has_value()) {
+            response.info = conversions::to_everest(leaf_info.info.value());
+        }
+
+        return response;
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        response.status = types::evse_security::GetCertificateInfoStatus::Rejected;
+        return response;
     }
-
-    return response;
 }
 
 types::evse_security::GetCertificateFullInfoResult
@@ -127,36 +188,62 @@ evse_securityImpl::handle_get_all_valid_certificates_info(types::evse_security::
                                                           bool& include_ocsp) {
     types::evse_security::GetCertificateFullInfoResult response;
 
-    const auto full_leaf_info = this->evse_security->get_all_valid_certificates_info(
-        conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
+    try {
+        const auto full_leaf_info = this->evse_security->get_all_valid_certificates_info(
+            conversions::from_everest(certificate_type), conversions::from_everest(encoding), include_ocsp);
 
-    response.status = conversions::to_everest(full_leaf_info.status);
+        response.status = conversions::to_everest(full_leaf_info.status);
 
-    if (full_leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted) {
-        for (const auto& info : full_leaf_info.info) {
-            response.info.push_back(conversions::to_everest(info));
+        if (full_leaf_info.status == evse_security::GetCertificateInfoStatus::Accepted) {
+            for (const auto& info : full_leaf_info.info) {
+                response.info.push_back(conversions::to_everest(info));
+            }
         }
-    }
 
-    return response;
+        return response;
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        response.status = types::evse_security::GetCertificateInfoStatus::Rejected;
+        return response;
+    }
 }
 
 std::string evse_securityImpl::handle_get_verify_file(types::evse_security::CaCertificateType& certificate_type) {
-    return this->evse_security->get_verify_file(conversions::from_everest(certificate_type));
+    try {
+        return this->evse_security->get_verify_file(conversions::from_everest(certificate_type));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return {};
+    }
 }
 
 std::string evse_securityImpl::handle_get_verify_location(types::evse_security::CaCertificateType& certificate_type) {
-    return this->evse_security->get_verify_location(conversions::from_everest(certificate_type));
+    try {
+        return this->evse_security->get_verify_location(conversions::from_everest(certificate_type));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return {};
+    }
 }
 
 int evse_securityImpl::handle_get_leaf_expiry_days_count(types::evse_security::LeafCertificateType& certificate_type) {
-    return this->evse_security->get_leaf_expiry_days_count(conversions::from_everest(certificate_type));
+    try {
+        return this->evse_security->get_leaf_expiry_days_count(conversions::from_everest(certificate_type));
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return 0;
+    }
 }
 
 bool evse_securityImpl::handle_verify_file_signature(std::string& file_path, std::string& signing_certificate,
                                                      std::string& signature) {
-    return evse_security::EvseSecurity::verify_file_signature(std::filesystem::path(file_path), signing_certificate,
-                                                              signature);
+    try {
+        return evse_security::EvseSecurity::verify_file_signature(std::filesystem::path(file_path), signing_certificate,
+                                                                  signature);
+    } catch (const std::out_of_range& e) {
+        EVLOG_warning << e.what();
+        return false;
+    }
 }
 
 } // namespace main
