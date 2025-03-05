@@ -650,9 +650,7 @@ void OCPP201::ready() {
     callbacks.connection_state_changed_callback =
         [this](const bool is_connected, const int /*configuration_slot*/,
                const ocpp::v2::NetworkConnectionProfile& /*network_connection_profile*/,
-               const auto) {
-            this->p_ocpp_generic->publish_is_connected(is_connected);
-        };
+               const auto) { this->p_ocpp_generic->publish_is_connected(is_connected); };
 
     callbacks.security_event_callback = [this](const ocpp::CiString<50>& event_type,
                                                const std::optional<ocpp::CiString<255>>& tech_info) {
