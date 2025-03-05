@@ -66,3 +66,20 @@ else()
     message(STATUS "Dependency everest-gpio NOT enabled")
 endif()
 
+ev_define_dependency(
+    DEPENDENCY_NAME grpc
+    OUTPUT_VARIABLE_SUFFIX GRPC
+    DEPENDENT_MODULES_LIST EEBUS
+)
+
+ev_define_dependency(
+    DEPENDENCY_NAME eebus-grpc
+    OUTPUT_VARIABLE_SUFFIX EEBUS_GRPC
+    DEPENDENT_MODULES_LIST EEBUS
+)
+
+ev_define_dependency(
+    DEPENDENCY_NAME grpc-extended-cpp-plugin
+    OUTPUT_VARIABLE_SUFFIX GRPC_EXTENDED_CPP_PLUGIN
+    DEPENDENT_MODULES_LIST EEBUS
+)
