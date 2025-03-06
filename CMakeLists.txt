@@ -6,11 +6,24 @@ project(iso15118
 	LANGUAGES CXX C
 )
 
-find_package(everest-cmake 0.1 REQUIRED
+find_package(everest-cmake 0.5
     PATHS ../everest-cmake
 )
 
 find_package(OpenSSL 3 REQUIRED)
+
+if (NOT everest-cmake_FOUND)
+    message(STATUS "Retrieving everest-cmake using FetchContent")
+    include(FetchContent)
+    FetchContent_Declare(
+        everest-cmake
+        GIT_REPOSITORY https://github.com/EVerest/everest-cmake.git
+        GIT_TAG        v0.5.0
+    )
+    FetchContent_MakeAvailable(everest-cmake)
+    set(everest-cmake_DIR "${everest-cmake_SOURCE_DIR}")
+    include("${everest-cmake_SOURCE_DIR}/everest-cmake-config.cmake")
+endif()
 
 # options
 option(${PROJECT_NAME}_BUILD_TESTING "Build unit tests, used if included as dependency" OFF)

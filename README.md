@@ -46,7 +46,23 @@ ISO15118 support is distributed accross multiple repositories and modules in EVe
 Dependencies
 ------------
 
-To build this library you need [everest-cmake](https://github.com/EVerest/everest-cmake) checkout in the same directory as libiso15118.
+To build this library you need [everest-cmake](https://github.com/EVerest/everest-cmake) checkout in the same directory as libiso15118. If no `everest-cmake` is available, it is retrieved via FetchContent.
+
+For Debian GNU/Linux 12 you will need the following dependencies:
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake libssl-dev
+```
+
+For Fedora 41+ you will need the following dependencies:
+
+```bash
+sudo dnf update
+sudo dnf install gcc gcc-c++ git make cmake openssl-devel 
+```
+
+OpenSSL version 3.0 or above is required. The build system `ninja` is optional. 
 
 Getting started
 ---------------
