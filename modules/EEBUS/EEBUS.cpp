@@ -24,12 +24,12 @@ void EEBUS::init() {
     this->control_service_stub = control_service::ControlService::NewStub(channel);
 
     grpc::ClientContext* context = nullptr;
-    std::list<uint32_t> entity_addresses;
+    std::vector<uint32_t> entity_addresses;
     entity_addresses.push_back(1);
-    auto entity_address = create_entity_address(
+    auto entity_address = common_types::CreateEntityAddress(
         entity_addresses
     );
-    auto use_case = create_use_case(
+    auto use_case = control_service::CreateUseCase(
         control_service::UseCase_ActorType_Enum::UseCase_ActorType_Enum_ControllableSystem,
         control_service::UseCase_NameType_Enum::UseCase_NameType_Enum_limitationOfPowerConsumption
     );
@@ -42,11 +42,11 @@ void EEBUS::init() {
             "Demo",
             "EVSE",
             "2345678901",
-            std::list<control_service::DeviceCategory_Enum>{
+            std::vector<control_service::DeviceCategory_Enum>{
                 control_service::DeviceCategory_Enum::DeviceCategory_Enum_E_MOBILITY
             },
             control_service::DeviceType_Enum::DeviceType_Enum_CHARGING_STATION,
-            std::list<control_service::EntityType_Enum>{
+            std::vector<control_service::EntityType_Enum>{
                 control_service::EntityType_Enum::EntityType_Enum_EVSE
             },
             4
@@ -79,7 +79,7 @@ void EEBUS::init() {
     );
 
     std::shared_ptr<grpc::Channel> channel2 = grpc::CreateChannel(
-        response_03.endpoint(),
+        add_use_case_response.endpoint(),
         grpc::InsecureChannelCredentials()
     );
     this->cs_lpc_stub = cs_lpc::ControllableSystemLPCControl::NewStub(channel2);
@@ -92,16 +92,17 @@ void EEBUS::init() {
         new cs_lpc::SetConsumptionNominalMaxResponse()
     );
 
+    common_types::LoadLimit load_limit = common_types::CreateLoadLimit(
+        0,
+        true,
+        false,
+        4200,
+        false
+    );
     cs_lpc::CallSetConsumptionLimit(
         this->cs_lpc_stub,
         cs_lpc::CreateSetConsumptionLimitRequest(
-            cs_lpc::CreateLoadLimit(
-                0,
-                true,
-                false,
-                4200,
-                false
-            )
+            &load_limit
         ),
         new cs_lpc::SetConsumptionLimitResponse()
     );
@@ -118,19 +119,20 @@ void EEBUS::init() {
     cs_lpc::CallSetFailsafeDurationMinimum(
         this->cs_lpc_stub,
         cs_lpc::CreateSetFailsafeDurationMinimumRequest(
-            2 * 60 * 60 * 1000 * 1000 * 1000,
+            (int64_t) 2 * 60 * 60 * 1000 * 1000 * 1000,
             true
         ),
         new cs_lpc::SetFailsafeDurationMinimumResponse()
     );
 
-    control_service::CallSubscribeUseCaseEvents(
+    this->reader = new UseCaseEventReader(
         this->control_service_stub,
+        this->cs_lpc_stub,
         control_service::CreateSubscribeUseCaseEventsRequest(
             &entity_address,
             &use_case
         ),
-        new control_service::EmptyResponse()
+        this
     );
 }
 
