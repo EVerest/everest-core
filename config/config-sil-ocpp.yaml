@@ -48,6 +48,9 @@ active_modules:
       store:
         - module_id: persistent_store
           implementation_id: main
+      connector_lock:
+        - module_id: yeti_driver_1
+          implementation_id: connector_lock
   evse_manager_2:
     module: EvseManager
     mapping:
@@ -78,6 +81,12 @@ active_modules:
       hlc:
         - module_id: iso15118_charger
           implementation_id: charger
+      store:
+        - module_id: persistent_store
+          implementation_id: main
+      connector_lock:
+        - module_id: yeti_driver_2
+          implementation_id: connector_lock
   yeti_driver_1:
     module: JsYetiSimulator
     mapping:
