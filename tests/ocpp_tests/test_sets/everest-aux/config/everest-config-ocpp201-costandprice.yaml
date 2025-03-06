@@ -89,6 +89,8 @@ active_modules:
     config_module:
       sqlite_db_file_path: persistent_store.db
   display_message:
+    module: TerminalDisplayMessage
+  session_cost:
     module: TerminalCostAndPriceMessage
     connections:
       session_cost:

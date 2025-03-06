@@ -69,7 +69,7 @@ void TerminalCostAndPriceMessage::init() {
 }
 
 void TerminalCostAndPriceMessage::ready() {
-    // invoke_ready(*p_display_message);
+    invoke_ready(*p_main);
 }
 
 } // namespace module
