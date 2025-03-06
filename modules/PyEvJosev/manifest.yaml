@@ -36,6 +36,10 @@ config:
       And any existing contract certificate will also be overwritten.
     type: boolean
     default: false
+  enable_tls_1_3:
+    description: The EVCC will enable TLS version 1.3
+    type: boolean
+    default: false
 provides:  
   ev:
     interface: ISO15118_ev
