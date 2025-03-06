@@ -188,6 +188,8 @@ active_modules:
         - module_id: evse_manager_2_ocpp_sink
           implementation_id: external_limits
   display_message:
+    module: TerminalDisplayMessage
+  session_cost:
     module: TerminalCostAndPriceMessage
     connections:
       session_cost:

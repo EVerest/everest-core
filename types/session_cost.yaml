@@ -8,6 +8,9 @@ types:
     required:
       - messages
     properties:
+      ocpp_transaction_id:
+        description: Transaction id of ocpp.
+        type: string
       identifier_id:
         description: To which token this message is bound.
         type: string
