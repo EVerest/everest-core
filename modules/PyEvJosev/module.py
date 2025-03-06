@@ -16,7 +16,7 @@ from iso15118.evcc.controller.simulator import SimEVController
 from iso15118.evcc.evcc_config import EVCCConfig
 from iso15118.evcc.everest import context as JOSEV_CONTEXT
 from iso15118.shared.exificient_exi_codec import ExificientEXICodec
-from iso15118.shared.settings import set_PKI_PATH
+from iso15118.shared.settings import set_PKI_PATH, enable_tls_1_3
 
 from utilities import (
     setup_everest_logging,
@@ -58,6 +58,9 @@ class PyEVJosevModule():
 
         etc_certs_path = m.info.paths.etc / EVEREST_CERTS_SUB_DIR
         set_PKI_PATH(str(etc_certs_path.resolve()))
+
+        if self._setup.configs.module['enable_tls_1_3'] == True:
+            enable_tls_1_3()
 
         # setup publishing callback
         def publish_callback(variable_name: str, value: any):
