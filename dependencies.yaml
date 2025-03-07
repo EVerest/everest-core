@@ -61,13 +61,13 @@ libcurl:
 # of libocpp and would otherwise be overwritten by the version used there
 libevse-security:
   git: git@github.com:PionixPro/libevse-security.git
-  git_tag: v0.9.1
+  git_tag: v0.9.3
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBEVSE_SECURITY"
 
 # OCPP
 libocpp:
   git: git@github.com:PionixPro/libocpp.git
-  git_tag: v0.20.0
+  git_tag: v0.23.1
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
