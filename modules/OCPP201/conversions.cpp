@@ -1313,7 +1313,6 @@ to_everest_charging_schedules(const std::vector<ocpp::v2::CompositeSchedule>& co
     return charging_schedules;
 }
 
-// TODO mz add new ocpp 2.1 values to interface
 types::ocpp::ChargingSchedule to_everest_charging_schedule(const ocpp::v2::CompositeSchedule& composite_schedule) {
     types::ocpp::ChargingSchedule charging_schedule;
     charging_schedule.evse = composite_schedule.evseId;
