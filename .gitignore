@@ -1,4 +1,4 @@
 *build
 .vscode
-pki
+/pki
 test/sample_data

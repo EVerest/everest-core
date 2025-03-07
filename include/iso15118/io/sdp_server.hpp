@@ -53,8 +53,13 @@ public:
         return fd;
     }
 
+    auto get_port() const {
+        return port;
+    }
+
 private:
     int fd{-1};
+    uint16_t port{0};
     sockaddr_in6 destination_address{};
 };
 

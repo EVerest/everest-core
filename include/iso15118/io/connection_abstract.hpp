@@ -4,8 +4,11 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 
 #include "ipv6_endpoint.hpp"
+
+#include <iso15118/detail/io/sha_hash.hpp>
 
 namespace iso15118::io {
 
@@ -32,6 +35,8 @@ struct IConnection {
     virtual ReadResult read(uint8_t* buf, size_t len) = 0;
 
     virtual void close() = 0;
+
+    virtual std::optional<sha512_hash_t> get_vehicle_cert_hash() const = 0;
 
     virtual ~IConnection() = default;
 };

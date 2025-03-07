@@ -153,7 +153,7 @@ void SdpServer::send_response(const PeerRequestContext& request, const Ipv6EndPo
 
     sendto(fd, v2g_packet, sizeof(v2g_packet), 0, reinterpret_cast<const sockaddr*>(&request.address), peer_addr_len);
 }
-TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port) {
+TlsKeyLoggingServer::TlsKeyLoggingServer(const std::string& interface_name, uint16_t port_) : port(port_) {
     static constexpr auto LINK_LOCAL_MULTICAST = "ff02::1";
 
     fd = socket(AF_INET6, SOCK_DGRAM, 0);

@@ -9,3 +9,20 @@ target_link_libraries(test_logging
 )
 
 catch_discover_tests(test_logging)
+
+add_executable(connection_openssl_test)
+add_custom_command(
+    TARGET connection_openssl_test
+    COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/pki
+    COMMAND cd pki && cp pki.sh ${CMAKE_CURRENT_BINARY_DIR}/pki
+    COMMAND cp -r configs ${CMAKE_CURRENT_BINARY_DIR}/pki
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+target_sources(connection_openssl_test
+    PRIVATE
+        connection_openssl.cpp
+)
+target_link_libraries(connection_openssl_test
+    PRIVATE
+        iso15118::iso15118
+)
