@@ -44,6 +44,8 @@ struct MatchingSession {
     int captured_aags[slac::defs::AAG_LIST_LEN];
     bool received_mnbc_sound{false};
 
+    int num_retries{0};
+
     // helper functions
     void set_next_timeout(int delay_ms);
     void ack_timeout();

@@ -1,0 +1,31 @@
+description: >-
+  This interface defines a fast over voltage monitoring device according
+  to IEC61851-23:2023 6.3.1.106.2 for DC charging. An emergency shutdown needs to be triggered
+  if the DC output voltage is above the limit of Table 103 for 9ms. The actual shutdown needs
+  to be handled in a lower layer outside of EVerest, but this interface sets the 
+  correct voltage limit at the start of the session and stops monitoring at the 
+  end of the session. The over voltage error should be reported after the actual
+  shutdown was already performed.
+  Once an over voltage error was raised, it should only be cleared when the reset_over_voltage_error command is called.
+  All other errors should be raised/cleared when they occur/are no longer active immediately.
+cmds:
+  start:
+    description: >-
+      Start over voltage monitoring
+    arguments:
+      over_voltage_limit_V:
+        description: >-
+          Specifies the over voltage threshold [V] (based on IEC61851-23:2023 Table 103)
+          An emergency shutdown should be triggered if the DC output voltage is higher 
+          than this value.
+        type: number
+  stop:
+    description: >-
+      Stop over voltage monitoring at the end of the power transfer.
+  reset_over_voltage_error:
+    description: >-
+      Resets the detection logic to allow for new charging session after an over voltage error occurred.
+      This should clear the over voltage error.
+      If monitoring is still active, it should be stopped.
+errors:
+  - reference: /errors/over_voltage_monitor
