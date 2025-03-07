@@ -52,7 +52,8 @@ private:
     // types::energy_price_information::PricePerkWh price_limit;
     // types::energy::OptimizerTarget optimizer_target;
     types::energy::EnergyFlowRequest energy_flow_request;
-    types::energy::LimitsRes last_enforced_limits;
+    float last_enforced_limits_ampere{-9999};
+    float last_enforced_limits_watt{-9999};
     float last_target_voltage{-9999};
     float last_actual_voltage{-9999};
     void clear_import_request_schedule();

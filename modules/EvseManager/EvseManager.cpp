@@ -1175,7 +1175,7 @@ void EvseManager::setup_v2h_mode() {
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
     target_entry.timestamp = timestamp;
-    target_entry.limits_to_leaves.total_power_W = {powersupply_capabilities.max_import_power_W.value(),
+    target_entry.limits_to_leaves.total_power_W = {powersupply_capabilities.max_import_power_W.value_or(0.),
                                                    info.id + "/setup_v2h_mode"};
 
     types::energy::ScheduleReqEntry zero_entry;
