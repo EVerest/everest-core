@@ -854,7 +854,7 @@ class TestOcpp16CostAndPrice:
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StopTransaction",
                                            call.StopTransactionPayload(0, "", 1, Reason.local),
                                            validate_standard_stop_transaction)
-        
+
         # expect StatusNotification with status finishing
         assert await wait_for_and_validate(test_utility, chargepoint_with_pm, "StatusNotification",
                                            call.StatusNotificationPayload(1, ChargePointErrorCode.no_error,
