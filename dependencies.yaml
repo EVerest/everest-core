@@ -67,7 +67,7 @@ libevse-security:
 # OCPP
 libocpp:
   git: git@github.com:PionixPro/libocpp.git
-  git_tag: 86084833556ec57f06069f3114dbf845b8fd02eb
+  git_tag: b95bafc4a3aaa5296402bc05f87021f765510309 
   cmake_condition: "EVEREST_DEPENDENCY_ENABLED_LIBOCPP"
 # Josev
 Josev:
