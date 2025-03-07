@@ -18,6 +18,27 @@ struct ResetState : public FSMSimpleState {
     CallbackReturnType callback() final;
 };
 
+struct ResetChipState : public FSMSimpleState {
+    using FSMSimpleState::FSMSimpleState;
+
+    HandleEventReturnType handle_event(AllocatorType&, Event) final;
+
+    void enter() final;
+    CallbackReturnType callback() final;
+
+    // for now returns true if CM_RESET_CNF is received
+    bool check_for_valid_reset_conf();
+
+    bool reset_delay_done{false};
+    bool chip_reset_has_been_sent{false};
+
+    enum class SubState {
+        DELAY,
+        SEND_RESET,
+        DONE,
+    } sub_state{SubState::DELAY};
+};
+
 struct InitSlacState : public FSMSimpleState {
     using FSMSimpleState::FSMSimpleState;
 
