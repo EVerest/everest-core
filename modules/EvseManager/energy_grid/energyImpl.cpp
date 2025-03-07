@@ -72,6 +72,7 @@ void energyImpl::clear_import_request_schedule() {
         const auto caps = mod->get_powersupply_capabilities();
         entry_import.limits_to_leaves.total_power_W = {caps.max_export_power_W,
                                                        source_base + "/clear_import_request_schedule"};
+        // Note both sides are optionals
         entry_import.conversion_efficiency = caps.conversion_efficiency_export;
     }
 
@@ -96,7 +97,8 @@ void energyImpl::clear_export_request_schedule() {
     if (mod->config.charge_mode == "DC") {
         // For DC, apply our power supply capabilities as limit on leaves side
         const auto caps = mod->get_powersupply_capabilities();
-        entry_export.limits_to_leaves.total_power_W = {caps.max_import_power_W.value(), source_psu_caps};
+        entry_export.limits_to_leaves.total_power_W = {caps.max_import_power_W.value_or(0), source_psu_caps};
+        // Note that both sides are optionals
         entry_export.conversion_efficiency = caps.conversion_efficiency_import;
     }
 
@@ -201,6 +203,7 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
                 // For DC, apply our power supply capabilities as an additional limit on leaves side
                 const auto caps = mod->get_powersupply_capabilities();
                 for (auto& entry : energy_flow_request.schedule_import) {
+                    // Apply caps limit if we request a leaves side watt value and it is larger than the capabilities
                     if (entry.limits_to_leaves.total_power_W.has_value() and
                         entry.limits_to_leaves.total_power_W.value().value > caps.max_export_power_W) {
                         entry.limits_to_leaves.total_power_W = {caps.max_export_power_W, source_psu_caps};
@@ -243,7 +246,8 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
                 // For DC, apply our power supply capabilities as an additional limit on leaves side
                 const auto caps = mod->get_powersupply_capabilities();
                 for (auto& entry : energy_flow_request.schedule_export) {
-                    if (entry.limits_to_leaves.total_power_W.value().value > caps.max_import_power_W) {
+                    if (entry.limits_to_leaves.total_power_W.has_value() and caps.max_import_power_W.has_value() and
+                        entry.limits_to_leaves.total_power_W.value().value > caps.max_import_power_W.value()) {
                         entry.limits_to_leaves.total_power_W = {caps.max_import_power_W.value(), source_bsp_caps};
                     }
                 }
@@ -285,7 +289,6 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
                 e.limits_to_leaves.ac_max_current_A.reset();
             }
         }
-
     } else {
         if (mod->config.charge_mode == "DC") {
             // we dont need power at the moment
@@ -310,7 +313,7 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     // EVLOG_info << "Outgoing request " << energy_flow_request;
 }
 
-static bool almost(float a, float b) {
+static bool almost_eq(float a, float b) {
     return a > b - 0.1 and a < b + 0.1;
 }
 
@@ -318,13 +321,13 @@ static bool almost(float a, float b) {
 bool energyImpl::random_delay_needed(float last_limit, float limit) {
 
     if (mod->config.uk_smartcharging_random_delay_at_any_change) {
-        if (not almost(last_limit, limit)) {
+        if (not almost_eq(last_limit, limit)) {
             return true;
         }
     } else {
-        if (almost(last_limit, 0.) and limit > 0.1) {
+        if (almost_eq(last_limit, 0.) and limit > 0.1) {
             return true;
-        } else if (last_limit > 0.1 and almost(limit, 0.)) {
+        } else if (last_limit > 0.1 and almost_eq(limit, 0.)) {
             return true;
         }
     }
@@ -471,7 +474,8 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         if (mod->config.charge_mode == "DC") {
             // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
             // FIXME: multiply by conversion_efficiency here!
-            if (value.limits_root_side.total_power_W.has_value()) {
+            if (value.limits_root_side.total_power_W.has_value() and
+                value.limits_root_side.ac_max_current_A.has_value()) {
                 float watt_leave_side = value.limits_root_side.total_power_W.value().value;
                 float ampere_root_side = value.limits_root_side.ac_max_current_A.value().value;
 
@@ -479,12 +483,19 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                 float target_voltage = ev_info.target_voltage.value_or(0.);
                 float actual_voltage = ev_info.present_voltage.value_or(0.);
 
-                // did the values change since the last call?
-                if (last_enforced_limits.total_power_W.value().value != watt_leave_side ||
-                    last_enforced_limits.ac_max_current_A.value().value != ampere_root_side ||
-                    target_voltage != last_target_voltage || voltage_changed(actual_voltage, last_actual_voltage)) {
+                bool values_changed = true;
 
-                    last_enforced_limits = value.limits_root_side;
+                // did the values change since the last call?
+                if (almost_eq(last_enforced_limits_watt, watt_leave_side) and
+                    almost_eq(last_enforced_limits_ampere, ampere_root_side) and
+                    almost_eq(target_voltage, last_target_voltage) and
+                    not voltage_changed(actual_voltage, last_actual_voltage)) {
+                    values_changed = false;
+                }
+
+                if (values_changed) {
+                    last_enforced_limits_ampere = ampere_root_side;
+                    last_enforced_limits_watt = watt_leave_side;
                     last_target_voltage = target_voltage;
                     last_actual_voltage = actual_voltage;
 
