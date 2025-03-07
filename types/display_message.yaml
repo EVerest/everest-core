@@ -2,8 +2,7 @@ description: >-
   Message to show on a display
 types:
   IdentifierType:
-    description: >-
-      The type of 'identifier_id'. If omitted, type will be session id.
+    description: Types of identifiers
     type: string
     enum:
       - IdToken
