@@ -14,7 +14,6 @@ namespace module {
 
 typedef std::vector<types::energy::ScheduleReqEntry> ScheduleReq;
 typedef std::vector<types::energy::ScheduleResEntry> ScheduleRes;
-typedef std::vector<types::energy::ScheduleSetpointEntry> ScheduleSetpoints;
 
 class globals_t {
 public:
@@ -29,12 +28,12 @@ public:
     bool debug{false};
     ScheduleReq zero_schedule_req, empty_schedule_req;
     ScheduleRes zero_schedule_res, empty_schedule_res;
-    ScheduleSetpoints empty_schedule_setpoints;
 
 private:
     void create_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request);
     void add_timestamps(const types::energy::EnergyFlowRequest& energy_flow_request);
-    template <typename T> void create_empty_schedule(T& s);
+    ScheduleReq create_empty_schedule_req();
+    ScheduleRes create_empty_schedule_res();
     std::vector<date::utc_clock::time_point> timestamps;
 };
 
@@ -65,9 +64,6 @@ public:
     std::vector<Market*> get_list_of_evses();
     ScheduleReq get_available_energy_import();
     ScheduleReq get_available_energy_export();
-    ScheduleSetpoints get_setpoints() {
-        return setpoints;
-    };
 
     ScheduleRes get_sold_energy();
 
@@ -85,19 +81,12 @@ private:
 
     // main data structures
     ScheduleReq import_max_available, export_max_available;
-    ScheduleSetpoints setpoints;
     ScheduleRes sold_root;
     std::vector<ScheduleRes> sold_leaves;
 
     ScheduleReq get_max_available_energy(const ScheduleReq& request);
     ScheduleReq get_available_energy(const ScheduleReq& available, bool add_sold);
-    ScheduleSetpoints resample(const ScheduleSetpoints& request);
 };
-
-float get_watt_from_freq_table(std::vector<types::energy::FrequencyWattPoint> table, float freq);
-void apply_limit_if_smaller(std::optional<types::energy::NumberWithSource>& base, float limit,
-                            const std::string source);
-void apply_setpoints(ScheduleReq& imp, ScheduleReq& exp, const ScheduleSetpoints& setpoints, std::optional<float> freq);
 
 } // namespace module
 

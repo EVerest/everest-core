@@ -25,10 +25,6 @@ void energyImpl::init() {
 
     charger_state = Charger::EvseState::Disabled;
 
-    source_base = mod->info.id;
-    source_bsp_caps = source_base + "/evse_board_support_caps";
-    source_psu_caps = source_base + "/powersupply_dc_caps";
-
     std::srand((unsigned)time(0));
 
     // UUID must be unique also beyond this charging station -> will be handled on framework level and above later
@@ -59,10 +55,10 @@ void energyImpl::clear_import_request_schedule() {
         Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tpnow) + date::get_leap_second_info(tpnow).elapsed);
 
     entry_import.timestamp = tp;
-    entry_import.limits_to_root.ac_max_phase_count = {hw_caps.max_phase_count_import};
-    entry_import.limits_to_root.ac_min_phase_count = {hw_caps.min_phase_count_import};
-    entry_import.limits_to_root.ac_max_current_A = {hw_caps.max_current_A_import};
-    entry_import.limits_to_root.ac_min_current_A = {hw_caps.min_current_A_import};
+    entry_import.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_import;
+    entry_import.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_import;
+    entry_import.limits_to_root.ac_max_current_A = hw_caps.max_current_A_import;
+    entry_import.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
     entry_import.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
     entry_import.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
@@ -70,12 +66,11 @@ void energyImpl::clear_import_request_schedule() {
     if (mod->config.charge_mode == "DC") {
         // For DC, apply our power supply capabilities as limit on leaves side
         const auto caps = mod->get_powersupply_capabilities();
-        entry_import.limits_to_leaves.total_power_W = {caps.max_export_power_W,
-                                                       source_base + "/clear_import_request_schedule"};
+        entry_import.limits_to_leaves.total_power_W = caps.max_export_power_W;
         entry_import.conversion_efficiency = caps.conversion_efficiency_export;
     }
 
-    energy_flow_request.schedule_import = std::vector<types::energy::ScheduleReqEntry>({entry_import});
+    energy_flow_request.schedule_import.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_import}));
 }
 
 void energyImpl::clear_export_request_schedule() {
@@ -85,10 +80,10 @@ void energyImpl::clear_export_request_schedule() {
         Everest::Date::to_rfc3339(date::floor<std::chrono::hours>(tpnow) + date::get_leap_second_info(tpnow).elapsed);
 
     entry_export.timestamp = tp;
-    entry_export.limits_to_root.ac_max_phase_count = {hw_caps.max_phase_count_export, source_bsp_caps};
-    entry_export.limits_to_root.ac_min_phase_count = {hw_caps.min_phase_count_export, source_bsp_caps};
-    entry_export.limits_to_root.ac_max_current_A = {hw_caps.max_current_A_export, source_bsp_caps};
-    entry_export.limits_to_root.ac_min_current_A = {hw_caps.min_current_A_export, source_bsp_caps};
+    entry_export.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_export;
+    entry_export.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_export;
+    entry_export.limits_to_root.ac_max_current_A = hw_caps.max_current_A_export;
+    entry_export.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
     entry_export.limits_to_root.ac_supports_changing_phases_during_charging =
         hw_caps.supports_changing_phases_during_charging;
     entry_export.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
@@ -96,11 +91,11 @@ void energyImpl::clear_export_request_schedule() {
     if (mod->config.charge_mode == "DC") {
         // For DC, apply our power supply capabilities as limit on leaves side
         const auto caps = mod->get_powersupply_capabilities();
-        entry_export.limits_to_leaves.total_power_W = {caps.max_import_power_W.value(), source_psu_caps};
+        entry_export.limits_to_leaves.total_power_W = caps.max_import_power_W;
         entry_export.conversion_efficiency = caps.conversion_efficiency_import;
     }
 
-    energy_flow_request.schedule_export = std::vector<types::energy::ScheduleReqEntry>({entry_export});
+    energy_flow_request.schedule_export.emplace(std::vector<types::energy::ScheduleReqEntry>({entry_export}));
 }
 
 void energyImpl::clear_request_schedules() {
@@ -194,83 +189,84 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
         charger_state == Charger::EvseState::ChargingPausedEV || !mod->config.request_zero_power_in_idle) {
 
         // copy complete external limit schedules for import
-        if (not mod->get_local_energy_limits().schedule_import.empty()) {
+        if (mod->get_local_energy_limits().schedule_import.has_value() &&
+            !mod->get_local_energy_limits().schedule_import.value().empty()) {
             energy_flow_request.schedule_import = mod->get_local_energy_limits().schedule_import;
 
             if (mod->config.charge_mode == "DC") {
                 // For DC, apply our power supply capabilities as an additional limit on leaves side
                 const auto caps = mod->get_powersupply_capabilities();
-                for (auto& entry : energy_flow_request.schedule_import) {
-                    if (entry.limits_to_leaves.total_power_W.has_value() and
-                        entry.limits_to_leaves.total_power_W.value().value > caps.max_export_power_W) {
-                        entry.limits_to_leaves.total_power_W = {caps.max_export_power_W, source_psu_caps};
+                for (auto& entry : energy_flow_request.schedule_import.value()) {
+                    if (entry.limits_to_leaves.total_power_W > caps.max_export_power_W) {
+                        entry.limits_to_leaves.total_power_W = caps.max_export_power_W;
                     }
                 }
             }
         }
 
         // apply our local hardware limits on root side
-        for (auto& e : energy_flow_request.schedule_import) {
+        for (auto& e : energy_flow_request.schedule_import.value()) {
             if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                e.limits_to_root.ac_max_current_A.value().value > hw_caps.max_current_A_import) {
-                e.limits_to_root.ac_max_current_A = {hw_caps.max_current_A_import, source_bsp_caps};
+                e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_import) {
+                e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_import;
 
                 // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
                 // wants to start charging again. The energy manager may pause us externally to reduce to
                 // zero
                 if (charger_state == Charger::EvseState::ChargingPausedEV && mod->config.request_zero_power_in_idle) {
-                    e.limits_to_root.ac_max_current_A = {hw_caps.min_current_A_import, source_bsp_caps};
+                    e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_import;
                 }
             }
 
             if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                e.limits_to_root.ac_max_phase_count.value().value > hw_caps.max_phase_count_import)
-                e.limits_to_root.ac_max_phase_count = {hw_caps.max_phase_count_import, source_bsp_caps};
+                e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_import)
+                e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_import;
 
             // copy remaining hw limits on root side
-            e.limits_to_root.ac_min_phase_count = {hw_caps.min_phase_count_import, source_bsp_caps};
-            e.limits_to_root.ac_min_current_A = {hw_caps.min_current_A_import, source_bsp_caps};
+            e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_import;
+            e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_import;
             e.limits_to_root.ac_supports_changing_phases_during_charging =
                 hw_caps.supports_changing_phases_during_charging;
             e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
         }
 
         // copy complete external limit schedules for export
-        if (not mod->get_local_energy_limits().schedule_export.empty()) {
+        if (mod->get_local_energy_limits().schedule_export.has_value() &&
+            !mod->get_local_energy_limits().schedule_export.value().empty()) {
             energy_flow_request.schedule_export = mod->get_local_energy_limits().schedule_export;
 
             if (mod->config.charge_mode == "DC") {
                 // For DC, apply our power supply capabilities as an additional limit on leaves side
                 const auto caps = mod->get_powersupply_capabilities();
-                for (auto& entry : energy_flow_request.schedule_export) {
-                    if (entry.limits_to_leaves.total_power_W.value().value > caps.max_import_power_W) {
-                        entry.limits_to_leaves.total_power_W = {caps.max_import_power_W.value(), source_bsp_caps};
+                for (auto& entry : energy_flow_request.schedule_export.value()) {
+                    if (entry.limits_to_leaves.total_power_W > caps.max_import_power_W) {
+                        entry.limits_to_leaves.total_power_W = caps.max_import_power_W;
                     }
                 }
             }
         }
 
         // apply our local hardware limits on root side
-        for (auto& e : energy_flow_request.schedule_export) {
+        for (auto& e : energy_flow_request.schedule_export.value()) {
             if (!e.limits_to_root.ac_max_current_A.has_value() ||
-                e.limits_to_root.ac_max_current_A.value().value > hw_caps.max_current_A_export) {
-                e.limits_to_root.ac_max_current_A = {hw_caps.max_current_A_export, source_bsp_caps};
+                e.limits_to_root.ac_max_current_A.value() > hw_caps.max_current_A_export) {
+                e.limits_to_root.ac_max_current_A = hw_caps.max_current_A_export;
 
                 // are we in EV pause mode? -> Reduce requested current to minimum just to see when car
                 // wants to start discharging again. The energy manager may pause us externally to reduce to
                 // zero
                 if (charger_state == Charger::EvseState::ChargingPausedEV) {
-                    e.limits_to_root.ac_max_current_A = {hw_caps.min_current_A_export, source_bsp_caps + "_pause"};
+                    e.limits_to_root.ac_max_current_A = hw_caps.min_current_A_export;
                 }
             }
 
             if (!e.limits_to_root.ac_max_phase_count.has_value() ||
-                e.limits_to_root.ac_max_phase_count.value().value > hw_caps.max_phase_count_export)
-                e.limits_to_root.ac_max_phase_count = {hw_caps.max_phase_count_export, source_bsp_caps};
+                e.limits_to_root.ac_max_phase_count.value() > hw_caps.max_phase_count_export)
+                e.limits_to_root.ac_max_phase_count = hw_caps.max_phase_count_export;
 
             // copy remaining hw limits on root side
-            e.limits_to_root.ac_min_phase_count = {hw_caps.min_phase_count_export, source_bsp_caps};
-            e.limits_to_root.ac_min_current_A = {hw_caps.min_current_A_export, source_bsp_caps};
+            e.limits_to_root.ac_min_phase_count = hw_caps.min_phase_count_export;
+            e.limits_to_root.ac_min_current_A = hw_caps.min_current_A_export;
             e.limits_to_root.ac_supports_changing_phases_during_charging =
                 hw_caps.supports_changing_phases_during_charging;
             e.limits_to_root.ac_number_of_active_phases = mod->ac_nr_phases_active;
@@ -278,10 +274,10 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
 
         if (mod->config.charge_mode == "DC") {
             // For DC mode remove amp limit on leave side if any
-            for (auto& e : energy_flow_request.schedule_import) {
+            for (auto& e : energy_flow_request.schedule_import.value()) {
                 e.limits_to_leaves.ac_max_current_A.reset();
             }
-            for (auto& e : energy_flow_request.schedule_export) {
+            for (auto& e : energy_flow_request.schedule_export.value()) {
                 e.limits_to_leaves.ac_max_current_A.reset();
             }
         }
@@ -289,11 +285,11 @@ void energyImpl::request_energy_from_energy_manager(bool priority_request) {
     } else {
         if (mod->config.charge_mode == "DC") {
             // we dont need power at the moment
-            energy_flow_request.schedule_import[0].limits_to_leaves.total_power_W = {0., "Idle"};
-            energy_flow_request.schedule_export[0].limits_to_leaves.total_power_W = {0., "Idle"};
+            energy_flow_request.schedule_import.value()[0].limits_to_leaves.total_power_W = 0.;
+            energy_flow_request.schedule_export.value()[0].limits_to_leaves.total_power_W = 0.;
         } else {
-            energy_flow_request.schedule_import[0].limits_to_leaves.ac_max_current_A = {0., "Idle"};
-            energy_flow_request.schedule_export[0].limits_to_leaves.ac_max_current_A = {0., "Idle"};
+            energy_flow_request.schedule_import.value()[0].limits_to_leaves.ac_max_current_A = 0.;
+            energy_flow_request.schedule_export.value()[0].limits_to_leaves.ac_max_current_A = 0.;
         }
     }
 
@@ -354,43 +350,44 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         int active_phasecount = mod->ac_nr_phases_active;
 
         // apply enforced limits
-
-        // set enforced AC current limit
-        if (value.limits_root_side.ac_max_current_A.has_value()) {
-            limit = value.limits_root_side.ac_max_current_A.value().value;
-        }
-
-        // apply number of phase limit
-        if (value.limits_root_side.ac_max_phase_count.has_value() &&
-            value.limits_root_side.ac_max_phase_count.value().value not_eq active_phasecount) {
-            if (mod->get_hw_capabilities().supports_changing_phases_during_charging) {
-                if (mod->charger->switch_three_phases_while_charging(
-                        value.limits_root_side.ac_max_phase_count.value().value == 3)) {
-                    mod->ac_nr_phases_active = value.limits_root_side.ac_max_phase_count.value().value;
-                    EVLOG_info << fmt::format("3ph/1ph: Switching #ph from {} to {}", active_phasecount,
-                                              value.limits_root_side.ac_max_phase_count.value().value);
-                } else {
-                    EVLOG_warning << fmt::format(
-                        "3ph/1ph: Energymanager requests switching #ph from {} to {}, ignored.", active_phasecount,
-                        value.limits_root_side.ac_max_phase_count.value().value);
-                }
-            } else {
-                EVLOG_error << fmt::format(
-                    "Energy manager requests switching #ph from {} to {}, but switching phases during "
-                    "charging is not supported by HW.",
-                    active_phasecount, value.limits_root_side.ac_max_phase_count.value().value);
+        if (value.limits_root_side.has_value()) {
+            // set enforced AC current limit
+            if (value.limits_root_side.value().ac_max_current_A.has_value()) {
+                limit = value.limits_root_side.value().ac_max_current_A.value();
             }
-        }
 
-        // apply watt limit
-        if (value.limits_root_side.total_power_W.has_value()) {
-            mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
-                              value.limits_root_side.total_power_W.value().value);
+            // apply number of phase limit
+            if (value.limits_root_side.value().ac_max_phase_count.has_value() &&
+                value.limits_root_side.value().ac_max_phase_count.value() not_eq active_phasecount) {
+                if (mod->get_hw_capabilities().supports_changing_phases_during_charging) {
+                    if (mod->charger->switch_three_phases_while_charging(
+                            value.limits_root_side.value().ac_max_phase_count.value() == 3)) {
+                        mod->ac_nr_phases_active = value.limits_root_side.value().ac_max_phase_count.value();
+                        EVLOG_info << fmt::format("3ph/1ph: Switching #ph from {} to {}", active_phasecount,
+                                                  value.limits_root_side.value().ac_max_phase_count.value());
+                    } else {
+                        EVLOG_warning << fmt::format(
+                            "3ph/1ph: Energymanager requests switching #ph from {} to {}, ignored.", active_phasecount,
+                            value.limits_root_side.value().ac_max_phase_count.value());
+                    }
+                } else {
+                    EVLOG_error << fmt::format(
+                        "Energy manager requests switching #ph from {} to {}, but switching phases during "
+                        "charging is not supported by HW.",
+                        active_phasecount, value.limits_root_side.value().ac_max_phase_count.value());
+                }
+            }
 
-            float a = value.limits_root_side.total_power_W.value().value / mod->config.ac_nominal_voltage /
-                      mod->ac_nr_phases_active;
-            if (a < limit) {
-                limit = a;
+            // apply watt limit
+            if (value.limits_root_side.value().total_power_W.has_value()) {
+                mod->mqtt.publish(fmt::format("everest_external/nodered/{}/state/max_watt", mod->config.connector_id),
+                                  value.limits_root_side.value().total_power_W.value());
+
+                float a = value.limits_root_side.value().total_power_W.value() / mod->config.ac_nominal_voltage /
+                          mod->ac_nr_phases_active;
+                if (a < limit) {
+                    limit = a;
+                }
             }
         }
 
@@ -471,20 +468,20 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
         if (mod->config.charge_mode == "DC") {
             // DC mode apply limit at the leave side, we get root side limits here from EnergyManager on ACDC!
             // FIXME: multiply by conversion_efficiency here!
-            if (value.limits_root_side.total_power_W.has_value()) {
-                float watt_leave_side = value.limits_root_side.total_power_W.value().value;
-                float ampere_root_side = value.limits_root_side.ac_max_current_A.value().value;
+            if (value.limits_root_side.has_value() && value.limits_root_side.value().total_power_W.has_value()) {
+                float watt_leave_side = value.limits_root_side.value().total_power_W.value();
+                float ampere_root_side = value.limits_root_side.value().ac_max_current_A.value();
 
                 auto ev_info = mod->get_ev_info();
                 float target_voltage = ev_info.target_voltage.value_or(0.);
                 float actual_voltage = ev_info.present_voltage.value_or(0.);
 
                 // did the values change since the last call?
-                if (last_enforced_limits.total_power_W.value().value != watt_leave_side ||
-                    last_enforced_limits.ac_max_current_A.value().value != ampere_root_side ||
+                if (last_enforced_limits.total_power_W != watt_leave_side ||
+                    last_enforced_limits.ac_max_current_A != ampere_root_side ||
                     target_voltage != last_target_voltage || voltage_changed(actual_voltage, last_actual_voltage)) {
 
-                    last_enforced_limits = value.limits_root_side;
+                    last_enforced_limits = value.limits_root_side.value();
                     last_target_voltage = target_voltage;
                     last_actual_voltage = actual_voltage;
 
@@ -500,10 +497,10 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                         // FIXME: we could use some magic here that involves actual measured voltage as well.
                         if (actual_voltage > 10) {
                             evse_max_limits.evse_maximum_current_limit =
-                                value.limits_root_side.total_power_W.value().value / actual_voltage;
+                                value.limits_root_side.value().total_power_W.value() / actual_voltage;
                         } else {
                             evse_max_limits.evse_maximum_current_limit =
-                                value.limits_root_side.total_power_W.value().value / target_voltage;
+                                value.limits_root_side.value().total_power_W.value() / target_voltage;
                         }
                     } else {
                         evse_max_limits.evse_maximum_current_limit = powersupply_capabilities.max_export_current_A;
@@ -521,7 +518,7 @@ void energyImpl::handle_enforce_limits(types::energy::EnforcedLimits& value) {
                     // now evse_max_limits.evse_maximum_current_limit is between
                     // -max_import_current_A ... +max_export_current_A
 
-                    evse_max_limits.evse_maximum_power_limit = value.limits_root_side.total_power_W.value().value;
+                    evse_max_limits.evse_maximum_power_limit = value.limits_root_side.value().total_power_W.value();
                     if (evse_max_limits.evse_maximum_power_limit > powersupply_capabilities.max_export_power_W)
                         evse_max_limits.evse_maximum_power_limit = powersupply_capabilities.max_export_power_W;
 

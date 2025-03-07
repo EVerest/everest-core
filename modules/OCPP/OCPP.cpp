@@ -125,20 +125,20 @@ void OCPP::set_external_limits(const std::map<int32_t, ocpp::v16::EnhancedChargi
             const auto timestamp = start_time.to_time_point() + std::chrono::seconds(period.startPeriod);
             schedule_req_entry.timestamp = ocpp::DateTime(timestamp).to_rfc3339();
             if (period.numberPhases.has_value()) {
-                limits_req.ac_max_phase_count = {period.numberPhases.value(), source_ext_limit};
+                limits_req.ac_max_phase_count = period.numberPhases.value();
             }
             if (schedule.chargingRateUnit == ocpp::v16::ChargingRateUnit::A) {
-                limits_req.ac_max_current_A = {period.limit, source_ext_limit};
+                limits_req.ac_max_current_A = period.limit;
                 if (schedule.minChargingRate.has_value()) {
-                    limits_req.ac_min_current_A = {schedule.minChargingRate.value(), source_ext_limit};
+                    limits_req.ac_min_current_A = schedule.minChargingRate.value();
                 }
             } else {
-                limits_req.total_power_W = {period.limit, source_ext_limit};
+                limits_req.total_power_W = period.limit;
             }
             schedule_req_entry.limits_to_leaves = limits_req;
             schedule_import.push_back(schedule_req_entry);
         }
-        limits.schedule_import = schedule_import;
+        limits.schedule_import.emplace(schedule_import);
         auto& evse_sink = external_energy_limits::get_evse_sink_by_evse_id(this->r_evse_energy_sink, connector_id);
         evse_sink.call_set_external_limits(limits);
     }
@@ -375,8 +375,6 @@ void OCPP::init() {
     invoke_init(*p_auth_validator);
     invoke_init(*p_auth_provider);
     invoke_init(*p_data_transfer);
-
-    source_ext_limit = info.id + "/OCPP_set_external_limits";
 
     // ensure all evse_energy_sink(s) that are connected have an evse id mapping
     for (const auto& evse_sink : this->r_evse_energy_sink) {

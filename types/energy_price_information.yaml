@@ -22,9 +22,6 @@ types:
         minLength: 3
         maxLength: 3
   EnergyPriceSchedule:
-    required:
-      - schedule_import
-      - schedule_export
     description: >-
       Forecast JSON Object containing timestamps and the price forecast
       for both import and export.

@@ -1,17 +1,7 @@
 {
   "basefile": "1_0_two_evse_load_balancing.json",
-  "description": "Tests load balancing between two EVSE nodes, one is charging and one is unplugged with 6A in idle",
+  "description": "Tests load balancing between two EVSE nodes, one is charging and one is unplugged with 0A in idle",
   "patches": [
-    {
-      "op": "replace",
-      "path": "/request/children/0/schedule_import/0/limits_to_root/ac_max_current_A",
-      "value": 45.0
-    },
-    {
-      "op": "replace",
-      "path": "/request/children/0/schedule_import/0/limits_to_leaves/ac_max_current_A",
-      "value": 44.0
-    },
     {
       "op": "replace",
       "path": "/request/children/1/schedule_import/0/limits_to_root/ac_max_current_A",
@@ -19,42 +9,50 @@
     },
     {
       "op": "replace",
-      "path": "/request/children/1/schedule_export/0/limits_to_root/ac_max_current_A",
-      "value": 8.0
-    },
-    {
-      "op": "remove",
-      "path": "/request/children/1/schedule_export/0/limits_to_leaves/ac_max_current_A"
+      "path": "/request/children/1/evse_state",
+      "value": "Unplugged"
     },
     {
       "op": "replace",
       "path": "/expected_result/0/limits_root_side/ac_max_current_A",
-      "value": 40.0
+      "value": 32.0
     },
     {
       "op": "replace",
       "path": "/expected_result/0/schedule/0/limits_to_root/ac_max_current_A",
-      "value": 40.0
+      "value": 32.0
     },
     {
       "op": "replace",
       "path": "/expected_result/0/schedule/1/limits_to_root/ac_max_current_A",
-      "value": 40.0
+      "value": 32.0
     },
     {
       "op": "replace",
       "path": "/expected_result/1/limits_root_side/ac_max_current_A",
-      "value": -8.0
+      "value": 0.0
+    },
+    {
+      "op": "remove",
+      "path": "/expected_result/1/limits_root_side/ac_max_phase_count"
+    },
+    {
+      "op": "remove",
+      "path": "/expected_result/1/schedule/0/limits_to_root/ac_max_phase_count"
+    },
+    {
+      "op": "remove",
+      "path": "/expected_result/1/schedule/1/limits_to_root/ac_max_phase_count"
     },
     {
       "op": "replace",
       "path": "/expected_result/1/schedule/0/limits_to_root/ac_max_current_A",
-      "value": -8.0
+      "value": 0.0
     },
     {
       "op": "replace",
       "path": "/expected_result/1/schedule/1/limits_to_root/ac_max_current_A",
-      "value": -8.0
+      "value": 0.0
     }
   ]
 }

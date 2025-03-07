@@ -207,8 +207,8 @@ std::vector<types::energy::EnforcedLimits> EnergyManagerImpl::run_optimizer(type
 
             optimized_values.push_back(l);
 
-            if (globals.debug) {
-                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side;
+            if (globals.debug && l.limits_root_side.has_value()) {
+                EVLOG_info << "Sending enforced limits (import) to :" << l.uuid << " " << l.limits_root_side.value();
             }
         }
     }

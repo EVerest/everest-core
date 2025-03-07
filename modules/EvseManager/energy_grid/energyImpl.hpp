@@ -64,11 +64,6 @@ private:
     float limit_when_random_delay_started{0.};
     std::atomic<Charger::EvseState> charger_state;
     static constexpr std::chrono::seconds detect_startup_with_ev_attached_duration{5};
-
-    std::string source_base;
-    std::string source_bsp_caps;
-    std::string source_psu_caps;
-
     // ev@3370e4dd-95f4-47a9-aaec-ea76f34a66c9:v1
 };
 

@@ -1,30 +1,23 @@
 {
-  "config": {
-    "nominal_ac_voltage": 230.0,
-    "update_interval": 1,
-    "schedule_interval_duration": 60,
-    "schedule_total_duration": 1,
-    "slice_ampere": 0.5,
-    "slice_watt": 500,
-    "debug": false,
-    "switch_3ph1ph_while_charging_mode": "Never",
-    "switch_3ph1ph_max_nr_of_switches_per_session": 10,
-    "switch_3ph1ph_switch_limit_stickyness": "DontChange",
-    "switch_3ph1ph_power_hysteresis_W": 500,
-    "switch_3ph1ph_time_hysteresis_s": 30
-  },
-  "expected_results": [
-    []
-  ],
-  "request": {
-    "children": [],
-    "node_type": "Undefined",
-    "schedule_setpoints": [],
-    "uuid": "",
-    "schedule_import": [],
-    "schedule_export": []
-  },
-  "start_times": [
-    "2025-01-16T15:42:56.390Z"
-  ]
+    "config": {
+      "nominal_ac_voltage": 230.0,
+      "update_interval": 1,
+      "schedule_interval_duration": 60,
+      "schedule_total_duration": 1,
+      "slice_ampere": 0.5,
+      "slice_watt": 500,
+      "debug": false,
+      "switch_3ph1ph_while_charging_mode": "Never",
+      "switch_3ph1ph_max_nr_of_switches_per_session": 10,
+      "switch_3ph1ph_switch_limit_stickyness": "DontChange",
+      "switch_3ph1ph_power_hysteresis_W": 500,
+      "switch_3ph1ph_time_hysteresis_s": 30
+    },
+    "expected_result": [],
+    "request": {
+        "children": [],
+        "node_type": "Undefined",
+        "uuid": ""
+    },
+    "start_time": "2025-01-16T15:42:56.390Z"
 }
