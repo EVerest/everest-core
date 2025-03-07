@@ -171,16 +171,21 @@ void ISO15118_chargerImpl::ready() {
         EVLOG_AND_THROW(Everest::EverestConfigError("V2G certificate not found"));
     }
 
+    const auto v2g_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::V2G);
+    const auto mo_root_cert_path = mod->r_security->call_get_verify_file(types::evse_security::CaCertificateType::MO);
+
     const iso15118::TbdConfig tbd_config = {
-        {
-            iso15118::config::CertificateBackend::EVEREST_LAYOUT,
-            {},
-            path_chain,
-            certificate_info.key,
-            certificate_info.password,
-            mod->config.enable_ssl_logging,
-            mod->config.enable_tls_key_logging,
-        },
+        {iso15118::config::CertificateBackend::EVEREST_LAYOUT,
+         {},
+         path_chain,
+         certificate_info.key,
+         certificate_info.password,
+         v2g_root_cert_path,
+         mo_root_cert_path,
+         mod->config.enable_ssl_logging,
+         mod->config.enable_tls_key_logging,
+         false,
+         "/tmp"},
         mod->config.device,
         convert_tls_negotiation_strategy(mod->config.tls_negotiation_strategy),
         mod->config.enable_sdp_server,
@@ -417,6 +422,13 @@ void ISO15118_chargerImpl::handle_stop_charging(bool& stop) {
     std::scoped_lock lock(GEL);
     if (controller) {
         controller->send_control_event(iso15118::d20::StopCharging{stop});
+    }
+}
+
+void ISO15118_chargerImpl::handle_pause_charging(bool& pause) {
+    std::scoped_lock lock(GEL);
+    if (controller) {
+        controller->send_control_event(iso15118::d20::PauseCharging{pause});
     }
 }
 
