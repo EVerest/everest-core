@@ -1052,7 +1052,8 @@ void EvseManager::ready_to_start_charging() {
     }
 
     this->p_evse->publish_ready(true);
-    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green), "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
+    EVLOG_info << fmt::format(fmt::emphasis::bold | fg(fmt::terminal_color::green),
+                              "🌀🌀🌀 Ready to start charging 🌀🌀🌀");
     if (!initial_powermeter_value_received) {
         EVLOG_warning << "No powermeter value received yet!";
     }
@@ -1186,7 +1187,7 @@ void EvseManager::setup_v2h_mode() {
     types::energy::ExternalLimits external_limits;
     types::energy::ScheduleReqEntry target_entry;
     target_entry.timestamp = timestamp;
-    target_entry.limits_to_leaves.total_power_W = {powersupply_capabilities.max_import_power_W.value(),
+    target_entry.limits_to_leaves.total_power_W = {powersupply_capabilities.max_import_power_W.value_or(0.),
                                                    info.id + "/setup_v2h_mode"};
 
     types::energy::ScheduleReqEntry zero_entry;
