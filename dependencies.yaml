@@ -4,7 +4,7 @@
 ---
 everest-framework:
   git: git@github.com:PionixPro/everest-framework.git
-  git_tag: 34e52aa821646479c05b3c7f63e4dd072f738a1d
+  git_tag: 5be1379a2f81c6be976ef44f26af118cbfd6e0d4
   options: [
     "BUILD_TESTING OFF",
     "everest-framework_USE_PYTHON_VENV ${PROJECT_NAME}_USE_PYTHON_VENV",
